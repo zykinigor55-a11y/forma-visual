@@ -1,0 +1,21 @@
+
+/* PLUX motion enhancement: UI only, no remote credentials. */
+const app=document.getElementById('app'),voice=document.getElementById('voice'),reduce=matchMedia('(prefers-reduced-motion:reduce)');
+const light=document.createElement('div');light.className='plux-light';light.setAttribute('aria-hidden','true');app.prepend(light);
+const scenes=[document.querySelector('.home-hero'),document.querySelector('.voice-scene'),document.querySelector('.onboard-visual')].filter(Boolean);
+const places=[[9,18,11,.38,6], [83,16,18,.39,8],[19,53,9,.52,7],[87,55,7,.4,6.6],[15,76,6,.34,9],[70,80,10,.35,8.2],[91,31,7,.42,7.8]];
+for(const scene of scenes){const stars=document.createElement('div');stars.className='plux-stars';stars.setAttribute('aria-hidden','true');places.forEach(([x,y,size,alpha,dur],i)=>{const b=document.createElement('i');b.style.cssText='--x:'+x+'%;--y:'+y+'%;--sz:'+size+'px;--alpha:'+alpha+';--dur:'+dur+'s;--delay:-'+(i*.47)+'s';stars.append(b)});scene.append(stars)}
+const voiceScene=document.querySelector('.voice-scene');if(voiceScene){for(let i=0;i<2;i++){const r=document.createElement('div');r.className='plux-voice-ring';voiceScene.append(r)}}
+const phaseOf=t=>{t=(t||'').toLowerCase();return t.includes('отвеч')?'speaking':t.includes('дума')?'thinking':t.includes('слуш')?'listening':t.includes('подключ')?'connecting':'idle'};
+const state=document.getElementById('voice-state');const onPhase=text=>{if(voice)voice.dataset.phase=phaseOf(text)};
+if(state){onPhase(state.textContent);new MutationObserver(()=>onPhase(state.textContent)).observe(state,{childList:true,characterData:true,subtree:true})}
+window.addEventListener('plux:voice-state',e=>onPhase(e.detail?.text));
+let mic=0,out=0,smoothed=0;
+window.addEventListener('plux:mic-level',e=>mic=Math.min(1,Math.max(0,Number(e.detail?.level)||0)));
+window.addEventListener('plux:audio-out',e=>out=Math.max(out,Math.min(1,Number(e.detail?.level)||0)));
+window.addEventListener('plux:voice-disconnect',()=>{mic=0;out=0;onPhase('')});
+function tick(){const phase=voice?.dataset.phase;const target=document.hidden?0:app.dataset.mode==='voice'?(phase==='speaking'?out:phase==='listening'?Math.min(1,mic*7):phase==='thinking'?.16:0):0;smoothed+=(target-smoothed)*.17;voice?.style.setProperty('--plux-energy',smoothed.toFixed(3));out*=.93;requestAnimationFrame(tick)}
+if(!reduce.matches)requestAnimationFrame(tick);
+document.querySelectorAll('button,.recent').forEach(el=>el.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;const box=el.getBoundingClientRect(),x=e.clientX-box.left,y=e.clientY-box.top;el.style.setProperty('--bx',x+'px');el.style.setProperty('--by',y+'px');if(reduce.matches)return;const ripple=document.createElement('span');ripple.className='plux-ripple';ripple.style.cssText='--x:'+x+'px;--y:'+y+'px';el.append(ripple);setTimeout(()=>ripple.remove(),630)},{passive:true}));
+const hero=document.querySelector('.home-hero');if(hero){hero.setAttribute('role','button');hero.setAttribute('tabindex','0');hero.setAttribute('aria-label','Поздороваться с Плюхом');let timer;const greet=e=>{if(reduce.matches)return;const rect=hero.getBoundingClientRect(),x=(e.clientX||rect.left+rect.width/2)-rect.left,y=(e.clientY||rect.top+rect.height/2)-rect.top;hero.classList.remove('plux-curious');void hero.offsetWidth;hero.classList.add('plux-curious');clearTimeout(timer);timer=setTimeout(()=>hero.classList.remove('plux-curious'),800);for(let i=0;i<9;i++){const a=i*Math.PI*2/9,sp=document.createElement('span');sp.className='plux-burst';sp.style.cssText='--x:'+x+'px;--y:'+y+'px;--dx:'+Math.round(Math.cos(a)*46)+'px;--dy:'+Math.round(Math.sin(a)*42)+'px';hero.append(sp);setTimeout(()=>sp.remove(),900)}};hero.addEventListener('click',greet);hero.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();greet({})}})}
+if(!reduce.matches&&!matchMedia('(pointer:coarse)').matches){let frame=0;document.addEventListener('pointermove',e=>{if(frame)return;frame=requestAnimationFrame(()=>{frame=0;const r=app.getBoundingClientRect();app.style.setProperty('--pmx',Math.round((e.clientX-r.left)/r.width*100)+'%');app.style.setProperty('--pmy',Math.round((e.clientY-r.top)/r.height*100)+'%')})},{passive:true})}

@@ -1,0 +1,52 @@
+
+/* PLUX Motion V5 | Apple-inspired mobile tactility, safe-area and reduced-motion conscious */
+:root{--pmx:50%;--pmy:38%;--plux-energy:0;--ease:cubic-bezier(.2,1,.3,1)}
+.app{isolation:isolate;overflow:hidden}
+.plux-light{position:absolute;z-index:0;inset:-4% -12% 15%;pointer-events:none;opacity:.72;background:radial-gradient(ellipse 39% 31% at var(--pmx) var(--pmy),#36f6ae2b,transparent 80%),conic-gradient(from 140deg at 67% 33%,transparent 0%,#04dd9b25 17%,transparent 21%,#3bffac1a 58%,transparent 65%);filter:blur(24px);animation:pluxAurora 18s ease-in-out infinite alternate}
+@keyframes pluxAurora{0%{transform:translate3d(-3%,-2%,0) scale(1)}100%{transform:translate3d(4%,3%,0) scale(1.06)}}
+.wordmark{position:relative;overflow:visible}
+.wordmark:after{content:'';pointer-events:none;position:absolute;top:20%;left:7%;width:15%;height:58%;background:linear-gradient(90deg,transparent,#d1fff09e,transparent);filter:blur(8px);opacity:0;transform:skewX(-22deg) translateX(-80px);animation:pluxLogo 9s ease-in-out infinite}
+@keyframes pluxLogo{0%,60%,100%{transform:skewX(-22deg) translateX(-80px);opacity:0}74%{opacity:.5}89%{transform:skewX(-22deg) translateX(200px);opacity:0}}
+.home-hero,.voice-scene{position:absolute}
+.home-hero{pointer-events:auto;cursor:pointer}
+.home-hero>*{pointer-events:none}
+.main-mascot,.voice-mascot{-webkit-mask-image:radial-gradient(ellipse 62% 74% at 50% 48%,#000 46%,#000 58%,transparent 85%)!important;mask-image:radial-gradient(ellipse 62% 74% at 50% 48%,#000 46%,#000 58%,transparent 85%)!important}
+.home-hero .mascot,.voice-scene .voice-mascot,.onboard-mascot{transform-origin:50% 60%;will-change:transform;animation:pluxFloat 4.8s ease-in-out infinite alternate!important}
+@keyframes pluxFloat{from{transform:translateY(4px) rotate(-1.5deg) scale(.987)}to{transform:translateY(-10px) rotate(1.2deg) scale(1.016)}}
+.home-hero.plux-curious .mascot{animation:pluxCurious .72s cubic-bezier(.12,.95,.23,1.17) both!important}
+@keyframes pluxCurious{0%,100%{transform:translateY(0) rotate(0) scale(1)}36%{transform:translateY(-16px) rotate(-5deg) scale(1.075)}67%{transform:translateY(-5px) rotate(4deg) scale(.98)}}
+.plux-stars{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+.plux-stars i{position:absolute;top:var(--y);left:var(--x);width:var(--sz);height:var(--sz);border-radius:50%;opacity:var(--alpha);background:radial-gradient(circle at 25% 25%,#d9fff2,#69ffce 19%,#003c2f 61%,#22e6a4 97%);box-shadow:inset -2px -2px 6px #015d43,0 0 9px #37ffc355;border:1px solid #ceffed94;animation:pluxBubble var(--dur) ease-in-out var(--delay) infinite alternate}
+@keyframes pluxBubble{from{transform:translate3d(-5px,5px,0) scale(.83)}to{transform:translate3d(9px,-15px,0) scale(1.1)}}
+.plux-burst{position:absolute;z-index:8;pointer-events:none;left:var(--x);top:var(--y);width:9px;height:9px;background:#ccffdd;border:1px solid white;border-radius:2px;box-shadow:0 0 12px #52ffc2,0 0 27px #28fba2;animation:pluxBurst .74s var(--ease) both}
+@keyframes pluxBurst{0%{transform:translate(-50%,-50%) rotate(45deg) scale(0);opacity:0}32%{transform:translate(-50%,-50%) rotate(45deg) scale(1.1);opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(135deg) scale(.2);opacity:0}}
+.home-hero:after,.voice-scene:after{content:'';position:absolute;z-index:1;left:15%;right:15%;bottom:7%;height:12%;pointer-events:none;border:1px solid #6cffcb70;border-radius:50%;box-shadow:0 0 23px #17eca94c,inset 0 0 22px #3effb125;animation:pluxRing 4.7s ease-in-out infinite alternate}
+@keyframes pluxRing{from{opacity:.16;transform:scale(.91)}to{opacity:.7;transform:scale(1.08)}}
+button:not(:disabled){touch-action:manipulation;transition:transform .3s var(--ease),box-shadow .34s ease,filter .2s ease!important;-webkit-tap-highlight-color:transparent}
+button:not(:disabled):active{transform:scale(.952)!important;filter:brightness(1.14)}
+button:focus-visible,input:focus-visible{outline:2px solid #b8ffeb;outline-offset:3px}
+.icon-btn,.home-mic,.back-btn,.dots-btn,.send-btn{min-width:44px;min-height:44px}
+.glass,.talk-trigger,.continue-btn,.home-mic,.voice-mic,.icon-btn{isolation:isolate;position:relative;overflow:hidden}
+.glass:after,.talk-trigger:after,.continue-btn:after,.home-mic:after,.voice-mic:after,.icon-btn:after{content:'';position:absolute;pointer-events:none;inset:0;border-radius:inherit;opacity:0;background:radial-gradient(circle 95px at var(--bx,50%) var(--by,50%),#c0ffea30,transparent 76%);transition:opacity .25s}
+.glass:focus-within:after,.talk-trigger:hover:after,.home-mic:hover:after,.voice-mic:hover:after,.icon-btn:hover:after{opacity:1}
+.talk-trigger{animation:pluxCTA 4.2s ease-in-out infinite alternate}
+@keyframes pluxCTA{to{box-shadow:0 0 34px #37ffbf72,inset 0 1px 6px #defff294;filter:brightness(1.07)}}
+.composer:focus-within{box-shadow:0 0 0 3px #43ffbd38,0 0 28px #2fffbd4d!important;border-color:#caffeb!important}
+.plux-ripple{position:absolute;left:var(--x);top:var(--y);pointer-events:none;z-index:7;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle,#ebfff5ab,#76ffd84d,transparent);animation:pluxRipple .52s ease-out both}
+@keyframes pluxRipple{from{opacity:.85;transform:translate(-50%,-50%) scale(.2)}to{opacity:0;transform:translate(-50%,-50%) scale(10)}}
+.app>main:not([hidden]){animation:pluxEnter .48s var(--ease) both}
+@keyframes pluxEnter{from{opacity:.7;transform:translateY(11px) scale(.988)}to{opacity:1;transform:translateY(0) scale(1)}}
+.chat-bubble{animation:pluxBubbleIn .4s var(--ease) both}
+@keyframes pluxBubbleIn{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+.voice-scene:before{content:'';position:absolute;z-index:2;pointer-events:none;left:12%;right:12%;bottom:5%;height:24%;opacity:calc(.22 + var(--plux-energy)*.7);background:radial-gradient(ellipse at 50% 72%,#32ffb94d,transparent 72%)}
+.plux-voice-ring{pointer-events:none;position:absolute;z-index:2;left:15%;right:15%;bottom:6%;height:13%;border:1px solid #69ffc774;border-radius:50%;animation:pluxRing 5.1s ease-in-out infinite alternate}
+.plux-voice-ring:nth-of-type(2){left:6%;right:6%;bottom:5%;animation-delay:-2s}
+.voice-screen[data-phase=listening] .voice-mic{box-shadow:0 0 0 8px #23fcb333,0 0 35px #32eeb588}
+.voice-screen[data-phase=speaking] .voice-mic{filter:hue-rotate(-12deg) brightness(1.15)}
+.voice-screen[data-phase=thinking] .voice-mic{animation:pluxCTA 1.25s ease-in-out infinite alternate}
+.voice-screen[data-phase=speaking] .waveform i{background:linear-gradient(180deg,#f1ffff,#63f6ff 54%,#008995)}
+.voice-screen[data-phase=listening] .waveform i{box-shadow:0 0 13px #3bffc777}
+.waveform i{transition:height .075s ease-out,opacity .075s linear;will-change:height}
+.toast.is-visible{animation:pluxToast .32s var(--ease) both}
+@keyframes pluxToast{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.plux-light{opacity:.22}.plux-stars i{opacity:.16!important}.plux-ripple,.plux-burst{display:none!important}}
