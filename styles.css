@@ -549,3 +549,10 @@ html,body{max-width:100%;overflow-x:clip}
 @media(prefers-reduced-motion:reduce){
  .view-mode,.image-option,.image-option img{transition:none!important}
 }
+
+/* 2K source photography: never blur the preset card or stretch it. */
+.image-option.preset-photo-card{isolation:isolate;overflow:hidden}
+.image-option.preset-photo-card img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 47%!important;filter:contrast(1.035) saturate(.93)!important;image-rendering:auto!important;transform:none!important;backface-visibility:hidden}
+.image-option.preset-photo-card:hover img{transform:scale(1.012)!important}
+.image-option.preset-photo-card .preset-card-icon{background:#10231da8!important;border-color:#ffffff44!important}
+.image-option.preset-photo-card .preset-card-label{text-shadow:0 2px 6px #071710db!important}
