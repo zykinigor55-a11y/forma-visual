@@ -134,7 +134,7 @@
  <button class="btn btn-outline btn-block" id="tryMaterial"><svg class="ico"><use href="#i-eye"/></svg>Предпросмотр · только выбранная область</button>
  <button class="btn btn-quiet btn-sm btn-block" id="discardMaterialPreview">Скрыть черновую примерку</button>
  <div><strong>4. Создать реальный результат</strong><p>AI получает исходную сцену, маску и вашу фактуру; учитывает свет и перспективу. Точность границ необходимо проверить.</p></div>
- <button type="button" class="btn btn-primary btn-block" id="generateMaterial"><svg class="ico"><use href="#i-spark"/></svg>Сгенерировать замену материала (AI)</button>
+ <button type="button" class="btn btn-outline btn-block mask-review-btn" id="reviewMask"><svg class="ico"><use href="#i-eye"/></svg>Проверить выделение перед генерацией</button><div class="mask-instructions">Проверка маски обязательна: AI изменяет только выделенные пиксели. Добавьте пропущенные участки кистью или полигоном.</div><button type="button" class="btn btn-primary btn-block" id="generateMaterial"><svg class="ico"><use href="#i-spark"/></svg>Сгенерировать замену материала (AI)</button>
  </div></section>
 <section id="variantsPanel" class="tab-panel" role="tabpanel">
  <span class="section-label">ИСТОРИЯ ПРОЕКТА</span>
@@ -167,6 +167,8 @@
 <script src="dom-render-preset-season.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-preset-weather.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-preset-plants.js?v=cohesive-photo-20261108-1"></script>
-<script src="app.js?v=preview-fix-20261108"></script>
+<script src="dom-render-unified-presets.js?v=uniform-20261108-v1"></script>
+<script src="dom-render-clean-sketchup-v3.js?v=clean-v3-20261108"></script>
+<script src="app.js?v=maskpreview-20261108-v1"></script>
 </body>
 </html>
