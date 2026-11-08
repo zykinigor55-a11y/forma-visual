@@ -34,7 +34,7 @@ edge=cv2.Canny(cv2.GaussianBlur(gray,(3,3),.45),75,175,L2gradient=True)
 out[edge>0]=np.clip(out[edge>0].astype(np.float32)*.16+np.array([42,45,48])*.84,0,255).astype('uint8')
 lines=cv2.HoughLinesP(edge,1,np.pi/1800,threshold=115,minLineLength=180,maxLineGap=12)
 if lines is not None:
-    for [[x1,y1,x2,y2]] in lines:
+    for (x1,y1,x2,y2) in lines.reshape(-1,4):
         if np.hypot(x1-x2,y1-y2)<195 or (y1+y2)*.5>865*h/1143: continue
         theta=np.degrees(np.arctan2(y2-y1,x2-x1))
         if abs(theta)<30 or abs(theta)>61:
