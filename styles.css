@@ -205,3 +205,13 @@ input,select {accent-color:#325f45}
 .scene-demo-option:focus-visible{outline:3px solid #93b49b;outline-offset:2px}
 .scene-demo-note{font-size:10px;color:#6e7b70;line-height:1.45;margin:10px 1px 0}
 @media(max-width:750px){.image-options-2,.image-options-3,.image-options-4{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.image-option img{aspect-ratio:16/10}.image-option span{font-size:13px}.scene-demo-top{align-items:start}.scene-demo-tag{font-size:8px}}
+
+/* Full-resolution photographic card adjustments and landscape reference */
+.scene-environment-inset{position:absolute;right:10px;top:10px;width:35%;max-width:162px;border:1px solid #ffffffb0;border-radius:10px;padding:5px;background:#fbfdf8eb;box-shadow:0 9px 25px #10180e45;backdrop-filter:blur(7px);z-index:3}
+.scene-environment-inset img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;filter:none!important;border-radius:6px}
+.scene-environment-inset-title{display:block;color:#56715e;font-size:7px;font-weight:850;letter-spacing:.08em;padding:2px 0 5px}
+.scene-environment-inset span:last-child{display:block;color:#20362a;font-size:10px;font-weight:800;padding:4px 0 1px}
+.scene-environment-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+.image-option img{object-position:center center;filter:contrast(1.035) saturate(1.075)}
+.image-options-2 .image-option img,.image-options-3 .image-option img,.image-options-4 .image-option img{aspect-ratio:16/10}
+@media(max-width:750px){.scene-environment-inset{width:39%;right:7px;top:7px}.scene-environment-inset-title{font-size:6px}.scene-environment-inset span:last-child{font-size:9px}}
