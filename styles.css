@@ -8,7 +8,10 @@
 
 .selection-only{border:1px solid #dce6db;background:#f6f9f5;padding:10px;margin-top:12px}.selection-only b{font-size:10px}
 
-.stage #materialPreview{clip-path:inset(0 0 0 var(--split))}
+.stage[data-view-mode="slider"] #materialPreview{clip-path:inset(0 0 0 var(--split))}
+.stage[data-view-mode="result"] #materialPreview{clip-path:none!important}
+.stage[data-view-mode="side"] #materialPreview{display:none}
+
 
 /* Navigation v2: scene settings together, material changes separate. */
 .tab-bar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
