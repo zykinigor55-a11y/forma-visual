@@ -195,7 +195,7 @@ function renderZones(){
 }
 function renderMaterials(){
  const s=current();
- $('mineCount').textContent=customMaterials.length;
+ 
  const cards=m=>`<button class="material-option ${s.mats[s.zone]===m.id?'active':''}" data-material="${eHTML(m.id)}" aria-pressed="${s.mats[s.zone]===m.id}"><img src="${eHTML(m.img)}" alt="Загруженная фактура ${eHTML(m.name)}"><span>${eHTML(m.name)}</span></button>`;
  $('catalogMaterials').innerHTML='';
  $('catalogMaterials').hidden=true;
