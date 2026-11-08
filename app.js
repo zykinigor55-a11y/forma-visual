@@ -109,8 +109,51 @@ document.addEventListener('error',function(event) {
   img.src=domRenderThumbFallback(name);
 },true);
 
+// Verified Pexels library originals: the CDN requests a 2048px image for each photographic preset.
+// If the CDN cannot load, we fall back to the photographic atlas bundled with this project.
+const HD_PHOTO_IDS = {
+ 'assets/thumbs/env-garden.jpg':10610731,
+ 'assets/thumbs/env-forest.jpg':29863712,
+ 'assets/thumbs/env-lake.jpg':32665591,
+ 'assets/thumbs/env-mountains.jpg':35757664,
+ 'assets/thumbs/env-city.jpg':33783264,
+ 'assets/thumbs/env-courtyard.jpg':31979505,
+ 'assets/thumbs/env-nordic.jpg':35552479,
+ 'assets/thumbs/env-coast.jpg':36899281,
+ 'assets/thumbs/env-minimal.jpg':9976121,
+ 'assets/thumbs/env-mist.jpg':17497197,
+ 'assets/thumbs/season-spring.jpg':16215927,
+ 'assets/thumbs/season-summer.jpg':7601179,
+ 'assets/thumbs/season-autumn.jpg':9665012,
+ 'assets/thumbs/season-winter.jpg':35830070,
+ 'assets/thumbs/weather-clear.jpg':8996637,
+ 'assets/thumbs/weather-cloud.jpg':18154963,
+ 'assets/thumbs/weather-rain.jpg':28447782,
+ 'assets/thumbs/weather-fog.jpg':6697824,
+ 'assets/thumbs/weather-snow.jpg':6533455,
+ 'assets/thumbs/time-morning.jpg':17807979,
+ 'assets/thumbs/time-day.jpg':35382739,
+ 'assets/thumbs/time-golden.jpg':785734,
+ 'assets/thumbs/time-night.jpg':5518647,
+ 'assets/thumbs/plants-minimal.jpg':297954,
+ 'assets/thumbs/plants-decorative.jpg':4846304,
+ 'assets/thumbs/plants-forest.jpg':32166001,
+ 'assets/thumbs/plants-mediterranean.jpg':28450914,
+ 'assets/thumbs/plants-tropical.jpg':927414
+};
+const HD_PRESETS = Object.fromEntries(Object.entries(HD_PHOTO_IDS).map(([path,id]) => [
+ path, 'https://images.pexels.com/photos/'+id+'/pexels-photo-'+id+'.jpeg?auto=compress&cs=tinysrgb&w=2048&h=1210&fit=crop'
+]));
+document.addEventListener('error',event=>{
+ const im=event.target;
+ if(!(im instanceof HTMLImageElement)||im.dataset.hdFallback)return;
+ const path=im.dataset.assetPath;
+ if(path && HD_PRESETS[path] && im.src.startsWith('https://images.pexels.com/')){
+   im.dataset.hdFallback='1';im.src=path;
+ }
+},true);
 const ASSET = 'assets/';
-const asset = path => window.DOM_RENDER_ASSETS?.[path] || path;
+const asset = path => window.DOM_RENDER_ASSETS?.[path] || HD_PRESETS[path] || path;
 const environments = [['garden','Сад и газон','Ухоженный приватный сад, аккуратный газон и декоративные посадки.'],['forest','Хвойный лес','Высокие хвойные деревья на заднем плане, натуральный лесной рельеф.'],['lake','У озера','Естественная береговая линия и спокойное озеро на заднем плане, берег не перемещать между видами произвольно.'],['mountains','Горы','Дальний горный горизонт и каменистый рельеф.'],['city','Городской парк','Ландшафт современного городского парка без новых построек.'],['courtyard','Тихий парк','Приватный озеленённый участок с высокими деревьями.'],['nordic','Северный пейзаж','Сдержанная северная природа, камни, хвойники.'],['coast','У побережья','Прибрежная природа, дальняя горизонтальная линия моря.'],['minimal','Минимализм','Сдержанный ландшафт, гравий, небольшие деревья и злаки.'],['mist','Туманный лес','Мягкий дальний лесной пейзаж с атмосферной дымкой.']];
 const choices = {
  time:[['morning','Утро','Мягкое низкое утреннее солнце'],['day','День','Естественный дневной свет'],['golden','Вечер','Тёплый золотой час'],['night','Ночь','Ночная съёмка, мягкий интерьерный свет']],
@@ -183,7 +226,10 @@ function setViewerMode(mode){
 }
 
 function showTab(tab,scroll=false){currentTab=tab;for(const b of document.querySelectorAll('[data-tab]')){const active=b.dataset.tab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active))}for(const panel of document.querySelectorAll('.tab-panel'))panel.classList.toggle('active',panel.id===tab+'Panel');$('panelTitle').textContent=({environment:'Настройка рендера',materials:'Смена материалов',parameters:'Параметры'})[tab];$('panelSubtitle').textContent=({environment:'Выберите ландшафт, сезон, погоду и освещение.',materials:'Выделите часть дома и назначьте новое покрытие.',parameters:'Выберите качество, формат и защиту архитектуры.'})[tab];document.querySelectorAll('[data-mobile]').forEach(x=>x.classList.toggle('active',x.dataset.mobile===tab));document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===tab||x.dataset.nav==='studio'&&tab==='environment'));if(tab!=='materials'&&editing)leaveEditor();if(tab==='materials')loadMask();else $('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);if(scroll)$('inspector').scrollIntoView({behavior:'smooth',block:'start'})}
-function optionCards(group,arr,selected){return arr.map(([id,name])=>`<button class="image-option ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}"><img src="${asset(`${ASSET}thumbs/${group==='environment'?'env':group}-${id}.jpg`)}" alt="${eHTML(name)}" loading="eager"><span>${eHTML(name)}</span></button>`).join('')}
+function optionCards(group,arr,selected){return arr.map(([id,name])=>{
+ const path=`${ASSET}thumbs/${group==='environment'?'env':group}-${id}.jpg`;
+ return `<button class="image-option ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}"><img src="${eHTML(asset(path))}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span>${eHTML(name)}</span></button>`;
+}).join('')}
 function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group])}
 function renderZones(){
  const s=current();
@@ -244,6 +290,15 @@ function setDemoScene(scene){
  document.querySelectorAll('[data-scene-demo]').forEach(b=>{
    const active=b.dataset.sceneDemo===scene;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))
  });
+}
+function chooseDemoEnvironment(kind){
+ const info={garden:'Сад и газон',forest:'Хвойный лес',lake:'У озера',mountains:'Горы'};
+ if(!Object.hasOwn(info,kind))return;
+ const path='assets/thumbs/env-'+kind+'.jpg';
+ const im=$('sceneEnvironmentPreview'),label=$('sceneEnvironmentLabel');
+ if(im){im.removeAttribute('data-hd-fallback');im.dataset.assetPath=path;im.src=asset(path);im.alt='Референс окружения: '+info[kind]}
+ if(label)label.textContent=info[kind];
+ document.querySelectorAll('[data-scene-environment]').forEach(b=>{let active=b.dataset.sceneEnvironment===kind;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
 }
 function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>{const target=el.dataset.mobile;if(target==='studio'){$('workspace').scrollIntoView({behavior:'smooth'});document.querySelectorAll('[data-mobile]').forEach(x=>x.classList.toggle('active',x.dataset.mobile==='studio'))}else showTab(target,true)});document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>{const target=el.dataset.nav;if(target==='projects')showProjects();else if(target==='studio'){$('workspace').scrollIntoView({behavior:'smooth'});showTab('environment')}else showTab(target,true)});$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;current().zone=el.dataset.zone;renderZones();renderMaterials();renderFooter();save();await loadMask()});for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});$('materialFile').onchange=e=>{uploadOwnMaterial(e.target.files[0]);e.target.value=''};$('uploadMaterialBtn').onclick=()=>$('materialFile').click();$('deleteMyMaterial').onclick=deleteSelectedCustomMaterial;$('startMask').onclick=async()=>{await loadMask();enterEditor();if(project.demo&&selectedMaskPixels()===0)makeDemoMask(current().zone)};$('showMask').onclick=async()=>{if(currentTab!=='materials')showTab('materials');await loadMask();if(selectedMaskPixels()===0){if(project.demo)makeDemoMask(current().zone);else toast('Маска пуста. Выделите область кистью или полигоном.');maskVisible=true}else maskVisible=!maskVisible;paintMaskOverlay();if(selectedMaskPixels())toast(maskVisible?'Маска показана.':'Маска скрыта.')};$('finishMask').onclick=leaveEditor;$('clearMask').onclick=()=>{stashHistory();maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);polyPoints=[];paintMaskOverlay();persistMask();toast('Выделение очищено')};$('undoMask').onclick=undoMask;document.querySelectorAll('[data-tool]').forEach(el=>el.onclick=()=>{if(polyPoints.length>=3&&tool==='polygon')polygonDone();tool=el.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===el));drawPolygonGuide()});$('brushSize').oninput=e=>$('brushOut').textContent=e.target.value;$('textureScale').oninput=e=>{current().textureScale=Number(e.target.value);$('scaleValue').textContent=e.target.value+'%';save()};$('textureRotate').onchange=e=>{current().textureRotate=Number(e.target.value);save()};$('tryMaterial').onclick=applyTexture;$('splitSlider').oninput=e=>updateSplit(e.target.value);$('resetSplit').onclick=()=>updateSplit(50);$('downloadResult').onclick=()=>{if(!renderURL){toast('Сначала создайте или выберите результат');return}downloadDataURL(renderURL,'dom-render-'+project.id+(project.demo||renderURL.startsWith('data:image/jpeg')?'.jpg':renderURL.startsWith('data:image/webp')?'.webp':'.png'));toast(project.demo?'Скачан демонстрационный кадр':'Результат скачан')};$('fullBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else $('viewerCard')?.requestFullscreen?.()||$('stage').requestFullscreen?.()};$('resultsStrip').addEventListener('click',e=>{const b=e.target.closest('[data-result]');if(b)showResult(b.dataset.result)});for(const id of ['ratioSelect','qualitySelect','quantitySelect'])$(id).onchange=e=>{current()[id.replace('Select','')]=e.target.value;renderFooter();save()};for(const id of ['lockGeometry','keepReference','editSelectedOnly'])$(id).onchange=e=>{current()[id]=e.target.checked;if(id==='keepReference'&&$('angleLandscapeLock'))$('angleLandscapeLock').checked=e.target.checked;save()};$('newProjectBtn').onclick=showNewProject;$('mobileAdd').onclick=showNewProject;$('helpBtn').onclick=()=>modal('Как работает ДОМ.РЕНДЕР',`<p class="muted"><b>1.</b> Загрузите скриншот из Archicad, SketchUp или Revit.<br><b>2.</b> Выберите окружение, погоду, сезон и время суток кнопками с изображениями.<br><b>3.</b> Во вкладке «Смена материалов» выделите фасад кистью или полигоном. Загрузите собственную текстуру, если требуется.<br><b>4.</b> Запустите AI-генерацию при подключённом API.<br><b>5.</b> Для следующего вида используйте «Новый ракурс»: настройки и референс сохранятся.</p><p class="muted">Без 3D совпадение положения объектов между разными ракурсами является приблизительным. Работа AI-редактора тоже не гарантирует идеальное сохранение геометрии.</p>`,[{label:'Понятно',primary:true,click:closeModal}]);$('generateBtn').onclick=generate;$('dialogClose').onclick=closeModal;$('dialogCover').onclick=e=>{if(e.target===$('dialogCover'))closeModal()}}
 function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;current()[group]=btn.dataset.choice;renderChoices();renderFooter();save();toast('Настройка сохранена: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
