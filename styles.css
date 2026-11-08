@@ -41,3 +41,51 @@
 .image-option:hover{border-color:#456b51}
 @media(min-width:701px) and (max-width:1050px){.image-options-4{grid-template-columns:repeat(4,minmax(0,1fr))}.image-options-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.image-options-2,.image-options-3,.image-options-4{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.image-option img{aspect-ratio:1.7}}
+
+
+/* 2026 refresh: restrained Apple-inspired clarity, readability and touch targets. */
+:root {
+  --bg:#f5f5f7;--paper:#ffffff;--ink:#1d1d1f;--muted:#6e6e73;--muted2:#86868b;
+  --hair:#e5e5ea;--dark:#222c27;--dark2:#344c3d;--soft:#f5f5f7;
+  --soft2:#fafafa;--chosen:#e6eee8;--green:#315b42;--rail:#202522;
+  --shadow:0 14px 44px rgba(23,30,26,.065);--radius:16px;
+}
+body {font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;letter-spacing:-.01em;background:var(--bg)}
+#briefBtn,#apiStatus,.no-prompts {display:none!important}
+.btn,.icon-button,.viewer-card,.dialog,.upload-box,.image-option,.material-option,.tab,.render-jump-btn,.rail-btn,.result-thumb {border-radius:12px}
+.btn {min-height:44px;font-size:12px;font-weight:600;letter-spacing:0;box-shadow:0 1px 2px rgba(0,0,0,.025)}
+.btn-sm {min-height:38px}
+.btn-primary {min-height:56px;border-radius:14px;background:#274d38;box-shadow:0 5px 18px rgba(38,77,55,.15)}
+.btn-primary:hover {background:#1e3d2c}
+.icon-button {width:39px;height:39px}
+.viewer-card {overflow:hidden;box-shadow:0 15px 50px rgba(26,32,29,.055)}
+.viewer-toolbar {min-height:62px;padding:0 18px}
+.workspace {padding-top:32px}
+.page-intro {padding-top:36px}
+.page-intro h1 {font-weight:650;letter-spacing:-.055em;line-height:1.08}
+.eyebrow {letter-spacing:.13em}
+.viewer-overlay-bottom {padding-bottom:20px}
+.image-tag {border-radius:8px;backdrop-filter:blur(10px);font-weight:650}
+.image-tag-dark {background:#19251dbb}
+.split-knob {box-shadow:0 5px 24px #0003}
+.image-option {overflow:hidden;border-radius:13px;padding:4px;background:#fff}
+.image-option img {border-radius:9px;object-fit:cover}
+.image-option.active,.image-option.selected {box-shadow:0 0 0 2px #355e43}
+.inspector {background:#fcfcfd}
+.tab {border-radius:12px}
+.render-jump {background:#fcfcfdee;backdrop-filter:blur(16px)}
+.render-jump-btn.active {background:#2a513a;border-color:#2a513a}
+.inspector-footer {background:#fff}
+input,select {accent-color:#325f45}
+@media (max-width:700px) {
+  .workspace {padding-top:18px}
+  .page-intro {padding-top:28px;padding-bottom:22px}
+  .page-intro h1 {font-size:clamp(31px,6.6vw,40px);line-height:1.09;letter-spacing:-.05em}
+  .viewer-card {border-radius:16px}
+  .viewer-toolbar {padding:0 12px;min-height:57px}
+  .icon-button {width:38px;height:38px}
+  .image-option {border-radius:12px}
+  .render-jump {background:#fcfcfdf4}
+  .mobile-nav {background:#ffffffed;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .mobile-nav button {min-height:53px}
+}
