@@ -170,3 +170,38 @@ input,select {accent-color:#325f45}
  .image-options .image-option{min-height:118px}
  .image-options-4{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Rich, comfortably tappable photographic controls */
+.image-options-2,.image-options-3,.image-options-4{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.image-option{border:1px solid #d9e3db;border-radius:13px;overflow:hidden;padding:5px;background:#fff;box-shadow:0 6px 18px rgba(28,47,35,.055);transition:transform .18s,box-shadow .18s,border-color .18s}
+.image-option:hover{transform:translateY(-2px);box-shadow:0 9px 28px rgba(28,47,35,.1)}
+.image-option img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:9px;image-rendering:auto}
+.image-option span{font-size:12px;font-weight:700;line-height:1.3;white-space:normal;padding:9px 7px 7px;min-height:33px}
+.image-option.active{border-color:#325a40;box-shadow:0 0 0 2px #36594155,0 8px 18px #1a38201a}
+.scene-demo{border:1px solid #d7e3d9;border-radius:18px;background:#f9fbf8;padding:13px;margin:0 0 25px;box-shadow:0 12px 38px rgba(30,53,35,.065)}
+.scene-demo-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:13px}
+.scene-demo-top strong{display:block;font-size:16px;line-height:1.25;letter-spacing:-.025em}
+.scene-demo-eyebrow{display:block;font-size:9px;font-weight:800;color:#668375;letter-spacing:.11em;margin-bottom:6px}
+.scene-demo-tag{font-size:9px;color:#596d5f;background:#eaf2e9;border:1px solid #d6e4d8;padding:5px 7px;border-radius:6px;white-space:nowrap}
+.scene-demo-photo{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:12px;background:#dfe6df}
+.scene-demo-photo img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .55s ease,transform 1s ease}
+.scene-demo-photo[data-scene="summer"] img{filter:contrast(1.06) saturate(1.22) brightness(1.05)}
+.scene-demo-photo[data-scene="autumn"] img{filter:sepia(.30) saturate(1.24) hue-rotate(-18deg) contrast(1.07)}
+.scene-demo-photo[data-scene="winter"] img{filter:saturate(.56) hue-rotate(169deg) brightness(1.13) contrast(.95)}
+.scene-demo-photo[data-scene="rain"] img{filter:brightness(.7) saturate(.65) contrast(1.12) hue-rotate(8deg)}
+.scene-demo-photo[data-scene="fog"] img{filter:saturate(.6) brightness(1.19) contrast(.67)}
+.scene-demo-photo[data-scene="golden"] img{filter:sepia(.31) saturate(1.28) hue-rotate(-13deg) brightness(.9)}
+.scene-demo-photo[data-scene="night"] img{filter:brightness(.40) saturate(.84) hue-rotate(185deg) contrast(1.13)}
+.scene-demo-effects{pointer-events:none;position:absolute;inset:0;transition:background .5s ease;mix-blend-mode:screen}
+.scene-demo-photo[data-scene="winter"] .scene-demo-effects{background:linear-gradient(180deg,#eaf5ff45,#c8e3ff31)}
+.scene-demo-photo[data-scene="rain"] .scene-demo-effects{background:repeating-linear-gradient(104deg,transparent 0px,transparent 8px,#e9f4ff53 9px,transparent 10px),linear-gradient(180deg,#1b344369,#1727301a)}
+.scene-demo-photo[data-scene="fog"] .scene-demo-effects{background:linear-gradient(0deg,#f4f5f4cb,#e1e6e465,#ffffff3e)}
+.scene-demo-photo[data-scene="golden"] .scene-demo-effects{background:linear-gradient(110deg,#f2a45f87,transparent 62%)}
+.scene-demo-photo[data-scene="night"] .scene-demo-effects{background:linear-gradient(180deg,#071b4085,#11284842)}
+.scene-demo-caption{position:absolute;left:11px;bottom:10px;z-index:2;font-size:12px;font-weight:800;color:#fff;background:#17261ecb;backdrop-filter:blur(8px);padding:7px 10px;border-radius:8px}
+.scene-demo-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px}
+.scene-demo-option{font:inherit;font-size:11px;font-weight:700;color:#506052;background:#fff;border:1px solid #dce5dc;padding:10px 2px;border-radius:9px;cursor:pointer}
+.scene-demo-option.active{background:#284635;color:#fff;border-color:#284635}
+.scene-demo-option:focus-visible{outline:3px solid #93b49b;outline-offset:2px}
+.scene-demo-note{font-size:10px;color:#6e7b70;line-height:1.45;margin:10px 1px 0}
+@media(max-width:750px){.image-options-2,.image-options-3,.image-options-4{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.image-option img{aspect-ratio:16/10}.image-option span{font-size:13px}.scene-demo-top{align-items:start}.scene-demo-tag{font-size:8px}}
