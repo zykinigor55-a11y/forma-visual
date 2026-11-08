@@ -1,0 +1,31 @@
+name: Build 2K photo presets for DOM.RENDER
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - scripts/build_hd_presets.py
+      - .github/workflows/build-hd-presets.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --quiet pillow
+      - name: Download and verify photo originals
+        run: python scripts/build_hd_presets.py
+      - name: Commit 28 self-hosted 2K images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/thumbs/hd/*.webp
+          if git diff --cached --quiet; then echo "Already up to date"; exit 0; fi
+          git commit -m "Install 28 verified sharp 2K environment and weather photos"
+          git push
