@@ -1,0 +1,20 @@
+/* PLUX 10.7 build patch. Apply after patch-app-v106.mjs. */
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+const root=process.argv[2]||'plux-published';
+const read=n=>readFileSync(join(root,n),'utf8');
+const write=(n,s)=>writeFileSync(join(root,n),s);
+let app=read('app.js');
+const oldSfx="./sfx.js?v=9.2";
+if(!app.includes(oldSfx))throw Error('V10.7 expects original PLUX sound import');
+app=app.replace(oldSfx,"./aurora-sfx-v107.js?v=107");
+if(!app.includes('window.PLUXSeamless?.set'))throw Error('Missing video controller V10.6');
+if(!app.includes('installInterfaceSfx()'))throw Error('Missing existing user-gesture audio setup');
+write('app.js',app);
+let html=read('index.html');
+if(!html.includes('app.js?v=106'))throw Error('Expected PLUX 10.6 entrypoint');
+html=html.replace('</head>','<meta name="plux-version" content="10.7"><meta name="theme-color" content="#010506"><link rel="stylesheet" href="/aurora-v107.css?v=107"></head>');
+html=html.replace('app.js?v=106','app.js?v=107');
+html=html.replace('Мягкое стекло, пузырьки и сигналы действий','Тихие стеклянные отклики без резких щелчков');
+write('index.html',html);
+console.log('PLUX V10.7: original character + fullscreen glass scene + green/lilac capsules + optional ASMR audio');
