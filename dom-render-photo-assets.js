@@ -30,8 +30,5 @@ document.addEventListener('error',function(event){
     event.stopImmediatePropagation();
   }
 },true);
-document.addEventListener('DOMContentLoaded',function(){
-  const before=document.getElementById('beforeImg');
-  if(before)before.src=approvedSketch;
-});
+/* DOM before image is managed only by app.js. Never override on DOMContentLoaded. */
 })();

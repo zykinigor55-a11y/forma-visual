@@ -225,7 +225,7 @@ const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',se
 const makeProject=(name='Новый проект',isDemo=false)=>({id:isDemo?'demo':uuid(),name,createdAt:Date.now(),modifiedAt:Date.now(),demo:isDemo,settings:defaultSettings(),renders:[],activeRender:null,reference:null,sourceWidth:1672,sourceHeight:941,hasSource:isDemo,angle:1});
 const STKEY='domrender_mvp_projects_v1', MTKEY='domrender_mvp_materials_v1';
 let projects=[],project=null,customMaterials=[],currentTab='project',materialTab='mine',viewerMode=localStorage.getItem('domrender_view_mode')||'slider';
-let sourceURL='',renderURL='',texturePreviewURL='',loadedMaskZone='',editing=false,tool='brush',lastPoint=null,polyPoints=[],drawActive=false,maskHistory=[],demoPhoto=asset(ASSET+'residence-render.jpg');
+let sourceURL='',renderURL='',texturePreviewURL='',loadedMaskZone='',editing=false,tool='brush',lastPoint=null,polyPoints=[],drawActive=false,maskHistory=[],demoPhoto=ASSET+'residence-render-bluehour-fixed.webp?v=stable-20261109';
 let maskVisible=false;
 let maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true}),toastTimer,rendering=false,aiConnected=false,apiAuthRequired=false;
 const imageCache = new Map();
