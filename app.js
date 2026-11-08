@@ -48,6 +48,56 @@ function domRenderThumbFallback(file) {
   const surface=landscape?'':'<rect x="50" y="38" width="220" height="126" rx="7" fill="'+p[2]+'" opacity=".72"/><path d="M50 66h220M50 98h220M50 130h220" stroke="'+p[1]+'" stroke-width="3" opacity=".52"/>';
   const label=(textLabels[id]||id).replace(/[<&]/g,'');
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200"><defs><linearGradient id="bg" x2=".3" y2="1"><stop stop-color="'+p[0]+'"/><stop offset="1" stop-color="'+p[1]+'"/></linearGradient></defs><rect width="320" height="200" fill="url(#bg)"/><circle cx="253" cy="45" r="26" fill="#fff9e9" opacity=".55"/><path d="M0 138Q70 100 155 135T320 133v67H0Z" fill="'+p[2]+'" opacity=".35"/>'+trees+house+surface+'<rect x="0" y="167" width="320" height="33" fill="#1e302d" opacity=".72"/><text x="12" y="188" fill="#fff" font-family="Arial,sans-serif" font-size="16">'+label+'</text></svg>';
+  // Photographic placeholders for not-yet-uploaded thumbnails.
+  // Original files under assets/thumbs always take priority; these are shown only on 404.
+  const photoIds = {
+    'env-garden':'photo-1500534623283-312aade485b7',
+    'env-forest':'photo-1441974231531-c6227db76b6e',
+    'env-lake':'photo-1501785888041-af3ef285b470',
+    'env-mountains':'photo-1464822759023-fed622ff2c3b',
+    'env-city':'photo-1519501025264-65ba15a82390',
+    'env-coast':'photo-1507525428034-b723cf961d3e',
+    'env-mist':'photo-1483347756197-71ef80e95f73',
+    'env-nordic':'photo-1464822759023-fed622ff2c3b',
+    'env-minimal':'photo-1500534623283-312aade485b7',
+    'env-courtyard':'photo-1416879595882-3373a0480b5b',
+    'season-spring':'photo-1490750967868-88aa4486c946',
+    'season-summer':'photo-1470252649378-9c29740c9fa8',
+    'season-autumn':'photo-1507371341162-763b5e419408',
+    'season-winter':'photo-1455156218388-5e61b526818b',
+    'weather-clear':'photo-1500534623283-312aade485b7',
+    'weather-cloud':'photo-1500534314209-a25ddb2bd429',
+    'weather-rain':'photo-1515694346937-94d85e41e6f0',
+    'weather-snow':'photo-1455156218388-5e61b526818b',
+    'weather-fog':'photo-1483347756197-71ef80e95f73',
+    'time-morning':'photo-1493246507139-91e8fad9978e',
+    'time-day':'photo-1500534623283-312aade485b7',
+    'time-golden':'photo-1470252649378-9c29740c9fa8',
+    'time-night':'photo-1470770841072-f978cf4d019e',
+    'plants-forest':'photo-1441974231531-c6227db76b6e',
+    'plants-tropical':'photo-1502082553048-f009c37129b9',
+    'plants-mediterranean':'photo-1416879595882-3373a0480b5b',
+    'plants-decorative':'photo-1416879595882-3373a0480b5b',
+    'plants-minimal':'photo-1500534623283-312aade485b7',
+    'look-original':'photo-1500534623283-312aade485b7',
+    'look-cinematic':'photo-1470252649378-9c29740c9fa8',
+    'look-dusk':'photo-1470770841072-f978cf4d019e',
+    'look-noon':'photo-1500534623283-312aade485b7',
+    'look-fog':'photo-1483347756197-71ef80e95f73',
+    'look-winter':'photo-1455156218388-5e61b526818b',
+    'mat-wood':'photo-1510798831971-661eb04b3739',
+    'mat-brick':'photo-1511818966892-d7d671e672a2',
+    'mat-concrete':'photo-1510798831971-661eb04b3739',
+    'mat-travertine':'photo-1511818966892-d7d671e672a2',
+    'mat-glass':'photo-1487958449943-2429e8be8625',
+    'mat-metal':'photo-1487958449943-2429e8be8625',
+    'mat-ceramic':'photo-1487958449943-2429e8be8625',
+    'mat-plaster':'photo-1511818966892-d7d671e672a2',
+    'mat-limestone':'photo-1511818966892-d7d671e672a2'
+  };
+  const photoId=photoIds[filename];
+  if(photoId)return 'https://images.unsplash.com/'+photoId+'?auto=format&fit=crop&w=440&h=270&q=75';
+
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 document.addEventListener('error',function(event) {
