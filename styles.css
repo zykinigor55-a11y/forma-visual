@@ -426,3 +426,8 @@ input,select {accent-color:#325f45}
  .image-option.preset-photo-card .preset-card-label{font-size:12px!important;padding:18px 8px 9px!important}
  .image-option.preset-photo-card .preset-card-icon{width:26px;height:26px;top:7px;left:8px}
 }
+
+/* During brush editing, never draw the local material preview on top of the selection mask. */
+.stage.edit-mode #materialPreview{display:none!important}
+.stage[data-view-mode="slider"] #materialPreview{will-change:clip-path}
+.stage[data-view-mode="side"] #afterImg,.stage[data-view-mode="side"] #materialPreview{object-position:center!important}
