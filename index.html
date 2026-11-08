@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f2"><meta name="description" content="ДОМ.РЕНДЕР — архитектурная визуализация из скриншота. Управление окружением, светом и материалами.">
 <title>ДОМ.РЕНДЕР — AI-визуализация архитектуры</title>
-<link rel="stylesheet" href="styles.css?v=hd-photo-presets-20261108-v2">
+<link rel="stylesheet" href="styles.css?v=cohesive-photo-20261108-1">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -65,7 +65,7 @@
  </div>
  <div class="stage" id="stage" data-view-mode="slider" style="--split:36%">
    <img id="afterImg" alt="Демонстрационная фотореалистичная визуализация" src="assets/residence-render.jpg" draggable="false">
-   <img id="beforeImg" alt="Утверждённая архитектурная модель в стиле SketchUp, без интерфейса программы" src="assets/residence-model-approved.svg" draggable="false">
+   <img id="beforeImg" alt="Модельный вид: точная геометрия нового дома и бассейна в стиле SketchUp" src="assets/residence-model-approved.svg" draggable="false">
    <canvas id="materialPreview" class="material-preview" aria-hidden="true"></canvas>
    <canvas id="maskOverlay" aria-hidden="true"></canvas>
    <svg id="polyOverlay" viewBox="0 0 1000 563" preserveAspectRatio="none" aria-hidden="true"></svg>
@@ -127,6 +127,12 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="dom-render-photo-assets.js?v=approved-20261108"></script>
 <script src="dom-render-bluehour-assets.js?v=bluehour-20261108-1"></script>
-<script src="app.js?v=bluehour-20261108-1"></script>
+<script src="dom-render-matched-model.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-environment.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-time.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-season.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-weather.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-plants.js?v=cohesive-photo-20261108-1"></script>
+<script src="app.js?v=cohesive-photo-20261108-1"></script>
 </body>
 </html>
