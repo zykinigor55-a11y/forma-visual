@@ -34,8 +34,11 @@
      window.DOM_RENDER_ASSETS[key]=data;
      // Do not overwrite a user-uploaded source image.
      if(typeof project!=='undefined' && project?.demo){
+       if(typeof sourceURL!=='undefined')sourceURL=data;
        const before=document.getElementById('beforeImg');
        if(before)before.src=data;
+       if(typeof renderResults==='function')renderResults();
+       if(typeof renderVariantsPanel==='function')renderVariantsPanel();
      }
    }catch(e){console.warn('Clean SketchUp grade unavailable; original aligned model retained.')}
  };
