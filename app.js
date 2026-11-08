@@ -106,7 +106,8 @@ document.addEventListener('error',function(event) {
   const name=img.getAttribute('src')||'';
   if (!/assets\/thumbs\/[^/]+\.(jpg|jpeg|png|webp)(?:\?|$)/i.test(name)) return;
   img.dataset.domFallback='1';
-  img.src=domRenderThumbFallback(name);
+  const photo = typeof naturePhoto==='function' ? naturePhoto(name.split('?')[0]) : null;
+  img.src=photo || domRenderThumbFallback(name);
 },true);
 
 // High-density landscape / daypart imagery. Real photos, delivered at up to 2048px.
@@ -193,7 +194,8 @@ const naturePhoto=path=>{
  const id=NATURE_PHOTOS[filename];
  return id?'https://images.unsplash.com/'+id+'?auto=format&fit=crop&w=2048&h=1280&q=88':null;
 };
-const asset = path => window.DOM_RENDER_UNIFIED_PRESETS?.[path] || naturePhoto(path) || window.DOM_RENDER_ASSETS?.[path] || premiumPhoto(path) || HD_PRESETS[path] || path;
+const isPhotoPreset = path => /^assets\/thumbs\/(?:env|time|season|weather|plants)-[a-z]+\.jpg$/.test(path);
+const asset = path => isPhotoPreset(path) ? path : window.DOM_RENDER_ASSETS?.[path] || window.DOM_RENDER_UNIFIED_PRESETS?.[path] || naturePhoto(path) || premiumPhoto(path) || HD_PRESETS[path] || path;
 const environments = [['garden','Сад и газон','Ухоженный приватный сад, аккуратный газон и декоративные посадки.'],['forest','Хвойный лес','Высокие хвойные деревья на заднем плане, натуральный лесной рельеф.'],['lake','У озера','Естественная береговая линия и спокойное озеро на заднем плане, берег не перемещать между видами произвольно.'],['mountains','Горы','Дальний горный горизонт и каменистый рельеф.'],['city','Городской парк','Ландшафт современного городского парка без новых построек.'],['courtyard','Тихий парк','Приватный озеленённый участок с высокими деревьями.'],['nordic','Северный пейзаж','Сдержанная северная природа, камни, хвойники.'],['coast','У побережья','Прибрежная природа, дальняя горизонтальная линия моря.'],['minimal','Минимализм','Сдержанный ландшафт, гравий, небольшие деревья и злаки.'],['mist','Туманный лес','Мягкий дальний лесной пейзаж с атмосферной дымкой.']];
 const choices = {
  time:[['morning','Утро','Мягкое низкое утреннее солнце'],['day','День','Естественный дневной свет'],['golden','Вечер','Тёплый золотой час'],['night','Ночь','Ночная съёмка, мягкий интерьерный свет']],
@@ -293,7 +295,8 @@ function showTab(tab,scroll=false){
 }
 function optionCards(group,arr,selected){return arr.map(([id,name])=>{
  const path=`${ASSET}thumbs/${group==='environment'?'env':group}-${id}.jpg`;
- return `<button class="image-option ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}"><img src="${eHTML(asset(path))}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>${eHTML(name)}</span></button>`;
+ const glyph = group==='time'?'sun':group==='weather'?'cloud':'tree';
+ return `<button class="image-option preset-photo-card ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}" title="${eHTML(name)}"><img src="${eHTML(asset(path))}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span class="preset-card-icon" aria-hidden="true">${icon(glyph)}</span><span class="preset-card-label">${eHTML(name)}</span></button>`;
 }).join('')}
 function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group])}
 function renderZones(){
