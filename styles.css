@@ -333,3 +333,10 @@ input,select {accent-color:#325f45}
  .inspector .tab{min-height:55px}
  .image-option img{height:136px!important}
 }
+
+/* Exact-aligned model-style view is an approximation, not a native SketchUp export. */
+.stage.demo-model-preview #beforeImg{filter:contrast(1.18) brightness(1.08) saturate(.40)!important;image-rendering:auto}
+.scene-reference img#sceneDemoImage{filter:contrast(1.07) saturate(.86);object-fit:cover}
+.scene-reference .scene-environment-inset{box-shadow:0 3px 12px #0003}
+.similar-settings{min-width:150px}
+@media(max-width:750px){.similar-settings{min-width:120px}}
