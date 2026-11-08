@@ -227,3 +227,47 @@ input,select {accent-color:#325f45}
 .image-options-3{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
 @media(min-width:1500px){.image-options-4{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:750px){.image-option{min-height:146px!important}.image-option img{min-height:115px}.image-option span{font-size:12px!important}.image-options-3,.image-options-4{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+
+/* A single, intentional visual language for architectural preset photography.
+   Separate lightweight 760px display assets derive from larger editorial images.
+   Typography/overlay provide readable options regardless of original photo brightness. */
+.image-options { gap:12px; }
+.image-options-4 { gap:9px; }
+.image-option {
+  position:relative; display:block; padding:0!important; overflow:hidden;
+  border-radius:13px; border:1px solid rgba(62,75,64,.16);
+  background:#26352f!important; box-shadow:0 5px 16px rgba(13,27,20,.075);
+  min-width:0; text-align:left; cursor:pointer; isolation:isolate;
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.image-option img {
+  display:block; aspect-ratio:1.54!important; width:100%; height:auto!important;
+  object-fit:cover; object-position:center; filter:saturate(.94) contrast(1.045);
+  image-rendering:auto; transition:transform .22s ease; background:#374b42;
+}
+.image-option span {
+  position:absolute; left:0;right:0;bottom:0;z-index:2; display:block;
+  background:linear-gradient(to top,rgba(12,23,21,.87),rgba(12,23,21,.52) 65%,transparent);
+  color:#fff!important; padding:26px 9px 9px!important; font-size:12px!important;
+  font-weight:750;letter-spacing:.01em;line-height:1.15!important;
+  overflow:visible;white-space:normal;text-overflow:clip;text-shadow:0 1px 4px #07161299;
+}
+.image-option:hover{transform:translateY(-1px);box-shadow:0 8px 22px #10261a25}
+.image-option:hover img{transform:scale(1.035)}
+.image-option.active{border-color:#d4ddbf!important;box-shadow:0 0 0 3px #4d715b,0 9px 25px #10251a26!important}
+.image-option.active::after{
+  content:'✓';position:absolute;right:7px;top:7px;z-index:4;
+  display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  background:#f1ecdc;color:#1c3327;font-size:13px;font-weight:900;
+  box-shadow:0 3px 12px #0003;
+}
+.image-option:focus-visible{outline:3px solid #c7d9ae;outline-offset:3px}
+@media(max-width:750px){
+ .image-options{gap:9px}
+ .image-option{border-radius:12px;min-height:0!important}
+ .image-option img{aspect-ratio:1.48!important}
+ .image-option span{font-size:12px!important;padding:22px 8px 9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .image-option,.image-option img{transition:none}
+}
