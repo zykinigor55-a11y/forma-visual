@@ -431,3 +431,12 @@ input,select {accent-color:#325f45}
 .stage.edit-mode #materialPreview{display:none!important}
 .stage[data-view-mode="slider"] #materialPreview{will-change:clip-path}
 .stage[data-view-mode="side"] #afterImg,.stage[data-view-mode="side"] #materialPreview{object-position:center!important}
+
+/* v2.4: consistent atmosphere across all real photo presets */
+.image-option.preset-photo-card{border-radius:13px!important;overflow:hidden;background:#101e1c!important}
+.image-option.preset-photo-card img{width:100%!important;height:100%!important;aspect-ratio:auto!important;object-fit:cover!important;filter:contrast(1.045) saturate(.88) brightness(.96)!important;transform:scale(1.01)}
+.image-option.preset-photo-card .preset-card-label{color:#fff!important;text-shadow:0 1px 5px #0b181ecb}
+.image-option.preset-photo-card.active{border-color:#a0af9e!important;box-shadow:0 0 0 2px #57715d,0 6px 20px #1b2f2350!important}
+.build-version{font-size:9px;color:#b6bfb6;letter-spacing:.04em;margin:4px 0;display:block;text-align:center}
+.stage[data-view-mode="result"] #materialPreview{display:block!important;clip-path:none!important;visibility:visible!important}
+.stage[data-view-mode="slider"] #materialPreview{clip-path:inset(0 0 0 var(--split))!important}
