@@ -8,7 +8,7 @@ from PIL import Image
 import cv2
 import numpy as np
 
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[1]
 src=cv2.imread(str(ROOT/'assets/residence-render.jpg'))
 if src is None:
     raise SystemExit('Missing approved After image')
