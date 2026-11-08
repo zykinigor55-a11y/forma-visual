@@ -378,3 +378,51 @@ input,select {accent-color:#325f45}
 .mask-review-btn{margin-top:12px;min-height:48px!important;font-weight:700}
 .mask-instructions{font-size:11px;line-height:1.5;color:#6b7c6e;margin:8px 0 13px}
 .mask-review-image{display:block;width:100%;height:auto;max-height:340px;object-fit:contain;margin:12px auto;border-radius:11px;border:1px solid #d4ded4;background:#e5e9e4}
+
+/* Coherent, photo-first preset cards across landscape, time, season, weather and plants. */
+.image-option.preset-photo-card{
+ position:relative;display:block;aspect-ratio:16/10;min-height:0;overflow:hidden;
+ padding:0!important;border-radius:15px!important;border:2px solid transparent!important;
+ background:#20332e;box-shadow:0 5px 14px #182b2220;isolation:isolate;
+ transition:box-shadow .2s,border-color .2s,transform .2s;
+}
+.image-option.preset-photo-card img{
+ position:absolute;inset:0;width:100%!important;height:100%!important;
+ border-radius:0!important;aspect-ratio:auto!important;object-fit:cover!important;
+ filter:saturate(.89) contrast(1.08) brightness(.98);transition:transform .3s;
+}
+.image-option.preset-photo-card:hover img{transform:scale(1.035)}
+.image-option.preset-photo-card::before{
+ content:"";position:absolute;inset:18% 0 0;z-index:1;pointer-events:none;
+ background:linear-gradient(180deg,transparent 20%,#0b171002 35%,#071b16e6 100%);
+}
+.image-option.preset-photo-card .preset-card-icon{
+ position:absolute;z-index:2;left:11px;top:11px;
+ display:grid;place-items:center;width:29px;height:29px;border-radius:9px;
+ background:#10231db9;border:1px solid #ffffff4d;color:#fff;
+ padding:0!important;min-height:0!important;font-size:0!important;
+}
+.image-option.preset-photo-card .preset-card-icon .ico{width:17px;height:17px;stroke-width:1.8}
+.image-option.preset-photo-card .preset-card-label{
+ position:absolute;z-index:2;bottom:0;left:0;right:0;
+ padding:19px 10px 10px!important;background:none!important;
+ color:#fff!important;font-size:13px!important;font-weight:750!important;line-height:1.2!important;
+ min-height:0!important;white-space:normal!important;overflow:visible!important;
+ text-shadow:0 1px 5px #0009;
+}
+.image-option.preset-photo-card.active{
+ border-color:#ddc295!important;outline:1px solid #405e49!important;outline-offset:2px;
+ box-shadow:0 0 0 3px #e4d5b7,0 8px 24px #172d282b!important;
+}
+.image-option.preset-photo-card.active::after{
+ content:"✓";position:absolute;z-index:3;right:8px;top:8px;
+ width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+ color:#233e30;background:#f3dfb9;font-size:15px;font-weight:900;
+ box-shadow:0 2px 7px #0b171033;
+}
+.image-option.preset-photo-card:focus-visible{outline:3px solid #a5c5b2!important;outline-offset:4px}
+@media(max-width:750px){
+ .image-option.preset-photo-card{min-height:115px!important}
+ .image-option.preset-photo-card .preset-card-label{font-size:12px!important;padding:18px 8px 9px!important}
+ .image-option.preset-photo-card .preset-card-icon{width:26px;height:26px;top:7px;left:8px}
+}
