@@ -1,0 +1,29 @@
+name: Create pixel-aligned SketchUp demo source
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths: ['scripts/make-sketchup-demo.py','.github/workflows/generate-sketchup-source.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  make-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image processors
+        run: python -m pip install --quiet 'numpy<2.3' 'opencv-python-headless>=4.9' 'Pillow>=10.0'
+      - name: Create exact-aligned image
+        run: python scripts/make-sketchup-demo.py
+      - name: Publish artifact in repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/residence-model-v32.webp
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate 2K pixel-aligned SketchUp demo image"
+            git push
+          fi
