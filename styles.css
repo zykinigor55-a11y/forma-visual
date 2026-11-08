@@ -360,3 +360,21 @@ input,select {accent-color:#325f45}
 
 /* Approved clean demo model: do not dim the linework or desaturate its pool */
 .stage.demo-model-preview #beforeImg { filter: none !important; image-rendering:auto; }
+
+/* 2026-11-08: Unified cinematic photographic presets */
+.image-option{border:1px solid #d8e2dd!important;background:#fbfcfa!important;border-radius:13px!important;overflow:hidden!important;box-shadow:0 2px 9px rgba(28,48,36,.07);transition:border-color .15s,box-shadow .15s,transform .15s}
+.image-option img{object-fit:cover!important;aspect-ratio:1.65!important;width:100%!important;height:auto!important;display:block;filter:none!important}
+.image-option span{background:#f7f9f6;color:#283d32!important;font-size:12px!important;font-weight:750;padding:8px 8px 10px!important;min-height:36px}
+.image-option:focus-visible{outline:3px solid #799c87!important;outline-offset:2px}
+.image-option.active{border-color:#3d624b!important;box-shadow:0 0 0 2px #3d624b,0 7px 18px rgba(22,56,32,.13)!important}
+.image-option:hover{transform:translateY(-1px)}
+/* Deterministic material overlay placement, independent of divider state */
+.stage #materialPreview{position:absolute;z-index:4;pointer-events:none;inset:0;object-position:center;object-fit:fill;}
+.stage[data-view-mode="slider"] #materialPreview{display:block!important;left:0!important;top:0!important;width:100%!important;height:100%!important;clip-path:inset(0 0 0 var(--split))!important;object-fit:fill!important}
+.stage[data-view-mode="result"] #materialPreview{display:block!important;left:0!important;top:0!important;width:100%!important;height:100%!important;clip-path:none!important;object-fit:fill!important}
+.stage[data-view-mode="side"] #materialPreview{display:block!important;left:50%!important;top:0!important;width:50%!important;height:100%!important;clip-path:none!important;object-fit:contain!important}
+.stage[data-view-mode="side"] #beforeImg,.stage[data-view-mode="side"] #afterImg{object-fit:contain!important}
+.stage[data-view-mode="side"] .viewer-overlay-top{display:none!important}
+.mask-review-btn{margin-top:12px;min-height:48px!important;font-weight:700}
+.mask-instructions{font-size:11px;line-height:1.5;color:#6b7c6e;margin:8px 0 13px}
+.mask-review-image{display:block;width:100%;height:auto;max-height:340px;object-fit:contain;margin:12px auto;border-radius:11px;border:1px solid #d4ded4;background:#e5e9e4}
