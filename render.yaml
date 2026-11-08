@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: dom-render-nanobanana
+    env: node
+    plan: free
+    buildCommand: echo 'No build step required'
+    startCommand: node server.mjs
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: HOST
+        value: 0.0.0.0
+      - key: SITE_ACCESS_PIN
+        sync: false
+      - key: DAILY_GENERATION_LIMIT
+        value: '12'
