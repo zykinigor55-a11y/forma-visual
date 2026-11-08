@@ -237,7 +237,13 @@ async function getMaskForZone(zone=current().zone){return getMedia(mediaKey('mas
 async function loadMask(zone=current().zone){loadedMaskZone=zone;maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);const data=await getMaskForZone(zone);if(data){try{const im=await imageFrom(data);maskCtx.drawImage(im,0,0,maskCanvas.width,maskCanvas.height)}catch{}}maskHistory=[];polyPoints=[];paintMaskOverlay()}
 function selectedMaskPixels(){const px=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height).data;let count=0;for(let i=3;i<px.length;i+=4)if(px[i]>80)count++;return count}
 async function persistMask(){const url=maskCanvas.toDataURL('image/png');await setMedia(mediaKey('mask_'+current().zone),url);save()}
-function paintMaskOverlay(){const cn=$('maskOverlay'),ctx=cn.getContext('2d');ctx.clearRect(0,0,cn.width,cn.height);if(!editing&&!maskVisible)return;const data=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height),out=ctx.createImageData(cn.width,cn.height);for(let i=0;i<data.data.length;i+=4){const a=data.data[i+3];if(a>0){out.data[i]=177;out.data[i+1]=100;out.data[i+2]=60;out.data[i+3]=Math.min(120,a*.48)}}ctx.putImageData(out,0,0);drawPolygonGuide()}
+function updateSelectionStatus(){
+ const el=$('selectionStatus');if(!el||!maskCanvas.width||!maskCanvas.height)return;
+ const pixels=selectedMaskPixels(),percent=pixels/(maskCanvas.width*maskCanvas.height)*100;
+ el.textContent=pixels?('Выделено '+percent.toFixed(1)+'% кадра · '+(percent>45?'проверьте маску':'можно уточнить кистью')):'Выделение ещё не задано';
+ el.classList.toggle('selection-warn',percent>45);
+}
+function paintMaskOverlay(){updateSelectionStatus();const cn=$('maskOverlay'),ctx=cn.getContext('2d');ctx.clearRect(0,0,cn.width,cn.height);if(!editing&&!maskVisible)return;const data=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height),out=ctx.createImageData(cn.width,cn.height);for(let i=0;i<data.data.length;i+=4){const a=data.data[i+3];if(a>0){out.data[i]=177;out.data[i+1]=100;out.data[i+2]=60;out.data[i+3]=Math.min(120,a*.48)}}ctx.putImageData(out,0,0);drawPolygonGuide()}
 function drawPolygonGuide(){const svg=$('polyOverlay');if(!editing||tool!=='polygon'||!polyPoints.length){svg.innerHTML='';return}const pts=polyPoints.map(p=>`${p.x},${p.y}`).join(' ');svg.innerHTML=`<polyline points="${pts}"/>`+polyPoints.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4"/>`).join('')}
 function stashHistory(){maskHistory.push(maskCanvas.toDataURL('image/png'));if(maskHistory.length>16)maskHistory.shift()}
 async function undoMask(){if(polyPoints.length){polyPoints.pop();drawPolygonGuide();return}const prev=maskHistory.pop();if(!prev){toast('Нет изменений для отмены');return}maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);const im=await imageFrom(prev);maskCtx.drawImage(im,0,0,maskCanvas.width,maskCanvas.height);paintMaskOverlay();await persistMask()}
@@ -382,29 +388,48 @@ async function similarMaterialAt(pt){
  if(!src){toast('Сначала загрузите исходник');return}
  try{
   const im=await imageFrom(src),w=maskCanvas.width,h=maskCanvas.height,cn=document.createElement('canvas');
-  cn.width=w;cn.height=h;const ctx=cn.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(im,0,0,w,h);
-  const pixels=ctx.getImageData(0,0,w,h).data;
+  cn.width=w;cn.height=h;const context=cn.getContext('2d',{willReadFrequently:true});
+  context.drawImage(im,0,0,w,h);
+  const pixels=context.getImageData(0,0,w,h).data;
   const x=Math.min(w-1,Math.max(0,Math.floor(pt.x))),y=Math.min(h-1,Math.max(0,Math.floor(pt.y)));
-  let sample=[0,0,0],samples=0;
-  for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
-   const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h)continue;
-   const i=(yy*w+xx)*4;for(let ch=0;ch<3;ch++)sample[ch]+=pixels[i+ch];samples++;
+  const seed=(y*w+x)*4;const sample=[pixels[seed],pixels[seed+1],pixels[seed+2]];
+  const lum=(sample[0]+sample[1]+sample[2])/3,threshold=Number($('similarTolerance')?.value||42);
+  const scoreAt=index=>{
+   const j=index*4, l=(pixels[j]+pixels[j+1]+pixels[j+2])/3;
+   return Math.abs((pixels[j]-l)-(sample[0]-lum))*.65
+        +Math.abs((pixels[j+1]-l)-(sample[1]-lum))*.65
+        +Math.abs((pixels[j+2]-l)-(sample[2]-lum))*.65
+        +Math.abs(l-lum)*.8;
+  };
+  // Connected region is the safe default; global mode is explicitly opted in.
+  const all=!!$('similarAllZones')?.checked;
+  const candidates=new Uint8Array(w*h);
+  let count=0;
+  if(all){
+   for(let n=0;n<w*h;n++)if(scoreAt(n)<=threshold){candidates[n]=1;count++}
+  }else{
+   const seen=new Uint8Array(w*h),queue=new Int32Array(w*h);let head=0,tail=0;
+   queue[tail++]=y*w+x;seen[y*w+x]=1;
+   while(head<tail){
+    const index=queue[head++];
+    if(scoreAt(index)>threshold)continue;
+    candidates[index]=1;count++;
+    const xx=index%w,yy=(index/w)|0;
+    if(xx>0&&!seen[index-1]){seen[index-1]=1;queue[tail++]=index-1}
+    if(xx<w-1&&!seen[index+1]){seen[index+1]=1;queue[tail++]=index+1}
+    if(yy>0&&!seen[index-w]){seen[index-w]=1;queue[tail++]=index-w}
+    if(yy<h-1&&!seen[index+w]){seen[index+w]=1;queue[tail++]=index+w}
+   }
   }
-  sample=sample.map(v=>v/Math.max(1,samples));
-  const sampledLum=(sample[0]+sample[1]+sample[2])/3;
-  const threshold=Number($('similarTolerance')?.value||42);
+  if(count/(w*h)>.55){
+    toast('Похоже, выделяется слишком большая область. Уменьшите допуск или попробуйте кисть и полигон.');
+    return;
+  }
   stashHistory();
-  const overlay=maskCtx.getImageData(0,0,w,h),m=overlay.data;let count=0;
-  for(let i=0;i<pixels.length;i+=4){
-   const lum=(pixels[i]+pixels[i+1]+pixels[i+2])/3;
-   const chroma=Math.abs((pixels[i]-lum)-(sample[0]-sampledLum))+Math.abs((pixels[i+1]-lum)-(sample[1]-sampledLum))+Math.abs((pixels[i+2]-lum)-(sample[2]-sampledLum));
-   const score=chroma*.65+Math.abs(lum-sampledLum)*.8;
-   if(score<=threshold){m[i]=255;m[i+1]=255;m[i+2]=255;m[i+3]=255;count++;}
-  }
+  const overlay=maskCtx.getImageData(0,0,w,h),pixelsOut=overlay.data;
+  for(let i=0;i<candidates.length;i++)if(candidates[i]){let k=i*4;pixelsOut[k]=255;pixelsOut[k+1]=255;pixelsOut[k+2]=255;pixelsOut[k+3]=255}
   maskCtx.putImageData(overlay,0,0);paintMaskOverlay();await persistMask();
-  const ratio=count/(w*h);
-  toast(ratio>.55?'Выделено слишком много похожих оттенков. Уточните маску ластиком или отмените.':'Найдены участки похожего цвета. Проверьте маску перед AI-генерацией.');
+  toast(all?'Похожие оттенки отмечены на всём кадре. Проверьте попадания перед генерацией.':'Выделена связанная область. Для остальных участков фасада повторите нажатие.');
  }catch(e){toast('Автовыделение не удалось: '+(e.message||'нет доступа к пикселям'))}
 }
 function asPNGMask(baseWidth,baseHeight){const total=maskCanvas.width*maskCanvas.height;if(!total||!selectedMaskPixels())return null;const cn=document.createElement('canvas');cn.width=baseWidth;cn.height=baseHeight;const ctx=cn.getContext('2d');ctx.fillStyle='rgba(0,0,0,1)';ctx.fillRect(0,0,cn.width,cn.height);ctx.globalCompositeOperation='destination-out';ctx.drawImage(maskCanvas,0,0,cn.width,cn.height);ctx.globalCompositeOperation='source-over';return cn.toDataURL('image/png')}
