@@ -96,7 +96,7 @@ function domRenderThumbFallback(file) {
     'mat-limestone':'photo-1511818966892-d7d671e672a2'
   };
   const photoId=photoIds[filename];
-  if(photoId)return 'https://images.unsplash.com/'+photoId+'?auto=format&fit=crop&w=440&h=270&q=75';
+  if(photoId)return 'https://images.unsplash.com/'+photoId+'?auto=format&fit=crop&w=2048&h=1280&q=88';
 
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
@@ -109,8 +109,8 @@ document.addEventListener('error',function(event) {
   img.src=domRenderThumbFallback(name);
 },true);
 
-// Verified Pexels library originals: the CDN requests a 2048px image for each photographic preset.
-// If the CDN cannot load, we fall back to the photographic atlas bundled with this project.
+// High-density landscape / daypart imagery. Real photos, delivered at up to 2048px.
+// The remote CDN is used for file size efficiency; fallback remains photographic.
 const HD_PHOTO_IDS = {
  'assets/thumbs/env-garden.jpg':10610731,
  'assets/thumbs/env-forest.jpg':29863712,
@@ -141,19 +141,47 @@ const HD_PHOTO_IDS = {
  'assets/thumbs/plants-mediterranean.jpg':28450914,
  'assets/thumbs/plants-tropical.jpg':927414
 };
-const HD_PRESETS = Object.fromEntries(Object.entries(HD_PHOTO_IDS).map(([path,id]) => [
- path, 'https://images.pexels.com/photos/'+id+'/pexels-photo-'+id+'.jpeg?auto=compress&cs=tinysrgb&w=2048&h=1210&fit=crop'
+const PREMIUM_LANDSCAPES = {
+ 'assets/thumbs/env-garden.jpg':'photo-1416879595882-3373a0480b5b',
+ 'assets/thumbs/env-forest.jpg':'photo-1441974231531-c6227db76b6e',
+ 'assets/thumbs/env-lake.jpg':'photo-1501785888041-af3ef285b470',
+ 'assets/thumbs/env-mountains.jpg':'photo-1464822759023-fed622ff2c3b',
+ 'assets/thumbs/env-city.jpg':'photo-1519501025264-65ba15a82390',
+ 'assets/thumbs/env-courtyard.jpg':'photo-1494438639946-1ebd1d20bf85',
+ 'assets/thumbs/env-nordic.jpg':'photo-1470770841072-f978cf4d019e',
+ 'assets/thumbs/env-coast.jpg':'photo-1507525428034-b723cf961d3e',
+ 'assets/thumbs/env-minimal.jpg':'photo-1500534623283-312aade485b7',
+ 'assets/thumbs/env-mist.jpg':'photo-1483347756197-71ef80e95f73',
+ 'assets/thumbs/time-morning.jpg':'photo-1470252649378-9c29740c9fa8',
+ 'assets/thumbs/time-day.jpg':'photo-1500534623283-312aade485b7',
+ 'assets/thumbs/time-golden.jpg':'photo-1500534314209-a25ddb2bd429',
+ 'assets/thumbs/time-night.jpg':'photo-1519608487953-e999c86e7455'
+};
+const premiumPhoto = (path, size=2048) => {
+ const id=PREMIUM_LANDSCAPES[path];
+ return id ? 'https://images.unsplash.com/'+id+'?auto=format&fit=crop&crop=entropy&w='+size+'&h='+Math.round(size*.64)+'&q=88' : null;
+};
+const HD_PRESETS = Object.fromEntries(Object.entries(HD_PHOTO_IDS).map(([path,id])=>[
+ path, 'https://images.pexels.com/photos/'+id+'/pexels-photo-'+id+'.jpeg?auto=compress&cs=tinysrgb&w=2048&h=1280&fit=crop'
 ]));
 document.addEventListener('error',event=>{
  const im=event.target;
- if(!(im instanceof HTMLImageElement)||im.dataset.hdFallback)return;
+ if(!(im instanceof HTMLImageElement))return;
  const path=im.dataset.assetPath;
- if(path && HD_PRESETS[path] && im.src.startsWith('https://images.pexels.com/')){
-   im.dataset.hdFallback='1';im.src=path;
+ if(!path)return;
+ const src=im.getAttribute('src')||'';
+ // If premium image fails, retry a second full-resolution photographer source.
+ if(src.startsWith('https://images.unsplash.com/') && HD_PRESETS[path] && im.dataset.imageFallback!=='pexels'){
+   im.dataset.imageFallback='pexels'; im.src=HD_PRESETS[path];return;
+ }
+ // For other preset groups use a known photographic alternative rather than a 2D tile.
+ if(src.startsWith('https://images.pexels.com/') && im.dataset.imageFallback!=='atlas'){
+   im.dataset.imageFallback='atlas';
+   im.src=path; // the bundled photo atlas handles offline mode, never a vector icon
  }
 },true);
 const ASSET = 'assets/';
-const asset = path => window.DOM_RENDER_ASSETS?.[path] || HD_PRESETS[path] || path;
+const asset = path => window.DOM_RENDER_ASSETS?.[path] || premiumPhoto(path) || HD_PRESETS[path] || path;
 const environments = [['garden','Сад и газон','Ухоженный приватный сад, аккуратный газон и декоративные посадки.'],['forest','Хвойный лес','Высокие хвойные деревья на заднем плане, натуральный лесной рельеф.'],['lake','У озера','Естественная береговая линия и спокойное озеро на заднем плане, берег не перемещать между видами произвольно.'],['mountains','Горы','Дальний горный горизонт и каменистый рельеф.'],['city','Городской парк','Ландшафт современного городского парка без новых построек.'],['courtyard','Тихий парк','Приватный озеленённый участок с высокими деревьями.'],['nordic','Северный пейзаж','Сдержанная северная природа, камни, хвойники.'],['coast','У побережья','Прибрежная природа, дальняя горизонтальная линия моря.'],['minimal','Минимализм','Сдержанный ландшафт, гравий, небольшие деревья и злаки.'],['mist','Туманный лес','Мягкий дальний лесной пейзаж с атмосферной дымкой.']];
 const choices = {
  time:[['morning','Утро','Мягкое низкое утреннее солнце'],['day','День','Естественный дневной свет'],['golden','Вечер','Тёплый золотой час'],['night','Ночь','Ночная съёмка, мягкий интерьерный свет']],
@@ -228,7 +256,7 @@ function setViewerMode(mode){
 function showTab(tab,scroll=false){currentTab=tab;for(const b of document.querySelectorAll('[data-tab]')){const active=b.dataset.tab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active))}for(const panel of document.querySelectorAll('.tab-panel'))panel.classList.toggle('active',panel.id===tab+'Panel');$('panelTitle').textContent=({environment:'Настройка рендера',materials:'Смена материалов',parameters:'Параметры'})[tab];$('panelSubtitle').textContent=({environment:'Выберите ландшафт, сезон, погоду и освещение.',materials:'Выделите часть дома и назначьте новое покрытие.',parameters:'Выберите качество, формат и защиту архитектуры.'})[tab];document.querySelectorAll('[data-mobile]').forEach(x=>x.classList.toggle('active',x.dataset.mobile===tab));document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===tab||x.dataset.nav==='studio'&&tab==='environment'));if(tab!=='materials'&&editing)leaveEditor();if(tab==='materials')loadMask();else $('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);if(scroll)$('inspector').scrollIntoView({behavior:'smooth',block:'start'})}
 function optionCards(group,arr,selected){return arr.map(([id,name])=>{
  const path=`${ASSET}thumbs/${group==='environment'?'env':group}-${id}.jpg`;
- return `<button class="image-option ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}"><img src="${eHTML(asset(path))}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span>${eHTML(name)}</span></button>`;
+ return `<button class="image-option ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}"><img src="${eHTML(asset(path))}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>${eHTML(name)}</span></button>`;
 }).join('')}
 function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group])}
 function renderZones(){
