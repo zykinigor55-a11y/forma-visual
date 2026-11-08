@@ -189,14 +189,9 @@ document.addEventListener('error',event=>{
  }
 },true);
 const ASSET = 'assets/';
-const APPROVED_DEMO_BEFORE='assets/residence-model-user-approved-20261109.png';
-async function approvedDemoSource(){
- try {
-   const response=await fetch(APPROVED_DEMO_BEFORE,{method:'HEAD',cache:'no-store'});
-   if(response.ok && (response.headers.get('content-type')||'').startsWith('image/'))return APPROVED_DEMO_BEFORE;
- }catch(e){}
- return asset(ASSET+'residence-model-v32.webp');
-}
+// The user-approved PNG is an exact, byte-identical copy of the uploaded original.
+const APPROVED_DEMO_BEFORE='assets/residence-model-user-approved-20261109.png?v=approved-photo-20261109';
+async function approvedDemoSource(){ return APPROVED_DEMO_BEFORE; }
 
 // v2.6: distinct, direct static demo source; avoid previously embedded model overrides.
 const NATURE_PHOTOS={
