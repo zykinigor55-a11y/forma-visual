@@ -65,13 +65,13 @@
  </div>
  <div class="stage" id="stage" data-view-mode="slider" style="--split:36%">
    <img id="afterImg" alt="Демонстрационная фотореалистичная визуализация" src="assets/residence-render.jpg" draggable="false">
-   <img id="beforeImg" alt="Модельный вид: точная геометрия нового дома и бассейна в стиле SketchUp" src="assets/residence-model-approved.svg" draggable="false">
+   <img id="beforeImg" alt="Упрощённая модель дома в стиле SketchUp: без мебели и деревьев, тот же ракурс" src="assets/residence-model-approved.svg" draggable="false">
    <canvas id="materialPreview" class="material-preview" aria-hidden="true"></canvas>
    <canvas id="maskOverlay" aria-hidden="true"></canvas>
    <svg id="polyOverlay" viewBox="0 0 1000 563" preserveAspectRatio="none" aria-hidden="true"></svg>
    <div class="split-guide" id="splitGuide"><span class="split-knob"><svg class="ico"><use href="#i-chevrons"/></svg></span></div>
    <input id="splitSlider" class="split-slider" type="range" min="0" max="100" value="36" aria-label="Сравнение скриншота и результата">
-   <div class="viewer-overlay-top"><span class="image-tag">ЭСКИЗ / SKETCHUP-СТИЛЬ</span><span class="image-tag image-tag-dark" id="resultTag">ДЕМОНСТРАЦИЯ</span></div>
+   <div class="viewer-overlay-top"><span class="image-tag">МОДЕЛЬ / SKETCHUP-СТИЛЬ</span><span class="image-tag image-tag-dark" id="resultTag">ДЕМОНСТРАЦИЯ</span></div>
    <div class="viewer-overlay-bottom"><div><small>АРХИТЕКТУРА / ЭКСТЕРЬЕР</small><strong id="stageTitle">Резиденция 01</strong><span id="stageSubtitle">Сад и газон · Лето · День</span></div><span class="image-badge" id="stageRatio">16:9</span></div>
    <div class="no-render" id="noRender" hidden><svg class="ico"><use href="#i-image"/></svg><strong>Результата пока нет</strong><span>Настройте сцену и запустите AI-визуализацию.</span></div>
   </div>
@@ -160,12 +160,13 @@
 <script src="dom-render-photo-assets.js?v=approved-20261108"></script>
 <script src="dom-render-bluehour-assets.js?v=bluehour-20261108-1"></script>
 <script src="dom-render-matched-model.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-sketchup-simple-asset.js?v=clean-20261108"></script>
 <script src="dom-render-preset-environment-1.js?v=cohesive-photo-20261108-2"></script>
 <script src="dom-render-preset-environment-2.js?v=cohesive-photo-20261108-2"></script>
 <script src="dom-render-preset-time.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-preset-season.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-preset-weather.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-preset-plants.js?v=cohesive-photo-20261108-1"></script>
-<script src="app.js?v=v2-rebuild-20261108-2"></script>
+<script src="app.js?v=clean-model-20261108"></script>
 </body>
 </html>
