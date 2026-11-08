@@ -4,6 +4,61 @@ const $ = id => document.getElementById(id);
 const eHTML = value => String(value ?? '').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const uuid = () => (globalThis.crypto?.randomUUID?.() || ('local-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12)));
 const icon = id => `<svg class="ico"><use href="#i-${id}"/></svg>`;
+
+// Missing asset fallback: preserve real photos when present; illustrate only unavailable thumbnail JPGs.
+// No external image requests, and no replacement of user-uploaded source images.
+function domRenderThumbFallback(file) {
+  const filename=String(file).split('/').pop().replace(/\.(jpg|png|webp)$/i,'');
+  const [group, ...parts]=filename.split('-');
+  const id=parts.join('-');
+  const textLabels={
+    garden:'Сад и газон',forest:'Лес',lake:'Озеро',mountains:'Горы',city:'Город',
+    coast:'Побережье',mist:'Туман',nordic:'Север',minimal:'Минимализм',
+    courtyard:'Двор',spring:'Весна',summer:'Лето',autumn:'Осень',winter:'Зима',
+    clear:'Ясно',cloud:'Облачно',rain:'Дождь',snow:'Снег',fog:'Туман',
+    morning:'Утро',day:'День',golden:'Закат',night:'Ночь',
+    tropical:'Тропики',mediterranean:'Средиземноморье',decorative:'Декоративные',
+    plaster:'Штукатурка',wood:'Дерево',glass:'Стекло',concrete:'Бетон',
+    travertine:'Травертин',brick:'Кирпич',metal:'Металл',ceramic:'Керамика',limestone:'Известняк',
+    original:'Исходный',cinematic:'Кино',dusk:'Сумерки',noon:'Полдень'
+  };
+  const palette={
+    garden:['#9dc3b0','#e5e8c4','#54795d'],forest:['#456c61','#b9c6a0','#274b40'],
+    lake:['#77b5bf','#d5e8e6','#567f8e'],mountains:['#8097a1','#e2e4df','#4e6c80'],
+    city:['#9fa8aa','#e6ddd4','#566e77'],coast:['#8fc4cf','#f5e3bc','#428f9d'],
+    mist:['#9aada8','#e2e5dc','#708c88'],nordic:['#86a7b6','#ecede6','#486c70'],
+    minimal:['#b7b9ad','#e7e3d6','#808b74'],courtyard:['#bba88e','#ebdcc3','#727f68'],
+    spring:['#a6c7a2','#f5dfd9','#69a571'],summer:['#86b6a4','#dfe6bb','#3f8c63'],
+    autumn:['#cd9c79','#eddfbd','#a35f45'],winter:['#bacdd6','#f5f5ef','#8ea9b9'],
+    clear:['#83bada','#e8d4a9','#6facc4'],cloud:['#9fb2c0','#e8ece9','#7a93a0'],
+    rain:['#778e9b','#bac8cf','#566c79'],snow:['#b4cbd8','#f2f5f8','#849eae'],
+    fog:['#a4b8b6','#e5e6dd','#829e9e'],morning:['#deb8a6','#f1e1ba','#9eb1b1'],
+    day:['#85bdd8','#e4e1bb','#6da1b2'],golden:['#d7a175','#f5d5a5','#996c69'],
+    night:['#344965','#9a8baa','#263b53'],
+    wood:['#ab8667','#e1c8a6','#7a5841'],brick:['#b57a6a','#dfaea0','#80564c'],
+    plaster:['#d5d3c6','#efede6','#a8a99f'],concrete:['#a7a9a4','#d0d0c9','#7e8482'],
+    metal:['#86979b','#cfd7d4','#596b71'],glass:['#89b5bd','#dce8e6','#5a909c'],
+    ceramic:['#b8b0a5','#e0d9ce','#8e887d'],travertine:['#c8b9a0','#eae0ce','#b4a084'],
+    limestone:['#cbbfa8','#efe8da','#a39883']
+  };
+  const p=palette[id]||['#9fb6af','#e5e6dc','#69817d'];
+  const landscape=group==='env'||group==='season'||group==='weather'||group==='time'||group==='plants'||group==='look';
+  const trees=landscape?'<path d="M18 122 54 55 90 122ZM264 122 291 73 318 122Z" fill="'+p[2]+'" opacity=".72"/><rect x="51" y="115" width="6" height="37" fill="#735e4c" opacity=".75"/>':'';
+  const house=landscape?'<path d="m104 110 60-45 62 45v58H104Z" fill="#eeeae0"/><path d="m95 110 69-53 71 53" fill="none" stroke="#485c57" stroke-width="8"/><path d="M127 119h30v34h-30zm49 0h30v34h-30" fill="'+p[2]+'" opacity=".78"/>':'';
+  const surface=landscape?'':'<rect x="50" y="38" width="220" height="126" rx="7" fill="'+p[2]+'" opacity=".72"/><path d="M50 66h220M50 98h220M50 130h220" stroke="'+p[1]+'" stroke-width="3" opacity=".52"/>';
+  const label=(textLabels[id]||id).replace(/[<&]/g,'');
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200"><defs><linearGradient id="bg" x2=".3" y2="1"><stop stop-color="'+p[0]+'"/><stop offset="1" stop-color="'+p[1]+'"/></linearGradient></defs><rect width="320" height="200" fill="url(#bg)"/><circle cx="253" cy="45" r="26" fill="#fff9e9" opacity=".55"/><path d="M0 138Q70 100 155 135T320 133v67H0Z" fill="'+p[2]+'" opacity=".35"/>'+trees+house+surface+'<rect x="0" y="167" width="320" height="33" fill="#1e302d" opacity=".72"/><text x="12" y="188" fill="#fff" font-family="Arial,sans-serif" font-size="16">'+label+'</text></svg>';
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+document.addEventListener('error',function(event) {
+  const img=event.target;
+  if (!(img instanceof HTMLImageElement) || img.dataset.domFallback) return;
+  const name=img.getAttribute('src')||'';
+  if (!/assets\/thumbs\/[^/]+\.(jpg|jpeg|png|webp)(?:\?|$)/i.test(name)) return;
+  img.dataset.domFallback='1';
+  img.src=domRenderThumbFallback(name);
+},true);
+
 const ASSET = 'assets/';
 const asset = path => window.DOM_RENDER_ASSETS?.[path] || path;
 const environments = [['garden','Сад и газон','Ухоженный приватный сад, аккуратный газон и декоративные посадки.'],['forest','Хвойный лес','Высокие хвойные деревья на заднем плане, натуральный лесной рельеф.'],['lake','У озера','Естественная береговая линия и спокойное озеро на заднем плане, берег не перемещать между видами произвольно.'],['mountains','Горы','Дальний горный горизонт и каменистый рельеф.'],['city','Городской парк','Ландшафт современного городского парка без новых построек.'],['courtyard','Тихий парк','Приватный озеленённый участок с высокими деревьями.'],['nordic','Северный пейзаж','Сдержанная северная природа, камни, хвойники.'],['coast','У побережья','Прибрежная природа, дальняя горизонтальная линия моря.'],['minimal','Минимализм','Сдержанный ландшафт, гравий, небольшие деревья и злаки.'],['mist','Туманный лес','Мягкий дальний лесной пейзаж с атмосферной дымкой.']];
