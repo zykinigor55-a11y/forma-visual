@@ -340,3 +340,17 @@ input,select {accent-color:#325f45}
 .scene-reference .scene-environment-inset{box-shadow:0 3px 12px #0003}
 .similar-settings{min-width:150px}
 @media(max-width:750px){.similar-settings{min-width:120px}}
+
+/* v2.1: concise material guidance and conservative selection */
+.similar-connectivity{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#4a5d50;background:#f0f4ef;border:1px solid #d3dfd3;padding:8px 11px;border-radius:10px;cursor:pointer}
+.similar-connectivity input{width:16px;height:16px;accent-color:#2a4936}
+.selection-status{margin:8px 0;flex:1 1 100%;border-radius:9px;padding:9px 11px;font-size:12px;color:#355641;background:#eff6ed;border:1px solid #d8e6d7}
+.selection-status.selection-warn{color:#8a5334;background:#fff1e7;border-color:#f1d6c5}
+.material-process{border:1px solid #d9e3d6;border-radius:15px;padding:15px;margin-top:18px;background:#f8faf6}
+.material-process .btn-primary{min-height:52px;font-weight:750}
+.material-process p{line-height:1.5}
+.image-option img{filter:none!important}
+.image-option{overflow:hidden;border-radius:13px!important}
+.image-option span{font-size:12px!important;white-space:normal!important;line-height:1.28!important;padding:8px!important;min-height:34px}
+.image-option.active{outline:2px solid #59765e;outline-offset:1px}
+.image-option:focus-visible{outline:3px solid #8cad9d;outline-offset:2px}
