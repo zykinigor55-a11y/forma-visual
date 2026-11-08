@@ -1,0 +1,15 @@
+/* PLUX V10.6: real two-video crossfade after decoding, same mask and crop for both layers. */
+.scene-home .mascot-hit.plux-v106-host>video.plux-v106-video,
+.voice-scene .voice-image-layer.plux-v106-host>video.plux-v106-video{
+ pointer-events:none!important;display:block!important;opacity:0;
+ transition:opacity 260ms linear!important;
+ backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:opacity
+}
+.scene-home .mascot-hit.plux-v106-host>video.plux-v106-video{
+ transform:translateY(15px) scale(.88)!important
+}
+.voice-scene .voice-image-layer.plux-v106-host>video.plux-v106-video{transform:none!important}
+@media(prefers-reduced-motion:reduce){
+ .scene-home .mascot-hit.plux-v106-host>video.plux-v106-video,
+ .voice-scene .voice-image-layer.plux-v106-host>video.plux-v106-video{transition:none!important}
+}
