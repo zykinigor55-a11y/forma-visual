@@ -1,0 +1,9 @@
+/* Consistent curated high-resolution photo presets: no houses, one grading and crop pipeline. */
+(function(){
+  'use strict';
+  const photos={"env-garden":"photo-1416879595882-3373a0480b5b","env-forest":"photo-1441974231531-c6227db76b6e","env-lake":"photo-1501785888041-af3ef285b470","env-mountains":"photo-1464822759023-fed622ff2c3b","env-city":"photo-1519501025264-65ba15a82390","env-courtyard":"photo-1494438639946-1ebd1d20bf85","env-nordic":"photo-1470770841072-f978cf4d019e","env-coast":"photo-1507525428034-b723cf961d3e","env-minimal":"photo-1500534623283-312aade485b7","env-mist":"photo-1483347756197-71ef80e95f73","time-morning":"photo-1470252649378-9c29740c9fa8","time-day":"photo-1500534623283-312aade485b7","time-golden":"photo-1500534314209-a25ddb2bd429","time-night":"photo-1519608487953-e999c86e7455","season-spring":"photo-1490750967868-88aa4486c946","season-summer":"photo-1470252649378-9c29740c9fa8","season-autumn":"photo-1507371341162-763b5e419408","season-winter":"photo-1455156218388-5e61b526818b","weather-clear":"photo-1500534623283-312aade485b7","weather-cloud":"photo-1500534314209-a25ddb2bd429","weather-rain":"photo-1515694346937-94d85e41e6f0","weather-fog":"photo-1483347756197-71ef80e95f73","weather-snow":"photo-1455156218388-5e61b526818b","plants-minimal":"photo-1500534623283-312aade485b7","plants-decorative":"photo-1416879595882-3373a0480b5b","plants-forest":"photo-1441974231531-c6227db76b6e","plants-mediterranean":"photo-1416879595882-3373a0480b5b","plants-tropical":"photo-1502082553048-f009c37129b9"};
+  const target=window.DOM_RENDER_UNIFIED_PRESETS=window.DOM_RENDER_UNIFIED_PRESETS||{};
+  for(const [name,id] of Object.entries(photos)){
+    target['assets/thumbs/'+name+'.jpg']='https://images.unsplash.com/'+id+'?auto=format&fit=crop&crop=entropy&w=2048&h=1240&q=87&sat=-12&con=8&sharp=10';
+  }
+})();
