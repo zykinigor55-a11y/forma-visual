@@ -1,0 +1,27 @@
+name: Build downloadable DOM.RENDER Render package
+on:
+  push:
+    branches:
+      - dom-render-deploy-ready
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deploy-ready files
+        uses: actions/checkout@v4
+      - name: Pack clean Render project
+        run: |
+          zip -qr DOM-RENDER-v2.5-Render.zip . -x ".git/*" ".github/*"
+          unzip -t DOM-RENDER-v2.5-Render.zip | tail -1
+      - name: Upload ready archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: DOM-RENDER-v2.5-Render
+          path: DOM-RENDER-v2.5-Render.zip
+          if-no-files-found: error
+          retention-days: 30
