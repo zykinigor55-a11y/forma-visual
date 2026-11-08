@@ -25,3 +25,53 @@
  100%{background-position:93% 22%,-85% 50%;opacity:.24}
 }
 @media(prefers-reduced-motion:reduce){#screen-modes .mode-icon-shimmer{display:none!important;animation:none!important}}
+
+
+/* PLUX V10.4: optically centered keyboard/camera on every mobile width.
+   Previously crystal-v10's background shorthand reset the PNG size/position
+   while premium-v9's higher-specificity image remained. That cropped icons. */
+#screen-home .quick-actions{
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+ align-items:center!important;justify-items:center!important;
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;margin:0!important;padding:0 2px!important;gap:0!important
+}
+#screen-home .quick-actions>.action-round{
+ display:grid!important;place-items:center!important;justify-self:center!important;
+ flex:none!important;box-sizing:border-box!important;min-width:0!important;
+ background-position:center center!important;background-size:contain!important;
+ background-repeat:no-repeat!important
+}
+#screen-home #open-chat-quick,#screen-home #open-create-quick{
+ width:clamp(66px,22.5vw,94px)!important;height:clamp(66px,22.5vw,94px)!important;
+ background-color:transparent!important;border:0!important;border-radius:26%!important;
+ background-position:50% 50%!important;background-repeat:no-repeat!important;
+ background-size:100% 100%!important;
+ filter:drop-shadow(0 7px 12px rgba(0,0,0,.78)) drop-shadow(0 0 8px rgba(20,255,173,.41))!important
+}
+#screen-home #open-chat-quick{background-image:url('/assets/glass-keyboard.png')!important}
+#screen-home #open-create-quick{background-image:url('/assets/glass-camera.png')!important}
+#screen-home #open-voice-quick{
+ width:clamp(96px,30.5vw,145px)!important;height:clamp(96px,30.5vw,145px)!important;
+ background-image:url('/assets/glass-mic.png')!important;
+ background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important
+}
+#screen-home .quick-actions>.action-round.small::before{
+ content:'';position:absolute;z-index:1;pointer-events:none;inset:8%;border:0;border-radius:27%;
+ background:linear-gradient(125deg,rgba(249,255,255,.30),transparent 27%,transparent 72%,rgba(44,250,170,.08));
+ mix-blend-mode:screen;opacity:.60
+}
+#screen-home .quick-actions>.action-round.small::after{
+ content:'';position:absolute;z-index:1;inset:8%;border:1px solid rgba(218,255,247,.15);
+ border-radius:27%;pointer-events:none
+}
+#screen-home .quick-actions>.action-round.small:active{
+ transform:scale(.93)!important;
+ filter:drop-shadow(0 0 17px rgba(34,255,162,.70)) brightness(1.13)!important
+}
+@media(max-width:355px){
+ #screen-home .quick-actions{padding:0!important}
+ #screen-home #open-chat-quick,#screen-home #open-create-quick{width:clamp(62px,21.5vw,80px)!important;height:clamp(62px,21.5vw,80px)!important}
+ #screen-home #open-voice-quick{width:clamp(86px,29vw,112px)!important;height:clamp(86px,29vw,112px)!important}
+}
+@media(prefers-reduced-motion:reduce){#screen-home .quick-actions>.action-round.small{transition:none!important}}
