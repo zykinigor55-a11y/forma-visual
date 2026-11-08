@@ -134,3 +134,23 @@ input,select {accent-color:#325f45}
 .zone-icon{display:inline-flex;width:39px;height:39px;align-items:center;justify-content:center;background:#eaf0e9;border-radius:9px;flex-shrink:0;color:#4d6952}
 .zone-icon svg{width:21px;height:21px}
 @media(max-width:750px){.angle-consistency{min-width:100%;order:-1}.angle-consistency strong{font-size:13px}}
+
+/* More legible navigation with text labels, preserving tablet/mobile layouts */
+@media(min-width:1051px){
+ .app{grid-template-columns:86px minmax(0,1fr) 367px}
+ .rail{padding-inline:8px}
+ .rail-nav{margin-top:54px}
+ .rail-btn{width:66px;height:65px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;border-radius:13px}
+ .rail-btn .ico{width:21px;height:21px;flex-shrink:0}
+ .rail-btn.active{box-shadow:0 3px 10px #00000018}
+}
+@media(min-width:1051px) and (max-width:1370px){
+ .app{grid-template-columns:77px minmax(0,1fr) 335px}
+ .rail-btn{width:61px}
+}
+@media(min-width:751px) and (max-width:1050px){
+ .app{grid-template-columns:77px minmax(0,1fr)}
+ .rail-btn{width:61px;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:11px}
+ .rail-btn .ico{width:22px;height:22px}
+}
+@media(max-width:750px){.rail-name{display:none}}
