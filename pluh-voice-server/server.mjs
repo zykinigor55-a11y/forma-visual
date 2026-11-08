@@ -1,9 +1,18 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash, timingSafeEqual } from "node:crypto";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "public");
+
+const previewMarkup=readFileSync(resolve(root,"plux-v5.html"),"utf8");
+const inlineHashes=(tag)=>{
+ const matches=[...previewMarkup.matchAll(new RegExp("<"+tag+">([\\s\\S]*?)<\\/"+tag+">","g"))];
+ return matches.map(m=>"'sha256-"+createHash("sha256").update(m[1]).digest("base64")+"'").join(" ");
+};
+const previewCsp="default-src 'self'; connect-src 'self' wss://api.elevenlabs.io; script-src 'self' "+inlineHashes("script")+"; style-src 'self' "+inlineHashes("style")+"; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+
 const port = Number(process.env.PORT || 8080);
 const agentId = process.env.ELEVENLABS_AGENT_ID || "agent_7501m6wt1wm5efybwty352yqned2";
 const types={".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",".png":"image/png",".webp":"image/webp",".mp4":"video/mp4"};
@@ -14,8 +23,9 @@ async function handler(req,res){
  res.setHeader("X-Content-Type-Options","nosniff");
  res.setHeader("Referrer-Policy","no-referrer");
  res.setHeader("Permissions-Policy","microphone=(self)");
- res.setHeader("Content-Security-Policy","default-src 'self'; connect-src 'self' wss://api.elevenlabs.io; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
  const pathname=new URL(req.url||"/","http://localhost").pathname;
+ const previewRoute=pathname==="/"||pathname==="/index.html"||pathname==="/plux-v5.html";
+ res.setHeader("Content-Security-Policy",previewRoute?previewCsp:"default-src 'self'; connect-src 'self' wss://api.elevenlabs.io; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
  if(pathname==="/api/health")return reply(res,200,{ready:Boolean(process.env.ELEVENLABS_API_KEY&&process.env.PLUH_DEMO_CODE),agentConfigured:!!agentId});
  if(pathname==="/api/session"){
    if(req.method!=="POST")return reply(res,405,{error:"Use POST"});
