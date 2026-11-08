@@ -6,7 +6,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "public");
 const port = Number(process.env.PORT || 8080);
 const agentId = process.env.ELEVENLABS_AGENT_ID || "agent_7501m6wt1wm5efybwty352yqned2";
-const types={".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",".webp":"image/webp",".mp4":"video/mp4"};
+const types={".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",".png":"image/png",".webp":"image/webp",".mp4":"video/mp4"};
 const requests=new Map();
 function reply(res,status,data){res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"});res.end(JSON.stringify(data));}
 function compare(a,b){if(typeof a!=="string"||typeof b!=="string")return false;const ha=createHash("sha256").update(a).digest(),hb=createHash("sha256").update(b).digest();return timingSafeEqual(ha,hb);}
@@ -43,7 +43,7 @@ async function handler(req,res){
  try{
   const st=await stat(path);if(!st.isFile())throw Error();
   const data=await readFile(path);
-  res.writeHead(200,{"Content-Type":types[extname(path)]||"application/octet-stream","Cache-Control":"public, max-age=120"});
+  res.writeHead(200,{"Content-Type":types[extname(path)]||"application/octet-stream","Cache-Control":"no-store"});
   res.end(req.method==="HEAD"?undefined:data);
  }catch{return reply(res,404,{error:"Not found"});}
 }
