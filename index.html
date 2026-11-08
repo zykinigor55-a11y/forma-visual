@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f2"><meta name="description" content="ДОМ.РЕНДЕР — архитектурная визуализация из скриншота. Управление окружением, светом и материалами.">
 <title>ДОМ.РЕНДЕР — AI-визуализация архитектуры</title>
-<link rel="stylesheet" href="styles.css?v=photo-demo-20261108-v1">
+<link rel="stylesheet" href="styles.css?v=hd-photo-presets-20261108-v2">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -94,6 +94,7 @@
   <div class="scene-demo-photo" id="sceneDemoPhoto" data-scene="summer">
    <img src="assets/residence-render.jpg" alt="Один и тот же современный дом в примере смены условий" id="sceneDemoImage" loading="lazy">
    <div class="scene-demo-effects" aria-hidden="true"></div>
+   <div class="scene-environment-inset"><span class="scene-environment-inset-title">РЕФЕРЕНС ОКРУЖЕНИЯ</span><img id="sceneEnvironmentPreview" data-asset-path="assets/thumbs/env-garden.jpg" src="assets/thumbs/env-garden.jpg" alt="Сад и газон" loading="lazy"><span id="sceneEnvironmentLabel">Сад и газон</span></div>
    <div class="scene-demo-caption" id="sceneDemoCaption">Лето · Ясно · День</div>
   </div>
   <div class="scene-demo-buttons" role="group" aria-label="Смена условий на примере дома">
@@ -105,7 +106,14 @@
    <button class="scene-demo-option" data-scene-demo="golden" type="button" aria-pressed="false">Вечер</button>
    <button class="scene-demo-option" data-scene-demo="night" type="button" aria-pressed="false">Ночь</button>
   </div>
-  <p class="scene-demo-note">Иллюстрация смены атмосферы на одном изображении. Реальные изменения окружения, сезона и погоды создаются AI после нажатия «Создать визуализацию».</p>
+  <div class="scene-environment-buttons" role="group" aria-label="Выберите референс окружения">
+  <button type="button" class="scene-demo-option active" data-scene-environment="garden" aria-pressed="true">Сад</button>
+  <button type="button" class="scene-demo-option" data-scene-environment="forest" aria-pressed="false">Лес</button>
+  <button type="button" class="scene-demo-option" data-scene-environment="lake" aria-pressed="false">Озеро</button>
+  <button type="button" class="scene-demo-option" data-scene-environment="mountains" aria-pressed="false">Горы</button>
+ </div>
+ <p class="scene-demo-note">Референс окружения — отдельная фотография ландшафта, а не результат генерации. После AI-визуализации выбранное окружение объединяется с проектом дома.</p>
+ <p class="scene-demo-note">Иллюстрация смены атмосферы на одном изображении. Реальные изменения окружения, сезона и погоды создаются AI после нажатия «Создать визуализацию».</p>
  </div>
  <nav class="render-jump" aria-label="Разделы настройки рендера"><button type="button" class="render-jump-btn active" data-jump="environment">Окружение</button><button type="button" class="render-jump-btn" data-jump="season">Сезон</button><button type="button" class="render-jump-btn" data-jump="weather">Погода</button><button type="button" class="render-jump-btn" data-jump="time">Свет</button><button type="button" class="render-jump-btn" data-jump="plants">Растения</button></nav><div class="render-group" id="renderSection-environment"><div class="panel-section-title"><h3>Окружение участка</h3><span>10 вариантов</span></div><div class="image-options image-options-2" id="environmentOptions"></div></div><div class="render-group" id="renderSection-season"><div class="param-group"><div class="panel-section-title"><h3>Сезон</h3></div><div class="image-options image-options-4" id="seasonOptions"></div></div></div><div class="render-group" id="renderSection-weather"><div class="param-group"><div class="panel-section-title"><h3>Погода</h3></div><div class="image-options image-options-3" id="weatherOptions"></div></div></div><div class="render-group" id="renderSection-time"><div class="param-group"><div class="panel-section-title"><h3>Время суток</h3></div><div class="image-options image-options-4" id="timeOptions"></div></div></div><div class="render-group" id="renderSection-plants"><div class="param-group"><div class="panel-section-title"><h3>Растительность</h3></div><div class="image-options image-options-3" id="plantsOptions"></div></div></div><div class="panel-help"><svg class="ico"><use href="#i-lock"/></svg><span>Настройки окружения сохраняются внутри проекта и передаются AI при генерации каждого нового ракурса.</span></div></section>
   <section id="materialsPanel" class="tab-panel" role="tabpanel"><div class="panel-section-title"><h3>Части фасада</h3><span>Выберите поверхность</span></div><div class="zone-options" id="zoneOptions"></div><div class="zone-buttons"><button class="btn btn-outline" id="startMask"><svg class="ico"><use href="#i-brush"/></svg>Выделить поверхность</button><button class="btn btn-quiet" id="showMask"><svg class="ico"><use href="#i-eye"/></svg>Показать маску</button></div><label class="switch-row selection-only"><span><b>Менять только выделенную область</b><small>При AI-генерации не трогать остальную сцену</small></span><input type="checkbox" id="editSelectedOnly"><i></i></label><div class="panel-section-title with-gap"><h3>Покрытие выбранной зоны</h3><span id="selectedZoneName">Основной фасад</span></div><div class="material-onboarding"><strong>Ваши материалы</strong><p>Загрузите фотографию своей фактуры. Выберите поверхность на доме и примените материал к выделению.</p></div><div id="catalogMaterials" class="material-grid" hidden></div><div id="myMaterials" class="material-grid" hidden></div><button class="upload-material" id="uploadMaterialBtn"><svg class="ico"><use href="#i-plus"/></svg><span>+ Добавить фактуру <small>Выберите фото материала · JPG / PNG / WebP</small></span></button><input type="file" id="materialFile" accept="image/png,image/jpeg,image/webp" hidden><button class="btn btn-quiet btn-sm" id="deleteMyMaterial" hidden style="margin-top:7px;color:#8a5548">Удалить выбранный материал</button><div class="material-tune"><label>Масштаб текстуры <output id="scaleValue">100%</output><input type="range" min="30" max="250" value="100" id="textureScale"></label><label>Поворот <select id="textureRotate"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></div><button class="btn btn-dark btn-block" id="tryMaterial"><svg class="ico"><use href="#i-layer"/></svg>Примерить на выделении</button><p class="mini-disclaimer">Локальная примерка показывает расположение фактуры, не заменяет AI-рендер.</p></section>
@@ -118,6 +126,6 @@
 <div class="dialog-cover" id="dialogCover" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-head"><div><span class="eyebrow">ДОМ.РЕНДЕР</span><h2 id="dialogTitle">Заголовок</h2></div><button class="icon-button" id="dialogClose" aria-label="Закрыть"><svg class="ico"><use href="#i-x"/></svg></button></div><div id="dialogBody"></div><div id="dialogActions"></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="dom-render-photo-assets.js?v=approved-20261108"></script>
-<script src="app.js?v=photo-demo-20261108-v1"></script>
+<script src="app.js?v=hd-photo-presets-20261108-v2"></script>
 </body>
 </html>
