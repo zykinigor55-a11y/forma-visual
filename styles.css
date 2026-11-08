@@ -154,3 +154,19 @@ input,select {accent-color:#325f45}
  .rail-btn .ico{width:22px;height:22px}
 }
 @media(max-width:750px){.rail-name{display:none}}
+
+/* Hotfix: enlarge architectural viewer and thumbnails without disrupting comparison controls */
+.viewer-card{width:100%;max-width:none}
+.stage{width:100%;min-height:clamp(360px,55vw,720px);overflow:hidden}
+.stage img{object-fit:cover}
+.view-modes{position:relative;z-index:5}
+.view-mode{cursor:pointer;touch-action:manipulation}
+.image-option{min-height:125px;overflow:hidden}
+.image-option img{width:100%;height:100%;object-fit:cover;image-rendering:auto}
+@media(max-width:750px){
+ .stage{min-height:clamp(300px,72vw,500px)}
+ .stage[data-view-mode="side"]{min-height:340px}
+ .stage[data-view-mode="side"] #beforeImg,.stage[data-view-mode="side"] #afterImg{object-fit:cover}
+ .image-options .image-option{min-height:118px}
+ .image-options-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
