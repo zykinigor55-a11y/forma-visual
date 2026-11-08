@@ -1,0 +1,27 @@
+/* PLUX V10.3 — liquid highlights are clipped to icons, not the labels. */
+#screen-modes .mode-card{position:relative;isolation:isolate}
+#screen-modes .mode-icon-shimmer{
+ display:block;position:absolute;z-index:5;inset:0;border:0;border-radius:inherit;
+ pointer-events:none;opacity:0;-webkit-mask-size:100% 100%;mask-size:100% 100%;
+ -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;mix-blend-mode:screen;
+ background-image:radial-gradient(ellipse 30% 46% at 38% 36%,rgba(211,255,243,.64),transparent 72%),linear-gradient(110deg,transparent 19%,rgba(24,255,170,.10) 32%,rgba(206,255,255,.98) 49%,rgba(45,255,160,.35) 57%,transparent 68%);
+ background-size:175% 130%,300% 100%;background-position:-30% 24%,100% 50%;
+ filter:brightness(1.1);will-change:background-position,opacity
+}
+#screen-modes .mode-icon-shimmer.is-ready{opacity:.9;animation:plux-icon-liquid-flow 5.7s cubic-bezier(.46,.12,.48,.9) var(--phase,0s) infinite}
+#screen-modes .mode-card:nth-child(4) .mode-icon-shimmer{
+ background-image:radial-gradient(ellipse 30% 46% at 38% 36%,rgba(250,220,255,.58),transparent 72%),linear-gradient(110deg,transparent 19%,rgba(150,73,255,.1) 32%,rgba(255,227,255,.96) 49%,rgba(179,105,255,.42) 57%,transparent 68%)
+}
+#screen-modes .mode-card:nth-child(2) .mode-icon-shimmer.is-ready{animation-duration:4.9s}
+#screen-modes .mode-card:nth-child(3) .mode-icon-shimmer.is-ready{animation-duration:6.2s}
+#screen-modes .mode-card:nth-child(5) .mode-icon-shimmer.is-ready{animation-duration:5.3s}
+#screen-modes .mode-card:nth-child(6) .mode-icon-shimmer.is-ready{animation-duration:4.6s}
+#screen-modes .mode-card:active .mode-icon-shimmer.is-ready{opacity:1;filter:brightness(1.55)}
+@keyframes plux-icon-liquid-flow{
+ 0%,10%{background-position:-28% 20%,112% 50%;opacity:.24}
+ 32%{opacity:.82}
+ 56%{background-position:34% 68%,13% 50%;opacity:1}
+ 78%{opacity:.52}
+ 100%{background-position:93% 22%,-85% 50%;opacity:.24}
+}
+@media(prefers-reduced-motion:reduce){#screen-modes .mode-icon-shimmer{display:none!important;animation:none!important}}
