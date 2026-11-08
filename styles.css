@@ -354,3 +354,6 @@ input,select {accent-color:#325f45}
 .image-option span{font-size:12px!important;white-space:normal!important;line-height:1.28!important;padding:8px!important;min-height:34px}
 .image-option.active{outline:2px solid #59765e;outline-offset:1px}
 .image-option:focus-visible{outline:3px solid #8cad9d;outline-offset:2px}
+
+/* Approved clean demo model: do not dim the linework or desaturate its pool */
+.stage.demo-model-preview #beforeImg { filter: none !important; image-rendering:auto; }
