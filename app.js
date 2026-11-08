@@ -103,6 +103,13 @@ function domRenderThumbFallback(file) {
 document.addEventListener('error',function(event) {
   const img=event.target;
   if (!(img instanceof HTMLImageElement) || img.dataset.domFallback) return;
+  const path=img.dataset.assetPath;
+  if(path){
+    img.dataset.domFallback='1';
+    img.removeAttribute('srcset');
+    img.src=window.DOM_RENDER_UNIFIED_PRESETS?.[path] || window.DOM_RENDER_ASSETS?.[path] || path;
+    return;
+  }
   const name=img.getAttribute('src')||'';
   if (!/assets\/thumbs\/[^/]+\.(jpg|jpeg|png|webp)(?:\?|$)/i.test(name)) return;
   img.dataset.domFallback='1';
@@ -301,8 +308,9 @@ function showTab(tab,scroll=false){
 }
 function optionCards(group,arr,selected){return arr.map(([id,name])=>{
  const path=`${ASSET}thumbs/${group==='environment'?'env':group}-${id}.jpg`;
+ const sharp=`assets/thumbs/hd/${group==='environment'?'env':group}-${id}.webp?v=hd28-20261108-1`;
  const glyph = group==='time'?'sun':group==='weather'?'cloud':'tree';
- return `<button class="image-option preset-photo-card ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}" title="${eHTML(name)}"><img src="${eHTML(asset(path))}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span class="preset-card-icon" aria-hidden="true">${icon(glyph)}</span><span class="preset-card-label">${eHTML(name)}</span></button>`;
+ return `<button class="image-option preset-photo-card ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}" title="${eHTML(name)}"><img src="${eHTML(sharp)}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span class="preset-card-icon" aria-hidden="true">${icon(glyph)}</span><span class="preset-card-label">${eHTML(name)}</span></button>`;
 }).join('')}
 function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group])}
 function renderZones(){
