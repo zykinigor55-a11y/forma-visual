@@ -1,0 +1,32 @@
+/** Patch the extracted V10.2 app during Render's static build; preserve UI and assets. */
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+const dir=process.argv[2]||'plux-published';
+const read=name=>readFileSync(join(dir,name),'utf8');
+const write=(name,text)=>writeFileSync(join(dir,name),text);
+let app=read('app.js');
+const begin=app.indexOf('const videoSpeeds='),end=app.indexOf('function setEmotion(',begin);
+if(begin<0||end<0)throw Error('PLUX V10.2 source structure changed');
+app=app.slice(0,begin)+"// V10.6 playback is managed by the predecoded two-video controller.\nfunction updateVideo(v,el,state){window.PLUXSeamless?.set(v,el,state)}\n\n"+app.slice(end);
+app=app.replace("emotionTimeout=setTimeout(()=>setEmotion('idle',false),2500)","emotionTimeout=setTimeout(()=>setEmotion('idle',false),next==='happy'?4900:2500)");
+app=app.replace('let sock=null,audioCtx=null','let talkingFinishTimer=0;let sock=null,audioCtx=null');
+app=app.replace('function stopSound(){for(const s of playSources)','function stopSound(){clearTimeout(talkingFinishTimer);for(const s of playSources)');
+const once="node.onended=()=>playSources.delete(node);node.start(when)";
+if(!app.includes(once))throw Error('PLUX PCM hook changed');
+app=app.replace(once,
+"node.onended=()=>{playSources.delete(node);if(playSources.size===0&&socketActive&&sessionMode==='voice'&&emotion==='talking'){clearTimeout(talkingFinishTimer);talkingFinishTimer=setTimeout(()=>{if(playSources.size===0&&socketActive&&sessionMode==='voice'&&emotion==='talking')showListening()},800)}};clearTimeout(talkingFinishTimer);node.start(when)");
+const oldVisibility="document.addEventListener('visibilitychange',()=>{if(document.hidden){$('home-state-video')?.pause();$('state-video')?.pause()}else if(appScreen==='home'||appScreen==='voice'){const vv=appScreen==='home'?'home-state-video':'state-video';const layer=appScreen==='home'?$('home-mascot'):document.querySelector('.voice-image-layer');updateVideo($(vv),layer,emotion)}})";
+if(!app.includes(oldVisibility))throw Error('PLUX visibility handler changed');
+app=app.replace(oldVisibility,"document.addEventListener('visibilitychange',()=>window.PLUXSeamless?.sync())");
+write('app.js',app);
+let html=read('index.html');
+if(!html.includes('src="/app.js?v=11"'))throw Error('Unexpected PLUX entrypoint');
+html=html.replace('</head>','<meta name="plux-release" content="10.6"><link rel="stylesheet" href="/icon-flow-v103.css?v=106"><link rel="stylesheet" href="/chat-glass-v105.css?v=106"><link rel="stylesheet" href="/seamless-v106.css?v=106"></head>');
+html=html.replace('<script type="module" src="/app.js?v=11">','<script src="/seamless-v106.js?v=106"></script><script type="module" src="/app.js?v=106">');
+html=html.replace('</body>','<script src="/chat-glass-v105.js?v=106"></script><script type="module" src="/icon-flow-v103.js?v=106"></script></body>');
+write('index.html',html);
+let chat=read('chat-glass-v105.js');
+chat=chat.replace('/assets/videos/01_idle.mp4','/assets/videos-v106/01_idle.mp4');
+write('chat-glass-v105.js',chat);
+if(!read('app.js').includes('window.PLUXSeamless?.set'))throw Error('V10.6 patch not applied');
+console.log('PLUX 10.6: original UI preserved, videos upgraded, chat-avatar video enabled');
