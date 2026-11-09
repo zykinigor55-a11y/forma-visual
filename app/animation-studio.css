@@ -146,3 +146,15 @@
  .app.cine-mode .menubar .menu-group:last-child{display:none}
  .app.cine-mode .menubar .menu-group:first-child{overflow:visible}
 }
+
+
+/* Realistic 3D cinema icon tiles — atlas stored locally under public/images/cinema */
+.cine-choice-icon{position:relative;overflow:hidden;background:#0e1519}
+.cine-choice.is-selected .cine-choice-icon{background:#111d22}
+.cine-photo{display:block;position:absolute;inset:0;z-index:2;background-image:url('/images/cinema/forma-cinema-atlas.webp');background-repeat:no-repeat;background-size:600% 400%;background-color:#0b1419;transition:filter .2s,transform .25s}
+.cine-choice:hover .cine-photo{filter:brightness(1.14);transform:scale(1.025)}
+.cine-choice.is-selected .cine-photo{filter:brightness(1.12) saturate(1.06)}
+.cine-vector-fallback{position:absolute;inset:0;z-index:1;display:grid;place-items:center;background:#101b20;color:#b3bfae}
+.cine-photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 82%,#0b111a38 100%);pointer-events:none}
+.cine-choice.is-selected .cine-choice-check{z-index:4;background:#f6f1dc;color:#1f3d34;box-shadow:0 2px 8px #0008}
+@media(prefers-reduced-motion:reduce){.cine-photo{transition:none}}
