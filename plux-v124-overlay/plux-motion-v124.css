@@ -1,0 +1,43 @@
+/* PLUX 12.4 — final touches only. Preserve the approved artwork and optical buttons. */
+#screen-home #greeting-title.plux124-writing::after{
+  content:"";display:inline-block;vertical-align:-.07em;width:2px;height:.85em;
+  margin-left:3px;background:#76ffd1;box-shadow:0 0 7px #39e5aeaa;
+  animation:plux124-caret 800ms steps(1,end) infinite;
+}
+#screen-home #greeting-subtitle{transition:opacity 420ms ease,transform 420ms ease}
+.plux124-typewriter #screen-home #greeting-subtitle:not(.plux124-revealed){opacity:0;transform:translateY(3px)}
+#screen-home #greeting-subtitle.plux124-revealed{opacity:1;transform:none}
+#screen-chat .plux124-chat-writing::after{
+  content:"";display:inline-block;vertical-align:-.08em;width:2px;height:.9em;
+  margin-left:3px;background:#66f7bd;animation:plux124-caret 800ms steps(1,end) infinite
+}
+@keyframes plux124-caret{0%,49%{opacity:.9}50%,100%{opacity:0}}
+/* Touch motion uses compositor-only transforms. Do not move the actual embedded tile icons. */
+#screen-home .quick-actions button,#screen-voice .voice-controls button,
+#screen-create #create-art-button,#screen-home .bottom-nav .nav-button,
+#screen-modes .tools-dock-v121 .nav-button,
+#screen-chat .chat-inputbar button{
+  transition:transform 170ms cubic-bezier(.17,.67,.25,1),filter 180ms ease!important;
+}
+#screen-home .quick-actions button.plux114-held,
+#screen-voice .voice-controls button.plux114-held,
+#screen-create #create-art-button.plux114-held,
+#screen-home .bottom-nav .nav-button.plux114-held,
+#screen-modes .tools-dock-v121 .nav-button.plux114-held,
+#screen-chat .chat-inputbar button.plux114-held{
+  transform:scale(.975)!important;
+}
+/* No new glass borders; only quiet motion in existing tile illumination. */
+#screen-modes .mode-card::before{animation-duration:13s!important;animation-timing-function:ease-in-out!important}
+/* Never let the mascot's CSS effects absorb taps or block the video decoder. */
+#screen-home .plux-v106-video,#screen-voice .plux-v106-video,
+#screen-onboard .plux116-hero-video{will-change:opacity;backface-visibility:hidden}
+@media(prefers-reduced-motion:reduce){
+  #screen-home #greeting-title.plux124-writing::after,#screen-chat .plux124-chat-writing::after{display:none}
+  #screen-home #greeting-subtitle{transition:none!important;opacity:1!important;transform:none!important}
+  #screen-modes .mode-card::before{animation:none!important}
+  #screen-home .quick-actions button,#screen-voice .voice-controls button,
+  #screen-create #create-art-button,#screen-home .bottom-nav .nav-button,
+  #screen-modes .tools-dock-v121 .nav-button,
+  #screen-chat .chat-inputbar button{transition:none!important}
+}
