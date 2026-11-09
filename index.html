@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="dom-render-nodes-v35.css?v=20261109-v1">
 <link rel="stylesheet" href="dom-render-mood-v36.css?v=20261109-v1">
 <link rel="stylesheet" href="dom-render-setup-v37.css?v=scene-setup-v37-20261109">
+<link rel="stylesheet" href="dom-render-animation-v39.css?v=cinema-artwork-v40-20261109">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -47,6 +48,7 @@
  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
  <symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5 9a8 8 0 0 1 14-2l1 5M4 12l1 5a8 8 0 0 0 14-2"/></symbol>
  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+ <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4"/></symbol>
  <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 3h13l4 4v14H3V3h1Zm3 0v7h10V3M7 21v-8h10v8"/></symbol>
 </svg>
 <header class="mobile-header"><div class="mobile-brand"><span class="mobile-brand-emblem"><svg class="logo-mark"><use href="#i-house"/></svg></span><b>ДОМ<span>.</span>РЕНДЕР</b></div><div class="mobile-header-actions"><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
@@ -57,6 +59,7 @@
   <button class="rail-btn active" data-nav="project" title="Загрузка исходника и сравнение" aria-label="Проект"><svg class="ico"><use href="#i-folder"/></svg><span class="rail-name">Проект</span></button>
   <button class="rail-btn" data-nav="environment" title="Окружение, сезоны и свет" aria-label="Окружение"><svg class="ico"><use href="#i-tree"/></svg><span class="rail-name">Рендер</span></button>
   <button class="rail-btn" data-nav="materials" title="Выделение и AI-замена фактур" aria-label="Материалы"><svg class="ico"><use href="#i-layer"/></svg><span class="rail-name">Материалы</span></button>
+  <button class="rail-btn" data-nav="animation" title="Виртуальные камеры, объективы и движение" aria-label="Архитектурная анимация"><svg class="ico"><use href="#i-film"/></svg><span class="rail-name">Анимация</span></button>
   <button class="rail-btn" data-nav="variants" title="Результаты и история" aria-label="Варианты"><svg class="ico"><use href="#i-image"/></svg><span class="rail-name">Варианты</span></button>
   <button class="rail-btn" data-nav="parameters" title="Настройки изображения" aria-label="Настройки"><svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Настройки</span></button>
  </nav>
@@ -101,7 +104,7 @@
  <footer class="page-footer studio-footer"><span>© 2026 ДОМ.РЕНДЕР · АРХИТЕКТУРНАЯ AI-СТУДИЯ</span><nav aria-label="Информация о сервисе"><button type="button" data-open-cabinet="account">Личный кабинет</button><button type="button" data-open-cabinet="contacts">Контакты</button><a href="privacy.html">Политика конфиденциальности</a></nav></footer>
 </main>
 <aside class="inspector" id="inspector" aria-label="Панель визуализации">
- <div class="inspector-head"><div class="inspector-kicker"><span>ДОМ.РЕНДЕР / СТУДИЯ</span></div><h2 id="panelTitle">Проект</h2><p id="panelSubtitle">Загрузите исходник и управляйте изображениями проекта.</p><div class="tab-bar" role="tablist"><button class="tab active" data-tab="project" role="tab" aria-selected="true"><svg class="ico"><use href="#i-folder"/></svg><span>Проект</span></button><button class="tab" data-tab="environment" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройка рендера</span></button><button class="tab" data-tab="materials" role="tab" aria-selected="false"><svg class="ico"><use href="#i-layer"/></svg><span>Материалы</span></button><button class="tab" data-tab="variants" role="tab" aria-selected="false"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button><button class="tab" data-tab="parameters" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Параметры</span></button></div></div>
+ <div class="inspector-head"><div class="inspector-kicker"><span>ДОМ.РЕНДЕР / СТУДИЯ</span></div><h2 id="panelTitle">Проект</h2><p id="panelSubtitle">Загрузите исходник и управляйте изображениями проекта.</p><div class="tab-bar" role="tablist"><button class="tab active" data-tab="project" role="tab" aria-selected="true"><svg class="ico"><use href="#i-folder"/></svg><span>Проект</span></button><button class="tab" data-tab="environment" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройка рендера</span></button><button class="tab" data-tab="materials" role="tab" aria-selected="false"><svg class="ico"><use href="#i-layer"/></svg><span>Материалы</span></button><button class="tab" data-tab="animation" role="tab" aria-selected="false"><svg class="ico"><use href="#i-film"/></svg><span>Анимация</span></button><button class="tab" data-tab="variants" role="tab" aria-selected="false"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button><button class="tab" data-tab="parameters" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Параметры</span></button></div></div>
  <div class="inspector-scroll">
 <section id="projectPanel" class="tab-panel active" role="tabpanel">
  <div class="project-dashboard">
@@ -383,6 +386,57 @@
   </div>
  </div>
 </section>
+<section id="animationPanel" class="tab-panel animation-studio" role="tabpanel">
+ <div class="anim-hero"><span class="anim-eyebrow">ДОМ.РЕНДЕР · CINEMA STUDIO</span><h3>Архитектурная анимация</h3><p>Выберите камеру, объектив, движение и цвет будущего архитектурного фильма.</p></div>
+ <div class="anim-truth"><svg class="ico"><use href="#i-lock"/></svg><span><strong>Одна модель — неизменная архитектура</strong><small>Все промпты сохраняют геометрию, окна, крышу, фактуры и существующий ландшафт. Камеры и объективы здесь — художественная имитация их изображения, не фактическая съёмка.</small></span></div>
+ <div class="anim-preview-shell">
+  <div class="anim-preview-meta"><strong>Предпросмотр движения</strong><span id="animPreviewState">Схематическая анимация кадра</span></div>
+  <div class="anim-preview-screen" id="animPreviewScreen">
+   <div class="anim-preview-frame" id="animPreviewFrame"><img id="animPreviewImage" alt="Исходный кадр текущего проекта" loading="lazy"></div>
+   <div class="anim-preview-overlay"><span><span class="anim-record-dot"></span> REC · ПРЕДПРОСМОТР</span><span id="animPreviewDuration">6 s · 24 fps</span></div>
+  </div>
+  <button type="button" id="animPlayPreview" class="anim-play"><svg class="ico"><use href="#i-film"/></svg>Показать движение камеры</button>
+  <p class="anim-preview-caption">Это визуальная схема движения неподвижной фотографии, а не созданный AI-видеоролик.</p>
+ </div>
+ <details class="anim-section" open>
+  <summary class="anim-section-head"><span class="anim-section-count">01</span><span class="anim-section-title"><strong>Кинокамера</strong><small>8 визуальных профилей: характер света, цвет и детализация</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animCameras"></div>
+ </details>
+ <details class="anim-section" >
+  <summary class="anim-section-head"><span class="anim-section-count">02</span><span class="anim-section-title"><strong>Объектив</strong><small>10 оптических профилей: ширина, перспектива и размытие</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animLenses"></div>
+ </details>
+ <details class="anim-section" >
+  <summary class="anim-section-head"><span class="anim-section-count">03</span><span class="anim-section-title"><strong>Движение камеры</strong><small>8 плавных траекторий для архитектурной съёмки</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animMoves"></div>
+ </details>
+ <details class="anim-section" >
+  <summary class="anim-section-head"><span class="anim-section-count">04</span><span class="anim-section-title"><strong>Цветокоррекция</strong><small>6 настроений — тот же дом в разных цветовых обработках</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animGrades"></div>
+ </details>
+ <div class="anim-settings-section">
+  <div class="anim-settings-heading"><span>05</span><div><strong>Параметры будущего ролика</strong><small>Формат, длительность и ваши пожелания</small></div></div>
+  <div class="anim-settings-grid">
+   <label>Длительность<select id="animDuration"><option value="5">5 секунд</option><option value="6" selected>6 секунд</option><option value="8">8 секунд</option><option value="10">10 секунд</option></select></label>
+   <label>Частота кадров<select id="animFPS"><option value="24">24 fps · кино</option><option value="25">25 fps · видео</option><option value="30">30 fps · плавно</option></select></label>
+   <label>Формат<select id="animRatio"><option value="16:9">16:9 · горизонтальный</option><option value="9:16">9:16 · вертикальный</option></select></label>
+   <label>Амплитуда движения<select id="animIntensity"><option value="low">Минимальная · точнее</option><option value="moderate">Умеренная</option></select></label>
+  </div>
+  <label class="anim-extra-label" for="animExtra">Дополнительное пожелание <span>необязательно</span></label>
+  <textarea id="animExtra" rows="3" maxlength="350" placeholder="Например: очень медленный пролёт вдоль фасада, мягкий вечерний свет. Архитектуру и материалы сохранить."></textarea>
+ </div>
+ <div class="anim-final">
+  <span class="anim-final-eyebrow">ВЫБРАННЫЙ СЪЁМОЧНЫЙ КОМПЛЕКТ</span>
+  <strong id="animSummary">ARRI ALEXA 35 · 24 мм Tilt-Shift · Плавное приближение</strong>
+  <p id="animSummaryDetail">6 секунд · 24 fps · 16:9 · Natural Luxury</p>
+  <details class="anim-prompt-details"><summary>Посмотреть профессиональный промпт</summary><textarea id="animPromptText" rows="12" readonly spellcheck="false"></textarea></details>
+  <div class="anim-final-actions">
+   <button type="button" class="btn btn-primary" id="animCopyPrompt"><svg class="ico"><use href="#i-copy"/></svg>Копировать промпт</button>
+   <button type="button" class="btn btn-outline" id="animExportBrief"><svg class="ico"><use href="#i-download"/></svg>Скачать ТЗ</button>
+  </div>
+  <div class="anim-video-notice" id="animVideoStatus"><strong>Подключение генерации видео</strong><p>Профили и промпты готовы. Сейчас API сайта генерирует только изображения: отдельный видеодвижок ещё не подключён. Списаний за видео здесь нет.</p></div>
+ </div>
+</section>
 <section id="variantsPanel" class="tab-panel" role="tabpanel">
  <span class="section-label">ИСТОРИЯ ПРОЕКТА</span>
  <p class="muted">Все реально сохранённые визуализации этого проекта. Откройте результат, назначьте его референсом для следующего ракурса или сравните с исходником.</p>
@@ -426,6 +480,7 @@
  <button data-mobile="project" class="active"><svg class="ico"><use href="#i-folder"/></svg><span>Проект</span></button>
  <button data-mobile="environment"><svg class="ico"><use href="#i-tree"/></svg><span>Рендер</span></button>
  <button data-mobile="materials"><svg class="ico"><use href="#i-layer"/></svg><span>Материалы</span></button>
+ <button data-mobile="animation"><svg class="ico"><use href="#i-film"/></svg><span>Анимация</span></button>
  <button data-mobile="variants"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button>
  <button data-mobile="parameters"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройки</span></button>
  </nav>
@@ -466,7 +521,9 @@
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
 <script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
-<script src="app.js?v=scene-setup-two-modes-v37-20261109"></script>
+<script src="dom-render-animation-v39.js?v=cinema-profiles-20261109"></script>
+<script src="dom-render-animation-art-v40.js?v=premium-studio-art-20261109"></script>
+<script src="app.js?v=animation-studio-v40-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
