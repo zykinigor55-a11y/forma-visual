@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./animation-studio.css";
 
 export const metadata: Metadata = {
   title: "Forma Визуал — ваш дом в новом образе",
