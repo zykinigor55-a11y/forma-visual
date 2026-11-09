@@ -608,24 +608,75 @@ function animationSettings(){
 function animationColorFilter(id){
  return {neutral:'none',filmic:'sepia(.12) saturate(.84) contrast(1.06)',contrast:'contrast(1.22) saturate(.82)',warm:'sepia(.20) saturate(1.16) brightness(1.04)',cool:'hue-rotate(14deg) saturate(.78) contrast(1.06)',bw:'grayscale(1) contrast(1.12)'}[id]||'none';
 }
+const ANIM_DEMO_HOUSE='assets/residence-render.jpg';
+const ANIM_LENS_SETTINGS={
+ ultra14:[14,1.00],shift17:[17,1.07],shift24:[24,1.16],cine24:[24,1.16],
+ cine35:[35,1.29],cine50:[50,1.44],portrait85:[85,1.72],
+ macro100:[100,1.86],tele135:[135,2.07],ana40:[40,1.34]
+};
+const ANIM_MOVEMENT_PATHS={
+ dolly:['M18 45 L206 11',18,45,206,11],
+ orbit:['M28 35 Q112 -8 198 35',28,35,198,35],
+ slider:['M18 28 L205 28',18,28,205,28],
+ crane:['M110 50 L110 5',110,50,110,5],
+ drone:['M22 9 Q105 28 203 45',22,9,203,45],
+ walk:['M18 43 Q70 15 130 30 T205 15',18,43,205,15],
+ tilt:['M110 50 Q155 25 110 5',110,50,110,5],
+ macro:['M30 34 L192 21',30,34,192,21]
+};
+function animationMotionGraphic(id){
+ const row=ANIM_MOVEMENT_PATHS[id]||ANIM_MOVEMENT_PATHS.dolly;
+ return '<span class="anim-motion-photo-overlay" aria-hidden="true"><svg viewBox="0 0 220 55"><path d="'+row[0]+'" fill="none" stroke="#d7ffe3" stroke-width="4" stroke-linecap="round" stroke-dasharray="11 7"/><circle cx="'+row[1]+'" cy="'+row[2]+'" r="6" fill="#f5fff5"/><circle cx="'+row[3]+'" cy="'+row[4]+'" r="7" fill="#66e49a"/></svg></span>';
+}
 function renderAnimationCards(containerId,field,items,kind,value){
  const holder=$(containerId);
  if(!holder)return;
- holder.innerHTML=items.map(item=>`<button type="button" class="anim-option-card ${item.id===value?'active':''}" data-anim-kind="${eHTML(field)}" data-anim-id="${eHTML(item.id)}" aria-pressed="${item.id===value}">
- <span class="anim-option-photo"><img src="${animationArt(kind,item.id)}" alt="${eHTML(item.name)} — визуальный пресет" loading="lazy" decoding="async"><span class="anim-option-check" aria-hidden="true">✓</span></span>
- <span class="anim-option-copy"><strong>${eHTML(item.name)}</strong><em>${eHTML(item.tag||'')}</em><small>${eHTML(item.desc||'')}</small></span></button>`).join('');
+ holder.innerHTML=items.map(item=>{
+  const realPhoto=kind==='grade'||kind==='motion';
+  const source=realPhoto?ANIM_DEMO_HOUSE:animationArt(kind,item.id);
+  const filter=kind==='grade'?' style="filter:'+animationColorFilter(item.id)+'"':'';
+  return `<button type="button" class="anim-option-card ${item.id===value?'active':''}" data-anim-kind="${eHTML(field)}" data-anim-id="${eHTML(item.id)}" aria-pressed="${item.id===value}">
+ <span class="anim-option-photo ${realPhoto?'anim-photo-real':''}"><img src="${source}" alt="${eHTML(item.name)} — изображение пресета" loading="lazy" decoding="async"${filter}>${kind==='motion'?animationMotionGraphic(item.id):''}<span class="anim-option-check" aria-hidden="true">✓</span></span>
+ <span class="anim-option-copy"><strong>${eHTML(item.name)}</strong><em>${eHTML(item.tag||'')}</em><small>${eHTML(item.desc||'')}</small></span></button>`;
+ }).join('');
+}
+function updateAnimationTrajectory(motion){
+ const row=ANIM_MOVEMENT_PATHS[motion]||ANIM_MOVEMENT_PATHS.dolly;
+ $('animPath').setAttribute('d',row[0]);
+ $('animPathStart').setAttribute('cx',row[1]);$('animPathStart').setAttribute('cy',row[2]);
+ $('animPathEnd').setAttribute('cx',row[3]);$('animPathEnd').setAttribute('cy',row[4]);
 }
 function renderAnimationSummary(){
  if(!$('animSummary')||!project||!window.DOM_RENDER_ANIMATION)return;
  const lib=window.DOM_RENDER_ANIMATION,s=animationSettings();
- const c=lib.cameras.find(v=>v.id===s.camera)||lib.cameras[0],l=lib.lenses.find(v=>v.id===s.lens)||lib.lenses[0],m=lib.moves.find(v=>v.id===s.motion)||lib.moves[0],g=lib.grades.find(v=>v.id===s.grade)||lib.grades[0];
+ const c=lib.cameras.find(v=>v.id===s.camera)||lib.cameras[0],
+       l=lib.lenses.find(v=>v.id===s.lens)||lib.lenses[0],
+       m=lib.moves.find(v=>v.id===s.motion)||lib.moves[0],
+       g=lib.grades.find(v=>v.id===s.grade)||lib.grades[0];
  $('animSummary').textContent=c.name+' · '+l.name+' · '+m.name;
  $('animSummaryDetail').textContent=s.duration+' секунд · '+s.fps+' fps · '+s.ratio+' · '+g.name;
- $('animPromptText').value=lib.buildPrompt(s);
- $('animPreviewDuration').textContent=s.duration+' s · '+s.fps+' fps';
+ $('animPreviewDuration').textContent=s.duration+' с · '+s.fps+' fps';
+ $('animHUDCamera').textContent=c.name;
+ $('animHUDLens').textContent=l.name;
+ $('animHUDMotion').textContent=m.name;
  $('animPreviewScreen').dataset.motion=s.motion;
  $('animPreviewScreen').dataset.ratio=s.ratio;
  $('animPreviewImage').style.filter=animationColorFilter(s.grade);
+ const [mm,zoom]=ANIM_LENS_SETTINGS[s.lens]||ANIM_LENS_SETTINGS.shift24;
+ const fov=s.lens==='ana40'?Math.round(2*Math.atan(36/(2*20))*180/Math.PI):
+   Math.round(2*Math.atan(36/(2*mm))*180/Math.PI);
+ $('animFocalLabel').textContent=mm+' мм';
+ $('animFovLabel').textContent='≈'+fov+'°';
+ const preview=$('animPreviewFrame');
+ const motion=s.motion;
+ const diff={dolly:[0,0,1.08],orbit:[-1.8,.2,1.03],slider:[-2.6,0,1],crane:[0,2.4,1.02],drone:[1.1,1.8,1.09],walk:[1.2,.4,1.05],tilt:[0,2.5,1],macro:[-2,0,1.075]}[motion]||[0,0,1.06];
+ const intensity=s.intensity==='moderate'?1.5:1;
+ preview.style.setProperty('--anim-start-scale',String(zoom));
+ preview.style.setProperty('--anim-end-scale',String(+(zoom*diff[2]).toFixed(4)));
+ preview.style.setProperty('--anim-end-x',(diff[0]*intensity)+'%');
+ preview.style.setProperty('--anim-end-y',(diff[1]*intensity)+'%');
+ preview.style.transform='scale('+zoom+')';
+ updateAnimationTrajectory(motion);
 }
 function renderAnimationPanel(){
  const lib=window.DOM_RENDER_ANIMATION,art=window.DOM_RENDER_ANIMATION_ART;
@@ -637,8 +688,14 @@ function renderAnimationPanel(){
  renderAnimationCards('animGrades','grade',lib.grades,'grade',s.grade);
  for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRatio','ratio'],['animIntensity','intensity']])$(id).value=String(s[field]);
  if($('animExtra').value!==s.promptExtra)$('animExtra').value=s.promptExtra;
- const src=renderURL||sourceURL||asset(ASSET+'residence-model-v32.webp');
+ const useProject=s.previewSource==='project'&&!!(renderURL||sourceURL);
+ const src=useProject?(renderURL||sourceURL):ANIM_DEMO_HOUSE;
  if($('animPreviewImage').getAttribute('src')!==src)$('animPreviewImage').src=src;
+ $('animPreviewState').textContent=useProject?'Исходное изображение проекта':'Демонстрационный архитектурный дом';
+ document.querySelectorAll('[data-anim-source]').forEach(el=>{
+  const active=el.dataset.animSource===(useProject?'project':'demo');
+  el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active));
+ });
  renderAnimationSummary();
 }
 function updateAnimationSetting(field,value,rerender=true){
@@ -652,32 +709,13 @@ function playAnimationPreview(){
  const frame=$('animPreviewFrame'),s=animationSettings();
  frame.classList.remove('is-playing');
  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-  $('animPreviewState').textContent='Схема движения · уменьшенная анимация отключена';
+  $('animPreviewState').textContent='Анимация отключена настройками устройства';
   return;
  }
  frame.style.setProperty('--anim-preview-seconds',String(s.duration)+'s');
  void frame.offsetWidth;
  frame.classList.add('is-playing');
- $('animPreviewState').textContent='Показываем схему · не AI-видео';
-}
-function exportAnimationBrief(){
- if(!project)return;
- const lib=window.DOM_RENDER_ANIMATION,s=animationSettings();
- const data='ДОМ.РЕНДЕР / Архитектурная анимация\\nПроект: '+project.name+'\\nПромпт: профиль кино и оптики\\n\\n'+lib.buildPrompt(s)+'\\n';
- const file=new Blob([data.replace(/\\n/g,'\n')],{type:'text/plain;charset=utf-8'});
- const url=URL.createObjectURL(file),a=document.createElement('a');
- a.href=url;a.download='DOM-RENDER-ANIMATION-BRIEF.txt';document.body.appendChild(a);a.click();a.remove();
- setTimeout(()=>URL.revokeObjectURL(url),3000);
- toast('ТЗ для анимации скачано');
-}
-async function copyAnimationPrompt(){
- if(!window.DOM_RENDER_ANIMATION)return;
- const textPrompt=window.DOM_RENDER_ANIMATION.buildPrompt(animationSettings());
- try{
-  if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(textPrompt);
-  else{$('animPromptText').focus();$('animPromptText').select();if(!document.execCommand('copy'))throw Error('Clipboard unavailable')}
-  toast('Промпт скопирован');
- }catch(e){toast('Откройте полный промпт и скопируйте его вручную')}
+ $('animPreviewState').textContent='Симуляция движения · '+s.duration+' с';
 }
 function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderResults();renderVariantsPanel();renderAnimationPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
 function renderResults(){const items=[{id:'source',label:'Исходник',src:sourceURL||asset(ASSET+'residence-model-v32.webp')}];if(project.demo)items.push({id:'demo',label:'Пример фото',src:demoPhoto});for(const r of project.renders)items.push({id:r.id,label:r.batchLabel||`Рендер ${r.number||''}`,src:imageCache.get(mediaKey('render_'+r.id))||asset(ASSET+'residence-render.jpg')});$('resultsStrip').innerHTML=items.map(r=>`<button class="result-thumb ${((project.activeRender|| (project.demo?'demo':'source'))===r.id)?'active':''}" data-result="${r.id}"><img src="${eHTML(r.src)}" alt="${eHTML(r.label)}"><span>${eHTML(r.label)}</span></button>`).join('');$('resultsHint').textContent=project.demo?'Пример результата · AI-фото не генерировалось':(project.renders.length?`${project.renders.length} AI-результатов`:'Рендеров пока нет')}
@@ -1123,11 +1161,12 @@ for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRat
 }
 $('animExtra').oninput=e=>updateAnimationSetting('promptExtra',e.target.value,false);
 $('animPlayPreview').onclick=playAnimationPreview;
-$('animCopyPrompt').onclick=copyAnimationPrompt;
-$('animExportBrief').onclick=exportAnimationBrief;
+document.querySelectorAll('[data-anim-source]').forEach(el=>el.onclick=()=>updateAnimationSetting('previewSource',el.dataset.animSource));
 $('animPreviewFrame').addEventListener('animationend',()=>{
  $('animPreviewFrame').classList.remove('is-playing');
- $('animPreviewState').textContent='Схематическая анимация кадра';
+ const s=animationSettings(),zoom=(ANIM_LENS_SETTINGS[s.lens]||ANIM_LENS_SETTINGS.shift24)[1];
+ $('animPreviewFrame').style.transform='scale('+zoom+')';
+ $('animPreviewState').textContent=s.previewSource==='project'&&!!(renderURL||sourceURL)?'Исходное изображение проекта':'Демонстрационный архитектурный дом';
 });
 if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-render-mode]').forEach(b=>b.onclick=()=>showRenderSetupMode(b.dataset.renderMode));
 document.querySelectorAll('[data-render-open]').forEach(b=>b.onclick=()=>{
