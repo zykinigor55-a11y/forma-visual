@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 330" width="540" height="330" role="img" aria-label="ana40 camera lens illustration"><defs>
+ <linearGradient id="back" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0c1719"/><stop offset=".52" stop-color="#1e292a"/><stop offset="1" stop-color="#0b1214"/></linearGradient>
+ <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#637074"/><stop offset=".17" stop-color="#303b40"/><stop offset=".55" stop-color="#111719"/><stop offset=".83" stop-color="#263136"/><stop offset="1" stop-color="#0b1012"/></linearGradient>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#142c32"/><stop offset=".24" stop-color="#45676a"/><stop offset=".47" stop-color="#122328"/><stop offset=".71" stop-color="#0c1c20"/><stop offset=".89" stop-color="#345657"/><stop offset="1" stop-color="#0c171a"/></linearGradient>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#101719"/><stop offset=".13" stop-color="#647176"/><stop offset=".28" stop-color="#141c1f"/><stop offset=".71" stop-color="#303d41"/><stop offset=".9" stop-color="#12191b"/><stop offset="1" stop-color="#6b767a"/></linearGradient>
+ <radialGradient id="halo"><stop stop-color="#668d75" stop-opacity=".35"/><stop offset=".6" stop-color="#2c5346" stop-opacity=".08"/><stop offset="1" stop-color="#132421" stop-opacity="0"/></radialGradient>
+ <filter id="shadow"><feGaussianBlur stdDeviation="11"/></filter>
+ </defs><rect width="540" height="330" rx="22" fill="url(#back)"/><ellipse cx="280" cy="155" rx="248" ry="160" fill="url(#halo)"/><path d="M25 275 H515" stroke="#789287" stroke-opacity=".11"/><ellipse cx="266" cy="278" rx="194" ry="18" fill="#000" opacity=".48" filter="url(#shadow)"/>
+ <path d="M146 112H340v130H146z" fill="url(#metal)" stroke="#637171" stroke-width="2.5"/>
+ <path d="M146 119H340" stroke="#a1b3ad" stroke-opacity=".28" stroke-width="3"/>
+ <path d="M146 235H340" stroke="#020809" stroke-opacity=".8" stroke-width="5"/>
+ <path d="M179 118v109" stroke="#738082" stroke-opacity=".33" stroke-width="3"/><path d="M183 123v99" stroke="#050b0c" stroke-opacity=".7" stroke-width="6"/><path d="M198 118v109" stroke="#738082" stroke-opacity=".33" stroke-width="3"/><path d="M202 123v99" stroke="#050b0c" stroke-opacity=".7" stroke-width="6"/><path d="M217 118v109" stroke="#738082" stroke-opacity=".33" stroke-width="3"/><path d="M221 123v99" stroke="#050b0c" stroke-opacity=".7" stroke-width="6"/><path d="M237 118v109" stroke="#738082" stroke-opacity=".33" stroke-width="3"/><path d="M241 123v99" stroke="#050b0c" stroke-opacity=".7" stroke-width="6"/><path d="M256 118v109" stroke="#738082" stroke-opacity=".33" stroke-width="3"/><path d="M260 123v99" stroke="#050b0c" stroke-opacity=".7" stroke-width="6"/><path d="M276 118v109" stroke="#738082" stroke-opacity=".33" stroke-width="3"/><path d="M280 123v99" stroke="#050b0c" stroke-opacity=".7" stroke-width="6"/>
+ <path d="M207.2 115v124" stroke="#83938c" stroke-opacity=".65" stroke-width="2"/>
+ <path d="M227.60000000000002 115v124" stroke="#080e0f" stroke-width="5"/>
+ <ellipse cx="340" cy="177" rx="84" ry="67" fill="#141c20" stroke="#728482" stroke-width="5"/>
+ <ellipse cx="342" cy="177" rx="88" ry="61" fill="#101719" stroke="#707e7e" stroke-width="2.2"/>
+ <ellipse cx="342" cy="177" rx="74" ry="47" fill="#1a2428" stroke="#343d41" stroke-width="8"/>
+ <ellipse cx="342" cy="177" rx="64" ry="37" fill="url(#glass)" stroke="#89a6a0" stroke-opacity=".35" stroke-width="2"/>
+ <ellipse cx="334" cy="169" rx="19.6" ry="12.040000000000001" fill="#102025" opacity=".6"/>
+ <path d="M309.1 152.92 Q331.5 139.16 356 149.05" stroke="#c6ebe1" stroke-opacity=".54" stroke-width="5" stroke-linecap="round" fill="none"/>
+ <path d="M354.6 198.93 Q380.5 191.62 387.5 182.16" stroke="#5a938b" stroke-opacity=".26" stroke-width="5" stroke-linecap="round" fill="none"/>
+ <ellipse cx="146" cy="177" rx="19" ry="60" fill="#1b2527" stroke="#7e9290" stroke-opacity=".34"/>
+ <path d="M164 132h30 M164 220h30" stroke="#a0b1ad" stroke-opacity=".34" stroke-width="2"/></svg>
