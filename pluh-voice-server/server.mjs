@@ -17,6 +17,8 @@ const port = Number(process.env.PORT || 8080);
 const agentId = process.env.ELEVENLABS_AGENT_ID || "agent_7501m6wt1wm5efybwty352yqned2";
 const types={".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",".png":"image/png",".webp":"image/webp",".mp4":"video/mp4"};
 const requests=new Map();
+const chatRequests=new Map();let chatDailyCount=0,chatDayStart=Date.now();
+
 function reply(res,status,data){res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"});res.end(JSON.stringify(data));}
 function compare(a,b){if(typeof a!=="string"||typeof b!=="string")return false;const ha=createHash("sha256").update(a).digest(),hb=createHash("sha256").update(b).digest();return timingSafeEqual(ha,hb);}
 async function handler(req,res){
@@ -46,6 +48,47 @@ async function handler(req,res){
      if(typeof result.signed_url!=="string"||!result.signed_url.startsWith("wss://api.elevenlabs.io/"))return reply(res,502,{error:"Некорректный ответ ElevenLabs."});
      return reply(res,200,{signedUrl:result.signed_url});
    }catch{return reply(res,502,{error:"Связь с ElevenLabs недоступна."});}
+ }
+ if(pathname==="/api/chat") { // PLUX_CHAT_V128
+  const allowedOrigin="https://plux-v12-2-2k-fixed.onrender.com";
+  const origin=String(req.headers.origin||"");
+  if(origin!==allowedOrigin) return reply(res,403,{error:"Origin not allowed"});
+  res.setHeader("Access-Control-Allow-Origin",allowedOrigin);
+  res.setHeader("Access-Control-Allow-Headers","Content-Type");
+  res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
+  res.setHeader("Vary","Origin");
+  if(req.method==="OPTIONS"){res.writeHead(204,{"Cache-Control":"no-store"});res.end();return}
+  if(req.method!=="POST")return reply(res,405,{error:"Use POST"});
+  const secret=process.env.API_MARKET_KEY;
+  if(!secret)return reply(res,503,{error:"ИИ пока не подключён. Нужно добавить API_MARKET_KEY в настройки сервера Render."});
+  const ip=String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0];
+  const now=Date.now();
+  const recent=(chatRequests.get(ip)||[]).filter(t=>now-t<60000);
+  if(recent.length>=10)return reply(res,429,{error:"Слишком много сообщений. Попробуй через минуту."});
+  recent.push(now);chatRequests.set(ip,recent);
+  // Prevent unlimited anonymous consumption. The counters reset when the service restarts.
+  if(now-chatDayStart>86400000){chatDayStart=now;chatDailyCount=0}
+  if(++chatDailyCount>500)return reply(res,429,{error:"Сегодня лимит сообщений закончился."});
+  let raw="";for await(const chunk of req){raw+=chunk;if(raw.length>18000)return reply(res,413,{error:"Сообщение слишком длинное"})}
+  let data;try{data=JSON.parse(raw)}catch{return reply(res,400,{error:"Некорректный запрос"})}
+  if(!Array.isArray(data.messages)||data.messages.length>16||!data.messages.length)return reply(res,400,{error:"Некорректная история сообщений"});
+  const messages=data.messages.filter(m=>m&&["user","assistant"].includes(m.role)&&typeof m.content==="string").slice(-12);
+  if(messages.length<1||messages.some(m=>!m.content.trim()||m.content.length>2500))return reply(res,400,{error:"Сообщение должно содержать текст до 2500 символов"});
+  // Do not forward arbitrary client-injected roles or keys.
+  messages.unshift({role:"system",content:"Ты ПЛЮХ — доброжелательный, энергичный персональный помощник. Отвечай на русском естественно и ясно, коротко по умолчанию. Не придумывай, что ты уже выполнил действие или подключил сервис."});
+  try {
+    const upstream=await fetch("https://api-market1.shop/v1/chat/completions",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+secret},
+      body:JSON.stringify({model:"gpt-6-luna",messages,temperature:0.7,max_completion_tokens:600}),
+      signal:AbortSignal.timeout(30000)
+    });
+    if(!upstream.ok)return reply(res,502,{error:"API Market не ответил успешно (HTTP "+upstream.status+"). Проверь ключ и баланс."});
+    const result=await upstream.json();
+    const answer=result?.choices?.[0]?.message?.content;
+    if(typeof answer!=="string"||!answer.trim())return reply(res,502,{error:"Модель вернула пустой ответ."});
+    return reply(res,200,{reply:answer.slice(0,5000),model:"gpt-6-luna"});
+  } catch(e){return reply(res,502,{error:e?.name==="TimeoutError"?"Модель не ответила вовремя.":"Связь с API Market недоступна."})}
  }
  if(req.method!=="GET"&&req.method!=="HEAD")return reply(res,405,{error:"Method not allowed"});
  const path=resolve(root,"."+decodeURIComponent(pathname==="/"?"/index.html":pathname));
