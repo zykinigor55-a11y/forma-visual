@@ -33,10 +33,8 @@ function updateContact(email){
 }
 function paint(data){
  lastStatus=data;
- const needCode=!!data.authRequired&&!data.authorized;
  const ready=!!data.ready;
- txt('cabinetAccessStatus',needCode?'Требуется код доступа':ready?'AI подключён · Nano Banana 2.1':'Генерация пока недоступна');
- $('cabinetLogin').hidden=!needCode;
+ txt('cabinetAccessStatus',ready?'AI подключён · Nano Banana 2.1':'Генерация пока недоступна');
  const remaining=(data.authorized&&Number.isInteger(data.dailyRemaining))?data.dailyRemaining:null;
  const limit=(data.authorized&&Number.isInteger(data.dailyLimit))?data.dailyLimit:null;
  txt('cabinetRemaining',remaining===null?'—':remaining);
@@ -58,20 +56,7 @@ async function refresh(){
  }catch(error){
   txt('cabinetAccessStatus','Не удалось получить данные. Нажмите «Обновить данные».');
   txt('cabinetRemaining','—');
-  $('cabinetLogin').hidden=true;
- }finally{btn.disabled=false}
-}
-async function login(){
- const pin=prompt('Введите код доступа ДОМ.РЕНДЕР (не API-ключ):');
- if(pin===null||!pin)return;
- const btn=$('cabinetLogin');btn.disabled=true;
- try{
-  const response=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({pin})});
-  const result=await response.json().catch(()=>({}));
-  if(!response.ok)throw Error(result.error||'Не удалось войти');
-  await refresh();
- }catch(error){txt('cabinetAccessStatus',error.message||'Ошибка авторизации')}
- finally{btn.disabled=false}
+  }finally{btn.disabled=false}
 }
 function init(){
  if(!$('cabinetCover'))return;
@@ -79,7 +64,6 @@ function init(){
  d.querySelectorAll('[data-cabinet-tab]').forEach(el=>el.addEventListener('click',()=>switchView(el.dataset.cabinetTab)));
  $('cabinetClose').addEventListener('click',close);
  $('cabinetRefresh').addEventListener('click',refresh);
- $('cabinetLogin').addEventListener('click',login);
  $('cabinetCover').addEventListener('click',ev=>{if(ev.target===$('cabinetCover'))close()});
  d.addEventListener('keydown',ev=>{if($('cabinetCover').hidden)return;if(ev.key==='Escape'){ev.preventDefault();close()}});
 }
