@@ -86,3 +86,9 @@
 @keyframes anim-cinema-preview{0%{transform:translate(0,0) scale(var(--a-start,1.02))}100%{transform:translate(var(--tx-end,0%),var(--ty-end,0%)) scale(var(--a-end,1.08))}}
 @media(max-width:700px){#animationPanel .anim-hero{padding:17px 14px}#animationPanel .anim-option-grid{gap:7px;padding:9px}#animationPanel .anim-option-copy strong{font-size:10px}#animationPanel .anim-option-photo{aspect-ratio:1.55}#animationPanel .anim-settings-grid{gap:7px}#animationPanel .anim-final-actions{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){#animationPanel .anim-preview-frame.is-playing{animation:none!important}#animationPanel .anim-option-card,#animationPanel .anim-option-photo img{transition:none!important}}
+
+/* Six navigation destinations instead of five: keep touch targets readable. */
+@media(min-width:1051px){.inspector .tab-bar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px}.inspector .tab{min-width:0;padding-inline:1px}.inspector .tab span{font-size:9px}}
+@media(min-width:701px) and (max-width:1050px){.inspector .tab-bar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px}.inspector .tab{min-width:0}.inspector .tab span{font-size:9px}}
+@media(max-width:700px){.inspector .tab-bar{grid-template-columns:repeat(6,minmax(0,1fr));gap:1px}.inspector .tab{min-width:0;padding:8px 1px;gap:3px}.inspector .tab span{font-size:8px}.mobile-nav{grid-template-columns:repeat(6,minmax(0,1fr));gap:0}.mobile-nav button{min-width:0;padding:5px 1px}.mobile-nav button .ico{width:20px;height:20px}.mobile-nav button span{font-size:8px;line-height:1.1;white-space:normal}}
+@media(max-width:360px){.inspector .tab span{font-size:7.2px}.mobile-nav button span{font-size:7.2px}}
