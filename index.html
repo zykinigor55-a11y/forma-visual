@@ -63,6 +63,7 @@
   <button type="button" class="view-mode" data-view-mode="side" aria-pressed="false" title="Исходник и результат рядом">▥ <span>Рядом</span></button>
   <button type="button" class="view-mode" data-view-mode="result" aria-pressed="false" title="Показать только результат">▣ <span>Результат</span></button>
  </div>
+ <p class="compare-hint" id="compareHint" role="status" hidden>Исходник загружен. Сравнение появится после генерации AI-результата.</p>
  <div class="stage" id="stage" data-view-mode="slider" style="--split:36%">
    <img id="afterImg" alt="Демонстрационная фотореалистичная визуализация" src="assets/residence-render-bluehour-fixed.webp?v=stable-20261109" draggable="false">
    <img id="beforeImg" alt="Упрощённая модель дома в стиле SketchUp: без мебели и деревьев, тот же ракурс" src="assets/residence-model-clean-approved-v36.png?v=approved-clean-v36" onerror="this.onerror=null;this.src='assets/residence-model-user-approved-20261109.png?v=approved-photo-20261109'" draggable="false">
@@ -73,6 +74,9 @@
    <input id="splitSlider" class="split-slider" type="range" min="0" max="100" value="36" aria-label="Сравнение скриншота и результата">
    <div class="viewer-overlay-top"><span class="image-tag">МОДЕЛЬ / SKETCHUP-СТИЛЬ</span><span class="image-tag image-tag-dark" id="resultTag">ДЕМОНСТРАЦИЯ</span></div>
    <div class="viewer-overlay-bottom"><div><small>АРХИТЕКТУРА / ЭКСТЕРЬЕР</small><strong id="stageTitle">Резиденция 01</strong><span id="stageSubtitle">Сад и газон · Лето · День</span></div><span class="image-badge" id="stageRatio">16:9</span></div>
+   <div class="render-progress" id="renderProgress" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="render-progress-panel"><span class="render-progress-kicker"><i aria-hidden="true"></i> ДОМ.РЕНДЕР · AI-СТУДИЯ</span><strong id="renderProgressTitle">Подготавливаем сцену</strong><span id="renderProgressDetail">Обрабатываем изображение и настройки</span><div class="render-progress-indeterminate" aria-hidden="true"><span></span></div><small>Идёт настоящая обработка · дождитесь результата</small></div>
+   </div>
    <div class="no-render" id="noRender" hidden><svg class="ico"><use href="#i-image"/></svg><strong>Результата пока нет</strong><span>Настройте сцену и запустите AI-визуализацию.</span></div>
   </div>
   <div class="editor-toolbar" id="editorToolbar" hidden>
@@ -168,6 +172,6 @@
 <script src="dom-render-preset-plants.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-unified-presets.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
-<script src="app.js?v=clean-approved-v36-prepared"></script>
+<script src="app.js?v=ux-mobile-20261109-v26-clean-approved-v36-prepared"></script>
 </body>
 </html>
