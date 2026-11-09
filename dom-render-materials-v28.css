@@ -65,3 +65,26 @@
 .editor-toolbar .similar-settings input{accent-color:#2c6e4d}
 .stage.edit-mode #maskOverlay{cursor:crosshair}
 @media(max-width:700px){.wand-approval{flex:1 1 100%;justify-content:space-between}.wand-approval span{font-size:11px}.editor-tools [data-tool="wand"]{min-width:145px}}
+
+/* v30 — one-click additive facade selection; prominent context-local undo */
+.stage .wand-undo-floating{display:none}
+.stage.edit-mode .wand-undo-floating{
+ position:absolute;z-index:20;top:53px;left:15px;display:flex;align-items:center;gap:8px;
+ min-height:42px;padding:8px 14px;border:1px solid rgba(255,255,255,.7);
+ border-radius:10px;background:rgba(28,56,39,.94);color:#fff;box-shadow:0 5px 20px rgba(7,20,12,.25);
+ backdrop-filter:blur(10px);font-weight:750;font-size:12px
+}
+.stage.edit-mode .wand-undo-floating .ico{width:17px;height:17px;stroke-width:2}
+.stage.edit-mode .wand-undo-floating small{display:block;font-size:10px;font-weight:500;color:#dcebdd}
+.stage.edit-mode .wand-undo-floating:hover:not(:disabled){background:#396c4b;transform:translateY(-1px)}
+.stage.edit-mode .wand-undo-floating:disabled{opacity:.72;cursor:not-allowed;background:#68766b}
+.editor-right .wand-undo-toolbar{min-height:41px;border:1px solid #86a68d;color:#28573a;background:#e3efe5;border-radius:8px;font-weight:750;font-size:11px}
+.editor-right .wand-undo-toolbar:hover:not(:disabled){background:#d0e7d4;border-color:#568d63}
+.editor-right .wand-undo-toolbar:disabled{opacity:.68}
+.editor-tools .wand-add-mode:has(input:checked){background:#dcefe2;border-color:#98c3a4;color:#285a3b;font-weight:700}
+.editor-caption{max-width:100%;line-height:1.45}
+@media(max-width:700px){
+ .stage.edit-mode .wand-undo-floating{top:49px;left:10px;min-height:40px;padding:7px 11px;border-radius:9px}
+ .stage.edit-mode .wand-undo-floating small{display:none}
+ .editor-right .wand-undo-toolbar{min-height:44px;font-size:11px}
+}
