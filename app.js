@@ -453,6 +453,23 @@ async function applyMaterialZoneSuggestion(){
  $('materialFindReview').hidden=true;
  if(materialAction()==='color')await previewSelectedColor();
 }
+async function selectMaterialElement(id,action=null){
+ if(!zones.some(([z])=>z===id))return;
+ resetColorPreview(true);
+ current().zone=id;
+ if(action){
+  current().materialActions={...current().materialActions,[id]:action};
+  current().editSelectedOnly=action!=='keep';
+ }
+ renderZones();renderMaterials();renderFooter();save();
+ await loadMask();
+ if(materialAction()==='color'){
+  if(selectedMaskPixels())await previewSelectedColor();
+  else await proposeMaterialZone();
+ }else if(materialAction()==='replace'&&!selectedMaskPixels()){
+  await proposeMaterialZone();
+ }
+}
 function renderMaterialAction(){
  const act=materialAction(),name=zoneLabel();
  document.querySelectorAll('[data-material-action]').forEach(b=>{const active=b.dataset.materialAction===act;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
@@ -462,9 +479,11 @@ function renderMaterialAction(){
  $('materialReplacePane').hidden=act!=='replace';
  $('editSelectedOnly').checked=act!=='keep'&&current().editSelectedOnly!==false;
  $('materialColor').value=materialColor();
+ $('materialColorHex').value=materialColor().toUpperCase();
+ document.querySelectorAll('[data-quick-zone]').forEach(button=>{const active=button.dataset.quickZone===current().zone&&act==='color';button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
  if($('materialInstruction').value!==materialInstruction())$('materialInstruction').value=materialInstruction();
  document.querySelectorAll('[data-color]').forEach(b=>{b.classList.toggle('active',b.dataset.color.toLowerCase()===materialColor().toLowerCase());b.setAttribute('aria-pressed',String(b.dataset.color.toLowerCase()===materialColor().toLowerCase()))});
- $('materialActionInfo').textContent=act==='keep'?name+': сохраняем исходный материал и улучшаем только реализм.':act==='color'?name+': выберите цвет и выделите поверхность. Тип покрытия сохраняется.':name+': выберите свою фактуру и выделите поверхность для замены.';
+ $('materialActionInfo').textContent=act==='keep'?name+': сохраняем исходный материал и улучшаем только реализм.':act==='color'?name+': задайте желаемый оттенок или опишите изменение словами. Тип покрытия сохраняется.':name+': загрузите новую фактуру или опишите материал словами. Изменение относится только к этому элементу.';
 }
 function renderZones(){
  const s=current();
@@ -906,7 +925,7 @@ function chooseDemoEnvironment(kind,applySettings=true){
  document.querySelectorAll('[data-scene-environment]').forEach(b=>{const active=b.dataset.sceneEnvironment===kind;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  if(applySettings){current().environment=kind;renderChoices();renderFooter();save();toast('Окружение выбрано: '+info[kind]+'. Для генерации нажмите «Создать визуализацию».')}
 }
-function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-scene-environment]').forEach(el=>el.onclick=()=>chooseDemoEnvironment(el.dataset.sceneEnvironment));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;resetColorPreview(true);current().zone=el.dataset.zone;renderZones();renderMaterials();renderFooter();save();await loadMask();if(materialAction()==='color'){if(selectedMaskPixels())previewSelectedColor();else proposeMaterialZone()}else if(materialAction()==='replace'&&!selectedMaskPixels())proposeMaterialZone()});for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
+function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-scene-environment]').forEach(el=>el.onclick=()=>chooseDemoEnvironment(el.dataset.sceneEnvironment));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;await selectMaterialElement(el.dataset.zone)});document.querySelectorAll('[data-quick-zone]').forEach(el=>el.addEventListener('click',async()=>{await selectMaterialElement(el.dataset.quickZone,'color');$('materialColorPane').scrollIntoView({behavior:'smooth',block:'nearest'});}));for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
  const act=b.dataset.materialAction;
  current().materialActions={...current().materialActions,[current().zone]:act};
  current().editSelectedOnly=act!=='keep';
@@ -920,6 +939,16 @@ function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{
 $('materialColor').addEventListener('input',e=>{
  current().materialColors={...current().materialColors,[current().zone]:e.target.value};
  renderZones();renderFooter();save();previewSelectedColor();
+});
+$('materialColorHex').addEventListener('input',e=>{
+ const hex=e.target.value.trim();
+ const valid=/^#[0-9a-fA-F]{6}$/.test(hex);
+ e.target.classList.toggle('is-invalid',hex.length>=7&&!valid);
+ if(!valid)return;
+ current().materialColors={...current().materialColors,[current().zone]:hex.toLowerCase()};
+ $('materialColor').value=hex.toLowerCase();
+ renderZones();renderFooter();save();
+ if(selectedMaskPixels())previewSelectedColor();
 });
 $('materialColorSwatches').addEventListener('click',e=>{
  const b=e.target.closest('[data-color]');if(!b)return;
