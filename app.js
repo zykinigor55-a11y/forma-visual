@@ -350,6 +350,62 @@ function setViewerMode(mode){
  stage.classList.toggle('is-pending',!hasResult);
 }
 
+const RENDER_FLOW_STEPS=[
+ ['environment','Окружение'],['season','Сезон'],['weather','Погода'],
+ ['time','Освещение'],['plants','Растения'],['review','Проверка и запуск']
+];
+function renderFlowLabels(){
+ if(!project||!$('renderNodeChain'))return;
+ const p=current();
+ const selected={
+  environment:envLabel(),
+  season:cLabel('season',p.season),
+  weather:cLabel('weather',p.weather),
+  time:cLabel('time',p.time),
+  plants:cLabel('plants',p.plants)
+ };
+ for(const [key] of RENDER_FLOW_STEPS){
+  const el=$('renderNodeSummary-'+key);
+  if(el)el.textContent=key==='review'?(project.hasSource?'Готово к запуску':'Требуется исходник'):selected[key];
+ }
+ const review=$('renderReviewList');
+ if(review){
+  const rows=[
+   ['Проект',project.demo?'Демонстрация · загрузите свой исходник':project.hasSource?'Исходник загружен':'Нужно загрузить исходник'],
+   ['Окружение',selected.environment],['Сезон',selected.season],['Погода',selected.weather],
+   ['Освещение',selected.time],['Растения',selected.plants],
+   ['Выход',String(p.ratio||'16:9')+' · '+(p.quality==='high'?'Высокое':'Стандартное')+' · '+(Number(p.quantity)||1)+' изображение(й)']
+  ];
+  review.innerHTML=rows.map(([key,value])=>'<div class="render-review-row" role="listitem"><span>'+eHTML(key)+'</span><b>'+eHTML(value)+'</b></div>').join('');
+ }
+ const locked=p.lockGeometry!==false&&p.preserveMaterials!==false;
+ const status=$('renderReviewLockTitle'),desc=$('renderReviewLockText');
+ if(status)status.textContent=locked?'Геометрия и материалы защищены':'Проверьте параметры сохранения';
+ if(desc)desc.textContent=locked?'AI получает строгие инструкции удерживать архитектуру и существующие материалы. Абсолютная точность не гарантируется.':'Одна или несколько защит отключены. Для сохранения исходного дома включите фиксацию геометрии и материалов в параметрах.';
+ const flag=document.querySelector('#renderNode-review .render-review-lock');
+ if(flag)flag.classList.toggle('is-warning',!locked);
+}
+function openRenderFlowNode(id,scroll=false,persist=true){
+ const index=RENDER_FLOW_STEPS.findIndex(([key])=>key===id);
+ if(index<0)return;
+ RENDER_FLOW_STEPS.forEach(([key])=>{
+  const active=key===id;
+  const node=$('renderNode-'+key),body=$('renderNodePanel-'+key);
+  if(node)node.classList.toggle('is-open',active);
+  if(body)body.hidden=!active;
+  const toggle=document.querySelector('[data-node-open="'+key+'"]');
+  if(toggle)toggle.setAttribute('aria-expanded',String(active));
+ });
+ if(project&&persist){current().renderFlowNode=id;save()}
+ const progress=$('renderFlowProgress');if(progress)progress.style.width=((index+1)/RENDER_FLOW_STEPS.length*100).toFixed(2)+'%';
+ const summary=$('renderFlowPosition');
+ if(summary)summary.textContent='Шаг '+(index+1)+' из '+RENDER_FLOW_STEPS.length+' · '+RENDER_FLOW_STEPS[index][1];
+ renderFlowLabels();
+ if(scroll){
+  const node=$('renderNode-'+id);
+  if(node)node.scrollIntoView({behavior:'smooth',block:'nearest'});
+ }
+}
 function showTab(tab,scroll=false){
  if(!['project','environment','materials','variants','parameters'].includes(tab))tab='project';
  currentTab=tab;
@@ -368,6 +424,7 @@ function showTab(tab,scroll=false){
  if(tab!=='materials'&&editing)leaveEditor();
  if(tab==='materials')loadMask().then(()=>{if(materialAction()==='color'&&selectedMaskPixels()>0)previewSelectedColor()}).catch(()=>{});else {$('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);resetColorPreview(true)}
  if(tab==='variants')renderVariantsPanel();
+ if(tab==='environment')openRenderFlowNode(current().renderFlowNode||'environment',false,false);
  if(scroll)$('inspector').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function optionCards(group,arr,selected){return arr.map(([id,name])=>{
@@ -377,7 +434,7 @@ function optionCards(group,arr,selected){return arr.map(([id,name])=>{
  const glyph = group==='time'?'sun':group==='weather'?'cloud':'tree';
  return `<button class="image-option preset-photo-card ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}" title="${eHTML(name)}"><img src="${eHTML(sharp)}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span class="preset-card-icon" aria-hidden="true">${icon(glyph)}</span><span class="preset-card-label">${eHTML(name)}</span></button>`;
 }).join('')}
-function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group])}
+function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group]);renderFlowLabels()}
 function materialAction(zone=current().zone){return current().materialActions?.[zone]||'keep'}
 function materialColor(zone=current().zone){const value=current().materialColors?.[zone];return /^#[0-9a-fA-F]{6}$/.test(value||'')?value:'#575c51'}
 let materialPreviewRevision=0;
@@ -509,7 +566,7 @@ function renderMaterials(){
  $('textureRotate').value=String(s.textureRotate);
  $('deleteMyMaterial').hidden=!matById(s.mats[s.zone]).custom;
 }
-function renderFooter(){const s=current();$('projectPanelName').textContent=project.name;$('projectPanelMeta').textContent=(project.demo?'Демонстрационная модель':'Ракурс '+(project.angle||1))+' · '+(project.sourceWidth||1672)+'×'+(project.sourceHeight||941);$('projectPanelStatus').textContent=project.demo?'Демонстрация · AI-фото не генерировалось':(project.renders.length?project.renders.length+' сохранённых AI-результатов':'Исходник загружен · AI-результатов пока нет');$('summaryLine').textContent=`${envLabel()} · ${cLabel('season',s.season)} · ${cLabel('time',s.time)}`;$('summaryMaterial').textContent=`${customMaterials.some(m=>m.id===s.mats[s.zone])?matById(s.mats[s.zone]).name:(s.preserveMaterials!==false?'Материалы исходника':'Материал не выбран')} · ${zoneLabel().toLowerCase()}`;$('stageSubtitle').textContent=$('summaryLine').textContent;$('stageTitle').textContent=project.name;$('canvasProjectLabel').textContent=project.name;$('breadcrumbName').textContent=project.name;$('stageRatio').textContent=s.ratio;$('ratioSelect').value=s.ratio;$('qualitySelect').value=s.quality;$('quantitySelect').value=s.quantity;$('lockGeometry').checked=s.lockGeometry;$('preserveMaterials').checked=s.preserveMaterials!==false;$('keepReference').checked=s.keepReference;if($('angleLandscapeLock'))$('angleLandscapeLock').checked=s.keepReference;$('editSelectedOnly').checked=!!s.editSelectedOnly}
+function renderFooter(){const s=current();$('projectPanelName').textContent=project.name;$('projectPanelMeta').textContent=(project.demo?'Демонстрационная модель':'Ракурс '+(project.angle||1))+' · '+(project.sourceWidth||1672)+'×'+(project.sourceHeight||941);$('projectPanelStatus').textContent=project.demo?'Демонстрация · AI-фото не генерировалось':(project.renders.length?project.renders.length+' сохранённых AI-результатов':'Исходник загружен · AI-результатов пока нет');$('summaryLine').textContent=`${envLabel()} · ${cLabel('season',s.season)} · ${cLabel('time',s.time)}`;$('summaryMaterial').textContent=`${customMaterials.some(m=>m.id===s.mats[s.zone])?matById(s.mats[s.zone]).name:(s.preserveMaterials!==false?'Материалы исходника':'Материал не выбран')} · ${zoneLabel().toLowerCase()}`;$('stageSubtitle').textContent=$('summaryLine').textContent;$('stageTitle').textContent=project.name;$('canvasProjectLabel').textContent=project.name;$('breadcrumbName').textContent=project.name;$('stageRatio').textContent=s.ratio;$('ratioSelect').value=s.ratio;$('qualitySelect').value=s.quality;$('quantitySelect').value=s.quantity;$('lockGeometry').checked=s.lockGeometry;$('preserveMaterials').checked=s.preserveMaterials!==false;$('keepReference').checked=s.keepReference;if($('angleLandscapeLock'))$('angleLandscapeLock').checked=s.keepReference;$('editSelectedOnly').checked=!!s.editSelectedOnly;renderFlowLabels()}
 function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderResults();renderVariantsPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
 function renderResults(){const items=[{id:'source',label:'Исходник',src:sourceURL||asset(ASSET+'residence-model-v32.webp')}];if(project.demo)items.push({id:'demo',label:'Пример фото',src:demoPhoto});for(const r of project.renders)items.push({id:r.id,label:r.batchLabel||`Рендер ${r.number||''}`,src:imageCache.get(mediaKey('render_'+r.id))||asset(ASSET+'residence-render.jpg')});$('resultsStrip').innerHTML=items.map(r=>`<button class="result-thumb ${((project.activeRender|| (project.demo?'demo':'source'))===r.id)?'active':''}" data-result="${r.id}"><img src="${eHTML(r.src)}" alt="${eHTML(r.label)}"><span>${eHTML(r.label)}</span></button>`).join('');$('resultsHint').textContent=project.demo?'Пример результата · AI-фото не генерировалось':(project.renders.length?`${project.renders.length} AI-результатов`:'Рендеров пока нет')}
 function renderVariantsPanel(){
@@ -925,7 +982,16 @@ function chooseDemoEnvironment(kind,applySettings=true){
  document.querySelectorAll('[data-scene-environment]').forEach(b=>{const active=b.dataset.sceneEnvironment===kind;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  if(applySettings){current().environment=kind;renderChoices();renderFooter();save();toast('Окружение выбрано: '+info[kind]+'. Для генерации нажмите «Создать визуализацию».')}
 }
-function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-scene-environment]').forEach(el=>el.onclick=()=>chooseDemoEnvironment(el.dataset.sceneEnvironment));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;await selectMaterialElement(el.dataset.zone)});document.querySelectorAll('[data-quick-zone]').forEach(el=>el.addEventListener('click',async()=>{await selectMaterialElement(el.dataset.quickZone,'color');$('materialColorPane').scrollIntoView({behavior:'smooth',block:'nearest'});}));for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
+function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-node-open]').forEach(b=>b.addEventListener('click',()=>{
+ openRenderFlowNode(b.dataset.nodeOpen,true);
+}));
+document.querySelectorAll('[data-node-next]').forEach(b=>b.addEventListener('click',()=>{
+ openRenderFlowNode(b.dataset.nodeNext,true);
+}));
+$('renderReviewMaterials').onclick=()=>showTab('materials',true);
+$('renderReviewParameters').onclick=()=>showTab('parameters',true);
+$('renderNodeGenerate').onclick=()=>generate();
+document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-scene-environment]').forEach(el=>el.onclick=()=>chooseDemoEnvironment(el.dataset.sceneEnvironment));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;await selectMaterialElement(el.dataset.zone)});document.querySelectorAll('[data-quick-zone]').forEach(el=>el.addEventListener('click',async()=>{await selectMaterialElement(el.dataset.quickZone,'color');$('materialColorPane').scrollIntoView({behavior:'smooth',block:'nearest'});}));for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
  const act=b.dataset.materialAction;
  current().materialActions={...current().materialActions,[current().zone]:act};
  current().editSelectedOnly=act!=='keep';
