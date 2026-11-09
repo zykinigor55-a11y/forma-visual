@@ -434,7 +434,11 @@ function showTab(tab,scroll=false){
   loadMask('custom').then(()=>{updateSelectionStatus();updateSimpleMaterialsUI()}).catch(()=>{});
  }else {$('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);resetColorPreview(true)}
  if(tab==='variants')renderVariantsPanel();
- if(tab==='animation')renderAnimationPanel();
+ if(tab==='animation'){
+  renderAnimationPanel();
+  window.DOM_RENDER_CAMERA_PATH?.mount($('animThreeLayer'));
+  window.DOM_RENDER_CAMERA_PATH?.setMotion(animationSettings().motion);
+ }else window.DOM_RENDER_CAMERA_PATH?.setVisible(false);
  if(tab==='environment'){showRenderSetupMode(current().renderSetupMode||'auto',false);syncDemoWithSettings()}
  if(scroll)$('inspector').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -677,6 +681,7 @@ function renderAnimationSummary(){
  preview.style.setProperty('--anim-end-y',(diff[1]*intensity)+'%');
  preview.style.transform='scale('+zoom+')';
  updateAnimationTrajectory(motion);
+ window.DOM_RENDER_CAMERA_PATH?.setMotion(motion);
 }
 function renderAnimationPanel(){
  const lib=window.DOM_RENDER_ANIMATION,art=window.DOM_RENDER_ANIMATION_ART;
@@ -715,7 +720,8 @@ function playAnimationPreview(){
  frame.style.setProperty('--anim-preview-seconds',String(s.duration)+'s');
  void frame.offsetWidth;
  frame.classList.add('is-playing');
- $('animPreviewState').textContent='Симуляция движения · '+s.duration+' с';
+ window.DOM_RENDER_CAMERA_PATH?.play(s.duration);
+ $('animPreviewState').textContent='3D-камера и светящаяся траектория · '+s.duration+' с';
 }
 function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderResults();renderVariantsPanel();renderAnimationPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
 function renderResults(){const items=[{id:'source',label:'Исходник',src:sourceURL||asset(ASSET+'residence-model-v32.webp')}];if(project.demo)items.push({id:'demo',label:'Пример фото',src:demoPhoto});for(const r of project.renders)items.push({id:r.id,label:r.batchLabel||`Рендер ${r.number||''}`,src:imageCache.get(mediaKey('render_'+r.id))||asset(ASSET+'residence-render.jpg')});$('resultsStrip').innerHTML=items.map(r=>`<button class="result-thumb ${((project.activeRender|| (project.demo?'demo':'source'))===r.id)?'active':''}" data-result="${r.id}"><img src="${eHTML(r.src)}" alt="${eHTML(r.label)}"><span>${eHTML(r.label)}</span></button>`).join('');$('resultsHint').textContent=project.demo?'Пример результата · AI-фото не генерировалось':(project.renders.length?`${project.renders.length} AI-результатов`:'Рендеров пока нет')}
