@@ -6,7 +6,6 @@ import http from 'node:http';
 import path from 'node:path';
 import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-import {randomBytes, timingSafeEqual} from 'node:crypto';
 import {apiMarketEdit} from './api-market.mjs';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // Optional simple local .env parser (no external packages). Environment variables win.
@@ -15,15 +14,10 @@ const PORT=Number(process.env.PORT)||3000;
 const HOST=process.env.HOST||'127.0.0.1';
 const API_KEY=process.env.API_MARKET_KEY||'';
 const MODEL='nano-banana-2.1';
-const ACCESS_PIN=process.env.SITE_ACCESS_PIN||'';
-if(HOST!=='127.0.0.1'&&HOST!=='localhost'&&!ACCESS_PIN)throw new Error('Для публичного HOST укажите SITE_ACCESS_PIN (защита генерации от посторонних).');
-const SESSION_TOKEN=randomBytes(24).toString('hex');
+// No shared PIN: the public preview uses server-side usage limits instead.
 const DAILY_CAP=Math.min(200,Math.max(1,Number(process.env.DAILY_GENERATION_LIMIT)||12));
 const PUBLIC_SUPPORT_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.PUBLIC_SUPPORT_EMAIL||'')?process.env.PUBLIC_SUPPORT_EMAIL:'';
 let dailyCount=0, day=new Date().toISOString().slice(0,10);
-const loginAttempts=new Map();
-function authorized(req){if(!ACCESS_PIN)return true;const token=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('domrender_session='))?.slice('domrender_session='.length);if(!token||token.length!==SESSION_TOKEN.length)return false;return timingSafeEqual(Buffer.from(token),Buffer.from(SESSION_TOKEN));}
-function safeEquals(a,b){const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y);}
 function sameOrigin(req){const origin=req.headers.origin;if(!origin)return true;const host=req.headers.host;try{return new URL(origin).host===host}catch{return false}}
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.json':'application/json; charset=utf-8'};
 const MAX_BODY=24*1024*1024;
@@ -41,7 +35,6 @@ function createPrompt(p){const b=p.brief||{};const specific=p.selectedZone&&p.ma
  const edit=specific?`LOCAL EDIT ONLY: edit the transparent region of the supplied PNG mask on IMAGE 1. The masked area is the selected facade zone named '${compact(p.selectedZone)}'. Apply material '${compact(p.materialName)}' to that facade surface and keep the rest of the image, environment, lighting and all other surfaces as unchanged as possible. Use the material reference image (when provided) for accurate color, grain and texture repeat. ${Number(p.materialDimensions?.width)>0?`Material physical size: ${Number(p.materialDimensions.width)} by ${Number(p.materialDimensions.height)||Number(p.materialDimensions.width)} millimetres.`:''} Replace the material consistently through the ENTIRE transparent masked area, never only a small isolated patch. Respect the mask boundary, preserve the contours around glazing and doors, and keep all unmasked pixels as untouched as possible. The mask is a guide and may not be pixel exact. Material reference image is not the building.`:`FULL SCENE ENHANCEMENT: Transform the sketch/model screenshot into a realistic photograph, preserving the existing architecture and point of view. Design only the surroundings, photographic light and surface appearance that the user selected.`;
  return [essential,geometry,edit,physics,context,continuity].filter(Boolean).join('\n\n')}
 async function proxyRender(req,res){
- if(!authorized(req))return json(res,401,{error:'Для генерации требуется код доступа к сайту.'});
  if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
  if(!API_KEY)return json(res,503,{error:'AI не настроен: укажите API_MARKET_KEY в .env и перезапустите сервер.'});
  const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}
@@ -72,23 +65,9 @@ async function proxyRender(req,res){
   json(res,200,{images,mimes,model:MODEL,provider:'API Market',warning});
  }catch(err){const status=err.status||502;console.warn('[AI] Генерация не выполнена:',status,String(err.message||'Ошибка сервера').slice(0,240));json(res,status,{error:err.message||'Ошибка сервера'})}finally{active--}
 }
-async function login(req,res){
- if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
- if(!ACCESS_PIN)return json(res,200,{ok:true});
- const ip=String(req.socket.remoteAddress||'unknown');const attempts=loginAttempts.get(ip)||{count:0,at:Date.now()};
- if(Date.now()-attempts.at>15*60*1000){attempts.count=0;attempts.at=Date.now();}
- if(attempts.count>=8)return json(res,429,{error:'Слишком много попыток. Повторите позже.'});
- let body;try{body=await readJSON(req)}catch{return json(res,400,{error:'Некорректный запрос'})}
- if(!safeEquals(body.pin||'',ACCESS_PIN)){attempts.count++;loginAttempts.set(ip,attempts);return json(res,401,{error:'Неверный код доступа.'});}
- loginAttempts.delete(ip);
- const secure=(req.headers['x-forwarded-proto']==='https'||req.socket.encrypted)?'; Secure':'';
- res.setHeader('Set-Cookie',`domrender_session=${SESSION_TOKEN}; HttpOnly; SameSite=Strict; Path=/; Max-Age=86400${secure}`);
- return json(res,200,{ok:true});
-}
 async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/index.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();const content=await readFile(file);res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
 const server=http.createServer(async(req,res)=>{
- if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY&&authorized(req),provider:'API Market',model:API_KEY?MODEL:null,authRequired:!!ACCESS_PIN,authorized:authorized(req),dailyRemaining:authorized(req)?Math.max(0,DAILY_CAP-dailyCount):null,dailyLimit:authorized(req)?DAILY_CAP:null,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
- if(req.url==='/api/login'&&req.method==='POST')return login(req,res);
+ if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
  if(req.url==='/api/render'&&req.method==='POST')return proxyRender(req,res);
  if(req.url?.startsWith('/api/'))return json(res,404,{error:'Не найдено'});
  if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Метод запрещён'});
