@@ -45,3 +45,21 @@ for(const asset of ['plux-motion-v124.js','plux-typewriter-v124.js','plux-motion
 }
 if(!readFileSync(join(root,'index.html'),'utf8').includes('plux-release-v124'))throw Error('V12.4 index patch missing');
 console.log('PLUX V12.4 Motion System applied to all screens');
+
+
+/* PLUX V12.4 Reference Glass: retain motion/typewriter system, replace only visible controls. */
+import {brotliDecompressSync as pluxGlassDecompress} from 'node:zlib';
+const glassBytes=Buffer.from(readFileSync('plux-v124-glass-overlay/patch.tar.br.b64','utf8').trim(),'base64');
+plux123Exec('tar',['xf','-','-C',root],{input:pluxGlassDecompress(glassBytes)});
+const glassIndex=join(root,'index.html');
+let glassHtml=readFileSync(glassIndex,'utf8');
+if(!glassHtml.includes('oled-reference-v124.css')){
+  glassHtml=glassHtml.replace('</head>','<meta name="plux-glass-release" content="12.4-emerald-reference"><link rel="stylesheet" href="/oled-glass-v123.css?v=1248"><link rel="stylesheet" href="/oled-reference-v124.css?v=1248"></head>');
+  glassHtml=glassHtml.replace('</body>','<script src="/oled-glass-v123.js?v=1248"></script><script src="/oled-reference-v124.js?v=1248"></script></body>');
+  writeFileSync(glassIndex,glassHtml);
+}
+for(const asset of ['oled-glass-v123.css','oled-reference-v124.css','assets/crystal-orb-v124.svg','assets/chrome-mic-v124.svg','sw.js']){
+ if(statSync(join(root,asset)).size<500)throw Error('Missing crystal glass asset: '+asset);
+}
+if(!glassHtml.includes('oled-reference-v124.css'))throw Error('Reference glass CSS not linked');
+console.log('PLUX V12.4 Emerald Crystal reference buttons and OLED menu installed');
