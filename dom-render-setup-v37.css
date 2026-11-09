@@ -1,0 +1,62 @@
+/* ДОМ.РЕНДЕР · 2 режимa настройки сцены · v37 */
+#environmentPanel.scene-setup-v37{padding-bottom:20px}
+#environmentPanel .scene-setup-header{background:linear-gradient(135deg,#213b2c,#43614a);color:#fff;border-radius:15px;padding:20px 17px;margin-bottom:13px}
+#environmentPanel .scene-setup-eyebrow{font-size:9px;letter-spacing:.15em;font-weight:800;color:#bcd5c0}
+#environmentPanel .scene-setup-header h3{font-size:21px;line-height:1.25;letter-spacing:-.035em;font-weight:720;margin:8px 0}
+#environmentPanel .scene-setup-header p{font-size:11px;line-height:1.5;color:#e2eee2;margin:0}
+#environmentPanel .scene-mode-switch{display:grid;grid-template-columns:1fr 1fr;padding:4px;gap:4px;background:#e8eee7;border:1px solid #dce7db;border-radius:12px;margin-bottom:15px}
+#environmentPanel .scene-mode-switch button{min-width:0;min-height:43px;padding:10px 6px;border:0;border-radius:9px;background:transparent;color:#607361;font-size:11px;font-weight:720;cursor:pointer}
+#environmentPanel .scene-mode-switch button.active{background:#fff;color:#2a5e3b;box-shadow:0 3px 12px #244c331a}
+#environmentPanel .scene-mode-switch button:focus-visible{outline:2px solid #397b4d;outline-offset:2px}
+#environmentPanel .scene-mode-content[hidden]{display:none!important}
+#environmentPanel .scene-panel-heading{margin:0 1px 12px}
+#environmentPanel .scene-panel-heading strong{font-size:13px;color:#304d38;font-weight:790}
+#environmentPanel .scene-panel-heading p{font-size:10px;color:#7b8e7c;line-height:1.55;margin:5px 0}
+#environmentPanel #renderAutoPanel>.mood-cards{margin:0 0 12px}
+#environmentPanel .scene-auto-environment{display:flex;align-items:center;gap:10px;width:100%;padding:13px 11px;background:#f7faf5;border:1px solid #d5e4d6;border-radius:11px;color:#385943;text-align:left;cursor:pointer;margin:12px 0}
+#environmentPanel .scene-auto-environment:hover{background:#eaf3ea;border-color:#9cbe9f}
+#environmentPanel .scene-auto-env-ico{width:35px;height:35px;flex:0 0 35px;display:grid;place-items:center;background:#e0eee0;border-radius:9px;color:#39734b;font-size:22px}
+#environmentPanel .scene-auto-environment>span:nth-child(2){display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+#environmentPanel .scene-auto-environment b{font-size:11px;font-weight:760}
+#environmentPanel .scene-auto-environment small{font-size:10px;color:#7b8e7c}
+#environmentPanel .scene-auto-env-change{font-size:10px;color:#376c47;white-space:nowrap;font-weight:750}
+#environmentPanel .scene-choice-list{display:flex;flex-direction:column;gap:9px}
+#environmentPanel .scene-choice{background:#fff;border:1px solid #dbe7db;border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+#environmentPanel .scene-choice.is-open{border-color:#76a983;box-shadow:0 5px 22px #315e3a15}
+#environmentPanel .scene-choice-trigger{display:flex;width:100%;min-height:67px;align-items:center;gap:12px;padding:12px;border:0;background:transparent;color:#314d39;text-align:left;cursor:pointer}
+#environmentPanel .scene-choice-trigger:hover{background:#f5f9f4}
+#environmentPanel .scene-choice-trigger:focus-visible{outline:2px solid #468357;outline-offset:-3px}
+#environmentPanel .scene-choice-index{display:grid;place-items:center;flex:0 0 34px;height:34px;background:#e7f1e6;color:#3d724c;border:1px solid #d1e5d2;border-radius:10px;font-size:10px;font-weight:830}
+#environmentPanel .scene-choice.is-open .scene-choice-index{color:#fff;background:#346e46;border-color:#346e46}
+#environmentPanel .scene-choice-label{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+#environmentPanel .scene-choice-label strong{font-size:12px;font-weight:760;line-height:1.35}
+#environmentPanel .scene-choice-label small{font-size:11px;font-weight:700;color:#48815a;line-height:1.45}
+#environmentPanel .scene-choice-arrow{font-size:20px;flex:0 0 24px;text-align:center;color:#819a87;transition:transform .2s}
+#environmentPanel .scene-choice.is-open .scene-choice-arrow,#environmentPanel .scene-advanced-plants[open] .scene-choice-arrow{transform:rotate(180deg)}
+#environmentPanel .scene-choice-panel{padding:12px;border-top:1px solid #e3eee4;background:#fbfdfb}
+#environmentPanel .scene-choice-panel[hidden]{display:none!important}
+#environmentPanel .scene-choice-hint{font-size:10px;color:#748878;line-height:1.55;margin:0 0 11px}
+#environmentPanel .scene-choice-panel .render-group,#environmentPanel .scene-advanced-content .render-group{padding:0!important;margin:0!important;border:none!important}
+#environmentPanel .scene-choice-panel .panel-section-title{margin:0 0 11px}
+#environmentPanel .scene-advanced-plants{border:1px dashed #cadccb;border-radius:11px;margin-top:11px;background:#f9fcf8}
+#environmentPanel .scene-advanced-plants>summary{display:flex;align-items:center;gap:10px;list-style:none;cursor:pointer;padding:12px}
+#environmentPanel .scene-advanced-plants>summary::-webkit-details-marker{display:none}
+#environmentPanel .scene-advanced-icon{display:grid;place-items:center;flex:0 0 33px;height:33px;border-radius:9px;background:#e6eee2;color:#577961;font-size:22px}
+#environmentPanel .scene-advanced-plants>summary span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:3px}
+#environmentPanel .scene-advanced-plants strong{font-size:11px;font-weight:750;color:#3c5741}
+#environmentPanel .scene-advanced-plants small{font-size:10px;color:#708c77}
+#environmentPanel .scene-advanced-content{padding:4px 12px 14px}
+#environmentPanel .scene-final-summary{margin-top:15px;border:1px solid #d3e5d5;border-radius:13px;padding:15px 13px;background:linear-gradient(145deg,#f6faf4,#eef7ee)}
+#environmentPanel .scene-summary-eyebrow{display:block;font-size:9px;letter-spacing:.12em;color:#6c9273;font-weight:800;margin:0 0 7px}
+#environmentPanel #renderSummaryLine{display:block;font-size:13px;line-height:1.55;color:#2e593c;font-weight:790;margin-bottom:11px}
+#environmentPanel .scene-summary-lock{display:flex;gap:8px;align-items:center;padding:9px 10px;background:#fff;border:1px solid #d7e6d6;border-radius:9px;font-size:10px;line-height:1.5;color:#4a6d4e;margin:0 0 11px}
+#environmentPanel .scene-summary-lock span:first-child{display:grid;place-items:center;flex:0 0 21px;height:21px;border-radius:50%;background:#dfeee0;color:#34704a;font-weight:800}
+#environmentPanel .scene-summary-lock.is-warning{color:#946b38;background:#fff8e6;border-color:#e5ce98}
+#environmentPanel .scene-summary-actions{display:flex;flex-direction:column;gap:8px}
+#environmentPanel #renderSetupGenerate{min-height:48px;white-space:normal;font-size:12px}
+#environmentPanel .scene-batch-button{min-height:44px;width:100%;border:1px solid #a7c4ae;border-radius:9px;background:#fff;color:#2d6340;font-size:11px;font-weight:760;cursor:pointer}
+#environmentPanel .scene-batch-button:hover{background:#edf6ec}
+#environmentPanel .scene-batch-button>span{font-size:17px;margin-right:6px;vertical-align:middle}
+#environmentPanel .scene-summary-note{font-size:9px;color:#7a917e;line-height:1.55;margin:9px 2px 0}
+@media(max-width:700px){#environmentPanel .scene-setup-header{padding:16px 14px}#environmentPanel .scene-mode-switch button{min-height:47px;font-size:10px}#environmentPanel .scene-choice-trigger{min-height:68px;padding:11px 9px;gap:8px}#environmentPanel .scene-choice-panel{padding:10px}#environmentPanel .mood-card{aspect-ratio:1.43}}
+@media(prefers-reduced-motion:reduce){#environmentPanel .scene-choice,#environmentPanel .scene-choice-arrow{transition:none!important}}
