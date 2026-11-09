@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="styles.css?v=geometry-v32-20261109">
 <link rel="stylesheet" href="dom-render-ux-v26.css?v=20261109-mobile">
 <link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
-<link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-wand-click-undo-v30">
+<link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-material-preview-v31">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -162,7 +162,11 @@
   <div id="materialKeepPane" class="material-keep-pane"><span class="material-keep-icon">✓</span><div><strong>Материал сохранён</strong><p>Стены, фальц, дерево и другие видимые покрытия сохраняются по исходному скриншоту. Можно переходить к настройке окружения.</p></div></div>
   <div id="materialEditPane" hidden>
    <div class="material-step-title"><span>03</span><strong>Укажите нужную область на изображении</strong></div>
-   <p class="material-hint">Выделите поверхность кистью, полигоном или поиском похожих оттенков. Сейчас автоматическое определение точных границ ещё не подключено — проверьте маску перед AI.</p>
+   <p class="material-hint">Выберите участок автоматически или уточните на изображении. Все изменения применяются только после проверки.</p><div class="material-auto-find">
+ <div><strong>Определить элемент на изображении</strong><small>Быстрая предварительная оценка зоны. Для точных границ можно уточнить маску палочкой или кистью.</small></div>
+ <button type="button" class="btn btn-outline btn-block" id="materialFindZone">Найти выбранный элемент · β</button>
+ <p id="materialFindStatus" role="status">Для точного выделения AI-модель сегментации пока не подключена. Проверьте предложенную маску перед генерацией.</p>
+ </div>
    <div class="zone-buttons"><button class="btn btn-outline" id="startMask"><svg class="ico"><use href="#i-brush"/></svg>Выделить на изображении</button><div class="selection-status" id="selectionStatus" role="status" aria-live="polite">Выделение ещё не задано</div><button class="btn btn-quiet" id="showMask"><svg class="ico"><use href="#i-eye"/></svg>Показать маску</button></div>
    <label class="switch-row selection-only material-advanced"><span><b>AI: изменять только маску</b><small>Не затрагивать остальную часть изображения</small></span><input type="checkbox" id="editSelectedOnly" checked><i></i></label>
    <div id="materialColorPane" hidden>
@@ -178,7 +182,12 @@
       <button type="button" data-color="#fcfcfa" style="--sw:#fcfcfa" title="Белый" aria-label="Белый"></button>
      </div>
     </div>
-    <p class="material-hint">AI меняет только цвет выделенной поверхности. Фальцы, доски, швы, рельеф и расположение элементов должны сохраниться.</p>
+    <div class="material-quick-preview">
+ <div><strong>Предварительный просмотр цвета</strong><small>Без AI и списания генераций. Использует подтверждённую маску, сохраняет светотень и рисунок поверхности.</small></div>
+ <button type="button" class="btn btn-outline btn-block" id="materialPreviewColor">Примерить выбранный цвет</button>
+ <button type="button" class="btn btn-quiet btn-block btn-sm" id="materialPreviewReset">Убрать примерку</button>
+ <p id="materialColorPreviewStatus" role="status">Для точной примерки сначала найдите элемент или выделите его на изображении.</p>
+ </div><p class="material-hint">AI меняет только цвет выделенной поверхности. Фальцы, доски, швы, рельеф и расположение элементов должны сохраниться.</p>
     <button type="button" class="btn btn-primary btn-block" id="generateColor"><svg class="ico"><use href="#i-spark"/></svg>Проверить выделение и изменить цвет (AI)</button>
    </div>
    <div id="materialReplacePane" hidden>
@@ -196,6 +205,14 @@
      <div class="mask-instructions">Прежде чем запускать генерацию, убедитесь, что границы маски точны.</div>
      <button type="button" class="btn btn-primary btn-block" id="generateMaterial"><svg class="ico"><use href="#i-spark"/></svg>Заменить материал (AI)</button>
     </div>
+   </div>
+   <div class="material-text-brief" id="materialTextBrief">
+     <div class="material-step-title"><span>05</span><strong>Опишите результат своими словами</strong></div>
+     <label for="materialInstruction">Задание для AI</label>
+     <textarea id="materialInstruction" rows="3" maxlength="500" placeholder="Например: оконные рамы сделать матово-чёрными, стекло, профиль и размеры сохранить. Или: террасу сделать из термодерева тёплого оттенка."></textarea>
+     <p>Промпт применяется только к выбранной категории. Если нет точной маски, AI сам ищет нужный элемент; перед заменой проверьте результат.</p>
+     <button type="button" class="btn btn-outline btn-block" id="materialGenerateFromText">Применить описание через AI</button>
+     <small>Это платная генерация через API Market. Описания не дают гарантии пиксельного сохранения соседних областей без маски.</small>
    </div>
   </div>
  </section>
@@ -254,7 +271,8 @@
 <script src="dom-render-unified-presets.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
-<script src="app.js?v=wand-additive-undo-v30-20261109"></script>
+<script src="dom-render-material-preview-v31.js?v=20261109-a"></script>
+<script src="app.js?v=material-preview-text-v31-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
