@@ -29,7 +29,7 @@ function updateContact(email){
  txt('cabinetSupportEmail',safe||'Контактный адрес ещё не опубликован');
  $('cabinetSupportAction').hidden=!safe;
  $('cabinetSupportNote').hidden=!!safe;
- if(safe)$('cabinetSupportAction').href='mailto:'+encodeURIComponent(safe)+'?subject='+encodeURIComponent('ДОМ.РЕНДЕР — обращение');
+ if(safe)$('cabinetSupportAction').href='mailto:'+safe+'?subject='+encodeURIComponent('ДОМ.РЕНДЕР — обращение');
 }
 function paint(data){
  lastStatus=data;
