@@ -958,7 +958,7 @@ const SCENE_PRESETS={
  overcast:{title:'Мягкий пасмурный',caption:'Лето · Облачно · День',season:'summer',weather:'cloud',time:'day'},
  rain:{title:'После дождя',caption:'Осень · Дождь · День',season:'autumn',weather:'rain',time:'day'},
  winter:{title:'Зимняя тишина',caption:'Зима · Снег · День',season:'winter',weather:'snow',time:'day'},
- blue:{title:'Синий час',caption:'Лето · Сумерки',season:'summer',weather:'clear',time:'night'},
+ blue:{title:'Синий час',caption:'Лето · Вечер · Сумерки',season:'summer',weather:'clear',time:'golden'},
  night:{title:'Ночная архитектура',caption:'Лето · Ночь · Свет',season:'summer',weather:'cloud',time:'night'}
 };
 function presetMatchesSettings(id,s){
