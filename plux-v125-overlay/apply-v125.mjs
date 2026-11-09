@@ -18,7 +18,8 @@ writeFileSync(indexPath,html);
 const sfxPath=join(root,'aurora-sfx-v107.js');
 let sound=readFileSync(sfxPath,'utf8');
 if(!sound.includes("plux_v125_volume")){
-  const levelPattern=/spec\.level\*g\/\(1\+i\*\.9(?:0)?\)/;\n  if(!levelPattern.test(sound))throw Error('Unexpected sound engine: do not replace blindly');
+  const levelPattern=/spec\.level\*g\/\(1\+i\*\.9(?:0)?\)/;
+  if(!levelPattern.test(sound))throw Error('Unexpected sound engine: do not replace blindly');
   sound=sound.replace(levelPattern,"spec.level*g*(Math.max(0,Math.min(100,Number(localStorage.getItem('plux_v125_volume')??70)))/100)/(1+i*.90)");
   sound=sound.replace('spec.level*spec.noise*g)',"spec.level*spec.noise*g*(Math.max(0,Math.min(100,Number(localStorage.getItem('plux_v125_volume')??70)))/100))");
   writeFileSync(sfxPath,sound);
