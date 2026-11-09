@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="dom-render-ux-v26.css?v=20261109-mobile">
 <link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
 <link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-material-preview-v31b">
+<link rel="stylesheet" href="dom-render-batch-v32.css?v=20261109-batch-v1">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -225,7 +226,34 @@
 </section>
 <section id="parametersPanel" class="tab-panel" role="tabpanel"><div class="param-group"><div class="panel-section-title"><h3>Качество и формат изображения</h3></div><div class="select-grid"><label>Формат <select id="ratioSelect"><option>16:9</option><option>3:2</option><option>4:3</option><option>1:1</option><option>9:16</option></select></label><label>Качество <select id="qualitySelect"><option value="medium">Стандарт</option><option value="high" selected>Высокое</option></select></label><label>Вариантов <select id="quantitySelect"><option value="1">1</option><option value="2">2</option><option value="4">4</option></select></label></div></div><div class="param-group"><div class="panel-section-title"><h3>Сохранение архитектуры</h3></div><label class="switch-row"><span><b>Фиксировать геометрию</b><small>Просить AI сохранять окна, объёмы и пропорции</small></span><input type="checkbox" id="lockGeometry" checked><i></i></label><label class="switch-row"><span><b>Сохранять материалы исходника</b><small>AI улучшает реализм фальца, дерева, кирпича и других видимых покрытий, не заменяя их штукатуркой. Для смены материала используйте отдельный инструмент.</small></span><input type="checkbox" id="preserveMaterials" checked><i></i></label><label class="switch-row landscape-lock"><span><b>Сохранять окружение при смене ракурса</b><small>Передавать прошлый результат как референс: растения, материалы, сезон и свет остаются согласованными</small></span><input type="checkbox" id="keepReference" checked><i></i></label><p class="mini-disclaimer">Без 3D-модели совпадение окружения между ракурсами не гарантируется.</p></div></section>
  </div>
- <div class="inspector-footer"><div class="run-summary"><span id="summaryLine">Сад и газон · Лето · День</span><span id="summaryMaterial">Травертин · основной фасад</span></div><button class="btn btn-primary btn-block" id="generateBtn"><svg class="ico"><use href="#i-spark"/></svg><span id="generateText">Создать визуализацию</span><svg class="ico arrow"><use href="#i-arrow"/></svg></button><div class="usage-foot"><span id="providerFoot" aria-live="polite">Генерация изображения</span><span>Только изображения · Без 3D</span></div></div>
+ <div class="inspector-footer"><div class="run-summary"><span id="summaryLine">Сад и газон · Лето · День</span><span id="summaryMaterial">Травертин · основной фасад</span></div><button class="btn btn-primary btn-block" id="generateBtn"><svg class="ico"><use href="#i-spark"/></svg><span id="generateText">Создать визуализацию</span><svg class="ico arrow"><use href="#i-arrow"/></svg></button><div class="batch-entry">
+ <button type="button" id="batchToggle" class="batch-toggle" aria-expanded="false" aria-controls="batchPanel"><span class="batch-toggle-icon">▦</span><span><b>Пакетная визуализация</b><small>4 кадра · 4 AI-генерации</small></span><svg class="ico"><use href="#i-arrow"/></svg></button>
+ <div class="batch-panel" id="batchPanel" hidden>
+ <div class="batch-panel-head"><strong>Четыре кадра одного проекта</strong><span>4 × изображение</span></div>
+ <div class="batch-shot-list" aria-label="Состав пакета">
+ <div class="batch-shot"><span>01</span><div><strong>Исходный ракурс</strong><small>Фотореализм, ракурс и геометрия как на загруженном изображении</small></div></div>
+ <div class="batch-shot"><span>02</span><div><strong>Фронтально на дом</strong><small>Перпендикулярно главному фасаду; для точности нужен фронтальный скрин модели</small></div></div>
+ <div class="batch-shot"><span>03</span><div><strong>Крупно — входная группа</strong><small>Увеличенный фрагмент исходника: вход, отделка, терраса</small></div></div>
+ <div class="batch-shot"><span>04</span><div><strong>Крупно — детали фасада</strong><small>Увеличенный фрагмент: окно, швы, фактура материалов</small></div></div>
+ </div>
+ <label class="batch-front-upload" for="batchFrontFile"><span><strong>Фронтальный скрин модели</strong><small>Необязательно, но нужен для геометрически точного кадра №2</small></span><span id="batchFrontName">Выбрать файл</span></label>
+ <input id="batchFrontFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+ <button type="button" id="batchFrontClear" class="batch-front-clear" hidden>Удалить фронтальный скрин</button>
+ <div class="batch-geometry-notice" id="batchGeometryNotice">Без отдельного фронтального вида кадр №2 будет AI-реконструкцией: строгое совпадение невидимой геометрии не гарантируется.</div>
+ <details class="batch-detail-adjust">
+  <summary>Настроить точки крупного плана <span>необязательно</span></summary>
+  <p>По умолчанию фокус на входе и окне. Если они находятся в другой части скриншота, передвиньте ползунки.</p>
+  <label>Кадр 3 · слева — справа <input id="batchDetail1X" type="range" min="15" max="85" value="60"></label>
+  <label>Кадр 3 · сверху — снизу <input id="batchDetail1Y" type="range" min="15" max="85" value="60"></label>
+  <label>Кадр 4 · слева — справа <input id="batchDetail2X" type="range" min="15" max="85" value="77"></label>
+  <label>Кадр 4 · сверху — снизу <input id="batchDetail2Y" type="range" min="15" max="85" value="40"></label>
+ </details>
+ <div class="batch-cost"><b>Расход: 4 платных обращения к AI Market</b><span>По одному на кадр. Каждое обращение учитывается отдельно. Если генерация прервётся, уже отправленные запросы могут быть оплачены.</span></div>
+ <button type="button" class="btn btn-primary btn-block" id="batchStart"><svg class="ico"><use href="#i-spark"/></svg><span>Создать пакет · 4 кадра</span></button>
+ <p class="batch-status" id="batchStatus" role="status" aria-live="polite">Готово к запуску. Результаты будут сохранены по одному.</p>
+ </div>
+ </div>
+ <div class="usage-foot"><span id="providerFoot" aria-live="polite">Генерация изображения</span><span>Только изображения · Без 3D</span></div></div>
 </aside>
 </div>
 <nav class="mobile-nav" aria-label="Мобильная навигация">
@@ -272,7 +300,7 @@
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
 <script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
-<script src="app.js?v=material-preview-text-v31b-20261109"></script>
+<script src="app.js?v=architectural-batch-4-v32-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
