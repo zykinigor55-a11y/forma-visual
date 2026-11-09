@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
 <link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-material-preview-v31b">
 <link rel="stylesheet" href="dom-render-batch-v32.css?v=20261109-batch-v1">
+<link rel="stylesheet" href="dom-render-material-quick-v34.css?v=20261109-v1">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -142,10 +143,21 @@
   <section id="materialsPanel" class="tab-panel" role="tabpanel">
   <div class="material-v28-head">
    <span class="material-eyebrow">МАТЕРИАЛЫ И ЦВЕТА</span>
-   <h3>Что хотите изменить в доме?</h3>
-   <p>Выберите элемент здания и действие. Если материалы устраивают, ничего менять не нужно — AI сохранит их при обычном рендере.</p>
+   <h3>Материалы вашего дома</h3>
+   <p>Сохраните исходную отделку, перекрасьте нужный элемент или загрузите новую фактуру. Любое изменение касается только выбранной части дома.</p>
   </div>
-  <div class="material-step-title"><span>01</span><strong>Выберите поверхность</strong></div>
+  <div class="material-quick-actions" role="group" aria-label="Быстрые команды изменения цвета">
+   <div class="material-quick-heading"><strong>Быстро изменить цвет</strong><small>Выберите, что хотите перекрасить</small></div>
+   <div class="material-quick-grid">
+    <button type="button" data-quick-zone="windows">Цвет окон</button>
+    <button type="button" data-quick-zone="main">Цвет стен</button>
+    <button type="button" data-quick-zone="roof">Цвет кровли</button>
+    <button type="button" data-quick-zone="base">Цвет цоколя</button>
+    <button type="button" data-quick-zone="doors">Цвет дверей</button>
+    <button type="button" data-quick-zone="terrace">Цвет террасы</button>
+   </div>
+  </div>
+  <div class="material-step-title"><span>01</span><strong>Выберите элемент дома</strong></div>
   <div class="zone-options material-zone-grid" id="zoneOptions"></div>
   <div class="material-step-title"><span>02</span><strong>Выберите действие</strong></div>
   <div class="material-action-options" role="group" aria-label="Действие с выбранной поверхностью">
@@ -162,7 +174,16 @@
   <div class="material-action-info" id="materialActionInfo" role="status">Исходное покрытие будет сохранено. При обычном рендере AI повысит его реализм.</div>
   <div id="materialKeepPane" class="material-keep-pane"><span class="material-keep-icon">✓</span><div><strong>Материал сохранён</strong><p>Стены, фальц, дерево и другие видимые покрытия сохраняются по исходному скриншоту. Можно переходить к настройке окружения.</p></div></div>
   <div id="materialEditPane" hidden>
-   <div class="material-step-title"><span>03</span><strong>Укажите нужную область на изображении</strong></div>
+   <div class="material-text-brief" id="materialTextBrief">
+     <div class="material-step-title"><span>03</span><strong>Опишите изменение своими словами</strong></div>
+     <label for="materialInstruction">Задание для AI</label>
+     <textarea id="materialInstruction" rows="3" maxlength="500" placeholder="Например: оконные рамы сделать матово-чёрными, стекло, профиль и размеры сохранить. Или: террасу сделать из термодерева тёплого оттенка."></textarea>
+     <p>Например: «Сделать оконные рамы чёрными, стекло и форму сохранить». Можно описать цвет или отделку без ручного выделения. При отсутствии точной маски AI определяет элемент по изображению, результат нужно проверить.</p>
+     <button type="button" class="btn btn-outline btn-block" id="materialGenerateFromText">Создать изменение по описанию (AI)</button>
+     <small>Это платная генерация через API Market. Описания не дают гарантии пиксельного сохранения соседних областей без маски.</small>
+   </div>
+  <div class="material-divider"><span>ИЛИ УТОЧНИТЕ ПОВЕРХНОСТЬ НА ИЗОБРАЖЕНИИ</span></div>
+   <div class="material-step-title"><span>04</span><strong>Уточните область перед заменой</strong></div>
    <p class="material-hint">Выберите участок автоматически или уточните на изображении. Все изменения применяются только после проверки.</p><div class="material-auto-find">
  <div><strong>Определить элемент на изображении</strong><small>Быстрая предварительная оценка зоны. Для точных границ можно уточнить маску палочкой или кистью.</small></div>
  <button type="button" class="btn btn-outline btn-block" id="materialFindZone">Найти выбранный элемент · β</button>
@@ -171,9 +192,9 @@
    <div class="zone-buttons"><button class="btn btn-outline" id="startMask"><svg class="ico"><use href="#i-brush"/></svg>Выделить на изображении</button><div class="selection-status" id="selectionStatus" role="status" aria-live="polite">Выделение ещё не задано</div><button class="btn btn-quiet" id="showMask"><svg class="ico"><use href="#i-eye"/></svg>Показать маску</button></div>
    <label class="switch-row selection-only material-advanced"><span><b>AI: изменять только маску</b><small>Не затрагивать остальную часть изображения</small></span><input type="checkbox" id="editSelectedOnly" checked><i></i></label>
    <div id="materialColorPane" hidden>
-    <div class="material-step-title"><span>04</span><strong>Выберите новый цвет</strong></div>
+    <div class="material-step-title"><span>05</span><strong>Выберите новый цвет</strong></div>
     <div class="material-color-editor">
-     <label class="material-color-label" for="materialColor"><span>Цвет поверхности</span><input type="color" id="materialColor" value="#575c51" aria-label="Выберите цвет покрытия"></label>
+     <label class="material-color-label" for="materialColor"><span>Выберите оттенок</span><input type="color" id="materialColor" value="#575c51" aria-label="Выберите цвет покрытия"></label><label class="material-hex-label" for="materialColorHex"><span>Точный цвет (HEX)</span><input type="text" id="materialColorHex" maxlength="7" value="#575C51" pattern="#[0-9a-fA-F]{6}" spellcheck="false" aria-label="Код цвета HEX"></label>
      <div class="material-color-swatches" id="materialColorSwatches" aria-label="Популярные цвета">
       <button type="button" data-color="#242624" style="--sw:#242624" title="Графит" aria-label="Графит"></button>
       <button type="button" data-color="#575c51" style="--sw:#575c51" title="Тёмный оливковый" aria-label="Тёмный оливковый"></button>
@@ -192,7 +213,7 @@
     <button type="button" class="btn btn-primary btn-block" id="generateColor"><svg class="ico"><use href="#i-spark"/></svg>Проверить выделение и изменить цвет (AI)</button>
    </div>
    <div id="materialReplacePane" hidden>
-    <div class="material-step-title"><span>04</span><strong>Загрузите новую фактуру</strong></div>
+    <div class="material-step-title"><span>05</span><strong>Загрузите новую фактуру</strong></div>
     <div class="material-onboarding"><strong>Мои материалы</strong><p>Фото дерева, металла, кирпича, камня или другой поверхности. Материал будет применён только к выделенной зоне.</p></div>
     <div id="catalogMaterials" class="material-grid" hidden></div><div id="myMaterials" class="material-grid" hidden></div>
     <button class="upload-material" id="uploadMaterialBtn"><svg class="ico"><use href="#i-plus"/></svg><span>+ Загрузить фактуру <small>JPG, PNG или WebP</small></span></button>
@@ -207,14 +228,7 @@
      <button type="button" class="btn btn-primary btn-block" id="generateMaterial"><svg class="ico"><use href="#i-spark"/></svg>Заменить материал (AI)</button>
     </div>
    </div>
-   <div class="material-text-brief" id="materialTextBrief">
-     <div class="material-step-title"><span>05</span><strong>Опишите результат своими словами</strong></div>
-     <label for="materialInstruction">Задание для AI</label>
-     <textarea id="materialInstruction" rows="3" maxlength="500" placeholder="Например: оконные рамы сделать матово-чёрными, стекло, профиль и размеры сохранить. Или: террасу сделать из термодерева тёплого оттенка."></textarea>
-     <p>Промпт применяется только к выбранной категории. Если нет точной маски, AI сам ищет нужный элемент; перед заменой проверьте результат.</p>
-     <button type="button" class="btn btn-outline btn-block" id="materialGenerateFromText">Применить описание через AI</button>
-     <small>Это платная генерация через API Market. Описания не дают гарантии пиксельного сохранения соседних областей без маски.</small>
-   </div>
+
   </div>
  </section>
 <section id="variantsPanel" class="tab-panel" role="tabpanel">
@@ -300,7 +314,7 @@
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
 <script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
-<script src="app.js?v=universal-batch-material-free-v33-20261109"></script>
+<script src="app.js?v=materials-quick-flow-v34-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
