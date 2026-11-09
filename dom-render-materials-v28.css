@@ -49,3 +49,19 @@
 #materialReplacePane .material-process .btn{white-space:normal;min-height:45px}
 @media(max-width:700px){.material-v28-head{padding:17px 15px}.material-v28-head h3{font-size:18px}.material-zone-grid{gap:7px!important}.material-zone-grid .material-zone-card{min-height:75px!important;padding:10px 8px!important;gap:7px}.material-zone-grid .material-zone-icon{flex-basis:29px;width:29px;height:29px;font-size:17px!important}.material-zone-grid .material-zone-card b{font-size:10px}.material-zone-grid .material-zone-card small{font-size:9px}.material-action-card{min-height:70px}.material-color-swatches{gap:6px}.material-color-swatches button{min-height:40px}}
 @media(max-width:365px){.material-zone-grid{grid-template-columns:1fr 1fr;gap:5px!important}.material-zone-grid .material-zone-card{padding:8px!important}.material-zone-grid .material-zone-icon{display:none!important}.material-color-editor{padding:9px}}
+
+/* Magic Wand v29: connected region preview that cannot silently overwrite a mask */
+.editor-tools [data-tool="wand"]{background:#e6f3ec;border:1px solid #b6d7c6;color:#204e39}
+.editor-tools [data-tool="wand"].active{background:#244d38;color:#fff;border-color:#244d38;box-shadow:0 0 0 2px rgba(43,113,69,.1)}
+.editor-tools [data-tool="wand"] svg{stroke-width:1.9}
+.wand-add-mode{border-radius:9px;background:#f4f8f3;color:#42684f}
+.wand-add-mode input{accent-color:#296b45}
+.wand-approval{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 9px;border:1px solid #a5cdb2;border-radius:10px;background:#e5f5e9;color:#2a6340}
+.wand-approval[hidden]{display:none!important}
+.wand-approval span{font-size:10px;font-weight:700;flex:1 1 115px}
+.wand-apply{background:#28583d!important;color:#fff!important;border-color:#28583d!important}
+.wand-apply:hover{background:#36704b!important}
+.editor-toolbar .similar-settings{min-width:115px;max-width:155px}
+.editor-toolbar .similar-settings input{accent-color:#2c6e4d}
+.stage.edit-mode #maskOverlay{cursor:crosshair}
+@media(max-width:700px){.wand-approval{flex:1 1 100%;justify-content:space-between}.wand-approval span{font-size:11px}.editor-tools [data-tool="wand"]{min-width:145px}}
