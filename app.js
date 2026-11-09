@@ -718,6 +718,157 @@ const m=matById(current().mats[current().zone]);
 if(useMask&&editMode==='replace'&&!m.custom&&!instruction)throw Error('Для замены выберите фактуру или опишите новый материал текстом.');
 const materialData=useMask&&editMode==='replace'&&m.custom?await getMedia('material_'+m.id):null;
 if(useMask&&editMode==='replace'&&m.custom&&!materialData)throw Error('Загрузите выбранную фактуру повторно.');let refData=null;if(current().keepReference&&!renderURL&&!project.demo){refData=await getMedia(mediaKey('ref'))}else if(current().keepReference&&project.reference){refData=await getMedia(mediaKey(project.reference))}const payload={image:await urlToDataURL(base),mask:maskData,material:materialData,reference:refData,brief:settingsBrief(),selectedZone:editRequested?zoneLabel():null,zoneId:editRequested?current().zone:null,editMode,editAction:editRequested?action:null,materialInstruction:editRequested?instruction:null,targetColor:editRequested&&action==='color'?materialColor():null,materialName:useMask&&editMode==='replace'&&m.custom?m.name:null,materialDimensions:useMask&&editMode==='replace'&&m.custom?{width:m.width||0,height:m.height||0}:null,size:imageSizeForRatio(current().ratio),quality:current().quality,quantity:Number(current().quantity)};setRenderProgress('AI создаёт визуализацию','Сервер обрабатывает сцену. Время зависит от сложности изображения.');const ac=new AbortController();const id=setTimeout(()=>ac.abort(),180000);let response;try{response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ac.signal})}finally{clearTimeout(id)}const data=await response.json().catch(()=>({error:'Некорректный ответ сервера'}));if(!response.ok||!Array.isArray(data.images)||!data.images.length)throw new Error(data.error||'Сервер не вернул изображение');setRenderProgress('Сохраняем результат','Добавляем изображение в галерею проекта');for(const [index,out] of data.images.entries()){const id='r'+uuid().slice(0,8);const url='data:'+(data.mimes?.[index]||'image/png')+';base64,'+out;await setMedia(mediaKey('render_'+id),url);project.renders.push({id,number:project.renders.length+1,createdAt:Date.now()});project.activeRender=id;renderURL=url}if(current().keepReference){await setMedia(mediaKey('ref'),renderURL);project.reference='ref'}save();await loadProject(project.id);toast(data.warning||'AI-визуализация готова. Сохраните изображение через галерею.')}catch(err){toast((err.name==='AbortError'?'Время ожидания AI истекло. ':err.message)||'Ошибка генерации')}finally{rendering=false;stopRenderProgress();$('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию';$('providerFoot').textContent=aiConnected?'Nano Banana подключена':'Демо: AI не подключён'}}
+const BATCH_SHOTS=[
+ {id:'original',label:'01 · Исходный ракурс',title:'Исходный ракурс'},
+ {id:'front',label:'02 · Фронтальный вид',title:'Фронтальный вид'},
+ {id:'detailEntry',label:'03 · Входная группа крупно',title:'Вход и терраса'},
+ {id:'detailMaterial',label:'04 · Детали фасада крупно',title:'Материалы и окно'}
+];
+function batchStatus(message,error=false){
+ const status=$('batchStatus');if(!status)return;
+ status.textContent=message;status.classList.toggle('is-error',error);
+}
+function updateBatchUI(){
+ if(!project)return;
+ const hasFront=!!project.hasBatchFront;
+ $('batchFrontName').textContent=hasFront?(project.batchFrontName||'Фронтальный вид загружен'):'Выбрать файл';
+ $('batchFrontClear').hidden=!hasFront;
+ const notice=$('batchGeometryNotice');
+ notice.classList.toggle('is-exact',hasFront);
+ notice.textContent=hasFront
+  ?'Для кадра №2 будет использован отдельный фронтальный скрин вашей модели. Это значительно надёжнее для сохранения геометрии.'
+  :'Без отдельного фронтального вида кадр №2 будет AI-реконструкцией. Строгое совпадение невидимой геометрии не гарантируется.';
+ for(const key of ['batchDetail1X','batchDetail1Y','batchDetail2X','batchDetail2Y']){
+  const fallback={batchDetail1X:60,batchDetail1Y:60,batchDetail2X:77,batchDetail2Y:40}[key];
+  $(key).value=String(Number(current()[key])||fallback);
+ }
+}
+async function storeBatchFront(file){
+ if(!file)return;
+ if(rendering){toast('Завершите текущую визуализацию');return}
+ if(!project?.hasSource){toast('Сначала загрузите основной скриншот дома');return}
+ try{
+  const im=await pngDataFromFile(file);
+  await setMedia(mediaKey('batchFront'),im.data);
+  project.hasBatchFront=true;
+  project.batchFrontName=file.name.slice(0,80);
+  save();updateBatchUI();
+  batchStatus('Фронтальный скрин сохранён для кадра №2. Все четыре кадра готовы к запуску.');
+ }catch(error){toast(error.message||'Не удалось загрузить фронтальный ракурс')}
+}
+async function clearBatchFront(){
+ if(rendering)return;
+ await dataStore.del(mediaKey('batchFront'));
+ imageCache.delete(mediaKey('batchFront'));
+ project.hasBatchFront=false;project.batchFrontName='';
+ save();updateBatchUI();
+ batchStatus('Дополнительный фронтальный вид удалён. При генерации кадра №2 AI будет оценивать фронтальную геометрию по основному изображению.');
+}
+async function cropBatchDetail(source,focusX,focusY,ratioString){
+ const img=await imageFrom(source);
+ const [a,b]=String(ratioString||'16:9').split(':').map(Number);
+ const ratio=a>0&&b>0?a/b:16/9;
+ let sw=Math.min(img.naturalWidth*.49,img.naturalHeight*.67*ratio);
+ let sh=sw/ratio;
+ if(sh>img.naturalHeight){sh=img.naturalHeight;sw=sh*ratio}
+ sw=Math.max(1,Math.round(sw));sh=Math.max(1,Math.round(sh));
+ const fx=Math.max(.04,Math.min(.96,Number(focusX)/100)),fy=Math.max(.04,Math.min(.96,Number(focusY)/100));
+ const sx=Math.max(0,Math.min(img.naturalWidth-sw,img.naturalWidth*fx-sw/2));
+ const sy=Math.max(0,Math.min(img.naturalHeight-sh,img.naturalHeight*fy-sh/2));
+ const out=document.createElement('canvas');
+ const factor=Math.min(2,2000/Math.max(sw,sh));
+ out.width=Math.min(2000,Math.max(384,Math.round(sw*factor)));
+ out.height=Math.min(2000,Math.max(256,Math.round(sh*factor)));
+ const ctx=out.getContext('2d');
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
+ ctx.drawImage(img,sx,sy,sw,sh,0,0,out.width,out.height);
+ const data=out.toDataURL('image/jpeg',.92);
+ out.width=out.height=1;
+ return data;
+}
+async function generateBatch(){
+ if(rendering){toast('Другая генерация уже выполняется');return}
+ if(!project?.hasSource){toast('Сначала загрузите исходный скриншот дома');return}
+ let available;
+ try{
+  const resp=await fetch('/api/status',{cache:'no-store'});
+  const status=await resp.json();
+  if(!status.ready)throw Error('Генерация AI Market не подключена');
+  available=Number(status.dailyRemaining);
+  if(!Number.isFinite(available)||available<4)throw Error('Недостаточно генераций в общем дневном лимите сервера: осталось '+(Number.isFinite(available)?available:'—')+'. Для пакета нужно 4.');
+ }catch(err){batchStatus(err.message||'Не удалось проверить лимит',true);return}
+ const front=project.hasBatchFront?await getMedia(mediaKey('batchFront')):null;
+ if(project.hasBatchFront&&!front){batchStatus('Фронтальный скрин не удалось прочитать. Загрузите его ещё раз.',true);return}
+ const estimate=front?'':'\nКадр 2 без фронтального скрина является AI-приближением, точную геометрию обещать нельзя.';
+ if(!confirm('Запустить пакет из 4 кадров? Будут отправлены ровно 4 отдельных платных обращения к API Market: по одному на кадр. Если часть запросов завершится ошибкой, уже отправленные могут быть списаны.'+estimate))return;
+ const batchProject=project,src=sourceURL,brief=settingsBrief(),ratio=current().ratio,quality=current().quality;
+ const positions=[[current().batchDetail1X||60,current().batchDetail1Y||60],[current().batchDetail2X||77,current().batchDetail2Y||40]];
+ const batchId='b'+uuid().slice(0,9);
+ let made=0,attempted=0,firstResult=null,failed=null;
+ rendering=true;
+ $('batchStart').disabled=true;$('generateBtn').disabled=true;$('batchToggle').disabled=true;$('batchFrontFile').disabled=true;
+ $('batchStart').textContent='Создаём пакет…';
+ setRenderProgress('Пакетная визуализация','Готовим четыре независимых кадра');
+ try{
+  const images=[
+   src,
+   front||src,
+   await cropBatchDetail(src,positions[0][0],positions[0][1],ratio),
+   await cropBatchDetail(src,positions[1][0],positions[1][1],ratio)
+  ];
+  for(let i=0;i<BATCH_SHOTS.length;i++){
+   if(project!==batchProject)throw Error('Во время пакета был переключён проект. Генерация оставшихся кадров остановлена.');
+   const shot=BATCH_SHOTS[i];
+   const position=(i+1)+' из 4';
+   batchStatus('Создаётся кадр '+position+': '+shot.title+'. Успешно сохранено: '+made+'.');
+   setRenderProgress('Кадр '+position,shot.title+' · один запрос к AI Market');
+   const payload={
+    image:await urlToDataURL(images[i]),
+    reference:i>0?firstResult:null,
+    brief:{...brief,lockGeometry:true,preserveMaterials:true,output:{...brief.output,quantity:1}},
+    batchShot:shot.id,batchFrontProvided:!!front,
+    quantity:1,quality,size:imageSizeForRatio(ratio)
+   };
+   const ctrl=new AbortController();
+   const timeout=setTimeout(()=>ctrl.abort(),200000);
+   let response,data;
+   attempted++;
+   try{
+    response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
+    data=await response.json().catch(()=>({error:'Неверный ответ сервера'}));
+   }finally{clearTimeout(timeout)}
+   if(!response.ok||!Array.isArray(data.images)||data.images.length!==1)throw Error(data.error||'AI не вернул кадр '+position);
+   const url='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
+   if(!firstResult)firstResult=url;
+   const id='r'+uuid().slice(0,8);
+   await setMedia(mediaKey('render_'+id,batchProject.id),url);
+   batchProject.renders.push({
+    id,number:batchProject.renders.length+1,createdAt:Date.now(),
+    batchId,batchIndex:i+1,batchLabel:shot.label,
+    approximateFront:i===1&&!front
+   });
+   batchProject.activeRender=id;
+   renderURL=url;
+   $('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='ПАКЕТ '+position.toUpperCase();
+   made++;save();renderResults();renderVariantsPanel();
+  }
+  if(current().keepReference&&firstResult){
+   await setMedia(mediaKey('ref'),firstResult);batchProject.reference='ref';save();
+  }
+  batchStatus('Все четыре кадра готовы. Расход — 4 обращения к AI Market. Каждый сохранён в разделе «Варианты».');
+  toast('Пакет готов: 4 отдельных изображения сохранены');
+ }catch(error){
+  failed=error;
+  const status='Создано '+made+' из 4 кадров. Отправлено запросов: '+attempted+'. '+(error.name==='AbortError'?'Истекло время ожидания; запрос мог быть оплачен. ':String(error.message||'Ошибка'))+' Уже полученные кадры сохранены. Повторный запуск создаст новый платный пакет.';
+  batchStatus(status,true);toast('Пакет завершён частично — '+made+' из 4. Проверьте статус и баланс.');
+ }finally{
+  rendering=false;stopRenderProgress();
+  $('batchStart').disabled=false;$('generateBtn').disabled=false;$('batchToggle').disabled=false;$('batchFrontFile').disabled=false;
+  $('batchStart').innerHTML='<svg class="ico"><use href="#i-spark"/></svg><span>Создать пакет · 4 кадра</span>';
+  $('providerFoot').textContent=aiConnected?'Nano Banana подключена':'Проверьте подключение API';
+  if(made>0)await loadProject(batchProject.id);
+ }
+}
 async function urlToDataURL(url){if(url.startsWith('data:'))return url;const response=await fetch(url);if(!response.ok)throw Error('Не удалось загрузить справочное изображение');const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader;r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)})}
 async function showResult(id){if(id==='source'){project.activeRender=null;renderURL='';$('afterImg').src=sourceURL;$('noRender').hidden=false;$('resultTag').textContent='НЕТ РЕНДЕРА';$('splitSlider').disabled=false}else if(id==='demo'&&project.demo){project.activeRender='demo';renderURL=demoPhoto;$('afterImg').src=renderURL;$('noRender').hidden=true;$('resultTag').textContent='ДЕМОНСТРАЦИЯ';$('splitSlider').disabled=false}else{const url=await getMedia(mediaKey('render_'+id));if(!url){toast('Результат не найден в локальном хранилище');return}project.activeRender=id;renderURL=url;$('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='AI-РЕЗУЛЬТАТ';$('splitSlider').disabled=false}save();renderResults();renderVariantsPanel();setViewerMode(viewerMode);$('materialPreview').getContext('2d').clearRect(0,0,$('materialPreview').width,$('materialPreview').height)}
 async function checkAPI(timeoutMs=20000){try{const res=await fetch('/api/status',{cache:'no-store',signal:AbortSignal.timeout(timeoutMs)});if(!res.ok)throw Error('Not running');const data=await res.json();aiConnected=!!data.ready;apiCheckError=''}catch{aiConnected=false;apiCheckError='Не удалось связаться с сервером AI. Повторите попытку через несколько секунд.'}$('providerFoot').textContent=aiConnected?'Nano Banana подключена':apiCheckError?'Проверить подключение AI':'Демо: AI не подключён';return aiConnected}
