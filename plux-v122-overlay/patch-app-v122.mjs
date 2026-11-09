@@ -63,3 +63,14 @@ for(const asset of ['oled-glass-v123.css','oled-reference-v124.css','assets/crys
 }
 if(!glassHtml.includes('oled-reference-v124.css'))throw Error('Reference glass CSS not linked');
 console.log('PLUX V12.4 Emerald Crystal reference buttons and OLED menu installed');
+
+
+/* PLUX V12.5 onboarding and aligned controls. Motion/videos and prior icons are not replaced. */
+const pluxV125Packed=Buffer.from(readFileSync('plux-v125-overlay/v125-assets.tgz.b64','utf8').trim(),'base64');
+plux123Exec('tar',['xzf','-','-C',root],{input:pluxV125Packed});
+plux123Exec(process.execPath,['plux-v125-overlay/apply-v125.mjs',root],{stdio:'inherit'});
+for(const asset of ['plux-v125.css','plux-v125.js']){
+ if(statSync(join(root,asset)).size<1200)throw Error('V12.5 missing '+asset);
+}
+if(!readFileSync(join(root,'index.html'),'utf8').includes('plux-release-v125'))throw Error('V12.5 index patch missing');
+console.log('PLUX V12.5 onboarding and aligned controls published');
