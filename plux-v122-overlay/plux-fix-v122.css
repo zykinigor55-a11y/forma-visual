@@ -1,0 +1,36 @@
+/* PLUX 12.2 — single reference icon source, safe full buttons, 2K asset atlas. */
+#screen-modes .mode-card:nth-child(n){background-image:url('/assets/modes-atlas-2k-v122.png')!important;background-size:200% 300%!important;background-repeat:no-repeat!important;background-color:transparent!important}
+#screen-modes .mode-card:nth-child(1){background-position:0% 0%!important}
+#screen-modes .mode-card:nth-child(2){background-position:100% 0%!important}
+#screen-modes .mode-card:nth-child(3){background-position:0% 50%!important}
+#screen-modes .mode-card:nth-child(4){background-position:100% 50%!important}
+#screen-modes .mode-card:nth-child(5){background-position:0% 100%!important}
+#screen-modes .mode-card:nth-child(6){background-position:100% 100%!important}
+#screen-modes .mode-card :is(.mode-emblem,strong,small),
+#screen-modes .mode-card>.plux-mode-liquid,#screen-modes .mode-card>.plux115-liquid{display:none!important;opacity:0!important;visibility:hidden!important}
+#screen-modes .mode-card::before,#screen-modes .mode-card::after{opacity:.10!important;mix-blend-mode:screen!important}
+#screen-modes .mode-card{filter:drop-shadow(0 7px 11px #000c)!important}
+#screen-modes .mode-card:active,#screen-modes .mode-card.mode-picking{filter:drop-shadow(0 0 12px #2dffa25c) brightness(1.08)!important}
+#screen-home .home-bottom{flex:0 0 clamp(208px,28dvh,250px)!important;min-height:208px!important;padding:7px clamp(16px,5.2vw,26px) 5px!important;justify-content:center!important;gap:9px!important;overflow:visible!important}
+#screen-home .speech-glass{flex:0 0 clamp(58px,7.6dvh,68px)!important;min-height:0!important;max-height:none!important}
+#screen-home .quick-actions{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;justify-items:center!important;align-items:center!important;height:clamp(126px,16dvh,148px)!important;min-height:clamp(126px,16dvh,148px)!important;flex:0 0 clamp(126px,16dvh,148px)!important;width:100%!important;box-sizing:border-box!important;margin:0!important;padding:8px 2px!important;overflow:visible!important;gap:3px!important}
+#screen-home .quick-actions>.action-round{position:relative!important;flex:0 0 auto!important;margin:0!important;padding:0!important;overflow:hidden!important;isolation:isolate!important;display:flex!important;align-items:center!important;justify-content:center!important;background-size:96% 96%!important;background-position:center!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;transform:translateZ(0)!important;filter:drop-shadow(0 5px 6px #0008) drop-shadow(0 0 7px #28efae30)!important}
+#screen-home #open-chat-quick,#screen-home #open-create-quick{width:clamp(80px,23.5vw,98px)!important;height:clamp(80px,23.5vw,98px)!important;border-radius:27%!important}
+#screen-home #open-voice-quick{width:clamp(109px,30vw,128px)!important;height:clamp(109px,30vw,128px)!important;border-radius:50%!important}
+#screen-home #open-chat-quick{background-image:url('/assets/ref-keyboard-crystal-v122.svg')!important}
+#screen-home #open-create-quick{background-image:url('/assets/ref-camera-crystal-v122.svg')!important}
+#screen-home #open-voice-quick{background-image:url('/assets/ref-mic.webp')!important}
+#screen-home .quick-actions>.action-round>svg,#screen-home .quick-actions>.action-round>.plux113-steel-mic,
+#screen-home .quick-actions>.action-round>.plux113-fluid,#screen-home .quick-actions>.action-round>.plux115-liquid,
+#screen-home .quick-actions>.action-round>.cd109-optics,#screen-home .quick-actions>.action-round>.cd109-energy{display:none!important}
+#screen-home .quick-actions>.action-round::before,#screen-home #open-chat-quick::after,#screen-home #open-create-quick::after{content:none!important;display:none!important}
+#screen-home #open-voice-quick::after{content:''!important;display:block!important;pointer-events:none!important;position:absolute!important;inset:24%!important;border:0!important;box-shadow:none!important;border-radius:50%!important;background:radial-gradient(circle at 30% 70%,#19ffb04f,transparent 65%),radial-gradient(circle at 78% 36%,#bc7aff41,transparent 72%)!important;opacity:.44!important;filter:blur(5px)!important;animation:plux122-orb 11s ease-in-out infinite alternate!important}
+@keyframes plux122-orb{from{transform:translate3d(-8%,5%,0) rotate(-12deg)}to{transform:translate3d(8%,-6%,0) rotate(21deg)}}
+#screen-home .quick-actions>.action-round:active{transform:scale(.965)!important;filter:brightness(1.12) drop-shadow(0 0 13px #8bffca74)!important}
+#screen-home .bottom-nav{flex-shrink:0!important;margin-top:2px!important;overflow:visible!important}
+#screen-create .featured-art img{content:url('/assets/emerald-world-2k-v122.png')!important}
+#screen-home .branding img,#screen-onboard .onboard-head img{content:url('/assets/plux-logo-2k-v122.png')!important}
+#prefs #demo-code,#prefs label[for=demo-code],#prefs .dialog-mini{display:none!important}
+@media(max-height:750px){#screen-home .home-bottom{flex-basis:205px!important;min-height:205px!important;padding-top:5px!important}#screen-home .quick-actions{height:124px!important;min-height:124px!important;flex-basis:124px!important}#screen-home #open-chat-quick,#screen-home #open-create-quick{width:78px!important;height:78px!important}#screen-home #open-voice-quick{width:106px!important;height:106px!important}}
+@media(max-width:370px){#screen-home #open-chat-quick,#screen-home #open-create-quick{width:77px!important;height:77px!important}#screen-home #open-voice-quick{width:105px!important;height:105px!important}}
+@media(prefers-reduced-motion:reduce){#screen-home #open-voice-quick::after{animation:none!important}}
