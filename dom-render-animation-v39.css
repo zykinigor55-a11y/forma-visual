@@ -151,3 +151,15 @@
  #animationPanel .anim-lens-metrics b{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){#animationPanel .anim-preview-frame.is-playing{animation:none!important}}
+
+/* v42 | 3D camera movement and illuminated path drawn over the original photo */
+#animationPanel .anim-three-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;contain:layout paint;isolation:isolate}
+#animationPanel .anim-three-layer svg.anim-camera-path-svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(9,24,15,.55))}
+#animationPanel .anim-three-layer [data-camera-symbol]{opacity:1;transition:opacity .2s ease;filter:drop-shadow(0 3px 6px rgba(3,18,11,.7))}
+#animationPanel .anim-three-layer.has-three-camera [data-camera-symbol]{opacity:0}
+#animationPanel .anim-camera-three-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;mix-blend-mode:normal}
+#animationPanel .anim-preview-overlay{z-index:5}
+#animationPanel .anim-preview-play-holder{z-index:6}
+#animationPanel .anim-view-finder{z-index:3}
+@media(max-width:700px){#animationPanel .anim-three-layer svg.anim-camera-path-svg{filter:drop-shadow(0 1px 3px rgba(9,24,15,.5))}}
+@media(prefers-reduced-motion:reduce){#animationPanel .anim-three-layer [data-camera-symbol]{transition:none}}
