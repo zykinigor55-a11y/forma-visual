@@ -165,7 +165,7 @@
    <p class="material-hint">Выберите участок автоматически или уточните на изображении. Все изменения применяются только после проверки.</p><div class="material-auto-find">
  <div><strong>Определить элемент на изображении</strong><small>Быстрая предварительная оценка зоны. Для точных границ можно уточнить маску палочкой или кистью.</small></div>
  <button type="button" class="btn btn-outline btn-block" id="materialFindZone">Найти выбранный элемент · β</button>
- <p id="materialFindStatus" role="status">Для точного выделения AI-модель сегментации пока не подключена. Проверьте предложенную маску перед генерацией.</p>
+ <p id="materialFindStatus" role="status">Для точного выделения AI-модель сегментации пока не подключена. Проверьте предложенную маску перед генерацией.</p><div class="material-find-review" id="materialFindReview" hidden><button type="button" class="btn btn-primary btn-block" id="materialFindApply">Подтвердить найденную область</button><button type="button" class="btn btn-quiet btn-block btn-sm" id="materialFindCancel">Отменить предложение</button></div>
  </div>
    <div class="zone-buttons"><button class="btn btn-outline" id="startMask"><svg class="ico"><use href="#i-brush"/></svg>Выделить на изображении</button><div class="selection-status" id="selectionStatus" role="status" aria-live="polite">Выделение ещё не задано</div><button class="btn btn-quiet" id="showMask"><svg class="ico"><use href="#i-eye"/></svg>Показать маску</button></div>
    <label class="switch-row selection-only material-advanced"><span><b>AI: изменять только маску</b><small>Не затрагивать остальную часть изображения</small></span><input type="checkbox" id="editSelectedOnly" checked><i></i></label>
