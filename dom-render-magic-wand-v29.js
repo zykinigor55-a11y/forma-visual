@@ -60,7 +60,24 @@
        }
      }
    }
-   return {mask:region,count,width:w,height:h,overflow:false};
+   // Fill only 1–2 px hairline breaks enclosed by already-selected surface pixels.
+   // This closes thin standing-seam shadows without crossing wide window/door frames.
+   const completed=region.slice();
+   let corrected=0;
+   for(let yy=1;yy<h-1;yy++){
+    const row=yy*w;
+    for(let xx=1;xx<w-3;xx++){
+     const i=row+xx;
+     if(!region[i])continue;
+     if(!region[i+1]&&region[i+2]){
+      if(!completed[i+1]){completed[i+1]=1;corrected++}
+     }else if(!region[i+1]&&!region[i+2]&&region[i+3]){
+      if(!completed[i+1]){completed[i+1]=1;corrected++}
+      if(!completed[i+2]){completed[i+2]=1;corrected++}
+     }
+    }
+   }
+   return {mask:completed,count:count+corrected,width:w,height:h,overflow:false};
  }
- window.DOM_RENDER_MAGIC_WAND={select,version:'29'};
+ window.DOM_RENDER_MAGIC_WAND={select,version:'30'};
 })();
