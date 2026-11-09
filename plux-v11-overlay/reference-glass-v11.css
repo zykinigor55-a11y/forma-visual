@@ -1,0 +1,145 @@
+/* PLUX V11 REFERENCE GLASS — match approved reference by using original polished button assets.
+   Remove all V10.8/10.9 SVG optics and pseudo-glass. Leave actual interaction untouched. */
+:root{--plux-ref-mint:#52e9b7;--plux-ref-lilac:#af8af1}
+#app .cd109-optics,#app .cd109-energy,#app .cv108-liquid{display:none!important;animation:none!important}
+#app .cd109-vessel.cd109-vessel::before,#app .cd109-vessel.cd109-vessel::after,
+#screen-home .glass-icon::before,#screen-home .glass-icon::after,
+#screen-home .quick-actions>.action-round::before,
+#screen-home .bottom-nav::before,#screen-home .bottom-nav::after,
+#screen-home .bottom-nav>.nav-button::before,#screen-home .bottom-nav>.nav-button::after{
+  content:none!important;display:none!important;animation:none!important
+}
+/* Actual pre-rendered transparent glass keys preserve their source-specular reflections. */
+#screen-home .quick-actions{
+ height:clamp(98px,28vw,124px)!important;min-height:98px!important;
+ flex-basis:clamp(98px,28vw,124px)!important;display:grid!important;
+ grid-template-columns:1fr auto 1fr!important;align-items:center!important;
+ justify-items:center!important;gap:4px!important;padding:0 4px!important;margin:0!important
+}
+#screen-home .quick-actions>.action-round,
+#screen-home #open-chat-quick.cd109-vessel,#screen-home #open-create-quick.cd109-vessel,
+#screen-home #open-voice-quick.cd109-vessel{
+ display:grid!important;place-items:center!important;position:relative!important;
+ padding:0!important;margin:0!important;overflow:visible!important;
+ background-color:transparent!important;background-repeat:no-repeat!important;
+ background-position:center!important;background-size:contain!important;
+ border:0!important;box-shadow:none!important;backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;
+ transition:transform .24s cubic-bezier(.2,.9,.25,1.18),filter .28s ease!important;
+ -webkit-tap-highlight-color:transparent!important
+}
+#screen-home #open-chat-quick,#screen-home #open-chat-quick.cd109-vessel{
+ width:clamp(68px,21.2vw,94px)!important;height:clamp(68px,21.2vw,94px)!important;
+ border-radius:24px!important;
+ background-image:url('/assets/glass-keyboard.png')!important
+}
+#screen-home #open-create-quick,#screen-home #open-create-quick.cd109-vessel{
+ width:clamp(68px,21.2vw,94px)!important;height:clamp(68px,21.2vw,94px)!important;
+ border-radius:24px!important;
+ background-image:url('/assets/glass-camera.png')!important
+}
+#screen-home #open-voice-quick,#screen-home #open-voice-quick.cd109-vessel{
+ width:clamp(93px,28.7vw,124px)!important;height:clamp(93px,28.7vw,124px)!important;
+ border-radius:50%!important;
+ background-image:url('/assets/glass-mic.png')!important;
+ filter:saturate(.76) brightness(.97) hue-rotate(7deg)!important;
+ animation:ref11-mic-glow 9s ease-in-out infinite alternate!important
+}
+#screen-home .quick-actions>.action-round>svg{display:none!important}
+#screen-home .quick-actions>.action-round:active{transform:translateY(2px) scale(.948)!important;filter:brightness(1.13)!important}
+/* Internal green/lilac light, no outer neon halo. */
+#screen-home #open-voice-quick::after{
+ content:''!important;display:block!important;
+ position:absolute!important;inset:17%!important;z-index:2!important;
+ background:radial-gradient(ellipse 49% 63% at 21% 70%,rgba(17,247,154,.34),transparent 95%),
+ radial-gradient(ellipse 38% 59% at 82% 75%,rgba(163,109,255,.42),transparent 95%)!important;
+ opacity:.46!important;pointer-events:none!important;border:0!important;
+ border-radius:50%!important;box-shadow:none!important;mix-blend-mode:screen!important;
+ animation:ref11-inner 11s ease-in-out infinite alternate!important
+}
+/* Top header: one circular lens per action from the already-shipped original image assets. */
+#screen-home .home-head .glass-icon,#screen-home .home-head .glass-icon.cd109-vessel{
+ width:clamp(40px,11.5vw,50px)!important;height:clamp(40px,11.5vw,50px)!important;
+ border:0!important;border-radius:50%!important;
+ padding:0!important;box-shadow:none!important;
+ background-color:transparent!important;background-repeat:no-repeat!important;
+ background-position:center!important;background-size:contain!important;
+ backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+ transition:transform .22s ease,filter .22s ease!important
+}
+#screen-home #open-profile{background-image:url('/assets/glass-profile.png')!important}
+#screen-home #open-notifications{background-image:url('/assets/glass-bell.png')!important}
+#screen-home .home-head .glass-icon svg{display:none!important}
+#screen-home .home-head .glass-icon:active{transform:scale(.94)!important;filter:brightness(1.14)}
+/* One dark floating crystal greeting capsule, not a thick outlined slab. */
+#screen-home .speech-glass,#screen-home .speech-glass.cd109-vessel{
+ height:clamp(54px,15vw,65px)!important;min-height:0!important;max-height:none!important;
+ border:1px solid rgba(214,242,255,.58)!important;border-radius:999px!important;
+ padding:7px 14px!important;overflow:hidden!important;
+ background:radial-gradient(ellipse 21% 64% at 2% 90%,rgba(29,219,167,.32),transparent 98%),
+ radial-gradient(ellipse 21% 84% at 100% 85%,rgba(169,104,241,.27),transparent 98%),
+ linear-gradient(103deg,rgba(20,69,66,.43),rgba(6,19,30,.81) 44%,rgba(30,23,55,.67))!important;
+ box-shadow:inset 0 2px 2px rgba(243,255,255,.52),inset 0 -3px 7px rgba(0,10,17,.57),
+ 0 9px 23px rgba(0,0,0,.56),0 0 9px rgba(97,206,202,.11)!important;
+ backdrop-filter:blur(17px) saturate(120%)!important;-webkit-backdrop-filter:blur(17px) saturate(120%)!important
+}
+#screen-home .speech-glass::before{
+ content:''!important;display:block!important;position:absolute!important;inset:5px!important;
+ border-radius:inherit!important;pointer-events:none!important;
+ border:1px solid rgba(232,255,253,.17)!important;
+ background:none!important;transform:none!important;animation:none!important
+}
+#screen-home .speech-glass::after{content:none!important;display:none!important}
+#screen-home .speech-glass strong{font-size:clamp(12px,3.6vw,17px)!important;font-weight:630!important}
+#screen-home .speech-glass small{font-size:clamp(10px,2.8vw,12px)!important;color:#dee7eb!important}
+#screen-home .speech-glass>.equalizer{flex:0 0 48px!important}
+/* One seamless dock image: home menu is only shown on the home screen.
+   Four original accessible buttons remain under the decorative bitmap. */
+#screen-home .bottom-nav,#screen-home .bottom-nav.cd109-vessel{
+ height:clamp(77px,20vw,92px)!important;min-height:clamp(77px,20vw,92px)!important;
+ flex:0 0 clamp(77px,20vw,92px)!important;
+ margin:0 11px max(9px,env(safe-area-inset-bottom))!important;
+ padding:0 8px!important;display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:2px!important;border-radius:36px!important;border:0!important;
+ background:transparent url('/assets/nav-shell.png') center/100% 100% no-repeat!important;
+ box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+ overflow:hidden!important
+}
+#screen-home .bottom-nav>.nav-button,#screen-home .bottom-nav>.nav-button.cd109-vessel,
+#screen-home .bottom-nav>.nav-button.selected.cd109-vessel{
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:5px!important;width:100%!important;height:100%!important;
+ margin:0!important;padding:7px 1px 5px!important;border:0!important;
+ border-radius:22px!important;background:none!important;box-shadow:none!important;
+ filter:none!important;overflow:visible!important;backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important
+}
+#screen-home .bottom-nav>.nav-button>svg,
+#screen-home .bottom-nav>.nav-button>span:not(.cd109-optics){
+ opacity:0!important;visibility:hidden!important
+}
+#screen-home .bottom-nav>.nav-button:focus-visible{outline:2px solid #a3fff2!important;outline-offset:-4px!important}
+#app button.cd109-vessel:not(.nav-button):not(.action-round):not(.glass-icon):not(.speech-glass){
+ border:1px solid rgba(207,232,252,.38)!important;
+ box-shadow:inset 0 1px 2px rgba(255,255,255,.3),inset 0 -3px 6px rgba(0,0,0,.32),0 7px 13px rgba(0,0,0,.4)!important;
+ background:linear-gradient(145deg,rgba(110,163,173,.14),rgba(7,18,28,.55) 65%,rgba(105,68,151,.13))!important
+}
+@keyframes ref11-mic-glow{
+ 0%,100%{filter:saturate(.76) brightness(.93) hue-rotate(7deg)}
+ 50%{filter:saturate(.9) brightness(1.045) hue-rotate(17deg)}
+}
+@keyframes ref11-inner{
+ 0%{transform:translate(-8%,3%) rotate(-11deg);opacity:.39}
+ 100%{transform:translate(10%,-3%) rotate(21deg);opacity:.62}
+}
+@media(max-height:740px){
+ #screen-home .home-bottom{gap:6px!important}
+ #screen-home .quick-actions{height:94px!important;min-height:94px!important;flex-basis:94px!important}
+ #screen-home #open-voice-quick{width:95px!important;height:95px!important}
+ #screen-home #open-chat-quick,#screen-home #open-create-quick{width:68px!important;height:68px!important}
+ #screen-home .bottom-nav{height:74px!important;min-height:74px!important;flex-basis:74px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-home #open-voice-quick,#screen-home #open-voice-quick::after{animation:none!important}
+}
