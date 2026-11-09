@@ -1,7 +1,7 @@
 'use client';
 
-import {useEffect,useMemo,useState,type CSSProperties,type ReactNode} from 'react';
-import {ArrowDownToLine,Check,CheckCircle2,Clapperboard,Copy,Film,Focus,Info,MoveRight,Play,SlidersHorizontal,Video} from 'lucide-react';
+import {useEffect,useMemo,useState,type ReactNode} from 'react';
+import {ArrowDownToLine,Check,CheckCircle2,Clapperboard,Copy,Film,Info,SlidersHorizontal} from 'lucide-react';
 
 type Selection={camera:string;lens:string;movement:string;filter:string;duration:number};
 type IconKind='camera'|'lens'|'movement'|'filter';
@@ -173,13 +173,13 @@ function createBrief(s:Selection){
 }
 
 export default function AnimationStudio({sourceUrl}:{sourceUrl:string}){
- const [selection,setSelection]=useState<Selection>(defaults),[message,setMessage]=useState('');
- useEffect(()=>{try{const s=JSON.parse(localStorage.getItem('forma-cinema-v1')||'null') as Partial<Selection>|null;if(!s)return;setSelection({
+ const [selection,setSelection]=useState<Selection>(defaults),[message,setMessage]=useState(''),[hydrated,setHydrated]=useState(false);
+ useEffect(()=>{try{const s=JSON.parse(localStorage.getItem('forma-cinema-v1')||'null') as Partial<Selection>|null;if(!s)return;const secs=typeof s.duration==='number'&&Number.isFinite(s.duration)?s.duration:8;setSelection({
   camera:find(cameras,String(s.camera||'')).id,lens:find(lenses,String(s.lens||'')).id,
   movement:find(movements,String(s.movement||'')).id,filter:find(filters,String(s.filter||'')).id,
-  duration:Number.isFinite(s.duration)&&s.duration!>=3&&s.duration!<=20?s.duration!:8
- });}catch{}},[]);
- useEffect(()=>{try{localStorage.setItem('forma-cinema-v1',JSON.stringify(selection));}catch{}},[selection]);
+  duration:Math.max(3,Math.min(20,Math.round(secs)))
+ });}catch{}finally{setHydrated(true);}},[]);
+ useEffect(()=>{if(!hydrated)return;try{localStorage.setItem('forma-cinema-v1',JSON.stringify(selection));}catch{}},[hydrated,selection]);
  useEffect(()=>{if(!message)return;const t=setTimeout(()=>setMessage(''),3300);return()=>clearTimeout(t);},[message]);
  const cam=find(cameras,selection.camera),lens=find(lenses,selection.lens),move=find(movements,selection.movement),filter=find(filters,selection.filter);
  const brief=useMemo(()=>createBrief(selection),[selection]);
@@ -209,6 +209,7 @@ export default function AnimationStudio({sourceUrl}:{sourceUrl:string}){
      </button>)}</div>
     </Group>)}
    </div>
+   <div className="cine-mobile-actions"><button onClick={copy}><Copy size={14}/>Скопировать ТЗ</button><button onClick={download}><ArrowDownToLine size={14}/>Скачать ТЗ</button></div>
   </aside>
   <section className="cine-center" aria-label="Предпросмотр анимации">
    <div className="cine-main-heading"><div><span className="cine-overline">CAMERA MOTION DESIGN</span><h2>Режиссура кадра</h2></div><span className="cine-production-tag"><Film size={13}/> PRE-VIS / 24 FPS</span></div>
