@@ -41,7 +41,7 @@ function paint(data){
  const limit=(data.authorized&&Number.isInteger(data.dailyLimit))?data.dailyLimit:null;
  txt('cabinetRemaining',remaining===null?'—':remaining);
  txt('cabinetLimitNote',limit===null?'Общий лимит сервера · доступен после входа':('Общий лимит сервера: '+limit+' в сутки · не личная квота'));
- txt('cabinetBalance','Не передаётся по API');
+ txt('cabinetBalance','Пока не подключён');
  txt('cabinetTariff',data.tariffName||'Пока не назначен');
  updateContact(data.supportEmail);
 }
