@@ -80,10 +80,48 @@ async function handler(req,res){
     const upstream=await fetch("https://api-market1.shop/v1/chat/completions",{
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+secret},
-      body:JSON.stringify({model:"gpt-6-luna",messages,temperature:0.7,max_completion_tokens:600}),
+      body:JSON.stringify({model:"gpt-6-luna",messages}),
       signal:AbortSignal.timeout(30000)
     });
-    if(!upstream.ok)return reply(res,502,{error:"API Market не ответил успешно (HTTP "+upstream.status+"). Проверь ключ и баланс."});
+
+    if(!upstream.ok){
+      // Inspect the provider's error without leaking credentials or arbitrary HTML to the client.
+      const contentType=upstream.headers.get("content-type")||"";
+      const textBody=(await upstream.text()).slice(0,3000);
+      const html=/html/i.test(contentType)||/^\s*</.test(textBody);
+      let providerError=null;
+      if(!html){
+        try {
+          const payload=JSON.parse(textBody);
+          providerError=payload?.error||payload;
+        } catch {}
+      }
+      const type=providerError&&typeof providerError==="object"
+        ? String(providerError.type||providerError.code||"").slice(0,70) : "";
+      const message=typeof providerError==="string" ? providerError
+        : (providerError&&typeof providerError==="object"
+          ? String(providerError.message||providerError.detail||"") : "");
+      const safeMessage=message
+        .replaceAll(secret,"[ключ скрыт]")
+        .replace(/Bearer\s+\S+/gi,"[токен скрыт]")
+        .replace(/sk-[a-z0-9_-]{6,}/gi,"[ключ скрыт]")
+        .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,"[email скрыт]")
+        .replace(/[\r\n\t]+/g," ")
+        .slice(0,180);
+      const detail=html
+        ? "Провайдер вернул HTML-страницу запрета (возможно, сработала защита сайта или ограничение IP сервера)."
+        : safeMessage||"Провайдер не указал причину отказа.";
+      console.warn("API Market upstream rejected",JSON.stringify({
+        status:upstream.status,
+        responseType:html?"html":(contentType.includes("json")?"json":"other"),
+        errorType:type
+      }));
+      return reply(res,502,{
+        error:"API Market: HTTP "+upstream.status+". "+detail,
+        upstreamStatus:upstream.status,
+        upstreamType:type||undefined
+      });
+    }
     const result=await upstream.json();
     const answer=result?.choices?.[0]?.message?.content;
     if(typeof answer!=="string"||!answer.trim())return reply(res,502,{error:"Модель вернула пустой ответ."});
