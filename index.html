@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="dom-render-nodes-v35.css?v=20261109-v1">
 <link rel="stylesheet" href="dom-render-mood-v36.css?v=20261109-v1">
 <link rel="stylesheet" href="dom-render-setup-v37.css?v=scene-setup-v37-20261109">
-<link rel="stylesheet" href="dom-render-animation-v39.css?v=cinema-preview-v41-20261109">
+<link rel="stylesheet" href="dom-render-animation-v39.css?v=three-camera-v42-20261109">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -398,6 +398,7 @@
   </div>
   <div class="anim-preview-screen" id="animPreviewScreen">
    <div class="anim-preview-frame" id="animPreviewFrame"><img id="animPreviewImage" alt="Демонстрационный архитектурный дом для оценки кинонастроек" loading="lazy"></div>
+   <div id="animThreeLayer" class="anim-three-layer" aria-hidden="true"></div>
    <div class="anim-preview-overlay">
     <div class="anim-preview-tags"><span id="animHUDCamera">ARRI ALEXA 35</span><span id="animHUDLens">24 мм</span><span id="animHUDMotion">Плавное приближение</span></div>
     <span class="anim-preview-time" id="animPreviewDuration">6 с · 24 fps</span>
@@ -409,7 +410,7 @@
    <div class="anim-motion-trajectory"><span>Траектория камеры</span><svg id="animTrajectory" viewBox="0 0 220 55" role="img" aria-label="Схема траектории"><path id="animPath" d="M14 42 L202 15" fill="none" stroke="#7dbc90" stroke-width="3" stroke-linecap="round"/><circle id="animPathStart" cx="14" cy="42" r="5" fill="#a0b4a2"/><circle id="animPathEnd" cx="202" cy="15" r="6" fill="#5ed785"/></svg></div>
    <div class="anim-lens-metrics"><span>Фокусное <b id="animFocalLabel">24 мм</b></span><span>Угол обзора <b id="animFovLabel">74°</b></span></div>
   </div>
-  <p class="anim-preview-caption">Изменения объектива, кадрирования, движения и цвета показаны условно на одном доме. Это интерактивная симуляция, не 3D-реконструкция и не AI-видео.</p>
+  <p class="anim-preview-caption">Светящаяся линия — условная траектория съёмки; 3D-камера движется поверх исходного фото, не изменяя дом. Для точного облёта нужны дополнительные ракурсы или 3D-модель.</p>
  </div>
  <details class="anim-section" open>
   <summary class="anim-section-head"><span class="anim-section-count">01</span><span class="anim-section-title"><strong>Кинокамера</strong><small>8 визуальных профилей: характер света, цвет и детализация</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
@@ -531,7 +532,8 @@
 <script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
 <script src="dom-render-animation-v39.js?v=cinema-profiles-20261109"></script>
 <script src="dom-render-animation-art-v40.js?v=premium-studio-art-20261109"></script>
-<script src="app.js?v=animation-cinema-preview-v41-20261109"></script>
+<script src="dom-render-three-camera-v42.js?v=three-camera-over-photo-v42-20261109"></script>
+<script src="app.js?v=three-camera-preview-v42-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
