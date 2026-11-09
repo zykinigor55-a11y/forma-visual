@@ -24,8 +24,8 @@
 #environmentPanel .mood-card-body small{font-size:9px;line-height:1.25;font-weight:550;color:#e7f1e7}
 #environmentPanel .mood-card-check{position:absolute;z-index:3;right:7px;top:7px;width:25px;height:25px;display:none;place-items:center;background:#dbf6dd;border:1px solid #d3ffe0;border-radius:50%;font-size:14px;font-weight:850;color:#1f6a3a;box-shadow:0 2px 8px #0003}
 #environmentPanel .mood-card.active .mood-card-check{display:grid}
-#environmentPanel .mood-card[data-scene-demo="blue"] img:not([data-new-photo="true"]){filter:hue-rotate(38deg) saturate(.72) brightness(.68)}
-#environmentPanel .mood-card[data-scene-demo="night"] img:not([data-new-photo="true"]){filter:brightness(.45) saturate(.7) hue-rotate(15deg)}
+#environmentPanel .mood-card[data-scene-demo="blue"] img{filter:hue-rotate(38deg) saturate(.72) brightness(.68)}
+#environmentPanel .mood-card[data-scene-demo="night"] img{filter:brightness(.45) saturate(.7) hue-rotate(15deg)}
 #environmentPanel .mood-current{margin:14px 0 9px;padding:12px 12px;display:flex;align-items:center;gap:10px;border-radius:11px;background:#edf6ed;border:1px solid #d5e7d7}
 #environmentPanel .mood-current-bullet{display:grid;place-items:center;width:29px;height:29px;flex:0 0 29px;background:#d5ecd9;color:#307143;border-radius:50%;font-size:14px;font-weight:800}
 #environmentPanel .mood-current>span:last-child{display:flex;flex-direction:column;gap:2px;min-width:0}
