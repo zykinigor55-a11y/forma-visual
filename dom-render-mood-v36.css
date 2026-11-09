@@ -41,3 +41,7 @@
 @media(max-width:700px){#environmentPanel .mood-cards{gap:7px}#environmentPanel .mood-card{aspect-ratio:1.5}#environmentPanel .mood-card-body{padding:9px 8px 9px}#environmentPanel .mood-card-body strong{font-size:10px}#environmentPanel .mood-card-body small{font-size:8.5px}#environmentPanel .mood-presets-inner{padding:12px 9px}}
 @media(max-width:360px){#environmentPanel .mood-card{aspect-ratio:1.25}#environmentPanel .mood-card-body strong{font-size:9.5px}}
 @media(prefers-reduced-motion:reduce){#environmentPanel .mood-card,#environmentPanel .mood-card img{transition:none!important}}
+
+#environmentPanel .mood-customize{display:flex;align-items:center;justify-content:space-between;gap:9px;width:100%;margin:0 0 10px;padding:11px 12px;background:#fff;color:#325c3e;border:1px solid #b9d2bf;border-radius:9px;cursor:pointer;text-align:left;font-size:11px;font-weight:740}
+#environmentPanel .mood-customize:hover{background:#eff7f0;border-color:#8caf94}
+#environmentPanel .mood-customize>span{font-size:16px;line-height:1}
