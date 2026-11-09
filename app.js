@@ -190,8 +190,17 @@ document.addEventListener('error',event=>{
 },true);
 const ASSET = 'assets/';
 // The user-approved PNG is an exact, byte-identical copy of the uploaded original.
-const APPROVED_DEMO_BEFORE='assets/residence-model-user-approved-20261109.png?v=approved-photo-20261109';
-async function approvedDemoSource(){ return APPROVED_DEMO_BEFORE; }
+// Approved colored SketchUp source, with an existing image as a safe fallback
+// until the exact approved PNG is present in the repository.
+const APPROVED_DEMO_BEFORE='assets/residence-model-clean-approved-v36.png?v=approved-clean-v36';
+const PREVIOUS_DEMO_BEFORE='assets/residence-model-user-approved-20261109.png?v=approved-photo-20261109';
+async function approvedDemoSource(){
+ try {
+  const res=await fetch(APPROVED_DEMO_BEFORE,{method:'HEAD',cache:'no-store'});
+  if(res.ok && (res.headers.get('content-type')||'').startsWith('image/'))return APPROVED_DEMO_BEFORE;
+ } catch(e){}
+ return PREVIOUS_DEMO_BEFORE;
+}
 
 // v2.6: distinct, direct static demo source; avoid previously embedded model overrides.
 const NATURE_PHOTOS={
