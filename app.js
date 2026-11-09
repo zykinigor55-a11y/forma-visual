@@ -354,7 +354,8 @@ function showTab(tab,scroll=false){
 }
 function optionCards(group,arr,selected){return arr.map(([id,name])=>{
  const path=`${ASSET}thumbs/${group==='environment'?'env':group}-${id}.jpg`;
- const sharp=`assets/thumbs/hd/${group==='environment'?'env':group}-${id}.webp?v=hd28-20261108-1`;
+ // Always load the approved Natural Luxury image directly; do not let old HD images override it.
+ const sharp=luxuryLocalAsset(path) || asset(path);
  const glyph = group==='time'?'sun':group==='weather'?'cloud':'tree';
  return `<button class="image-option preset-photo-card ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}" title="${eHTML(name)}"><img src="${eHTML(sharp)}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span class="preset-card-icon" aria-hidden="true">${icon(glyph)}</span><span class="preset-card-label">${eHTML(name)}</span></button>`;
 }).join('')}
