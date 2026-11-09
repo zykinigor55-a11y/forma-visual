@@ -1,0 +1,17 @@
+/* PLUX V12.6: one sharp icon per sphere, precise center, intact OLED glass. */
+#app#app#app#app #screen-home .quick-actions button:is(#open-chat-quick,#open-create-quick){position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;isolation:isolate!important;overflow:visible!important;}
+#app#app#app#app #screen-home .quick-actions button:is(#open-chat-quick,#open-create-quick)>svg{display:none!important;visibility:hidden!important;opacity:0!important;}
+#app#app#app#app #screen-home .quick-actions button:is(#open-chat-quick,#open-create-quick)>img.plux126-glyph{
+ display:block!important;visibility:visible!important;opacity:1!important;
+ position:absolute!important;top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;
+ transform:translate(-50%,-50%)!important;translate:none!important;margin:0!important;padding:0!important;
+ width:43%!important;height:43%!important;max-width:43px!important;max-height:43px!important;
+ object-fit:contain!important;z-index:999!important;pointer-events:none!important;
+ filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 2px #42fca477)!important;
+}
+#app#app#app #screen-voice.plux126-on #voice-toggle{filter:brightness(1.17) drop-shadow(0 0 18px #20ffad9e)!important;}
+#app#app#app #screen-voice.plux126-on #voice-toggle>img.plux124-chrome{filter:drop-shadow(0 0 9px #d8fff0)!important;}
+#app#app#app #screen-voice.plux126-on #audio-wave i{animation:none!important;transition:height 60ms linear!important;background:#58ffd1!important;box-shadow:0 0 9px #16f7a7!important;}
+#app#app#app #screen-voice.plux126-request #voice-toggle{opacity:.86!important;}
+#app#app#app #screen-voice #voice-status{max-width:calc(100% - 24px)!important;text-align:center!important;line-height:1.4!important;}
+@media(max-width:370px){#app#app#app#app #screen-home .quick-actions button:is(#open-chat-quick,#open-create-quick)>img.plux126-glyph{width:40%!important;height:40%!important;}}
