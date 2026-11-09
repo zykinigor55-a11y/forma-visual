@@ -28,13 +28,13 @@ function lensRings(x,y,rx,ry,flared=false){
 function camera(id){
  const opts={
   alexa35:{type:'cine',body:195,bias:0},
+  alexamini:{type:'cine',body:164,bias:2},
   venice2:{type:'cine',body:183,bias:1},
+  burano:{type:'mid',body:158,bias:4},
   vraptor:{type:'cine',body:148,bias:2},
+  komodox:{type:'cine',body:122,bias:5},
   ursa:{type:'cine',body:202,bias:3},
-  c400:{type:'mid',body:148,bias:4},
-  fx6:{type:'mid',body:137,bias:5},
-  ronin4d:{type:'gimbal',body:143,bias:6},
-  s1h:{type:'dslr',body:138,bias:7}
+  ronin4d:{type:'gimbal',body:143,bias:6}
  };
  const s=opts[id]||opts.alexa35;
  const cx=s.type==='dslr'?307:318, cy=179;
