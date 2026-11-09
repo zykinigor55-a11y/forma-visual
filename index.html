@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="styles.css?v=geometry-v32-20261109">
 <link rel="stylesheet" href="dom-render-ux-v26.css?v=20261109-mobile">
 <link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
-<link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-wand29">
+<link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-wand-click-undo-v30">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -74,6 +74,7 @@
    <canvas id="materialPreview" class="material-preview" aria-hidden="true"></canvas>
    <canvas id="maskOverlay" aria-hidden="true"></canvas>
    <svg id="polyOverlay" viewBox="0 0 1000 563" preserveAspectRatio="none" aria-hidden="true"></svg>
+   <button type="button" id="undoWandFloating" class="wand-undo-floating" title="Отменить последний щелчок выделения (Ctrl+Z)" aria-label="Назад — отменить последний клик" disabled><svg class="ico"><use href="#i-undo"/></svg><span>Назад</span><small>отменить клик</small></button>
    <div class="split-guide" id="splitGuide"><span class="split-knob"><svg class="ico"><use href="#i-chevrons"/></svg></span></div>
    <input id="splitSlider" class="split-slider" type="range" min="0" max="100" value="36" aria-label="Сравнение скриншота и результата">
    <div class="viewer-overlay-top"><span class="image-tag">МОДЕЛЬ / SKETCHUP-СТИЛЬ</span><span class="image-tag image-tag-dark" id="resultTag">ДЕМОНСТРАЦИЯ</span></div>
@@ -84,8 +85,8 @@
    <div class="no-render" id="noRender" hidden><svg class="ico"><use href="#i-image"/></svg><strong>Результата пока нет</strong><span>Настройте сцену и запустите AI-визуализацию.</span></div>
   </div>
   <div class="editor-toolbar" id="editorToolbar" hidden>
-   <div class="editor-tools"><span class="editor-caption">ВЫДЕЛЕНИЕ · Касайтесь нужной поверхности. Точность уточняйте кистью.</span><button class="tool-btn active" data-tool="brush" title="Добавить маску кистью"><svg class="ico"><use href="#i-brush"/></svg><span>Кисть</span></button><button class="tool-btn" data-tool="erase" title="Убрать маску"><svg class="ico"><use href="#i-eraser"/></svg><span>Ластик</span></button><button class="tool-btn" data-tool="polygon" title="Обвести полигоном"><svg class="ico"><use href="#i-poly"/></svg><span>Полигон</span></button><button class="tool-btn" data-tool="wand" title="Волшебная палочка: выделяет только связанную с нажатием область близкого цвета, предлагает маску для проверки"><svg class="ico"><use href="#i-wand"/></svg><span>Волшебная палочка</span></button><label class="brush-size similar-settings" title="Чем меньше допуск, тем строже выделение">Допуск <input id="similarTolerance" type="range" min="8" max="42" step="1" value="18"><output id="similarOut">18</output></label><label class="similar-connectivity wand-add-mode" title="По умолчанию новое выделение заменяет прежнее; включите для добавления новой области"><input type="checkbox" id="wandAddMode"><span>Добавлять</span></label><div class="wand-approval" id="wandApproval" hidden><span id="wandPreviewText">Предпросмотр</span><button type="button" class="btn btn-sm wand-apply" id="wandApply">Применить</button><button type="button" class="btn btn-quiet btn-sm" id="wandCancel">Отмена</button></div><label class="brush-size">Размер <input id="brushSize" type="range" min="5" max="100" value="32"><output id="brushOut">32</output></label></div>
-   <div class="editor-right"><button class="btn btn-quiet btn-sm" id="undoMask" title="Отменить"><svg class="ico"><use href="#i-undo"/></svg>Отменить</button><button class="btn btn-quiet btn-sm" id="clearMask" title="Очистить выделение">Очистить</button><button class="btn btn-dark btn-sm" id="finishMask"><svg class="ico"><use href="#i-check"/></svg>Готово</button></div>
+   <div class="editor-tools"><span class="editor-caption">ВЫДЕЛЕНИЕ · Кликайте по материалу несколько раз: области суммируются. Ошиблись? «Назад».</span><button class="tool-btn active" data-tool="brush" title="Добавить маску кистью"><svg class="ico"><use href="#i-brush"/></svg><span>Кисть</span></button><button class="tool-btn" data-tool="erase" title="Убрать маску"><svg class="ico"><use href="#i-eraser"/></svg><span>Ластик</span></button><button class="tool-btn" data-tool="polygon" title="Обвести полигоном"><svg class="ico"><use href="#i-poly"/></svg><span>Полигон</span></button><button class="tool-btn" data-tool="wand" title="Волшебная палочка: щёлкайте по нужным участкам материала, каждый клик расширяет выделение. Ctrl+Z отменяет последний."><svg class="ico"><use href="#i-wand"/></svg><span>Волшебная палочка</span></button><label class="brush-size similar-settings" title="Чем меньше допуск, тем строже выделение">Допуск <input id="similarTolerance" type="range" min="8" max="42" step="1" value="18"><output id="similarOut">18</output></label><label class="similar-connectivity wand-add-mode" title="Щёлкайте по пропущенным участкам стены: каждый клик сразу добавляется в выделение. Ошибку можно отменить кнопкой Назад."><input type="checkbox" id="wandAddMode" checked><span>Добавлять кликами</span></label><div class="wand-approval" id="wandApproval" hidden><span id="wandPreviewText">Предпросмотр</span><button type="button" class="btn btn-sm wand-apply" id="wandApply">Применить</button><button type="button" class="btn btn-quiet btn-sm" id="wandCancel">Отмена</button></div><label class="brush-size">Размер <input id="brushSize" type="range" min="5" max="100" value="32"><output id="brushOut">32</output></label></div>
+   <div class="editor-right"><button class="btn btn-quiet btn-sm wand-undo-toolbar" id="undoMask" title="Отменить последний клик (Ctrl+Z)" disabled><svg class="ico"><use href="#i-undo"/></svg>Назад · отменить клик</button><button class="btn btn-quiet btn-sm" id="clearMask" title="Очистить выделение">Очистить</button><button class="btn btn-dark btn-sm" id="finishMask"><svg class="ico"><use href="#i-check"/></svg>Готово</button></div>
   </div>
   <div class="viewer-footer"><div class="viewer-footer-head"><span class="section-label">ПОСЛЕДНИЕ РЕЗУЛЬТАТЫ</span><span class="viewer-footer-note" id="resultsHint">Демонстрационный проект</span></div><div class="results-strip" id="resultsStrip"></div><button type="button" class="btn btn-outline btn-sm variant-all-link" id="viewAllVariants">Все варианты и действия</button></div>
  </section>
@@ -252,8 +253,8 @@
 <script src="dom-render-preset-plants.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-unified-presets.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
-<script src="dom-render-magic-wand-v29.js?v=magic-wand-v29-20261109"></script>
-<script src="app.js?v=wand-masks-v29-20261109"></script>
+<script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
+<script src="app.js?v=wand-additive-undo-v30-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
