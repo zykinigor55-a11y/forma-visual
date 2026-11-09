@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-material-preview-v31b">
 <link rel="stylesheet" href="dom-render-batch-v32.css?v=20261109-batch-v1">
 <link rel="stylesheet" href="dom-render-material-quick-v34.css?v=20261109-v1">
+<link rel="stylesheet" href="dom-render-simple-materials-v38.css?v=materials-simple-v38-20261109">
 <link rel="stylesheet" href="dom-render-nodes-v35.css?v=20261109-v1">
 <link rel="stylesheet" href="dom-render-mood-v36.css?v=20261109-v1">
 <link rel="stylesheet" href="dom-render-setup-v37.css?v=scene-setup-v37-20261109">
@@ -252,6 +253,45 @@
  </div>
  </section>
  <section id="materialsPanel" class="tab-panel" role="tabpanel">
+ <div class="material-simple" id="materialSimple">
+  <div class="material-simple-heading"><span>ДОМ.РЕНДЕР / МАТЕРИАЛЫ</span><h3>Изменить отделку дома</h3><p>Никаких сложных категорий. Выделите именно ту поверхность, которую хотите изменить, и примените свою фактуру или напишите задание для AI.</p></div>
+  <div class="material-simple-step">
+   <div class="material-simple-number">01</div>
+   <div class="material-simple-content">
+    <h4>Выделите область на изображении</h4>
+    <p>Нажмите на поверхность дома. Волшебная палочка добавляет участки кликами, кистью можно уточнить края. Кнопка «Назад» отменяет последний клик.</p>
+    <button type="button" class="btn btn-primary btn-block" id="simpleSelectArea"><svg class="ico"><use href="#i-brush"/></svg>Выделить поверхность</button>
+    <button type="button" class="btn btn-outline btn-block" id="simpleShowMask">Показать выделение</button>
+    <p class="material-simple-status" id="simpleMaskStatus" role="status">Область ещё не выделена</p>
+   </div>
+  </div>
+  <div class="material-simple-separator">ПОСЛЕ ВЫДЕЛЕНИЯ ВЫБЕРИТЕ СПОСОБ ИЗМЕНЕНИЯ</div>
+  <div class="material-simple-step">
+   <div class="material-simple-number">02</div>
+   <div class="material-simple-content">
+    <h4>Загрузите свой материал</h4>
+    <p>Добавьте фотографию или текстуру дерева, металла, кирпича, камня или любого другого покрытия.</p>
+    <button type="button" class="material-simple-upload" id="simpleUploadTexture"><svg class="ico"><use href="#i-plus"/></svg><span>Загрузить фактуру <small>JPG, PNG, WebP</small></span></button>
+    <div id="simpleMaterialGrid" class="material-simple-grid" aria-label="Загруженные материалы"></div>
+    <div class="material-simple-selected" id="simpleMaterialStatus" role="status">Материал пока не загружен</div>
+    <button type="button" class="btn btn-primary btn-block" id="simpleApplyTexture">Применить материал через AI</button>
+    <small class="material-simple-help">AI меняет только выделенную область. После проверки маски отправляется один платный запрос.</small>
+   </div>
+  </div>
+  <div class="material-simple-or"><span>ИЛИ</span></div>
+  <div class="material-simple-step">
+   <div class="material-simple-number">03</div>
+   <div class="material-simple-content">
+    <h4>Опишите изменение словами</h4>
+    <label class="material-simple-prompt-label" for="simpleMaterialPrompt">Ваш запрос для AI</label>
+    <textarea id="simpleMaterialPrompt" rows="3" maxlength="500" placeholder="Например: заменить отделку выделенной стены на натуральный светлый камень, сохранить окна, швы и всю геометрию."></textarea>
+    <p>Можно указать материал и цвет прямо текстом. С выделением AI меняет только отмеченную поверхность; без выделения определяет нужный элемент по описанию — такой результат требует проверки.</p>
+    <button type="button" class="btn btn-outline btn-block" id="simpleApplyPrompt">Применить запрос через AI</button>
+   </div>
+  </div>
+  <div class="material-simple-protection"><span aria-hidden="true">✓</span><p>При обычном рендере существующие материалы сохраняются. Здесь они меняются только по вашему отдельному запросу. Размеры, окна, кровля и геометрия должны остаться прежними.</p></div>
+ </div>
+ <div id="materialsLegacyBridge" hidden aria-hidden="true">
   <div class="material-v28-head">
    <span class="material-eyebrow">МАТЕРИАЛЫ И ЦВЕТА</span>
    <h3>Материалы вашего дома</h3>
@@ -341,7 +381,8 @@
    </div>
 
   </div>
- </section>
+ </div>
+</section>
 <section id="variantsPanel" class="tab-panel" role="tabpanel">
  <span class="section-label">ИСТОРИЯ ПРОЕКТА</span>
  <p class="muted">Все реально сохранённые визуализации этого проекта. Откройте результат, назначьте его референсом для следующего ракурса или сравните с исходником.</p>
