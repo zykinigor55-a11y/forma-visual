@@ -113,3 +113,21 @@ for(const asset of ['plux-v127.css','plux-v127.js','assets/videos-v106/01_idle.m
 }
 if(!html127.includes('plux127-intro')||!html127.includes('plux-release-v127'))throw Error('V12.7 intro not installed');
 console.log('PLUX V12.7 Fullscreen Welcome installed successfully');
+
+
+/* PLUX V12.8 Chat Proxy: only backend calls API Market, never the browser. */
+const chat128File=join(root,'plux-chat-v128.js');
+writeFileSync(chat128File,readFileSync('plux-v128-overlay/plux-chat-v128.js'));
+if(statSync(chat128File).size<1500)throw Error('V12.8 chat script missing');
+const html128File=join(root,'index.html');
+let html128=readFileSync(html128File,'utf8');
+if(!html128.includes('plux-v127.js'))throw Error('V12.7 introduction must be installed first');
+html128=html128.replace('</body>','<script src="/plux-chat-v128.js?v=1281"></script></body>');
+html128=html128.replace('</head>','<meta name="plux-release-v128" content="server-held-gpt-6-luna-chat"></head>');
+writeFileSync(html128File,html128);
+const sw128File=join(root,'sw.js');
+let sw128=readFileSync(sw128File,'utf8').replace(/plux-emerald-v127/g,'plux-emerald-v128');
+if(!sw128.includes("'/plux-chat-v128.js'"))sw128=sw128.replace("'/plux-v127.js'","'/plux-v127.js','/plux-chat-v128.js'");
+writeFileSync(sw128File,sw128);
+if(!html128.includes('/plux-chat-v128.js'))throw Error('V12.8 missing chat loader');
+console.log('PLUX V12.8 Chat Proxy UI installed (server secret required)');
