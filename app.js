@@ -764,11 +764,12 @@ async function clearBatchFront(){
  save();updateBatchUI();
  batchStatus('Дополнительный фронтальный вид удалён. При генерации кадра №2 AI будет оценивать фронтальную геометрию по основному изображению.');
 }
-async function cropBatchDetail(source,focusX,focusY,ratioString){
+async function cropBatchDetail(source,focusX,focusY,ratioString,zoom=.5){
  const img=await imageFrom(source);
  const [a,b]=String(ratioString||'16:9').split(':').map(Number);
  const ratio=a>0&&b>0?a/b:16/9;
- let sw=Math.min(img.naturalWidth*.49,img.naturalHeight*.67*ratio);
+ const cropWidthFraction=Math.max(.28,Math.min(.68,Number(zoom)||.5));
+ let sw=Math.min(img.naturalWidth*cropWidthFraction,img.naturalHeight*.67*ratio);
  let sh=sw/ratio;
  if(sh>img.naturalHeight){sh=img.naturalHeight;sw=sh*ratio}
  sw=Math.max(1,Math.round(sw));sh=Math.max(1,Math.round(sh));
@@ -804,7 +805,7 @@ async function generateBatch(){
  const batchProject=project,src=sourceURL,brief=settingsBrief(),ratio=current().ratio,quality=current().quality;
  const positions=[[current().batchDetail1X||60,current().batchDetail1Y||60],[current().batchDetail2X||77,current().batchDetail2Y||40]];
  const batchId='b'+uuid().slice(0,9);
- let made=0,attempted=0,firstResult=null,failed=null;
+ let made=0,attempted=0,firstResult=null;
  rendering=true;
  $('batchStart').disabled=true;$('generateBtn').disabled=true;$('batchToggle').disabled=true;$('batchFrontFile').disabled=true;
  $('batchStart').textContent='Создаём пакет…';
@@ -813,8 +814,8 @@ async function generateBatch(){
   const images=[
    src,
    front||src,
-   await cropBatchDetail(src,positions[0][0],positions[0][1],ratio),
-   await cropBatchDetail(src,positions[1][0],positions[1][1],ratio)
+   await cropBatchDetail(src,positions[0][0],positions[0][1],ratio,.55),
+   await cropBatchDetail(src,positions[1][0],positions[1][1],ratio,.38)
   ];
   for(let i=0;i<BATCH_SHOTS.length;i++){
    if(project!==batchProject)throw Error('Во время пакета был переключён проект. Генерация оставшихся кадров остановлена.');
@@ -824,7 +825,7 @@ async function generateBatch(){
    setRenderProgress('Кадр '+position,shot.title+' · один запрос к AI Market');
    const payload={
     image:await urlToDataURL(images[i]),
-    reference:i>0?firstResult:null,
+    reference:i===0?null:(i===1&&!front?null:src), // The original complete MODEL anchors geometry in frontal and AI-generated macro crops.
     brief:{...brief,lockGeometry:true,preserveMaterials:true,output:{...brief.output,quantity:1}},
     batchShot:shot.id,batchFrontProvided:!!front,
     quantity:1,quality,size:imageSizeForRatio(ratio)
@@ -858,7 +859,6 @@ async function generateBatch(){
   batchStatus('Все четыре кадра готовы. Расход — 4 обращения к AI Market. Каждый сохранён в разделе «Варианты».');
   toast('Пакет готов: 4 отдельных изображения сохранены');
  }catch(error){
-  failed=error;
   const status='Создано '+made+' из 4 кадров. Отправлено запросов: '+attempted+'. '+(error.name==='AbortError'?'Истекло время ожидания; запрос мог быть оплачен. ':String(error.message||'Ошибка'))+' Уже полученные кадры сохранены. Повторный запуск создаст новый платный пакет.';
   batchStatus(status,true);toast('Пакет завершён частично — '+made+' из 4. Проверьте статус и баланс.');
  }finally{
