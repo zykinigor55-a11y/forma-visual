@@ -197,13 +197,16 @@ export default function AnimationStudio({sourceUrl}:{sourceUrl:string}){
    <div className="cine-panel-header"><div><span className="cine-overline">FILM PRODUCTION / 01</span><strong>Анимация</strong></div><Clapperboard size={19} strokeWidth={1.4}/></div>
    <div className="cine-controls-scroll">
     <div className="cine-intro"><span className="cine-intro-dot"/>Кинематографический кадр. Настоящее оборудование как референс, точная траектория и сдержанная оптика.</div>
-    {groups.map(group=><Group key={group.key} title={group.title} eyebrow={group.eyebrow}>
+    {groups.map((group,groupIndex)=><Group key={group.key} title={group.title} eyebrow={group.eyebrow}>
      <div className="cine-card-grid">{group.entries.map((item,i)=><button key={item.id} type="button"
       className={'cine-choice '+(selection[group.key]===item.id?'is-selected':'')}
       aria-pressed={selection[group.key]===item.id}
       title={item.note}
       onClick={()=>select(group.key,item.id)}>
-      <span className="cine-choice-icon"><TechnicalIcon kind={group.key} index={i} id={item.id}/></span>
+      <span className="cine-choice-icon">
+       <span className="cine-vector-fallback"><TechnicalIcon kind={group.key} index={i} id={item.id}/></span>
+       <span className="cine-photo" aria-hidden="true" style={{backgroundPosition:`${i*20}% ${groupIndex*100/3}%`}}/>
+      </span>
       <span className="cine-choice-info"><strong>{group.key==='camera'?('brand' in item?item.brand+' · ':'')+item.name:item.name}</strong><small>{'ru' in item?item.ru:'tag' in item?item.tag:item.note}</small></span>
       {selection[group.key]===item.id&&<span className="cine-choice-check"><Check size={11}/></span>}
      </button>)}</div>
