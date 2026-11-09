@@ -37,3 +37,11 @@ for(const asset of ['plux-optical-v123.css','plux-optical-v123.js','assets/plux-
  if(statSync(join(root,asset)).size<500)throw Error('V12.3 missing '+asset);
 }
 console.log('PLUX V12.3 optical controls ready for publication');
+
+/* PLUX V12.4 Motion System: preserve original five video sources and approved controls. */
+plux123Exec(process.execPath,['plux-v124-overlay/apply-v124.mjs',root],{stdio:'inherit'});
+for(const asset of ['plux-motion-v124.js','plux-typewriter-v124.js','plux-motion-v124.css']){
+ if(statSync(join(root,asset)).size<1000)throw Error('V12.4 missing '+asset);
+}
+if(!readFileSync(join(root,'index.html'),'utf8').includes('plux-release-v124'))throw Error('V12.4 index patch missing');
+console.log('PLUX V12.4 Motion System applied to all screens');
