@@ -248,7 +248,7 @@ const choices = {
 };
 const zones = [['main','Стены фасада'],['accent','Декоративная отделка'],['base','Цоколь'],['roof','Кровля'],['windows','Оконные рамы'],['doors','Двери'],['terrace','Терраса'],['steps','Ступени'],['custom','Другой участок']];
 const catalog = [['plaster','Штукатурка','mat-plaster.jpg'],['travertine','Травертин','mat-travertine.jpg'],['limestone','Природный камень','mat-limestone.jpg'],['wood','Дерево','mat-wood.jpg'],['brick','Клинкер','mat-brick.jpg'],['concrete','Бетон','mat-concrete.jpg'],['metal','Металл','mat-metal.jpg'],['ceramic','Керамогранит','mat-ceramic.jpg'],['glass','Стекло','mat-glass.jpg']];
-const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false});
+const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},materialInstructions:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false});
 const makeProject=(name='Новый проект',isDemo=false)=>({id:isDemo?'demo':uuid(),name,createdAt:Date.now(),modifiedAt:Date.now(),demo:isDemo,settings:defaultSettings(),renders:[],activeRender:null,reference:null,sourceWidth:1672,sourceHeight:941,hasSource:isDemo,angle:1});
 const STKEY='domrender_mvp_projects_v1', MTKEY='domrender_mvp_materials_v1';
 let projects=[],project=null,customMaterials=[],currentTab='project',materialTab='mine',viewerMode=localStorage.getItem('domrender_view_mode')||'slider';
@@ -365,7 +365,7 @@ function showTab(tab,scroll=false){
  document.querySelectorAll('[data-mobile]').forEach(x=>x.classList.toggle('active',x.dataset.mobile===tab));
  document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===tab));
  if(tab!=='materials'&&editing)leaveEditor();
- if(tab==='materials')loadMask();else $('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);
+ if(tab==='materials')loadMask().then(()=>{if(materialAction()==='color'&&selectedMaskPixels()>0)previewSelectedColor()}).catch(()=>{});else {$('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);resetColorPreview(true)}
  if(tab==='variants')renderVariantsPanel();
  if(scroll)$('inspector').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -379,6 +379,69 @@ function optionCards(group,arr,selected){return arr.map(([id,name])=>{
 function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group])}
 function materialAction(zone=current().zone){return current().materialActions?.[zone]||'keep'}
 function materialColor(zone=current().zone){const value=current().materialColors?.[zone];return /^#[0-9a-fA-F]{6}$/.test(value||'')?value:'#575c51'}
+let materialPreviewRevision=0;
+function materialInstruction(zone=current().zone){return String(current().materialInstructions?.[zone]||'').slice(0,500)}
+function resetColorPreview(silent=false){
+ materialPreviewRevision++;
+ const canvas=$('materialPreview');
+ if(canvas)canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+ if($('materialColorPreviewStatus'))$('materialColorPreviewStatus').textContent='Цветовая примерка не активна';
+ if($('resultTag'))$('resultTag').textContent=project?.demo?'ДЕМОНСТРАЦИЯ':renderURL?'AI-РЕЗУЛЬТАТ':'НЕТ РЕНДЕРА';
+ if($('noRender'))$('noRender').hidden=!!renderURL;
+ if(!silent)toast('Цветовая примерка скрыта. Исходник и AI-результат не менялись.');
+}
+async function previewSelectedColor(){
+ const revision=++materialPreviewRevision;
+ if(materialAction()!=='color')return;
+ if(!window.DOM_RENDER_MATERIAL_PREVIEW){toast('Модуль примерки не загрузился');return}
+ if(!selectedMaskPixels()){
+  $('materialColorPreviewStatus').textContent='Для точной примерки сначала подтвердите найденную область или выделите её на изображении.';
+  return;
+ }
+ try{
+  const src=renderURL||sourceURL,im=await imageFrom(src);
+  if(revision!==materialPreviewRevision)return;
+  const w=maskCanvas.width,h=maskCanvas.height,base=document.createElement('canvas');
+  base.width=w;base.height=h;const bc=base.getContext('2d',{willReadFrequently:true});
+  bc.drawImage(im,0,0,w,h);
+  const candidate=window.DOM_RENDER_MATERIAL_PREVIEW.recolor(bc.getImageData(0,0,w,h),maskCtx.getImageData(0,0,w,h),materialColor());
+  if(revision!==materialPreviewRevision)return;
+  if(!candidate.count){$('materialColorPreviewStatus').textContent='Пустая маска: уточните область';return}
+  const c=$('materialPreview'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,w,h);ctx.putImageData(new ImageData(candidate.data,w,h),0,0);
+  maskVisible=false;paintMaskOverlay();
+  $('resultTag').textContent='ПРИМЕРКА ЦВЕТА · БЕЗ AI';
+  $('noRender').hidden=true;setViewerMode('result');
+  $('materialColorPreviewStatus').textContent='Предварительный цвет '+materialColor().toUpperCase()+' на '+zoneLabel().toLowerCase()+'. Это только локальная примерка, не AI.';
+ }catch(e){
+  if(revision===materialPreviewRevision)$('materialColorPreviewStatus').textContent='Примерка не удалась: '+(e.message||'ошибка');
+ }
+}
+async function proposeMaterialZone(){
+ if(!project?.hasSource){toast('Сначала загрузите проект');return false}
+ if(!window.DOM_RENDER_MATERIAL_PREVIEW){toast('Модуль анализа не загрузился');return false}
+ try{
+  const src=renderURL||sourceURL,im=await imageFrom(src);
+  const w=maskCanvas.width,h=maskCanvas.height;
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(im,0,0,w,h);
+  const result=window.DOM_RENDER_MATERIAL_PREVIEW.guess(ctx.getImageData(0,0,w,h),current().zone);
+  if(!result){$('materialFindStatus').textContent='Надёжно определить этот элемент по цвету не удалось. Уточните его «Волшебной палочкой» или введите задание для AI без маски.';return false}
+  wandPreviewMask=result.mask;wandPreviewAdd=false;
+  $('materialFindReview').hidden=false;
+  $('materialFindStatus').textContent='Зелёным показана ПРЕДПОЛАГАЕМАЯ область ('+(result.coverage*100).toFixed(1)+'% кадра). Это не распознавание AI: проверьте окна, стёкла, стыки и соседние материалы перед подтверждением.';
+  maskVisible=true;paintMaskOverlay();
+  if($('materialPreview'))$('materialPreview').getContext('2d').clearRect(0,0,w,h);
+  $('noRender').hidden=true;setViewerMode('result');
+  return true;
+ }catch(e){$('materialFindStatus').textContent='Не удалось найти зону: '+(e.message||'ошибка');return false}
+}
+async function applyMaterialZoneSuggestion(){
+ if(!wandPreviewMask)return;
+ await applyWandPreview();
+ $('materialFindReview').hidden=true;
+ if(materialAction()==='color')await previewSelectedColor();
+}
 function renderMaterialAction(){
  const act=materialAction(),name=zoneLabel();
  document.querySelectorAll('[data-material-action]').forEach(b=>{const active=b.dataset.materialAction===act;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
@@ -389,6 +452,7 @@ function renderMaterialAction(){
  $('editSelectedOnly').checked=act!=='keep';
  current().editSelectedOnly=act!=='keep';
  $('materialColor').value=materialColor();
+ $('materialInstruction').value=materialInstruction();
  document.querySelectorAll('[data-color]').forEach(b=>{b.classList.toggle('active',b.dataset.color.toLowerCase()===materialColor().toLowerCase());b.setAttribute('aria-pressed',String(b.dataset.color.toLowerCase()===materialColor().toLowerCase()))});
  $('materialActionInfo').textContent=act==='keep'?name+': сохраняем исходный материал и улучшаем только реализм.':act==='color'?name+': выберите цвет и выделите поверхность. Тип покрытия сохраняется.':name+': выберите свою фактуру и выделите поверхность для замены.';
 }
@@ -538,6 +602,7 @@ function discardMaterialPreview(){
 function cancelWandPreview(){
  wandPreviewMask=null;
  if($('wandApproval'))$('wandApproval').hidden=true;
+ if($('materialFindReview'))$('materialFindReview').hidden=true;
  if($('wandPreviewText'))$('wandPreviewText').textContent='Предпросмотр выделения';
  if(maskCanvas?.width&&editing)paintMaskOverlay();
 }
@@ -666,24 +731,33 @@ function chooseDemoEnvironment(kind,applySettings=true){
  document.querySelectorAll('[data-scene-environment]').forEach(b=>{const active=b.dataset.sceneEnvironment===kind;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  if(applySettings){current().environment=kind;renderChoices();renderFooter();save();toast('Окружение выбрано: '+info[kind]+'. Для генерации нажмите «Создать визуализацию».')}
 }
-function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-scene-environment]').forEach(el=>el.onclick=()=>chooseDemoEnvironment(el.dataset.sceneEnvironment));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;current().zone=el.dataset.zone;renderZones();renderMaterials();renderFooter();save();await loadMask()});for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
+function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-scene-environment]').forEach(el=>el.onclick=()=>chooseDemoEnvironment(el.dataset.sceneEnvironment));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;resetColorPreview(true);current().zone=el.dataset.zone;renderZones();renderMaterials();renderFooter();save();await loadMask();if(materialAction()==='color'){if(selectedMaskPixels())previewSelectedColor();else proposeMaterialZone()}});for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
  const act=b.dataset.materialAction;
  current().materialActions={...current().materialActions,[current().zone]:act};
  if(act==='keep')current().preserveMaterials=true;
+ if(act!=='color')resetColorPreview(true);
  renderZones();renderMaterials();renderFooter();save();
+ if(act==='color'){if(selectedMaskPixels())previewSelectedColor();else proposeMaterialZone()}
  if(act==='color')toast('Выберите цвет и выделите нужную поверхность.');
  if(act==='replace')toast('Загрузите фактуру и выделите нужную поверхность.');
 }));
 $('materialColor').addEventListener('input',e=>{
  current().materialColors={...current().materialColors,[current().zone]:e.target.value};
- renderZones();renderFooter();save();
+ renderZones();renderFooter();save();previewSelectedColor();
 });
 $('materialColorSwatches').addEventListener('click',e=>{
  const b=e.target.closest('[data-color]');if(!b)return;
  const c=b.dataset.color;
  current().materialColors={...current().materialColors,[current().zone]:c};
- renderZones();renderFooter();save();
+ renderZones();renderFooter();save();previewSelectedColor();
 });
+$('materialInstruction').addEventListener('input',e=>{current().materialInstructions={...current().materialInstructions,[current().zone]:e.target.value.slice(0,500)};save()});
+$('materialFindZone').onclick=proposeMaterialZone;
+$('materialFindApply').onclick=applyMaterialZoneSuggestion;
+$('materialFindCancel').onclick=()=>{cancelWandPreview();paintMaskOverlay();$('materialFindStatus').textContent='Предложение отменено. Можно выбрать область кистью или палочкой.'};
+$('materialPreviewColor').onclick=previewSelectedColor;
+$('materialPreviewReset').onclick=()=>resetColorPreview();
+$('materialGenerateFromText').onclick=async()=>{if(!materialInstruction().trim())return toast('Напишите, что изменить: например, оконные рамы сделать чёрными.');if(!confirm('Запустить платное AI-изменение по описанию? При отсутствии точной маски AI сам определит нужные элементы.'))return;await generate({materialEdit:true,textRequested:true})};
 $('generateColor').onclick=()=>reviewMaskBeforeAI(true);
 $('materialFile').onchange=e=>{uploadOwnMaterial(e.target.files[0]);e.target.value=''};$('uploadMaterialBtn').onclick=()=>$('materialFile').click();$('deleteMyMaterial').onclick=deleteSelectedCustomMaterial;$('startMask').onclick=async()=>{await loadMask();enterEditor();if(project.demo&&selectedMaskPixels()===0)makeDemoMask(current().zone)};$('showMask').onclick=async()=>{if(currentTab!=='materials')showTab('materials');await loadMask();if(selectedMaskPixels()===0){if(project.demo)makeDemoMask(current().zone);else toast('Маска пуста. Выделите область кистью или полигоном.');maskVisible=true}else maskVisible=!maskVisible;paintMaskOverlay();if(selectedMaskPixels())toast(maskVisible?'Маска показана.':'Маска скрыта.')};$('finishMask').onclick=leaveEditor;$('clearMask').onclick=()=>{cancelWandPreview();stashHistory();maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);polyPoints=[];paintMaskOverlay();persistMask();toast('Выделение очищено')};$('undoMask').onclick=undoMask;$('undoWandFloating').onclick=undoMask;document.querySelectorAll('[data-tool]').forEach(el=>el.onclick=()=>{if(polyPoints.length>=3&&tool==='polygon')polygonDone();cancelWandPreview();tool=el.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===el));drawPolygonGuide()});$('brushSize').oninput=e=>$('brushOut').textContent=e.target.value;$('similarTolerance').oninput=e=>{$('similarOut').textContent=e.target.value;cancelWandPreview()};$('wandApply').onclick=applyWandPreview;$('wandCancel').onclick=cancelWandPreview;$('textureScale').oninput=e=>{current().textureScale=Number(e.target.value);$('scaleValue').textContent=e.target.value+'%';save()};$('textureRotate').onchange=e=>{current().textureRotate=Number(e.target.value);save()};$('tryMaterial').onclick=applyTexture;$('discardMaterialPreview').onclick=discardMaterialPreview;$('generateMaterial').onclick=generateSelectedMaterial;$('reviewMask').onclick=()=>reviewMaskBeforeAI(false);$('splitSlider').oninput=e=>updateSplit(e.target.value);$('resetSplit').onclick=()=>updateSplit(50);$('downloadResult').onclick=()=>{if(!renderURL){toast('Сначала создайте или выберите результат');return}downloadDataURL(renderURL,'dom-render-'+project.id+(project.demo||renderURL.startsWith('data:image/jpeg')?'.jpg':renderURL.startsWith('data:image/webp')?'.webp':'.png'));toast(project.demo?'Скачан демонстрационный кадр':'Результат скачан')};$('fullBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else $('viewerCard')?.requestFullscreen?.()||$('stage').requestFullscreen?.()};$('resultsStrip').addEventListener('click',e=>{const b=e.target.closest('[data-result]');if(b)showResult(b.dataset.result)});for(const id of ['ratioSelect','qualitySelect','quantitySelect'])$(id).onchange=e=>{current()[id.replace('Select','')]=e.target.value;renderFooter();save()};for(const id of ['lockGeometry','preserveMaterials','keepReference','editSelectedOnly'])$(id).onchange=e=>{current()[id]=e.target.checked;if(id==='keepReference'&&$('angleLandscapeLock'))$('angleLandscapeLock').checked=e.target.checked;save()};$('viewAllVariants').onclick=()=>showTab('variants',true);
  $('projectUpload').onclick=()=>$('sourceFile').click();
