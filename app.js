@@ -358,7 +358,7 @@ function showTab(tab,scroll=false){
  const copy={
   project:['Проект','Загрузка исходника, сравнение и доступ к проектам.'],
   environment:['Настройка рендера','Окружение, время суток, сезон и погода.'],
-  materials:['Материалы','Выделение → черновая примерка → AI-замена.'],
+  materials:['Материалы и цвета','Выберите элемент дома, примерьте цвет и опишите изменение своими словами.'],
   variants:['Варианты','Просмотр и управление сохранёнными результатами.'],
   parameters:['Настройки','Качество, формат и сохранение архитектуры.']
  };
@@ -809,6 +809,6 @@ $('materialFile').onchange=e=>{uploadOwnMaterial(e.target.files[0]);e.target.val
    const del=e.target.closest('[data-variant-delete]');
    if(del){await deleteVariant(del.dataset.variantDelete)}
  });
- $('newProjectBtn').onclick=showNewProject;$('mobileAdd').onclick=showNewProject;$('helpBtn').onclick=()=>modal('Как работает ДОМ.РЕНДЕР',`<p class="muted"><b>1.</b> Загрузите скриншот из Archicad, SketchUp или Revit.<br><b>2.</b> Выберите окружение, погоду, сезон и время суток кнопками с изображениями.<br><b>3.</b> Во вкладке «Смена материалов» выделите фасад кистью или полигоном. Загрузите собственную текстуру, если требуется.<br><b>4.</b> Запустите AI-генерацию при подключённом API.<br><b>5.</b> Для следующего вида используйте «Новый ракурс»: настройки и референс сохранятся.</p><p class="muted">Без 3D совпадение положения объектов между разными ракурсами является приблизительным. Работа AI-редактора тоже не гарантирует идеальное сохранение геометрии.</p>`,[{label:'Понятно',primary:true,click:closeModal}]);$('generateBtn').onclick=generate;$('dialogClose').onclick=closeModal;$('dialogCover').onclick=e=>{if(e.target===$('dialogCover'))closeModal()}}
+ $('newProjectBtn').onclick=showNewProject;$('mobileAdd').onclick=showNewProject;$('helpBtn').onclick=()=>modal('Как работает ДОМ.РЕНДЕР',`<p class="muted"><b>1.</b> Загрузите скриншот из Archicad, SketchUp или Revit.<br><b>2.</b> Выберите окружение, погоду, сезон и время суток кнопками с изображениями.<br><b>3.</b> Во вкладке «Материалы и цвета» выберите элемент: стены, окна, террасу или кровлю. Примерьте цвет бесплатно или введите текстовое задание для AI. Для точной замены подтвердите маску.<br><b>4.</b> Запустите AI-генерацию при подключённом API.<br><b>5.</b> Для следующего вида используйте «Новый ракурс»: настройки и референс сохранятся.</p><p class="muted">Без 3D совпадение положения объектов между разными ракурсами является приблизительным. Работа AI-редактора тоже не гарантирует идеальное сохранение геометрии.</p>`,[{label:'Понятно',primary:true,click:closeModal}]);$('generateBtn').onclick=generate;$('dialogClose').onclick=closeModal;$('dialogCover').onclick=e=>{if(e.target===$('dialogCover'))closeModal()}}
 function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;current()[group]=btn.dataset.choice;renderChoices();renderFooter();save();if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();toast('Настройка сохранена: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
 init().catch(err=>{console.error(err);toast('Не удалось загрузить приложение')});
