@@ -99,3 +99,17 @@ if(!sw126.includes("'/plux-v126.js'")){
 }
 writeFileSync(sw126Path,sw126);
 console.log('PLUX V12.6 quick icons + microphone permission and live level meter installed');
+
+/* PLUX V12.7 Fullscreen Welcome: full OLED video, typewriter and opt-in sounds. */
+const packedV127=Buffer.from(readFileSync('plux-v127-overlay/v127_patch.tar.br.b64','utf8').trim(),'base64');
+plux123Exec('tar',['xf','-','-C',root],{input:pluxGlassDecompress(packedV127)});
+plux123Exec(process.execPath,[join(root,'patch-app-v127.mjs'),root],{stdio:'inherit'});
+const path127=join(root,'index.html');
+let html127=readFileSync(path127,'utf8');
+html127=html127.replaceAll('/assets/onboard-idle-poster.webp','/assets/onboard-idle-poster.png');
+writeFileSync(path127,html127);
+for(const asset of ['plux-v127.css','plux-v127.js','assets/videos-v106/01_idle.mp4','assets/onboard-idle-poster.png']){
+ if(statSync(join(root,asset)).size<1000)throw Error('PLUX V12.7 missing '+asset);
+}
+if(!html127.includes('plux127-intro')||!html127.includes('plux-release-v127'))throw Error('V12.7 intro not installed');
+console.log('PLUX V12.7 Fullscreen Welcome installed successfully');
