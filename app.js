@@ -410,7 +410,7 @@ function openRenderPicker(key,scroll=false){
  renderFlowLabels();
 }
 function showTab(tab,scroll=false){
- if(!['project','environment','materials','variants','parameters'].includes(tab))tab='project';
+ if(!['project','environment','materials','animation','variants','parameters'].includes(tab))tab='project';
  currentTab=tab;
  for(const b of document.querySelectorAll('[data-tab]')){const active=b.dataset.tab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active))}
  for(const panel of document.querySelectorAll('.tab-panel'))panel.classList.toggle('active',panel.id===tab+'Panel');
@@ -418,6 +418,7 @@ function showTab(tab,scroll=false){
   project:['Проект','Загрузка исходника, сравнение и доступ к проектам.'],
   environment:['Настройка сцены','Готовая атмосфера или четыре понятных настройки.'],
   materials:['Материалы','Выделите поверхность, загрузите фактуру или напишите запрос для AI.'],
+  animation:['Архитектурная анимация','Кинокамеры, оптика, движение и цвет в одном месте.'],
   variants:['Варианты','Просмотр и управление сохранёнными результатами.'],
   parameters:['Настройки','Качество, формат и сохранение архитектуры.']
  };
@@ -433,6 +434,7 @@ function showTab(tab,scroll=false){
   loadMask('custom').then(()=>{updateSelectionStatus();updateSimpleMaterialsUI()}).catch(()=>{});
  }else {$('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);resetColorPreview(true)}
  if(tab==='variants')renderVariantsPanel();
+ if(tab==='animation')renderAnimationPanel();
  if(tab==='environment'){showRenderSetupMode(current().renderSetupMode||'auto',false);syncDemoWithSettings()}
  if(scroll)$('inspector').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -592,7 +594,91 @@ function renderMaterials(){
  updateSimpleMaterialsUI();
 }
 function renderFooter(){const s=current();$('projectPanelName').textContent=project.name;$('projectPanelMeta').textContent=(project.demo?'Демонстрационная модель':'Ракурс '+(project.angle||1))+' · '+(project.sourceWidth||1672)+'×'+(project.sourceHeight||941);$('projectPanelStatus').textContent=project.demo?'Демонстрация · AI-фото не генерировалось':(project.renders.length?project.renders.length+' сохранённых AI-результатов':'Исходник загружен · AI-результатов пока нет');$('summaryLine').textContent=`${envLabel()} · ${cLabel('season',s.season)} · ${cLabel('time',s.time)}`;$('summaryMaterial').textContent=`${customMaterials.some(m=>m.id===s.mats[s.zone])?matById(s.mats[s.zone]).name:(s.preserveMaterials!==false?'Материалы исходника':'Материал не выбран')} · ${zoneLabel().toLowerCase()}`;$('stageSubtitle').textContent=$('summaryLine').textContent;$('stageTitle').textContent=project.name;$('canvasProjectLabel').textContent=project.name;$('breadcrumbName').textContent=project.name;$('stageRatio').textContent=s.ratio;$('ratioSelect').value=s.ratio;$('qualitySelect').value=s.quality;$('quantitySelect').value=s.quantity;$('lockGeometry').checked=s.lockGeometry;$('preserveMaterials').checked=s.preserveMaterials!==false;$('keepReference').checked=s.keepReference;if($('angleLandscapeLock'))$('angleLandscapeLock').checked=s.keepReference;$('editSelectedOnly').checked=!!s.editSelectedOnly;renderFlowLabels()}
-function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderResults();renderVariantsPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
+/* Cinematic equipment and optical preview are local UI simulations, not billed video. */
+const animationArtCache=new Map();
+function animationArt(kind,id){
+ const key=kind+':'+id;
+ if(!animationArtCache.has(key))animationArtCache.set(key,window.DOM_RENDER_ANIMATION_ART.src(kind,id));
+ return animationArtCache.get(key);
+}
+function animationSettings(){
+ const lib=window.DOM_RENDER_ANIMATION;
+ return lib.normalize(current().cinema||{});
+}
+function animationColorFilter(id){
+ return {neutral:'none',filmic:'sepia(.12) saturate(.84) contrast(1.06)',contrast:'contrast(1.22) saturate(.82)',warm:'sepia(.20) saturate(1.16) brightness(1.04)',cool:'hue-rotate(14deg) saturate(.78) contrast(1.06)',bw:'grayscale(1) contrast(1.12)'}[id]||'none';
+}
+function renderAnimationCards(containerId,field,items,kind,value){
+ const holder=$(containerId);
+ if(!holder)return;
+ holder.innerHTML=items.map(item=>`<button type="button" class="anim-option-card ${item.id===value?'active':''}" data-anim-kind="${eHTML(field)}" data-anim-id="${eHTML(item.id)}" aria-pressed="${item.id===value}">
+ <span class="anim-option-photo"><img src="${animationArt(kind,item.id)}" alt="${eHTML(item.name)} — визуальный пресет" loading="lazy" decoding="async"><span class="anim-option-check" aria-hidden="true">✓</span></span>
+ <span class="anim-option-copy"><strong>${eHTML(item.name)}</strong><em>${eHTML(item.tag||'')}</em><small>${eHTML(item.desc||'')}</small></span></button>`).join('');
+}
+function renderAnimationSummary(){
+ if(!$('animSummary')||!project||!window.DOM_RENDER_ANIMATION)return;
+ const lib=window.DOM_RENDER_ANIMATION,s=animationSettings();
+ const c=lib.cameras.find(v=>v.id===s.camera)||lib.cameras[0],l=lib.lenses.find(v=>v.id===s.lens)||lib.lenses[0],m=lib.moves.find(v=>v.id===s.motion)||lib.moves[0],g=lib.grades.find(v=>v.id===s.grade)||lib.grades[0];
+ $('animSummary').textContent=c.name+' · '+l.name+' · '+m.name;
+ $('animSummaryDetail').textContent=s.duration+' секунд · '+s.fps+' fps · '+s.ratio+' · '+g.name;
+ $('animPromptText').value=lib.buildPrompt(s);
+ $('animPreviewDuration').textContent=s.duration+' s · '+s.fps+' fps';
+ $('animPreviewScreen').dataset.motion=s.motion;
+ $('animPreviewImage').style.filter=animationColorFilter(s.grade);
+}
+function renderAnimationPanel(){
+ const lib=window.DOM_RENDER_ANIMATION,art=window.DOM_RENDER_ANIMATION_ART;
+ if(!lib||!art||!project||!$('animCameras'))return;
+ const s=animationSettings();
+ renderAnimationCards('animCameras','camera',lib.cameras,'camera',s.camera);
+ renderAnimationCards('animLenses','lens',lib.lenses,'lens',s.lens);
+ renderAnimationCards('animMoves','motion',lib.moves,'motion',s.motion);
+ renderAnimationCards('animGrades','grade',lib.grades,'grade',s.grade);
+ for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRatio','ratio'],['animIntensity','intensity']])$(id).value=String(s[field]);
+ if($('animExtra').value!==s.promptExtra)$('animExtra').value=s.promptExtra;
+ const src=renderURL||sourceURL||asset(ASSET+'residence-model-v32.webp');
+ if($('animPreviewImage').getAttribute('src')!==src)$('animPreviewImage').src=src;
+ renderAnimationSummary();
+}
+function updateAnimationSetting(field,value,rerender=true){
+ if(!project||!window.DOM_RENDER_ANIMATION)return;
+ current().cinema=window.DOM_RENDER_ANIMATION.normalize({...animationSettings(),[field]:value});
+ save();
+ if(rerender)renderAnimationPanel();else renderAnimationSummary();
+}
+function playAnimationPreview(){
+ if(!project)return;
+ const frame=$('animPreviewFrame'),s=animationSettings();
+ frame.classList.remove('is-playing');
+ if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  $('animPreviewState').textContent='Схема движения · уменьшенная анимация отключена';
+  return;
+ }
+ frame.style.setProperty('--anim-preview-seconds',String(s.duration)+'s');
+ void frame.offsetWidth;
+ frame.classList.add('is-playing');
+ $('animPreviewState').textContent='Показываем схему · не AI-видео';
+}
+function exportAnimationBrief(){
+ if(!project)return;
+ const lib=window.DOM_RENDER_ANIMATION,s=animationSettings();
+ const data='ДОМ.РЕНДЕР / Архитектурная анимация\\nПроект: '+project.name+'\\nПромпт: профиль кино и оптики\\n\\n'+lib.buildPrompt(s)+'\\n';
+ const file=new Blob([data.replace(/\\n/g,'\n')],{type:'text/plain;charset=utf-8'});
+ const url=URL.createObjectURL(file),a=document.createElement('a');
+ a.href=url;a.download='DOM-RENDER-ANIMATION-BRIEF.txt';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),3000);
+ toast('ТЗ для анимации скачано');
+}
+async function copyAnimationPrompt(){
+ if(!window.DOM_RENDER_ANIMATION)return;
+ const textPrompt=window.DOM_RENDER_ANIMATION.buildPrompt(animationSettings());
+ try{
+  if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(textPrompt);
+  else{$('animPromptText').focus();$('animPromptText').select();if(!document.execCommand('copy'))throw Error('Clipboard unavailable')}
+  toast('Промпт скопирован');
+ }catch(e){toast('Откройте полный промпт и скопируйте его вручную')}
+}
+function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderResults();renderVariantsPanel();renderAnimationPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
 function renderResults(){const items=[{id:'source',label:'Исходник',src:sourceURL||asset(ASSET+'residence-model-v32.webp')}];if(project.demo)items.push({id:'demo',label:'Пример фото',src:demoPhoto});for(const r of project.renders)items.push({id:r.id,label:r.batchLabel||`Рендер ${r.number||''}`,src:imageCache.get(mediaKey('render_'+r.id))||asset(ASSET+'residence-render.jpg')});$('resultsStrip').innerHTML=items.map(r=>`<button class="result-thumb ${((project.activeRender|| (project.demo?'demo':'source'))===r.id)?'active':''}" data-result="${r.id}"><img src="${eHTML(r.src)}" alt="${eHTML(r.label)}"><span>${eHTML(r.label)}</span></button>`).join('');$('resultsHint').textContent=project.demo?'Пример результата · AI-фото не генерировалось':(project.renders.length?`${project.renders.length} AI-результатов`:'Рендеров пока нет')}
 function renderVariantsPanel(){
  if(!project||!$('variantHistory'))return;
@@ -1025,7 +1111,24 @@ function initMoodPhotos(){
   preload.src=target;
  });
 }
-function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-render-mode]').forEach(b=>b.onclick=()=>showRenderSetupMode(b.dataset.renderMode));
+function bind(){for(const id of ['animCameras','animLenses','animMoves','animGrades']){
+ $(id).onclick=e=>{
+  const el=e.target.closest('[data-anim-kind][data-anim-id]');if(!el)return;
+  updateAnimationSetting(el.dataset.animKind,el.dataset.animId);
+ };
+}
+for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRatio','ratio'],['animIntensity','intensity']]){
+ $(id).onchange=e=>updateAnimationSetting(field,e.target.value);
+}
+$('animExtra').oninput=e=>updateAnimationSetting('promptExtra',e.target.value,false);
+$('animPlayPreview').onclick=playAnimationPreview;
+$('animCopyPrompt').onclick=copyAnimationPrompt;
+$('animExportBrief').onclick=exportAnimationBrief;
+$('animPreviewFrame').addEventListener('animationend',()=>{
+ $('animPreviewFrame').classList.remove('is-playing');
+ $('animPreviewState').textContent='Схематическая анимация кадра';
+});
+if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-render-mode]').forEach(b=>b.onclick=()=>showRenderSetupMode(b.dataset.renderMode));
 document.querySelectorAll('[data-render-open]').forEach(b=>b.onclick=()=>{
  const key=b.dataset.renderOpen;
  openRenderPicker(b.getAttribute('aria-expanded')==='true'?null:key,true);
