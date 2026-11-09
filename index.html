@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="dom-render-batch-v32.css?v=20261109-batch-v1">
 <link rel="stylesheet" href="dom-render-material-quick-v34.css?v=20261109-v1">
 <link rel="stylesheet" href="dom-render-nodes-v35.css?v=20261109-v1">
+<link rel="stylesheet" href="dom-render-mood-v36.css?v=20261109-v1">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -114,32 +115,64 @@
  </div>
 </section>
 <section id="environmentPanel" class="tab-panel" role="tabpanel">
- <details class="render-presets-optional"><summary><span><strong>Быстрые сценарии</strong><small>Готовые сочетания сезона, погоды и света · необязательно</small></span><span class="render-presets-arrow" aria-hidden="true">⌄</span></summary><div class="scene-demo" aria-label="Наглядный пример смены условий">
-  <div class="scene-demo-top"><div><span class="scene-demo-eyebrow">БЫСТРЫЕ СЦЕНАРИИ</span><strong>Условия для вашего рендера</strong></div><span class="scene-demo-tag">РЕФЕРЕНС УСЛОВИЙ · БЕЗ ДОМА</span></div>
-  <div class="scene-demo-photo scene-reference" id="sceneDemoPhoto" data-scene="summer">
-   <img src="assets/thumbs/season-summer.jpg" alt="Референс летнего окружения без здания" id="sceneDemoImage" loading="lazy">
-   
-   <div class="scene-environment-inset"><span class="scene-environment-inset-title">РЕФЕРЕНС ОКРУЖЕНИЯ</span><img id="sceneEnvironmentPreview" data-asset-path="assets/thumbs/env-garden.jpg" src="assets/thumbs/env-garden.jpg" alt="Сад и газон" loading="lazy"><span id="sceneEnvironmentLabel">Сад и газон</span></div>
-   <div class="scene-demo-caption" id="sceneDemoCaption">Лето · Ясно · День</div>
-  </div>
-  <div class="scene-demo-buttons" role="group" aria-label="Смена условий на примере дома">
-   <button class="scene-demo-option active" data-scene-demo="summer" type="button" aria-pressed="true">Лето</button>
-   <button class="scene-demo-option" data-scene-demo="autumn" type="button" aria-pressed="false">Осень</button>
-   <button class="scene-demo-option" data-scene-demo="winter" type="button" aria-pressed="false">Зима</button>
-   <button class="scene-demo-option" data-scene-demo="rain" type="button" aria-pressed="false">Дождь</button>
-   <button class="scene-demo-option" data-scene-demo="fog" type="button" aria-pressed="false">Туман</button>
-   <button class="scene-demo-option" data-scene-demo="golden" type="button" aria-pressed="false">Вечер</button>
-   <button class="scene-demo-option" data-scene-demo="night" type="button" aria-pressed="false">Ночь</button>
-  </div>
-  <div class="scene-environment-buttons" role="group" aria-label="Выберите референс окружения">
-  <button type="button" class="scene-demo-option active" data-scene-environment="garden" aria-pressed="true">Сад</button>
-  <button type="button" class="scene-demo-option" data-scene-environment="forest" aria-pressed="false">Лес</button>
-  <button type="button" class="scene-demo-option" data-scene-environment="lake" aria-pressed="false">Озеро</button>
-  <button type="button" class="scene-demo-option" data-scene-environment="mountains" aria-pressed="false">Горы</button>
+ <details class="render-presets-optional mood-presets" open>
+ <summary><span><strong>Атмосфера кадра</strong><small>Быстрая настройка · 8 готовых сценариев</small></span><span class="render-presets-arrow" aria-hidden="true">⌄</span></summary>
+ <div class="mood-presets-inner">
+ <div class="mood-presets-heading"><span>БЫСТРАЯ НАСТРОЙКА</span><p>Выберите настроение будущего рендера. Каждая карточка устанавливает сезон, погоду и освещение.</p></div>
+ <div class="mood-cards" role="group" aria-label="Готовые сценарии атмосферы">
+ <button type="button" class="mood-card" data-scene-demo="sunny" aria-pressed="false" title="Солнечный день: Лето · Ясно · День">
+ <img src="assets/thumbs/natural-luxury/season-summer.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-sunny.webp?v=preset-v36" alt="Природная атмосфера: Солнечный день, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Солнечный день</strong><small>Лето · Ясно · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="golden" aria-pressed="false" title="Золотой час: Лето · Вечер">
+ <img src="assets/thumbs/natural-luxury/time-morning.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-golden.webp?v=preset-v36" alt="Природная атмосфера: Золотой час, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Золотой час</strong><small>Лето · Вечер</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="fog" aria-pressed="false" title="Туманное утро: Осень · Туман · Утро">
+ <img src="assets/thumbs/natural-luxury/weather-fog.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-fog.webp?v=preset-v36" alt="Природная атмосфера: Туманное утро, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Туманное утро</strong><small>Осень · Туман · Утро</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="overcast" aria-pressed="false" title="Мягкий пасмурный: Лето · Облачно · День">
+ <img src="assets/thumbs/natural-luxury/weather-cloud.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-overcast.webp?v=preset-v36" alt="Природная атмосфера: Мягкий пасмурный, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Мягкий пасмурный</strong><small>Лето · Облачно · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="rain" aria-pressed="false" title="После дождя: Осень · Дождь · День">
+ <img src="assets/thumbs/natural-luxury/weather-rain.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-rain.webp?v=preset-v36" alt="Природная атмосфера: После дождя, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>После дождя</strong><small>Осень · Дождь · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="winter" aria-pressed="false" title="Зимняя тишина: Зима · Снег · День">
+ <img src="assets/thumbs/natural-luxury/season-winter.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-winter.webp?v=preset-v36" alt="Природная атмосфера: Зимняя тишина, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Зимняя тишина</strong><small>Зима · Снег · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="blue" aria-pressed="false" title="Синий час: Лето · Сумерки">
+ <img src="assets/thumbs/natural-luxury/env-nordic.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-blue.webp?v=preset-v36" alt="Природная атмосфера: Синий час, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Синий час</strong><small>Лето · Сумерки</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="night" aria-pressed="false" title="Ночная архитектура: Лето · Ночь · Свет">
+ <img src="assets/thumbs/natural-luxury/env-forest.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-night.webp?v=preset-v36" alt="Природная атмосфера: Ночная архитектура, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Ночная архитектура</strong><small>Лето · Ночь · Свет</small></span>
+ </button>
  </div>
- <p class="scene-demo-note">Выберите готовый сценарий или настройте каждый параметр отдельно в карточках ниже.</p>
- <p class="scene-demo-note">Кнопки выше изменяют настройки рендера этого проекта. Фотографии служат референсами условий, а не изображениями дома; настоящий результат появляется только после AI-генерации.</p>
- </div></details>
+ <div class="mood-current" aria-live="polite"><span class="mood-current-bullet" aria-hidden="true">✓</span><span><small>ВЫБРАННЫЙ СЦЕНАРИЙ</small><strong id="scenePresetSelected">Солнечный день</strong><em id="scenePresetDesc">Лето · Ясно · День</em></span></div>
+ <div class="mood-presets-note"><span aria-hidden="true">ⓘ</span><p>Карточки меняют только атмосферу. <b>Окружение участка</b> — сад, лес, горы или озеро — выбирается отдельно в первом ноде. Изображения служат референсами условий, без домов.</p></div>
+ </div>
+ </details>
  <div class="render-flow-intro"><span class="render-flow-eyebrow">ПОШАГОВАЯ НАСТРОЙКА</span><h3>От окружения до готового кадра</h3><p>Откройте нужный шаг, выберите параметр и переходите дальше. Значения сохраняются автоматически.</p><div class="render-flow-progress"><div id="renderFlowProgress" style="width:16.6667%"></div></div><span id="renderFlowPosition">Шаг 1 из 6 · Окружение</span></div>
  <div class="render-node-chain" id="renderNodeChain"><div class="render-node is-open" data-render-node="environment" id="renderNode-environment">
  <button type="button" class="render-node-toggle" data-node-open="environment" aria-expanded="true" aria-controls="renderNodePanel-environment">
@@ -388,7 +421,7 @@
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
 <script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
-<script src="app.js?v=render-nodes-flow-v35-20261109"></script>
+<script src="app.js?v=render-atmosphere-cards-v36-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
