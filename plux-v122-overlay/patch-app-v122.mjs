@@ -25,3 +25,15 @@ let css=readFileSync(cssPath,'utf8');
 css=css.replace('ref-mic.webp','ref-mic-2k-v122.png');
 writeFileSync(cssPath,css);
 console.log('PLUX V12.2 installed: unique mode artwork, unclipped glass controls, settings cleaned, 2K graphics');
+
+/* PLUX V12.3: the same verified assets used by the offline 360/393/412px visual tests. */
+import {execFileSync as plux123Exec} from 'node:child_process';
+const chunks=['part1.b64','part2.b64','part3.b64'].map(name=>readFileSync(join('plux-v123-overlay',name),'utf8').trim());
+const packed=chunks.join('');
+if(packed.length!==7040)throw Error('V12.3 optical package incomplete: '+packed.length);
+plux123Exec('tar',['xzf','-','-C',root],{input:Buffer.from(packed,'base64')});
+plux123Exec(process.execPath,[join(root,'patch-app-v123.mjs'),root],{stdio:'inherit'});
+for(const asset of ['plux-optical-v123.css','plux-optical-v123.js','assets/plux-keyboard-vessel-v123.svg','assets/plux-camera-vessel-v123.svg']){
+ if(statSync(join(root,asset)).size<500)throw Error('V12.3 missing '+asset);
+}
+console.log('PLUX V12.3 optical controls ready for publication');
