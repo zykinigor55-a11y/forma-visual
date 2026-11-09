@@ -1,0 +1,56 @@
+/* ДОМ.РЕНДЕР · UX v2.6: responsive AI-generation and touch comparison. */
+.render-progress[hidden],.compare-hint[hidden]{display:none!important}
+.render-progress{position:absolute;inset:0;z-index:17;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding:20px;overflow:hidden;background:linear-gradient(180deg,rgba(7,18,15,.06),rgba(7,18,15,.56));isolation:isolate}
+.render-progress:before{content:'';position:absolute;top:0;bottom:0;width:22%;left:-24%;z-index:0;background:linear-gradient(90deg,transparent,rgba(185,239,210,.3),rgba(241,255,244,.5),rgba(185,239,210,.18),transparent);filter:blur(12px);transform:skewX(-9deg);animation:dom-render-scan 3.8s linear infinite}
+@keyframes dom-render-scan{to{left:114%}}
+.render-progress-panel{position:relative;z-index:1;width:min(520px,100%);padding:19px 22px 17px;border:1px solid rgba(240,255,245,.23);border-radius:15px;background:rgba(12,29,25,.85);box-shadow:0 15px 52px rgba(2,11,8,.28);backdrop-filter:blur(12px);color:#fff;display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.render-progress-kicker{font-size:10px;letter-spacing:.15em;color:#c4dfd0;font-weight:750;display:flex;align-items:center;gap:8px}
+.render-progress-kicker i{display:block;width:8px;height:8px;border-radius:50%;background:#b1f7c7;box-shadow:0 0 13px #b1f7c7;animation:dom-dot-pulse 1.6s ease-in-out infinite}
+@keyframes dom-dot-pulse{50%{opacity:.38}}
+.render-progress-panel strong{font-size:clamp(17px,2vw,22px);font-weight:650;letter-spacing:-.025em;line-height:1.22}
+.render-progress-panel>span:not(.render-progress-kicker){font-size:12px;color:#dfede6;line-height:1.4}
+.render-progress-panel small{font-size:10px;color:#a9c2b4}
+.render-progress-indeterminate{width:100%;height:3px;background:rgba(255,255,255,.17);border-radius:10px;overflow:hidden;margin:5px 0 2px}
+.render-progress-indeterminate span{display:block;height:100%;width:34%;background:linear-gradient(90deg,#8aca9c,#f0fff1,#8aca9c);border-radius:10px;animation:dom-render-bar 2.1s ease-in-out infinite}
+@keyframes dom-render-bar{0%{transform:translateX(-120%)}100%{transform:translateX(400%)}}
+.compare-hint{margin:0;padding:9px 15px;background:#eef3ee;border-bottom:1px solid #d9e3db;color:#506457;font-size:12px;line-height:1.45}
+.upload-box.is-uploading{pointer-events:none;opacity:.75;border-color:#3b644a;background:#ecf4ec}
+.upload-box.is-uploading .upload-symbol{animation:dom-dot-pulse 1s ease-in-out infinite}
+/* Stage controls consume horizontal swipes, not vertical scrolling; range stays keyboard-accessible. */
+.stage[data-view-mode="slider"] .split-slider{pointer-events:none!important}
+.stage[data-view-mode="slider"]{cursor:ew-resize;touch-action:pan-y}
+.stage[data-view-mode="slider"].is-pending .split-guide{opacity:.68}
+.stage[data-view-mode="slider"].is-pending #afterImg{filter:brightness(.97) saturate(.88)}
+.stage>img#beforeImg,.stage>img#afterImg{object-fit:contain!important;background:#e6ebe6}
+@media(max-width:700px){
+ .workspace{padding-inline:12px!important}
+ .topline{gap:8px}
+ .page-intro{padding-block:18px 15px!important}
+ .page-intro h1{font-size:clamp(25px,6vw,33px)!important;line-height:1.13}
+ .page-intro .subtitle{font-size:12px;line-height:1.5}
+ .viewer-card{border-radius:14px;overflow:hidden}
+ .view-modes{gap:5px}
+ .view-mode{min-height:44px!important;font-size:12px!important}
+ .viewer-actions .icon-button{width:40px!important;height:40px!important}
+ .stage[data-view-mode="slider"] .split-knob{width:48px!important;height:48px!important;box-shadow:0 3px 18px #0004}
+ .stage[data-view-mode="slider"] .split-guide{width:2px}
+ .stage[data-view-mode="side"]{min-height:220px!important}
+ .compare-hint{font-size:11px;padding:10px 12px}
+ .render-progress{padding:10px;align-items:flex-end}
+ .render-progress-panel{gap:4px;padding:12px 13px;border-radius:12px;backdrop-filter:blur(7px)}
+ .render-progress-panel strong{font-size:15px}
+ .render-progress-panel>span:not(.render-progress-kicker){font-size:10px}
+ .render-progress-panel small{font-size:9px}
+ .render-progress-kicker{font-size:8px}
+ .under-viewer .upload-box{min-height:62px}
+ .mobile-nav button{min-height:56px}
+ .inspector-scroll{padding-inline:12px!important}
+ .inspector-footer{bottom:calc(64px + env(safe-area-inset-bottom))!important;z-index:45}
+ .image-options-3,.image-options-4{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .image-option{min-height:120px}
+ .image-option img{min-height:110px}
+ .inspector-footer .btn-primary{min-height:54px!important;font-size:13px}
+ .toast{font-size:12px;max-width:calc(100vw - 24px);width:max-content}
+}
+@media(max-width:360px){.render-progress-panel small{display:none}.render-progress-panel{padding:9px}.render-progress{padding:7px}.image-options-3,.image-options-4{gap:5px!important}}
+@media(prefers-reduced-motion:reduce){.render-progress:before,.render-progress-indeterminate span,.render-progress-kicker i,.upload-box.is-uploading .upload-symbol{animation:none!important}.render-progress-indeterminate span{width:100%;opacity:.55}}
