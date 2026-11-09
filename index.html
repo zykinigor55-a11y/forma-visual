@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-material-preview-v31b">
 <link rel="stylesheet" href="dom-render-batch-v32.css?v=20261109-batch-v1">
 <link rel="stylesheet" href="dom-render-material-quick-v34.css?v=20261109-v1">
+<link rel="stylesheet" href="dom-render-nodes-v35.css?v=20261109-v1">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -113,7 +114,7 @@
  </div>
 </section>
 <section id="environmentPanel" class="tab-panel" role="tabpanel">
- <div class="scene-demo" aria-label="Наглядный пример смены условий">
+ <details class="render-presets-optional"><summary><span><strong>Быстрые сценарии</strong><small>Готовые сочетания сезона, погоды и света · необязательно</small></span><span class="render-presets-arrow" aria-hidden="true">⌄</span></summary><div class="scene-demo" aria-label="Наглядный пример смены условий">
   <div class="scene-demo-top"><div><span class="scene-demo-eyebrow">БЫСТРЫЕ СЦЕНАРИИ</span><strong>Условия для вашего рендера</strong></div><span class="scene-demo-tag">РЕФЕРЕНС УСЛОВИЙ · БЕЗ ДОМА</span></div>
   <div class="scene-demo-photo scene-reference" id="sceneDemoPhoto" data-scene="summer">
    <img src="assets/thumbs/season-summer.jpg" alt="Референс летнего окружения без здания" id="sceneDemoImage" loading="lazy">
@@ -138,8 +139,81 @@
  </div>
  <p class="scene-demo-note">Выберите готовый сценарий или настройте каждый параметр отдельно в карточках ниже.</p>
  <p class="scene-demo-note">Кнопки выше изменяют настройки рендера этого проекта. Фотографии служат референсами условий, а не изображениями дома; настоящий результат появляется только после AI-генерации.</p>
+ </div></details>
+ <div class="render-flow-intro"><span class="render-flow-eyebrow">ПОШАГОВАЯ НАСТРОЙКА</span><h3>От окружения до готового кадра</h3><p>Откройте нужный шаг, выберите параметр и переходите дальше. Значения сохраняются автоматически.</p><div class="render-flow-progress"><div id="renderFlowProgress" style="width:16.6667%"></div></div><span id="renderFlowPosition">Шаг 1 из 6 · Окружение</span></div>
+ <div class="render-node-chain" id="renderNodeChain"><div class="render-node is-open" data-render-node="environment" id="renderNode-environment">
+ <button type="button" class="render-node-toggle" data-node-open="environment" aria-expanded="true" aria-controls="renderNodePanel-environment">
+  <span class="render-node-step">01</span>
+  <span class="render-node-main"><strong>Окружение</strong><span class="render-node-description">Где расположен дом</span><span class="render-node-selected" id="renderNodeSummary-environment">Не выбрано</span></span>
+  <span class="render-node-marker" aria-hidden="true">⌄</span>
+ </button>
+ <div class="render-node-content" id="renderNodePanel-environment" >
+  <div class="render-group" id="renderSection-environment"><div class="panel-section-title"><h3>Окружение участка</h3><span>10 вариантов</span></div><div class="image-options image-options-2" id="environmentOptions"></div></div>
+  <button type="button" class="render-node-continue" data-node-next="season">Следующий шаг <span aria-hidden="true">→</span></button>
  </div>
- <nav class="render-jump" aria-label="Разделы настройки рендера"><button type="button" class="render-jump-btn active" data-jump="environment">Окружение</button><button type="button" class="render-jump-btn" data-jump="season">Сезон</button><button type="button" class="render-jump-btn" data-jump="weather">Погода</button><button type="button" class="render-jump-btn" data-jump="time">Свет</button><button type="button" class="render-jump-btn" data-jump="plants">Растения</button></nav><div class="render-group" id="renderSection-environment"><div class="panel-section-title"><h3>Окружение участка</h3><span>10 вариантов</span></div><div class="image-options image-options-2" id="environmentOptions"></div></div><div class="render-group" id="renderSection-season"><div class="param-group"><div class="panel-section-title"><h3>Сезон</h3></div><div class="image-options image-options-4" id="seasonOptions"></div></div></div><div class="render-group" id="renderSection-weather"><div class="param-group"><div class="panel-section-title"><h3>Погода</h3></div><div class="image-options image-options-3" id="weatherOptions"></div></div></div><div class="render-group" id="renderSection-time"><div class="param-group"><div class="panel-section-title"><h3>Время суток</h3></div><div class="image-options image-options-4" id="timeOptions"></div></div></div><div class="render-group" id="renderSection-plants"><div class="param-group"><div class="panel-section-title"><h3>Растительность</h3></div><div class="image-options image-options-3" id="plantsOptions"></div></div></div><div class="panel-help"><svg class="ico"><use href="#i-lock"/></svg><span>Настройки окружения сохраняются внутри проекта и передаются AI при генерации каждого нового ракурса.</span></div></section>
+ </div>
+<div class="render-node " data-render-node="season" id="renderNode-season">
+ <button type="button" class="render-node-toggle" data-node-open="season" aria-expanded="false" aria-controls="renderNodePanel-season">
+  <span class="render-node-step">02</span>
+  <span class="render-node-main"><strong>Сезон</strong><span class="render-node-description">Время года</span><span class="render-node-selected" id="renderNodeSummary-season">Не выбрано</span></span>
+  <span class="render-node-marker" aria-hidden="true">⌄</span>
+ </button>
+ <div class="render-node-content" id="renderNodePanel-season" hidden>
+  <div class="render-group" id="renderSection-season"><div class="param-group"><div class="panel-section-title"><h3>Сезон</h3></div><div class="image-options image-options-4" id="seasonOptions"></div></div></div>
+  <button type="button" class="render-node-continue" data-node-next="weather">Следующий шаг <span aria-hidden="true">→</span></button>
+ </div>
+ </div>
+<div class="render-node " data-render-node="weather" id="renderNode-weather">
+ <button type="button" class="render-node-toggle" data-node-open="weather" aria-expanded="false" aria-controls="renderNodePanel-weather">
+  <span class="render-node-step">03</span>
+  <span class="render-node-main"><strong>Погода</strong><span class="render-node-description">Атмосфера и осадки</span><span class="render-node-selected" id="renderNodeSummary-weather">Не выбрано</span></span>
+  <span class="render-node-marker" aria-hidden="true">⌄</span>
+ </button>
+ <div class="render-node-content" id="renderNodePanel-weather" hidden>
+  <div class="render-group" id="renderSection-weather"><div class="param-group"><div class="panel-section-title"><h3>Погода</h3></div><div class="image-options image-options-3" id="weatherOptions"></div></div></div>
+  <button type="button" class="render-node-continue" data-node-next="time">Следующий шаг <span aria-hidden="true">→</span></button>
+ </div>
+ </div>
+<div class="render-node " data-render-node="time" id="renderNode-time">
+ <button type="button" class="render-node-toggle" data-node-open="time" aria-expanded="false" aria-controls="renderNodePanel-time">
+  <span class="render-node-step">04</span>
+  <span class="render-node-main"><strong>Освещение</strong><span class="render-node-description">Время суток</span><span class="render-node-selected" id="renderNodeSummary-time">Не выбрано</span></span>
+  <span class="render-node-marker" aria-hidden="true">⌄</span>
+ </button>
+ <div class="render-node-content" id="renderNodePanel-time" hidden>
+  <div class="render-group" id="renderSection-time"><div class="param-group"><div class="panel-section-title"><h3>Время суток</h3></div><div class="image-options image-options-4" id="timeOptions"></div></div></div>
+  <button type="button" class="render-node-continue" data-node-next="plants">Следующий шаг <span aria-hidden="true">→</span></button>
+ </div>
+ </div>
+<div class="render-node " data-render-node="plants" id="renderNode-plants">
+ <button type="button" class="render-node-toggle" data-node-open="plants" aria-expanded="false" aria-controls="renderNodePanel-plants">
+  <span class="render-node-step">05</span>
+  <span class="render-node-main"><strong>Растения</strong><span class="render-node-description">Характер озеленения</span><span class="render-node-selected" id="renderNodeSummary-plants">Не выбрано</span></span>
+  <span class="render-node-marker" aria-hidden="true">⌄</span>
+ </button>
+ <div class="render-node-content" id="renderNodePanel-plants" hidden>
+  <div class="render-group" id="renderSection-plants"><div class="param-group"><div class="panel-section-title"><h3>Растительность</h3></div><div class="image-options image-options-3" id="plantsOptions"></div></div></div>
+  <button type="button" class="render-node-continue" data-node-next="review">Следующий шаг <span aria-hidden="true">→</span></button>
+ </div>
+ </div>
+<div class="render-node render-node-review" data-render-node="review" id="renderNode-review">
+ <button type="button" class="render-node-toggle" data-node-open="review" aria-expanded="false" aria-controls="renderNodePanel-review">
+  <span class="render-node-step">06</span>
+  <span class="render-node-main"><strong>Проверка и запуск</strong><span class="render-node-description">Всё готово к визуализации</span><span class="render-node-selected" id="renderNodeSummary-review">5 параметров</span></span>
+  <span class="render-node-marker" aria-hidden="true">⌄</span>
+ </button>
+ <div class="render-node-content" id="renderNodePanel-review" hidden>
+  <div class="render-review-head">Ваши настройки перед генерацией</div>
+  <div class="render-review-list" id="renderReviewList" role="list"></div>
+  <div class="render-review-lock"><span aria-hidden="true">✓</span><div><strong>Архитектура под защитой</strong><p>Геометрия и существующие материалы сохраняются по исходной модели. Проверить переключатели можно в параметрах.</p></div></div>
+  <div class="render-review-actions">
+   <button type="button" class="btn btn-outline" id="renderReviewMaterials">Материалы и цвета</button>
+   <button type="button" class="btn btn-outline" id="renderReviewParameters">Параметры</button>
+  </div>
+  <button type="button" class="btn btn-primary btn-block" id="renderNodeGenerate">Создать визуализацию <span aria-hidden="true">→</span></button>
+  <p class="render-review-disclaimer">Это AI-генерация через API Market. Если исходник не загружен, сначала потребуется добавить проект.</p>
+ </div>
+ </div></div><div class="panel-help"><svg class="ico"><use href="#i-lock"/></svg><span>Настройки окружения сохраняются внутри проекта и передаются AI при генерации каждого нового ракурса.</span></div></section>
   <section id="materialsPanel" class="tab-panel" role="tabpanel">
   <div class="material-v28-head">
    <span class="material-eyebrow">МАТЕРИАЛЫ И ЦВЕТА</span>
@@ -314,7 +388,7 @@
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
 <script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
-<script src="app.js?v=materials-quick-flow-v34-20261109"></script>
+<script src="app.js?v=render-nodes-flow-v35-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
