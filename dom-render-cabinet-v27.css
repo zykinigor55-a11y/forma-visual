@@ -90,3 +90,8 @@
  .cabinet-bottom{padding:14px 17px 18px}
 }
 @media(max-width:370px){.cabinet-stats{grid-template-columns:1fr}.cabinet-stat{min-height:105px}.cabinet-stat-wide{grid-column:1}.mobile-brand-emblem{height:35px;width:35px}.mobile-header-actions{gap:5px}#mobileAdd{font-size:10px!important}}
+
+/* Prioritize crisp white symbols in both branded marks. */
+.mobile-brand .mobile-brand-emblem{color:#fff!important}
+.mobile-account-btn .ico{width:21px;height:21px;stroke-width:1.75}
+@media(max-width:700px){.top-actions .header-account{display:none!important}}
