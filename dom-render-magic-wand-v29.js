@@ -53,10 +53,29 @@
      const i=queue[head++],xx=i%w,yy=(i/w)|0;
      const neighbors=[xx?i-1:-1,xx<w-1?i+1:-1,yy?i-w:-1,yy<h-1?i+w:-1];
      for(let k=0;k<4;k++){
-       const j=neighbors[k];if(j<0||region[j]||visited[j])continue;
+       const j=neighbors[k];if(j<0||region[j])continue;
        if(fits(j)){
          region[j]=1;queue[tail++]=j;count++;
          if(count>maxCount)return {mask:null,count,width:w,height:h,overflow:true};
+         continue;
+       }
+       // For vertical battens/falz, allow crossing a *horizontal* gap of at
+       // most two dark pixels when matching material continues immediately.
+       // Never bridge 3+ pixels: window frames and material borders stay intact.
+       if(k>1)continue;
+       const dir=k===0?-1:1;
+       for(let gap=1;gap<=2;gap++){
+         const destX=xx+dir*(gap+1);
+         if(destX<0||destX>=w)break;
+         const dest=i+dir*(gap+1);
+         if(!fits(dest))continue;
+         if(!region[dest]){region[dest]=1;queue[tail++]=dest;count++}
+         for(let t=1;t<=gap;t++){
+           const gapIndex=i+dir*t;
+           if(!region[gapIndex]){region[gapIndex]=1;count++}
+         }
+         if(count>maxCount)return {mask:null,count,width:w,height:h,overflow:true};
+         break;
        }
      }
    }
