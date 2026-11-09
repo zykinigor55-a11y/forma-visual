@@ -295,8 +295,11 @@ async function persistMask(){const url=maskCanvas.toDataURL('image/png');await s
 function updateSelectionStatus(){
  const el=$('selectionStatus');if(!el||!maskCanvas.width||!maskCanvas.height)return;
  const pixels=selectedMaskPixels(),percent=pixels/(maskCanvas.width*maskCanvas.height)*100;
- el.textContent=pixels?('Выделено '+percent.toFixed(1)+'% кадра · '+(percent>45?'проверьте маску':'можно уточнить кистью')):'Выделение ещё не задано';
- el.classList.toggle('selection-warn',percent>45);
+ const msg=pixels?('Выделено '+percent.toFixed(1)+'% кадра · '+(percent>45?'проверьте границы':'можно уточнить кистью')):'Область ещё не выделена';
+ el.textContent=msg;el.classList.toggle('selection-warn',percent>45);
+ const simple=$('simpleMaskStatus');
+ if(simple){simple.textContent=msg;simple.classList.toggle('selection-warn',percent>45)}
+ if($('simpleApplyTexture')&&current().mats?.custom)$('simpleApplyTexture').disabled=!pixels||!customMaterials.some(m=>m.id===current().mats.custom);
 }
 function paintMaskOverlay(){updateSelectionStatus();const cn=$('maskOverlay'),ctx=cn.getContext('2d');ctx.clearRect(0,0,cn.width,cn.height);if(!editing&&!maskVisible)return;const data=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height),out=ctx.createImageData(cn.width,cn.height);if(!wandPreviewMask||wandPreviewAdd){for(let i=0;i<data.data.length;i+=4){const a=data.data[i+3];if(a>0){out.data[i]=177;out.data[i+1]=100;out.data[i+2]=60;out.data[i+3]=Math.min(120,a*.48)}}}if(wandPreviewMask){for(let p=0;p<wandPreviewMask.length;p++)if(wandPreviewMask[p]){const k=p*4;out.data[k]=23;out.data[k+1]=204;out.data[k+2]=144;out.data[k+3]=174}}ctx.putImageData(out,0,0);drawPolygonGuide()}
 function drawPolygonGuide(){const svg=$('polyOverlay');if(!editing||tool!=='polygon'||!polyPoints.length){svg.innerHTML='';return}const pts=polyPoints.map(p=>`${p.x},${p.y}`).join(' ');svg.innerHTML=`<polyline points="${pts}"/>`+polyPoints.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4"/>`).join('')}
@@ -559,6 +562,21 @@ function renderZones(){
  }).join('');
  renderMaterialAction();
 }
+function updateSimpleMaterialsUI(){
+ if(!project||!$('materialSimple'))return;
+ const selected=current().mats?.custom;
+ const currentMaterial=customMaterials.find(m=>m.id===selected);
+ const grid=$('simpleMaterialGrid');
+ grid.innerHTML=customMaterials.map(m=>{
+  const preview=matById(m.id);
+  return '<button type="button" class="material-simple-item '+(m.id===selected?'active':'')+'" data-simple-material="'+eHTML(m.id)+'" aria-pressed="'+(m.id===selected)+'"><img src="'+eHTML(preview.img)+'" alt="Фактура '+eHTML(m.name)+'" loading="lazy"><span>'+eHTML(m.name)+'</span></button>';
+ }).join('');
+ $('simpleMaterialStatus').textContent=currentMaterial?'Выбрана фактура: '+currentMaterial.name:'Материал пока не загружен. Можно применить изменение через текст.';
+ const text=materialInstruction('custom');
+ if($('simpleMaterialPrompt').value!==text)$('simpleMaterialPrompt').value=text;
+ const masked=maskCanvas.width&&maskCanvas.height&&selectedMaskPixels()>0;
+ $('simpleApplyTexture').disabled=!(currentMaterial&&masked);
+}
 function renderMaterials(){
  const s=current();
  
@@ -571,6 +589,7 @@ function renderMaterials(){
  $('scaleValue').textContent=s.textureScale+'%';
  $('textureRotate').value=String(s.textureRotate);
  $('deleteMyMaterial').hidden=!matById(s.mats[s.zone]).custom;
+ updateSimpleMaterialsUI();
 }
 function renderFooter(){const s=current();$('projectPanelName').textContent=project.name;$('projectPanelMeta').textContent=(project.demo?'Демонстрационная модель':'Ракурс '+(project.angle||1))+' · '+(project.sourceWidth||1672)+'×'+(project.sourceHeight||941);$('projectPanelStatus').textContent=project.demo?'Демонстрация · AI-фото не генерировалось':(project.renders.length?project.renders.length+' сохранённых AI-результатов':'Исходник загружен · AI-результатов пока нет');$('summaryLine').textContent=`${envLabel()} · ${cLabel('season',s.season)} · ${cLabel('time',s.time)}`;$('summaryMaterial').textContent=`${customMaterials.some(m=>m.id===s.mats[s.zone])?matById(s.mats[s.zone]).name:(s.preserveMaterials!==false?'Материалы исходника':'Материал не выбран')} · ${zoneLabel().toLowerCase()}`;$('stageSubtitle').textContent=$('summaryLine').textContent;$('stageTitle').textContent=project.name;$('canvasProjectLabel').textContent=project.name;$('breadcrumbName').textContent=project.name;$('stageRatio').textContent=s.ratio;$('ratioSelect').value=s.ratio;$('qualitySelect').value=s.quality;$('quantitySelect').value=s.quantity;$('lockGeometry').checked=s.lockGeometry;$('preserveMaterials').checked=s.preserveMaterials!==false;$('keepReference').checked=s.keepReference;if($('angleLandscapeLock'))$('angleLandscapeLock').checked=s.keepReference;$('editSelectedOnly').checked=!!s.editSelectedOnly;renderFlowLabels()}
 function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderResults();renderVariantsPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
@@ -798,8 +817,8 @@ const imSize=await getImageSize(base);
 const maskData=useMask?asPNGMask(imSize.w,imSize.h):null;
 const m=matById(current().mats[current().zone]);
 if(useMask&&editMode==='replace'&&!m.custom&&!instruction)throw Error('Для замены выберите фактуру или опишите новый материал текстом.');
-const materialData=useMask&&editMode==='replace'&&m.custom?await getMedia('material_'+m.id):null;
-if(useMask&&editMode==='replace'&&m.custom&&!materialData)throw Error('Загрузите выбранную фактуру повторно.');let refData=null;if(current().keepReference&&!renderURL&&!project.demo){refData=await getMedia(mediaKey('ref'))}else if(current().keepReference&&project.reference){refData=await getMedia(mediaKey(project.reference))}const payload={image:await urlToDataURL(base),mask:maskData,material:materialData,reference:refData,brief:settingsBrief(),selectedZone:editRequested?zoneLabel():null,zoneId:editRequested?current().zone:null,editMode,editAction:editRequested?action:null,materialInstruction:editRequested?instruction:null,targetColor:editRequested&&action==='color'?materialColor():null,materialName:useMask&&editMode==='replace'&&m.custom?m.name:null,materialDimensions:useMask&&editMode==='replace'&&m.custom?{width:m.width||0,height:m.height||0}:null,size:imageSizeForRatio(current().ratio),quality:current().quality,quantity:Number(current().quantity)};setRenderProgress('AI создаёт визуализацию','Сервер обрабатывает сцену. Время зависит от сложности изображения.');const ac=new AbortController();const id=setTimeout(()=>ac.abort(),180000);let response;try{response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ac.signal})}finally{clearTimeout(id)}const data=await response.json().catch(()=>({error:'Некорректный ответ сервера'}));if(!response.ok||!Array.isArray(data.images)||!data.images.length)throw new Error(data.error||'Сервер не вернул изображение');setRenderProgress('Сохраняем результат','Добавляем изображение в галерею проекта');for(const [index,out] of data.images.entries()){const id='r'+uuid().slice(0,8);const url='data:'+(data.mimes?.[index]||'image/png')+';base64,'+out;await setMedia(mediaKey('render_'+id),url);project.renders.push({id,number:project.renders.length+1,createdAt:Date.now()});project.activeRender=id;renderURL=url}if(current().keepReference){await setMedia(mediaKey('ref'),renderURL);project.reference='ref'}save();await loadProject(project.id);toast(data.warning||'AI-визуализация готова. Сохраните изображение через галерею.')}catch(err){toast((err.name==='AbortError'?'Время ожидания AI истекло. ':err.message)||'Ошибка генерации')}finally{rendering=false;stopRenderProgress();$('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию';$('providerFoot').textContent=aiConnected?'Nano Banana подключена':'Демо: AI не подключён'}}
+const materialData=useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?await getMedia('material_'+m.id):null;
+if(useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly&&!materialData)throw Error('Загрузите выбранную фактуру повторно.');let refData=null;if(current().keepReference&&!renderURL&&!project.demo){refData=await getMedia(mediaKey('ref'))}else if(current().keepReference&&project.reference){refData=await getMedia(mediaKey(project.reference))}const payload={image:await urlToDataURL(base),mask:maskData,material:materialData,reference:refData,brief:settingsBrief(),selectedZone:editRequested?zoneLabel():null,zoneId:editRequested?current().zone:null,editMode,editAction:editRequested?action:null,materialInstruction:editRequested?instruction:null,targetColor:editRequested&&action==='color'?materialColor():null,materialName:useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?m.name:null,materialDimensions:useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?{width:m.width||0,height:m.height||0}:null,size:imageSizeForRatio(current().ratio),quality:current().quality,quantity:Number(current().quantity)};setRenderProgress('AI создаёт визуализацию','Сервер обрабатывает сцену. Время зависит от сложности изображения.');const ac=new AbortController();const id=setTimeout(()=>ac.abort(),180000);let response;try{response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ac.signal})}finally{clearTimeout(id)}const data=await response.json().catch(()=>({error:'Некорректный ответ сервера'}));if(!response.ok||!Array.isArray(data.images)||!data.images.length)throw new Error(data.error||'Сервер не вернул изображение');setRenderProgress('Сохраняем результат','Добавляем изображение в галерею проекта');for(const [index,out] of data.images.entries()){const id='r'+uuid().slice(0,8);const url='data:'+(data.mimes?.[index]||'image/png')+';base64,'+out;await setMedia(mediaKey('render_'+id),url);project.renders.push({id,number:project.renders.length+1,createdAt:Date.now()});project.activeRender=id;renderURL=url}if(current().keepReference){await setMedia(mediaKey('ref'),renderURL);project.reference='ref'}save();await loadProject(project.id);toast(data.warning||'AI-визуализация готова. Сохраните изображение через галерею.')}catch(err){toast((err.name==='AbortError'?'Время ожидания AI истекло. ':err.message)||'Ошибка генерации')}finally{rendering=false;stopRenderProgress();$('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию';$('providerFoot').textContent=aiConnected?'Nano Banana подключена':'Демо: AI не подключён'}}
 const BATCH_SHOTS=[
  {id:'original',label:'01 · Исходный ракурс',title:'Исходный ракурс'},
  {id:'front',label:'02 · Фронтальный вид',title:'Фронтальный вид'},
@@ -1016,6 +1035,43 @@ $('renderSetupGenerate').onclick=()=>generate();
 $('renderSetupBatch').onclick=()=>{
  if($('batchPanel').hidden)$('batchToggle').click();
  $('batchToggle').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+$('simpleSelectArea').onclick=()=>{
+ current().zone='custom';
+ current().materialActions={...current().materialActions,custom:'replace'};
+ current().editSelectedOnly=true;
+ $('startMask').click();
+};
+$('simpleShowMask').onclick=()=>{$('showMask').click()};
+$('simpleUploadTexture').onclick=()=>{$('uploadMaterialBtn').click()};
+$('simpleMaterialGrid').onclick=e=>{
+ const btn=e.target.closest('[data-simple-material]');if(!btn)return;
+ const id=btn.dataset.simpleMaterial;if(!customMaterials.some(m=>m.id===id))return;
+ current().zone='custom';current().mats.custom=id;
+ current().materialActions={...current().materialActions,custom:'replace'};
+ renderMaterials();renderZones();renderFooter();save();
+};
+$('simpleApplyTexture').onclick=()=>{
+ current().zone='custom';current().editSelectedOnly=true;
+ current().materialActions={...current().materialActions,custom:'replace'};
+ $('generateMaterial').click();
+};
+$('simpleMaterialPrompt').addEventListener('input',e=>{
+ const value=e.target.value.slice(0,500);
+ current().zone='custom';
+ current().materialInstructions={...current().materialInstructions,custom:value};
+ $('materialInstruction').value=value;
+ save();
+});
+$('simpleApplyPrompt').onclick=async()=>{
+ const value=$('simpleMaterialPrompt').value.trim();
+ if(!value){toast('Напишите, какой материал или цвет нужно изменить');return}
+ current().zone='custom';
+ current().materialInstructions={...current().materialInstructions,custom:value};
+ current().materialActions={...current().materialActions,custom:'replace'};
+ current().editSelectedOnly=true;save();
+ if(!confirm('Выполнить платную AI-генерацию по вашему описанию? Без выделения AI определяет нужную область по тексту.'))return;
+ await generate({materialEdit:true,textRequested:true,materialPromptOnly:true});
 };
 document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));
 $('moodCustomize').onclick=()=>openRenderPicker('season',true);document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;await selectMaterialElement(el.dataset.zone)});document.querySelectorAll('[data-quick-zone]').forEach(el=>el.addEventListener('click',async()=>{await selectMaterialElement(el.dataset.quickZone,'color');$('materialColorPane').scrollIntoView({behavior:'smooth',block:'nearest'});}));for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
