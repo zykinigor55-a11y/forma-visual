@@ -1,0 +1,40 @@
+/* ДОМ.РЕНДЕР · Пакетная визуализация · 4 кадра · v32 */
+.batch-entry{margin-top:9px}
+.batch-toggle{display:flex;align-items:center;gap:11px;width:100%;border:1px solid #cbd9cd;background:#f6faf5;color:#294532;border-radius:10px;min-height:57px;padding:10px 14px;text-align:left;transition:background .2s,border-color .2s}
+.batch-toggle:hover{background:#eaf3e8;border-color:#8fb39a}
+.batch-toggle .batch-toggle-icon{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;background:#dfece0;border:1px solid #bdd6c1;color:#396f4a;border-radius:8px;font-size:23px}
+.batch-toggle>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:2px;min-width:0}
+.batch-toggle b{font-size:12px;font-weight:750;line-height:1.3}
+.batch-toggle small{font-size:10px;color:#66816b;line-height:1.4}
+.batch-toggle>.ico{transition:transform .2s;transform:rotate(90deg);width:16px;color:#486b50}
+.batch-toggle[aria-expanded="true"]>.ico{transform:rotate(-90deg)}
+.batch-panel{border:1px solid #d9e4da;background:#fbfdfb;padding:15px 12px;border-radius:0 0 12px 12px;margin:-3px 0 8px;display:flex;flex-direction:column;gap:13px}
+.batch-panel[hidden]{display:none!important}
+.batch-panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.batch-panel-head strong{font-size:12px;font-weight:780;color:#2c4633}
+.batch-panel-head>span{background:#e1ece1;color:#416d47;border:1px solid #c6dbca;border-radius:6px;padding:3px 7px;font-size:9px;white-space:nowrap}
+.batch-shot-list{display:grid;gap:7px}
+.batch-shot{display:flex;gap:10px;align-items:start;border:1px solid #e2e8e1;border-radius:10px;padding:10px;background:#fff}
+.batch-shot>span{width:26px;height:26px;display:grid;place-items:center;flex:0 0 26px;border-radius:8px;background:#e5f0e6;color:#41704a;font-weight:800;font-size:10px}
+.batch-shot strong{display:block;color:#2d4633;font-size:11px;line-height:1.35;margin-bottom:3px}
+.batch-shot small{display:block;color:#7b8b7d;font-size:10px;line-height:1.45}
+.batch-front-upload{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 10px;border:1px dashed #9bb5a1;background:#f3f9f2;border-radius:9px;cursor:pointer}
+.batch-front-upload strong{display:block;color:#334c39;font-size:11px}
+.batch-front-upload small{display:block;color:#728a76;font-size:10px;line-height:1.4;margin-top:3px}
+.batch-front-upload>span:last-child{font-size:10px;color:#2e6840;background:#fff;padding:8px;border-radius:6px;white-space:nowrap;border:1px solid #cee0d0;max-width:128px;text-overflow:ellipsis;overflow:hidden}
+.batch-front-clear{font-size:10px;background:transparent;text-align:right;border:none;color:#a04b42;text-decoration:underline}
+.batch-geometry-notice{font-size:10px;line-height:1.55;border-left:3px solid #b89f64;background:#f7f3e9;border-radius:0 6px 6px 0;color:#6d5d37;padding:10px}
+.batch-geometry-notice.is-exact{border-left-color:#619c6e;background:#eff6f0;color:#3f7149}
+.batch-detail-adjust{border:1px solid #e0e7df;background:#fff;border-radius:9px;padding:10px 11px}
+.batch-detail-adjust>summary{cursor:pointer;color:#385441;font-size:10px;font-weight:750;line-height:1.5}
+.batch-detail-adjust>summary span{font-size:9px;color:#8c9b8e;font-weight:500}
+.batch-detail-adjust p{font-size:10px;color:#79877a;line-height:1.5;margin:10px 0}
+.batch-detail-adjust label{display:flex;flex-direction:column;gap:5px;color:#516752;font-size:10px;margin:10px 0}
+.batch-detail-adjust input[type=range]{width:100%;accent-color:#426f4b}
+.batch-cost{display:flex;flex-direction:column;gap:4px;border:1px solid #e2e0cf;background:#f9f8f1;border-radius:9px;padding:11px}
+.batch-cost b{font-size:11px;color:#594a33;font-weight:700}
+.batch-cost span{font-size:10px;line-height:1.55;color:#776d5d}
+#batchStart{white-space:normal;padding:12px;min-height:49px}
+.batch-status{font-size:10px;line-height:1.5;color:#5d775f;margin:0}
+.batch-status.is-error{color:#9b4c43}
+@media(max-width:700px){.batch-panel{padding:12px 10px}.batch-shot{padding:9px}.batch-front-upload{flex-wrap:wrap}.batch-front-upload>span:last-child{max-width:100%;flex-shrink:0}.batch-toggle{min-height:61px}}
