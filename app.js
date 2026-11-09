@@ -624,6 +624,7 @@ function renderAnimationSummary(){
  $('animPromptText').value=lib.buildPrompt(s);
  $('animPreviewDuration').textContent=s.duration+' s · '+s.fps+' fps';
  $('animPreviewScreen').dataset.motion=s.motion;
+ $('animPreviewScreen').dataset.ratio=s.ratio;
  $('animPreviewImage').style.filter=animationColorFilter(s.grade);
 }
 function renderAnimationPanel(){
