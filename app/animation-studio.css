@@ -137,3 +137,12 @@
 .cine-mobile-actions{display:none}
 @media(max-width:1190px){.cine-mobile-actions{display:flex;gap:7px;padding:10px 12px;border-top:1px solid #dce0d5;background:#f4f3ee;flex-shrink:0}.cine-mobile-actions button{flex:1;min-width:0;min-height:39px;font-size:10px;font-weight:600;border:1px solid #c5d0c2;background:#e5ece2;color:#3a5b3e;border-radius:4px}.cine-mobile-actions button:first-child{background:#344e38;color:#fff;border-color:#344e38}}
 @media(max-width:390px){.cine-mobile-actions{padding:8px 12px}.cine-mobile-actions button{font-size:9px}}
+
+@media(max-width:800px),(max-width:1000px) and (orientation:landscape) and (max-height:550px){
+ .menubar .menu-group:first-child{flex:1;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+ .menubar .menu-group:first-child::-webkit-scrollbar{display:none}
+ .menubar .menu-group:last-child{flex-shrink:0}
+ .app.cine-mode .menubar .menu-group:first-child>button:not(.mode-switch),
+ .app.cine-mode .menubar .menu-group:last-child{display:none}
+ .app.cine-mode .menubar .menu-group:first-child{overflow:visible}
+}
