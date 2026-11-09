@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="styles.css?v=geometry-v32-20261109">
 <link rel="stylesheet" href="dom-render-ux-v26.css?v=20261109-mobile">
 <link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
+<link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-materials">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -136,13 +137,67 @@
  <p class="scene-demo-note">Кнопки выше изменяют настройки рендера этого проекта. Фотографии служат референсами условий, а не изображениями дома; настоящий результат появляется только после AI-генерации.</p>
  </div>
  <nav class="render-jump" aria-label="Разделы настройки рендера"><button type="button" class="render-jump-btn active" data-jump="environment">Окружение</button><button type="button" class="render-jump-btn" data-jump="season">Сезон</button><button type="button" class="render-jump-btn" data-jump="weather">Погода</button><button type="button" class="render-jump-btn" data-jump="time">Свет</button><button type="button" class="render-jump-btn" data-jump="plants">Растения</button></nav><div class="render-group" id="renderSection-environment"><div class="panel-section-title"><h3>Окружение участка</h3><span>10 вариантов</span></div><div class="image-options image-options-2" id="environmentOptions"></div></div><div class="render-group" id="renderSection-season"><div class="param-group"><div class="panel-section-title"><h3>Сезон</h3></div><div class="image-options image-options-4" id="seasonOptions"></div></div></div><div class="render-group" id="renderSection-weather"><div class="param-group"><div class="panel-section-title"><h3>Погода</h3></div><div class="image-options image-options-3" id="weatherOptions"></div></div></div><div class="render-group" id="renderSection-time"><div class="param-group"><div class="panel-section-title"><h3>Время суток</h3></div><div class="image-options image-options-4" id="timeOptions"></div></div></div><div class="render-group" id="renderSection-plants"><div class="param-group"><div class="panel-section-title"><h3>Растительность</h3></div><div class="image-options image-options-3" id="plantsOptions"></div></div></div><div class="panel-help"><svg class="ico"><use href="#i-lock"/></svg><span>Настройки окружения сохраняются внутри проекта и передаются AI при генерации каждого нового ракурса.</span></div></section>
-  <section id="materialsPanel" class="tab-panel" role="tabpanel"><div class="panel-section-title"><h3>1. Выделите поверхность</h3><span>Кисть · Полигон · Ластик · Похожие оттенки</span></div><div class="zone-options" id="zoneOptions"></div><div class="zone-buttons"><button class="btn btn-outline" id="startMask"><svg class="ico"><use href="#i-brush"/></svg>Редактировать выделение</button><div class="selection-status" id="selectionStatus" role="status" aria-live="polite">Выделение ещё не задано</div><button class="btn btn-quiet" id="showMask"><svg class="ico"><use href="#i-eye"/></svg>Показать маску</button></div><label class="switch-row selection-only"><span><b>AI: изменять только маску</b><small>Отправить выделенную поверхность как прозрачную область маски</small></span><input type="checkbox" id="editSelectedOnly"><i></i></label><div class="panel-section-title with-gap"><h3>2. Загрузите свою фактуру</h3><span id="selectedZoneName">Основной фасад</span></div><div class="material-onboarding"><strong>Ваши материалы</strong><p>Загрузите фактуру камня, дерева или штукатурки. Предварительная примерка не изменяет оригинал и не сохраняет финальный рендер.</p></div><div id="catalogMaterials" class="material-grid" hidden></div><div id="myMaterials" class="material-grid" hidden></div><button class="upload-material" id="uploadMaterialBtn"><svg class="ico"><use href="#i-plus"/></svg><span>+ Добавить фактуру <small>Выберите фото материала · JPG / PNG / WebP</small></span></button><input type="file" id="materialFile" accept="image/png,image/jpeg,image/webp" hidden><button class="btn btn-quiet btn-sm" id="deleteMyMaterial" hidden style="margin-top:7px;color:#8a5548">Удалить выбранный материал</button><div class="material-tune"><label>Масштаб текстуры <output id="scaleValue">100%</output><input type="range" min="30" max="250" value="100" id="textureScale"></label><label>Поворот <select id="textureRotate"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></div><div class="material-process">
- <div><strong>3. Предварительный просмотр</strong><p>Наложение фактуры строго по маске. Если часть фасада не изменилась, дополните выделение. Это не AI-результат.</p></div>
- <button class="btn btn-outline btn-block" id="tryMaterial"><svg class="ico"><use href="#i-eye"/></svg>Предпросмотр · только выбранная область</button>
- <button class="btn btn-quiet btn-sm btn-block" id="discardMaterialPreview">Скрыть черновую примерку</button>
- <div><strong>4. Создать реальный результат</strong><p>AI получает исходную сцену, маску и вашу фактуру; учитывает свет и перспективу. Точность границ необходимо проверить.</p></div>
- <button type="button" class="btn btn-outline btn-block mask-review-btn" id="reviewMask"><svg class="ico"><use href="#i-eye"/></svg>Проверить выделение перед генерацией</button><div class="mask-instructions">Проверка маски обязательна: AI изменяет только выделенные пиксели. Добавьте пропущенные участки кистью или полигоном.</div><button type="button" class="btn btn-primary btn-block" id="generateMaterial"><svg class="ico"><use href="#i-spark"/></svg>Сгенерировать замену материала (AI)</button>
- </div></section>
+  <section id="materialsPanel" class="tab-panel" role="tabpanel">
+  <div class="material-v28-head">
+   <span class="material-eyebrow">МАТЕРИАЛЫ И ЦВЕТА</span>
+   <h3>Что хотите изменить в доме?</h3>
+   <p>Выберите элемент здания и действие. Если материалы устраивают, ничего менять не нужно — AI сохранит их при обычном рендере.</p>
+  </div>
+  <div class="material-step-title"><span>01</span><strong>Выберите поверхность</strong></div>
+  <div class="zone-options material-zone-grid" id="zoneOptions"></div>
+  <div class="material-step-title"><span>02</span><strong>Выберите действие</strong></div>
+  <div class="material-action-options" role="group" aria-label="Действие с выбранной поверхностью">
+   <button type="button" class="material-action-card active" data-material-action="keep" aria-pressed="true">
+    <span class="material-action-ico">✓</span><strong>Оставить как есть</strong><small>Сохранить исходный материал и его фактуру</small>
+   </button>
+   <button type="button" class="material-action-card" data-material-action="color" aria-pressed="false">
+    <span class="material-action-ico">◑</span><strong>Изменить цвет</strong><small>Перекрасить поверхность, сохранив её материал</small>
+   </button>
+   <button type="button" class="material-action-card" data-material-action="replace" aria-pressed="false">
+    <span class="material-action-ico">▧</span><strong>Заменить материал</strong><small>Добавить собственную текстуру и применить её</small>
+   </button>
+  </div>
+  <div class="material-action-info" id="materialActionInfo" role="status">Исходное покрытие будет сохранено. При обычном рендере AI повысит его реализм.</div>
+  <div id="materialKeepPane" class="material-keep-pane"><span class="material-keep-icon">✓</span><div><strong>Материал сохранён</strong><p>Стены, фальц, дерево и другие видимые покрытия сохраняются по исходному скриншоту. Можно переходить к настройке окружения.</p></div></div>
+  <div id="materialEditPane" hidden>
+   <div class="material-step-title"><span>03</span><strong>Укажите нужную область на изображении</strong></div>
+   <p class="material-hint">Выделите поверхность кистью, полигоном или поиском похожих оттенков. Сейчас автоматическое определение точных границ ещё не подключено — проверьте маску перед AI.</p>
+   <div class="zone-buttons"><button class="btn btn-outline" id="startMask"><svg class="ico"><use href="#i-brush"/></svg>Выделить на изображении</button><div class="selection-status" id="selectionStatus" role="status" aria-live="polite">Выделение ещё не задано</div><button class="btn btn-quiet" id="showMask"><svg class="ico"><use href="#i-eye"/></svg>Показать маску</button></div>
+   <label class="switch-row selection-only material-advanced"><span><b>AI: изменять только маску</b><small>Не затрагивать остальную часть изображения</small></span><input type="checkbox" id="editSelectedOnly" checked><i></i></label>
+   <div id="materialColorPane" hidden>
+    <div class="material-step-title"><span>04</span><strong>Выберите новый цвет</strong></div>
+    <div class="material-color-editor">
+     <label class="material-color-label" for="materialColor"><span>Цвет поверхности</span><input type="color" id="materialColor" value="#575c51" aria-label="Выберите цвет покрытия"></label>
+     <div class="material-color-swatches" id="materialColorSwatches" aria-label="Популярные цвета">
+      <button type="button" data-color="#242624" style="--sw:#242624" title="Графит" aria-label="Графит"></button>
+      <button type="button" data-color="#575c51" style="--sw:#575c51" title="Тёмный оливковый" aria-label="Тёмный оливковый"></button>
+      <button type="button" data-color="#b7b4a7" style="--sw:#b7b4a7" title="Тёплый серый" aria-label="Тёплый серый"></button>
+      <button type="button" data-color="#e4ddcf" style="--sw:#e4ddcf" title="Светлый камень" aria-label="Светлый камень"></button>
+      <button type="button" data-color="#8b6246" style="--sw:#8b6246" title="Натуральный древесный" aria-label="Натуральный древесный"></button>
+      <button type="button" data-color="#fcfcfa" style="--sw:#fcfcfa" title="Белый" aria-label="Белый"></button>
+     </div>
+    </div>
+    <p class="material-hint">AI меняет только цвет выделенной поверхности. Фальцы, доски, швы, рельеф и расположение элементов должны сохраниться.</p>
+    <button type="button" class="btn btn-primary btn-block" id="generateColor"><svg class="ico"><use href="#i-spark"/></svg>Проверить выделение и изменить цвет (AI)</button>
+   </div>
+   <div id="materialReplacePane" hidden>
+    <div class="material-step-title"><span>04</span><strong>Загрузите новую фактуру</strong></div>
+    <div class="material-onboarding"><strong>Мои материалы</strong><p>Фото дерева, металла, кирпича, камня или другой поверхности. Материал будет применён только к выделенной зоне.</p></div>
+    <div id="catalogMaterials" class="material-grid" hidden></div><div id="myMaterials" class="material-grid" hidden></div>
+    <button class="upload-material" id="uploadMaterialBtn"><svg class="ico"><use href="#i-plus"/></svg><span>+ Загрузить фактуру <small>JPG, PNG или WebP</small></span></button>
+    <input type="file" id="materialFile" accept="image/png,image/jpeg,image/webp" hidden>
+    <button class="btn btn-quiet btn-sm" id="deleteMyMaterial" hidden style="margin-top:7px;color:#8a5548">Удалить выбранный материал</button>
+    <div class="material-tune"><label>Масштаб текстуры <output id="scaleValue">100%</output><input type="range" min="30" max="250" value="100" id="textureScale"></label><label>Поворот <select id="textureRotate"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></div>
+    <div class="material-process"><div><strong>05. Проверьте наложение</strong><p>Черновая примерка поможет оценить масштаб. Финальный реализм создаётся AI.</p></div>
+     <button class="btn btn-outline btn-block" id="tryMaterial"><svg class="ico"><use href="#i-eye"/></svg>Предпросмотр материала</button>
+     <button class="btn btn-quiet btn-sm btn-block" id="discardMaterialPreview">Скрыть примерку</button>
+     <button type="button" class="btn btn-outline btn-block mask-review-btn" id="reviewMask"><svg class="ico"><use href="#i-eye"/></svg>Проверить выделенную область</button>
+     <div class="mask-instructions">Прежде чем запускать генерацию, убедитесь, что границы маски точны.</div>
+     <button type="button" class="btn btn-primary btn-block" id="generateMaterial"><svg class="ico"><use href="#i-spark"/></svg>Заменить материал (AI)</button>
+    </div>
+   </div>
+  </div>
+ </section>
 <section id="variantsPanel" class="tab-panel" role="tabpanel">
  <span class="section-label">ИСТОРИЯ ПРОЕКТА</span>
  <p class="muted">Все реально сохранённые визуализации этого проекта. Откройте результат, назначьте его референсом для следующего ракурса или сравните с исходником.</p>
@@ -197,7 +252,7 @@
 <script src="dom-render-preset-plants.js?v=cohesive-photo-20261108-1"></script>
 <script src="dom-render-unified-presets.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
-<script src="app.js?v=material-fidelity-lock-v1-20261109"></script>
+<script src="app.js?v=material-ux-v28-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
