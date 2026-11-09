@@ -107,7 +107,12 @@ document.addEventListener('error',function(event) {
   if(path){
     img.dataset.domFallback='1';
     img.removeAttribute('srcset');
-    img.src=window.DOM_RENDER_UNIFIED_PRESETS?.[path] || window.DOM_RENDER_ASSETS?.[path] || path;
+    const failedSrc=img.getAttribute('src')||'';
+    // Local Natural Luxury photographs are optional until uploaded to GitHub.
+    // If an asset is missing, retain a working premium photographic fallback.
+    img.src=failedSrc.includes('assets/thumbs/natural-luxury/')
+      ? (window.DOM_RENDER_UNIFIED_PRESETS?.[path] || window.DOM_RENDER_ASSETS?.[path] || naturePhoto(path) || HD_PRESETS[path] || path)
+      : (window.DOM_RENDER_UNIFIED_PRESETS?.[path] || window.DOM_RENDER_ASSETS?.[path] || path);
     return;
   }
   const name=img.getAttribute('src')||'';
@@ -216,10 +221,23 @@ const naturePhoto=path=>{
  return id?'https://images.unsplash.com/'+id+'?auto=format&fit=crop&w=2048&h=1280&q=88':null;
 };
 const isPhotoPreset = path => /^assets\/thumbs\/(?:env|time|season|weather|plants)-[a-z]+\.jpg$/.test(path);
+// All 28 cards: prefer the user's curated local WebP pack when its binaries exist.
+// Master images live separately; the browser uses optimized 800x600 WebP.
+const NATURAL_LUXURY_28=new Set([
+ 'env-garden','env-forest','env-lake','env-mountains','env-city','env-courtyard','env-nordic','env-coast','env-minimal','env-mist',
+ 'season-spring','season-summer','season-autumn','season-winter',
+ 'weather-clear','weather-cloud','weather-rain','weather-fog','weather-snow',
+ 'time-morning','time-day','time-golden','time-night',
+ 'plants-minimal','plants-decorative','plants-forest','plants-mediterranean','plants-tropical'
+]);
+const luxuryLocalAsset=path=>{
+ const name=path.split('/').pop()?.replace(/\.jpg$/,'');
+ return NATURAL_LUXURY_28.has(name)?'assets/thumbs/natural-luxury/'+name+'.webp?v=natural-luxury-28-20261109':null;
+};
 // Use selected unified imagery first. The old short-circuit returned stale local JPEGs.
 // Keep embedded files as offline fallback and never rewrite user-uploaded pictures.
 const asset = path => isPhotoPreset(path)
-  ? (window.DOM_RENDER_UNIFIED_PRESETS?.[path] || window.DOM_RENDER_ASSETS?.[path] || naturePhoto(path) || HD_PRESETS[path] || path)
+  ? (luxuryLocalAsset(path) || window.DOM_RENDER_UNIFIED_PRESETS?.[path] || window.DOM_RENDER_ASSETS?.[path] || naturePhoto(path) || HD_PRESETS[path] || path)
   : (window.DOM_RENDER_ASSETS?.[path] || window.DOM_RENDER_UNIFIED_PRESETS?.[path] || naturePhoto(path) || premiumPhoto(path) || HD_PRESETS[path] || path);
 const environments = [['garden','Сад и газон','Ухоженный приватный сад, аккуратный газон и декоративные посадки.'],['forest','Хвойный лес','Высокие хвойные деревья на заднем плане, натуральный лесной рельеф.'],['lake','У озера','Естественная береговая линия и спокойное озеро на заднем плане, берег не перемещать между видами произвольно.'],['mountains','Горы','Дальний горный горизонт и каменистый рельеф.'],['city','Городской парк','Ландшафт современного городского парка без новых построек.'],['courtyard','Тихий парк','Приватный озеленённый участок с высокими деревьями.'],['nordic','Северный пейзаж','Сдержанная северная природа, камни, хвойники.'],['coast','У побережья','Прибрежная природа, дальняя горизонтальная линия моря.'],['minimal','Минимализм','Сдержанный ландшафт, гравий, небольшие деревья и злаки.'],['mist','Туманный лес','Мягкий дальний лесной пейзаж с атмосферной дымкой.']];
 const choices = {
