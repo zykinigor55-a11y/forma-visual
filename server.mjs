@@ -19,6 +19,7 @@ const ACCESS_PIN=process.env.SITE_ACCESS_PIN||'';
 if(HOST!=='127.0.0.1'&&HOST!=='localhost'&&!ACCESS_PIN)throw new Error('Для публичного HOST укажите SITE_ACCESS_PIN (защита генерации от посторонних).');
 const SESSION_TOKEN=randomBytes(24).toString('hex');
 const DAILY_CAP=Math.min(200,Math.max(1,Number(process.env.DAILY_GENERATION_LIMIT)||12));
+const PUBLIC_SUPPORT_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.PUBLIC_SUPPORT_EMAIL||'')?process.env.PUBLIC_SUPPORT_EMAIL:'';
 let dailyCount=0, day=new Date().toISOString().slice(0,10);
 const loginAttempts=new Map();
 function authorized(req){if(!ACCESS_PIN)return true;const token=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('domrender_session='))?.slice('domrender_session='.length);if(!token||token.length!==SESSION_TOKEN.length)return false;return timingSafeEqual(Buffer.from(token),Buffer.from(SESSION_TOKEN));}
@@ -86,7 +87,7 @@ async function login(req,res){
 }
 async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/index.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();const content=await readFile(file);res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
 const server=http.createServer(async(req,res)=>{
- if(req.url==='/api/status'&&req.method==='GET')return json(res,200,{ready:!!API_KEY&&authorized(req),provider:'API Market',model:API_KEY?MODEL:null,authRequired:!!ACCESS_PIN,authorized:authorized(req),dailyRemaining:Math.max(0,DAILY_CAP-dailyCount)});
+ if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY&&authorized(req),provider:'API Market',model:API_KEY?MODEL:null,authRequired:!!ACCESS_PIN,authorized:authorized(req),dailyRemaining:authorized(req)?Math.max(0,DAILY_CAP-dailyCount):null,dailyLimit:authorized(req)?DAILY_CAP:null,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
  if(req.url==='/api/login'&&req.method==='POST')return login(req,res);
  if(req.url==='/api/render'&&req.method==='POST')return proxyRender(req,res);
  if(req.url?.startsWith('/api/'))return json(res,404,{error:'Не найдено'});
