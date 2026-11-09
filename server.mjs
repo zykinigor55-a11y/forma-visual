@@ -47,6 +47,7 @@ async function proxyRender(req,res){
  if(dailyCount>=DAILY_CAP)return json(res,429,{error:'Достигнут дневной лимит генераций этого сервера.'});
  if(active>=1)return json(res,429,{error:'Другая визуализация уже выполняется. Дождитесь результата.'});
  active++;
+ console.info('[AI] Запрос генерации принят');
  try{
   const p=await readJSON(req);if(!p.image)return json(res,400,{error:'Загрузите исходный скриншот'});
   const primary=imageBlob(p.image,'image');const mask=imageBlob(p.mask,'mask');const material=imageBlob(p.material,'material');const reference=imageBlob(p.reference,'reference');
@@ -68,7 +69,7 @@ async function proxyRender(req,res){
    }
   }
   json(res,200,{images,mimes,model:MODEL,provider:'API Market',warning});
- }catch(err){const status=err.status||502;json(res,status,{error:err.message||'Ошибка сервера'})}finally{active--}
+ }catch(err){const status=err.status||502;console.warn('[AI] Генерация не выполнена:',status,String(err.message||'Ошибка сервера').slice(0,240));json(res,status,{error:err.message||'Ошибка сервера'})}finally{active--}
 }
 async function login(req,res){
  if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
