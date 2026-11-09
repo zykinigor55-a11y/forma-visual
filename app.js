@@ -601,8 +601,10 @@ function renderFooter(){const s=current();$('projectPanelName').textContent=proj
 /* Cinematic equipment and optical preview are local UI simulations, not billed video. */
 const animationArtCache=new Map();
 function animationArt(kind,id){
+ const folders={camera:'cameras',lens:'lenses',motion:'motions',grade:'grades'};
+ if(!folders[kind]||!/^[a-z0-9]+$/.test(id))return '';
  const key=kind+':'+id;
- if(!animationArtCache.has(key))animationArtCache.set(key,window.DOM_RENDER_ANIMATION_ART.src(kind,id));
+ if(!animationArtCache.has(key))animationArtCache.set(key,'assets/cinema/'+folders[kind]+'/'+id+'.svg?v=cinema-icons-v42');
  return animationArtCache.get(key);
 }
 function animationSettings(){
@@ -636,11 +638,11 @@ function renderAnimationCards(containerId,field,items,kind,value){
  const holder=$(containerId);
  if(!holder)return;
  holder.innerHTML=items.map(item=>{
-  const realPhoto=kind==='grade'||kind==='motion';
+  const realPhoto=kind==='grade';
   const source=realPhoto?ANIM_DEMO_HOUSE:animationArt(kind,item.id);
   const filter=kind==='grade'?' style="filter:'+animationColorFilter(item.id)+'"':'';
   return `<button type="button" class="anim-option-card ${item.id===value?'active':''}" data-anim-kind="${eHTML(field)}" data-anim-id="${eHTML(item.id)}" aria-pressed="${item.id===value}">
- <span class="anim-option-photo ${realPhoto?'anim-photo-real':''}"><img src="${source}" alt="${eHTML(item.name)} — изображение пресета" loading="lazy" decoding="async"${filter}>${kind==='motion'?animationMotionGraphic(item.id):''}<span class="anim-option-check" aria-hidden="true">✓</span></span>
+ <span class="anim-option-photo ${realPhoto?'anim-photo-real':''}"><img src="${source}" alt="${eHTML(item.name)} — изображение пресета" loading="lazy" decoding="async"${filter}><span class="anim-option-check" aria-hidden="true">✓</span></span>
  <span class="anim-option-copy"><strong>${eHTML(item.name)}</strong><em>${eHTML(item.tag||'')}</em><small>${eHTML(item.desc||'')}</small></span></button>`;
  }).join('');
 }
