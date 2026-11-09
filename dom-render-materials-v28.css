@@ -88,3 +88,26 @@
  .stage.edit-mode .wand-undo-floating small{display:none}
  .editor-right .wand-undo-toolbar{min-height:44px;font-size:11px}
 }
+
+/* v31: scoped material description and live local recolor preview */
+.material-auto-find,.material-quick-preview,.material-text-brief{border:1px solid #d9e3da;border-radius:12px;padding:14px;background:#f9fbf8;margin:12px 0 18px;display:flex;flex-direction:column;gap:10px}
+.material-auto-find>div:first-child,.material-quick-preview>div:first-child{display:flex;flex-direction:column;gap:4px}
+.material-auto-find strong,.material-quick-preview strong{font-size:12px;font-weight:760;line-height:1.3;color:#2c4937}
+.material-auto-find small,.material-quick-preview small,.material-text-brief>small{font-size:10px;line-height:1.5;color:#789082}
+.material-auto-find p,.material-quick-preview p{margin:0;font-size:10px;line-height:1.5;color:#57745f;padding:9px 11px;background:#eff5ed;border-radius:8px}
+.material-find-review{display:flex;flex-direction:column;gap:7px}
+.material-find-review[hidden]{display:none!important}
+.material-find-review .btn{white-space:normal;line-height:1.4;padding:9px 12px}
+.material-text-brief{margin-top:22px;background:#fff;border-color:#cddbd0;border-top:3px solid #436d50}
+.material-text-brief .material-step-title{margin:0 0 3px}
+.material-text-brief label{font-size:11px;font-weight:700;color:#344d3a}
+.material-text-brief textarea{width:100%;min-height:100px;resize:vertical;padding:12px;border:1px solid #bdcebf;border-radius:9px;background:#f9fbf9;color:#253f2d;font:12px/1.55 Inter,Arial,sans-serif}
+.material-text-brief textarea:focus-visible{outline:2px solid #4a8c60;outline-offset:1px}
+.material-text-brief p{font-size:10px;color:#607963;line-height:1.65;margin:0}
+.material-text-brief .btn{min-height:45px;white-space:normal;line-height:1.4;padding:10px}
+#materialPreviewColor{background:#eaf3e9;color:#315b3b;border-color:#a7c9af;font-weight:730}
+#materialPreviewColor:hover{background:#d8ead8}
+#materialPreviewReset{min-height:35px}
+#materialColorPreviewStatus{color:#405c4b}
+#materialFindZone{min-height:43px;white-space:normal}
+@media(max-width:700px){.material-auto-find,.material-quick-preview,.material-text-brief{padding:12px;margin-bottom:14px}.material-text-brief textarea{min-height:95px;font-size:13px}}
