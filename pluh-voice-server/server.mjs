@@ -139,3 +139,55 @@ async function handler(req,res){
  }catch{return reply(res,404,{error:"Not found"});}
 }
 createServer((req,res)=>{handler(req,res).catch(()=>reply(res,500,{error:"Internal server error"}));}).listen(port,"0.0.0.0",()=>console.log("PLUH voice server started on "+port));
+
+
+/* PLUX_TEMP_ROUTE_DIAGNOSTIC_V1 — opt-in, startup-only; remove after comparing routes. */
+async function pluxRouteDiagnostic(){
+  if(process.env.PLUH_ROUTING_DIAG!=="20261110")return;
+  const key=process.env.API_MARKET_KEY;
+  if(!key){console.log("PLUX_ROUTE_DIAG",JSON.stringify({test:"config",status:"no_key"}));return;}
+  const base="https://api-market1.shop/v1";
+  const auth={"Authorization":"Bearer "+key};
+  const checks=[
+    {name:"models",url:base+"/models",method:"GET"},
+    {name:"luna",url:base+"/chat/completions",method:"POST",model:"gpt-6-luna"},
+    {name:"deepseek",url:base+"/chat/completions",method:"POST",model:"deepseek-v4.1-flash"}
+  ];
+  for(const test of checks){
+    try {
+      const response=await fetch(test.url,{
+        method:test.method,
+        headers:test.method==="POST"?{...auth,"Content-Type":"application/json"}:auth,
+        ...(test.method==="POST"?{body:JSON.stringify({
+          model:test.model,
+          messages:[{role:"user",content:"Ответь одним словом: привет."}]
+        })}:{}),
+        signal:AbortSignal.timeout(14000)
+      });
+      const raw=(await response.text()).slice(0,2500);
+      let payload={};
+      try{payload=JSON.parse(raw)}catch{}
+      const text=String(payload?.error?.message||payload?.error||payload?.message||"");
+      const category=/regular users cannot specify a channel/i.test(text)?"channel_forbidden":
+        /unauthoriz|invalid.*(token|key)|authenticat/i.test(text)?"auth":
+        /insufficient|quota|balance|billing/i.test(text)?"quota":
+        /model.*(not found|unavailable|not exist)|invalid model/i.test(text)?"model_unavailable":
+        /upstream|temporar|unavailable/i.test(text)?"provider_unavailable":
+        !response.ok?"other_error":"ok";
+      const available=Array.isArray(payload?.data)?payload.data.map(x=>x?.id).filter(Boolean):[];
+      console.log("PLUX_ROUTE_DIAG",JSON.stringify({
+        test:test.name,status:response.status,category,
+        html:/html/i.test(response.headers.get("content-type")||"")||/^\s*</.test(raw),
+        lunaAvailable:available.includes("gpt-6-luna"),
+        deepseekAvailable:available.includes("deepseek-v4.1-flash"),
+        modelCount:available.length
+      }));
+    }catch(e){
+      console.log("PLUX_ROUTE_DIAG",JSON.stringify({
+        test:test.name,status:"transport_error",
+        category:e?.name==="TimeoutError"?"timeout":"connection"
+      }));
+    }
+  }
+}
+setTimeout(()=>{void pluxRouteDiagnostic()},1300);
