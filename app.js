@@ -253,7 +253,7 @@ const makeProject=(name='Новый проект',isDemo=false)=>({id:isDemo?'de
 const STKEY='domrender_mvp_projects_v1', MTKEY='domrender_mvp_materials_v1';
 let projects=[],project=null,customMaterials=[],currentTab='project',materialTab='mine',viewerMode=localStorage.getItem('domrender_view_mode')||'slider';
 let sourceURL='',renderURL='',texturePreviewURL='',loadedMaskZone='',editing=false,tool='brush',lastPoint=null,polyPoints=[],drawActive=false,maskHistory=[],demoPhoto=ASSET+'residence-render-bluehour-fixed.webp?v=stable-20261109';
-let maskVisible=false;
+let maskVisible=false,wandPreviewMask=null,wandPreviewAdd=false,wandBusy=false;
 let maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true}),toastTimer,rendering=false,uploadBusy=false,aiConnected=false,apiCheckError='';
 const imageCache = new Map();
 const dataStore = (()=>{
@@ -289,7 +289,7 @@ async function imageFrom(url){return new Promise((resolve,reject)=>{const im=new
 function setupMaskSize(){let w=1200,h=Math.round(1200*(project.sourceHeight||941)/(project.sourceWidth||1672));h=Math.max(300,Math.min(1750,h));maskCanvas.width=w;maskCanvas.height=h;maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true});$('maskOverlay').width=w;$('maskOverlay').height=h;$('materialPreview').width=w;$('materialPreview').height=h;$('polyOverlay').setAttribute('viewBox',`0 0 ${w} ${h}`)}
 function updateStageAspect(){const w=project.demo?2048:(project.sourceWidth||1672),h=project.demo?1143:(project.sourceHeight||941);$('stage').style.aspectRatio=`${w}/${h}`;setupMaskSize()}
 async function getMaskForZone(zone=current().zone){return getMedia(mediaKey('mask_'+zone))}
-async function loadMask(zone=current().zone){loadedMaskZone=zone;maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);const data=await getMaskForZone(zone);if(data){try{const im=await imageFrom(data);maskCtx.drawImage(im,0,0,maskCanvas.width,maskCanvas.height)}catch{}}maskHistory=[];polyPoints=[];paintMaskOverlay()}
+async function loadMask(zone=current().zone){cancelWandPreview();loadedMaskZone=zone;maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);const data=await getMaskForZone(zone);if(data){try{const im=await imageFrom(data);maskCtx.drawImage(im,0,0,maskCanvas.width,maskCanvas.height)}catch{}}maskHistory=[];polyPoints=[];paintMaskOverlay()}
 function selectedMaskPixels(){const px=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height).data;let count=0;for(let i=3;i<px.length;i+=4)if(px[i]>80)count++;return count}
 async function persistMask(){const url=maskCanvas.toDataURL('image/png');await setMedia(mediaKey('mask_'+current().zone),url);save()}
 function updateSelectionStatus(){
@@ -298,17 +298,17 @@ function updateSelectionStatus(){
  el.textContent=pixels?('Выделено '+percent.toFixed(1)+'% кадра · '+(percent>45?'проверьте маску':'можно уточнить кистью')):'Выделение ещё не задано';
  el.classList.toggle('selection-warn',percent>45);
 }
-function paintMaskOverlay(){updateSelectionStatus();const cn=$('maskOverlay'),ctx=cn.getContext('2d');ctx.clearRect(0,0,cn.width,cn.height);if(!editing&&!maskVisible)return;const data=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height),out=ctx.createImageData(cn.width,cn.height);for(let i=0;i<data.data.length;i+=4){const a=data.data[i+3];if(a>0){out.data[i]=177;out.data[i+1]=100;out.data[i+2]=60;out.data[i+3]=Math.min(120,a*.48)}}ctx.putImageData(out,0,0);drawPolygonGuide()}
+function paintMaskOverlay(){updateSelectionStatus();const cn=$('maskOverlay'),ctx=cn.getContext('2d');ctx.clearRect(0,0,cn.width,cn.height);if(!editing&&!maskVisible)return;const data=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height),out=ctx.createImageData(cn.width,cn.height);for(let i=0;i<data.data.length;i+=4){const a=data.data[i+3];if(a>0){out.data[i]=177;out.data[i+1]=100;out.data[i+2]=60;out.data[i+3]=Math.min(120,a*.48)}}if(wandPreviewMask){for(let p=0;p<wandPreviewMask.length;p++)if(wandPreviewMask[p]){const k=p*4;out.data[k]=23;out.data[k+1]=204;out.data[k+2]=144;out.data[k+3]=174}}ctx.putImageData(out,0,0);drawPolygonGuide()}
 function drawPolygonGuide(){const svg=$('polyOverlay');if(!editing||tool!=='polygon'||!polyPoints.length){svg.innerHTML='';return}const pts=polyPoints.map(p=>`${p.x},${p.y}`).join(' ');svg.innerHTML=`<polyline points="${pts}"/>`+polyPoints.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4"/>`).join('')}
 function stashHistory(){maskHistory.push(maskCanvas.toDataURL('image/png'));if(maskHistory.length>16)maskHistory.shift()}
-async function undoMask(){if(polyPoints.length){polyPoints.pop();drawPolygonGuide();return}const prev=maskHistory.pop();if(!prev){toast('Нет изменений для отмены');return}maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);const im=await imageFrom(prev);maskCtx.drawImage(im,0,0,maskCanvas.width,maskCanvas.height);paintMaskOverlay();await persistMask()}
+async function undoMask(){cancelWandPreview();if(polyPoints.length){polyPoints.pop();drawPolygonGuide();return}const prev=maskHistory.pop();if(!prev){toast('Нет изменений для отмены');return}maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);const im=await imageFrom(prev);maskCtx.drawImage(im,0,0,maskCanvas.width,maskCanvas.height);paintMaskOverlay();await persistMask()}
 function makeDemoMask(zone){if(!project.demo){toast('На своём проекте выделите нужную область кистью или полигоном');return}const w=maskCanvas.width,h=maskCanvas.height;const shapes={main:[[.05,.31],[.17,.07],[.57,.17],[.61,.42],[.49,.41],[.47,.52],[.16,.48],[.07,.56]],accent:[[.48,.43],[.61,.35],[.97,.46],[.96,.75],[.56,.75],[.47,.65]],base:[[.07,.75],[.94,.75],[.95,.86],[.07,.85]],roof:[[.03,.28],[.18,.045],[.89,.27],[.93,.32],[.17,.10],[.07,.35]],custom:[]};const shape=shapes[zone]||[];maskCtx.clearRect(0,0,w,h);if(shape.length){maskCtx.beginPath();shape.forEach(([x,y],i)=>i?maskCtx.lineTo(x*w,y*h):maskCtx.moveTo(x*w,y*h));maskCtx.closePath();maskCtx.fillStyle='#fff';maskCtx.fill()}paintMaskOverlay();persistMask();toast('Примерная зона выделена на демонстрационном доме. Уточните кистью.')}
 function polygonDone(){if(polyPoints.length<3){toast('Для полигона нужно минимум три точки');return}stashHistory();maskCtx.beginPath();polyPoints.forEach((p,i)=>i?maskCtx.lineTo(p.x,p.y):maskCtx.moveTo(p.x,p.y));maskCtx.closePath();maskCtx.fillStyle='#fff';maskCtx.fill();polyPoints=[];paintMaskOverlay();persistMask()}
 const ptFromEvent=e=>{const rect=$('maskOverlay').getBoundingClientRect();return {x:Math.max(0,Math.min(maskCanvas.width,(e.clientX-rect.left)/rect.width*maskCanvas.width)),y:Math.max(0,Math.min(maskCanvas.height,(e.clientY-rect.top)/rect.height*maskCanvas.height))}};
 function stroke(a,b,eraser=false){maskCtx.save();maskCtx.globalCompositeOperation=eraser?'destination-out':'source-over';maskCtx.strokeStyle='#fff';maskCtx.fillStyle='#fff';maskCtx.lineWidth=Number($('brushSize').value)*2;maskCtx.lineCap='round';maskCtx.lineJoin='round';maskCtx.beginPath();maskCtx.moveTo(a.x,a.y);maskCtx.lineTo(b.x,b.y);maskCtx.stroke();maskCtx.restore();paintMaskOverlay()}
-function initDrawEvents(){const cn=$('maskOverlay');cn.addEventListener('pointerdown',e=>{if(!editing)return;e.preventDefault();const pt=ptFromEvent(e);if(tool==='polygon'){polyPoints.push(pt);drawPolygonGuide();return}if(tool==='similar'){similarMaterialAt(pt);return}stashHistory();drawActive=true;lastPoint=pt;cn.setPointerCapture(e.pointerId);stroke(pt,pt,tool==='erase')});cn.addEventListener('pointermove',e=>{if(!drawActive||!editing)return;const pt=ptFromEvent(e);stroke(lastPoint,pt,tool==='erase');lastPoint=pt});async function finish(){if(!drawActive)return;drawActive=false;lastPoint=null;await persistMask()}cn.addEventListener('pointerup',finish);cn.addEventListener('pointercancel',finish);cn.addEventListener('dblclick',e=>{if(editing&&tool==='polygon'){e.preventDefault();polygonDone()}});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editing){leaveEditor()}if(e.key==='Enter'&&editing&&tool==='polygon'){polygonDone()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&editing){e.preventDefault();undoMask()}})}
-function enterEditor(){maskVisible=true;editing=true;current().editSelectedOnly=true;$('editSelectedOnly').checked=true;save();tool='brush';$('stage').classList.add('edit-mode');$('editorToolbar').hidden=false;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool===tool));$('stage').scrollIntoView({behavior:'smooth',block:'center'});paintMaskOverlay();toast('Выделяйте поверхность. «Похожие цвета» — приблизительный поиск, проверьте маску. Полигон завершается Enter или двойным нажатием.')}
-async function leaveEditor(){if(polyPoints.length>=3)polygonDone();editing=false;maskVisible=false;polyPoints=[];$('stage').classList.remove('edit-mode');$('editorToolbar').hidden=true;await persistMask();paintMaskOverlay()}
+function initDrawEvents(){const cn=$('maskOverlay');cn.addEventListener('pointerdown',e=>{if(!editing)return;e.preventDefault();const pt=ptFromEvent(e);if(tool==='polygon'){polyPoints.push(pt);drawPolygonGuide();return}if(tool==='wand'){magicWandAt(pt,e.shiftKey);return}stashHistory();drawActive=true;lastPoint=pt;cn.setPointerCapture(e.pointerId);stroke(pt,pt,tool==='erase')});cn.addEventListener('pointermove',e=>{if(!drawActive||!editing)return;const pt=ptFromEvent(e);stroke(lastPoint,pt,tool==='erase');lastPoint=pt});async function finish(){if(!drawActive)return;drawActive=false;lastPoint=null;await persistMask()}cn.addEventListener('pointerup',finish);cn.addEventListener('pointercancel',finish);cn.addEventListener('dblclick',e=>{if(editing&&tool==='polygon'){e.preventDefault();polygonDone()}});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editing){leaveEditor()}if(e.key==='Enter'&&editing&&tool==='polygon'){polygonDone()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&editing){e.preventDefault();undoMask()}})}
+function enterEditor(){maskVisible=true;editing=true;current().editSelectedOnly=true;$('editSelectedOnly').checked=true;save();tool='wand';cancelWandPreview();if(renderURL&&viewerMode==='slider')setViewerMode('result');$('stage').classList.add('edit-mode');$('editorToolbar').hidden=false;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool===tool));$('stage').scrollIntoView({behavior:'smooth',block:'center'});paintMaskOverlay();toast('Волшебная палочка: нажмите на материал. Зелёная область — предварительная маска; нажмите «Применить», если границы верны.')}
+async function leaveEditor(){cancelWandPreview();if(polyPoints.length>=3)polygonDone();editing=false;maskVisible=false;polyPoints=[];$('stage').classList.remove('edit-mode');$('editorToolbar').hidden=true;await persistMask();paintMaskOverlay()}
 function updateSplit(value){const n=Math.max(0,Math.min(100,Number(value)||0));$('stage').style.setProperty('--split',`${n}%`);$('splitSlider').value=n}
 function setRenderProgress(title,detail){const overlay=$('renderProgress');if(!overlay)return;$('renderProgressTitle').textContent=title;$('renderProgressDetail').textContent=detail;overlay.hidden=false;$('stage').classList.add('is-rendering');$('noRender').hidden=true}
 function stopRenderProgress(){const overlay=$('renderProgress');if(overlay)overlay.hidden=true;$('stage').classList.remove('is-rendering');setViewerMode(viewerMode)}
@@ -518,54 +518,77 @@ function discardMaterialPreview(){
  $('noRender').hidden=!!renderURL;
  toast('Черновая примерка скрыта. Исходное изображение не изменено');
 }
-async function similarMaterialAt(pt){
+function cancelWandPreview(){
+ wandPreviewMask=null;
+ if($('wandApproval'))$('wandApproval').hidden=true;
+ if($('wandPreviewText'))$('wandPreviewText').textContent='Предпросмотр выделения';
+ if(maskCanvas?.width&&editing)paintMaskOverlay();
+}
+async function magicWandAt(pt,addByShift=false){
+ if(wandBusy)return;
+ if(!window.DOM_RENDER_MAGIC_WAND){toast('Модуль выделения не загрузился. Обновите страницу.');return}
  const src=renderURL||sourceURL;
- if(!src){toast('Сначала загрузите исходник');return}
+ if(!src){toast('Сначала загрузите изображение дома');return}
+ const w=maskCanvas.width,h=maskCanvas.height;
+ wandBusy=true;
+ const btn=$('wandApply');if(btn)btn.disabled=true;
  try{
-  const im=await imageFrom(src),w=maskCanvas.width,h=maskCanvas.height,cn=document.createElement('canvas');
-  cn.width=w;cn.height=h;const context=cn.getContext('2d',{willReadFrequently:true});
-  context.drawImage(im,0,0,w,h);
-  const pixels=context.getImageData(0,0,w,h).data;
-  const x=Math.min(w-1,Math.max(0,Math.floor(pt.x))),y=Math.min(h-1,Math.max(0,Math.floor(pt.y)));
-  const seed=(y*w+x)*4;const sample=[pixels[seed],pixels[seed+1],pixels[seed+2]];
-  const lum=(sample[0]+sample[1]+sample[2])/3,threshold=Number($('similarTolerance')?.value||42);
-  const scoreAt=index=>{
-   const j=index*4, l=(pixels[j]+pixels[j+1]+pixels[j+2])/3;
-   return Math.abs((pixels[j]-l)-(sample[0]-lum))*.65
-        +Math.abs((pixels[j+1]-l)-(sample[1]-lum))*.65
-        +Math.abs((pixels[j+2]-l)-(sample[2]-lum))*.65
-        +Math.abs(l-lum)*.8;
-  };
-  // Connected region is the safe default; global mode is explicitly opted in.
-  const all=!!$('similarAllZones')?.checked;
-  const candidates=new Uint8Array(w*h);
+  // Work at a bounded resolution to keep one-click selection responsive on phones.
+  const photo=await imageFrom(src);
+  const scale=Math.min(1,820/Math.max(w,h));
+  const sw=Math.max(64,Math.round(w*scale)),sh=Math.max(64,Math.round(h*scale));
+  const canvas=document.createElement('canvas');
+  canvas.width=sw;canvas.height=sh;
+  const cx=canvas.getContext('2d',{willReadFrequently:true});
+  cx.drawImage(photo,0,0,sw,sh);
+  const result=window.DOM_RENDER_MAGIC_WAND.select(cx.getImageData(0,0,sw,sh),{
+   x:pt.x*sw/w,y:pt.y*sh/h,
+   tolerance:Number($('similarTolerance')?.value||18),
+   maxCoverage:.42
+  });
+  if(result.overflow){
+   cancelWandPreview();
+   toast('Выделение слишком широкое и могло захватить соседние материалы. Уменьшите допуск или щёлкните в центре стены.');
+   return;
+  }
+  if(!result.mask||result.count<12){
+   cancelWandPreview();
+   toast('Не удалось выделить поверхность. Увеличьте допуск на несколько пунктов или попробуйте другую точку.');
+   return;
+  }
+  // Upscale the discrete region with nearest-neighbor mapping (no fuzzy color bleed).
+  const mask=new Uint8Array(w*h),xs=new Int32Array(w);
+  for(let x=0;x<w;x++)xs[x]=Math.min(sw-1,Math.floor(x*sw/w));
   let count=0;
-  if(all){
-   for(let n=0;n<w*h;n++)if(scoreAt(n)<=threshold){candidates[n]=1;count++}
-  }else{
-   const seen=new Uint8Array(w*h),queue=new Int32Array(w*h);let head=0,tail=0;
-   queue[tail++]=y*w+x;seen[y*w+x]=1;
-   while(head<tail){
-    const index=queue[head++];
-    if(scoreAt(index)>threshold)continue;
-    candidates[index]=1;count++;
-    const xx=index%w,yy=(index/w)|0;
-    if(xx>0&&!seen[index-1]){seen[index-1]=1;queue[tail++]=index-1}
-    if(xx<w-1&&!seen[index+1]){seen[index+1]=1;queue[tail++]=index+1}
-    if(yy>0&&!seen[index-w]){seen[index-w]=1;queue[tail++]=index-w}
-    if(yy<h-1&&!seen[index+w]){seen[index+w]=1;queue[tail++]=index+w}
-   }
+  for(let y=0;y<h;y++){
+   const sy=Math.min(sh-1,Math.floor(y*sh/h)),offset=y*w,source=sy*sw;
+   for(let x=0;x<w;x++)if(result.mask[source+xs[x]]){mask[offset+x]=1;count++}
   }
-  if(count/(w*h)>.55){
-    toast('Похоже, выделяется слишком большая область. Уменьшите допуск или попробуйте кисть и полигон.');
-    return;
-  }
-  stashHistory();
-  const overlay=maskCtx.getImageData(0,0,w,h),pixelsOut=overlay.data;
-  for(let i=0;i<candidates.length;i++)if(candidates[i]){let k=i*4;pixelsOut[k]=255;pixelsOut[k+1]=255;pixelsOut[k+2]=255;pixelsOut[k+3]=255}
-  maskCtx.putImageData(overlay,0,0);paintMaskOverlay();await persistMask();
-  toast(all?'Похожие оттенки отмечены на всём кадре. Проверьте попадания перед генерацией.':'Выделена связанная область. Для остальных участков фасада повторите нажатие.');
- }catch(e){toast('Автовыделение не удалось: '+(e.message||'нет доступа к пикселям'))}
+  wandPreviewMask=mask;
+  wandPreviewAdd=!!($('wandAddMode')?.checked||addByShift);
+  $('wandPreviewText').textContent='Зелёное: '+(count/(w*h)*100).toFixed(1)+'% кадра · '+(wandPreviewAdd?'добавить':'заменить');
+  $('wandApproval').hidden=false;
+  maskVisible=true;paintMaskOverlay();
+  toast('Проверьте зелёную область. Если задеты другие материалы — нажмите «Отмена» и снизьте допуск.');
+ }catch(e){
+  cancelWandPreview();
+  toast('Выделение не удалось: '+(e.message||'ошибка чтения изображения'));
+ }finally{wandBusy=false;if(btn)btn.disabled=false}
+}
+async function applyWandPreview(){
+ if(!wandPreviewMask||wandBusy)return;
+ const mask=wandPreviewMask,add=wandPreviewAdd,w=maskCanvas.width,h=maskCanvas.height;
+ if(mask.length!==w*h){cancelWandPreview();return}
+ stashHistory();
+ const pixels=maskCtx.getImageData(0,0,w,h),data=pixels.data;
+ if(!add)data.fill(0);
+ for(let i=0;i<mask.length;i++)if(mask[i]){
+  const j=i*4;data[j]=255;data[j+1]=255;data[j+2]=255;data[j+3]=255;
+ }
+ maskCtx.putImageData(pixels,0,0);
+ cancelWandPreview();
+ paintMaskOverlay();await persistMask();
+ toast(add?'Выделение добавлено. Можно отметить ещё один участок.':'Выделена только подтверждённая область. Для других частей той же стены включите «Добавлять».');
 }
 function asPNGMask(baseWidth,baseHeight){const total=maskCanvas.width*maskCanvas.height;if(!total||!selectedMaskPixels())return null;const cn=document.createElement('canvas');cn.width=baseWidth;cn.height=baseHeight;const ctx=cn.getContext('2d');ctx.fillStyle='rgba(0,0,0,1)';ctx.fillRect(0,0,cn.width,cn.height);ctx.globalCompositeOperation='destination-out';ctx.drawImage(maskCanvas,0,0,cn.width,cn.height);ctx.globalCompositeOperation='source-over';return cn.toDataURL('image/png')}
 function getImageSize(url){return imageFrom(url).then(im=>({w:im.naturalWidth,h:im.naturalHeight}))}
@@ -626,7 +649,7 @@ $('materialColorSwatches').addEventListener('click',e=>{
  renderZones();renderFooter();save();
 });
 $('generateColor').onclick=()=>reviewMaskBeforeAI(true);
-$('materialFile').onchange=e=>{uploadOwnMaterial(e.target.files[0]);e.target.value=''};$('uploadMaterialBtn').onclick=()=>$('materialFile').click();$('deleteMyMaterial').onclick=deleteSelectedCustomMaterial;$('startMask').onclick=async()=>{await loadMask();enterEditor();if(project.demo&&selectedMaskPixels()===0)makeDemoMask(current().zone)};$('showMask').onclick=async()=>{if(currentTab!=='materials')showTab('materials');await loadMask();if(selectedMaskPixels()===0){if(project.demo)makeDemoMask(current().zone);else toast('Маска пуста. Выделите область кистью или полигоном.');maskVisible=true}else maskVisible=!maskVisible;paintMaskOverlay();if(selectedMaskPixels())toast(maskVisible?'Маска показана.':'Маска скрыта.')};$('finishMask').onclick=leaveEditor;$('clearMask').onclick=()=>{stashHistory();maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);polyPoints=[];paintMaskOverlay();persistMask();toast('Выделение очищено')};$('undoMask').onclick=undoMask;document.querySelectorAll('[data-tool]').forEach(el=>el.onclick=()=>{if(polyPoints.length>=3&&tool==='polygon')polygonDone();tool=el.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===el));drawPolygonGuide()});$('brushSize').oninput=e=>$('brushOut').textContent=e.target.value;$('similarTolerance').oninput=e=>$('similarOut').textContent=e.target.value;$('textureScale').oninput=e=>{current().textureScale=Number(e.target.value);$('scaleValue').textContent=e.target.value+'%';save()};$('textureRotate').onchange=e=>{current().textureRotate=Number(e.target.value);save()};$('tryMaterial').onclick=applyTexture;$('discardMaterialPreview').onclick=discardMaterialPreview;$('generateMaterial').onclick=generateSelectedMaterial;$('reviewMask').onclick=()=>reviewMaskBeforeAI(false);$('splitSlider').oninput=e=>updateSplit(e.target.value);$('resetSplit').onclick=()=>updateSplit(50);$('downloadResult').onclick=()=>{if(!renderURL){toast('Сначала создайте или выберите результат');return}downloadDataURL(renderURL,'dom-render-'+project.id+(project.demo||renderURL.startsWith('data:image/jpeg')?'.jpg':renderURL.startsWith('data:image/webp')?'.webp':'.png'));toast(project.demo?'Скачан демонстрационный кадр':'Результат скачан')};$('fullBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else $('viewerCard')?.requestFullscreen?.()||$('stage').requestFullscreen?.()};$('resultsStrip').addEventListener('click',e=>{const b=e.target.closest('[data-result]');if(b)showResult(b.dataset.result)});for(const id of ['ratioSelect','qualitySelect','quantitySelect'])$(id).onchange=e=>{current()[id.replace('Select','')]=e.target.value;renderFooter();save()};for(const id of ['lockGeometry','preserveMaterials','keepReference','editSelectedOnly'])$(id).onchange=e=>{current()[id]=e.target.checked;if(id==='keepReference'&&$('angleLandscapeLock'))$('angleLandscapeLock').checked=e.target.checked;save()};$('viewAllVariants').onclick=()=>showTab('variants',true);
+$('materialFile').onchange=e=>{uploadOwnMaterial(e.target.files[0]);e.target.value=''};$('uploadMaterialBtn').onclick=()=>$('materialFile').click();$('deleteMyMaterial').onclick=deleteSelectedCustomMaterial;$('startMask').onclick=async()=>{await loadMask();enterEditor();if(project.demo&&selectedMaskPixels()===0)makeDemoMask(current().zone)};$('showMask').onclick=async()=>{if(currentTab!=='materials')showTab('materials');await loadMask();if(selectedMaskPixels()===0){if(project.demo)makeDemoMask(current().zone);else toast('Маска пуста. Выделите область кистью или полигоном.');maskVisible=true}else maskVisible=!maskVisible;paintMaskOverlay();if(selectedMaskPixels())toast(maskVisible?'Маска показана.':'Маска скрыта.')};$('finishMask').onclick=leaveEditor;$('clearMask').onclick=()=>{cancelWandPreview();stashHistory();maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);polyPoints=[];paintMaskOverlay();persistMask();toast('Выделение очищено')};$('undoMask').onclick=undoMask;document.querySelectorAll('[data-tool]').forEach(el=>el.onclick=()=>{if(polyPoints.length>=3&&tool==='polygon')polygonDone();cancelWandPreview();tool=el.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===el));drawPolygonGuide()});$('brushSize').oninput=e=>$('brushOut').textContent=e.target.value;$('similarTolerance').oninput=e=>{$('similarOut').textContent=e.target.value;cancelWandPreview()};$('wandApply').onclick=applyWandPreview;$('wandCancel').onclick=cancelWandPreview;$('textureScale').oninput=e=>{current().textureScale=Number(e.target.value);$('scaleValue').textContent=e.target.value+'%';save()};$('textureRotate').onchange=e=>{current().textureRotate=Number(e.target.value);save()};$('tryMaterial').onclick=applyTexture;$('discardMaterialPreview').onclick=discardMaterialPreview;$('generateMaterial').onclick=generateSelectedMaterial;$('reviewMask').onclick=()=>reviewMaskBeforeAI(false);$('splitSlider').oninput=e=>updateSplit(e.target.value);$('resetSplit').onclick=()=>updateSplit(50);$('downloadResult').onclick=()=>{if(!renderURL){toast('Сначала создайте или выберите результат');return}downloadDataURL(renderURL,'dom-render-'+project.id+(project.demo||renderURL.startsWith('data:image/jpeg')?'.jpg':renderURL.startsWith('data:image/webp')?'.webp':'.png'));toast(project.demo?'Скачан демонстрационный кадр':'Результат скачан')};$('fullBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else $('viewerCard')?.requestFullscreen?.()||$('stage').requestFullscreen?.()};$('resultsStrip').addEventListener('click',e=>{const b=e.target.closest('[data-result]');if(b)showResult(b.dataset.result)});for(const id of ['ratioSelect','qualitySelect','quantitySelect'])$(id).onchange=e=>{current()[id.replace('Select','')]=e.target.value;renderFooter();save()};for(const id of ['lockGeometry','preserveMaterials','keepReference','editSelectedOnly'])$(id).onchange=e=>{current()[id]=e.target.checked;if(id==='keepReference'&&$('angleLandscapeLock'))$('angleLandscapeLock').checked=e.target.checked;save()};$('viewAllVariants').onclick=()=>showTab('variants',true);
  $('projectUpload').onclick=()=>$('sourceFile').click();
  $('projectSwitch').onclick=showProjects;
  $('projectCreate').onclick=showNewProject;
