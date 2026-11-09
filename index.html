@@ -233,8 +233,8 @@
  <div class="batch-shot-list" aria-label="Состав пакета">
  <div class="batch-shot"><span>01</span><div><strong>Исходный ракурс</strong><small>Фотореализм, ракурс и геометрия как на загруженном изображении</small></div></div>
  <div class="batch-shot"><span>02</span><div><strong>Фронтально на дом</strong><small>Перпендикулярно главному фасаду; для точности нужен фронтальный скрин модели</small></div></div>
- <div class="batch-shot"><span>03</span><div><strong>Крупно — входная группа</strong><small>Увеличенный фрагмент исходника: вход, отделка, терраса</small></div></div>
- <div class="batch-shot"><span>04</span><div><strong>Крупно — детали фасада</strong><small>Увеличенный фрагмент: окно, швы, фактура материалов</small></div></div>
+ <div class="batch-shot"><span>03</span><div><strong>Крупный план А · AI</strong><small>Новая фотореалистичная генерация выбранного фрагмента дома с детализацией существующих элементов</small></div></div>
+ <div class="batch-shot"><span>04</span><div><strong>Крупный план Б · AI</strong><small>Ещё одна генерация другого участка дома: точные формы и существующие материалы, новые микродетали</small></div></div>
  </div>
  <label class="batch-front-upload" for="batchFrontFile"><span><strong>Фронтальный скрин модели</strong><small>Необязательно, но нужен для геометрически точного кадра №2</small></span><span id="batchFrontName">Выбрать файл</span></label>
  <input id="batchFrontFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
@@ -242,7 +242,7 @@
  <div class="batch-geometry-notice" id="batchGeometryNotice">Без отдельного фронтального вида кадр №2 будет AI-реконструкцией: строгое совпадение невидимой геометрии не гарантируется.</div>
  <details class="batch-detail-adjust">
   <summary>Настроить точки крупного плана <span>необязательно</span></summary>
-  <p>По умолчанию фокус на входе и окне. Если они находятся в другой части скриншота, передвиньте ползунки.</p>
+  <p>Выберите любые два выразительных участка именно вашего дома. Фрагменты задают область кадра, а AI выполняет полноценную генерацию фактур и света, не меняя архитектуру.</p>
   <label>Кадр 3 · слева — справа <input id="batchDetail1X" type="range" min="15" max="85" value="60"></label>
   <label>Кадр 3 · сверху — снизу <input id="batchDetail1Y" type="range" min="15" max="85" value="60"></label>
   <label>Кадр 4 · слева — справа <input id="batchDetail2X" type="range" min="15" max="85" value="77"></label>
@@ -300,7 +300,7 @@
 <script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
 <script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
 <script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
-<script src="app.js?v=architectural-batch-4-v32-20261109"></script>
+<script src="app.js?v=universal-batch-material-free-v33-20261109"></script>
 <script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
 </body>
 </html>
