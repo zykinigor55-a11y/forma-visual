@@ -107,16 +107,17 @@
  function renderAt(t){
   if(!element)return;
   const pts=paths[path]||paths.dolly;
-  const [x,y]=point(pts,t);
+  // Tilt is a fixed-position tripod rotation, unlike an actual crane movement.
+  const [x,y]=point(pts,path==='tilt'?0:t);
   const [bx,by]=point(pts,Math.min(1,t+.015));
   const radians=Math.atan2(by-y,bx-x);
-  if(marker)marker.setAttribute('transform','translate('+x.toFixed(2)+' '+y.toFixed(2)+') rotate('+(radians*180/Math.PI*.13).toFixed(1)+')');
+  if(marker)marker.setAttribute('transform','translate('+x.toFixed(2)+' '+y.toFixed(2)+') rotate('+(path==='tilt'?-30*t:radians*180/Math.PI*.13).toFixed(1)+')');
   if(trail){
    let len=0;
    try{len=trail.getTotalLength()}catch(e){}
    if(len>0){trail.style.strokeDasharray=String(len);trail.style.strokeDashoffset=String(len*(1-t))}
   }
-  if(model){model.position.set(x-320,180-y,12);model.rotation.z=-radians*.12;model.rotation.y=.12+Math.sin(t*Math.PI)*.14}
+  if(model){model.position.set(x-320,180-y,12);model.rotation.z=path==='tilt'?0:-radians*.12;model.rotation.x=path==='tilt'?-0.14-.48*t:-0.14;model.rotation.y=.12+Math.sin(t*Math.PI)*.14}
   renderThree();
  }
  function setMotion(id){
