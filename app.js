@@ -424,7 +424,7 @@ function showTab(tab,scroll=false){
  if(tab!=='materials'&&editing)leaveEditor();
  if(tab==='materials')loadMask().then(()=>{if(materialAction()==='color'&&selectedMaskPixels()>0)previewSelectedColor()}).catch(()=>{});else {$('maskOverlay').getContext('2d').clearRect(0,0,$('maskOverlay').width,$('maskOverlay').height);resetColorPreview(true)}
  if(tab==='variants')renderVariantsPanel();
- if(tab==='environment')openRenderFlowNode(current().renderFlowNode||'environment',false,false);
+ if(tab==='environment'){openRenderFlowNode(current().renderFlowNode||'environment',false,false);initMoodPhotos();syncDemoWithSettings()}
  if(scroll)$('inspector').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function optionCards(group,arr,selected){return arr.map(([id,name])=>{
@@ -950,37 +950,55 @@ async function urlToDataURL(url){if(url.startsWith('data:'))return url;const res
 async function showResult(id){$('beforeImg').src=(id==='source'||id==='demo'?sourceURL:await getMedia(mediaKey('input_'+id))||sourceURL);if(id==='source'){project.activeRender=null;renderURL='';$('afterImg').src=sourceURL;$('noRender').hidden=false;$('resultTag').textContent='НЕТ РЕНДЕРА';$('splitSlider').disabled=false}else if(id==='demo'&&project.demo){project.activeRender='demo';renderURL=demoPhoto;$('afterImg').src=renderURL;$('noRender').hidden=true;$('resultTag').textContent='ДЕМОНСТРАЦИЯ';$('splitSlider').disabled=false}else{const url=await getMedia(mediaKey('render_'+id));if(!url){toast('Результат не найден в локальном хранилище');return}project.activeRender=id;renderURL=url;$('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='AI-РЕЗУЛЬТАТ';$('splitSlider').disabled=false}save();renderResults();renderVariantsPanel();setViewerMode(viewerMode);$('materialPreview').getContext('2d').clearRect(0,0,$('materialPreview').width,$('materialPreview').height)}
 async function checkAPI(timeoutMs=20000){try{const res=await fetch('/api/status',{cache:'no-store',signal:AbortSignal.timeout(timeoutMs)});if(!res.ok)throw Error('Not running');const data=await res.json();aiConnected=!!data.ready;apiCheckError=''}catch{aiConnected=false;apiCheckError='Не удалось связаться с сервером AI. Повторите попытку через несколько секунд.'}$('providerFoot').textContent=aiConnected?'Nano Banana подключена':apiCheckError?'Проверить подключение AI':'Демо: AI не подключён';return aiConnected}
 async function init(){let saved;try{saved=JSON.parse(localStorage.getItem(STKEY)||'null')}catch{}projects=saved?.projects?.length?saved.projects:[makeProject('Резиденция 01',true)];try{customMaterials=JSON.parse(localStorage.getItem(MTKEY)||'[]')}catch{customMaterials=[]}for(const m of customMaterials){const value=await getMedia('material_'+m.id);if(value)imageCache.set('material_'+m.id,value)}await loadProject(saved?.activeId||projects[0].id);initDrawEvents();bind();bindTouchComparison();syncDemoWithSettings();checkAPI();}
+/* Atmosphere presets control ONLY season, weather and light, never the surroundings. */
+const SCENE_PRESETS={
+ sunny:{title:'Солнечный день',caption:'Лето · Ясно · День',season:'summer',weather:'clear',time:'day'},
+ golden:{title:'Золотой час',caption:'Лето · Вечер',season:'summer',weather:'clear',time:'golden'},
+ fog:{title:'Туманное утро',caption:'Осень · Туман · Утро',season:'autumn',weather:'fog',time:'morning'},
+ overcast:{title:'Мягкий пасмурный',caption:'Лето · Облачно · День',season:'summer',weather:'cloud',time:'day'},
+ rain:{title:'После дождя',caption:'Осень · Дождь · День',season:'autumn',weather:'rain',time:'day'},
+ winter:{title:'Зимняя тишина',caption:'Зима · Снег · День',season:'winter',weather:'snow',time:'day'},
+ blue:{title:'Синий час',caption:'Лето · Сумерки',season:'summer',weather:'clear',time:'night'},
+ night:{title:'Ночная архитектура',caption:'Лето · Ночь · Свет',season:'summer',weather:'cloud',time:'night'}
+};
+function presetMatchesSettings(id,s){
+ const p=SCENE_PRESETS[id];
+ return !!p&&p.season===s.season&&p.weather===s.weather&&p.time===s.time;
+}
 function syncDemoWithSettings(){
- const setting=current();
- const scene=setting.season==='winter'?'winter':setting.weather==='rain'?'rain':setting.weather==='fog'?'fog':setting.time==='night'?'night':setting.time==='golden'?'golden':setting.season==='autumn'?'autumn':'summer';
- setDemoScene(scene,false);
- if(['garden','forest','lake','mountains'].includes(setting.environment))chooseDemoEnvironment(setting.environment,false);
+ const s=current();
+ let id=s.sceneMood;
+ if(!presetMatchesSettings(id,s))id=Object.keys(SCENE_PRESETS).find(k=>presetMatchesSettings(k,s))||null;
+ const preset=id?SCENE_PRESETS[id]:null;
+ document.querySelectorAll('[data-scene-demo]').forEach(b=>{
+  const active=b.dataset.sceneDemo===id;
+  b.classList.toggle('active',active);
+  b.setAttribute('aria-pressed',String(active));
+ });
+ if($('scenePresetSelected'))$('scenePresetSelected').textContent=preset?preset.title:'Индивидуальная атмосфера';
+ if($('scenePresetDesc'))$('scenePresetDesc').textContent=preset?preset.caption:(cLabel('season',s.season)+' · '+cLabel('weather',s.weather)+' · '+cLabel('time',s.time));
 }
-function setDemoScene(scene,applySettings=true){
- const presets={
-  summer:{caption:'Лето · Ясно · День',image:'season-summer',settings:{season:'summer',weather:'clear',time:'day'}},
-  autumn:{caption:'Осень · Облачно',image:'season-autumn',settings:{season:'autumn',weather:'cloud',time:'day'}},
-  winter:{caption:'Зима · Снег · Бассейн закрыт',image:'season-winter',settings:{season:'winter',weather:'snow',time:'day'}},
-  rain:{caption:'Дождь · Влажные поверхности',image:'weather-rain',settings:{weather:'rain',time:'day'}},
-  fog:{caption:'Туман · Утро',image:'weather-fog',settings:{weather:'fog',time:'morning'}},
-  golden:{caption:'Тёплый вечер',image:'time-golden',settings:{time:'golden',weather:'clear'}},
-  night:{caption:'Ночь · Тёплый интерьерный свет',image:'time-night',settings:{time:'night',weather:'clear'}}
- };
- const preset=presets[scene];if(!preset)return;
- const photo=$('sceneDemoPhoto'),caption=$('sceneDemoCaption'),im=$('sceneDemoImage');
- if(photo)photo.dataset.scene=scene;if(caption)caption.textContent=preset.caption;
- if(im){const path='assets/thumbs/'+preset.image+'.jpg';im.dataset.assetPath=path;im.src=asset(path);im.alt='Атмосферный фотореференс: '+preset.caption+' (без дома)'}
- document.querySelectorAll('[data-scene-demo]').forEach(b=>{const active=b.dataset.sceneDemo===scene;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
- if(applySettings){Object.assign(current(),preset.settings);renderChoices();renderFooter();save();toast('Сценарий сохранён. Для готового рендера запустите AI-генерацию.')}
+function setDemoScene(id,applySettings=true){
+ const p=SCENE_PRESETS[id];if(!p)return;
+ if(applySettings){
+  Object.assign(current(),{season:p.season,weather:p.weather,time:p.time,sceneMood:id});
+  renderChoices();renderFooter();save();
+  toast('Атмосфера «'+p.title+'» сохранена: сезон, погода и свет обновлены. Окружение участка осталось прежним.');
+ }
+ syncDemoWithSettings();
 }
-function chooseDemoEnvironment(kind,applySettings=true){
- const info={garden:'Сад и газон',forest:'Хвойный лес',lake:'У озера',mountains:'Горы'};
- if(!Object.hasOwn(info,kind))return;
- const path='assets/thumbs/env-'+kind+'.jpg',im=$('sceneEnvironmentPreview'),label=$('sceneEnvironmentLabel');
- if(im){im.dataset.assetPath=path;im.src=asset(path);im.alt='Фотореференс: '+info[kind]+' без дома'}
- if(label)label.textContent=info[kind];
- document.querySelectorAll('[data-scene-environment]').forEach(b=>{const active=b.dataset.sceneEnvironment===kind;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
- if(applySettings){current().environment=kind;renderChoices();renderFooter();save();toast('Окружение выбрано: '+info[kind]+'. Для генерации нажмите «Создать визуализацию».')}
+let moodImagesInitialized=false;
+function initMoodPhotos(){
+ if(moodImagesInitialized)return;
+ moodImagesInitialized=true;
+ document.querySelectorAll('.mood-card img[data-preset-source]').forEach(img=>{
+  const target=img.dataset.presetSource;
+  if(!target)return;
+  const preload=new Image();
+  preload.onload=()=>{img.src=target;img.dataset.newPhoto='true'};
+  preload.onerror=()=>{img.dataset.newPhoto='false'};
+  preload.src=target;
+ });
 }
 function bind(){if($('angleLandscapeLock'))$('angleLandscapeLock').onchange=e=>{current().keepReference=e.target.checked;$('keepReference').checked=e.target.checked;save();toast(e.target.checked?'Ландшафт и стиль сохраняются для следующих ракурсов':'Передача прошлого ракурса как референса выключена')};document.querySelectorAll('[data-view-mode]').forEach(b=>b.onclick=()=>setViewerMode(b.dataset.viewMode));document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>showTab(el.dataset.tab));document.querySelectorAll('[data-node-open]').forEach(b=>b.addEventListener('click',()=>{
  openRenderFlowNode(b.dataset.nodeOpen,true);
@@ -991,7 +1009,7 @@ document.querySelectorAll('[data-node-next]').forEach(b=>b.addEventListener('cli
 $('renderReviewMaterials').onclick=()=>showTab('materials',true);
 $('renderReviewParameters').onclick=()=>showTab('parameters',true);
 $('renderNodeGenerate').onclick=()=>generate();
-document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-scene-environment]').forEach(el=>el.onclick=()=>chooseDemoEnvironment(el.dataset.sceneEnvironment));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;await selectMaterialElement(el.dataset.zone)});document.querySelectorAll('[data-quick-zone]').forEach(el=>el.addEventListener('click',async()=>{await selectMaterialElement(el.dataset.quickZone,'color');$('materialColorPane').scrollIntoView({behavior:'smooth',block:'nearest'});}));for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
+document.querySelectorAll('[data-scene-demo]').forEach(el=>el.onclick=()=>setDemoScene(el.dataset.sceneDemo));document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{const target=document.getElementById('renderSection-'+el.dataset.jump);if(!target)return;if(currentTab!=='environment')showTab('environment');document.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('active',b===el));target.scrollIntoView({behavior:'smooth',block:'start'})});document.querySelectorAll('[data-mobile]').forEach(el=>el.onclick=()=>showTab(el.dataset.mobile,true));document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>showTab(el.dataset.nav,true));$('environmentOptions').addEventListener('click',pickChoice);for(const group of ['time','weather','season','plants'])$(group+'Options').addEventListener('click',pickChoice);$('zoneOptions').addEventListener('click',async e=>{const el=e.target.closest('[data-zone]');if(!el)return;await selectMaterialElement(el.dataset.zone)});document.querySelectorAll('[data-quick-zone]').forEach(el=>el.addEventListener('click',async()=>{await selectMaterialElement(el.dataset.quickZone,'color');$('materialColorPane').scrollIntoView({behavior:'smooth',block:'nearest'});}));for(const el of [$('catalogMaterials'),$('myMaterials')])el.addEventListener('click',e=>{const b=e.target.closest('[data-material]');if(!b)return;current().mats[current().zone]=b.dataset.material;renderMaterials();renderZones();renderFooter();save();toast('Материал назначен зоне. Для визуальной примерки используйте маску.')});document.querySelectorAll('[data-mtab]').forEach(el=>el.onclick=()=>{materialTab=el.dataset.mtab;renderMaterials()});$('sourceFile').onchange=e=>{uploadSource(e.target.files[0],false);e.target.value=''};$('angleFile').onchange=e=>{uploadSource(e.target.files[0],true);e.target.value=''};$('newAngleBtn').onclick=()=>{if(!project.hasSource)return toast('Сначала загрузите первый ракурс');$('angleFile').click()};$('uploadBox').onclick=()=>{$('sourceFile').click()};$('uploadBox').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sourceFile').click()}};for(const ev of ['dragover','dragleave','drop'])$('uploadBox').addEventListener(ev,e=>{e.preventDefault();if(ev==='dragover')$('uploadBox').classList.add('dragging');else $('uploadBox').classList.remove('dragging');if(ev==='drop'&&e.dataTransfer.files[0])uploadSource(e.dataTransfer.files[0],false)});document.querySelectorAll('[data-material-action]').forEach(b=>b.addEventListener('click',()=>{
  const act=b.dataset.materialAction;
  current().materialActions={...current().materialActions,[current().zone]:act};
  current().editSelectedOnly=act!=='keep';
@@ -1070,5 +1088,5 @@ for(const name of ['batchDetail1X','batchDetail1Y','batchDetail2X','batchDetail2
 }
 $('batchStart').onclick=generateBatch;
 $('dialogClose').onclick=closeModal;$('dialogCover').onclick=e=>{if(e.target===$('dialogCover'))closeModal()}}
-function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;current()[group]=btn.dataset.choice;renderChoices();renderFooter();save();if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();toast('Настройка сохранена: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
+function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;current()[group]=btn.dataset.choice;if(['time','season','weather'].includes(group))current().sceneMood=null;renderChoices();renderFooter();save();if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();toast('Настройка сохранена: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
 init().catch(err=>{console.error(err);toast('Не удалось загрузить приложение')});
