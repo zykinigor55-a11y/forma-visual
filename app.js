@@ -721,8 +721,8 @@ if(useMask&&editMode==='replace'&&m.custom&&!materialData)throw Error('Загр�
 const BATCH_SHOTS=[
  {id:'original',label:'01 · Исходный ракурс',title:'Исходный ракурс'},
  {id:'front',label:'02 · Фронтальный вид',title:'Фронтальный вид'},
- {id:'detailEntry',label:'03 · Входная группа крупно',title:'Вход и терраса'},
- {id:'detailMaterial',label:'04 · Детали фасада крупно',title:'Материалы и окно'}
+ {id:'detailEntry',label:'03 · Архитектурная деталь А',title:'Крупный план А'},
+ {id:'detailMaterial',label:'04 · Архитектурная деталь Б',title:'Крупный план Б'}
 ];
 function batchStatus(message,error=false){
  const status=$('batchStatus');if(!status)return;
