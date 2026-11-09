@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#010503">
+<title>PLUX — реальный 3D против видео · тест</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#000;color:#f4fffb;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+body{display:flex;justify-content:center;align-items:center;padding:0;background:radial-gradient(ellipse at 50% 25%,#07352b 0%,#000 52%)}
+.phone{position:relative;width:min(100%,460px);height:100dvh;min-height:650px;max-height:960px;overflow:hidden;background:linear-gradient(180deg,#010806,#000 45%,#010409 90%);isolation:isolate}
+.phone::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.55;background:radial-gradient(ellipse 48% 28% at 50% 65%,#06583a2f,transparent 100%)}
+.header{position:absolute;z-index:20;top:max(22px,env(safe-area-inset-top));left:24px;right:24px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:3px}.brand strong{font-size:31px;letter-spacing:3px;font-style:italic;font-weight:800;line-height:1;color:#b4fff0;text-shadow:0 0 20px #36d8b470}.brand small{font-size:10px;letter-spacing:2.2px;color:#c2d9d1}
+.pills{display:flex;gap:6px;background:#071917b8;padding:5px;border-radius:24px;border:1px solid #61958565;box-shadow:inset 0 1px 1px #fff4}.pills button{appearance:none;border:0;background:transparent;color:#99b7b1;cursor:pointer;border-radius:18px;font-size:12px;padding:8px 11px;white-space:nowrap;transition:background .2s,color .2s}.pills button[aria-pressed="true"]{background:linear-gradient(140deg,#108e68,#044e43);color:#eafff9;box-shadow:inset 0 1px 1px #fff9,0 0 12px #00ffb431}
+.hero{position:absolute;inset:98px 0 216px;z-index:2;min-height:300px;overflow:hidden;touch-action:none}
+#scene,#video{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1}
+#video{object-position:center;display:none;filter:saturate(.92)}
+.videoMode #video{display:block}
+.videoMode #scene{display:none}
+.hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#000 0%,transparent 14%,transparent 73%,#000 100%)}
+.hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:#a0c6be;z-index:6;font-size:11px;letter-spacing:.2px;opacity:.84;pointer-events:none;display:none}
+.status{position:absolute;top:94px;left:0;right:0;text-align:center;z-index:8;pointer-events:none;display:flex;justify-content:center}
+.status span{display:inline-flex;align-items:center;gap:7px;border:1px solid #2f967c61;background:#00180e8c;backdrop-filter:blur(8px);padding:7px 13px;border-radius:99px;font-size:11px;letter-spacing:.2px;color:#c4ebda}
+.status .dot{width:6px;height:6px;background:#52f8a9;box-shadow:0 0 10px #20ffa8;border-radius:50%}
+.bottom{position:absolute;z-index:12;bottom:max(18px,env(safe-area-inset-bottom));left:0;right:0;padding:0 24px 0}
+.caption{text-align:center;margin:0 0 15px;color:#d5eee4;font-size:13px;line-height:1.45;min-height:41px}.caption strong{font-size:16px;color:#fff}.caption small{font-size:12px;color:#9fbeb6}
+.controls{display:grid;grid-template-columns:1fr 1.17fr 1fr;gap:20px;align-items:center;justify-items:center;margin-bottom:20px}
+.glass{position:relative;cursor:pointer;display:grid;place-items:center;border:1.5px solid #9dcfc4ac;border-radius:28px;background:radial-gradient(ellipse at 32% 0,#d8fff66b,transparent 33%),radial-gradient(ellipse at 9% 82%,#2bffd58b,transparent 46%),radial-gradient(ellipse at 87% 96%,#b580ff5f,transparent 55%),linear-gradient(145deg,#163f41c4,#010a13 64%,#241435);box-shadow:inset 0 3px 3px #ffffff77,inset 2px 0 7px #cefff63d,inset -3px 0 7px #ae84ff54,inset 0 -9px 13px #0008,0 6px 22px #000d,0 0 14px #0cfab92c;color:#ecfffa;transition:transform .2s,filter .2s}.glass:before{position:absolute;content:"";left:11%;right:11%;top:5%;height:19%;border-radius:100%;background:linear-gradient(#ffffff98,transparent);filter:blur(5px);pointer-events:none}.glass:active{transform:scale(.93);filter:brightness(1.25)}.glass svg{width:40%;height:40%;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px #8bfbe0)}
+.square{width:76px;height:76px}.mainbtn{width:104px;height:104px;border-radius:50%;box-shadow:inset 0 4px 4px #ffffff92,inset 2px 0 9px #cefff65c,inset -3px 0 9px #ae84ff68,inset 0 -15px 18px #000c,0 7px 24px #000d,0 0 27px #10fac95e}.mainbtn svg{width:45%;height:45%}
+.input{width:100%;height:63px;display:flex;align-items:center;border:1.2px solid #abe2d5a0;border-radius:50px;background:linear-gradient(105deg,#17493980,#021e1cd9 40%,#141126d9 100%);box-shadow:inset 0 3px 2px #c6fff974,inset 0 -3px 2px #09eeae29,0 0 20px #12e9b225;overflow:hidden;gap:10px;padding:0 17px;color:#9cbbb0;font-size:15px}
+.input svg{flex:none;width:23px;height:23px;stroke:#c8fff2;stroke-width:1.5;fill:none}.input span{flex:1}.input .send{color:#5cf2bd;flex:none}
+.fineprint{position:absolute;top:79px;right:26px;z-index:10;font-size:9px;color:#91a9a1;opacity:.7;text-transform:uppercase;letter-spacing:1px}
+@media(max-height:730px){.hero{inset:82px 0 190px}.header{top:17px}.status{top:79px}.bottom{bottom:10px;padding:0 18px}.controls{margin-bottom:12px}.caption{margin-bottom:8px}.mainbtn{width:94px;height:94px}.square{width:69px;height:69px}.input{height:56px}}
+@media(prefers-reduced-motion:reduce){.glass{transition:none}}
+</style>
+</head><body>
+<div class="phone" id="app">
+<header class="header"><div class="brand"><strong>PLUX</strong><small>ТВОЙ AI-ДРУГ</small></div><div class="pills"><button type="button" id="btn3d" aria-pressed="true">Живой 3D</button><button type="button" id="btnvideo" aria-pressed="false">Твоё видео</button></div></header>
+<div class="fineprint">ПРОТОТИП · НЕ КОНЦЕПТ</div>
+<div class="status"><span><i class="dot"></i><b id="mode-label" style="font-weight:500">WebGL · живой персонаж</b></span></div>
+<section class="hero" id="hero"><canvas id="scene" aria-label="Трёхмерная анимированная капля PLUX"></canvas><video id="video" src="01_idle.mp4" muted playsinline loop preload="metadata"></video><div class="hint" id="hint" style="display:none">Проведи пальцем по капле · нажми, чтобы она ожила</div></section>
+<div class="bottom"><p class="caption" id="caption"><strong>Я — PLUX ✦</strong><br><small>Живая 3D-капля внутри браузера</small></p>
+<div class="controls"><button class="glass square" type="button" id="mood" aria-label="Выражение лица"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h.1m4 0h.1m4 0h.1M6 13h.1m4 0h.1m4 0h.1M7 16h10"/></svg></button><button class="glass mainbtn" type="button" id="talk" aria-label="Сказать привет"><svg viewBox="0 0 24 24"><rect x="9" y="2.6" width="6" height="12.5" rx="3"/><path d="M6 10.5v1.3a6 6 0 0 0 12 0v-1.3M12 18v3.2M8.8 21.2h6.4"/></svg></button><button class="glass square" type="button" id="camera" aria-label="Сменить освещение"><svg viewBox="0 0 24 24"><path d="M5 7h3l1.4-2h5.2L16 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="13" r="3.3"/></svg></button></div>
+<div class="input"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-8.5 8A9 9 0 0 1 7 18.2L3 20l1.1-4A8.8 8.8 0 1 1 20 11.5Z"/></svg><span>Настоящее 3D или исходное видео?</span><svg class="send" viewBox="0 0 24 24"><path d="M3 11.7 21 3l-6.5 18-3.4-8.3Z"/></svg></div></div>
+</div>
+<script>
+(()=>{
+'use strict';
+const canvas=document.getElementById('scene');const video=document.getElementById('video');const hero=document.getElementById('hero');const app=document.getElementById('app');const hint=document.getElementById('hint');const modeLabel=document.getElementById('mode-label');const cap=document.getElementById('caption');
+let gl=canvas.getContext('webgl2',{alpha:false,antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+if(!gl){modeLabel.textContent='WebGL 2 недоступен — показываю твоё видео';hint.textContent='Исходное видео';app.classList.add('videoMode');document.getElementById('btn3d').setAttribute('aria-pressed','false');document.getElementById('btnvideo').setAttribute('aria-pressed','true');video.play().catch(()=>{});return}
+const vtx=`#version 300 es
+in vec2 position; void main(){gl_Position=vec4(position,0.,1.);}`;
+const frag=`#version 300 es
+precision highp float;
+out vec4 fragColor;
+uniform vec2 uResolution;
+uniform float uTime,uYaw,uBlink,uMood,uLight;
+#define PI 3.14159265359
+float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
+float ell(vec3 p,vec3 r){float k0=length(p/r);float k1=length(p/(r*r));return k0*(k0-1.)/k1;}
+float cap(vec3 p,vec3 a,vec3 b,float r){vec3 pa=p-a,ba=b-a;return length(pa-ba*clamp(dot(pa,ba)/dot(ba,ba),0.,1.))-r;}
+mat2 rot(float a){float s=sin(a),c=cos(a);return mat2(c,-s,s,c);}
+vec3 local(vec3 p){p.xz=rot(uYaw)*p.xz;p.x+=.013*sin(p.y*4.4+uTime*.85)*(.8+max(p.y,0.));return p;}
+vec2 map(vec3 pw){vec3 p=local(pw);float body=ell(p-vec3(0.,-.22,0.),vec3(1.065,1.06,.96));
+// A tapering, curved crown that merges into the glass body.
+float crown=cap(p,vec3(-.48,.48,-.03),vec3(-.23,.92,-.07),.43);
+crown=smin(crown,cap(p,vec3(-.23,.89,-.07),vec3(.07,1.39,-.09),.26),.25);
+crown=smin(crown,cap(p,vec3(.07,1.39,-.09),vec3(.40,1.50,-.12),.095),.16);
+body=smin(body,crown,.35);
+// gentle liquid ripples, not noisy polygonal displacement.
+body+=.014*sin(p.y*8.0+p.x*5.2+uTime*.68)*smoothstep(-.2,-.85,p.y)*smoothstep(0.,.6,length(p.xy));
+vec2 res=vec2(body,1.);
+// A face modelled in 3D on the surface, not a photograph texture.
+float blink=clamp(uBlink,0.,1.);
+float eyeH=mix(.257,.025,blink);
+for(int s=0;s<2;s++){
+ float side=s==0?-1.:1.;
+ vec3 ec=vec3(side*.395,.055,.924);
+ float socket=ell(p-ec,vec3(.284,eyeH*1.19,.194));
+ if(socket<res.x){res=vec2(socket,2.);}
+ float iris=ell(p-vec3(side*.388,.053,1.091),vec3(.174,eyeH*.70,.105));
+ if(iris<res.x){res=vec2(iris,3.);}
+ float pupil=ell(p-vec3(side*.388,.044,1.173),vec3(.095,eyeH*.43,.06));
+ if(pupil<res.x){res=vec2(pupil,4.);}
+ // wet white glints, like overhead HDR studio strips.
+ float spec=ell(p-vec3(side*.427-.042,.155,1.215),vec3(.042,.046,.034));
+ if(spec<res.x){res=vec2(spec,5.);}
+ }
+// expressive eyebrows slightly raised above eyes
+float lB=cap(p,vec3(-.57,.394,.92),vec3(-.26,.414,1.017),.025);
+float rB=cap(p,vec3(.26,.413,1.017),vec3(.56,.391,.92),.025);
+if(min(lB,rB)<res.x)res=vec2(min(lB,rB),6.);
+// cheerful thin smile, a curved glowing tube near front of face
+float xm=p.x;
+float mouthY=-.436+.135*pow(clamp(abs(xm)/.245,0.,1.),1.6);
+float mouth=length(vec2(p.y-mouthY,p.z-1.012))-.018;
+if(abs(xm)>.25)mouth+=abs(xm)-.25;
+if(mouth<res.x)res=vec2(mouth,7.);
+// tiny translucent floating beads
+float b1=length(p-vec3(-1.36,.44,-.28))-.168;
+float b2=length(p-vec3(1.36,.78,-.22))-.13;
+float b3=length(p-vec3(1.23,-.48,.14))-.084;
+if(min(b1,min(b2,b3))<res.x)res=vec2(min(b1,min(b2,b3)),8.);
+return res;}
+vec3 normal(vec3 p){vec2 e=vec2(.0015,0.);return normalize(vec3(map(p+e.xyy).x-map(p-e.xyy).x,map(p+e.yxy).x-map(p-e.yxy).x,map(p+e.yyx).x-map(p-e.yyx).x));}
+vec3 env(vec3 dir){float h=clamp(dir.y*.5+.5,0.,1.);vec3 col=mix(vec3(.003,.022,.02),vec3(.013,.066,.057),h);
+float strip=pow(max(dot(dir,normalize(vec3(-.59,.68,.45))),0.),32.);
+float strip2=pow(max(dot(dir,normalize(vec3(.72,.22,.67))),0.),22.);
+float strip3=pow(max(dot(dir,normalize(vec3(.13,-.70,.7))),0.),18.);
+col+=vec3(.56,.91,.88)*strip*2.5+vec3(.64,.34,.88)*strip2*1.5+vec3(.01,.88,.63)*strip3*1.6;
+return col;}
+vec3 shade(vec3 pos,vec3 rd,float material){vec3 n=normal(pos);vec3 v=-rd;
+float nv=clamp(dot(n,v),0.,1.);float fres=pow(1.-nv,2.55);
+vec3 refl=env(reflect(rd,n));
+float top=pow(max(dot(n,normalize(vec3(-.55,.7,1.))),0.),8.);
+float lil=pow(max(dot(n,normalize(vec3(.67,.25,.8))),0.),11.);
+float inner=pow(max(0.,1.-length(local(pos).xy-vec2(.07,-.35))/1.18),2.);
+if(material==1. || material==8.){
+ vec3 deep=mix(vec3(.003,.032,.029),vec3(.018,.170,.120),.38+inner*.23);
+ float w=sin(pos.y*7.-pos.x*4.+uTime*.67);
+ deep+=vec3(.009,.105,.078)*smoothstep(.55,1.,w)*(.15+smoothstep(-.65,-1.2,pos.y)*.8);
+ vec3 col=deep+refl*(.68+fres*1.7)+vec3(.03,.85,.52)*pow(fres,1.7)*.92;
+ col+=vec3(.43,.93,.85)*top*.87+vec3(.55,.18,.87)*lil*.56;
+ float panel=exp(-pow((n.x+.55)/.23,2.))*exp(-pow((n.y-.50)/.50,2.))*smoothstep(-.10,.35,n.z);
+ float panel2=exp(-pow((n.x-.73)/.14,2.))*exp(-pow((n.y-.05)/.70,2.))*smoothstep(-.05,.40,n.z);
+ col+=vec3(.75,1.18,1.20)*panel*1.05 +vec3(.35,.84,.72)*panel2*.58;
+ col+=vec3(.02,.35,.21)*inner*.20;
+ if(material==8.)col+=vec3(.07,.18,.13);
+ return col;
+ }
+ if(material==2.)return vec3(.24,.61,.57)*(.61+.3*top)+refl*.22+vec3(.22,.71,.63)*fres*.33;
+ if(material==3.){float rad=length(local(pos).xy-vec2((pos.x<0.?-.386:.386),.054));float streaks=.6+.4*sin(40.*atan(pos.y,pos.x)+rad*85.);return vec3(.007,.33,.145)*(.85+streaks*.5)+refl*.4+vec3(.07,.75,.32)*top*.4;}
+ if(material==4.)return vec3(.001,.009,.013)+refl*.14;
+ if(material==5.)return vec3(1.,1.,.9)*1.8;
+ if(material==6.)return vec3(.05,.35,.23)+refl*.65;
+ if(material==7.)return vec3(.21,1.,.57)*(1.1+uMood*.4)+refl*.16;
+ return vec3(0.);
+}
+float softCircle(float x,float r,float w){return 1.-smoothstep(r-w,r+w,x);}
+void main(){vec2 uv=(gl_FragCoord.xy-.5*uResolution)/uResolution.y*2.;
+ vec2 q=uv;vec3 col=vec3(.0015,.006,.006);
+ float ambient=exp(-dot(q-vec2(0.,.04),q-vec2(0.,.04))*1.3);
+ col+=vec3(.008,.054,.035)*ambient;
+ col+=vec3(.016,.005,.035)*exp(-dot(q-vec2(.75,.2),q-vec2(.75,.2))*4.)*.35;
+ // A luminous floating platform beneath the real-time body
+ vec2 rg=vec2(q.x*1.2,(q.y+.77)*3.9);
+ float r=length(rg);
+ float ring=exp(-pow((r-.71)/.027,2.))*1.5+exp(-pow((r-.92)/.017,2.))*1.4+exp(-pow((r-.52)/.028,2.))*.7;
+ float fog=exp(-pow((r-.79)/.23,2.))*.26;
+ col+=vec3(.015,.89,.48)*(ring*.62+fog);
+ col+=vec3(.02,.21,.14)*exp(-pow(q.x/.37,2.)-pow((q.y+.73)/.12,2.));
+ // Crisp world-space raymarched glass (not an image or spritesheet).
+ vec3 ro=vec3(0.,.12,4.6);
+ vec3 rd=normalize(vec3(uv.x,uv.y,-1.58));
+ float td=0.;vec2 hit=vec2(100.,0.);
+ for(int i=0;i<116;i++){
+  vec3 p=ro+rd*td;
+  hit=map(p);
+  if(hit.x<.0014 || td>9.)break;
+  td+=max(hit.x*.80,.006);
+ }
+ if(hit.x<.008&&td<9.){
+ vec3 p=ro+rd*td;
+ vec3 sc=shade(p,rd,hit.y);
+ // glow from glass edge and eyes, subdued to preserve deep OLED black
+ vec3 n=normal(p);
+ float edge=pow(1.-clamp(dot(n,-rd),0.,1.),3.5);
+ float lightBoost=(uLight>.5?1.:.67);
+ sc+=vec3(.04,.35,.24)*edge*.32*lightBoost;
+ col=sc*lightBoost;
+ }
+ // Background light blooms around silhouette, handled in-screen for mobile.
+ col+=vec3(.004,.04,.024)*exp(-pow((length(q-vec2(0.,-.17))-.60)/.22,2.))*.25;
+ // Filmic tonemapping and slight vibrance
+ col=col/(col+vec3(.82));col=pow(col,vec3(.89));
+ // dark vignette
+ col*=1.-.28*smoothstep(.3,1.3,length(q));
+ fragColor=vec4(col,1.);
+}`;
+function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){throw Error(gl.getShaderInfoLog(s))}return s}
+let program;
+try{program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vtx));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,frag));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));}
+catch(e){modeLabel.textContent='Ошибка 3D — показываю твоё видео';console.error(e);app.classList.add('videoMode');document.getElementById('btn3d').setAttribute('aria-pressed','false');document.getElementById('btnvideo').setAttribute('aria-pressed','true');video.play().catch(()=>{});return}
+const quad=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quad);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);gl.useProgram(program);const attr=gl.getAttribLocation(program,'position');gl.enableVertexAttribArray(attr);gl.vertexAttribPointer(attr,2,gl.FLOAT,false,0,0);
+const un=Object.fromEntries(['uResolution','uTime','uYaw','uBlink','uMood','uLight'].map(n=>[n,gl.getUniformLocation(program,n)]));
+let prev=0,t=0,yaw=0,targetYaw=0,mood=0,blink=0,blinkAt=4,light=1,active='3d',down=false,startX=0,startYaw=0,lastState=0;
+function resize(){const dpr=Math.min(devicePixelRatio||1,1.3);const w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(w!==canvas.width||h!==canvas.height){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h)}}
+function render(ts){requestAnimationFrame(render);if(active!=='3d')return;resize();const dt=Math.min(.05,(ts-prev)/1000||.016);prev=ts;t+=dt;yaw+=(targetYaw-yaw)*Math.min(1,dt*6.5);
+ if(t>blinkAt){blink=Math.min(1,blink+dt*7);if(blink>=1){blinkAt=t+3.+Math.random()*3;lastState=1}}
+ else if(lastState){blink=Math.max(0,blink-dt*6.);if(blink<=0){blink=0;lastState=0}}
+ gl.useProgram(program);gl.uniform2f(un.uResolution,canvas.width,canvas.height);gl.uniform1f(un.uTime,t);gl.uniform1f(un.uYaw,yaw);gl.uniform1f(un.uBlink,blink);gl.uniform1f(un.uMood,mood);gl.uniform1f(un.uLight,light);gl.drawArrays(gl.TRIANGLES,0,6);}
+requestAnimationFrame(render);
+function switchTo(next){active=next;app.classList.toggle('videoMode',next==='video');document.getElementById('btn3d').setAttribute('aria-pressed',String(next==='3d'));document.getElementById('btnvideo').setAttribute('aria-pressed',String(next==='video'));modeLabel.textContent=next==='video'?'Оригинальный MP4 · 720 × 1280':'WebGL · живой персонаж';hint.textContent=next==='video'?'Твоё исходное видео, без 3D-управления':'Проведи пальцем по капле · нажми, чтобы она ожила';cap.innerHTML=next==='video'?'<strong>Твоя капля — видео</strong><br><small>Пререндер: больше деталей и более сложные отражения</small>':'<strong>Я — PLUX ✦</strong><br><small>Интерактивная 3D-капля, без видео</small>';if(next==='video'){video.play().catch(()=>{});}else{video.pause();prev=performance.now();}}
+document.getElementById('btn3d').addEventListener('click',()=>switchTo('3d'));document.getElementById('btnvideo').addEventListener('click',()=>switchTo('video'));
+hero.addEventListener('pointerdown',e=>{if(active!=='3d')return;down=true;startX=e.clientX;startYaw=targetYaw;try{hero.setPointerCapture(e.pointerId)}catch{}});
+hero.addEventListener('pointermove',e=>{if(!down||active!=='3d')return;targetYaw=Math.max(-.70,Math.min(.70,startYaw+(e.clientX-startX)/hero.clientWidth*1.3))});
+hero.addEventListener('pointerup',e=>{if(!down)return;down=false;if(Math.abs(e.clientX-startX)<15){mood=1-mood;blinkAt=t+.07;targetYaw*=.4}try{hero.releasePointerCapture(e.pointerId)}catch{}});
+hero.addEventListener('pointercancel',()=>{down=false});
+document.getElementById('mood').addEventListener('click',()=>{switchTo('3d');mood=1-mood;blinkAt=t+.3});
+document.getElementById('talk').addEventListener('click',()=>{switchTo('3d');mood=1;blinkAt=t+.15;targetYaw*=.5;cap.innerHTML='<strong>Привет! Я — PLUX ✨</strong><br><small>Это настоящая анимация в реальном времени</small>'});
+document.getElementById('camera').addEventListener('click',()=>{switchTo('3d');light=1.-light});
+window.addEventListener('visibilitychange',()=>{prev=performance.now();if(document.hidden)video.pause();else if(active==='video')video.play().catch(()=>{})});
+window.PLUX_DEMO={getInfo:()=>({renderer:'WebGL2 raymarch',active,canvas:[canvas.width,canvas.height],note:'procedural WebGL2 shader, independent live frames',yaw:yaw,mood:mood,video:'original 01_idle.mp4'}),setMode:switchTo};
+})();
+</script>
+</body></html>
