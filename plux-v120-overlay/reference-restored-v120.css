@@ -1,0 +1,25 @@
+/* PLUX V12 reference correction. Approved original bitmaps & their positions stay unchanged.
+   Light is ONLY an interior low-opacity animated reflection. */
+:root{--p120g:rgba(25,255,167,.34);--p120v:rgba(160,100,247,.29)}
+#screen-modes .mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(3,minmax(0,1fr))!important;gap:13px!important;padding:0 18px 12px!important;margin-top:0!important;height:auto!important;max-height:616px!important;flex:1!important;min-height:0!important}
+#screen-modes .mode-card{background-size:100% 100%!important;background-repeat:no-repeat!important;background-position:center center!important;border:0!important;border-radius:24px!important;box-shadow:none!important;padding:0!important;isolation:isolate!important;overflow:hidden!important;min-height:0!important;filter:drop-shadow(0 8px 11px rgba(0,0,0,.75)) drop-shadow(0 0 5px rgba(11,255,138,.18))!important;transition:transform .28s cubic-bezier(.19,1.2,.34,1),filter .28s ease!important}
+#screen-modes .mode-card:nth-child(1){background-image:url('/assets/mode-tiles/mode-1.webp')!important}
+#screen-modes .mode-card:nth-child(2){background-image:url('/assets/mode-tiles/mode-2.webp')!important}
+#screen-modes .mode-card:nth-child(3){background-image:url('/assets/mode-tiles/mode-3.webp')!important}
+#screen-modes .mode-card:nth-child(4){background-image:url('/assets/mode-tiles/mode-4.webp')!important}
+#screen-modes .mode-card:nth-child(5){background-image:url('/assets/mode-tiles/mode-5.webp')!important}
+#screen-modes .mode-card:nth-child(6){background-image:url('/assets/mode-tiles/mode-6.webp')!important}
+/* Artwork already contains approved icon, text and thick refractive rim. No SVG duplicate. */
+#screen-modes .mode-card .mode-emblem,#screen-modes .mode-card strong,#screen-modes .mode-card small{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+#screen-modes .mode-card>.plux-mode-liquid{display:block!important;z-index:1!important;opacity:.66!important}
+#screen-modes .mode-card::before{content:''!important;display:block!important;position:absolute!important;inset:11% 9% 8%!important;width:auto!important;height:auto!important;border:0!important;border-radius:24px!important;box-shadow:none!important;pointer-events:none!important;z-index:2!important;background:radial-gradient(ellipse 55% 35% at 19% 92%,var(--p120g),transparent 94%),radial-gradient(ellipse 51% 42% at 92% 84%,var(--p120v),transparent 94%)!important;mix-blend-mode:screen!important;opacity:.19!important;filter:blur(9px)!important;transform:translate3d(-5%,1%,0)!important;animation:p120-flow 15s ease-in-out infinite alternate!important}
+#screen-modes .mode-card::after{content:none!important;display:none!important}
+#screen-modes .mode-card:nth-child(2)::before{animation-delay:-3s!important}
+#screen-modes .mode-card:nth-child(3)::before{animation-delay:-5s!important}
+#screen-modes .mode-card:nth-child(4)::before{animation-delay:-8s!important}
+#screen-modes .mode-card:nth-child(5)::before{animation-delay:-11s!important}
+#screen-modes .mode-card:nth-child(6)::before{animation-delay:-2s!important}
+#screen-modes .mode-card:active,#screen-modes .mode-card.mode-picking{transform:scale(.972)!important;filter:drop-shadow(0 0 13px rgba(31,255,160,.43)) brightness(1.14)!important}
+#screen-modes .mode-card:active::before,#screen-modes .mode-card.mode-picking::before{opacity:.36!important}
+@keyframes p120-flow{0%{transform:translate3d(-7%,2%,0) rotate(-5deg)}55%{transform:translate3d(3%,-4%,0) rotate(3deg)}100%{transform:translate3d(8%,4%,0) rotate(7deg)}}
+@media(prefers-reduced-motion:reduce){#screen-modes .mode-card::before{animation:none!important;transform:none!important}}
