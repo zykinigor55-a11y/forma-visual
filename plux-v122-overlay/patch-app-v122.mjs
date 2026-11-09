@@ -74,3 +74,28 @@ for(const asset of ['plux-v125.css','plux-v125.js']){
 }
 if(!readFileSync(join(root,'index.html'),'utf8').includes('plux-release-v125'))throw Error('V12.5 index patch missing');
 console.log('PLUX V12.5 onboarding and aligned controls published');
+
+
+/* PLUX V12.6 quick icons + real mic permission meter; do not alter old videos. */
+for(const asset of ['plux-v126.js','plux-v126.css']){
+  const src=join('plux-v126-overlay',asset),dest=join(root,asset);
+  const raw=readFileSync(src);
+  if(raw.length<1000)throw Error('V12.6 file missing or incomplete: '+asset);
+  writeFileSync(dest,raw);
+}
+const page126=join(root,'index.html');
+let html126=readFileSync(page126,'utf8');
+if(!html126.includes('plux-release-v125'))throw Error('V12.5 prerequisite missing');
+if(!html126.includes('plux-release-v126')){
+  html126=html126.replace('</head>','<meta name="plux-release-v126" content="real-mic-and-crystal-quick-glyphs"><link rel="stylesheet" href="/plux-v126.css?v=1261"></head>');
+  html126=html126.replace('</body>','<script src="/plux-v126.js?v=1261"></script></body>');
+  writeFileSync(page126,html126);
+}
+const sw126Path=join(root,'sw.js');
+let sw126=readFileSync(sw126Path,'utf8');
+sw126=sw126.replace(/plux-emerald-v12\d+/g,'plux-emerald-v126');
+if(!sw126.includes("'/plux-v126.js'")){
+  sw126=sw126.replace("'/plux-v125.js'", "'/plux-v125.js','/plux-v126.css','/plux-v126.js'");
+}
+writeFileSync(sw126Path,sw126);
+console.log('PLUX V12.6 quick icons + microphone permission and live level meter installed');
