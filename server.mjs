@@ -40,11 +40,15 @@ function photographicDirection(p){
  const season=String(b.season||'').toLowerCase();
  const time=String(b.time||'').toLowerCase();
  const shot=String(p.batchShot||'').toLowerCase();
- const isDetail=shot==='detailEntry'.toLowerCase()||shot==='detailMaterial'.toLowerCase();
- const evening=variant==='evening'||variant.endsWith('_evening')||['blue','night','golden'].includes(mood)||/вечер|сумерк|ночь|blue.hour|twilight|evening|night/i.test(time);
- const winter=variant.startsWith('winter')||/зима|winter/i.test(season);
- const cloudy=variant.endsWith('_overcast')||['fog','overcast','rain'].includes(mood)||/пасмур|облач|дожд|туман|overcast|cloud|rain|fog/i.test(weather);
- const sunny=variant.endsWith('_sunny')||['sunny','golden'].includes(mood)||/солнеч|ясно|sunny|clear/i.test(weather);
+ const isDetail=shot==='detailentry'||shot==='detailmaterial';
+ // A post-render scene variant intentionally overrides the weather/season of
+ // the source render; never let an original overcast/daytime mood override it.
+ const evening=variant
+  ?variant==='evening'||variant.endsWith('_evening')
+  :['blue','night','golden'].includes(mood)||/вечер|сумерк|ночь|blue.hour|twilight|evening|night/i.test(time);
+ const winter=variant?variant.startsWith('winter'):/зима|winter/i.test(season);
+ const cloudy=variant?variant.endsWith('_overcast'):['fog','overcast','rain'].includes(mood)||/пасмур|облач|дожд|туман|overcast|cloud|rain|fog/i.test(weather);
+ const sunny=variant?variant.endsWith('_sunny'):['sunny','golden'].includes(mood)||/солнеч|ясно|sunny|clear/i.test(weather);
  let camera;
  let exposure;
  if(isDetail){
