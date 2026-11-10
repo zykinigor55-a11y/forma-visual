@@ -8,6 +8,7 @@ import {arkheonSession,arkheonVoiceProbe,arkheonUsageProbe} from "./arkheon-real
 import { handleAudius } from "./music-audius-v24.mjs";
 import {storeGeneratedPdf,sendGeneratedPdf} from "./pdf-download-v27.mjs";
 import {beginGenerationJob,handleGenerationJobStatus} from "./generation-jobs-v28.mjs";
+import {streamPlainChat} from "./chat-stream-v29.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -122,6 +123,12 @@ async function handler(req,res){
   }
   // Do not forward arbitrary client-injected roles or keys.
   messages.unshift({role:"system",content:"Ты ПЛЮХ — доброжелательный, энергичный персональный помощник. Отвечай на русском естественно и ясно, коротко по умолчанию. Не придумывай, что ты уже выполнил действие или подключил сервис."});
+  // New chat versions stream partial text to the screen. Older APKs that
+  // don't advertise support continue to get the original JSON response.
+  if(data?.clientFeatures?.textStreaming===true&&
+    (!Array.isArray(data.attachments)||data.attachments.length===0)){
+    return streamPlainChat(req,res,{secret,messages});
+  }
   try {
     const upstream=await fetch("https://api-market1.shop/v1/chat/completions",{
       method:"POST",
