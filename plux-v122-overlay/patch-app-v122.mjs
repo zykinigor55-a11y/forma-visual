@@ -482,3 +482,36 @@ if(!v23Sw.includes("'/plux-themes-v23.js'"))
 writeFileSync(v23SWPath,v23Sw);
 if(!v23ThemeHtml.includes('/plux-themes-v23.js?v=2301'))throw Error('V23 themes not loaded');
 console.log('PLUX V23: four accessible themes with recolored five-state video, improved realtime conversation and undistorted launcher icon');
+
+
+/* PLUX V24: local generated-media gallery, Audius free-streaming player,
+ * theme-aware chat, responsive microphone and completed image previews.
+ * Source content is copied by earlier V12.8/V12.9/V16/V17 patches.
+ */
+for(const name of ['plux-gallery-v24.js','plux-gallery-v24.css','plux-music-v24.js','plux-music-v24.css','plux-chat-v24.css']){
+ const src=join('plux-v24-overlay',name);
+ if(statSync(src).size<2100)throw Error('PLUX V24 release asset missing: '+name);
+ writeFileSync(join(root,name),readFileSync(src));
+ if(name.endsWith('.js'))plux123Exec(process.execPath,['--check',join(root,name)],{stdio:'inherit'});
+}
+const v24IndexPath=join(root,'index.html');
+let v24HTML=readFileSync(v24IndexPath,'utf8');
+if(!v24HTML.includes('plux-release-v23'))throw Error('V23 PLUX prerequisite is missing');
+v24HTML=v24HTML.replace('</head>','<meta name="plux-release-v24" content="local-gallery-free-audius-chat-image-voice"><link rel="stylesheet" href="/plux-gallery-v24.css?v=2401"><link rel="stylesheet" href="/plux-music-v24.css?v=2401"><link rel="stylesheet" href="/plux-chat-v24.css?v=2401"></head>');
+v24HTML=v24HTML.replace('</body>','<script src="/plux-gallery-v24.js?v=2401" defer></script><script src="/plux-music-v24.js?v=2401" defer></script></body>');
+v24HTML=v24HTML.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=2401');
+v24HTML=v24HTML.replace(/\/plux-v129\.js\?v=\d+/g,'/plux-v129.js?v=2401');
+v24HTML=v24HTML.replace(/\/plux-video-v16\.js\?v=\d+/g,'/plux-video-v16.js?v=2401');
+v24HTML=v24HTML.replace(/\/plux-arkheon-v17\.js\?v=\d+/g,'/plux-arkheon-v17.js?v=2401');
+writeFileSync(v24IndexPath,v24HTML);
+const v24SWPath=join(root,'sw.js');
+let v24SW=readFileSync(v24SWPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2401');
+const v24List="'/plux-gallery-v24.js','/plux-gallery-v24.css','/plux-music-v24.js','/plux-music-v24.css','/plux-chat-v24.css'";
+if(!v24SW.includes("'/plux-gallery-v24.js'")){
+ if(!v24SW.includes("'/plux-themes-v23.css'"))throw Error('V23 service worker insertion point missing');
+ v24SW=v24SW.replace("'/plux-themes-v23.css'","'/plux-themes-v23.css',"+v24List);
+}
+writeFileSync(v24SWPath,v24SW);
+for(const file of ['plux-chat-v128.js','plux-v129.js','plux-video-v16.js','plux-arkheon-v17.js'])plux123Exec(process.execPath,['--check',join(root,file)],{stdio:'inherit'});
+if(!v24HTML.includes('/plux-gallery-v24.js?v=2401')||!v24HTML.includes('/plux-music-v24.js?v=2401'))throw Error('V24 scripts not installed');
+console.log('PLUX V24: IndexedDB Gallery replaces More, Audius music, responsive voice, full image cards, four theme-aware chat colors');
