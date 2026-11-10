@@ -750,17 +750,17 @@ console.log('PLUX V27: downloadable PDFs, no dead bell, proper image-create icon
  const htmlPath=join(root,'index.html');
  let html=readFileSync(htmlPath,'utf8');
  if(!html.includes('plux-release-v28'))throw Error('PLUX V28 prerequisite required');
- html=html.replace('</head>','<meta name="plux-release-v29" content="streaming-chat-typing-original-glass-sound"><link rel="stylesheet" href="/plux-chat-typing-v29.css?v=2901"></head>');
- html=html.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=2901');
+ html=html.replace('</head>','<meta name="plux-release-v29" content="streaming-chat-typing-original-glass-sound"><link rel="stylesheet" href="/plux-chat-typing-v29.css?v=2902"></head>');
+ html=html.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=2902');
  writeFileSync(htmlPath,html);
  const workerPath=join(root,'sw.js');
- let worker=readFileSync(workerPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2901');
+ let worker=readFileSync(workerPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2902');
  if(!worker.includes("'/plux-chat-typing-v29.css'")){
    if(!worker.includes("'/plux-chat-v128.js'"))throw Error('Chat script missing from service worker');
    worker=worker.replace("'/plux-chat-v128.js'","'/plux-chat-v128.js','/plux-chat-typing-v29.css'");
  }
  writeFileSync(workerPath,worker);
  plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
- if(!html.includes('/plux-chat-v128.js?v=2901'))throw Error('PLUX V29 chat script not included');
+ if(!html.includes('/plux-chat-v128.js?v=2902'))throw Error('PLUX V29 chat script not included');
  console.log('PLUX V29: gradual text appearance and original optional keyboard glass sound ready');
 }
