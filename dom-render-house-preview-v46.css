@@ -30,3 +30,8 @@ body.cinema-preview-open{overflow:hidden}
  #animationPanel .anim-preview-play-holder .anim-play{min-height:36px;padding:6px 12px}
 }
 @media(prefers-reduced-motion:reduce){#animationPanel .anim-preview-frame{will-change:auto}}
+
+/* v47: the preview follows the opened project's selected BEFORE/AFTER view automatically. */
+#animationPanel .anim-preview-source{display:none!important}
+#animationPanel .anim-preview-shell{padding:8px}
+#animationPanel .anim-preview-screen{margin-top:0}
