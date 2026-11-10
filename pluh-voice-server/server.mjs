@@ -4,7 +4,7 @@ import { artifactIntent, makeGptImage, makePdf } from "./chat-artifacts-v14.mjs"
 import { handleCyhub } from "./cyhub-voice-v15.mjs";
 import {handleCyhubVideo} from "./cyhub-video-v16.mjs";
 import { voiceSession } from "./live-voice-v151.mjs";
-import {arkheonSession} from "./arkheon-realtime-v17.mjs";
+import {arkheonSession,arkheonVoiceProbe} from "./arkheon-realtime-v17.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -171,4 +171,9 @@ async function handler(req,res){
   res.end(req.method==="HEAD"?undefined:data);
  }catch{return reply(res,404,{error:"Not found"});}
 }
-createServer((req,res)=>{handler(req,res).catch(()=>reply(res,500,{error:"Internal server error"}));}).listen(port,"0.0.0.0",()=>console.log("PLUH voice server started on "+port));
+createServer((req,res)=>{handler(req,res).catch(()=>reply(res,500,{error:"Internal server error"}));}).listen(port,"0.0.0.0",()=>{
+ console.log("PLUH voice server started on "+port);
+ void arkheonVoiceProbe().then(result=>{
+   console.log("PLUX Arkheon voices readiness",JSON.stringify(result));
+ }).catch(()=>{console.log("PLUX Arkheon voices catalog unavailable");});
+});
