@@ -295,11 +295,23 @@ if(!markupV17.includes('plux-arkheon-v17.js')){
  markupV17=markupV17.replace('</body>','<script src="/plux-arkheon-v17.js?v=1702" defer></script></body>');
 }
 if(!markupV17.includes('plux-arkheon-v17.js'))throw Error('Arkheon mic handler not installed');
+// V18: refresh persistent browser/PWA caches for newly fixed Russian voice director.
+markupV17=markupV17.replace('/plux-arkheon-v17.js?v=1702','/plux-arkheon-v17.js?v=1801');
+markupV17=markupV17.replace('/plux-motion-v124.js?v=124','/plux-motion-v124.js?v=1801');
+if(!markupV17.includes('plux-release-v18'))markupV17=markupV17.replace('</head>','<meta name="plux-release-v18" content="five-emotions-russian-first-voice"></head>');
 writeFileSync(pageV17,markupV17);
+for(const name of ['01_idle','02_listening','03_thinking','04_talking','05_happy']){
+ const videoFile=join(root,'assets','videos-v106',name+'.mp4');
+ const videoBytes=statSync(videoFile).size;
+ if(videoBytes<65000)throw Error('V18 original mascot emotion video unavailable: '+name);
+ console.log('PLUX V18 checked original video '+name+' ('+Math.round(videoBytes/1024)+' KiB)');
+}
+if(!readFileSync(join(root,'plux-motion-v124.js'),'utf8').includes('plux:emotion'))
+ throw Error('PLUX emotion director is missing');
 const swV17Path=join(root,'sw.js');
-let swV17=readFileSync(swV17Path,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v1702');
+let swV17=readFileSync(swV17Path,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v1801');
 if(!swV17.includes("'/plux-arkheon-v17.js'")){
  swV17=swV17.replace("'/plux-video-v16.js'","'/plux-video-v16.js','/plux-arkheon-v17.js','/plux-arkheon-processor-v17.js'");
 }
 writeFileSync(swV17Path,swV17);
-console.log('PLUX V17 photo-to-video + Arkheon WebSocket mic handler installed; live speech requires ARKHEON_API_KEY');
+console.log('PLUX V18 five mascot videos verified, Russian-first live speech director installed; live speech requires ARKHEON_API_KEY');
