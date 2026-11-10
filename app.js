@@ -786,6 +786,13 @@ function renderHomeChanges(){
   const value=String(current()?.homeChanges||'');
   if(input.value!==value)input.value=value;
  }
+ const specified=!!String(current()?.homeChanges||'').trim();
+ if($('renderSummaryLockText'))$('renderSummaryLockText').textContent=specified
+  ?'Геометрия сохраняется; отделка меняется по вашему заданию'
+  :'Архитектура и материалы исходника сохраняются';
+ if($('renderSetupSourceNote'))$('renderSetupSourceNote').textContent=specified
+  ?'AI использует текстовое задание только для указанных элементов дома. Архитектура и ракурс сохраняются.'
+  :'Используется выбранный проект. AI сохраняет архитектуру и существующие материалы.';
 }
 function renderSceneVariantsUI(){
  const panel=$('sceneVariantsPanel');
@@ -898,7 +905,7 @@ function showNewProject(){modal('Новый проект',`<label>Названи
 function settingsBrief(){
  const s=current();
  /* Only explicit user-uploaded material assignments: no phantom plaster defaults. */
- const assignedMaterials=Object.fromEntries(zones.flatMap(([id,name])=>{
+ const assignedMaterials=String(s.homeChanges||'').trim()?{}:Object.fromEntries(zones.flatMap(([id,name])=>{
   const materialId=s.mats?.[id];
   const chosen=customMaterials.find(m=>m.id===materialId);
   return chosen?[[name,chosen.name]]:[];
@@ -1288,7 +1295,7 @@ function initMoodPhotos(){
 function bind(){
  const homeInput=$('homeChangesInput');
  if(homeInput)homeInput.addEventListener('input',()=>{
-  current().homeChanges=homeInput.value.slice(0,600);save();
+  current().homeChanges=homeInput.value.slice(0,600);save();renderHomeChanges();
  });
  const variantsGrid=$('sceneVariantsGrid');
  if(variantsGrid)variantsGrid.addEventListener('click',event=>{
