@@ -295,7 +295,7 @@ function pngDataFromFile(file,maxEdge=3800){return new Promise((resolve,reject)=
     const reader=new FileReader();
     reader.onerror=()=>finish(Error('Не удалось прочитать исходный файл.'));
     reader.onload=()=>finish(null,{data:String(reader.result),width:w,height:h});
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(file.type?file:new Blob([file],{type}));
     return;
    }
    const factor=Math.min(1,maxEdge/Math.max(w,h));
