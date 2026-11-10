@@ -14,7 +14,7 @@
  const form=$("#plux24-music-search"),query=$("#plux24-music-query");
  let opener=null;
  function show(text){notice.textContent=text||""}
- function open(){opener=document.activeElement;panel.hidden=false;document.body.classList.add("plux24-music-open");if(!tracks.length)void find("");}
+ function open({autoSearch=true}={}){opener=document.activeElement;panel.hidden=false;document.body.classList.add("plux24-music-open");if(autoSearch&&!tracks.length)void find("");}
  function close(){panel.hidden=true;document.body.classList.remove("plux24-music-open");opener?.focus?.({preventScroll:true})}
  panel.addEventListener("click",e=>{if(e.target.closest("[data-music-close]"))close()});
  document.addEventListener("keydown",e=>{if(!panel.hidden&&e.key==="Escape")close()});
@@ -87,13 +87,13 @@
   if(/^(?:пауза|останови музыку|выключи музыку|поставь на паузу|пауза музыка)$/i.test(text)){audio.pause();update();show("Музыка на паузе.");return true}
   if(/^(?:продолжи музыку|возобнови музыку|играй дальше)$/i.test(text)){open();playPause();return true}
   if(/^(?:следующий трек|переключи трек|следующую песню)$/i.test(text)){open();next();return true}
-  if(!/(?:включи|поставь|запусти|найди|послушаем|послушать|сыграй|воспроизведи)/i.test(text))return false;
+  if(!/^(?:(?:плюх|пожалуйста)[,!]?\s*)*(?:включи|поставь|запусти|найди|послушаем|послушать|сыграй|воспроизведи)\b/i.test(text))return false;
   if(!/(?:музык|песн|трек|плейлист|джаз|рок|рэп|класси|лоу.?фай|lofi|hip.?hop|ambient|jazz|поп|блюз|шансон|электрон|исполнител)/i.test(text))return false;
   let want=text.replace(/^(?:плюх[,!]?\s*)?(?:пожалуйста[,!]?\s*)?(?:включи|поставь|запусти|найди|послушаем|послушать|сыграй|воспроизведи)\s*/i,"")
     .replace(/^(?:мне|для меня|нам)\s*/i,"").replace(/\b(?:музыку|песню|трек|плейлист|из интернета|на аудиусе|на audius)\b/gi,"").trim();
   for(const [mood,search] of Object.entries(moods))if(text.includes(mood)){want=search;break}
   if(want.length>96)want=want.slice(0,96);
-  open();query.value=want;
+  open({autoSearch:false});query.value=want;
   // Mobile browsers can require a second user tap after an async provider search.
   // Voice commands open the player; they never claim a track played unless it did.
   void find(want,source==="chat");
