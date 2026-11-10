@@ -271,3 +271,35 @@ if(!video16Worker.includes("'/plux-video-v16.js'"))
  video16Worker=video16Worker.replace("'/plux-live-v151.js'","'/plux-live-v151.js','/plux-video-v16.css','/plux-video-v16.js'");
 writeFileSync(video16SW,video16Worker);
 console.log('PLUX V16 Cyhub Grok Lite video creation UI installed; paid requests require quote confirmation');
+
+
+/* PLUX V17 PHOTO TO VIDEO + ARKHEON: keep OLED artwork intact and replace only the voice engine. */
+for(const name of ['plux-arkheon-v17.js','plux-arkheon-processor-v17.js']){
+ const data=readFileSync(join('plux-v17-overlay',name));
+ if(data.length<1000)throw Error('Missing V17 Arkheon asset '+name);
+ writeFileSync(join(root,name),data);
+ plux123Exec(process.execPath,['--check',join(root,name)],{stdio:'inherit'});
+}
+plux123Exec(process.execPath,['--check',join(root,'plux-video-v16.js')],{stdio:'inherit'});
+plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
+plux123Exec(process.execPath,['--check',join(root,'plux-v129.js')],{stdio:'inherit'});
+const pageV17=join(root,'index.html');
+let markupV17=readFileSync(pageV17,'utf8');
+markupV17=markupV17.replace(/<script\s+src="\/plux-live-v151\.js\?v=\d+"(?:\s+defer)?><\/script>/g,'');
+markupV17=markupV17.replace(/(<script src="\/plux-video-v16\.js\?v=)1601/g,'$11702');
+markupV17=markupV17.replace(/(<script src="\/plux-chat-v128\.js\?v=)\d+/g,'$11702');
+markupV17=markupV17.replace(/(<script src="\/plux-v129\.js\?v=)1291/g,'$11702');
+if(markupV17.includes('src="/plux-live-v151.js'))throw Error('Old ElevenLabs microphone handler still loaded');
+if(!markupV17.includes('plux-arkheon-v17.js')){
+ markupV17=markupV17.replace('</head>','<meta name="plux-release-v17" content="grok-image-to-video-arkheon-realtime"></head>');
+ markupV17=markupV17.replace('</body>','<script src="/plux-arkheon-v17.js?v=1702" defer></script></body>');
+}
+if(!markupV17.includes('plux-arkheon-v17.js'))throw Error('Arkheon mic handler not installed');
+writeFileSync(pageV17,markupV17);
+const swV17Path=join(root,'sw.js');
+let swV17=readFileSync(swV17Path,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v1702');
+if(!swV17.includes("'/plux-arkheon-v17.js'")){
+ swV17=swV17.replace("'/plux-video-v16.js'","'/plux-video-v16.js','/plux-arkheon-v17.js','/plux-arkheon-processor-v17.js'");
+}
+writeFileSync(swV17Path,swV17);
+console.log('PLUX V17 photo-to-video + Arkheon WebSocket mic handler installed; live speech requires ARKHEON_API_KEY');
