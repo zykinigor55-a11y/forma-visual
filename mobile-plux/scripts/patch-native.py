@@ -23,8 +23,8 @@ if platform=="android":
     if not gradle.exists():raise SystemExit("Android app build.gradle missing")
     gradle_text=gradle.read_text()
     import re
-    gradle_text,version_hits=re.subn(r'(?m)^(\s*versionCode\s+)\d+',r'\g<1>28',gradle_text,count=1)
-    gradle_text,name_hits=re.subn(r'(?m)^(\s*versionName\s+)"[^"]+"',r'\g<1>"28.0.0"',gradle_text,count=1)
+    gradle_text,version_hits=re.subn(r'(?m)^(\s*versionCode\s+)\d+',r'\g<1>30',gradle_text,count=1)
+    gradle_text,name_hits=re.subn(r'(?m)^(\s*versionName\s+)"[^"]+"',r'\g<1>"30.0.0"',gradle_text,count=1)
     if version_hits!=1 or name_hits!=1:raise SystemExit("Could not update Android APK version")
     gradle.write_text(gradle_text)
     main=root/"android/app/src/main/java/com/plux/assistant/MainActivity.java"
@@ -68,12 +68,19 @@ if platform=="android":
                     android.net.Uri uri=android.net.Uri.parse(url);
                     if (!"https".equalsIgnoreCase(uri.getScheme())) return;
                     if (!"pluh-voice-demo.onrender.com".equalsIgnoreCase(uri.getHost())) return;
-                    if (uri.getPath()==null || !uri.getPath().startsWith("/api/download/pdf/")) return;
-                    String fileName="PLUX-document-"+System.currentTimeMillis()+".pdf";
+                    String route=uri.getPath();
+                    boolean pdf=route!=null && route.startsWith("/api/download/pdf/");
+                    boolean image=route!=null && route.startsWith("/api/download/image/");
+                    if (!pdf && !image) return;
+                    String kind=pdf?"PDF":"изображение";
+                    String suffix=pdf?".pdf":".png";
+                    if (image && "image/jpeg".equalsIgnoreCase(mimeType))suffix=".jpg";
+                    if (image && "image/webp".equalsIgnoreCase(mimeType))suffix=".webp";
+                    String fileName="PLUX-"+(pdf?"document-":"image-")+System.currentTimeMillis()+suffix;
                     android.app.DownloadManager.Request request=new android.app.DownloadManager.Request(uri);
                     request.setTitle(fileName);
-                    request.setDescription("Документ ПЛЮХ");
-                    request.setMimeType("application/pdf");
+                    request.setDescription(pdf?"Документ ПЛЮХ":"Изображение ПЛЮХ");
+                    request.setMimeType(pdf?"application/pdf":("image/jpeg".equalsIgnoreCase(mimeType)?"image/jpeg":"image/webp".equalsIgnoreCase(mimeType)?"image/webp":"image/png"));
                     request.setNotificationVisibility(
                         android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
                     request.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS,fileName);
@@ -82,11 +89,11 @@ if platform=="android":
                     if (manager==null) throw new IllegalStateException("DownloadManager unavailable");
                     manager.enqueue(request);
                     runOnUiThread(()->android.widget.Toast.makeText(
-                        MainActivity.this,"PDF загружается в папку Загрузки",
+                        MainActivity.this,kind+" загружается в папку Загрузки",
                         android.widget.Toast.LENGTH_LONG).show());
                 } catch (Exception problem) {
                     runOnUiThread(()->android.widget.Toast.makeText(
-                        MainActivity.this,"Не удалось сохранить PDF. Попробуй открыть ссылку в браузере.",
+                        MainActivity.this,"Не удалось сохранить файл. Попробуй открыть ссылку в браузере.",
                         android.widget.Toast.LENGTH_LONG).show());
                 }
             }
