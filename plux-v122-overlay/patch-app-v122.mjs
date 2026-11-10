@@ -214,3 +214,34 @@ if(!v15sw.includes("'/plux-voice-v15.js'"))
   v15sw=v15sw.replace("'/plux-artifacts-v14.css'","'/plux-artifacts-v14.css','/plux-voice-v15.css','/plux-voice-v15.js'");
 writeFileSync(v15swPath,v15sw);
 console.log('PLUX V15 Cyhub voice playback controls installed, paid TTS remains opt-in');
+
+
+/* PLUX V15.1 REALTIME VOICE — bundle official SDK at build-time, self-host client JS. */
+for(const file of ['plux-live-v151.src.js','plux-live-v151.css','package.json']){
+ if(statSync(join('plux-v151-overlay',file)).size<200)throw Error('Missing voice asset: '+file);
+}
+plux123Exec('npm',['install','--prefix','plux-v151-overlay','--no-audit','--no-fund'],{
+ stdio:'inherit',timeout:180000
+});
+plux123Exec(join('plux-v151-overlay','node_modules','.bin','esbuild'),[
+ 'plux-v151-overlay/plux-live-v151.src.js',
+ '--bundle','--minify','--platform=browser','--format=iife','--target=es2020',
+ '--outfile='+join(root,'plux-live-v151.js')
+],{stdio:'inherit',timeout:120000});
+if(statSync(join(root,'plux-live-v151.js')).size<12000)throw Error('Voice client bundle is incomplete');
+plux123Exec(process.execPath,['--check',join(root,'plux-live-v151.js')],{stdio:'inherit'});
+writeFileSync(join(root,'plux-live-v151.css'),readFileSync('plux-v151-overlay/plux-live-v151.css'));
+const liveIndex=join(root,'index.html');
+let liveHTML=readFileSync(liveIndex,'utf8');
+if(!liveHTML.includes('plux-live-v151.js')){
+ liveHTML=liveHTML.replace('</head>','<meta name="plux-release-v151" content="realtime-voice-mode"><link rel="stylesheet" href="/plux-live-v151.css?v=1511"></head>');
+ liveHTML=liveHTML.replace('</body>','<script src="/plux-live-v151.js?v=1511" defer></script></body>');
+ writeFileSync(liveIndex,liveHTML);
+}
+const liveSw=join(root,'sw.js');
+let liveWorker=readFileSync(liveSw,'utf8')
+ .replace(/plux-emerald-v(?:12|13|14)\d*/g,'plux-emerald-v151');
+if(!liveWorker.includes("'/plux-live-v151.js'"))
+ liveWorker=liveWorker.replace("'/plux-artifacts-v14.css'","'/plux-artifacts-v14.css','/plux-live-v151.css','/plux-live-v151.js'");
+writeFileSync(liveSw,liveWorker);
+console.log('PLUX V15.1: voice SDK bundled locally; crystal microphone starts audio conversation');
