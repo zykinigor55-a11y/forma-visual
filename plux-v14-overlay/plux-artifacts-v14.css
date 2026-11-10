@@ -1,0 +1,13 @@
+/* PLUX V14: premium OLED inline image / PDF cards.
+   Match the existing emerald glass without changing the chat layout. */
+#screen-chat .plux14-artifact-row{max-width:100%;min-width:0}
+#screen-chat .plux14-artifact{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:min(100%,330px);min-width:0;max-width:calc(100vw - 115px);padding:11px;border-radius:24px;border:1px solid rgba(147,242,203,.45);
+background:linear-gradient(145deg,rgba(8,47,37,.9),rgba(1,15,19,.96) 70%,rgba(24,16,38,.94));
+box-shadow:inset 0 1px 1px rgba(246,255,251,.25),inset 0 -5px 11px rgba(0,215,144,.13),0 8px 24px rgba(0,0,0,.35);color:#e7fff5}
+#screen-chat .plux14-created-image{display:block;max-width:100%;width:100%;aspect-ratio:1/1;height:auto;object-fit:contain;border-radius:16px;background:#010604;outline:1px solid rgba(255,255,255,.10);outline-offset:-1px}
+#screen-chat .plux14-file-title{font-size:12px;line-height:1.4;min-width:0;overflow-wrap:anywhere;color:#dbfff1}
+#screen-chat .plux14-pdf-icon{align-self:flex-start;border-radius:12px;padding:13px 17px;border:1px solid rgba(139,242,198,.45);background:linear-gradient(140deg,#084938,#001912);box-shadow:inset 0 -4px 13px rgba(0,236,159,.17);font-size:22px;font-weight:700;letter-spacing:.035em}
+#screen-chat .plux14-download{display:block;text-align:center;text-decoration:none;color:#fff;font-size:13px;font-weight:650;line-height:1.3;padding:12px 10px;border-radius:23px;border:1px solid rgba(189,255,226,.6);background:linear-gradient(140deg,#0c614b,#022b23 70%);box-shadow:inset 0 1px 2px rgba(255,255,255,.22),inset 0 -5px 12px rgba(0,235,161,.25)}
+#screen-chat .plux14-download:active{transform:scale(.96);transition:transform 150ms ease-out}
+#screen-chat .plux14-download:focus-visible{outline:2px solid #c5ffe9;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){#screen-chat .plux14-download:active{transform:none}}
