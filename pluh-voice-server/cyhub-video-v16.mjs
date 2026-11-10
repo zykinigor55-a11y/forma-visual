@@ -45,7 +45,7 @@ function checkQuota(ip){
  if(active>=2)throw problem(429,"Генератор занят. Попробуй позже.");
  return recent;
 }
-function settings(body){
+export function videoSettings(body){
  const prompt=safeText(body?.prompt,1400);
  if(prompt.length<5||prompt.length>1200)throw problem(400,"Опиши видео текстом длиной от 5 до 1200 символов.");
  const seconds=Number(body?.duration??5);
@@ -136,7 +136,7 @@ export async function handleCyhubVideo(req,res){
   const ip=ipOf(req);
   if(path==="/api/video/quote"){
     if(req.method!=="POST")throw problem(405,"Используй POST.");
-    const body=await readBody(req),payload=settings(body),price=await getPrice(payload);
+    const body=await readBody(req),payload=videoSettings(body),price=await getPrice(payload);
     prune();
     const token=randomUUID();
     quotes.set(token,{created:Date.now(),ip,payload,amount:price.amount_minor,currency:price.currency,used:false});
@@ -151,13 +151,13 @@ export async function handleCyhubVideo(req,res){
     const quote=quotes.get(String(body?.quoteId||""));
     if(!quote||quote.used||quote.ip!==ip||Date.now()-quote.created>600000)
       throw problem(409,"Цена устарела. Проверь стоимость ещё раз.");
-    checkQuota(ip);
+    const quota=checkQuota(ip);
+    quote.used=true; // Reserve the quote before asynchronous repricing; cannot launch twice.
     // Reprice immediately. Changes never become a surprise charge.
     const price=await getPrice(quote.payload);
     if(price.amount_minor!==quote.amount)throw problem(409,"Цена изменилась. Проверь стоимость повторно.");
     if(Number.isInteger(price.available_minor)&&price.available_minor<price.amount_minor)
       throw problem(402,"Недостаточно средств на балансе Cyhub.");
-    quote.used=true;
     active++;
     try{
       const job=await provider("/tasks",{method:"POST",
@@ -168,8 +168,7 @@ export async function handleCyhubVideo(req,res){
       const token=randomUUID();
       jobs.set(token,{created:Date.now(),ip,providerId:job.id,
         state:job.status||"queued",index:null});
-      const recent=checkQuota(ip);
-      recent.push(Date.now());hits.set(ip,recent);daily++;
+      quota.push(Date.now());hits.set(ip,quota);daily++;
       quotes.delete(String(body.quoteId));
       json(res,202,{videoId:token,status:job.status||"queued",
         amountMinor:Number.isInteger(job.amount_minor)?job.amount_minor:quote.amount,
