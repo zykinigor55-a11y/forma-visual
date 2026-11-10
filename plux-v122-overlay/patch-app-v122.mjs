@@ -437,3 +437,22 @@ for(const f of ['plux-v127.js','plux-chat-v128.js','plux-arkheon-v17.js','app.js
 }
 if(!v22Html.includes('/plux-v22.css?v=2202'))throw Error('PLUX V22 not loaded');
 console.log('PLUX V22: inline GPT Image 2 progress, Android voice, welcome type audio, centered glass Home');
+
+
+/* PLUX V23: preserve square launcher proportions from the portrait master.
+ * Previous ffmpeg scale=512:512 distorted the 540x960 mascot into a pancake.
+ * Center-crop first (same scale on both axes), THEN resize square.
+ */
+const plux23Frame=join(root,'assets','videos-v106','01_idle.mp4');
+const plux23FF=process.env.PLUX_FFMPEG||'ffmpeg';
+for(const side of [192,512]){
+  plux123Exec(plux23FF,[
+    '-nostdin','-hide_banner','-loglevel','error','-y','-ss','0.3','-i',plux23Frame,
+    '-frames:v','1',
+    '-vf', 'crop=iw:iw:0:(ih-iw)*0.36,scale='+side+':'+side+':flags=lanczos',
+    join(root,'icon-'+side+'.png')
+  ],{stdio:'inherit',timeout:90000});
+  if(statSync(join(root,'icon-'+side+'.png')).size<10000)
+    throw Error('V23 undistorted launcher icon missing: '+side);
+}
+console.log('PLUX V23 aspect-correct green mascot icons 192/512 ready');
