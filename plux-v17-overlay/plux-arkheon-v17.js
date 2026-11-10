@@ -15,6 +15,36 @@
  let ws=null,stream=null,captureCtx=null,speakerCtx=null,worklet=null,processor=null,input=null,silence=null;
  let active=false,connecting=false,sequence=0,playAt=0,playing=[],closed=false;
  let mode="idle",checking=false,timeout=0;
+ let responseDone=false,responseAudioStarted=false,responseCycle=0,lastAudioAt=0;
+ let userSpeaking=false,ignoreAbortedResponse=false,sessionConfirmed=false;
+ let speakingStartedAt=0,finishTimer=0,happyTimer=0,latestEvent="idle";
+ const cancelEmotionTimers=()=>{
+  clearTimeout(finishTimer);clearTimeout(happyTimer);finishTimer=0;happyTimer=0;
+ };
+ // The fifth original mascot clip is intentionally a short celebration
+ // after an audible answer; speech must finish playing first.
+ function finishAudio(){
+  clearTimeout(finishTimer);finishTimer=0;
+  if(!active||userSpeaking||!responseAudioStarted||mode!=="talking")return;
+  const remaining=Math.max(0,(playAt-(speakerCtx?.currentTime||0))*1000);
+  const elapsed=Date.now()-lastAudioAt;
+  const minTalkMs=Math.max(0,1350-(performance.now()-speakingStartedAt));
+  const settlingMs=Math.max(0,420-elapsed);
+  const waitingForDone=!responseDone?Math.max(0,2100-elapsed):0;
+  const delay=Math.max(remaining+((remaining>0)?90:0),playing.length?100:0,minTalkMs,settlingMs,waitingForDone);
+  if(delay>5){finishTimer=setTimeout(finishAudio,Math.max(50,Math.min(delay,2000)));return}
+  responseAudioStarted=false;
+  responseDone=false;
+  state("happy");
+  const generation=sequence,cycle=responseCycle;
+  happyTimer=setTimeout(()=>{
+   if(generation===sequence&&cycle===responseCycle&&active&&!userSpeaking&&mode==="happy")state("listening");
+  },1800);
+ }
+ function scheduleFinish(){
+  clearTimeout(finishTimer);
+  finishTimer=setTimeout(finishAudio,90);
+ }
  const original=label.textContent;
  function say(head,note){
   label.textContent=head;status.textContent=note;
@@ -25,8 +55,9 @@
   if(screen.hidden)return;
   const host=screen.querySelector(".voice-image-layer");
   const video=host?.querySelector("video");
-  if(window.PLUXSeamless&&host&&video)
+  if(window.PLUXSeamless&&host&&video){
    window.PLUXSeamless.set(video,host,next);
+  }
  }
  function presentation(on){
   active=on;
@@ -39,8 +70,9 @@
  }
  function state(s){
   visual(s==="speaking"?"talking":s==="thinking"?"thinking":s==="listening"?"listening":"idle");
-  if(s==="speaking")say("ПЛЮХ отвечает","Можешь перебить меня — я слушаю.");
+  if(s==="speaking")say("ПЛЮХ говорит","Можешь перебить меня — я слушаю.");
   else if(s==="thinking")say("ПЛЮХ думает","Подготавливаю ответ…");
+  else if(s==="happy")say("ПЛЮХ рад","Готово! Слушаю тебя дальше.");
   else if(s==="listening")say("ПЛЮХ слушает","Говори свободно. Нажми микрофон, чтобы закончить.");
  }
  function clearOutput(){
@@ -64,7 +96,12 @@
    if(playAt-speakerCtx.currentTime>5){clearOutput()}
    const source=speakerCtx.createBufferSource();
    source.buffer=audio;source.connect(speakerCtx.destination);
-   source.onended=()=>{playing=playing.filter(x=>x!==source);try{source.disconnect()}catch{}};
+   source.onended=()=>{
+    playing=playing.filter(x=>x!==source);
+    try{source.disconnect()}catch{}
+    // Network completion can be earlier than the last sound from the speaker.
+    if(responseAudioStarted&&playing.length===0)scheduleFinish();
+   };
    const time=Math.max(speakerCtx.currentTime+.025,playAt);
    source.start(time);playing.push(source);playAt=time+audio.duration;
   }catch{}
@@ -94,36 +131,64 @@
  }
  function handleEvent(evt){
   const name=String(evt?.type||"");
+  latestEvent=name.slice(0,100);
   if(name==="session.created"||name==="session.updated")return;
+  if(name==="error"){
+   const reason=evt?.error?.message;
+   if(reason)status.textContent="Arkheon: "+String(reason).slice(0,150);
+   return;
+  }
+  if(!sessionConfirmed)return; // Never speak before Russian instructions are acknowledged.
   if(name==="input_audio_buffer.speech_started"){
-    clearOutput();
-    state("listening");
-    return;
+   userSpeaking=true;ignoreAbortedResponse=true;
+   responseCycle++;responseDone=false;responseAudioStarted=false;
+   cancelEmotionTimers();clearOutput();
+   state("listening");return;
   }
-  if(name==="input_audio_buffer.speech_stopped"||name==="input_audio_buffer.committed"||
-     name==="conversation.item.input_audio_transcription.completed"){
-    state("thinking");return;
+  if(name==="input_audio_buffer.speech_stopped"||name==="input_audio_buffer.committed"){
+   userSpeaking=false;
+   if(mode!=="talking")state("thinking");
+   return;
   }
-  if(name==="response.created"){state("thinking");return}
+  if(name==="conversation.item.input_audio_transcription.completed"){
+   // A transcript may arrive AFTER audio started: it must never hide talking video.
+   if(!userSpeaking&&mode==="listening")state("thinking");
+   return;
+  }
+  if(name==="response.created"){
+   userSpeaking=false;ignoreAbortedResponse=false;
+   responseCycle++;responseDone=false;responseAudioStarted=false;
+   cancelEmotionTimers();
+   state("thinking");
+   return;
+  }
   if(name==="response.output_audio.delta"||name==="response.audio.delta"){
-    if(typeof evt.delta==="string"){if(mode!=="talking")state("speaking");playback(evt.delta)}
-    return;
+   if(ignoreAbortedResponse||typeof evt.delta!=="string")return;
+   lastAudioAt=Date.now();
+   responseDone=false;
+   if(!responseAudioStarted){
+    responseAudioStarted=true;speakingStartedAt=performance.now();
+    cancelEmotionTimers();state("speaking");
+   }
+   playback(evt.delta);
+   scheduleFinish();
+   return;
+  }
+  if(name==="response.output_audio.done"||name==="response.audio.done"){
+   responseDone=true;scheduleFinish();return;
   }
   if(name==="response.done"||name==="response.completed"){
-    // Queue might still be playing. Keep talking animation until decoded audio ends.
-    const remain=Math.max(0,(playAt-(speakerCtx?.currentTime||0))*1000);
-    const n=sequence;
-    setTimeout(()=>{if(n===sequence&&mode==="talking")state("listening")},Math.min(10000,remain+180));
-    return;
-  }
-  if(name==="error"){
-    const reason=evt?.error?.message;
-    if(reason)status.textContent="Arkheon: "+String(reason).slice(0,150);
+   if(ignoreAbortedResponse)return;
+   responseDone=true;
+   if(responseAudioStarted)scheduleFinish();
+   else if(!userSpeaking)state("listening");
+   return;
   }
  }
  async function stop(reason="Нажми на микрофон, чтобы поговорить с ПЛЮХ."){
   sequence++;
-  connecting=false;active=false;clearTimeout(timeout);
+  connecting=false;active=false;sessionConfirmed=false;clearTimeout(timeout);
+  cancelEmotionTimers();responseAudioStarted=false;responseDone=false;ignoreAbortedResponse=false;
   screen.classList.remove("plux126-request");
   const oldSocket=ws;ws=null;
   if(oldSocket){try{oldSocket.close(1000,"PLUX user ended session")}catch{}}
@@ -178,7 +243,8 @@
      socket.addEventListener("close",()=>reject(Error("Arkheon закрыл голосовое соединение.")),{once:true});
    });
    if(id!==sequence){socket.close();return}
-   active=true;connecting=false;clearTimeout(timeout);presentation(true);state("listening");
+   active=true;connecting=false;clearTimeout(timeout);presentation(true);
+   say("Настраиваю русский язык…","Проверяю язык и голос перед началом разговора.");
    socket.addEventListener("message",e=>{
      if(id!==sequence)return;
      try{handleEvent(JSON.parse(e.data))}catch{}
@@ -189,9 +255,24 @@
    socket.addEventListener("error",()=>{
      if(id===sequence)void stop("Связь с Arkheon прервалась.");
    });
+   const confirmed=new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{socket.removeEventListener("message",onConfig);reject(Error("Arkheon не подтвердил настройки русского языка."))},8500);
+    function onConfig(msg){
+     try{
+      const e=JSON.parse(msg.data);
+      if(e.type==="session.updated"){
+       clearTimeout(timer);socket.removeEventListener("message",onConfig);resolve(e.session);
+      }else if(e.type==="error"){
+       clearTimeout(timer);socket.removeEventListener("message",onConfig);
+       reject(Error("Arkheon отклонил настройки голоса: "+String(e.error?.message||"ошибка").slice(0,150)));
+      }
+     }catch{}
+    }
+    socket.addEventListener("message",onConfig);
+   });
    send({type:"session.update",session:{
      type:"realtime",
-     instructions:"Ты ПЛЮХ — умный, дружелюбный голосовой помощник. Всегда отвечай на русском языке. Манера общения: молодой энергичный мужчина, тёплый тембр, лёгкая улыбка в голосе, живые доброжелательные интонации, бодрый, но комфортный темп. Не говори как диктор и не используй канцелярит. Говори естественно и достаточно кратко: чаще одна-две фразы, если собеседник не просит подробностей. Не играй роль ребёнка, не кричи, не говори слишком быстро, не добавляй неуместный сленг. Уместный лёгкий юмор приветствуется. Слушай собеседника, допускай перебивания и не придумывай выполненные действия.",
+     instructions:"СИСТЕМНОЕ ПРАВИЛО: ОТВЕЧАЙ ИСКЛЮЧИТЕЛЬНО ПО-РУССКИ С ПЕРВОЙ ЖЕ РЕПЛИКИ. Не произноси английские приветствия, инструкции и вводные слова, даже если в контексте есть английский текст. Ты ПЛЮХ — умный, дружелюбный голосовой помощник. Твой стиль: молодой энергичный мужской голос, тёплый тембр, лёгкая улыбка, естественные доброжелательные интонации, бодрый, но комфортный темп. Без дикторской манеры и канцелярита. Отвечай обычно одной-двумя короткими фразами, подробнее по просьбе. Не играй роль ребёнка, не кричи и не добавляй неуместный сленг. Уместен лёгкий юмор. Слушай собеседника, допускай перебивания и не выдумывай выполненные действия. ВАЖНО: ЯЗЫК КАЖДОГО ОТВЕТА — РУССКИЙ.",
      audio:{
        input:{format:{type:"audio/pcm",rate:24000},turn_detection:{
          type:"server_vad",threshold:.5,prefix_padding_ms:300,silence_duration_ms:550,
@@ -200,6 +281,9 @@
        output:{format:{type:"audio/pcm",rate:24000},voice:"ash"}
      }
    }});
+   await confirmed;
+   if(id!==sequence)return;
+   sessionConfirmed=true;
    await openMicrophone(media);
    if(id!==sequence)return;
    state("listening");
@@ -221,12 +305,24 @@
  for(const id of ["voice-back","voice-end"]){
   document.getElementById(id)?.addEventListener("click",()=>{if(active||connecting)void stop()},{capture:true});
  }
- new MutationObserver(()=>{if(screen.hidden&&(active||connecting))void stop()})
-  .observe(screen,{attributes:true,attributeFilter:["hidden"]});
+ new MutationObserver(()=>{
+   if(screen.hidden&&(active||connecting))void stop();
+   else if(!screen.hidden&&active){
+    // Home quick microphone can open the voice screen after network setup.
+    visual(mode);
+    window.PLUXSeamless?.sync?.();
+   }
+  }).observe(screen,{attributes:true,attributeFilter:["hidden"]});
  document.addEventListener("visibilitychange",()=>{
   if(document.hidden&&(active||connecting))void stop("Разговор остановлен при сворачивании приложения.");
  });
  window.addEventListener("pagehide",()=>{if(active||connecting)void stop()});
- window.PLUXArkheon={start,stop,isActive:()=>active,isConnecting:()=>connecting};
+ window.PLUXArkheon={
+  start,stop,isActive:()=>active,isConnecting:()=>connecting,
+  debug:()=>({state:mode,connected:active,russianConfigured:sessionConfirmed,
+   streamEvent:latestEvent,playingChunks:playing.length,
+   video:screen.querySelector(".voice-image-layer")?.dataset.pluxEmotion||null,
+   videoDirector:window.PLUXSeamless?.debug?.()||[]})
+ };
  say("Голосовой режим",original||"Нажми на микрофон, чтобы поговорить с ПЛЮХ.");
 })();
