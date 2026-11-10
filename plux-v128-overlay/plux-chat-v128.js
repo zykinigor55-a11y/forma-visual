@@ -36,6 +36,8 @@
       &&/^data:image\/(?:png|jpeg|webp);base64,/.test(item.dataUrl)?item.dataUrl:null;
     const pdfLink=item.type==='pdf'&&typeof item.url==='string'
       &&/^https:\/\/pluh-voice-demo\.onrender\.com\/api\/download\/pdf\/[A-Za-z0-9_-]{43}$/.test(item.url)?item.url:null;
+    const imageLink=item.type==='image'&&typeof item.url==='string'
+      &&/^https:\/\/pluh-voice-demo\.onrender\.com\/api\/download\/image\/[A-Za-z0-9_-]{43}$/.test(item.url)?item.url:null;
     const uri=safeImageData||pdfLink||(item.type==='pdf'?downloadable(item.dataUrl):null)
       ||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
     if(!uri){onImageReady(false);append('info','Не удалось открыть вложение от генератора.');return}
@@ -82,6 +84,11 @@
       action.addEventListener('click',event=>{
         if(!navigator.onLine){event.preventDefault();append('info','Нет интернета. Повтори загрузку PDF после подключения.');}
       });
+    }else if(imageLink){
+      action.href=imageLink+'?download=1';
+      action.removeAttribute('target');
+      action.removeAttribute('download');
+      action.setAttribute('aria-label','Скачать готовое изображение');
     }else if(action.href.startsWith('blob:')||action.href.startsWith('data:'))action.download=file;
     else{action.target='_blank';action.rel='noopener noreferrer'}
     bubble.append(action);
