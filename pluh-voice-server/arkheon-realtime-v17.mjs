@@ -66,3 +66,31 @@ export async function arkheonSession(req,res){
   return json(res,code,{error:code===429?e.message:e?.name==="TimeoutError"?"Arkheon не ответил вовремя.":"Не удалось связаться с Arkheon."});
  }
 }
+
+
+/** Non-billable voice inventory check. This does not synthesize audio or expose the API key. */
+export async function arkheonVoiceProbe(){
+ const key=String(process.env.ARKHEON_API_KEY||"").trim();
+ if(!key)return {configured:false,checked:false,voices:[]};
+ try{
+  const response=await fetch("https://arkheonchat.com/v1/audio/models",{
+   method:"GET",headers:{Authorization:"Bearer "+key,"Accept":"application/json"},
+   signal:AbortSignal.timeout(9000)
+  });
+  if(!response.ok)return {configured:true,checked:false,status:response.status,voices:[]};
+  const info=await response.json();
+  const values=[];
+  const scan=x=>{
+   if(!x||typeof x!=="object"||values.length>100)return;
+   if(Array.isArray(x)){for(const item of x.slice(0,100))scan(item);return}
+   if(typeof x.id==="string"&&/^(ash|echo|verse|alloy|coral|marin|cedar|onyx|puck|male|ru[-_])/i.test(x.id))
+    values.push(x.id.slice(0,70));
+   if(typeof x.name==="string"&&/^(ash|echo|verse|alloy|coral|marin|cedar|onyx)/i.test(x.name))
+    values.push(x.name.slice(0,70));
+   for(const k of ["data","models","voices","items","supported_voices","available_voices"])if(x[k])scan(x[k]);
+  };
+  scan(info);
+  return {configured:true,checked:true,voices:[...new Set(values)].slice(0,40),
+    topLevelKeys:typeof info==="object"?Object.keys(info||{}).slice(0,7):[]};
+ }catch{return {configured:true,checked:false,voices:[]};}
+}
