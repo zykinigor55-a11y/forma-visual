@@ -5,6 +5,7 @@
 import {randomBytes,createHash} from "node:crypto";
 import {makeGptImage,makePdf} from "./chat-artifacts-v14.mjs";
 import {storeGeneratedPdf} from "./pdf-download-v27.mjs";
+import {storeGeneratedImage} from "./image-download-v30.mjs";
 
 const ORIGIN="https://plux-v12-2-2k-fixed.onrender.com";
 const TTL=18*60*1000,MAX_JOBS=8,MAX_ACTIVE=3,MAX_PER_IP=2;
@@ -52,9 +53,10 @@ export function beginGenerationJob({kind,prompt,messages,secret,imageKey,ip}){
  // reissue an upstream request, avoiding duplicate paid generations.
  void Promise.resolve().then(async()=>{
   try{
-   const artifact=kind==="image"
+   let artifact=kind==="image"
     ?await makeGptImage(prompt,imageKey||secret,ip)
     :await makePdf(prompt,messages,secret,ip);
+   if(kind==="image")artifact=storeGeneratedImage(artifact);
    if(kind==="pdf"){
     artifact.url=storeGeneratedPdf(artifact);
     // PDF is delivered as a genuine HTTPS download by Android DownloadManager.
