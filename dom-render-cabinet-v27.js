@@ -5,11 +5,13 @@ const d=document;
 let previousFocus=null,shown='account',lastStatus=null;
 function txt(id,value){const e=$(id);if(e)e.textContent=String(value)}
 function switchView(view){
- shown=view==='contacts'?'contacts':'account';
+ shown=['account','gallery','contacts'].includes(view)?view:'account';
  $('cabinetAccount').hidden=shown!=='account';
+ $('cabinetGallery').hidden=shown!=='gallery';
  $('cabinetContacts').hidden=shown!=='contacts';
- txt('cabinetTitle',shown==='account'?'Личный кабинет':'Контакты');
+ txt('cabinetTitle',shown==='account'?'Личный кабинет':shown==='gallery'?'Галерея работ':'Контакты');
  d.querySelectorAll('[data-cabinet-tab]').forEach(btn=>{const on=btn.dataset.cabinetTab===shown;btn.classList.toggle('active',on);btn.setAttribute('aria-selected',String(on))});
+ if(shown==='gallery')window.DOM_RENDER_GALLERY?.activate?.();
 }
 function open(view){
  previousFocus=d.activeElement;
@@ -17,7 +19,7 @@ function open(view){
  $('cabinetCover').hidden=false;
  d.body.classList.add('cabinet-open');
  $('cabinetClose').focus();
- refresh();
+ if(shown==='account')refresh();
 }
 function close(){
  $('cabinetCover').hidden=true;
@@ -63,6 +65,7 @@ function init(){
  d.querySelectorAll('[data-open-cabinet]').forEach(el=>el.addEventListener('click',()=>open(el.dataset.openCabinet)));
  d.querySelectorAll('[data-cabinet-tab]').forEach(el=>el.addEventListener('click',()=>switchView(el.dataset.cabinetTab)));
  $('cabinetClose').addEventListener('click',close);
+ $('cabinetGoGallery')?.addEventListener('click',()=>switchView('gallery'));
  $('cabinetRefresh').addEventListener('click',refresh);
  $('cabinetCover').addEventListener('click',ev=>{if(ev.target===$('cabinetCover'))close()});
  d.addEventListener('keydown',ev=>{if($('cabinetCover').hidden)return;if(ev.key==='Escape'){ev.preventDefault();close()}});
