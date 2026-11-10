@@ -113,6 +113,13 @@ for(const asset of ['plux-v127.css','plux-v127.js','assets/videos-v106/01_idle.m
 }
 if(!html127.includes('plux127-intro')||!html127.includes('plux-release-v127'))throw Error('V12.7 intro not installed');
 console.log('PLUX V12.7 Fullscreen Welcome installed successfully');
+for(const filename of ['plux-v127.js','onboard-cinematic-v116.js','plux-typewriter-v124.js']){
+ const input=readFileSync(join(root,filename),'utf8').split('\n');
+ const chosen=input.map((line,i)=>({line:i+1,value:line}))
+  .filter(item=>/audioUnlocked|typeScript|playSfx|typing|typewriter|sound|async function type|letter|char|intro|const entries/i.test(item.value))
+  .slice(0,70);
+ console.log('PLUX SOUND AUDIT '+filename+' '+JSON.stringify(chosen).slice(0,7000));
+}
 
 
 /* PLUX V12.8 Chat Proxy: only backend calls API Market, never the browser. */
