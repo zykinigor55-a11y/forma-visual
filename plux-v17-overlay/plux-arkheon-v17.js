@@ -69,7 +69,7 @@
   mic.setAttribute("aria-label",on?"Завершить голосовой разговор":"Начать голосовой разговор");
  }
  function state(s){
-  visual(s==="speaking"?"talking":s==="thinking"?"thinking":s==="listening"?"listening":"idle");
+  visual(s==="speaking"?"talking":s==="thinking"?"thinking":s==="listening"?"listening":s==="happy"?"happy":"idle");
   if(s==="speaking")say("ПЛЮХ говорит","Можешь перебить меня — я слушаю.");
   else if(s==="thinking")say("ПЛЮХ думает","Подготавливаю ответ…");
   else if(s==="happy")say("ПЛЮХ рад","Готово! Слушаю тебя дальше.");
