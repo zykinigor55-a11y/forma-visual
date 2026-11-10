@@ -668,3 +668,23 @@ for(const file of ['plux-chat-v128.js','plux-modes-v26.js','plux-arkheon-v17.js'
 }
 if(!v27Html.includes('/plux-chat-v128.js?v=2701'))throw Error('PLUX V27 chat cache-bust missing');
 console.log('PLUX V27: downloadable PDFs, no dead bell, proper image-create icon and low-bandwidth voice jitter recovery');
+
+
+/* PLUX V28: asynchronous generation of real GPT Image 2 photos and PDF files.
+ * Polling survives network disconnects and does not trigger duplicate paid jobs.
+ * Web-only update: existing Android installations receive it from Render.
+ */
+{
+ const path=join(root,'index.html');
+ let html=readFileSync(path,'utf8');
+ if(!html.includes('plux-release-v27'))throw Error('PLUX V27 prerequisite missing');
+ html=html.replace('</head>','<meta name="plux-release-v28" content="reliable-async-gpt-image-and-pdf-jobs"></head>');
+ html=html.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=2801');
+ writeFileSync(path,html);
+ const swFile=join(root,'sw.js');
+ let sw=readFileSync(swFile,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2801');
+ writeFileSync(swFile,sw);
+ plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
+ if(!html.includes('/plux-chat-v128.js?v=2801'))throw Error('PLUX V28 chat asset not loaded');
+ console.log('PLUX V28 web ready: true GPT Image 2/PDF job polling, Russian intent, recovery after mobile disconnect');
+}
