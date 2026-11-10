@@ -74,3 +74,23 @@
 .plux16-again{background:transparent;border-color:rgba(178,239,207,.24)}
 @media(max-width:370px){.plux16-card{padding:17px}.plux16-fields{gap:7px}.plux16-form select{padding:10px 5px}.plux16-head b{font-size:19px}}
 @media(prefers-reduced-motion:reduce){.plux16-orb{animation:none}.plux16-quote:active,.plux16-confirm:active,.plux16-open:active{transform:none}}
+
+/* PLUX 17 photo-to-video — one image, one video, original PLUX glass. */
+.plux17-photo{padding:12px;border-radius:20px;border:1px solid rgba(146,248,205,.22);background:rgba(3,19,17,.63);display:flex;flex-direction:column;gap:9px}
+.plux17-photo-inner{display:flex;align-items:center;justify-content:center;min-height:116px;max-height:240px;border-radius:15px;overflow:hidden;background:radial-gradient(circle at 50% 30%,rgba(26,107,79,.16),#01110e 70%);border:1px solid rgba(132,206,175,.18)}
+.plux17-photo-inner img{display:block;max-height:240px;width:100%;object-fit:contain}
+.plux17-photo-inner img[hidden],.plux17-placeholder[hidden],.plux17-clear[hidden]{display:none!important}
+.plux17-placeholder{font-size:12px;color:#769a8d}
+.plux17-photo-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.plux17-pick,.plux17-clear{border-radius:18px;border:1px solid rgba(168,255,215,.4);background:linear-gradient(145deg,#114b3b,#052821);color:#d6ffed;font-size:12px;padding:10px 15px;min-height:40px;cursor:pointer;box-shadow:inset 0 1px 2px rgba(255,255,255,.12)}
+.plux17-pick:focus-within,.plux17-clear:focus-visible{outline:2px solid #baffdd;outline-offset:2px}
+.plux17-photo>small{font-size:10px;line-height:1.5;color:#85afa0}
+.plux17-animate{display:block;width:100%;min-height:44px;margin-top:10px;padding:11px 16px;border-radius:22px;cursor:pointer;
+border:1px solid rgba(175,255,218,.47);color:#f0fff7;font-size:13px;font-weight:650;
+background:linear-gradient(140deg,#137758,#084934 70%,#04231c);
+box-shadow:inset 0 1px 2px rgba(249,255,250,.26),inset 0 -8px 18px rgba(0,174,111,.24);transition:transform 150ms ease-out}
+.plux17-animate:active{transform:scale(.96)}
+.plux17-animate:focus-visible{outline:2px solid #d2ffe9;outline-offset:2px}
+.plux129-result .plux17-animate-create{max-width:100%;margin:12px auto}
+.plux16-form select:disabled{opacity:.6}
+@media(prefers-reduced-motion:reduce){.plux17-animate{transition:none}.plux17-animate:active{transform:none}}
