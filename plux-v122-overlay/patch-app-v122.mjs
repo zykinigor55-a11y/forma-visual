@@ -515,3 +515,33 @@ writeFileSync(v24SWPath,v24SW);
 for(const file of ['plux-chat-v128.js','plux-v129.js','plux-video-v16.js','plux-arkheon-v17.js'])plux123Exec(process.execPath,['--check',join(root,file)],{stdio:'inherit'});
 if(!v24HTML.includes('/plux-gallery-v24.js?v=2401')||!v24HTML.includes('/plux-music-v24.js?v=2401'))throw Error('V24 scripts not installed');
 console.log('PLUX V24: IndexedDB Gallery replaces More, Audius music, responsive voice, full image cards, four theme-aware chat colors');
+
+
+/* PLUX direct Render APK mirror: Android in-app browsers sometimes fail
+ * to download GitHub Releases (cross-domain redirects). During static-site
+ * build, mirror the already published, exact V24 APK to the same origin.
+ * A mirror failure must not break the already working PЛЮХ web app.
+ */
+{
+ const release="https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v24-20261110/PLUX-Android.apk";
+ let ok=false;
+ for(let attempt=1;attempt<=3&&!ok;attempt++){
+  try{
+   const response=await fetch(release,{redirect:'follow',signal:AbortSignal.timeout(50000),headers:{'Accept':'application/octet-stream','User-Agent':'PLUX-Render-APK-Mirror/1.0'}});
+   if(!response.ok)throw Error('GitHub release download status '+response.status);
+   const declared=Number(response.headers.get('content-length')||0);
+   if(declared>20000000)throw Error('Oversize APK');
+   const bytes=new Uint8Array(await response.arrayBuffer());
+   if(bytes.byteLength<2000000||bytes.byteLength>20000000||bytes[0]!==0x50||bytes[1]!==0x4b)
+    throw Error('Invalid Android package payload');
+   writeFileSync(join(root,'PLUX-Android-V24.apk'),bytes);
+   console.log('PLUX Android V24 APK mirror ready:',bytes.byteLength,'bytes at /PLUX-Android-V24.apk');
+   ok=true;
+  }catch(e){console.warn('PLUX APK mirror attempt',attempt,'failed:',String(e?.message||e).slice(0,160));}
+ }
+ if(!ok)console.warn('PLUX APK mirror unavailable; app remains live; use official GitHub Release download.');
+ // A stable in-app installation guide is accessible even if the mirror
+ // download itself was temporarily blocked by GitHub's CDN.
+ const site='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Установить ПЛЮХ на Android</title><style>body{min-height:100dvh;margin:0;background:#020b0c;color:#f1fff8;font:16px system-ui;display:grid;place-items:center;padding:20px;box-sizing:border-box}main{width:min(420px,100%);box-sizing:border-box;padding:28px 22px;border:1px solid #408b72;border-radius:28px;background:linear-gradient(145deg,#10362d,#030e11);box-shadow:0 0 60px #145b3a3b}h1{font-size:28px;margin:0 0 10px}p{color:#bddbd0;line-height:1.5}a{display:block;margin:13px 0;padding:15px;border-radius:16px;background:#154d3d;border:1px solid #70c7a6;color:#effff5;text-decoration:none;text-align:center;font-weight:650}small{color:#a4c2b9;line-height:1.4;display:block}</style></head><body><main><h1>ПЛЮХ для Android</h1><p>Версия V24. Выбери ссылку для скачивания установочного APK.</p><a href="/PLUX-Android-V24.apk" download="PLUX-Android-V24.apk">Скачать APK с Render</a><a href="https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v24-20261110/PLUX-Android.apk" rel="noopener noreferrer">Запасная ссылка GitHub</a><small>Открывай в Chrome или Яндекс Браузере. Скачанный файл находится в папке «Загрузки». Для установки может понадобиться разрешение на установку из выбранного браузера.</small></main></body></html>';
+ writeFileSync(join(root,'install-android.html'),site);
+}
