@@ -67,20 +67,38 @@ async function readBody(req,maxBytes=2600){
  for await(const part of req){len+=part.length;if(len>maxBytes)throw problem(413,"Слишком большой запрос.");list.push(part)}
  try{return JSON.parse(Buffer.concat(list).toString("utf8"))}catch{throw problem(400,"Неверный формат запроса.")}
 }
+/* The Android photo picker can report image/png for JPEG bytes (or vice versa).
+ * Always trust the file signature, not the browser-declared MIME type.
+ * Invalid or undecodable formats must be re-encoded by the client before upload.
+ */
+export function parseUploadedPhoto(dataUrl){
+ const encoded=String(dataUrl||"");
+ if(encoded.length>13_000_000)throw problem(413,"Фото слишком большое. Максимум 9 МБ.");
+ const match=/^data:(image\/(?:png|jpe?g|webp|heic|heif|avif)|application\/octet-stream);base64,([a-z0-9+/=\s]+)$/i.exec(encoded);
+ if(!match)throw problem(415,"Не удалось прочитать формат фото. Выбери JPG, PNG или WebP.");
+ const base64=match[2].replace(/\s/g,"");
+ if(base64.length%4===1||!/^[A-Za-z0-9+/]*={0,2}$/.test(base64))
+  throw problem(415,"Неверная кодировка фото. Загрузи изображение повторно.");
+ const bytes=Buffer.from(base64,"base64");
+ if(bytes.length<100||bytes.length>9_000_000)
+  throw problem(413,"Размер исходного фото должен быть от 100 байт до 9 МБ.");
+ let mime="",extension="";
+ if(bytes.length>=8&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))){
+  mime="image/png";extension="png";
+ }else if(bytes[0]===255&&bytes[1]===216&&bytes[2]===255){
+  mime="image/jpeg";extension="jpg";
+ }else if(bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP"){
+  mime="image/webp";extension="webp";
+ }else{
+  throw problem(415,"Телефон передал фото в неподходящем формате. Выбери его снова — ПЛЮХ автоматически преобразует в JPEG.");
+ }
+ return {bytes,mime,extension};
+}
 async function uploadImage(body,ip){
  prune();
- const encoded=String(body?.dataUrl||"");
- const match=/^data:(image\/(?:png|jpeg|webp));base64,([a-z0-9+/=]+)$/i.exec(encoded);
- if(!match)throw problem(415,"Поддерживаются PNG, JPEG и WebP до 9 МБ.");
- const bytes=Buffer.from(match[2],"base64");
- if(bytes.length<300||bytes.length>9_000_000)throw problem(413,"Фото должно быть не больше 9 МБ.");
- const mime=match[1].toLowerCase();
- const valid=mime==="image/png"?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
-   :mime==="image/jpeg"?bytes[0]===255&&bytes[1]===216
-   :bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
- if(!valid)throw problem(415,"Фото повреждено или не совпадает с форматом.");
+ const {bytes,mime,extension}=parseUploadedPhoto(body?.dataUrl);
  const form=new FormData();
- form.append("file",new Blob([bytes],{type:mime}),mime==="image/jpeg"?"plux.jpg":mime==="image/png"?"plux.png":"plux.webp");
+ form.append("file",new Blob([bytes],{type:mime}),"plux."+extension);
  const upload=await fetch(BASE+"/files",{
    method:"POST",headers:{Authorization:"Bearer "+secret()},body:form,
    signal:AbortSignal.timeout(35000)
@@ -88,11 +106,13 @@ async function uploadImage(body,ip){
  const data=await upload.json().catch(()=>null);
  if(!upload.ok)throw problem(502,upload.status===402?"Недостаточно средств Cyhub.":"Cyhub не принял исходное фото (HTTP "+upload.status+").");
  let url;try{url=new URL(data?.url)}catch{}
- if(!url||url.protocol!=="https:"||url.username||url.password)throw problem(502,"Cyhub не вернул прямую ссылку на фото.");
+ if(!url||url.protocol!=="https:"||url.username||url.password)
+  throw problem(502,"Cyhub не вернул прямую ссылку на фото.");
  const id=randomUUID();
  sources.set(id,{created:Date.now(),ip,url:url.toString()});
- return {sourceId:id,name:"Исходное фото готово",expiresSeconds:3300};
+ return {sourceId:id,name:"Исходное фото загружено",expiresSeconds:3300};
 }
+
 async function provider(path,opts={}){
  const response=await fetch(BASE+path,{
    ...opts,
