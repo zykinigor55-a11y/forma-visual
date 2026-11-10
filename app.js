@@ -734,15 +734,22 @@ function renderAnimationPanel(){
  renderAnimationCards('animGrades','grade',lib.grades,'grade',s.grade);
  for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRatio','ratio'],['animIntensity','intensity']])$(id).value=String(s[field]);
  if($('animExtra').value!==s.promptExtra)$('animExtra').value=s.promptExtra;
- const useProject=s.previewSource==='project'&&!!(renderURL||sourceURL);
- const src=useProject?(renderURL||sourceURL):ANIM_DEMO_HOUSE;
- if($('animPreviewImage').getAttribute('src')!==src)$('animPreviewImage').src=src;
- $('animPreviewState').textContent=useProject?'Исходное изображение проекта':'Демонстрационный архитектурный дом';
+ // The animation preview must show exactly the current project's selected AFTER image.
+ // No unrelated sample house may replace a source or a completed AI render.
+ const preview=renderURL
+   ?{src:renderURL,label:project.demo?'Демо-проект · вариант после':'Мой проект · вариант после'}
+   :project.hasSource&&sourceURL
+     ?{src:sourceURL,label:'Мой проект · исходное изображение'}
+     :{src:demoPhoto,label:'Демо-проект · вариант после'};
+ const previewImg=$('animPreviewImage');
+ if(previewImg.getAttribute('src')!==preview.src)previewImg.src=preview.src;
+ $('animPreviewState').textContent=preview.label;
  document.querySelectorAll('[data-anim-source]').forEach(el=>{
-  const active=el.dataset.animSource===(useProject?'project':'demo');
+  const active=el.dataset.animSource==='project';
   el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active));
  });
  renderAnimationSummary();
+ window.DOM_RENDER_HOUSE_PREVIEW?.sync?.();
 }
 function updateAnimationSetting(field,value,rerender=true){
  if(!project||!window.DOM_RENDER_ANIMATION)return;
@@ -1125,7 +1132,7 @@ async function generateBatch(){
    batchProject.activeRender=id;
    renderURL=url;
    $('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='ПАКЕТ '+position.toUpperCase();
-   made++;save();renderResults();renderVariantsPanel();
+   made++;save();renderResults();renderVariantsPanel();renderAnimationPanel();
   }
   if(current().keepReference&&firstResult){
    await setMedia(mediaKey('ref'),firstResult);batchProject.reference='ref';save();
@@ -1144,7 +1151,7 @@ async function generateBatch(){
  }
 }
 async function urlToDataURL(url){if(url.startsWith('data:'))return url;const response=await fetch(url);if(!response.ok)throw Error('Не удалось загрузить справочное изображение');const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader;r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)})}
-async function showResult(id){$('beforeImg').src=(id==='source'||id==='demo'?sourceURL:await getMedia(mediaKey('input_'+id))||sourceURL);if(id==='source'){project.activeRender=null;renderURL='';$('afterImg').src=sourceURL;$('noRender').hidden=false;$('resultTag').textContent='НЕТ РЕНДЕРА';$('splitSlider').disabled=false}else if(id==='demo'&&project.demo){project.activeRender='demo';renderURL=demoPhoto;$('afterImg').src=renderURL;$('noRender').hidden=true;$('resultTag').textContent='ДЕМОНСТРАЦИЯ';$('splitSlider').disabled=false}else{const url=await getMedia(mediaKey('render_'+id));if(!url){toast('Результат не найден в локальном хранилище');return}project.activeRender=id;renderURL=url;$('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='AI-РЕЗУЛЬТАТ';$('splitSlider').disabled=false}save();renderResults();renderVariantsPanel();setViewerMode(viewerMode);$('materialPreview').getContext('2d').clearRect(0,0,$('materialPreview').width,$('materialPreview').height)}
+async function showResult(id){$('beforeImg').src=(id==='source'||id==='demo'?sourceURL:await getMedia(mediaKey('input_'+id))||sourceURL);if(id==='source'){project.activeRender=null;renderURL='';$('afterImg').src=sourceURL;$('noRender').hidden=false;$('resultTag').textContent='НЕТ РЕНДЕРА';$('splitSlider').disabled=false}else if(id==='demo'&&project.demo){project.activeRender='demo';renderURL=demoPhoto;$('afterImg').src=renderURL;$('noRender').hidden=true;$('resultTag').textContent='ДЕМОНСТРАЦИЯ';$('splitSlider').disabled=false}else{const url=await getMedia(mediaKey('render_'+id));if(!url){toast('Результат не найден в локальном хранилище');return}project.activeRender=id;renderURL=url;$('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='AI-РЕЗУЛЬТАТ';$('splitSlider').disabled=false}save();renderResults();renderVariantsPanel();setViewerMode(viewerMode);renderAnimationPanel();$('materialPreview').getContext('2d').clearRect(0,0,$('materialPreview').width,$('materialPreview').height)}
 async function checkAPI(timeoutMs=20000){try{const res=await fetch('/api/status',{cache:'no-store',signal:AbortSignal.timeout(timeoutMs)});if(!res.ok)throw Error('Not running');const data=await res.json();aiConnected=!!data.ready;apiCheckError=''}catch{aiConnected=false;apiCheckError='Не удалось связаться с сервером AI. Повторите попытку через несколько секунд.'}$('providerFoot').textContent=aiConnected?'Nano Banana подключена':apiCheckError?'Проверить подключение AI':'Демо: AI не подключён';return aiConnected}
 async function init(){let saved;try{saved=JSON.parse(localStorage.getItem(STKEY)||'null')}catch{}projects=saved?.projects?.length?saved.projects:[makeProject('Резиденция 01',true)];try{customMaterials=JSON.parse(localStorage.getItem(MTKEY)||'[]')}catch{customMaterials=[]}for(const m of customMaterials){const value=await getMedia('material_'+m.id);if(value)imageCache.set('material_'+m.id,value)}await loadProject(saved?.activeId||projects[0].id);initDrawEvents();bind();bindTouchComparison();syncDemoWithSettings();checkAPI();}
 /* Atmosphere presets control ONLY season, weather and light, never the surroundings. */
