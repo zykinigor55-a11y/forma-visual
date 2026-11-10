@@ -456,3 +456,29 @@ for(const side of [192,512]){
     throw Error('V23 undistorted launcher icon missing: '+side);
 }
 console.log('PLUX V23 aspect-correct green mascot icons 192/512 ready');
+
+
+/* PLUX V23: four coordinated premium glass themes, including original video
+ * tint. No new video calls, API keys or changes to microphone capture.
+ */
+for(const f of ['plux-themes-v23.js','plux-themes-v23.css']){
+  const from=join('plux-v23-overlay',f);
+  if(statSync(from).size<1800)throw Error('Missing PLUX V23 theme file: '+f);
+  writeFileSync(join(root,f),readFileSync(from));
+}
+plux123Exec(process.execPath,['--check',join(root,'plux-themes-v23.js')],{stdio:'inherit'});
+const v23ThemePage=join(root,'index.html');let v23ThemeHtml=readFileSync(v23ThemePage,'utf8');
+if(!v23ThemeHtml.includes('plux-release-v22'))throw Error('V22 prerequisite missing');
+v23ThemeHtml=v23ThemeHtml.replace('</head>',
+ '<meta name="plux-release-v23" content="four-crystal-themes-and-voice-stability"><link rel="stylesheet" href="/plux-themes-v23.css?v=2301"></head>');
+v23ThemeHtml=v23ThemeHtml.replace('</body>',
+ '<script src="/plux-themes-v23.js?v=2301" defer></script></body>');
+v23ThemeHtml=v23ThemeHtml.replace(/\/plux-arkheon-v17\.js\?v=\d+/g,'/plux-arkheon-v17.js?v=2301');
+writeFileSync(v23ThemePage,v23ThemeHtml);
+const v23SWPath=join(root,'sw.js');
+let v23Sw=readFileSync(v23SWPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2301');
+if(!v23Sw.includes("'/plux-themes-v23.js'"))
+  v23Sw=v23Sw.replace("'/plux-v22.css'","'/plux-v22.css','/plux-themes-v23.js','/plux-themes-v23.css'");
+writeFileSync(v23SWPath,v23Sw);
+if(!v23ThemeHtml.includes('/plux-themes-v23.js?v=2301'))throw Error('V23 themes not loaded');
+console.log('PLUX V23: four accessible themes with recolored five-state video, improved realtime conversation and undistorted launcher icon');
