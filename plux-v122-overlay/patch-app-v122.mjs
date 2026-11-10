@@ -156,3 +156,18 @@ if(!sw129.includes("'/plux-v129.js'")){
 writeFileSync(plux129SW,sw129);
 if(!plux129HTML.includes('/plux-v129.js'))throw Error('PLUX V12.9 script missing');
 console.log('PLUX V12.9 attachment picker and Nano Banana image generator ready');
+
+/* PLUX V13.0 Clean Screen — stylesheet is ordered after all earlier versions. */
+const v130css=readFileSync('plux-v130-overlay/plux-v130.css','utf8');
+if(v130css.length<1500)throw Error('PLUX V13.0 CSS missing');
+writeFileSync(join(root,'plux-v130.css'),v130css);
+const v130html=join(root,'index.html');
+let p130=readFileSync(v130html,'utf8');
+p130=p130.replace('</head>','<meta name="plux-release-v130" content="clean-native-header-and-animated-gallery"><link rel="stylesheet" href="/plux-v130.css?v=1301"></head>');
+p130=p130.replace(/(<meta name="plux-version" content=")[^"]+/,'$113.0');
+writeFileSync(v130html,p130);
+const v130sw=join(root,'sw.js');
+let p130sw=readFileSync(v130sw,'utf8').replace(/plux-emerald-v12\\d+/g,'plux-emerald-v130');
+if(!p130sw.includes("'/plux-v130.css'"))p130sw=p130sw.replace("'/plux-v129.js'","'/plux-v129.js','/plux-v130.css'");
+writeFileSync(v130sw,p130sw);
+console.log('PLUX V13.0 hidden fake status/chrome, logo subtitle removed, gallery drift restored');
