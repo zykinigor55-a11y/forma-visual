@@ -270,6 +270,7 @@
   timeout=setTimeout(()=>{if(id===sequence&&!active)void stop("Соединение с Arkheon не установлено.")},28000);
   try{
    const media=await microphonePromise;
+   if(id===sequence)status.textContent="Микрофон подключён. Устанавливаю голосовую связь…";
    if(id!==sequence){media.getTracks().forEach(t=>t.stop());return}
    stream=media;
    const response=await fetch(backend+"/api/arkheon/token",{
@@ -339,7 +340,11 @@
    state("listening");
   }catch(e){
    if(id!==sequence)return;
-   const detail=e?.name==="TimeoutError"?"Сервер Arkheon не отвечает. Попробуй позже.":String(e?.message||"Не удалось начать разговор.");
+   const detail=e?.name==="TimeoutError"?"Сервер голосовой связи не отвечает. Попробуй позже."
+    :e?.name==="NotAllowedError"?"Разреши микрофон: Настройки Android → Приложения → ПЛЮХ → Разрешения → Микрофон."
+    :e?.name==="NotReadableError"?"Микрофон занят другим приложением или не готов. Закрой другие приложения и повтори."
+    :e?.name==="NotFoundError"?"Микрофон не найден. Проверь устройство."
+    :String(e?.message||"Не удалось начать разговор.");
    await stop(detail.slice(0,200));
   }
  }
@@ -352,6 +357,12 @@
  // On the home screen, user presses the crystal mic: start media permission
  // synchronously in this gesture while the old app navigates to voice screen.
  launch?.addEventListener("click",()=>{if(!active&&!connecting)void start()},{capture:true});
+ // The welcome panel on Home is also a microphone affordance. Start the
+ // permission request on the actual touch, not only after navigation.
+ document.getElementById("speech-button")?.addEventListener("click",()=>{
+  if(!active&&!connecting)void start();
+ },{capture:true});
+
  for(const id of ["voice-back","voice-end"]){
   document.getElementById(id)?.addEventListener("click",()=>{if(active||connecting)void stop()},{capture:true});
  }
