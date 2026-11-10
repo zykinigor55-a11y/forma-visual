@@ -2,6 +2,12 @@ import assert from "node:assert/strict";
 import {artifactIntent,buildRussianPdf} from "./chat-artifacts-v14.mjs";
 assert.equal(artifactIntent("Нарисуй изображение современного дома"),"image");
 assert.equal(artifactIntent("Сделай PDF-презентацию проекта дома"),"pdf");
+assert.equal(artifactIntent("Нужен пдф альбос с фото, как убрать кротов"),"pdf");
+assert.equal(artifactIntent("Сделай пдф доклад про собак шпицов"),"pdf");
+assert.equal(artifactIntent("PDF альбом про собак"),"pdf");
+assert.equal(artifactIntent("Фото слона в сапогах создай"),"image");
+assert.equal(artifactIntent("Что такое PDF?"),null);
+
 assert.equal(artifactIntent("Как создать PDF?"),null);
 assert.equal(artifactIntent("Напиши промпт для изображения"),null);
 assert.equal(artifactIntent("Полосатая корова фото"),"image","noun-photo prompt must use real generator");
