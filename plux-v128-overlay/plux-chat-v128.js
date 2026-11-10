@@ -132,6 +132,38 @@
     const timer=setInterval(()=>{if(ended)return;step=Math.min(step+1,notes.length-1);const label=bubble.querySelector('.plux22-gen-note');if(label)label.textContent=notes[step];feed.scrollTop=feed.scrollHeight},8500);
     return {stop(){if(ended)return;ended=true;clearInterval(timer);row.remove();feed.scrollTop=feed.scrollHeight},ready(){const label=bubble.querySelector('.plux22-gen-note');if(label)label.textContent=kind==='pdf'?'Документ готов. Открываю PDF…':'Изображение готово. Открываю в чате…'}};
   }
+  // Confirm potentially billed photo creation before spending API credits.
+  // Ambiguous "can you make images?" stays ordinary chat until a subject
+  // is supplied. Only explicit confirmation starts an image job.
+  let pendingImageConfirmation=null;
+  function askBeforeImage(prompt){
+    if(pendingImageConfirmation?.isConnected)pendingImageConfirmation.remove();
+    const row=document.createElement('div');
+    row.className='chat-row bot plux30-confirm-row';
+    const avatar=document.createElement('img');avatar.className='chat-mini';avatar.alt='';avatar.src='/assets/states/idle.webp';
+    const bubble=document.createElement('div');bubble.className='chat-bubble plux30-confirm';
+    const heading=document.createElement('strong');heading.textContent='Создать изображение?';
+    const description=document.createElement('p');description.textContent=String(prompt).slice(0,280);
+    const sub=document.createElement('small');sub.textContent='Генерация может расходовать баланс API Market.';
+    const actions=document.createElement('div');actions.className='plux30-confirm-actions';
+    const yes=document.createElement('button');yes.type='button';yes.className='plux30-confirm-yes';yes.textContent='Создать изображение';
+    const no=document.createElement('button');no.type='button';no.className='plux30-confirm-no';no.textContent='Отмена';
+    yes.addEventListener('click',()=>{
+      if(busy)return;
+      yes.disabled=true;no.disabled=true;row.remove();
+      if(pendingImageConfirmation===row)pendingImageConfirmation=null;
+      void send(prompt,{confirmedImage:true});
+    });
+    no.addEventListener('click',()=>{
+      row.remove();
+      if(pendingImageConfirmation===row)pendingImageConfirmation=null;
+      input.value=prompt;input.focus();
+    });
+    actions.append(yes,no);bubble.append(heading,description,sub,actions);
+    row.append(avatar,bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
+    pendingImageConfirmation=row;
+    yes.focus({preventScroll:true});
+  }
   // A job identifier represents one paid generation. Poll it rather than
   // repeating the upstream request on a weak mobile connection.
   const jobKey='plux_pending_generation_v28';
@@ -299,14 +331,14 @@
     await live.finish(answer);
     return answer;
   }
-  async function send(text){
+  async function send(text,{confirmedImage=false}={}){
     if(busy)return;busy=true;
     const attachments=window.PLUXMediaV129?.takeAttachments?.()||[];
     const display=text||'Проанализируй вложения';
     const summary=attachments.map(x=>'📎 '+x.name).join('\n');
     const button=form.querySelector('.chat-send');if(button)button.disabled=true;
     append('user',display+(summary?'\n'+summary:''));
-    const kind=pdfIntent(text)?'pdf':imageIntent(text)?'image':null;
+    const kind=pdfIntent(text)?'pdf':(confirmedImage||imageIntent(text))?'image':null;
     const generating=kind?showGenerating(kind):null;
     const live=kind?null:startTextReply();
     // A received user bubble must never look like an unanswered dead screen.
@@ -316,7 +348,7 @@
     ];
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments,clientFeatures:{generationJobs:true,textStreaming:true}}),signal:AbortSignal.timeout(generating?25000:65000)});
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments,requestedArtifact:confirmedImage?"image":null,clientFeatures:{generationJobs:true,textStreaming:true}}),signal:AbortSignal.timeout(generating?25000:65000)});
       if(response.ok&&response.headers.get('content-type')?.includes('application/x-ndjson')){
         await readTextStream(response,live);
         return;
@@ -385,6 +417,9 @@
       &&/(?:видео|видеоролик|ролик|анимаци)/i.test(t);
     if(videoRequest && window.PLUXVideoV16 && !window.PLUXMediaV129?.hasAttachments?.()){
       input.value='';window.PLUXVideoV16.open(t);return;
+    }
+    if(!window.PLUXMediaV129?.hasAttachments?.()&&imageIntent(t)){
+      input.value='';askBeforeImage(t);return;
     }
     input.value='';void send(t);
   },true);
