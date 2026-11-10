@@ -11,7 +11,7 @@ services:
         value: '22'
       - key: HOST
         value: 0.0.0.0
-      - key: SITE_ACCESS_PIN
+      - key: API_MARKET_KEY
         sync: false
       - key: DAILY_GENERATION_LIMIT
         value: '12'
