@@ -32,3 +32,17 @@
   animation:none!important
  }
 }
+
+/* User-controlled retry after a failed text delivery. Avoid paid auto-retries. */
+#screen-chat .plux29-retry{
+ display:block;min-height:44px;width:100%;margin-top:11px;
+ padding:10px 14px;border-radius:15px;
+ border:1px solid var(--plux-theme-bright,rgba(127,255,205,.53));
+ color:#f2fff8;background:linear-gradient(145deg,var(--plux-theme-soft,rgba(46,207,151,.23)),rgba(5,23,29,.85));
+ font:600 13px/1.4 system-ui;cursor:pointer;
+ box-shadow:inset 0 1px 2px rgba(255,255,255,.16);
+}
+#screen-chat .plux29-retry:focus-visible{
+ outline:2px solid var(--plux-theme-accent,#71f6bd);outline-offset:3px;
+}
+#screen-chat .plux29-retry:disabled{opacity:.5}
