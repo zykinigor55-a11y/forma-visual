@@ -34,7 +34,9 @@
     // Android WebView/CSP, which previously left a text-only result card.
     const safeImageData=item.type==='image'&&typeof item.dataUrl==='string'
       &&/^data:image\/(?:png|jpeg|webp);base64,/.test(item.dataUrl)?item.dataUrl:null;
-    const uri=safeImageData||(item.type==='pdf'?downloadable(item.dataUrl):null)
+    const pdfLink=item.type==='pdf'&&typeof item.url==='string'
+      &&/^https:\/\/pluh-voice-demo\.onrender\.com\/api\/download\/pdf\/[A-Za-z0-9_-]{43}$/.test(item.url)?item.url:null;
+    const uri=safeImageData||pdfLink||(item.type==='pdf'?downloadable(item.dataUrl):null)
       ||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
     if(!uri){onImageReady(false);append('info','Не удалось открыть вложение от генератора.');return}
     const row=document.createElement('div');row.className='chat-row bot plux14-artifact-row';
@@ -70,7 +72,17 @@
     }
     const action=document.createElement('a');action.className='plux14-download';action.textContent=item.type==='pdf'?'Скачать PDF':'Сохранить изображение';
     action.href=safeImageData?downloadable(safeImageData)||uri:uri;
-    if(action.href.startsWith('blob:')||action.href.startsWith('data:'))action.download=file;
+    if(pdfLink){
+      // Prefer the real server URL. Android DownloadManager handles this URL,
+      // unlike a blob: anchor that silently fails in Capacitor WebView.
+      action.href=pdfLink;
+      action.removeAttribute('target');action.removeAttribute('download');
+      action.setAttribute('aria-label','Скачать PDF в папку Загрузки');
+      action.setAttribute('role','button');action.style.pointerEvents='auto';
+      action.addEventListener('click',event=>{
+        if(!navigator.onLine){event.preventDefault();append('info','Нет интернета. Повтори загрузку PDF после подключения.');}
+      });
+    }else if(action.href.startsWith('blob:')||action.href.startsWith('data:'))action.download=file;
     else{action.target='_blank';action.rel='noopener noreferrer'}
     bubble.append(action);
     if(item.type==='image'){
