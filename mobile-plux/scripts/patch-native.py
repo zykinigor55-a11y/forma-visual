@@ -52,6 +52,48 @@ if platform=="android":
             if marker not in code:raise SystemExit("Android WebView audio initialization hook missing")
             code=code.replace(marker,marker+"\n        "+permission,1)
             main.write_text(code)
+        # Browser/WebView blob: downloads cannot be forwarded to Android.
+        # Real generated documents are served from a short-lived HTTPS URL
+        # and saved in the system Downloads folder with Android DownloadManager.
+        code=main.read_text()
+        if "setDownloadListener(" not in code:
+            needle="getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);"
+            if needle not in code:raise SystemExit("Capacitor WebView missing for PDF handler")
+            listener=r"""
+        getBridge().getWebView().setDownloadListener(new android.webkit.DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent,
+                    String contentDisposition, String mimeType, long contentLength) {
+                try {
+                    android.net.Uri uri=android.net.Uri.parse(url);
+                    if (!"https".equalsIgnoreCase(uri.getScheme())) return;
+                    if (!"pluh-voice-demo.onrender.com".equalsIgnoreCase(uri.getHost())) return;
+                    if (uri.getPath()==null || !uri.getPath().startsWith("/api/download/pdf/")) return;
+                    String fileName="PLUX-document-"+System.currentTimeMillis()+".pdf";
+                    android.app.DownloadManager.Request request=new android.app.DownloadManager.Request(uri);
+                    request.setTitle(fileName);
+                    request.setDescription("Документ ПЛЮХ");
+                    request.setMimeType("application/pdf");
+                    request.setNotificationVisibility(
+                        android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                    request.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS,fileName);
+                    android.app.DownloadManager manager=(android.app.DownloadManager)
+                        getSystemService(android.content.Context.DOWNLOAD_SERVICE);
+                    if (manager==null) throw new IllegalStateException("DownloadManager unavailable");
+                    manager.enqueue(request);
+                    runOnUiThread(()->android.widget.Toast.makeText(
+                        MainActivity.this,"PDF загружается в папку Загрузки",
+                        android.widget.Toast.LENGTH_LONG).show());
+                } catch (Exception problem) {
+                    runOnUiThread(()->android.widget.Toast.makeText(
+                        MainActivity.this,"Не удалось сохранить PDF. Попробуй открыть ссылку в браузере.",
+                        android.widget.Toast.LENGTH_LONG).show());
+                }
+            }
+        });
+"""
+            code=code.replace(needle,needle+"\\n"+listener,1)
+            main.write_text(code)
 elif platform=="ios":
     import plistlib
     plist=root/"ios/App/App/Info.plist"
