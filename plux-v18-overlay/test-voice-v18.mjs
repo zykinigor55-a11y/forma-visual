@@ -68,7 +68,7 @@ const window={
 };
 const navigator={mediaDevices:{getUserMedia:async()=>stream}};
 const fetch=async()=>({ok:true,json:async()=>({token:"ark_fake_test_ephemeral_token_123",wsUrl:"wss://arkheonchat.com/v1/realtime?model=google%2Fgemini-2.5-flash-lite"})});
-const context={window,document,navigator,fetch,WebSocket:FakeWebSocket,MutationObserver,
+const context={window,document,navigator,fetch,WebSocket:FakeWebSocket,MutationObserver,AudioWorkletNode,
  AbortSignal,URL,Date,Math,console,
  performance:{now:()=>Date.now()-boot},setTimeout,clearTimeout,
  atob:s=>Buffer.from(s,"base64").toString("binary"),btoa:s=>Buffer.from(s,"binary").toString("base64"),
