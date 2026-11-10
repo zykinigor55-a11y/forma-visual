@@ -239,6 +239,9 @@
       draw();
     }
     return {
+      status(text){
+        if(!finished&&!started)hint.firstChild.textContent=String(text||'ПЛЮХ готовит ответ');
+      },
       update(text){
         if(finished||finalizing)return;
         const next=String(text||'').slice(0,5000);
@@ -283,6 +286,7 @@
         if(!line.trim())continue;
         let event;
         try{event=JSON.parse(line)}catch{continue}
+        if(event.type==='started')live.status('Сообщение доставлено. Жду ответ модели');
         if(event.type==='delta'&&typeof event.text==='string'){
           answer=(answer+event.text).slice(0,5000);
           live.update(answer);
@@ -305,6 +309,11 @@
     const kind=pdfIntent(text)?'pdf':imageIntent(text)?'image':null;
     const generating=kind?showGenerating(kind):null;
     const live=kind?null:startTextReply();
+    // A received user bubble must never look like an unanswered dead screen.
+    const pendingUpdates=kind?[]:[
+      setTimeout(()=>live?.status?.('Проверяю соединение с ПЛЮХом'),6500),
+      setTimeout(()=>live?.status?.('Сервис отвечает медленно. Сообщение отправлено'),20000)
+    ];
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
       const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments,clientFeatures:{generationJobs:true,textStreaming:true}}),signal:AbortSignal.timeout(generating?25000:65000)});
@@ -343,9 +352,28 @@
     }catch(e){
       live?.stop();
       generating?.stop();
-      append('info',e.name==='TimeoutError'?'Генератор не ответил вовремя. Проверь чат и баланс, прежде чем запускать повторную платную генерацию.':String(e.message||'Связь с сервером недоступна.'));
+      const message=e.name==='TimeoutError'
+        ?(kind?'Генератор не ответил вовремя. Не запускай платную генерацию повторно до проверки статуса.':'Сервер не ответил вовремя. Проверь интернет и попробуй отправить сообщение ещё раз.')
+        :String(e.message||'Связь с сервером недоступна.');
+      append('info',message);
+      // Keep the original prompt accessible for a conscious retry; never
+      // automatically send another paid request after a transport failure.
+      if(!kind){
+        const retry=document.createElement('button');retry.type='button';
+        retry.className='plux29-retry';retry.textContent='Повторить сообщение';
+        retry.addEventListener('click',()=>{
+          if(busy)return;
+          retry.disabled=true;retry.remove();
+          void send(text);
+        });
+        const last=feed.lastElementChild?.querySelector('.chat-bubble');
+        last?.append(retry);
+      }
     }
-    finally{busy=false;if(button)button.disabled=false}
+    finally{
+      pendingUpdates.forEach(clearTimeout);
+      busy=false;if(button)button.disabled=false;
+    }
   }
   form.addEventListener('submit',e=>{
     e.preventDefault();e.stopImmediatePropagation();
