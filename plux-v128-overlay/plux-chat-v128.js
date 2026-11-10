@@ -31,7 +31,7 @@
     if(!item||!['image','pdf'].includes(item.type))return;
     const file=String(item.filename|| (item.type==='pdf'?'PLUX.pdf':'PLUX.png')).replace(/[\\\/<>:*?"|]/g,'').slice(0,90);
     const uri=downloadable(item.dataUrl)||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
-    if(!uri){append('info','Не удалось открыть вложение от генератора.');return}
+    if(!uri){onImageReady(false);append('info','Не удалось открыть вложение от генератора.');return}
     const row=document.createElement('div');row.className='chat-row bot plux14-artifact-row';
     const avatar=document.createElement('img');avatar.className='chat-mini';avatar.src='/assets/states/idle.webp';avatar.alt='';row.append(avatar);
     const bubble=document.createElement('div');bubble.className='chat-bubble plux14-artifact';
@@ -90,11 +90,11 @@
   async function send(text){
     if(busy)return;busy=true;
     const attachments=window.PLUXMediaV129?.takeAttachments?.()||[];
-    const generating=imageIntent(text)?showGenerating():null;
     const display=text||'Проанализируй вложения';
     const summary=attachments.map(x=>'📎 '+x.name).join('\n');
     const button=form.querySelector('.chat-send');if(button)button.disabled=true;
     append('user',display+(summary?'\n'+summary:''));
+    const generating=imageIntent(text)?showGenerating():null;
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
       const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments}),signal:AbortSignal.timeout(generating?155000:65000)});
