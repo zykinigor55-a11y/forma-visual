@@ -11,6 +11,7 @@ const MODEL="grok_video";
 const VARIANT="grok_lite";
 const MAX_PRICE_MINOR=7500; // Absolute hard stop: 75 RUB, regardless of account balance.
 const quotes=new Map();
+const sources=new Map();
 const jobs=new Map();
 const hits=new Map();
 let daily=0,day=Date.now(),active=0;
@@ -34,6 +35,7 @@ function cors(req,res){
 function prune(){
  const now=Date.now();
  for(const [id,x] of quotes)if(now-x.created>10*60*1000)quotes.delete(id);
+ for(const [id,x] of sources)if(now-x.created>55*60*1000)sources.delete(id);
  for(const [id,x] of jobs)if(now-x.created>70*60*1000)jobs.delete(id);
  if(now-day>86400000){day=now;daily=0;hits.clear();}
 }
@@ -45,7 +47,7 @@ function checkQuota(ip){
  if(active>=2)throw problem(429,"Генератор занят. Попробуй позже.");
  return recent;
 }
-export function videoSettings(body){
+export function videoSettings(body,sourceUrl=null){
  const prompt=safeText(body?.prompt,1400);
  if(prompt.length<5||prompt.length>1200)throw problem(400,"Опиши видео текстом длиной от 5 до 1200 символов.");
  const seconds=Number(body?.duration??5);
@@ -53,8 +55,10 @@ export function videoSettings(body){
  const aspect=String(body?.aspectRatio||"16:9");
  if(!["16:9","9:16","1:1"].includes(aspect))throw problem(400,"Недопустимый формат кадра.");
  // Do not accept arbitrary models, urls, resolutions, unsafe settings.
- return {model:MODEL,settings:{mode:"text_to_video",model:VARIANT,prompt,
-   duration:seconds,aspect_ratio:aspect,quality:"480p"}};
+ const settings={mode:sourceUrl?"image_to_video":"text_to_video",model:VARIANT,prompt,duration:seconds,quality:"480p"};
+ if(sourceUrl)settings.image_urls=[sourceUrl];
+ else settings.aspect_ratio=aspect;
+ return {model:MODEL,settings};
 }
 async function readBody(req,maxBytes=2600){
  const declared=Number(req.headers["content-length"]||0);
@@ -62,6 +66,32 @@ async function readBody(req,maxBytes=2600){
  const list=[];let len=0;
  for await(const part of req){len+=part.length;if(len>maxBytes)throw problem(413,"Слишком большой запрос.");list.push(part)}
  try{return JSON.parse(Buffer.concat(list).toString("utf8"))}catch{throw problem(400,"Неверный формат запроса.")}
+}
+async function uploadImage(body,ip){
+ prune();
+ const encoded=String(body?.dataUrl||"");
+ const match=/^data:(image\/(?:png|jpeg|webp));base64,([a-z0-9+/=]+)$/i.exec(encoded);
+ if(!match)throw problem(415,"Поддерживаются PNG, JPEG и WebP до 9 МБ.");
+ const bytes=Buffer.from(match[2],"base64");
+ if(bytes.length<300||bytes.length>9_000_000)throw problem(413,"Фото должно быть не больше 9 МБ.");
+ const mime=match[1].toLowerCase();
+ const valid=mime==="image/png"?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
+   :mime==="image/jpeg"?bytes[0]===255&&bytes[1]===216
+   :bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
+ if(!valid)throw problem(415,"Фото повреждено или не совпадает с форматом.");
+ const form=new FormData();
+ form.append("file",new Blob([bytes],{type:mime}),mime==="image/jpeg"?"plux.jpg":mime==="image/png"?"plux.png":"plux.webp");
+ const upload=await fetch(BASE+"/files",{
+   method:"POST",headers:{Authorization:"Bearer "+secret()},body:form,
+   signal:AbortSignal.timeout(35000)
+ });
+ const data=await upload.json().catch(()=>null);
+ if(!upload.ok)throw problem(502,upload.status===402?"Недостаточно средств Cyhub.":"Cyhub не принял исходное фото (HTTP "+upload.status+").");
+ let url;try{url=new URL(data?.url)}catch{}
+ if(!url||url.protocol!=="https:"||url.username||url.password)throw problem(502,"Cyhub не вернул прямую ссылку на фото.");
+ const id=randomUUID();
+ sources.set(id,{created:Date.now(),ip,url:url.toString()});
+ return {sourceId:id,name:"Исходное фото готово",expiresSeconds:3300};
 }
 async function provider(path,opts={}){
  const response=await fetch(BASE+path,{
@@ -128,15 +158,30 @@ export async function handleCyhubVideo(req,res){
   if(path==="/api/video/config"){
     if(req.method!=="GET")throw problem(405,"Используй GET.");
     json(res,200,{configured:Boolean(secret()),model:MODEL,variant:VARIANT,
+      supportsImageToVideo:true,
       options:{seconds:[1,3,5,8,10,15],aspects:["16:9","9:16","1:1"],quality:"480p"},
       maxChargeRub:MAX_PRICE_MINOR/100});
     return true;
   }
   if(!secret())throw problem(503,"Cyhub ещё не подключён. Добавь CYHUB_API_KEY в Render Environment сервера ПЛЮХ.");
   const ip=ipOf(req);
+  if(path==="/api/video/source"){
+    if(req.method!=="POST")throw problem(405,"Используй POST.");
+    const body=await readBody(req,13_000_000);
+    json(res,201,await uploadImage(body,ip));
+    return true;
+  }
   if(path==="/api/video/quote"){
     if(req.method!=="POST")throw problem(405,"Используй POST.");
-    const body=await readBody(req),payload=videoSettings(body),price=await getPrice(payload);
+    const body=await readBody(req);
+    let sourceUrl=null;
+    if(body?.sourceId){
+      const source=sources.get(String(body.sourceId));
+      if(!source||source.ip!==ip||Date.now()-source.created>55*60*1000)
+        throw problem(409,"Исходное фото устарело. Выбери его заново.");
+      sourceUrl=source.url;
+    }
+    const payload=videoSettings(body,sourceUrl),price=await getPrice(payload);
     prune();
     const token=randomUUID();
     quotes.set(token,{created:Date.now(),ip,payload,amount:price.amount_minor,currency:price.currency,used:false});
@@ -203,7 +248,7 @@ export async function handleCyhubVideo(req,res){
   }
   throw problem(404,"Неизвестный маршрут.");
  }catch(e){
-   const status=[400,402,403,404,405,409,413,429,502,503].includes(e.status)?e.status:502;
+   const status=[400,402,403,404,405,409,413,415,429,502,503].includes(e.status)?e.status:502;
    const reason=e.status?safeText(e.message,230):"Нет связи с Cyhub. Запрос не следует повторять без проверки истории задач, если он уже был отправлен.";
    json(res,status,{error:reason});
    return true;
