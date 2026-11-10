@@ -76,7 +76,7 @@ const context={window,document,navigator,fetch,WebSocket:FakeWebSocket,MutationO
 runInNewContext(readFileSync("plux-v17-overlay/plux-arkheon-v17.js","utf8"),context,{filename:"plux-arkheon-v17.js"});
 assert.equal(window.PLUXArkheon.debug().state,"idle");
 await window.PLUXArkheon.start();
-assert.equal(window.PLUXArkheon.debug().connected,true);
+assert.equal(window.PLUXArkheon.debug().connected,true,"Voice startup: "+JSON.stringify({debug:window.PLUXArkheon.debug(),status:status.textContent,header:header.textContent,micOpened,webSocketSent:lastSocket?.sent?.map(x=>x.type)}));
 assert.equal(window.PLUXArkheon.debug().russianConfigured,true);
 assert.equal(micOpened,1,"Microphone must open only after acknowledgement");
 assert.equal(window.PLUXArkheon.debug().state,"listening");
