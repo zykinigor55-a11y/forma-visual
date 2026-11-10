@@ -56,7 +56,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          version="plux-android-v25-20261110"
+          version="plux-android-v26-20261110"
           apk="android/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$apk"
           cp "$apk" "${RUNNER_TEMP}/PLUX-Android.apk"
@@ -64,8 +64,8 @@ jobs:
             gh release upload "$version" "${RUNNER_TEMP}/PLUX-Android.apk" --clobber
           else
             gh release create "$version" "${RUNNER_TEMP}/PLUX-Android.apk" \
-              --title "ПЛЮХ для Android — V25" \
-              --notes "ПЛЮХ V25: цвет капли и пузырей во всех темах, единая стеклянная галерея и режимы, исправлен запуск Audius из чата и голосом. Требуется интернет для музыки и ИИ. Приложение использует работающий сервер Render для голосового помощника, чата и генераций. Для установки разрешите установку из браузера или файлового менеджера. Это тестовая сборка, не Google Play." \
+              --title "ПЛЮХ для Android — V26" \
+              --notes "ПЛЮХ V26: реальные изображения GPT Image 2 без сырого JSON, все шесть иконок в одном стеклянном стиле и мягкие сигналы голоса (слушает, думает, отвечает). Требуется интернет для музыки и ИИ. Приложение использует работающий сервер Render для голосового помощника, чата и генераций. Для установки разрешите установку из браузера или файлового менеджера. Это тестовая сборка, не Google Play." \
               --target "$GITHUB_SHA" \
               --prerelease
           fi
