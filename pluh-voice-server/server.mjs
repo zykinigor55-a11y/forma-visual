@@ -173,6 +173,7 @@ async function handler(req,res){
 }
 createServer((req,res)=>{handler(req,res).catch(()=>reply(res,500,{error:"Internal server error"}));}).listen(port,"0.0.0.0",()=>{
  console.log("PLUH voice server started on "+port);
+ console.log("PLUX service keys present",JSON.stringify({cyhubVideo:Boolean(process.env.CYHUB_API_KEY?.trim()),arkheonVoice:Boolean(process.env.ARKHEON_API_KEY?.trim())}));
  void arkheonVoiceProbe().then(result=>{
    console.log("PLUX Arkheon voices readiness",JSON.stringify(result));
  }).catch(()=>{console.log("PLUX Arkheon voices catalog unavailable");});
