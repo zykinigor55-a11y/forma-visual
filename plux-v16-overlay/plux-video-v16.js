@@ -30,7 +30,8 @@
  modal.innerHTML=[
   '<section class="plux16-card">',
   '<header class="plux16-head"><div class="plux16-symbol">'+icon+'</div><div><b>Создать видео</b><small>GROK LITE  /  CYHUB</small></div><button type="button" class="plux16-close" aria-label="Закрыть окно">×</button></header>',
-  '<p class="plux16-description">Промпт превратится в короткое видео. Цена рассчитывается до списания.</p>',
+  '<p class="plux16-description">Оживи готовое изображение или создай ролик по описанию. Точную цену покажем до запуска.</p>',
+  '<div class="plux17-photo"><div class="plux17-photo-inner"><img class="plux17-preview" hidden alt="Исходное изображение для анимации"><div class="plux17-placeholder">Первый кадр видео</div></div><div class="plux17-photo-actions"><label class="plux17-pick">Выбрать фото<input type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button class="plux17-clear" type="button" hidden>Убрать фото</button></div><small>Можно использовать созданную в ПЛЮХ картинку или загрузить свою. До 9 МБ.</small></div>',
   '<form class="plux16-form">',
    '<label for="plux16-prompt">Что должно происходить в ролике?</label>',
    '<textarea id="plux16-prompt" rows="4" maxlength="1200" placeholder="Современный дом у озера. Камера плавно приближается, деревья движутся от ветра, мягкий вечерний свет…" required></textarea>',
@@ -54,7 +55,31 @@
  const result=$('.plux16-result',modal),status=$('.plux16-status',result);
  const player=$('video',result),save=$('.plux16-save',result);
  const duration=$('select[name=duration]',modal),aspect=$('select[name=aspectRatio]',modal);
+ const preview=$('.plux17-preview',modal),place=$('.plux17-placeholder',modal);
+ const pick=$('.plux17-pick input',modal),clearPhoto=$('.plux17-clear',modal);
+ let sourceImage=null,sourceName='',uploadTicket=0;
  let quote=null,videoId=null,timer=0,seq=0,busy=false,playing=false;
+ function setImage(data,name='Готовое изображение'){
+  if(data&&!/^data:image\/(png|jpeg|webp);base64,/i.test(data))throw Error('Не удалось прочитать исходный кадр. Загрузи фото вручную.');
+  if(data&&data.length>12_500_000)throw Error('Фото превышает 9 МБ.');
+  sourceImage=data||null;sourceName=name;preview.hidden=!sourceImage;
+  if(sourceImage)preview.src=sourceImage;
+  else preview.removeAttribute('src');
+  place.hidden=!!sourceImage;clearPhoto.hidden=!sourceImage;
+  aspect.disabled=!!sourceImage;
+  resetQuote();
+ }
+ pick.addEventListener('change',async()=>{
+  const file=pick.files?.[0];if(!file)return;
+  if(file.size>9_000_000){price.textContent='Фото не должно превышать 9 МБ.';return}
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){price.textContent='Выбери JPEG, PNG или WebP.';return}
+  try{const data=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Фото не прочитано'));reader.readAsDataURL(file);
+   });setImage(data,file.name)}
+  catch(e){price.textContent=e.message}
+  pick.value='';
+ });
+ clearPhoto.addEventListener('click',()=>setImage(null));
  const rub=minor=>(minor/100).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽';
  async function fetchJson(path,options={}){
    const response=await fetch(API+path,{mode:'cors',credentials:'omit',cache:'no-store',
@@ -80,7 +105,18 @@
  modal.addEventListener('click',event=>{if(event.target===modal)close()});
  modal.addEventListener('close',()=>clearTimeout(timer));
  function open(prefill=''){
-  if(prefill){prompt.value=String(prefill).slice(0,1200);resetQuote()}
+  if(prefill&&typeof prefill==='object'){
+    try{
+      if(prefill.imageDataUrl)setImage(prefill.imageDataUrl,prefill.name||'Фото ПЛЮХ');
+      else if(prefill.imageUrl){
+        const url=String(prefill.imageUrl);
+        if(url.startsWith('data:'))setImage(url,prefill.name||'Фото ПЛЮХ');
+        else price.textContent='Ссылка на фото недоступна для загрузки. Выбери сохранённое изображение вручную.';
+      }
+    }catch(e){price.textContent=e.message}
+    if(prefill.prompt)prompt.value=String(prefill.prompt).slice(0,1200);
+    resetQuote();
+  }else if(prefill){prompt.value=String(prefill).slice(0,1200);resetQuote()}
   if(!modal.open)modal.showModal();
   prompt.focus({preventScroll:true});
   if(videoId&&playing)void poll();
@@ -103,8 +139,18 @@
   updateButton(quoteBtn,true,'Проверяю цену…');
   price.textContent='Запрашиваю точную стоимость у Cyhub, деньги не списываются.';
   try{
+    let sourceId=null;
+    if(sourceImage){
+      price.textContent='Подготавливаю исходное фото для Grok Lite…';
+      const upload=await fetchJson('/source',{
+        method:'POST',timeout:45000,body:JSON.stringify({dataUrl:sourceImage})
+      });
+      if(ticket!==seq)return;
+      sourceId=upload.sourceId;
+      price.textContent='Исходное фото загружено. Проверяю стоимость…';
+    }
     const data=await fetchJson('/quote',{method:'POST',body:JSON.stringify({
-      prompt:text,duration:Number(duration.value),aspectRatio:aspect.value
+      prompt:text,duration:Number(duration.value),aspectRatio:aspect.value,sourceId
     })});
     if(ticket!==seq)return;
     quote=data.quoteId;
@@ -173,9 +219,9 @@
  const restart=document.createElement('button');restart.type='button';restart.className='plux16-again';restart.textContent='Новый ролик';
  restart.addEventListener('click',()=>{
    clearTimeout(timer);playing=false;videoId=null;form.hidden=false;result.hidden=true;
-   player.pause();player.removeAttribute('src');player.load();prompt.value='';
+   player.pause();player.removeAttribute('src');player.load();prompt.value='';setImage(null);
    resetQuote();quoteBtn.disabled=false;
  });
  result.append(restart);
- window.PLUXVideoV16={open,active:()=>playing};
+ window.PLUXVideoV16={open,active:()=>playing,setImage};
 })();
