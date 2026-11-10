@@ -50,7 +50,7 @@ if platform=="android":
         permission="getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);"
         if permission not in code:
             if marker not in code:raise SystemExit("Android WebView audio initialization hook missing")
-            code=code.replace(marker,marker+"\\n        "+permission,1)
+            code=code.replace(marker,marker+"\n        "+permission,1)
             main.write_text(code)
 elif platform=="ios":
     import plistlib
