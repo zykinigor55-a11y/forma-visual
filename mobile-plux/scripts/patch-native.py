@@ -23,8 +23,8 @@ if platform=="android":
     if not gradle.exists():raise SystemExit("Android app build.gradle missing")
     gradle_text=gradle.read_text()
     import re
-    gradle_text,version_hits=re.subn(r'(?m)^(\s*versionCode\s+)\d+',r'\g<1>24',gradle_text,count=1)
-    gradle_text,name_hits=re.subn(r'(?m)^(\s*versionName\s+)"[^"]+"',r'\g<1>"24.0.0"',gradle_text,count=1)
+    gradle_text,version_hits=re.subn(r'(?m)^(\s*versionCode\s+)\d+',r'\g<1>25',gradle_text,count=1)
+    gradle_text,name_hits=re.subn(r'(?m)^(\s*versionName\s+)"[^"]+"',r'\g<1>"25.0.0"',gradle_text,count=1)
     if version_hits!=1 or name_hits!=1:raise SystemExit("Could not update Android APK version")
     gradle.write_text(gradle_text)
     main=root/"android/app/src/main/java/com/plux/assistant/MainActivity.java"
@@ -39,6 +39,18 @@ if platform=="android":
             android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 }""")
+            main.write_text(code)
+        # Capacitor opens HTTPS content in an Android WebView. A voice/text
+        # "play music" command performs async Audius search, so audio.play()
+        # occurs AFTER the original tap/voice gesture. Default Android WebView
+        # blocks that deferred play; enable explicitly requested media playback
+        # while keeping all app-level player controls and mute/pause behavior.
+        code=main.read_text()
+        marker="super.onCreate(state);"
+        permission="getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);"
+        if permission not in code:
+            if marker not in code:raise SystemExit("Android WebView audio initialization hook missing")
+            code=code.replace(marker,marker+"\\n        "+permission,1)
             main.write_text(code)
 elif platform=="ios":
     import plistlib
