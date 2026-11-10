@@ -32,7 +32,7 @@ function limit(ip){
   const now=Date.now();
   if(now-dayStart>86400000){dayStart=now;daily=0;hits.clear()}
   const old=(hits.get(ip)||[]).filter(x=>now-x<600000);
-  if(old.length>=3||daily>=25||concurrent>=2)throw err(429,"Лимит генерации: не более 3 файлов за 10 минут, 25 за день.");
+  if(old.length>=6||daily>=60||concurrent>=2)throw err(429,"Лимит защиты: до 6 генераций за 10 минут, 60 за день. Дождись окончания предыдущей задачи.");
   old.push(now);hits.set(ip,old);daily++;concurrent++;
 }
 function failure(response,data){
