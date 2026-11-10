@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="dom-render-mobile-cinema-v52.css?v=mobile-cinema-20261110-v52">
 <link rel="stylesheet" href="dom-render-progress-v53.css?v=ai-progress-20261110-v53">
 <link rel="stylesheet" href="dom-render-scene-icons-v54.css?v=minimal-scene-icons-20261110-v55">
+<link rel="stylesheet" href="dom-render-gallery-v56.css?v=portfolio-20261110-v56">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -588,7 +589,7 @@
 <div class="cabinet-cover" id="cabinetCover" hidden>
  <section class="cabinet-sheet" role="dialog" aria-modal="true" aria-labelledby="cabinetTitle" tabindex="-1">
   <div class="cabinet-head"><div><small class="cabinet-eyebrow">ДОМ.РЕНДЕР · СЕРВИС</small><h2 id="cabinetTitle">Личный кабинет</h2></div><button type="button" id="cabinetClose" class="cabinet-close" aria-label="Закрыть">×</button></div>
-  <nav class="cabinet-tabs" aria-label="Разделы кабинета"><button type="button" data-cabinet-tab="account" class="active">Личный кабинет</button><button type="button" data-cabinet-tab="contacts">Контакты</button></nav>
+  <nav class="cabinet-tabs" aria-label="Разделы кабинета"><button type="button" data-cabinet-tab="account" class="active">Личный кабинет</button><button type="button" data-cabinet-tab="gallery">Галерея работ</button><button type="button" data-cabinet-tab="contacts">Контакты</button></nav>
   <div id="cabinetAccount" class="cabinet-view">
    <div class="cabinet-access"><span class="cabinet-dot"></span><span id="cabinetAccessStatus">Проверяем доступ…</span></div>
    <div class="cabinet-stats">
@@ -596,13 +597,40 @@
     <div class="cabinet-stat"><small>Баланс API Market</small><strong id="cabinetBalance">Недоступен в API</strong><span>Проверяется в личном кабинете поставщика</span></div>
     <div class="cabinet-stat cabinet-stat-wide"><small>Ваш тариф ДОМ.РЕНДЕР</small><strong id="cabinetTariff">Пока не назначен</strong><span>Персональные подписки и пользовательские счета ещё не подключены. API Market списывает средства за фактические запросы.</span></div>
    </div>
+   <div class="cabinet-gallery-promo">
+    <div class="cabinet-gallery-promo-main"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg><span><strong>Галерея работ</strong><small>Все ваши рендеры и сохранённые видео в одном месте</small></span></div>
+    <button type="button" id="cabinetGoGallery">Открыть галерею</button>
+   </div>
    <div class="cabinet-actions"><button type="button" id="cabinetRefresh">Обновить данные</button><a href="https://api-market1.shop/" target="_blank" rel="noopener noreferrer">Открыть баланс API Market ↗</a></div>
    <p class="cabinet-disclaimer">Это информационный кабинет тестовой версии. Показанный лимит относится ко всему серверу и может сбрасываться при перезапуске. Здесь не отображается персональный оплаченный баланс.</p>
+  </div>
+  <div id="cabinetGallery" class="cabinet-view cabinet-gallery" hidden>
+   <div class="cabinet-gallery-top"><div><span class="cabinet-gallery-label">PORTFOLIO / PRIVATE COLLECTION</span><h3>Галерея работ</h3><p>Рендеры из всех проектов на этом устройстве и ваши сохранённые видеоролики.</p></div>
+   <button type="button" class="cabinet-gallery-import" id="cabinetGalleryImport"><svg class="ico"><use href="#i-plus"/></svg> Добавить видео</button>
+   <input id="cabinetGalleryFile" type="file" accept="video/mp4,video/webm,.mp4,.webm" hidden>
+   </div>
+   <div class="cabinet-gallery-stats">
+    <div><span>ВСЕГО РАБОТ</span><strong id="cabinetGalleryTotal">0</strong></div>
+    <div><span>РЕНДЕРЫ</span><strong id="cabinetGalleryRenders">0</strong></div>
+    <div><span>ВИДЕО</span><strong id="cabinetGalleryVideos">0</strong></div>
+   </div>
+   <div class="cabinet-gallery-tools">
+    <div class="cabinet-gallery-filters" role="group" aria-label="Типы работ"><button type="button" class="active" data-gallery-kind="all" aria-pressed="true">Все</button><button type="button" data-gallery-kind="image" aria-pressed="false">Рендеры</button><button type="button" data-gallery-kind="video" aria-pressed="false">Видео</button></div>
+    <select id="cabinetGalleryProject" aria-label="Фильтр по проекту"><option value="all">Все проекты</option></select>
+   </div>
+   <div id="cabinetGalleryGrid" class="cabinet-gallery-grid" aria-live="polite"></div>
+   <button id="cabinetGalleryMore" type="button" class="cabinet-gallery-more" hidden>Показать ещё</button>
+   <p class="cabinet-gallery-note">Работы хранятся локально в браузере. Они не синхронизируются между устройствами. Для сохранности скачивайте важные файлы.</p>
   </div>
   <div id="cabinetContacts" class="cabinet-view" hidden>
    <p class="cabinet-description">Связь с командой ДОМ.РЕНДЕР по вопросам сайта, визуализации и сотрудничества.</p>
    <div class="cabinet-contact-card"><small>Электронная почта для обращений</small><strong id="cabinetSupportEmail">Контактный адрес ещё не опубликован</strong><a id="cabinetSupportAction" href="#" hidden>Написать письмо ↗</a><p id="cabinetSupportNote">Владелец сайта должен добавить публичный адрес через настройку PUBLIC_SUPPORT_EMAIL на сервере.</p></div>
    <p class="cabinet-disclaimer">По вопросам оплаты и баланса API Market обращайтесь непосредственно в поддержку <a href="https://api-market1.shop/" target="_blank" rel="noopener noreferrer">API Market</a>. Она не является поддержкой ДОМ.РЕНДЕР.</p>
+  </div>
+  <div id="cabinetGalleryLightbox" class="cabinet-gallery-lightbox" role="dialog" aria-modal="true" aria-label="Просмотр работы" hidden>
+    <div class="cabinet-gallery-lightbox-head"><div><strong id="cabinetGalleryViewTitle">Работа</strong><span id="cabinetGalleryViewMeta"></span></div><button id="cabinetGalleryViewClose" type="button" aria-label="Закрыть просмотр">×</button></div>
+    <div id="cabinetGalleryMedia" class="cabinet-gallery-lightbox-media"></div>
+    <div class="cabinet-gallery-lightbox-actions"><button id="cabinetGalleryDownload" type="button"><svg class="ico"><use href="#i-save"/></svg> Скачать оригинал</button><button id="cabinetGalleryDeleteVideo" type="button" hidden>Удалить видео</button></div>
   </div>
   <div class="cabinet-bottom"><a href="privacy.html">Политика конфиденциальности</a><span>© 2026 ДОМ.РЕНДЕР</span></div>
  </section>
@@ -626,7 +654,8 @@
 <script src="dom-render-cinema-premium-v43.js?v=distinct-optics-v44-20261110"></script>
 
 <script src="app.js?v=preview-my-project-after-v47-20261110"></script>
-<script defer src="dom-render-cabinet-v27.js?v=public-ai-no-pin-20261109"></script>
+<script defer src="dom-render-cabinet-v27.js?v=gallery-account-20261110-v56"></script>
+<script defer src="dom-render-gallery-v56.js?v=portfolio-20261110-v56"></script>
 <script src="dom-render-cinema-cards-fix-v45.js?v=mobile-atlas-performance-20261110-v52"></script>
 <script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
 <script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
