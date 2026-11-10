@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { readJsonLimited, messagesWithAttachments, handleImageRequest } from "./media-v129.mjs";
+import { artifactIntent, makeGptImage, makePdf } from "./chat-artifacts-v14.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -76,6 +77,25 @@ async function handler(req,res){
   let messages=data.messages.filter(m=>m&&["user","assistant"].includes(m.role)&&typeof m.content==="string").slice(-12);
   if(messages.length<1||messages.some(m=>m.content.length>2500||(!m.content.trim()&&!Array.isArray(data.attachments))))return reply(res,400,{error:"Сообщение должно содержать текст до 2500 символов"});
   try{messages=await messagesWithAttachments(messages,data.attachments)}catch(e){return reply(res,e.status||422,{error:e.message||"Ошибка обработки вложения"})}
+  /* PLUX V14: artifact generation is server-routed, not claimed by the text model. */
+  const lastOriginal=data.messages.at(-1);
+  const latestText=lastOriginal?.role==="user"&&typeof lastOriginal.content==="string"?lastOriginal.content:"";
+  const kind=artifactIntent(latestText);
+  if(kind){
+    try{
+      const imageKey=process.env.API_MARKET_IMAGE_KEY||secret;
+      const artifact=kind==="image"
+        ? await makeGptImage(latestText,imageKey,ip)
+        : await makePdf(latestText,messages,secret,ip);
+      const note=kind==="image"?"Создал изображение с GPT Image 2.":"Подготовил PDF-документ: "+artifact.title;
+      return reply(res,200,{reply:note,artifact});
+    }catch(e){
+      const status=Number(e?.status)||502;
+      const safe=status===429||status===504||status===502?String(e?.message||"Ошибка генерации.").slice(0,240):"Не удалось подготовить файл.";
+      console.warn("PLUX artifact generation failed",JSON.stringify({kind,status,type:e?.name||"Error"}));
+      return reply(res,status,{error:safe});
+    }
+  }
   // Do not forward arbitrary client-injected roles or keys.
   messages.unshift({role:"system",content:"Ты ПЛЮХ — доброжелательный, энергичный персональный помощник. Отвечай на русском естественно и ясно, коротко по умолчанию. Не придумывай, что ты уже выполнил действие или подключил сервис."});
   try {
