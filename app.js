@@ -248,7 +248,7 @@ const choices = {
 };
 const zones = [['main','Стены фасада'],['accent','Декоративная отделка'],['base','Цоколь'],['roof','Кровля'],['windows','Оконные рамы'],['doors','Двери'],['terrace','Терраса'],['steps','Ступени'],['custom','Другой участок']];
 const catalog = [['plaster','Штукатурка','mat-plaster.jpg'],['travertine','Травертин','mat-travertine.jpg'],['limestone','Природный камень','mat-limestone.jpg'],['wood','Дерево','mat-wood.jpg'],['brick','Клинкер','mat-brick.jpg'],['concrete','Бетон','mat-concrete.jpg'],['metal','Металл','mat-metal.jpg'],['ceramic','Керамогранит','mat-ceramic.jpg'],['glass','Стекло','mat-glass.jpg']];
-const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},materialInstructions:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false,batchDetail1X:60,batchDetail1Y:60,batchDetail2X:77,batchDetail2Y:40});
+const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},materialInstructions:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false,homeChanges:'',batchDetail1X:60,batchDetail1Y:60,batchDetail2X:77,batchDetail2Y:40});
 const makeProject=(name='Новый проект',isDemo=false)=>({id:isDemo?'demo':uuid(),name,createdAt:Date.now(),modifiedAt:Date.now(),demo:isDemo,settings:defaultSettings(),renders:[],activeRender:null,reference:null,sourceWidth:1672,sourceHeight:941,hasSource:isDemo,angle:1});
 const STKEY='domrender_mvp_projects_v1', MTKEY='domrender_mvp_materials_v1';
 let projects=[],project=null,customMaterials=[],currentTab='project',materialTab='mine',viewerMode=localStorage.getItem('domrender_view_mode')||'slider';
@@ -771,7 +771,88 @@ function playAnimationPreview(){
  window.DOM_RENDER_CAMERA_PATH?.play(s.duration);
  $('animPreviewState').textContent='3D-камера и светящаяся траектория · '+s.duration+' с';
 }
-function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderResults();renderVariantsPanel();renderAnimationPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
+const SCENE_VARIANT_OPTIONS={
+ evening:'Вечер с фонарями',
+ autumn_overcast:'Осень · пасмурно',
+ autumn_sunny:'Осень · солнечно',
+ autumn_evening:'Осень · вечер',
+ winter_overcast:'Зима · пасмурно',
+ winter_sunny:'Зима · солнечно',
+ winter_evening:'Зима · вечер'
+};
+function renderHomeChanges(){
+ const input=$('homeChangesInput');
+ if(input&&document.activeElement!==input){
+  const value=String(current()?.homeChanges||'');
+  if(input.value!==value)input.value=value;
+ }
+}
+function renderSceneVariantsUI(){
+ const panel=$('sceneVariantsPanel');
+ if(!panel)return;
+ const hasApprovedRender=!!(project&&!project.demo&&renderURL&&project.activeRender&&project.renders?.some(r=>r.id===project.activeRender));
+ panel.hidden=!hasApprovedRender;
+ panel.querySelectorAll('[data-scene-variant]').forEach(button=>button.disabled=rendering);
+}
+async function generateSceneVariant(variantId){
+ const label=SCENE_VARIANT_OPTIONS[variantId];
+ if(!label){toast('Такой вариант не найден');return}
+ if(rendering){toast('Дождитесь завершения текущей генерации');return}
+ if(!project||project.demo||!project.activeRender||!project.renders.some(x=>x.id===project.activeRender)||!renderURL){
+  toast('Сначала создайте и выберите готовую AI-визуализацию дома.');
+  return;
+ }
+ const sourceRender=project.activeRender;
+ const targetProject=project;
+ if(!aiConnected){
+  await checkAPI(30000);
+  if(!aiConnected){toast(apiCheckError||'AI Market сейчас недоступен.');return}
+ }
+ rendering=true;renderSceneVariantsUI();
+ const status=$('sceneVariantsStatus');
+ if(status){status.classList.remove('is-error');status.textContent='Создаём «'+label+'» из выбранного изображения…'}
+ setRenderProgress('Создаём '+label,'Используем выбранный готовый рендер, сохраняем архитектуру и ракурс');
+ $('generateBtn').disabled=true;$('renderSetupGenerate').disabled=true;
+ try{
+  const base=renderURL;
+  const image=await urlToDataURL(base);
+  const payload={image,sceneVariation:variantId,quantity:1,quality:current().quality,
+   size:imageSizeForRatio(current().ratio),brief:{lockGeometry:true,preserveMaterials:true,project:project.name}};
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),180000);
+  let response;
+  try{
+   response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload),signal:controller.signal});
+  }finally{clearTimeout(timer)}
+  const data=await response.json().catch(()=>({error:'Сервер вернул некорректный ответ'}));
+  if(!response.ok||!Array.isArray(data.images)||!data.images.length){
+   throw new Error(data.error||'AI не вернул изображение');
+  }
+  if(project!==targetProject)throw new Error('Во время создания варианта изменился проект');
+  const id='r'+uuid().slice(0,8);
+  const result='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
+  await setMedia(mediaKey('render_'+id),result);
+  await setMedia(mediaKey('input_'+id),base);
+  project.renders.push({id,number:project.renders.length+1,createdAt:Date.now(),batchLabel:label,sceneVariant:variantId,derivedFrom:sourceRender});
+  project.activeRender=id;renderURL=result;
+  save();
+  await loadProject(project.id);
+  setViewerMode('result');
+  if(status){status.classList.remove('is-error');status.textContent='Вариант «'+label+'» готов и сохранён в истории.'}
+  toast('Готово: '+label+'. Новая версия сохранена отдельно.');
+ }catch(error){
+  const message=error?.name==='AbortError'?'Превышено время ожидания. Запрос мог быть списан у провайдера.':String(error?.message||'Ошибка генерации');
+  if(status){status.classList.add('is-error');status.textContent='Не удалось создать вариант: '+message}
+  toast(message);
+ }finally{
+  rendering=false;
+  stopRenderProgress();
+  $('generateBtn').disabled=false;$('renderSetupGenerate').disabled=false;
+  renderSceneVariantsUI();
+ }
+}
+function renderAll(){renderChoices();renderZones();renderMaterials();renderFooter();renderHomeChanges();renderResults();renderVariantsPanel();renderSceneVariantsUI();renderAnimationPanel();updateStageAspect();updateSplit(36);setViewerMode(viewerMode);showTab(currentTab)}
 function renderResults(){const items=[{id:'source',label:'Исходник',src:sourceURL||asset(ASSET+'residence-model-v32.webp')}];if(project.demo)items.push({id:'demo',label:'Пример фото',src:demoPhoto});for(const r of project.renders)items.push({id:r.id,label:r.batchLabel||`Рендер ${r.number||''}`,src:imageCache.get(mediaKey('render_'+r.id))||asset(ASSET+'residence-render.jpg')});$('resultsStrip').innerHTML=items.map(r=>`<button class="result-thumb ${((project.activeRender|| (project.demo?'demo':'source'))===r.id)?'active':''}" data-result="${r.id}"><img src="${eHTML(r.src)}" alt="${eHTML(r.label)}"><span>${eHTML(r.label)}</span></button>`).join('');$('resultsHint').textContent=project.demo?'Пример результата · AI-фото не генерировалось':(project.renders.length?`${project.renders.length} AI-результатов`:'Рендеров пока нет')}
 function renderVariantsPanel(){
  if(!project||!$('variantHistory'))return;
@@ -822,7 +903,7 @@ function settingsBrief(){
   const chosen=customMaterials.find(m=>m.id===materialId);
   return chosen?[[name,chosen.name]]:[];
  }));
- return {project:project.name,source:project.hasSource?'Скриншот':'Нет',environment:envLabel(),environmentInstructions:environments.find(e=>e[0]===s.environment)?.[2],time:cLabel('time',s.time),weather:cLabel('weather',s.weather),season:cLabel('season',s.season),plants:cLabel('plants',s.plants),sceneMood:s.sceneMood||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.'}}
+ return {project:project.name,source:project.hasSource?'Скриншот':'Нет',environment:envLabel(),environmentInstructions:environments.find(e=>e[0]===s.environment)?.[2],time:cLabel('time',s.time),weather:cLabel('weather',s.weather),season:cLabel('season',s.season),plants:cLabel('plants',s.plants),sceneMood:s.sceneMood||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',homeChanges:String(s.homeChanges||'').trim().slice(0,600),lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.'}}
 function showBrief(){const text=JSON.stringify(settingsBrief(),null,2);modal('Техническое задание',`<p class="muted">Собрано автоматически из выбранных карточек. Пользователю не требуется писать промпт.</p><pre>${eHTML(text)}</pre>`,[{label:'Скопировать',primary:true,click:async()=>{try{await navigator.clipboard.writeText(text);toast('Бриф скопирован')}catch{downloadText('dom-render-brief.json',text,'application/json')}closeModal()}},{label:'Скачать JSON',click:()=>downloadText('dom-render-brief.json',text,'application/json')}])}
 function downloadText(filename,text,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
 function downloadDataURL(url,filename){const a=document.createElement('a');a.href=url;a.download=filename;a.click()}
@@ -1151,7 +1232,7 @@ async function generateBatch(){
  }
 }
 async function urlToDataURL(url){if(url.startsWith('data:'))return url;const response=await fetch(url);if(!response.ok)throw Error('Не удалось загрузить справочное изображение');const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader;r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)})}
-async function showResult(id){$('beforeImg').src=(id==='source'||id==='demo'?sourceURL:await getMedia(mediaKey('input_'+id))||sourceURL);if(id==='source'){project.activeRender=null;renderURL='';$('afterImg').src=sourceURL;$('noRender').hidden=false;$('resultTag').textContent='НЕТ РЕНДЕРА';$('splitSlider').disabled=false}else if(id==='demo'&&project.demo){project.activeRender='demo';renderURL=demoPhoto;$('afterImg').src=renderURL;$('noRender').hidden=true;$('resultTag').textContent='ДЕМОНСТРАЦИЯ';$('splitSlider').disabled=false}else{const url=await getMedia(mediaKey('render_'+id));if(!url){toast('Результат не найден в локальном хранилище');return}project.activeRender=id;renderURL=url;$('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='AI-РЕЗУЛЬТАТ';$('splitSlider').disabled=false}save();renderResults();renderVariantsPanel();setViewerMode(viewerMode);renderAnimationPanel();$('materialPreview').getContext('2d').clearRect(0,0,$('materialPreview').width,$('materialPreview').height)}
+async function showResult(id){$('beforeImg').src=(id==='source'||id==='demo'?sourceURL:await getMedia(mediaKey('input_'+id))||sourceURL);if(id==='source'){project.activeRender=null;renderURL='';$('afterImg').src=sourceURL;$('noRender').hidden=false;$('resultTag').textContent='НЕТ РЕНДЕРА';$('splitSlider').disabled=false}else if(id==='demo'&&project.demo){project.activeRender='demo';renderURL=demoPhoto;$('afterImg').src=renderURL;$('noRender').hidden=true;$('resultTag').textContent='ДЕМОНСТРАЦИЯ';$('splitSlider').disabled=false}else{const url=await getMedia(mediaKey('render_'+id));if(!url){toast('Результат не найден в локальном хранилище');return}project.activeRender=id;renderURL=url;$('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='AI-РЕЗУЛЬТАТ';$('splitSlider').disabled=false}save();renderResults();renderVariantsPanel();renderSceneVariantsUI();setViewerMode(viewerMode);renderAnimationPanel();$('materialPreview').getContext('2d').clearRect(0,0,$('materialPreview').width,$('materialPreview').height)}
 async function checkAPI(timeoutMs=20000){try{const res=await fetch('/api/status',{cache:'no-store',signal:AbortSignal.timeout(timeoutMs)});if(!res.ok)throw Error('Not running');const data=await res.json();aiConnected=!!data.ready;apiCheckError=''}catch{aiConnected=false;apiCheckError='Не удалось связаться с сервером AI. Повторите попытку через несколько секунд.'}$('providerFoot').textContent=aiConnected?'Nano Banana подключена':apiCheckError?'Проверить подключение AI':'Демо: AI не подключён';return aiConnected}
 async function init(){let saved;try{saved=JSON.parse(localStorage.getItem(STKEY)||'null')}catch{}projects=saved?.projects?.length?saved.projects:[makeProject('Резиденция 01',true)];try{customMaterials=JSON.parse(localStorage.getItem(MTKEY)||'[]')}catch{customMaterials=[]}for(const m of customMaterials){const value=await getMedia('material_'+m.id);if(value)imageCache.set('material_'+m.id,value)}await loadProject(saved?.activeId||projects[0].id);initDrawEvents();bind();bindTouchComparison();syncDemoWithSettings();checkAPI();}
 /* Atmosphere presets control ONLY season, weather and light, never the surroundings. */
@@ -1204,7 +1285,17 @@ function initMoodPhotos(){
   preload.src=target;
  });
 }
-function bind(){for(const id of ['animCameras','animLenses','animMoves','animGrades']){
+function bind(){
+ const homeInput=$('homeChangesInput');
+ if(homeInput)homeInput.addEventListener('input',()=>{
+  current().homeChanges=homeInput.value.slice(0,600);save();
+ });
+ const variantsGrid=$('sceneVariantsGrid');
+ if(variantsGrid)variantsGrid.addEventListener('click',event=>{
+  const choice=event.target.closest('[data-scene-variant]');
+  if(choice&&!choice.disabled)generateSceneVariant(choice.dataset.sceneVariant);
+ });
+ for(const id of ['animCameras','animLenses','animMoves','animGrades']){
  $(id).onclick=e=>{
   const el=e.target.closest('[data-anim-kind][data-anim-id]');if(!el)return;
   updateAnimationSetting(el.dataset.animKind,el.dataset.animId);
