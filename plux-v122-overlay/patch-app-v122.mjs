@@ -392,3 +392,48 @@ writeFileSync(pageV21,htmlV21);
 const swV21=join(root,'sw.js');
 writeFileSync(swV21,readFileSync(swV21,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2101'));
 console.log('PLUX V21 shared home/intro soft typing sound; respect volume and one-tap audio unlock');
+
+
+/* PLUX V22: real image completion in chat, glass Home icon, welcome keyboard
+   replay after the first user gesture, Russian microphone label. */
+const v22CssSource=join('plux-v22-overlay','plux-v22.css');
+if(statSync(v22CssSource).size<1000)throw Error('Missing PLUX V22 stylesheet');
+writeFileSync(join(root,'plux-v22.css'),readFileSync(v22CssSource));
+const v22WelcomePath=join(root,'plux-v127.js');
+let v22Welcome=readFileSync(v22WelcomePath,'utf8');
+const v22WelcomeMarker="  root.addEventListener('pointerdown',unlock,{capture:true,passive:true});";
+if(!v22Welcome.includes(v22WelcomeMarker))throw Error('PLUX welcome unlock hook absent');
+const v22WelcomeHook=[
+ "  // Mobile browsers require a real gesture before audible keyboard clicks.",
+ "  let welcomeSoundReplay=false;",
+ "  root.addEventListener('pointerdown',event=>{",
+ "    if(welcomeSoundReplay||stage!=='name'||event.target?.closest?.('#plux127-sound'))return;",
+ "    welcomeSoundReplay=true;",
+ "    if(soundEnabled)void replayGreeting();",
+ "  },{capture:true,passive:true});"
+].join('\n');
+v22Welcome=v22Welcome.replace(v22WelcomeMarker,v22WelcomeMarker+'\n'+v22WelcomeHook);
+writeFileSync(v22WelcomePath,v22Welcome);
+const v22AppPath=join(root,'app.js');
+let v22App=readFileSync(v22AppPath,'utf8');
+v22App=v22App.replaceAll('PLUX слушает...','ПЛЮХ слушает…');
+writeFileSync(v22AppPath,v22App);
+const v22PagePath=join(root,'index.html');
+let v22Html=readFileSync(v22PagePath,'utf8');
+if(!v22Html.includes('plux-release-v21'))throw Error('PLUX V21 required');
+v22Html=v22Html.replaceAll('PLUX слушает...','ПЛЮХ слушает…');
+if(!v22Html.includes('plux-release-v22'))
+ v22Html=v22Html.replace('</head>','<meta name="plux-release-v22" content="image-progress-android-mic-centered-glass-home"><link rel="stylesheet" href="/plux-v22.css?v=2202"></head>');
+v22Html=v22Html.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=2202');
+v22Html=v22Html.replace(/\/plux-arkheon-v17\.js\?v=\d+/g,'/plux-arkheon-v17.js?v=2202');
+v22Html=v22Html.replace(/\/plux-v127\.js\?v=\d+/g,'/plux-v127.js?v=2202');
+writeFileSync(v22PagePath,v22Html);
+const v22ServiceWorkerPath=join(root,'sw.js');
+let v22Sw=readFileSync(v22ServiceWorkerPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2202');
+if(!v22Sw.includes("'/plux-v22.css'"))v22Sw=v22Sw.replace("'/plux-artifacts-v14.css'","'/plux-artifacts-v14.css','/plux-v22.css'");
+writeFileSync(v22ServiceWorkerPath,v22Sw);
+for(const f of ['plux-v127.js','plux-chat-v128.js','plux-arkheon-v17.js','app.js']){
+ plux123Exec(process.execPath,['--check',join(root,f)],{stdio:'inherit'});
+}
+if(!v22Html.includes('/plux-v22.css?v=2202'))throw Error('PLUX V22 not loaded');
+console.log('PLUX V22: inline GPT Image 2 progress, Android voice, welcome type audio, centered glass Home');
