@@ -1,0 +1,55 @@
+/* PLUX V22: restrained emerald-glass Home button and honest chat image progress. */
+#screen-chat .plux22-generating-row{width:100%;max-width:100%;align-items:flex-start;min-width:0}
+#screen-chat .plux22-generating{
+  width:min(100%,328px);max-width:calc(100vw - 112px);
+  padding:13px;border-radius:23px;border:1px solid rgba(169,249,218,.43);
+  background:linear-gradient(145deg,rgba(9,51,42,.91),rgba(0,12,17,.96) 78%);
+  color:#e5fff4;box-shadow:inset 0 1px 1px rgba(255,255,255,.24),inset 0 -7px 18px rgba(6,113,84,.12),0 10px 28px rgba(0,0,0,.32);
+  display:flex;flex-direction:column;align-items:stretch;gap:9px;overflow:hidden;position:relative;
+}
+#screen-chat .plux22-preview{position:relative;display:grid;place-items:center;isolation:isolate;width:100%;aspect-ratio:1.45;border-radius:14px;overflow:hidden;background:radial-gradient(circle at 52% 48%,rgba(29,172,128,.3),transparent 51%),linear-gradient(145deg,#09251f,#020908);box-shadow:inset 0 0 0 1px rgba(153,243,210,.16)}
+#screen-chat .plux22-preview::before{content:'';position:absolute;inset:-45%;background:linear-gradient(111deg,transparent 36%,rgba(162,255,220,.14) 51%,transparent 62%);animation:plux22-light 3.3s ease-in-out infinite}
+#screen-chat .plux22-orbit{position:absolute;width:76px;height:76px;border-radius:50%;border:1px solid rgba(174,255,226,.42);box-shadow:inset 0 0 18px rgba(26,249,172,.2),0 0 26px rgba(17,213,142,.16);animation:plux22-float 3.1s ease-in-out infinite}
+#screen-chat .plux22-orbit::before{content:'';position:absolute;inset:10px;border-radius:50%;background:radial-gradient(circle at 35% 22%,rgba(237,255,248,.82),transparent 16%),radial-gradient(circle at 43% 40%,rgba(0,255,164,.58),rgba(5,42,34,.62) 73%);box-shadow:inset 0 0 13px rgba(230,255,246,.5)}
+#screen-chat .plux22-spark{position:absolute;width:110px;height:110px;border-top:1px solid rgba(174,255,226,.65);border-radius:50%;animation:plux22-spin 4.8s linear infinite}
+#screen-chat .plux22-gen-title{font-size:13px;font-weight:650;letter-spacing:.015em;line-height:1.3;color:#edfff7}
+#screen-chat .plux22-gen-note{font-size:11px;line-height:1.3;color:#9bdac3}
+#screen-chat .plux22-dots::after{content:'...';display:inline-block;width:15px;overflow:hidden;vertical-align:bottom;animation:plux22-dots 1.3s steps(4,end) infinite}
+#screen-chat .plux22-progress{height:3px;overflow:hidden;border-radius:999px;background:rgba(122,234,193,.17)}
+#screen-chat .plux22-progress i{display:block;width:44%;height:100%;border-radius:999px;background:linear-gradient(90deg,transparent,#9cffe1,transparent);animation:plux22-load 2.4s ease-in-out infinite}
+#screen-chat img.plux14-created-image{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:180px!important;object-fit:contain!important;visibility:visible!important;opacity:1!important;content-visibility:visible!important;filter:none!important}
+@keyframes plux22-light{0%{transform:translateX(-50%)}100%{transform:translateX(60%)}}
+@keyframes plux22-float{0%,100%{transform:translateY(3px)}50%{transform:translateY(-5px)}}
+@keyframes plux22-spin{to{transform:rotate(360deg)}}
+@keyframes plux22-load{0%{transform:translateX(-105%)}100%{transform:translateX(315%)}}
+@keyframes plux22-dots{0%,100%{width:0}75%{width:15px}}
+/* Fix off-center Home icon without changing the layout of the other three tabs. */
+#app#app#app #screen-home .bottom-nav > button.nav-button[data-go="home"]{
+ position:relative!important;display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;gap:3px!important;
+ padding:5px 8px!important;margin:0!important;isolation:isolate;overflow:hidden!important;
+ border:1px solid rgba(213,255,243,.43)!important;border-radius:22px!important;
+ background:linear-gradient(154deg,rgba(176,255,233,.19),rgba(29,103,83,.29) 36%,rgba(3,26,26,.78) 74%),radial-gradient(ellipse at 45% -14%,rgba(238,255,248,.29),transparent 60%)!important;
+ box-shadow:inset 0 2px 2px rgba(244,255,252,.38),inset 0 -9px 15px rgba(0,6,9,.68),inset 0 0 0 1px rgba(46,249,171,.13),0 6px 16px rgba(0,0,0,.28)!important;
+ -webkit-backdrop-filter:blur(18px) saturate(135%)!important;backdrop-filter:blur(18px) saturate(135%)!important;
+}
+#app#app#app #screen-home .bottom-nav > button.nav-button[data-go="home"]::before{
+ content:''!important;position:absolute!important;display:block!important;inset:2px 6px auto!important;height:27%!important;border-radius:50% 50% 35% 35%!important;
+ background:linear-gradient(180deg,rgba(250,255,253,.19),transparent)!important;pointer-events:none!important
+}
+#app#app#app #screen-home .bottom-nav > button.nav-button[data-go="home"] > svg{
+ position:relative!important;display:block!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+ width:23px!important;height:23px!important;flex:0 0 23px!important;
+ margin:0 auto!important;padding:0!important;transform:none!important;
+ stroke:rgba(233,255,246,.97)!important;fill:none!important;z-index:2!important;
+ filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))!important
+}
+#app#app#app #screen-home .bottom-nav > button.nav-button[data-go="home"] > span{
+ display:block!important;width:100%!important;margin:0!important;padding:0!important;text-align:center!important;align-self:center!important;
+ position:relative!important;left:auto!important;transform:none!important;z-index:2!important;font-size:10px!important;line-height:1.1!important;color:#dffff1!important
+}
+#app#app#app #screen-home .bottom-nav > button.nav-button[data-go="home"]:active{transform:scale(.96)!important}
+@media(prefers-reduced-motion:reduce){
+ #screen-chat .plux22-preview::before,#screen-chat .plux22-orbit,#screen-chat .plux22-spark,
+ #screen-chat .plux22-dots::after,#screen-chat .plux22-progress i{animation:none!important}
+}
