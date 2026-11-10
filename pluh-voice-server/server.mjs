@@ -163,7 +163,7 @@ setTimeout(async()=>{
     const body=await models.text();
     const cls=classify(body,models.status);
     console.log("PLUX_KEY_CHECK",JSON.stringify({step:"models",http:models.status,result:cls}));
-    if(!models.ok)return;
+    // Chat availability may differ from the models endpoint; test it independently.
     const chat=await fetch(base+"/chat/completions",{
       method:"POST",
       headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},
