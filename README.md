@@ -43,3 +43,10 @@ node server.mjs
 ```
 
 Секреты не включены в исходники. `api-market.mjs` содержит отдельный адаптер API, который можно тестировать без реального платного ключа.
+
+
+## Cinema Premium v43 — 10 ноября 2026
+
+Раздел «Анимация» использует 24 реалистичных визуальных иконки (общий WebP-атлас `assets/cinema/forma-cinema-atlas.webp`): 6 кинокамер, 6 кинообъективов ARRI Signature Prime, 6 движений камеры и 6 оптических фильтров. Новые профили — `dom-render-cinema-premium-v43.js`; оформление — `dom-render-cinema-premium-v43.css`. Подключены в `index.html` до основного `app.js`. Основная ветка `main` (Forma Визуал) не затрагивается.
+
+Рекомендуемая публикация на Render: **Web Service**, GitHub `zykinigor55-a11y/forma-visual`, ветка `dom-render-nanobanana`, Node.js 22, Build `echo 'No build step required'`, Start `node server.mjs`, health `/api/status`, `HOST=0.0.0.0`. API-ключ `API_MARKET_KEY` настраивается только в секретах Render. Без ключа сайт открывается, но платная генерация изображений недоступна. Перед открытым коммерческим запуском нужны аккаунты, лимиты на пользователя и защита расходов.
