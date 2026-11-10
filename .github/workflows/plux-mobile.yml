@@ -74,6 +74,23 @@ jobs:
           npx cap add ios
           python3 scripts/patch-native.py ios
           npx cap sync ios
+      - name: Build unsigned iPhone IPA for AltStore Classic
+        run: |
+          set -euo pipefail
+          cd ios
+          xcodebuild -workspace App/App.xcworkspace -scheme App -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+          test -f build/Build/Products/Release-iphoneos/App.app/Info.plist
+          mkdir -p altstore/Payload
+          cp -a build/Build/Products/Release-iphoneos/App.app altstore/Payload/
+          cd altstore
+          ditto -c -k --sequesterRsrc --keepParent Payload PLUX-iPhone-AltStore.ipa
+          test -s PLUX-iPhone-AltStore.ipa
+      - name: Upload unsigned IPA for free Apple ID sideloading
+        uses: actions/upload-artifact@v4
+        with:
+          name: PLUX-iPhone-AltStore-IPA
+          path: mobile-plux/ios/altstore/PLUX-iPhone-AltStore.ipa
+          if-no-files-found: error
       - name: Upload iOS project (signing required for iPhone)
         uses: actions/upload-artifact@v4
         with:
