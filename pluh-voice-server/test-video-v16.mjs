@@ -25,3 +25,13 @@ assert.equal(cfg.model,"grok_video");
 assert.equal(cfg.variant,"grok_lite");
 assert.equal(typeof cfg.configured,"boolean");
 console.log("PLUX V16 video smoke tests passed: pricing-safe payload, bounds, config");
+
+const imagePayload=videoSettings({prompt:"Камера плавно приближается к дому",duration:5,aspectRatio:"16:9"},"https://files.cyhub.ai/example-first-frame.jpg");
+assert.equal(imagePayload.model,"grok_video");
+assert.equal(imagePayload.settings.mode,"image_to_video");
+assert.equal(imagePayload.settings.model,"grok_lite");
+assert.deepEqual(imagePayload.settings.image_urls,["https://files.cyhub.ai/example-first-frame.jpg"]);
+assert.equal(Object.hasOwn(imagePayload.settings,"aspect_ratio"),false);
+assert.equal(imagePayload.settings.quality,"480p");
+assert.equal(cfg.supportsImageToVideo,true);
+console.log("PLUX V17 image-to-video smoke test passed");
