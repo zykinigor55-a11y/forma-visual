@@ -7,6 +7,7 @@ import { voiceSession } from "./live-voice-v151.mjs";
 import {arkheonSession,arkheonVoiceProbe,arkheonUsageProbe} from "./arkheon-realtime-v17.mjs";
 import { handleAudius } from "./music-audius-v24.mjs";
 import {storeGeneratedPdf,sendGeneratedPdf} from "./pdf-download-v27.mjs";
+import {beginGenerationJob,handleGenerationJobStatus} from "./generation-jobs-v28.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -57,6 +58,7 @@ async function handler(req,res){
      return reply(res,200,{signedUrl:result.signed_url});
    }catch{return reply(res,502,{error:"Связь с ElevenLabs недоступна."});}
  }
+ if(pathname==="/api/generation/status")return handleGenerationJobStatus(req,res,pathname);
  if(pathname.startsWith("/api/download/pdf/"))return sendGeneratedPdf(req,res,pathname);
  if(pathname.startsWith("/api/music/"))return handleAudius(req,res);
  if(pathname.startsWith("/api/arkheon/"))return arkheonSession(req,res);
@@ -93,6 +95,15 @@ async function handler(req,res){
   const lastOriginal=data.messages.at(-1);
   const latestText=lastOriginal?.role==="user"&&typeof lastOriginal.content==="string"?lastOriginal.content:"";
   const kind=artifactIntent(latestText);
+  if(kind&&data?.clientFeatures?.generationJobs===true){
+    try{
+      const job=beginGenerationJob({kind,prompt:latestText,messages,
+        secret,imageKey:process.env.API_MARKET_IMAGE_KEY||secret,ip});
+      return reply(res,202,{job});
+    }catch(e){
+      return reply(res,Number(e?.status)||502,{error:String(e?.message||"Не удалось создать задачу.").slice(0,210)});
+    }
+  }
   if(kind){
     try{
       const imageKey=process.env.API_MARKET_IMAGE_KEY||secret;
