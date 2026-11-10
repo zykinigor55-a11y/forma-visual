@@ -1,0 +1,23 @@
+[Unit]
+Description=PLUX AI companion - private Beget API backend
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=plux
+Group=plux
+WorkingDirectory=/opt/plux/server
+EnvironmentFile=/etc/plux/plux.env
+ExecStart=__NODE__ server.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
