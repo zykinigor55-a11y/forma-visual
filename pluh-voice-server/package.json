@@ -1,12 +1,18 @@
 {
   "name": "pluh-voice-server",
-  "version": "1.0.0",
+  "version": "1.2.9",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check media-v129.mjs",
+    "postinstall": "npm run check"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "mammoth": "^1.9.1",
+    "pdf-parse": "1.1.1"
   }
 }
