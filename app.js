@@ -686,8 +686,8 @@ function renderAnimationSummary(){
  window.DOM_RENDER_CAMERA_PATH?.setMotion(motion);
 }
 function renderAnimationPanel(){
- const lib=window.DOM_RENDER_ANIMATION,art=window.DOM_RENDER_ANIMATION_ART;
- if(!lib||!art||!project||!$('animCameras'))return;
+ const lib=window.DOM_RENDER_ANIMATION;
+ if(!lib||!project||!$('animCameras'))return;
  const s=animationSettings();
  renderAnimationCards('animCameras','camera',lib.cameras,'camera',s.camera);
  renderAnimationCards('animLenses','lens',lib.lenses,'lens',s.lens);
