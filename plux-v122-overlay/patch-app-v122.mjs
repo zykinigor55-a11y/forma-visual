@@ -190,3 +190,27 @@ if(!p14worker.includes("'/plux-artifacts-v14.css'"))
  p14worker=p14worker.replace("'/plux-v130.css'","'/plux-v130.css','/plux-artifacts-v14.css'");
 writeFileSync(p14sw,p14worker);
 console.log('PLUX V14 chat artifact renderer installed');
+
+
+/* PLUX V15 CYHUB VOICE: paid narration is opt-in, API key remains server-side. */
+for(const filename of ['plux-voice-v15.js','plux-voice-v15.css']){
+  const bytes=readFileSync(join('plux-v15-overlay',filename));
+  if(bytes.length<1200)throw Error('PLUX V15 asset not found: '+filename);
+  writeFileSync(join(root,filename),bytes);
+}
+plux123Exec(process.execPath,['--check',join(root,'plux-voice-v15.js')],{stdio:'inherit'});
+plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
+const v15htmlPath=join(root,'index.html');
+let v15html=readFileSync(v15htmlPath,'utf8');
+if(!v15html.includes('plux-voice-v15.js')){
+  v15html=v15html.replace('</head>','<meta name="plux-release-v15" content="cyhub-russian-elevenlabs-opt-in-tts"><link rel="stylesheet" href="/plux-voice-v15.css?v=1501"></head>');
+  v15html=v15html.replace('</body>','<script src="/plux-voice-v15.js?v=1501"></script></body>');
+  v15html=v15html.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=1501');
+  writeFileSync(v15htmlPath,v15html);
+}
+const v15swPath=join(root,'sw.js');
+let v15sw=readFileSync(v15swPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v150');
+if(!v15sw.includes("'/plux-voice-v15.js'"))
+  v15sw=v15sw.replace("'/plux-artifacts-v14.css'","'/plux-artifacts-v14.css','/plux-voice-v15.css','/plux-voice-v15.js'");
+writeFileSync(v15swPath,v15sw);
+console.log('PLUX V15 Cyhub voice playback controls installed, paid TTS remains opt-in');
