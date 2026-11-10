@@ -154,7 +154,7 @@
  async function openMicrophone(media){
   if(!Context||!window.AudioWorkletNode)throw Error("Нужен современный браузер с поддержкой AudioWorklet.");
   captureCtx=new Context({latencyHint:"interactive"});
-  await captureCtx.audioWorklet.addModule("/plux-arkheon-processor-v17.js?v=1702");
+  await captureCtx.audioWorklet.addModule("/plux-arkheon-processor-v17.js?v=2001");
   if(!active){throw Error("Разговор был остановлен.")}
   input=captureCtx.createMediaStreamSource(media);
   worklet=new AudioWorkletNode(captureCtx,"plux-arkheon-capture",{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]});
