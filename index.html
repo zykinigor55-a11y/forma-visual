@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="dom-render-ui-polish-v51.css?v=restored-apple-jakub-20261110-v51">
 <link rel="stylesheet" href="dom-render-mobile-cinema-v52.css?v=mobile-cinema-20261110-v52">
 <link rel="stylesheet" href="dom-render-progress-v53.css?v=ai-progress-20261110-v53">
+<link rel="stylesheet" href="dom-render-scene-icons-v54.css?v=professional-scenes-20261110-v54">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -130,20 +131,66 @@
   </div>
   <div class="viewer-footer"><div class="viewer-footer-head"><span class="section-label">ПОСЛЕДНИЕ РЕЗУЛЬТАТЫ</span><span class="viewer-footer-note" id="resultsHint">Демонстрационный проект</span></div><div class="results-strip" id="resultsStrip"></div><button type="button" class="btn btn-outline btn-sm variant-all-link" id="viewAllVariants">Все варианты и действия</button></div>
  </section>
+ <svg class="scene-variant-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="scene-icon-evening" viewBox="0 0 64 64">
+   <path class="scene-sky" d="M45 7a10 10 0 1 0 11 15A11 11 0 0 1 45 7Z"/>
+   <path d="M8 36 31 21l24 15M13 33v24h37V33M13 56h39"/>
+   <rect class="scene-light" x="24" y="39" width="13" height="12" rx="1"/>
+   <path d="M30.5 39v12M24 45h13M6 52h9M50 52h8"/>
+   <path class="scene-warm" d="M9 48v8m0-8 2 2m-2-2-2 2"/>
+  </symbol>
+  <symbol id="scene-icon-autumn-overcast" viewBox="0 0 64 64">
+   <path d="M13 35 31 23l21 12M17 33v23h31V33M18 56h32M27 41h11v10H27z"/>
+   <path class="scene-sky" d="M34 13c2-6 10-6 12-1 7-1 10 8 3 11H30c-5-4-1-11 4-10Z"/>
+   <path class="scene-warm" d="M11 18c-6-2-9 5-4 10l7 1c4-5 3-8-3-11ZM9 28l6 8M54 45l5 4m-5-4 4-4"/>
+   <path d="M9 41v16"/>
+  </symbol>
+  <symbol id="scene-icon-autumn-sunny" viewBox="0 0 64 64">
+   <circle class="scene-warm" cx="46" cy="13" r="6"/>
+   <path class="scene-warm" d="M46 2v4m0 14v4m11-11h4m-26 0h4m-2-8 3 3m12 12 3 3m0-18-3 3"/>
+   <path d="M9 36 31 22l23 14M14 34v22h35V34M24 40h13v12H24zM30.5 40v12M13 57h39"/>
+   <path class="scene-warm" d="M10 18c-6-2-7 5-1 8 7 0 8-7 1-8ZM10 26l-2 7"/>
+  </symbol>
+  <symbol id="scene-icon-autumn-evening" viewBox="0 0 64 64">
+   <path class="scene-sky" d="M45 6a9 9 0 1 0 10 14A10 10 0 0 1 45 6Z"/>
+   <path d="M9 37 31 22l22 15M14 34v22h35V34M12 57h40"/>
+   <rect class="scene-light" x="26" y="40" width="11" height="12" rx="1"/>
+   <path d="M31.5 40v12"/>
+   <path class="scene-warm" d="M9 16c-5 0-7 7-2 10 6 2 10-5 2-10ZM8 26l7 11M53 45l5 4m-5-4 4-4"/>
+  </symbol>
+  <symbol id="scene-icon-winter-overcast" viewBox="0 0 64 64">
+   <path class="scene-sky" d="M34 11c1-5 9-6 12-1 7-1 10 8 4 11H29c-5-4-1-11 5-10Z"/>
+   <path d="M8 36 31 21l24 15M14 35v21h36V35M25 41h13v12H25zM12 57h40"/>
+   <path class="scene-snow" d="m11 17 0 8m-4-4h8m-7-3 6 6m0-6-6 6M55 43v8m-4-4h8m-7-3 6 6m0-6-6 6M10 36l21-15 22 15"/>
+  </symbol>
+  <symbol id="scene-icon-winter-sunny" viewBox="0 0 64 64">
+   <circle class="scene-warm" cx="48" cy="12" r="6"/>
+   <path class="scene-warm" d="M48 2v4m0 12v4m-10-10h-4m24 0h4m-7-7-3 3m0 8 3 3"/>
+   <path d="M8 36 31 22l24 14M14 34v22h36V34M25 41h13v12H25zM12 57h40"/>
+   <path class="scene-snow" d="m8 36 23-14 24 14M6 53l3 2 3-2m41 0 3 2 3-2M11 18v8m-4-4h8"/>
+  </symbol>
+  <symbol id="scene-icon-winter-evening" viewBox="0 0 64 64">
+   <path class="scene-sky" d="M45 7a10 10 0 1 0 11 15A11 11 0 0 1 45 7Z"/>
+   <path d="M8 36 31 21l24 15M14 34v22h36V34M12 57h40"/>
+   <rect class="scene-light" x="25" y="40" width="13" height="12" rx="1"/>
+   <path d="M31.5 40v12"/>
+   <path class="scene-snow" d="m9 36 22-15 24 15M10 16v7m-3-3h6M54 45v8m-4-4h8M10 53l-3 2m49-2 3 2"/>
+  </symbol>
+ </svg>
  <section id="sceneVariantsPanel" class="scene-variants-panel" aria-labelledby="sceneVariantsTitle" hidden>
   <div class="scene-variants-heading">
-   <div><span class="scene-variants-eyebrow">ПОСЛЕ ГЕНЕРАЦИИ</span><h3 id="sceneVariantsTitle">Быстрые версии сцены</h3><p>Создайте новый вариант из выбранного готового рендера. Архитектура, материалы и ракурс сохраняются.</p></div>
+   <div><span class="scene-variants-eyebrow">ПОСЛЕ ГЕНЕРАЦИИ · СВЕТ И СЕЗОН</span><h3 id="sceneVariantsTitle">Атмосфера кадра</h3><p>Световые и сезонные сценарии для выбранного рендера. Ракурс, геометрия и материалы сохраняются.</p></div>
   </div>
   <div class="scene-variants-grid" id="sceneVariantsGrid">
-   <button type="button" data-scene-variant="evening"><span class="scene-variant-ico">☾</span><strong>Вечер с фонарями</strong><small>Свет в окнах · подсветка участка</small></button>
-   <button type="button" data-scene-variant="autumn_overcast"><span class="scene-variant-ico">☁</span><strong>Осень · пасмурно</strong><small>Мягкий свет · осенняя листва</small></button>
-   <button type="button" data-scene-variant="autumn_sunny"><span class="scene-variant-ico">☀</span><strong>Осень · солнечно</strong><small>Тёплые листья · ясный день</small></button>
-   <button type="button" data-scene-variant="autumn_evening"><span class="scene-variant-ico">☾</span><strong>Осень · вечер</strong><small>Сумерки · тёплые окна</small></button>
-   <button type="button" data-scene-variant="winter_overcast"><span class="scene-variant-ico">❄</span><strong>Зима · пасмурно</strong><small>Снег · рассеянный свет</small></button>
-   <button type="button" data-scene-variant="winter_sunny"><span class="scene-variant-ico">☀</span><strong>Зима · солнечно</strong><small>Снег · яркое зимнее солнце</small></button>
-   <button type="button" data-scene-variant="winter_evening"><span class="scene-variant-ico">☾</span><strong>Зима · вечер</strong><small>Снег · фонари · свет из окон</small></button>
+   <button type="button" data-scene-variant="evening" data-scene-number="01"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#scene-icon-evening"/></svg></span><span class="scene-variant-copy"><strong>Синий час · свет</strong><small>Тёплые окна · фонари участка</small></span></button>
+   <button type="button" data-scene-variant="autumn_overcast" data-scene-number="02"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#scene-icon-autumn-overcast"/></svg></span><span class="scene-variant-copy"><strong>Осень · рассеянный свет</strong><small>Пасмурное небо · мягкие тени</small></span></button>
+   <button type="button" data-scene-variant="autumn_sunny" data-scene-number="03"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#scene-icon-autumn-sunny"/></svg></span><span class="scene-variant-copy"><strong>Осень · тёплое солнце</strong><small>Золотая листва · ясный день</small></span></button>
+   <button type="button" data-scene-variant="autumn_evening" data-scene-number="04"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#scene-icon-autumn-evening"/></svg></span><span class="scene-variant-copy"><strong>Осень · синий час</strong><small>Вечерний свет · тёплые окна</small></span></button>
+   <button type="button" data-scene-variant="winter_overcast" data-scene-number="05"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#scene-icon-winter-overcast"/></svg></span><span class="scene-variant-copy"><strong>Зима · мягкий свет</strong><small>Облачный день · снежный покров</small></span></button>
+   <button type="button" data-scene-variant="winter_sunny" data-scene-number="06"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#scene-icon-winter-sunny"/></svg></span><span class="scene-variant-copy"><strong>Зима · ясный день</strong><small>Низкое солнце · чёткие тени</small></span></button>
+   <button type="button" data-scene-variant="winter_evening" data-scene-number="07"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#scene-icon-winter-evening"/></svg></span><span class="scene-variant-copy"><strong>Зима · синий час</strong><small>Снег · свет в окнах · фонари</small></span></button>
   </div>
-  <p class="scene-variants-note">Каждое нажатие запускает одну платную AI-генерацию. Новая версия сохранится в «Вариантах».</p>
+  <p class="scene-variants-note">Каждая карточка создаёт отдельный AI-вариант из готового рендера. Один запуск — один платный запрос к API Market.</p>
   <p class="scene-variants-status" id="sceneVariantsStatus" role="status" aria-live="polite"></p>
  </section>
  <div class="under-viewer"><div class="upload-box" id="uploadBox" role="button" tabindex="0"><div class="upload-symbol"><svg class="ico"><use href="#i-upload"/></svg></div><div><b id="uploadTitle">Загрузить скриншот проекта</b><span id="uploadSubtitle">PNG, JPG, WEBP · Archicad, SketchUp, Revit и другие</span></div><span class="upload-action">Выбрать <svg class="ico"><use href="#i-arrow"/></svg></span><input id="sourceFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><label class="angle-consistency" title="Сохранять окружение на следующих ракурсах"><input type="checkbox" id="angleLandscapeLock" checked><span class="angle-lock-icon">◎</span><span><strong>Единый ландшафт</strong><small>Тот же участок на новых ракурсах</small></span></label><button class="btn btn-outline" id="newAngleBtn" title="Новый ракурс того же дома с сохранением параметров и окружения"><svg class="ico"><use href="#i-plus"/></svg>Новый ракурс</button><input id="angleFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
