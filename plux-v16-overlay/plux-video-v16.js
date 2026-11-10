@@ -57,12 +57,12 @@
  const duration=$('select[name=duration]',modal),aspect=$('select[name=aspectRatio]',modal);
  const preview=$('.plux17-preview',modal),place=$('.plux17-placeholder',modal);
  const pick=$('.plux17-pick input',modal),clearPhoto=$('.plux17-clear',modal);
- let sourceImage=null,sourceName='',uploadTicket=0;
+ let sourceImage=null,sourceName='',uploadTicket=0,needsSource=false;
  let quote=null,videoId=null,timer=0,seq=0,busy=false,playing=false;
  function setImage(data,name='Готовое изображение'){
   if(data&&!/^data:image\/(png|jpeg|webp);base64,/i.test(data))throw Error('Не удалось прочитать исходный кадр. Загрузи фото вручную.');
   if(data&&data.length>12_500_000)throw Error('Фото превышает 9 МБ.');
-  sourceImage=data||null;sourceName=name;preview.hidden=!sourceImage;
+  sourceImage=data||null;sourceName=name;needsSource=false;preview.hidden=!sourceImage;
   if(sourceImage)preview.src=sourceImage;
   else preview.removeAttribute('src');
   place.hidden=!!sourceImage;clearPhoto.hidden=!sourceImage;
@@ -111,9 +111,33 @@
       else if(prefill.imageUrl){
         const url=String(prefill.imageUrl);
         if(url.startsWith('data:'))setImage(url,prefill.name||'Фото ПЛЮХ');
-        else price.textContent='Ссылка на фото недоступна для загрузки. Выбери сохранённое изображение вручную.';
+        else{
+          needsSource=true;quoteBtn.disabled=true;
+          price.textContent='Загружаю исходную картинку…';
+          if(/^https:\/\//.test(url)){
+            const ticket=++uploadTicket;
+            void fetch(url,{mode:'cors',credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(25000)})
+              .then(async resp=>{
+                if(!resp.ok)throw Error('Фото недоступно.');
+                const blob=await resp.blob();
+                if(!['image/jpeg','image/png','image/webp'].includes(blob.type)||blob.size>9_000_000)throw Error('Ссылка вернула неподдерживаемый файл.');
+                return await new Promise((resolve,reject)=>{
+                  const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Фото не прочитано.'));
+                  reader.readAsDataURL(blob);
+                });
+              }).then(data=>{
+                if(ticket!==uploadTicket)return;
+                setImage(data,prefill.name||'Фото ПЛЮХ');
+                quoteBtn.disabled=false;price.textContent='Первый кадр загружен. Проверь стоимость генерации.';
+              }).catch(()=>{
+                if(ticket!==uploadTicket)return;
+                needsSource=true;quoteBtn.disabled=true;
+                price.textContent='Фото недоступно для автоматической загрузки. Сохрани его и нажми «Выбрать фото».';
+              });
+          }else price.textContent='Сохрани картинку и нажми «Выбрать фото».';
+        }
       }
-    }catch(e){price.textContent=e.message}
+    }catch(e){needsSource=true;quoteBtn.disabled=true;price.textContent=e.message}
     if(prefill.prompt)prompt.value=String(prefill.prompt).slice(0,1200);
     resetQuote();
   }else if(prefill){prompt.value=String(prefill).slice(0,1200);resetQuote()}
@@ -124,7 +148,7 @@
     if(!data.configured){
       price.textContent='Озвучка и видео используют разные API. Для видео нужен CYHUB_API_KEY в Render.';
       quoteBtn.disabled=true;
-    }else if(!busy){
+    }else if(!busy&& !needsSource){
       quoteBtn.disabled=false;
     }
   }).catch(()=>{price.textContent='Не удалось проверить подключение Cyhub. Попробуй позже.'});
@@ -133,6 +157,7 @@
  form.addEventListener('submit',async(event)=>{
   event.preventDefault();
   if(busy||playing)return;
+  if(needsSource){price.textContent='Для видео из фото сначала выбери исходное изображение.';return}
   const text=prompt.value.trim();
   if(text.length<5){price.textContent='Опиши движение и сцену хотя бы пятью символами.';prompt.focus();return}
   busy=true;const ticket=++seq;confirmBtn.hidden=true;
