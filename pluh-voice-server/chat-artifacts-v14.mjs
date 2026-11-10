@@ -11,10 +11,16 @@ export function artifactIntent(text){
   const s=clean(text,2600).toLowerCase();
   if(!s||/(как|почему|расскажи|объясни|можно ли).{0,55}(сделать|создать|pdf|пдф|картин)/i.test(s))return null;
   if(/(напиши|составь|придумай).{0,16}промпт/i.test(s))return null;
+  // Spoken/chat shorthand is an image request too: "Полосатая корова фото"
+  // and "Фото полосатой коровы" must not go to a text model that fabricates
+  // ChatGPT-internal estuary URLs or JSON image output.
   const action=/(сдела|созда|сгенериру|нарису|подготов|оформ|собер|состав|generate|create|draw|make)/i.test(s);
-  if(!action)return null;
-  if(/(пдф|pdf)/i.test(s))return "pdf";
-  if(/(изображени|картин|рисунк|рисунок|фото|фотографи|иллюстраци|обложк|постер|image|picture)/i.test(s))return "image";
+  const visual=/(изображени|картин|рисунк|рисунок|фото|фотографи|иллюстраци|обложк|постер|портрет|image|picture|photo)/i.test(s);
+  const describe=/(?:^|\\s)(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)\\s+.{3,100}$|^.{3,100}\\s+(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)$/i.test(s);
+  const question=/(?:[?？]|^(?:где|когда|покажи|найди|что|кто|почему|зачем|можно|есть|скажи|оцени|опиши|сравни|проанализируй)\\b)/i.test(s);
+  if(/(пдф|pdf)/i.test(s))return action?"pdf":null;
+  if((action&&visual)||(action&&/(?:нарису|нарисуй|draw)/i.test(s)))return "image";
+  if(!question&&s.length<=125&&describe)return "image";
   return null;
 }
 function limit(ip){
