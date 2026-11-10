@@ -1,0 +1,76 @@
+/* PLUX V16 · Grok Lite video generator. Approved PLUX OLED glass language retained. */
+.plux16-open {
+ display:flex;align-items:center;gap:14px;
+ width:min(100% - 32px,520px);min-height:72px;
+ margin:20px auto 28px;padding:13px 18px;
+ border:1px solid rgba(142,255,209,.35);border-radius:25px;
+ background:linear-gradient(145deg,rgba(18,80,63,.55),rgba(2,21,23,.91) 65%,rgba(12,8,25,.94));
+ box-shadow:inset 0 1px 1px rgba(237,255,247,.19),inset 0 -8px 20px rgba(1,125,83,.16),0 15px 32px rgba(0,0,0,.37);
+ color:#e8fff7;text-align:left;cursor:pointer;
+ transition:transform 150ms ease-out,box-shadow 250ms cubic-bezier(.2,0,0,1);
+ -webkit-tap-highlight-color:transparent;
+}
+.plux16-open:active{transform:scale(.96)}
+.plux16-open>svg{width:37px;height:37px;padding:8px;border-radius:16px;flex:none;color:#b4ffe0;background:rgba(31,161,114,.19);filter:drop-shadow(0 0 6px rgba(32,220,157,.26))}
+.plux16-open>span:nth-child(2){display:flex;flex-direction:column;gap:4px;min-width:0}
+.plux16-open strong{font-size:15px;font-weight:650;letter-spacing:.012em}
+.plux16-open small{font-size:11px;color:rgba(206,255,236,.64)}
+.plux16-right{margin-left:auto;font-size:29px;line-height:1;color:rgba(194,255,225,.8)}
+.plux16-modal:not([open]){display:none!important}
+.plux16-modal{position:fixed;inset:0;margin:auto;border:0;padding:0;max-width:calc(100vw - 24px);width:min(520px,calc(100vw - 24px));
+ max-height:calc(100dvh - 28px);height:auto;color:#e5fff5;
+ background:transparent;overflow-y:auto;overscroll-behavior:contain;z-index:2147483600;border-radius:29px}
+.plux16-modal::backdrop{background:rgba(0,0,0,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.plux16-card{border-radius:29px;padding:22px;background:radial-gradient(ellipse at 76% 7%,rgba(28,108,81,.30),transparent 57%),
+ linear-gradient(152deg,rgba(8,38,33,.985),rgba(0,6,12,.99) 69%);
+ border:1px solid rgba(133,250,201,.34);
+ box-shadow:inset 0 1px 1px rgba(238,255,249,.18),inset 0 -12px 26px rgba(16,103,73,.07),0 25px 85px rgba(0,0,0,.72)}
+.plux16-head{display:flex;align-items:center;gap:12px}
+.plux16-symbol{width:50px;height:50px;border:1px solid rgba(172,255,219,.32);border-radius:18px;display:grid;place-items:center;
+ background:linear-gradient(145deg,rgba(44,146,105,.25),rgba(4,35,30,.9));box-shadow:inset 0 2px 2px rgba(239,255,246,.18),inset 0 -4px 10px rgba(14,172,115,.18)}
+.plux16-symbol svg{width:27px;height:27px;color:#bfffe5}
+.plux16-head>div:nth-child(2){display:flex;flex-direction:column;gap:3px}
+.plux16-head b{font-size:21px;letter-spacing:-.02em;font-weight:650}
+.plux16-head small{font-size:10px;color:#80b99e;letter-spacing:.13em}
+.plux16-close{margin-left:auto;width:40px;height:40px;border-radius:50%;border:1px solid rgba(194,253,219,.30);
+ background:linear-gradient(150deg,rgba(52,109,85,.32),rgba(4,23,22,.6));color:#e4fff3;font-size:26px;line-height:1;cursor:pointer}
+.plux16-description{font-size:13px;line-height:1.6;margin:15px 0 19px;color:#abcbbf}
+.plux16-form{display:flex;flex-direction:column;gap:12px}
+.plux16-form[hidden],.plux16-result[hidden],.plux16-result video[hidden],.plux16-result button[hidden],.plux16-form button[hidden]{display:none!important}
+.plux16-form label{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c4e7d8}
+.plux16-form textarea,.plux16-form select{width:100%;min-width:0;color:#f0fff7;
+ background:linear-gradient(150deg,rgba(3,28,25,.98),rgba(3,14,22,.96));
+ border:1px solid rgba(128,225,180,.33);border-radius:17px;
+ box-shadow:inset 0 2px 7px rgba(0,0,0,.23);outline:none}
+.plux16-form textarea{padding:14px 15px;resize:vertical;font:13px/1.5 inherit;min-height:105px;box-sizing:border-box}
+.plux16-form textarea::placeholder{color:#638776}
+.plux16-form select{padding:12px 15px;height:46px;font-size:12px}
+.plux16-form textarea:focus-visible,.plux16-form select:focus-visible,.plux16-close:focus-visible,
+.plux16-open:focus-visible,.plux16-form button:focus-visible,.plux16-result button:focus-visible{
+ outline:2px solid #a9ffe0;outline-offset:2px}
+.plux16-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plux16-spec{display:flex;justify-content:space-between;gap:8px;padding:12px;border-radius:15px;
+ background:rgba(7,56,42,.28);border:1px solid rgba(116,214,166,.14);font-size:11px;color:#a7ddc4}
+.plux16-price{min-height:32px;line-height:1.45;color:#d9fff0;font-size:12px}
+.plux16-quote,.plux16-confirm,.plux16-save,.plux16-again{min-height:49px;border-radius:24px;cursor:pointer;
+ border:1px solid rgba(168,255,215,.49);background:linear-gradient(145deg,#116149,#06402f 67%,#05261e);
+ color:white;box-shadow:inset 0 2px 2px rgba(238,255,246,.18),inset 0 -7px 15px rgba(0,174,113,.19);
+ font-size:13px;font-weight:650;padding:12px 20px;
+ transition:transform 150ms ease-out,opacity 150ms ease-out}
+.plux16-quote:active,.plux16-confirm:active,.plux16-save:active,.plux16-again:active{transform:scale(.96)}
+.plux16-quote:disabled,.plux16-confirm:disabled,.plux16-save:disabled{opacity:.50;cursor:progress}
+.plux16-confirm{background:linear-gradient(145deg,#208462,#0a5b42 70%,#093b31)}
+.plux16-result{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-top:19px}
+.plux16-status{font-size:13px;line-height:1.6;color:#c1e9d6;min-height:22px}
+.plux16-orb{width:54px;height:54px;border-radius:50%;margin:8px auto;
+ background:radial-gradient(circle at 32% 22%,#c6ffe9 0%,#44dba8 18%,#085f44 45%,#011710 75%);
+ border:1px solid rgba(204,255,231,.45);box-shadow:inset -8px -8px 14px rgba(0,0,0,.6),0 0 24px rgba(55,229,156,.23);
+ animation:plux16-breathe 1.9s ease-in-out infinite}
+.plux16-orb.finished{animation:none}
+@keyframes plux16-breathe{50%{transform:scale(.92);opacity:.65}}
+.plux16-result video{display:block;max-width:100%;width:100%;max-height:48dvh;background:black;border-radius:17px;
+ outline:1px solid rgba(255,255,255,.10);outline-offset:-1px}
+.plux16-footnote{font-size:10px;line-height:1.55;color:#6f9486;margin:18px 2px 0}
+.plux16-again{background:transparent;border-color:rgba(178,239,207,.24)}
+@media(max-width:370px){.plux16-card{padding:17px}.plux16-fields{gap:7px}.plux16-form select{padding:10px 5px}.plux16-head b{font-size:19px}}
+@media(prefers-reduced-motion:reduce){.plux16-orb{animation:none}.plux16-quote:active,.plux16-confirm:active,.plux16-open:active{transform:none}}
