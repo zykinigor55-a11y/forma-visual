@@ -599,13 +599,52 @@ function renderMaterials(){
 }
 function renderFooter(){const s=current();$('projectPanelName').textContent=project.name;$('projectPanelMeta').textContent=(project.demo?'Демонстрационная модель':'Ракурс '+(project.angle||1))+' · '+(project.sourceWidth||1672)+'×'+(project.sourceHeight||941);$('projectPanelStatus').textContent=project.demo?'Демонстрация · AI-фото не генерировалось':(project.renders.length?project.renders.length+' сохранённых AI-результатов':'Исходник загружен · AI-результатов пока нет');$('summaryLine').textContent=`${envLabel()} · ${cLabel('season',s.season)} · ${cLabel('time',s.time)}`;$('summaryMaterial').textContent=`${customMaterials.some(m=>m.id===s.mats[s.zone])?matById(s.mats[s.zone]).name:(s.preserveMaterials!==false?'Материалы исходника':'Материал не выбран')} · ${zoneLabel().toLowerCase()}`;$('stageSubtitle').textContent=$('summaryLine').textContent;$('stageTitle').textContent=project.name;$('canvasProjectLabel').textContent=project.name;$('breadcrumbName').textContent=project.name;$('stageRatio').textContent=s.ratio;$('ratioSelect').value=s.ratio;$('qualitySelect').value=s.quality;$('quantitySelect').value=s.quantity;$('lockGeometry').checked=s.lockGeometry;$('preserveMaterials').checked=s.preserveMaterials!==false;$('keepReference').checked=s.keepReference;if($('angleLandscapeLock'))$('angleLandscapeLock').checked=s.keepReference;$('editSelectedOnly').checked=!!s.editSelectedOnly;renderFlowLabels()}
 /* Cinematic equipment and optical preview are local UI simulations, not billed video. */
+/* Individual 1K images are faithfully cropped from the user's approved 6x4 cinema atlas.
+   Each tile is 160x120 in the reference; upscale to 1024x768 without inventing new visuals. */
 const animationArtCache=new Map();
+const cinema1KOrder={
+ camera:['alexa35','alexamini','venice2','vraptor','komodox','ursa'],
+ lens:['ultra14','shift24','cine35','cine50','portrait85','macro100'],
+ motion:['orbit','dolly','drone','slider','crane','walk'],
+ grade:['neutral','filmic','contrast','warm','cool','bw']
+};
+let cinema1KLoading=false;
+function loadCinema1K(){
+ if(cinema1KLoading)return;
+ cinema1KLoading=true;
+ const atlas=new Image();
+ atlas.onload=()=>{
+  try{
+   for(const [row,kind] of ['camera','lens','motion','grade'].entries()){
+    for(const [col,id] of cinema1KOrder[kind].entries()){
+     const canvas=document.createElement('canvas');
+     canvas.width=1024;canvas.height=768;
+     const ctx=canvas.getContext('2d',{alpha:false});
+     ctx.imageSmoothingEnabled=true;
+     ctx.imageSmoothingQuality='high';
+     ctx.drawImage(atlas,col*160,row*120,160,120,0,0,1024,768);
+     const url=canvas.toDataURL('image/webp',.94);
+     const key=kind+':'+id;
+     animationArtCache.set(key,url);
+     document.querySelectorAll('#animationPanel [data-anim-kind] ').forEach(card=>{
+      if(card.dataset.animKind===kind && card.dataset.animId===id){
+       const img=card.querySelector('.anim-option-photo img');
+       if(img){img.src=url;img.style.filter='none';}
+      }
+     });
+    }
+   }
+  }catch(err){console.warn('Cinema 1K atlas enhancement unavailable',err)}
+ };
+ atlas.onerror=()=>console.warn('Cinema atlas did not load; showing SVG fallback');
+ atlas.src='assets/cinema/forma-cinema-atlas.webp?v=approved-cinema-1k-20261110';
+}
 function animationArt(kind,id){
  const folders={camera:'cameras',lens:'lenses',motion:'motions',grade:'grades'};
  if(!folders[kind]||!/^[a-z0-9]+$/.test(id))return '';
+ if(!cinema1KLoading)loadCinema1K();
  const key=kind+':'+id;
- if(!animationArtCache.has(key))animationArtCache.set(key,'assets/cinema/'+folders[kind]+'/'+id+'.svg?v=cinema-icons-v42');
- return animationArtCache.get(key);
+ return animationArtCache.get(key)||('assets/cinema/'+folders[kind]+'/'+id+'.svg?v=cinema-svg-fallback');
 }
 function animationSettings(){
  const lib=window.DOM_RENDER_ANIMATION;
