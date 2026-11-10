@@ -24,8 +24,10 @@ function rate(req){
  const now=Date.now();
  if(now-day>=86400000){total=0;day=now;IP_LIMIT.clear()}
  const ip=String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0].trim().slice(0,75);
- const hits=(IP_LIMIT.get(ip)||[]).filter(t=>now-t<600000);
- if(hits.length>=3||total>=25)throw msg(429,"Лимит голосовых сессий: до трёх за 10 минут.");
+ const hits=(IP_LIMIT.get(ip)||[]).filter(t=>now-t<60000);
+ // No artificial three-conversations-per-ten-minutes limit: rapid re-opening is normal.
+ // Protect the account only against automated mass token issuance.
+ if(hits.length>=20||total>=160)throw msg(429,"Защита от слишком частых автоматических подключений. Повтори немного позже.");
  hits.push(now);IP_LIMIT.set(ip,hits);total++;
 }
 export async function arkheonSession(req,res){
@@ -93,4 +95,40 @@ export async function arkheonVoiceProbe(){
   return {configured:true,checked:true,voices:[...new Set(values)].slice(0,40),
     topLevelKeys:typeof info==="object"?Object.keys(info||{}).slice(0,7):[]};
  }catch{return {configured:true,checked:false,voices:[]};}
+}
+
+
+/** Read-only billing telemetry for operator logs; never log keys or account identifiers. */
+export async function arkheonUsageProbe(){
+ const key=String(process.env.ARKHEON_API_KEY||"").trim();
+ if(!key)return {configured:false,checked:false};
+ try{
+  const [usageResult,balanceResult]=await Promise.allSettled([
+   fetch("https://arkheonchat.com/v1/usage?days=30",{
+    headers:{Authorization:"Bearer "+key,"Accept":"application/json"},
+    signal:AbortSignal.timeout(10000)}),
+   fetch("https://arkheonchat.com/v1/balance",{
+    headers:{Authorization:"Bearer "+key,"Accept":"application/json"},
+    signal:AbortSignal.timeout(10000)})
+  ]);
+  const usage=usageResult.status==="fulfilled"&&usageResult.value.ok
+   ?await usageResult.value.json().catch(()=>null):null;
+  const balance=balanceResult.status==="fulfilled"&&balanceResult.value.ok
+   ?await balanceResult.value.json().catch(()=>null):null;
+  const finite=value=>typeof value==="number"&&Number.isFinite(value)?value:null;
+  const total=usage?.total||{};
+  const perModel=Array.isArray(usage?.by_model)?usage.by_model:[];
+  const b=balance||{};
+  const creditsRemaining=finite(b.balance)??finite(b.credits)??finite(b.available_credits)??finite(b.available);
+  return {
+   configured:true,usageChecked:Boolean(usage),balanceChecked:Boolean(balance),
+   periodDays:usage?.period?.days??30,
+   requests:finite(total.requests),
+   creditsSpent:finite(total.credits),
+   creditsRemaining,
+   byModel:perModel.slice(0,15).filter(x=>x&&typeof x.model==="string").map(x=>({
+    model:x.model.slice(0,80),requests:finite(x.requests),credits:finite(x.credits)
+   }))
+  };
+ }catch{return {configured:true,usageChecked:false,balanceChecked:false}}
 }
