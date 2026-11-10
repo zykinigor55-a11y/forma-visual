@@ -34,6 +34,9 @@
   document.querySelectorAll('#animationPanel details.anim-section').forEach(el=>el.open=true);
  }
  function loadAtlas(){
+  // Mobile screens display the approved original atlas directly via CSS.
+  // Avoid allocating twenty-four 1024×768 canvas/data-URL copies on phones.
+  if(window.matchMedia?.('(max-width:700px)').matches)return;
   if(atlasLoaded)return;
   atlasLoaded=true;
   const img=new Image();
@@ -59,6 +62,12 @@
   loadAtlas();
   document.querySelectorAll('[data-mobile="animation"],[data-nav="animation"],[data-tab="animation"]').forEach(el=>el.addEventListener('click',()=>queueMicrotask(hydrate)));
   window.addEventListener('pageshow',hydrate);
+  // If a phone changes into a desktop-width viewport, hydrate desktop art.
+  const mobileQuery=window.matchMedia?.('(max-width:700px)');
+  mobileQuery?.addEventListener?.('change',event=>{
+   if(!event.matches)loadAtlas();
+   else hydrate();
+  });
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
