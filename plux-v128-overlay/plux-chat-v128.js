@@ -177,6 +177,9 @@
   }
   // Display the wait state immediately and render genuine streamed tokens.
   // This bubble is persisted to local chat history only when the reply finishes.
+  // PLUX V29.1: the same soft sound as the existing onboarding/home screen,
+  // paired with real progressive, grapheme-safe typing in chat. No extra audio
+  // engine: PLUX125 owns volume, sound-on/off and mobile audio-unlock policy.
   function startTextReply(){
     const row=document.createElement('div');row.className='chat-row bot plux29-live-row';
     const avatar=document.createElement('img');avatar.className='chat-mini';avatar.alt='';avatar.src='/assets/states/idle.webp';
@@ -185,30 +188,83 @@
     const dots=document.createElement('span');dots.className='plux29-dots';dots.setAttribute('aria-hidden','true');
     hint.append(dots);bubble.append(hint);row.append(avatar,bubble);feed.append(row);
     feed.scrollTop=feed.scrollHeight;
-    let latest='',finished=false;
+    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
+    const segmenter=typeof Intl?.Segmenter==='function'?new Intl.Segmenter('ru',{granularity:'grapheme'}):null;
+    const split=text=>segmenter?[...segmenter.segment(text)].map(x=>x.segment):Array.from(text);
+    let incoming='',chars=[],position=0,started=false,finished=false,finalizing=false;
+    let timer=null,onComplete=null;
+    function persist(text){
+      const h=history();h.push({from:'bot',text:String(text).slice(0,5000),at:Date.now()});
+      try{localStorage.setItem('plux_messages',JSON.stringify(h.slice(-75)))}catch{}
+    }
+    function clearTick(){if(timer!==null){clearInterval(timer);timer=null}}
+    function draw(){
+      if(finished)return;
+      const left=chars.length-position;
+      if(!left){
+        if(finalizing){
+          finished=true;clearTick();
+          bubble.classList.remove('plux29-live-bubble','plux29-streaming');
+          row.classList.remove('plux29-live-row');
+          persist(incoming);
+          feed.scrollTop=feed.scrollHeight;
+          onComplete?.();
+        }
+        return;
+      }
+      if(!started){
+        started=true;bubble.textContent='';
+        bubble.classList.add('plux29-streaming');
+      }
+      // Stay expressive on short answers, but catch up quickly when a long
+      // chunk arrives or streaming finishes. Never delay a large reply by minutes.
+      const pace=reduced?left:
+        left>450?Math.min(35,Math.ceil(left/22)):
+        left>130?Math.min(16,Math.ceil(left/22)):
+        finalizing?Math.min(9,Math.max(2,Math.ceil(left/35))):
+        left>45?3:1;
+      const chunk=chars.slice(position,position+pace).join('');
+      position+=pace;
+      const nearBottom=feed.scrollHeight-feed.scrollTop-feed.clientHeight<160;
+      bubble.append(document.createTextNode(chunk));
+      if(!reduced&&chunk.trim()&&!document.hidden){
+        window.PLUX125?.playTypeClick?.();
+      }
+      if(nearBottom)feed.scrollTop=feed.scrollHeight;
+    }
+    function startTick(){
+      if(finished||timer!==null)return;
+      timer=setInterval(draw,reduced?15:29);
+      draw();
+    }
     return {
       update(text){
-        if(finished)return;
-        latest=String(text||'').slice(0,5000);
-        if(latest){
-          bubble.textContent=latest;
-          bubble.classList.add('plux29-streaming');
-        }
-        if(feed.scrollHeight-feed.scrollTop-feed.clientHeight<160)feed.scrollTop=feed.scrollHeight;
+        if(finished||finalizing)return;
+        const next=String(text||'').slice(0,5000);
+        if(next===incoming)return;
+        incoming=next;chars=split(next);
+        startTick();
       },
       finish(text){
-        if(finished)return;
-        finished=true;
-        latest=String(text||latest||'').slice(0,5000);
-        bubble.textContent=latest;bubble.classList.remove('plux29-live-bubble');
-        row.classList.remove('plux29-live-row');
-        const h=history();h.push({from:'bot',text:latest,at:Date.now()});
-        try{localStorage.setItem('plux_messages',JSON.stringify(h.slice(-75)))}catch{}
-        feed.scrollTop=feed.scrollHeight;
+        if(finished)return Promise.resolve();
+        const finalText=String(text||incoming).slice(0,5000);
+        if(finalText!==incoming){incoming=finalText;chars=split(finalText);}
+        finalizing=true;
+        startTick();
+        return new Promise(resolve=>{onComplete=resolve;if(finished)resolve()});
       },
       stop(){
         if(finished)return;
-        finished=true;row.remove();
+        finished=true;clearTick();
+        // A network error must not erase already received words.
+        if(position>0){
+          const partial=chars.slice(0,position).join('');
+          bubble.textContent=partial;
+          bubble.classList.remove('plux29-live-bubble','plux29-streaming');
+          row.classList.remove('plux29-live-row');
+          persist(partial);
+        }else row.remove();
+        onComplete?.();
       }
     };
   }
@@ -221,7 +277,7 @@
       if(done)break;
       buffer+=decoder.decode(value,{stream:true});
       if(buffer.length>100_000)throw Error('Ошибка передачи ответа.');
-      const lines=buffer.split(/\\r?\\n/);buffer=lines.pop()||'';
+      const lines=buffer.split(/\r?\n/);buffer=lines.pop()||'';
       for(const line of lines){
         if(!line.trim())continue;
         let event;
@@ -235,7 +291,7 @@
       }
     }
     if(!finished||!answer.trim())throw Error('Соединение прервалось до окончания ответа. Попробуй ещё раз.');
-    live.finish(answer);
+    await live.finish(answer);
     return answer;
   }
   async function send(text){
