@@ -31,7 +31,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
  border-right:1px solid #384B3C;box-shadow:4px 0 18px #14251A1D
 }
 .brand-mark,.rail-monogram{border-color:#657260!important;color:#E8E3D7!important}
-.rail-btn{border-radius:12px;color:#ACB9AD!important}
+.rail-btn{position:relative;border-radius:12px;color:#ACB9AD!important}
 .rail-btn .ico{stroke-width:1.8}
 .rail-btn:hover{background:#2C4434!important;color:#FAFCF8!important}
 .rail-btn.active{
