@@ -1,0 +1,11 @@
+/* PLUX V15 — quiet luxury, crystal-glass speech controls inside the existing OLED chat */
+#screen-chat .plux15-voice{display:flex;flex-wrap:wrap;align-items:center;gap:7px 10px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(176,244,218,.16);min-width:0}
+#screen-chat .plux15-voice-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid rgba(167,250,222,.43);border-radius:24px;padding:8px 11px;min-height:37px;max-width:100%;background:radial-gradient(circle at 28% 3%,rgba(230,255,251,.17),transparent 52%),linear-gradient(150deg,#0a4136,#041917 72%);color:#e5fff7;font:600 12px/1.3 inherit;box-shadow:inset 0 1px 2px rgba(255,255,255,.13),inset 0 -4px 9px rgba(12,209,143,.16),0 3px 12px rgba(0,0,0,.28);-webkit-tap-highlight-color:transparent;cursor:pointer;transition:transform 150ms ease-out,opacity 150ms ease-out}
+#screen-chat .plux15-voice-button svg{display:block;width:17px;height:17px;flex:none;color:#8afbd2}
+#screen-chat .plux15-voice-button:not(:disabled):active{transform:scale(.96)}
+#screen-chat .plux15-voice-button:disabled{opacity:.65;cursor:progress}
+#screen-chat .plux15-voice-button:focus-visible{outline:2px solid #ddffef;outline-offset:3px}
+#screen-chat .plux15-voice-status{font-size:10px;color:#b4d6c9;line-height:1.4;min-width:0;overflow-wrap:anywhere;max-width:100%}
+#screen-chat .plux15-voice-download{display:inline-block;color:#adf7d4;text-decoration:underline;text-underline-offset:3px;font-size:11px;font-weight:600;line-height:1.4}
+@media(hover:hover){#screen-chat .plux15-voice-button:not(:disabled):hover{border-color:rgba(203,255,237,.75)}}
+@media(prefers-reduced-motion:reduce){#screen-chat .plux15-voice-button{transition:none}#screen-chat .plux15-voice-button:active{transform:none}}
