@@ -56,7 +56,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          version="plux-android-v22-20261110"
+          version="plux-android-v23-20261110"
           apk="android/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$apk"
           cp "$apk" "${RUNNER_TEMP}/PLUX-Android.apk"
@@ -64,8 +64,8 @@ jobs:
             gh release upload "$version" "${RUNNER_TEMP}/PLUX-Android.apk" --clobber
           else
             gh release create "$version" "${RUNNER_TEMP}/PLUX-Android.apk" \
-              --title "ПЛЮХ для Android — V22" \
-              --notes "Отладочная Android APK сборка ПЛЮХа с фирменной иконкой капли. Приложение использует работающий сервер Render для голосового помощника, чата и генераций. Для установки разрешите установку из браузера или файлового менеджера. Это тестовая сборка, не Google Play." \
+              --title "ПЛЮХ для Android — V23" \
+              --notes "Тестовая Android APK сборка ПЛЮХ V23: улучшены голосовой разговор и русский язык, исправлено воспроизведение ответов, доступны четыре стеклянные цветовые темы и новая иконка без искажений. Приложение использует работающий сервер Render для голосового помощника, чата и генераций. Для установки разрешите установку из браузера или файлового менеджера. Это тестовая сборка, не Google Play." \
               --target "$GITHUB_SHA" \
               --prerelease
           fi
