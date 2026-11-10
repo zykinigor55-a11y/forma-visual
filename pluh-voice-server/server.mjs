@@ -5,6 +5,7 @@ import { handleCyhub } from "./cyhub-voice-v15.mjs";
 import {handleCyhubVideo} from "./cyhub-video-v16.mjs";
 import { voiceSession } from "./live-voice-v151.mjs";
 import {arkheonSession,arkheonVoiceProbe,arkheonUsageProbe} from "./arkheon-realtime-v17.mjs";
+import { handleAudius } from "./music-audius-v24.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -55,6 +56,7 @@ async function handler(req,res){
      return reply(res,200,{signedUrl:result.signed_url});
    }catch{return reply(res,502,{error:"Связь с ElevenLabs недоступна."});}
  }
+ if(pathname.startsWith("/api/music/"))return handleAudius(req,res);
  if(pathname.startsWith("/api/arkheon/"))return arkheonSession(req,res);
  if(pathname.startsWith("/api/voice/"))return voiceSession(req,res);
  if(pathname.startsWith("/api/tts/"))return handleCyhub(req,res);
