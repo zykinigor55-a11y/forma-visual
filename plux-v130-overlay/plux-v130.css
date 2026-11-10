@@ -1,0 +1,41 @@
+/* PLUX V13.0 — remove fake phone chrome / ghosted brand subtitle / restore gallery motion.
+   This stylesheet loads last, after the approved crystal OLED design. */
+#app .screen .statusbar,
+#screen-onboard .statusbar,
+#screen-home .statusbar,
+#screen-create .statusbar { display:none!important; height:0!important; min-height:0!important; max-height:0!important; padding:0!important; margin:0!important; flex:0 0 0!important; overflow:hidden!important; visibility:hidden!important; }
+#screen-home .branding > span,
+#screen-home .branding span:not(.logo-only) { display:none!important; visibility:hidden!important; }
+#screen-home .branding { gap:0!important; }
+#screen-home .branding img { object-fit:contain!important; }
+#screen-create .create-head .create-spark { display:none!important; visibility:hidden!important; width:0!important; height:0!important; min-width:0!important; min-height:0!important; flex:0 0 0!important; }
+#screen-create .create-head { position:relative; gap:0!important; }
+#screen-create .create-head h1 { margin:0!important; }
+#screen-create .create-head .back-glass { position:absolute!important; left:clamp(14px,4vw,24px)!important; top:50%!important; transform:translateY(-50%)!important; }
+/* Gentle GPU-only drift, in the original 3D-card gallery. */
+@keyframes plux130-center {
+  0%,100% {transform:translate3d(0,2px,34px) rotateZ(2.4deg) rotateY(-1deg);}
+  50% {transform:translate3d(0,-9px,38px) rotateZ(1.1deg) rotateY(2deg);}
+}
+@keyframes plux130-left {
+  0%,100% {transform:translate3d(-12%,-2px,-22px) rotate(-12deg) rotateY(4deg);}
+  50% {transform:translate3d(-15%,3px,-18px) rotate(-10deg) rotateY(-1deg);}
+}
+@keyframes plux130-right {
+  0%,100% {transform:translate3d(12%,3px,-20px) rotate(11deg) rotateY(-4deg);}
+  50% {transform:translate3d(15%,-5px,-15px) rotate(13deg) rotateY(1deg);}
+}
+@keyframes plux130-depth {0%,100%{transform:scale(1.035) translate3d(0,0,0)}50%{transform:scale(1.07) translate3d(-.6%,0,0)}}
+@keyframes plux130-shimmer {0%,25%,100% {transform:translateX(-46%) rotate(18deg);opacity:0}44%{opacity:.32}68%{transform:translateX(43%) rotate(18deg);opacity:0}}
+#screen-create:not([hidden]) .create-art .gallery-stage>.featured-art {animation:plux130-center 6.4s ease-in-out infinite!important;will-change:transform;}
+#screen-create:not([hidden]) .create-art .gallery-stage>.poster-side.left {animation:plux130-left 7.4s ease-in-out infinite!important;will-change:transform;}
+#screen-create:not([hidden]) .create-art .gallery-stage>.poster-side.right {animation:plux130-right 8.1s ease-in-out -1.4s infinite!important;will-change:transform;}
+#screen-create:not([hidden]) .create-art .featured-art>img {animation:plux130-depth 11s ease-in-out infinite!important;}
+#screen-create:not([hidden]) .create-art .featured-art::before {animation:plux130-shimmer 11s ease-in-out infinite!important;}
+#screen-create[hidden] .create-art * {animation-play-state:paused!important;}
+@media(prefers-reduced-motion:reduce){
+ #screen-create .create-art .gallery-stage>.featured-art,
+ #screen-create .create-art .gallery-stage>.poster-side,
+ #screen-create .create-art .featured-art>img,
+ #screen-create .create-art .featured-art::before{animation:none!important;will-change:auto;}
+}
