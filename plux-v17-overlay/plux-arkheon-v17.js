@@ -21,8 +21,8 @@
  let userSpeaking=false,ignoreAbortedResponse=false,sessionConfirmed=false;
  let speakingStartedAt=0,finishTimer=0,happyTimer=0,latestEvent="idle";
  let detectedVoiceMs=0,pendingSpeechStart=0,lastVoiceAt=0,interruptions=0,playedChunks=0;
- const jitterLeadSeconds=.22; // prevent audible gaps on jittery 4G and Android WebView
- const speakingVoiceThreshold=.075; // post-echo-cancellation local voice RMS
+ const jitterLeadSeconds=.16; // lower first-audio latency, retain some 4G jitter protection
+ const speakingVoiceThreshold=.062; // post-echo-cancellation local voice RMS
  const interruptionVoiceMs=210;
  const cancelEmotionTimers=()=>{
   clearTimeout(finishTimer);clearTimeout(happyTimer);finishTimer=0;happyTimer=0;
@@ -223,6 +223,12 @@
    // A transcript may arrive AFTER audio started: it must never hide talking video.
    const transcript=typeof evt.transcript==="string"?evt.transcript.trim():"";
    if(transcript)lastUserTranscript=transcript.slice(0,240);
+   // A locally recognized music command opens the actual licensed Audius
+   // player. Stop the live mic to prevent feedback from musical playback.
+   if(transcript&&window.PLUXMusic?.interpret?.(transcript,{source:"voice"})){
+    void stop("Музыкальный плеер открыт. Нажми ▶, если звук не начался.");
+    return;
+   }
    if(!userSpeaking&&mode==="listening")state("thinking");
    // Shows what was actually understood, useful to diagnose noisy microphones.
    if(transcript&&!responseAudioStarted&&mode==="thinking")
@@ -284,6 +290,7 @@
  }
  async function start(){
   if(active||connecting)return;
+  window.PLUXMusic?.pause?.(); // prevent music from being mistaken for user speech
   const id=++sequence;
   connecting=true;screen.classList.add("plux126-request");
   mic.setAttribute("aria-label","Подключение к ПЛЮХ");
@@ -356,7 +363,7 @@
      instructions:"ПРАВИЛО ЯЗЫКА: ОТВЕЧАЙ ИСКЛЮЧИТЕЛЬНО ПО-РУССКИ. Ты ПЛЮХ — внимательный, энергичный, доброжелательный голосовой помощник. ВСЕГДА отвечай естественным грамотным русским языком; никогда не начинай на английском. Слушай вопрос целиком, не теряй смысл слов и продолжай тему с учётом предыдущих реплик. Не перескакивай на другие темы. Если речь распознана неуверенно, задай один короткий уточняющий вопрос, вместо догадок. Говори понятно, без спешки, тёплым молодым мужским голосом. Обычно отвечай полноценно за 2–5 предложений, а если просят подробностей — объясняй подробнее. ЗАВЕРШАЙ каждую фразу и мысль; не обрывай предложение и не вставляй многоточие вместо ответа. Не повторяй одни и те же слова, не начинай заново уже сказанное. Лёгкий юмор допустим. Не выдумывай выполненные действия, результаты или подключения. Пользователь общается по-русски, отвечай только по-русски.",
      audio:{
        input:{format:{type:"audio/pcm",rate:24000},turn_detection:{
-         type:"server_vad",threshold:.5,prefix_padding_ms:450,silence_duration_ms:950,
+         type:"server_vad",threshold:.42,prefix_padding_ms:500,silence_duration_ms:820,
          create_response:true,interrupt_response:false
        }},
        output:{format:{type:"audio/pcm",rate:24000},voice:"ash"}
