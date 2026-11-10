@@ -653,7 +653,7 @@ function animationSettings(){
 function animationColorFilter(id){
  return {neutral:'none',filmic:'brightness(1.04) contrast(.91) saturate(.94)',contrast:'brightness(1.05) contrast(.88) saturate(.95)',warm:'contrast(1.10) saturate(1.10)',cool:'brightness(.64) contrast(1.03)',bw:'contrast(.97) saturate(.89)'}[id]||'none';
 }
-const ANIM_DEMO_HOUSE='assets/residence-render.jpg';
+const ANIM_DEMO_HOUSE='assets/Современный дом с бассейном.png';
 const ANIM_LENS_SETTINGS={
  ultra14:[18,1.04],shift17:[17,1.07],shift24:[25,1.16],cine24:[24,1.16],
  cine35:[35,1.29],cine50:[47,1.42],portrait85:[75,1.64],
