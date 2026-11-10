@@ -644,3 +644,27 @@ console.log('PLUX V26 ready: photo viewer, genuine image generator, six unified 
   console.warn('PLUX V26 ZIP was not built because release APK mirror did not download.');
  }
 }
+
+
+/* PLUX V27: PDF downloads from real HTTPS URLs; fix empty image creation
+ * icon, remove decorative stripes and inactive notification bell, and smooth
+ * realtime speech on unreliable mobile connections. Native Android V27 adds
+ * the system DownloadManager; web mode can use the same direct PDF link.
+ */
+const v27PagePath=join(root,'index.html');
+let v27Html=readFileSync(v27PagePath,'utf8');
+if(!v27Html.includes('plux-release-v26'))throw Error('V26 prerequisite required');
+v27Html=v27Html.replace('</head>','<meta name="plux-release-v27" content="download-pdf-modes-icons-voice-stability"></head>');
+for(const script of ['plux-chat-v128.js','plux-modes-v26.js','plux-arkheon-v17.js']){
+ v27Html=v27Html.replace(new RegExp('/'+script.replaceAll('.','\\.')+'\\?v=\\d+','g'),'/'+script+'?v=2701');
+}
+v27Html=v27Html.replace(/\/plux-v26\.css\?v=\d+/g,'/plux-v26.css?v=2701');
+writeFileSync(v27PagePath,v27Html);
+const v27SwPath=join(root,'sw.js');
+let v27Sw=readFileSync(v27SwPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2701');
+writeFileSync(v27SwPath,v27Sw);
+for(const file of ['plux-chat-v128.js','plux-modes-v26.js','plux-arkheon-v17.js']){
+ plux123Exec(process.execPath,['--check',join(root,file)],{stdio:'inherit'});
+}
+if(!v27Html.includes('/plux-chat-v128.js?v=2701'))throw Error('PLUX V27 chat cache-bust missing');
+console.log('PLUX V27: downloadable PDFs, no dead bell, proper image-create icon and low-bandwidth voice jitter recovery');
