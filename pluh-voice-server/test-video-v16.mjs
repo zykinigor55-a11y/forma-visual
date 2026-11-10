@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {videoSettings,handleCyhubVideo} from "./cyhub-video-v16.mjs";
+import {videoSettings,handleCyhubVideo,parseUploadedPhoto} from "./cyhub-video-v16.mjs";
 const params=videoSettings({prompt:"Зелёная стеклянная капля улыбается",duration:1,aspectRatio:"16:9"});
 assert.equal(params.model,"grok_video");
 assert.equal(params.settings.model,"grok_lite");
@@ -35,3 +35,25 @@ assert.equal(Object.hasOwn(imagePayload.settings,"aspect_ratio"),false);
 assert.equal(imagePayload.settings.quality,"480p");
 assert.equal(cfg.supportsImageToVideo,true);
 console.log("PLUX V17 image-to-video smoke test passed");
+
+
+// Android gallery may advertise JPEG bytes as PNG, and vice versa.
+// Verify the real bytes take priority; this test creates NO chargeable task.
+const pngMagic=Buffer.from([137,80,78,71,13,10,26,10]);
+const pngBytes=Buffer.concat([pngMagic,Buffer.alloc(400)]);
+const pngWrongLabel=parseUploadedPhoto("data:image/jpeg;base64,"+pngBytes.toString("base64"));
+assert.equal(pngWrongLabel.mime,"image/png");
+assert.equal(pngWrongLabel.extension,"png");
+assert.equal(pngWrongLabel.bytes.byteLength,pngBytes.byteLength);
+const jpgBytes=Buffer.concat([Buffer.from([255,216,255,224,0,16]),Buffer.alloc(330),Buffer.from([255,217])]);
+const jpgWrongLabel=parseUploadedPhoto("data:image/png;base64,"+jpgBytes.toString("base64"));
+assert.equal(jpgWrongLabel.mime,"image/jpeg");
+assert.equal(jpgWrongLabel.extension,"jpg");
+const webpBytes=Buffer.concat([Buffer.from("RIFF"),Buffer.from([0,0,0,0]),Buffer.from("WEBP"),Buffer.alloc(400)]);
+const webp=parseUploadedPhoto("data:image/webp;base64,"+webpBytes.toString("base64"));
+assert.equal(webp.mime,"image/webp");
+assert.throws(()=>parseUploadedPhoto("data:image/png;base64,"+Buffer.alloc(330).toString("base64")));
+// Data URLs sometimes contain harmless line wrapping from browser plugins.
+const withWhitespace=parseUploadedPhoto("data:image/jpeg;base64,"+jpgBytes.toString("base64").replace(/.{72}/g,"$&\n"));
+assert.equal(withWhitespace.mime,"image/jpeg");
+console.log("PLUX V19 gallery file smoke tests passed: PNG/JPEG/WebP and mislabeled MIME");
