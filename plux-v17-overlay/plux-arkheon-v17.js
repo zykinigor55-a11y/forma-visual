@@ -18,6 +18,10 @@
  let responseDone=false,responseAudioStarted=false,responseCycle=0,lastAudioAt=0;
  let userSpeaking=false,ignoreAbortedResponse=false,sessionConfirmed=false;
  let speakingStartedAt=0,finishTimer=0,happyTimer=0,latestEvent="idle";
+ let detectedVoiceMs=0,pendingSpeechStart=0,lastVoiceAt=0,interruptions=0,playedChunks=0;
+ const jitterLeadSeconds=.125; // small buffer for jittery Android WebSocket audio
+ const speakingVoiceThreshold=.075; // post-echo-cancellation local voice RMS
+ const interruptionVoiceMs=210;
  const cancelEmotionTimers=()=>{
   clearTimeout(finishTimer);clearTimeout(happyTimer);finishTimer=0;happyTimer=0;
  };
@@ -26,13 +30,13 @@
  function finishAudio(){
   clearTimeout(finishTimer);finishTimer=0;
   if(!active||userSpeaking||!responseAudioStarted||mode!=="talking")return;
+  // IMPORTANT: never infer that a streamed answer is complete from a 2s gap.
+  // Sentences are synthesized separately; long network gaps are normal.
+  if(!responseDone)return;
   const remaining=Math.max(0,(playAt-(speakerCtx?.currentTime||0))*1000);
-  const elapsed=Date.now()-lastAudioAt;
-  const minTalkMs=Math.max(0,1350-(performance.now()-speakingStartedAt));
-  const settlingMs=Math.max(0,420-elapsed);
-  const waitingForDone=!responseDone?Math.max(0,2100-elapsed):0;
-  const delay=Math.max(remaining+((remaining>0)?90:0),playing.length?100:0,minTalkMs,settlingMs,waitingForDone);
-  if(delay>5){finishTimer=setTimeout(finishAudio,Math.max(50,Math.min(delay,2000)));return}
+  const minTalkMs=Math.max(0,900-(performance.now()-speakingStartedAt));
+  const delay=Math.max(remaining+60,playing.length?80:0,minTalkMs);
+  if(delay>65){finishTimer=setTimeout(finishAudio,Math.max(65,Math.min(delay,1600)));return}
   responseAudioStarted=false;
   responseDone=false;
   state("happy");
@@ -76,9 +80,37 @@
   else if(s==="listening")say("ПЛЮХ слушает","Говори свободно. Нажми микрофон, чтобы закончить.");
  }
  function clearOutput(){
-  for(const node of playing){try{node.stop()}catch{}try{node.disconnect()}catch{}}
-  playing=[];
+  const list=playing;playing=[];
+  // Reset scheduling BEFORE stop() fires onended handlers.
   playAt=speakerCtx?.currentTime||0;
+  for(const node of list){try{node.onended=null;node.stop()}catch{}try{node.disconnect()}catch{}}
+ }
+ function interruptFromSpeech(){
+  if(!active||mode!=="talking"||!pendingSpeechStart)return;
+  pendingSpeechStart=0;interruptions++;
+  userSpeaking=true;ignoreAbortedResponse=true;
+  responseCycle++;responseDone=false;responseAudioStarted=false;
+  cancelEmotionTimers();
+  // Arkheon cannot distinguish speaker echo from a real barge-in reliably.
+  // We cancel at the server ONLY when microphone-side acoustic evidence exists.
+  send({type:"response.cancel"});
+  clearOutput();state("listening");
+ }
+ function localLevel(level){
+  if(!active)return;
+  const rms=Number(level);
+  if(!Number.isFinite(rms))return;
+  const now=Date.now();
+  if(rms>speakingVoiceThreshold){
+   detectedVoiceMs=Math.min(1000,detectedVoiceMs+100);lastVoiceAt=now;
+  }else{
+   detectedVoiceMs=Math.max(0,detectedVoiceMs-80);
+  }
+  if(pendingSpeechStart){
+   if(now-pendingSpeechStart>1400){pendingSpeechStart=0;return}
+   if(detectedVoiceMs>=interruptionVoiceMs&&now-lastVoiceAt<300)
+    interruptFromSpeech();
+  }
  }
  function playback(base64){
   if(!speakerCtx||!base64)return;
@@ -93,7 +125,9 @@
     if(v>=32768)v-=65536;
     channel[i]=v/32768;
    }
-   if(playAt-speakerCtx.currentTime>5){clearOutput()}
+   // Earlier releases dropped *all* queued audio after five seconds, cutting
+   // off answers and causing repeated syllables. Never discard valid output.
+   playedChunks++;
    const source=speakerCtx.createBufferSource();
    source.buffer=audio;source.connect(speakerCtx.destination);
    source.onended=()=>{
@@ -102,7 +136,7 @@
     // Network completion can be earlier than the last sound from the speaker.
     if(responseAudioStarted&&playing.length===0)scheduleFinish();
    };
-   const time=Math.max(speakerCtx.currentTime+.025,playAt);
+   const time=Math.max(speakerCtx.currentTime+jitterLeadSeconds,playAt);
    source.start(time);playing.push(source);playAt=time+audio.duration;
   }catch{}
  }
@@ -124,7 +158,10 @@
   if(!active){throw Error("Разговор был остановлен.")}
   input=captureCtx.createMediaStreamSource(media);
   worklet=new AudioWorkletNode(captureCtx,"plux-arkheon-capture",{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]});
-  worklet.port.onmessage=e=>{if(e.data instanceof ArrayBuffer)audioChunk(e.data)};
+  worklet.port.onmessage=e=>{
+   if(e.data instanceof ArrayBuffer)audioChunk(e.data);
+   else if(e.data?.type==="level")localLevel(e.data.rms);
+  };
   silence=captureCtx.createGain();silence.gain.value=0;
   input.connect(worklet);worklet.connect(silence);silence.connect(captureCtx.destination);
   await captureCtx.resume();
@@ -140,12 +177,22 @@
   }
   if(!sessionConfirmed)return; // Never speak before Russian instructions are acknowledged.
   if(name==="input_audio_buffer.speech_started"){
+   if(mode==="talking"){
+    // False server VAD triggers on the assistant's own speaker output are
+    // common on phones. Do not truncate replies until real local speech.
+    pendingSpeechStart=Date.now();
+    if(detectedVoiceMs>=interruptionVoiceMs&&Date.now()-lastVoiceAt<300)
+     interruptFromSpeech();
+    return;
+   }
    userSpeaking=true;ignoreAbortedResponse=true;
    responseCycle++;responseDone=false;responseAudioStarted=false;
+   pendingSpeechStart=0;
    cancelEmotionTimers();clearOutput();
    state("listening");return;
   }
   if(name==="input_audio_buffer.speech_stopped"||name==="input_audio_buffer.committed"){
+   pendingSpeechStart=0;
    userSpeaking=false;
    if(mode!=="talking")state("thinking");
    return;
@@ -157,6 +204,7 @@
   }
   if(name==="response.created"){
    userSpeaking=false;ignoreAbortedResponse=false;
+   detectedVoiceMs=0;pendingSpeechStart=0;
    responseCycle++;responseDone=false;responseAudioStarted=false;
    cancelEmotionTimers();
    state("thinking");
@@ -165,7 +213,8 @@
   if(name==="response.output_audio.delta"||name==="response.audio.delta"){
    if(ignoreAbortedResponse||typeof evt.delta!=="string")return;
    lastAudioAt=Date.now();
-   responseDone=false;
+   // Do not reset responseDone from late audio chunks: the completion event
+   // can arrive before the local speaker queue has finished playing.
    if(!responseAudioStarted){
     responseAudioStarted=true;speakingStartedAt=performance.now();
     cancelEmotionTimers();state("speaking");
@@ -189,6 +238,7 @@
   sequence++;
   connecting=false;active=false;sessionConfirmed=false;clearTimeout(timeout);
   cancelEmotionTimers();responseAudioStarted=false;responseDone=false;ignoreAbortedResponse=false;
+  pendingSpeechStart=0;detectedVoiceMs=0;
   screen.classList.remove("plux126-request");
   const oldSocket=ws;ws=null;
   if(oldSocket){try{oldSocket.close(1000,"PLUX user ended session")}catch{}}
@@ -275,8 +325,8 @@
      instructions:"СИСТЕМНОЕ ПРАВИЛО: ОТВЕЧАЙ ИСКЛЮЧИТЕЛЬНО ПО-РУССКИ С ПЕРВОЙ ЖЕ РЕПЛИКИ. Не произноси английские приветствия, инструкции и вводные слова, даже если в контексте есть английский текст. Ты ПЛЮХ — умный, дружелюбный голосовой помощник. Твой стиль: молодой энергичный мужской голос, тёплый тембр, лёгкая улыбка, естественные доброжелательные интонации, бодрый, но комфортный темп. Без дикторской манеры и канцелярита. Отвечай обычно одной-двумя короткими фразами, подробнее по просьбе. Не играй роль ребёнка, не кричи и не добавляй неуместный сленг. Уместен лёгкий юмор. Слушай собеседника, допускай перебивания и не выдумывай выполненные действия. ВАЖНО: ЯЗЫК КАЖДОГО ОТВЕТА — РУССКИЙ.",
      audio:{
        input:{format:{type:"audio/pcm",rate:24000},turn_detection:{
-         type:"server_vad",threshold:.5,prefix_padding_ms:300,silence_duration_ms:550,
-         create_response:true,interrupt_response:true
+         type:"server_vad",threshold:.62,prefix_padding_ms:400,silence_duration_ms:850,
+         create_response:true,interrupt_response:false
        }},
        output:{format:{type:"audio/pcm",rate:24000},voice:"ash"}
      }
@@ -321,6 +371,8 @@
   start,stop,isActive:()=>active,isConnecting:()=>connecting,
   debug:()=>({state:mode,connected:active,russianConfigured:sessionConfirmed,
    streamEvent:latestEvent,playingChunks:playing.length,
+   speakerQueueSeconds:Math.max(0,playAt-(speakerCtx?.currentTime||0)).toFixed(2),
+   totalPlaybackChunks:playedChunks,confirmedBargeIns:interruptions,
    video:screen.querySelector(".voice-image-layer")?.dataset.pluxEmotion||null,
    videoDirector:window.PLUXSeamless?.debug?.()||[]})
  };
