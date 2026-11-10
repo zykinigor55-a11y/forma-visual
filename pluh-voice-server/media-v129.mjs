@@ -116,8 +116,12 @@ export async function handleImageRequest(req,res){
       return reply(res,502,{error:"Nano Banana: HTTP "+upstream.status+". "+(msg||"Проверь ключ и доступ к модели.")});
     }
     const first=body?.data?.[0];
-    if(typeof first?.b64_json==="string"&&/^[a-z0-9+/]+={0,2}$/i.test(first.b64_json)&&first.b64_json.length<24000000)
-      return reply(res,200,{image:"data:image/png;base64,"+first.b64_json,model:"nano-banana-2.1"});
+    if(typeof first?.b64_json==="string"&&/^[a-z0-9+/]+={0,2}$/i.test(first.b64_json)&&first.b64_json.length<24000000){
+      const imageBytes=Buffer.from(first.b64_json,"base64");
+      const kind=imageBytes[0]===255&&imageBytes[1]===216?"image/jpeg":imageBytes[0]===137&&imageBytes[1]===80?"image/png":imageBytes.toString("ascii",0,4)==="RIFF"?"image/webp":null;
+      if(!kind)return reply(res,502,{error:"Модель вернула неподдерживаемый формат изображения."});
+      return reply(res,200,{image:"data:"+kind+";base64,"+first.b64_json,model:"nano-banana-2.1"});
+    }
     if(typeof first?.url==="string"){
       let u;try{u=new URL(first.url)}catch{}
       if(u?.protocol==="https:"&&!u.username&&!u.password&&!["localhost","127.0.0.1"].includes(u.hostname))
