@@ -54,7 +54,7 @@
       for(const v of this.videos) {
         v.addEventListener('ended',()=>{
           if(v!==this.active)return;
-          if(this.state==='happy')this.set('idle');
+          if(this.state==='happy'&&!this.host.closest('#screen-voice'))this.set('idle');
         });
       }
     }
