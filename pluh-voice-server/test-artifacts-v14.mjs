@@ -4,6 +4,12 @@ assert.equal(artifactIntent("Нарисуй изображение соврем�
 assert.equal(artifactIntent("Сделай PDF-презентацию проекта дома"),"pdf");
 assert.equal(artifactIntent("Как создать PDF?"),null);
 assert.equal(artifactIntent("Напиши промпт для изображения"),null);
+assert.equal(artifactIntent("Полосатая корова фото"),"image","noun-photo prompt must use real generator");
+assert.equal(artifactIntent("Фото полосатой коровы"),"image");
+assert.equal(artifactIntent("Нарисуй полосатую корову"),"image");
+assert.equal(artifactIntent("Покажи, как сделать фото?"),null);
+assert.equal(artifactIntent("Объясни создание картинки"),null);
+assert.equal(artifactIntent("Сделай фото"),"image");
 const pdf=await buildRussianPdf({
  title:"Тестовый проект ПЛЮХ",subtitle:"Техническая проверка PDF",
  sections:[{heading:"Введение",paragraphs:["Привет! Проверка русского шрифта и создания документа."]}]
