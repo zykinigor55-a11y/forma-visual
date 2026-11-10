@@ -314,6 +314,10 @@
       const url=API+'/file/'+encodeURIComponent(videoId);
       player.crossOrigin='anonymous';player.src=url;player.hidden=false;player.preload='metadata';
       save.hidden=false;
+      // Save the finished video, not only its temporary provider URL.
+      // If local space/CORS is unavailable, keep normal MP4 download working.
+      void window.PLUXGallery?.save?.({kind:'video',source:url,filename:'PLUX-Grok-Lite-'+videoId+'.mp4',
+        caption:prompt.value||'Видео ПЛЮХ',model:'grok-lite'});
       result.querySelector('.plux16-orb')?.classList.add('finished');
       return;
     }
