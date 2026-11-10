@@ -688,3 +688,52 @@ console.log('PLUX V27: downloadable PDFs, no dead bell, proper image-create icon
  if(!html.includes('/plux-chat-v128.js?v=2801'))throw Error('PLUX V28 chat asset not loaded');
  console.log('PLUX V28 web ready: true GPT Image 2/PDF job polling, Russian intent, recovery after mobile disconnect');
 }
+
+
+/* PLUX V28 direct APK and ZIP mirrors for Samsung downloads. We mirror the
+ * verified GitHub Release asset to our Render static host, avoiding the
+ * browser redirect chain that blocked earlier downloads.
+ */
+{
+ const assetUrl='https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v28-20261110/PLUX-Android.apk';
+ const name='PLUX-Android-V28.apk',target=join(root,name);
+ let ready=false;
+ for(let attempt=0;attempt<3&&!ready;attempt++){
+  try{
+   const response=await fetch(assetUrl,{redirect:'follow',headers:{'Accept':'application/octet-stream','User-Agent':'PLUX-Android-v28/1.0'},signal:AbortSignal.timeout(50000)});
+   if(!response.ok)throw Error('Release APK unavailable: '+response.status);
+   const data=Buffer.from(await response.arrayBuffer());
+   if(data.length<2_000_000||data.length>18_000_000||data[0]!==0x50||data[1]!==0x4b)
+    throw Error('Invalid Android APK binary');
+   writeFileSync(target,data);
+   // Create a normal uncompressed ZIP containing one intact APK. This download
+   // format is easier for some mobile browsers than application/vnd.android.package-archive.
+   const entry=Buffer.from(name,'utf8');
+   let crc=0xffffffff;
+   for(const byte of data){
+    crc^=byte;
+    for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);
+   }
+   crc=(crc^0xffffffff)>>>0;
+   const local=Buffer.alloc(30+entry.length);
+   local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(20,4);
+   local.writeUInt32LE(crc,14);local.writeUInt32LE(data.length,18);local.writeUInt32LE(data.length,22);
+   local.writeUInt16LE(entry.length,26);entry.copy(local,30);
+   const central=Buffer.alloc(46+entry.length);
+   central.writeUInt32LE(0x02014b50,0);central.writeUInt16LE(20,4);central.writeUInt16LE(20,6);
+   central.writeUInt32LE(crc,16);central.writeUInt32LE(data.length,20);central.writeUInt32LE(data.length,24);
+   central.writeUInt16LE(entry.length,28);entry.copy(central,46);
+   const end=Buffer.alloc(22);
+   end.writeUInt32LE(0x06054b50,0);end.writeUInt16LE(1,8);end.writeUInt16LE(1,10);
+   end.writeUInt32LE(central.length,12);end.writeUInt32LE(local.length+data.length,16);
+   writeFileSync(join(root,'PLUX-Android-V28.zip'),Buffer.concat([local,data,central,end]));
+   ready=true;
+   console.log('PLUX V28 APK + ZIP mirror published, verified payload:',data.length,'bytes');
+  }catch(error){
+   console.warn('PLUX V28 download mirror attempt '+(attempt+1)+': '+String(error.message||error).slice(0,180));
+  }
+ }
+ const installHtml='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020d0b"><title>Установить ПЛЮХ V28</title><style>body{background:#020b0d;color:#f5fff9;min-height:100dvh;margin:0;padding:20px;box-sizing:border-box;display:grid;place-items:center;font:16px/1.5 system-ui}main{width:min(470px,100%);padding:27px 22px;border-radius:25px;border:1px solid #42876c;background:linear-gradient(140deg,#114233,#040f12 70%);box-shadow:0 0 40px #206f4c35}h1{margin:0;font-size:27px}p,small{color:#beddd0}a{display:block;text-align:center;padding:15px;margin-top:14px;color:#f2fff8;border-radius:16px;border:1px solid #8aefc5;background:linear-gradient(145deg,#185a45,#09241f);font-weight:700;text-decoration:none}small{font-size:12px;display:block;margin-top:18px}</style></head><body><main><h1>ПЛЮХ V28</h1><p>Скачать и установить приложение на Android.</p><a href="/PLUX-Android-V28.apk" download>Скачать APK</a><a href="/PLUX-Android-V28.zip" download>Скачать ZIP (запасной вариант)</a><a href="'+assetUrl+'">Скачать с GitHub</a><small>Открой страницу через Chrome или Яндекс Браузер. ZIP нужно распаковать через «Мои файлы». Не удаляй предыдущую версию, пока не сохранишь файлы галереи.</small></main></body></html>';
+ writeFileSync(join(root,'install-android.html'),installHtml);
+ if(!ready)console.warn('PLUX V28 mirror pending release; only GitHub fallback is available in install page.');
+}
