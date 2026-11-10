@@ -232,12 +232,14 @@ if(statSync(join(root,'plux-live-v151.js')).size<12000)throw Error('Voice client
 plux123Exec(process.execPath,['--check',join(root,'plux-live-v151.js')],{stdio:'inherit'});
 writeFileSync(join(root,'plux-live-v151.css'),readFileSync('plux-v151-overlay/plux-live-v151.css'));
 const liveIndex=join(root,'index.html');
-let liveHTML=readFileSync(liveIndex,'utf8');
+let liveHTML=readFileSync(liveIndex,'utf8')
+  .replace(/<script src="\/plux-voice-v15\.js\?v=1501"><\/script>/g,'')
+  .replace(/<link rel="stylesheet" href="\/plux-voice-v15\.css\?v=1501">/g,'');
 if(!liveHTML.includes('plux-live-v151.js')){
  liveHTML=liveHTML.replace('</head>','<meta name="plux-release-v151" content="realtime-voice-mode"><link rel="stylesheet" href="/plux-live-v151.css?v=1511"></head>');
  liveHTML=liveHTML.replace('</body>','<script src="/plux-live-v151.js?v=1511" defer></script></body>');
- writeFileSync(liveIndex,liveHTML);
 }
+writeFileSync(liveIndex,liveHTML);
 const liveSw=join(root,'sw.js');
 let liveWorker=readFileSync(liveSw,'utf8')
  .replace(/plux-emerald-v(?:12|13|14)\d*/g,'plux-emerald-v151');
