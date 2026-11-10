@@ -26,6 +26,53 @@ function json(res,status,payload){res.writeHead(status,{'Content-Type':'applicat
 async function readJSON(req){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY){const err=Error('Запрос слишком большой');err.status=413;throw err}chunks.push(chunk)}try{return JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{const err=Error('Некорректный JSON');err.status=400;throw err}}
 function imageBlob(data,field){if(!data)return null;const m=String(data).match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+\/=]+)$/);if(!m)throw Object.assign(Error(`Некорректное изображение: ${field}`),{status:400});const bytes=Buffer.from(m[2],'base64');if(bytes.length>14*1024*1024||bytes.length<100)throw Object.assign(Error(`Неверный размер: ${field}`),{status:400});const type=m[1]==='jpeg'?'image/jpeg':`image/${m[1]}`;return new Blob([bytes],{type})}
 function compact(str,limit=180){return String(str||'').slice(0,limit).replace(/\s+/g,' ').trim()}
+/**
+ * Shared photographic direction appended to EVERY image generation prompt:
+ * first render, edited surface, all four batch shots, and post-render scenes.
+ * Camera specifications guide realistic image formation, never override the
+ * supplied lens geometry/crop or imply an actual physical camera was used.
+ */
+function photographicDirection(p){
+ const b=p.brief||{};
+ const variant=String(p.sceneVariation||'').toLowerCase();
+ const mood=String(b.sceneMood||'').toLowerCase();
+ const weather=String(b.weather||'').toLowerCase();
+ const season=String(b.season||'').toLowerCase();
+ const time=String(b.time||'').toLowerCase();
+ const shot=String(p.batchShot||'').toLowerCase();
+ const isDetail=shot==='detailEntry'.toLowerCase()||shot==='detailMaterial'.toLowerCase();
+ const evening=variant==='evening'||variant.endsWith('_evening')||['blue','night','golden'].includes(mood)||/вечер|сумерк|ночь|blue.hour|twilight|evening|night/i.test(time);
+ const winter=variant.startsWith('winter')||/зима|winter/i.test(season);
+ const cloudy=variant.endsWith('_overcast')||['fog','overcast','rain'].includes(mood)||/пасмур|облач|дожд|туман|overcast|cloud|rain|fog/i.test(weather);
+ const sunny=variant.endsWith('_sunny')||['sunny','golden'].includes(mood)||/солнеч|ясно|sunny|clear/i.test(weather);
+ let camera;
+ let exposure;
+ if(isDetail){
+  camera='Nikon Z8 full-frame mirrorless camera with NIKKOR Z MC 105mm f/2.8 VR S macro optics; a close-up architectural detail photograph, deep enough focus to resolve material relief, without synthetic macro blur.';
+  exposure='Use approximately f/8–f/11 with light-appropriate shutter and ISO 64–200; focus stacking is acceptable ONLY if it preserves the reference framing and true construction edges.';
+ }else if(evening){
+  camera='Sony Alpha 7R V full-frame camera with Sony FE 24–70mm F2.8 GM II professional zoom; use the source-matching architectural field of view, typically 24–35mm full-frame equivalent.';
+  exposure='Tripod-based blue-hour/exterior exposure, approximately f/5.6–f/8, ISO 100–400 and a physically plausible slower shutter. Balance residual cool sky with warm existing practical lights; avoid blown-out windows and pitch-black walls.';
+ }else if(winter){
+  camera='Canon EOS R5 Mark II full-frame camera with Canon RF 24–70mm F2.8 L IS USM lens; use the existing source-matching perspective, typically 24–35mm full-frame equivalent.';
+  exposure='Approximately f/8, ISO 100–200, shutter speed set by genuine scene luminance; protect snow highlights from clipping and keep clear detail in darker facades.';
+ }else if(cloudy){
+  camera='Sony Alpha 7R V full-frame camera with Sony FE 24–70mm F2.8 GM II lens; professional straight-line architectural image with the source-matching focal length.';
+  exposure='Approximately f/8, ISO 100–200, shutter adapted to soft overcast illuminance; maintain neutral white balance, soft shadows and detailed midtones.';
+ }else if(sunny){
+  camera='Canon EOS R5 Mark II full-frame camera with Canon RF 24–70mm F2.8 L IS USM lens; use the source-matching field of view, commonly 28–35mm equivalent.';
+  exposure='Approximately f/8, ISO 100, shutter adjusted to actual daylight; preserve highlights, physically consistent direct sunlight and sharp but natural shadows.';
+ }else{
+  camera='Nikon Z8 full-frame mirrorless camera with NIKKOR Z 24–70mm f/2.8 S professional lens; use the lens field of view matching the source, typically 24–35mm full-frame equivalent.';
+  exposure='Approximately f/8, ISO 64–100, shutter and white balance calibrated to the actual season, weather and time; realistic depth of field across the building and landscaping.';
+ }
+ const capture='REAL ARCHITECTURAL PHOTO / CAMERA PROFILE: Render the visual character of a high-resolution photograph CAPTURED AS IF using a '+camera+' '+exposure+' The supplied image dictates the camera position, lens perspective, horizon, vertical alignment, framing and all geometry (except an explicitly requested approximate new frontal view). Camera/lens/EXIF are quality references only: DO NOT move the camera, crop, warp perspective, invent architectural features, insert a camera, show an EXIF caption, or change any building shape to imitate a focal length. Keep verticals naturally straight, with realistic optical contrast and no unnatural wide-angle distortion.';
+ const materials='ULTRA-DETAILED, MATERIAL-ACCURATE SURFACES: Preserve material identity and construction assembly in the actual input. On timber/logs/glulam reveal realistic directional grain, subtle annual rings, joints and wood fibers at correct physical scale; on brick reveal irregular mineral pores and accurate mortar joints; on natural stone/slate show believable layered fractures, veins, chips and roughness; on plaster/concrete show fine aggregate, grain and restrained micro-variation; on metal roof/cladding preserve every real seam/ridge and physically correct fine specular reflections; on painted frames/uPVC preserve actual profiles and precise edges; on glass show true transparency plus angle-dependent reflections, interior depth and appropriate Fresnel response. Render paving, gravel, soil, lawn and decking with individually distinguishable microtextures. Materials must NOT be changed, artificially recolored or newly assigned except where explicitly specified by the user or required by the chosen seasonal variation. No invented planks, joints, pipes, gutters, railings, windows or roof changes.';
+ const plants='BOTANICAL PHOTOGRAPHY / VEGETATION MICRODETAIL: High-frequency natural detail in individual grass blades, clumps, leaf veins, realistic leaf sizes, fine branches, needles, bark fissures, moss and groundcover; plausible plant species and growth, varied green/ochre hues, realistic subsurface transmission through thin leaves, optical occlusion between leaves, contact shadows at roots, and believable plant spacing. Distinguish conifer needles, barberry leaves, willow branches, fruit-tree foliage, etc. WHERE ACTUALLY PRESENT; never add an unrequested species. Maintain exact existing tree/plant locations and silhouettes as far as visible. In autumn alter only seasonal deciduous foliage and fallen leaves; in winter respect leafless deciduous trees, snow weights and evergreen conifers. No plastic-looking identical shrubs, duplicated foliage, painterly smear, repeated leaf textures or impossibly sharp distant vegetation.';
+ const light='PHYSICALLY COHERENT LIGHT TRANSPORT: One believable sky/sun and weather state; correct solar direction and shadow lengths, natural skylight bounce, soft ambient fill, realistic contact and occlusion shadows, energy-conserving diffuse/specular response, correct wet or dry roughness, subtle reflection in glass and stone, credible shadow softness for clouds and proper warm/cool mixed lighting at dusk. Artificial fixtures and window light illuminate nearby walls, paving and foliage with realistic falloff without turning daytime into night. Preserve dimensional texture with nuanced highlights; no flat ambient wash, neon glow, black shadows, glowing tree bark, forced HDR or oversaturation.';
+ const finish='EDITORIAL PHOTOGRAPHIC FINISH: True-to-life dynamic range, restrained contrast, fine locally coherent microcontrast, faithful white balance and neutral facade colors, crisp legitimate detail without sharpening halos or fake AI texture, no denoising waxiness, no excessive depth-of-field blur, no edge ringing, no cartoon/painterly/CGI sheen. High resolution and natural optical sharpness to the output size actually supported by the provider; do not falsely imply extra native pixels.';
+ return [capture,materials,plants,light,finish].join('\n\n');
+}
 const SCENE_VARIANTS=Object.freeze({
  evening:'Evening blue-hour architectural photograph: cobalt-blue twilight, residual sky glow, warm physically believable light from the EXISTING windows, warm exterior garden and pathway lanterns that illuminate the real paths and foliage; if no lamps exist, introduce only a few discreet removable ground-level garden lamps, never change architecture. Natural light falloff, gentle reflections, no black nighttime exposure. Keep the original season.',
  autumn_overcast:'Mid-autumn overcast daylight: deciduous leaves in realistic amber, copper and ochre, some fallen leaves on the existing ground, grey softly diffused sky, nuanced texture on slightly damp paving, muted but true-to-source facade colors, no direct sunlight, realistic autumn plant species.',
@@ -42,7 +89,8 @@ function sceneVariationPrompt(p){
  'PHOTOREAL ARCHITECTURAL PHOTOGRAPH — CONTROLLED SEASON / LIGHT VARIATION FROM A COMPLETED AI RENDER.',
  'IMAGE 1 is the final approved architectural photograph. Rework ONLY the weather, season, existing foliage seasonality, natural lighting, sky, snow and requested nighttime lights. Preserve camera viewpoint, focal length, image crop, building silhouette, roof geometry, number/size/position of ALL windows and doors, facades, cladding type/colors, site layout, objects, pool footprint, walkways and construction joints. No building modifications, no material swaps, no invented rooms or structural parts, no altered camera perspective. Keep facade texture and microdetail authentic and sharp.',
  'REQUIRED SCENE TRANSFORMATION: '+variant,
- 'Physically coherent global illumination, realistic filmic dynamic range, professional 4K-ready photographic detail if the image generation model supports it, natural flora, no cartoon render. Change only the aspects strictly required by the chosen scene variant. No people, text, overlays, new construction, material retexturing, warped openings, duplicated trees or hallucinated building elements.',
+ photographicDirection(p),
+ 'Change only the aspects strictly required by the chosen scene variant. No people, text, overlays, new construction, material retexturing, warped openings, duplicated trees or hallucinated building elements.',
  'Keep the same exact house as Image 1. This is an image-to-image edit, not a new design.'
  ].join('\n\n');
 }
@@ -100,7 +148,7 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
  const extraRequest=!semanticOnly&&specific&&userRequest?`Additional user instruction scoped ONLY to the named masked component: "${userRequest}". ${category} Keep every unmasked pixel untouched.`:null;
  const edit=semanticOnly?semanticText:specific?recolor?recolorText:`LOCAL EDIT ONLY: edit the transparent region of the supplied PNG mask on IMAGE 1. The masked area is the selected facade zone named '${compact(p.selectedZone)}'. Apply requested material '${compact(p.materialName)||compact(userRequest,100)||'as described in the user instruction'}' to that facade surface and keep the rest of the image, environment, lighting and all other surfaces as unchanged as possible. Use the material reference image (when provided) for accurate color, grain and texture repeat. ${Number(p.materialDimensions?.width)>0?`Material physical size: ${Number(p.materialDimensions.width)} by ${Number(p.materialDimensions.height)||Number(p.materialDimensions.width)} millimetres.`:''} Replace the material consistently through the ENTIRE transparent masked area, never only a small isolated patch. Respect the mask boundary, preserve the contours around glazing and doors, and keep all unmasked pixels as untouched as possible. The mask is a guide and may not be pixel exact. Material reference image is not the building.`:`FULL SCENE ENHANCEMENT: Transform the sketch/model screenshot into a realistic architectural photograph while preserving existing building materials, all visible texture divisions and exact architectural point of view. Develop only the selected surroundings, weather, season and photographic lighting. A photographed exterior must look realistic without redesigning or re-cladding any part of the house.`;
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
- return [essential,geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,edit,homeEdit,extraRequest,physics,context,continuity].filter(Boolean).join('\n\n')}
+ return [essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,edit,homeEdit,extraRequest,physics,context,continuity].filter(Boolean).join('\n\n')}
 async function proxyRender(req,res){
  if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
  if(!API_KEY)return json(res,503,{error:'AI не настроен: укажите API_MARKET_KEY в .env и перезапустите сервер.'});
