@@ -16,11 +16,14 @@
   }
   async function send(text){
     if(busy)return;busy=true;
+    const attachments=window.PLUXMediaV129?.takeAttachments?.()||[];
+    const display=text||'Проанализируй вложения';
+    const summary=attachments.map(x=>'📎 '+x.name).join('\n');
     const button=form.querySelector('.chat-send');if(button)button.disabled=true;
-    append('user',text);
+    append('user',display+(summary?'\n'+summary:''));
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages}),signal:AbortSignal.timeout(35000)});
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments}),signal:AbortSignal.timeout(65000)});
       const result=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(result.error||'Не удалось получить ответ ИИ');
       if(typeof result.reply!=='string'||!result.reply.trim())throw Error('Пустой ответ модели');
@@ -30,7 +33,7 @@
   }
   form.addEventListener('submit',e=>{
     e.preventDefault();e.stopImmediatePropagation();
-    if(busy)return;const t=input.value.trim();if(!t)return;input.value='';void send(t);
+    if(busy)return;const t=input.value.trim();if(!t&&!window.PLUXMediaV129?.hasAttachments?.())return;input.value='';void send(t);
   },true);
   window.PLUXChatAPI={model:'gpt-6-luna',endpoint};
 })();
