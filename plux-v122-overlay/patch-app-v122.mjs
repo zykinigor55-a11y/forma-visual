@@ -314,4 +314,5 @@ if(!swV17.includes("'/plux-arkheon-v17.js'")){
  swV17=swV17.replace("'/plux-video-v16.js'","'/plux-video-v16.js','/plux-arkheon-v17.js','/plux-arkheon-processor-v17.js'");
 }
 writeFileSync(swV17Path,swV17);
+plux123Exec(process.execPath,['plux-v18-overlay/test-voice-v18.mjs'],{stdio:'inherit',timeout:35000});
 console.log('PLUX V18 five mascot videos verified, Russian-first live speech director installed; live speech requires ARKHEON_API_KEY');
