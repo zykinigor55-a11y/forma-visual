@@ -201,7 +201,7 @@
     function draw(){
       if(finished)return;
       const left=chars.length-position;
-      if(!left){
+      if(left<=0){
         if(finalizing){
           finished=true;clearTick();
           bubble.classList.remove('plux29-live-bubble','plux29-streaming');
@@ -223,8 +223,9 @@
         left>130?Math.min(16,Math.ceil(left/22)):
         finalizing?Math.min(9,Math.max(2,Math.ceil(left/35))):
         left>45?3:1;
-      const chunk=chars.slice(position,position+pace).join('');
-      position+=pace;
+      const count=Math.min(left,pace);
+      const chunk=chars.slice(position,position+count).join('');
+      position+=count;
       const nearBottom=feed.scrollHeight-feed.scrollTop-feed.clientHeight<160;
       bubble.append(document.createTextNode(chunk));
       if(!reduced&&chunk.trim()&&!document.hidden){
@@ -313,8 +314,8 @@
       }
       let result=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(result.error||'Не удалось получить ответ ИИ');
-      live?.stop();
       if(result.job){
+        live?.stop();
         rememberJob(result.job);
         result=await pollJob(result.job);
       }
@@ -324,10 +325,14 @@
         // chatgpt.com/backend-api URL is NOT a generated image file.
         const fake=/chatgpt\.com\/backend-api\/estuary|\`\`\`json[\s\S]{0,200}"size"/i.test(text);
         if(fake&&!result.artifact){
+          live?.stop();
           append('info','Сервер вернул текст вместо настоящего фото. Повтори запрос: «Создай изображение ...». Ссылки ChatGPT внутри стороннего приложения не работают.');
+        }else if(live&&!result.artifact){
+          await live.finish(text);
         }else append('bot',text);
       }
       else if(!result.artifact)throw Error('Пустой ответ модели');
+      if(result.artifact)live?.stop();
       if(result.artifact?.type==='image'){
         generating?.ready();
         appendArtifact(result.artifact,()=>generating?.stop());
