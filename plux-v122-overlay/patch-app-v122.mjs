@@ -737,3 +737,30 @@ console.log('PLUX V27: downloadable PDFs, no dead bell, proper image-create icon
  writeFileSync(join(root,'install-android.html'),installHtml);
  if(!ready)console.warn('PLUX V28 mirror pending release; only GitHub fallback is available in install page.');
 }
+
+
+/* PLUX V29: progressive chat typing with the original V12.5 optional typing
+ * sound. Image and PDF generation still use the V28 background job path.
+ * This web update is delivered to all existing Android wrappers via Render.
+ */
+{
+ const cssSource=join('plux-v29-overlay','plux-chat-typing-v29.css');
+ if(statSync(cssSource).size<900)throw Error('PLUX V29 glass typing CSS missing');
+ writeFileSync(join(root,'plux-chat-typing-v29.css'),readFileSync(cssSource));
+ const htmlPath=join(root,'index.html');
+ let html=readFileSync(htmlPath,'utf8');
+ if(!html.includes('plux-release-v28'))throw Error('PLUX V28 prerequisite required');
+ html=html.replace('</head>','<meta name="plux-release-v29" content="streaming-chat-typing-original-glass-sound"><link rel="stylesheet" href="/plux-chat-typing-v29.css?v=2901"></head>');
+ html=html.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=2901');
+ writeFileSync(htmlPath,html);
+ const workerPath=join(root,'sw.js');
+ let worker=readFileSync(workerPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2901');
+ if(!worker.includes("'/plux-chat-typing-v29.css'")){
+   if(!worker.includes("'/plux-chat-v128.js'"))throw Error('Chat script missing from service worker');
+   worker=worker.replace("'/plux-chat-v128.js'","'/plux-chat-v128.js','/plux-chat-typing-v29.css'");
+ }
+ writeFileSync(workerPath,worker);
+ plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
+ if(!html.includes('/plux-chat-v128.js?v=2901'))throw Error('PLUX V29 chat script not included');
+ console.log('PLUX V29: gradual text appearance and original optional keyboard glass sound ready');
+}
