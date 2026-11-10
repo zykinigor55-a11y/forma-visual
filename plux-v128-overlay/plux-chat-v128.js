@@ -43,6 +43,13 @@
     if(item.type==='image'){
       const picture=document.createElement('img');picture.className='plux14-created-image';picture.alt='Изображение, созданное GPT Image 2';
       picture.loading='eager';picture.decoding='async';
+      picture.tabIndex=0;picture.setAttribute('role','button');
+      picture.setAttribute('aria-label','Открыть созданное изображение на весь экран');
+      const showPhoto=()=>window.PLUX26ImageViewer?.open?.({src:uri,filename:file});
+      picture.addEventListener('click',showPhoto);
+      picture.addEventListener('keydown',event=>{
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();showPhoto();}
+      });
       picture.addEventListener('load',()=>{
         picture.classList.add('plux22-image-ready');
         onImageReady(true);
@@ -87,9 +94,16 @@
     }
     row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
   }
-  const imageIntent=text=>/(?:сгенериру|созда|сдела|нарису|нарисова|нарисуй|сделай|создай|генераци|generate|draw|make|create)/i.test(text)
-    && /(?:изображени|картин|фото|фотографи|рисунк|иллюстраци|обложк|постер|image|picture)/i.test(text)
-    && !/(?:промпт|как (?:сделать|создать)|почему)/i.test(text);
+  const imageIntent=text=>{
+    const s=String(text||'').trim().toLowerCase();
+    if(!s||s.length>2500)return false;
+    if(/(?:промпт|как (?:сделать|создать)|почему|объясни|расскажи|[?？])/.test(s))return false;
+    const action=/(?:сгенериру|созда|сдела|нарису|нарисуй|генераци|generate|draw|make|create)/i.test(s);
+    const visual=/(?:изображени|картин|фото|фотографи|рисунк|иллюстраци|обложк|постер|портрет|image|picture|photo)/i.test(s);
+    if(action&&(visual||/нарису|нарисуй|draw/i.test(s)))return true;
+    // "Полосатая корова фото" or "Фото полосатой коровы": treat as creation.
+    return s.length<=125&&/(?:^|\s)(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)\s+.{3,100}$|^.{3,100}\s+(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)$/i.test(s);
+  };
   function showGenerating(){
     const row=document.createElement('div');row.className='chat-row bot plux22-generating-row';row.setAttribute('role','status');
     const bubble=document.createElement('div');bubble.className='chat-bubble plux22-generating';
@@ -113,7 +127,15 @@
       const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments}),signal:AbortSignal.timeout(generating?155000:65000)});
       const result=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(result.error||'Не удалось получить ответ ИИ');
-      if(typeof result.reply==='string'&&result.reply.trim())append('bot',result.reply);
+      if(typeof result.reply==='string'&&result.reply.trim()){
+        const text=String(result.reply);
+        // A language model's markdown/JSON referencing an internal
+        // chatgpt.com/backend-api URL is NOT a generated image file.
+        const fake=/chatgpt\.com\/backend-api\/estuary|\`\`\`json[\s\S]{0,200}"size"/i.test(text);
+        if(fake&&!result.artifact){
+          append('info','Сервер вернул текст вместо настоящего фото. Повтори запрос: «Создай изображение ...». Ссылки ChatGPT внутри стороннего приложения не работают.');
+        }else append('bot',text);
+      }
       else if(!result.artifact)throw Error('Пустой ответ модели');
       if(result.artifact?.type==='image'){
         generating?.ready();
