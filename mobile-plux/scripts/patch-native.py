@@ -72,7 +72,12 @@ def install_plux_icon(platform):
     x=(source.width-side)//2;y=(source.height-side)//2
     source=source.crop((x,y,x+side,y+side))
     def render(size):
-        resized=source.resize((size,size),Image.Resampling.LANCZOS)
+        # Preserve the square icon and optically correct the slightly flattened
+        # emerald droplet with a very gentle vertical enlargement (no clipping).
+        vertical=max(size+1,int(round(size*1.085)))
+        scaled=source.resize((size,vertical),Image.Resampling.LANCZOS)
+        crop=(vertical-size)//2
+        resized=scaled.crop((0,crop,size,crop+size))
         base=Image.new("RGB",(size,size),(0,17,14))
         base.paste(resized,(0,0),resized.getchannel("A"))
         return base
