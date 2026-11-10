@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="dom-render-scene-variants-v48.css?v=before-after-season-scenes-20261110-v1">
 <link rel="stylesheet" href="dom-render-ui-polish-v51.css?v=restored-apple-jakub-20261110-v51">
 <link rel="stylesheet" href="dom-render-mobile-cinema-v52.css?v=mobile-cinema-20261110-v52">
+<link rel="stylesheet" href="dom-render-progress-v53.css?v=ai-progress-20261110-v53">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -94,8 +95,32 @@
    <input id="splitSlider" class="split-slider" type="range" min="0" max="100" value="36" aria-label="Сравнение скриншота и результата">
    <div class="viewer-overlay-top"><span class="image-tag image-tag-dark" id="resultTag">ДЕМОНСТРАЦИЯ</span></div>
    <div class="viewer-overlay-bottom"><div><small>АРХИТЕКТУРА / ЭКСТЕРЬЕР</small><strong id="stageTitle">Резиденция 01</strong><span id="stageSubtitle">Сад и газон · Лето · День</span></div><span class="image-badge" id="stageRatio">16:9</span></div>
-   <div class="render-progress" id="renderProgress" role="status" aria-live="polite" aria-atomic="true" hidden>
-    <div class="render-progress-panel"><span class="render-progress-kicker"><i aria-hidden="true"></i> ДОМ.РЕНДЕР · AI-СТУДИЯ</span><strong id="renderProgressTitle">Подготавливаем сцену</strong><span id="renderProgressDetail">Обрабатываем изображение и настройки</span><div class="render-progress-indeterminate" aria-hidden="true"><span></span></div><small>Идёт настоящая обработка · дождитесь результата</small></div>
+   <div class="render-progress" id="renderProgress" role="status" aria-live="polite" aria-atomic="false" hidden>
+    <div class="render-progress-panel">
+     <span class="render-progress-kicker"><i aria-hidden="true"></i> ДОМ.РЕНДЕР · AI-ВИЗУАЛИЗАЦИЯ</span>
+     <strong id="renderProgressTitle">Подготавливаем сцену</strong>
+     <span id="renderProgressDetail">Обрабатываем изображение и настройки</span>
+     <div class="render-progress-statline">
+      <div class="render-progress-value"><b id="renderProgressPercent" aria-hidden="true">2%</b><span>выполнено · оценка</span></div>
+      <div class="render-progress-left"><strong id="renderProgressRemaining" aria-hidden="true">Осталось ≈ 98%</strong><small>Расчётный прогресс</small></div>
+     </div>
+     <div class="render-progress-meter" id="renderProgressMeter" role="progressbar" aria-label="Ориентировочный ход генерации" aria-valuemin="0" aria-valuemax="100" aria-valuenow="2"><span id="renderProgressBar"></span></div>
+     <div class="render-progress-steps" aria-label="Этапы создания изображения">
+      <div class="render-progress-step is-active" data-progress-phase="prepare">
+       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg></span>
+       <span class="render-progress-step-copy"><strong>Подготовка</strong><small>Исходник и настройки</small></span>
+      </div>
+      <div class="render-progress-step" data-progress-phase="ai">
+       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-spark"/></svg></span>
+       <span class="render-progress-step-copy"><strong>AI-рендер</strong><small>Создание фотографии</small></span>
+      </div>
+      <div class="render-progress-step" data-progress-phase="save">
+       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg></span>
+       <span class="render-progress-step-copy"><strong>Результат</strong><small>Сохранение в проект</small></span>
+      </div>
+     </div>
+     <p class="render-progress-note" id="renderProgressHint">Процент ориентировочный: API Market не передаёт точный ход выполнения.</p>
+    </div>
    </div>
    <div class="no-render" id="noRender" hidden><svg class="ico"><use href="#i-image"/></svg><strong>Результата пока нет</strong><span>Настройте сцену и запустите AI-визуализацию.</span></div>
   </div>
@@ -566,5 +591,6 @@
 <script src="dom-render-cinema-cards-fix-v45.js?v=mobile-atlas-performance-20261110-v52"></script>
 <script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
 <script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
+<script src="dom-render-progress-v53.js?v=ai-progress-20261110-v53"></script>
 </body>
 </html>
