@@ -10,6 +10,7 @@
  const byId=id=>document.getElementById(id);
  let artTest=null;
  let hasPlayedOnce=false;
+ let initialized=false;
  function mobile(){return mq.matches}
  function setAtlasReady(){
   if(!mobile())return;
@@ -53,7 +54,8 @@
   play();
  }
  function init(){
-  if(!mobile())return;
+  if(!mobile()||initialized)return;
+  initialized=true;
   setAtlasReady();
   const screen=byId('animPreviewScreen');
   screen?.addEventListener('click',onPreviewTap);
@@ -73,7 +75,7 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
  mq.addEventListener?.('change',event=>{
-  if(event.matches)setAtlasReady();
+  if(event.matches)init();
   else document.documentElement.classList.remove('mobile-cinema-atlas-ready');
  });
 })();
