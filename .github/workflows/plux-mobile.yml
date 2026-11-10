@@ -7,7 +7,7 @@ on:
       - '.github/workflows/plux-mobile.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   android:
     name: Build Android debug APK
@@ -50,6 +50,25 @@ jobs:
           name: PLUX-Android-debug-APK
           path: mobile-plux/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publish permanent GitHub Android APK download
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="plux-android-v21-20261110"
+          apk="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$apk"
+          cp "$apk" "${RUNNER_TEMP}/PLUX-Android.apk"
+          if gh release view "$version" >/dev/null 2>&1; then
+            gh release upload "$version" "${RUNNER_TEMP}/PLUX-Android.apk" --clobber
+          else
+            gh release create "$version" "${RUNNER_TEMP}/PLUX-Android.apk" \
+              --title "ПЛЮХ для Android — V21" \
+              --notes "Отладочная Android APK сборка ПЛЮХа с фирменной иконкой капли. Приложение использует работающий сервер Render для голосового помощника, чата и генераций. Для установки разрешите установку из браузера или файлового менеджера. Это тестовая сборка, не Google Play." \
+              --target "$GITHUB_SHA" \
+              --prerelease
+          fi
   ios:
     name: Prepare iOS Xcode project
     runs-on: macos-latest
