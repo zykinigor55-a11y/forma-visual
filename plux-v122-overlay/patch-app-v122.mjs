@@ -247,3 +247,27 @@ if(!liveWorker.includes("'/plux-live-v151.js'"))
  liveWorker=liveWorker.replace("'/plux-artifacts-v14.css'","'/plux-artifacts-v14.css','/plux-live-v151.css','/plux-live-v151.js'");
 writeFileSync(liveSw,liveWorker);
 console.log('PLUX V15.1: voice SDK bundled locally; crystal microphone starts audio conversation');
+
+
+/* PLUX V16 CYHUB GROK LITE VIDEO — cheapest text-to-video, explicit price and confirmation. */
+for(const filename of ['plux-video-v16.js','plux-video-v16.css']){
+ const raw=readFileSync(join('plux-v16-overlay',filename));
+ if(raw.length<1200)throw Error('Incomplete PLUX V16 video resource '+filename);
+ writeFileSync(join(root,filename),raw);
+}
+plux123Exec(process.execPath,['--check',join(root,'plux-video-v16.js')],{stdio:'inherit'});
+const video16Page=join(root,'index.html');
+let video16Html=readFileSync(video16Page,'utf8');
+if(!video16Html.includes('plux-release-v16')){
+ video16Html=video16Html.replace('</head>',
+  '<meta name="plux-release-v16" content="cyhub-grok-lite-video"><link rel="stylesheet" href="/plux-video-v16.css?v=1601"></head>');
+ video16Html=video16Html.replace('</body>',
+  '<script src="/plux-video-v16.js?v=1601" defer></script></body>');
+ writeFileSync(video16Page,video16Html);
+}
+const video16SW=join(root,'sw.js');
+let video16Worker=readFileSync(video16SW,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v160');
+if(!video16Worker.includes("'/plux-video-v16.js'"))
+ video16Worker=video16Worker.replace("'/plux-live-v151.js'","'/plux-live-v151.js','/plux-video-v16.css','/plux-video-v16.js'");
+writeFileSync(video16SW,video16Worker);
+console.log('PLUX V16 Cyhub Grok Lite video creation UI installed; paid requests require quote confirmation');
