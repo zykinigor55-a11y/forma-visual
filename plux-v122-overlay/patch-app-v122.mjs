@@ -519,11 +519,11 @@ console.log('PLUX V24: IndexedDB Gallery replaces More, Audius music, responsive
 
 /* PLUX direct Render APK mirror: Android in-app browsers sometimes fail
  * to download GitHub Releases (cross-domain redirects). During static-site
- * build, mirror the already published, exact V25 APK to the same origin.
+ * build, mirror the already published, exact V26 APK to the same origin.
  * A mirror failure must not break the already working PЛЮХ web app.
  */
 {
- const release="https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v25-20261110/PLUX-Android.apk";
+ const release="https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v26-20261110/PLUX-Android.apk";
  let ok=false;
  for(let attempt=1;attempt<=3&&!ok;attempt++){
   try{
@@ -534,15 +534,15 @@ console.log('PLUX V24: IndexedDB Gallery replaces More, Audius music, responsive
    const bytes=new Uint8Array(await response.arrayBuffer());
    if(bytes.byteLength<2000000||bytes.byteLength>20000000||bytes[0]!==0x50||bytes[1]!==0x4b)
     throw Error('Invalid Android package payload');
-   writeFileSync(join(root,'PLUX-Android-V25.apk'),bytes);
-   console.log('PLUX Android V25 APK mirror ready:',bytes.byteLength,'bytes at /PLUX-Android-V25.apk');
+   writeFileSync(join(root,'PLUX-Android-V26.apk'),bytes);
+   console.log('PLUX Android V26 APK mirror ready:',bytes.byteLength,'bytes at /PLUX-Android-V26.apk');
    ok=true;
   }catch(e){console.warn('PLUX APK mirror attempt',attempt,'failed:',String(e?.message||e).slice(0,160));}
  }
  if(!ok)console.warn('PLUX APK mirror unavailable; app remains live; use official GitHub Release download.');
  // A stable in-app installation guide is accessible even if the mirror
  // download itself was temporarily blocked by GitHub's CDN.
- const site='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Установить ПЛЮХ на Android</title><style>body{min-height:100dvh;margin:0;background:#020b0c;color:#f1fff8;font:16px system-ui;display:grid;place-items:center;padding:20px;box-sizing:border-box}main{width:min(420px,100%);box-sizing:border-box;padding:28px 22px;border:1px solid #408b72;border-radius:28px;background:linear-gradient(145deg,#10362d,#030e11);box-shadow:0 0 60px #145b3a3b}h1{font-size:28px;margin:0 0 10px}p{color:#bddbd0;line-height:1.5}a{display:block;margin:13px 0;padding:15px;border-radius:16px;background:#154d3d;border:1px solid #70c7a6;color:#effff5;text-decoration:none;text-align:center;font-weight:650}small{color:#a4c2b9;line-height:1.4;display:block}</style></head><body><main><h1>ПЛЮХ для Android</h1><p>Версия V25. Выбери ссылку для скачивания установочного APK.</p><a href="/PLUX-Android-V25.apk" download="PLUX-Android-V25.apk">Скачать APK с Render</a><a href="https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v25-20261110/PLUX-Android.apk" rel="noopener noreferrer">Запасная ссылка GitHub</a><small>Открывай в Chrome или Яндекс Браузере. Скачанный файл находится в папке «Загрузки». Для установки может понадобиться разрешение на установку из выбранного браузера.</small></main></body></html>';
+ const site='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Установить ПЛЮХ на Android</title><style>body{min-height:100dvh;margin:0;background:#020b0c;color:#f1fff8;font:16px system-ui;display:grid;place-items:center;padding:20px;box-sizing:border-box}main{width:min(420px,100%);box-sizing:border-box;padding:28px 22px;border:1px solid #408b72;border-radius:28px;background:linear-gradient(145deg,#10362d,#030e11);box-shadow:0 0 60px #145b3a3b}h1{font-size:28px;margin:0 0 10px}p{color:#bddbd0;line-height:1.5}a{display:block;margin:13px 0;padding:15px;border-radius:16px;background:#154d3d;border:1px solid #70c7a6;color:#effff5;text-decoration:none;text-align:center;font-weight:650}small{color:#a4c2b9;line-height:1.4;display:block}</style></head><body><main><h1>ПЛЮХ для Android</h1><p>Версия V26. Выбери ссылку для скачивания установочного APK.</p><a href="/PLUX-Android-V26.apk" download="PLUX-Android-V26.apk">Скачать APK с Render</a><a href="https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v26-20261110/PLUX-Android.apk" rel="noopener noreferrer">Запасная ссылка GitHub</a><small>Открывай в Chrome или Яндекс Браузере. Скачанный файл находится в папке «Загрузки». Для установки может понадобиться разрешение на установку из выбранного браузера.</small></main></body></html>';
  writeFileSync(join(root,'install-android.html'),site);
 }
 
