@@ -100,7 +100,50 @@ export function playSfx(name='tap',intensity=1){
     return true;
   }catch{return false}
 }
+// Reuse the existing 'type' effect for the welcome screen's animated text.
+// The browser allows sound only after a real user gesture: never force autoplay.
+let welcomeSoundInstalled=false;
+export function installWelcomeTypewriterSfx(){
+  if(welcomeSoundInstalled||typeof MutationObserver==='undefined')return;
+  welcomeSoundInstalled=true;
+  let unlocked=false,target=null,text='',observer=null;
+  const unlock=()=>{unlocked=true};
+  document.addEventListener('pointerdown',unlock,{capture:true,once:true,passive:true});
+  document.addEventListener('keydown',unlock,{capture:true,once:true,passive:true});
+  function scan(){
+    const screen=document.querySelector(
+      '#screen-welcome,#screen-onboard,#screen-onboarding,#onboard,.welcome-screen,.onboarding-screen,[data-screen="welcome"]'
+    );
+    const next=screen?.querySelector(
+      '[data-plux-welcome-typewriter],[data-typewriter],#welcome-typewriter,#intro-typewriter,#welcome-text,#onboard-typed-text,.typewriter,.typing-text,h1'
+    );
+    if(!next||next===target)return;
+    observer?.disconnect();
+    target=next;
+    text=next.textContent||'';
+    observer=new MutationObserver(()=>{
+      if(!target||document.hidden)return;
+      const current=target.textContent||'';
+      const added=current.startsWith(text)?current.slice(text.length):'';
+      if(unlocked&&current.length>text.length&&added.length<=5&&/\S/.test(added)&&
+        target.getClientRects().length&&getComputedStyle(target).visibility!=='hidden'){
+        playSfx('type',.85);
+      }
+      text=current;
+    });
+    observer.observe(target,{childList:true,characterData:true,subtree:true});
+  }
+  scan();
+  if(document.body){
+    new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
+  }else document.addEventListener('DOMContentLoaded',()=>{
+    scan();
+    new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
+  },{once:true});
+}
+
 export function installInterfaceSfx(){
+  installWelcomeTypewriterSfx();
   if(installed)return;installed=true;
   document.addEventListener('click',event=>{
     const b=event.target?.closest?.('button');
