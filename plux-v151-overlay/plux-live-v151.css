@@ -1,0 +1,10 @@
+/* PLUX 15.1 — live voice status, preserve approved OLED crystal design. */
+#screen-voice.plux151-connected #voice-toggle{box-shadow:inset 0 2px 8px rgba(233,255,245,.22),inset 0 -6px 17px rgba(0,246,168,.24),0 0 18px rgba(9,196,137,.26)!important}
+#screen-voice[data-voice-state="listening"] #voice-status{color:#bdffe2}
+#screen-voice[data-voice-state="talking"] #voice-toplabel{color:#e4fff2}
+#screen-voice[data-voice-state="thinking"] #voice-status{opacity:.84}
+#screen-voice #voice-toggle{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#screen-voice #voice-toggle:focus-visible{outline:2px solid #caffeb;outline-offset:6px}
+@media(prefers-reduced-motion:reduce){
+ #screen-voice.plux151-connected #voice-toggle{transition:opacity 150ms ease-out!important}
+}
