@@ -1,6 +1,6 @@
 /* ДОМ.РЕНДЕР · Realistic premium equipment sprites, 6×4 atlas, version 43 */
-#animationPanel .anim-option-photo{background-image:url('/assets/cinema/forma-cinema-atlas.webp');background-size:600% 400%;background-repeat:no-repeat;background-color:#0e171b;border-bottom:1px solid #243337;isolation:isolate}
-#animationPanel .anim-option-photo>img{opacity:0;pointer-events:none}
+#animationPanel .anim-option-photo{background-image:none!important;background-color:#0e171b;border-bottom:1px solid #243337;isolation:isolate;overflow:hidden;display:block}
+#animationPanel .anim-option-photo>img{opacity:1!important;display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
 #animationPanel .anim-option-photo::after{background:linear-gradient(180deg,transparent 76%,#0710133b 100%)}
 #animationPanel .anim-option-card{border-color:#ccd9ce;border-radius:9px;background:#fcfcfa;box-shadow:0 1px 2px #101d1710}
 #animationPanel .anim-option-card.active{border-color:#496d50;box-shadow:0 0 0 1px #719579,0 6px 20px #132c1a20}
