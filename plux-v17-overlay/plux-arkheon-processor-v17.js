@@ -7,6 +7,7 @@ class PluxArkheonCapture extends AudioWorkletProcessor {
     this.phase=0;this.step=sampleRate/24000;
     this.frames=[];this.framesMax=1024;
     this.stopped=false;
+    this.levelPower=0;this.levelSamples=0;this.levelTarget=Math.max(1600,Math.round(sampleRate/10));
     this.port.onmessage=e=>{if(e.data==="stop"){this.stopped=true;this.frames=[]}};
   }
   process(inputs,outputs){
@@ -15,6 +16,17 @@ class PluxArkheonCapture extends AudioWorkletProcessor {
     if(this.stopped)return false;
     const input=inputs?.[0]?.[0];
     if(!input?.length)return true;
+    // Report 100 ms RMS blocks after built-in acoustic echo cancellation;
+    // voice barge-in is accepted only with a real local-microphone signal.
+    for(let n=0;n<input.length;n++){
+      const sample=input[n];this.levelPower+=sample*sample;
+    }
+    this.levelSamples+=input.length;
+    if(this.levelSamples>=this.levelTarget){
+      const rms=Math.sqrt(this.levelPower/this.levelSamples);
+      this.port.postMessage({type:"level",rms});
+      this.levelPower=0;this.levelSamples=0;
+    }
     let position=this.phase;
     while(position<input.length){
       const i=Math.floor(position),fraction=position-i;
