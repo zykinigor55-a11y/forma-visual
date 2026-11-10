@@ -33,7 +33,7 @@
   function decorate(row,text){
     const bubble=row?.querySelector(".chat-bubble");
     if(!bubble||bubble.querySelector(".plux15-voice"))return;
-    const spoken=String(text||"").replace(/https?:\/\/\S+/g,"").trim().slice(0,450);
+    const spoken=String(text||"").replace(/https?:\/\/\S+/g,"").trim();
     if(spoken.length<2)return;
     const area=document.createElement("div");
     area.className="plux15-voice";
