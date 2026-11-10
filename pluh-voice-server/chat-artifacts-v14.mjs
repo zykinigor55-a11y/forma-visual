@@ -18,7 +18,12 @@ export function artifactIntent(text){
   const visual=/(изображени|картин|рисунк|рисунок|фото|фотографи|иллюстраци|обложк|постер|портрет|image|picture|photo)/i.test(s);
   const describe=/(?:^|\s)(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)\s+.{3,100}$|^.{3,100}\s+(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)$/i.test(s);
   const question=/(?:[?？]|^(?:где|когда|покажи|найди|что|кто|почему|зачем|можно|есть|скажи|оцени|опиши|сравни|проанализируй)\b)/i.test(s);
-  if(/(пдф|pdf)/i.test(s))return action?"pdf":null;
+  if(/(пдф|pdf)/i.test(s)){
+    // "Нужен пдф альбом", "Хочу PDF", "PDF доклад" are generation requests.
+    const requested=/(?:^|\s)(?:нужен|нужна|нужно|хочу|подготовь|составь|пришли|собери|создай|сделай)(?=\s|$)/i.test(s);
+    const shorthand=/^(?:пдф|pdf)[\s:,-]+(?:альбом|доклад|отч[её]т|сценарий|презентац|проект|документ)/i.test(s);
+    return action||requested||shorthand?"pdf":null;
+  }
   if((action&&visual)||(action&&/(?:нарису|нарисуй|draw)/i.test(s)))return "image";
   if(!question&&s.length<=125&&describe)return "image";
   return null;
@@ -48,7 +53,7 @@ export async function makeGptImage(prompt,key,ip){
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
       body:JSON.stringify({model:"gpt-image-2",prompt:clean(prompt,1700),size:"1024x1024",n:1}),
-      signal:AbortSignal.timeout(120000)
+      signal:AbortSignal.timeout(235000)
     });
     const result=await upstream.json().catch(()=>null);
     if(!upstream.ok)throw err(502,failure(upstream,result));
@@ -62,6 +67,8 @@ export async function makeGptImage(prompt,key,ip){
     }
     if(typeof item?.url==="string"){
       let target;try{target=new URL(item.url)}catch{}
+      if(target?.hostname==="chatgpt.com"&&target.pathname.startsWith("/backend-api/"))
+        throw err(502,"Провайдер вернул приватную ссылку ChatGPT вместо открытого изображения.");
       if(target?.protocol==="https:"&&!target.username&&!target.password)
         return {type:"image",mime:"image/png",filename:"PLUX-GPT-Image-2.png",url:target.href,model:"gpt-image-2"};
     }
@@ -97,11 +104,11 @@ async function pdfContent(prompt,messages,key){
   const response=await fetch(url+"/chat/completions",{
     method:"POST",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-    body:JSON.stringify({model:"gpt-6-luna",temperature:0.35,messages:[
+    body:JSON.stringify({model:"gpt-6-luna",reasoning_effort:"none",max_completion_tokens:3000,temperature:0.3,messages:[
       {role:"system",content:instructions},
       {role:"user",content:"Задача: "+clean(prompt,1900)+"\nКонтекст:\n"+recent}
     ]}),
-    signal:AbortSignal.timeout(50000)
+    signal:AbortSignal.timeout(80000)
   });
   const result=await response.json().catch(()=>null);
   if(!response.ok)throw err(502,failure(response,result));
