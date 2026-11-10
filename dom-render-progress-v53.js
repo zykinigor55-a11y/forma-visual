@@ -9,6 +9,21 @@
  let batchTotal=0,batchIndex=0,runner=null,hideTimer=null,lastReported=-1;
  const clocks=()=>Date.now();
  const clamp=(x,min,max)=>Math.min(max,Math.max(min,x));
+ const mobile=window.matchMedia?.('(max-width:700px)');
+ let originalParent=null,originalSibling=null;
+ function placeOverlay(){
+  const overlay=$('renderProgress');
+  if(!overlay)return;
+  if(!originalParent){originalParent=overlay.parentNode;originalSibling=overlay.nextSibling}
+  // On phones the viewer is too short for a tall progress card. Mount the
+  // overlay at body level, avoiding clipping by .viewer-card overflow:hidden.
+  if(mobile?.matches){
+   if(overlay.parentNode!==document.body)document.body.appendChild(overlay);
+  }else if(originalParent&&overlay.parentNode!==originalParent){
+   if(originalSibling?.parentNode===originalParent)originalParent.insertBefore(overlay,originalSibling);
+   else originalParent.appendChild(overlay);
+  }
+ }
  function nodes(){return {
   panel:$('renderProgress'),percent:$('renderProgressPercent'),remaining:$('renderProgressRemaining'),
   meter:$('renderProgressMeter'),bar:$('renderProgressBar'),
@@ -62,6 +77,7 @@
   paint();
  }
  function begin(){
+  placeOverlay();
   if(hideTimer){clearTimeout(hideTimer);hideTimer=null}
   active=true;completed=false;phase='prepare';phaseStarted=clocks();
   aiStarted=0;batchIndex=0;batchTotal=0;percent=2;lastReported=-1;
@@ -115,5 +131,6 @@
   }
   return !!n.panel;
  }
+ mobile?.addEventListener?.('change',placeOverlay);
  window.DOM_RENDER_PROGRESS={update,complete,stop};
 })();
