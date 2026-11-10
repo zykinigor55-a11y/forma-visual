@@ -772,13 +772,13 @@ function playAnimationPreview(){
  $('animPreviewState').textContent='3D-камера и светящаяся траектория · '+s.duration+' с';
 }
 const SCENE_VARIANT_OPTIONS={
- evening:'Вечер с фонарями',
- autumn_overcast:'Осень · пасмурно',
- autumn_sunny:'Осень · солнечно',
- autumn_evening:'Осень · вечер',
- winter_overcast:'Зима · пасмурно',
- winter_sunny:'Зима · солнечно',
- winter_evening:'Зима · вечер'
+ evening:'Синий час · свет',
+ autumn_overcast:'Осень · рассеянный свет',
+ autumn_sunny:'Осень · тёплое солнце',
+ autumn_evening:'Осень · синий час',
+ winter_overcast:'Зима · мягкий свет',
+ winter_sunny:'Зима · ясный день',
+ winter_evening:'Зима · синий час'
 };
 function renderHomeChanges(){
  const input=$('homeChangesInput');
