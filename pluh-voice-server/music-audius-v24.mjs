@@ -40,9 +40,15 @@ function normalize(track){
  const title=String(track.title||"Без названия").slice(0,140);
  const artist=String(track.user?.name||track.user?.handle||"Исполнитель").slice(0,110);
  const cover=safeImage(track.artwork?.["480x480"]||track.artwork?.["150x150"]||"");
+ // Audius canonical paths may be absolute or relative.
+ let playerPage=null;
+ try{
+  const target=new URL(String(track.permalink||"").slice(0,280),"https://audius.co/");
+  if(target.protocol==="https:"&&["audius.co","www.audius.co"].includes(target.hostname))playerPage=target.href;
+ }catch{}
  const stream=new URL(API+"/tracks/"+encodeURIComponent(id)+"/stream");
  stream.searchParams.set("app_name",APP);
- return {id,title,artist,cover,duration:Math.max(0,Math.min(36000,Number(track.duration)||0)),url:safeImage(track.permalink||""),
+ return {id,title,artist,cover,duration:Math.max(0,Math.min(36000,Number(track.duration)||0)),url:playerPage,
   stream:stream.href};
 }
 export async function handleAudius(req,res){
