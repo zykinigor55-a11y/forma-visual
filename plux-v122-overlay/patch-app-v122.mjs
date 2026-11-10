@@ -570,3 +570,34 @@ writeFileSync(v25SWPath,v25SW);
 plux123Exec(process.execPath,['--check',join(root,'plux-music-v24.js')],{stdio:'inherit'});
 if(!v25Html.includes('/plux-v25-style.css?v=2501'))throw Error('PLUX V25 stylesheet not linked');
 console.log('PLUX V25: main mascot and bubbles follow theme, gallery aligns with modes, Audius user-requested playback');
+
+
+/* PLUX V26: all six cards adopt the Gallery's satin-glass icon system,
+ * real GPT Image 2 output is displayed and can be opened fullscreen,
+ * glass-state cues confirm when the assistant listens/thinks/speaks.
+ */
+for(const name of ['plux-modes-v26.js','plux-v26-images.js','plux-v26.css']){
+ const source=join('plux-v26-overlay',name);
+ if(statSync(source).size<2100)throw Error('PLUX V26 asset missing: '+name);
+ writeFileSync(join(root,name),readFileSync(source));
+ if(name.endsWith('.js'))plux123Exec(process.execPath,['--check',join(root,name)],{stdio:'inherit'});
+}
+const v26Page=join(root,'index.html');
+let v26HTML=readFileSync(v26Page,'utf8');
+if(!v26HTML.includes('plux-release-v25'))throw Error('PLUX V25 prerequisite missing');
+v26HTML=v26HTML.replace('</head>','<meta name="plux-release-v26" content="real-gpt-image-six-satin-cards-voice-cues"><link rel="stylesheet" href="/plux-v26.css?v=2601"></head>');
+v26HTML=v26HTML.replace('</body>','<script src="/plux-v26-images.js?v=2601" defer></script><script src="/plux-modes-v26.js?v=2601" defer></script></body>');
+v26HTML=v26HTML.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=2601');
+v26HTML=v26HTML.replace(/\/plux-arkheon-v17\.js\?v=\d+/g,'/plux-arkheon-v17.js?v=2601');
+writeFileSync(v26Page,v26HTML);
+const v26SWPath=join(root,'sw.js');
+let v26SW=readFileSync(v26SWPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2601');
+if(!v26SW.includes("'/plux-modes-v26.js'")){
+ if(!v26SW.includes("'/plux-v25-style.css'"))throw Error('PLUX V25 SW asset list missing');
+ v26SW=v26SW.replace("'/plux-v25-style.css'","'/plux-v25-style.css','/plux-v26.css','/plux-modes-v26.js','/plux-v26-images.js'");
+}
+writeFileSync(v26SWPath,v26SW);
+for(const name of ['plux-chat-v128.js','plux-arkheon-v17.js'])plux123Exec(process.execPath,['--check',join(root,name)],{stdio:'inherit'});
+if(!v26HTML.includes('/plux-v26.css?v=2601')||!v26HTML.includes('/plux-modes-v26.js?v=2601'))
+ throw Error('PLUX V26 not loaded');
+console.log('PLUX V26 ready: photo viewer, genuine image generator, six unified cards, three state sounds');
