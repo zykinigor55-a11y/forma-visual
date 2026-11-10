@@ -601,3 +601,46 @@ for(const name of ['plux-chat-v128.js','plux-arkheon-v17.js'])plux123Exec(proces
 if(!v26HTML.includes('/plux-v26.css?v=2601')||!v26HTML.includes('/plux-modes-v26.js?v=2601'))
  throw Error('PLUX V26 not loaded');
 console.log('PLUX V26 ready: photo viewer, genuine image generator, six unified cards, three state sounds');
+
+
+/* PLUX V26 ZIP download for Samsung browsers: same-origin, plain ZIP file
+ * avoids Android's .apk MIME handling, browser interstitials and GitHub CDN.
+ * ZIP uses STORE for the signed APK binary; no external tools required.
+ */
+{
+ const apk=join(root,'PLUX-Android-V26.apk');
+ if(statSync(apk,{throwIfNoEntry:false})?.size>2_000_000){
+  const data=readFileSync(apk), name=Buffer.from('PLUX-Android-V26.apk','utf8');
+  let crc=0xffffffff;
+  for(const byte of data){
+   crc^=byte;
+   for(let b=0;b<8;b++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);
+  }
+  crc=(crc^0xffffffff)>>>0;
+  const local=Buffer.alloc(30+name.length);
+  local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(20,4);local.writeUInt32LE(crc,14);
+  local.writeUInt32LE(data.length,18);local.writeUInt32LE(data.length,22);local.writeUInt16LE(name.length,26);
+  name.copy(local,30);
+  const central=Buffer.alloc(46+name.length);
+  central.writeUInt32LE(0x02014b50,0);central.writeUInt16LE(20,4);central.writeUInt16LE(20,6);
+  central.writeUInt32LE(crc,16);central.writeUInt32LE(data.length,20);central.writeUInt32LE(data.length,24);
+  central.writeUInt16LE(name.length,28);name.copy(central,46);
+  const ending=Buffer.alloc(22);
+  ending.writeUInt32LE(0x06054b50,0);ending.writeUInt16LE(1,8);ending.writeUInt16LE(1,10);
+  ending.writeUInt32LE(central.length,12);ending.writeUInt32LE(local.length+data.length,16);
+  const zipped=Buffer.concat([local,data,central,ending]);
+  writeFileSync(join(root,'PLUX-Android-V26.zip'),zipped);
+  console.log('PLUX V26 ZIP mirror ready:',zipped.length,'bytes at /PLUX-Android-V26.zip');
+  const pageFile=join(root,'install-android.html');
+  let page=readFileSync(pageFile,'utf8');
+  const apkButton='<a href="/PLUX-Android-V26.apk" download="PLUX-Android-V26.apk">Скачать APK с Render</a>';
+  const zipButton='<a href="/PLUX-Android-V26.zip" download="PLUX-Android-V26.zip">Скачать ZIP — если APK не скачивается</a>';
+  if(!page.includes(zipButton)){
+   if(!page.includes(apkButton))throw Error('PLUX V26 download page missing APK button');
+   page=page.replace(apkButton,zipButton+apkButton);
+  }
+  writeFileSync(pageFile,page);
+ }else{
+  console.warn('PLUX V26 ZIP was not built because release APK mirror did not download.');
+ }
+}
