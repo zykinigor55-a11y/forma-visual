@@ -764,3 +764,31 @@ console.log('PLUX V27: downloadable PDFs, no dead bell, proper image-create icon
  if(!html.includes('/plux-chat-v128.js?v=2902'))throw Error('PLUX V29 chat script not included');
  console.log('PLUX V29: gradual text appearance and original optional keyboard glass sound ready');
 }
+
+
+/* PLUX V30: reliable real image delivery, image request confirmation, and
+ * correctly laid-out loading state. The installed Android WebView obtains
+ * all V30 changes from Render; no native permissions or geometry changed.
+ */
+{
+ const v30Css=join('plux-v30-overlay','plux-v30.css');
+ if(statSync(v30Css).size<1800)throw Error('PLUX V30 stylesheet missing');
+ writeFileSync(join(root,'plux-v30.css'),readFileSync(v30Css));
+ const htmlFile=join(root,'index.html');
+ let html=readFileSync(htmlFile,'utf8');
+ if(!html.includes('plux-release-v29'))throw Error('PLUX V29 prerequisite missing');
+ html=html.replace('</head>','<meta name="plux-release-v30" content="real-images-lightweight-https-and-user-consent"><link rel="stylesheet" href="/plux-v30.css?v=3001"></head>');
+ html=html.replace(/\/plux-chat-v128\.js\?v=\d+/g,'/plux-chat-v128.js?v=3001');
+ writeFileSync(htmlFile,html);
+ const swFile=join(root,'sw.js');
+ let sw=readFileSync(swFile,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v3001');
+ if(!sw.includes("'/plux-v30.css'")){
+  if(!sw.includes("'/plux-chat-typing-v29.css'"))throw Error('V29 service worker prerequisite missing');
+  sw=sw.replace("'/plux-chat-typing-v29.css'","'/plux-chat-typing-v29.css','/plux-v30.css'");
+ }
+ writeFileSync(swFile,sw);
+ plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
+ if(!html.includes('/plux-v30.css?v=3001')||!html.includes('/plux-chat-v128.js?v=3001'))
+  throw Error('PLUX V30 assets were not loaded');
+ console.log('PLUX V30: real generated photos via compact HTTPS, confirmation before billing, stable generator visuals');
+}
