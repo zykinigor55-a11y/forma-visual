@@ -7,6 +7,7 @@ import { voiceSession } from "./live-voice-v151.mjs";
 import {arkheonSession,arkheonVoiceProbe,arkheonUsageProbe} from "./arkheon-realtime-v17.mjs";
 import { handleAudius } from "./music-audius-v24.mjs";
 import {storeGeneratedPdf,sendGeneratedPdf} from "./pdf-download-v27.mjs";
+import {storeGeneratedImage,sendGeneratedImage} from "./image-download-v30.mjs";
 import {beginGenerationJob,handleGenerationJobStatus} from "./generation-jobs-v28.mjs";
 import {streamPlainChat} from "./chat-stream-v29.mjs";
 import { readFile, stat } from "node:fs/promises";
@@ -60,6 +61,7 @@ async function handler(req,res){
    }catch{return reply(res,502,{error:"Связь с ElevenLabs недоступна."});}
  }
  if(pathname==="/api/generation/status")return handleGenerationJobStatus(req,res,pathname);
+ if(pathname.startsWith("/api/download/image/"))return sendGeneratedImage(req,res,pathname);
  if(pathname.startsWith("/api/download/pdf/"))return sendGeneratedPdf(req,res,pathname);
  if(pathname.startsWith("/api/music/"))return handleAudius(req,res);
  if(pathname.startsWith("/api/arkheon/"))return arkheonSession(req,res);
@@ -95,7 +97,7 @@ async function handler(req,res){
   /* PLUX V14: artifact generation is server-routed, not claimed by the text model. */
   const lastOriginal=data.messages.at(-1);
   const latestText=lastOriginal?.role==="user"&&typeof lastOriginal.content==="string"?lastOriginal.content:"";
-  const kind=artifactIntent(latestText);
+  const kind=data?.requestedArtifact==="image"&&latestText.trim()?"image":artifactIntent(latestText);
   if(kind&&data?.clientFeatures?.generationJobs===true){
     try{
       const job=beginGenerationJob({kind,prompt:latestText,messages,
@@ -108,9 +110,10 @@ async function handler(req,res){
   if(kind){
     try{
       const imageKey=process.env.API_MARKET_IMAGE_KEY||secret;
-      const artifact=kind==="image"
+      let artifact=kind==="image"
         ? await makeGptImage(latestText,imageKey,ip)
         : await makePdf(latestText,messages,secret,ip);
+      if(kind==="image")artifact=storeGeneratedImage(artifact);
       if(kind==="pdf")artifact.url=storeGeneratedPdf(artifact);
        const note=kind==="image"?"Создал изображение с GPT Image 2.":"Подготовил PDF-документ: "+artifact.title;
       return reply(res,200,{reply:note,artifact});
