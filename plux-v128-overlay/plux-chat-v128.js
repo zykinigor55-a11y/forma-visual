@@ -14,6 +14,43 @@
     if(from!=='user'){const im=document.createElement('img');im.className='chat-mini';im.src='/assets/states/idle.webp';im.alt='';row.append(im)}
     const bubble=document.createElement('div');bubble.className='chat-bubble';bubble.textContent=message;row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
   }
+  // V14: display real tool outputs, not fabricated text links from the language model.
+  const temporaryUrls=[];
+  const downloadable=data=>{
+    if(typeof data!=='string'||!/^data:(application\/pdf|image\/png|image\/jpeg|image\/webp);base64,/.test(data))return null;
+    try{
+      const split=data.indexOf(','),head=data.slice(5,split),body=atob(data.slice(split+1));
+      const bytes=new Uint8Array(body.length);
+      for(let i=0;i<body.length;i++)bytes[i]=body.charCodeAt(i);
+      const uri=URL.createObjectURL(new Blob([bytes],{type:head.slice(0,head.indexOf(';'))}));
+      temporaryUrls.push(uri);return uri;
+    }catch{return null}
+  };
+  window.addEventListener('pagehide',()=>temporaryUrls.splice(0).forEach(uri=>URL.revokeObjectURL(uri)));
+  function appendArtifact(item){
+    if(!item||!['image','pdf'].includes(item.type))return;
+    const file=String(item.filename|| (item.type==='pdf'?'PLUX.pdf':'PLUX.png')).replace(/[\\\/<>:*?"|]/g,'').slice(0,90);
+    const uri=downloadable(item.dataUrl)||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
+    if(!uri){append('info','Не удалось открыть вложение от генератора.');return}
+    const row=document.createElement('div');row.className='chat-row bot plux14-artifact-row';
+    const avatar=document.createElement('img');avatar.className='chat-mini';avatar.src='/assets/states/idle.webp';avatar.alt='';row.append(avatar);
+    const bubble=document.createElement('div');bubble.className='chat-bubble plux14-artifact';
+    if(item.type==='image'){
+      const picture=document.createElement('img');picture.className='plux14-created-image';picture.src=uri;picture.alt='Изображение, созданное GPT Image 2';
+      picture.loading='lazy';bubble.append(picture);
+      const title=document.createElement('div');title.className='plux14-file-title';title.textContent='GPT Image 2 · 1024 × 1024';
+      bubble.append(title);
+    }else{
+      const icon=document.createElement('span');icon.className='plux14-pdf-icon';icon.textContent='PDF';bubble.append(icon);
+      const title=document.createElement('span');title.className='plux14-file-title';title.textContent=String(item.title||file).slice(0,120);
+      bubble.append(title);
+    }
+    const action=document.createElement('a');action.className='plux14-download';action.textContent=item.type==='pdf'?'Скачать PDF':'Сохранить изображение';
+    action.href=uri;
+    if(uri.startsWith('blob:'))action.download=file;
+    else{action.target='_blank';action.rel='noopener noreferrer'}
+    bubble.append(action);row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
+  }
   async function send(text){
     if(busy)return;busy=true;
     const attachments=window.PLUXMediaV129?.takeAttachments?.()||[];
@@ -28,6 +65,7 @@
       if(!response.ok)throw Error(result.error||'Не удалось получить ответ ИИ');
       if(typeof result.reply!=='string'||!result.reply.trim())throw Error('Пустой ответ модели');
       append('bot',result.reply);
+      if(result.artifact)appendArtifact(result.artifact);
     }catch(e){append('info',e.name==='TimeoutError'?'Сервер долго не отвечает. Попробуй ещё раз.':String(e.message||'Связь с сервером недоступна.'))}
     finally{busy=false;if(button)button.disabled=false}
   }
