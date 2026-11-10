@@ -545,3 +545,28 @@ console.log('PLUX V24: IndexedDB Gallery replaces More, Audius music, responsive
  const site='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Установить ПЛЮХ на Android</title><style>body{min-height:100dvh;margin:0;background:#020b0c;color:#f1fff8;font:16px system-ui;display:grid;place-items:center;padding:20px;box-sizing:border-box}main{width:min(420px,100%);box-sizing:border-box;padding:28px 22px;border:1px solid #408b72;border-radius:28px;background:linear-gradient(145deg,#10362d,#030e11);box-shadow:0 0 60px #145b3a3b}h1{font-size:28px;margin:0 0 10px}p{color:#bddbd0;line-height:1.5}a{display:block;margin:13px 0;padding:15px;border-radius:16px;background:#154d3d;border:1px solid #70c7a6;color:#effff5;text-decoration:none;text-align:center;font-weight:650}small{color:#a4c2b9;line-height:1.4;display:block}</style></head><body><main><h1>ПЛЮХ для Android</h1><p>Версия V24. Выбери ссылку для скачивания установочного APK.</p><a href="/PLUX-Android-V24.apk" download="PLUX-Android-V24.apk">Скачать APK с Render</a><a href="https://github.com/zykinigor55-a11y/forma-visual/releases/download/plux-android-v24-20261110/PLUX-Android.apk" rel="noopener noreferrer">Запасная ссылка GitHub</a><small>Открывай в Chrome или Яндекс Браузере. Скачанный файл находится в папке «Загрузки». Для установки может понадобиться разрешение на установку из выбранного браузера.</small></main></body></html>';
  writeFileSync(join(root,'install-android.html'),site);
 }
+
+
+/* PLUX V25: correct color of home mascot in every state and unify
+ * Gallery with original optical mode cards. The native WebView handles
+ * a separately requested music playback gesture after async Audius search.
+ */
+const v25CssSource=join('plux-v25-overlay','plux-v25-style.css');
+if(statSync(v25CssSource).size<2500)throw Error('PLUX V25 style asset missing');
+writeFileSync(join(root,'plux-v25-style.css'),readFileSync(v25CssSource));
+const v25Page=join(root,'index.html');
+let v25Html=readFileSync(v25Page,'utf8');
+if(!v25Html.includes('plux-release-v24'))throw Error('PLUX V24 required');
+v25Html=v25Html.replace('</head>','<meta name="plux-release-v25" content="unified-six-card-modes-mascot-theme-audius-auto-play"><link rel="stylesheet" href="/plux-v25-style.css?v=2501"></head>');
+v25Html=v25Html.replace(/\/plux-music-v24\.js\?v=\d+/g,'/plux-music-v24.js?v=2501');
+writeFileSync(v25Page,v25Html);
+const v25SWPath=join(root,'sw.js');
+let v25SW=readFileSync(v25SWPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2501');
+if(!v25SW.includes("'/plux-v25-style.css'")){
+ if(!v25SW.includes("'/plux-chat-v24.css'"))throw Error('PLUX V24 SW list missing');
+ v25SW=v25SW.replace("'/plux-chat-v24.css'","'/plux-chat-v24.css','/plux-v25-style.css'");
+}
+writeFileSync(v25SWPath,v25SW);
+plux123Exec(process.execPath,['--check',join(root,'plux-music-v24.js')],{stdio:'inherit'});
+if(!v25Html.includes('/plux-v25-style.css?v=2501'))throw Error('PLUX V25 stylesheet not linked');
+console.log('PLUX V25: main mascot and bubbles follow theme, gallery aligns with modes, Audius user-requested playback');
