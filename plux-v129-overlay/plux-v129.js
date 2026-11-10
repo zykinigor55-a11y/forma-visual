@@ -125,6 +125,10 @@
       if(!src)throw Error('Генератор не вернул файл.');
       const image=document.createElement('img');image.src=src;image.alt='Результат генерации Nano Banana';
       result.replaceChildren(image);
+      image.addEventListener('load',()=>{
+        void window.PLUXGallery?.save?.({kind:'image',source:src,filename:'PLUX-Nano-Banana.png',
+          caption:description,model:'nano-banana'});
+      },{once:true});
       const action=document.createElement('a');action.className='plux129-save';action.textContent='Сохранить изображение';
       action.href=src;
       if(src.startsWith('data:'))action.download='PLUX_Nano_Banana.png';
