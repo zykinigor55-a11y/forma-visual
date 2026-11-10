@@ -129,7 +129,22 @@
       action.href=src;
       if(src.startsWith('data:'))action.download='PLUX_Nano_Banana.png';
       else{action.target='_blank';action.rel='noopener noreferrer'}
-      result.append(action);result.scrollIntoView({block:'nearest',behavior:'smooth'});
+      result.append(action);
+      const animate=document.createElement('button');
+      animate.type='button';
+      animate.className='plux17-animate plux17-animate-create';
+      animate.textContent='Сделать видео';
+      animate.addEventListener('click',()=>{
+        if(!window.PLUXVideoV16?.open){notify('Генератор видео недоступен.');return}
+        window.PLUXVideoV16.open({
+          imageDataUrl:src.startsWith('data:')?src:null,
+          imageUrl:!src.startsWith('data:')?src:null,
+          name:'Изображение ПЛЮХ',
+          prompt:'Анимировать исходную картинку. Сохрани композицию, материалы, лица и архитектуру. Плавный кинематографичный пролёт камеры, естественное движение окружающей среды.'
+        });
+      });
+      result.append(animate);
+      result.scrollIntoView({block:'nearest',behavior:'smooth'});
     }catch(e){progress.textContent=e?.name==='TimeoutError'?'Сервер долго отвечает. Проверь баланс — генерация могла быть оплачена.':String(e.message||'Ошибка генерации');result.classList.add('plux129-error')}
     finally{createButton.disabled=false;createButton.removeAttribute('aria-busy');createButton.innerHTML='Создать <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-star"></use></svg>'}
   },{capture:true});
