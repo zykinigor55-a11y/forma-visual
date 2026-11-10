@@ -12,7 +12,7 @@
     try{localStorage.setItem('plux_messages',JSON.stringify(rows.slice(-75)))}catch{}
     const row=document.createElement('div');row.className='chat-row '+(from==='user'?'user':from==='info'?'info':'bot');
     if(from!=='user'){const im=document.createElement('img');im.className='chat-mini';im.src='/assets/states/idle.webp';im.alt='';row.append(im)}
-    const bubble=document.createElement('div');bubble.className='chat-bubble';bubble.textContent=message;row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
+    const bubble=document.createElement('div');bubble.className='chat-bubble';bubble.textContent=message;row.append(bubble);feed.append(row);if(from==='bot')window.PLUXVoiceV15?.decorate?.(row,message);feed.scrollTop=feed.scrollHeight;
   }
   // V14: display real tool outputs, not fabricated text links from the language model.
   const temporaryUrls=[];
