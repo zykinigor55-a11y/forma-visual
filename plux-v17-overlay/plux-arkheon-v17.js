@@ -21,7 +21,8 @@
  let userSpeaking=false,ignoreAbortedResponse=false,sessionConfirmed=false;
  let speakingStartedAt=0,finishTimer=0,happyTimer=0,latestEvent="idle";
  let detectedVoiceMs=0,pendingSpeechStart=0,lastVoiceAt=0,interruptions=0,playedChunks=0;
- const jitterLeadSeconds=.16; // lower first-audio latency, retain some 4G jitter protection
+ const jitterLeadSeconds=.20; // low first-audio latency, moderate mobile jitter protection
+ let lateVoicePackets=0,networkAudioGaps=0;
  const speakingVoiceThreshold=.062; // post-echo-cancellation local voice RMS
  const interruptionVoiceMs=210;
  const cancelEmotionTimers=()=>{
@@ -169,7 +170,16 @@
     // Network completion can be earlier than the last sound from the speaker.
     if(responseAudioStarted&&playing.length===0)scheduleFinish();
    };
-   const time=Math.max(speakerCtx.currentTime+jitterLeadSeconds,playAt);
+   // Recover from jitter only after a real underrun. Do not discard
+   // fragments or add a large baseline delay on a good connection.
+   const now=speakerCtx.currentTime,remaining=playAt-now;
+   if(playedChunks>1&&remaining<.045){
+     lateVoicePackets=Math.min(4,lateVoicePackets+1);
+     networkAudioGaps++;
+     if(networkAudioGaps===3&&mode==="talking")status.textContent="Интернет нестабилен. Сглаживаю воспроизведение речи…";
+   }else if(remaining>.42)lateVoicePackets=Math.max(0,lateVoicePackets-1);
+   const lead=Math.min(.48,jitterLeadSeconds+lateVoicePackets*.07);
+   const time=Math.max(now+lead,playAt);
    source.start(time);playing.push(source);playAt=time+audio.duration;
   }catch{}
  }
@@ -457,6 +467,7 @@
    streamEvent:latestEvent,playingChunks:playing.length,
    speakerQueueSeconds:Math.max(0,playAt-(speakerCtx?.currentTime||0)).toFixed(2),
    totalPlaybackChunks:playedChunks,confirmedBargeIns:interruptions,
+   networkAudioGaps,lateVoicePackets,
    mutedInputFrames:microphoneSilencedFrames,manualInterrupts,responseInProgress,
    lastUserTranscript,
    video:screen.querySelector(".voice-image-layer")?.dataset.pluxEmotion||null,
