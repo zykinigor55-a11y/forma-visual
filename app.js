@@ -274,15 +274,45 @@ function save(){if(!project)return;project.modifiedAt=Date.now();try{localStorag
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3400)}
 async function setMedia(key,url){imageCache.set(key,url);await dataStore.put(key,url)}
 async function getMedia(key){if(imageCache.has(key))return imageCache.get(key);const val=await dataStore.get(key);if(val)imageCache.set(key,val);return val||''}
-function pngDataFromFile(file,maxEdge=2000){return new Promise((resolve,reject)=>{
+/* Preserve uploaded pixels instead of downsizing all source drawings to 2000px
+ * JPEG/0.88. Provider accepts PNG/JPEG/WebP up to 14 MB per reference. */
+function pngDataFromFile(file,maxEdge=3800){return new Promise((resolve,reject)=>{
  if(!file)return reject(Error('Выберите изображение'));
- if(!(['image/png','image/jpeg','image/webp'].includes(file.type)||(!file.type&&/\.(png|jpe?g|webp)$/i.test(file.name))))return reject(Error('Поддерживаются только PNG, JPG и WebP'));
+ const type=file.type||(/\.png$/i.test(file.name)?'image/png':/\.webp$/i.test(file.name)?'image/webp':'image/jpeg');
+ if(!['image/png','image/jpeg','image/webp'].includes(type))return reject(Error('Поддерживаются только PNG, JPG и WebP'));
  if(file.size>22*1024*1024)return reject(Error('Размер изображения должен быть до 22 МБ'));
- const url=URL.createObjectURL(file),im=new Image();let done=false;
- const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);URL.revokeObjectURL(url);im.onload=im.onerror=null;error?reject(error):resolve(value)};
- const timer=setTimeout(()=>finish(Error('Загрузка изображения занимает слишком много времени')),45000);
+ const maxBytes=12*1024*1024,url=URL.createObjectURL(file),im=new Image();let done=false;
+ const finish=(err,val)=>{if(done)return;done=true;clearTimeout(timer);URL.revokeObjectURL(url);im.onload=im.onerror=null;err?reject(err):resolve(val)};
+ const timer=setTimeout(()=>finish(Error('Загрузка изображения занимает слишком много времени')),60000);
  im.onerror=()=>finish(Error('Не удалось прочитать изображение'));
- im.onload=()=>{try{const w=im.naturalWidth,h=im.naturalHeight;if(!w||!h)throw Error('Изображение повреждено');const factor=Math.min(1,maxEdge/Math.max(w,h)),cw=Math.max(1,Math.round(w*factor)),ch=Math.max(1,Math.round(h*factor)),cn=document.createElement('canvas');cn.width=cw;cn.height=ch;const ctx=cn.getContext('2d');if(!ctx)throw Error('Недостаточно памяти');ctx.fillStyle='#fff';ctx.fillRect(0,0,cw,ch);ctx.drawImage(im,0,0,cw,ch);const data=cn.toDataURL('image/jpeg',.88);cn.width=cn.height=1;finish(null,{data,width:cw,height:ch})}catch(err){finish(Error(err.message||'Не удалось подготовить изображение'))}};
+ im.onload=async()=>{
+  try{
+   const w=im.naturalWidth,h=im.naturalHeight;
+   if(!w||!h)throw Error('Изображение повреждено');
+   // Standard uploads are sent bit-for-bit, retaining genuine texture and
+   // precise construction lines. Re-encode only larger-than-provider files.
+   if(file.size<=maxBytes){
+    const reader=new FileReader();
+    reader.onerror=()=>finish(Error('Не удалось прочитать исходный файл.'));
+    reader.onload=()=>finish(null,{data:String(reader.result),width:w,height:h});
+    reader.readAsDataURL(file);
+    return;
+   }
+   const factor=Math.min(1,maxEdge/Math.max(w,h));
+   const outW=Math.max(1,Math.round(w*factor)),outH=Math.max(1,Math.round(h*factor));
+   const cn=document.createElement('canvas');cn.width=outW;cn.height=outH;
+   const ctx=cn.getContext('2d');if(!ctx)throw Error('Недостаточно памяти');
+   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+   ctx.fillStyle='#fff';ctx.fillRect(0,0,outW,outH);
+   ctx.drawImage(im,0,0,outW,outH);
+   let data=cn.toDataURL('image/jpeg',.97);
+   if(data.length>Math.ceil(maxBytes*4/3)+60)data=cn.toDataURL('image/jpeg',.93);
+   if(data.length>Math.ceil(maxBytes*4/3)+60)data=cn.toDataURL('image/jpeg',.88);
+   cn.width=cn.height=1;
+   if(data.length>Math.ceil(maxBytes*4/3)+60)throw Error('Изображение слишком сложное для обработки. Сохраните исходник в PNG/JPEG до 12 МБ.');
+   finish(null,{data,width:outW,height:outH});
+  }catch(e){finish(Error(e.message||'Не удалось подготовить изображение'))}
+ };
  im.src=url;
 })}
 async function imageFrom(url){return new Promise((resolve,reject)=>{const im=new Image;im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('Не удалось загрузить текстуру'));im.src=url})}
