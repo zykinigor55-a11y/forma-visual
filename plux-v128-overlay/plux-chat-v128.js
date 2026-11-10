@@ -104,6 +104,10 @@
       });
       bubble.append(animate);
     }
+    if(kind==='pdf'){
+      bubble.querySelector('.plux22-gen-title').firstChild.textContent='ПЛЮХ готовит PDF';
+      bubble.querySelector('.plux22-gen-note').textContent='Формирую документ';
+    }
     row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
   }
   const imageIntent=text=>{
@@ -116,15 +120,60 @@
     // "Полосатая корова фото" or "Фото полосатой коровы": treat as creation.
     return s.length<=125&&/(?:^|\s)(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)\s+.{3,100}$|^.{3,100}\s+(?:фото|фотографи[яию]|картин[ау]|изображени[ея]|рисунок|портрет)$/i.test(s);
   };
-  function showGenerating(){
+  function showGenerating(kind='image'){
     const row=document.createElement('div');row.className='chat-row bot plux22-generating-row';row.setAttribute('role','status');
     const bubble=document.createElement('div');bubble.className='chat-bubble plux22-generating';
     bubble.innerHTML='<div class="plux22-preview" aria-hidden="true"><div class="plux22-orbit"></div><div class="plux22-spark"></div></div><div class="plux22-gen-title">ПЛЮХ создаёт изображение<span class="plux22-dots"></span></div><div class="plux22-gen-note">Готовлю композицию и детали</div><div class="plux22-progress"><i></i></div>';
     row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
-    const notes=['Готовлю композицию и детали','Создаю свет, цвета и материалы','Прорабатываю изображение','Загружаю готовый результат'];
+    const notes=kind==='pdf'
+      ?['Формирую структуру документа','Ожидаю готовый PDF','Проверяю создание файла']
+      :['Готовлю композицию и детали','Ожидаю результат GPT Image 2','Проверяю готовность изображения'];
     let step=0,ended=false;
     const timer=setInterval(()=>{if(ended)return;step=Math.min(step+1,notes.length-1);const label=bubble.querySelector('.plux22-gen-note');if(label)label.textContent=notes[step];feed.scrollTop=feed.scrollHeight},8500);
-    return {stop(){if(ended)return;ended=true;clearInterval(timer);row.remove();feed.scrollTop=feed.scrollHeight},ready(){const label=bubble.querySelector('.plux22-gen-note');if(label)label.textContent='Изображение готово. Открываю в чате…'}};
+    return {stop(){if(ended)return;ended=true;clearInterval(timer);row.remove();feed.scrollTop=feed.scrollHeight},ready(){const label=bubble.querySelector('.plux22-gen-note');if(label)label.textContent=kind==='pdf'?'Документ готов. Открываю PDF…':'Изображение готово. Открываю в чате…'}};
+  }
+  // A job identifier represents one paid generation. Poll it rather than
+  // repeating the upstream request on a weak mobile connection.
+  const jobKey='plux_pending_generation_v28';
+  const jobStatusUrl='https://pluh-voice-demo.onrender.com/api/generation/status';
+  const pdfIntent=text=>{
+    const t=String(text||'').trim().toLowerCase();
+    return /(pdf|пдф)/.test(t)&&/(созда|сдела|сгенериру|нужен|нужна|нужно|хочу|подготов|состав|пришли|собер|альбом|доклад|отч[её]т|презентац)/.test(t);
+  };
+  async function pollJob(job){
+    if(!job||!(/^[A-Za-z0-9_-]{32}$/.test(job.id)))throw Error('Сервер вернул неправильный номер задачи.');
+    const maxWait=job.kind==='image'?340000:150000;
+    const until=Date.now()+maxWait;
+    let connectionErrors=0;
+    while(Date.now()<until){
+      await new Promise(resolve=>setTimeout(resolve,2200));
+      let r,result;
+      try{
+        r=await fetch(jobStatusUrl+'?id='+encodeURIComponent(job.id),{
+          mode:'cors',credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(14000)
+        });
+        result=await r.json().catch(()=>({}));
+      }catch(error){
+        if(++connectionErrors>12)throw Error('Интернет нестабилен. Задача сохранена — открой чат снова, чтобы получить готовый файл. Не запускай генерацию повторно.');
+        continue;
+      }
+      connectionErrors=0;
+      if(!r.ok)throw Error(result.error||'Не удалось проверить генерацию.');
+      if(result.state==='working')continue;
+      if(result.state==='failed'){
+        try{localStorage.removeItem(jobKey)}catch{}
+        throw Error(result.error||'Не удалось создать файл.');
+      }
+      if(result.state==='complete'){
+        try{localStorage.removeItem(jobKey)}catch{}
+        if(!result.artifact)throw Error('Генератор завершился без файла.');
+        return result;
+      }
+    }
+    throw Error('Генерация всё ещё выполняется. Задача сохранена — открой чат позже, не создавая повторный платный запрос.');
+  }
+  function rememberJob(job){
+    try{localStorage.setItem(jobKey,JSON.stringify({id:job.id,kind:job.kind,at:Date.now()}))}catch{}
   }
   async function send(text){
     if(busy)return;busy=true;
@@ -133,12 +182,17 @@
     const summary=attachments.map(x=>'📎 '+x.name).join('\n');
     const button=form.querySelector('.chat-send');if(button)button.disabled=true;
     append('user',display+(summary?'\n'+summary:''));
-    const generating=imageIntent(text)?showGenerating():null;
+    const kind=imageIntent(text)?'image':pdfIntent(text)?'pdf':null;
+    const generating=kind?showGenerating(kind):null;
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments}),signal:AbortSignal.timeout(generating?155000:65000)});
-      const result=await response.json().catch(()=>({}));
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments,clientFeatures:{generationJobs:true}}),signal:AbortSignal.timeout(generating?25000:65000)});
+      let result=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(result.error||'Не удалось получить ответ ИИ');
+      if(result.job){
+        rememberJob(result.job);
+        result=await pollJob(result.job);
+      }
       if(typeof result.reply==='string'&&result.reply.trim()){
         const text=String(result.reply);
         // A language model's markdown/JSON referencing an internal
@@ -176,4 +230,26 @@
     input.value='';void send(t);
   },true);
   window.PLUXChatAPI={model:'gpt-6-luna',endpoint};
+  // Recover the original job after a tab/app restart instead of paying twice.
+  try{
+    const saved=JSON.parse(localStorage.getItem(jobKey)||'null');
+    if(saved?.id&&Date.now()-saved.at<17*60*1000){
+      setTimeout(async()=>{
+        if(busy)return;
+        busy=true;
+        const loading=showGenerating(saved.kind);
+        append('info','Восстанавливаю ранее запущенную генерацию…');
+        try{
+          const ready=await pollJob(saved);
+          if(typeof ready.reply==='string')append('bot',ready.reply);
+          if(ready.artifact?.type==='image'){
+            ready.artifact&&appendArtifact(ready.artifact,()=>loading.stop());
+          }else{
+            loading.stop();if(ready.artifact)appendArtifact(ready.artifact);
+          }
+        }catch(error){loading.stop();append('info',String(error.message||'Не удалось восстановить задачу.'))}
+        finally{busy=false}
+      },1100);
+    }
+  }catch{}
 })();
