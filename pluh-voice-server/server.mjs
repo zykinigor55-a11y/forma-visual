@@ -4,7 +4,7 @@ import { artifactIntent, makeGptImage, makePdf } from "./chat-artifacts-v14.mjs"
 import { handleCyhub } from "./cyhub-voice-v15.mjs";
 import {handleCyhubVideo} from "./cyhub-video-v16.mjs";
 import { voiceSession } from "./live-voice-v151.mjs";
-import {arkheonSession,arkheonVoiceProbe} from "./arkheon-realtime-v17.mjs";
+import {arkheonSession,arkheonVoiceProbe,arkheonUsageProbe} from "./arkheon-realtime-v17.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -177,4 +177,7 @@ createServer((req,res)=>{handler(req,res).catch(()=>reply(res,500,{error:"Intern
  void arkheonVoiceProbe().then(result=>{
    console.log("PLUX Arkheon voices readiness",JSON.stringify(result));
  }).catch(()=>{console.log("PLUX Arkheon voices catalog unavailable");});
+ void arkheonUsageProbe().then(result=>{
+   console.log("PLUX Arkheon key usage last 30d",JSON.stringify(result));
+ }).catch(()=>{console.log("PLUX Arkheon usage unavailable");});
 });
