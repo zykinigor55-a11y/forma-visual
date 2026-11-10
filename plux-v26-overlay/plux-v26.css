@@ -111,3 +111,36 @@
 @media(prefers-reduced-motion:reduce){
  #screen-modes .plux26-mode-card{transition:none!important}
 }
+
+/* V27: the old light-mask overlays introduced visible horizontal bars across
+ * the minimalist SVGs. Keep the icons themselves but remove all legacy strips. */
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .mode-icon-shimmer,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .plux-mode-liquid,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .plux115-liquid,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .mode-emblem,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .plux24-gallery-tile-icon{
+ display:none!important;visibility:hidden!important;opacity:0!important;
+}
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card::before,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card::after,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .plux26-mode-icon::before,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .plux26-mode-icon::after{
+ content:none!important;display:none!important;background:none!important;
+}
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card .plux26-mode-icon{
+ background:linear-gradient(146deg,var(--plux-theme-soft,rgba(40,203,152,.23)),rgba(3,18,22,.92) 78%)!important;
+ box-shadow:inset 0 1px 2px rgba(255,255,255,.17),inset 0 -4px 9px rgba(1,9,13,.6)!important;
+}
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card svg,
+#screen-modes .mode-grid > button.mode-card.plux26-mode-card svg *{
+ stroke-dasharray:none!important;stroke-dashoffset:0!important;
+ animation:none!important;
+}
+/* The bell was a placeholder with no real notification center. Leave its
+ * DOM node for the legacy app module but remove the inactive control visually. */
+#screen-home #open-notifications{display:none!important;visibility:hidden!important}
+/* Clear accessible tap targets for generated PDF documents */
+#screen-chat .chat-bubble.plux14-artifact a.plux14-download{
+ pointer-events:auto!important;touch-action:manipulation!important;
+ position:relative!important;z-index:16!important;cursor:pointer!important;
+}
