@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check server.mjs && node --check media-v129.mjs && node --check chat-artifacts-v14.mjs && node --check generation-jobs-v28.mjs && node --check chat-stream-v29.mjs && node test-chat-stream-v29.mjs && node --check live-voice-v151.mjs && node --check cyhub-video-v16.mjs && node --check arkheon-realtime-v17.mjs && node --check pdf-download-v27.mjs && node test-pdf-download-v27.mjs && node test-artifacts-v14.mjs && node test-cyhub-v15.mjs && node test-video-v16.mjs",
+    "check": "node --check server.mjs && node --check media-v129.mjs && node --check chat-artifacts-v14.mjs && node --check generation-jobs-v28.mjs && node --check image-download-v30.mjs && node test-image-download-v30.mjs && node --check chat-stream-v29.mjs && node test-chat-stream-v29.mjs && node --check live-voice-v151.mjs && node --check cyhub-video-v16.mjs && node --check arkheon-realtime-v17.mjs && node --check pdf-download-v27.mjs && node test-pdf-download-v27.mjs && node test-artifacts-v14.mjs && node test-cyhub-v15.mjs && node test-video-v16.mjs",
     "postinstall": "npm run check"
   },
   "engines": {
