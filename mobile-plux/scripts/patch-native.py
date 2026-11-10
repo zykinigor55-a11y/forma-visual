@@ -23,8 +23,8 @@ if platform=="android":
     if not gradle.exists():raise SystemExit("Android app build.gradle missing")
     gradle_text=gradle.read_text()
     import re
-    gradle_text,version_hits=re.subn(r'(?m)^(\s*versionCode\s+)\d+',r'\g<1>23',gradle_text,count=1)
-    gradle_text,name_hits=re.subn(r'(?m)^(\s*versionName\s+)"[^"]+"',r'\g<1>"23.0.0"',gradle_text,count=1)
+    gradle_text,version_hits=re.subn(r'(?m)^(\s*versionCode\s+)\d+',r'\g<1>24',gradle_text,count=1)
+    gradle_text,name_hits=re.subn(r'(?m)^(\s*versionName\s+)"[^"]+"',r'\g<1>"24.0.0"',gradle_text,count=1)
     if version_hits!=1 or name_hits!=1:raise SystemExit("Could not update Android APK version")
     gradle.write_text(gradle_text)
     main=root/"android/app/src/main/java/com/plux/assistant/MainActivity.java"
