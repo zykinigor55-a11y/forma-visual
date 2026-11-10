@@ -92,15 +92,15 @@ def install_plux_icon(platform):
             foreground.save(folder/"ic_launcher_foreground.png",format="PNG")
         background=dest/"drawable/ic_launcher_background.xml"
         background.write_text('<?xml version="1.0" encoding="utf-8"?>\n<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle"><solid android:color="#00110E"/></shape>\n')
-        color_dir=dest/"values"
-        color_dir.mkdir(parents=True,exist_ok=True)
-        colors=color_dir/"colors.xml"
-        value=colors.read_text() if colors.exists() else "<resources></resources>"
-        if 'name="ic_launcher_background"' in value:
-            value=re.sub(r'<color\s+name="ic_launcher_background"[^>]*>[^<]*</color>',
-                         '<color name="ic_launcher_background">#00110E</color>',value)
-        else:value=value.replace("</resources>",'<color name="ic_launcher_background">#00110E</color></resources>')
-        colors.write_text(value)
+        # Capacitor already owns this named color in values/ic_launcher_background.xml.
+        # Edit it in place: adding another value in colors.xml breaks AAPT2.
+        icon_color=dest/"values/ic_launcher_background.xml"
+        if icon_color.exists():
+            previous=icon_color.read_text()
+            icon_color.write_text(re.sub(
+                r'(<color\b[^>]*name="ic_launcher_background"[^>]*>)[^<]*(</color>)',
+                r'\g<1>#00110E\g<2>',previous
+            ))
     else:
         app_icon=root/"ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"
         app_icon.parent.mkdir(parents=True,exist_ok=True)
