@@ -49,12 +49,27 @@ export async function streamPlainChat(req,res,{secret,messages}){
   clearTimeout(safety);res.end();return;
  }
  try{
-  const upstream=await fetch("https://api-market1.shop/v1/chat/completions",{
-   method:"POST",
-   headers:{"Content-Type":"application/json","Authorization":"Bearer "+secret,"Accept":"text/event-stream"},
-   body:JSON.stringify({model:"gpt-6-luna",reasoning_effort:"none",stream:true,messages}),
+  const url="https://api-market1.shop/v1/chat/completions";
+  const headers={"Content-Type":"application/json","Authorization":"Bearer "+secret,"Accept":"text/event-stream"};
+  let upstream=await fetch(url,{
+   method:"POST",headers,
+   body:JSON.stringify({model:"gpt-6-luna",stream:true,messages}),
    signal:abort.signal
   });
+  // Some compatible providers reject stream=true. Only after an explicit
+  // validation failure (not a chargeable timeout) retry once without stream;
+  // the client still receives its locally animated text and sound.
+  if(upstream.status===400||upstream.status===422){
+    const rejected=(await upstream.text()).slice(0,700);
+    if(/stream|not supported|unsupported parameter|unknown parameter|invalid parameter/i.test(rejected)){
+      console.warn("PLUX chat stream API does not support streaming; using compatible reply");
+      upstream=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+secret},
+        body:JSON.stringify({model:"gpt-6-luna",messages}),signal:abort.signal});
+    }else{
+      emit({type:"error",message:"Сервис ИИ отклонил запрос (HTTP "+upstream.status+")."});
+      complete=true;return;
+    }
+  }
   if(!upstream.ok){
    const code=upstream.status;
    const body=(await upstream.text()).slice(0,700);
