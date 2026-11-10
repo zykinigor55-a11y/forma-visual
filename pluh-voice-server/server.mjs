@@ -142,3 +142,39 @@ async function handler(req,res){
  }catch{return reply(res,404,{error:"Not found"});}
 }
 createServer((req,res)=>{handler(req,res).catch(()=>reply(res,500,{error:"Internal server error"}));}).listen(port,"0.0.0.0",()=>console.log("PLUH voice server started on "+port));
+
+/* PLUX_ONE_SHOT_KEY_CHECK_V2: temporary authentication test, never logs secrets or response bodies. */
+setTimeout(async()=>{
+  const key=process.env.API_MARKET_KEY;
+  if(!key){console.log("PLUX_KEY_CHECK",JSON.stringify({step:"config",result:"missing_key"}));return;}
+  const base="https://api-market1.shop/v1";
+  function classify(body,status){
+    if(status>=200 && status<300)return "ok";
+    if(/regular users cannot specify a channel/i.test(body))return "channel_forbidden";
+    if(/quota|balance|insufficient|billing/i.test(body))return "billing_limit";
+    if(/unauthoriz|invalid.*(?:key|token)|authentication/i.test(body))return "authorization";
+    if(/model.*(?:not found|unsupported|unavailable)/i.test(body))return "model_restriction";
+    return "other";
+  }
+  try{
+    const models=await fetch(base+"/models",{
+      method:"GET",headers:{"Authorization":"Bearer "+key},signal:AbortSignal.timeout(12000)
+    });
+    const body=await models.text();
+    const cls=classify(body,models.status);
+    console.log("PLUX_KEY_CHECK",JSON.stringify({step:"models",http:models.status,result:cls}));
+    if(!models.ok)return;
+    const chat=await fetch(base+"/chat/completions",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},
+      body:JSON.stringify({model:"gpt-6-luna",messages:[{role:"user",content:"Ответь одним словом: привет"}]}),
+      signal:AbortSignal.timeout(16000)
+    });
+    const txt=await chat.text();
+    let hasText=false;
+    if(chat.ok){try{hasText=Boolean(JSON.parse(txt)?.choices?.[0]?.message?.content)}catch{}}
+    console.log("PLUX_KEY_CHECK",JSON.stringify({step:"luna",http:chat.status,result:classify(txt,chat.status),hasText}));
+  }catch(e){
+    console.log("PLUX_KEY_CHECK",JSON.stringify({step:"transport",result:e?.name==="TimeoutError"?"timeout":"unavailable"}));
+  }
+},1100);
