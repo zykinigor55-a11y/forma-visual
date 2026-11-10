@@ -30,7 +30,12 @@
   function appendArtifact(item,onImageReady=()=>{}){
     if(!item||!['image','pdf'].includes(item.type))return;
     const file=String(item.filename|| (item.type==='pdf'?'PLUX.pdf':'PLUX.png')).replace(/[\\\/<>:*?"|]/g,'').slice(0,90);
-    const uri=downloadable(item.dataUrl)||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
+    // Display image data URLs directly. Blob URLs can be blocked by older
+    // Android WebView/CSP, which previously left a text-only result card.
+    const safeImageData=item.type==='image'&&typeof item.dataUrl==='string'
+      &&/^data:image\/(?:png|jpeg|webp);base64,/.test(item.dataUrl)?item.dataUrl:null;
+    const uri=safeImageData||(item.type==='pdf'?downloadable(item.dataUrl):null)
+      ||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
     if(!uri){onImageReady(false);append('info','Не удалось открыть вложение от генератора.');return}
     const row=document.createElement('div');row.className='chat-row bot plux14-artifact-row';
     const avatar=document.createElement('img');avatar.className='chat-mini';avatar.src='/assets/states/idle.webp';avatar.alt='';row.append(avatar);
@@ -38,9 +43,17 @@
     if(item.type==='image'){
       const picture=document.createElement('img');picture.className='plux14-created-image';picture.alt='Изображение, созданное GPT Image 2';
       picture.loading='eager';picture.decoding='async';
-      picture.addEventListener('load',()=>{picture.classList.add('plux22-image-ready');onImageReady(true)},{once:true});
+      picture.addEventListener('load',()=>{
+        picture.classList.add('plux22-image-ready');
+        onImageReady(true);
+        void window.PLUXGallery?.save?.({kind:'image',source:safeImageData||item.url,filename:file,
+          caption:'GPT Image 2',model:'gpt-image-2'});
+      },{once:true});
       picture.addEventListener('error',()=>{onImageReady(false);append('info','Изображение создано, но не загрузилось в чат. Попробуй открыть или сохранить его кнопкой ниже.')},{once:true});
-      picture.src=uri;bubble.append(picture);
+      // Keep image visible even when a legacy chat stylesheet applies generic
+      // styles to img and chat bubbles.
+      picture.style.cssText='display:block!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:220px!important;object-fit:contain!important;visibility:visible!important;opacity:1!important';
+      bubble.append(picture);picture.src=uri;
       const title=document.createElement('div');title.className='plux14-file-title';title.textContent='GPT Image 2 · 1024 × 1024';
       bubble.append(title);
     }else{
@@ -49,8 +62,8 @@
       bubble.append(title);
     }
     const action=document.createElement('a');action.className='plux14-download';action.textContent=item.type==='pdf'?'Скачать PDF':'Сохранить изображение';
-    action.href=uri;
-    if(uri.startsWith('blob:'))action.download=file;
+    action.href=safeImageData?downloadable(safeImageData)||uri:uri;
+    if(action.href.startsWith('blob:')||action.href.startsWith('data:'))action.download=file;
     else{action.target='_blank';action.rel='noopener noreferrer'}
     bubble.append(action);
     if(item.type==='image'){
@@ -74,7 +87,7 @@
     }
     row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
   }
-  const imageIntent=text=>/(?:сгенериру|созда|сдела|нарису|нарисова|сделай|создай|генераци|generate|draw|make|create)/i.test(text)
+  const imageIntent=text=>/(?:сгенериру|созда|сдела|нарису|нарисова|нарисуй|сделай|создай|генераци|generate|draw|make|create)/i.test(text)
     && /(?:изображени|картин|фото|фотографи|рисунк|иллюстраци|обложк|постер|image|picture)/i.test(text)
     && !/(?:промпт|как (?:сделать|создать)|почему)/i.test(text);
   function showGenerating(){
@@ -120,6 +133,7 @@
     if(busy)return;const t=input.value.trim();if(!t&&!window.PLUXMediaV129?.hasAttachments?.())return;
     // Create video through the same written conversation without mixing it with voice mode.
     // Other messages, attachments, PDFs and images preserve their existing routes.
+    if(window.PLUXMusic?.interpret?.(t,{source:'chat'})){input.value='';return;}
     const videoRequest=/(?:созда|сдела|сгенериру|подготов|сними|нарису)/i.test(t)
       &&/(?:видео|видеоролик|ролик|анимаци)/i.test(t);
     if(videoRequest && window.PLUXVideoV16 && !window.PLUXMediaV129?.hasAttachments?.()){
