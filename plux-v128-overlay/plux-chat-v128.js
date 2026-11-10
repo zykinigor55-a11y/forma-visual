@@ -71,7 +71,15 @@
   }
   form.addEventListener('submit',e=>{
     e.preventDefault();e.stopImmediatePropagation();
-    if(busy)return;const t=input.value.trim();if(!t&&!window.PLUXMediaV129?.hasAttachments?.())return;input.value='';void send(t);
+    if(busy)return;const t=input.value.trim();if(!t&&!window.PLUXMediaV129?.hasAttachments?.())return;
+    // Create video through the same written conversation without mixing it with voice mode.
+    // Other messages, attachments, PDFs and images preserve their existing routes.
+    const videoRequest=/(?:созда|сдела|сгенериру|подготов|сними|нарису)/i.test(t)
+      &&/(?:видео|видеоролик|ролик|анимаци)/i.test(t);
+    if(videoRequest && window.PLUXVideoV16 && !window.PLUXMediaV129?.hasAttachments?.()){
+      input.value='';window.PLUXVideoV16.open(t);return;
+    }
+    input.value='';void send(t);
   },true);
   window.PLUXChatAPI={model:'gpt-6-luna',endpoint};
 })();
