@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { readJsonLimited, messagesWithAttachments, handleImageRequest } from "./media-v129.mjs";
 import { artifactIntent, makeGptImage, makePdf } from "./chat-artifacts-v14.mjs";
 import { handleCyhub } from "./cyhub-voice-v15.mjs";
+import {handleCyhubVideo} from "./cyhub-video-v16.mjs";
 import { voiceSession } from "./live-voice-v151.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
@@ -55,6 +56,7 @@ async function handler(req,res){
  }
  if(pathname.startsWith("/api/voice/"))return voiceSession(req,res);
  if(pathname.startsWith("/api/tts/"))return handleCyhub(req,res);
+ if(pathname.startsWith("/api/video/"))return handleCyhubVideo(req,res);
  if(pathname==="/api/image")return handleImageRequest(req,res);
  if(pathname==="/api/chat") { // PLUX_CHAT_V128
   const allowedOrigin="https://plux-v12-2-2k-fixed.onrender.com";
