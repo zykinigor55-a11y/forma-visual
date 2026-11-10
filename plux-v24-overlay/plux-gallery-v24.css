@@ -35,3 +35,18 @@
 .plux24-gallery-preview-actions button,.plux24-gallery-preview-actions a{flex:1;display:grid;place-items:center;min-height:40px;min-width:95px;padding:6px 10px;box-sizing:border-box;text-align:center;border-radius:14px;border:1px solid var(--plux-theme-bright,rgba(182,255,215,.48));background:var(--plux-theme-soft,rgba(15,124,80,.25));color:#edfff5;font:600 12px system-ui;text-decoration:none;cursor:pointer}
 @media(min-width:600px){.plux24-gallery-sheet{height:min(88dvh,900px);border-radius:30px;margin:10px}.plux24-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){#screen-modes .mode-card[data-action="gallery"] *{animation:none!important}}
+
+/* Override the old atlas-only styling: this sixth card has real controls. */
+#screen-modes .mode-grid .mode-card[data-action="gallery"]{
+  background-image:none!important;background-size:auto!important;
+  background:radial-gradient(circle at 48% 20%,var(--plux-theme-soft,rgba(70,224,178,.33)),transparent 57%),
+    linear-gradient(150deg,rgba(26,74,63,.85),rgba(0,8,15,.97) 83%)!important;
+  border:1px solid var(--plux-theme-bright,rgba(142,255,212,.65))!important;
+  border-radius:26px!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.27),0 12px 24px rgba(0,0,0,.36),0 0 19px var(--plux-theme-soft,rgba(66,240,174,.15))!important;
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"] strong,
+#screen-modes .mode-grid .mode-card[data-action="gallery"] small,
+#screen-modes .mode-grid .mode-card[data-action="gallery"] .plux24-gallery-tile-icon{
+ display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:7!important
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"] .plux24-gallery-tile-icon{display:grid!important}
