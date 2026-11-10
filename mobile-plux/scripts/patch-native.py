@@ -92,7 +92,7 @@ if platform=="android":
             }
         });
 """
-            code=code.replace(needle,needle+"\\n"+listener,1)
+            code=code.replace(needle,needle+"\n"+listener,1)
             main.write_text(code)
 elif platform=="ios":
     import plistlib
