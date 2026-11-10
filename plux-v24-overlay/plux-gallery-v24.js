@@ -117,9 +117,16 @@
    const animate=document.createElement("button");animate.type="button";animate.textContent="Сделать видео";
    animate.addEventListener("click",()=>{
     if(!window.PLUXVideoV16?.open){status("Генератор видео пока не загружен");return}
-    const u=el.src;
-    preview.remove();preview=null;close();
-    window.PLUXVideoV16.open({imageUrl:u,name:item.filename,prompt:"Кинематографичная анимация исходного изображения с сохранением деталей."});
+    // Video generator needs image data, not a revoked blob URL from the gallery.
+    const reader=new FileReader();
+    reader.onerror=()=>status("Не получилось прочитать изображение из галереи.");
+    reader.onload=()=>{
+      const data=String(reader.result||"");
+      if(!data.startsWith("data:image/")){status("Неверный формат изображения.");return}
+      preview.remove();preview=null;close();
+      window.PLUXVideoV16.open({imageDataUrl:data,name:item.filename,prompt:"Кинематографичная анимация исходного изображения с сохранением деталей."});
+    };
+    reader.readAsDataURL(item.blob);
    });buttons.append(animate);
   }
   box.append(back,el,info,buttons);preview.append(box);overlay.append(preview);
