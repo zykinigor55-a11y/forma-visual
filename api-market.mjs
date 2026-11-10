@@ -75,19 +75,33 @@ export async function apiMarketEdit({apiKey,source,material,reference,mask,promp
   form.append('quality',quality==='medium'?'medium':'high');
   form.append('response_format','b64_json');
   form.append('n','1');
-  // API Market follows OpenAI Images edit semantics: one 'image' or image[] refs.
-  if(!reference&&!material&&!mask)form.append('image',source,'source.png');
+  // File extensions must match the actual Blob MIME type (JPEG is common here).
+  const uploadName=(blob,stem)=>stem+(blob?.type==='image/jpeg'?'.jpg':blob?.type==='image/webp'?'.webp':'.png');
+  if(!reference&&!material&&!mask)form.append('image',source,uploadName(source,'source'));
   else {
-    form.append('image[]',source,'source.png');
-    if(material)form.append('image[]',material,'material-reference.png');
-    if(reference)form.append('image[]',reference,'previous-view.png');
+    form.append('image[]',source,uploadName(source,'source'));
+    if(material)form.append('image[]',material,uploadName(material,'material-reference'));
+    if(reference)form.append('image[]',reference,uploadName(reference,'previous-view'));
     if(mask)form.append('image[]',mask,'selection-mask.png');
   }
   let response;
   try{
     response=await fetchImpl(API_MARKET_ENDPOINT,{method:'POST',headers:{Authorization:`Bearer ${apiKey}`},body:form,signal:AbortSignal.timeout(timeoutMs)});
   }catch(error){if(error.name==='TimeoutError'||error.name==='AbortError')throw new Error('Превышено время ожидания API Market. Проверьте баланс: запрос мог быть оплачен.');throw new Error('Не удалось соединиться с API Market.');}
-  let body;try{body=await response.json()}catch{throw new Error('API Market вернул некорректный ответ.');}
+  const responseType=(response.headers.get('content-type')||'').toLowerCase().split(';')[0];
+  if(response.ok&&['image/png','image/jpeg','image/webp'].includes(responseType)){
+    const raw=Buffer.from(await response.arrayBuffer()),mimeType=detectMime(raw);
+    if(!mimeType||raw.length<100||raw.length>MAX_OUTPUT_BYTES)throw new Error('API Market вернул повреждённое изображение.');
+    return {b64:raw.toString('base64'),mimeType};
+  }
+  let body;
+  try{body=await response.json()}
+  catch{
+    // A gateway may return HTML/text on failure. Don't expose HTML or secrets to clients.
+    console.warn('[API Market] Не-JSON ответ:',response.status,responseType||'unknown content type');
+    if(response.status>=500)throw new Error('API Market временно вернул ошибку сервера (HTTP '+response.status+'). Попробуйте позже; запрос мог быть оплачен.');
+    throw new Error('API Market вернул некорректный формат ответа (HTTP '+response.status+').');
+  }
   if(!response.ok)throw new Error(sanitizeProviderError(response.status,body));
   return parseImageReply(body,{fetchImpl});
 }
