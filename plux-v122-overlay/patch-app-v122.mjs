@@ -113,15 +113,6 @@ for(const asset of ['plux-v127.css','plux-v127.js','assets/videos-v106/01_idle.m
 }
 if(!html127.includes('plux127-intro')||!html127.includes('plux-release-v127'))throw Error('V12.7 intro not installed');
 console.log('PLUX V12.7 Fullscreen Welcome installed successfully');
-for(const filename of ['plux-v127.js','plux-v125.js','onboard-cinematic-v116.js']){
- const input=readFileSync(join(root,filename),'utf8').split('\n');
- const chosen=input.map((line,i)=>({line:i+1,value:line}))
-  .filter(item=>/audioUnlocked|typeScript|playSfx|typing|typewriter|sound|async function type|letter|char|intro|const entries/i.test(item.value))
-  .slice(0,70);
- console.log('PLUX SOUND AUDIT '+filename+' '+JSON.stringify(chosen).slice(0,7000));
- if(filename==='plux-v127.js')console.log('PLUX INTRO SOUND SOURCE '+input.slice(0,83).map((line,i)=>(i+1)+' '+line).join('\n').slice(0,9800));
- if(filename==='plux-v125.js')console.log('PLUX HOME SOUND SOURCE '+input.filter(line=>/type|sound|sfx|tap|key|audio|beep|tick|volume/i.test(line)).slice(0,75).join('\n').slice(0,9000));
-}
 
 
 /* PLUX V12.8 Chat Proxy: only backend calls API Market, never the browser. */
@@ -359,3 +350,45 @@ writeFileSync(v20Index,v20Html);
 const v20SW=join(root,'sw.js');
 writeFileSync(v20SW,readFileSync(v20SW,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2001'));
 console.log('PLUX V20 stable Arkheon playback queue + echo-safe interrupt + completed speech installed');
+
+
+/* PLUX V21 — identical home-screen typing sound on fullscreen welcome.
+ * V12.5 owns the user-selected typing click: reuse it, do not synthesize another.
+ * The first sound-button tap unlocks mobile audio and replays visible greeting.
+ */
+const homeV21Path=join(root,'plux-v125.js');
+let homeV21=readFileSync(homeV21Path,'utf8');
+const homeV21Original="window.PLUX125={version:'12.5',complete:()=>get(READY_KEY)==='yes',audioSettings:()=>({typing:auto.typingOn,volume:auto.volume})};";
+if(!homeV21.includes(homeV21Original))throw Error('V21 shared typing oscillator not found');
+homeV21=homeV21.replace(homeV21Original,
+ "window.PLUX125={version:'12.5',complete:()=>get(READY_KEY)==='yes',audioSettings:()=>({typing:auto.typingOn,volume:auto.volume}),playTypeClick:typeClick};");
+writeFileSync(homeV21Path,homeV21);
+const introV21Path=join(root,'plux-v127.js');
+let introV21=readFileSync(introV21Path,'utf8');
+const introV21Original="if(chars[i].trim())beep('type');";
+if(!introV21.includes(introV21Original))throw Error('V21 intro typewriter frame not found');
+introV21=introV21.replace(introV21Original,"if(chars[i].trim()&&soundEnabled)window.PLUX125?.playTypeClick?.();");
+const soundV21Setup="let active=true,stage='name',typing=0,ready=false,audio=null,gesture=false,lastSound=0;";
+if(!introV21.includes(soundV21Setup))throw Error('V21 intro sound state missing');
+introV21=introV21.replace(soundV21Setup,soundV21Setup+"\n  let soundButtonTouched=false;");
+const soundV21Reflect="sound.querySelector('span').textContent=soundEnabled?'Звук вкл.':'Звук выкл.'";
+if(!introV21.includes(soundV21Reflect))throw Error('V21 intro sound indicator missing');
+introV21=introV21.replace(soundV21Reflect,
+ "sound.querySelector('span').textContent=soundEnabled?(soundButtonTouched||navigator.userActivation?.hasBeenActive?'Звук вкл.':'Включить звук'):'Звук выкл.'");
+const soundV21Toggle="unlock();soundEnabled=!soundEnabled;set('plux_sfx_enabled',soundEnabled?'on':'off');set('plux_v125_typing_enabled',soundEnabled?'on':'off');reflectSound();";
+if(!introV21.includes(soundV21Toggle))throw Error('V21 intro sound control missing');
+introV21=introV21.replace(soundV21Toggle,
+ "const initialUnlock=!soundButtonTouched&&soundEnabled;soundButtonTouched=true;unlock();if(!initialUnlock)soundEnabled=!soundEnabled;set('plux_sfx_enabled',soundEnabled?'on':'off');set('plux_v125_typing_enabled',soundEnabled?'on':'off');reflectSound();");
+writeFileSync(introV21Path,introV21);
+plux123Exec(process.execPath,['--check',homeV21Path],{stdio:'inherit'});
+plux123Exec(process.execPath,['--check',introV21Path],{stdio:'inherit'});
+const pageV21=join(root,'index.html');let htmlV21=readFileSync(pageV21,'utf8');
+htmlV21=htmlV21.replace(/\/plux-v125\.js\?v=\d+/g,'/plux-v125.js?v=2101');
+htmlV21=htmlV21.replace(/\/plux-v127\.js\?v=\d+/g,'/plux-v127.js?v=2101');
+if(!htmlV21.includes('plux-release-v21'))
+ htmlV21=htmlV21.replace('</head>','<meta name="plux-release-v21" content="shared-onboarding-typing-sound"></head>');
+if(!htmlV21.includes('/plux-v127.js?v=2101'))throw Error('V21 welcome audio not installed');
+writeFileSync(pageV21,htmlV21);
+const swV21=join(root,'sw.js');
+writeFileSync(swV21,readFileSync(swV21,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2101'));
+console.log('PLUX V21 shared home/intro soft typing sound; respect volume and one-tap audio unlock');
