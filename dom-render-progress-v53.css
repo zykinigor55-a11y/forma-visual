@@ -1,0 +1,121 @@
+/* DOM.RENDER • Professional generation tracker v53
+   Displays estimated (NOT provider-sourced) progress; no fake server stages. */
+#renderProgress .render-progress-panel{
+  width:min(550px,100%);
+  gap:10px;
+  padding:20px 22px 19px;
+  border:1px solid rgba(229,246,233,.27);
+  border-radius:14px;
+  background:linear-gradient(150deg,rgba(20,38,28,.97),rgba(11,27,22,.94));
+  box-shadow:0 24px 70px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.07);
+  color:#F8FCF7;
+  text-align:left
+}
+#renderProgress .render-progress-kicker{
+  color:#B4D2B9;letter-spacing:.13em;font-size:10px;font-weight:740
+}
+#renderProgress #renderProgressTitle{font-size:clamp(16px,2vw,22px);line-height:1.25;color:#FCFFFA;font-weight:730}
+#renderProgress #renderProgressDetail{font-size:12px;line-height:1.45;color:#D0E1D4;max-width:100%}
+.render-progress-statline{width:100%;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:1px}
+.render-progress-value{display:flex;align-items:baseline;gap:8px;min-width:0}
+.render-progress-value b{
+  font-family:inherit;color:#F3F8F1;line-height:.95;font-size:clamp(28px,4vw,41px);
+  font-weight:740;letter-spacing:-.06em;font-variant-numeric:tabular-nums
+}
+.render-progress-value span{font-size:10px;color:#B2CDB6;font-weight:550}
+.render-progress-left{color:#C8DACA;text-align:right;min-width:0}
+.render-progress-left strong{display:block;color:#E0F2DF;font-size:13px;font-weight:730;font-variant-numeric:tabular-nums}
+.render-progress-left small{display:block;margin-top:4px;color:#ADC5B3;font-size:9px;line-height:1.3}
+#renderProgress .render-progress-meter{
+  position:relative;box-sizing:border-box;width:100%;height:8px;margin-top:2px;
+  background:#526C5947;border:1px solid #B4D2B526;border-radius:999px;
+  overflow:hidden
+}
+#renderProgress .render-progress-meter>span{
+  display:block;width:0;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,#6D9B76 0%,#A3D2A8 58%,#E3F3D8 100%);
+  box-shadow:0 0 13px #A9DEA794;
+  transition:width .65s cubic-bezier(.25,.7,.25,1);
+  position:relative
+}
+#renderProgress .render-progress-meter>span:after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 15%,rgba(255,255,255,.27) 49%,transparent 78%);
+  animation:render-progress-shine 2.3s linear infinite;transform:translateX(-100%);
+  pointer-events:none
+}
+@keyframes render-progress-shine{to{transform:translateX(130%)}}
+#renderProgress .render-progress-steps{
+  width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  border-top:1px solid rgba(219,241,223,.14);padding-top:14px;margin-top:2px;gap:10px
+}
+#renderProgress .render-progress-step{
+  display:flex;align-items:center;gap:9px;min-width:0;opacity:.55;
+  transition:opacity .22s ease
+}
+#renderProgress .render-progress-step.is-active,
+#renderProgress .render-progress-step.is-done{opacity:1}
+#renderProgress .render-progress-step-icon{
+  box-sizing:border-box;display:grid;place-items:center;
+  width:36px;height:36px;min-width:36px;
+  border:1px solid #8BAC8C50;border-radius:9px;
+  background:rgba(151,195,149,.07);color:#A6C3AA
+}
+#renderProgress .render-progress-step.is-active .render-progress-step-icon{
+  border-color:#A8D3A7;background:#A2D1A31C;color:#DCF5D6;
+  box-shadow:0 0 0 2px #8FBE9D10
+}
+#renderProgress .render-progress-step.is-done .render-progress-step-icon{
+  border-color:#82AD88;background:#6B996B22;color:#C4E8C6
+}
+#renderProgress .render-progress-step-icon .ico{width:19px;height:19px;stroke-width:1.8}
+#renderProgress .render-progress-step-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
+#renderProgress .render-progress-step-copy strong{font-size:11px;font-weight:720;line-height:1.25;color:#F3F9F1}
+#renderProgress .render-progress-step-copy small{font-size:9px;color:#A8C1AF;line-height:1.25}
+#renderProgress .render-progress-note{
+  font-size:10px;color:#BED2C1;line-height:1.45;
+  padding:9px 10px;margin:0;width:100%;box-sizing:border-box;
+  background:#A9C6AD0E;border:1px solid #B4D2B513;border-radius:8px
+}
+#renderProgress .render-progress-note svg{display:inline-block;vertical-align:-3px;width:15px;height:15px;stroke-width:1.8;margin-right:4px}
+#renderProgress.is-complete .render-progress-meter>span{background:linear-gradient(90deg,#7DB786,#D8F5D0)}
+#renderProgress.is-complete .render-progress-kicker i{background:#9CE4A2}
+#renderProgress .render-progress-indeterminate{display:none}
+#renderProgress .render-progress-panel>small{display:none}
+@media(max-width:700px){
+  #renderProgress:not([hidden]){
+    position:fixed!important;
+    inset:calc(65px + env(safe-area-inset-top)) 0 calc(68px + env(safe-area-inset-bottom))!important;
+    display:flex;align-items:center;justify-content:center;
+    overflow:visible;padding:12px;z-index:150;
+    background:rgba(7,18,13,.67);backdrop-filter:blur(6px);
+    pointer-events:none
+  }
+  #renderProgress .render-progress-panel{
+    padding:17px 15px;gap:9px;border-radius:13px;
+    width:min(440px,100%);
+    max-height:min(84dvh,560px);overflow-y:auto;
+    box-shadow:0 18px 52px #0006
+  }
+  #renderProgress #renderProgressTitle{font-size:19px}
+  #renderProgress #renderProgressDetail{font-size:11px}
+  #renderProgress .render-progress-statline{gap:7px}
+  #renderProgress .render-progress-value b{font-size:36px}
+  #renderProgress .render-progress-value span{font-size:9px}
+  #renderProgress .render-progress-left strong{font-size:12px}
+  #renderProgress .render-progress-steps{gap:6px;padding-top:11px}
+  #renderProgress .render-progress-step{gap:5px;flex-direction:column;align-items:center;text-align:center}
+  #renderProgress .render-progress-step-icon{width:34px;height:34px;min-width:34px}
+  #renderProgress .render-progress-step-copy strong{font-size:10px}
+  #renderProgress .render-progress-step-copy small{font-size:9px}
+  #renderProgress .render-progress-note{font-size:10px}
+}
+@media(max-width:360px){
+ #renderProgress .render-progress-panel{padding:14px 11px}
+ #renderProgress .render-progress-step-copy strong{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ #renderProgress .render-progress-meter>span{transition:none}
+ #renderProgress .render-progress-meter>span:after{animation:none}
+ #renderProgress .render-progress-step{transition:none}
+}
