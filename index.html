@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="dom-render-ui-polish-v51.css?v=restored-apple-jakub-20261110-v51">
 <link rel="stylesheet" href="dom-render-mobile-cinema-v52.css?v=mobile-cinema-20261110-v52">
 <link rel="stylesheet" href="dom-render-progress-v53.css?v=ai-progress-20261110-v53">
-<link rel="stylesheet" href="dom-render-scene-icons-v54.css?v=professional-scenes-20261110-v54">
+<link rel="stylesheet" href="dom-render-scene-icons-v54.css?v=minimal-scene-icons-20261110-v55">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -132,49 +132,41 @@
   <div class="viewer-footer"><div class="viewer-footer-head"><span class="section-label">ПОСЛЕДНИЕ РЕЗУЛЬТАТЫ</span><span class="viewer-footer-note" id="resultsHint">Демонстрационный проект</span></div><div class="results-strip" id="resultsStrip"></div><button type="button" class="btn btn-outline btn-sm variant-all-link" id="viewAllVariants">Все варианты и действия</button></div>
  </section>
  <svg class="scene-variant-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
-  <symbol id="scene-icon-evening" viewBox="0 0 64 64">
-   <path class="scene-sky" d="M45 7a10 10 0 1 0 11 15A11 11 0 0 1 45 7Z"/>
-   <path d="M8 36 31 21l24 15M13 33v24h37V33M13 56h39"/>
-   <rect class="scene-light" x="24" y="39" width="13" height="12" rx="1"/>
-   <path d="M30.5 39v12M24 45h13M6 52h9M50 52h8"/>
-   <path class="scene-warm" d="M9 48v8m0-8 2 2m-2-2-2 2"/>
+  <!-- 7 light, legible 48px symbols: light/time + autumn leaf or winter snow -->
+  <symbol id="scene-icon-evening" viewBox="0 0 48 48">
+   <path d="M25.5 7.5a12 12 0 1 0 13 18.5A12 12 0 0 1 25.5 7.5Z"/>
+   <path d="M9 42h30M14 34v8M34 34v8"/>
+   <circle class="scene-light" cx="14" cy="33" r="2.4"/>
+   <circle class="scene-light" cx="34" cy="33" r="2.4"/>
   </symbol>
-  <symbol id="scene-icon-autumn-overcast" viewBox="0 0 64 64">
-   <path d="M13 35 31 23l21 12M17 33v23h31V33M18 56h32M27 41h11v10H27z"/>
-   <path class="scene-sky" d="M34 13c2-6 10-6 12-1 7-1 10 8 3 11H30c-5-4-1-11 4-10Z"/>
-   <path class="scene-warm" d="M11 18c-6-2-9 5-4 10l7 1c4-5 3-8-3-11ZM9 28l6 8M54 45l5 4m-5-4 4-4"/>
-   <path d="M9 41v16"/>
+  <symbol id="scene-icon-autumn-overcast" viewBox="0 0 48 48">
+   <path d="M9 25h27a5.5 5.5 0 0 0 .1-11 9 9 0 0 0-17.2-2.3A7 7 0 0 0 9 25Z"/>
+   <path class="scene-warm" d="M29 38c-.8-7 4-12 12-13-.7 8-4.4 13.2-12 13Z"/>
+   <path class="scene-warm" d="M26 42l10-10"/>
   </symbol>
-  <symbol id="scene-icon-autumn-sunny" viewBox="0 0 64 64">
-   <circle class="scene-warm" cx="46" cy="13" r="6"/>
-   <path class="scene-warm" d="M46 2v4m0 14v4m11-11h4m-26 0h4m-2-8 3 3m12 12 3 3m0-18-3 3"/>
-   <path d="M9 36 31 22l23 14M14 34v22h35V34M24 40h13v12H24zM30.5 40v12M13 57h39"/>
-   <path class="scene-warm" d="M10 18c-6-2-7 5-1 8 7 0 8-7 1-8ZM10 26l-2 7"/>
+  <symbol id="scene-icon-autumn-sunny" viewBox="0 0 48 48">
+   <circle cx="16" cy="15" r="6"/>
+   <path d="M16 3v4m0 16v4M4 15h4m16 0h4M7.5 6.5l3 3m11 11 3 3m0-17-3 3m-11 11-3 3"/>
+   <path class="scene-warm" d="M28 38c-1-8 4-14 13-15-.4 8.5-5 15-13 15Z"/>
+   <path class="scene-warm" d="M25 42l11-11"/>
   </symbol>
-  <symbol id="scene-icon-autumn-evening" viewBox="0 0 64 64">
-   <path class="scene-sky" d="M45 6a9 9 0 1 0 10 14A10 10 0 0 1 45 6Z"/>
-   <path d="M9 37 31 22l22 15M14 34v22h35V34M12 57h40"/>
-   <rect class="scene-light" x="26" y="40" width="11" height="12" rx="1"/>
-   <path d="M31.5 40v12"/>
-   <path class="scene-warm" d="M9 16c-5 0-7 7-2 10 6 2 10-5 2-10ZM8 26l7 11M53 45l5 4m-5-4 4-4"/>
+  <symbol id="scene-icon-autumn-evening" viewBox="0 0 48 48">
+   <path d="M23.5 7.5a12 12 0 1 0 13 18.5A12 12 0 0 1 23.5 7.5Z"/>
+   <path class="scene-warm" d="M28 38c-.7-7.5 4-12.5 13-13.5-.8 8-5 14-13 13.5Z"/>
+   <path class="scene-warm" d="M25 42l11-11"/>
   </symbol>
-  <symbol id="scene-icon-winter-overcast" viewBox="0 0 64 64">
-   <path class="scene-sky" d="M34 11c1-5 9-6 12-1 7-1 10 8 4 11H29c-5-4-1-11 5-10Z"/>
-   <path d="M8 36 31 21l24 15M14 35v21h36V35M25 41h13v12H25zM12 57h40"/>
-   <path class="scene-snow" d="m11 17 0 8m-4-4h8m-7-3 6 6m0-6-6 6M55 43v8m-4-4h8m-7-3 6 6m0-6-6 6M10 36l21-15 22 15"/>
+  <symbol id="scene-icon-winter-overcast" viewBox="0 0 48 48">
+   <path d="M9 24h28a5.5 5.5 0 0 0 .1-11 9 9 0 0 0-17.3-2A7 7 0 0 0 9 24Z"/>
+   <path class="scene-snow" d="M24 30v13m-6.5-6.5h13m-11-4.5 9 9m0-9-9 9"/>
   </symbol>
-  <symbol id="scene-icon-winter-sunny" viewBox="0 0 64 64">
-   <circle class="scene-warm" cx="48" cy="12" r="6"/>
-   <path class="scene-warm" d="M48 2v4m0 12v4m-10-10h-4m24 0h4m-7-7-3 3m0 8 3 3"/>
-   <path d="M8 36 31 22l24 14M14 34v22h36V34M25 41h13v12H25zM12 57h40"/>
-   <path class="scene-snow" d="m8 36 23-14 24 14M6 53l3 2 3-2m41 0 3 2 3-2M11 18v8m-4-4h8"/>
+  <symbol id="scene-icon-winter-sunny" viewBox="0 0 48 48">
+   <circle cx="16" cy="15" r="6"/>
+   <path d="M16 3v4m0 16v4M4 15h4m16 0h4M7.5 6.5l3 3m11 11 3 3m0-17-3 3m-11 11-3 3"/>
+   <path class="scene-snow" d="M34 28v16m-8-8h16m-13.6-5.6 11.2 11.2m0-11.2L28.4 41.6"/>
   </symbol>
-  <symbol id="scene-icon-winter-evening" viewBox="0 0 64 64">
-   <path class="scene-sky" d="M45 7a10 10 0 1 0 11 15A11 11 0 0 1 45 7Z"/>
-   <path d="M8 36 31 21l24 15M14 34v22h36V34M12 57h40"/>
-   <rect class="scene-light" x="25" y="40" width="13" height="12" rx="1"/>
-   <path d="M31.5 40v12"/>
-   <path class="scene-snow" d="m9 36 22-15 24 15M10 16v7m-3-3h6M54 45v8m-4-4h8M10 53l-3 2m49-2 3 2"/>
+  <symbol id="scene-icon-winter-evening" viewBox="0 0 48 48">
+   <path d="M23.5 7.5a12 12 0 1 0 13 18.5A12 12 0 0 1 23.5 7.5Z"/>
+   <path class="scene-snow" d="M34 28v16m-8-8h16m-13.6-5.6 11.2 11.2m0-11.2L28.4 41.6"/>
   </symbol>
  </svg>
  <section id="sceneVariantsPanel" class="scene-variants-panel" aria-labelledby="sceneVariantsTitle" hidden>
