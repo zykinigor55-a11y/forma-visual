@@ -182,7 +182,7 @@
     const summary=attachments.map(x=>'📎 '+x.name).join('\n');
     const button=form.querySelector('.chat-send');if(button)button.disabled=true;
     append('user',display+(summary?'\n'+summary:''));
-    const kind=imageIntent(text)?'image':pdfIntent(text)?'pdf':null;
+    const kind=pdfIntent(text)?'pdf':imageIntent(text)?'image':null;
     const generating=kind?showGenerating(kind):null;
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
