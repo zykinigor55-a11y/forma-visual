@@ -91,6 +91,7 @@ assert.equal(window.PLUXArkheon.debug().state,"thinking");
 lastSocket.receive({type:"response.created"});
 lastSocket.receive({type:"response.output_audio.delta",delta:Buffer.alloc(4800).toString("base64")});
 assert.equal(window.PLUXArkheon.debug().state,"talking");
+lastSocket.receive({type:"response.output_audio.done"}); // a sentence part ended; more parts may follow
 lastSocket.receive({type:"conversation.item.input_audio_transcription.completed",transcript:"Привет"});
 assert.equal(window.PLUXArkheon.debug().state,"talking","Late transcription must not interrupt talking animation");
 // A delayed second sentence must not trigger premature happiness / end-of-answer.
@@ -110,13 +111,20 @@ assert.ok(Number(window.PLUXArkheon.debug().speakerQueueSeconds)>5,"A six-second
 assert.equal(window.PLUXArkheon.debug().totalPlaybackChunks>=3,true);
 const oldInterruptions=window.PLUXArkheon.debug().confirmedBargeIns;
 lastSocket.receive({type:"input_audio_buffer.speech_started"});
-assert.equal(window.PLUXArkheon.debug().state,"talking","False VAD due to speaker echo must NOT cut the assistant");
+assert.equal(window.PLUXArkheon.debug().state,"talking","Speaker echo must NOT cut the assistant");
 assert.equal(window.PLUXArkheon.debug().confirmedBargeIns,oldInterruptions);
 for(let i=0;i<3;i++)lastAudioWorklet.port.onmessage({data:{type:"level",rms:.16}});
-assert.equal(window.PLUXArkheon.debug().state,"listening","Real nearby speech should allow interruption");
-assert.equal(window.PLUXArkheon.debug().confirmedBargeIns,oldInterruptions+1);
-assert.equal(lastSocket.sent.at(-1).type,"response.cancel");
+assert.equal(window.PLUXArkheon.debug().state,"talking","Speakerphone RMS must not cause false user interruption");
+lastAudioWorklet.port.onmessage({data:new ArrayBuffer(2048)});
+const frame=lastSocket.sent.at(-1);
+assert.equal(frame.type,"input_audio_buffer.append");
+assert.ok(/^A+$/.test(frame.audio.replace(/=+$/,'')),"PCM input during model output should be gated to digital silence");
+assert.equal(window.PLUXArkheon.debug().responseInProgress,true);
+mic.dispatch("click",{preventDefault(){},stopImmediatePropagation(){}});
+assert.equal(window.PLUXArkheon.debug().state,"listening","Explicit microphone tap should safely interrupt and resume listening");
+assert.equal(lastSocket.sent.at(-1).type,"response.cancel","Explicit interruption cancels upstream output");
+assert.equal(window.PLUXArkheon.debug().manualInterrupts,1);
 await window.PLUXArkheon.stop();
 assert.equal(window.PLUXArkheon.debug().state,"idle");
 assert.ok(transitions.includes("idle"),"Idle video must show after the call ends");
-console.log("PLUX V18 voice/video tests passed: 5 clips, response synchronization, barge-in, Russian-before-mic");
+console.log("PLUX V23 voice regression passed: 5 clips, complete sentences, no speaker echo, explicit interruption, Russian-before-mic");
