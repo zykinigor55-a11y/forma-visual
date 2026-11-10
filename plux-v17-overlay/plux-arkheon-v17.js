@@ -17,6 +17,7 @@
  let mode="idle",checking=false,timeout=0;
  let responseDone=false,responseAudioStarted=false,responseCycle=0,lastAudioAt=0;
  let responseInProgress=false,microphoneSilencedFrames=0,manualInterrupts=0;
+ let lastUserTranscript="";
  let userSpeaking=false,ignoreAbortedResponse=false,sessionConfirmed=false;
  let speakingStartedAt=0,finishTimer=0,happyTimer=0,latestEvent="idle";
  let detectedVoiceMs=0,pendingSpeechStart=0,lastVoiceAt=0,interruptions=0,playedChunks=0;
@@ -77,7 +78,7 @@
  }
  function state(s){
   visual(s==="speaking"?"talking":s==="thinking"?"thinking":s==="listening"?"listening":s==="happy"?"happy":"idle");
-  if(s==="speaking")say("ПЛЮХ говорит","Можешь перебить меня — я слушаю.");
+  if(s==="speaking")say("ПЛЮХ говорит","Чтобы перебить ответ, нажми микрофон ещё раз.");
   else if(s==="thinking")say("ПЛЮХ думает","Подготавливаю ответ…");
   else if(s==="happy")say("ПЛЮХ рад","Готово! Слушаю тебя дальше.");
   else if(s==="listening")say("ПЛЮХ слушает","Говори свободно. Нажми микрофон, чтобы закончить.");
@@ -220,7 +221,12 @@
   }
   if(name==="conversation.item.input_audio_transcription.completed"){
    // A transcript may arrive AFTER audio started: it must never hide talking video.
+   const transcript=typeof evt.transcript==="string"?evt.transcript.trim():"";
+   if(transcript)lastUserTranscript=transcript.slice(0,240);
    if(!userSpeaking&&mode==="listening")state("thinking");
+   // Shows what was actually understood, useful to diagnose noisy microphones.
+   if(transcript&&!responseAudioStarted&&mode==="thinking")
+    status.textContent="Распознано: "+transcript.slice(0,120);
    return;
   }
   if(name==="response.created"){
@@ -416,6 +422,7 @@
    speakerQueueSeconds:Math.max(0,playAt-(speakerCtx?.currentTime||0)).toFixed(2),
    totalPlaybackChunks:playedChunks,confirmedBargeIns:interruptions,
    mutedInputFrames:microphoneSilencedFrames,manualInterrupts,responseInProgress,
+   lastUserTranscript,
    video:screen.querySelector(".voice-image-layer")?.dataset.pluxEmotion||null,
    videoDirector:window.PLUXSeamless?.debug?.()||[]})
  };
