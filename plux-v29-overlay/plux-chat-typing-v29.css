@@ -1,0 +1,34 @@
+/* PLUX V29 — progressive assistant typing in the existing OLED glass chat. */
+#screen-chat .plux29-live-row .chat-bubble.plux29-live-bubble{
+  display:block!important;min-width:155px;max-width:min(76vw,340px);
+  min-height:49px;padding:15px 18px;overflow-wrap:anywhere;
+  border:1px solid var(--plux-theme-bright,rgba(126,255,203,.44))!important;
+  border-radius:20px!important;
+  background:linear-gradient(145deg,var(--plux-theme-soft,rgba(32,205,143,.2)),rgba(2,19,26,.94))!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.18),0 8px 20px rgba(0,0,0,.3)!important;
+}
+#screen-chat .plux29-hint{
+  font-size:13px;line-height:1.4;font-weight:500;
+  letter-spacing:.012em;color:var(--plux-theme-accent,#8cfbd0);
+}
+#screen-chat .plux29-dots::after{
+  content:'…';display:inline-block;min-width:18px;
+  animation:plux29-thinking 1.1s ease-in-out infinite;
+  color:var(--plux-theme-accent,#8cfbd0);
+}
+#screen-chat .plux29-streaming::after{
+  content:'▍';display:inline;vertical-align:baseline;
+  margin-left:1px;color:var(--plux-theme-accent,#8cfbd0);
+  animation:plux29-caret .75s steps(2,end) infinite;
+}
+@keyframes plux29-thinking{
+  0%,100%{opacity:.22}50%{opacity:1}
+}
+@keyframes plux29-caret{
+  0%,100%{opacity:.95}50%{opacity:.1}
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-chat .plux29-dots::after,#screen-chat .plux29-streaming::after{
+  animation:none!important
+ }
+}
