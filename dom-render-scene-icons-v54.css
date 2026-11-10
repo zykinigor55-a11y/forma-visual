@@ -59,10 +59,12 @@
   display:block;width:48px;height:48px;stroke:currentColor;fill:none;
   stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
 }
-.scene-variant-ico .scene-light{stroke:#C58B45;fill:#F4D8A3}
-.scene-variant-ico .scene-warm{stroke:#B77842}
-.scene-variant-ico .scene-snow{stroke:#79A9BC}
-.scene-variant-ico .scene-sky{stroke:#6C90B3}
+/* Style symbol definitions too: <use> may isolate referenced paths from
+   styles targeting descendants of the visible <svg> element. */
+.scene-variant-ico .scene-light,.scene-variant-symbols .scene-light{stroke:#C58B45;fill:#F4D8A3}
+.scene-variant-ico .scene-warm,.scene-variant-symbols .scene-warm{stroke:#B77842}
+.scene-variant-ico .scene-snow,.scene-variant-symbols .scene-snow{stroke:#79A9BC}
+.scene-variant-ico .scene-sky,.scene-variant-symbols .scene-sky{stroke:#6C90B3}
 .scene-variants-grid .scene-variant-copy{
   display:flex;flex-direction:column;align-items:flex-start;
   gap:5px;margin-top:auto;min-width:0;
