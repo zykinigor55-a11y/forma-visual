@@ -1,0 +1,33 @@
+/* PLUX V24 Audius · OLED glass player, Android safe-areas. */
+.plux24-music-panel[hidden]{display:none!important}
+.plux24-music-panel{position:fixed;inset:0;z-index:2147482600;display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(14px + env(safe-area-inset-bottom));box-sizing:border-box;color:#f1fff9}
+.plux24-music-shade{position:absolute;inset:0;background:rgba(0,5,9,.77);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.plux24-music-sheet{position:relative;box-sizing:border-box;width:100%;max-width:520px;max-height:88dvh;display:flex;flex-direction:column;gap:13px;padding:18px 17px 17px;border-radius:29px;border:1px solid var(--plux-theme-bright,rgba(122,255,205,.5));background:linear-gradient(150deg,rgba(12,56,47,.95),rgba(2,15,20,.98) 46%,#02080d 100%);box-shadow:inset 0 1px 2px rgba(255,255,255,.23),0 22px 70px rgba(0,0,0,.67),0 0 20px var(--plux-theme-soft,rgba(57,235,158,.2));overflow:hidden}
+.plux24-music-sheet>header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.plux24-music-sheet>header strong{font-size:22px;line-height:1.25;display:block}
+.plux24-music-sheet>header small{font-size:12px;line-height:1.3;color:#a8d9cb;display:block;margin-top:3px}
+.plux24-music-x{width:38px;height:38px;flex:0 0 38px;border-radius:50%;border:1px solid rgba(207,255,238,.23);background:rgba(169,245,224,.1);color:#fff;font:26px system-ui;cursor:pointer}
+#plux24-music-search{display:flex;align-items:stretch;gap:7px;min-height:44px}
+#plux24-music-search input{min-width:0;flex:1;border:1px solid rgba(182,255,217,.31);border-radius:16px;background:rgba(0,0,0,.36);color:#ecfff7;font:14px system-ui;padding:10px 13px;outline:none}
+#plux24-music-search input:focus{border-color:var(--plux-theme-accent,#62f5bd)}
+#plux24-music-search button{flex:0 0 74px;border:1px solid var(--plux-theme-bright,rgba(138,255,198,.5));border-radius:16px;color:#effff7;background:var(--plux-theme-soft,rgba(64,242,167,.15));font:600 13px system-ui;cursor:pointer}
+.plux24-music-notice{font-size:12px;line-height:1.5;color:#b6dccc;min-height:17px;margin:0}
+.plux24-music-tracks{overflow-y:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:7px;scrollbar-width:thin}
+.plux24-music-track{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;min-width:0;border:1px solid rgba(181,245,215,.17);border-radius:18px;padding:7px;background:rgba(4,25,25,.65);color:#eafff4;cursor:pointer;text-align:left;box-sizing:border-box}
+.plux24-music-track.active{border-color:var(--plux-theme-accent,#53ffc2);background:var(--plux-theme-soft,rgba(61,225,152,.2))}
+.plux24-music-track>img{width:43px;height:43px;flex:0 0 43px;object-fit:cover;border-radius:12px;background:#071b16}
+.plux24-music-track-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.plux24-music-track-info strong{font-size:13px;font-weight:630;line-height:1.25;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.plux24-music-track-info small{font-size:11px;line-height:1.25;color:#a6cebf;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.plux24-music-track-play{font-size:14px;width:29px;text-align:center;color:var(--plux-theme-accent,#7afece)}
+.plux24-music-controls[hidden]{display:none!important}
+.plux24-music-controls{display:flex;gap:8px;align-items:center;min-width:0;padding:11px 8px;border:1px solid var(--plux-theme-bright,rgba(144,242,192,.4));border-radius:23px;background:linear-gradient(130deg,var(--plux-theme-soft,rgba(17,189,125,.18)),rgba(0,8,10,.73));box-shadow:inset 0 1px 2px rgba(255,255,255,.25),inset 0 -7px 14px rgba(0,0,0,.25)}
+.plux24-music-cover{width:46px;height:46px;object-fit:cover;border-radius:12px;background:#08281b}
+.plux24-music-now{flex:1;min-width:0}
+.plux24-music-now strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plux24-music-now small{display:block;font-size:10px;color:#a1d8c4;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plux24-music-controls button{flex:0 0 30px;height:33px;display:grid;place-items:center;border:1px solid rgba(198,255,230,.25);border-radius:12px;background:rgba(140,241,201,.1);color:#fff;cursor:pointer}
+.plux24-music-controls button[data-music-toggle]{border-color:var(--plux-theme-accent,#65ffc0);color:var(--plux-theme-accent,#65ffc0);font-size:18px;width:40px;flex-basis:40px}
+.plux24-music-sheet>footer{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:10px;color:#a3bdaf;line-height:1.35}
+.plux24-music-sheet>footer a{color:var(--plux-theme-accent,#95f7bc)}
+@media(max-width:370px){.plux24-music-sheet{padding:15px 11px}.plux24-music-controls{gap:4px}.plux24-music-cover{width:38px;height:38px}}
