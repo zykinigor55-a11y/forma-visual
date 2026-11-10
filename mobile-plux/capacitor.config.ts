@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   webDir: 'www',
   // Native preview loads deployed PLUX; bundle full web assets before App Store release.
   server: {
-    url: 'https://plux-v12-2-2k-fixed.onrender.com/?mobile=1&v=2501',
+    url: 'https://plux-v12-2-2k-fixed.onrender.com/?mobile=1&v=2601',
     cleartext: false,
     allowNavigation: ['plux-v12-2-2k-fixed.onrender.com']
   },
