@@ -10,6 +10,7 @@ function switchView(view){
  $('cabinetGallery').hidden=shown!=='gallery';
  $('cabinetContacts').hidden=shown!=='contacts';
  txt('cabinetTitle',shown==='account'?'Личный кабинет':shown==='gallery'?'Галерея работ':'Контакты');
+ $('cabinetCover').classList.toggle('is-gallery',shown==='gallery');
  d.querySelectorAll('[data-cabinet-tab]').forEach(btn=>{const on=btn.dataset.cabinetTab===shown;btn.classList.toggle('active',on);btn.setAttribute('aria-selected',String(on))});
  if(shown==='gallery')window.DOM_RENDER_GALLERY?.activate?.();
 }
@@ -23,6 +24,7 @@ function open(view){
 }
 function close(){
  $('cabinetCover').hidden=true;
+ $('cabinetCover').classList.remove('is-gallery');
  d.body.classList.remove('cabinet-open');
  if(previousFocus&&previousFocus.isConnected)previousFocus.focus();
 }
