@@ -5,6 +5,7 @@
  const API="https://pluh-voice-demo.onrender.com/api/music";
  const moods={"спокойн":"ambient","расслаб":"chill","релакс":"chill","фоновой":"ambient","для сна":"sleep","весел":"happy","джаз":"jazz","рок":"rock","электрон":"electronic","классическ":"classical","хип-хоп":"hip hop","танцеваль":"dance","лоуфай":"lofi","ло-фай":"lofi"};
  let tracks=[],current=-1,playing=false,busy=false,voiceTriggered=false;
+ let deferredSearch=null,hasTriedPlayback=false;
  const audio=new Audio();audio.preload="none";audio.volume=.65;audio.setAttribute("playsinline","");
  const panel=document.createElement("div");panel.id="plux24-music-panel";panel.className="plux24-music-panel";panel.hidden=true;
  panel.innerHTML='<div class="plux24-music-shade" data-music-close></div><section class="plux24-music-sheet" role="dialog" aria-modal="true" aria-label="Музыка Audius"><header><div><strong>Музыка</strong><small>Каталог Audius · бесплатный поиск</small></div><button class="plux24-music-x" type="button" data-music-close aria-label="Закрыть">×</button></header><form id="plux24-music-search"><input id="plux24-music-query" type="search" placeholder="Исполнитель, песня, настроение…" autocomplete="off" aria-label="Найти музыку"><button type="submit" aria-label="Искать">Найти</button></form><p class="plux24-music-notice" role="status" aria-live="polite"></p><div class="plux24-music-tracks" role="list"></div><div class="plux24-music-controls" hidden><img class="plux24-music-cover" alt=""><div class="plux24-music-now"><strong></strong><small></small></div><button type="button" data-music-prev aria-label="Предыдущий трек">⏮</button><button type="button" data-music-toggle aria-label="Воспроизвести">▶</button><button type="button" data-music-next aria-label="Следующий трек">⏭</button></div><footer><span>Музыка принадлежит авторам на Audius.</span><a href="https://audius.co" target="_blank" rel="noopener noreferrer">Audius</a></footer></section>';
@@ -12,6 +13,18 @@
  const $=sel=>panel.querySelector(sel);
  const notice=$(".plux24-music-notice"),results=$(".plux24-music-tracks"),controls=$(".plux24-music-controls"),cover=$(".plux24-music-cover"),nowTitle=$(".plux24-music-now strong"),nowArtist=$(".plux24-music-now small"),toggle=$("[data-music-toggle]");
  const form=$("#plux24-music-search"),query=$("#plux24-music-query");
+ // If native WebView/remote streaming fails, let the listener open the
+ // real track on Audius rather than pretending it is playing.
+ const external=document.createElement("a");
+ external.className="plux25-audius-track";external.hidden=true;
+ external.textContent="Открыть трек в Audius";
+ external.target="_blank";external.rel="noopener noreferrer";
+ controls.insertAdjacentElement("afterend",external);
+ function setExternal(track){
+  const raw=track?.url||"";
+  const href=typeof raw==="string"&&/^https:\/\/(?:www\.)?audius\.co\//.test(raw)?raw:"https://audius.co/";
+  external.href=href;external.hidden=false;
+ }
  let opener=null;
  function show(text){notice.textContent=text||""}
  function open({autoSearch=true}={}){opener=document.activeElement;panel.hidden=false;document.body.classList.add("plux24-music-open");if(autoSearch&&!tracks.length)void find("");}
@@ -23,17 +36,24 @@
   toggle.textContent=playing?"Ⅱ":"▶";
   toggle.setAttribute("aria-label",playing?"Пауза":"Воспроизвести");
   const track=tracks[current];
-  if(track){nowTitle.textContent=track.title;nowArtist.textContent=track.artist;cover.src=track.cover||"/icon-192.png";cover.hidden=false;}
+  if(track){nowTitle.textContent=track.title;nowArtist.textContent=track.artist;cover.src=track.cover||"/icon-192.png";cover.hidden=false;setExternal(track);}else{external.hidden=true;}
   [...results.children].forEach((b,i)=>{b.classList.toggle("active",i===current);b.setAttribute("aria-pressed",String(i===current))});
  }
  function choose(i,autoplay=true){
   const track=tracks[i];if(!track)return false;
   if(!/^https:\/\/api\.audius\.co\/v1\/tracks\/[A-Za-z0-9_-]+\/stream\?/.test(track.stream||"")){show("Audius вернул неподдерживаемую ссылку.");return false}
-  current=i;audio.src=track.stream;audio.load();update();
-  if(autoplay)void audio.play().then(()=>{show("Сейчас играет Audius");update()}).catch(()=>{
-    update();show("Нажми ▶, чтобы разрешить воспроизведение музыки на телефоне.");
-  });
-  else show("Нажми ▶ для воспроизведения.");
+  current=i;hasTriedPlayback=false;audio.src=track.stream;audio.load();update();
+  if(autoplay){
+   show("Подключаю музыку Audius…");
+   void audio.play().then(()=>{
+    hasTriedPlayback=true;show("Сейчас играет: "+track.title);update();
+   }).catch(e=>{
+    update();
+    const gesture=e?.name==="NotAllowedError";
+    show(gesture?"Нажми большую кнопку ▶ для запуска на телефоне.":"Не удалось запустить поток. Нажми ▶ ещё раз или открой трек в Audius.");
+    setExternal(track);
+   });
+  }else show("Трек найден. Нажми ▶ для воспроизведения.");
   return true;
  }
  function render(){
@@ -52,7 +72,7 @@
   update();
  }
  async function find(term="",autoplay=false){
-  if(busy)return;busy=true;
+  if(busy){deferredSearch={term,autoplay};return}busy=true;
   const clean=String(term||"").trim().slice(0,96);
   show(clean?"Ищу музыку…":"Загружаю популярные треки Audius…");results.replaceChildren();
   const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),11000);
@@ -66,10 +86,10 @@
    show(tracks.length?("Найдено треков: "+tracks.length):"Не нашёл подходящих треков. Попробуй другой запрос.");
    if(tracks.length&&autoplay)choose(0,true);
   }catch(e){tracks=[];render();show(e.name==="AbortError"?"Поиск занял слишком много времени. Попробуй позже.":String(e.message||"Нет связи с Audius."))}
-  finally{clearTimeout(timer);busy=false}
+  finally{clearTimeout(timer);busy=false;const next=deferredSearch;deferredSearch=null;if(next)void find(next.term,next.autoplay)}
  }
  function playPause(){if(current<0){if(tracks.length)choose(0,true);else void find("");return}
-  if(audio.paused)void audio.play().then(update).catch(()=>show("Нажми ▶, чтобы включить музыку."));
+  if(audio.paused)void audio.play().then(()=>{show("Сейчас играет: "+(tracks[current]?.title||"Audius"));update()}).catch(e=>{show(e?.name==="NotAllowedError"?"Разреши воспроизведение нажатием ▶.":"Audius не отдал аудиопоток. Можно открыть трек на Audius.");setExternal(tracks[current]);update()});
   else audio.pause();update();
  }
  function next(){if(tracks.length)choose((Math.max(current,0)+1)%tracks.length,true)}
@@ -79,7 +99,14 @@
  $("[data-music-next]").addEventListener("click",next);
  $("[data-music-prev]").addEventListener("click",prev);
  audio.addEventListener("play",update);audio.addEventListener("pause",update);audio.addEventListener("ended",next);
- audio.addEventListener("error",()=>{show("Не удалось воспроизвести трек. Выбери другой или нажми ▶.");update()});
+ audio.addEventListener("error",()=>{
+   const error=audio.error?.code;
+   show("Поток Audius недоступен"+(error?" (код "+error+")":"")+". Попробуй другой трек или открой его на Audius.");
+   setExternal(tracks[current]);update();
+ });
+ audio.addEventListener("waiting",()=>{if(current>=0)show("Загружаю звук Audius…")});
+ audio.addEventListener("playing",()=>{if(current>=0){show("Сейчас играет: "+tracks[current].title);update()}});
+
  const musicTile=document.querySelector('#screen-modes .mode-card[data-action="music"]');
  if(musicTile)musicTile.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();open()},{capture:true});
  function interpret(message,{source="chat"}={}){
@@ -96,7 +123,8 @@
   open({autoSearch:false});query.value=want;
   // Mobile browsers can require a second user tap after an async provider search.
   // Voice commands open the player; they never claim a track played unless it did.
-  void find(want,source==="chat");
+  const playRequested=!/^(?:(?:плюх|пожалуйста)[,!]?\s*)*найди(?:\s|$)/i.test(text);
+  void find(want,playRequested);
   if(source==="voice"){voiceTriggered=true;show("Ищу трек по голосовой команде. Если нужно, нажми ▶.");}
   return true;
  }
