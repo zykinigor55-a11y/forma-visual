@@ -131,3 +131,28 @@ if(!sw128.includes("'/plux-chat-v128.js'"))sw128=sw128.replace("'/plux-v127.js'"
 writeFileSync(sw128File,sw128);
 if(!html128.includes('/plux-chat-v128.js'))throw Error('V12.8 missing chat loader');
 console.log('PLUX V12.8 Chat Proxy UI installed (server secret required)');
+
+/* PLUX V12.9 MEDIA: augment approved OLED layout, keep video/persona untouched. */
+for(const filename of ['plux-v129.js','plux-v129.css']){
+  const bytes=readFileSync(join('plux-v129-overlay',filename));
+  if(bytes.length<1500)throw Error('Incomplete V12.9 asset: '+filename);
+  writeFileSync(join(root,filename),bytes);
+}
+plux123Exec(process.execPath,['--check',join(root,'plux-v129.js')],{stdio:'inherit'});
+plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
+const plux129Index=join(root,'index.html');
+let plux129HTML=readFileSync(plux129Index,'utf8');
+if(!plux129HTML.includes('plux-release-v129')){
+  plux129HTML=plux129HTML.replace('</head>','<meta name="plux-release-v129" content="file-attachments-nano-banana"><link rel="stylesheet" href="/plux-v129.css?v=1291"></head>');
+  plux129HTML=plux129HTML.replace('</body>','<script src="/plux-v129.js?v=1291" defer></script></body>');
+  plux129HTML=plux129HTML.replace(/(<meta name="plux-version" content=")[^"]+/,'$112.9');
+  writeFileSync(plux129Index,plux129HTML);
+}
+const plux129SW=join(root,'sw.js');
+let sw129=readFileSync(plux129SW,'utf8').replace(/plux-emerald-v12\d+/g,'plux-emerald-v129');
+if(!sw129.includes("'/plux-v129.js'")){
+  sw129=sw129.replace("'/plux-chat-v128.js'","'/plux-chat-v128.js','/plux-v129.css','/plux-v129.js'");
+}
+writeFileSync(plux129SW,sw129);
+if(!plux129HTML.includes('/plux-v129.js'))throw Error('PLUX V12.9 script missing');
+console.log('PLUX V12.9 attachment picker and Nano Banana image generator ready');
