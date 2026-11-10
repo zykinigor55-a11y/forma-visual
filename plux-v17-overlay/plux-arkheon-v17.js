@@ -16,10 +16,11 @@
  let active=false,connecting=false,sequence=0,playAt=0,playing=[],closed=false;
  let mode="idle",checking=false,timeout=0;
  let responseDone=false,responseAudioStarted=false,responseCycle=0,lastAudioAt=0;
+ let responseInProgress=false,microphoneSilencedFrames=0,manualInterrupts=0;
  let userSpeaking=false,ignoreAbortedResponse=false,sessionConfirmed=false;
  let speakingStartedAt=0,finishTimer=0,happyTimer=0,latestEvent="idle";
  let detectedVoiceMs=0,pendingSpeechStart=0,lastVoiceAt=0,interruptions=0,playedChunks=0;
- const jitterLeadSeconds=.125; // small buffer for jittery Android WebSocket audio
+ const jitterLeadSeconds=.22; // prevent audible gaps on jittery 4G and Android WebView
  const speakingVoiceThreshold=.075; // post-echo-cancellation local voice RMS
  const interruptionVoiceMs=210;
  const cancelEmotionTimers=()=>{
@@ -39,6 +40,8 @@
   if(delay>65){finishTimer=setTimeout(finishAudio,Math.max(65,Math.min(delay,1600)));return}
   responseAudioStarted=false;
   responseDone=false;
+  responseInProgress=false; // Resume microphone only once final PCM buffer finished.
+  pendingSpeechStart=0;
   state("happy");
   const generation=sequence,cycle=responseCycle;
   happyTimer=setTimeout(()=>{
@@ -143,11 +146,26 @@
  function send(obj){
   if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(obj));
  }
+ const silentEncoded=new Map();
  function audioChunk(buf){
-  if(ws?.readyState!==WebSocket.OPEN||ws.bufferedAmount>1_000_000)return;
+  if(ws?.readyState!==WebSocket.OPEN||ws.bufferedAmount>800_000)return;
   const bytes=new Uint8Array(buf);
+  // Acoustic echo is often interpreted as a NEW user utterance on speakerphone.
+  // Use a microphone gate during the entire model response, including pauses
+  // between sentence-by-sentence synthesis. Resume after ALL output is played.
+  // Keep sending equal-duration silence: input audio clock/VAD stays stable.
+  if(responseInProgress){
+   let encoded=silentEncoded.get(bytes.length);
+   if(!encoded){
+    encoded=btoa("\0".repeat(bytes.length));
+    if(silentEncoded.size>4)silentEncoded.clear();
+    silentEncoded.set(bytes.length,encoded);
+   }
+   microphoneSilencedFrames++;
+   send({type:"input_audio_buffer.append",audio:encoded});
+   return;
+  }
   let binary="";
-  // A worklet sends only ~2 kB of data at once, so no giant apply()/stack frames.
   for(let i=0;i<bytes.length;i++)binary+=String.fromCharCode(bytes[i]);
   send({type:"input_audio_buffer.append",audio:btoa(binary)});
  }
@@ -177,6 +195,8 @@
   }
   if(!sessionConfirmed)return; // Never speak before Russian instructions are acknowledged.
   if(name==="input_audio_buffer.speech_started"){
+   // Ignore echoed speaker voice while the provider is composing or talking.
+   if(responseInProgress)return;
    if(mode==="talking"){
     // False server VAD triggers on the assistant's own speaker output are
     // common on phones. Do not truncate replies until real local speech.
@@ -192,6 +212,7 @@
    state("listening");return;
   }
   if(name==="input_audio_buffer.speech_stopped"||name==="input_audio_buffer.committed"){
+   if(responseInProgress)return;
    pendingSpeechStart=0;
    userSpeaking=false;
    if(mode!=="talking")state("thinking");
@@ -203,6 +224,7 @@
    return;
   }
   if(name==="response.created"){
+   responseInProgress=true;
    userSpeaking=false;ignoreAbortedResponse=false;
    detectedVoiceMs=0;pendingSpeechStart=0;
    responseCycle++;responseDone=false;responseAudioStarted=false;
@@ -224,20 +246,22 @@
    return;
   }
   if(name==="response.output_audio.done"||name==="response.audio.done"){
-   responseDone=true;scheduleFinish();return;
+   // This closes ONE audio part, not the whole Arkheon sentence-streamed answer.
+   // Wait for response.done before declaring that the assistant has finished.
+   return;
   }
   if(name==="response.done"||name==="response.completed"){
    if(ignoreAbortedResponse)return;
    responseDone=true;
    if(responseAudioStarted)scheduleFinish();
-   else if(!userSpeaking)state("listening");
+   else if(!userSpeaking){responseInProgress=false;state("listening");}
    return;
   }
  }
  async function stop(reason="Нажми на микрофон, чтобы поговорить с ПЛЮХ."){
   sequence++;
   connecting=false;active=false;sessionConfirmed=false;clearTimeout(timeout);
-  cancelEmotionTimers();responseAudioStarted=false;responseDone=false;ignoreAbortedResponse=false;
+  cancelEmotionTimers();responseAudioStarted=false;responseDone=false;responseInProgress=false;ignoreAbortedResponse=false;
   pendingSpeechStart=0;detectedVoiceMs=0;
   screen.classList.remove("plux126-request");
   const oldSocket=ws;ws=null;
@@ -323,10 +347,10 @@
    });
    send({type:"session.update",session:{
      type:"realtime",
-     instructions:"СИСТЕМНОЕ ПРАВИЛО: ОТВЕЧАЙ ИСКЛЮЧИТЕЛЬНО ПО-РУССКИ С ПЕРВОЙ ЖЕ РЕПЛИКИ. Не произноси английские приветствия, инструкции и вводные слова, даже если в контексте есть английский текст. Ты ПЛЮХ — умный, дружелюбный голосовой помощник. Твой стиль: молодой энергичный мужской голос, тёплый тембр, лёгкая улыбка, естественные доброжелательные интонации, бодрый, но комфортный темп. Без дикторской манеры и канцелярита. Отвечай обычно одной-двумя короткими фразами, подробнее по просьбе. Не играй роль ребёнка, не кричи и не добавляй неуместный сленг. Уместен лёгкий юмор. Слушай собеседника, допускай перебивания и не выдумывай выполненные действия. ВАЖНО: ЯЗЫК КАЖДОГО ОТВЕТА — РУССКИЙ.",
+     instructions:"Ты ПЛЮХ — внимательный, энергичный, доброжелательный голосовой помощник. ВСЕГДА отвечай естественным грамотным русским языком; никогда не начинай на английском. Слушай вопрос целиком, не теряй смысл слов и продолжай тему с учётом предыдущих реплик. Не перескакивай на другие темы. Если речь распознана неуверенно, задай один короткий уточняющий вопрос, вместо догадок. Говори понятно, без спешки, тёплым молодым мужским голосом. Обычно отвечай полноценно за 2–5 предложений, а если просят подробностей — объясняй подробнее. ЗАВЕРШАЙ каждую фразу и мысль; не обрывай предложение и не вставляй многоточие вместо ответа. Не повторяй одни и те же слова, не начинай заново уже сказанное. Лёгкий юмор допустим. Не выдумывай выполненные действия, результаты или подключения. Пользователь общается по-русски, отвечай только по-русски.",
      audio:{
        input:{format:{type:"audio/pcm",rate:24000},turn_detection:{
-         type:"server_vad",threshold:.62,prefix_padding_ms:400,silence_duration_ms:850,
+         type:"server_vad",threshold:.5,prefix_padding_ms:450,silence_duration_ms:950,
          create_response:true,interrupt_response:false
        }},
        output:{format:{type:"audio/pcm",rate:24000},voice:"ash"}
@@ -351,7 +375,14 @@
  // Capture ensures the old V12.6 microphone-level-only listener never runs.
  mic.addEventListener("click",event=>{
   event.preventDefault();event.stopImmediatePropagation();
-  if(active||connecting)void stop("Разговор остановлен.");
+  if(active&&responseInProgress){
+   // Explicit tap is the reliable way to interrupt while the speaker gate is on.
+   manualInterrupts++;
+   if(!responseDone)send({type:"response.cancel"});
+   clearOutput();responseDone=false;responseAudioStarted=false;responseInProgress=false;
+   pendingSpeechStart=0;detectedVoiceMs=0;
+   cancelEmotionTimers();state("listening");
+  }else if(active||connecting)void stop("Разговор остановлен.");
   else void start();
  },{capture:true});
  // On the home screen, user presses the crystal mic: start media permission
@@ -384,6 +415,7 @@
    streamEvent:latestEvent,playingChunks:playing.length,
    speakerQueueSeconds:Math.max(0,playAt-(speakerCtx?.currentTime||0)).toFixed(2),
    totalPlaybackChunks:playedChunks,confirmedBargeIns:interruptions,
+   mutedInputFrames:microphoneSilencedFrames,manualInterrupts,responseInProgress,
    video:screen.querySelector(".voice-image-layer")?.dataset.pluxEmotion||null,
    videoDirector:window.PLUXSeamless?.debug?.()||[]})
  };
