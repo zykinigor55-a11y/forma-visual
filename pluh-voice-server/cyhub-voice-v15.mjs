@@ -43,9 +43,9 @@ function takeQuota(ip){
 }
 async function readPayload(req){
   const declared=Number(req.headers["content-length"]||0);
-  if(declared>2200)throw fail(413,"Текст слишком длинный.");
+  if(declared>20000)throw fail(413,"Текст слишком длинный.");
   const chunks=[];let size=0;
-  for await(const part of req){size+=part.length;if(size>2200)throw fail(413,"Текст слишком длинный.");chunks.push(part)}
+  for await(const part of req){size+=part.length;if(size>20000)throw fail(413,"Текст слишком длинный.");chunks.push(part)}
   try{return JSON.parse(Buffer.concat(chunks).toString("utf8"))}catch{throw fail(400,"Некорректные данные запроса.")}
 }
 async function cy(endpoint,options={}){
@@ -86,7 +86,7 @@ export async function handleCyhub(req,res){
       if(req.method!=="POST")throw fail(405,"Нужен POST.");
       const body=await readPayload(req);
       const text=clean(body?.text);
-      if(text.length<2||text.length>450)throw fail(400,"Для озвучки нужен текст от 2 до 450 символов.");
+      if(text.length<2||text.length>5000)throw fail(400,"Для озвучки нужен текст от 2 до 5000 символов.");
       // Voice requests are explicitly clicked: never charge for ordinary chat replies.
       takeQuota(ip);
       try{
