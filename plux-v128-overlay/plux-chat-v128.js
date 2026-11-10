@@ -104,10 +104,6 @@
       });
       bubble.append(animate);
     }
-    if(kind==='pdf'){
-      bubble.querySelector('.plux22-gen-title').firstChild.textContent='ПЛЮХ готовит PDF';
-      bubble.querySelector('.plux22-gen-note').textContent='Формирую документ';
-    }
     row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
   }
   const imageIntent=text=>{
@@ -124,6 +120,10 @@
     const row=document.createElement('div');row.className='chat-row bot plux22-generating-row';row.setAttribute('role','status');
     const bubble=document.createElement('div');bubble.className='chat-bubble plux22-generating';
     bubble.innerHTML='<div class="plux22-preview" aria-hidden="true"><div class="plux22-orbit"></div><div class="plux22-spark"></div></div><div class="plux22-gen-title">ПЛЮХ создаёт изображение<span class="plux22-dots"></span></div><div class="plux22-gen-note">Готовлю композицию и детали</div><div class="plux22-progress"><i></i></div>';
+    if(kind==='pdf'){
+      bubble.querySelector('.plux22-gen-title').firstChild.textContent='ПЛЮХ готовит PDF';
+      bubble.querySelector('.plux22-gen-note').textContent='Формирую документ';
+    }
     row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
     const notes=kind==='pdf'
       ?['Формирую структуру документа','Ожидаю готовый PDF','Проверяю создание файла']
@@ -175,6 +175,69 @@
   function rememberJob(job){
     try{localStorage.setItem(jobKey,JSON.stringify({id:job.id,kind:job.kind,at:Date.now()}))}catch{}
   }
+  // Display the wait state immediately and render genuine streamed tokens.
+  // This bubble is persisted to local chat history only when the reply finishes.
+  function startTextReply(){
+    const row=document.createElement('div');row.className='chat-row bot plux29-live-row';
+    const avatar=document.createElement('img');avatar.className='chat-mini';avatar.alt='';avatar.src='/assets/states/idle.webp';
+    const bubble=document.createElement('div');bubble.className='chat-bubble plux29-live-bubble';
+    const hint=document.createElement('span');hint.className='plux29-hint';hint.textContent='ПЛЮХ готовит ответ';
+    const dots=document.createElement('span');dots.className='plux29-dots';dots.setAttribute('aria-hidden','true');
+    hint.append(dots);bubble.append(hint);row.append(avatar,bubble);feed.append(row);
+    feed.scrollTop=feed.scrollHeight;
+    let latest='',finished=false;
+    return {
+      update(text){
+        if(finished)return;
+        latest=String(text||'').slice(0,5000);
+        if(latest){
+          bubble.textContent=latest;
+          bubble.classList.add('plux29-streaming');
+        }
+        if(feed.scrollHeight-feed.scrollTop-feed.clientHeight<160)feed.scrollTop=feed.scrollHeight;
+      },
+      finish(text){
+        if(finished)return;
+        finished=true;
+        latest=String(text||latest||'').slice(0,5000);
+        bubble.textContent=latest;bubble.classList.remove('plux29-live-bubble');
+        row.classList.remove('plux29-live-row');
+        const h=history();h.push({from:'bot',text:latest,at:Date.now()});
+        try{localStorage.setItem('plux_messages',JSON.stringify(h.slice(-75)))}catch{}
+        feed.scrollTop=feed.scrollHeight;
+      },
+      stop(){
+        if(finished)return;
+        finished=true;row.remove();
+      }
+    };
+  }
+  async function readTextStream(response,live){
+    if(!response.body||!response.body.getReader)throw Error('Телефон не поддерживает потоковый ответ.');
+    const reader=response.body.getReader(),decoder=new TextDecoder();
+    let buffer='',answer='',finished=false;
+    while(true){
+      const {value,done}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      if(buffer.length>100_000)throw Error('Ошибка передачи ответа.');
+      const lines=buffer.split(/\\r?\\n/);buffer=lines.pop()||'';
+      for(const line of lines){
+        if(!line.trim())continue;
+        let event;
+        try{event=JSON.parse(line)}catch{continue}
+        if(event.type==='delta'&&typeof event.text==='string'){
+          answer=(answer+event.text).slice(0,5000);
+          live.update(answer);
+        }
+        if(event.type==='error')throw Error(event.message||'Ошибка модели.');
+        if(event.type==='done')finished=true;
+      }
+    }
+    if(!finished||!answer.trim())throw Error('Соединение прервалось до окончания ответа. Попробуй ещё раз.');
+    live.finish(answer);
+    return answer;
+  }
   async function send(text){
     if(busy)return;busy=true;
     const attachments=window.PLUXMediaV129?.takeAttachments?.()||[];
@@ -184,11 +247,17 @@
     append('user',display+(summary?'\n'+summary:''));
     const kind=pdfIntent(text)?'pdf':imageIntent(text)?'image':null;
     const generating=kind?showGenerating(kind):null;
+    const live=kind?null:startTextReply();
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments,clientFeatures:{generationJobs:true}}),signal:AbortSignal.timeout(generating?25000:65000)});
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments,clientFeatures:{generationJobs:true,textStreaming:true}}),signal:AbortSignal.timeout(generating?25000:65000)});
+      if(response.ok&&response.headers.get('content-type')?.includes('application/x-ndjson')){
+        await readTextStream(response,live);
+        return;
+      }
       let result=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(result.error||'Не удалось получить ответ ИИ');
+      live?.stop();
       if(result.job){
         rememberJob(result.job);
         result=await pollJob(result.job);
@@ -211,6 +280,7 @@
         if(result.artifact)appendArtifact(result.artifact);
       }
     }catch(e){
+      live?.stop();
       generating?.stop();
       append('info',e.name==='TimeoutError'?'Генератор не ответил вовремя. Проверь чат и баланс, прежде чем запускать повторную платную генерацию.':String(e.message||'Связь с сервером недоступна.'));
     }
