@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { readJsonLimited, messagesWithAttachments, handleImageRequest } from "./media-v129.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -49,6 +50,7 @@ async function handler(req,res){
      return reply(res,200,{signedUrl:result.signed_url});
    }catch{return reply(res,502,{error:"Связь с ElevenLabs недоступна."});}
  }
+ if(pathname==="/api/image")return handleImageRequest(req,res);
  if(pathname==="/api/chat") { // PLUX_CHAT_V128
   const allowedOrigin="https://plux-v12-2-2k-fixed.onrender.com";
   const origin=String(req.headers.origin||"");
@@ -69,11 +71,11 @@ async function handler(req,res){
   // Prevent unlimited anonymous consumption. The counters reset when the service restarts.
   if(now-chatDayStart>86400000){chatDayStart=now;chatDailyCount=0}
   if(++chatDailyCount>500)return reply(res,429,{error:"Сегодня лимит сообщений закончился."});
-  let raw="";for await(const chunk of req){raw+=chunk;if(raw.length>18000)return reply(res,413,{error:"Сообщение слишком длинное"})}
-  let data;try{data=JSON.parse(raw)}catch{return reply(res,400,{error:"Некорректный запрос"})}
+  let data;try{data=await readJsonLimited(req,14*1024*1024)}catch(e){return reply(res,e.status||400,{error:e.message||"Некорректный запрос"})}
   if(!Array.isArray(data.messages)||data.messages.length>16||!data.messages.length)return reply(res,400,{error:"Некорректная история сообщений"});
-  const messages=data.messages.filter(m=>m&&["user","assistant"].includes(m.role)&&typeof m.content==="string").slice(-12);
-  if(messages.length<1||messages.some(m=>!m.content.trim()||m.content.length>2500))return reply(res,400,{error:"Сообщение должно содержать текст до 2500 символов"});
+  let messages=data.messages.filter(m=>m&&["user","assistant"].includes(m.role)&&typeof m.content==="string").slice(-12);
+  if(messages.length<1||messages.some(m=>m.content.length>2500||(!m.content.trim()&&!Array.isArray(data.attachments))))return reply(res,400,{error:"Сообщение должно содержать текст до 2500 символов"});
+  try{messages=await messagesWithAttachments(messages,data.attachments)}catch(e){return reply(res,e.status||422,{error:e.message||"Ошибка обработки вложения"})}
   // Do not forward arbitrary client-injected roles or keys.
   messages.unshift({role:"system",content:"Ты ПЛЮХ — доброжелательный, энергичный персональный помощник. Отвечай на русском естественно и ясно, коротко по умолчанию. Не придумывай, что ты уже выполнил действие или подключил сервис."});
   try {
