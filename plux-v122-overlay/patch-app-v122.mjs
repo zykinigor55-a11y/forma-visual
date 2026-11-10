@@ -337,4 +337,16 @@ for(const marker of ['plux19-styles','plux19-motion','compatiblePhoto','image/jp
 plux123Exec(process.execPath,['plux-v18-overlay/test-voice-v18.mjs'],{stdio:'inherit',timeout:35000});
 console.log('PLUX V18 five mascot videos verified, Russian-first live speech director installed; live speech requires ARKHEON_API_KEY');
 
-console.log('PLUX V19 gallery image upload validation, cinematic preset UI and fresh cache active');
+
+/* PLUX V20: use real audio queue lifecycle instead of network timeouts;
+   raise false-echo barge-in threshold and flush only on confirmed speech. */
+const v20Index=join(root,'index.html');
+let v20Html=readFileSync(v20Index,'utf8');
+v20Html=v20Html.replace(/\/plux-arkheon-v17\.js\?v=\d+/g,'/plux-arkheon-v17.js?v=2001');
+if(!v20Html.includes('plux-release-v20'))
+ v20Html=v20Html.replace('</head>','<meta name="plux-release-v20" content="stable-full-voice-speech-and-echo-filter"></head>');
+if(!v20Html.includes('/plux-arkheon-v17.js?v=2001'))throw Error('PLUX V20 speech client not installed');
+writeFileSync(v20Index,v20Html);
+const v20SW=join(root,'sw.js');
+writeFileSync(v20SW,readFileSync(v20SW,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v2001'));
+console.log('PLUX V20 stable Arkheon playback queue + echo-safe interrupt + completed speech installed');
