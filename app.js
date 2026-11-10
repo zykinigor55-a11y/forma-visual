@@ -612,21 +612,21 @@ function animationSettings(){
  return lib.normalize(current().cinema||{});
 }
 function animationColorFilter(id){
- return {neutral:'none',filmic:'sepia(.12) saturate(.84) contrast(1.06)',contrast:'contrast(1.22) saturate(.82)',warm:'sepia(.20) saturate(1.16) brightness(1.04)',cool:'hue-rotate(14deg) saturate(.78) contrast(1.06)',bw:'grayscale(1) contrast(1.12)'}[id]||'none';
+ return {neutral:'none',filmic:'brightness(1.04) contrast(.91) saturate(.94)',contrast:'brightness(1.05) contrast(.88) saturate(.95)',warm:'contrast(1.10) saturate(1.10)',cool:'brightness(.64) contrast(1.03)',bw:'contrast(.97) saturate(.89)'}[id]||'none';
 }
 const ANIM_DEMO_HOUSE='assets/residence-render.jpg';
 const ANIM_LENS_SETTINGS={
- ultra14:[14,1.00],shift17:[17,1.07],shift24:[24,1.16],cine24:[24,1.16],
- cine35:[35,1.29],cine50:[50,1.44],portrait85:[85,1.72],
- macro100:[100,1.86],tele135:[135,2.07],ana40:[40,1.34]
+ ultra14:[18,1.04],shift17:[17,1.07],shift24:[25,1.16],cine24:[24,1.16],
+ cine35:[35,1.29],cine50:[47,1.42],portrait85:[75,1.64],
+ macro100:[95,1.80],tele135:[135,2.07],ana40:[40,1.34]
 };
 const ANIM_MOVEMENT_PATHS={
  dolly:['M18 45 L206 11',18,45,206,11],
  orbit:['M28 35 Q112 -8 198 35',28,35,198,35],
  slider:['M18 28 L205 28',18,28,205,28],
  crane:['M110 50 L110 5',110,50,110,5],
- drone:['M22 9 Q105 28 203 45',22,9,203,45],
- walk:['M18 43 Q70 15 130 30 T205 15',18,43,205,15],
+ drone:['M206 11 L18 45',206,11,18,45],
+ walk:['M18 43 Q90 39 203 9',18,43,203,9],
  tilt:['M110 50 Q155 25 110 5',110,50,110,5],
  macro:['M30 34 L192 21',30,34,192,21]
 };
@@ -675,7 +675,7 @@ function renderAnimationSummary(){
  $('animFovLabel').textContent='≈'+fov+'°';
  const preview=$('animPreviewFrame');
  const motion=s.motion;
- const diff={dolly:[0,0,1.08],orbit:[-1.8,.2,1.03],slider:[-2.6,0,1],crane:[0,2.4,1.02],drone:[1.1,1.8,1.09],walk:[1.2,.4,1.05],tilt:[0,2.5,1],macro:[-2,0,1.075]}[motion]||[0,0,1.06];
+ const diff={dolly:[0,0,1.08],orbit:[-1.8,.2,1.03],slider:[-2.6,0,1],crane:[0,2.4,1.02],drone:[0,0,.94],walk:[3,-1,1.04],tilt:[0,2.5,1],macro:[-2,0,1.075]}[motion]||[0,0,1.06];
  const intensity=s.intensity==='moderate'?1.5:1;
  preview.style.setProperty('--anim-start-scale',String(zoom));
  preview.style.setProperty('--anim-end-scale',String(+(zoom*diff[2]).toFixed(4)));
