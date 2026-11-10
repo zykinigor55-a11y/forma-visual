@@ -27,7 +27,7 @@
     }catch{return null}
   };
   window.addEventListener('pagehide',()=>temporaryUrls.splice(0).forEach(uri=>URL.revokeObjectURL(uri)));
-  function appendArtifact(item){
+  function appendArtifact(item,onImageReady=()=>{}){
     if(!item||!['image','pdf'].includes(item.type))return;
     const file=String(item.filename|| (item.type==='pdf'?'PLUX.pdf':'PLUX.png')).replace(/[\\\/<>:*?"|]/g,'').slice(0,90);
     const uri=downloadable(item.dataUrl)||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
@@ -36,8 +36,11 @@
     const avatar=document.createElement('img');avatar.className='chat-mini';avatar.src='/assets/states/idle.webp';avatar.alt='';row.append(avatar);
     const bubble=document.createElement('div');bubble.className='chat-bubble plux14-artifact';
     if(item.type==='image'){
-      const picture=document.createElement('img');picture.className='plux14-created-image';picture.src=uri;picture.alt='Изображение, созданное GPT Image 2';
-      picture.loading='lazy';bubble.append(picture);
+      const picture=document.createElement('img');picture.className='plux14-created-image';picture.alt='Изображение, созданное GPT Image 2';
+      picture.loading='eager';picture.decoding='async';
+      picture.addEventListener('load',()=>{picture.classList.add('plux22-image-ready');onImageReady(true)},{once:true});
+      picture.addEventListener('error',()=>{onImageReady(false);append('info','Изображение создано, но не загрузилось в чат. Попробуй открыть или сохранить его кнопкой ниже.')},{once:true});
+      picture.src=uri;bubble.append(picture);
       const title=document.createElement('div');title.className='plux14-file-title';title.textContent='GPT Image 2 · 1024 × 1024';
       bubble.append(title);
     }else{
@@ -71,22 +74,45 @@
     }
     row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
   }
+  const imageIntent=text=>/(?:сгенериру|созда|сдела|нарису|нарисова|сделай|создай|генераци|generate|draw|make|create)/i.test(text)
+    && /(?:изображени|картин|фото|фотографи|рисунк|иллюстраци|обложк|постер|image|picture)/i.test(text)
+    && !/(?:промпт|как (?:сделать|создать)|почему)/i.test(text);
+  function showGenerating(){
+    const row=document.createElement('div');row.className='chat-row bot plux22-generating-row';row.setAttribute('role','status');
+    const bubble=document.createElement('div');bubble.className='chat-bubble plux22-generating';
+    bubble.innerHTML='<div class="plux22-preview" aria-hidden="true"><div class="plux22-orbit"></div><div class="plux22-spark"></div></div><div class="plux22-gen-title">ПЛЮХ создаёт изображение<span class="plux22-dots"></span></div><div class="plux22-gen-note">Готовлю композицию и детали</div><div class="plux22-progress"><i></i></div>';
+    row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
+    const notes=['Готовлю композицию и детали','Создаю свет, цвета и материалы','Прорабатываю изображение','Загружаю готовый результат'];
+    let step=0,ended=false;
+    const timer=setInterval(()=>{if(ended)return;step=Math.min(step+1,notes.length-1);const label=bubble.querySelector('.plux22-gen-note');if(label)label.textContent=notes[step];feed.scrollTop=feed.scrollHeight},8500);
+    return {stop(){if(ended)return;ended=true;clearInterval(timer);row.remove();feed.scrollTop=feed.scrollHeight},ready(){const label=bubble.querySelector('.plux22-gen-note');if(label)label.textContent='Изображение готово. Открываю в чате…'}};
+  }
   async function send(text){
     if(busy)return;busy=true;
     const attachments=window.PLUXMediaV129?.takeAttachments?.()||[];
+    const generating=imageIntent(text)?showGenerating():null;
     const display=text||'Проанализируй вложения';
     const summary=attachments.map(x=>'📎 '+x.name).join('\n');
     const button=form.querySelector('.chat-send');if(button)button.disabled=true;
     append('user',display+(summary?'\n'+summary:''));
     const messages=history().filter(m=>m.from==='user'||m.from==='bot').slice(-12).map(m=>({role:m.from==='user'?'user':'assistant',content:m.text.slice(0,2400)}));
     try{
-      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments}),signal:AbortSignal.timeout(65000)});
+      const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,attachments}),signal:AbortSignal.timeout(generating?155000:65000)});
       const result=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(result.error||'Не удалось получить ответ ИИ');
-      if(typeof result.reply!=='string'||!result.reply.trim())throw Error('Пустой ответ модели');
-      append('bot',result.reply);
-      if(result.artifact)appendArtifact(result.artifact);
-    }catch(e){append('info',e.name==='TimeoutError'?'Сервер долго не отвечает. Попробуй ещё раз.':String(e.message||'Связь с сервером недоступна.'))}
+      if(typeof result.reply==='string'&&result.reply.trim())append('bot',result.reply);
+      else if(!result.artifact)throw Error('Пустой ответ модели');
+      if(result.artifact?.type==='image'){
+        generating?.ready();
+        appendArtifact(result.artifact,()=>generating?.stop());
+      }else{
+        generating?.stop();
+        if(result.artifact)appendArtifact(result.artifact);
+      }
+    }catch(e){
+      generating?.stop();
+      append('info',e.name==='TimeoutError'?'Генератор не ответил вовремя. Проверь чат и баланс, прежде чем запускать повторную платную генерацию.':String(e.message||'Связь с сервером недоступна.'));
+    }
     finally{busy=false;if(button)button.disabled=false}
   }
   form.addEventListener('submit',e=>{
