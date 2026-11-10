@@ -314,5 +314,27 @@ if(!swV17.includes("'/plux-arkheon-v17.js'")){
  swV17=swV17.replace("'/plux-video-v16.js'","'/plux-video-v16.js','/plux-arkheon-v17.js','/plux-arkheon-processor-v17.js'");
 }
 writeFileSync(swV17Path,swV17);
+
+// V19: new video presets and correctly encoded phone photo upload.
+// Bump ALL independent HTML and service-worker cache keys so installed Android
+// PWA copies do not keep the broken gallery handler from the old release.
+const pageV19=join(root,'index.html');
+let htmlV19=readFileSync(pageV19,'utf8');
+htmlV19=htmlV19
+ .replace(/\/plux-video-v16\.css\?v=\d+/g,'/plux-video-v16.css?v=1901')
+ .replace(/\/plux-video-v16\.js\?v=\d+/g,'/plux-video-v16.js?v=1901');
+if(!htmlV19.includes('plux-release-v19'))
+ htmlV19=htmlV19.replace('</head>','<meta name="plux-release-v19" content="photo-upload-fix-3d-anime-video-presets"></head>');
+if(!htmlV19.includes('/plux-video-v16.js?v=1901'))throw Error('V19 video controls not installed');
+writeFileSync(pageV19,htmlV19);
+const swV19Path=join(root,'sw.js');
+const swV19=readFileSync(swV19Path,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v1901');
+writeFileSync(swV19Path,swV19);
+const v19Client=readFileSync(join(root,'plux-video-v16.js'),'utf8');
+for(const marker of ['plux19-styles','plux19-motion','compatiblePhoto','image/jpeg']){
+ if(!v19Client.includes(marker))throw Error('V19 missing video control: '+marker);
+}
 plux123Exec(process.execPath,['plux-v18-overlay/test-voice-v18.mjs'],{stdio:'inherit',timeout:35000});
 console.log('PLUX V18 five mascot videos verified, Russian-first live speech director installed; live speech requires ARKHEON_API_KEY');
+
+console.log('PLUX V19 gallery image upload validation, cinematic preset UI and fresh cache active');
