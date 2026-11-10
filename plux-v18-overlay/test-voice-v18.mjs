@@ -20,7 +20,7 @@ const screen=new Node(),mic=new Node(),launch=new Node(),header=new Node(),statu
 const back=new Node(),end=new Node(),host=new Node(),firstVideo=new Node();
 const elements={"screen-voice":screen,"voice-toggle":mic,"open-voice-quick":launch,
  "voice-toplabel":header,"voice-status":status,"voice-back":back,"voice-end":end};
-let micOpened=0,lastSocket;
+let micOpened=0,lastSocket,lastAudioWorklet;
 const document={
  hidden:false,
  getElementById:id=>elements[id]||null,
@@ -59,7 +59,7 @@ class FakeAudio{
   return source;
  }
 }
-class AudioWorkletNode{constructor(){this.port={onmessage:null,postMessage(){}}}connect(){}disconnect(){}}
+class AudioWorkletNode{constructor(){this.port={onmessage:null,postMessage(){}};lastAudioWorklet=this}connect(){}disconnect(){}}
 const stream={getTracks:()=>[{stop(){}}]};
 const window={
  isSecureContext:true,AudioContext:FakeAudio,AudioWorkletNode,
@@ -83,6 +83,8 @@ assert.equal(window.PLUXArkheon.debug().state,"listening");
 const settings=lastSocket.sent.find(s=>s.type==="session.update");
 assert.ok(settings?.session?.instructions?.includes("ОТВЕЧАЙ ИСКЛЮЧИТЕЛЬНО ПО-РУССКИ"));
 assert.equal(settings.session.audio.output.voice,"ash");
+assert.equal(settings.session.audio.input.turn_detection.interrupt_response,false,"Echo must not auto-cut the response");
+assert.ok(settings.session.audio.input.turn_detection.silence_duration_ms>=800,"Longer pauses within a phrase should not split it");
 lastSocket.receive({type:"input_audio_buffer.speech_started"});
 lastSocket.receive({type:"input_audio_buffer.speech_stopped"});
 assert.equal(window.PLUXArkheon.debug().state,"thinking");
@@ -91,6 +93,10 @@ lastSocket.receive({type:"response.output_audio.delta",delta:Buffer.alloc(4800).
 assert.equal(window.PLUXArkheon.debug().state,"talking");
 lastSocket.receive({type:"conversation.item.input_audio_transcription.completed",transcript:"Привет"});
 assert.equal(window.PLUXArkheon.debug().state,"talking","Late transcription must not interrupt talking animation");
+// A delayed second sentence must not trigger premature happiness / end-of-answer.
+await sleep(2600);
+assert.equal(window.PLUXArkheon.debug().state,"talking","Long synthesizer pause must NOT truncate an unfinished answer");
+lastSocket.receive({type:"response.output_audio.delta",delta:Buffer.alloc(4800).toString("base64")});
 lastSocket.receive({type:"response.done"});
 await sleep(1650);
 assert.equal(window.PLUXArkheon.debug().state,"happy","After the audio ends, the happy clip should show");
@@ -98,9 +104,18 @@ await sleep(2050);
 assert.equal(window.PLUXArkheon.debug().state,"listening","After the happy clip, conversation should resume listening");
 assert.deepEqual([...new Set(transitions)].slice(0,4),["listening","thinking","talking","happy"]);
 lastSocket.receive({type:"response.created"});
-lastSocket.receive({type:"response.output_audio.delta",delta:Buffer.alloc(24000).toString("base64")});
+lastSocket.receive({type:"response.output_audio.delta",delta:Buffer.alloc(288000).toString("base64")});
+assert.equal(window.PLUXArkheon.debug().state,"talking");
+assert.ok(Number(window.PLUXArkheon.debug().speakerQueueSeconds)>5,"A six-second backlog must remain scheduled, not be dropped");
+assert.equal(window.PLUXArkheon.debug().totalPlaybackChunks>=3,true);
+const oldInterruptions=window.PLUXArkheon.debug().confirmedBargeIns;
 lastSocket.receive({type:"input_audio_buffer.speech_started"});
-assert.equal(window.PLUXArkheon.debug().state,"listening","User interruption should stop speaking video");
+assert.equal(window.PLUXArkheon.debug().state,"talking","False VAD due to speaker echo must NOT cut the assistant");
+assert.equal(window.PLUXArkheon.debug().confirmedBargeIns,oldInterruptions);
+for(let i=0;i<3;i++)lastAudioWorklet.port.onmessage({data:{type:"level",rms:.16}});
+assert.equal(window.PLUXArkheon.debug().state,"listening","Real nearby speech should allow interruption");
+assert.equal(window.PLUXArkheon.debug().confirmedBargeIns,oldInterruptions+1);
+assert.equal(lastSocket.sent.at(-1).type,"response.cancel");
 await window.PLUXArkheon.stop();
 assert.equal(window.PLUXArkheon.debug().state,"idle");
 assert.ok(transitions.includes("idle"),"Idle video must show after the call ends");
