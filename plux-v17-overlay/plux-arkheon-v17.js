@@ -76,8 +76,37 @@
   mic.setAttribute("aria-pressed",String(on));
   mic.setAttribute("aria-label",on?"Завершить голосовой разговор":"Начать голосовой разговор");
  }
+ let lastGlassCueAt=0;
+ function glassVoiceCue(next){
+  if(next!=="listening"&&next!=="thinking"&&next!=="talking")return;
+  let enabled=true;
+  try{enabled=localStorage.getItem("plux_sfx_enabled")!=="off";}catch{}
+  if(!enabled||document.getElementById("sound-toggle")?.checked===false)return;
+  // Use an already user-unlocked voice context: no autoplay bypass,
+  // no extra microphone permission, no heavyweight sound downloads.
+  const ctx=speakerCtx;
+  if(!ctx||ctx.state!=="running"||typeof ctx.createOscillator!=="function"||typeof ctx.createGain!=="function")return;
+  const now=performance.now();
+  if(now-lastGlassCueAt<180)return;
+  lastGlassCueAt=now;
+  const settings={listening:[680,900,.095,.013],thinking:[575,480,.115,.010],talking:[780,1020,.070,.008]};
+  const [first,last,duration,volume]=settings[next];
+  try{
+   const osc=ctx.createOscillator(),gain=ctx.createGain(),t=ctx.currentTime+.007;
+   osc.type="sine";osc.frequency.setValueAtTime(first,t);
+   osc.frequency.exponentialRampToValueAtTime(last,t+duration);
+   gain.gain.setValueAtTime(.0001,t);
+   gain.gain.linearRampToValueAtTime(volume,t+.017);
+   gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+   osc.connect(gain);gain.connect(ctx.destination);
+   osc.start(t);osc.stop(t+duration+.012);
+   osc.onended=()=>{try{osc.disconnect();gain.disconnect()}catch{}};
+  }catch{}
+ }
  function state(s){
+  const old=mode;
   visual(s==="speaking"?"talking":s==="thinking"?"thinking":s==="listening"?"listening":s==="happy"?"happy":"idle");
+  if(mode!==old&&active&&!screen.hidden)glassVoiceCue(mode);
   if(s==="speaking")say("ПЛЮХ говорит","Чтобы перебить ответ, нажми микрофон ещё раз.");
   else if(s==="thinking")say("ПЛЮХ думает","Подготавливаю ответ…");
   else if(s==="happy")say("ПЛЮХ рад","Готово! Слушаю тебя дальше.");
