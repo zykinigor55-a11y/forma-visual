@@ -153,13 +153,13 @@ export async function handleCyhubVideo(req,res){
       throw problem(409,"Цена устарела. Проверь стоимость ещё раз.");
     const quota=checkQuota(ip);
     quote.used=true; // Reserve the quote before asynchronous repricing; cannot launch twice.
-    // Reprice immediately. Changes never become a surprise charge.
-    const price=await getPrice(quote.payload);
-    if(price.amount_minor!==quote.amount)throw problem(409,"Цена изменилась. Проверь стоимость повторно.");
-    if(Number.isInteger(price.available_minor)&&price.available_minor<price.amount_minor)
-      throw problem(402,"Недостаточно средств на балансе Cyhub.");
-    active++;
+    active++; // Count capacity before awaiting network I/O to prevent concurrent overspend.
     try{
+      // Reprice immediately. Changes never become a surprise charge.
+      const price=await getPrice(quote.payload);
+      if(price.amount_minor!==quote.amount)throw problem(409,"Цена изменилась. Проверь стоимость повторно.");
+      if(Number.isInteger(price.available_minor)&&price.available_minor<price.amount_minor)
+        throw problem(402,"Недостаточно средств на балансе Cyhub.");
       const job=await provider("/tasks",{method:"POST",
         headers:{"Content-Type":"application/json","Idempotency-Key":randomUUID()},
         body:JSON.stringify(quote.payload)});
