@@ -12,6 +12,11 @@ if platform=="android":
     if "android.permission.RECORD_AUDIO" not in content:
         content=content.replace("<application", '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application',1)
         manifest.write_text(content)
+    # Chromium WebView audio routing with echo cancellation needs MODIFY_AUDIO_SETTINGS
+    # in addition to the runtime microphone permission.
+    if "android.permission.MODIFY_AUDIO_SETTINGS" not in content:
+        content=content.replace("<application", '<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\\n    <application',1)
+        manifest.write_text(content)
     ET.parse(manifest)
     main=root/"android/app/src/main/java/com/plux/assistant/MainActivity.java"
     if main.exists():
