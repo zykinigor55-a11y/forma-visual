@@ -1,0 +1,75 @@
+/* PLUX V24: theme-coherent chat + guaranteed inline GPT Image 2 result. */
+#screen-chat .chat-row.bot .chat-bubble:not(.plux14-artifact):not(.plux22-generating){
+  border-color:var(--plux-theme-bright,rgba(137,255,207,.48))!important;
+  background:linear-gradient(143deg,var(--plux-theme-soft,rgba(51,234,156,.18)) 0%,rgba(7,27,30,.92) 65%,rgba(4,12,21,.98))!important;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.18),0 8px 19px rgba(0,0,0,.38)!important;
+}
+#screen-chat .chat-row.user .chat-bubble{
+  border-color:var(--plux-theme-bright,rgba(135,255,205,.5))!important;
+  background:linear-gradient(145deg,var(--plux-theme-soft,rgba(36,228,151,.3)) 0%,rgba(12,46,48,.84) 64%,rgba(3,21,25,.92))!important;
+  box-shadow:inset 0 1px 2px rgba(240,255,247,.26),inset 0 -8px 13px var(--plux-theme-soft,rgba(47,239,161,.12)),0 9px 23px rgba(0,0,0,.36)!important;
+}
+#screen-chat .chat-inputbar{
+  background:linear-gradient(160deg,rgba(225,255,249,.12),var(--plux-theme-soft,rgba(42,198,131,.18)) 45%,rgba(2,15,19,.94) 85%)!important;
+  border-color:var(--plux-theme-bright,rgba(150,255,217,.47))!important;
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.29),inset 0 -8px 17px var(--plux-theme-soft,rgba(38,229,137,.1)),0 0 18px var(--plux-theme-soft,rgba(43,219,155,.15))!important
+}
+#screen-chat .chat-inputbar .chat-send{
+  background:radial-gradient(circle at 25% 17%,rgba(255,255,255,.55),var(--plux-theme-accent,#5dfcb5) 37%,rgba(3,36,39,.93) 92%)!important;
+  border-color:var(--plux-theme-bright,rgba(164,255,209,.6))!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.45),0 0 16px var(--plux-theme-soft,rgba(42,240,160,.34))!important
+}
+#screen-chat .chat-inputbar #chat-attach{
+  border-color:var(--plux-theme-bright,rgba(154,255,203,.4))!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.29),0 0 13px var(--plux-theme-soft,rgba(41,212,150,.22))!important
+}
+#screen-chat .plux14-artifact-row{max-width:100%!important;min-width:0!important;width:100%!important}
+#screen-chat .chat-bubble.plux14-artifact{
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:13px!important;min-width:0!important;width:min(100%,350px)!important;max-width:calc(100vw - 103px)!important;
+  height:auto!important;min-height:130px!important;padding:13px!important;overflow:hidden!important;
+  white-space:normal!important;border-radius:23px!important;border:1px solid var(--plux-theme-bright,rgba(172,255,215,.52))!important;
+  background:linear-gradient(155deg,var(--plux-theme-soft,rgba(17,206,142,.2)),rgba(1,16,22,.96) 67%)!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.25),0 9px 24px rgba(0,0,0,.39),0 0 14px var(--plux-theme-soft,rgba(49,211,159,.18))!important;
+}
+#screen-chat .chat-bubble.plux14-artifact .plux14-created-image{
+  display:block!important;position:relative!important;box-sizing:border-box!important;
+  flex:none!important;width:100%!important;max-width:100%!important;max-height:none!important;
+  height:auto!important;min-height:220px!important;aspect-ratio:1/1!important;object-fit:contain!important;
+  overflow:visible!important;opacity:1!important;visibility:visible!important;
+  border-radius:16px!important;background:#030e0d!important;filter:none!important;transform:none!important
+}
+#screen-chat .chat-bubble.plux14-artifact .plux14-file-title{
+  display:block!important;position:relative!important;min-width:0!important;line-height:1.45!important;
+  color:#e1fff2!important;white-space:normal!important;overflow-wrap:anywhere!important;
+  padding:0 2px!important;margin:0!important
+}
+#screen-chat .chat-bubble.plux14-artifact .plux14-download,
+#screen-chat .chat-bubble.plux14-artifact .plux17-animate{
+  box-sizing:border-box!important;position:relative!important;display:flex!important;flex:none!important;
+  width:100%!important;min-height:42px!important;height:auto!important;align-items:center!important;justify-content:center!important;
+  padding:10px!important;margin:0!important;border-radius:15px!important;white-space:normal!important;
+  font:600 13px/1.4 system-ui!important;text-align:center!important;color:#f3fff8!important;
+  background:linear-gradient(150deg,var(--plux-theme-soft,rgba(26,199,137,.3)),rgba(2,24,29,.84))!important;
+  border:1px solid var(--plux-theme-bright,rgba(175,255,223,.5))!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.19)!important;text-decoration:none!important;
+  cursor:pointer!important;z-index:2!important
+}
+#screen-chat .plux22-generating{
+  background:linear-gradient(150deg,var(--plux-theme-soft,rgba(24,193,124,.16)),rgba(3,19,27,.96) 75%)!important;
+  border-color:var(--plux-theme-bright,rgba(157,255,204,.45))!important
+}
+#screen-chat .plux22-preview{
+  background:radial-gradient(circle at 52% 48%,var(--plux-theme-soft,rgba(35,226,157,.38)),transparent 57%),#030e13!important
+}
+#screen-chat .plux22-gen-title{color:var(--plux-theme-accent,#b2ffe2)!important}
+#screen-chat .plux22-dots::after{color:var(--plux-theme-accent,#7ffcc4)!important}
+#screen-chat .plux22-spark{border-top-color:var(--plux-theme-bright,rgba(131,255,216,.6))!important}
+#screen-chat .plux22-progress i{background:linear-gradient(90deg,transparent,var(--plux-theme-accent,#50f7b1),transparent)!important}
+#screen-chat .chat-row .chat-mini{border-color:var(--plux-theme-bright,rgba(84,255,189,.5))!important}
+@media(max-width:370px){
+ #screen-chat .chat-bubble.plux14-artifact{max-width:calc(100vw - 90px)!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-chat .plux22-preview *,#screen-chat .plux22-preview::before,#screen-chat .plux22-dots::after{animation:none!important}
+}
