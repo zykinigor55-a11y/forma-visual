@@ -49,7 +49,27 @@
     action.href=uri;
     if(uri.startsWith('blob:'))action.download=file;
     else{action.target='_blank';action.rel='noopener noreferrer'}
-    bubble.append(action);row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
+    bubble.append(action);
+    if(item.type==='image'){
+      const animate=document.createElement('button');
+      animate.type='button';animate.className='plux17-animate';
+      animate.textContent='Сделать видео';
+      animate.setAttribute('aria-label','Анимировать это изображение через Grok Lite');
+      animate.addEventListener('click',()=>{
+        if(!window.PLUXVideoV16?.open){
+          append('info','Генератор видео пока не загружен.');
+          return;
+        }
+        window.PLUXVideoV16.open({
+          imageDataUrl:typeof item.dataUrl==='string'?item.dataUrl:null,
+          imageUrl:!item.dataUrl?item.url:null,
+          name:file,
+          prompt:'Плавная кинематографическая анимация исходного изображения. Сохрани форму объектов, композицию и материалы. Естественное движение камеры и окружения.'
+        });
+      });
+      bubble.append(animate);
+    }
+    row.append(bubble);feed.append(row);feed.scrollTop=feed.scrollHeight;
   }
   async function send(text){
     if(busy)return;busy=true;
