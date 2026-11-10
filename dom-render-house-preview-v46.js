@@ -43,7 +43,7 @@
   const l=$('cinemaLensLabel');
   if(l)l.textContent=(focal[s.lens]||35)+' мм';
   lastLens=s.lens;lastMotion=s.motion;lastGrade=s.grade;
-  if(posterURL&&activeDemo()&&photo?.src!==posterURL)photo.src=posterURL;
+  // Source of truth: app.js, which chooses the current project's image.
  }
  function motionKeyframes(id,z,intensity){
   const k=intensity,scale=n=>+(z*n).toFixed(4),p=n=>+(n*k).toFixed(2)+'%';
@@ -100,35 +100,11 @@
   });
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('cinema-maximized')){stage.classList.remove('cinema-maximized');document.body.classList.remove('cinema-preview-open')}});
  }
- function enhanceImage(){
-  if(enhancing)return;
-  enhancing=true;
-  const orig=new Image();orig.decoding='async';
-  orig.onload=()=>{
-   try{
-    const canvas=document.createElement('canvas');canvas.width=3840;canvas.height=2160;
-    const ctx=canvas.getContext('2d',{alpha:false});
-    if(!ctx)return;
-    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-    const w=orig.naturalWidth,h=orig.naturalHeight,aspect=16/9;
-    let sx=0,sy=0,sw=w,sh=h;
-    if(w/h>aspect){sw=h*aspect;sx=(w-sw)/2}else{sh=w/aspect;sy=(h-sh)/2}
-    ctx.drawImage(orig,sx,sy,sw,sh,0,0,3840,2160);
-    canvas.toBlob(blob=>{
-     if(!blob)return;
-     posterURL=URL.createObjectURL(blob);
-     if(activeDemo()&&photo){photo.src=posterURL}
-    },'image/webp',.93);
-   }catch(e){console.warn('High-res camera preview fallback:',e)}
-  };
-  orig.onerror=()=>console.warn('Modern house demo asset unavailable');
-  orig.src=DEMO;
- }
  function start(){
   stage=$('animPreviewScreen');frame=$('animPreviewFrame');photo=$('animPreviewImage');
   if(!stage||!frame||!photo)return;
   installControls();
-  if(!photo.getAttribute('src')||photo.src.endsWith('/assets/residence-render.jpg'))photo.src=DEMO;
+  // Do not set an independent demo image here: app.js owns the preview src.
   const button=$('animPlayPreview');
   if(button)button.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();play()},{capture:true});
   document.getElementById('animationPanel')?.addEventListener('click',event=>{
@@ -142,17 +118,10 @@
     }
   },{capture:true});
   for(const id of ['animIntensity','animRatio','animDuration'])$(id)?.addEventListener('change',()=>window.setTimeout(sync,0));
-  const sourceObserver=new MutationObserver(()=>{
-    if(posterURL&&activeDemo()&&photo.src!==posterURL)photo.src=posterURL;
-  });
-  sourceObserver.observe(photo,{attributes:true,attributeFilter:['src']});
-  photo.addEventListener('error',()=>{
-   if(photo.src!==DEMO&&activeDemo()){posterURL='';photo.src=DEMO}
-  });
-  if(activeDemo())photo.src=DEMO;
-  enhanceImage();
+  // The source image is set by renderAnimationPanel() whenever the project changes.
   sync();
   window.addEventListener('pageshow',sync);
  }
+ window.DOM_RENDER_HOUSE_PREVIEW={sync};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
