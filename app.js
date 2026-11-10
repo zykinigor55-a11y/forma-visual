@@ -677,9 +677,9 @@ function renderAnimationCards(containerId,field,items,kind,value){
  const holder=$(containerId);
  if(!holder)return;
  holder.innerHTML=items.map(item=>{
-  const realPhoto=kind==='grade';
-  const source=realPhoto?ANIM_DEMO_HOUSE:animationArt(kind,item.id);
-  const filter=kind==='grade'?' style="filter:'+animationColorFilter(item.id)+'"':'';
+  const realPhoto=false;
+  const source=animationArt(kind,item.id);
+  const filter='';
   return `<button type="button" class="anim-option-card ${item.id===value?'active':''}" data-anim-kind="${eHTML(field)}" data-anim-id="${eHTML(item.id)}" aria-pressed="${item.id===value}">
  <span class="anim-option-photo ${realPhoto?'anim-photo-real':''}"><img src="${source}" alt="${eHTML(item.name)} — изображение пресета" loading="lazy" decoding="async"${filter}><span class="anim-option-check" aria-hidden="true">✓</span></span>
  <span class="anim-option-copy"><strong>${eHTML(item.name)}</strong><em>${eHTML(item.tag||'')}</em><small>${eHTML(item.desc||'')}</small></span></button>`;
