@@ -1,11 +1,11 @@
 {
   "name": "pluh-voice-server",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check server.mjs && node --check media-v129.mjs && node --check chat-artifacts-v14.mjs && node test-artifacts-v14.mjs",
+    "check": "node --check server.mjs && node --check media-v129.mjs && node --check chat-artifacts-v14.mjs && node --check cyhub-voice-v15.mjs && node test-artifacts-v14.mjs && node test-cyhub-v15.mjs",
     "postinstall": "npm run check"
   },
   "engines": {
