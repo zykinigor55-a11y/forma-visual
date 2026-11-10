@@ -171,3 +171,22 @@ let p130sw=readFileSync(v130sw,'utf8').replace(/plux-emerald-v12\d+/g,'plux-emer
 if(!p130sw.includes("'/plux-v130.css'"))p130sw=p130sw.replace("'/plux-v129.js'","'/plux-v129.js','/plux-v130.css'");
 writeFileSync(v130sw,p130sw);
 console.log('PLUX V13.0 hidden fake status/chrome, logo subtitle removed, gallery drift restored');
+
+/* PLUX V14 CHAT ARTIFACTS: PDF / GPT Image 2 cards in existing OLED chat. */
+const p14css=readFileSync('plux-v14-overlay/plux-artifacts-v14.css','utf8');
+if(p14css.length<1200)throw Error('PLUX V14 artifact CSS not found');
+writeFileSync(join(root,'plux-artifacts-v14.css'),p14css);
+plux123Exec(process.execPath,['--check',join(root,'plux-chat-v128.js')],{stdio:'inherit'});
+const p14file=join(root,'index.html');
+let p14html=readFileSync(p14file,'utf8');
+if(!p14html.includes('plux-artifacts-v14.css')){
+ p14html=p14html.replace('</head>','<meta name="plux-release-v14" content="gpt-image-2-and-pdf-chat"><link rel="stylesheet" href="/plux-artifacts-v14.css?v=1401"></head>');
+ p14html=p14html.replace('/plux-chat-v128.js?v=1281','/plux-chat-v128.js?v=1401');
+ writeFileSync(p14file,p14html);
+}
+const p14sw=join(root,'sw.js');
+let p14worker=readFileSync(p14sw,'utf8').replace(/plux-emerald-v(?:12|13)\d*/g,'plux-emerald-v140');
+if(!p14worker.includes("'/plux-artifacts-v14.css'"))
+ p14worker=p14worker.replace("'/plux-v130.css'","'/plux-v130.css','/plux-artifacts-v14.css'");
+writeFileSync(p14sw,p14worker);
+console.log('PLUX V14 chat artifact renderer installed');
