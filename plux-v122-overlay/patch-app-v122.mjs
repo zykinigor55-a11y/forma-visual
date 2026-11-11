@@ -843,3 +843,31 @@ console.log('PLUX V27: downloadable PDFs, no dead bell, proper image-create icon
 }
 
 
+
+
+/* PLUX V31: Cyhub source-upload reliability. Fix price-check stalls caused by
+ * repeat uploads, show elapsed time and explicit timeout errors, and keep the
+ * premium glass mobile controls readable. No video generation is triggered
+ * during the free health checks or this build.
+ */
+{
+ const css=join('plux-v31-overlay','plux-video-v31.css');
+ if(statSync(css).size<750)throw Error('PLUX V31 video styling not found');
+ writeFileSync(join(root,'plux-video-v31.css'),readFileSync(css));
+ const htmlPath=join(root,'index.html');
+ let html=readFileSync(htmlPath,'utf8');
+ if(!html.includes('plux-release-v30'))throw Error('PLUX V30 base missing');
+ html=html.replace('</head>','<meta name="plux-release-v31" content="cyhub-photo-upload-quote-recovery"><link rel="stylesheet" href="/plux-video-v31.css?v=3101"></head>');
+ html=html.replace(/\/plux-video-v16\.js\?v=\d+/g,'/plux-video-v16.js?v=3101');
+ writeFileSync(htmlPath,html);
+ const swPath=join(root,'sw.js');
+ let sw=readFileSync(swPath,'utf8').replace(/plux-emerald-v\d+/g,'plux-emerald-v3101');
+ if(!sw.includes("'/plux-video-v31.css'")){
+  if(!sw.includes("'/plux-v30.css'"))throw Error('V30 SW prerequisite missing');
+  sw=sw.replace("'/plux-v30.css'","'/plux-v30.css','/plux-video-v31.css'");
+ }
+ writeFileSync(swPath,sw);
+ plux123Exec(process.execPath,['--check',join(root,'plux-video-v16.js')],{stdio:'inherit'});
+ if(!html.includes('/plux-video-v16.js?v=3101'))throw Error('PLUX V31 video script missing');
+ console.log('PLUX V31: Cyhub photo upload compression/caching, price diagnosis and visible timeout recovery ready');
+}
