@@ -25,3 +25,7 @@
 @media(max-width:700px){#animationPanel .wan26-panel{padding:13px;border-radius:12px}#animationPanel .wan26-heading b{font-size:13px}#animationPanel .wan26-tools{flex-direction:column;align-items:stretch}#animationPanel .wan26-duration{width:100%}}
 
 #animationPanel #wanDownload[hidden],#animationPanel #wanResult[hidden]{display:none}
+
+#animationPanel .wan26-private-label{display:block;font-size:11px;font-weight:600;color:#516454;margin:13px 0}
+#animationPanel #wan3AccessPin{display:block;width:100%;height:40px;border:1px solid #ccdace;border-radius:9px;background:#f9faf8;margin-top:7px;padding:0 12px;outline:0;color:#243e2d}
+#animationPanel #wan3AccessPin:focus{border-color:#38734b;box-shadow:0 0 0 3px #39754b18}
