@@ -50,7 +50,7 @@
    status.textContent=data.ready?'Wan 2.6 Free доступна · осталось запусков сегодня: '+data.remaining:
       'Wan 2.6 не подключена: '+(data.reason||'проверьте ключ OpenRouter');
    status.dataset.ready=String(!!data.ready);
-   button.disabled=!data.ready;
+   button.disabled=!data.ready || Number(data.remaining)<=0;
   }catch(e){available={ready:false};button.disabled=true;status.textContent=e.message;status.dataset.ready='false'}
  }
  const states={pending:'В очереди OpenRouter',in_progress:'Генерация видео выполняется',completed:'Видео готово',failed:'Ошибка генерации',cancelled:'Задание отменено',expired:'Срок задания истёк'};
@@ -83,7 +83,7 @@
    jobId=job.id;
    try{sessionStorage.setItem('wan-job-id',jobId)}catch{}
    result.textContent='Видео создаётся из текущего кадра.';
-   await poll();if(timer===null&&jobId)timer=setInterval(poll,25000);
+   await poll();if(timer===null&&jobId&&!result.textContent.includes('Генерация завершена'))timer=setInterval(poll,25000);
   }catch(e){
    label(e.message);
    result.textContent='Генерация не запущена.';
@@ -103,6 +103,6 @@
   reader.onerror=()=>label('Не удалось прочитать файл.');
   reader.readAsDataURL(f);
  });
- try{const saved=sessionStorage.getItem('wan-job-id');if(saved&&/^[0-9a-f-]{36}$/i.test(saved)){jobId=saved;poll().then(()=>{if(timer===null)timer=setInterval(poll,25000)})}}catch{}
+ try{const saved=sessionStorage.getItem('wan-job-id');if(saved&&/^[0-9a-f-]{36}$/i.test(saved)){jobId=saved;poll().then(()=>{if(timer===null&&!result.textContent.includes('Генерация завершена'))timer=setInterval(poll,25000)})}}catch{}
  refresh();
 })();
