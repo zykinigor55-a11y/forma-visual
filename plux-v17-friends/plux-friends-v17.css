@@ -1,0 +1,93 @@
+/* PLUX FRIENDS V17 — scoped glass messenger, no changes to existing screens. */
+#plux-friends-panel[hidden],#plux-friends-panel [hidden]{display:none!important}
+#plux-friends-panel{position:fixed;inset:0;z-index:100002;background:#000;color:#f2fff9;
+ font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,Arial,sans-serif;isolation:isolate;}
+#plux-friends-panel *{box-sizing:border-box}
+#plux-friends-panel button,#plux-friends-open{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#plux-friends-panel input{font:inherit}
+#plux-friends-panel .pf-shell{width:min(610px,100%);height:100%;margin:auto;display:flex;flex-direction:column;
+ background:radial-gradient(ellipse 68% 37% at 42% -9%,#003725b0,transparent),#03090a;overflow:hidden;
+ border-left:1px solid #105b445c;border-right:1px solid #105b445c}
+#plux-friends-panel .pf-head{padding:calc(18px + env(safe-area-inset-top,0px)) 23px 16px;display:flex;align-items:center;gap:16px;
+ background:#001c16bb;border-bottom:1px solid #7bf6c53b;flex:none}
+#plux-friends-panel .pf-head strong{display:block;font-size:23px;line-height:1.2;letter-spacing:-.5px}
+#plux-friends-panel .pf-head strong em{font-style:normal;color:#83ffd1}
+#plux-friends-panel .pf-head small{display:block;font-size:9px;letter-spacing:1.9px;color:#93bba9;margin-top:4px}
+#plux-friends-panel .pf-head>span{margin-left:auto;font-size:23px;color:#8cfbd0}
+#plux-friends-panel .pf-head button,#plux-friends-panel #pf-chat-back{height:49px;width:49px;min-width:49px;border-radius:50%;
+ background:radial-gradient(circle at 32% 7%,#adffe38c,transparent 28%),linear-gradient(145deg,#0b3d30,#00150f);
+ border:1px solid #94fada92;color:#eafff8;font-size:33px;font-weight:300;box-shadow:inset 0 -5px 10px #00e69945,0 0 16px #00e6a73d;
+ display:grid;place-items:center;padding:0}
+#plux-friends-panel .pf-alert{margin:10px 18px 0;padding:12px 14px;background:#123c2e;border:1px solid #61c49c86;border-radius:12px;
+ font-size:13px;color:#c9fff0;white-space:pre-wrap;flex:none;max-height:100px;overflow:auto}
+#plux-friends-panel .pf-alert.bad{color:#ffd4d4;border-color:#e8898d66;background:#3b1c20}
+#plux-friends-panel .pf-section{flex:1;overflow-y:auto;padding:28px 23px}
+#plux-friends-panel #pf-content{display:flex;flex-direction:column;flex:1;min-height:0}
+#plux-friends-panel #pf-social{min-height:0;overflow-y:auto}
+#plux-friends-panel .pf-section>small{font-size:11px;color:#8df3c9;letter-spacing:1.7px}
+#plux-friends-panel h2{font-size:clamp(23px,5vw,33px);line-height:1.16;margin:17px 0;font-weight:700;letter-spacing:-.7px}
+#plux-friends-panel .pf-section>p{font-size:14px;line-height:1.7;color:#a2c4b9;max-width:500px}
+#plux-friends-panel input{color:#fff;min-height:52px;min-width:0;border-radius:16px;background:linear-gradient(150deg,#091c1d,#060c11);
+ border:1px solid #80eac68a;padding:12px 17px;outline:none;box-shadow:inset 0 1px 5px #000a}
+#plux-friends-panel input:focus{border-color:#dcffeb;box-shadow:0 0 0 3px #51d6a725}
+#plux-friends-panel #pf-login{display:flex;flex-direction:column;gap:14px;margin-top:26px}
+#plux-friends-panel .pf-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#plux-friends-panel .pf-row button,#plux-friends-panel #pf-save-profile,
+#plux-friends-panel #pf-search button{background:linear-gradient(120deg,#146c50,#073524);border:1px solid #8df0c7a8;color:#f0fff7;
+ border-radius:17px;padding:12px;font-weight:650;box-shadow:inset 0 -3px 8px #00c57f4d}
+#plux-friends-panel #pf-register{background:linear-gradient(130deg,#172429,#181126);color:#d9f4e7}
+#plux-friends-panel .pf-profile{padding:17px;border-radius:20px;border:1px solid #80f5bf60;background:radial-gradient(circle at 5% 0%,#124b356c,transparent 52%),#061413;
+ display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px;box-shadow:inset 0 1px 1px #c4fff928}
+#plux-friends-panel .pf-profile strong{font-size:19px;display:block}
+#plux-friends-panel .pf-profile small{color:#8fb7a5}
+#plux-friends-panel .pf-profile button{border:1px solid #2e775d;color:#c2fce9;border-radius:13px;background:#05271e;padding:10px 12px;font-size:12px}
+#plux-friends-panel details{border-radius:16px;border:1px solid #60a98b60;background:#071918;padding:12px 16px;margin-bottom:21px}
+#plux-friends-panel details summary{font-size:13px;color:#b9f4de;cursor:pointer}
+#plux-friends-panel details input{display:block;width:100%;margin-top:11px}
+#plux-friends-panel #pf-save-profile{margin-top:11px;font-size:12px}
+#plux-friends-panel .pf-tabs{display:grid;grid-template-columns:repeat(3,1fr);padding:5px;gap:5px;border-radius:18px;
+ border:1px solid #72dba766;background:#021a17;margin-bottom:19px}
+#plux-friends-panel .pf-tab{padding:12px 4px;white-space:nowrap;border:0;border-radius:13px;color:#97bcb0;font-size:13px;background:transparent}
+#plux-friends-panel .pf-tab.active{color:#ecfff6;background:linear-gradient(125deg,#07523a,#123223);box-shadow:inset 0 1px 2px #9bffd45c}
+#plux-friends-panel .pf-tab span{color:#a8ffd8}
+#plux-friends-panel .pf-person{display:flex;align-items:center;gap:12px;border-bottom:1px solid #528b7352;padding:15px 0}
+#plux-friends-panel .pf-avatar{height:46px;width:46px;min-width:46px;border-radius:50%;display:grid;place-items:center;
+ background:radial-gradient(circle at 25% 16%,#d9ffef80,transparent 30%),linear-gradient(155deg,#15674e,#001b15 75%);
+ border:1px solid #73e3b9b0;box-shadow:inset 0 -3px 8px #17cd8780;color:#f2fff8;font-size:20px}
+#plux-friends-panel .pf-person-title{min-width:0;flex:1}
+#plux-friends-panel .pf-person-title strong{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#plux-friends-panel .pf-person-title small{display:block;color:#8eb9a7;font-size:12px}
+#plux-friends-panel .pf-btn{border:1px solid #66cca38a;border-radius:13px;background:#0b3529;color:#c9ffe7;padding:9px 10px;font-size:12px;white-space:nowrap}
+#plux-friends-panel .pf-empty{padding:28px 8px;color:#92bca9;font-size:14px;line-height:1.6;text-align:center}
+#plux-friends-panel #pf-search{display:flex;gap:9px}
+#plux-friends-panel #pf-search input{min-width:0;flex:1;width:70%}
+#plux-friends-panel #pf-search button{flex:0 0 auto}
+#plux-friends-panel #pf-chat{display:flex;flex:1;min-height:0;flex-direction:column}
+#plux-friends-panel .pf-chat-head{padding:14px 17px;display:flex;gap:12px;align-items:center;border-bottom:1px solid #76ffd04d}
+#plux-friends-panel .pf-chat-head strong{display:block;font-size:17px}
+#plux-friends-panel .pf-chat-head small{color:#9cceba}
+#plux-friends-panel #pf-messages{flex:1;min-height:100px;overflow-y:auto;padding:19px 13px 21px;display:flex;flex-direction:column;gap:11px}
+#plux-friends-panel .pf-bubble{max-width:86%;padding:12px 14px;border:1px solid #499e7566;background:#142b2a;
+ border-radius:19px 19px 19px 5px;overflow-wrap:anywhere;align-self:flex-start}
+#plux-friends-panel .pf-bubble.mine{align-self:flex-end;background:#103b2b;border-color:#77dfae6d;border-radius:19px 19px 5px 19px}
+#plux-friends-panel .pf-bubble p{white-space:pre-wrap;margin:0;color:#ebfff7;font-size:14px;line-height:1.5}
+#plux-friends-panel .pf-bubble time{display:block;text-align:right;color:#9cc2b0;margin-top:5px;font-size:10px}
+#plux-friends-panel .pf-photo{max-width:100%;display:block;border-radius:11px;max-height:420px;object-fit:contain;margin-bottom:8px}
+#plux-friends-panel #pf-compose{display:flex;gap:9px;align-items:center;padding:12px 14px 4px}
+#plux-friends-panel #pf-compose input[type=text],#plux-friends-panel #pf-input{flex:1;width:1%;min-height:50px}
+#plux-friends-panel #pf-compose button,#plux-friends-panel .pf-attach{display:grid;place-items:center;width:47px;height:47px;min-width:47px;
+ border-radius:50%;border:1px solid #66deb196;background:linear-gradient(145deg,#125c42,#001e17);
+ color:#e8fff6;font-size:23px;box-shadow:inset 0 -4px 9px #00d38b66}
+#plux-friends-panel #pf-file-title{color:#8cdcbc;min-height:19px;padding-left:20px;font-size:11px}
+#plux-friends-open.pf-open{width:calc(100% - 20px);margin:22px 10px 12px;padding:16px 19px;display:flex;gap:15px;align-items:center;
+ border-radius:22px;border:1px solid #8df1c4a0;background:radial-gradient(ellipse at 10% 0%,#17634395,transparent 48%),
+ linear-gradient(140deg,#072c23,#03151a 78%);box-shadow:inset 0 1px 2px #bcffed42,inset 0 -4px 12px #00d99a38,0 3px 16px #0009;
+ color:#effff9;text-align:left}
+#plux-friends-open .pf-open-icon{width:53px;height:53px;display:grid;place-items:center;border:1px solid #b9fff1b0;border-radius:50%;
+ background:linear-gradient(145deg,#0a5540,#00261b);font-size:29px;box-shadow:inset 0 -5px 9px #00d39d8f}
+#plux-friends-open .pf-open-copy{flex:1;display:flex;flex-direction:column}
+#plux-friends-open strong{font-size:19px}
+#plux-friends-open small{font-size:12px;color:#98d2b5}
+#plux-friends-open>span:last-child{font-size:30px}
+@media(max-width:420px){#plux-friends-panel .pf-section{padding:20px 15px}#plux-friends-panel .pf-head{padding-left:17px;padding-right:17px}#plux-friends-panel .pf-btn{font-size:11px}
+ #plux-friends-panel .pf-person{gap:9px}#plux-friends-panel .pf-row{grid-template-columns:1fr}#plux-friends-open.pf-open{width:calc(100% - 28px);margin-left:14px}}
