@@ -23,3 +23,5 @@
 #animationPanel #wanMessage{color:#6f8272;font-size:11px;line-height:1.6;min-height:17px;overflow-wrap:anywhere}
 #animationPanel .wan26-foot{color:#88968c;font-size:10px;line-height:1.5;margin:12px 0 0}
 @media(max-width:700px){#animationPanel .wan26-panel{padding:13px;border-radius:12px}#animationPanel .wan26-heading b{font-size:13px}#animationPanel .wan26-tools{flex-direction:column;align-items:stretch}#animationPanel .wan26-duration{width:100%}}
+
+#animationPanel #wanDownload[hidden],#animationPanel #wanResult[hidden]{display:none}
