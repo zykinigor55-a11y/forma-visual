@@ -57,3 +57,40 @@ assert.throws(()=>parseUploadedPhoto("data:image/png;base64,"+Buffer.alloc(330).
 const withWhitespace=parseUploadedPhoto("data:image/jpeg;base64,"+jpgBytes.toString("base64").replace(/.{72}/g,"$&\n"));
 assert.equal(withWhitespace.mime,"image/jpeg");
 console.log("PLUX V19 gallery file smoke tests passed: PNG/JPEG/WebP and mislabeled MIME");
+
+/* V31 source-upload diagnostic: valid photo upload is free and must
+ * return the sourceId required by the subsequent no-charge /price call.
+ * This mock makes no real Cyhub API call. */
+const originalFetch=globalThis.fetch;
+const formerKey=process.env.CYHUB_API_KEY;
+process.env.CYHUB_API_KEY="test-cyhub-video-key";
+try{
+ let requests=0;
+ globalThis.fetch=async (url,opts)=>{
+  assert.equal(url,"https://api.cyhub.ai/v1/files");
+  assert.equal(opts.method,"POST");
+  assert.equal(opts.body.constructor.name,"FormData");
+  requests++;
+  return new Response(JSON.stringify({url:"https://files.cyhub.ai/test-frame.png",id:"mock-source"}),{
+    status:200,headers:{"content-type":"application/json"}
+  });
+ };
+ const payload=Buffer.from(JSON.stringify({dataUrl:"data:image/png;base64,"+pngBytes.toString("base64")}));
+ const request={
+   method:"POST",url:"/api/video/source",
+   headers:{origin:"https://plux-v12-2-2k-fixed.onrender.com","content-length":String(payload.length)},
+   socket:{remoteAddress:"127.0.0.1"},
+   async *[Symbol.asyncIterator](){yield payload}
+ };
+ let sourceStatus=0,sourceContent="";
+ const sourceRes={headers:{},setHeader(k,v){this.headers[k]=v},writeHead(code){sourceStatus=code},end(data){sourceContent=String(data||"")}};
+ await handleCyhubVideo(request,sourceRes);
+ assert.equal(sourceStatus,201,sourceContent);
+ assert.equal(requests,1);
+ assert.match(JSON.parse(sourceContent).sourceId,/^[0-9a-f-]{36}$/);
+ console.log("PLUX V31 Cyhub first-frame upload route verified without paid generation");
+}finally{
+ globalThis.fetch=originalFetch;
+ if(formerKey===undefined)delete process.env.CYHUB_API_KEY;
+ else process.env.CYHUB_API_KEY=formerKey;
+}
