@@ -159,3 +159,6 @@ create policy plux_chat_photo_upload on storage.objects for insert to authentica
  and exists(select 1 from public.plux_dialogs d where d.id::text=split_part(name,'/',1)
    and ((select auth.uid())=d.user_a or (select auth.uid())=d.user_b))
 );
+
+-- Auth trigger is never directly callable by users.
+revoke execute on function public.plux_new_user() from public, anon, authenticated;
