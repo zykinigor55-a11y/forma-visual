@@ -42,3 +42,10 @@
 - `plux-v17-friends/plux-friends-v17.css` — стили OLED
 - `plux-v17-friends/plux-create-v17.css` — улучшенная компоновка редактора фото
 - `plux-v17-friends/apply-v17.mjs` — скрипт добавления экрана к сборке
+
+## Подключение к созданному проекту
+Supabase Project: **PLUX Friends** (`lxwqpoakdsbpshfyfqih`), Frankfurt, Free.
+Project URL: `https://lxwqpoakdsbpshfyfqih.supabase.co`.
+Миграции уже применены через Supabase: `plux_friends_v17_initial_secure_schema`, `plux_friends_invitation_rate_limit`.
+Не запускайте SQL-файлы повторно на этом проекте. Для веб-сборки потребуется публичный Publishable Key из Supabase в Render Environment; не путать с секретным Service Role.
+Проверено: 5 таблиц с включённым RLS, 7 политик на таблицах, 2 политики приватного Storage; 3 предупреждения Advisors для осознанно привилегированных RPC функций.
