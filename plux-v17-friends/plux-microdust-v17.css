@@ -1,0 +1,63 @@
+/* Crystal Microdust v17 — microscopic light points INSIDE existing glass spheres.
+   Low-contrast/low-cost effect: transforms + opacity only, no canvas or blur filters. */
+#app button.plux17-microdust-button{
+ position:relative!important;isolation:isolate;
+}
+#app button.plux17-microdust-button>.plux17-microdust-field{
+ position:absolute!important;inset:5%!important;border-radius:50%!important;
+ overflow:hidden!important;z-index:1!important;pointer-events:none!important;
+ opacity:.92!important;transform:translateZ(0);
+}
+#app button.plux17-microdust-button .plux17-microdust-dot{
+ position:absolute!important;left:var(--dust-x)!important;top:var(--dust-y)!important;
+ width:var(--dust-size)!important;height:var(--dust-size)!important;
+ display:block!important;border-radius:50%!important;
+ background:#e2fff4!important;
+ box-shadow:0 0 3px 1px rgba(98,255,190,.22)!important;
+ opacity:var(--dust-alpha)!important;
+ transform:translate3d(-50%,-50%,0);
+ animation:plux17-dust-drift var(--dust-time) ease-in-out var(--dust-delay) infinite alternate!important;
+ will-change:transform,opacity;
+}
+#app button.plux17-microdust-keyboard .plux17-microdust-dot:nth-child(4n){
+ background:#ffffff!important;box-shadow:0 0 3px rgba(210,255,245,.5)!important;
+}
+#app button.plux17-microdust-microphone .plux17-microdust-dot:nth-child(5n){
+ box-shadow:0 0 4px 1px rgba(78,255,179,.45)!important;
+}
+#app button.plux17-microdust-camera .plux17-microdust-dot{
+ animation-name:plux17-dust-camera!important;
+}
+#app button.plux17-microdust-button.plux17-microdust-touch .plux17-microdust-field{
+ animation:plux17-dust-touch .65s ease-out both!important;
+}
+#app button.plux17-microdust-button>.plux17-microdust-field~img,
+#app button.plux17-microdust-button>.plux17-microdust-field~svg,
+#app button.plux17-microdust-button>.plux17-microdust-field~.plux126-glyph,
+#app button.plux17-microdust-button>.plux17-microdust-field~.plux124-chrome{
+ position:relative;z-index:3;
+}
+@keyframes plux17-dust-drift{
+ 0%{transform:translate3d(-50%,-50%,0) scale(.68);opacity:calc(var(--dust-alpha)*.55)}
+ 50%{opacity:var(--dust-alpha)}
+ 100%{transform:translate3d(calc(-50% + var(--dust-shift)),calc(-50% - 10px),0) scale(1.13);opacity:calc(var(--dust-alpha)*.72)}
+}
+@keyframes plux17-dust-camera{
+ 0%{transform:translate3d(-50%,-50%,0) rotate(0deg);opacity:calc(var(--dust-alpha)*.62)}
+ 50%{opacity:var(--dust-alpha)}
+ 100%{transform:translate3d(calc(-50% + var(--dust-shift)),calc(-50% - 7px),0) rotate(var(--dust-spin));opacity:calc(var(--dust-alpha)*.8)}
+}
+@keyframes plux17-dust-touch{
+ 0%{opacity:.92;transform:scale(1)}
+ 45%{opacity:1;transform:scale(1.025)}
+ 100%{opacity:.92;transform:scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+ #app button.plux17-microdust-button .plux17-microdust-dot,
+ #app button.plux17-microdust-button .plux17-microdust-field{
+  animation:none!important;will-change:auto!important;
+ }
+}
+@media(max-width:410px){
+ #app button.plux17-microdust-button .plux17-microdust-dot:nth-child(3n){display:none!important}
+}
