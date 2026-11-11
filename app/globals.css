@@ -53,3 +53,6 @@
  .panel-heading{height:32px;min-height:32px}.source-upload{display:none}
  .mobile-nav{height:calc(40px + env(safe-area-inset-bottom));min-height:calc(40px + env(safe-area-inset-bottom))}
 }
+
+/* Three equal mobile navigation items: editor, variants, animation. */
+.mobile-nav{grid-template-columns:repeat(3,minmax(0,1fr))}
