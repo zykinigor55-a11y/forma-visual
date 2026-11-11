@@ -79,7 +79,9 @@
    const c=chosen();
    const prompt=lib.buildPrompt(c);
    if(image.length>11*1024*1024)throw Error('Изображение больше 8 МБ. Сожмите файл.');
-   const job=await getJSON('/api/wan3/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,prompt,duration:c.duration,ratio:c.ratio})});
+   const accessPin=$('wan3AccessPin')?.value?.trim()||'';
+   if(accessPin.length<12)throw Error('Введите приватный код доступа к Wan 3.0 (минимум 12 символов).');
+   const job=await getJSON('/api/wan3/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,prompt,duration:c.duration,ratio:c.ratio,accessPin})});
    jobId=job.id;
    try{sessionStorage.setItem('wan3-job-id',jobId)}catch{}
    result.textContent='Видео создаётся из текущего кадра.';
