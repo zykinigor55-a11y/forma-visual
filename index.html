@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="dom-render-progress-v53.css?v=ai-progress-20261110-v53">
 <link rel="stylesheet" href="dom-render-scene-icons-v54.css?v=minimal-scene-icons-20261110-v55">
 <link rel="stylesheet" href="dom-render-gallery-v56.css?v=portfolio-20261110-v56">
+<link rel="stylesheet" href="dom-render-wan26.css?v=wan26-preview-1">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -537,6 +538,21 @@
   <p id="animSummaryDetail">6 секунд · 24 fps · 16:9 · Natural Luxury</p>
   <div class="anim-video-notice" id="animVideoStatus"><span class="anim-status-dot" aria-hidden="true"></span><span>Демонстрация настроек. Видеогенерация пока не подключена.</span></div>
  </div>
+ <div class="wan26-panel" id="wan26Panel">
+ <div class="wan26-heading"><b>Генерация видео Wan 2.6</b><span class="wan26-label">OpenRouter · Free</span></div>
+ <p class="wan26-description">Получите MP4 из текущего рендера. Камеры, объективы, движения и фильтры из выбранных карточек используются в запросе.</p>
+ <span id="wanAvailability" class="wan26-info" aria-live="polite">Проверяем доступность бесплатной модели…</span>
+ <div class="wan26-tools">
+  <label class="wan26-duration">Длительность Wan<select id="wanDuration"><option value="5" selected>5 секунд</option><option value="10">10 секунд</option></select></label>
+  <label class="wan26-upload">Свой кадр (необязательно)<input id="wanImageFile" type="file" accept="image/jpeg,image/png,image/webp"><span id="wanFilename" class="wan26-file">По умолчанию — текущий кадр предпросмотра</span></label>
+  <button class="wan26-clear" id="wanClearFile" type="button">Сбросить файл</button>
+ </div>
+ <button type="button" id="wanGenerate" disabled>Создать видео · Wan 2.6 Free</button>
+ <div id="wanResult" class="wan26-result" hidden></div>
+ <div class="wan26-commands"><a id="wanDownload" hidden download="dom-render-wan26.mp4" href="#">Скачать MP4</a><button type="button" id="wanRefresh">Проверить статус</button></div>
+ <div id="wanMessage" role="status" aria-live="polite"></div>
+ <p class="wan26-foot">Если бесплатная модель недоступна или требует оплату, создание видео блокируется. Процент выполнения OpenRouter не сообщает. Данные обрабатываются провайдером. После перезапуска сервера задание может пропасть из интерфейса.</p>
+ </div>
 </section>
 <section id="variantsPanel" class="tab-panel" role="tabpanel">
  <span class="section-label">ИСТОРИЯ ПРОЕКТА</span>
@@ -660,5 +676,6 @@
 <script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
 <script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
 <script src="dom-render-progress-v53.js?v=ai-progress-20261110-v53"></script>
+<script src="dom-render-wan26.js?v=wan26-preview-1"></script>
 </body>
 </html>
