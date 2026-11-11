@@ -200,15 +200,42 @@
    if(!response.ok)throw Error(data.error||('Cyhub HTTP '+response.status+'. Генерация не запущена.'));
    return data;
  }
+ // Resize oversized first frames before upload. Preserve the entire image,
+ // its aspect ratio and subject; use a small JPEG over weak mobile connections.
+ async function compactSource(data){
+   if(typeof data!=='string'||data.length<2_500_000)return data;
+   const img=new Image();img.decoding='async';
+   await new Promise((ok,fail)=>{
+     img.onload=ok;img.onerror=()=>fail(Error('Не удалось подготовить исходный кадр.'));
+     img.src=data;
+   });
+   if(!img.naturalWidth||!img.naturalHeight)throw Error('Исходное фото повреждено.');
+   const ratio=Math.min(1,2048/Math.max(img.naturalWidth,img.naturalHeight));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));
+   canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+   const ctx=canvas.getContext('2d');
+   if(!ctx)throw Error('На телефоне недоступна обработка фото.');
+   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   const compressed=canvas.toDataURL('image/jpeg',.84);
+   canvas.width=canvas.height=0;
+   return compressed.length<data.length?compressed:data;
+ }
  async function uploadSourceOnce(){
    if(!sourceImage)return null;
    const revision=photoRevision;
    if(sourceCache&&sourceCache.revision===revision&&sourceCache.expires>Date.now())
      return sourceCache.id;
    if(sourcePending&&sourcePending.revision===revision)return sourcePending.promise;
+   const photo=sourceImage;
    const promise=(async()=>{
+     price.textContent='Оптимизирую исходный кадр для быстрой загрузки…';
+     const compact=await compactSource(photo);
+     if(revision!==photoRevision)throw Error('Исходное фото было заменено. Проверь стоимость заново.');
+     price.textContent='Передаю фото в Cyhub…';
      const upload=await fetchJson('/source',{
-       method:'POST',timeout:50000,body:JSON.stringify({dataUrl:sourceImage})
+       method:'POST',timeout:50000,body:JSON.stringify({dataUrl:compact})
      });
      if(!upload?.sourceId)throw Error('Cyhub не подтвердил загрузку исходного кадра.');
      if(revision===photoRevision)
