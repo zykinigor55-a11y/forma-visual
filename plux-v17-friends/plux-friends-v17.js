@@ -13,7 +13,7 @@ const notice=(s,bad=false)=>{id('pf-alert').textContent=s;id('pf-alert').hidden=
 const h=(opts={})=>({apikey:key, ...(S.session?.access_token?{Authorization:'Bearer '+S.session.access_token}:{}),...opts});
 async function fetcher(path,method='GET',body=null,binary=false,retry=false){
  if(!base||!key)throw Error('Сервис общения пока не подключён');
- const headers=h(binary?{'Content-Type':body.type}:{Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})});
+ const headers=h(binary&&body?{'Content-Type':body.type}:{Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})});
  const response=await fetch(base+path,{method,headers,body:binary?body:body?JSON.stringify(body):undefined,cache:'no-store'});
  if(response.status===401&&S.session?.refresh_token&&!retry){await refresh();return fetcher(path,method,body,binary,true)}
  const type=response.headers.get('content-type')||'';
@@ -30,6 +30,8 @@ async function start(){
  const me=await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name&id=eq.'+S.user.id);
  S.profile=me[0];id('pf-myname').textContent=S.profile?.display_name||'Профиль';
  id('pf-myhandle').textContent='@'+(S.profile?.handle||'');
+ id('pf-display').value=S.profile?.display_name||'';
+ id('pf-handle').value=S.profile?.handle||'';
  visible('pf-signin',false);visible('pf-content',true);
  await people();drawPeople();beginPolling();
 }
