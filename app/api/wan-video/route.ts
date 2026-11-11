@@ -18,7 +18,7 @@ function dailyLimit(): number {
 }
 function imageKey(id: string) {return 'wan-frames/' + id;}
 function jobKey(owner: string, id: string) {return 'wan-jobs/' + owner + '/' + id + '.json';}
-function authHeaders(key: string): HeadersInit {
+function authHeaders(key: string): Record<string, string> {
   return {'Authorization': 'Bearer ' + key};
 }
 async function getModel(key: string) {
@@ -30,14 +30,14 @@ async function getModel(key: string) {
 async function readJob(owner: string, id: string): Promise<VideoJob | null> {
   if (!isUUID(id)) return null;
   const object = await config().BUCKET?.get(jobKey(owner, id));
-  return object ? await object.json<VideoJob>() : null;
+  return object ? await object.json() as VideoJob : null;
 }
 async function providerStatus(key: string, remoteId: string): Promise<VideoStatus> {
   const response = await fetch(BASE + '/videos/' + encodeURIComponent(remoteId), {
     headers: authHeaders(key), signal: AbortSignal.timeout(30000)
   });
   if (!response.ok) throw new Error('OpenRouter не вернул статус задания (' + response.status + ').');
-  return response.json<VideoStatus>();
+  return response.json() as Promise<VideoStatus>;
 }
 function guardedOrigin(request: Request) {
   const origin = request.headers.get('origin');
