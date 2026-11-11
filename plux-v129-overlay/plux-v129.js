@@ -101,34 +101,86 @@
     notice:notify
   };
   const prompt=document.getElementById('image-prompt');
+  // PLUX V17: explicit image edit mode with an actual reference image.
+  const editor=document.createElement('section');
+  editor.className='plux17-editor';
+  editor.innerHTML='<div class="plux17-modebar"><button type="button" class="active" data-mode="create">✦ Создать с нуля</button><button type="button" data-mode="edit">▧ Редактировать фото</button></div><label class="plux17-upload" for="plux17-source">＋ Загрузить своё фото <small>JPG / PNG / WEBP · до 4 МБ</small></label><input id="plux17-source" type="file" accept="image/jpeg,image/png,image/webp" hidden><div class="plux17-preview" hidden><img alt="Ваше фото для редактирования"><div><strong>Исходная фотография</strong><small>Будут изменены только указанные элементы</small><button type="button">Удалить фото</button></div></div>';
+  const before=prompt?.closest('.create-prompt-wrap')||prompt;
+  (before?.parentNode||createScreen).insertBefore(editor,before||createScreen.firstChild);
+  const source=editor.querySelector('input');
+  const preview=editor.querySelector('.plux17-preview');
+  const modes=Array.from(editor.querySelectorAll('[data-mode]'));
+  let editMode=false,referenceImage='';
+  function updateMode(mode){
+    editMode=mode==='edit';
+    modes.forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    source.closest('.plux17-editor').classList.toggle('plux17-editing',editMode);
+    if(prompt)prompt.placeholder=editMode?'Например, замени фон на сосновый лес. Сам дом, ракурс и геометрию сохрани без изменений…':'Опиши, что хочешь создать…';
+  }
+  modes.forEach(b=>b.addEventListener('click',()=>updateMode(b.dataset.mode)));
+  const clear=()=>{referenceImage='';source.value='';preview.hidden=true;preview.querySelector('img').removeAttribute('src');updateMode('create')};
+  preview.querySelector('button').addEventListener('click',clear);
+  source.addEventListener('change',async()=>{
+    const file=source.files?.[0];
+    if(!file)return;
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>4*1024*1024){notify('Выберите JPG, PNG или WEBP до 4 МБ.');source.value='';return}
+    try{
+      const blobUrl=URL.createObjectURL(file);
+      const img=new Image();
+      try{
+        await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=blobUrl});
+        const factor=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+        const canvas=document.createElement('canvas');canvas.width=Math.round(img.naturalWidth*factor);canvas.height=Math.round(img.naturalHeight*factor);
+        if(!canvas.width||!canvas.height||canvas.width*canvas.height>10000000)throw Error('Слишком большое фото');
+        canvas.getContext('2d',{alpha:false}).drawImage(img,0,0,canvas.width,canvas.height);
+        referenceImage=canvas.toDataURL('image/jpeg',.82);
+        if(referenceImage.length>5_700_000)throw Error('Сожмите фото до 4 МБ');
+        preview.querySelector('img').src=referenceImage;preview.hidden=false;updateMode('edit');
+      }finally{URL.revokeObjectURL(blobUrl)}
+    }catch(e){notify(e.message||'Не удалось загрузить фото');clear()}
+  });
+  const descriptions={
+    'Реализм':['Фотореализм','Как настоящее фото'],
+    'Арт':['Иллюстрация','Художественный рисунок'],
+    '3D':['3D-рендер','Объёмная графика'],
+    'Анимация':['Мультстиль','Кадр мультфильма']
+  };
+  createScreen.querySelectorAll('.create-chips [data-style]').forEach(chip=>{
+    const d=descriptions[chip.dataset.style];
+    if(!d)return;
+    chip.replaceChildren();
+    const label=document.createElement('span');label.textContent=d[0];
+    const hint=document.createElement('small');hint.textContent=d[1];
+    chip.append(label,hint);
+    chip.setAttribute('aria-label',d.join(' — '));
+  });
   const result=document.createElement('section');result.className='plux129-result';result.hidden=true;
   createButton.insertAdjacentElement('afterend',result);
   createButton.addEventListener('click',async e=>{
     e.preventDefault();e.stopImmediatePropagation();
     if(createButton.disabled)return;
     const description=prompt?.value.trim()||'';
-    if(description.length<3){notify('Сначала опиши изображение.');prompt?.focus();return}
+    if(description.length<3){notify(editMode?'Опиши, что изменить на фото.':'Сначала опиши изображение.');prompt?.focus();return}
+    if(editMode&&!referenceImage){notify('Загрузи фото, которое нужно отредактировать.');source.click();return}
     const selected=createScreen.querySelector('.create-chips .selected')?.dataset.style||'Реализм';
     const styles={'Реализм':'realism','Арт':'art','3D':'3d','Анимация':'animation'};
     createButton.disabled=true;createButton.setAttribute('aria-busy','true');
     createButton.textContent='Создаю изображение…';
     result.hidden=false;result.replaceChildren();
-    const progress=document.createElement('p');progress.className='plux129-generating';progress.textContent='Nano Banana создаёт изображение. Запрос может занять около минуты.';
+    const progress=document.createElement('p');progress.className='plux129-generating';progress.textContent=editMode?'Редактируем фотографию…':'Создаём изображение…';
     result.append(progress);
     try{
       const response=await fetch(base+'/api/image',{method:'POST',mode:'cors',credentials:'omit',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({prompt:description,style:styles[selected]||'realism'}),signal:AbortSignal.timeout(125000)});
+        body:JSON.stringify({prompt:description,style:styles[selected]||'realism',referenceImage:editMode?referenceImage:undefined}),signal:AbortSignal.timeout(125000)});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(data.error||'Не удалось создать изображение');
       const src=data.image||data.url;
       if(!src)throw Error('Генератор не вернул файл.');
-      const image=document.createElement('img');image.src=src;image.alt='Результат генерации Nano Banana';
+      const image=document.createElement('img');image.src=src;image.alt=editMode?'Отредактированная фотография':'Сгенерированное изображение';
       result.replaceChildren(image);
-      const action=document.createElement('a');action.className='plux129-save';action.textContent='Сохранить изображение';
-      action.href=src;
-      if(src.startsWith('data:'))action.download='PLUX_Nano_Banana.png';
-      else{action.target='_blank';action.rel='noopener noreferrer'}
+      const action=document.createElement('button');action.type='button';action.className='plux129-save';action.textContent='Сохранить на телефон';
+      action.addEventListener('click',()=>window.PLUXSaveV17?.save(src,'PLUX-'+Date.now()+'.png','image/png')||notify('Скачивание недоступно. Открой изображение в браузере.'));
       result.append(action);result.scrollIntoView({block:'nearest',behavior:'smooth'});
     }catch(e){progress.textContent=e?.name==='TimeoutError'?'Сервер долго отвечает. Проверь баланс — генерация могла быть оплачена.':String(e.message||'Ошибка генерации');result.classList.add('plux129-error')}
     finally{createButton.disabled=false;createButton.removeAttribute('aria-busy');createButton.innerHTML='Создать <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-star"></use></svg>'}
