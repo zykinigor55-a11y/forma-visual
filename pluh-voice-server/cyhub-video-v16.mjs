@@ -99,12 +99,25 @@ async function uploadImage(body,ip){
  const {bytes,mime,extension}=parseUploadedPhoto(body?.dataUrl);
  const form=new FormData();
  form.append("file",new Blob([bytes],{type:mime}),"plux."+extension);
- const upload=await fetch(BASE+"/files",{
+ const started=Date.now();
+ let upload;
+ try{
+  upload=await fetch(BASE+"/files",{
    method:"POST",headers:{Authorization:"Bearer "+secret()},body:form,
    signal:AbortSignal.timeout(35000)
- });
+  });
+ }catch(e){
+  console.warn("PLUX VIDEO photo upload transport",JSON.stringify({name:String(e?.name||"Error").slice(0,40),durationMs:Date.now()-started,sizeBytes:bytes.length}));
+  throw problem(502,"Не удалось передать фото в Cyhub: тайм-аут или нестабильный интернет. Платная генерация не запускалась.");
+ }
  const data=await upload.json().catch(()=>null);
- if(!upload.ok)throw problem(502,upload.status===402?"Недостаточно средств Cyhub.":"Cyhub не принял исходное фото (HTTP "+upload.status+").");
+ console.log("PLUX VIDEO photo upload",JSON.stringify({http:upload.status,durationMs:Date.now()-started,sizeBytes:bytes.length,hasUrl:typeof data?.url==="string"}));
+ if(!upload.ok){
+  const hint=String(data?.error?.message||data?.message||data?.detail||"").replace(/[\\r\\n]+/g," ").slice(0,120);
+  let reason=upload.status===401||upload.status===403?"Cyhub отклонил API-ключ.":upload.status===402?"Недостаточно средств на балансе Cyhub.":upload.status===429?"Cyhub ограничил загрузку фото. Повтори позже.":"Cyhub не принял исходное фото (HTTP "+upload.status+").";
+  if(upload.status===413)reason="Cyhub отклонил размер изображения. Выбери более лёгкое фото.";
+  throw problem(upload.status===429?429:502,reason+(hint?" "+hint:""));
+ }
  let url;try{url=new URL(data?.url)}catch{}
  if(!url||url.protocol!=="https:"||url.username||url.password)
   throw problem(502,"Cyhub не вернул прямую ссылку на фото.");
@@ -188,7 +201,8 @@ export async function handleCyhubVideo(req,res){
   if(path==="/api/video/source"){
     if(req.method!=="POST")throw problem(405,"Используй POST.");
     const body=await readBody(req,13_000_000);
-    json(res,201,await uploadImage(body,ip));
+    const source=await uploadImage(body,ip);
+    json(res,201,source);
     return true;
   }
   if(path==="/api/video/quote"){
