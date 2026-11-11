@@ -5,7 +5,7 @@
  * in Alibaba's Singapore console and explicitly confirms that in Render.
  * Never automatically fall back to pay-as-you-go, other models or regions.
  */
-import {randomUUID} from 'node:crypto';
+import {randomUUID,timingSafeEqual} from 'node:crypto';
 import {Readable} from 'node:stream';
 
 const MODEL='wan3.0-video';
@@ -16,6 +16,13 @@ const key=()=>String(process.env.DASHSCOPE_API_KEY||'').trim();
 const workspace=()=>String(process.env.WAN3_WORKSPACE_ID||'').trim();
 const enabled=()=>process.env.WAN3_ENABLED==='true';
 const protectedQuota=()=>process.env.WAN3_FREE_QUOTA_ONLY_CONFIRMED==='true';
+const accessCode=()=>String(process.env.WAN3_ACCESS_PIN||'').trim();
+function authenticated(code){
+ const secret=accessCode();
+ if(secret.length<12||typeof code!=='string'||code.length>200)return false;
+ const left=Buffer.from(secret),right=Buffer.from(code);
+ return left.length===right.length&&timingSafeEqual(left,right);
+}
 const dailyLimit=()=>{
   const n=Number(process.env.WAN_DAILY_LIMIT||10);
   return Number.isInteger(n)&&n>=1&&n<=20?n:10;
@@ -34,6 +41,7 @@ function settings(){
   if(!workspace())return {ready:false,reason:'Добавьте WAN3_WORKSPACE_ID из Alibaba Cloud Model Studio (Singapore).'};
   try{endpoint()}catch(e){return {ready:false,reason:compact(e)}}
   if(!protectedQuota())return {ready:false,reason:'Сначала включите Free Quota Only для wan3.0-video в Alibaba Cloud, затем установите WAN3_FREE_QUOTA_ONLY_CONFIRMED=true в Render. Без этого возможны списания.'};
+  if(accessCode().length<12)return {ready:false,reason:'Создайте WAN3_ACCESS_PIN (минимум 12 символов) в Environment на Render, чтобы защитить пробную квоту от посторонних.'};
   return {ready:true,model:MODEL,region:'Singapore',note:'Конфигурация заполнена; доступность квоты и действительность ключа проверяются только при реальном вызове.'};
 }
 function providerError(status,body){
@@ -129,6 +137,7 @@ export function createWan3Video({json,readJSON,sameOrigin,imageBlob}){
       active++;
       try{
         const input=await readJSON(req);
+        if(!authenticated(input?.accessPin))return fail(res,403,'Неверный приватный код генерации Wan 3.0.');
         const blob=imageBlob(input?.image,'image');
         if(!blob)return fail(res,400,'Загрузите изображение дома.');
         if(blob.size>MAX_IMAGE)return fail(res,413,'Размер изображения должен быть до 8 МБ.');
