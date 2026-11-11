@@ -74,6 +74,9 @@
  const preview=$('.plux17-preview',modal),place=$('.plux17-placeholder',modal);
  const pick=$('.plux17-pick input',modal),clearPhoto=$('.plux17-clear',modal);
  let sourceImage=null,sourceName='',uploadTicket=0,needsSource=false;
+ let photoRevision=0,sourceCache=null,sourcePending=null;
+ // Don't re-upload identical photo each time user adjusts video options.
+ function forgetUploadedImage(){photoRevision++;sourceCache=null;sourcePending=null}
  const STYLE={
   original:'Preserve the exact source image visual style, composition, identity and materials. No redesign.',
   cinema:'Cinematic live-action film look, natural shadows, realistic motion, elegant lens rendering.',
@@ -108,6 +111,7 @@
  function setImage(data,name='Готовое изображение'){
   if(data&&!/^data:image\/(png|jpeg|webp);base64,/i.test(data))throw Error('Не удалось прочитать исходный кадр. Загрузи фото вручную.');
   if(data&&data.length>12_500_000)throw Error('Фото превышает 9 МБ.');
+  if(sourceImage!==data)forgetUploadedImage();
   sourceImage=data||null;sourceName=name;needsSource=false;preview.hidden=!sourceImage;
   if(sourceImage)preview.src=sourceImage;
   else preview.removeAttribute('src');
@@ -181,12 +185,39 @@
  clearPhoto.addEventListener('click',()=>setImage(null));
  const rub=minor=>(minor/100).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽';
  async function fetchJson(path,options={}){
-   const response=await fetch(API+path,{mode:'cors',credentials:'omit',cache:'no-store',
-     headers:{'Content-Type':'application/json'},...options,
-     signal:AbortSignal.timeout(options.timeout||25000)});
+   const {timeout=25000,...opts}=options;
+   let response;
+   try{
+     response=await fetch(API+path,{mode:'cors',credentials:'omit',cache:'no-store',
+       headers:{'Content-Type':'application/json'},...opts,
+       signal:AbortSignal.timeout(timeout)});
+   }catch(error){
+     if(error?.name==='TimeoutError'||error?.name==='AbortError')
+       throw Error(path==='/source'?'Загрузка фото занимает слишком много времени. Проверь интернет и повтори бесплатную проверку цены.':'Cyhub не ответил вовремя. Попробуй проверить цену позже.');
+     throw Error('Нет связи с видеосервисом. Проверь интернет и повтори бесплатную проверку.');
+   }
    const data=await response.json().catch(()=>({}));
-   if(!response.ok)throw new Error(data.error||'Ошибка соединения с сервисом.');
+   if(!response.ok)throw Error(data.error||('Cyhub HTTP '+response.status+'. Генерация не запущена.'));
    return data;
+ }
+ async function uploadSourceOnce(){
+   if(!sourceImage)return null;
+   const revision=photoRevision;
+   if(sourceCache&&sourceCache.revision===revision&&sourceCache.expires>Date.now())
+     return sourceCache.id;
+   if(sourcePending&&sourcePending.revision===revision)return sourcePending.promise;
+   const promise=(async()=>{
+     const upload=await fetchJson('/source',{
+       method:'POST',timeout:50000,body:JSON.stringify({dataUrl:sourceImage})
+     });
+     if(!upload?.sourceId)throw Error('Cyhub не подтвердил загрузку исходного кадра.');
+     if(revision===photoRevision)
+       sourceCache={revision,id:upload.sourceId,expires:Date.now()+48*60*1000};
+     return upload.sourceId;
+   })();
+   sourcePending={revision,promise};
+   try{return await promise}
+   finally{if(sourcePending?.promise===promise)sourcePending=null}
  }
  function resetQuote(){
    seq++;quote=null;
@@ -239,6 +270,7 @@
     }catch(e){needsSource=true;quoteBtn.disabled=true;price.textContent=e.message}
     if(prefill.prompt)prompt.value=String(prefill.prompt).slice(0,850);
     resetQuote();
+    if(needsSource)price.textContent='Загружаю исходный кадр. Проверка стоимости станет доступна после загрузки.';
   }else if(prefill){prompt.value=String(prefill).slice(0,850);resetQuote()}
   if(!modal.open)modal.showModal();
   prompt.focus({preventScroll:true});
@@ -261,19 +293,24 @@
   if(text.length<5){price.textContent='Опиши движение и сцену хотя бы пятью символами.';prompt.focus();return}
   busy=true;const ticket=++seq;confirmBtn.hidden=true;
   updateButton(quoteBtn,true,'Проверяю цену…');
+  const started=Date.now();
+  const noteTimer=setInterval(()=>{
+    if(ticket!==seq||!busy)return;
+    const seconds=Math.floor((Date.now()-started)/1000);
+    price.textContent=sourceImage&&!sourceCache
+      ?'Передаю исходное фото: '+seconds+' сек. Деньги не списаны.'
+      :'Cyhub рассчитывает цену: '+seconds+' сек. Деньги не списаны.';
+  },3500);
   price.textContent='Запрашиваю точную стоимость у Cyhub, деньги не списываются.';
   try{
     let sourceId=null;
     if(sourceImage){
       price.textContent='Подготавливаю исходное фото для Grok Lite…';
-      const upload=await fetchJson('/source',{
-        method:'POST',timeout:45000,body:JSON.stringify({dataUrl:sourceImage})
-      });
+      sourceId=await uploadSourceOnce();
       if(ticket!==seq)return;
-      sourceId=upload.sourceId;
-      price.textContent='Исходное фото загружено. Проверяю стоимость…';
+      price.textContent='Первый кадр загружен. Проверяю стоимость…';
     }
-    const data=await fetchJson('/quote',{method:'POST',body:JSON.stringify({
+    const data=await fetchJson('/quote',{method:'POST',timeout:25000,body:JSON.stringify({
       prompt:makePrompt(text),duration:Number(duration.value),aspectRatio:aspect.value,sourceId
     })});
     if(ticket!==seq)return;
@@ -283,7 +320,7 @@
     else {confirmBtn.textContent='Создать видео за '+rub(data.amountMinor);confirmBtn.hidden=false}
     quoteBtn.hidden=true;
   }catch(e){if(ticket===seq)price.textContent=String(e.message||'Не удалось получить цену.')}
-  finally{busy=false;updateButton(quoteBtn,false,'Проверить стоимость')}
+  finally{clearInterval(noteTimer);busy=false;updateButton(quoteBtn,false,'Проверить стоимость')}
  });
  confirmBtn.addEventListener('click',async()=>{
   if(!quote||busy||playing)return;
