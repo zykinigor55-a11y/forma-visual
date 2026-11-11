@@ -1,0 +1,27 @@
+/* ДОМ.РЕНДЕР · WAN 2.6 Free, isolated from existing preview styles */
+#animationPanel .wan26-panel{margin-top:14px;padding:17px;border-radius:14px;background:#fff;border:1px solid #d8e4db;box-shadow:0 10px 30px #2039270c}
+#animationPanel .wan26-heading{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+#animationPanel .wan26-heading b{font-size:14px;letter-spacing:-.02em;color:#203f2b}
+#animationPanel .wan26-label{border:1px solid #bad5bf;background:#edf5ed;border-radius:20px;padding:5px 9px;font-size:10px;color:#245936;font-weight:700}
+#animationPanel .wan26-description{font-size:11px;line-height:1.65;color:#788b7b;margin:0 0 14px}
+#animationPanel .wan26-info{font-size:11px;color:#5b705e;line-height:1.5;display:block;margin:0 0 12px}
+#animationPanel .wan26-info[data-ready="false"]{color:#9a694d}
+#animationPanel .wan26-tools{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:12px 0}
+#animationPanel .wan26-duration{display:flex;flex-direction:column;gap:6px;flex:1;min-width:100px;font-size:11px;font-weight:600;color:#4e6352}
+#animationPanel .wan26-duration select{width:100%;min-height:36px;border-radius:8px;border:1px solid #ccdace;background:#f9faf8;padding:7px 9px}
+#animationPanel .wan26-upload{display:flex;flex-direction:column;flex:2;gap:6px;min-width:165px;font-size:11px}
+#animationPanel .wan26-file{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#859388}
+#animationPanel .wan26-upload input{width:100%;max-width:100%;font-size:11px;color:#445e48}
+#animationPanel .wan26-clear{font-size:11px;min-height:35px;border:1px solid #d2ddd3;padding:6px 10px;border-radius:8px}
+#animationPanel #wanGenerate{display:flex;align-items:center;justify-content:center;width:100%;border-radius:10px;color:white;background:#23563a;min-height:44px;font-weight:750;font-size:12px}
+#animationPanel #wanGenerate:hover:not(:disabled){background:#1b482f}
+#animationPanel #wanGenerate:disabled{opacity:.42;cursor:not-allowed}
+#animationPanel .wan26-result{margin-top:12px;padding:13px;background:#f2f7f3;border:1px solid #d7e6d8;border-radius:9px;color:#2c6a42;font-size:12px}
+#animationPanel .wan26-commands{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}
+#animationPanel .wan26-commands a{display:inline-flex;padding:11px 14px;border-radius:9px;background:#224d34;color:white;font-size:12px;text-decoration:none;font-weight:650}
+#animationPanel .wan26-commands button{font-size:11px;border:1px solid #d5dfd7;padding:10px;border-radius:9px}
+#animationPanel #wanMessage{color:#6f8272;font-size:11px;line-height:1.6;min-height:17px;overflow-wrap:anywhere}
+#animationPanel .wan26-foot{color:#88968c;font-size:10px;line-height:1.5;margin:12px 0 0}
+@media(max-width:700px){#animationPanel .wan26-panel{padding:13px;border-radius:12px}#animationPanel .wan26-heading b{font-size:13px}#animationPanel .wan26-tools{flex-direction:column;align-items:stretch}#animationPanel .wan26-duration{width:100%}}
+
+#animationPanel #wanDownload[hidden],#animationPanel #wanResult[hidden]{display:none}
