@@ -31,6 +31,8 @@ try{
    ambient:home.querySelectorAll('.plux318-ambient-spark').length,orbs,
    theme:document.documentElement.dataset.pluxTheme,nav:home.querySelectorAll('.bottom-nav>.nav-button').length};
  });
+ const headerAudit=await page.evaluate(()=>[...document.querySelector('#screen-home .home-head').querySelectorAll('img,svg,h1,h2,strong,span,div')].slice(0,35).map(n=>({tag:n.tagName,id:n.id,class:String(n.className?.baseVal||n.className||'').slice(0,80),src:(n.getAttribute('src')||'').slice(0,90),text:(n.textContent||'').trim().slice(0,25),visible:getComputedStyle(n).visibility,display:getComputedStyle(n).display,rect:[Math.round(n.getBoundingClientRect().width),Math.round(n.getBoundingClientRect().height)]})));
+ console.log('PLUX318_HEADER_AUDIT '+JSON.stringify(headerAudit));
  const s=await state();console.log('PLUX318_LIVE_HOME '+JSON.stringify(s));
  assert(s.logo&&s.logo[2]>=90&&s.logo[2]<=175,'compact cognition logo mounted');
  assert(s.videoTab&&s.videoTab[2]>30,'video tab mounted and visible');
