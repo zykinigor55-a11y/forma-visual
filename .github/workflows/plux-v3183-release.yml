@@ -1,0 +1,40 @@
+name: PLUX V31.8.3 Android APK direct download
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths: ['.github/workflows/plux-v3183-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Download verified V31.8.3 APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43226835971 --repo "${{ github.repository }}" --name PLUX-V31.8-Android-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.8.3-Android.apk
+          unzip -tq release/PLUX-V31.8.3-Android.apk
+          sha256sum release/PLUX-V31.8.3-Android.apk
+      - name: Publish direct APK download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-8-3-gemini-nano-banana-20261112"
+          apk="release/PLUX-V31.8.3-Android.apk"
+          notes="PLUX V31.8.3 Android debug: premium OLED interface and full-screen mascot from V31.7, only animated orbital AI core (no green wordmark), reduced subtle glass particles, Gemini 2.5 Flash Lite realtime over Arkheon with WebSocket instead of ElevenLabs, Nano Banana 2.1 API Market request cleanup with actionable error messages, Video and Friends avatars. Uses live site plux-v17-friends-preview.onrender.com and backend pluh-voice-demo.onrender.com. Not signed for Play Store. Audio and image generation require active API service; phone test remains necessary."
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk" --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "PLUX V31.8.3 - Gemini Voice & Nano Banana" --notes "$notes"
+          else
+            gh release create "$tag" "$apk" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "PLUX V31.8.3 - Gemini Voice & Nano Banana" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[]|(.name+" "+.url)'
