@@ -6,7 +6,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-app=FastAPI(title="SCENA Karaoke Cloud",version="1.2.2", docs_url=None,redoc_url=None)
+app=FastAPI(title="SCENA Karaoke Cloud",version="1.2.3", docs_url=None,redoc_url=None)
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["GET","POST","DELETE","OPTIONS"],allow_headers=["Authorization","Content-Type"])
 BASE=Path(tempfile.gettempdir())/"scena-jobs"; BASE.mkdir(exist_ok=True)
 TOKEN=os.getenv("SCENA_ACCESS_TOKEN","")
@@ -33,6 +33,25 @@ def dependencies():
             "demucs_model":model_file.is_file(),
             "faster_whisper":importlib.util.find_spec("faster_whisper") is not None,
             "whisper_model":(whisper_path/"model.bin").is_file()}
+# Free Render containers expose a 512 MiB cgroup memory limit. Demucs
+# cannot be run safely in that budget: reject the task before upload/OOM.
+MIN_MEMORY_MB=int(os.getenv("SCENA_MIN_MEMORY_MB","1536"))
+def available_memory_mb():
+    for file in ("/sys/fs/cgroup/memory.max", "/sys/fs/cgroup/memory/memory.limit_in_bytes"):
+        try:
+            raw=Path(file).read_text().strip()
+            if raw!="max":
+                limit=int(raw)
+                if 0<limit<2**50: return limit//(1024*1024)
+        except (OSError,ValueError):pass
+    return None
+def inference_capacity():
+    mem=available_memory_mb()
+    return {"memory_limit_mb":mem,"minimum_memory_mb":MIN_MEMORY_MB,
+            "memory_sufficient":mem is None or mem>=MIN_MEMORY_MB}
+def processing_ready():
+    return bool(TOKEN) and all(dependencies().values()) and inference_capacity()["memory_sufficient"]
+
 def prune():
     while True:
         try:
@@ -110,15 +129,24 @@ def work(jid, src):
 @app.get("/")
 def index():
     d=dependencies()
-    return {"service":"СЦЕНА • личное караоке","status":"online","engine_ready":bool(TOKEN) and all(d.values()),"api":"/api/health"}
+    return {"service":"СЦЕНА • личное караоке","status":"online","engine_ready":processing_ready(),"api":"/api/health","resources":inference_capacity()}
 @app.get("/api/health")
 def health():
     d=dependencies()
-    return {"ok":True,"engine_ready":bool(TOKEN) and all(d.values()),"dependencies":d,"cloud":True,"private":True,"retention_seconds":TTL,"model":"Demucs + Faster-Whisper","version":"1.2.2-model-preload"}
+    return {"ok":True,"engine_ready":processing_ready(),"dependencies":d,
+            "resources":inference_capacity(),"cloud":True,"private":True,
+            "retention_seconds":TTL,"model":"Demucs + Faster-Whisper","version":"1.2.3-capacity-guard"}
 @app.post("/api/process",status_code=202)
 async def submit(request:Request,file:UploadFile=File(...)):
     require(request)
-    if not all(dependencies().values()):raise HTTPException(503,"ИИ на сервере не готов")
+    cap=inference_capacity()
+    if not cap["memory_sufficient"]:
+        raise HTTPException(503,
+            f"Для создания минусовки требуется сервер минимум с {MIN_MEMORY_MB} МБ ОЗУ. "
+            f"Сейчас доступно {cap['memory_limit_mb']} МБ. "
+            "Бесплатный Render недостаточно мощный; нужен сервер с большим объёмом памяти.")
+    if not all(dependencies().values()):
+        raise HTTPException(503,"ИИ на сервере не готов")
     ext=Path(file.filename or "").suffix.lower()
     if ext not in (".mp3",".wav",".flac",".m4a",".ogg",".aac",".opus"): raise HTTPException(415,"Этот аудиоформат не поддерживается")
     with guard:
