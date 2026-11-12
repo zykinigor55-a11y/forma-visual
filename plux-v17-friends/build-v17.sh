@@ -13,6 +13,19 @@ node --check plux-published/plux-save-v17.js
 node --check plux-published/plux-microdust-v17.js
 node --check plux-published/music-player-v31.js
 node --check plux-published/drop-colors-v31.js
+node --check plux-published/plux-gallery-v24.js
+node --check plux-published/plux-music-v24.js
+node --check plux-published/plux-modes-v26.js
+node --check plux-published/plux-themes-v31.js
+node --check plux-published/tools-v30-bridge-v31.js
+test -s plux-published/plux-v26.css
+test -s plux-published/plux-themes-v23.css
+test -s plux-published/plux-v30.css
+grep -q 'plux-gallery-v24.js' plux-published/index.html
+grep -q 'plux-music-v24.js' plux-published/index.html
+grep -q 'plux-modes-v26.js' plux-published/index.html
+grep -q 'plux-themes-v31.js' plux-published/index.html
+grep -q 'tools-v30-bridge-v31.js' plux-published/index.html
 node --check plux-v31/apply-v31.mjs
 node --check plux-v17-friends/install-media-v17.mjs
 grep -q 'plux-friends-v17.js' plux-published/index.html
@@ -20,4 +33,4 @@ grep -q 'plux-microdust-v17.js' plux-published/index.html
 grep -q 'music-player-v31.js' plux-published/index.html
 grep -q 'drop-colors-v31.js' plux-published/index.html
 test -s plux-published/index.html
-echo "PLUX V31 release build verified: V30 base + Friends + native-save web bridge + music + colors"
+echo "PLUX V31 release build verified: exact V30 six tools + 8 true colors + Friends + old Audius + radio"
