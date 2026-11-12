@@ -57,7 +57,7 @@ export function beginGenerationJob({kind,prompt,messages,secret,imageKey,ip}){
  void Promise.resolve().then(async()=>{
   try{
    let artifact=kind==="image"
-    ?await makeGptImage(prompt,imageKey||secret,ip)
+    ?await makeGptImage(prompt,imageKey||secret,ip,messages)
     :kind==="presentation"?await makePresentation(prompt,messages,secret,ip,imageKey||secret)
     :await makePdf(prompt,messages,secret,ip);
    if(kind==="image")artifact=storeGeneratedImage(artifact);
