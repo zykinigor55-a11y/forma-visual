@@ -7,3 +7,10 @@
 .reset{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px;color:#6d8597;background:#fff;border:1px solid #d8e1e7}
 .right input:disabled,.right select:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:700px){.uploadbox{margin:8px}.right label{padding:10px 10px 0}}
+
+.import-stage{margin-top:10px;padding:9px 10px;border-left:2px solid #8aa4b8;background:#eef3f6;color:#567185;font-size:10px;line-height:1.5}
+.import-report{display:flex;flex-direction:column;gap:5px;margin-top:10px;padding:11px;border:1px solid #dce4e8;background:#fff;font-size:10px;color:#657582;overflow-wrap:anywhere}
+.import-report b{font-size:11px;color:#4d6577}
+.import-report small{line-height:1.5;color:#99a6b0}
+.viewport canvas{display:block;touch-action:none}
+button:disabled{opacity:.5;cursor:wait}
