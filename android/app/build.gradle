@@ -1,0 +1,17 @@
+plugins { id 'com.android.application' }
+android {
+  namespace 'app.scena.karaoke'
+  compileSdk 35
+  defaultConfig {
+    applicationId 'app.scena.karaoke'
+    minSdk 26
+    targetSdk 35
+    versionCode 14
+    versionName '1.4'
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+dependencies { implementation 'androidx.webkit:webkit:1.12.1' }
