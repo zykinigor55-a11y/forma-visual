@@ -1,0 +1,23 @@
+name: PLUX V31.7 music mini player swipe and EQ
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - 'plux-v31/verify-music-swipe-v317.mjs'
+      - '.github/workflows/plux-v317-music.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  music-ui-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install mobile Chrome driver
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Check swipe previous/next and theme equalizer without external streaming
+        run: node plux-v31/verify-music-swipe-v317.mjs
