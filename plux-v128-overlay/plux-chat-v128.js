@@ -29,7 +29,7 @@
   window.addEventListener('pagehide',()=>temporaryUrls.splice(0).forEach(uri=>URL.revokeObjectURL(uri)));
   function appendArtifact(item){
     if(!item||!['image','pdf','presentation'].includes(item.type))return;
-    const file=String(item.filename|| (item.type==='presentation'?'PLUX-presentation.pptx':item.type==='pdf'?'PLUX.pdf':'PLUX.png')).replace(/[\\\/<>:*?"|]/g,'').slice(0,90);
+    const file=String(item.filename|| (item.type==='presentation'?'PLUX-presentation.pptx':item.type==='pdf'?'PLUX.pdf':'PLUX.png')).replace(/[\\/<>:*?"|]/g,'').slice(0,90);
     const uri=downloadable(item.dataUrl)||(typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null);
     if(!uri){append('info','Не удалось открыть вложение от генератора.');return}
     const row=document.createElement('div');row.className='chat-row bot plux14-artifact-row';
@@ -54,8 +54,8 @@
   }
   function isPresentation(text){
     const s=String(text||'').toLowerCase();
-    return /(?:сделай|создай|собери|подготовь|оформи|придумай|сгенерируй|нужна|хочу)\\s.{0,55}(?:презентаци|слайды|powerpoint|pptx)/i.test(s)
-       || /^(?:презентация|презентацию|слайды|pptx)\\b/i.test(s);
+    return /(?:сделай|создай|собери|подготовь|оформи|придумай|сгенерируй|нужна|хочу)\s.{0,55}(?:презентаци|слайды|powerpoint|pptx)/i.test(s)
+       || /^(?:презентация|презентацию|слайды|pptx)\b/i.test(s);
   }
   function inferredKind(text){
     if(isPresentation(text))return 'presentation';
@@ -84,7 +84,7 @@
   }
   function appendUploads(attachments){
     for(const item of attachments){
-      if(!item?.mime?.startsWith('image/')||!/^data:image\\/(png|jpeg|webp);base64,/.test(item.dataUrl||''))continue;
+      if(!item?.mime?.startsWith('image/')||!/^data:image\/(png|jpeg|webp);base64,/.test(item.dataUrl||''))continue;
       const row=document.createElement('div');row.className='chat-row user plux3184-upload-row';
       const image=document.createElement('img');image.className='plux3184-upload-preview';image.alt='Загруженное изображение: '+String(item.name||'фото').slice(0,80);
       image.src=item.dataUrl;row.append(image);feed.append(row);
