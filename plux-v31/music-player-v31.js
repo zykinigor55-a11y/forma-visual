@@ -117,19 +117,33 @@
    list.append(b);
   });
  }
+ let activeRequest=null,requestId=0;
  async function load(q=''){
-  if(S.busy)return;
+  // A fast switch between Radio and Audius cancels stale search results,
+  // but never changes the playing queue captured by choose().
+  const id=++requestId;
+  activeRequest?.abort();
+  const controller=new AbortController();activeRequest=controller;
+  const source=S.source;
   S.busy=true;note.textContent='Ищу музыку…';list.replaceChildren();
-  const url=BACK+(S.source==='radio'?'/api/music/radio'+(q?'?q='+encodeURIComponent(q):''):
+  const url=BACK+(source==='radio'?'/api/music/radio'+(q?'?q='+encodeURIComponent(q):''):
     '/api/music/'+(q?'search?q='+encodeURIComponent(q):'trending'));
+  const timeout=setTimeout(()=>controller.abort(),14000);
   try{
-   const r=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(14000)});
+   const r=await fetch(url,{cache:'no-store',signal:controller.signal});
    const d=await r.json().catch(()=>({}));
+   if(id!==requestId)return;
    if(!r.ok)throw Error(d.error||'Сервис недоступен');
-   S.list=(S.source==='radio'?d.stations:d.tracks)||[];
+   S.list=(source==='radio'?d.stations:d.tracks)||[];
    showRows();
-  }catch(e){note.textContent=String(e.message||'Нет связи с музыкальным сервисом.');}
-  finally{S.busy=false}
+  }catch(e){
+   if(id!==requestId)return;
+   note.textContent=e.name==='AbortError'?'Поиск не ответил. Попробуй ещё раз.':
+    String(e.message||'Нет связи с музыкальным сервисом.');
+  }finally{
+   clearTimeout(timeout);
+   if(id===requestId){S.busy=false;activeRequest=null}
+  }
  }
  $('.plux31-music-close').onclick=()=>dialog.close();
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
