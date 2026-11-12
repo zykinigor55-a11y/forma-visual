@@ -23,10 +23,10 @@ if(!check)throw Error('PLUX original screen contract changed. Refuse to patch un
 const styles=['plux-v129.css','plux-video-v16.css'];
 const scripts=['plux-save-v17.js','plux-v129.js','plux-video-v16.js'];
 for(const f of styles){
- if(!html.includes('/'+f))html=html.replace('</head>', '<link rel="stylesheet" href="/'+f+'?v=3185"></head>');
+ if(!html.includes('/'+f))html=html.replace('</head>', '<link rel="stylesheet" href="/'+f+'?v=3186"></head>');
 }
 for(const f of scripts){
- if(!html.includes('/'+f))html=html.replace('</body>', '<script defer src="/'+f+'?v=3185"></script></body>');
+ if(!html.includes('/'+f))html=html.replace('</body>', '<script defer src="/'+f+'?v=3186"></script></body>');
 }
 writeFileSync(indexPath,html);
 console.log('PLUX v17 image & video modules: installed. Existing design unchanged.');
