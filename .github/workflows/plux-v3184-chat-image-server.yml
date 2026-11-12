@@ -1,0 +1,24 @@
+name: PLUX V31.8.4 full chat backend checks
+on:
+  push:
+    branches: [pluh-voice-server]
+    paths:
+      - 'pluh-voice-server/**'
+      - '.github/workflows/plux-v3184-chat-image-server.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  full-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    defaults:
+      run:
+        working-directory: pluh-voice-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install pinned PowerPoint dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run full existing API + PPTX + uploaded-photo edit regression suite
+        run: npm run check
