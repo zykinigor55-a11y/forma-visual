@@ -1,0 +1,85 @@
+/* PLUX V31.4 · fix the actual collapsed mascot scene discovered on mobile:
+   860px viewport, 421px home, 0px #home-scene => mascot invisible.
+   Keep all original V30 character art, transitions and quick-action geometry. */
+#app #screen-home:not([hidden]) {
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  width:100%!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  max-height:100dvh!important;
+  overflow:hidden!important;
+}
+/* Navigation changes hidden on route; ensure Home does not show underneath Chat. */
+#app #screen-home[hidden]{display:none!important}
+#app #screen-home:not([hidden]) #home-scene {
+  display:block!important;
+  position:relative!important;
+  flex:1 1 0px!important;
+  height:auto!important;
+  min-height:clamp(105px,21dvh,175px)!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+/* Re-enable actual rendering area for the existing five-state mascot.
+   Do not set src, change art or override its animation controller. */
+#app #screen-home:not([hidden]) #home-mascot {
+  height:100%!important;
+  min-height:100%!important;
+  max-height:100%!important;
+  width:100%!important;
+  top:0!important;left:0!important;right:0!important;bottom:0!important;
+}
+#app #screen-home:not([hidden]) #home-mascot-image{
+  width:100%!important;height:100%!important;min-height:100%!important;
+  object-fit:contain!important;
+}
+@supports not(height:100dvh) {
+  #app #screen-home:not([hidden]){
+    height:100vh!important;min-height:100vh!important;max-height:100vh!important;
+  }
+}
+/* Exactly the same photographic glass shells, now recolored without touching
+   the original bright white keyboard/camera/microphone icon layers. */
+#app #screen-home .quick-actions button.plux314-themed-orb {
+  isolation:isolate!important;
+  background-image:none!important;
+  background-color:transparent!important;
+}
+#app #screen-home .quick-actions button.plux314-themed-orb>img.plux314-orb-art {
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;
+  max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;
+  border-radius:50%!important;
+  z-index:0!important;
+  pointer-events:none!important;
+  transform:none!important;
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+  transition:filter 160ms ease-out!important;
+}
+/* Theme glow on the button surface, not on the inner silver/white icons. */
+#app #screen-home .quick-actions button.plux314-themed-orb{
+  filter:drop-shadow(0 5px 7px #0009)
+    drop-shadow(0 0 8px rgba(var(--plux314-orb-rgb,27,210,147),.35))!important;
+}
+#app #screen-home .quick-actions #open-voice-quick.plux314-themed-orb::after{
+  background:radial-gradient(circle at 30% 70%,
+      rgba(var(--plux314-orb-rgb,27,210,147),.24),transparent 65%),
+    radial-gradient(circle at 78% 36%,
+      rgba(var(--plux314-orb-rgb,27,210,147),.12),transparent 72%)!important;
+}
+/* Existing microdust and chrome overlays remain above the new shell. */
+#app #screen-home .quick-actions button.plux314-themed-orb>.plux17-microdust-field{
+  z-index:1!important;
+}
+@media (prefers-reduced-motion:reduce) {
+  #app #screen-home .quick-actions button.plux314-themed-orb>img.plux314-orb-art{
+    transition:none!important
+  }
+}
