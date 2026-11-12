@@ -15,4 +15,5 @@ grep -q 'plux-friends-v17.js' plux-published/index.html
 grep -q 'plux-microdust-v17.js' plux-published/index.html
 test -s plux-published/index.html
 node plux-v31/probe-ui.mjs plux-published
+node plux-v31/probe-palette-v31.mjs plux-published
 echo "PLUX V31 baseline probe complete"
