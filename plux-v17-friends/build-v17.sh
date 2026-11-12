@@ -47,6 +47,9 @@ node --check plux-v17-friends/install-media-v17.mjs
 grep -q 'plux-friends-v17.js' plux-published/index.html
 grep -q 'plux-microdust-v17.js' plux-published/index.html
 grep -q 'music-player-v31.js' plux-published/index.html
+grep -q 'plux31-equalizer' plux-published/music-player-v31.js
+grep -q 'plux31-eq-dance' plux-published/music-player-v31.css
+grep -q 'touchstart' plux-published/music-player-v31.js
 grep -q 'drop-colors-v31.js' plux-published/index.html
 test -s plux-published/index.html
-echo "PLUX V31.6 OLED: full-bleed video with uncropped drop, V30 tools, 8 theme orbs, Friends and Audius"
+echo "PLUX V31.7 OLED: original full-screen mascot, swipe radio/Audius, color equalizer and Friends, all modules checked"
