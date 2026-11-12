@@ -44,13 +44,13 @@ const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
  'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js'];
 for(const file of styles){
- if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3162"></head>`);
+ if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3171"></head>`);
 }
 for(const file of scripts){
- if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3162"></script></body>`);
+ if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3171"></script></body>`);
 }
 if(!html.includes('name="theme-color"'))html=html.replace('</head>','<meta name="theme-color" content="#000000"></head>');
 if(!html.includes('plux-release-v31'))html=html.replace('</head>',
  '<meta name="plux-release-v31" content="V30-fullscreen-mascot-8-themes-friends-asmr-glass-orbs-OLED"></head>');
 writeFileSync(htmlFile,html);
-console.log('PLUX V31.6 OLED: full-screen V30 video composition and uncropped drop restored, glass orbs retained.');
+console.log('PLUX V31.7 OLED: full-screen V30 drop, swipeable radio/Audius mini-player and color-synced equalizer.');
