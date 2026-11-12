@@ -216,8 +216,16 @@
     createBusy=true;createButton.disabled=true;createButton.setAttribute('aria-busy','true');
     createButton.textContent='Создаю изображение…';
     result.hidden=false;result.classList.remove('plux129-error');result.replaceChildren();
-    const progress=document.createElement('p');progress.className='plux129-generating';progress.textContent=editMode?'Редактируем фотографию…':'Создаём изображение…';
-    result.append(progress);
+    // Same visual component as the GPT Image 2 Chat card (pixel-identical).
+    const ui=window.PLUXGenerationProgressV3188?.mount?.(result,{
+      kind:"image",model:"Nano Banana 2.1",edit:editMode
+    })||null;
+    const progress=ui?ui.root:document.createElement('p');
+    if(!ui){
+      progress.className='plux129-generating';
+      progress.textContent=editMode?'Редактируем фотографию…':'Создаём изображение…';
+      result.append(progress);
+    }
     try{
       const response=await fetch(base+'/api/image',{method:'POST',mode:'cors',credentials:'omit',
         headers:{'Content-Type':'application/json'},
@@ -244,12 +252,25 @@
       if(!raw.trim())throw Error('Сервер вернул пустой ответ. Проверь обработчик /api/image.');
       const src=data.image||data.url;
       if(!src)throw Error('Генератор не вернул файл.');
-      const image=document.createElement('img');image.src=src;image.alt=editMode?'Отредактированная фотография':'Сгенерированное изображение';
+      const image=document.createElement('img');image.alt=editMode?'Отредактированная фотография':'Сгенерированное изображение';
+      // 100% is shown only after actual image bytes have been loaded.
+      ui?.state('Загружаю готовое изображение…');ui?.setProgress(93);
+      await new Promise((resolve,reject)=>{
+        image.onload=()=>image.naturalWidth>0?resolve():reject(Error('Изображение оказалось пустым.'));
+        image.onerror=()=>reject(Error('Готовое изображение не удалось загрузить. Проверь интернет.'));
+        image.src=src;
+        if(image.complete&&image.naturalWidth>0)resolve();
+      });
+      ui?.finish();
       result.replaceChildren(image);
       const action=document.createElement('button');action.type='button';action.className='plux129-save';action.textContent='Сохранить на телефон';
       action.addEventListener('click',()=>window.PLUXSaveV17?.save(src,'PLUX-'+Date.now()+'.png','image/png')||notify('Скачивание недоступно. Открой изображение в браузере.'));
       result.append(action);result.scrollIntoView({block:'nearest',behavior:'smooth'});
-    }catch(e){progress.textContent=e?.name==='TimeoutError'?'Сервер долго отвечает. Проверь баланс — генерация могла быть оплачена.':String(e.message||'Ошибка генерации');result.classList.add('plux129-error')}
+    }catch(e){
+      const msg=e?.name==='TimeoutError'?'Сервер долго отвечает. Генерация могла быть оплачена. Не отправляй запрос повторно сразу.':String(e.message||'Ошибка генерации');
+      if(ui)ui.fail(msg);else progress.textContent=msg;
+      result.classList.add('plux129-error');
+    }
     finally{createBusy=false;updatePromptCounter();createButton.removeAttribute('aria-busy');createButton.innerHTML='Создать <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-star"></use></svg>'}
   },{capture:true});
 })();
