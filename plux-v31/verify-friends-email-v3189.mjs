@@ -66,6 +66,12 @@ try{
  await page.evaluate(()=>window.PLUXFriendsV17.open());
  await page.waitForFunction(()=>!document.getElementById("pf-confirm").hidden,{timeout:10000});
  assert.equal(signupCount,1);
+ // The app must enforce a 60-second cooldown before asking the provider again.
+ await page.locator("#pf-resend").click();
+ await page.waitForFunction(()=>document.querySelector("#pf-alert")?.textContent?.includes("Повторить отправку"),{timeout:10000});
+ assert.equal(resendCount,0,"Cooldown prevents repeated real emails");
+ // Move the mock browser clock forward without actually waiting 60 seconds.
+ await page.evaluate(()=>{const now=Date.now();Date.now=()=>now+61000});
  await page.locator("#pf-resend").click();
  await page.waitForFunction(()=>document.querySelector("#pf-alert")?.textContent?.includes("Слишком много"),{timeout:10000});
  assert.equal(resendCount,1);
