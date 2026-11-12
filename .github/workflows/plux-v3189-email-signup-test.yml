@@ -1,0 +1,27 @@
+name: PLUX V31.8.9 Friends email signup and confirmation
+on:
+  push:
+    branches: [plux-v3189-friends-signup-confirmation]
+    paths: 
+      - 'plux-v17-friends/**'
+      - 'plux-v31/verify-friends-email-v3189.mjs'
+      - '.github/workflows/plux-v3189-email-signup-test.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  signup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install Playwright runner
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Validate code
+        run: |
+          node --check plux-v17-friends/plux-friends-v17.js
+          node --check plux-v17-friends/apply-v17.mjs
+          node --check plux-v31/verify-friends-email-v3189.mjs
+      - name: Test registration, email confirmation and resend without SMTP usage
+        run: node plux-v31/verify-friends-email-v3189.mjs
