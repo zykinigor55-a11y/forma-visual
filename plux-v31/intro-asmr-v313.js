@@ -18,7 +18,10 @@
    '#greeting-title','#greeting-subtitle',
    '#welcome-text','#welcome-typewriter','#onboard-typed-text',
    '#intro-typewriter','#screen-onboard .typewriter',
-   '#screen-onboard .typing-text','#screen-welcome .typewriter'
+   '#screen-onboard .typing-text','#screen-welcome .typewriter',
+   '#plux127-intro .typing-text','#plux127-intro h1',
+   '#screen-onboard [data-plux-welcome-typewriter]',
+   '#screen-welcome [data-typewriter]','#screen-onboard h1'
  ];
  let ctx=null,noise=null,unlocked=false;
  let lastTick=0,tickCount=0;
