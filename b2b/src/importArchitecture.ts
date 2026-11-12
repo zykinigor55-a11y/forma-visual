@@ -49,7 +49,6 @@ function report(scene:THREE.Group,sourceName:string,format:string):ImportReport{
   const preview=new THREE.Group();
   preview.name="FORMA Preview (not for engineering dimensions)";
   preview.add(scene);
-  scene.scale.setScalar(1); // Input geometry stays as authored.
   preview.scale.setScalar(scale);
   preview.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
   const unitWarning=(format==="glb"||format==="gltf")?"glTF принято считать метрическим; проверьте размер по чертежу.":"Единицы исходного файла не подтверждены — масштаб просмотра нормализован.";
@@ -149,6 +148,7 @@ async function convertedImport(file:File,stage:Stage):Promise<ImportReport>{
   let resp:Response;
   try{resp=await fetch(base+"/api/imports",{method:"POST",body:data})}catch{throw new Error("Нет связи с сервисом конвертации. Проверьте адрес API.")}
   if(!resp.ok)throw new Error(await responseError(resp));
+  if(!(resp.headers.get("content-type")||"").includes("application/json"))throw new Error("Сервис конвертации не отвечает. Запустите import-service или настройте API.");
   let job=await resp.json() as Job;
   for(let attempt=0;attempt<120;attempt++){
     if(job.status==="failed")throw new Error(job.message||"Ошибка преобразования модели.");
