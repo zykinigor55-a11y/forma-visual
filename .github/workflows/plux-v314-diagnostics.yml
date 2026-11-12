@@ -1,0 +1,30 @@
+name: PLUX V31.4 mascot and quick buttons diagnostic
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - 'plux-v31/diagnose-home-v314.mjs'
+      - '.github/workflows/plux-v314-diagnostics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chrome browser driver
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Inspect mascot, video, stack and color state
+        run: node plux-v31/diagnose-home-v314.mjs
+      - name: Preserve mobile screenshot
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PLUX-V31-Home-Mascot-Diagnostic
+          path: plux-v31/home-broken-before-fix.png
+          if-no-files-found: warn
