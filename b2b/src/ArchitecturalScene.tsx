@@ -6,6 +6,7 @@ import {Config,Zone,Opening,frontOpenings,panelParts,subtractOpenings,getMateria
 
 export type CameraPreset="perspective"|"facade"|"side"|"roof";
 export type EnvironmentMode="studio"|"daylight"|"overcast"|"evening";
+export type MapSet=Partial<Record<Zone,{base?:THREE.Texture;normal?:THREE.Texture;roughness?:THREE.Texture}>>;
 
 type Props={
  config:Config;
@@ -17,7 +18,8 @@ type Props={
  cameraPreset:CameraPreset;
  environment:EnvironmentMode;
  showGrid:boolean;
- maps?:Partial<Record<Zone,THREE.Texture>>;
+ maps?:MapSet;
+ onCanvasReady?:(canvas:HTMLCanvasElement)=>void;
 };
 
 function CameraController({preset,width,depth}:{preset:CameraPreset;width:number;depth:number}){
@@ -135,19 +137,19 @@ function Building({config,mats,selected,onSelect,mode}:{config:Config;mats:Finis
  </group>;
 }
 
-export default function ArchitecturalScene({config,selected,onSelect,imported,onMesh,mode,cameraPreset,environment,showGrid,maps}:Props){
+export default function ArchitecturalScene({config,selected,onSelect,imported,onMesh,mode,cameraPreset,environment,showGrid,maps,onCanvasReady}:Props){
  const materials=useMemo(()=>{
   const make=(zone:Zone)=>{
    const data=getMaterial(config.zoneMaterials[zone]);
-   return new THREE.MeshStandardMaterial({color:maps?.[zone]?"#ffffff":data.color,map:maps?.[zone]||null,roughness:data.roughness,metalness:data.metalness});
+   return new THREE.MeshStandardMaterial({color:maps?.[zone]?.base?"#ffffff":data.color,map:maps?.[zone]?.base||null,normalMap:maps?.[zone]?.normal||null,roughnessMap:maps?.[zone]?.roughness||null,roughness:data.roughness,metalness:data.metalness});
   };
   return {facade:make("facade"),roof:make("roof"),plinth:make("plinth"),frames:make("frames")};
- },[config.zoneMaterials.facade,config.zoneMaterials.roof,config.zoneMaterials.plinth,config.zoneMaterials.frames,maps?.facade,maps?.roof,maps?.plinth,maps?.frames]);
+ },[config.zoneMaterials.facade,config.zoneMaterials.roof,config.zoneMaterials.plinth,config.zoneMaterials.frames,maps]);
  useEffect(()=>()=>Object.values(materials).forEach(m=>m.dispose()),[materials]);
  const evening=environment==="evening";
  const overcast=environment==="overcast";
  const ambient=evening?.75:overcast?2.2:1.75;
- return <Canvas shadows dpr={[1,1.8]} camera={{position:[15,9,18],fov:36,near:.05,far:450}} gl={{antialias:true,powerPreference:"high-performance"}} onCreated={({gl})=>{gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=evening?1.1:1.55}}>
+ return <Canvas shadows dpr={[1,1.8]} camera={{position:[15,9,18],fov:36,near:.05,far:450}} gl={{antialias:true,powerPreference:"high-performance",preserveDrawingBuffer:true}} onCreated={({gl})=>{gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=evening?1.1:1.55;onCanvasReady?.(gl.domElement)}}>
   <color attach="background" args={[mode==="studio"?"#eceff2":evening?"#aab0b5":overcast?"#dfe3e5":"#e7eceb"]}/>
   <fog attach="fog" args={[mode==="studio"?"#eceff2":evening?"#aab0b5":"#e7eceb",40,140]}/>
   <hemisphereLight args={["#ffffff","#a3a6a1",ambient]}/>
