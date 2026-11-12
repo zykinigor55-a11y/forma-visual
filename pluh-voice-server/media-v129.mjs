@@ -120,15 +120,15 @@ export async function handleImageRequest(req,res){
   try{
     let endpoint="https://api-market1.shop/v1/images/generations";
     let headers={"Authorization":"Bearer "+key,"Content-Type":"application/json"};
-    let requestBody=JSON.stringify({model:"nano-banana-2.1",prompt:prompt+"\n"+style,size:"1024x1024",n:1,response_format:"b64_json"});
+    let requestBody=JSON.stringify({model:"nano-banana-2.1",prompt:prompt+"\n"+style,size:"1024x1024",quality:"high",n:1,response_format:"b64_json"});
     if(reference){
       // OpenAI-compatible image edit; no fallback to text-to-image on failure.
       // This preserves the user's source and prevents an unintended second charge.
       endpoint="https://api-market1.shop/v1/images/edits";
       const form=new FormData();
-      form.set("model","gpt-image-2");
+      form.set("model","nano-banana-2.1");
       form.set("prompt",prompt+"\n"+style+"\nUse the attached image as the source. Preserve all areas not requested to change.");
-      form.set("size","1024x1024");form.set("n","1");
+      form.set("size","1024x1024");form.set("quality","high");form.set("n","1");
       const ext=reference.mime==="image/png"?"png":reference.mime==="image/webp"?"webp":"jpg";
       form.set("image",new Blob([reference.bytes],{type:reference.mime}),"PLUX-source."+ext);
       headers={"Authorization":"Bearer "+key};
