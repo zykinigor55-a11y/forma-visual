@@ -29,7 +29,8 @@ const modules=[
  ['plux-v31/intro-asmr-v313.js','intro-asmr-v313.js'],
  ['plux-v31/home-fix-v314.css','home-fix-v314.css'],
  ['plux-v31/quick-orbs-v314.js','quick-orbs-v314.js'],
- ['plux-v31/oled-v315.css','oled-v315.css']
+ ['plux-v31/oled-v315.css','oled-v315.css'],
+ ['plux-v31/mascot-fullscreen-v316.css','mascot-fullscreen-v316.css']
 ];
 for(const [src,dest]of modules){
  if(!existsSync(src))throw Error('V30/V31 dependency missing: '+src);
