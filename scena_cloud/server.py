@@ -6,7 +6,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-app=FastAPI(title="SCENA Karaoke Cloud",version="1.2.1", docs_url=None,redoc_url=None)
+app=FastAPI(title="SCENA Karaoke Cloud",version="1.2.2", docs_url=None,redoc_url=None)
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["GET","POST","DELETE","OPTIONS"],allow_headers=["Authorization","Content-Type"])
 BASE=Path(tempfile.gettempdir())/"scena-jobs"; BASE.mkdir(exist_ok=True)
 TOKEN=os.getenv("SCENA_ACCESS_TOKEN","")
@@ -26,7 +26,13 @@ def update(jobid,**kw):
     with guard:
         if jobid in jobs: jobs[jobid].update(kw)
 def dependencies():
-    return {"ffmpeg": bool(shutil.which("ffmpeg")), "ffprobe":bool(shutil.which("ffprobe")), "demucs":importlib.util.find_spec("demucs") is not None, "faster_whisper":importlib.util.find_spec("faster_whisper") is not None}
+    model_file=Path(os.getenv("TORCH_HOME",str(Path.home()/".cache/torch")))/"hub"/"checkpoints"/"955717e8-8726e21a.th"
+    whisper_path=Path(os.getenv("SCENA_WHISPER_MODEL_PATH","/opt/models/whisper-tiny"))
+    return {"ffmpeg": bool(shutil.which("ffmpeg")), "ffprobe":bool(shutil.which("ffprobe")),
+            "demucs":importlib.util.find_spec("demucs") is not None,
+            "demucs_model":model_file.is_file(),
+            "faster_whisper":importlib.util.find_spec("faster_whisper") is not None,
+            "whisper_model":(whisper_path/"model.bin").is_file()}
 def prune():
     while True:
         try:
@@ -59,8 +65,19 @@ def work(jid, src):
         update(jid,stage="Разделяем вокал и инструменты")
         out=folder/"separated"
         model=os.getenv("SCENA_DEMUCS_MODEL","htdemucs")
-        proc=subprocess.run([sys.executable,"-m","demucs","-n",model,"--two-stems","vocals","--segment","7","--mp3","--mp3-bitrate","192","-o",str(out),str(src)],capture_output=True,text=True,timeout=3600,cwd=folder)
-        if proc.returncode: raise RuntimeError("Ошибка разделения музыки: "+(proc.stderr or proc.stdout)[-280:])
+        proc=subprocess.run([sys.executable,"-m","demucs","-n",model,
+            "--two-stems","vocals","--segment","2","--overlap","0.1",
+            "--shifts","0","-j","0","-d","cpu",
+            "--mp3","--mp3-bitrate","192","-o",str(out),str(src)],
+            capture_output=True,text=True,timeout=3600,cwd=folder)
+        if proc.returncode:
+            detail=(proc.stderr or proc.stdout or "")[-1200:]
+            print(f"SCENA Demucs error (exit {proc.returncode}): {detail}",flush=True)
+            if "CERTIFICATE_VERIFY_FAILED" in detail or "certificate has expired" in detail:
+                raise RuntimeError("Ошибка загрузки ИИ-модели на сервере. Повтори попытку после обновления сервера.")
+            if proc.returncode in (-9,137) or "out of memory" in detail.lower():
+                raise RuntimeError("Недостаточно оперативной памяти облачного сервера для обработки песни.")
+            raise RuntimeError("ИИ не смог разделить аудиодорожку. Проверь доступную память сервера.")
         stemdir=out/model/src.stem
         stems={"no_vocals.mp3":"instrumental.mp3","vocals.mp3":"vocals.mp3"}
         for source,dest in stems.items():
@@ -68,7 +85,7 @@ def work(jid, src):
             shutil.move(str(stemdir/source),str(folder/dest))
         update(jid,stage="Распознаём слова")
         from faster_whisper import WhisperModel
-        model=WhisperModel(os.getenv("SCENA_WHISPER_MODEL","tiny"),device="cpu",compute_type="int8")
+        model=WhisperModel(os.getenv("SCENA_WHISPER_MODEL_PATH","/opt/models/whisper-tiny"),device="cpu",compute_type="int8")
         segments,info=model.transcribe(str(folder/"vocals.mp3"),word_timestamps=True,vad_filter=False,beam_size=3)
         words=[]
         for seg in segments:
@@ -79,7 +96,15 @@ def work(jid, src):
         (folder/"lyrics.lrc").write_text(make_lrc(words),encoding="utf-8")
         update(jid,status="ready",stage="Караоке готово",words=words,language=info.language)
     except Exception as e:
-        update(jid,status="error",stage="Ошибка",error=str(e)[:400])
+        msg=str(e)
+        print(f"SCENA job {jid[:8]} failure: {type(e).__name__}: {msg[-400:]}",flush=True)
+        if "CERTIFICATE_VERIFY_FAILED" in msg or "certificate has expired" in msg:
+            msg="Не удалось получить модель ИИ. Повтори попытку после обновления сервера."
+        elif "out of memory" in msg.lower():
+            msg="Недостаточно памяти сервера для обработки этой песни."
+        elif not isinstance(e, RuntimeError) or len(msg)>220 or "Traceback" in msg or "/usr/local/" in msg:
+            msg="Ошибка обработки на сервере. Проверь состояние сервера и попробуй короткий трек."
+        update(jid,status="error",stage="Ошибка",error=msg[:220])
     finally:
         src.unlink(missing_ok=True);shutil.rmtree(folder/"separated",ignore_errors=True)
 @app.get("/")
@@ -89,7 +114,7 @@ def index():
 @app.get("/api/health")
 def health():
     d=dependencies()
-    return {"ok":True,"engine_ready":bool(TOKEN) and all(d.values()),"dependencies":d,"cloud":True,"private":True,"retention_seconds":TTL,"model":"Demucs + Faster-Whisper"}
+    return {"ok":True,"engine_ready":bool(TOKEN) and all(d.values()),"dependencies":d,"cloud":True,"private":True,"retention_seconds":TTL,"model":"Demucs + Faster-Whisper","version":"1.2.2-model-preload"}
 @app.post("/api/process",status_code=202)
 async def submit(request:Request,file:UploadFile=File(...)):
     require(request)
