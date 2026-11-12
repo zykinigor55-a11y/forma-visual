@@ -32,7 +32,8 @@ try{
    called++;
    assert.equal(url,'https://api-market1.shop/v1/images/edits');
    assert.equal(options.method,'POST');
-   assert.equal(options.body.get('model'),'gpt-image-2');
+   assert.equal(options.body.get('model'),'nano-banana-2.1');
+   assert.equal(options.body.get('quality'),'high');
    assert.equal(options.body.get('prompt').includes('Измени фон на лес'),true);
    assert.ok(options.body.get('image') instanceof Blob);
    assert.equal(options.body.get('image').type,'image/jpeg');
