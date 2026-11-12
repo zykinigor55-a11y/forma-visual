@@ -55,7 +55,7 @@ test -s plux-published/index.html
 # V31.8 feature gates: all additive modules must be bundled and linked.
 for file in header-palette-v3184.js header-prompt-v3184.css video-hub-v318.js video-hub-v318.css ai-cognition-v318.js ai-cognition-v318.css microdust-enhanced-v318.js microdust-enhanced-v318.css microphone-permission-v318.js theme-motion-v318.css gemini-voice-v3183.js; do
   test -s "plux-published/$file"
-  grep -q "/$file?v=3185" plux-published/index.html
+  grep -q "/$file?v=3186" plux-published/index.html
 done
 for file in header-palette-v3184.js video-hub-v318.js ai-cognition-v318.js microdust-enhanced-v318.js microphone-permission-v318.js gemini-voice-v3183.js; do
   node --check "plux-published/$file"
@@ -77,3 +77,11 @@ grep -q 'responseFinished' plux-published/gemini-voice-v3183.js
 if grep -Eiq '<script[^>]*src=["\x27][^"\x27]*plux-live-v151\.js' plux-published/index.html; then
  echo 'competing ElevenLabs realtime script was not removed' >&2; exit 49
 fi
+
+# V31.8.6 voice memory must load before realtime Gemini; never include raw recordings.
+node --check plux-published/voice-memory-v3186.js
+node --check plux-published/gemini-voice-v3183.js
+test -s plux-published/voice-memory-v3186.css
+grep -q '/voice-memory-v3186.js?v=3186' plux-published/index.html
+grep -q '/voice-memory-v3186.css?v=3186' plux-published/index.html
+grep -q 'input_audio_transcription' plux-published/gemini-voice-v3183.js
