@@ -297,17 +297,10 @@
       if(!confirmedMissing){
         throw Error("Нет связи с сервером. Генерация могла начаться: не отправляй повторно платный запрос.");
       }
-      // This is safe even when two requests race: the backend will always
-      // reuse the same high-entropy id and never launch two jobs for it.
-      progress?.state("Восстановил соединение. Проверяю запрос…");
-      try{response=await fetch(endpoint,{...opts,signal:AbortSignal.timeout(48000)})}
-      catch{
-        try{
-          const job=await queryStatus(jobId);
-          if(job)return {job:{id:jobId,kind}};
-        }catch{}
-        throw Error("Соединение снова оборвалось. Повторная генерация не запускалась.");
-      }
+      // A 404 could also mean a Render instance restarted and lost its
+      // in-memory jobs, while the image provider may already have charged.
+      // Never resend a paid POST after an ambiguous network error.
+      throw Error("Сервер отвечает, но прежняя задача не найдена. Запрос не повторялся, чтобы избежать двойной оплаты.");
     }
     const data=await response.json().catch(()=>({}));
     if(!response.ok)throw Error(data.error||"Сервер не принял запрос (HTTP "+response.status+").");
