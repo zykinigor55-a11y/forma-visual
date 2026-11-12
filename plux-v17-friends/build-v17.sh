@@ -13,6 +13,12 @@ node --check plux-published/plux-save-v17.js
 node --check plux-published/plux-microdust-v17.js
 node --check plux-published/music-player-v31.js
 node --check plux-published/drop-colors-v31.js
+node --check plux-published/intro-asmr-v313.js
+test -s plux-published/home-contrast-v313.css
+grep -q 'home-contrast-v313.css' plux-published/index.html
+grep -q 'intro-asmr-v313.js' plux-published/index.html
+if grep -q 'welcome-asmr-v31.js' plux-published/index.html; then echo 'duplicate ASMR script' >&2; exit 34; fi
+if grep -q 'home-contrast-v31.css' plux-published/index.html; then echo 'duplicate home contrast' >&2; exit 35; fi
 node --check plux-published/plux-gallery-v24.js
 node --check plux-published/plux-music-v24.js
 node --check plux-published/plux-modes-v26.js
@@ -33,4 +39,4 @@ grep -q 'plux-microdust-v17.js' plux-published/index.html
 grep -q 'music-player-v31.js' plux-published/index.html
 grep -q 'drop-colors-v31.js' plux-published/index.html
 test -s plux-published/index.html
-echo "PLUX V31 release build verified: exact V30 six tools + 8 true colors + Friends + old Audius + radio"
+echo "PLUX V31.3 verified: V30 six tools, eight true colors, Friends, Audius, centered Home, contrast ambient, greeting ASMR"
