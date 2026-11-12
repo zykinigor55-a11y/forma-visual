@@ -5,14 +5,18 @@ unzip -oq PLUX_V10_2_RENDER_READY.zip -d /tmp/plux112source; mkdir -p plux-publi
 # Stage additional features after the original approved PLUX build.
 node plux-v17-friends/install-media-v17.mjs plux-published
 node plux-v17-friends/apply-v17.mjs plux-published
+node plux-v31/apply-v31.mjs plux-published
 node --check plux-published/plux-v129.js
 node --check plux-published/plux-video-v16.js
 node --check plux-published/plux-friends-v17.js
 node --check plux-published/plux-save-v17.js
 node --check plux-published/plux-microdust-v17.js
+node --check plux-published/music-player-v31.js
+node --check plux-v31/apply-v31.mjs
 node --check plux-v17-friends/install-media-v17.mjs
 grep -q 'plux-friends-v17.js' plux-published/index.html
 grep -q 'plux-microdust-v17.js' plux-published/index.html
+grep -q 'music-player-v31.js' plux-published/index.html
 test -s plux-published/index.html
 node plux-v31/probe-ui.mjs plux-published
 node plux-v31/probe-palette-v31.mjs plux-published
