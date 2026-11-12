@@ -1,4 +1,4 @@
-import{readFileSync}from'node:fs';import{join}from'node:path';
+import{readFileSync,readdirSync}from'node:fs';import{join}from'node:path';
 const dir=process.argv[2]||'plux-published';
 for(const f of ['index.html','app.js']){
  const s=readFileSync(join(dir,f),'utf8');
@@ -29,4 +29,12 @@ for(const f of ['index.html','app.js']){
   if(at>=0){console.log('V31_PALETTE '+f+' '+token+' '+JSON.stringify(data.slice(Math.max(0,at-240),Math.min(data.length,at+1550))));i++}
   if(i>=12)break;
  }
+}
+
+for(const name of readdirSync(dir).filter(f=>/\.(?:js|css)$/.test(f))){
+ if(name.includes('plux-live-')||name==='app.js')continue;
+ const data=readFileSync(join(dir,name),'utf8');
+ if(data.length>250000)continue;
+ const matches=[...data.matchAll(/(?:палитр|цвет кап|синий|красный|color-palette|data-color|setColor|hue-rotate|swatch|color-choice|hueRotate)/gi)].slice(0,6);
+ if(matches.length)console.log('V31_COLOR_FILE '+name+' '+JSON.stringify(matches.map(m=>data.slice(Math.max(0,m.index-100),Math.min(data.length,m.index+260)).replace(/\s+/g,' '))));
 }
