@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V17: ephemeral Arkheon Realtime browser credentials.
  * Browser never receives ARKHEON_API_KEY; token valid for one connection/60s.
  */
@@ -12,8 +13,8 @@ function json(res,status,data){
 }
 const msg=(status,message)=>Object.assign(new Error(message),{status});
 function origin(req,res){
- if(req.headers.origin!==ORIGIN){json(res,403,{error:"Открой официальное приложение ПЛЮХ для голосового режима."});return false}
- res.setHeader("Access-Control-Allow-Origin",ORIGIN);
+ if(!appOrigin(req)){json(res,403,{error:"Открой официальное приложение ПЛЮХ для голосового режима."});return false}
+ res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
  res.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS");
  res.setHeader("Access-Control-Allow-Headers","Content-Type");
  res.setHeader("Vary","Origin");
