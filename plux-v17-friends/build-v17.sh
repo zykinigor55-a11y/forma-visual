@@ -16,6 +16,9 @@ node --check plux-published/drop-colors-v31.js
 node --check plux-published/intro-asmr-v313.js
 node --check plux-published/quick-orbs-v314.js
 test -s plux-published/home-fix-v314.css
+test -s plux-published/oled-v315.css
+grep -q 'oled-v315.css' plux-published/index.html
+grep -q 'name="theme-color" content="#000000"' plux-published/index.html
 grep -q 'home-fix-v314.css' plux-published/index.html
 grep -q 'quick-orbs-v314.js' plux-published/index.html
 test -s plux-published/home-contrast-v313.css
@@ -43,4 +46,4 @@ grep -q 'plux-microdust-v17.js' plux-published/index.html
 grep -q 'music-player-v31.js' plux-published/index.html
 grep -q 'drop-colors-v31.js' plux-published/index.html
 test -s plux-published/index.html
-echo "PLUX V31.3 verified: V30 six tools, eight true colors, Friends, Audius, centered Home, contrast ambient, greeting ASMR"
+echo "PLUX V31.5 OLED: V30 original tools, mascot and icon; black background, theme orbs, Friends, Audius and ASMR"
