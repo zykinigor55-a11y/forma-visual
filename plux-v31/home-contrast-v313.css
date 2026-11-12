@@ -1,0 +1,111 @@
+/* PLUX V31.3 — home contrast and centered Home tab.
+   The original V30 screen and glass assets stay intact.
+   The ambient background COMPLEMENTS the drop; the pigment itself is not repainted.
+*/
+:root {
+ --plux31-home-base:#040913;
+ --plux31-home-contrast-a:rgba(77,53,142,.32);
+ --plux31-home-contrast-b:rgba(30,71,123,.27);
+ --plux31-home-contrast-c:rgba(41,44,94,.20);
+}
+:root[data-plux-theme="emerald"] {
+ --plux31-home-base:#040a17;
+ --plux31-home-contrast-a:rgba(75,48,150,.39);
+ --plux31-home-contrast-b:rgba(30,77,138,.29);
+ --plux31-home-contrast-c:rgba(83,43,110,.18);
+}
+:root[data-plux-theme="azure"] {
+ --plux31-home-base:#110b0d;
+ --plux31-home-contrast-a:rgba(197,95,36,.31);
+ --plux31-home-contrast-b:rgba(142,73,42,.35);
+ --plux31-home-contrast-c:rgba(107,65,29,.22);
+}
+:root[data-plux-theme="ruby"] {
+ --plux31-home-base:#031219;
+ --plux31-home-contrast-a:rgba(14,132,130,.34);
+ --plux31-home-contrast-b:rgba(13,89,125,.31);
+ --plux31-home-contrast-c:rgba(27,120,114,.18);
+}
+:root[data-plux-theme="solar"] {
+ --plux31-home-base:#09091c;
+ --plux31-home-contrast-a:rgba(79,57,164,.39);
+ --plux31-home-contrast-b:rgba(40,50,138,.35);
+ --plux31-home-contrast-c:rgba(95,45,145,.17);
+}
+:root[data-plux-theme="turquoise"] {
+ --plux31-home-base:#130912;
+ --plux31-home-contrast-a:rgba(152,44,105,.35);
+ --plux31-home-contrast-b:rgba(114,50,103,.31);
+ --plux31-home-contrast-c:rgba(145,58,95,.16);
+}
+:root[data-plux-theme="violet"] {
+ --plux31-home-base:#06120b;
+ --plux31-home-contrast-a:rgba(77,132,31,.33);
+ --plux31-home-contrast-b:rgba(27,112,81,.27);
+ --plux31-home-contrast-c:rgba(93,111,27,.17);
+}
+:root[data-plux-theme="rose"] {
+ --plux31-home-base:#06121a;
+ --plux31-home-contrast-a:rgba(19,127,158,.34);
+ --plux31-home-contrast-b:rgba(36,89,141,.30);
+ --plux31-home-contrast-c:rgba(32,138,125,.17);
+}
+:root[data-plux-theme="silver"] {
+ --plux31-home-base:#0d0a17;
+ --plux31-home-contrast-a:rgba(91,56,131,.34);
+ --plux31-home-contrast-b:rgba(50,77,133,.29);
+ --plux31-home-contrast-c:rgba(95,54,129,.19);
+}
+/* Complementary color backlighting on the main home screen only. */
+#screen-home {
+ position:relative!important;
+ background-color:var(--plux31-home-base)!important;
+ background-image:
+  radial-gradient(ellipse 86% 65% at 85% 26%,var(--plux31-home-contrast-a),transparent 76%),
+  radial-gradient(ellipse 85% 68% at 10% 74%,var(--plux31-home-contrast-b),transparent 77%),
+  linear-gradient(155deg,var(--plux31-home-base),#03080e 68%,var(--plux31-home-base))!important;
+ transition:background-color .45s ease!important;
+}
+#screen-home .scene-home{
+ position:relative!important;
+}
+#screen-home .scene-home>.plux31-home-ambient{
+ position:absolute!important;inset:0!important;z-index:0!important;
+ display:block!important;pointer-events:none!important;
+ background:
+  radial-gradient(ellipse 62% 48% at 85% 34%,var(--plux31-home-contrast-a),transparent 91%),
+  radial-gradient(ellipse 75% 57% at 16% 75%,var(--plux31-home-contrast-b),transparent 90%),
+  radial-gradient(ellipse 50% 40% at 56% 96%,var(--plux31-home-contrast-c),transparent 94%)!important;
+ opacity:.90!important;mix-blend-mode:screen!important;
+ transition:background .45s ease!important;
+}
+#screen-home .scene-home>.plux31-home-ambient~*{position:relative;z-index:1}
+/* Exact home glyph and "Главная" label share the same vertical centerline.
+   Do not change sizes/geometry of the other four tabs. */
+#screen-home .bottom-nav>button.nav-button[data-go="home"],
+#screen-home .bottom-nav>button.nav-button:first-child {
+ display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;
+ text-align:center!important;gap:4px!important;
+ padding:4px 0!important;margin:0!important;
+ min-width:0!important;justify-self:stretch!important;
+}
+#screen-home .bottom-nav>button.nav-button[data-go="home"]>svg,
+#screen-home .bottom-nav>button.nav-button:first-child>svg,
+#screen-home .bottom-nav>button.nav-button[data-go="home"]>img,
+#screen-home .bottom-nav>button.nav-button:first-child>img{
+ display:block!important;flex:none!important;align-self:center!important;
+ margin:0 auto!important;position:static!important;
+ transform:none!important;left:auto!important;right:auto!important;
+}
+#screen-home .bottom-nav>button.nav-button[data-go="home"]>span,
+#screen-home .bottom-nav>button.nav-button:first-child>span{
+ display:block!important;position:static!important;flex:none!important;
+ width:100%!important;max-width:100%!important;
+ text-align:center!important;margin:0!important;padding:0!important;
+ transform:none!important;left:auto!important;right:auto!important;
+ white-space:nowrap!important;
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-home,#screen-home .scene-home>.plux31-home-ambient{transition:none!important}
+}
