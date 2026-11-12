@@ -5,6 +5,8 @@ import {appOrigin} from "./allowed-origins-v31.mjs";
  */
 import {randomBytes,createHash} from "node:crypto";
 import {makeGptImage,makePdf} from "./chat-artifacts-v14.mjs";
+import {makePresentation} from "./presentation-v3184.mjs";
+import {storePresentation} from "./presentation-download-v3184.mjs";
 import {storeGeneratedPdf} from "./pdf-download-v27.mjs";
 import {storeGeneratedImage} from "./image-download-v30.mjs";
 
@@ -31,7 +33,7 @@ function signature({kind,prompt,ip}){
  return createHash("sha256").update(kind+"\0"+ip+"\0"+String(prompt).trim().toLowerCase()).digest("hex");
 }
 export function beginGenerationJob({kind,prompt,messages,secret,imageKey,ip}){
- if(kind!=="image"&&kind!=="pdf")throw Object.assign(new Error("Неизвестный тип файла."),{status:400});
+ if(kind!=="image"&&kind!=="pdf"&&kind!=="presentation")throw Object.assign(new Error("Неизвестный тип файла."),{status:400});
  cleanup();
  const sig=signature({kind,prompt,ip}),now=Date.now();
  // Deduplicate pending requests from the same device and prevent accidental
@@ -56,14 +58,16 @@ export function beginGenerationJob({kind,prompt,messages,secret,imageKey,ip}){
   try{
    let artifact=kind==="image"
     ?await makeGptImage(prompt,imageKey||secret,ip)
+    :kind==="presentation"?await makePresentation(prompt,messages,secret,ip,imageKey||secret)
     :await makePdf(prompt,messages,secret,ip);
    if(kind==="image")artifact=storeGeneratedImage(artifact);
+   if(kind==="presentation")artifact=storePresentation(artifact);
    if(kind==="pdf"){
     artifact.url=storeGeneratedPdf(artifact);
     // PDF is delivered as a genuine HTTPS download by Android DownloadManager.
     delete artifact.dataUrl;
    }
-   job.result={reply:kind==="image"?"Создал изображение с GPT Image 2.":"Подготовил PDF-документ: "+artifact.title,artifact};
+   job.result={reply:kind==="image"?"Создал изображение с GPT Image 2.":kind==="presentation"?"Готова презентация PowerPoint: "+artifact.title:"Подготовил PDF-документ: "+artifact.title,artifact};
    job.state="complete";
   }catch(e){
    job.error=failText(e);job.state="failed";
