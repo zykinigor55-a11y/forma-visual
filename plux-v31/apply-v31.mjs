@@ -9,6 +9,8 @@ if(!existsSync(htmlFile))throw Error('PLUX page missing');
 // Restore the exact V30 six-card tools, gallery, music and theme dependencies
 // in the same order as the approved original. Do not rebuild card DOM.
 const modules=[
+ ['plux-v31/generation-progress-v3188.js','generation-progress-v3188.js'],
+ ['plux-v31/generation-progress-v3188.css','generation-progress-v3188.css'],
  ['plux-v124-overlay/plux-typewriter-v124.js','plux-typewriter-v124.js'],
  ['plux-v128-overlay/plux-chat-v128.js','plux-chat-v128.js'],
  ['plux-v14-overlay/plux-artifacts-v14.css','plux-artifacts-v14.css'],
@@ -56,7 +58,7 @@ for(const [src,dest]of modules){
 let html=readFileSync(htmlFile,'utf8');
 /* The old typewriter destroyed image/download/progress nodes via textContent.
  * Load the patched plain-text-only handler with a fresh URL. */
-html=html.replace(/(\/plux-typewriter-v124\.js)(?:\?[^"']*)?/gi,'$1?v=3187');
+html=html.replace(/(\/plux-typewriter-v124\.js)(?:\?[^"']*)?/gi,'$1?v=3188');
 
 /* V31.8.5: legacy ElevenLabs client also bound the home and mic buttons.
  * It started a second simultaneous audio session. Remove only that script;
@@ -66,19 +68,19 @@ html=html.replace(/<script\b[^>]*src=["'][^"']*plux-live-v151\.js[^"']*["'][^>]*
 if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
  throw Error('Original approved V30 layout changed; stop rather than overwrite');
 const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
- 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css','oled-v315.css','mascot-fullscreen-v316.css','theme-motion-v318.css','microdust-enhanced-v318.css','ai-cognition-v318.css','video-hub-v318.css','header-prompt-v3184.css','voice-memory-v3186.css','plux-artifacts-v14.css','chat-image-v3187.css'];
+ 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css','oled-v315.css','mascot-fullscreen-v316.css','theme-motion-v318.css','microdust-enhanced-v318.css','ai-cognition-v318.css','video-hub-v318.css','header-prompt-v3184.css','voice-memory-v3186.css','plux-artifacts-v14.css','chat-image-v3187.css','generation-progress-v3188.css'];
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
- 'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js','microphone-permission-v318.js','microdust-enhanced-v318.js','ai-cognition-v318.js','video-hub-v318.js','voice-memory-v3186.js','gemini-voice-v3183.js','header-palette-v3184.js'];
+ 'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js','microphone-permission-v318.js','microdust-enhanced-v318.js','ai-cognition-v318.js','video-hub-v318.js','voice-memory-v3186.js','generation-progress-v3188.js','gemini-voice-v3183.js','header-palette-v3184.js'];
 for(const file of styles){
- if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3187"></head>`);
+ if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3188"></head>`);
 }
 for(const file of scripts){
- if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3187"></script></body>`);
+ if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3188"></script></body>`);
 }
 // Ensure one (and only one) actively maintained chat handler. V12.8 from an
 // older build used lazy image URLs and silently hid failures on Android.
 html=html.replace(/<script\b[^>]*src=["'][^"']*plux-chat-v128\.js[^"']*["'][^>]*>\s*<\/script>/gi,'');
-html=html.replace('</body>','<script defer src="/plux-chat-v128.js?v=3187"></script></body>');
+html=html.replace('</body>','<script defer src="/plux-chat-v128.js?v=3188"></script></body>');
 if(!html.includes('name="theme-color"'))html=html.replace('</head>','<meta name="theme-color" content="#000000"></head>');
 if(!html.includes('plux-release-v31'))html=html.replace('</head>',
  '<meta name="plux-release-v31" content="V30-fullscreen-mascot-8-themes-friends-asmr-glass-orbs-OLED"></head>');
