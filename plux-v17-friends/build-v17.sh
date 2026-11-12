@@ -53,11 +53,11 @@ grep -q 'touchstart' plux-published/music-player-v31.js
 grep -q 'drop-colors-v31.js' plux-published/index.html
 test -s plux-published/index.html
 # V31.8 feature gates: all additive modules must be bundled and linked.
-for file in header-palette-v3184.js header-prompt-v3184.css video-hub-v318.js video-hub-v318.css ai-cognition-v318.js ai-cognition-v318.css microdust-enhanced-v318.js microdust-enhanced-v318.css microphone-permission-v318.js theme-motion-v318.css gemini-voice-v3183.js; do
+for file in header-palette-v3185.js header-prompt-v3185.css video-hub-v318.js video-hub-v318.css ai-cognition-v318.js ai-cognition-v318.css microdust-enhanced-v318.js microdust-enhanced-v318.css microphone-permission-v318.js theme-motion-v318.css gemini-voice-v3183.js; do
   test -s "plux-published/$file"
-  grep -q "/$file?v=3184" plux-published/index.html
+  grep -q "/$file?v=3185" plux-published/index.html
 done
-for file in header-palette-v3184.js video-hub-v318.js ai-cognition-v318.js microdust-enhanced-v318.js microphone-permission-v318.js gemini-voice-v3183.js; do
+for file in header-palette-v3185.js video-hub-v318.js ai-cognition-v318.js microdust-enhanced-v318.js microphone-permission-v318.js gemini-voice-v3183.js; do
   node --check "plux-published/$file"
 done
 test -s plux-published/plux-friends-v17.js
@@ -67,4 +67,13 @@ test -s plux-published/assets/videos-v106/01_idle.mp4
 test -s plux-published/assets/videos-v106/05_happy.mp4
 echo "PLUX V31.8 OLED: V31.7 preserved; Nano Banana errors, Friends avatars, Video, AI core, microphone, brighter particles and themes bundled"
 
-grep -q 'plux3184-prompt-count' plux-published/plux-v129.js
+grep -q 'plux3185-prompt-count' plux-published/plux-v129.js
+
+# V31.8.5 voice exclusivity, persistent account and profile avatar handling.
+node --check plux-published/gemini-voice-v3183.js
+node --check plux-published/plux-friends-v17.js
+grep -q 'plux_friends_session_v3185' plux-published/plux-friends-v17.js
+grep -q 'responseFinished' plux-published/gemini-voice-v3183.js
+if grep -Eiq '<script[^>]*src=["\x27][^"\x27]*plux-live-v151\.js' plux-published/index.html; then
+ echo 'competing ElevenLabs realtime script was not removed' >&2; exit 49
+fi
