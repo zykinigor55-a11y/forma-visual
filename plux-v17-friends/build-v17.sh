@@ -94,3 +94,8 @@ grep -q '/plux-chat-v128.js?v=3187' plux-published/index.html
 grep -q '/chat-image-v3187.css?v=3187' plux-published/index.html
 grep -q 'Примерный прогресс' plux-published/plux-chat-v128.js
 grep -q 'loadPreview' plux-published/plux-chat-v128.js
+
+# V31.8.7 typewriter must not overwrite nested image/progress DOM.
+node --check plux-published/plux-typewriter-v124.js
+grep -q 'plux14-artifact-row' plux-published/plux-typewriter-v124.js
+grep -q '/plux-typewriter-v124.js?v=3187' plux-published/index.html
