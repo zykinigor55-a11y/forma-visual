@@ -142,6 +142,9 @@ function audioStart(){
 function handle(data,generation){
  if(generation!==sessionId||!data||typeof data!=="object")return;
  const type=String(data.type||"");
+ // Completed transcript events survive disconnects and app restarts.
+ // No raw microphone audio or session tokens are stored in memory.
+ window.PLUXVoiceMemoryV3186?.event?.(data);
  if(type==="error"){
   const msg=data.error?.message||data.message||"Сервис голосового ИИ вернул ошибку.";
   release();showError(msg);
@@ -194,8 +197,10 @@ async function start(){
    clearTimeout(timer);connecting=false;connected=true;
    micEnabled(false);
    packet({type:"session.update",session:{
-    instructions:"Ты ПЛЮХ — молодой, доброжелательный, энергичный помощник. Общайся исключительно по-русски, цельными короткими фразами без повторений. Не перебивай говорящего.",
+    instructions:"Ты ПЛЮХ — молодой, доброжелательный, энергичный помощник. Общайся исключительно по-русски, цельными короткими фразами без повторений. Не перебивай говорящего.\n\n"+
+      (window.PLUXVoiceMemoryV3186?.context?.()||""),
     input_audio_format:"pcm16",output_audio_format:"pcm16",voice:"ash",
+    input_audio_transcription:{model:"whisper-1",language:"ru"},
     turn_detection:{type:"server_vad",threshold:.57,prefix_padding_ms:300,silence_duration_ms:820,create_response:true}
    }});
    audioStart();
