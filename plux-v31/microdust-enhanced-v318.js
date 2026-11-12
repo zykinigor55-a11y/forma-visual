@@ -13,18 +13,18 @@ function fill(field,count,seed,extra=false){
   dot.className=(extra?"plux318-particle-extra":"plux17-microdust-dot")+" plux318-particle";
   dot.style.setProperty("--dust-x",(50+Math.cos(a)*r*100).toFixed(2)+"%");
   dot.style.setProperty("--dust-y",(50+Math.sin(a)*r*100).toFixed(2)+"%");
-  dot.style.setProperty("--dust-size",(1.05+random(seed*2+i*19)*2.2).toFixed(2)+"px");
+  dot.style.setProperty("--dust-size",(0.75+random(seed*2+i*19)*1.1).toFixed(2)+"px");
   dot.style.setProperty("--dust-shift",((random(seed*6+i*11)-.5)*14).toFixed(1)+"px");
   dot.style.setProperty("--dust-time",(4.7+random(i*9+seed)*8.3).toFixed(1)+"s");
   dot.style.setProperty("--dust-delay",(-random(i*13+seed)*12).toFixed(1)+"s");
-  dot.style.setProperty("--dust-alpha",(.66+random(i*7+seed)*.30).toFixed(2));
+  dot.style.setProperty("--dust-alpha",(.16+random(i*7+seed)*.29).toFixed(2));
   field.append(dot);
  }
 }
 function orb(id,seed){
  const b=document.getElementById(id),field=b?.querySelector(".plux17-microdust-field");
  if(!field||field.querySelector(".plux318-particle-extra"))return;
- fill(field,13,seed,true);
+ fill(field,8,seed,true);
 }
 function mainVoiceButton(){
  if(!voice||voice.hidden)return null;
@@ -44,16 +44,16 @@ function voiceOrb(){
  let field=b.querySelector(".plux17-microdust-field");
  if(!field){field=document.createElement("span");field.className="plux17-microdust-field plux318-voice-particles";
  field.setAttribute("aria-hidden","true");b.insertBefore(field,b.firstChild);}
- fill(field,34,593,true);
+ fill(field,18,593,true);
 }
 function ambient(screen,seed){
  if(!screen||screen.querySelector(".plux318-ambient-dust"))return;
  const layer=document.createElement("div");layer.className="plux318-ambient-dust";layer.setAttribute("aria-hidden","true");
- for(let i=0;i<34;i++){
+ for(let i=0;i<25;i++){
   const dot=document.createElement("i");dot.className="plux318-ambient-spark";
   dot.style.setProperty("--px",(6+random(seed+i*13)*88).toFixed(2)+"%");
   dot.style.setProperty("--py",(18+random(seed*4+i*9)*64).toFixed(2)+"%");
-  dot.style.setProperty("--ps",(1+random(seed*7+i*5)*1.65).toFixed(2)+"px");
+  dot.style.setProperty("--ps",(0.7+random(seed*7+i*5)*1.05).toFixed(2)+"px");
   dot.style.setProperty("--delay",(-random(seed+i*37)*12).toFixed(1)+"s");
   dot.style.setProperty("--duration",(5+random(seed*6+i*15)*9).toFixed(1)+"s");
   layer.append(dot);
