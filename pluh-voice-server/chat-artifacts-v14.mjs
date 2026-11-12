@@ -57,7 +57,7 @@ function sourceImage(messages){
   if(p?.type!=="image_url")continue;
   const raw=p?.image_url?.url;
   if(typeof raw!=="string"||raw.length>4300000)continue;
-  const m=/^data:image\\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(raw);
+  const m=/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(raw);
   if(!m)continue;
   const bytes=Buffer.from(m[2],"base64");
   if(bytes.length<100||bytes.length>3_000_000)continue;
@@ -78,7 +78,7 @@ export async function makeGptImage(prompt,key,ip,sourceMessages=null){
       endpoint=url+"/images/edits";
       const form=new FormData();
       form.set("model","gpt-image-2");
-      form.set("prompt",clean(prompt,1700)+"\\nUse the uploaded photo as the source image. Keep unchanged areas intact.");
+      form.set("prompt",clean(prompt,1700)+"\nUse the uploaded photo as the source image. Keep unchanged areas intact.");
       form.set("size","1024x1024");
       form.set("image",new Blob([reference.bytes],{type:reference.type}),"PLUX-upload."+reference.ext);
       body=form;headers={"Authorization":"Bearer "+key};
