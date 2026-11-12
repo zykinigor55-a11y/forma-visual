@@ -59,7 +59,7 @@ try{
  });
  const res=await page.goto(origin+"/?mobile=1&v=3186",{waitUntil:"domcontentloaded",timeout:60000});
  assert.equal(res.status(),200);
- await page.waitForSelector("#chat-form",{timeout:28000});
+ await page.waitForSelector("#chat-form",{state:"attached",timeout:28000});
  await page.evaluate(()=>{
   for(const el of document.querySelectorAll(".screen")){
    const show=el.id==="screen-chat";
