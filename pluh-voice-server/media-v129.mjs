@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V12.9 — user attachments and Nano Banana image generation.
    All paid API calls stay server-side. Attachments are processed in memory, not stored. */
 const PER_FILE_LIMIT=6*1024*1024;
@@ -12,8 +13,8 @@ function error(status,message){return Object.assign(new Error(message),{status})
 function reply(res,status,data){res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"});res.end(JSON.stringify(data))}
 export function mediaCors(req,res){
   const origin=String(req.headers.origin||"");
-  if(origin!==originAllowed){reply(res,403,{error:"Недопустимый источник запроса."});return false}
-  res.setHeader("Access-Control-Allow-Origin",originAllowed);
+  if(!appOrigin(req)){reply(res,403,{error:"Недопустимый источник запроса."});return false}
+  res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
   res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
   res.setHeader("Vary","Origin");
