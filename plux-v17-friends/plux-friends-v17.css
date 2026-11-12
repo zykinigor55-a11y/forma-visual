@@ -91,3 +91,66 @@
 #plux-friends-open>span:last-child{font-size:30px}
 @media(max-width:420px){#plux-friends-panel .pf-section{padding:20px 15px}#plux-friends-panel .pf-head{padding-left:17px;padding-right:17px}#plux-friends-panel .pf-btn{font-size:11px}
  #plux-friends-panel .pf-person{gap:9px}#plux-friends-panel .pf-row{grid-template-columns:1fr}#plux-friends-open.pf-open{width:calc(100% - 28px);margin-left:14px}}
+
+/* V31: Friends is a fifth item in the EXISTING V30 home tab bar.  No
+   duplicate full-width card on the Tools screen. Preserves V30 glass icons. */
+#screen-home .bottom-nav{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  justify-items:stretch!important;
+  gap:clamp(1px,.8vw,6px)!important;
+  padding-left:clamp(6px,2vw,13px)!important;
+  padding-right:clamp(6px,2vw,13px)!important;
+}
+#screen-home .bottom-nav>.nav-button{
+  min-width:0!important;
+  width:100%!important;
+  padding-left:0!important;
+  padding-right:0!important;
+  overflow:visible!important;
+  position:relative!important;
+}
+#screen-home .bottom-nav>.nav-button span{
+  font-size:clamp(9px,2.35vw,11px)!important;
+  letter-spacing:-.1px!important;
+  max-width:100%!important;
+  white-space:nowrap!important;
+  text-overflow:clip!important;
+}
+#screen-home .bottom-nav>.pf-nav-button{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+#screen-home .bottom-nav>.pf-nav-button svg{
+  width:24px!important;
+  height:24px!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.65!important;
+  opacity:.95!important;
+  flex:0 0 auto!important;
+}
+#screen-home .bottom-nav>.pf-nav-button .pf-notify:not([hidden]){
+  position:absolute!important;
+  top:2px;right:12%;
+  display:grid!important;place-items:center!important;
+  width:17px!important;height:17px!important;
+  min-width:17px!important;border-radius:50%!important;
+  background:#66ffbb!important;color:#002a1c!important;
+  border:1px solid #ebfff5!important;
+  box-shadow:0 0 10px rgba(54,243,177,.45)!important;
+  font:700 10px/1 system-ui,sans-serif!important;
+  pointer-events:none!important;
+}
+#screen-home .bottom-nav>.pf-nav-button .pf-notify[hidden]{
+ display:none!important;
+}
+@media(max-width:359px){
+ #screen-home .bottom-nav>.nav-button span{
+  font-size:9px!important;letter-spacing:-.35px!important;
+ }
+ #screen-home .bottom-nav>.pf-nav-button svg{width:21px!important;height:21px!important}
+}
