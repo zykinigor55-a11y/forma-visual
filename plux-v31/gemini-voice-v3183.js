@@ -98,7 +98,7 @@ function handle(data,generation){
  const type=String(data.type||"");
  if(type==="error"){
   const msg=data.error?.message||data.message||"Сервис голосового ИИ вернул ошибку.";
-  showError(msg);stop();
+  release();showError(msg);
   return;
  }
  if(type==="input_audio_buffer.speech_started"){stopPlayback();setState("ПЛЮХ слушает","Говори свободно. Можешь перебивать ответ.","listening")}
@@ -120,7 +120,7 @@ async function start(){
  try{
   await window.PLUXMicPermissionV318?.request?.();
   mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-  if(generation!==sessionId)return;
+  if(generation!==sessionId){mic.getTracks().forEach(t=>t.stop());mic=null;return}
   audio=new(window.AudioContext||window.webkitAudioContext)({sampleRate:24000,latencyHint:"interactive"});
   await audio.resume();
   setState("Подключаем Gemini…","Получаю защищённую голосовую сессию.","thinking");
@@ -146,7 +146,7 @@ async function start(){
    setState("ПЛЮХ слушает","Gemini подключён. Говори!","listening");
   };
   ws.onmessage=e=>{try{handle(JSON.parse(e.data),generation)}catch{}};
-  ws.onerror=()=>{if(generation===sessionId){showError("Ошибка соединения с Gemini через Arkheon.");stop()}};
+  ws.onerror=()=>{if(generation===sessionId){release();showError("Ошибка соединения с Gemini через Arkheon.")}};
   ws.onclose=e=>{clearTimeout(timer);if(generation!==sessionId)return;const code=e.code;stop(code===1000?"Разговор завершён. Нажми микрофон.":"Соединение прервано (код "+code+"). Нажми микрофон ещё раз.")};
  }catch(e){
   if(generation!==sessionId)return;
