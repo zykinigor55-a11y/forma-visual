@@ -7,7 +7,8 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 const PORT = Number(process.env.PORT || 3000);
 const BRAVE_KEY = process.env.BRAVE_SEARCH_API_KEY || '';
 const TAVILY_KEY = process.env.TAVILY_API_KEY || '';
-const SEARCH_ENABLED = Boolean(TAVILY_KEY || BRAVE_KEY);
+const SERPER_KEY = process.env.SERPER_API_KEY || '';
+const SEARCH_ENABLED = Boolean(SERPER_KEY || TAVILY_KEY || BRAVE_KEY);
 const AI_KEY = process.env.VISION_API_KEY || '';
 const AI_BASE = (process.env.VISION_API_BASE || 'https://api.openai.com/v1').replace(/\/+$/, '');
 const AI_MODEL = process.env.VISION_MODEL || 'gpt-4.1-mini';
@@ -115,7 +116,7 @@ function filterResult(x,s){
 async function searchSources(rawQuery){
   if(!SEARCH_ENABLED) return {available:false,results:[],provider:null,sources:SITE.map(s=>({id:s.id,label:s.label,count:0,status:'not-configured'}))};
   const query=textLimited(rawQuery,110) || 'modern wooden house exterior';
-  const provider=TAVILY_KEY ? 'tavily' : 'brave';
+  const provider=SERPER_KEY ? 'serper' : TAVILY_KEY ? 'tavily' : 'brave';
   const cacheKey=provider+':'+query.toLowerCase();
   const cached=refCache.get(cacheKey);
   if(cached && Date.now()-cached.at<15*60*1000) return {...cached.data,cached:true};
@@ -123,7 +124,26 @@ async function searchSources(rawQuery){
   const fetched=await Promise.all(SITE.map(async s=>{
     const unique=new Map();
     try {
-      if(TAVILY_KEY){
+      if(SERPER_KEY){
+        // Serper.dev: 2,500 one-off free Google Image Search queries without a payment card.
+        // Keep source provenance: only images from pages on allowlisted architecture domains.
+        const response=await fetch('https://google.serper.dev/images',{
+          method:'POST',
+          headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
+          body:JSON.stringify({
+            q:('site:'+s.domain+' '+query+' '+s.term+' daylight exterior').slice(0,320),
+            num:20,hl:'en',gl:'us',safe:'active'
+          }),
+          signal:timeout(20_000)
+        });
+        if(!response.ok)return {id:s.id,label:s.label,count:0,status:'Serper HTTP '+response.status,results:[]};
+        const data=await response.json();
+        for(const item of Array.isArray(data.images)?data.images:[]){
+          const src=item.thumbnailUrl||item.imageUrl;
+          const matched=filterResult({url:item.link,title:item.title,thumbnail:{src}},s);
+          if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
+        }
+      }else if(TAVILY_KEY){
         // Basic search costs one Tavily credit. Source-linked images keep provenance.
         // One site-filtered request per source: approximately 5 credits per new project query.
         const response=await fetch('https://api.tavily.com/search',{
@@ -177,7 +197,7 @@ async function searchSources(rawQuery){
 }
 function safeText(v, limit=250) { return textLimited(v,limit); }
 async function direct(input) {
-  if (!AI_KEY || !SEARCH_ENABLED) return {available:false, message:'Для автоматического сравнения нужны ключ визуальной модели (VISION_API_KEY) и поиска (TAVILY_API_KEY либо BRAVE_SEARCH_API_KEY).'};
+  if (!AI_KEY || !SEARCH_ENABLED) return {available:false, message:'Для автоматического сравнения нужны ключ визуальной модели (VISION_API_KEY) и поиска (SERPER_API_KEY, TAVILY_API_KEY либо BRAVE_SEARCH_API_KEY).'};
   if (!validImage(input?.image)) throw Object.assign(new Error('Для выбора референса нужно загрузить изображение JPG, PNG или WebP до 8 МБ.'),{status:400});
   const project = input.project || {};
   const q = safeText(input.query,110) || 'modern residential building architectural photo';
@@ -259,8 +279,8 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.4.0'});
-    if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.5.0'});
+    if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
     if(req.method==='POST'&&pathName==='/api/analyze')return json(res,200,await analyze(await bodyJson(req)));
     if(req.method==='POST'&&pathName==='/api/direct')return json(res,200,await direct(await bodyJson(req)));
     if(req.method==='GET'&&pathName==='/api/references'){

@@ -254,11 +254,11 @@ async function runProject(event) {
         alertStatus('Не удалось сравнить источники: ' + error.message, 'error');
       }
     } else if (state.isVisualAnalysis) {
-      setRecommendationMessage('AI изучил архитектуру, но поиск по профессиональным площадкам выключен. Чтобы выбрать лучший референс по изображениям, подключите TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY в Render.', 'ПОИСК НЕ ПОДКЛЮЧЁН');
-      alertStatus('Анализ изображения готов. Поиск профессиональных референсов требует TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY.');
+      setRecommendationMessage('AI изучил архитектуру, но поиск по профессиональным площадкам выключен. Чтобы выбрать лучший референс по изображениям, подключите SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY в Render.', 'ПОИСК НЕ ПОДКЛЮЧЁН');
+      alertStatus('Анализ изображения готов. Поиск профессиональных референсов требует SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY.');
     } else {
-      setRecommendationMessage('Автоматический арт-дирекшн ещё не запущен: нужен визуальный VISION_API_KEY и TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY. Ниже доступен лишь честно помеченный черновик промпта.', 'НЕ ХВАТАЕТ ПОДКЛЮЧЕНИЙ');
-      alertStatus(issue + '. Для поиска и выбора референса также нужен TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY.', 'error');
+      setRecommendationMessage('Автоматический арт-дирекшн ещё не запущен: нужен визуальный VISION_API_KEY и SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY. Ниже доступен лишь честно помеченный черновик промпта.', 'НЕ ХВАТАЕТ ПОДКЛЮЧЕНИЙ');
+      alertStatus(issue + '. Для поиска и выбора референса также нужен SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY.', 'error');
     }
     makePrompt(project);
     $('#analysis').scrollIntoView({behavior:'smooth', block:'start'});
