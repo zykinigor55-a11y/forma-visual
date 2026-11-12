@@ -47,7 +47,7 @@
 .plux31-music-dialog header small{display:block;color:#95cdb4;font-size:10px;letter-spacing:1.5px;margin-top:4px}
 .plux31-music-dialog button{cursor:pointer;font:inherit;color:#eafff5}
 .plux31-music-dialog .plux31-music-close{width:39px;height:39px;border-radius:50%;background:#11372b;border:1px solid #74d8b9;font-size:25px}
-.plux31-music-dialog .plux31-source{display:grid;grid-template-columns:1fr 1fr;gap:6px;border-radius:15px;padding:5px;background:#07201e}
+.plux31-music-dialog .plux31-source{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;border-radius:15px;padding:5px;background:#07201e}
 .plux31-music-dialog .plux31-source button{padding:12px 3px;border:0;border-radius:11px;background:transparent;color:#93b7aa;font-size:13px}
 .plux31-music-dialog .plux31-source button.active{background:#0e5742;color:white;box-shadow:inset 0 1px 2px #e8fff652}
 .plux31-music-dialog .plux31-query{display:flex;gap:7px}
@@ -68,3 +68,5 @@
  #screen-home .plux31-mini-player button{transition:none!important}
  .plux31-music-dialog::backdrop{backdrop-filter:none}
 }
+/* V31 Jamendo: compact accessible three-source tabs on narrow Android screens. */
+@media(max-width:380px){.plux31-music-dialog .plux31-source{gap:4px;padding:4px}.plux31-music-dialog .plux31-source button{font-size:12px;padding:10px 2px}}
