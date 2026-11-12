@@ -8,6 +8,57 @@ const key=/^(sb_publishable_|eyJ)/.test(conf.anonKey||'')?conf.anonKey:'';
 const S={session:null,user:null,friends:[],requests:[],tab:'friends',dialog:null,person:null,timer:0,pictures:new Map(),busy:false,signature:''};
 const id=x=>document.getElementById(x);
 const make=(tag,cl,text)=>{const n=document.createElement(tag);if(cl)n.className=cl;if(text!==undefined)n.textContent=text;return n};
+
+/* V31.8: square, recompressed profile photos. Only the owner uploads/changes an avatar. */
+const avatarPattern=/^[a-f0-9-]{36}\/[a-f0-9-]{36}\.webp$/;
+function drawAvatar(el,p){
+ if(!el)return;
+ el.replaceChildren();
+ el.textContent=String(p?.display_name||p?.handle||'?').trim().charAt(0).toUpperCase()||'?';
+ const path=p?.avatar_path;
+ if(typeof path!=='string'||!avatarPattern.test(path))return;
+ const im=make('img','pf-avatar-photo');
+ im.alt='';im.loading='lazy';im.decoding='async';
+ im.onload=()=>{if(el.isConnected)el.replaceChildren(im)};
+ im.onerror=()=>{im.remove()};
+ im.src=base+'/storage/v1/object/public/plux-avatars/'+path;
+}
+async function prepareAvatar(file){
+ if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>6*1024*1024)
+  throw Error('Выберите JPG, PNG или WEBP до 6 МБ');
+ const url=URL.createObjectURL(file);
+ let picture;
+ try{
+  picture=await new Promise((resolve,reject)=>{
+   const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(Error('Не удалось открыть фотографию'));im.src=url;
+  });
+  const w=picture.naturalWidth,h=picture.naturalHeight;
+  if(!w||!h||Math.max(w,h)>10000)throw Error('Слишком большое фото. Выберите другое.');
+  const side=Math.min(w,h),canvas=document.createElement('canvas');
+  canvas.width=384;canvas.height=384;
+  const context=canvas.getContext('2d');
+  if(!context)throw Error('Обработка фотографии недоступна');
+  context.drawImage(picture,(w-side)/2,(h-side)/2,side,side,0,0,384,384);
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Не удалось подготовить фото')),'image/webp',.84));
+  if(blob.type!=='image/webp'||blob.size>2*1024*1024)throw Error('Не удалось сжать фото до нужного размера');
+  return blob;
+ }finally{URL.revokeObjectURL(url)}
+}
+async function changeAvatar(file){
+ if(!S.user||!S.profile)throw Error('Сначала войдите в профиль');
+ const data=await prepareAvatar(file);
+ const path=S.user.id+'/'+crypto.randomUUID()+'.webp';
+ await fetcher('/storage/v1/object/plux-avatars/'+path,'POST',data,true);
+ try{await fetcher('/rest/v1/plux_profiles?id=eq.'+S.user.id,'PATCH',{avatar_path:path})}
+ catch(e){void fetcher('/storage/v1/object/plux-avatars/'+path,'DELETE').catch(()=>{});throw e}
+ const old=S.profile.avatar_path;
+ S.profile.avatar_path=path;
+ drawAvatar(id('pf-myavatar'),S.profile);
+ if(old&&avatarPattern.test(old)&&old!==path)
+  void fetcher('/storage/v1/object/plux-avatars/'+old,'DELETE').catch(()=>{});
+ notice('Аватарка обновлена. Её увидят другие пользователи ПЛЮХ.');
+}
+
 const visible=(x,on)=>{id(x).hidden=!on};
 const notice=(s,bad=false)=>{id('pf-alert').textContent=s;id('pf-alert').hidden=!s;id('pf-alert').classList.toggle('bad',bad)};
 const h=(opts={})=>({apikey:key, ...(S.session?.access_token?{Authorization:'Bearer '+S.session.access_token}:{}),...opts});
@@ -27,11 +78,12 @@ async function refresh(){
  const d=await r.json();if(!r.ok)throw Error('Сессия истекла');setSession(d);
 }
 async function start(){
- const me=await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name&id=eq.'+S.user.id);
+ const me=await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name,avatar_path&id=eq.'+S.user.id);
  S.profile=me[0];id('pf-myname').textContent=S.profile?.display_name||'Профиль';
  id('pf-myhandle').textContent='@'+(S.profile?.handle||'');
  id('pf-display').value=S.profile?.display_name||'';
  id('pf-handle').value=S.profile?.handle||'';
+ drawAvatar(id('pf-myavatar'),S.profile);
  visible('pf-signin',false);visible('pf-content',true);
  await people();drawPeople();beginPolling();
 }
@@ -42,7 +94,7 @@ async function people(){
  ]);
  const ids=(friends||[]).map(p=>p.user_a===S.user.id?p.user_b:p.user_a);
  const all=[...new Set([...ids,...(requests||[]).map(x=>x.from_id)])];
- const profiles=all.length?await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name&id=in.('+all.join(',')+')'):[];
+ const profiles=all.length?await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name,avatar_path&id=in.('+all.join(',')+')'):[];
  const dict=new Map(profiles.map(p=>[p.id,p]));
  S.friends=ids.map(x=>dict.get(x)).filter(Boolean);
  S.requests=(requests||[]).map(x=>({...x,profile:dict.get(x.from_id)}));
@@ -51,7 +103,7 @@ async function people(){
  if(badge){badge.hidden=!S.requests.length;badge.textContent=S.requests.length>9?'9+':String(S.requests.length)}
 }
 function item(p,label,fn){
- const row=make('div','pf-person'),avatar=make('span','pf-avatar',(p.display_name||'?')[0].toUpperCase());
+ const row=make('div','pf-person'),avatar=make('span','pf-avatar');drawAvatar(avatar,p);
  const names=make('div','pf-person-title');names.append(make('strong','',p.display_name),make('small','','@'+p.handle));
  const btn=make('button','pf-btn',label);btn.type='button';btn.onclick=fn;row.append(avatar,names,btn);return row;
 }
@@ -69,7 +121,7 @@ function drawPeople(){
 async function searchFriend(){
  const name=id('pf-query').value.trim().toLowerCase();
  if(!/^[a-z0-9_]{3,24}$/.test(name))throw Error('Введите ник: латиница, цифры, _, от 3 до 24 символов');
- const list=await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name&handle=eq.'+encodeURIComponent(name));
+ const list=await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name,avatar_path&handle=eq.'+encodeURIComponent(name));
  const container=id('pf-found');container.replaceChildren();
  if(!list.length)container.append(make('div','pf-empty','Пользователь не найден'));
  for(const p of list)container.append(item(p,p.id===S.user.id?'Это вы':'＋ Добавить',()=>act(async()=>{
@@ -82,6 +134,7 @@ async function openChat(p){
   const dialog=await fetcher('/rest/v1/rpc/plux_start_dialog','POST',{p_friend_id:p.id});
   S.dialog=dialog;S.person=p;S.signature='';
   id('pf-peer').textContent=p.display_name;id('pf-peername').textContent='@'+p.handle;
+  drawAvatar(id('pf-peer-avatar'),p);
   visible('pf-social',false);visible('pf-chat',true);await loadMessages();
  });
 }
@@ -162,10 +215,10 @@ root.innerHTML=[
 '<div id="pf-alert" class="pf-alert" role="status" hidden></div>',
 '<section id="pf-setup" class="pf-section" hidden><h2>Общение в ПЛЮХ</h2><p>Модуль готов. Для настоящих чатов необходимо подключить Supabase с защищённой базой, аккаунтами и приватным хранилищем фото.</p></section>',
 '<section id="pf-signin" class="pf-section" hidden><small>АККАУНТ</small><h2>Привет! Найди своих друзей</h2><p>Создай профиль по электронной почте, чтобы начать общение.</p><form id="pf-login"><input id="pf-email" type="email" placeholder="Электронная почта" autocomplete="email" required><input id="pf-password" type="password" placeholder="Пароль от 8 символов" minlength="8" required><div class="pf-row"><button>Войти</button><button id="pf-register" type="button">Регистрация</button></div></form></section>',
-'<section id="pf-content" hidden><div id="pf-social" class="pf-section"><div class="pf-profile"><div><strong id="pf-myname"></strong><small id="pf-myhandle"></small></div><button id="pf-logout" type="button">Выйти</button></div><details><summary>Имя и ник</summary><input id="pf-display" placeholder="Ваше имя" maxlength="60"><input id="pf-handle" placeholder="Ник латиницей" maxlength="24"><button id="pf-save-profile" type="button">Сохранить профиль</button></details>',
+'<section id="pf-content" hidden><div id="pf-social" class="pf-section"><div class="pf-profile"><div class="pf-profile-id"><button id="pf-avatar-change" type="button" aria-label="Загрузить или поменять фото профиля" title="Нажмите, чтобы изменить аватарку"><span id="pf-myavatar" class="pf-avatar pf-avatar-own">?</span><span class="pf-avatar-edit-indicator" aria-hidden="true">＋</span></button><input id="pf-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" hidden><div><strong id="pf-myname"></strong><small id="pf-myhandle"></small><small class="pf-avatar-hint">Нажмите на фото, чтобы изменить</small></div></div><button id="pf-logout" type="button">Выйти</button></div><details><summary>Имя и ник</summary><input id="pf-display" placeholder="Ваше имя" maxlength="60"><input id="pf-handle" placeholder="Ник латиницей" maxlength="24"><button id="pf-save-profile" type="button">Сохранить профиль</button></details>',
 '<nav class="pf-tabs"><button class="pf-tab active" data-tab="friends">Друзья</button><button class="pf-tab" data-tab="requests">Заявки <span id="pf-count"></span></button><button class="pf-tab" data-tab="search">Найти</button></nav>',
 '<div id="pf-people"><div id="pf-list"></div></div><div id="pf-search-area" hidden><form id="pf-search"><input id="pf-query" placeholder="Ник друга, например alexey_77"><button>Поиск</button></form><div id="pf-found"></div></div></div>',
-'<div id="pf-chat" class="pf-chat" hidden><div class="pf-chat-head"><button id="pf-chat-back">‹</button><div><strong id="pf-peer"></strong><small id="pf-peername"></small></div></div><div id="pf-messages"></div><form id="pf-compose"><label class="pf-attach">＋<input id="pf-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><input id="pf-input" placeholder="Сообщение или фото…" maxlength="4000"><button>➤</button></form><small id="pf-file-title"></small></div></section></section>'
+'<div id="pf-chat" class="pf-chat" hidden><div class="pf-chat-head"><button id="pf-chat-back">‹</button><span id="pf-peer-avatar" class="pf-avatar pf-peer-avatar">?</span><div><strong id="pf-peer"></strong><small id="pf-peername"></small></div></div><div id="pf-messages"></div><form id="pf-compose"><label class="pf-attach">＋<input id="pf-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><input id="pf-input" placeholder="Сообщение или фото…" maxlength="4000"><button>➤</button></form><small id="pf-file-title"></small></div></section></section>'
 ].join('');
 document.body.append(root);
 function insertButton(){
@@ -197,6 +250,11 @@ function insertButton(){
  if(chat)chat.insertAdjacentElement('afterend',b);else nav.append(b);
 }
 id('pf-close').onclick=close;
+id('pf-avatar-change').onclick=()=>id('pf-avatar-input').click();
+id('pf-avatar-input').onchange=e=>{
+ const file=e.target.files?.[0];e.target.value='';
+ if(file)void act(()=>changeAvatar(file));
+};
 id('pf-chat-back').onclick=leaveChat;
 id('pf-login').onsubmit=e=>{e.preventDefault();void act(async()=>{
   const x=await fetcher('/auth/v1/token?grant_type=password','POST',{email:id('pf-email').value.trim(),password:id('pf-password').value});
