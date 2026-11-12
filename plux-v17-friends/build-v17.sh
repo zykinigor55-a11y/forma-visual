@@ -55,7 +55,7 @@ test -s plux-published/index.html
 # V31.8 feature gates: all additive modules must be bundled and linked.
 for file in header-palette-v3184.js header-prompt-v3184.css video-hub-v318.js video-hub-v318.css ai-cognition-v318.js ai-cognition-v318.css microdust-enhanced-v318.js microdust-enhanced-v318.css microphone-permission-v318.js theme-motion-v318.css gemini-voice-v3183.js; do
   test -s "plux-published/$file"
-  grep -q "/$file?v=3187" plux-published/index.html
+  grep -q "/$file?v=3188" plux-published/index.html
 done
 for file in header-palette-v3184.js video-hub-v318.js ai-cognition-v318.js microdust-enhanced-v318.js microphone-permission-v318.js gemini-voice-v3183.js; do
   node --check "plux-published/$file"
@@ -82,20 +82,31 @@ fi
 node --check plux-published/voice-memory-v3186.js
 node --check plux-published/gemini-voice-v3183.js
 test -s plux-published/voice-memory-v3186.css
-grep -q '/voice-memory-v3186.js?v=3187' plux-published/index.html
-grep -q '/voice-memory-v3186.css?v=3187' plux-published/index.html
+grep -q '/voice-memory-v3186.js?v=3188' plux-published/index.html
+grep -q '/voice-memory-v3186.css?v=3188' plux-published/index.html
 grep -q 'input_audio_transcription' plux-published/gemini-voice-v3183.js
 
 # V31.8.7 inline images, not a file-name-only chat reply.
 node --check plux-published/plux-chat-v128.js
 test -s plux-published/plux-artifacts-v14.css
 test -s plux-published/chat-image-v3187.css
-grep -q '/plux-chat-v128.js?v=3187' plux-published/index.html
-grep -q '/chat-image-v3187.css?v=3187' plux-published/index.html
+grep -q '/plux-chat-v128.js?v=3188' plux-published/index.html
+grep -q '/chat-image-v3187.css?v=3188' plux-published/index.html
 grep -q 'Примерный прогресс' plux-published/plux-chat-v128.js
 grep -q 'loadPreview' plux-published/plux-chat-v128.js
 
 # V31.8.7 typewriter must not overwrite nested image/progress DOM.
 node --check plux-published/plux-typewriter-v124.js
 grep -q 'plux14-artifact-row' plux-published/plux-typewriter-v124.js
-grep -q '/plux-typewriter-v124.js?v=3187' plux-published/index.html
+grep -q '/plux-typewriter-v124.js?v=3188' plux-published/index.html
+
+# PLUX V31.8.8: Create and Chat share exactly one progress component.
+node --check plux-published/generation-progress-v3188.js
+node --check plux-published/plux-chat-v128.js
+node --check plux-published/plux-v129.js
+test -s plux-published/generation-progress-v3188.css
+grep -q '/generation-progress-v3188.js?v=3188' plux-published/index.html
+grep -q '/generation-progress-v3188.css?v=3188' plux-published/index.html
+grep -q '/plux-chat-v128.js?v=3188' plux-published/index.html
+grep -q 'PLUXGenerationProgressV3188' plux-published/plux-chat-v128.js
+grep -q 'PLUXGenerationProgressV3188' plux-published/plux-v129.js
