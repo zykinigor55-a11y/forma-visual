@@ -157,6 +157,8 @@
  try{
   navigator.mediaSession?.setActionHandler?.('play',()=>{void audio.play().then(sync).catch(()=>{})});
   navigator.mediaSession?.setActionHandler?.('pause',()=>{audio.pause();sync()});
+  navigator.mediaSession?.setActionHandler?.('nexttrack',()=>{skip(1)});
+  navigator.mediaSession?.setActionHandler?.('previoustrack',()=>{skip(-1)});
  }catch{}
  let switched=false;
  const showMini=()=>{
