@@ -20,3 +20,13 @@ for(const f of ['index.html','app.js']){
    if(index>=0) console.log('V31_TARGET '+f+' '+token+': '+JSON.stringify(data.slice(Math.max(0,index-180),Math.min(data.length,index+1150))));
  }
 }
+
+for(const f of ['index.html','app.js']){
+ const data=readFileSync(join(dir,f),'utf8');
+ let i=0;
+ for(const token of ['id="screen-settings"','id="screen-profile"','palette','swatch','color-grid','color-chip','colour','hueRotate','hue-rotate','цвет','#screen-settings','data-color','data-hue','localStorage.setItem']){
+  let at=data.indexOf(token);
+  if(at>=0){console.log('V31_PALETTE '+f+' '+token+' '+JSON.stringify(data.slice(Math.max(0,at-240),Math.min(data.length,at+1550))));i++}
+  if(i>=12)break;
+ }
+}
