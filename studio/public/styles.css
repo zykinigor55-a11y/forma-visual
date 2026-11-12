@@ -24,3 +24,15 @@
 .director-caption strong{font:800 16px/1.35 var(--h);color:#232925}.director-caption p{margin-top:7px;color:#777e77;font-size:12px;line-height:1.8}
 @media(max-width:950px){.best-reference{grid-template-columns:1fr}.best-photo{min-height:360px}}
 @media(max-width:640px){.best-wait{padding:20px;font-size:12px}.best-photo{min-height:235px}.best-explanation{padding:24px 20px}.best-explanation h3{font-size:24px}.director-caption{padding:18px 15px;gap:12px}.director-mark{width:40px;height:40px;flex-basis:40px;font-size:22px}.director-caption strong{font-size:14px}}
+
+/* FORMA 0.3 — a single selected editorial shot with its physical scene staging */
+.shot-plan{border-top:1px solid #424a47;margin-top:6px;padding-top:22px;display:flex;flex-direction:column;gap:12px}
+.shot-plan[hidden]{display:none!important}
+.shot-plan-heading{display:flex;flex-direction:column;gap:9px}
+.shot-plan-heading>.micro{color:#c8b293}
+.shot-plan-heading strong{font:750 17px/1.4 var(--h);color:#f0eee7;letter-spacing:-.02em}
+.shot-story{font-size:12px;line-height:1.8;color:#adb9b2}
+.shot-layers{display:grid;grid-template-columns:1fr;gap:10px}
+.shot-layers>div{padding:13px 15px;background:#222a29;border-left:2px solid #bca785}
+.shot-layers span{font:700 9px/1.3 var(--h);letter-spacing:.13em;color:#c5ae87}
+.shot-layers p{font-size:12px;line-height:1.65;color:#d7dcd7;margin-top:6px}

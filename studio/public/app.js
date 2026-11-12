@@ -101,6 +101,13 @@ function showWinner(result) {
   $('#bestLighting').textContent = String(result.direction.lightingDescription || MODES[result.direction.lighting]?.name || 'Выразительный натуральный дневной свет');
   $('#bestEnvironment').textContent = String(result.direction.environment || 'Индивидуальное окружение под стиль здания');
   $('#bestComposition').textContent = String(result.direction.composition || 'Архитектурная композиция при сохранении камеры исходного изображения');
+  const shot = result.direction;
+  $('#shotPlan').hidden = !(shot.focalPoint || shot.foreground || shot.middleGround || shot.background || shot.story);
+  $('#bestFocalPoint').textContent = shot.focalPoint || 'Архитектура — главный герой кадра';
+  $('#bestStory').textContent = shot.story || '';
+  $('#bestForeground').textContent = shot.foreground || 'Передний план без перекрытия архитектуры';
+  $('#bestMiddleGround').textContent = shot.middleGround || 'Архитектурный объём и его контакт с ландшафтом';
+  $('#bestBackground').textContent = shot.background || 'Естественный и правдоподобный дальний план';
   $('#autoDirection').textContent = MODES[result.direction.lighting]?.name || MODES.sunlit.name;
   $('#directionReason').textContent = result.direction.reason || 'Профессиональная дневная архитектурная фотография.';
   $('#directionTag').textContent = 'ОТОБРАНО AI / ДЕНЬ';
@@ -122,7 +129,7 @@ ${curated ? 'IMAGE-BASED AI CURATION / VERIFIED REFERENCE SELECTION' : state.isV
 NON-NEGOTIABLE SOURCE OF TRUTH
 Use the ATTACHED ORIGINAL HOUSE IMAGE as the exact architectural source, not as loose inspiration. Preserve the entire building design: footprint, volume, roof configuration and pitch, overhangs, facade geometry and joints, material authenticity, window and door number, sizes, exact placement, mullions, plinth, levels, stairs, openings and every architectural line. Preserve ORIGINAL CAMERA POSITION, lens perspective, eye level, viewpoint, orientation and building framing. Do not change the house to resemble the reference's building. Do not invent architectural components or landscape structures.
 
-CREATIVE DIRECTOR'S APPROACH
+EDITORIAL SHOT DIRECTOR / PUBLIC ARCHVIZ PRINCIPLES
 Develop one cohesive professional architectural editorial photograph rather than a generic glossy render. Work from the existing image toward a complete visual story: a clear visual hierarchy centred on the actual architecture; purposeful light revealing volumes and surfaces; an original, site-appropriate environment; near/middle/far layers making depth; nuanced atmospheric perspective, realistic surface and plant microdetail. The mood should emerge from THIS building, rather than following a fixed forest / plant / camera preset. Editorial image-making principles: same building, same camera, new light and environment, coherent storytelling.
 
 ORIGINAL BUILDING
@@ -144,6 +151,11 @@ ${curated ? `REFERENCE-BASED ART DIRECTION (inspiration only, not geometry sourc
 Chosen professional reference: ${state.winner.sourceLabel} — ${state.winner.link}
 Why selected: ${chosen.reason || 'compatible architectural photo direction'}
 Composition treatment: ${chosen.composition || 'preserve image perspective, refine visual hierarchy'}
+Architectural hero / visual anchor: ${chosen.focalPoint || 'determine from the original architecture'}
+Near-foreground shot staging: ${chosen.foreground || 'use only believable, architecture-friendly foreground depth'}
+Middle-ground relationship to the building: ${chosen.middleGround || 'create credible hardscape/planting transition around the architecture'}
+Distant landscape / horizon: ${chosen.background || 'site-consistent layered distance, without inventing observed location'}
+Editorial story / emotional intention: ${chosen.story || 'one purposeful, photographed architectural editorial moment'}
 Environment concept: ${chosen.environment || 'bespoke landscape matching building'}
 Light treatment: ${chosen.lightingDescription || mode.lighting}
 Material and colour balance: ${chosen.palette || 'restrained premium neutral grade'}
@@ -175,6 +187,7 @@ function updateImage(file) {
   reader.onload = () => {
     state.file = file; state.image = String(reader.result || '');
     state.analysis = null; state.winner = null; state.curation = null; state.prompt = '';
+    $('#shotPlan').hidden = true;
     $('#projectPreview').src = state.image; $('#projectPreview').hidden = false; $('#emptyScene').hidden = true;
     $('#dropTitle').textContent = 'Заменить изображение'; $('#dropHint').textContent = 'Нажмите, чтобы загрузить другое';
     $('#imageLabel').textContent = file.name.length > 28 ? file.name.slice(0,24) + '…' : file.name;
