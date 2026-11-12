@@ -291,22 +291,4 @@ const server=http.createServer(async(req,res)=>{
     return json(res,405,{error:'Метод не поддерживается'});
   }catch(e){json(res,e.status||502,{error:errorOf(e)});}
 });
-// TEMPORARY CONNECTIVITY DIAGNOSTIC — remove after verifying Serper.
-console.log('[CONFIG_CHECK]',JSON.stringify({serperConfigured:Boolean(SERPER_KEY),aiConfigured:Boolean(AI_KEY),searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':'none'}));
-if(SERPER_KEY){
-  (async()=>{
-    try{
-      const res=await fetch('https://google.serper.dev/images',{
-        method:'POST',headers:{'X-API-KEY':SERPER_KEY,'Content-Type':'application/json'},
-        body:JSON.stringify({q:'site:archdaily.com residential architecture daylight exterior',num:3,hl:'en',gl:'us',safe:'active'}),
-        signal:timeout(15000)
-      });
-      if(!res.ok){console.log('[SERPER_CHECK]',JSON.stringify({http:res.status,success:false}));return;}
-      const data=await res.json();
-      const items=Array.isArray(data.images)?data.images:[];
-      const allowed=items.filter(item=>{try{const u=new URL(item.link);return u.hostname==='archdaily.com'||u.hostname.endsWith('.archdaily.com');}catch{return false;}});
-      console.log('[SERPER_CHECK]',JSON.stringify({http:res.status,success:true,images:items.length,allowedDomain:allowed.length}));
-    }catch(error){console.log('[SERPER_CHECK]',JSON.stringify({success:false,error:error?.name==='TimeoutError'?'timeout':'connection_failure'}));}
-  })();
-}
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
