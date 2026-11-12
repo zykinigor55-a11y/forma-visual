@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V28 — nonblocking real image/PDF generation.
  * Long GPT Image 2 requests can exceed the phone's HTTP timeout. Return
  * an opaque job id immediately and poll without starting another paid request.
@@ -78,8 +79,8 @@ function json(res,status,payload){
 export function handleGenerationJobStatus(req,res,pathname){
  if(pathname!=="/api/generation/status")return false;
  const origin=String(req.headers.origin||"");
- if(origin!==ORIGIN)return json(res,403,{error:"Недопустимый источник."});
- res.setHeader("Access-Control-Allow-Origin",ORIGIN);
+ if(!appOrigin(req))return json(res,403,{error:"Недопустимый источник."});
+ res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
  res.setHeader("Access-Control-Allow-Headers","Content-Type");
  res.setHeader("Access-Control-Allow-Methods","GET, OPTIONS");
  res.setHeader("Vary","Origin");
