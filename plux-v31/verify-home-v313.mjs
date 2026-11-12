@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright-core';
-const pageURL='https://plux-v17-friends-preview.onrender.com/?ui-check=3132';
+const pageURL='https://plux-v17-friends-preview.onrender.com/?ui-check=3135';
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 try {
  const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
