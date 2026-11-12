@@ -26,6 +26,22 @@ if platform=="android":
     }
 }""")
             main.write_text(code)
+    # V31: Capacitor bridge into MediaStore for actual Android gallery saving.
+    media_template=root/"scripts/plux-media-saver.java.txt"
+    media_target=root/"android/app/src/main/java/com/plux/assistant/PLUXMediaSaver.java"
+    if not media_template.exists():
+        raise SystemExit("Missing V31 MediaStore Java plugin")
+    media_target.parent.mkdir(parents=True, exist_ok=True)
+    media_target.write_text(media_template.read_text())
+    if main.exists():
+        code=main.read_text()
+        if "registerPlugin(PLUXMediaSaver.class)" not in code:
+            if "super.onCreate(state);" not in code:
+                raise SystemExit("Cannot find Android onCreate insertion point")
+            code=code.replace(
+                "super.onCreate(state);",
+                "registerPlugin(PLUXMediaSaver.class);\n        super.onCreate(state);",1)
+            main.write_text(code)
 elif platform=="ios":
     import plistlib
     plist=root/"ios/App/App/Info.plist"
