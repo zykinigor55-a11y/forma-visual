@@ -1,0 +1,40 @@
+name: PLUX V31.8.7 Android visible images APK release
+on:
+  push:
+    branches: [plux-v3187-inline-images-percent-progress]
+    paths: ['.github/workflows/plux-v3187-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Get verified Android build from production branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43262257527 --repo "${{ github.repository }}" --name PLUX-V31.8-Android-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.8.7-Android.apk
+          unzip -tq release/PLUX-V31.8.7-Android.apk
+          sha256sum release/PLUX-V31.8.7-Android.apk
+      - name: Publish APK direct link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-8-7-chat-images-progress-20261112"
+          apk="release/PLUX-V31.8.7-Android.apk"
+          notes="PLUX V31.8.7 Android debug APK: real GPT Image 2 generated images load and decode directly inside chat, same loading card becomes completed image with save button, estimated 0–95% progress while processing (NOT provider reported), 100% only after successfully loaded, errors visible on failure. Critical fix: V12.4 typewriter now skips rich-image and artifact/progress bubbles instead of deleting child DOM. Original V31.8.6 voice memory, Friends, OLED mascot, themes and video are preserved. Deployed static website: https://plux-v17-friends-preview.onrender.com/?v=3187. Requires connected Render/online API Market; mock image browser tests and Android build passed. Live paid generation on device not executed."
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk" --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "PLUX V31.8.7 - Visible GPT Image 2 and Progress" --notes "$notes"
+          else
+            gh release create "$tag" "$apk" --repo "${{ github.repository }}" --target "6b51b99283fc51985d1429b9668ddc03339c0cfc" --title "PLUX V31.8.7 - Visible GPT Image 2 and Progress" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[]|(.name+" "+.url)'
