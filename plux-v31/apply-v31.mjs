@@ -40,8 +40,8 @@ const modules=[
  ['plux-v31/video-hub-v318.js','video-hub-v318.js'],
  ['plux-v31/video-hub-v318.css','video-hub-v318.css'],
  ['plux-v31/gemini-voice-v3183.js','gemini-voice-v3183.js'],
- ['plux-v31/header-palette-v3184.js','header-palette-v3184.js'],
- ['plux-v31/header-prompt-v3184.css','header-prompt-v3184.css']
+ ['plux-v31/header-palette-v3185.js','header-palette-v3185.js'],
+ ['plux-v31/header-prompt-v3185.css','header-prompt-v3185.css']
 ];
 for(const [src,dest]of modules){
  if(!existsSync(src))throw Error('V30/V31 dependency missing: '+src);
@@ -56,9 +56,9 @@ html=html.replace(/<script\b[^>]*src=["'][^"']*plux-live-v151\.js[^"']*["'][^>]*
 if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
  throw Error('Original approved V30 layout changed; stop rather than overwrite');
 const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
- 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css','oled-v315.css','mascot-fullscreen-v316.css','theme-motion-v318.css','microdust-enhanced-v318.css','ai-cognition-v318.css','video-hub-v318.css','header-prompt-v3184.css'];
+ 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css','oled-v315.css','mascot-fullscreen-v316.css','theme-motion-v318.css','microdust-enhanced-v318.css','ai-cognition-v318.css','video-hub-v318.css','header-prompt-v3185.css'];
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
- 'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js','microphone-permission-v318.js','microdust-enhanced-v318.js','ai-cognition-v318.js','video-hub-v318.js','gemini-voice-v3183.js','header-palette-v3184.js'];
+ 'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js','microphone-permission-v318.js','microdust-enhanced-v318.js','ai-cognition-v318.js','video-hub-v318.js','gemini-voice-v3183.js','header-palette-v3185.js'];
 for(const file of styles){
  if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3185"></head>`);
 }
