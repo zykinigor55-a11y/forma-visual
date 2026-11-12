@@ -11,17 +11,32 @@ const make=(tag,cl,text)=>{const n=document.createElement(tag);if(cl)n.className
 
 /* V31.8: square, recompressed profile photos. Only the owner uploads/changes an avatar. */
 const avatarPattern=/^[a-f0-9-]{36}\/[a-f0-9-]{36}\.webp$/;
+const avatarObjectUrls=new Map();
 function drawAvatar(el,p){
  if(!el)return;
- el.replaceChildren();
- el.textContent=String(p?.display_name||p?.handle||'?').trim().charAt(0).toUpperCase()||'?';
+ const initial=String(p?.display_name||p?.handle||'?').trim().charAt(0).toUpperCase()||'?';
  const path=p?.avatar_path;
+ el.replaceChildren();
+ el.textContent=initial;
  if(typeof path!=='string'||!avatarPattern.test(path))return;
  const im=make('img','pf-avatar-photo');
- im.alt='';im.loading='lazy';im.decoding='async';
+ im.alt='Аватар';im.loading='eager';im.decoding='async';
+ const cached=avatarObjectUrls.get(path);
+ let retried=false;
  im.onload=()=>{if(el.isConnected)el.replaceChildren(im)};
- im.onerror=()=>{im.remove()};
- im.src=base+'/storage/v1/object/public/plux-avatars/'+path;
+ im.onerror=async()=>{
+  if(retried){im.remove();if(el.id==='pf-myavatar')notice('Не удалось загрузить аватарку. Проверь соединение.',true);return}
+  retried=true;
+  try{
+   const blob=await fetcher('/storage/v1/object/public/plux-avatars/'+path,'GET',null,true);
+   if(!blob?.type?.startsWith('image/')||blob.size<100)throw Error('Неизвестный формат изображения');
+   const old=avatarObjectUrls.get(path);if(old)URL.revokeObjectURL(old);
+   const local=URL.createObjectURL(blob);avatarObjectUrls.set(path,local);im.src=local;
+  }catch{
+   if(el.id==='pf-myavatar')notice('Фото есть в профиле, но не загрузилось. Проверь интернет.',true);
+  }
+ };
+ im.src=cached||base+'/storage/v1/object/public/plux-avatars/'+path;
 }
 async function prepareAvatar(file){
  if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>6*1024*1024)
@@ -49,10 +64,18 @@ async function changeAvatar(file){
  const data=await prepareAvatar(file);
  const path=S.user.id+'/'+crypto.randomUUID()+'.webp';
  await fetcher('/storage/v1/object/plux-avatars/'+path,'POST',data,true);
- try{await fetcher('/rest/v1/plux_profiles?id=eq.'+S.user.id,'PATCH',{avatar_path:path})}
- catch(e){void fetcher('/storage/v1/object/plux-avatars/'+path,'DELETE').catch(()=>{});throw e}
+ let updated;
+ try{
+  updated=await fetcher('/rest/v1/plux_profiles?id=eq.'+S.user.id+'&select=avatar_path','PATCH',{avatar_path:path});
+  if(!Array.isArray(updated)||updated[0]?.avatar_path!==path)throw Error('Изображение загружено, но профиль не обновился');
+ }catch(e){
+  void fetcher('/storage/v1/object/plux-avatars/'+path,'DELETE').catch(()=>{});
+  throw e;
+ }
  const old=S.profile.avatar_path;
  S.profile.avatar_path=path;
+ const preview=URL.createObjectURL(data);
+ avatarObjectUrls.set(path,preview);
  drawAvatar(id('pf-myavatar'),S.profile);
  if(old&&avatarPattern.test(old)&&old!==path)
   void fetcher('/storage/v1/object/plux-avatars/'+old,'DELETE').catch(()=>{});
@@ -357,6 +380,8 @@ id('pf-logout').onclick=()=>{
  dropSession();S.dialog=null;
  clearInterval(S.timer);S.timer=0;
  visible('pf-content',false);visible('pf-signin',true);notice('');
+ for(const link of avatarObjectUrls.values())URL.revokeObjectURL(link);
+ avatarObjectUrls.clear();
  if(token)void fetch(base+'/auth/v1/logout',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+token}}).catch(()=>{});
 };
 id('pf-save-profile').onclick=()=>void act(async()=>{
