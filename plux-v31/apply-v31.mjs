@@ -48,6 +48,11 @@ for(const [src,dest]of modules){
  copyFileSync(src,join(root,dest));
 }
 let html=readFileSync(htmlFile,'utf8');
+/* V31.8.5: legacy ElevenLabs client also bound the home and mic buttons.
+ * It started a second simultaneous audio session. Remove only that script;
+ * keep the independent on-demand text-to-speech feature intact. */
+html=html.replace(/<script\b[^>]*src=["'][^"']*plux-live-v151\.js[^"']*["'][^>]*>\s*<\/script>/gi,'');
+
 if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
  throw Error('Original approved V30 layout changed; stop rather than overwrite');
 const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
@@ -55,10 +60,10 @@ const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
  'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js','microphone-permission-v318.js','microdust-enhanced-v318.js','ai-cognition-v318.js','video-hub-v318.js','gemini-voice-v3183.js','header-palette-v3184.js'];
 for(const file of styles){
- if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3184"></head>`);
+ if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3185"></head>`);
 }
 for(const file of scripts){
- if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3184"></script></body>`);
+ if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3185"></script></body>`);
 }
 if(!html.includes('name="theme-color"'))html=html.replace('</head>','<meta name="theme-color" content="#000000"></head>');
 if(!html.includes('plux-release-v31'))html=html.replace('</head>',

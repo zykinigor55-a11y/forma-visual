@@ -1,0 +1,32 @@
+name: PLUX V31.8.5 Gemini turns, avatars and persistent friends
+on:
+  push:
+    branches: [plux-v3185-voice-stability-persistent-friends]
+    paths:
+      - 'plux-v31/**'
+      - 'plux-v17-friends/**'
+      - '.github/workflows/plux-v3185-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install browser testing helper
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Check new application scripts and HTML patcher
+        run: |
+          node --check plux-v31/gemini-voice-v3183.js
+          node --check plux-v17-friends/plux-friends-v17.js
+          node --check plux-v31/apply-v31.mjs
+          node --check plux-v31/verify-voice-stability-v3185.mjs
+          node --check plux-v31/verify-friends-persistence-v3185.mjs
+      - name: Check Gemini half-duplex audio and audible listening notification
+        run: node plux-v31/verify-voice-stability-v3185.mjs
+      - name: Check remembered account and restored photo avatar
+        run: node plux-v31/verify-friends-persistence-v3185.mjs

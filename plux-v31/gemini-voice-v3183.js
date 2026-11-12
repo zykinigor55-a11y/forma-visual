@@ -13,7 +13,47 @@ const title=document.getElementById("voice-toplabel");
 const status=document.getElementById("voice-status");
 if(!voice||!button||!title||!status)return;
 let connected=false,connecting=false,ws=null,mic=null,audio=null,source=null,processor=null,mute=null;
-let sessionId=0,nextPlayback=0,sources=[];
+let sessionId=0,nextPlayback=0,sources=[],inputEnabled=false,responseFinished=false;
+let resumeTimer=0,lastSignalAt=0;
+const launch=document.getElementById("open-voice-quick");
+function micEnabled(enabled){
+ inputEnabled=Boolean(enabled)&&connected;
+ if(mic)for(const t of mic.getAudioTracks())t.enabled=inputEnabled;
+}
+function clearResume(){if(resumeTimer){clearTimeout(resumeTimer);resumeTimer=0}}
+function signalReady(){
+ if(!audio||audio.state==="closed")return;
+ const when=audio.currentTime+.02,gain=audio.createGain();
+ gain.gain.setValueAtTime(.0001,when);
+ gain.gain.exponentialRampToValueAtTime(.12,when+.035);
+ gain.gain.exponentialRampToValueAtTime(.0001,when+.27);
+ gain.connect(audio.destination);
+ const a=audio.createOscillator(),b=audio.createOscillator();
+ a.type="sine";b.type="sine";a.frequency.value=760;b.frequency.value=1040;
+ a.connect(gain);b.connect(gain);
+ a.start(when);b.start(when+.105);a.stop(when+.17);b.stop(when+.27);
+ b.onended=()=>{try{gain.disconnect()}catch{}};
+}
+function listening(generation,{tone=true}={}){
+ if(generation!==sessionId||!connected)return;
+ clearResume();micEnabled(false);responseFinished=false;
+ setState("Слушаю","Говори, я тебя слышу.","listening");
+ const now=Date.now(),canTone=tone&&now-lastSignalAt>1150;
+ if(canTone){lastSignalAt=now;try{signalReady()}catch{}}
+ resumeTimer=setTimeout(()=>{
+  resumeTimer=0;
+  if(generation===sessionId&&connected&&voice.dataset.voiceState==="listening")micEnabled(true);
+ },canTone?390:160);
+}
+function resumeAfterAnswer(generation){
+ if(!responseFinished||generation!==sessionId||!connected||sources.length)return;
+ clearResume();
+ resumeTimer=setTimeout(()=>{
+  resumeTimer=0;
+  if(generation!==sessionId||!connected||sources.length||!responseFinished)return;
+  listening(generation);
+ },560);
+}
 const supported=()=>!!navigator.mediaDevices?.getUserMedia&&typeof WebSocket!=="undefined";
 const setState=(name,detail,state="idle")=>{
  title.textContent=name;status.textContent=detail;
@@ -26,7 +66,7 @@ const setState=(name,detail,state="idle")=>{
  const videoState=state==="talking"?"talking":state==="thinking"?"thinking":state==="listening"?"listening":"idle";
  if(clip&&window.PLUXSeamless?.set)try{window.PLUXSeamless.set(clip,layer,videoState)}catch{}
 };
-const showError=message=>setState("Голосовой режим · Gemini",String(message||"Ошибка подключения").slice(0,220),"idle");
+const showError=message=>setState("Голосовой режим",String(message||"Ошибка подключения").slice(0,220),"idle");
 const bytesToBase64=bytes=>{
  let s="";for(let i=0;i<bytes.length;i+=8192){s+=String.fromCharCode(...bytes.subarray(i,i+8192));}
  return btoa(s);
@@ -57,16 +97,16 @@ function playDelta(value){
   if(n>=32768)n-=65536;samples[i]=n/32768;
  }
  const node=audio.createBufferSource();
+ const generation=sessionId;
  node.buffer=buffer;node.connect(audio.destination);
- const start=Math.max(audio.currentTime+.045,nextPlayback);
- // Never let a stale network burst accumulate unbounded silence.
- if(start-audio.currentTime>3){stopPlayback();nextPlayback=audio.currentTime+.06}
+ // Preserve queued chunks: dropping them caused truncated and stuttering speech.
  const at=Math.max(audio.currentTime+.045,nextPlayback);
  node.start(at);nextPlayback=at+buffer.duration;sources.push(node);
- node.onended=()=>{sources=sources.filter(x=>x!==node)};
+ node.onended=()=>{sources=sources.filter(x=>x!==node);resumeAfterAnswer(generation)};
 }
 function release(){
  sessionId++;connecting=false;connected=false;
+ clearResume();inputEnabled=false;responseFinished=false;
  if(processor){processor.onaudioprocess=null;try{processor.disconnect()}catch{}processor=null}
  if(source){try{source.disconnect()}catch{}source=null}
  if(mute){try{mute.disconnect()}catch{}mute=null}
@@ -76,8 +116,8 @@ function release(){
  if(audio){const a=audio;audio=null;void a.close().catch(()=>{})}
  button.classList.remove("plux3183-connecting","live");button.setAttribute("aria-pressed","false");
 }
-function stop(message="Нажми микрофон, чтобы поговорить с ПЛЮХом через Gemini."){
- release();setState("Голосовой режим · Gemini",message,"idle");
+function stop(message="Нажми микрофон, чтобы поговорить с ПЛЮХом."){
+ release();setState("Голосовой режим",message,"idle");
 }
 function packet(payload){if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(payload))}
 function audioStart(){
@@ -88,7 +128,7 @@ function audioStart(){
  mute=audio.createGain();mute.gain.value=0;
  source.connect(processor);processor.connect(mute);mute.connect(audio.destination);
  processor.onaudioprocess=e=>{
-  if(!connected||ws?.readyState!==WebSocket.OPEN)return;
+  if(!connected||!inputEnabled||ws?.readyState!==WebSocket.OPEN)return;
   const f=e.inputBuffer.getChannelData(0);
   packet({type:"input_audio_buffer.append",audio:pcm16Base64(f,audio.sampleRate)});
  };
@@ -101,15 +141,24 @@ function handle(data,generation){
   release();showError(msg);
   return;
  }
- if(type==="input_audio_buffer.speech_started"){stopPlayback();setState("ПЛЮХ слушает","Говори свободно. Можешь перебивать ответ.","listening")}
- if(type==="input_audio_buffer.speech_stopped")setState("ПЛЮХ думает","Gemini готовит ответ…","thinking");
- if(type==="response.created")setState("ПЛЮХ думает","Подготавливаю ответ…","thinking");
+ if(type==="input_audio_buffer.speech_started"){
+  if(inputEnabled)setState("Слушаю","Я тебя слышу.","listening");
+ }
+ if(type==="input_audio_buffer.speech_stopped"){
+  micEnabled(false);clearResume();
+  responseFinished=false;setState("Думаю","Формирую ответ…","thinking");
+ }
+ if(type==="response.created"){
+  micEnabled(false);clearResume();
+  responseFinished=false;setState("Думаю","Подготавливаю ответ…","thinking");
+ }
  if(type==="response.output_audio.delta"||type==="response.audio.delta"){
-  setState("ПЛЮХ говорит","Можешь перебить в любой момент.","talking");
+  micEnabled(false);clearResume();
+  setState("Отвечаю","Готовый ответ ПЛЮХа.","talking");
   playDelta(data.delta);
  }
- if(type==="response.done"||type==="response.completed"){
-  if(nextPlayback<=0||!audio||nextPlayback-audio.currentTime<.12)setState("ПЛЮХ слушает","Говори свободно.","listening");
+ if(type==="response.done"||type==="response.completed"||type==="response.cancelled"||type==="response.failed"){
+  responseFinished=true;resumeAfterAnswer(generation);
  }
 }
 async function start(){
@@ -137,13 +186,14 @@ async function start(){
   ws.onopen=()=>{
    if(generation!==sessionId)return;
    clearTimeout(timer);connecting=false;connected=true;
+   micEnabled(false);
    packet({type:"session.update",session:{
-    instructions:"Ты ПЛЮХ — молодой, доброжелательный, энергичный помощник. Разговаривай ТОЛЬКО по-русски, короткими естественными фразами, без пауз и иностранных слов.",
+    instructions:"Ты ПЛЮХ — молодой, доброжелательный, энергичный помощник. Общайся исключительно по-русски, цельными короткими фразами без повторений. Не перебивай говорящего.",
     input_audio_format:"pcm16",output_audio_format:"pcm16",voice:"ash",
-    turn_detection:{type:"server_vad",threshold:.45,prefix_padding_ms:300,silence_duration_ms:650,create_response:true}
+    turn_detection:{type:"server_vad",threshold:.57,prefix_padding_ms:300,silence_duration_ms:820,create_response:true}
    }});
    audioStart();
-   setState("ПЛЮХ слушает","Gemini подключён. Говори!","listening");
+   listening(generation);
   };
   ws.onmessage=e=>{try{handle(JSON.parse(e.data),generation)}catch{}};
   ws.onerror=()=>{if(generation===sessionId){release();showError("Ошибка соединения с Gemini через Arkheon.")}};
@@ -166,8 +216,17 @@ document.addEventListener("click",e=>{
 for(const id of ["voice-back","voice-end"]){
  document.getElementById(id)?.addEventListener("click",()=>stop(),{capture:true});
 }
+// Opening the voice page from the Home mic starts only the Gemini flow.
+launch?.addEventListener("click",()=>{
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  if(!voice.hidden&&!connecting&&!connected)void start();
+ }));
+});
+new MutationObserver(()=>{
+ if(voice.hidden&&(connecting||connected))stop();
+}).observe(voice,{attributes:true,attributeFilter:["hidden"]});
 window.addEventListener("pagehide",()=>release());
 document.addEventListener("visibilitychange",()=>{if(document.hidden)release()});
 stop();
-window.PLUXGeminiVoiceV3183={start,stop,ready:()=>connected};
+window.PLUXGeminiVoiceV3183={start,stop,ready:()=>connected,isListening:()=>inputEnabled};
 })();

@@ -41,7 +41,7 @@
     button.type="button";button.className="plux15-voice-button";
     button.innerHTML=speaker+"<span>Озвучить</span>";
     button.setAttribute("aria-label","Озвучить ответ Плюха");
-    button.title="Создать голосовую версию через ElevenLabs (платная генерация)";
+    button.title="Создать голосовую версию ответа";
     const status=document.createElement("span");
     status.className="plux15-voice-status";status.setAttribute("role","status");
     area.append(button,status);bubble.append(area);

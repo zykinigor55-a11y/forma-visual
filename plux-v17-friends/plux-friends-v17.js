@@ -11,17 +11,32 @@ const make=(tag,cl,text)=>{const n=document.createElement(tag);if(cl)n.className
 
 /* V31.8: square, recompressed profile photos. Only the owner uploads/changes an avatar. */
 const avatarPattern=/^[a-f0-9-]{36}\/[a-f0-9-]{36}\.webp$/;
+const avatarObjectUrls=new Map();
 function drawAvatar(el,p){
  if(!el)return;
- el.replaceChildren();
- el.textContent=String(p?.display_name||p?.handle||'?').trim().charAt(0).toUpperCase()||'?';
+ const initial=String(p?.display_name||p?.handle||'?').trim().charAt(0).toUpperCase()||'?';
  const path=p?.avatar_path;
+ el.replaceChildren();
+ el.textContent=initial;
  if(typeof path!=='string'||!avatarPattern.test(path))return;
  const im=make('img','pf-avatar-photo');
- im.alt='';im.loading='lazy';im.decoding='async';
+ im.alt='Аватар';im.loading='eager';im.decoding='async';
+ const cached=avatarObjectUrls.get(path);
+ let retried=false;
  im.onload=()=>{if(el.isConnected)el.replaceChildren(im)};
- im.onerror=()=>{im.remove()};
- im.src=base+'/storage/v1/object/public/plux-avatars/'+path;
+ im.onerror=async()=>{
+  if(retried){im.remove();if(el.id==='pf-myavatar')notice('Не удалось загрузить аватарку. Проверь соединение.',true);return}
+  retried=true;
+  try{
+   const blob=await fetcher('/storage/v1/object/public/plux-avatars/'+path,'GET',null,true);
+   if(!blob?.type?.startsWith('image/')||blob.size<100)throw Error('Неизвестный формат изображения');
+   const old=avatarObjectUrls.get(path);if(old)URL.revokeObjectURL(old);
+   const local=URL.createObjectURL(blob);avatarObjectUrls.set(path,local);im.src=local;
+  }catch{
+   if(el.id==='pf-myavatar')notice('Фото есть в профиле, но не загрузилось. Проверь интернет.',true);
+  }
+ };
+ im.src=cached||base+'/storage/v1/object/public/plux-avatars/'+path;
 }
 async function prepareAvatar(file){
  if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>6*1024*1024)
@@ -49,10 +64,18 @@ async function changeAvatar(file){
  const data=await prepareAvatar(file);
  const path=S.user.id+'/'+crypto.randomUUID()+'.webp';
  await fetcher('/storage/v1/object/plux-avatars/'+path,'POST',data,true);
- try{await fetcher('/rest/v1/plux_profiles?id=eq.'+S.user.id,'PATCH',{avatar_path:path})}
- catch(e){void fetcher('/storage/v1/object/plux-avatars/'+path,'DELETE').catch(()=>{});throw e}
+ let updated;
+ try{
+  updated=await fetcher('/rest/v1/plux_profiles?id=eq.'+S.user.id+'&select=avatar_path','PATCH',{avatar_path:path});
+  if(!Array.isArray(updated)||updated[0]?.avatar_path!==path)throw Error('Изображение загружено, но профиль не обновился');
+ }catch(e){
+  void fetcher('/storage/v1/object/plux-avatars/'+path,'DELETE').catch(()=>{});
+  throw e;
+ }
  const old=S.profile.avatar_path;
  S.profile.avatar_path=path;
+ const preview=URL.createObjectURL(data);
+ avatarObjectUrls.set(path,preview);
  drawAvatar(id('pf-myavatar'),S.profile);
  if(old&&avatarPattern.test(old)&&old!==path)
   void fetcher('/storage/v1/object/plux-avatars/'+old,'DELETE').catch(()=>{});
@@ -64,7 +87,9 @@ const notice=(s,bad=false)=>{id('pf-alert').textContent=s;id('pf-alert').hidden=
 const h=(opts={})=>({apikey:key, ...(S.session?.access_token?{Authorization:'Bearer '+S.session.access_token}:{}),...opts});
 async function fetcher(path,method='GET',body=null,binary=false,retry=false){
  if(!base||!key)throw Error('Сервис общения пока не подключён');
+ if(!path.startsWith('/auth/'))await ensureFresh();
  const headers=h(binary&&body?{'Content-Type':body.type}:{Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})});
+ if(method==='PATCH')headers.Prefer='return=representation';
  const response=await fetch(base+path,{method,headers,body:binary?body:body?JSON.stringify(body):undefined,cache:'no-store'});
  if(response.status===401&&S.session?.refresh_token&&!retry){await refresh();return fetcher(path,method,body,binary,true)}
  const type=response.headers.get('content-type')||'';
@@ -72,10 +97,48 @@ async function fetcher(path,method='GET',body=null,binary=false,retry=false){
  if(!response.ok)throw Error(String(value?.message||value?.error_description||value?.error||value||'Ошибка сервера').slice(0,180));
  return value;
 }
-function setSession(data){S.session=data;S.user=data.user;try{sessionStorage.setItem('plux_friends_session',JSON.stringify(data))}catch{}}
+/* V31.8.5: persistent, rotating Supabase refresh token across Android app restarts.
+   Sign-out is the only normal action that deletes the saved session. */
+const sessionKey='plux_friends_session_v3185';
+let refreshPending=null;
+function dropSession(){
+ S.session=null;S.user=null;S.profile=null;
+ try{localStorage.removeItem(sessionKey);sessionStorage.removeItem('plux_friends_session')}catch{}
+}
+function setSession(data){
+ if(!data?.access_token||!data?.refresh_token||!data?.user?.id)throw Error('Неверные данные авторизации');
+ S.session={...data,expires_at:Number(data.expires_at)||(Math.floor(Date.now()/1000)+Number(data.expires_in||3600))};
+ S.user=data.user;
+ try{localStorage.setItem(sessionKey,JSON.stringify(S.session));
+  sessionStorage.removeItem('plux_friends_session')}catch{}
+}
+function restoreSession(){
+ let saved=null;
+ try{saved=JSON.parse(localStorage.getItem(sessionKey)||sessionStorage.getItem('plux_friends_session')||'null')}catch{}
+ if(!saved?.refresh_token||!saved?.user?.id)return false;
+ S.session=saved;S.user=saved.user;return true;
+}
 async function refresh(){
- const r=await fetch(base+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:S.session.refresh_token})});
- const d=await r.json();if(!r.ok)throw Error('Сессия истекла');setSession(d);
+ if(refreshPending)return refreshPending;
+ if(!S.session?.refresh_token)throw Error('Для входа требуется авторизация');
+ refreshPending=(async()=>{
+  const r=await fetch(base+'/auth/v1/token?grant_type=refresh_token',{
+   method:'POST',headers:{apikey:key,'Content-Type':'application/json'},
+   body:JSON.stringify({refresh_token:S.session.refresh_token}),signal:AbortSignal.timeout(18000)
+  });
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){
+   // A temporary network error must not silently log out a user.
+   if([400,401,403].includes(r.status))dropSession();
+   throw Error(d?.msg||d?.error_description||'Не удалось обновить сессию');
+  }
+  setSession(d);
+  return S.session;
+ })();
+ try{return await refreshPending}finally{refreshPending=null}
+}
+async function ensureFresh(){
+ if(S.session?.refresh_token&&(!S.session.expires_at||S.session.expires_at*1000<Date.now()+90000))await refresh();
 }
 async function start(){
  const me=await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name,avatar_path&id=eq.'+S.user.id);
@@ -241,11 +304,16 @@ async function open(){
  id('plux-friends-panel').hidden=false;notice('');
  if(!base||!key){visible('pf-setup',true);visible('pf-signin',false);visible('pf-content',false);return;}
  visible('pf-setup',false);
- if(S.session&&S.user){await start();return;}
- try{
-  const s=JSON.parse(sessionStorage.getItem('plux_friends_session')||'null');
-  if(s?.refresh_token){S.session=s;await refresh();await start();return;}
- }catch{}
+ if((S.session&&S.user)||restoreSession()){
+  try{await ensureFresh();await start();return}
+  catch(e){
+   if(S.session){
+    visible('pf-signin',false);visible('pf-content',true);
+    notice('Профиль сохранён. Нет связи: '+String(e.message||'попробуй позже').slice(0,100),true);
+    return;
+   }
+  }
+ }
  visible('pf-signin',true);visible('pf-content',false);
 }
 const root=document.createElement('div');root.id='plux-friends-panel';root.hidden=true;
@@ -308,8 +376,13 @@ id('pf-register').onclick=()=>void act(async()=>{
  if(x.access_token){setSession(x);await start()}else notice('Проверь почту, подтверди регистрацию и войди');
 });
 id('pf-logout').onclick=()=>{
- S.session=null;S.user=null;S.dialog=null;try{sessionStorage.removeItem('plux_friends_session')}catch{}
- clearInterval(S.timer);visible('pf-content',false);visible('pf-signin',true);
+ const token=S.session?.access_token;
+ dropSession();S.dialog=null;
+ clearInterval(S.timer);S.timer=0;
+ visible('pf-content',false);visible('pf-signin',true);notice('');
+ for(const link of avatarObjectUrls.values())URL.revokeObjectURL(link);
+ avatarObjectUrls.clear();
+ if(token)void fetch(base+'/auth/v1/logout',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+token}}).catch(()=>{});
 };
 id('pf-save-profile').onclick=()=>void act(async()=>{
  const handle=id('pf-handle').value.trim().toLowerCase(),display_name=id('pf-display').value.trim();
