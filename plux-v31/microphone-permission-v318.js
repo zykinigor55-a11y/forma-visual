@@ -14,6 +14,7 @@ function notice(message){
  if(!n){n=document.createElement("div");n.className="plux318-mic-notice";n.setAttribute("role","alert");voice.append(n)}
  n.textContent=message;n.hidden=false;
 }
+let permissionPending=null;
 async function requestNative(){
  if(!native())return true;
  const m=plugin();
@@ -21,7 +22,9 @@ async function requestNative(){
   // Old APK: avoid fake success, let WebView decide and show Android settings if denied.
   return true;
  }
- const res=await m.requestMicrophone();
+ if(permissionPending)return permissionPending;
+ permissionPending=m.requestMicrophone().finally(()=>{permissionPending=null});
+ const res=await permissionPending;
  if(res?.granted!==true)throw Error("Микрофон не разрешён. Открой настройки Android → PLUX → Разрешения.");
  return true;
 }
