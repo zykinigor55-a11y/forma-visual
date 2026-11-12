@@ -28,7 +28,8 @@ const modules=[
  ['plux-v31/home-contrast-v313.css','home-contrast-v313.css'],
  ['plux-v31/intro-asmr-v313.js','intro-asmr-v313.js'],
  ['plux-v31/home-fix-v314.css','home-fix-v314.css'],
- ['plux-v31/quick-orbs-v314.js','quick-orbs-v314.js']
+ ['plux-v31/quick-orbs-v314.js','quick-orbs-v314.js'],
+ ['plux-v31/oled-v315.css','oled-v315.css']
 ];
 for(const [src,dest]of modules){
  if(!existsSync(src))throw Error('V30/V31 dependency missing: '+src);
@@ -38,16 +39,17 @@ let html=readFileSync(htmlFile,'utf8');
 if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
  throw Error('Original approved V30 layout changed; stop rather than overwrite');
 const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
- 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css'];
+ 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css','oled-v315.css'];
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
  'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js'];
 for(const file of styles){
- if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3141"></head>`);
+ if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3151"></head>`);
 }
 for(const file of scripts){
- if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3141"></script></body>`);
+ if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3151"></script></body>`);
 }
+if(!html.includes('name="theme-color"'))html=html.replace('</head>','<meta name="theme-color" content="#000000"></head>');
 if(!html.includes('plux-release-v31'))html=html.replace('</head>',
- '<meta name="plux-release-v31" content="V30-tools-8-themes-friends-asmr-mascot-visible-glass-orbs"></head>');
+ '<meta name="plux-release-v31" content="V30-tools-8-themes-friends-asmr-mascot-visible-glass-orbs-OLED"></head>');
 writeFileSync(htmlFile,html);
-console.log('PLUX V31.4: original V30 tools and mascot restored; quick glass spheres tint with 8 drop themes.');
+console.log('PLUX V31.5 OLED: original V30 mascot and glass tool art retained; themed orbs and true-black display.');
