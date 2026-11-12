@@ -1,0 +1,30 @@
+name: PLUX 31.8.8 identical GPT Image 2 progress and recovery
+on:
+  push:
+    branches: [plux-v3188-chat-network-recovery]
+    paths:
+      - 'plux-v128-overlay/**'
+      - 'plux-v129-overlay/**'
+      - 'plux-v31/**'
+      - '.github/workflows/plux-v3188-shared-progress.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install browser testing
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Verify syntax
+        run: |
+          node --check plux-v31/generation-progress-v3188.js
+          node --check plux-v128-overlay/plux-chat-v128.js
+          node --check plux-v129-overlay/plux-v129.js
+          node --check plux-v31/verify-shared-progress-v3188.mjs
+          node --check plux-v31/apply-v31.mjs
+      - name: Verify Chat/Create identical progress, lost HTTP response and inline image
+        run: node plux-v31/verify-shared-progress-v3188.mjs
