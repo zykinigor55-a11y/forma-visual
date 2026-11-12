@@ -20,7 +20,7 @@ export function normalizeJamendoTrack(track){
  return {id:'jamendo-'+id,title:String(track.name||'Без названия').slice(0,140),
   artist:String(track.artist_name||'Независимый исполнитель').slice(0,110),
   cover:httpsOnly(track.image),stream,
-  url:page&&new URL(page).hostname.endsWith('jamendo.com')?page:null,
+  url:page&&(new URL(page).hostname==='jamendo.com'||new URL(page).hostname.endsWith('.jamendo.com'))?page:null,
   license:httpsOnly(track.license_ccurl),
   duration:Math.max(0,Math.min(36000,Number(track.duration)||0)),
   provider:'Jamendo'};
