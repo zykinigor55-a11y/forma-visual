@@ -1,0 +1,50 @@
+name: PLUX — configure Brevo SMTP for Friends registration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/plux-smtp-setup.mjs'
+      - '.github/workflows/plux-smtp-setup.yml'
+  workflow_dispatch:
+    inputs:
+      sender_verified:
+        description: 'I have verified the sending domain and sender email in Brevo'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate settings and prevent unsafe senders (no network, no secrets)
+        run: |
+          node --check ops/plux-smtp-setup.mjs
+          node ops/plux-smtp-setup.mjs --dry-run
+
+  configure:
+    needs: [validate]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.sender_verified == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enable PLUX Friends custom Brevo SMTP in Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          BREVO_SMTP_LOGIN: ${{ secrets.BREVO_SMTP_LOGIN }}
+          BREVO_SMTP_KEY: ${{ secrets.BREVO_SMTP_KEY }}
+          PLUX_SENDER_EMAIL: ${{ secrets.PLUX_SENDER_EMAIL }}
+        run: node ops/plux-smtp-setup.mjs
