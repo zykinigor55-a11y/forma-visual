@@ -47,6 +47,8 @@ async function people(){
  S.friends=ids.map(x=>dict.get(x)).filter(Boolean);
  S.requests=(requests||[]).map(x=>({...x,profile:dict.get(x.from_id)}));
  id('pf-count').textContent=S.requests.length||'';
+ const badge=id('plux31-friends-badge');
+ if(badge){badge.hidden=!S.requests.length;badge.textContent=S.requests.length>9?'9+':String(S.requests.length)}
 }
 function item(p,label,fn){
  const row=make('div','pf-person'),avatar=make('span','pf-avatar',(p.display_name||'?')[0].toUpperCase());
@@ -138,6 +140,7 @@ function beginPolling(){
  },10000);
 }
 function close(){
+ id('plux-friends-open')?.setAttribute('aria-expanded','false');
  id('plux-friends-panel').hidden=true;clearInterval(S.timer);S.timer=0;
  for(const u of S.pictures.values())URL.revokeObjectURL(u);S.pictures.clear();
 }
@@ -153,6 +156,7 @@ async function open(){
  visible('pf-signin',true);visible('pf-content',false);
 }
 const root=document.createElement('div');root.id='plux-friends-panel';root.hidden=true;
+root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','Друзья и личные сообщения');
 root.innerHTML=[
 '<section class="pf-shell"><header class="pf-head"><button id="pf-close" aria-label="Назад">‹</button><div><strong>Друзья <em>✦</em></strong><small>PLUX • PRIVATE MESSENGER</small></div><span>◈</span></header>',
 '<div id="pf-alert" class="pf-alert" role="status" hidden></div>',
@@ -166,13 +170,31 @@ root.innerHTML=[
 document.body.append(root);
 function insertButton(){
  if(id('plux-friends-open'))return;
- const b=make('button','pf-open');b.id='plux-friends-open';b.type='button';
- const icon=make('span','pf-open-icon','♧'),txt=make('span','pf-open-copy');
- txt.append(make('strong','','Друзья'),make('small','','Сообщения и фотографии'));
- b.append(icon,txt,make('span','','›'));b.onclick=()=>void open();
- const modes=document.querySelector('#screen-modes .mode-grid');
- if(modes)modes.insertAdjacentElement('afterend',b);
- else (document.querySelector('#screen-modes')||document.querySelector('#screen-home')||document.body).append(b);
+ // Native fifth item of the approved V30 bottom navigation — not a modes card.
+ const nav=document.querySelector('#screen-home .bottom-nav');
+ if(!nav){console.warn('PLUX Friends: home navigation is unavailable');return}
+ const b=make('button','nav-button pf-nav-button');
+ b.id='plux-friends-open';b.type='button';b.setAttribute('aria-label','Открыть друзей и сообщения');
+ b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-expanded','false');
+ const symbol=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ symbol.setAttribute('viewBox','0 0 24 24');symbol.setAttribute('fill','none');
+ symbol.setAttribute('stroke','currentColor');symbol.setAttribute('stroke-linecap','round');
+ symbol.setAttribute('stroke-linejoin','round');symbol.setAttribute('stroke-width','1.7');
+ for(const d of [
+   'M15.5 19.4v-1.2c0-2-1.6-3.6-3.6-3.6H5.6c-2 0-3.6 1.6-3.6 3.6v1.2',
+   'M8.8 11.4a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7',
+   'M18.2 11.2a3.3 3.3 0 0 1 0-6.2',
+   'M22 19.4v-1.2a3.6 3.6 0 0 0-2.7-3.5'
+ ]){
+   const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+   path.setAttribute('d',d);symbol.append(path);
+ }
+ const label=make('span','', 'Друзья');
+ const badge=make('i','pf-notify');badge.id='plux31-friends-badge';badge.hidden=true;badge.setAttribute('aria-label','Новые заявки в друзья');
+ b.append(symbol,label,badge);
+ b.addEventListener('click',()=>{b.setAttribute('aria-expanded','true');void open()});
+ const chat=nav.querySelector('[data-go="chat"]');
+ if(chat)chat.insertAdjacentElement('afterend',b);else nav.append(b);
 }
 id('pf-close').onclick=close;
 id('pf-chat-back').onclick=leaveChat;
