@@ -13,8 +13,8 @@ if platform=="android":
         content=content.replace("<application", '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application',1)
         manifest.write_text(content)
     ET.parse(manifest)
-    main=root/"android/app/src/main/java/com/plux/assistant/MainActivity.java"
-    if main.exists():
+    main=next((root/"android/app/src/main/java").rglob("MainActivity.java"), None)
+    if main and main.exists():
         code=main.read_text()
         if "FLAG_FULLSCREEN" not in code:
             code=code.replace("public class MainActivity extends BridgeActivity {}", """public class MainActivity extends BridgeActivity {
