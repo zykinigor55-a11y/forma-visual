@@ -57,6 +57,8 @@
  --plux31-home-contrast-c:rgba(95,54,129,.19);
 }
 /* Complementary color backlighting on the main home screen only. */
+:root[data-plux-theme] #app#app#app#app #screen-home,
+#app#app#app#app #screen-home,
 #screen-home {
  position:relative!important;
  background-color:var(--plux31-home-base)!important;
