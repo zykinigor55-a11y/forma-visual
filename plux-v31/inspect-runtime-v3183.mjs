@@ -24,6 +24,7 @@ for(const [method,path,body] of [
  ['GET','/api/arkheon/config',null],
  ['GET','/api/voice/config',null],
  ['GET','/api/image/config',null],
+ ['GET','/api/image/diagnostics',null],
  ['OPTIONS','/api/image',null],
  ['POST','/api/image',{prompt:'a'}],
 ]){
