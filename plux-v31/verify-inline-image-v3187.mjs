@@ -102,7 +102,7 @@ try{
  assert.equal(detail.src,"blob:");
  assert(detail.button);
  assert(!detail.text.includes("Примерный прогресс"));
- assert.equal(page.locator(".plux3187-image-card").then!==undefined,true); // card exists
+ assert.equal(await page.locator(".plux3187-image-card").count(),1);
  console.log("PLUX3187_INLINE_PASS "+JSON.stringify({start,progress,...detail,requests,statuses,photoFetches}));
  // On a bad/expired remote link, show an explicit visible error, not a fake preview.
  failPreview=true;
