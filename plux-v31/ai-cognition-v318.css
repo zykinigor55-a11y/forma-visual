@@ -1,0 +1,42 @@
+/* V31.8: compact titanium AI thinking core. OLED, theme aware, reduced motion. */
+#screen-home .home-head{isolation:isolate}
+#screen-home .home-head .plux318-retired-logo:not(button){visibility:hidden!important}
+#screen-home .home-head #plux318-cognition{
+ position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;
+ width:165px!important;max-width:41vw!important;height:76px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ flex-direction:column!important;gap:2px!important;pointer-events:none!important;z-index:2!important;
+ color:#eaf9fa!important;overflow:visible!important;
+}
+#screen-home #plux318-cognition .plux318-orbital{
+ display:block;position:relative;width:54px;height:44px;flex:none;
+ filter:drop-shadow(0 0 6px color-mix(in srgb,var(--plux-theme-accent,#88fbd1) 16%,transparent));
+}
+#screen-home #plux318-cognition .plux318-orbit{
+ position:absolute;inset:6px 4px;border:1px solid color-mix(in srgb,var(--plux-theme-accent,#8afed1) 72%,#eaf1f1);
+ border-radius:50%;opacity:.78;transform-style:preserve-3d;
+ animation:plux318-cognition-drift 8s linear infinite;
+ box-shadow:inset 0 0 2px #e9fffb34,0 0 5px color-mix(in srgb,var(--plux-theme-accent,#6afdc4) 20%,transparent)
+}
+#screen-home #plux318-cognition .plux318-orbit.oa{transform:rotate(-25deg) scaleY(.48);animation-name:plux318-rotate-a}
+#screen-home #plux318-cognition .plux318-orbit.ob{transform:rotate(57deg) scaleY(.53);animation-name:plux318-rotate-b;animation-duration:11s;opacity:.54}
+#screen-home #plux318-cognition .plux318-orbit.oc{transform:rotate(102deg) scaleY(.48);animation-name:plux318-rotate-c;animation-duration:13s;opacity:.38}
+#screen-home #plux318-cognition .plux318-heart{position:absolute;width:8px;height:8px;left:calc(50% - 4px);top:calc(50% - 4px);
+ border-radius:50%;background:radial-gradient(circle at 31% 31%,white 0%,#e6fff8 25%,var(--plux-theme-accent,#5cf6be) 75%);
+ box-shadow:0 0 5px #fff8,0 0 13px var(--plux-theme-accent,#5cf6be);
+ animation:plux318-heartbeat 4.5s ease-in-out infinite;
+}
+#screen-home #plux318-cognition .plux318-signal{position:absolute;top:13px;left:2px;width:3px;height:3px;border-radius:50%;
+ background:#e8fffd;box-shadow:0 0 6px var(--plux-theme-accent,#6effc2);animation:plux318-signal 4.4s ease-in-out infinite}
+#screen-home #plux318-cognition .plux318-signal.two{top:26px;left:auto;right:1px;animation-delay:-2.1s}
+#screen-home #plux318-cognition .plux318-identity{display:flex;flex-direction:column;align-items:center;gap:1px}
+#screen-home #plux318-cognition .plux318-identity b{font:600 13px/1.1 system-ui,sans-serif!important;letter-spacing:4px!important;color:#f2fcff!important;text-shadow:0 0 7px #afefe23d!important}
+#screen-home #plux318-cognition .plux318-identity small{font:500 6px/1 system-ui,sans-serif!important;letter-spacing:2.2px!important;color:#8aa5a2!important}
+#screen-home #plux318-cognition.is-thinking .plux318-orbit{animation-duration:2.1s;opacity:.94}
+#screen-home #plux318-cognition.is-thinking .plux318-heart{animation-duration:1.1s}
+@keyframes plux318-rotate-a{0%{transform:rotate(-25deg) scaleY(.48)}100%{transform:rotate(335deg) scaleY(.48)}}
+@keyframes plux318-rotate-b{0%{transform:rotate(57deg) scaleY(.53)}100%{transform:rotate(-303deg) scaleY(.53)}}
+@keyframes plux318-rotate-c{0%{transform:rotate(102deg) scaleY(.48)}100%{transform:rotate(462deg) scaleY(.48)}}
+@keyframes plux318-heartbeat{0%,100%{transform:scale(.9);opacity:.8}48%{transform:scale(1.28);opacity:1}}
+@keyframes plux318-signal{0%,100%{opacity:.24;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+@media(max-width:360px){#screen-home .home-head #plux318-cognition{max-width:38vw!important;transform:translate(-50%,-50%) scale(.86)!important}}
+@media(prefers-reduced-motion:reduce){#screen-home #plux318-cognition *{animation:none!important}}
