@@ -50,12 +50,14 @@ try {
    return names.map(theme=>{
      window.PLUXThemesV31.set(theme);
      const s=getComputedStyle(home);
-     return {theme,base:s.backgroundColor,accent:getComputedStyle(document.documentElement).getPropertyValue('--plux31-home-contrast-a').trim()};
+     return {theme,base:s.backgroundColor,image:s.backgroundImage,accent:getComputedStyle(document.documentElement).getPropertyValue('--plux31-home-contrast-a').trim()};
    });
  });
  console.log('PLUX_V313_COLORS',JSON.stringify(result));
  assert.equal(new Set(result.map(x=>x.accent)).size,4,'home contrast color changes with theme');
- assert.equal(new Set(result.map(x=>x.base)).size,4,'home background changes with theme');
+ assert.equal(new Set(result.map(x=>x.image)).size,4,'home gradient changes immediately with each theme');
+ // Base background-color eases over 450ms; checking it in the same event loop
+ // incorrectly reads the initial animation frame.
  console.log('PLUX_V313_PASS home tab centered and theme contrast responds to four pigment choices');
  console.log('PLUX_PAGE_ERRORS',JSON.stringify(errors.slice(0,8)));
 }finally{await browser.close()}
