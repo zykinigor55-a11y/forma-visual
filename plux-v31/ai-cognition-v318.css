@@ -51,3 +51,18 @@
  opacity:0!important;
  pointer-events:none!important
 }
+
+/* V31.8.3 - single minimalist animated neural core; no wordmark text. */
+#screen-home .home-head>.branding,
+#screen-home .home-head .branding,
+#screen-home .home-head img[src*="plux-liquid-logo"],
+#screen-home .home-head img[src*="plux-logo-2k"]{
+ display:none!important;visibility:hidden!important;opacity:0!important;
+}
+#screen-home .home-head #plux318-cognition{
+ width:88px!important;max-width:28vw!important;height:74px!important;gap:0!important;
+}
+#screen-home #plux318-cognition .plux318-identity{display:none!important}
+#screen-home #plux318-cognition .plux318-orbital{width:65px;height:56px;filter:none}
+#screen-home #plux318-cognition .plux318-orbit{border-width:.8px;opacity:.70;box-shadow:0 0 3px color-mix(in srgb,var(--plux-theme-accent,#70f8be) 18%,transparent)}
+#screen-home #plux318-cognition .plux318-heart{width:7px;height:7px;left:calc(50% - 3.5px);top:calc(50% - 3.5px);box-shadow:0 0 7px var(--plux-theme-accent,#61f7ba)}
