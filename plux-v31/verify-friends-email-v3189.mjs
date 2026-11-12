@@ -48,7 +48,12 @@ try{
  assert.equal(r.status(),200);
  await page.addScriptTag({path:"plux-v17-friends/plux-friends-v17.js"});
  await page.waitForFunction(()=>!!window.PLUXFriendsV17,{timeout:10000});
- await page.evaluate(()=>window.PLUXFriendsV17.open());
+ await page.evaluate(()=>{
+  for(const el of document.querySelectorAll("#plux127-intro,#screen-onboard,#onboarding-screen,.onboard-overlay")){
+    el.hidden=true;el.style.setProperty("display","none","important");
+  }
+  window.PLUXFriendsV17.open();
+ });
  await page.locator("#pf-email").fill("example@example.com");
  await page.locator("#pf-password").fill("test-password-123");
  await page.locator("#pf-register").click();
