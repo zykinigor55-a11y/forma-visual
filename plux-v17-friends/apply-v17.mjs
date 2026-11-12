@@ -21,11 +21,11 @@ writeFileSync(join(root,'plux-friends-config-v17.js'),
 let html=readFileSync(htmlFile,'utf8');
 if(!html.includes('plux-friends-v17.css')){
  html=html.replace('</head>',
-  '<meta name="plux-friends-v17" content="private-chat-and-friend-requests"><link rel="stylesheet" href="/plux-friends-v17.css?v=3182"><link rel="stylesheet" href="/plux-create-v17.css?v=3182"><link rel="stylesheet" href="/plux-microdust-v17.css?v=3182"></head>');
+  '<meta name="plux-friends-v17" content="private-chat-and-friend-requests"><link rel="stylesheet" href="/plux-friends-v17.css?v=3183"><link rel="stylesheet" href="/plux-create-v17.css?v=3183"><link rel="stylesheet" href="/plux-microdust-v17.css?v=3183"></head>');
 }
 if(!html.includes('plux-friends-v17.js')){
  html=html.replace('</body>',
- '<script src="/plux-friends-config-v17.js?v=3182"></script><script defer src="/plux-friends-v17.js?v=3182"></script><script defer src="/plux-microdust-v17.js?v=3182"></script></body>');
+ '<script src="/plux-friends-config-v17.js?v=3183"></script><script defer src="/plux-friends-v17.js?v=3183"></script><script defer src="/plux-microdust-v17.js?v=3183"></script></body>');
 }
 writeFileSync(htmlFile,html);
 console.log('PLUX Friends V17: UI installed; Supabase configured:',okay);
