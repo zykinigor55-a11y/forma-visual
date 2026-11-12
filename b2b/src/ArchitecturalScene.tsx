@@ -39,24 +39,6 @@ function CameraController({preset,width,depth}:{preset:CameraPreset;width:number
  return null;
 }
 
-function Finishes({config,maps}:{config:Config;maps?:Props["maps"]}){
- const current=useMemo(()=>{
-  const make=(zone:Zone)=>{
-   const data=getMaterial(config.zoneMaterials[zone]);
-   return new THREE.MeshStandardMaterial({
-    color:maps?.[zone]? "#ffffff":data.color,
-    map:maps?.[zone]||null,
-    roughness:data.roughness,
-    metalness:data.metalness,
-    side:THREE.FrontSide
-   });
-  };
-  return {facade:make("facade"),roof:make("roof"),plinth:make("plinth"),frames:make("frames")};
- },[config.zoneMaterials.facade,config.zoneMaterials.roof,config.zoneMaterials.plinth,config.zoneMaterials.frames,maps?.facade,maps?.roof,maps?.plinth,maps?.frames]);
- useEffect(()=>()=>Object.values(current).forEach(m=>m.dispose()),[current]);
- return <Building config={config} mats={current}/>;
-}
-
 type FinishMap=Record<Zone,THREE.MeshStandardMaterial>;
 function Building({config,mats,selected,onSelect,mode}:{config:Config;mats:FinishMap;selected:Zone;onSelect:(z:Zone)=>void;mode:Props["mode"]}){
  const {width:w,height:h,depth:d,panelWidth:pw,gap,orientation}=config;
