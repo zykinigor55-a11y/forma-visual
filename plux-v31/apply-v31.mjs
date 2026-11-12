@@ -51,7 +51,7 @@ let html=readFileSync(htmlFile,'utf8');
 /* V31.8.5: legacy ElevenLabs client also bound the home and mic buttons.
  * It started a second simultaneous audio session. Remove only that script;
  * keep the independent on-demand text-to-speech feature intact. */
-html=html.replace(/<script\\b[^>]*src=["'][^"']*plux-live-v151\\.js[^"']*["'][^>]*>\\s*<\\/script>/gi,'');
+html=html.replace(/<script\b[^>]*src=["'][^"']*plux-live-v151\.js[^"']*["'][^>]*>\s*<\/script>/gi,'');
 
 if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
  throw Error('Original approved V30 layout changed; stop rather than overwrite');
