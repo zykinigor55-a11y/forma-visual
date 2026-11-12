@@ -73,6 +73,32 @@ async function handler(req,res){
  if(pathname.startsWith("/api/voice/"))return voiceSession(req,res);
  if(pathname.startsWith("/api/tts/"))return handleCyhub(req,res);
  if(pathname.startsWith("/api/video/"))return handleCyhubVideo(req,res);
+ if(pathname==="/api/image/diagnostics"){
+  const allowed=appOrigin(req);
+  if(!allowed)return reply(res,403,{error:"Источник запроса не разрешён."});
+  res.setHeader("Access-Control-Allow-Origin",allowed);
+  res.setHeader("Vary","Origin");
+  res.setHeader("Access-Control-Allow-Methods","GET, OPTIONS");
+  if(req.method==="OPTIONS"){res.writeHead(204);res.end();return}
+  if(req.method!=="GET")return reply(res,405,{error:"Нужен GET"});
+  const key=String(process.env.API_MARKET_IMAGE_KEY||process.env.API_MARKET_KEY||"").trim();
+  if(!key)return reply(res,200,{provider:"API Market",ready:false,reason:"missing_key"});
+  try{
+   const check=await fetch("https://api-market1.shop/v1/models",{
+    headers:{Authorization:"Bearer "+key,Accept:"application/json"},
+    signal:AbortSignal.timeout(12000)
+   });
+   const data=check.ok?await check.json().catch(()=>null):null;
+   const models=Array.isArray(data?.data)?data.data:[];
+   const listed=models.some(item=>String(item?.id||"")==="nano-banana-2.1");
+   return reply(res,200,{provider:"API Market",model:"nano-banana-2.1",ready:check.ok,
+    providerHttp:check.status,modelListed:listed,modelsChecked:models.length>0,
+    note:!check.ok?"Проверь ключ API Market или доступ к API.":
+      models.length&&!listed?"Модель отсутствует в полученном списке, проверь доступ в кабинете.":"Ключ принят сервисом."});
+  }catch(e){
+   return reply(res,200,{provider:"API Market",ready:false,reason:e?.name==="TimeoutError"?"timeout":"network_error"});
+  }
+ }
  if(pathname==="/api/image/config")return req.method==="GET"
   ?reply(res,200,{provider:"API Market",model:"nano-banana-2.1",configured:!!(process.env.API_MARKET_IMAGE_KEY||process.env.API_MARKET_KEY),quality:"high"})
   :reply(res,405,{error:"Use GET"});
