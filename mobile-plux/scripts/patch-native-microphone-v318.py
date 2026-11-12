@@ -56,4 +56,9 @@ out.write_text(template.replace("PACKAGE",package))
 manifest=root/"android/app/src/main/AndroidManifest.xml"
 if "android.permission.RECORD_AUDIO" not in manifest.read_text():
     raise SystemExit("RECORD_AUDIO manifest permission missing")
+# Chromium WebView audio capture uses this permission for device routing on Android 16.
+if "android.permission.MODIFY_AUDIO_SETTINGS" not in manifest.read_text():
+    data=manifest.read_text()
+    data=data.replace("<application",'<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <application',1)
+    manifest.write_text(data)
 print("PLUX v31.8 runtime microphone permission plugin ready")
