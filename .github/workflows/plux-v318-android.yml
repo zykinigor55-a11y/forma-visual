@@ -45,7 +45,7 @@ jobs:
           python3 scripts/patch-native-microphone-v318.py
           python3 scripts/restore-v30-icon.py android
           npx cap sync android
-          grep -q "PLUXMicrophonePermission" android/app/src/main/java/com/plux/assistant/MainActivity.java
+          find android/app/src/main/java -name MainActivity.java -exec grep -l "PLUXMicrophonePermission" {} \; | grep -q .
           grep -q "android.permission.RECORD_AUDIO" android/app/src/main/AndroidManifest.xml
       - name: Compile Android APK
         run: cd android && ./gradlew assembleDebug --no-daemon
