@@ -1,0 +1,70 @@
+/* PLUX V31 music player — same approved OLED / emerald-glass visual identity. */
+#screen-home #speech-button[hidden]{display:none!important}
+#screen-home .plux31-mini-player[hidden]{display:none!important}
+#screen-home .plux31-mini-player{
+  display:flex!important;align-items:center!important;gap:10px!important;
+  width:100%!important;min-height:72px!important;
+  padding:10px 11px!important;
+  color:#eafff5!important;
+  border-radius:22px!important;
+  border:1px solid rgba(185,255,227,.36)!important;
+  background:radial-gradient(circle at 8% -10%,rgba(58,220,165,.25),transparent 46%),linear-gradient(145deg,#07231fc9,#020b10dd)!important;
+  box-shadow:inset 0 1px 3px #e6fff52b,inset 0 -8px 18px #02ac753d,0 6px 27px #0008!important;
+}
+#screen-home .plux31-mini-player button{
+  touch-action:manipulation!important;cursor:pointer!important;
+  flex:0 0 auto!important;display:grid!important;place-items:center!important;
+  width:46px!important;height:46px!important;border-radius:50%!important;
+  color:#f4fff9!important;border:1px solid #affbe38b!important;
+  background:radial-gradient(circle at 30% 12%,#b4ffeb34,#00372766 50%,#071820)!important;
+  box-shadow:inset 0 2px 3px #e2fff555,inset 0 -6px 11px #03e29d50!important;
+  font-size:21px!important;line-height:1!important;
+}
+#screen-home .plux31-mini-player button:active{transform:scale(.95)!important}
+#screen-home .plux31-mini-player .plux31-now{flex:1!important;min-width:0!important;text-align:left!important}
+#screen-home .plux31-mini-player .plux31-now strong,
+#screen-home .plux31-mini-player .plux31-now small{
+  display:block!important;white-space:nowrap!important;text-overflow:ellipsis!important;overflow:hidden!important;
+}
+#screen-home .plux31-mini-player .plux31-now strong{font-size:clamp(12px,3.5vw,15px)!important;font-weight:650!important}
+#screen-home .plux31-mini-player .plux31-now small{font-size:11px!important;color:#a6d7c4!important;margin-top:4px!important}
+#screen-home .plux31-mini-player .plux31-search{width:37px!important;height:37px!important;font-size:25px!important}
+.plux31-music-dialog:not([open]){display:none!important}
+.plux31-music-dialog{
+ position:fixed!important;z-index:110111!important;top:0!important;bottom:0!important;
+ left:0!important;right:0!important;width:min(620px,100%)!important;
+ height:min(820px,calc(100dvh - 12px))!important;
+ padding:0!important;margin:auto!important;border-radius:25px!important;
+ border:1px solid #95f4c27d!important;background:#010a0b!important;
+ color:#f0fff8!important;box-shadow:0 18px 70px #000e!important;
+ overflow:hidden!important;max-width:calc(100% - 10px)!important;
+}
+.plux31-music-dialog::backdrop{background:#000d!important;backdrop-filter:blur(9px)}
+.plux31-music-dialog *{box-sizing:border-box}
+.plux31-music-dialog .plux31-music-sheet{display:flex;flex-direction:column;height:100%;padding:18px;gap:15px}
+.plux31-music-dialog header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.plux31-music-dialog header strong{display:block;font-size:22px}
+.plux31-music-dialog header small{display:block;color:#95cdb4;font-size:10px;letter-spacing:1.5px;margin-top:4px}
+.plux31-music-dialog button{cursor:pointer;font:inherit;color:#eafff5}
+.plux31-music-dialog .plux31-music-close{width:39px;height:39px;border-radius:50%;background:#11372b;border:1px solid #74d8b9;font-size:25px}
+.plux31-music-dialog .plux31-source{display:grid;grid-template-columns:1fr 1fr;gap:6px;border-radius:15px;padding:5px;background:#07201e}
+.plux31-music-dialog .plux31-source button{padding:12px 3px;border:0;border-radius:11px;background:transparent;color:#93b7aa;font-size:13px}
+.plux31-music-dialog .plux31-source button.active{background:#0e5742;color:white;box-shadow:inset 0 1px 2px #e8fff652}
+.plux31-music-dialog .plux31-query{display:flex;gap:7px}
+.plux31-music-dialog .plux31-query input{flex:1;width:1%;min-width:0;min-height:48px;background:#061d1b;border:1px solid #65bd9b;border-radius:13px;color:white;padding:0 13px;font:inherit}
+.plux31-music-dialog .plux31-query button{border-radius:13px;border:1px solid #93f2d0;background:#0d4b38;padding:9px 13px}
+.plux31-music-dialog .plux31-music-message{font-size:12px;color:#aedaca;min-height:18px}
+.plux31-music-dialog .plux31-music-results{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.plux31-music-dialog .plux31-result{width:100%;display:flex;align-items:center;gap:13px;padding:12px 7px;background:transparent;border:0;border-bottom:1px solid #174d3e80;text-align:left}
+.plux31-music-dialog .plux31-result-icon{height:39px;width:39px;flex:0 0 39px;display:grid;place-items:center;border-radius:13px;background:#0a3b2d;color:#8affc4;font-size:23px}
+.plux31-music-dialog .plux31-result-text{min-width:0;flex:1}
+.plux31-music-dialog .plux31-result-text strong,.plux31-music-dialog .plux31-result-text small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plux31-music-dialog .plux31-result-text strong{font-size:14px}
+.plux31-music-dialog .plux31-result-text small{font-size:11px;color:#8bbcaa;margin-top:3px}
+.plux31-music-dialog .plux31-result-play{font-size:18px;padding-right:8px}
+.plux31-music-dialog footer{font-size:10px;line-height:1.4;color:#92b2a5;padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(max-width:365px){.plux31-music-dialog .plux31-music-sheet{padding:12px}}
+@media(prefers-reduced-motion:reduce){
+ #screen-home .plux31-mini-player button{transition:none!important}
+ .plux31-music-dialog::backdrop{backdrop-filter:none}
+}
