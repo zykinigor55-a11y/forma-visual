@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V30 · Real image delivery as an expiring HTTPS media URL.
  * This avoids injecting multi-megabyte Base64 strings into a mobile JSON
  * response. Save finished artwork to the device gallery before expiry.
@@ -50,7 +51,7 @@ export function sendGeneratedImage(req,res,pathname){
  const item=images.get(token);
  if(!item){res.writeHead(404,{"Cache-Control":"no-store"});res.end("Ссылка на изображение истекла.");return true}
  const origin=String(req.headers.origin||"");
- if(origin===ORIGIN)res.setHeader("Access-Control-Allow-Origin",ORIGIN);
+ if(appOrigin(req))res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
  res.setHeader("Vary","Origin");
  res.setHeader("Cache-Control","private, max-age=120");
  res.setHeader("X-Content-Type-Options","nosniff");
