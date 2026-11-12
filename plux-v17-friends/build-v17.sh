@@ -14,6 +14,10 @@ node --check plux-published/plux-microdust-v17.js
 node --check plux-published/music-player-v31.js
 node --check plux-published/drop-colors-v31.js
 node --check plux-published/intro-asmr-v313.js
+node --check plux-published/quick-orbs-v314.js
+test -s plux-published/home-fix-v314.css
+grep -q 'home-fix-v314.css' plux-published/index.html
+grep -q 'quick-orbs-v314.js' plux-published/index.html
 test -s plux-published/home-contrast-v313.css
 grep -q 'home-contrast-v313.css' plux-published/index.html
 grep -q 'intro-asmr-v313.js' plux-published/index.html
