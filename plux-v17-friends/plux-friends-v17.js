@@ -228,6 +228,7 @@ function beginPolling(){
  S.timer=setInterval(()=>{
   if(id('plux-friends-panel').hidden||document.hidden||S.busy)return;
   if(S.dialog)void loadMessages().catch(()=>{});
+  else if(S.tab==='new')void Promise.all([people(),loadDiscovery()]).then(drawPeople).catch(()=>{});
   else void people().then(drawPeople).catch(()=>{});
  },10000);
 }
