@@ -6,7 +6,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-
 try{
  const page=await browser.newPage({viewport:{width:390,height:860},deviceScaleFactor:1,isMobile:true,hasTouch:true});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- const res=await page.goto('https://plux-v17-friends-preview.onrender.com/?v=3161&visual=1',{waitUntil:'domcontentloaded',timeout:60000});
+ const res=await page.goto('https://plux-v17-friends-preview.onrender.com/?v=3161&visual=2',{waitUntil:'domcontentloaded',timeout:60000});
  assert.equal(res.status(),200);
  await page.waitForFunction(()=>!!window.PLUXOrbsV314&&!!window.PLUXThemesV31,{timeout:30000});
  await page.evaluate(()=>{
@@ -36,7 +36,7 @@ try{
    const home=document.getElementById('screen-home'),scene=document.getElementById('home-scene');
    const mascot=document.getElementById('home-mascot'),poster=document.getElementById('home-mascot-image');
    const videos=[...mascot.querySelectorAll('video')].map(e=>({
-     rect:B(e),fit:getComputedStyle(e).objectFit,mask:getComputedStyle(e).maskImage.slice(0,180),
+     rect:B(e),fit:getComputedStyle(e).objectFit,position:getComputedStyle(e).objectPosition,mask:getComputedStyle(e).maskImage.slice(0,180),
      readyState:e.readyState,src:e.currentSrc||e.src
    }));
    const buttons=['open-chat-quick','open-voice-quick','open-create-quick'].map(id=>{
@@ -46,6 +46,7 @@ try{
    return{home:B(home),scene:B(scene),mascot:B(mascot),poster:B(poster),
      posterReady:poster.complete&&poster.naturalWidth>0,
      posterFit:getComputedStyle(poster).objectFit,
+     posterPosition:getComputedStyle(poster).objectPosition,
      posterMask:getComputedStyle(poster).maskImage,
      scenePosition:getComputedStyle(scene).position,
      videos,buttons,theme:document.documentElement.dataset.pluxTheme,
@@ -60,6 +61,8 @@ try{
  assert.equal(first.scenePosition,'absolute','the scene is a full-screen layer, not a flex item');
  assert(first.poster.h>=840&&first.posterReady&&first.posterFit==='contain','full-screen uncropped picture');
  assert(first.posterMask.includes('radial-gradient'),'video rectangle is softened');
+ assert(first.posterPosition.endsWith('29%'),'drop and glowing base are above the music controls');
+ assert(first.videos.every(v=>v.position.endsWith('0%')),'portrait video content is top-aligned without cropping');
  assert(first.videos.every(v=>v.rect.h>=840&&v.fit==='contain'&&v.mask.includes('radial-gradient')),
    'both animated state videos are full-height, uncropped, blended at edges');
  await page.screenshot({path:'plux-v31/verified-v316/emerald-fullscreen.png',fullPage:true});
