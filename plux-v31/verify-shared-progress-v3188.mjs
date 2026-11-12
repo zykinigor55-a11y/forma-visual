@@ -113,7 +113,15 @@ try{
  const progress=await page.locator(".plux3188-progress-value").last().textContent();
  const caption=await page.locator(".plux3188-progress-numbers span").last().textContent();
  assert.match(caption,/Примерный/);
- await page.locator(".plux3187-image-open img").waitFor({timeout:30000});
+ await page.waitForTimeout(10000);
+ const diagnostic=await page.evaluate(()=>{
+  const feed=document.getElementById("chat-messages");
+  return {last:feed?.textContent?.slice(-1200),html:feed?.innerHTML?.slice(-1700),
+   progress:[...document.querySelectorAll(".plux3188-progress-value")].map(n=>n.textContent),
+   cards:document.querySelectorAll(".plux3187-image-card").length};
+ });
+ console.log("PLUX3188_AFTER_RECOVERY "+JSON.stringify({requests,statuses,photoFetches,diagnostic,errors}));
+ await page.locator(".plux3187-image-open img").waitFor({timeout:22000});
  const detail=await page.evaluate(()=>{
   const image=document.querySelector(".plux3187-image-open img");
   const card=document.querySelector(".plux3187-image-card");
