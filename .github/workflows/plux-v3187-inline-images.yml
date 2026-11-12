@@ -1,0 +1,27 @@
+name: PLUX V31.8.7 inline GPT Image 2 preview
+on:
+  push:
+    branches: [plux-v3187-inline-images-percent-progress]
+    paths:
+      - 'plux-v128-overlay/plux-chat-v128.js'
+      - 'plux-v31/**'
+      - '.github/workflows/plux-v3187-inline-images.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inline-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install browser runner
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Check syntax and verify visible image card
+        run: |
+          node --check plux-v128-overlay/plux-chat-v128.js
+          node --check plux-v31/apply-v31.mjs
+          node --check plux-v31/verify-inline-image-v3187.mjs
+          node plux-v31/verify-inline-image-v3187.mjs
