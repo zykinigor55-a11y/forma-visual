@@ -32,8 +32,14 @@
      button.style.setProperty('--plux314-orb-rgb',rgb[current]);
      // Reuse the SAME original pigment filter as the drop. Every pixel of
      // the emerald orb is remapped to actual chosen pigment, whites stay white.
-     shell.style.setProperty('filter',current==='emerald'?'none':
-       'url("#plux31-pigment-'+current+'")','important');
+     // Mobile Android WebView can ignore SVG filter references for external SVG.
+     // CSS hue rotation is reliable across native WebView and browsers. Original highlights stay white.
+     const hues={emerald:'none',azure:'hue-rotate(55deg) saturate(1.6)',ruby:'hue-rotate(195deg) saturate(1.65)',
+       solar:'hue-rotate(275deg) saturate(1.55)',turquoise:'hue-rotate(16deg) saturate(1.3)',
+       violet:'hue-rotate(112deg) saturate(1.6)',rose:'hue-rotate(172deg) saturate(1.3)',
+       silver:'grayscale(1) brightness(1.15)'};
+     shell.style.setProperty('filter',hues[current]||'none','important');
+     button.style.setProperty('--plux318-orb-accent','var(--plux-theme-accent)');
    }
  }
  function apply(theme){
