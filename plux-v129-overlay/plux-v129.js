@@ -101,6 +101,53 @@
     notice:notify
   };
   const prompt=document.getElementById('image-prompt');
+  // V31.8.4: visual, lossless validation. Keep full pasted prompts so the user
+  // can edit them rather than silently discarding architectural instructions.
+  const maxPromptChars=1300;
+  let createBusy=false;
+  const counterFooter=document.createElement('div');
+  counterFooter.className='plux3184-prompt-footer';
+  counterFooter.innerHTML='<span class="plux3184-prompt-hint" id="plux3184-prompt-hint">Минимум 3 символа</span><div class="plux3184-prompt-right"><button class="plux3184-prompt-shorten" type="button" hidden>Сократить</button><output class="plux3184-prompt-count" id="plux3184-prompt-count" for="image-prompt">0 / 1300</output></div>';
+  const countOutput=counterFooter.querySelector('.plux3184-prompt-count');
+  const counterHint=counterFooter.querySelector('.plux3184-prompt-hint');
+  const shortenButton=counterFooter.querySelector('.plux3184-prompt-shorten');
+  if(prompt){
+    const promptContainer=prompt.closest('.create-prompt-wrap')||prompt;
+    promptContainer.insertAdjacentElement('afterend',counterFooter);
+    const ariaHint=prompt.getAttribute('aria-describedby');
+    prompt.setAttribute('aria-describedby',[ariaHint,'plux3184-prompt-count','plux3184-prompt-hint'].filter(Boolean).join(' '));
+  }
+  function updatePromptCounter(){
+    const count=prompt?.value?.length||0;
+    const trimmed=prompt?.value?.trim()?.length||0;
+    const over=count>maxPromptChars;
+    const near=count>=1100&&!over;
+    counterFooter.classList.toggle('plux3184-near',near);
+    counterFooter.classList.toggle('plux3184-over',over);
+    countOutput.value=count+' / '+maxPromptChars;
+    countOutput.textContent=count+' / '+maxPromptChars;
+    counterHint.textContent=over
+      ?'Слишком длинное описание: убери '+(count-maxPromptChars)+' симв.'
+      :trimmed<3?'Минимум 3 символа'
+      :near?'Приближаешься к лимиту':'Описание готово к генерации';
+    shortenButton.hidden=!over;
+    createButton.disabled=createBusy||trimmed<3||over;
+    createButton.setAttribute('aria-describedby',over?'plux3184-prompt-hint':'plux3184-prompt-count');
+    return {count,over,valid:trimmed>=3&&!over};
+  }
+  shortenButton.addEventListener('click',()=>{
+    if(!prompt)return;
+    // Explicit user action: never lose the rest of a long prompt automatically.
+    let text=prompt.value.slice(0,maxPromptChars);
+    if(/[\uD800-\uDBFF]$/.test(text))text=text.slice(0,-1);
+    prompt.value=text;
+    prompt.dispatchEvent(new Event('input',{bubbles:true}));
+    prompt.focus();
+    notify('Описание сокращено до 1300 символов.');
+  });
+  prompt?.addEventListener('input',updatePromptCounter);
+  prompt?.addEventListener('change',updatePromptCounter);
+  updatePromptCounter();
   // PLUX V17: explicit image edit mode with an actual reference image.
   const editor=document.createElement('section');
   editor.className='plux17-editor';
@@ -160,11 +207,13 @@
     e.preventDefault();e.stopImmediatePropagation();
     if(createButton.disabled)return;
     const description=prompt?.value.trim()||'';
+    const counterState=updatePromptCounter();
+    if(counterState.over){notify('Слишком длинное описание. Сократи его до 1300 символов.');prompt?.focus();return}
     if(description.length<3){notify(editMode?'Опиши, что изменить на фото.':'Сначала опиши изображение.');prompt?.focus();return}
     if(editMode&&!referenceImage){notify('Загрузи фото, которое нужно отредактировать.');source.click();return}
     const selected=createScreen.querySelector('.create-chips .selected')?.dataset.style||'Реализм';
     const styles={'Реализм':'realism','Арт':'art','3D':'3d','Анимация':'animation'};
-    createButton.disabled=true;createButton.setAttribute('aria-busy','true');
+    createBusy=true;createButton.disabled=true;createButton.setAttribute('aria-busy','true');
     createButton.textContent='Создаю изображение…';
     result.hidden=false;result.classList.remove('plux129-error');result.replaceChildren();
     const progress=document.createElement('p');progress.className='plux129-generating';progress.textContent=editMode?'Редактируем фотографию…':'Создаём изображение…';
@@ -201,6 +250,6 @@
       action.addEventListener('click',()=>window.PLUXSaveV17?.save(src,'PLUX-'+Date.now()+'.png','image/png')||notify('Скачивание недоступно. Открой изображение в браузере.'));
       result.append(action);result.scrollIntoView({block:'nearest',behavior:'smooth'});
     }catch(e){progress.textContent=e?.name==='TimeoutError'?'Сервер долго отвечает. Проверь баланс — генерация могла быть оплачена.':String(e.message||'Ошибка генерации');result.classList.add('plux129-error')}
-    finally{createButton.disabled=false;createButton.removeAttribute('aria-busy');createButton.innerHTML='Создать <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-star"></use></svg>'}
+    finally{createBusy=false;updatePromptCounter();createButton.removeAttribute('aria-busy');createButton.innerHTML='Создать <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-star"></use></svg>'}
   },{capture:true});
 })();
