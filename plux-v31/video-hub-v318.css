@@ -1,0 +1,52 @@
+/* PLUX V31.8 — premium OLED Video, 6 balanced home tabs. */
+#plux-video-panel[hidden],#plux-video-panel [hidden]{display:none!important}
+#plux-video-panel{position:fixed;inset:0;z-index:100010;background:#000;color:#f4fff9;font:14px/1.45 Inter,system-ui,sans-serif}
+#plux-video-panel *{box-sizing:border-box}
+#plux-video-panel button,#plux-video-panel input{font:inherit}
+#plux-video-panel button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+#plux-video-panel .pv-shell{height:100%;width:min(620px,100%);margin:auto;background:radial-gradient(ellipse at 50% -12%,var(--plux-theme-soft,#145e404d),transparent 47%),#020807;display:flex;flex-direction:column}
+#plux-video-panel .pv-head{display:flex;align-items:center;gap:15px;padding:calc(13px + env(safe-area-inset-top,0px)) 17px 15px;background:#05130fcf;border-bottom:1px solid #a0ffe138;flex-shrink:0}
+#plux-video-panel .pv-back{height:48px;width:48px;border:1px solid #a8ffd688;background:linear-gradient(140deg,#1c4639,#04150e);border-radius:50%;color:white;font-size:32px}
+#plux-video-panel .pv-head strong{font-size:24px;letter-spacing:-.7px}
+#plux-video-panel .pv-head em{font-style:normal;color:var(--plux-theme-accent,#6bffd3)}
+#plux-video-panel .pv-head small{display:block;font-size:9px;letter-spacing:1.6px;color:#a4c6b9}
+#plux-video-panel .pv-head-logo{margin-left:auto;color:var(--plux-theme-accent,#6bffd3);font-size:28px}
+#plux-video-panel .pv-scroll{flex:1;min-height:0;overflow-y:auto;padding:23px 17px calc(35px + env(safe-area-inset-bottom,0px))}
+#plux-video-panel .pv-intro{padding:20px;border:1px solid #a6ffdd47;border-radius:24px;background:radial-gradient(ellipse at 10% 0,var(--plux-theme-soft,#0c8c6030),transparent 65%),#071512}
+#plux-video-panel .pv-intro b{font-size:24px;letter-spacing:-.7px}
+#plux-video-panel .pv-intro p{color:#b0cfc2;font-size:13px;line-height:1.55;margin:7px 0 0}
+#plux-video-panel .pv-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:20px 0;padding:5px;border-radius:17px;background:#061914;border:1px solid #8debc64a}
+#plux-video-panel .pv-source{background:none;border:0;border-radius:12px;color:#a5bcb2;padding:12px 4px;font-size:12px;font-weight:650}
+#plux-video-panel .pv-source.active{color:white;border:1px solid var(--plux-theme-accent,#50ffae);background:linear-gradient(125deg,var(--plux-theme-soft,#127c574a),#0e3023)}
+#plux-video-panel form{margin:18px 0 21px}
+#plux-video-panel form>label{display:block;font-size:15px;font-weight:650;margin-bottom:9px}
+#plux-video-panel .pv-inline{display:flex;gap:8px}
+#plux-video-panel .pv-inline input{min-width:0;width:1%;flex:1;padding:12px;border:1px solid #8ce4b969;border-radius:14px;background:#051816;color:white;outline:none;min-height:51px}
+#plux-video-panel .pv-inline input:focus{border-color:var(--plux-theme-accent,#58ffbd)}
+#plux-video-panel .pv-inline button,#plux-video-panel .pv-actions button{border:1px solid #adffde72;border-radius:14px;background:linear-gradient(140deg,#19523e,#06281f);color:#ecfff6;padding:10px 13px;font-size:12px;font-weight:650}
+#plux-video-panel form small{display:block;color:#8fa99b;line-height:1.5;font-size:11px;margin-top:7px}
+#plux-video-panel .pv-status{padding:10px 13px;background:#0a201a;border-left:2px solid var(--plux-theme-accent,#50ffad);border-radius:0 11px 11px 0;color:#a9dfc7}
+#plux-video-panel .pv-status.bad{border-color:#ff8191;background:#30171a;color:#ffced3}
+#plux-video-panel .pv-player{padding:11px;margin:19px 0;border-radius:20px;border:1px solid #95efc96a;background:#091a15}
+#plux-video-panel .pv-frame{background:#000;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;border-radius:13px}
+#plux-video-panel .pv-frame iframe{width:100%;height:100%;border:0}
+#plux-video-panel .pv-embed-notice{color:#ceeadf;padding:20px;text-align:center}
+#plux-video-panel .pv-meta{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:12px 3px}
+#plux-video-panel .pv-provider{color:#a4d7c2;font-size:11px}
+#plux-video-panel .pv-actions{display:flex;flex-wrap:wrap;gap:8px}
+#plux-video-panel .pv-actions button{flex:1 1 110px;padding:10px 7px}
+#plux-video-panel .pv-favourites{margin-top:23px;border-top:1px solid #9ce5c944;padding-top:15px}
+#plux-video-panel .pv-section-title{display:flex;justify-content:space-between;align-items:baseline;gap:9px}
+#plux-video-panel .pv-section-title strong{font-size:20px}
+#plux-video-panel .pv-section-title small{font-size:10px;color:#98bba8}
+#plux-video-panel .pv-empty{padding:24px 10px;color:#91b2a4;text-align:center}
+#plux-video-panel .pv-bookmark{display:flex;align-items:center;background:#081c17;margin:9px 0;border-radius:14px;border:1px solid #a1e6cf50}
+#plux-video-panel .pv-bookmark-title{flex:1;min-width:0;background:none;border:0;color:#e8fff3;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:15px 13px}
+#plux-video-panel .pv-bookmark-remove{flex:0 0 43px;background:none;border:0;color:#d5e9de;font-size:22px}
+#plux-video-panel .pv-legal{color:#829b91;font-size:10px;line-height:1.6;margin-top:25px}
+#app #screen-home .bottom-nav{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:1px!important}
+#app #screen-home .bottom-nav>button.nav-button{min-width:0!important;padding-inline:0!important;width:100%!important}
+#app #screen-home .bottom-nav>button.nav-button span{font-size:clamp(8px,2.1vw,10px)!important;letter-spacing:-.22px!important}
+#app #screen-home .bottom-nav>.plux318-video-nav{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;background:transparent!important;border:0!important;color:#ebfff3!important}
+#app #screen-home .bottom-nav>.plux318-video-nav svg{width:22px;height:22px;flex:none}
+@media(prefers-reduced-motion:reduce){#plux-video-panel *{scroll-behavior:auto!important}}

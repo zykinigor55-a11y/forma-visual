@@ -154,3 +154,29 @@
  }
  #screen-home .bottom-nav>.pf-nav-button svg{width:21px!important;height:21px!important}
 }
+
+
+/* V31.8: profile-photo editing without changing the V31.7 navigation or palette. */
+#plux-friends-panel .pf-profile-id{display:flex;align-items:center;gap:13px;min-width:0;flex:1}
+#plux-friends-panel .pf-profile-id>div{min-width:0}
+#plux-friends-panel .pf-profile-id strong,#plux-friends-panel .pf-profile-id small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#plux-friends-panel .pf-profile-id .pf-avatar-hint{display:block;font-size:10px;color:#81c9ac;margin-top:3px}
+#plux-friends-panel .pf-profile #pf-avatar-change{
+ position:relative;flex:0 0 66px;width:66px;height:66px;border:0;background:transparent;
+ padding:0;border-radius:50%;box-shadow:none;display:grid;place-items:center;color:#eafff6;
+}
+#plux-friends-panel .pf-avatar-own{width:66px;height:66px;min-width:66px;font-size:27px;overflow:hidden}
+#plux-friends-panel .pf-avatar-edit-indicator{
+ position:absolute;right:-3px;bottom:-3px;width:23px;height:23px;display:grid;place-items:center;
+ border-radius:50%;background:#1c8a65;border:2px solid #032018;color:white;font-size:16px;
+ box-shadow:0 2px 9px #0009;
+}
+#plux-friends-panel .pf-avatar{overflow:hidden;position:relative;isolation:isolate}
+#plux-friends-panel .pf-avatar-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+#plux-friends-panel .pf-peer-avatar{width:44px;height:44px;min-width:44px;font-size:18px}
+#plux-friends-panel #pf-avatar-change:focus-visible{outline:2px solid #b6ffe0;outline-offset:3px}
+@media(max-width:359px){
+ #plux-friends-panel .pf-profile-id{gap:8px}
+ #plux-friends-panel .pf-avatar-own,#plux-friends-panel .pf-profile #pf-avatar-change{width:53px;height:53px;min-width:53px;flex-basis:53px}
+ #plux-friends-panel .pf-profile-id .pf-avatar-hint{font-size:9px;white-space:normal}
+}

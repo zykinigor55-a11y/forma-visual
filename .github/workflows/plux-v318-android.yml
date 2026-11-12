@@ -1,0 +1,57 @@
+name: PLUX V31.8 Android microphone + AI video
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths:
+      - 'mobile-plux/**'
+      - 'plux-v31/**'
+      - 'plux-v17-friends/**'
+      - '.github/workflows/plux-v318-android.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: mobile-plux
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Install deps
+        run: |
+          python -m pip install --disable-pip-version-check pillow==11.3.0
+          npm install --no-audit --no-fund
+      - name: Check new web features syntax and bridge
+        run: |
+          node --check ../plux-v31/video-hub-v318.js
+          node --check ../plux-v31/ai-cognition-v318.js
+          node --check ../plux-v31/microdust-enhanced-v318.js
+          node --check ../plux-v31/microphone-permission-v318.js
+          node --check ../plux-v31/apply-v31.mjs
+          python3 -m py_compile scripts/patch-native-microphone-v318.py
+      - name: Generate native project and request RECORD_AUDIO
+        run: |
+          npx cap add android
+          python3 scripts/patch-native.py android
+          python3 scripts/patch-native-save-v31.py
+          python3 scripts/patch-native-microphone-v318.py
+          python3 scripts/restore-v30-icon.py android
+          npx cap sync android
+          find android/app/src/main/java -name MainActivity.java -exec grep -l "PLUXMicrophonePermission" {} \; | grep -q .
+          grep -q "android.permission.RECORD_AUDIO" android/app/src/main/AndroidManifest.xml
+      - name: Compile Android APK
+        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PLUX-V31.8-Android-APK
+          path: mobile-plux/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

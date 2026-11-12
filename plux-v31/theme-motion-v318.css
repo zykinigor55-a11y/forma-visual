@@ -1,0 +1,52 @@
+/* V31.8 – one live color system shared by mascot, orbs, radio and voice visualizers. */
+:root{--plux318-hue:0deg;--plux318-saturation:1}
+:root[data-plux-theme="azure"]{--plux318-hue:55deg;--plux318-saturation:1.55}
+:root[data-plux-theme="ruby"]{--plux318-hue:195deg;--plux318-saturation:1.6}
+:root[data-plux-theme="solar"]{--plux318-hue:275deg;--plux318-saturation:1.55}
+:root[data-plux-theme="turquoise"]{--plux318-hue:16deg;--plux318-saturation:1.2}
+:root[data-plux-theme="violet"]{--plux318-hue:112deg;--plux318-saturation:1.5}
+:root[data-plux-theme="rose"]{--plux318-hue:172deg;--plux318-saturation:1.4}
+:root[data-plux-theme="silver"]{--plux318-hue:0deg;--plux318-saturation:.13}
+#app #screen-home .plux31-mini-player .plux31-equalizer{
+ color:var(--plux-theme-accent,#4df9b7)!important;
+ border-color:color-mix(in srgb,var(--plux-theme-accent,#4df9b7) 55%,transparent)!important;
+ box-shadow:inset 0 0 9px color-mix(in srgb,var(--plux-theme-accent,#4df9b7) 12%,transparent),0 0 12px color-mix(in srgb,var(--plux-theme-accent,#4df9b7) 30%,transparent)!important
+}
+#app #screen-home .plux31-mini-player .plux31-eq-bar{
+ background:linear-gradient(180deg,#e8f8f6 0%,var(--plux-theme-accent,#5fffbf) 40%,var(--plux-theme-accent,#5fffbf) 100%)!important;
+ box-shadow:0 0 5px 1px var(--plux-theme-accent,#5fffbf)!important
+}
+#app #screen-home .plux31-mini-player {
+ border-color:color-mix(in srgb,var(--plux-theme-accent,#4effb7) 40%,#e4f6f2)!important;
+ box-shadow:inset 0 1px 3px #ffffff31,0 0 14px color-mix(in srgb,var(--plux-theme-accent,#4effb7) 16%,transparent)!important
+}
+#app #screen-home .quick-actions button.plux314-themed-orb{
+ --plux318-accent:var(--plux-theme-accent,#4fffb8);
+ box-shadow:inset 0 1px 2px #fff5,0 0 13px 2px color-mix(in srgb,var(--plux318-accent) 38%,transparent)!important
+}
+#app #screen-voice button.plux318-voice-mic{
+ filter:hue-rotate(var(--plux318-hue)) saturate(var(--plux318-saturation))!important;
+ transition:filter .3s ease!important
+}
+#app #screen-voice .plux318-voice-eq,
+#app #screen-voice .voice-waveform,
+#app #screen-voice .voice-wave,
+#app #screen-voice .waveform,
+#app #screen-voice .voice-visualizer,
+#app #screen-voice .voice-wave-bars{
+ filter:hue-rotate(var(--plux318-hue)) saturate(var(--plux318-saturation))!important;
+ transition:filter .3s ease!important
+}
+@media(prefers-reduced-motion:reduce){
+ #app #screen-voice button.plux318-voice-mic,
+ #app #screen-voice .voice-waveform,
+ #app #screen-voice .voice-wave{transition:none!important}
+}
+
+#app #screen-voice .plux318-mic-notice:not([hidden]){
+ position:absolute;z-index:40;bottom:calc(19% + env(safe-area-inset-bottom,0px));left:7%;right:7%;
+ padding:13px 14px;border-radius:15px;border:1px solid #f4b5ba8a;background:rgba(34,8,15,.92);
+ color:#ffe3e3;font:500 12px/1.5 system-ui,sans-serif;text-align:center;
+ box-shadow:0 10px 34px #000b;pointer-events:none
+}
+#app #screen-voice .plux318-mic-notice[hidden]{display:none!important}

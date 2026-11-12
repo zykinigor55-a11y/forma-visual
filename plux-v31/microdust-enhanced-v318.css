@@ -1,0 +1,39 @@
+/* PLUX V31.8: readable but restrained real glass microdust. */
+#app button.plux17-microdust-button>.plux17-microdust-field,
+#app #screen-voice button.plux318-voice-mic>.plux17-microdust-field{
+ opacity:1!important;position:absolute!important;inset:5%!important;border-radius:50%!important;overflow:hidden!important;z-index:3!important;pointer-events:none!important
+}
+#app button .plux17-microdust-dot.plux318-particle,
+#app button .plux318-particle-extra,
+#app button.plux17-microdust-button .plux17-microdust-dot{
+ background:#f3fffd!important;width:var(--dust-size)!important;height:var(--dust-size)!important;
+ box-shadow:0 0 3px 1px #fff8,0 0 8px 2px color-mix(in srgb,var(--plux-theme-accent,#57ffb7) 66%,transparent)!important;
+ opacity:var(--dust-alpha,.81)!important;
+ animation:plux17-dust-drift var(--dust-time,8s) ease-in-out var(--dust-delay,0s) infinite alternate!important;
+}
+#app button.plux17-microdust-button .plux17-microdust-dot:not(.plux318-particle){transform:scale(1.32)!important}
+#app button.plux17-microdust-button>.plux17-microdust-field .plux318-particle-extra{
+ position:absolute!important;left:var(--dust-x)!important;top:var(--dust-y)!important;
+ border-radius:50%!important;display:block!important;transform:translate3d(-50%,-50%,0)
+}
+#app #screen-voice button.plux318-voice-mic{position:relative!important;isolation:isolate!important}
+#app #screen-voice button.plux318-voice-mic .plux318-voice-particles .plux318-particle-extra{
+ position:absolute!important;left:var(--dust-x)!important;top:var(--dust-y)!important;display:block!important;
+ border-radius:50%!important;transform:translate3d(-50%,-50%,0)
+}
+#app .plux318-ambient-dust{position:absolute!important;inset:0!important;z-index:2!important;overflow:hidden!important;pointer-events:none!important;mix-blend-mode:screen!important}
+#app .plux318-ambient-spark{
+ position:absolute!important;left:var(--px);top:var(--py);
+ width:var(--ps);height:var(--ps);background:#eafffa;border-radius:50%;
+ box-shadow:0 0 4px #fff9,0 0 11px 2px var(--plux-theme-accent,#66e9ae);
+ opacity:.45;animation:plux318-ambient var(--duration,10s) ease-in-out var(--delay,0s) infinite alternate!important
+}
+@keyframes plux318-ambient{
+ 0%{transform:translate3d(-2px,4px,0) scale(.65);opacity:.25}
+ 45%{opacity:.89;transform:translate3d(3px,-3px,0) scale(1)}
+ 100%{transform:translate3d(-2px,-12px,0) scale(.55);opacity:.34}
+}
+@media(max-width:410px){
+ #app button.plux17-microdust-button .plux17-microdust-dot:nth-child(3n){display:block!important}
+}
+@media(prefers-reduced-motion:reduce){#app .plux318-ambient-spark,#app button .plux318-particle-extra{animation:none!important;opacity:.65!important}}
