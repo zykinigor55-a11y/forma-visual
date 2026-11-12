@@ -94,7 +94,11 @@ async function fetcher(path,method='GET',body=null,binary=false,retry=false){
  if(response.status===401&&S.session?.refresh_token&&!retry){await refresh();return fetcher(path,method,body,binary,true)}
  const type=response.headers.get('content-type')||'';
  const value=binary&&method==='GET'?await response.blob():type.includes('json')?await response.json().catch(()=>null):await response.text();
- if(!response.ok)throw Error(String(value?.message||value?.error_description||value?.error||value||'Ошибка сервера').slice(0,180));
+ if(!response.ok){
+ const error=Error(String(value?.message||value?.error_description||value?.error||value||'Ошибка сервера').slice(0,180));
+ error.httpStatus=response.status;error.code=String(value?.error_code||value?.code||value?.error||'');
+ throw error;
+}
  return value;
 }
 /* V31.8.5: persistent, rotating Supabase refresh token across Android app restarts.
@@ -147,7 +151,7 @@ async function start(){
  id('pf-display').value=S.profile?.display_name||'';
  id('pf-handle').value=S.profile?.handle||'';
  drawAvatar(id('pf-myavatar'),S.profile);
- visible('pf-signin',false);visible('pf-content',true);
+ visible('pf-signin',false);visible('pf-confirm',false);visible('pf-content',true);clearPending();
  await people();
  try{await loadDiscovery()}catch{S.newcomers=[];S.discoveryJoined=false;}
  drawPeople();beginPolling();
@@ -284,7 +288,7 @@ async function send(){
  });
 }
 async function act(fn){
- if(S.busy)return;S.busy=true;try{await fn()}catch(e){notice(e.message,true)}finally{S.busy=false}
+ if(S.busy)return;S.busy=true;try{await fn()}catch(e){notice(signupMessage(e),true)}finally{S.busy=false}
 }
 function beginPolling(){
  clearInterval(S.timer);
@@ -300,6 +304,46 @@ function close(){
  id('plux-friends-panel').hidden=true;clearInterval(S.timer);S.timer=0;
  for(const u of S.pictures.values())URL.revokeObjectURL(u);S.pictures.clear();
 }
+
+/* V31.8.9 email confirmation is a separate step. Never store passwords. */
+const pendingKey='plux_friends_pending_email_v3189';
+let resendAt=0;
+const validEmail=e=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
+function pendingEmail(){try{return JSON.parse(localStorage.getItem(pendingKey)||'null')||''}catch{return ''}}
+function setPending(email){try{localStorage.setItem(pendingKey,JSON.stringify(email))}catch{}}
+function clearPending(){try{localStorage.removeItem(pendingKey)}catch{}}
+function signupMessage(err){
+ const code=String(err?.code||'').toLowerCase(),msg=String(err?.message||'').toLowerCase();
+ if(code==='email_not_confirmed'||msg.includes('email not confirmed'))return 'Аккаунт создан, но почта не подтверждена. Открой письмо и нажми ссылку подтверждения.';
+ if(code==='over_email_send_rate_limit'||err?.httpStatus===429||msg.includes('rate limit'))return 'Слишком много запросов писем. Подожди, затем нажми «Отправить письмо повторно», не регистрируйся заново.';
+ if(code==='email_address_not_authorized'||msg.includes('email address not authorized'))return 'Отправка писем на этот адрес пока запрещена настройками Supabase. Для регистрации всех пользователей требуется почтовый SMTP-сервер.';
+ if(code==='user_already_exists'||msg.includes('already registered'))return 'Такой email уже зарегистрирован. Подтверди почту и войди, повторная регистрация не нужна.';
+ if(code==='invalid_credentials'||msg.includes('invalid login credentials'))return 'Неверные почта или пароль. Если только что зарегистрировался, сначала подтверди почту.';
+ if(/failed to fetch|network/.test(msg))return 'Нет связи с сервисом регистрации. Проверь интернет или VPN.';
+ return String(err?.message||'Ошибка регистрации').slice(0,200);
+}
+function confirmPage(email,info=''){
+ email=String(email||pendingEmail()).trim().toLowerCase();
+ if(!validEmail(email))throw Error('Укажи действующий email.');
+ setPending(email);id('pf-confirm-address').textContent=email;id('pf-email').value=email;
+ visible('pf-setup',false);visible('pf-signin',false);visible('pf-content',false);visible('pf-confirm',true);
+ notice(info);
+}
+function signInPage(){
+ visible('pf-confirm',false);visible('pf-signin',true);visible('pf-content',false);
+ id('pf-email').value=pendingEmail()||id('pf-email').value;notice('');
+}
+async function resendEmail(){
+ const email=pendingEmail();if(!validEmail(email))throw Error('Сначала введи адрес почты.');
+ if(Date.now()<resendAt){notice('Повторить отправку можно через '+Math.ceil((resendAt-Date.now())/1000)+' секунд.',true);return}
+ const btn=id('pf-resend');btn.disabled=true;
+ try{
+  await fetcher('/auth/v1/resend','POST',{type:'signup',email});
+  resendAt=Date.now()+60000;notice('Письмо запрошено. Проверь «Входящие» и «Спам».');
+ }catch(e){if(e.httpStatus===429)resendAt=Date.now()+60000;notice(signupMessage(e),true)}
+ finally{btn.disabled=false}
+}
+
 async function open(){
  id('plux-friends-panel').hidden=false;notice('');
  if(!base||!key){visible('pf-setup',true);visible('pf-signin',false);visible('pf-content',false);return;}
@@ -314,7 +358,8 @@ async function open(){
    }
   }
  }
- visible('pf-signin',true);visible('pf-content',false);
+ if(validEmail(pendingEmail()))confirmPage(pendingEmail());
+ else{visible('pf-confirm',false);visible('pf-signin',true);visible('pf-content',false)}
 }
 const root=document.createElement('div');root.id='plux-friends-panel';root.hidden=true;
 root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','Друзья и личные сообщения');
@@ -323,6 +368,7 @@ root.innerHTML=[
 '<div id="pf-alert" class="pf-alert" role="status" hidden></div>',
 '<section id="pf-setup" class="pf-section" hidden><h2>Общение в ПЛЮХ</h2><p>Модуль готов. Для настоящих чатов необходимо подключить Supabase с защищённой базой, аккаунтами и приватным хранилищем фото.</p></section>',
 '<section id="pf-signin" class="pf-section" hidden><small>АККАУНТ</small><h2>Привет! Найди своих друзей</h2><p>Создай профиль по электронной почте, чтобы начать общение.</p><form id="pf-login"><input id="pf-email" type="email" placeholder="Электронная почта" autocomplete="email" required><input id="pf-password" type="password" placeholder="Пароль от 8 символов" minlength="8" required><div class="pf-row"><button>Войти</button><button id="pf-register" type="button">Регистрация</button></div></form></section>',
+'<section id="pf-confirm" class="pf-section pf-confirm-page" hidden><div class="pf-confirm-icon">✉</div><small>ПОДТВЕРЖДЕНИЕ ПОЧТЫ</small><h2>Проверь электронную почту</h2><p>Аккаунт создан, но для входа нужно подтвердить адрес:</p><strong id="pf-confirm-address"></strong><p>Нажми ссылку в письме и вернись в ПЛЮХ. Проверь «Спам», если письма нет.</p><button id="pf-confirm-login" type="button">Я подтвердил · Войти</button><button id="pf-resend" type="button">Отправить письмо повторно</button><button id="pf-confirm-back" type="button">Изменить email</button></section>',
 '<section id="pf-content" hidden><div id="pf-social" class="pf-section"><div class="pf-profile"><div class="pf-profile-id"><button id="pf-avatar-change" type="button" aria-label="Загрузить или поменять фото профиля" title="Нажмите, чтобы изменить аватарку"><span id="pf-myavatar" class="pf-avatar pf-avatar-own">?</span><span class="pf-avatar-edit-indicator" aria-hidden="true">＋</span></button><input id="pf-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" hidden><div><strong id="pf-myname"></strong><small id="pf-myhandle"></small><small class="pf-avatar-hint">Нажмите на фото, чтобы изменить</small></div></div><button id="pf-logout" type="button">Выйти</button></div><details><summary>Имя и ник</summary><input id="pf-display" placeholder="Ваше имя" maxlength="60"><input id="pf-handle" placeholder="Ник латиницей" maxlength="24"><button id="pf-save-profile" type="button">Сохранить профиль</button></details>',
 '<nav class="pf-tabs"><button class="pf-tab active" data-tab="friends">Друзья</button><button class="pf-tab" data-tab="requests">Заявки <span id="pf-count"></span></button><button class="pf-tab" data-tab="new">Новенькие</button><button class="pf-tab" data-tab="search">Найти</button></nav>',
 '<p id="pf-new-description" class="pf-discovery-info" hidden>Знакомься без знания ника: здесь новые участники, которые согласились показывать свой профиль.</p>',
@@ -368,13 +414,25 @@ id('pf-avatar-input').onchange=e=>{
 };
 id('pf-chat-back').onclick=leaveChat;
 id('pf-login').onsubmit=e=>{e.preventDefault();void act(async()=>{
-  const x=await fetcher('/auth/v1/token?grant_type=password','POST',{email:id('pf-email').value.trim(),password:id('pf-password').value});
-  setSession(x);await start();
+ const email=id('pf-email').value.trim().toLowerCase();
+ try{
+  const data=await fetcher('/auth/v1/token?grant_type=password','POST',{email,password:id('pf-password').value});
+  setSession(data);await start();
+ }catch(err){if(err.code==='email_not_confirmed'||/email not confirmed/i.test(err.message)){confirmPage(email,signupMessage(err));return}throw err}
 })};
 id('pf-register').onclick=()=>void act(async()=>{
- const x=await fetcher('/auth/v1/signup','POST',{email:id('pf-email').value.trim(),password:id('pf-password').value});
- if(x.access_token){setSession(x);await start()}else notice('Проверь почту, подтверди регистрацию и войди');
+ const email=id('pf-email').value.trim().toLowerCase(),password=id('pf-password').value;
+ if(!validEmail(email))throw Error('Проверь email.');
+ if(password.length<8)throw Error('Пароль должен быть не короче восьми символов.');
+ if(pendingEmail()===email){confirmPage(email,'Регистрация уже началась. Подтверди почту, не создавай аккаунт заново.');return}
+ const data=await fetcher('/auth/v1/signup','POST',{email,password});
+ if(data?.access_token){setSession(data);await start()}
+ else if(data?.session?.access_token){setSession(data.session);await start()}
+ else{resendAt=Date.now()+60000;confirmPage(email,'Регистрация принята. Найди письмо с подтверждением.')}
 });
+id('pf-confirm-login').onclick=signInPage;
+id('pf-confirm-back').onclick=()=>{clearPending();signInPage();id('pf-email').value=''};
+id('pf-resend').onclick=()=>void act(resendEmail);
 id('pf-logout').onclick=()=>{
  const token=S.session?.access_token;
  dropSession();S.dialog=null;
