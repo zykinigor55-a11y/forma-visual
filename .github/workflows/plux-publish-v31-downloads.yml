@@ -1,4 +1,4 @@
-name: PLUX V31 permanent phone download links
+name: PLUX V31.3 permanent phone download links
 on:
   push:
     branches: [plux-v31-v30-base-friends-colors-music]
@@ -20,8 +20,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/android artifacts/ios releases
-          gh run download 43136911822 --repo "${{ github.repository }}" --name PLUX-v31-Android-debug-APK --dir artifacts/android
-          gh run download 43136911822 --repo "${{ github.repository }}" --name PLUX-V31-iPhone-AltStore-IPA --dir artifacts/ios
+          gh run download 43141133013 --repo "${{ github.repository }}" --name PLUX-v31-Android-debug-APK --dir artifacts/android
+          gh run download 43141133013 --repo "${{ github.repository }}" --name PLUX-V31-iPhone-AltStore-IPA --dir artifacts/ios
           test -s artifacts/android/app-debug.apk
           test -s artifacts/ios/PLUX-V31-iPhone-AltStore.ipa
           cp artifacts/android/app-debug.apk releases/PLUX_V31_Android.apk
@@ -37,7 +37,8 @@ jobs:
           tag="plux-v31-20261112"
           if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release upload "$tag" releases/PLUX_V31_Android.apk releases/PLUX_V31_iPhone_AltStore.ipa --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "ПЛЮХ V31.3 · Android и iPhone" --notes 'PLUX V31.3: домик и подпись «Главная» по центру; главный экран мягко меняет контрастную палитру вместе с каплей; ASMR-клавиши в печатающемся приветствии (с учётом настроек звука). Сохранены шесть карточек Инструментов V30, восьмицветная капля, Друзья, Audius и радио. Название на телефоне — PLUX. Android — тестовый APK. iPhone — неподписанный IPA для AltStore / Apple ID.'
           else
-            gh release create "$tag" releases/PLUX_V31_Android.apk releases/PLUX_V31_iPhone_AltStore.ipa --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "ПЛЮХ V31 · Android и iPhone" --notes "PLUX V31: меню из шести карточек V30, единая палитра из восьми цветов, старый музыкальный плеер Audius и радио, Друзья. На телефоне название PLUX. Android APK — тестовая подпись. iPhone IPA — без подписи, требуется AltStore / Apple ID для установки." --prerelease
+            gh release create "$tag" releases/PLUX_V31_Android.apk releases/PLUX_V31_iPhone_AltStore.ipa --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "ПЛЮХ V31.3 · Android и iPhone" --notes 'PLUX V31.3: домик и подпись «Главная» по центру; главный экран мягко меняет контрастную палитру вместе с каплей; ASMR-клавиши в печатающемся приветствии (с учётом настроек звука). Сохранены шесть карточек Инструментов V30, восьмицветная капля, Друзья, Audius и радио. Название на телефоне — PLUX. Android — тестовый APK. iPhone — неподписанный IPA для AltStore / Apple ID.' --prerelease
           fi
           gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[] | (.name + " " + .url)'
