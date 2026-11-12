@@ -84,7 +84,8 @@ export async function handleImageRequest(req,res){
   if(!mediaCors(req,res))return;
   if(req.method!=="POST")return reply(res,405,{error:"Используй POST."});
   const key=process.env.API_MARKET_IMAGE_KEY||process.env.API_MARKET_KEY;
-  const model=process.env.API_MARKET_IMAGE_MODEL==='nano-banana-2.1'?'nano-banana-2.1':'nano-banana-2.1';
+  const model=process.env.API_MARKET_IMAGE_MODEL||"nano-banana-2.1";
+  if(model!=="nano-banana-2.1")return reply(res,503,{error:"Разрешена только модель Nano Banana 2.1 через API Market."});
   if(!key)return reply(res,503,{error:"Не задан API_MARKET_IMAGE_KEY в Render Environment."});
   const ip=String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0];
   const now=Date.now();
