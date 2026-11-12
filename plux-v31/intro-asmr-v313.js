@@ -11,11 +11,11 @@
  // Explicitly apply our background as an inline variable-based style, preserving
  // the original home scene and all mascot images above it.
  function restoreHomeBackdrop(){
-   home.style.setProperty('background-color','var(--plux31-home-base)','important');
+   home.style.setProperty('background-color','#000','important');
    home.style.setProperty('background-image',
-     'radial-gradient(ellipse 86% 65% at 85% 26%, var(--plux31-home-contrast-a), transparent 76%), '+
-     'radial-gradient(ellipse 85% 68% at 10% 74%, var(--plux31-home-contrast-b), transparent 77%), '+
-     'linear-gradient(155deg, var(--plux31-home-base), #03080e 68%, var(--plux31-home-base))',
+     'radial-gradient(ellipse 64% 24% at 50% 29%, var(--plux31-home-contrast-a), transparent 79%), '+
+     'radial-gradient(ellipse 59% 19% at 50% 70%, var(--plux31-home-contrast-b), transparent 85%), '+
+     'linear-gradient(#000, #000)',
      'important');
  }
  restoreHomeBackdrop();
