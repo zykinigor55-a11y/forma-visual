@@ -197,3 +197,10 @@
 #plux-friends-panel .pf-discovery-settings span{display:flex;flex-direction:column;gap:3px}
 #plux-friends-panel .pf-discovery-settings strong{font-size:12px;color:#edfff8}
 #plux-friends-panel .pf-discovery-settings small{font-size:10px;line-height:1.5;color:#95c7b0}
+
+
+/* V31.8.4: discreet name-search in opt-in member discovery. */
+#plux-friends-panel .pf-new-filter{display:flex;flex-direction:column;gap:6px;margin:0 0 15px}
+#plux-friends-panel .pf-new-filter[hidden]{display:none!important}
+#plux-friends-panel .pf-new-filter>span{font-size:12px;color:#a2dbbe;font-weight:600}
+#plux-friends-panel .pf-new-filter>input{width:100%;min-height:45px;border-radius:14px;font-size:14px}
