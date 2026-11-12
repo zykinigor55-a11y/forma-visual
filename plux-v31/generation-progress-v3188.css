@@ -1,3 +1,11 @@
+/* Remove the old Chat bubble frame: the actual progress card must match Create 1:1. */
+#screen-chat .plux3188-progress-bubble{
+ display:block!important;width:min(360px,calc(100vw - 113px))!important;
+ max-width:calc(100vw - 110px)!important;
+ padding:0!important;margin:0!important;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;overflow:visible!important;
+}
 /* PLUX 31.8.8. Exactly ONE premium OLED percent animation in Chat and Create. */
 #screen-chat .plux3188-progress,
 #screen-create .plux3188-progress{
