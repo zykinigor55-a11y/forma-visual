@@ -9,6 +9,7 @@ if(!existsSync(htmlFile))throw Error('PLUX page missing');
 // Restore the exact V30 six-card tools, gallery, music and theme dependencies
 // in the same order as the approved original. Do not rebuild card DOM.
 const modules=[
+ ['plux-v124-overlay/plux-typewriter-v124.js','plux-typewriter-v124.js'],
  ['plux-v128-overlay/plux-chat-v128.js','plux-chat-v128.js'],
  ['plux-v14-overlay/plux-artifacts-v14.css','plux-artifacts-v14.css'],
  ['plux-v31/chat-image-v3187.css','chat-image-v3187.css'],
@@ -53,6 +54,10 @@ for(const [src,dest]of modules){
  copyFileSync(src,join(root,dest));
 }
 let html=readFileSync(htmlFile,'utf8');
+/* The old typewriter destroyed image/download/progress nodes via textContent.
+ * Load the patched plain-text-only handler with a fresh URL. */
+html=html.replace(/(\/plux-typewriter-v124\.js)(?:\?[^"']*)?/gi,'$1?v=3187');
+
 /* V31.8.5: legacy ElevenLabs client also bound the home and mic buttons.
  * It started a second simultaneous audio session. Remove only that script;
  * keep the independent on-demand text-to-speech feature intact. */
