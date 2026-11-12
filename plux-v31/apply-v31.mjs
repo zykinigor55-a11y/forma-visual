@@ -40,10 +40,10 @@ const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
  'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js'];
 for(const file of styles){
- if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3134"></head>`);
+ if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3135"></head>`);
 }
 for(const file of scripts){
- if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3134"></script></body>`);
+ if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3135"></script></body>`);
 }
 if(!html.includes('plux-release-v31'))html=html.replace('</head>',
  '<meta name="plux-release-v31" content="V30-six-tools-eight-accurate-colors-friends-home-contrast-asmr"></head>');
