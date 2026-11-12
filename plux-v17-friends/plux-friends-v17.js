@@ -95,7 +95,8 @@ async function fetcher(path,method='GET',body=null,binary=false,retry=false){
  const type=response.headers.get('content-type')||'';
  const value=binary&&method==='GET'?await response.blob():type.includes('json')?await response.json().catch(()=>null):await response.text();
  if(!response.ok){
- const error=Error(String(value?.message||value?.error_description||value?.error||value||'Ошибка сервера').slice(0,180));
+ const detail=value?.message||value?.error_description||value?.error?.message||value?.error?.error_description||value?.error||'Ошибка сервера';
+ const error=Error((typeof detail==='string'?detail:JSON.stringify(detail)).slice(0,240));
  error.httpStatus=response.status;error.code=String(value?.error_code||value?.code||value?.error||'');
  throw error;
 }
