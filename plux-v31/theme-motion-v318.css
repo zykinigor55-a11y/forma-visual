@@ -42,3 +42,11 @@
  #app #screen-voice .voice-waveform,
  #app #screen-voice .voice-wave{transition:none!important}
 }
+
+#app #screen-voice .plux318-mic-notice:not([hidden]){
+ position:absolute;z-index:40;bottom:calc(19% + env(safe-area-inset-bottom,0px));left:7%;right:7%;
+ padding:13px 14px;border-radius:15px;border:1px solid #f4b5ba8a;background:rgba(34,8,15,.92);
+ color:#ffe3e3;font:500 12px/1.5 system-ui,sans-serif;text-align:center;
+ box-shadow:0 10px 34px #000b;pointer-events:none
+}
+#app #screen-voice .plux318-mic-notice[hidden]{display:none!important}
