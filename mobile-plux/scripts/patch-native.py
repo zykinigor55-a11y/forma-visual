@@ -36,6 +36,19 @@ if platform=="android":
             if anchor not in code:raise SystemExit("Android onCreate missing for audio settings")
             code=code.replace(anchor,anchor+"\n        "+setting,1)
             main.write_text(code)
+    # V31.5 OLED: true black system and gesture navigation bars, white icons.
+    # Modern Android versions keep their own gesture navigation policy.
+    if main and main.exists():
+        code=main.read_text()
+        if "setNavigationBarColor(android.graphics.Color.BLACK)" not in code:
+            line="super.onCreate(state);"
+            addon="""getWindow().setNavigationBarColor(android.graphics.Color.BLACK);
+        getWindow().setStatusBarColor(android.graphics.Color.BLACK);
+        if(android.os.Build.VERSION.SDK_INT>=29)
+            getWindow().setNavigationBarContrastEnforced(false);"""
+            if line not in code:raise SystemExit("PLUX native OLED: onCreate missing")
+            code=code.replace(line,line+"\n        "+addon,1)
+            main.write_text(code)
     # V31: Capacitor bridge into MediaStore for actual Android gallery saving.
     media_template=root/"scripts/plux-media-saver.java.txt"
     media_target=root/"android/app/src/main/java/com/plux/assistant/PLUXMediaSaver.java"
@@ -62,7 +75,9 @@ elif platform=="ios":
         "NSCameraUsageDescription":"ПЛЮХ позволяет прикреплять фотографии с камеры.",
         "NSPhotoLibraryUsageDescription":"ПЛЮХ позволяет выбирать фотографии для анализа.",
         "UIViewControllerBasedStatusBarAppearance":False,
-        "UIStatusBarHidden":True
+        "UIStatusBarHidden":True,
+        "UIUserInterfaceStyle":"Dark",
+        "UIStatusBarStyle":"UIStatusBarStyleLightContent"
     })
     with plist.open("wb") as f:plistlib.dump(content,f,fmt=plistlib.FMT_XML)
 else:
