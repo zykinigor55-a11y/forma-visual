@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright-core';
 import {mkdirSync} from 'node:fs';
 
-const URL='https://plux-v17-friends-preview.onrender.com/?ui-check=3151';
+const URL='https://plux-v17-friends-preview.onrender.com/?ui-check=3152';
 mkdirSync('plux-v31/smoke-v314',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 try {
@@ -46,6 +46,21 @@ try {
      theme:document.documentElement.dataset.pluxTheme,quick};
  });
  const before=await inspect();console.log('PLUX314_RESTORED '+JSON.stringify(before));
+ const oled=await page.evaluate(()=>{
+   const root=document.documentElement,home=document.getElementById('screen-home');
+   const bg=e=>getComputedStyle(e).backgroundColor;
+   return {body:bg(document.body),root:bg(root),app:bg(document.getElementById('app')),
+     home:bg(home),viewportHeight:innerHeight,css:!!document.querySelector('link[href*="oled-v315.css"]'),
+     meta:document.querySelector('meta[name="theme-color"]')?.content,
+     gradient:getComputedStyle(home).backgroundImage.slice(0,120),
+     originalLogo:!!document.querySelector('#screen-home img[src*="plux-liquid-logo"]')};
+ });
+ console.log('PLUX315_OLED '+JSON.stringify(oled));
+ assert.equal(oled.css,true,'OLED black theme stylesheet loaded');
+ assert.equal(oled.meta,'#000000','Android browser/system bar theme is true black');
+ assert.equal(oled.body,'rgb(0, 0, 0)','body uses genuine black OLED pixels');
+ assert.equal(oled.app,'rgb(0, 0, 0)','native app container is genuine black');
+ assert.equal(oled.home,'rgb(0, 0, 0)','home base pixels are genuine black');
  assert(before.home[3]>=820,'home fills device viewport: no black gap');
  assert(before.scene[3]>=200,'mascot scene has space above the bottom controls');
  assert(before.mascot[3]>=200,'mascot display area is non-zero');
@@ -67,7 +82,7 @@ try {
    assert(state.mascot[3]>=200,'mascot remains visible after theme switch');
    await page.screenshot({path:'plux-v31/smoke-v314/home-'+color+'.png',fullPage:true});
  }
- console.log('PLUX314_CHECK_PASS: full-size V30 drop, three separately colored glass orbs, icons and microdust preserved');
+ console.log('PLUX315_CHECK_PASS: true OLED black, full-size V30 drop, and all three themed crystal orbs with original icons');
  console.log('PLUX314_PAGE_ERRORS '+JSON.stringify(errors.slice(0,12)));
  assert.equal(errors.length,0,'No JavaScript runtime errors');
 }finally{await browser.close()}
