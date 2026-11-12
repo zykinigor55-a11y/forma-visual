@@ -65,6 +65,26 @@
   mask-image:radial-gradient(ellipse 78% 58% at 50% 49%,
     #000 0%,#000 56%,rgba(0,0,0,.98) 69%,rgba(0,0,0,.47) 85%,transparent 100%)!important;
 }
+/* Photo source is 750x875, animated originals are portrait 540x960.
+   Both must have their drop/base ABOVE the music strip without cropping.
+   Individual contain positions match the painted frame alignment and retain
+   the entire original frame without horizontal stretching. */
+#app #screen-home:not([hidden]) #home-mascot>img#home-mascot-image {
+  object-position:50% 29%!important;
+  -webkit-mask-image:radial-gradient(ellipse 78% 43% at 50% 42%,
+    #000 0%,#000 48%,rgba(0,0,0,.84) 51%,rgba(0,0,0,.38) 56%,transparent 62%)!important;
+  mask-image:radial-gradient(ellipse 78% 43% at 50% 42%,
+    #000 0%,#000 48%,rgba(0,0,0,.84) 51%,rgba(0,0,0,.38) 56%,transparent 62%)!important;
+}
+#app #screen-home:not([hidden]) #home-mascot>video,
+#app #screen-home:not([hidden]) #home-mascot>video.plux-v106-video {
+  object-position:50% 0%!important;
+  -webkit-mask-image:radial-gradient(ellipse 76% 60% at 50% 38%,
+    #000 0%,#000 43%,rgba(0,0,0,.88) 49%,rgba(0,0,0,.43) 56%,transparent 66%)!important;
+  mask-image:radial-gradient(ellipse 76% 60% at 50% 38%,
+    #000 0%,#000 43%,rgba(0,0,0,.88) 49%,rgba(0,0,0,.43) 56%,transparent 66%)!important;
+}
+
 /* Glass panels and all input controls are above the scene, just as in V30. */
 #app #screen-home:not([hidden])>.home-head,
 #app #screen-home:not([hidden])>.home-bottom,
