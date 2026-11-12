@@ -25,6 +25,8 @@ try {
      labelCenter:label?cx(label):null,
      btnCenter:first?cx(first):null,
      ambient:!!ambient,
+     ambientBg:ambient?getComputedStyle(ambient).backgroundImage:null,
+     cssLoaded:!!document.querySelector('link[href*="home-contrast-v313.css"]'),
      sound:!!window.PLUXHomeV313,
      count:window.PLUXHomeV313?.getGreetingTargets?.(),
      bg:css.backgroundImage,
@@ -39,6 +41,8 @@ try {
  assert(initial.count>=1,'greeting text observed for ASMR');
  assert(Math.abs(initial.iconCenter-initial.labelCenter)<=4,'home glyph and label centered');
  assert(Math.abs(initial.iconCenter-initial.btnCenter)<=4,'home glyph centered in tab');
+ assert(initial.cssLoaded,'contrasting home stylesheet was included');
+ assert(initial.ambientBg?.includes('gradient'),'complementary scene backdrop is visible');
  assert(initial.bg.includes('gradient'),'home screen has colored background');
  const result=await page.evaluate(()=>{
    const home=document.getElementById('screen-home');
