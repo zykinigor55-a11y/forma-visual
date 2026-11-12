@@ -82,7 +82,7 @@
  schedule();
  window.PLUXColorsV31={
    get:()=>active,
-   choose:(id)=>valid.has(id)&&!!window.PLUXThemes?.set?.(id),
+   choose:(id)=>{if(!valid.has(id)||!window.PLUXThemes?.set)return false;window.PLUXThemes.set(id);return true},
    all:()=>Object.keys(COLORS)
  };
 })();
