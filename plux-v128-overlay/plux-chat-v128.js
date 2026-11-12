@@ -63,9 +63,11 @@
       return await load(local);
     }catch(e){
       if(local){try{URL.revokeObjectURL(local)}catch{}}
-      // A provider may not allow fetch/CORS but still allow the ordinary image
-      // resource in WebView. Try it, and propagate real errors if that fails.
-      try{return await load(uri)}catch{throw e}
+      // WebView may forbid fetch() while <img> succeeds; try resource loading.
+      try{return await load(uri)}
+      catch{
+        throw Error("Готовое изображение есть, но не загрузилось на телефон. Проверь соединение и повтори загрузку.");
+      }
     }
   };
   function createArtifactRow(existing){
@@ -89,7 +91,23 @@
     if(item.type==="image"){
       pending?.state("Загружаю готовое изображение…");
       pending?.setProgress(95);
-      const picture=await loadPreview(uri);
+      let picture;
+      try{picture=await loadPreview(uri)}
+      catch(error){
+        if(pending?.bubble){
+          const retry=document.createElement("button");
+          retry.type="button";retry.className="plux3188-image-retry";
+          retry.textContent="Повторить загрузку изображения";
+          retry.onclick=()=>{
+            retry.disabled=true;retry.textContent="Загружаю готовую картинку…";
+            void appendArtifact(item,pending).catch(()=>{
+              retry.disabled=false;retry.textContent="Повторить загрузку изображения";
+            });
+          };
+          pending.bubble.append(retry);
+        }
+        throw error;
+      }
       pending?.finish();
       row.className="chat-row bot plux14-artifact-row plux3187-image-row";
       bubble.className="chat-bubble plux14-artifact plux3187-image-card";
@@ -152,6 +170,23 @@
   // clearly labeled estimated percentage, capped below 100% until the preview
   // has decoded successfully. Never claim 100% on a failed/expired image.
   function appendPending(kind){
+    // V31.8.8: use EXACTLY the same percent animation as the Create screen.
+    if(window.PLUXGenerationProgressV3188?.mount){
+      const row=document.createElement("div");
+      row.className="chat-row bot plux3184-progress-row plux3188-chat-progress-row";
+      const avatar=document.createElement("img");
+      avatar.className="chat-mini";avatar.alt="";avatar.src="/assets/states/idle.webp";row.append(avatar);
+      const bubble=document.createElement("div");bubble.className="chat-bubble plux14-artifact plux3188-progress-bubble";
+      bubble.setAttribute("data-plux-artifact","progress");row.append(bubble);feed.append(row);
+      const progress=window.PLUXGenerationProgressV3188.mount(bubble,{
+        kind,model:kind==="image"?"GPT Image 2":kind==="presentation"?"PowerPoint":"PDF"
+      });
+      feed.scrollTop=feed.scrollHeight;
+      return {row,bubble,state:progress.state,setProgress:progress.setProgress,
+        finish:progress.finish,fail:progress.fail,end:()=>{
+          progress.end();row.remove()
+        }};
+    }
     const row=document.createElement("div");row.className="chat-row bot plux3184-progress-row";
     const avatar=document.createElement("img");avatar.className="chat-mini";
     avatar.alt="";avatar.src="/assets/states/idle.webp";row.append(avatar);
@@ -223,15 +258,76 @@
     }
     feed.scrollTop=feed.scrollHeight;
   }
+  // A 32-character random id is allocated BEFORE any paid request is sent.
+  // The server uses it as the generation-job token, so we can find a running
+  // generation after a lost POST response without paying a second time.
+  function newJobId(){
+    const bytes=new Uint8Array(24);crypto.getRandomValues(bytes);
+    return btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=/g,"");
+  }
+  const apiRoot="https://pluh-voice-demo.onrender.com";
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  async function queryStatus(id){
+    const res=await fetch(apiRoot+"/api/generation/status?id="+encodeURIComponent(id),
+      {method:"GET",mode:"cors",credentials:"omit",cache:"no-store",signal:AbortSignal.timeout(19000)});
+    if(res.status===404)return null;
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw Error(data.error||"Сервер не смог проверить генерацию (HTTP "+res.status+").");
+    return data;
+  }
+  async function requestChatWithRecovery(payload,kind,progress,jobId){
+    const opts={
+      method:"POST",mode:"cors",credentials:"omit",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload),signal:AbortSignal.timeout(65000)
+    };
+    let response;
+    try{response=await fetch(endpoint,opts)}
+    catch(e){
+      if(!kind)throw Error("Связь с сервером ПЛЮХ недоступна. Проверь интернет и попробуй позже.");
+      progress?.state("Связь прервалась. Ищу уже созданную задачу…");
+      let confirmedMissing=false;
+      for(let i=0;i<3;i++){
+        await wait(i===0?1200:1900);
+        try{
+          const job=await queryStatus(jobId);
+          if(job)return {job:{id:jobId,kind}};
+          confirmedMissing=true;break;
+        }catch{}
+      }
+      if(!confirmedMissing){
+        throw Error("Нет связи с сервером. Генерация могла начаться: не отправляй повторно платный запрос.");
+      }
+      // This is safe even when two requests race: the backend will always
+      // reuse the same high-entropy id and never launch two jobs for it.
+      progress?.state("Восстановил соединение. Проверяю запрос…");
+      try{response=await fetch(endpoint,{...opts,signal:AbortSignal.timeout(48000)})}
+      catch{
+        try{
+          const job=await queryStatus(jobId);
+          if(job)return {job:{id:jobId,kind}};
+        }catch{}
+        throw Error("Соединение снова оборвалось. Повторная генерация не запускалась.");
+      }
+    }
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw Error(data.error||"Сервер не принял запрос (HTTP "+response.status+").");
+    return data;
+  }
   async function pollJob(job,progress){
     if(!job?.id||!/^[A-Za-z0-9_-]{32}$/.test(job.id))throw Error('Сервер вернул неверный номер задачи');
     const started=Date.now();
     while(Date.now()-started<270000){
       await new Promise(resolve=>setTimeout(resolve,2400));
-      const res=await fetch('https://pluh-voice-demo.onrender.com/api/generation/status?id='+job.id,
-       {method:'GET',mode:'cors',credentials:'omit',signal:AbortSignal.timeout(18000)});
-      const x=await res.json().catch(()=>({}));
-      if(!res.ok)throw Error(x.error||'Не удалось узнать состояние генерации');
+      let x;
+      try{
+        x=await queryStatus(job.id);
+        if(!x)throw Error('Задача пропала после перезапуска сервера. Попробуй позже.');
+      }catch(error){
+        if(/пропала/.test(error.message))throw error;
+        progress.state("Проверяю связь с сервером. Генерация продолжается…");
+        if(Date.now()-started>270000)throw error;
+        continue; // Never re-issue the paid image request during polling.
+      }
       if(x.state==='failed')throw Error(x.error||'Не удалось создать файл');
       if(x.state==='complete')return x;
       progress.state(job.kind==='image'?'GPT Image 2 создаёт изображение…':
@@ -255,13 +351,10 @@
     const messages=history().filter(m=>m.from==="user"||m.from==="bot").slice(-12)
       .map(m=>({role:m.from==="user"?"user":"assistant",content:m.text.slice(0,2400)}));
     try{
-      const response=await fetch(endpoint,{method:"POST",mode:"cors",credentials:"omit",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({messages,attachments,requestedArtifact:kind||undefined,
-          clientFeatures:{generationJobs:!!kind}}),
-        signal:AbortSignal.timeout(65000)});
-      let result=await response.json().catch(()=>({}));
-      if(!response.ok)throw Error(result.error||"Не удалось получить ответ ИИ");
+      const jobId=kind?newJobId():undefined;
+      const payload={messages,attachments,requestedArtifact:kind||undefined,
+        clientFeatures:{generationJobs:!!kind},clientJobId:jobId};
+      let result=await requestChatWithRecovery(payload,kind,progress,jobId);
       if(response.status===202&&result.job)result=await pollJob(result.job,progress||{state:()=>{}});
       if(result.artifact){
         // The same pending bubble becomes the finished image or document.
@@ -273,8 +366,10 @@
         else throw Error("Сервер не вернул готовое изображение или ответ.");
       }
     }catch(e){
-      const msg=e.name==="TimeoutError"?"Сервер долго не отвечает. Проверь чат позже и не повторяй платный запрос сразу.":
-        String(e.message||"Связь с сервером недоступна.");
+      const msg=e.name==="TimeoutError"?"Сервер долго не отвечает. Генерация могла начаться — не отправляй запрос повторно сразу.":
+        /Failed to fetch|NetworkError|Load failed/i.test(String(e.message||""))
+          ?"Не удалось подключиться к серверу ПЛЮХ. Проверь сеть или VPN; оплаченный запрос мог продолжить выполняться."
+          :String(e.message||"Связь с сервером недоступна.");
       if(progress)progress.fail(msg);else append("info",msg);
     }finally{busy=false;if(button)button.disabled=false}
   }
