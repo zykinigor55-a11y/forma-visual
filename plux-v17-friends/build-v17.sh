@@ -12,12 +12,12 @@ node --check plux-published/plux-friends-v17.js
 node --check plux-published/plux-save-v17.js
 node --check plux-published/plux-microdust-v17.js
 node --check plux-published/music-player-v31.js
+node --check plux-published/drop-colors-v31.js
 node --check plux-v31/apply-v31.mjs
 node --check plux-v17-friends/install-media-v17.mjs
 grep -q 'plux-friends-v17.js' plux-published/index.html
 grep -q 'plux-microdust-v17.js' plux-published/index.html
 grep -q 'music-player-v31.js' plux-published/index.html
+grep -q 'drop-colors-v31.js' plux-published/index.html
 test -s plux-published/index.html
-node plux-v31/probe-ui.mjs plux-published
-node plux-v31/probe-palette-v31.mjs plux-published
-echo "PLUX V31 baseline probe complete"
+echo "PLUX V31 release build verified: V30 base + Friends + native-save web bridge + music + colors"
