@@ -2,6 +2,7 @@
  * metadata. Uses mocked API routes — no paid generation or external image. */
 import assert from "node:assert/strict";
 import {deflateSync} from "node:zlib";
+import {readFileSync} from "node:fs";
 import {chromium} from "playwright-core";
 const origin="https://plux-v17-friends-preview.onrender.com";
 const api="https://pluh-voice-demo.onrender.com";
@@ -31,6 +32,12 @@ try{
  const errors=[];page.on("pageerror",e=>errors.push(e.message));
  let requests=0,statuses=0;
  await page.route("**/plux-chat-v128.js*",route=>route.fulfill({status:200,contentType:"text/javascript",body:"/* injected updated local script */"}));
+ // The old V12.4 typewriter deleted generated images and progress DOM.
+ // Test the corrected version in the real, still-old published page.
+ await page.route("**/plux-typewriter-v124.js*",route=>route.fulfill({
+  status:200,contentType:"text/javascript",
+  body:readFileSync("plux-v124-overlay/plux-typewriter-v124.js","utf8")
+ }));
  await page.route("**/api/chat",route=>{
   if(route.request().method()==="OPTIONS")
    return route.fulfill({status:204,headers:{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST,OPTIONS"}});
