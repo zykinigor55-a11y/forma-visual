@@ -30,7 +30,15 @@ const modules=[
  ['plux-v31/home-fix-v314.css','home-fix-v314.css'],
  ['plux-v31/quick-orbs-v314.js','quick-orbs-v314.js'],
  ['plux-v31/oled-v315.css','oled-v315.css'],
- ['plux-v31/mascot-fullscreen-v316.css','mascot-fullscreen-v316.css']
+ ['plux-v31/mascot-fullscreen-v316.css','mascot-fullscreen-v316.css'],
+ ['plux-v31/microphone-permission-v318.js','microphone-permission-v318.js'],
+ ['plux-v31/microdust-enhanced-v318.js','microdust-enhanced-v318.js'],
+ ['plux-v31/microdust-enhanced-v318.css','microdust-enhanced-v318.css'],
+ ['plux-v31/theme-motion-v318.css','theme-motion-v318.css'],
+ ['plux-v31/ai-cognition-v318.js','ai-cognition-v318.js'],
+ ['plux-v31/ai-cognition-v318.css','ai-cognition-v318.css'],
+ ['plux-v31/video-hub-v318.js','video-hub-v318.js'],
+ ['plux-v31/video-hub-v318.css','video-hub-v318.css']
 ];
 for(const [src,dest]of modules){
  if(!existsSync(src))throw Error('V30/V31 dependency missing: '+src);
@@ -40,9 +48,9 @@ let html=readFileSync(htmlFile,'utf8');
 if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
  throw Error('Original approved V30 layout changed; stop rather than overwrite');
 const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
- 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css','oled-v315.css','mascot-fullscreen-v316.css'];
+ 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css','home-contrast-v313.css','home-fix-v314.css','oled-v315.css','mascot-fullscreen-v316.css','theme-motion-v318.css','microdust-enhanced-v318.css','ai-cognition-v318.css','video-hub-v318.css'];
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
- 'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js'];
+ 'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js','intro-asmr-v313.js','quick-orbs-v314.js','microphone-permission-v318.js','microdust-enhanced-v318.js','ai-cognition-v318.js','video-hub-v318.js'];
 for(const file of styles){
  if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3171"></head>`);
 }
@@ -53,4 +61,4 @@ if(!html.includes('name="theme-color"'))html=html.replace('</head>','<meta name=
 if(!html.includes('plux-release-v31'))html=html.replace('</head>',
  '<meta name="plux-release-v31" content="V30-fullscreen-mascot-8-themes-friends-asmr-glass-orbs-OLED"></head>');
 writeFileSync(htmlFile,html);
-console.log('PLUX V31.7 OLED: full-screen V30 drop, swipeable radio/Audius mini-player and color-synced equalizer.');
+console.log('PLUX V31.8 OLED: original V31.7 + video, avatars, cognition, particles and microphone permission.');
