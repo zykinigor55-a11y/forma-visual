@@ -1,50 +1,114 @@
-/* V31: larger, labelled chromatic selection without modifying V30 OLED layout. */
-#plux31-color-panel{
- box-sizing:border-box!important;margin:18px 14px 22px!important;
- padding:17px 16px 19px!important;border:1px solid #6ceabb76!important;
- border-radius:22px!important;color:#effff7!important;
- background:linear-gradient(145deg,rgba(20,61,51,.92),rgba(4,16,17,.97))!important;
- box-shadow:inset 0 1px 3px #bffffc30,0 8px 24px #0007!important;
+/* PLUX V31 · original V30 color button + larger intuitive color sheet.
+   Theme variables tint the SIX V30 tools and glow. No replacement of card geometry. */
+:root[data-plux-theme="emerald"]{
+ --plux-theme-accent:#51ffb7;--plux-theme-bright:rgba(113,255,194,.77);
+ --plux-theme-soft:rgba(21,214,141,.28);--plux25-halo:rgba(21,214,141,.22);
 }
-#plux31-color-panel h3{font-size:17px!important;letter-spacing:.1px!important;font-weight:700!important;margin:0 0 5px!important;color:#effff6!important}
-#plux31-color-panel p{margin:0 0 15px!important;color:#bad7ca!important;font-size:12px!important;line-height:1.45!important}
-#plux31-color-panel .plux31-color-grid{
- display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
- gap:9px!important;min-width:0!important;
+:root[data-plux-theme="azure"]{
+ --plux-theme-accent:#4687ff;--plux-theme-bright:rgba(84,146,255,.85);
+ --plux-theme-soft:rgba(24,93,255,.31);--plux25-halo:rgba(26,97,255,.27);
 }
-#plux31-color-panel .plux31-color-option{
- box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
- align-items:center!important;justify-content:center!important;
- gap:7px!important;padding:9px 3px!important;min-width:0!important;
- border-radius:15px!important;border:1px solid #8be2c340!important;
- background:rgba(1,22,20,.75)!important;color:#d7efe5!important;
- font:500 clamp(9px,2.65vw,12px)/1.15 system-ui,sans-serif!important;
- box-shadow:inset 0 1px 1px #ffffff10!important;
- -webkit-tap-highlight-color:transparent!important;cursor:pointer!important;
+:root[data-plux-theme="ruby"]{
+ --plux-theme-accent:#ff3a51;--plux-theme-bright:rgba(255,91,102,.87);
+ --plux-theme-soft:rgba(235,25,57,.32);--plux25-halo:rgba(238,30,54,.25);
 }
-#plux31-color-panel .plux31-color-option.selected{
- border-color:#d5ffedbb!important;color:#fff!important;
- background:linear-gradient(145deg,#12473b,#0b2525)!important;
- box-shadow:0 0 0 1px #70e8bd44,inset 0 1px 2px #e7fff336!important;
+:root[data-plux-theme="solar"]{
+ --plux-theme-accent:#ffcd19;--plux-theme-bright:rgba(255,215,74,.9);
+ --plux-theme-soft:rgba(238,168,7,.33);--plux25-halo:rgba(254,200,19,.27);
 }
-#plux31-color-panel .plux31-color-swatch{
- display:block!important;box-sizing:border-box!important;
- width:clamp(36px,11vw,48px)!important;height:clamp(36px,11vw,48px)!important;
- border-radius:50%!important;flex:none!important;
- background:radial-gradient(circle at 35% 18%,#ffffffd4,transparent 32%),
- radial-gradient(circle at 62% 82%,#020b1088,transparent 44%),var(--plux31-chip)!important;
- border:1px solid #ffffff6d!important;box-shadow:inset 0 -7px 9px #0005,inset 0 3px 5px #fff7,0 3px 12px #0008!important;
+:root[data-plux-theme="turquoise"]{
+ --plux-theme-accent:#14e7e2;--plux-theme-bright:rgba(35,248,235,.78);
+ --plux-theme-soft:rgba(0,207,203,.27);--plux25-halo:rgba(0,210,207,.24);
 }
-#plux31-color-panel .plux31-color-option.selected .plux31-color-swatch{
- outline:2px solid #dcfff1!important;outline-offset:3px!important;
+:root[data-plux-theme="violet"]{
+ --plux-theme-accent:#b48aff;--plux-theme-bright:rgba(179,136,255,.8);
+ --plux-theme-soft:rgba(122,69,235,.29);--plux25-halo:rgba(122,69,235,.26);
 }
-#plux31-color-panel .plux31-color-label{
- white-space:normal!important;overflow-wrap:break-word!important;text-align:center!important;
- font-size:clamp(10px,2.5vw,12px)!important;font-weight:550!important;
+:root[data-plux-theme="rose"]{
+ --plux-theme-accent:#ff8cc9;--plux-theme-bright:rgba(255,150,205,.79);
+ --plux-theme-soft:rgba(227,83,161,.29);--plux25-halo:rgba(228,86,164,.25);
 }
-#plux31-color-panel .plux31-color-current{
- margin-top:13px!important;text-align:center!important;color:#a6e4c9!important;
- font-size:12px!important;font-weight:600!important;
+:root[data-plux-theme="silver"]{
+ --plux-theme-accent:#c8e5ea;--plux-theme-bright:rgba(215,240,245,.82);
+ --plux-theme-soft:rgba(155,187,199,.25);--plux25-halo:rgba(166,204,212,.22);
 }
-@media(max-width:360px){#plux31-color-panel{margin:15px 9px!important;padding:14px 10px!important}
-#plux31-color-panel .plux31-color-grid{gap:5px!important}}
+/* Original V30 corner trigger; slightly larger for reliable phone taps. */
+#screen-home .plux-theme-trigger{
+ width:46px!important;height:46px!important;flex-basis:46px!important;
+ border-radius:16px!important;margin:0 7px 0 auto!important;
+ box-shadow:inset 0 1px 3px #ffffff6b,0 0 19px var(--plux-theme-soft)!important;
+}
+#screen-home .plux-theme-four{width:24px!important;height:24px!important;gap:3px!important}
+#screen-home .plux-theme-four i{width:10px!important;height:10px!important}
+/* One single bottom sheet: two rows of clearly named large swatches. */
+#plux-theme-backdrop .plux-theme-dialog{
+ width:min(100%,510px)!important;max-width:510px!important;
+ padding:22px 17px 25px!important;border-radius:28px!important;
+ border-color:var(--plux-theme-bright)!important;
+ box-shadow:inset 0 1px 3px #ffffff32,0 -8px 45px var(--plux-theme-soft),0 18px 55px #000b!important;
+}
+#plux-theme-backdrop .plux-theme-heading{margin-bottom:20px!important}
+#plux-theme-backdrop .plux-theme-heading strong{font:700 20px/1.2 system-ui!important}
+#plux-theme-backdrop .plux-theme-heading small{
+ max-width:340px!important;line-height:1.4!important;color:#cfebe0!important;font-size:13px!important;
+}
+#plux-theme-backdrop .plux-theme-options{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:11px!important;
+}
+#plux-theme-backdrop .plux-theme-option{
+ box-sizing:border-box!important;min-height:108px!important;
+ padding:13px 4px 12px!important;gap:9px!important;
+ border-radius:19px!important;
+ border:1px solid rgba(178,224,218,.22)!important;
+ background:linear-gradient(145deg,rgba(27,54,54,.44),rgba(5,17,22,.91))!important;
+}
+#plux-theme-backdrop .plux-theme-option.selected{
+ border:2px solid var(--plux-theme-accent)!important;
+ background:linear-gradient(142deg,var(--plux-theme-soft),rgba(8,22,29,.91))!important;
+ box-shadow:0 0 17px var(--plux-theme-soft),inset 0 1px 3px #ffffff3a!important;
+}
+#plux-theme-backdrop .plux-theme-swatch{
+ width:clamp(42px,12vw,60px)!important;height:clamp(42px,12vw,60px)!important;
+ flex:none!important;
+ background:radial-gradient(circle at 31% 19%,rgba(255,255,255,.95) 0 3%,rgba(255,255,255,.46) 7%,transparent 29%),
+ radial-gradient(circle at 72% 83%,rgba(0,0,0,.56),transparent 46%),var(--swatch-color)!important;
+ box-shadow:inset 0 3px 7px #fff6,inset 0 -8px 11px #0008,0 0 15px color-mix(in srgb,var(--swatch-color) 34%,transparent)!important;
+}
+#plux-theme-backdrop .plux-theme-name{
+ font:650 clamp(10px,2.85vw,13px)/1.25 system-ui!important;
+ white-space:normal!important;text-align:center!important;overflow-wrap:anywhere!important;
+}
+#plux-theme-backdrop .plux-theme-check{
+ top:4px!important;right:6px!important;display:grid!important;place-items:center!important;
+ width:18px!important;height:18px!important;border-radius:50%!important;
+ background:var(--plux-theme-accent)!important;color:#07131a!important;
+ font-size:12px!important;font-weight:900!important;
+}
+#screen-modes .mode-grid>button.mode-card.plux26-mode-card{
+ border-color:var(--plux-theme-bright)!important;
+ background-image:
+  radial-gradient(ellipse at 16% 6%,rgba(249,255,255,.12),transparent 30%),
+  radial-gradient(ellipse at 28% 72%,var(--plux-theme-soft),transparent 64%),
+  linear-gradient(153deg,rgba(12,41,43,.91),rgba(4,18,27,.96) 69%,rgba(6,11,22,.99))!important;
+ box-shadow:inset 0 1px 2px #ffffff3c,inset 0 -7px 15px #010a0f99,
+  0 9px 22px #0006,0 0 21px var(--plux-theme-soft)!important;
+}
+#screen-modes .mode-grid>button.mode-card.plux26-mode-card>.plux26-mode-icon{
+ border-color:var(--plux-theme-bright)!important;
+ background:linear-gradient(146deg,var(--plux-theme-soft),rgba(3,18,22,.92) 78%)!important;
+ box-shadow:inset 0 1px 3px #ffffff38,0 0 18px var(--plux-theme-soft)!important;
+}
+#screen-modes .mode-grid>button.mode-card.plux26-mode-card>.plux26-mode-icon svg{
+ stroke:var(--plux-theme-accent)!important;
+ filter:drop-shadow(0 0 6px var(--plux-theme-soft))!important;
+}
+@media(max-width:370px){
+ #screen-home .plux-theme-trigger{width:42px!important;height:42px!important;flex-basis:42px!important}
+ #plux-theme-backdrop .plux-theme-dialog{padding:18px 10px 20px!important}
+ #plux-theme-backdrop .plux-theme-options{gap:6px!important}
+ #plux-theme-backdrop .plux-theme-option{min-height:96px!important;padding:9px 2px!important;gap:6px!important}
+ #plux-theme-backdrop .plux-theme-swatch{width:43px!important;height:43px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #plux-theme-backdrop .plux-theme-option{transition:none!important}
+}
