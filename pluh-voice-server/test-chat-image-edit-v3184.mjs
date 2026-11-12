@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import {makeGptImage} from "./chat-artifacts-v14.mjs";
+const image="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==";
+const source="data:image/png;base64,"+Buffer.concat([Buffer.from(image,"base64"),Buffer.alloc(85)]).toString("base64");
+const messages=[{role:"user",content:[{type:"text",text:"Перерисуй освещение, сохрани дом"},{type:"image_url",image_url:{url:source}}]}];
+let calls=0;globalThis.fetch=async(url,options)=>{
+ calls++;
+ assert(String(url).endsWith("/v1/images/edits"),"photo must use image edits endpoint");
+ assert(options.body instanceof FormData,"edits must be multipart");
+ assert.equal(options.body.get("model"),"gpt-image-2");
+ assert(options.body.get("image") instanceof Blob,"uploaded image should be a file");
+ assert(options.body.get("prompt").includes("сохрани дом"));
+ return new Response(JSON.stringify({data:[{b64_json:image}]}),{status:200,headers:{"Content-Type":"application/json"}});
+};
+const result=await makeGptImage("Перерисуй освещение, сохрани дом","DUMMY","photo-test-3184",messages);
+assert.equal(calls,1);
+assert.equal(result.type,"image");
+assert.equal(result.edited,true);
+assert(result.dataUrl.startsWith("data:image/png;base64,"));
+console.log("PLUX GPT Image 2 photo-edit contract PASS: 1 multipart request, source preserved");
