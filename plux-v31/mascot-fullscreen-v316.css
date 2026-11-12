@@ -1,0 +1,91 @@
+/* PLUX V31.6 — V30 FULL-SCREEN MASCOT RESTORATION.
+ * V31.4 wrongly made the whole video scene a flex item between header
+ * and quick buttons. The approved V30 placed it behind the ENTIRE screen:
+ * #home-scene {position:absolute;inset:0;height:100%}
+ * and used object-fit:contain + a radial optical matte.
+ *
+ * Restore the original geometry, retain 100%-visible character and soften the
+ * straight vertical video edges; all tools remain interactive above the stage.
+ * Pure OLED #000 survives beyond the soft matte.
+ */
+#app #screen-home:not([hidden]) {
+  position:relative!important;
+  isolation:isolate!important;
+  background-color:#000!important;
+  overflow:hidden!important;
+}
+#app #screen-home:not([hidden])>#home-scene {
+  position:absolute!important;
+  inset:0!important;
+  left:0!important;right:0!important;top:0!important;bottom:0!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  flex:none!important;
+  margin:0!important;
+  z-index:1!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  background:transparent!important;
+  isolation:isolate!important;
+}
+/* The drop itself is the original clickable V30 full-screen transparent hit surface.
+   Leave controller, animation states, original image/video URLs untouched. */
+#app #screen-home:not([hidden]) #home-scene>#home-mascot {
+  position:absolute!important;
+  inset:0!important;
+  top:0!important;right:0!important;bottom:0!important;left:0!important;
+  display:block!important;
+  width:100%!important;height:100%!important;
+  min-height:0!important;max-height:none!important;
+  transform:none!important;
+  border:0!important;padding:0!important;margin:0!important;
+  pointer-events:auto!important;
+  overflow:hidden!important;
+  background:transparent!important;
+}
+/* Restore V30 contain treatment: character stays entirely in frame.
+   Black and maroon box-shaped source borders dissolve into the OLED stage. */
+#app #screen-home:not([hidden]) #home-mascot>img#home-mascot-image,
+#app #screen-home:not([hidden]) #home-mascot>video,
+#app #screen-home:not([hidden]) #home-mascot>video.plux-v106-video {
+  position:absolute!important;
+  inset:0!important;
+  top:0!important;left:0!important;
+  width:100%!important;height:100%!important;
+  min-height:0!important;max-height:100%!important;
+  object-fit:contain!important;
+  object-position:50% 49%!important;
+  transform:none!important;
+  mix-blend-mode:screen!important;
+  -webkit-mask-image:radial-gradient(ellipse 78% 58% at 50% 49%,
+    #000 0%,#000 56%,rgba(0,0,0,.98) 69%,rgba(0,0,0,.47) 85%,transparent 100%)!important;
+  mask-image:radial-gradient(ellipse 78% 58% at 50% 49%,
+    #000 0%,#000 56%,rgba(0,0,0,.98) 69%,rgba(0,0,0,.47) 85%,transparent 100%)!important;
+}
+/* Glass panels and all input controls are above the scene, just as in V30. */
+#app #screen-home:not([hidden])>.home-head,
+#app #screen-home:not([hidden])>.home-bottom,
+#app #screen-home:not([hidden])>.bottom-nav {
+  position:relative!important;
+}
+#app #screen-home:not([hidden])>.home-head{z-index:6!important}
+#app #screen-home:not([hidden])>.home-bottom{z-index:6!important}
+#app #screen-home:not([hidden])>.bottom-nav{z-index:8!important}
+/* The companion ambient sheen spans the entire scene (not a narrow column).
+   Complementary theme colors remain subtle to keep AMOLED edges black. */
+#app #screen-home:not([hidden]) #home-scene>.plux31-home-ambient {
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;height:100%!important;
+  z-index:0!important;
+  pointer-events:none!important;
+  opacity:.32!important;
+  mix-blend-mode:screen!important;
+}
+/* Reduce video postprocessing when the user requests less motion. */
+@media (prefers-reduced-motion:reduce) {
+ #app #screen-home:not([hidden]) #home-mascot>video{transition:none!important}
+}
