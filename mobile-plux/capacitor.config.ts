@@ -1,11 +1,11 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
-  appId: 'com.plux.assistant',
-  appName: 'PLUX',
+  appId: 'com.plux.assistant.v31',
+  appName: 'PLUX V31',
   webDir: 'www',
   // Native preview loads deployed PLUX; bundle full web assets before App Store release.
   server: {
-    url: 'https://plux-v17-friends-preview.onrender.com/?mobile=1&v=1701',
+    url: 'https://plux-v17-friends-preview.onrender.com/?mobile=1&v=3101',
     cleartext: false,
     allowNavigation: ['plux-v17-friends-preview.onrender.com']
   },
