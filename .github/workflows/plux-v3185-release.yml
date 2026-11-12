@@ -1,0 +1,40 @@
+name: PLUX V31.8.5 Android stable voice APK download
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths: ['.github/workflows/plux-v3185-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Download verified V31.8.5 Android APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43250528172 --repo "${{ github.repository }}" --name PLUX-V31.8-Android-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.8.5-Android.apk
+          unzip -tq release/PLUX-V31.8.5-Android.apk
+          sha256sum release/PLUX-V31.8.5-Android.apk
+      - name: Publish permanent APK link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-8-5-voice-friends-20261112"
+          apk="release/PLUX-V31.8.5-Android.apk"
+          notes="PLUX V31.8.5 Android test APK. Gemini realtime voice: no legacy ElevenLabs startup; half-duplex listening/thinking/speaking, full queued playback, audible two-tone listen signal, no repeated mascot-video resets. Friends persist session across app restarts and refresh expired Supabase tokens; profile avatars are verified and display with retry. Orbital AI animation lowered 13px. Built from f4642d3a722e686f31a8f357c19b05a3746e607c. Requires Internet and Render services. Validated by mocked browser tests and successful Android build, real-device audio stability not yet confirmed."
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk" --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "PLUX V31.8.5 - Gemini Voice & Friends" --notes "$notes"
+          else
+            gh release create "$tag" "$apk" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "PLUX V31.8.5 - Gemini Voice & Friends" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[]|(.name+" "+.url)'
