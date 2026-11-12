@@ -1,0 +1,22 @@
+name: PLUX V31.8 live mobile visual smoke
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths:
+      - 'plux-v31/verify-live-v318.mjs'
+      - '.github/workflows/plux-v318-visual-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install Playwright and Chrome
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Verify PLUX 31.8 real mobile UI
+        run: node plux-v31/verify-live-v318.mjs
