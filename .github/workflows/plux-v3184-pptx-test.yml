@@ -1,0 +1,29 @@
+name: PLUX 31.8.4 PPTX and chat generation checks
+on:
+  push:
+    branches: [pluh-v3184-chat-presentations]
+    paths:
+      - 'pluh-voice-server/**'
+      - '.github/workflows/plux-v3184-pptx-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pptx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: pluh-voice-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install dependencies and run server postinstall smoke tests
+        run: npm install --no-audit --no-fund
+      - name: Validate direct PPTX and previous PDF intents
+        run: |
+          node test-presentation-v3184.mjs
+          node test-artifacts-v14.mjs
+          node --check generation-jobs-v28.mjs
+          node --check server.mjs
