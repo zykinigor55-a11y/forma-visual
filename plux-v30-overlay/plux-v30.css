@@ -1,0 +1,65 @@
+/* PLUX V30: readable image-generation state + clear user-confirmed billing.
+ * Keep existing color themes, crystal bubbles and mascot untouched.
+ */
+#screen-chat .chat-bubble.plux22-generating{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ justify-content:flex-start!important;gap:11px!important;
+ box-sizing:border-box!important;width:min(100%,355px)!important;
+ max-width:calc(100vw - 104px)!important;min-width:0!important;
+ padding:17px!important;margin:0!important;height:auto!important;
+ overflow:hidden!important;white-space:normal!important;
+ border:1px solid var(--plux-theme-bright,rgba(134,255,207,.45))!important;
+ border-radius:23px!important;
+ background:linear-gradient(148deg,var(--plux-theme-soft,rgba(23,190,128,.17)),rgba(2,18,27,.97) 70%)!important;
+}
+#screen-chat .plux22-generating .plux22-preview{
+ display:block!important;flex:0 0 auto!important;width:100%!important;
+ height:132px!important;min-height:100px!important;position:relative!important;
+ overflow:hidden!important;border-radius:18px!important;
+}
+#screen-chat .plux22-generating .plux22-gen-title{
+ display:block!important;position:relative!important;width:100%!important;
+ margin:0!important;padding:0!important;white-space:normal!important;
+ text-align:left!important;font:700 15px/1.45 system-ui!important;
+ color:var(--plux-theme-accent,#90fbd2)!important;
+}
+#screen-chat .plux22-generating .plux22-gen-note{
+ display:block!important;position:relative!important;width:100%!important;
+ margin:0!important;padding:0!important;white-space:normal!important;
+ font:400 13px/1.55 system-ui!important;text-align:left!important;
+ color:#b7d6c8!important;
+}
+#screen-chat .plux22-generating .plux22-progress{
+ display:block!important;width:100%!important;box-sizing:border-box!important;
+ flex:0 0 5px!important;margin-top:1px!important;overflow:hidden!important;
+}
+#screen-chat .plux30-confirm-row .chat-bubble.plux30-confirm{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ gap:10px!important;max-width:min(83vw,352px)!important;min-width:0!important;
+ padding:17px!important;margin:0!important;white-space:normal!important;
+ border-radius:22px!important;border:1px solid var(--plux-theme-bright,rgba(141,255,214,.54))!important;
+ background:linear-gradient(148deg,var(--plux-theme-soft,rgba(20,178,130,.25)),rgba(3,15,22,.96) 67%)!important;
+ box-shadow:inset 0 1px 2px rgba(255,255,255,.23),0 10px 30px rgba(0,0,0,.4)!important;
+}
+#screen-chat .plux30-confirm strong{display:block!important;font:700 16px/1.35 system-ui!important;color:#ecfff3!important}
+#screen-chat .plux30-confirm p{display:block!important;font:14px/1.5 system-ui!important;color:#e4f6ee!important;margin:0!important;overflow-wrap:anywhere}
+#screen-chat .plux30-confirm small{display:block!important;font:11px/1.45 system-ui!important;color:#a3c7b7!important}
+#screen-chat .plux30-confirm-actions{display:flex;gap:8px;width:100%;flex-wrap:wrap}
+#screen-chat .plux30-confirm-actions button{
+ min-width:0;flex:1;min-height:44px;padding:9px 12px!important;
+ border:1px solid var(--plux-theme-bright,rgba(139,255,213,.55))!important;
+ border-radius:14px!important;background:var(--plux-theme-soft,rgba(50,201,142,.16))!important;
+ color:#f6fff9!important;font:650 13px/1.35 system-ui!important;cursor:pointer!important
+}
+#screen-chat .plux30-confirm-actions .plux30-confirm-yes{
+ flex:1.5;background:linear-gradient(150deg,var(--plux-theme-soft,rgba(35,227,155,.3)),rgba(4,49,41,.88))!important
+}
+#screen-chat .plux30-confirm-actions button:focus-visible{
+ outline:2px solid var(--plux-theme-accent,#94ffd3);outline-offset:3px
+}
+@media(max-width:370px){
+ #screen-chat .chat-bubble.plux22-generating{max-width:calc(100vw - 87px)!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-chat .plux22-generating *{animation:none!important}
+}
