@@ -1,0 +1,39 @@
+name: FORMA B2B - Publish Preview
+on:
+  push:
+    branches:
+      - feature/forma-b2b-dual-apps
+    paths:
+      - 'b2b/**'
+      - '.github/workflows/forma-b2b-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forma-b2b-preview
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install, test and build
+        working-directory: b2b
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run build -- --base /forma-visual/
+      - name: Publish isolated preview branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./b2b/dist
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false
