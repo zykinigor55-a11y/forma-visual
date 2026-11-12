@@ -256,9 +256,14 @@ async function runProject(event) {
     } else if (state.isVisualAnalysis) {
       setRecommendationMessage('AI изучил архитектуру, но поиск по профессиональным площадкам выключен. Чтобы выбрать лучший референс по изображениям, подключите SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY в Render.', 'ПОИСК НЕ ПОДКЛЮЧЁН');
       alertStatus('Анализ изображения готов. Поиск профессиональных референсов требует SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY.');
+    } else if (state.config.search) {
+      const provider = state.config.searchProvider === 'serper' ? 'Serper' : state.config.searchProvider === 'tavily' ? 'Tavily' : 'Brave';
+      const reason = state.config.ai ? 'Визуальная модель не завершила анализ: ' + issue : 'Для анализа фотографии требуется VISION_API_KEY в Render.';
+      setRecommendationMessage('Поиск архитектурных референсов через ' + provider + ' подключён и работает. ' + reason + ' Пока показываем только черновик промпта, а не выдуманный результат AI-отбора.', 'ПОИСК ПОДКЛЮЧЁН / НУЖЕН ВИЗУАЛЬНЫЙ AI');
+      alertStatus('Поиск через ' + provider + ' подключён. ' + reason, state.config.ai ? 'error' : 'info');
     } else {
-      setRecommendationMessage('Автоматический арт-дирекшн ещё не запущен: нужен визуальный VISION_API_KEY и SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY. Ниже доступен лишь честно помеченный черновик промпта.', 'НЕ ХВАТАЕТ ПОДКЛЮЧЕНИЙ');
-      alertStatus(issue + '. Для поиска и выбора референса также нужен SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY.', 'error');
+      setRecommendationMessage('Поиск по профессиональным площадкам и визуальный AI-отбор пока недоступны. Добавьте SERPER_API_KEY для поиска и VISION_API_KEY для анализа фотографии. Ниже доступен только черновик промпта.', 'ПОИСК И AI НЕ ПОДКЛЮЧЕНЫ');
+      alertStatus(issue + '. Для поиска референсов нужен SERPER_API_KEY в Render.', 'error');
     }
     makePrompt(project);
     $('#analysis').scrollIntoView({behavior:'smooth', block:'start'});
@@ -279,7 +284,9 @@ async function init() {
     $('#connectStatus').textContent = `● AI ${state.config.ai ? 'ON':'OFF'} · SEARCH ${state.config.search ? 'ON':'OFF'}`;
     $('#connectStatus').title = 'Статусы серверных ключей, без раскрытия значений';
     if (state.config.ai && state.config.search) alertStatus('Режим автоматического арт-дирекшна доступен. Загрузите исходную архитектуру.', 'success');
-    else alertStatus('Для настоящего автоматического поиска и визуального отбора нужны AI и поисковый API. Случайные карточки и имитация поиска отключены.');
+    else if(state.config.search) alertStatus('Поиск референсов подключён (' + (state.config.searchProvider || 'Search') + '). Для выбора лучшей постановки по фотографии осталось подключить VISION_API_KEY.');
+    else if(state.config.ai) alertStatus('Визуальный AI подключён. Для поиска профессиональных фотографий нужен SERPER_API_KEY.');
+    else alertStatus('Для автоматического подбора референсов нужно подключить поиск Serper и визуальный AI. Случайные карточки отключены.');
   } catch { alertStatus('Не удалось проверить сервер. Проверьте подключение к FORMA STUDIO.', 'error'); }
   const zone = $('#dropZone'); const input = $('#imageInput');
   zone.addEventListener('click', () => input.click());
