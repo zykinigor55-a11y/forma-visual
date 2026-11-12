@@ -1,0 +1,46 @@
+name: PLUX V31.8.8 Android GPT Image 2 percent progress release
+on:
+  push:
+    branches: [plux-v3188-publish-apk]
+    paths: ['.github/workflows/plux-v3188-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for validated production APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run watch 43272096297 --repo "${{ github.repository }}" --exit-status --interval 10
+      - name: Download and validate build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43272096297 --repo "${{ github.repository }}" --name PLUX-V31.8-Android-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.8.8-Android.apk
+          unzip -tq release/PLUX-V31.8.8-Android.apk
+          sha256sum release/PLUX-V31.8.8-Android.apk
+      - name: Publish permanent APK direct link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-8-8-chat-image-percent-20261112"
+          file="release/PLUX-V31.8.8-Android.apk"
+          notes="PLUX V31.8.8 Android test APK: same high-quality orbit-and-bar estimated percent animation for Chat GPT Image 2 and Create Nano Banana 2.1. GPT Image 2 image shows directly in chat with open/save. If mobile loses the initial server response, the app recovers the same generation via secure preallocated job ID without creating a second paid request; avoids auto-resubmit when job cannot be verified. Shows clear connection failures and allows reloading an already-created image without paying again. Original Gemini voice memory, Friends, music, OLED and full-screen mascot preserved. Tests: live CORS GET/POST preflight, mocked provider single call, browser simulated HTTP disconnect with 1 POST + working status polls + loaded PNG and failure UI; no paid API generation executed. Requires Internet and Render services; phone-specific network path remains to test."
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "$file" --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "PLUX 31.8.8 - GPT Image 2 Percent Progress" --notes "$notes"
+          else
+            gh release create "$tag" "$file" --repo "${{ github.repository }}" --target "e85067acd7e6250246213a74a3b9a8bba2a0098f" --title "PLUX 31.8.8 - GPT Image 2 Percent Progress" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[]|(.name+" "+.url)'
