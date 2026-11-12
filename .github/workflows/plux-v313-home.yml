@@ -1,0 +1,23 @@
+name: PLUX V31.3 Home layout and theme smoke test
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - 'plux-v31/verify-home-v313.mjs'
+      - '.github/workflows/plux-v313-home.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser driver
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Check centered Home, contrast themes and ASMR startup module
+        run: node plux-v31/verify-home-v313.mjs
