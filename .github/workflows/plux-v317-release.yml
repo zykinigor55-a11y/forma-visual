@@ -1,0 +1,40 @@
+name: PLUX V31.7 Android APK - swipe music and equalizer
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - '.github/workflows/plux-v317-release.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Collect PLUX V31.7 Android APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43199513024 --repo "${{ github.repository }}" --name PLUX-v31-Android-debug-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.7-Music-Swipe-Android.apk
+          unzip -tq release/PLUX-V31.7-Music-Swipe-Android.apk
+          sha256sum release/PLUX-V31.7-Music-Swipe-Android.apk
+      - name: Publish permanent GitHub download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-7-music-20261112"
+          notes='PLUX V31.7 Android APK. Плеер Audius и радио: свайп влево — следующая, вправо — предыдущая; 8-полосный анимированный эквалайзер меняет цвет вместе с каплей, движется только при воспроизведении. Сохранены OLED, полноэкранная капля V30 и её анимация, прежняя оригинальная иконка PLUX, Инструменты, Друзья, голосовой режим и Gallery. Приложение загружает актуальный сайт из Render. Тестовая подпись Android debug.'
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" release/PLUX-V31.7-Music-Swipe-Android.apk --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "PLUX V31.7 OLED · Музыка и свайпы" --notes "$notes"
+          else
+            gh release create "$tag" release/PLUX-V31.7-Music-Swipe-Android.apk --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "PLUX V31.7 OLED · Музыка и свайпы" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[] | (.name + " " + .url)'
