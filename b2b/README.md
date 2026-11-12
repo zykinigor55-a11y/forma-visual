@@ -1,13 +1,16 @@
-# FORMA B2B — Studio + Home (MVP)
+# FORMA B2B — Studio + Home (prototype)
 
-Two interfaces share one Three.js model, a material catalog, and a common facade configuration schema.
+Two application modes currently share one React application and a Three.js / React Three Fiber viewport. They are not yet separate production deployments.
 
-- **Studio:** edit facade dimensions, panel layout and materials; publish to local browser catalog.
-- **Home:** preview a basic house and apply Studio-published facade configurations.
-- Real-time 3D rendering with React Three Fiber, orbit/zoom, shadows and grid.
-- Export component JSON.
+## Implemented
 
-## Run
+- **Studio:** procedural architectural house with editable width, wall height, depth, facade-panel width and gap; facade layout orientation; independent facade, roof, plinth, window/door material presets.
+- **Home:** same 3D building scene, material selection and reuse of locally published Studio configurations.
+- GLB model upload, and GLTF files when external dependencies (BIN, textures) are embedded. GLTFLoader parses the selected file locally in the browser.
+- Imported mesh selection, orbit camera, zoom, shadows, viewport grid.
+- Export of component settings as JSON. Catalog stored in browser localStorage.
+
+## Start
 
 ```bash
 cd b2b
@@ -15,15 +18,21 @@ npm install
 npm run dev
 ```
 
-## Current limitations
+## Known limitations (important)
 
-This is an initial browser-only MVP, **not production software**. Catalog publication uses localStorage and is only visible in the same browser, not across devices or accounts. The house is a simplified procedural model. There is no GLB/CAD import, PBR texture upload, server, accounts, product pricing backend, physically accurate openings/cutouts, or Blender render pipeline yet. Pricing shown in the sample catalog is illustrative.
+- The procedural house is a **geometry prototype**. Openings and panel placement are not yet production-ready construction geometry. For example, decorative facade slats can cross windows; this is not a valid BOM or cutting layout.
+- Imported models can be inspected and meshes selected, but material changes and parametric edits apply **only to the built-in house**, not to imported GLB/GLTF objects.
+- GLTF with external .bin or texture image files is not supported in the single-file upload workflow yet; use a self-contained GLB.
+- Preview normalizes imported model scale and center for display. It does not yet retain or use certified building dimensions.
+- No manufacturer authentication, shared database, object storage, PBR texture ingestion, server-based Blender rendering, or commercial quotation workflow.
+- All prices are illustrative. The displayed facade area is a rough single-wall figure, **not** whole-building quantity measurement.
+- No production deployment is configured by this folder.
 
-## Next engineering milestones
+## Engineering plan
 
-1. Extract shared 3D engine, schemas, and domain modules into packages; automated tests.
-2. GLB/glTF import, geometry validation, mesh picking and material slots.
-3. Manufacturer auth, object storage, catalog and publish API.
-4. Real building assemblies, cutouts, corners and accurate quantities.
-5. Render queue with Blender Cycles workers, progress and immutable scene snapshots.
-6. Customer quotation, supplier lead and order workflow.
+1. Building geometry: correct openings, parametric roof, facade cladding layout around apertures, real measurements and tests.
+2. Imported GLB materials: named mesh/material slots, assignment, mapping, and persistence.
+3. Professional manufacturer UI: object inspector, selection modes, transform gizmos, library, revision history and material PBR inspector.
+4. Backend API: manufacturer catalog, user accounts, storage, versioning and publish/approve workflow.
+5. Rendering: background Blender Cycles workers, queue, immutable scene snapshot, progress and result gallery.
+6. Separate Studio/Home deployments sharing common geometry and types.
