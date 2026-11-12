@@ -2,8 +2,10 @@
 """Restore the ORIGINAL V30 glass droplet icon to Android launcher for V31.
 Do not redesign or stylize; this is the exact same V30 build function."""
 from pathlib import Path
+import sys
 root=Path(__file__).resolve().parents[1]
-platform="android"
+platform=sys.argv[1] if len(sys.argv)>1 else "android"
+if platform not in ("android","ios"):raise SystemExit("Only Android/iOS icons supported")
 
 def install_plux_icon(platform):
     """Use exactly the approved production PLUX video-frame icon on both OSes."""
