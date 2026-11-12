@@ -79,7 +79,7 @@ function Building({config,selected,onZone}:{config:Config;selected:Zone;onZone:(
  </group>
 }
 function Imported({scene,selectedName,onSelect}:{scene:THREE.Group;selectedName:string;onSelect:(name:string)=>void}){
- return <primitive object={scene} onClick={(event:ThreeEvent<MouseEvent>)=>{event.stopPropagation();onSelect(event.object.name||event.object.uuid)}}/>;
+ return <primitive object={scene} onClick={(event:ThreeEvent<MouseEvent>)=>{event.stopPropagation();onSelect(event.object.uuid)}}/>;
 }
 function Scene({config,scene,selected,onZone,onMesh}:{config:Config;scene:THREE.Group|null;selected:Zone;onZone:(z:Zone)=>void;onMesh:(s:string)=>void}){
  return <Canvas shadows camera={{position:[13,9,14],fov:37,near:.05,far:300}} gl={{antialias:true,preserveDrawingBuffer:false}} onCreated={({gl})=>{gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.25}}>
