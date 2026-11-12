@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V24 · Free Audius music search for text and voice actions.
  * Read-only API, no secrets in browser, no unlicensed media mirroring.
  * The client plays original Audius streaming URLs with user interaction.
@@ -14,8 +15,8 @@ function json(res,status,body){
 }
 function cors(req,res){
  const origin=req.headers.origin;
- if(origin!==ORIGIN){json(res,403,{error:"Музыкальный поиск доступен в приложении ПЛЮХ."});return false}
- res.setHeader("Access-Control-Allow-Origin",ORIGIN);
+ if(!appOrigin(req)){json(res,403,{error:"Музыкальный поиск доступен в приложении ПЛЮХ."});return false}
+ res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
  res.setHeader("Access-Control-Allow-Methods","GET, OPTIONS");
  res.setHeader("Vary","Origin");
  if(req.method==="OPTIONS"){res.writeHead(204,{"Cache-Control":"no-store"});res.end();return false}
