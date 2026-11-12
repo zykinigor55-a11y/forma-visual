@@ -1,0 +1,21 @@
+name: PLUX V31.8.4 live Android UI check
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths:
+      - 'plux-v31/verify-live-v3184.mjs'
+      - '.github/workflows/plux-v3184-live-ui.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install Playwright core
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Verify live app
+        run: node plux-v31/verify-live-v3184.mjs
