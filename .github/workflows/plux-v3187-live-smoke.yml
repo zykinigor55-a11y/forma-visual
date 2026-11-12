@@ -1,0 +1,22 @@
+name: PLUX 31.8.7 published chat image smoke
+on:
+  push:
+    branches: [plux-v3187-inline-images-percent-progress]
+    paths:
+      - 'plux-v31/verify-live-inline-v3187.mjs'
+      - '.github/workflows/plux-v3187-live-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install browser runner
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Verify live Render chat preview, percent and error behavior
+        run: node plux-v31/verify-live-inline-v3187.mjs
