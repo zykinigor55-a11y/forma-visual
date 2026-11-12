@@ -35,12 +35,18 @@ try{
  console.log('PLUX318_HEADER_AUDIT '+JSON.stringify(headerAudit));
  const s=await state();console.log('PLUX318_LIVE_HOME '+JSON.stringify(s));
  assert(s.logo&&s.logo[2]>=90&&s.logo[2]<=175,'compact cognition logo mounted');
+ const legacy=await page.evaluate(()=>{
+   const box=document.querySelector('#screen-home .home-head .branding');
+   return {visible:box?getComputedStyle(box).visibility:'absent',opacity:box?getComputedStyle(box).opacity:'0'};
+ });
+ console.log('PLUX318_LEGACY_LOGO '+JSON.stringify(legacy));
+ assert(legacy.visible==='hidden'||Number(legacy.opacity)===0,'old large logo is invisible');
  assert(s.videoTab&&s.videoTab[2]>30,'video tab mounted and visible');
  assert(s.nav>=6,'five original tabs and new video tab');
  assert(s.ambient>=25,'animated ambient particles present');
  assert(s.orbs.every(x=>x.exists&&x.dust>=20),'all three glass orbs have particles');
  await page.evaluate(()=>window.PLUXThemesV31.set('ruby'));
- await page.waitForTimeout(180);
+ await page.waitForTimeout(620);
  const red=await state();console.log('PLUX318_THEME_RUBY '+JSON.stringify(red));
  assert(red.orbs.every(x=>x.filter?.includes('hue-rotate(195deg)')),'orb pigments changed with theme');
  await page.evaluate(()=>window.PLUXVideoHubV318.open());
