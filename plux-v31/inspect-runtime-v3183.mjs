@@ -10,6 +10,11 @@ for(const src of scripts){
  try{let r=await fetch(new URL(src,base),{signal:AbortSignal.timeout(25000)});if(!r.ok)continue;let body=await r.text();all.push({src,body});}catch{}
 }
 for(let {src,body}of all){
+ if(src.includes("plux-live-v151.js")){
+  const i=body.lastIndexOf('https://pluh-voice-demo.onrender.com');
+  console.log("PLUX_VOICE_RUNTIME_TAIL "+JSON.stringify({bytes:body.length,segment:body.slice(i,i+6500).replace(/\\u([0-9a-fA-F]{4})/g,(_,code)=>String.fromCharCode(parseInt(code,16)))}));
+ }
+
  const tokens=['/api/voice/token','/api/arkheon/token','ELEVENLABS_API_KEY','conversationToken','open-voice-quick','speech-button','getUserMedia','response.audio.delta','realtime','wss://'];
  let hits=[];
  for(const t of tokens){let i=body.indexOf(t);if(i>=0){hits.push({token:t,count:body.split(t).length-1,context:body.slice(Math.max(0,i-230),i+420).replace(/(?:sk|ek)_[A-Za-z0-9_-]{12,}/g,'[redacted]')})}}
