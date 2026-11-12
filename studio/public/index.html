@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101214">
-  <meta name="description" content="FORMA STUDIO — интеллектуальный арт-директор для архитектурной визуализации. Анализ проекта, пять источников референсов, три визуальные концепции, промпт для Nano Banana.">
+  <meta name="description" content="FORMA STUDIO — интеллектуальный арт-директор для архитектурной визуализации. Анализ архитектуры, автоматический выбор лучшей постановки кадра и дневного света, промпт для Nano Banana.">
   <title>FORMA STUDIO — Architectural Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,14 +19,14 @@
       <nav class="side-nav" aria-label="Основная навигация">
         <a class="nav-item is-current" href="#project"><span class="nav-index">01</span><span>Мой проект</span><span class="nav-arrow">↗</span></a>
         <a class="nav-item" href="#analysis"><span class="nav-index">02</span><span>Архитектурный анализ</span><span class="nav-arrow">↗</span></a>
-        <a class="nav-item" href="#references"><span class="nav-index">03</span><span>Референсы</span><span class="nav-arrow">↗</span></a>
-        <a class="nav-item" href="#directions"><span class="nav-index">04</span><span>Промпт и концепция</span><span class="nav-arrow">↗</span></a>
+        <a class="nav-item" href="#references"><span class="nav-index">03</span><span>Лучшее решение</span><span class="nav-arrow">↗</span></a>
+        <a class="nav-item" href="#directions"><span class="nav-index">04</span><span>Промпт для Nano Banana</span><span class="nav-arrow">↗</span></a>
       </nav>
       <div class="sidebar-lower">
         <div class="side-rule"></div>
         <div class="side-small">ТЕХНОЛОГИЯ</div>
         <p>ARCHITECTURE<br>× PHOTOGRAPHY<br>× AI DIRECTION</p>
-        <div class="version"><span class="status-dot"></span> FORMA / 0.1 BETA</div>
+        <div class="version"><span class="status-dot"></span> FORMA / 0.2 AUTO</div>
       </div>
     </aside>
     <main class="main">
@@ -34,7 +34,7 @@
       <div class="main-content">
         <section class="hero">
           <div class="eyebrow"><span class="eyebrow-line"></span> YOUR ARCHITECTURAL ART DIRECTOR</div>
-          <div class="hero-grid"><div><h1>Форма. Свет.<br><em>Впечатление.</em></h1><p class="hero-lead">Из архитектурной модели — в выразительную фотографию. Анализируем проект, изучаем профессиональные референсы и собираем точное визуальное решение.</p></div><div class="hero-aside"><span class="hero-big-number">05<span>/</span>03</span><p>Пять источников.<br>Три направления.<br>Одно лучшее решение.</p><span class="hero-aside-line"></span></div></div>
+          <div class="hero-grid"><div><h1>Форма. Свет.<br><em>Впечатление.</em></h1><p class="hero-lead">Из архитектурной модели — в выразительную фотографию. Анализируем архитектуру, изучаем профессиональные работы и автоматически выбираем одну выразительную постановку кадра — без ночных сцен.</p></div><div class="hero-aside"><span class="hero-big-number">01<span>/</span>AI</span><p>Пять профессиональных источников.<br>Один лучший визуальный сценарий.<br>Геометрия неизменна.</p><span class="hero-aside-line"></span></div></div>
         </section>
         <section class="workspace" id="project">
           <div class="section-heading"><div><span class="micro">01 / PROJECT INPUT</span><h2>Загрузите архитектуру</h2></div><span class="section-note">ГЕОМЕТРИЯ БЕЗ ИЗМЕНЕНИЙ</span></div>
@@ -50,17 +50,17 @@
             <form id="projectForm" class="settings-panel">
               <div class="panel-header"><div><span class="micro">PROJECT PARAMETERS</span><h3>Параметры проекта</h3></div><span class="panel-icon">↗</span></div>
               <label for="buildingType">ТИП АРХИТЕКТУРЫ</label>
-              <select id="buildingType" name="buildingType"><option value="Тёплый дом из клеёного бруса">Дом из клеёного бруса</option><option value="Современный барнхаус">Современный барнхаус</option><option value="Дом из кирпича и штукатурки">Кирпич + штукатурка</option><option value="Скандинавский деревянный дом">Скандинавский деревянный дом</option><option value="Современная вилла / минимализм">Современный минимализм</option><option value="Другой жилой дом">Другой проект</option></select>
+              <select id="buildingType" name="buildingType"><option value="Определить по изображению">Определить автоматически</option><option value="Тёплый дом из клеёного бруса">Дом из клеёного бруса</option><option value="Современный барнхаус">Современный барнхаус</option><option value="Дом из кирпича и штукатурки">Кирпич + штукатурка</option><option value="Скандинавский деревянный дом">Скандинавский деревянный дом</option><option value="Современная вилла / минимализм">Современный минимализм</option><option value="Другой жилой дом">Другой проект</option></select>
               <label for="materials">ФАСАД И МАТЕРИАЛЫ</label>
-              <input id="materials" name="materials" value="Сибирская сосна, тёплые рыжеватые торцы, тёмная кровля" maxlength="240" placeholder="Опишите видимые материалы">
+              <input id="materials" name="materials" maxlength="240" placeholder="Необязательно · AI определит по изображению">
               <label for="notes">ВАЖНЫЕ ДЕТАЛИ И ЗАДАЧА</label>
-              <textarea id="notes" name="notes" rows="3" maxlength="900" placeholder="Например: много зелени, можжевельник, естественное солнечное освещение, премиальная фотография"></textarea>
+              <textarea id="notes" name="notes" rows="3" maxlength="900" placeholder="Необязательно · пожелания, которые нельзя менять"></textarea>
               <div class="controls-row"><div class="toggle-lock"><span class="lock-glyph">▣</span><span>Сохранить геометрию<br><small>Окна, ракурс, размеры, фасады</small></span></div><span class="locked-tag">LOCKED / ON</span></div>
-              <div class="panel-bottom"><span class="muted-caption">РЕЗУЛЬТАТ / NANO BANANA</span><button id="analyzeBtn" class="primary-button" type="submit">Начать анализ <span>↗</span></button></div>
+              <div class="panel-bottom"><span class="muted-caption">РЕЗУЛЬТАТ / NANO BANANA</span><button id="analyzeBtn" class="primary-button" type="submit">Найти лучшее решение <span>↗</span></button></div>
             </form>
           </div>
         </section>
-        <div id="liveNotice" class="live-notice" role="status" aria-live="polite"><span class="notice-icon">i</span><span>Начните с изображения. Без ключа AI можно подготовить композиционный бриф и промпты на основе описания.</span></div>
+        <div id="liveNotice" class="live-notice" role="status" aria-live="polite"><span class="notice-icon">i</span><span>Загрузите изображение. FORMA выберет свет, окружение и визуальную композицию в духе профессиональной архитектурной редакционной съёмки.</span></div>
         <section id="analysis" class="analysis-section reveal-section">
           <div class="section-heading"><div><span class="micro">02 / ARCHITECTURAL INTELLIGENCE</span><h2>Анализ проекта</h2></div><span id="analysisTag" class="section-note">ОЖИДАНИЕ ПРОЕКТА</span></div>
           <div id="analysisEmpty" class="empty-content"><span class="outline-icon">◎</span><p>После загрузки изображения появится архитектурная оценка: материалы, ракурс, свет и ключевые ограничения для генерации.</p></div>
@@ -70,18 +70,26 @@
           </div>
         </section>
         <section id="references" class="references-section reveal-section">
-          <div class="section-heading"><div><span class="micro">03 / MULTI-SOURCE RESEARCH</span><h2>Библиотека референсов</h2></div><span id="refsLabel" class="section-note">05 ИСТОЧНИКОВ</span></div>
-          <div class="sources-strip"><span>BEHANCE</span><span>DIVISARE</span><span>ARCHDAILY</span><span>CGCONNECT</span><span>DEZEEN</span></div>
-          <div id="refHelp" class="refs-help">После анализа здесь появятся найденные изображения либо прямые поисковые ссылки по каждому источнику. Фотографии принадлежат авторам — открывайте первоисточники.</div>
-          <div id="referenceGrid" class="reference-grid"></div>
+          <div class="section-heading"><div><span class="micro">03 / AI ART DIRECTION</span><h2>Лучшее визуальное решение</h2></div><span id="refsLabel" class="section-note">АВТОМАТИЧЕСКИЙ ОТБОР</span></div>
+          <div id="refHelp" class="refs-help best-wait">После анализа здесь появится один выбранный профессиональный референс. Площадки поиска работают в фоновом режиме и не требуют ручного просмотра карточек.</div>
+          <div id="referenceGrid" class="best-reference" hidden>
+            <a id="bestRefLink" class="best-photo" target="_blank" rel="noopener noreferrer" href="#references"><img id="bestRefImage" loading="lazy" referrerpolicy="no-referrer" alt="Профессиональный референс, выбранный визуальной AI-моделью"><span>01 / CURATED REFERENCE</span></a>
+            <div class="best-explanation">
+              <span class="micro">ART DIRECTOR / SELECTED</span>
+              <h3 id="bestTitle">Выбранная композиция</h3>
+              <p id="bestReason"></p>
+              <div class="best-factors"><div><span>СВЕТ</span><p id="bestLighting"></p></div><div><span>ОКРУЖЕНИЕ</span><p id="bestEnvironment"></p></div><div><span>ПОСТАНОВКА КАДРА</span><p id="bestComposition"></p></div></div>
+              <a id="bestSourceLink" target="_blank" rel="noopener noreferrer" href="#references">Открыть оригинальную публикацию ↗</a>
+            </div>
+          </div>
         </section>
         <section id="directions" class="directions-section reveal-section">
-          <div class="section-heading"><div><span class="micro">04 / DIRECTION & DELIVERY</span><h2>Режиссура кадра</h2></div><span class="section-note">03 НАПРАВЛЕНИЯ</span></div>
-          <div id="directionCards" class="directions-grid"></div>
+          <div class="section-heading"><div><span class="micro">04 / FINAL DIRECTION</span><h2>Промпт для визуализации</h2></div><span id="directionTag" class="section-note">ДНЕВНОЙ СВЕТ / БЕЗ НОЧИ</span></div>
+          <div class="director-caption"><span class="director-mark">✳</span><div><strong id="autoDirection">Свет и атмосфера подбираются автоматически</strong><p id="directionReason">Подход: исходное здание и точка камеры сохраняются, а свет, ландшафт и художественная режиссура подчиняются архитектуре.</p></div></div>
           <div class="prompt-workspace">
             <div class="prompt-topline"><div><span class="micro">FINAL OUTPUT / NANO BANANA</span><h3>Профессиональный промпт</h3></div><span id="promptState">ПРОМПТ НЕ ГОТОВ</span></div>
-            <div class="prompt-body"><div id="promptText" class="prompt-text">Загрузите изображение и запустите анализ, чтобы получить точный промпт для работы с вашим домом.</div></div>
-            <div class="prompt-actions"><span>ПРОВЕРКА ГЕОМЕТРИИ / СТРОГАЯ</span><div><button type="button" id="copyPrompt" class="secondary-button" disabled>Копировать ↗</button><button type="button" id="downloadPrompt" class="outline-button" disabled>Скачать .txt ↓</button></div></div>
+            <div class="prompt-body"><div id="promptText" class="prompt-text">Загрузите изображение и запустите анализ. Без AI-ключей приложение не будет выдавать случайный референс за выбранный лучшим.</div></div>
+            <div class="prompt-actions"><span>АРХИТЕКТУРА И КАМЕРА / LOCKED</span><div><button type="button" id="copyPrompt" class="secondary-button" disabled>Копировать ↗</button><button type="button" id="downloadPrompt" class="outline-button" disabled>Скачать .txt ↓</button></div></div>
           </div>
         </section>
         <footer class="footer"><span>© 2026 FORMA STUDIO</span><span>ARCHITECTURE IS THE SUBJECT. LIGHT IS THE LANGUAGE.</span><a href="https://github.com/zykinigor55-a11y/forma-visual" target="_blank" rel="noopener noreferrer">GITHUB ↗</a></footer>

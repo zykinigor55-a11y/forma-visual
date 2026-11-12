@@ -1,13 +1,15 @@
 {
   "name": "forma-studio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "FORMA STUDIO — architectural reference direction and prompt builder",
+  "description": "FORMA STUDIO — automatic architectural editorial art direction, multi-source image ranking",
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
     "check": "node --check server.mjs && node --check public/app.js"
   },
-  "engines": {"node": ">=20"}
+  "engines": {
+    "node": ">=20"
+  }
 }
