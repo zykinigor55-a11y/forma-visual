@@ -133,11 +133,14 @@ function item(p,label,fn){
 }
 function drawPeople(){
  visible('pf-people',S.tab!=='search');visible('pf-search-area',S.tab==='search');
- visible('pf-discovery-settings',S.tab==='new');visible('pf-new-description',S.tab==='new');
+ visible('pf-discovery-settings',S.tab==='new');visible('pf-new-description',S.tab==='new');visible('pf-new-filter-wrap',S.tab==='new');
  document.querySelectorAll('.pf-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));
  const list=id('pf-list');list.replaceChildren();
  if(S.tab==='friends')for(const p of S.friends)list.append(item(p,'Написать ›',()=>openChat(p)));
- if(S.tab==='new')for(const p of S.newcomers)list.append(item(p,'＋ Добавить',()=>act(async()=>{
+ if(S.tab==='new')for(const p of S.newcomers.filter(p=>{
+  const term=(id('pf-new-filter')?.value||'').trim().toLocaleLowerCase('ru-RU');
+  return !term||(p.display_name||'').toLocaleLowerCase('ru-RU').includes(term)||(p.handle||'').toLowerCase().includes(term);
+ }))list.append(item(p,'＋ Добавить',()=>act(async()=>{
   if(p.id===S.user.id)return;
   await fetcher('/rest/v1/rpc/plux_request_friend','POST',{p_handle:p.handle});
   notice('Заявка отправлена пользователю @'+p.handle);
@@ -146,7 +149,7 @@ function drawPeople(){
    await fetcher('/rest/v1/rpc/plux_accept_friend','POST',{p_request_id:q.id});
    await people();drawPeople();notice('Теперь вы друзья!');
  })));
- if(!list.children.length)list.append(make('div','pf-empty',S.tab==='friends'?'Здесь появятся друзья. Найдите человека по его нику.':S.tab==='new'?'Новых участников пока нет. Показываются только профили с согласия владельцев.':'Новых заявок пока нет.'));
+ if(!list.children.length)list.append(make('div','pf-empty',S.tab==='friends'?'Здесь появятся друзья. Найдите человека по его нику.':S.tab==='new'?(id('pf-new-filter')?.value.trim()?'По этому имени пока никого нет. Попробуй другое имя.':'Новых участников пока нет. Показываются только профили с согласия владельцев.'):'Новых заявок пока нет.'));
 }
 async function searchFriend(){
  const name=id('pf-query').value.trim().toLowerCase();
@@ -253,7 +256,8 @@ root.innerHTML=[
 '<section id="pf-signin" class="pf-section" hidden><small>АККАУНТ</small><h2>Привет! Найди своих друзей</h2><p>Создай профиль по электронной почте, чтобы начать общение.</p><form id="pf-login"><input id="pf-email" type="email" placeholder="Электронная почта" autocomplete="email" required><input id="pf-password" type="password" placeholder="Пароль от 8 символов" minlength="8" required><div class="pf-row"><button>Войти</button><button id="pf-register" type="button">Регистрация</button></div></form></section>',
 '<section id="pf-content" hidden><div id="pf-social" class="pf-section"><div class="pf-profile"><div class="pf-profile-id"><button id="pf-avatar-change" type="button" aria-label="Загрузить или поменять фото профиля" title="Нажмите, чтобы изменить аватарку"><span id="pf-myavatar" class="pf-avatar pf-avatar-own">?</span><span class="pf-avatar-edit-indicator" aria-hidden="true">＋</span></button><input id="pf-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" hidden><div><strong id="pf-myname"></strong><small id="pf-myhandle"></small><small class="pf-avatar-hint">Нажмите на фото, чтобы изменить</small></div></div><button id="pf-logout" type="button">Выйти</button></div><details><summary>Имя и ник</summary><input id="pf-display" placeholder="Ваше имя" maxlength="60"><input id="pf-handle" placeholder="Ник латиницей" maxlength="24"><button id="pf-save-profile" type="button">Сохранить профиль</button></details>',
 '<nav class="pf-tabs"><button class="pf-tab active" data-tab="friends">Друзья</button><button class="pf-tab" data-tab="requests">Заявки <span id="pf-count"></span></button><button class="pf-tab" data-tab="new">Новенькие</button><button class="pf-tab" data-tab="search">Найти</button></nav>',
-'<p id="pf-new-description" class="pf-discovery-info" hidden>Участники, которые сами разрешили показывать свой профиль. Только последние 20.</p>',
+'<p id="pf-new-description" class="pf-discovery-info" hidden>Знакомься без знания ника: здесь новые участники, которые согласились показывать свой профиль.</p>',
+ '<label id="pf-new-filter-wrap" class="pf-new-filter" hidden><span>Поиск по имени</span><input id="pf-new-filter" type="search" placeholder="Например, Катя или Андрей" maxlength="60" autocomplete="off"></label>',
 '<label id="pf-discovery-settings" class="pf-discovery-settings" hidden><input id="pf-discover-toggle" type="checkbox"><span><strong>Показывать меня в «Новеньких»</strong><small>Выключено по умолчанию. Можно отключить в любой момент.</small></span></label>',
 '<div id="pf-people"><div id="pf-list"></div></div><div id="pf-search-area" hidden><form id="pf-search"><input id="pf-query" placeholder="Ник друга, например alexey_77"><button>Поиск</button></form><div id="pf-found"></div></div></div>',
 '<div id="pf-chat" class="pf-chat" hidden><div class="pf-chat-head"><button id="pf-chat-back">‹</button><span id="pf-peer-avatar" class="pf-avatar pf-peer-avatar">?</span><div><strong id="pf-peer"></strong><small id="pf-peername"></small></div></div><div id="pf-messages"></div><form id="pf-compose"><label class="pf-attach">＋<input id="pf-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><input id="pf-input" placeholder="Сообщение или фото…" maxlength="4000"><button>➤</button></form><small id="pf-file-title"></small></div></section></section>'
@@ -314,6 +318,7 @@ id('pf-save-profile').onclick=()=>void act(async()=>{
 document.querySelectorAll('.pf-tab').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;drawPeople();notice('');
  if(S.tab==='new')void loadDiscovery().then(drawPeople).catch(e=>notice(e.message,true));
 });
+id('pf-new-filter').addEventListener('input',()=>{if(S.tab==='new')drawPeople()});
 id('pf-discover-toggle').onchange=e=>void act(async()=>{
  try{await toggleDiscovery(e.target.checked)}
  catch(err){e.target.checked=S.discoveryJoined;throw err}
