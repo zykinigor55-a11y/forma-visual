@@ -278,7 +278,9 @@
       if(progress)progress.fail(msg);else append("info",msg);
     }finally{busy=false;if(button)button.disabled=false}
   }
-  form.addEventListener('submit',e=>{
+  window.addEventListener('submit',e=>{
+    if(e.target!==form)return;
+    // Catch this on Window BEFORE older form handlers can insert text-only cards.
     e.preventDefault();e.stopImmediatePropagation();
     if(busy)return;const t=input.value.trim();if(!t&&!window.PLUXMediaV129?.hasAttachments?.())return;
     // Create video through the same written conversation without mixing it with voice mode.
