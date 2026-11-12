@@ -1,0 +1,49 @@
+/* PLUX V31.5 · OLED black.
+   Black pixels really turn off (#000). The drop and glass remain glossy.
+   Tinted light is confined to narrow zones around content, NOT a grey overlay.
+   All five navigation tabs and V30 Tools layout are unchanged. */
+html,body,#app{
+ background-color:#000!important;
+ color-scheme:dark!important;
+ -webkit-tap-highlight-color:transparent;
+}
+html,body{width:100%;min-height:100%;margin:0!important;padding:0!important}
+#app{min-height:100dvh!important;max-width:100%!important;overflow-x:hidden!important}
+:root{--plux-oled-black:#000;--plux-oled-glass:rgba(6,15,20,.91)}
+/* Keep genuine black at edges. Subtle complementary local light below the
+   glass surfaces offers contrast without turning the chosen drop color. */
+#app #screen-home:not([hidden]){
+ background-color:#000!important;
+ background-image:
+  radial-gradient(ellipse 64% 24% at 50% 29%,var(--plux31-home-contrast-a,rgba(90,44,120,.22)),transparent 79%),
+  radial-gradient(ellipse 59% 19% at 50% 70%,var(--plux31-home-contrast-b,rgba(25,80,120,.18)),transparent 85%),
+  linear-gradient(#000,#000)!important;
+}
+#app #screen-home .home-head,
+#app #screen-home .home-bottom,
+#app #screen-home .quick-actions{
+ background-color:transparent!important;
+}
+#app #screen-home .scene-home{
+ background-color:transparent!important;
+}
+#app #screen-home .scene-home>.plux31-home-ambient{
+ opacity:.40!important;
+ mix-blend-mode:screen!important;
+}
+/* All screens have an OLED-black canvas; original glass panels stay intact. */
+#app .screen:not(#screen-home){
+ background-color:#000!important;
+}
+#app #screen-home .bottom-nav,
+#app #screen-modes .mode-card{
+ backdrop-filter:none; /* don't sample grey pixels under an OLED glass panel */
+ -webkit-backdrop-filter:none;
+}
+/* Preserve rounded original V30 cards and light from the selected theme. */
+#app #screen-home .bottom-nav{
+ background-color:var(--plux-oled-glass)!important;
+}
+@media (max-width:450px){
+ #app #screen-home:not([hidden]){width:100%!important}
+}
