@@ -40,3 +40,14 @@
 @keyframes plux318-signal{0%,100%{opacity:.24;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 @media(max-width:360px){#screen-home .home-head #plux318-cognition{max-width:38vw!important;transform:translate(-50%,-50%) scale(.86)!important}}
 @media(prefers-reduced-motion:reduce){#screen-home #plux318-cognition *{animation:none!important}}
+
+
+/* V31.8.2: the original PLUX wordmark is an img nested in .branding.
+   Retain its flex space so profile and palette controls stay exactly put,
+   but do not display the legacy oversized liquid wordmark behind the core. */
+#screen-home .home-head .branding,
+#screen-home .home-head .branding img[src*="plux-liquid-logo"]{
+ visibility:hidden!important;
+ opacity:0!important;
+ pointer-events:none!important
+}
