@@ -68,3 +68,76 @@
  #screen-home .plux31-mini-player button{transition:none!important}
  .plux31-music-dialog::backdrop{backdrop-filter:none}
 }
+
+/* V31.7 · swipeable mini-player with theme-synced glass equalizer.
+   Actual stream playback drives play/pause animation; the bars are an
+   aesthetic playback indicator (not an audio-frequency analysis). */
+#screen-home .plux31-mini-player {
+  touch-action:pan-y!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  -webkit-touch-callout:none!important;
+}
+#screen-home .plux31-mini-player .plux31-now {pointer-events:none!important}
+#screen-home .plux31-mini-player .plux31-equalizer {
+  box-sizing:border-box!important;
+  display:flex!important;align-items:flex-end!important;justify-content:center!important;
+  flex:0 0 42px!important;width:42px!important;max-width:42px!important;height:40px!important;
+  gap:2px!important;
+  padding:10px 5px 9px!important;
+  border-radius:13px!important;
+  background:linear-gradient(150deg,rgba(245,255,255,.08),rgba(1,7,13,.44))!important;
+  border:1px solid color-mix(in srgb,var(--plux-theme-accent,#43efb0) 44%,transparent)!important;
+  box-shadow:inset 0 1px 2px #ffffff26,
+    0 0 9px color-mix(in srgb,var(--plux-theme-accent,#43efb0) 18%,transparent)!important;
+  color:var(--plux-theme-accent,#43efb0)!important;
+  pointer-events:none!important;
+}
+#screen-home .plux31-mini-player .plux31-eq-bar{
+  display:block!important;flex:0 0 2px!important;width:2px!important;
+  min-height:3px!important;height:3px!important;
+  border-radius:3px!important;
+  background:linear-gradient(180deg,#eafff5 0%,currentColor 28%,currentColor 100%)!important;
+  box-shadow:0 0 4px currentColor!important;
+  transform-origin:center bottom!important;
+  animation:none!important;
+  opacity:.57!important;
+}
+#screen-home .plux31-mini-player.plux31-is-playing:not(.plux31-is-buffering) .plux31-eq-bar {
+  height:17px!important;opacity:1!important;
+  animation:plux31-eq-dance .82s ease-in-out infinite alternate!important;
+}
+#screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar:nth-child(2n){
+  animation-duration:.64s!important;animation-delay:-.31s!important;
+}
+#screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar:nth-child(3n){
+  animation-duration:1.04s!important;animation-delay:-.59s!important;
+}
+#screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar:nth-child(5n){
+  animation-duration:.73s!important;animation-delay:-.18s!important;
+}
+@keyframes plux31-eq-dance {
+  0% {transform:scaleY(.22);opacity:.63}
+  35% {transform:scaleY(.62);opacity:.94}
+  100% {transform:scaleY(1.2);opacity:1}
+}
+#screen-home .plux31-mini-player:focus-visible {
+ outline:2px solid var(--plux-theme-accent,#4be5b7)!important;
+ outline-offset:3px!important;
+}
+@media(max-width:370px){
+ #screen-home .plux31-mini-player{gap:7px!important;padding:9px 8px!important}
+ #screen-home .plux31-mini-player .plux31-equalizer{
+   flex-basis:34px!important;width:34px!important;gap:1.5px!important;padding:10px 3px 9px!important
+ }
+ #screen-home .plux31-mini-player .plux31-now strong{font-size:12px!important}
+ #screen-home .plux31-mini-player .plux31-now small{font-size:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-home .plux31-mini-player .plux31-eq-bar,
+ #screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar {
+   animation:none!important;transform:none!important;
+ }
+ #screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar:nth-child(2n){height:10px!important}
+ #screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar:nth-child(3n){height:14px!important}
+}
