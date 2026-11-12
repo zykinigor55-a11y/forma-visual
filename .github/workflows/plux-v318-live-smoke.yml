@@ -15,13 +15,13 @@ jobs:
         run: |
           set -euo pipefail
           url="https://plux-v17-friends-preview.onrender.com"
-          curl -fsSL --retry 2 "$url/?v=3181" -o /tmp/plux-index.html
+          curl -fsSL --retry 2 "$url/?v=3182" -o /tmp/plux-index.html
           for file in video-hub-v318.js ai-cognition-v318.js microphone-permission-v318.js microdust-enhanced-v318.js theme-motion-v318.css video-hub-v318.css; do
-            grep -q "$file?v=3181" /tmp/plux-index.html
-            curl -fsSL --retry 2 "$url/$file?v=3181" -o "/tmp/$file"
+            grep -q "$file?v=3182" /tmp/plux-index.html
+            curl -fsSL --retry 2 "$url/$file?v=3182" -o "/tmp/$file"
             test -s "/tmp/$file"
           done
-          curl -fsSL "$url/plux-friends-config-v17.js?v=3181" -o /tmp/plux-friends-config.js
+          curl -fsSL "$url/plux-friends-config-v17.js?v=3182" -o /tmp/plux-friends-config.js
           grep -q "anonKey" /tmp/plux-friends-config.js
           grep -q "lxwqpoakdsbpshfyfqih.supabase.co" /tmp/plux-friends-config.js
           echo "PLUX V31.8 Live site, video, AI cognition, friends, theme and mic scripts available."

@@ -5,7 +5,7 @@ try{
  const page=await browser.newPage({viewport:{width:390,height:860},deviceScaleFactor:1,isMobile:true,hasTouch:true});
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- const res=await page.goto('https://plux-v17-friends-preview.onrender.com/?mobile=1&v=3181',{waitUntil:'domcontentloaded',timeout:60000});
+ const res=await page.goto('https://plux-v17-friends-preview.onrender.com/?mobile=1&v=3182',{waitUntil:'domcontentloaded',timeout:60000});
  assert.equal(res.status(),200);
  await page.waitForFunction(()=>!!window.PLUXVideoHubV318&&!!window.PLUXCognitionV318&&!!window.PLUXDustV318&&!!window.PLUXThemesV31,{timeout:35000});
  await page.evaluate(()=>{
