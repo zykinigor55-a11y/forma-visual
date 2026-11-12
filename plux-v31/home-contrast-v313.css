@@ -108,3 +108,40 @@
 @media(prefers-reduced-motion:reduce){
  #screen-home,#screen-home .scene-home>.plux31-home-ambient{transition:none!important}
 }
+
+:root[data-plux-theme="emerald"]{--plux31-home-highlight:#f1bc85;--plux31-home-highlight-rgb:239,188,133}
+:root[data-plux-theme="azure"]{--plux31-home-highlight:#ffaf79;--plux31-home-highlight-rgb:255,175,121}
+:root[data-plux-theme="ruby"]{--plux31-home-highlight:#57d7d1;--plux31-home-highlight-rgb:87,215,209}
+:root[data-plux-theme="solar"]{--plux31-home-highlight:#94a8ff;--plux31-home-highlight-rgb:148,168,255}
+:root[data-plux-theme="turquoise"]{--plux31-home-highlight:#ed90c8;--plux31-home-highlight-rgb:237,144,200}
+:root[data-plux-theme="violet"]{--plux31-home-highlight:#d2d46f;--plux31-home-highlight-rgb:210,212,111}
+:root[data-plux-theme="rose"]{--plux31-home-highlight:#56d5d2;--plux31-home-highlight-rgb:86,213,210}
+:root[data-plux-theme="silver"]{--plux31-home-highlight:#a7a0f0;--plux31-home-highlight-rgb:167,160,240}
+
+/* In V30 the Tools cards follow the drop; Home chrome uses a complementary,
+   intentionally different hue for better contrast and depth. */
+:root[data-plux-theme] #screen-home .bottom-nav{
+ border-color:rgba(var(--plux31-home-highlight-rgb),.40)!important;
+ background:linear-gradient(157deg,rgba(var(--plux31-home-highlight-rgb),.18),
+   rgba(3,18,25,.91) 47%,rgba(2,12,19,.97))!important;
+ box-shadow:inset 0 2px 3px #ffffff2b,inset 0 -6px 13px #0006,
+   0 0 17px rgba(var(--plux31-home-highlight-rgb),.16)!important;
+}
+:root[data-plux-theme] #screen-home .bottom-nav>button.nav-button.selected {
+ border-color:rgba(var(--plux31-home-highlight-rgb),.68)!important;
+ color:var(--plux31-home-highlight)!important;
+ background:linear-gradient(150deg,rgba(var(--plux31-home-highlight-rgb),.30),
+   rgba(1,17,24,.88) 78%)!important;
+ box-shadow:inset 0 1px 2px #ffffff43,0 0 16px rgba(var(--plux31-home-highlight-rgb),.21)!important;
+}
+:root[data-plux-theme] #screen-home .bottom-nav>button.nav-button.selected svg,
+:root[data-plux-theme] #screen-home .bottom-nav>button.nav-button.selected span{
+ color:var(--plux31-home-highlight)!important;
+ stroke:var(--plux31-home-highlight)!important;
+}
+:root[data-plux-theme] #screen-home .speech-glass {
+ border-color:rgba(var(--plux31-home-highlight-rgb),.50)!important;
+ box-shadow:inset 0 2px 2px #ffffff2a,
+  inset 0 -8px 14px rgba(var(--plux31-home-highlight-rgb),.12),
+  0 0 18px rgba(var(--plux31-home-highlight-rgb),.17)!important;
+}
