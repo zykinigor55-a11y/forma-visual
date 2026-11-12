@@ -22,6 +22,21 @@ const zoneNames:Record<Zone,string>={facade:"Фасады",roof:"Кровля",p
 const byId=(id:string)=>materials.find(m=>m.id===id)||materials[0];
 const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
 function Standard({color,metalness=0,roughness=.77}:{color:string;metalness?:number;roughness?:number}){return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness}/>}
+type CutRect={x0:number;x1:number;y0:number;y1:number};
+function cutOut(panel:CutRect,openings:CutRect[]):CutRect[]{
+ let parts=[panel];
+ for(const opening of openings){
+  const next:CutRect[]=[];
+  for(const p of parts){
+   const x0=Math.max(p.x0,opening.x0),x1=Math.min(p.x1,opening.x1);
+   const y0=Math.max(p.y0,opening.y0),y1=Math.min(p.y1,opening.y1);
+   if(x1<=x0||y1<=y0){next.push(p);continue}
+   next.push({x0:p.x0,x1:p.x1,y0:p.y0,y1:y0},{x0:p.x0,x1:p.x1,y0:y1,y1:p.y1},{x0:p.x0,x1:x0,y0,y1},{x0:x1,x1:p.x1,y0,y1});
+  }
+  parts=next.filter(p=>p.x1-p.x0>.003&&p.y1-p.y0>.003);
+ }
+ return parts;
+}
 function Building({config,selected,onZone}:{config:Config;selected:Zone;onZone:(z:Zone)=>void}){
  const {width:w,height:h,depth:d}=config;const wallDepth=.18,roofRise=1.85;
  const color=(z:Zone)=>byId(config.zoneMaterials[z]).color;
@@ -35,8 +50,10 @@ function Building({config,selected,onZone}:{config:Config;selected:Zone;onZone:(
  if(!opening)return [segment(cx,h/2,d/2,sw,h,wallDepth,"facade","front"+i)];
  const bottom=opening.y-opening.hh/2,top=opening.y+opening.hh/2;return [segment(cx,bottom/2,d/2,sw,bottom,wallDepth,"facade","sill"+i),segment(cx,(h+top)/2,d/2,sw,h-top,wallDepth,"facade","header"+i)]});
  const pane=(x:number,y:number,z:number,ww:number,hh:number,rot=0,key="pane")=><group key={key} position={[x,y,z]} rotation={[0,rot,0]} onClick={e=>{e.stopPropagation();onZone("frames")}}><mesh castShadow><boxGeometry args={[ww,hh,.085]}/><Standard color={color("frames")} metalness={.25}/></mesh><mesh position={[0,0,.052]}><boxGeometry args={[ww-.115,hh-.115,.012]}/><Standard color="#78909d" metalness={.5} roughness={.16}/></mesh><mesh position={[0,0,.064]}><boxGeometry args={[.045,hh-.12,.015]}/><Standard color={color("frames")}/></mesh><mesh position={[0,0,.065]}><boxGeometry args={[ww-.12,.04,.016]}/><Standard color={color("frames")}/></mesh></group>;
- const roofGeo=React.useMemo(()=>{const shape=new THREE.Shape();shape.moveTo(-w/2-.35,0);shape.lineTo(0,roofRise);shape.lineTo(w/2+.35,0);shape.lineTo(w/2+.35,-.16);shape.lineTo(0,roofRise-.16);shape.lineTo(-w/2-.35,-.16);shape.closePath();const geo=new THREE.ExtrudeGeometry(shape,{depth:d+.8,bevelEnabled:false});geo.computeVertexNormals();return geo},[w,d]);
- React.useEffect(()=>()=>roofGeo.dispose(),[roofGeo]);
+ const halfSpan=w/2+.38;
+ const roofAngle=Math.atan2(roofRise,halfSpan);
+ const roofLength=Math.hypot(halfSpan,roofRise);
+ const gableShape=React.useMemo(()=>{const s=new THREE.Shape();s.moveTo(-w/2,h);s.lineTo(w/2,h);s.lineTo(0,h+roofRise*(w/2)/halfSpan);s.closePath();return s},[w,h,roofRise]);
  const selectedOutline=(zone:Zone)=>selected===zone?"#7a98af":"#a9afb3";
  const slats=React.useMemo(()=>{const step=Math.max(.065,config.panelWidth+config.gap);return Math.min(135,Math.floor((config.orientation==="vertical"?w:h)/step))},[w,h,config.panelWidth,config.gap,config.orientation]);
  const {orientation,panelWidth:pw,gap}=config;
@@ -45,13 +62,16 @@ function Building({config,selected,onZone}:{config:Config;selected:Zone;onZone:(
  {segment(-w/2,h/2,0,wallDepth,h,d,"facade","left")}
  {segment(w/2,h/2,0,wallDepth,h,d,"facade","right")}
  {frontPieces}
- {Array.from({length:slats},(_,i)=>{const step=pw+gap,isV=orientation==="vertical";
- const xx=isV?-w/2+pw/2+i*step:0,yy=isV?h/2:pw/2+i*step;
- return <mesh key={"clad"+i} position={[xx,yy,d/2+.11]} castShadow receiveShadow onClick={e=>{e.stopPropagation();onZone("facade")}}><boxGeometry args={[isV?pw:w,isV?h:pw,.03]}/><Standard color={color("facade")} metalness={config.zoneMaterials.facade==="metal"?.35:0}/></mesh>})}
+ {Array.from({length:slats},(_,i)=>{
+  const step=pw+gap,isV=orientation==="vertical";
+  const p:CutRect=isV?{x0:-w/2+i*step,x1:Math.min(w/2,-w/2+i*step+pw),y0:0,y1:h}:{x0:-w/2,x1:w/2,y0:i*step,y1:Math.min(h,i*step+pw)};
+  const openings=frontOpenings.map(o=>({x0:o.x-o.ww/2,x1:o.x+o.ww/2,y0:o.y-o.hh/2,y1:o.y+o.hh/2}));
+  return cutOut(p,openings).map((seg,j)=><mesh key={"clad"+i+"-"+j} position={[(seg.x0+seg.x1)/2,(seg.y0+seg.y1)/2,d/2+.11]} castShadow receiveShadow onClick={e=>{e.stopPropagation();onZone("facade")}}><boxGeometry args={[seg.x1-seg.x0,seg.y1-seg.y0,.03]}/><Standard color={color("facade")} metalness={config.zoneMaterials.facade==="metal"?.35:0}/></mesh>)
+ })}
  {frontOpenings.map((o,i)=>pane(o.x,o.y,d/2+.155,o.ww,o.hh,0,"frontPane"+i))}
  {pane(w/2+.13,1.55,-d*.1,1.3,1.55,Math.PI/2,"sidePane")}
- <mesh position={[0,h+.02,d/2+.27]} onClick={e=>{e.stopPropagation();onZone("roof")}}><boxGeometry args={[w+.65,.17,.42]}/><Standard color={color("roof")} metalness={.2}/></mesh>
- <mesh position={[0,h,-d/2-.4]} rotation={[0,Math.PI/2,0]} geometry={roofGeo} castShadow receiveShadow onClick={e=>{e.stopPropagation();onZone("roof")}}><Standard color={color("roof")} metalness={.2} roughness={.68}/></mesh>
+ {[-1,1].map((side)=><mesh key={"slope"+side} position={[side*halfSpan/2,h+roofRise/2,0]} rotation={[0,0,side===-1?roofAngle:-roofAngle]} castShadow receiveShadow onClick={e=>{e.stopPropagation();onZone("roof")}}><boxGeometry args={[roofLength,.14,d+.78]}/><Standard color={color("roof")} metalness={.2} roughness={.68}/></mesh>)}
+ {[-1,1].map(side=><mesh key={"gable"+side} position={[0,0,side*d/2]}><shapeGeometry args={[gableShape]}/><meshStandardMaterial color="#c7c9c7" side={THREE.DoubleSide} roughness={.8}/></mesh>)}
  {segment(0,-.17,0,w+.06,.34,d+.06,"plinth","plinth")}
  </group>
  <mesh rotation={[-Math.PI/2,0,0]} position={[0,-.025,0]} receiveShadow><planeGeometry args={[120,120]}/><Standard color="#e2e6e9" roughness={1}/></mesh>
