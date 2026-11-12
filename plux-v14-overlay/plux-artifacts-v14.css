@@ -11,3 +11,29 @@ box-shadow:inset 0 1px 1px rgba(246,255,251,.25),inset 0 -5px 11px rgba(0,215,14
 #screen-chat .plux14-download:active{transform:scale(.96);transition:transform 150ms ease-out}
 #screen-chat .plux14-download:focus-visible{outline:2px solid #c5ffe9;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){#screen-chat .plux14-download:active{transform:none}}
+
+/* V31.8.4 — actual chat generation in progress, not a fake completion bar. */
+#screen-chat .plux3184-generation{width:min(100%,345px);padding:18px 14px!important;display:flex;gap:13px;align-items:center;
+ border:1px solid color-mix(in srgb,var(--plux-theme-accent,#53d8a8) 45%,transparent);
+ background:linear-gradient(135deg,#0a2521,#051315 75%);border-radius:20px;color:#ebfff8}
+#screen-chat .plux3184-render-visual{width:57px;height:57px;position:relative;flex:0 0 57px;display:grid;place-items:center}
+#screen-chat .plux3184-render-orbit{position:absolute;width:49px;height:49px;left:4px;top:4px;
+ border:1px solid color-mix(in srgb,var(--plux-theme-accent,#7dfac0) 65%,transparent);
+ border-radius:47% 53% 58% 42%;animation:plux3184-orbit 3.8s linear infinite}
+#screen-chat .plux3184-render-orbit:nth-child(2){width:31px;height:31px;left:13px;top:13px;border-color:#d4fff887;animation-duration:2.7s;animation-direction:reverse}
+#screen-chat .plux3184-render-orbit:nth-child(3){width:9px;height:9px;left:24px;top:24px;background:var(--plux-theme-accent,#54ecb1);
+ border:0;box-shadow:0 0 11px color-mix(in srgb,var(--plux-theme-accent,#55efb5) 45%,transparent);animation:plux3184-core 2s ease-in-out infinite}
+#screen-chat .plux3184-render-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+#screen-chat .plux3184-render-body strong{font-size:13px;line-height:1.35}
+#screen-chat .plux3184-render-body small{font-size:11px;color:#9fc4b4;line-height:1.5}
+#screen-chat .plux3184-render-track{width:100%;height:3px;border-radius:6px;overflow:hidden;background:#344d436c}
+#screen-chat .plux3184-render-track i{display:block;height:100%;width:30%;background:var(--plux-theme-accent,#6ef3bd);
+ border-radius:6px;animation:plux3184-indeterminate 1.8s ease-in-out infinite}
+#screen-chat .plux3184-upload-preview{display:block;width:clamp(160px,58vw,245px);max-height:260px;object-fit:contain;
+ border-radius:18px;border:1px solid #8bd8bb7e;box-shadow:0 4px 18px #0005;background:#06120f}
+@keyframes plux3184-orbit{to{transform:rotate(360deg)}}
+@keyframes plux3184-core{50%{transform:scale(1.34);opacity:.5}}
+@keyframes plux3184-indeterminate{0%{transform:translateX(-110%)}100%{transform:translateX(340%)}}
+@media(prefers-reduced-motion:reduce){
+ #screen-chat .plux3184-render-orbit,#screen-chat .plux3184-render-track i{animation:none!important}
+}

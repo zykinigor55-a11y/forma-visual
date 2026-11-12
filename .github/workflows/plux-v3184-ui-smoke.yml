@@ -1,0 +1,41 @@
+name: PLUX V31.8.4 UI static validation
+on:
+  push:
+    branches: [plux-v3184-palette-prompt-counter]
+    paths:
+      - 'plux-v128-overlay/**'
+      - 'plux-v129-overlay/**'
+      - 'plux-v17-friends/**'
+      - 'plux-v31/**'
+      - '.github/workflows/plux-v3184-ui-smoke.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Parse all touched scripts and check integration
+        run: |
+          set -euo pipefail
+          node --check plux-v128-overlay/plux-chat-v128.js
+          node --check plux-v129-overlay/plux-v129.js
+          node --check plux-v17-friends/plux-friends-v17.js
+          node --check plux-v31/header-palette-v3184.js
+          node --check plux-v31/apply-v31.mjs
+          node --check plux-v17-friends/apply-v17.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const create=fs.readFileSync('plux-v129-overlay/plux-v129.js','utf8');
+          const friends=fs.readFileSync('plux-v17-friends/plux-friends-v17.js','utf8');
+          const chat=fs.readFileSync('plux-v128-overlay/plux-chat-v128.js','utf8');
+          const apply=fs.readFileSync('plux-v31/apply-v31.mjs','utf8');
+          for(const s of ['plux3184-prompt-count','1300','updatePromptCounter'])if(!create.includes(s))throw Error('Counter missing: '+s);
+          for(const s of ['plux_discovery_opt_in','pf-discover-toggle','Новенькие'])if(!friends.includes(s))throw Error('Friends feed missing: '+s);
+          for(const s of ['appendPending','pollJob','presentation','plux3184-upload-preview'])if(!chat.includes(s))throw Error('Chat generated media missing: '+s);
+          for(const s of ['header-palette-v3184.js','header-prompt-v3184.css'])if(!apply.includes(s))throw Error('Not bundled: '+s);
+          console.log('PLUX V31.8.4 UI syntax and integration OK');
+          JS

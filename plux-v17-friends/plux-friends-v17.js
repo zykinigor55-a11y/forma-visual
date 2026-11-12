@@ -5,7 +5,7 @@ if(window.PLUXFriendsV17)return;
 const conf=window.PLUX_FRIENDS_CONFIG||{};
 const base=/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(conf.url||'')?conf.url:'';
 const key=/^(sb_publishable_|eyJ)/.test(conf.anonKey||'')?conf.anonKey:'';
-const S={session:null,user:null,friends:[],requests:[],tab:'friends',dialog:null,person:null,timer:0,pictures:new Map(),busy:false,signature:''};
+const S={session:null,user:null,friends:[],requests:[],tab:'friends',newcomers:[],discoveryJoined:false,dialog:null,person:null,timer:0,pictures:new Map(),busy:false,signature:''};
 const id=x=>document.getElementById(x);
 const make=(tag,cl,text)=>{const n=document.createElement(tag);if(cl)n.className=cl;if(text!==undefined)n.textContent=text;return n};
 
@@ -85,7 +85,9 @@ async function start(){
  id('pf-handle').value=S.profile?.handle||'';
  drawAvatar(id('pf-myavatar'),S.profile);
  visible('pf-signin',false);visible('pf-content',true);
- await people();drawPeople();beginPolling();
+ await people();
+ try{await loadDiscovery()}catch{S.newcomers=[];S.discoveryJoined=false;}
+ drawPeople();beginPolling();
 }
 async function people(){
  const [friends,requests]=await Promise.all([
@@ -102,6 +104,28 @@ async function people(){
  const badge=id('plux31-friends-badge');
  if(badge){badge.hidden=!S.requests.length;badge.textContent=S.requests.length>9?'9+':String(S.requests.length)}
 }
+async function loadDiscovery(){
+ const mine=await fetcher('/rest/v1/plux_discovery_opt_in?select=user_id&user_id=eq.'+S.user.id+'&limit=1');
+ S.discoveryJoined=mine.length>0;
+ const toggle=id('pf-discover-toggle');if(toggle)toggle.checked=S.discoveryJoined;
+ const rows=await fetcher('/rest/v1/plux_discovery_opt_in?select=user_id,joined_at&order=joined_at.desc&limit=26');
+ const entries=rows.filter(x=>x.user_id!==S.user.id).slice(0,20);
+ if(!entries.length){S.newcomers=[];return}
+ const ids=entries.map(x=>x.user_id);
+ const profiles=await fetcher('/rest/v1/plux_profiles?select=id,handle,display_name,avatar_path&id=in.('+ids.join(',')+')');
+ const dict=new Map(profiles.map(p=>[p.id,p]));
+ S.newcomers=entries.map(x=>dict.has(x.user_id)?{...dict.get(x.user_id),joined_at:x.joined_at}:null).filter(Boolean);
+}
+async function toggleDiscovery(checked){
+ if(checked){
+  await fetcher('/rest/v1/plux_discovery_opt_in','POST',{user_id:S.user.id});
+  notice('Теперь твой профиль виден в разделе «Новенькие».');
+ }else{
+  await fetcher('/rest/v1/plux_discovery_opt_in?user_id=eq.'+S.user.id,'DELETE');
+  notice('Твой профиль больше не показывается другим новым участникам.');
+ }
+ await loadDiscovery();drawPeople();
+}
 function item(p,label,fn){
  const row=make('div','pf-person'),avatar=make('span','pf-avatar');drawAvatar(avatar,p);
  const names=make('div','pf-person-title');names.append(make('strong','',p.display_name),make('small','','@'+p.handle));
@@ -109,14 +133,23 @@ function item(p,label,fn){
 }
 function drawPeople(){
  visible('pf-people',S.tab!=='search');visible('pf-search-area',S.tab==='search');
+ visible('pf-discovery-settings',S.tab==='new');visible('pf-new-description',S.tab==='new');visible('pf-new-filter-wrap',S.tab==='new');
  document.querySelectorAll('.pf-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));
  const list=id('pf-list');list.replaceChildren();
  if(S.tab==='friends')for(const p of S.friends)list.append(item(p,'Написать ›',()=>openChat(p)));
+ if(S.tab==='new')for(const p of S.newcomers.filter(p=>{
+  const term=(id('pf-new-filter')?.value||'').trim().toLocaleLowerCase('ru-RU');
+  return !term||(p.display_name||'').toLocaleLowerCase('ru-RU').includes(term)||(p.handle||'').toLowerCase().includes(term);
+ }))list.append(item(p,'＋ Добавить',()=>act(async()=>{
+  if(p.id===S.user.id)return;
+  await fetcher('/rest/v1/rpc/plux_request_friend','POST',{p_handle:p.handle});
+  notice('Заявка отправлена пользователю @'+p.handle);
+ })));
  if(S.tab==='requests')for(const q of S.requests)if(q.profile)list.append(item(q.profile,'✓ Принять',()=>act(async()=>{
    await fetcher('/rest/v1/rpc/plux_accept_friend','POST',{p_request_id:q.id});
    await people();drawPeople();notice('Теперь вы друзья!');
  })));
- if(!list.children.length)list.append(make('div','pf-empty',S.tab==='friends'?'Здесь появятся друзья. Найдите человека по его нику.':'Новых заявок пока нет.'));
+ if(!list.children.length)list.append(make('div','pf-empty',S.tab==='friends'?'Здесь появятся друзья. Найдите человека по его нику.':S.tab==='new'?(id('pf-new-filter')?.value.trim()?'По этому имени пока никого нет. Попробуй другое имя.':'Новых участников пока нет. Показываются только профили с согласия владельцев.'):'Новых заявок пока нет.'));
 }
 async function searchFriend(){
  const name=id('pf-query').value.trim().toLowerCase();
@@ -222,7 +255,10 @@ root.innerHTML=[
 '<section id="pf-setup" class="pf-section" hidden><h2>Общение в ПЛЮХ</h2><p>Модуль готов. Для настоящих чатов необходимо подключить Supabase с защищённой базой, аккаунтами и приватным хранилищем фото.</p></section>',
 '<section id="pf-signin" class="pf-section" hidden><small>АККАУНТ</small><h2>Привет! Найди своих друзей</h2><p>Создай профиль по электронной почте, чтобы начать общение.</p><form id="pf-login"><input id="pf-email" type="email" placeholder="Электронная почта" autocomplete="email" required><input id="pf-password" type="password" placeholder="Пароль от 8 символов" minlength="8" required><div class="pf-row"><button>Войти</button><button id="pf-register" type="button">Регистрация</button></div></form></section>',
 '<section id="pf-content" hidden><div id="pf-social" class="pf-section"><div class="pf-profile"><div class="pf-profile-id"><button id="pf-avatar-change" type="button" aria-label="Загрузить или поменять фото профиля" title="Нажмите, чтобы изменить аватарку"><span id="pf-myavatar" class="pf-avatar pf-avatar-own">?</span><span class="pf-avatar-edit-indicator" aria-hidden="true">＋</span></button><input id="pf-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" hidden><div><strong id="pf-myname"></strong><small id="pf-myhandle"></small><small class="pf-avatar-hint">Нажмите на фото, чтобы изменить</small></div></div><button id="pf-logout" type="button">Выйти</button></div><details><summary>Имя и ник</summary><input id="pf-display" placeholder="Ваше имя" maxlength="60"><input id="pf-handle" placeholder="Ник латиницей" maxlength="24"><button id="pf-save-profile" type="button">Сохранить профиль</button></details>',
-'<nav class="pf-tabs"><button class="pf-tab active" data-tab="friends">Друзья</button><button class="pf-tab" data-tab="requests">Заявки <span id="pf-count"></span></button><button class="pf-tab" data-tab="search">Найти</button></nav>',
+'<nav class="pf-tabs"><button class="pf-tab active" data-tab="friends">Друзья</button><button class="pf-tab" data-tab="requests">Заявки <span id="pf-count"></span></button><button class="pf-tab" data-tab="new">Новенькие</button><button class="pf-tab" data-tab="search">Найти</button></nav>',
+'<p id="pf-new-description" class="pf-discovery-info" hidden>Знакомься без знания ника: здесь новые участники, которые согласились показывать свой профиль.</p>',
+ '<label id="pf-new-filter-wrap" class="pf-new-filter" hidden><span>Поиск по имени</span><input id="pf-new-filter" type="search" placeholder="Например, Катя или Андрей" maxlength="60" autocomplete="off"></label>',
+'<label id="pf-discovery-settings" class="pf-discovery-settings" hidden><input id="pf-discover-toggle" type="checkbox"><span><strong>Показывать меня в «Новеньких»</strong><small>Выключено по умолчанию. Можно отключить в любой момент.</small></span></label>',
 '<div id="pf-people"><div id="pf-list"></div></div><div id="pf-search-area" hidden><form id="pf-search"><input id="pf-query" placeholder="Ник друга, например alexey_77"><button>Поиск</button></form><div id="pf-found"></div></div></div>',
 '<div id="pf-chat" class="pf-chat" hidden><div class="pf-chat-head"><button id="pf-chat-back">‹</button><span id="pf-peer-avatar" class="pf-avatar pf-peer-avatar">?</span><div><strong id="pf-peer"></strong><small id="pf-peername"></small></div></div><div id="pf-messages"></div><form id="pf-compose"><label class="pf-attach">＋<input id="pf-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><input id="pf-input" placeholder="Сообщение или фото…" maxlength="4000"><button>➤</button></form><small id="pf-file-title"></small></div></section></section>'
 ].join('');
@@ -279,7 +315,14 @@ id('pf-save-profile').onclick=()=>void act(async()=>{
  if(!/^[a-z0-9_]{3,24}$/.test(handle)||!display_name)throw Error('Ник: от 3 до 24 символов латиницей; укажи имя');
  await fetcher('/rest/v1/plux_profiles?id=eq.'+S.user.id,'PATCH',{handle,display_name});await start();notice('Профиль сохранён');
 });
-document.querySelectorAll('.pf-tab').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;drawPeople();notice('')});
+document.querySelectorAll('.pf-tab').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;drawPeople();notice('');
+ if(S.tab==='new')void loadDiscovery().then(drawPeople).catch(e=>notice(e.message,true));
+});
+id('pf-new-filter').addEventListener('input',()=>{if(S.tab==='new')drawPeople()});
+id('pf-discover-toggle').onchange=e=>void act(async()=>{
+ try{await toggleDiscovery(e.target.checked)}
+ catch(err){e.target.checked=S.discoveryJoined;throw err}
+});
 id('pf-search').onsubmit=e=>{e.preventDefault();void act(searchFriend)};
 id('pf-compose').onsubmit=e=>{e.preventDefault();void send()};
 id('pf-file').onchange=()=>{id('pf-file-title').textContent=id('pf-file').files[0]?.name||''};

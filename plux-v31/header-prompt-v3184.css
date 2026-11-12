@@ -1,0 +1,62 @@
+/* PLUX V31.8.4 — equal edge spacing for profile and colour selector. */
+#app #screen-home .home-head{
+ position:relative!important;
+}
+#app #screen-home .home-head>#plux-theme-trigger{
+ position:absolute!important;
+ top:var(--plux3184-palette-top,14px)!important;
+ right:var(--plux3184-palette-right,18px)!important;
+ left:auto!important;bottom:auto!important;
+ margin:0!important;
+ transform:none!important;
+ z-index:15!important;
+ flex:none!important;
+ width:46px!important;height:46px!important;
+}
+@media(max-width:370px){
+ #app #screen-home .home-head>#plux-theme-trigger{width:42px!important;height:42px!important}
+}
+/* Prompt length support — aligned with the existing form, without changing its glass text area. */
+#screen-create .plux3184-prompt-footer{
+ box-sizing:border-box;
+ width:min(calc(100% - 34px),520px);
+ margin:-2px auto 13px;
+ padding:1px 7px;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
+ font:500 11px/1.4 system-ui,sans-serif;
+ color:#a1c3b6;
+}
+#screen-create .plux3184-prompt-footer .plux3184-prompt-hint{
+ flex:1;min-width:0;overflow-wrap:anywhere;
+}
+#screen-create .plux3184-prompt-footer .plux3184-prompt-right{
+ display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-shrink:0;
+}
+#screen-create .plux3184-prompt-footer .plux3184-prompt-count{
+ white-space:nowrap;font:600 11px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;
+ font-variant-numeric:tabular-nums;
+ color:#c3e6da;
+}
+#screen-create .plux3184-prompt-footer.plux3184-near .plux3184-prompt-count,
+#screen-create .plux3184-prompt-footer.plux3184-near .plux3184-prompt-hint{color:#ffd39a}
+#screen-create .plux3184-prompt-footer.plux3184-over .plux3184-prompt-count,
+#screen-create .plux3184-prompt-footer.plux3184-over .plux3184-prompt-hint{color:#ff8c98}
+#screen-create .plux3184-prompt-footer .plux3184-prompt-shorten{
+ border:1px solid rgba(255,154,169,.48);
+ border-radius:9px;
+ color:#ffe4e7;
+ background:rgba(112,26,43,.20);
+ padding:5px 8px;
+ font:600 10px/1.15 system-ui,sans-serif;
+ cursor:pointer;
+}
+#screen-create .plux3184-prompt-footer .plux3184-prompt-shorten[hidden]{display:none!important}
+#screen-create .plux3184-prompt-footer .plux3184-prompt-shorten:focus-visible{outline:2px solid #c8fff3;outline-offset:2px}
+#screen-create #create-art-button:disabled:not([aria-busy="true"]){opacity:.55!important;cursor:not-allowed!important}
+@media(max-width:360px){
+ #screen-create .plux3184-prompt-footer{font-size:10px;padding:1px 4px}
+ #screen-create .plux3184-prompt-footer .plux3184-prompt-count{font-size:10px}
+}
