@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V15 — opt-in Russian ElevenLabs narration via Cyhub tasks.
    Provider secret never reaches the web app. Temporary task ownership is in memory.
    This is a restricted preview integration, not production authentication.
@@ -20,8 +21,8 @@ function ipOf(req){return String(req.headers["x-forwarded-for"]||req.socket?.rem
 function key(){return String(process.env.CYHUB_API_KEY||"").trim()}
 function fail(status,reason){return Object.assign(new Error(reason),{status})}
 function cors(req,res){
-  if(req.headers.origin!==ORIGIN){reply(res,403,{error:"Источник не разрешён."});return false}
-  res.setHeader("Access-Control-Allow-Origin",ORIGIN);
+  if(!appOrigin(req)){reply(res,403,{error:"Источник не разрешён."});return false}
+  res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
   res.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
   res.setHeader("Vary","Origin");
