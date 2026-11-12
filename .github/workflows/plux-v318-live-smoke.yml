@@ -1,0 +1,32 @@
+name: PLUX V31.8 live Nano Banana and video smoke
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths: ['.github/workflows/plux-v318-live-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check published PLUX 31.8 homepage and assets
+        run: |
+          set -euo pipefail
+          url="https://plux-v17-friends-preview.onrender.com"
+          curl -fsSL --retry 2 "$url/?v=3181" -o /tmp/plux-index.html
+          for file in video-hub-v318.js ai-cognition-v318.js microphone-permission-v318.js microdust-enhanced-v318.js theme-motion-v318.css video-hub-v318.css; do
+            grep -q "$file?v=3181" /tmp/plux-index.html
+            curl -fsSL --retry 2 "$url/$file?v=3181" -o "/tmp/$file"
+            test -s "/tmp/$file"
+          done
+          curl -fsSL "$url/plux-friends-config-v17.js?v=3181" -o /tmp/plux-friends-config.js
+          grep -q "anonKey" /tmp/plux-friends-config.js
+          grep -q "lxwqpoakdsbpshfyfqih.supabase.co" /tmp/plux-friends-config.js
+          echo "PLUX V31.8 Live site, video, AI cognition, friends, theme and mic scripts available."
+      - name: Check API Market Nano Banana config without paid generation
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 2 "https://pluh-voice-demo.onrender.com/api/image/config" -o /tmp/image-config.json
+          node -e 'const c=require("/tmp/image-config.json"); if(c.model!=="nano-banana-2.1"||c.provider!=="API Market")throw Error("wrong provider/model"); console.log("Nano Banana 2.1 configured:",c.configured);if(!c.configured)process.exitCode=2;'
