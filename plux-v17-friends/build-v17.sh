@@ -53,11 +53,11 @@ grep -q 'touchstart' plux-published/music-player-v31.js
 grep -q 'drop-colors-v31.js' plux-published/index.html
 test -s plux-published/index.html
 # V31.8 feature gates: all additive modules must be bundled and linked.
-for file in header-palette-v3185.js header-prompt-v3185.css video-hub-v318.js video-hub-v318.css ai-cognition-v318.js ai-cognition-v318.css microdust-enhanced-v318.js microdust-enhanced-v318.css microphone-permission-v318.js theme-motion-v318.css gemini-voice-v3183.js; do
+for file in header-palette-v3184.js header-prompt-v3184.css video-hub-v318.js video-hub-v318.css ai-cognition-v318.js ai-cognition-v318.css microdust-enhanced-v318.js microdust-enhanced-v318.css microphone-permission-v318.js theme-motion-v318.css gemini-voice-v3183.js; do
   test -s "plux-published/$file"
   grep -q "/$file?v=3185" plux-published/index.html
 done
-for file in header-palette-v3185.js video-hub-v318.js ai-cognition-v318.js microdust-enhanced-v318.js microphone-permission-v318.js gemini-voice-v3183.js; do
+for file in header-palette-v3184.js video-hub-v318.js ai-cognition-v318.js microdust-enhanced-v318.js microphone-permission-v318.js gemini-voice-v3183.js; do
   node --check "plux-published/$file"
 done
 test -s plux-published/plux-friends-v17.js
