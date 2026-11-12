@@ -1,0 +1,28 @@
+name: PLUX 31.8.8 safe GPT Image 2 job recovery
+on:
+  push:
+    branches: [pluh-v3188-generation-recovery]
+    paths:
+      - 'pluh-voice-server/**'
+      - '.github/workflows/plux-v3188-server-recovery.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install backend dependencies
+        working-directory: pluh-voice-server
+        run: npm install --no-audit --no-fund
+      - name: Validate idempotent job and old image/PPTX contract
+        working-directory: pluh-voice-server
+        run: |
+          node --check generation-jobs-v28.mjs
+          node --check server.mjs
+          node test-job-recovery-v3188.mjs
+          node test-chat-image-edit-v3184.mjs
+          node test-presentation-v3184.mjs

@@ -32,10 +32,20 @@ function cleanup(){
 function signature({kind,prompt,ip}){
  return createHash("sha256").update(kind+"\0"+ip+"\0"+String(prompt).trim().toLowerCase()).digest("hex");
 }
-export function beginGenerationJob({kind,prompt,messages,secret,imageKey,ip}){
+export function beginGenerationJob({kind,prompt,messages,secret,imageKey,ip,clientJobId}){
  if(kind!=="image"&&kind!=="pdf"&&kind!=="presentation")throw Object.assign(new Error("Неизвестный тип файла."),{status:400});
  cleanup();
  const sig=signature({kind,prompt,ip}),now=Date.now();
+ // V31.8.8: the app knows this high-entropy token BEFORE submitting a paid
+ // request. If its mobile fetch fails after the server accepts the POST, the
+ // phone can poll this same id instead of starting another paid generation.
+ if(clientJobId!==undefined&&(!/^[A-Za-z0-9_-]{32}$/.test(clientJobId)))
+  throw Object.assign(new Error("Некорректный идентификатор генерации."),{status:400});
+ const existing=clientJobId&&jobs.get(clientJobId);
+ if(existing){
+  if(existing.signature!==sig)throw Object.assign(new Error("Идентификатор используется для другого запроса."),{status:409});
+  return {id:existing.id,kind:existing.kind,state:existing.state};
+ }
  // Deduplicate pending requests from the same device and prevent accidental
  // double charges if the client retries during a weak connection.
  for(const job of jobs.values()){
@@ -49,7 +59,7 @@ export function beginGenerationJob({kind,prompt,messages,secret,imageKey,ip}){
  if(active>=MAX_ACTIVE||activeForIp>=MAX_PER_IP){
   throw Object.assign(new Error("Генератор занят. Подожди завершения предыдущей задачи."),{status:429});
  }
- const id=randomBytes(24).toString("base64url");
+ const id=clientJobId||randomBytes(24).toString("base64url");
  const job={id,kind,ip,signature:sig,state:"working",createdAt:now,updatedAt:now,result:null,error:null};
  jobs.set(id,job);
  // The task intentionally outlives the HTTP request. A status poll does not
