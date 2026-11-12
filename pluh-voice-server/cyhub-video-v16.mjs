@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V16 — lowest-priced Cyhub Grok Imagine Lite, text-to-video.
  * Strict server-side key, quote-before-charge, short-lived quotes, bounded spend,
  * per-client/global budgets, idempotency and protected result download.
@@ -24,8 +25,8 @@ function json(res,status,body){
  res.end(JSON.stringify(body));
 }
 function cors(req,res){
- if(req.headers.origin!==ORIGIN){json(res,403,{error:"Источник запроса не разрешён."});return false}
- res.setHeader("Access-Control-Allow-Origin",ORIGIN);
+ if(!appOrigin(req)){json(res,403,{error:"Источник запроса не разрешён."});return false}
+ res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
  res.setHeader("Access-Control-Allow-Headers","Content-Type");
  res.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS");
  res.setHeader("Vary","Origin");
