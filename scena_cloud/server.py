@@ -141,3 +141,11 @@ def delete(jobid:str,request:Request):
     with guard:jobs.pop(jobid,None)
     shutil.rmtree(BASE/jobid,ignore_errors=True)
     return {"deleted":True}
+
+@app.get("/app", include_in_schema=False)
+def scena_frontend():
+    """Serve SCENA at the API origin to avoid cross-origin blocks in mobile browsers."""
+    page = Path(__file__).resolve().parent / "site" / "index.html"
+    if not page.is_file():
+        raise HTTPException(503, "Интерфейс ещё не опубликован")
+    return FileResponse(page, media_type="text/html", headers={"Cache-Control":"no-store"})
