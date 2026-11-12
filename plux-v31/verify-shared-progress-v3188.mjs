@@ -104,8 +104,8 @@ try{
    api:!!window.PLUXChatAPI,forms:document.querySelectorAll("#chat-form").length};
  });
  console.log("PLUX3188_DEBUG "+JSON.stringify({debug,requests,statuses,errors}));
- await page.locator(".plux3187-percent").waitFor({state:"attached",timeout:10000});
- const start=await page.locator(".plux3187-percent").last().textContent();
+ await page.locator(".plux3188-progress-value").waitFor({state:"attached",timeout:10000});
+ const start=await page.locator(".plux3188-progress-value").last().textContent();
  assert.match(start,/\d+%/);
  assert(!start.includes("100%"));
  await page.waitForFunction(()=>{const p=document.querySelector(".plux3188-progress-value");
@@ -142,13 +142,13 @@ try{
  assert(identical.same&&identical.sameStyles,"Chat and Create must share pixel-identical percent cards");
  assert.equal(await page.locator(".plux3187-image-card").count(),1);
  assert.equal(requests,1,"Lost POST response must NOT launch another paid request");
- console.log("PLUX3187_INLINE_PASS "+JSON.stringify({start,progress,...detail,requests,statuses,photoFetches}));
+ console.log("PLUX3188_INLINE_PASS "+JSON.stringify({start,progress,...detail,requests,statuses,photoFetches}));
  // On a bad/expired remote link, show an explicit visible error, not a fake preview.
  failPreview=true;
  await send("Нарисуй еще одну лошадь");
  await page.locator(".plux3188-progress-error").waitFor({timeout:30000});
  const errorText=await page.locator(".plux3188-progress-error").last().textContent();
  assert(/Не удалось|Ошибка/i.test(errorText));
- console.log("PLUX3187_FAILED_PREVIEW_VISIBLE "+errorText.slice(0,160));
+ console.log("PLUX3188_FAILED_PREVIEW_VISIBLE "+errorText.slice(0,160));
  assert.equal(errors.length,0,errors.join(" | "));
 }finally{await browser.close()}
