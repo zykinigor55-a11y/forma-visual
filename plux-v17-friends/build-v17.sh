@@ -14,4 +14,5 @@ node --check plux-v17-friends/install-media-v17.mjs
 grep -q 'plux-friends-v17.js' plux-published/index.html
 grep -q 'plux-microdust-v17.js' plux-published/index.html
 test -s plux-published/index.html
-echo "PLUX v17 test build complete"
+node plux-v31/probe-ui.mjs plux-published
+echo "PLUX V31 baseline probe complete"
