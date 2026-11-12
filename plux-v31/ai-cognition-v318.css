@@ -1,5 +1,5 @@
 /* V31.8: compact titanium AI thinking core. OLED, theme aware, reduced motion. */
-#screen-home .home-head{isolation:isolate}
+#screen-home .home-head{isolation:isolate;position:relative!important;}
 #screen-home .home-head .plux318-retired-logo:not(button){visibility:hidden!important}
 #screen-home .home-head #plux318-cognition{
  position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;
