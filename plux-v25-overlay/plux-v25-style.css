@@ -1,0 +1,112 @@
+/* PLUX V25 — coherent four-color mascot scene & six unified modes.
+ * Tone only mascot artwork / decorative glass, never the overall page or text.
+ */
+:root[data-plux-theme="azure"]{--plux25-rotate:128deg;--plux25-halo:rgba(41,135,255,.20)}
+:root[data-plux-theme="ruby"]{--plux25-rotate:-130deg;--plux25-halo:rgba(249,59,101,.20)}
+:root[data-plux-theme="solar"]{--plux25-rotate:-61deg;--plux25-halo:rgba(239,187,55,.20)}
+:root[data-plux-theme="emerald"]{--plux25-rotate:0deg;--plux25-halo:rgba(31,203,137,.18)}
+/* Main home character: original five animation states can render as image or
+   as dynamically injected video, so include both variants. */
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home #home-mascot-image,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home #home-mascot>img,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home #home-mascot>video,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home .scene-home .mascot-hit>img,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home .scene-home .mascot-hit>video,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-voice #voice-image,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-chat .chat-mini,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-chat .chat-avatar{
+  filter:hue-rotate(var(--plux25-rotate)) saturate(1.18)!important;
+}
+/* The 8 floating bubbles and ground light reflect the same mood. */
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home .glass-bubble,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home .scene-home .orbital,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home .scene-home .ribbon,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home .scene-home .sparkles,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-home .scene-home .scene-glow{
+  filter:hue-rotate(var(--plux25-rotate)) saturate(1.15)!important
+}
+:root[data-plux-theme] #screen-home .scene-home::after{
+  background:radial-gradient(ellipse at 51% 70%,var(--plux25-halo,rgba(31,203,137,.18)) 0%,transparent 65%)!important;
+}
+:root[data-plux-theme] #screen-home .speech-glass{
+  border-color:var(--plux-theme-bright)!important;
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.24),inset 0 -8px 19px var(--plux-theme-soft),0 0 24px var(--plux-theme-soft)!important;
+  background:linear-gradient(115deg,var(--plux-theme-soft),rgba(2,15,19,.92) 68%,rgba(23,12,40,.6))!important
+}
+:root[data-plux-theme] #screen-home .action-round,
+:root[data-plux-theme] #screen-home .glass-icon{
+  border-color:var(--plux-theme-bright)!important;
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.25),inset 0 -9px 13px rgba(0,9,13,.69),0 0 20px var(--plux-theme-soft)!important
+}
+/* Mode screen: five illustrated 2K atlas cards stay intact.
+   The sixth (Gallery) visually matches the same glass depth and title positions,
+   but with a quieter satin-glass face, as requested. */
+#screen-modes .mode-grid{gap:clamp(9px,2vw,15px)!important}
+#screen-modes .mode-grid .mode-card{
+  border-radius:25px!important;overflow:hidden!important;
+  filter:drop-shadow(0 7px 12px rgba(0,0,0,.48))!important
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"]{
+  position:relative!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:flex-end!important;gap:4px!important;
+  padding:12px 7px 17px!important;
+  background-image:
+    radial-gradient(ellipse at 26% 15%,rgba(234,255,251,.12),transparent 28%),
+    radial-gradient(ellipse at 78% 88%,rgba(153,80,247,.18),transparent 39%),
+    radial-gradient(ellipse at 24% 93%,var(--plux-theme-soft),transparent 45%),
+    linear-gradient(155deg,rgba(17,88,71,.89),rgba(2,36,38,.97) 51%,rgba(10,11,29,.96))!important;
+  background-size:100% 100%!important;background-position:center!important;
+  border:1px solid var(--plux-theme-bright)!important;
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.25),inset 0 -5px 13px rgba(0,12,14,.62),0 8px 20px rgba(0,0,0,.43),0 0 11px var(--plux-theme-soft)!important
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"]::before{
+  content:''!important;display:block!important;position:absolute!important;inset:2px 4px auto!important;
+  height:34%!important;border-radius:22px 22px 60% 60%!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.13),transparent 83%)!important;
+  filter:none!important;mix-blend-mode:normal!important;opacity:.58!important;animation:none!important
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"]::after{
+  content:''!important;display:block!important;position:absolute!important;inset:3px!important;
+  border-radius:23px!important;border:1px solid rgba(198,255,226,.23)!important;
+  border-top-color:rgba(252,255,252,.44)!important;pointer-events:none!important
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"] .plux24-gallery-tile-icon{
+  display:grid!important;position:absolute!important;left:50%!important;top:20%!important;
+  width:72px!important;height:72px!important;max-width:39%!important;
+  transform:translateX(-50%)!important;place-items:center!important;
+  background:radial-gradient(circle at 22% 16%,rgba(230,255,249,.30),transparent 37%),
+    linear-gradient(148deg,var(--plux-theme-soft),rgba(0,22,28,.87) 75%)!important;
+  border:1px solid var(--plux-theme-bright)!important;border-radius:24px!important;
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.27),inset 0 -8px 11px rgba(2,19,22,.7),0 0 22px var(--plux-theme-soft)!important
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"] .plux24-gallery-tile-icon svg{width:40px!important;height:40px!important;filter:drop-shadow(0 0 7px var(--plux-theme-soft))!important}
+#screen-modes .mode-grid .mode-card[data-action="gallery"] strong{
+  position:relative!important;display:block!important;visibility:visible!important;
+  opacity:1!important;white-space:normal!important;font-size:clamp(14px,3.45vw,18px)!important;
+  line-height:1.25!important;letter-spacing:-.015em!important;
+  margin:0!important;padding:0!important;font-weight:700!important;
+  text-shadow:0 2px 5px rgba(0,0,0,.7)!important
+}
+#screen-modes .mode-grid .mode-card[data-action="gallery"] small{
+  position:relative!important;display:block!important;visibility:visible!important;
+  opacity:1!important;font-size:clamp(10px,2.8vw,13px)!important;
+  line-height:1.3!important;white-space:normal!important;margin:0!important;
+  color:rgba(235,255,244,.82)!important;text-align:center!important
+}
+#screen-modes .liquid-footer{
+  border-radius:24px!important;border-color:var(--plux-theme-bright)!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.2),0 4px 13px var(--plux-theme-soft)!important
+}
+@media(max-height:770px){
+ #screen-modes .mode-grid .mode-card[data-action="gallery"] .plux24-gallery-tile-icon{
+  width:52px!important;height:52px!important;top:18%!important;border-radius:17px!important
+ }
+ #screen-modes .mode-grid .mode-card[data-action="gallery"] .plux24-gallery-tile-icon svg{
+  width:31px!important;height:31px!important
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-modes .mode-grid .mode-card[data-action="gallery"],
+ #screen-home .speech-glass{transition:none!important;animation:none!important}
+}
