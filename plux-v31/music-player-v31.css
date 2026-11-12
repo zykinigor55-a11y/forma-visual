@@ -141,3 +141,14 @@
  #screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar:nth-child(2n){height:10px!important}
  #screen-home .plux31-mini-player.plux31-is-playing .plux31-eq-bar:nth-child(3n){height:14px!important}
 }
+
+/* Quiet swipe discoverability: two chevrons remain underneath the animated bars. */
+#screen-home .plux31-mini-player .plux31-equalizer{position:relative!important}
+#screen-home .plux31-mini-player .plux31-equalizer::after{
+ content:'‹  ›'!important;position:absolute!important;
+ left:0!important;right:0!important;bottom:0!important;
+ font:600 10px/1 system-ui,sans-serif!important;
+ text-align:center!important;letter-spacing:3px!important;
+ color:var(--plux-theme-accent,#43efb0)!important;
+ opacity:.68!important;pointer-events:none!important;
+}
