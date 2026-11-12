@@ -1,5 +1,7 @@
 # FORMA STUDIO / Architectural AI Art Director v0.2
 
+Release: 2026-11-12 — automatic daylight editorial curation.
+
 One original house image → image-aware analysis → balanced professional-domain photo search → visual comparison by a multimodal AI model → **one best compatible daylight editorial direction** → accurate Nano Banana prompt.
 
 Separate folder `studio` on the `forma-studio-v1` branch of `zykinigor55-a11y/forma-visual`. Does not modify the previous FORMA VISUAL project in the default branch.
