@@ -1,0 +1,27 @@
+name: PLUX V31.8.3 Gemini voice browser mock
+on:
+  push:
+    branches: [plux-v3183-gemini-voice-image]
+    paths:
+      - 'plux-v31/gemini-voice-v3183.js'
+      - 'plux-v31/verify-gemini-voice-v3183.mjs'
+      - '.github/workflows/plux-v3183-gemini-mock.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install browser runner
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Validate browser contract and realtime fake session
+        run: |
+          node --check plux-v31/gemini-voice-v3183.js
+          node --check plux-v31/ai-cognition-v318.js
+          node --check plux-v31/microdust-enhanced-v318.js
+          node --check plux-v129-overlay/plux-v129.js
+          node plux-v31/verify-gemini-voice-v3183.mjs
