@@ -110,7 +110,7 @@ function share(){
  if(!selected)return;
  try{sessionStorage.setItem("plux_pending_shared_video",selected.url)}catch{}
  close();
- if(window.PLUXFriendsV17?.open){
+ if(window.PLUXFriendsV17?.configured?.()){
   void window.PLUXFriendsV17.open();return;
  }
  if(navigator.share){void navigator.share({url:selected.url,title:"Видео из ПЛЮХ"}).catch(()=>{})}
