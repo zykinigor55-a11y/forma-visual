@@ -1,7 +1,4 @@
-/* PLUX v17 — phone save utility for images & MP4 in modern browsers.
- * Direct download first, Android share sheet as fallback. Native APK MediaStore
- * saving requires a separate Capacitor plugin; this module does not pretend otherwise.
- */
+/* PLUX V31 native MediaStore save; Android scoped gallery + browser share fallback. */
 (()=>{
  'use strict';
  if(window.PLUXSaveV17)return;
@@ -22,6 +19,15 @@
    const name=String(filename).replace(/[^a-zA-Zа-яА-Я0-9_.-]/g,'_').slice(0,120);
    try{
      if(typeof source!=='string'||!(source.startsWith('https://')||source.startsWith('data:')||source.startsWith('blob:')))throw Error('Нет файла для сохранения');
+     const native=window.Capacitor?.isNativePlatform?.()===true;
+     const saver=native?window.Capacitor?.Plugins?.PLUXMediaSaver:null;
+     // Video is streamed directly to Android MediaStore without buffering a 50MB file in JS.
+     if(saver?.saveRemote && source.startsWith('https://pluh-voice-demo.onrender.com/api/')){
+       try{
+         await saver.saveRemote({url:source,fileName:name});
+         message('Файл сохранён в галерею телефона');return true;
+       }catch(e){message('Ошибка сохранения: '+String(e?.message||e).slice(0,140));return false}
+     }
      let blob;
      if(source.startsWith('data:')){
        const m=/^data:([^;]+);base64,(.*)$/s.exec(source);
@@ -39,16 +45,17 @@
      const type=blob.type.split(';')[0]||requested;
      if(!allowed.test(type))throw Error('Неподдерживаемый формат '+type);
      const file=new File([blob],name,{type,lastModified:Date.now()});
-     if(window.Capacitor?.isNativePlatform?.()){
-       const saver=window.Capacitor?.Plugins?.PLUXMediaSaver;
+     if(native){
        if(saver?.saveBase64){
-         // Optional native plugin; never assume it is installed in test APK.
+         // Scoped Android gallery permission, no external-storage permission required.
          const encoded=await new Promise((resolve,reject)=>{
            const r=new FileReader();r.onerror=()=>reject(Error('Ошибка чтения файла'));
            r.onload=()=>resolve(String(r.result).split(',')[1]);r.readAsDataURL(blob);
          });
-         await saver.saveBase64({data:encoded,mimeType:type,fileName:name});
-         message('Сохранено в галерею телефона');return true;
+         try{
+           await saver.saveBase64({data:encoded,mimeType:type,fileName:name});
+           message('Сохранено в галерею телефона');return true;
+         }catch(e){message('Ошибка сохранения: '+String(e?.message||e).slice(0,140));return false}
        }
      }
      // On Android, navigator.share can expose a system Save/Files destination.
