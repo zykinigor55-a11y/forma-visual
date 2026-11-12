@@ -59,6 +59,13 @@
     row.dataset.plux124Known='true';
     const bubble=row.querySelector('.chat-bubble');
     if(!bubble)return;
+    // V31.8.7: never overwrite structured chat content. V12.4 used
+    // textContent='' for every bot bubble, which deleted generated <img>,
+    // progress bars, download actions and entire inline attachment cards.
+    // Only plain-text assistant bubbles can use the typewriter animation.
+    if(row.matches('.plux14-artifact-row,.plux3184-progress-row,.plux3187-image-row')||
+       bubble.matches('.plux14-artifact,.plux3184-generation,.plux3187-image-card')||
+       bubble.children.length>0||bubble.querySelector('img,video,a,button,output,progress,[role="progressbar"]'))return;
     const full=bubble.textContent||'';
     if(!live()||reduced.matches||full.length>650)return;
     const id=++chatToken;
