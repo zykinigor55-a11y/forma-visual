@@ -55,7 +55,7 @@ test -s plux-published/index.html
 # V31.8 feature gates: all additive modules must be bundled and linked.
 for file in video-hub-v318.js video-hub-v318.css ai-cognition-v318.js ai-cognition-v318.css microdust-enhanced-v318.js microdust-enhanced-v318.css microphone-permission-v318.js theme-motion-v318.css; do
   test -s "plux-published/$file"
-  grep -q "/$file?v=3171" plux-published/index.html
+  grep -q "/$file?v=3181" plux-published/index.html
 done
 for file in video-hub-v318.js ai-cognition-v318.js microdust-enhanced-v318.js microphone-permission-v318.js; do
   node --check "plux-published/$file"
