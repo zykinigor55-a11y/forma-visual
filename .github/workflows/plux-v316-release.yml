@@ -1,0 +1,39 @@
+name: PLUX V31.6 direct Android APK download
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - '.github/workflows/plux-v316-release.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Fetch V31.6 verified Android APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43194052450 --repo "${{ github.repository }}" --name PLUX-v31-Android-debug-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.6-Fullscreen-Android.apk
+          unzip -tq release/PLUX-V31.6-Fullscreen-Android.apk
+          sha256sum release/PLUX-V31.6-Fullscreen-Android.apk
+      - name: Publish public direct download link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-6-fullscreen-20261112"
+          note='PLUX V31.6 OLED Android APK: восстановлен полноэкранный слой видео и анимации капли как в V30, капля целиком в кадре (object-fit:contain), края видео плавно растворяются в OLED-чёрном. Сохранены оригинальная иконка, название PLUX без номера, кнопки клавиатуры/микрофона/камеры с изменением цветов, Друзья, Audius и радио, ASMR печати. Сборка тестовая, подпись debug. Веб-приложение загружается с Render.'
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" release/PLUX-V31.6-Fullscreen-Android.apk --clobber --repo "${{ github.repository }}"
+          else
+            gh release create "$tag" release/PLUX-V31.6-Fullscreen-Android.apk --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "PLUX V31.6 OLED · Android APK" --notes "$note" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[] | (.name + " " + .url)'
