@@ -12,7 +12,7 @@
 
  const icon='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 8 6 4-6 4z"/></svg>';
  const launch=document.createElement('button');
- launch.type='button';launch.className='plux16-open';launch.innerHTML=icon+'<span><strong>Создать видео</strong><small>Grok Lite · Cyhub · от 3 ₽</small></span><span class="plux16-right">›</span>';
+ launch.type='button';launch.className='plux16-open';launch.innerHTML=icon+'<span><strong>Создать видео</strong><small>Кинематографичные видео · Grok</small></span><span class="plux16-right">›</span>';
  launch.setAttribute('aria-label','Создать видео через Cyhub Grok Lite');
  const modesGrid=root?.querySelector('.mode-grid');
  if(modesGrid)modesGrid.insertAdjacentElement('afterend',launch);
@@ -30,7 +30,7 @@
  modal.innerHTML=[
   '<section class="plux16-card">',
   '<header class="plux16-head"><div class="plux16-symbol">'+icon+'</div><div><b>Создать видео</b><small>GROK LITE  /  CYHUB</small></div><button type="button" class="plux16-close" aria-label="Закрыть окно">×</button></header>',
-  '<p class="plux16-description">Промпт превратится в короткое видео. Цена рассчитывается до списания.</p>',
+  '<p class="plux16-description">Создай короткое видео по описанию. Платный запуск возможен только после подтверждения точной стоимости.</p>',
   '<form class="plux16-form">',
    '<label for="plux16-prompt">Что должно происходить в ролике?</label>',
    '<textarea id="plux16-prompt" rows="4" maxlength="1200" placeholder="Современный дом у озера. Камера плавно приближается, деревья движутся от ветра, мягкий вечерний свет…" required></textarea>',
@@ -39,7 +39,7 @@
     '<label>Формат<select name="aspectRatio"><option value="16:9" selected>16:9 · кино</option><option value="9:16">9:16 · вертикальный</option><option value="1:1">1:1 · квадрат</option></select></label>',
    '</div>',
    '<div class="plux16-spec"><span>Grok Imagine Lite</span><span>480p · экономный режим</span></div>',
-   '<div class="plux16-price" role="status" aria-live="polite">Стоимость зависит от длительности. Сначала проверим цену.</div>',
+   '<div class="plux16-price" role="status" aria-live="polite">Выбери длительность и параметры будущего видео.</div>',
    '<button class="plux16-quote" type="submit">Проверить стоимость</button>',
    '<button class="plux16-confirm" type="button" hidden>Создать видео</button>',
   '</form>',
@@ -67,7 +67,7 @@
  function resetQuote(){
    seq++;quote=null;
    confirmBtn.hidden=true;
-   price.textContent='Нажми «Проверить стоимость» — это бесплатно.';
+   price.textContent='';
    quoteBtn.hidden=false;
  }
  for(const item of [prompt,duration,aspect])item.addEventListener('input',resetQuote);
@@ -119,7 +119,7 @@
   if(!quote||busy||playing)return;
   busy=true;
   updateButton(confirmBtn,true,'Запускаю…');
-  price.textContent='Подтверждение принято. Запускаю генерацию.';
+  price.textContent='Генерация запускается…';
   try{
     const data=await fetchJson('/start',{method:'POST',body:JSON.stringify({quoteId:quote})});
     quote=null;confirmBtn.hidden=true;form.hidden=true;
@@ -157,18 +157,20 @@
   timer=setTimeout(()=>{if(modal.open&&playing)void poll()},5500);
  }
  save.addEventListener('click',async()=>{
-  if(!videoId)return;
-  updateButton(save,true,'Загружаю MP4…');
-  try{
-    const response=await fetch(API+'/file/'+encodeURIComponent(videoId),{mode:'cors',credentials:'omit',cache:'no-store'});
-    if(!response.ok){const d=await response.json().catch(()=>({}));throw Error(d.error||'Не удалось получить MP4')}
-    const blob=await response.blob();
-    if(blob.size>65000000)throw Error('Ролик слишком большой');
-    const url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download='PLUX-Grok-Lite.mp4';document.body.append(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),120000);
-  }catch(e){status.textContent=String(e.message||'Не удалось сохранить видео.')}
-  finally{updateButton(save,false,'Сохранить MP4')}
+   if(!videoId)return;
+   updateButton(save,true,'Сохраняю MP4…');
+   try{
+     const src=API+'/file/'+encodeURIComponent(videoId);
+     if(window.PLUXSaveV17?.save){
+       await window.PLUXSaveV17.save(src,'PLUX-video-'+videoId.slice(0,8)+'.mp4','video/mp4');
+     }else{
+       const link=document.createElement('a');
+       link.href=src;link.target='_blank';link.rel='noopener noreferrer';link.download='PLUX-video.mp4';
+       document.body.append(link);link.click();link.remove();
+       status.textContent='Открыл загрузку видео в браузере.';
+     }
+   }catch(e){status.textContent=String(e.message||'Не удалось сохранить видео.')}
+   finally{updateButton(save,false,'Сохранить MP4')}
  });
  const restart=document.createElement('button');restart.type='button';restart.className='plux16-again';restart.textContent='Новый ролик';
  restart.addEventListener('click',()=>{
