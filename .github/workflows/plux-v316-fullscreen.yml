@@ -1,0 +1,30 @@
+name: PLUX V31.6 fullscreen mascot regression test
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - '.github/workflows/plux-v316-fullscreen.yml'
+      - 'plux-v31/verify-fullscreen-v316.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-visual-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chrome automation
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Assert V30 fullscreen video, drop framing and OLED edges
+        run: node plux-v31/verify-fullscreen-v316.mjs
+      - name: Keep four mobile screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PLUX-V316-Fullscreen-Verification
+          path: plux-v31/verified-v316/*.png
+          if-no-files-found: warn
