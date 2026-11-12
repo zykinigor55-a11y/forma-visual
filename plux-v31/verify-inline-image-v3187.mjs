@@ -80,7 +80,16 @@ try{
   },prompt);
  }
  await send("Нарисуй красивую лошадь");
- await page.locator(".plux3187-percent").waitFor({timeout:10000});
+ await page.waitForTimeout(600);
+ const debug=await page.evaluate(()=>{
+  const form=document.getElementById("chat-form"),feed=document.getElementById("chat-messages"),chat=document.getElementById("screen-chat");
+  return {formHidden:!!form?.hidden,screenHidden:!!chat?.hidden,formStyle:getComputedStyle(form).display,
+   content:feed?.textContent?.slice(-700),markup:feed?.innerHTML?.slice(-900),
+   generated:feed?.querySelectorAll(".plux3187-percent").length,
+   api:!!window.PLUXChatAPI,forms:document.querySelectorAll("#chat-form").length};
+ });
+ console.log("PLUX3187_DEBUG "+JSON.stringify({debug,requests,statuses,errors}));
+ await page.locator(".plux3187-percent").waitFor({state:"attached",timeout:10000});
  const start=await page.locator(".plux3187-percent").last().textContent();
  assert.match(start,/\d+%/);
  assert(!start.includes("100%"));
