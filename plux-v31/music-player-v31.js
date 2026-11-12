@@ -9,7 +9,7 @@
  const greeting=document.getElementById('speech-button');
  if(!home||!greeting)return;
  const BACK='https://pluh-voice-demo.onrender.com';
- const audio=new Audio();audio.preload='none';audio.crossOrigin='anonymous';
+ const audio=new Audio();audio.preload='none'; // Streaming servers need not support CORS for playback.
  const S={source:'radio',list:[],track:null,index:-1,busy:false};
  const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x};
  const mini=el('div','plux31-mini-player');mini.id='plux31-mini-player';mini.hidden=true;
