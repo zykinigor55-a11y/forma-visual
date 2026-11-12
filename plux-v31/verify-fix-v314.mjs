@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright-core';
 import {mkdirSync} from 'node:fs';
 
-const URL='https://plux-v17-friends-preview.onrender.com/?ui-check=3141';
+const URL='https://plux-v17-friends-preview.onrender.com/?ui-check=3151';
 mkdirSync('plux-v31/smoke-v314',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 try {
@@ -10,7 +10,17 @@ try {
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const res=await page.goto(URL,{waitUntil:'domcontentloaded',timeout:60000});
  assert.equal(res?.status(),200);
- await page.waitForFunction(()=>!!window.PLUXOrbsV314&&!!window.PLUXThemesV31,{timeout:30000});
+ await page.waitForTimeout(1500);
+ const preload=await page.evaluate(()=>({
+   module:!!window.PLUXOrbsV314,
+   theme:!!window.PLUXThemesV31,
+   scripts:[...document.querySelectorAll('script[src]')].filter(e=>/plux-themes-v31|quick-orbs-v314|intro-asmr-v313/.test(e.src)).map(e=>e.src),
+   ready:document.readyState,
+   html:document.documentElement.dataset.pluxTheme
+ }));
+ console.log('PLUX314_MODULES '+JSON.stringify(preload));
+ assert.equal(preload.module,true,'glass orb tint JS must load');
+ assert.equal(preload.theme,true,'theme selection JS must load');
  // Move to the same active home state the user's screenshot shows.
  await page.evaluate(()=>{
    const home=document.getElementById('screen-home');
