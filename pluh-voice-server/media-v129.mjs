@@ -93,7 +93,7 @@ export async function handleImageRequest(req,res){
   if(imageTotal>=16)return reply(res,429,{error:"Дневной лимит генераций достигнут."});
   if(inFlight>=2)return reply(res,429,{error:"Генератор занят, попробуй повторить запрос."});
   let payload;
-  try{payload=await readJsonLimited(req,12000)}catch(e){return reply(res,e.status||400,{error:e.message})}
+  try{payload=await readJsonLimited(req,6_200_000)}catch(e){return reply(res,e.status||400,{error:e.message})}
   const prompt=String(payload.prompt||"").trim();
   if(prompt.length<3||prompt.length>1300)return reply(res,400,{error:"Опиши изображение (от 3 до 1300 символов)."});
   const styles={realism:"Фотореалистичное изображение с естественным освещением, без надписей.",
@@ -101,12 +101,43 @@ export async function handleImageRequest(req,res){
     "3d":"Премиальный детализированный 3D-рендер, без надписей.",
     animation:"Статичный выразительный кадр в стиле качественной анимации, без надписей."};
   const style=styles[payload.style]||styles.realism;
+  let reference=null;
+  // Never silently ignore an uploaded image: edit it or return a clear error.
+  if(payload.referenceImage!==undefined&&payload.referenceImage!==null){
+    if(typeof payload.referenceImage!=='string'||payload.referenceImage.length>5_700_000)
+      return reply(res,413,{error:"Фото слишком большое (до 4 МБ)."});
+    const m=/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(payload.referenceImage);
+    if(!m)return reply(res,415,{error:"Исходное фото должно быть JPG, PNG или WEBP."});
+    const bytes=Buffer.from(m[2],"base64");
+    const valid=(m[1]==="image/jpeg"&&bytes[0]===255&&bytes[1]===216)
+      ||(m[1]==="image/png"&&bytes[0]===137&&bytes[1]===80)
+      ||(m[1]==="image/webp"&&bytes.toString("ascii",0,4)==="RIFF");
+    if(!valid||bytes.length<100||bytes.length>4*1024*1024)
+      return reply(res,415,{error:"Фото повреждено или больше 4 МБ."});
+    reference={mime:m[1],bytes};
+  }
   recent.push(now);imageHits.set(ip,recent);imageTotal++;inFlight++;
   try{
-    const upstream=await fetch("https://api-market1.shop/v1/images/generations",{
+    let endpoint="https://api-market1.shop/v1/images/generations";
+    let headers={"Authorization":"Bearer "+key,"Content-Type":"application/json"};
+    let requestBody=JSON.stringify({model:"nano-banana-2.1",prompt:prompt+"\n"+style,size:"1024x1024",n:1,response_format:"b64_json"});
+    if(reference){
+      // OpenAI-compatible image edit; no fallback to text-to-image on failure.
+      // This preserves the user's source and prevents an unintended second charge.
+      endpoint="https://api-market1.shop/v1/images/edits";
+      const form=new FormData();
+      form.set("model","gpt-image-2");
+      form.set("prompt",prompt+"\n"+style+"\nUse the attached image as the source. Preserve all areas not requested to change.");
+      form.set("size","1024x1024");form.set("n","1");
+      const ext=reference.mime==="image/png"?"png":reference.mime==="image/webp"?"webp":"jpg";
+      form.set("image",new Blob([reference.bytes],{type:reference.mime}),"PLUX-source."+ext);
+      headers={"Authorization":"Bearer "+key};
+      requestBody=form;
+    }
+    const upstream=await fetch(endpoint,{
       method:"POST",
-      headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},
-      body:JSON.stringify({model:"nano-banana-2.1",prompt:prompt+"\n"+style,size:"1024x1024",n:1,response_format:"b64_json"}),
+      headers,
+      body:requestBody,
       signal:AbortSignal.timeout(115000)
     });
     const body=await upstream.json().catch(()=>null);
@@ -114,21 +145,21 @@ export async function handleImageRequest(req,res){
       const msg=String(body?.error?.message||body?.error||"").slice(0,220)
         .replaceAll(key,"[ключ скрыт]").replace(/sk-[a-z0-9_-]{6,}/gi,"[ключ скрыт]");
       console.warn("PLUX IMAGE upstream",upstream.status);
-      return reply(res,502,{error:"Nano Banana: HTTP "+upstream.status+". "+(msg||"Проверь ключ и доступ к модели.")});
+      return reply(res,502,{error:(reference?"Редактирование фото":"Создание изображения")+": HTTP "+upstream.status+". "+(msg||"Проверь доступ к модели.")});
     }
     const first=body?.data?.[0];
     if(typeof first?.b64_json==="string"&&/^[a-z0-9+/]+={0,2}$/i.test(first.b64_json)&&first.b64_json.length<24000000){
       const imageBytes=Buffer.from(first.b64_json,"base64");
       const kind=imageBytes[0]===255&&imageBytes[1]===216?"image/jpeg":imageBytes[0]===137&&imageBytes[1]===80?"image/png":imageBytes.toString("ascii",0,4)==="RIFF"?"image/webp":null;
       if(!kind)return reply(res,502,{error:"Модель вернула неподдерживаемый формат изображения."});
-      return reply(res,200,{image:"data:"+kind+";base64,"+first.b64_json,model:"nano-banana-2.1"});
+      return reply(res,200,{image:"data:"+kind+";base64,"+first.b64_json,edited:!!reference});
     }
     if(typeof first?.url==="string"){
       let u;try{u=new URL(first.url)}catch{}
       if(u?.protocol==="https:"&&!u.username&&!u.password&&!["localhost","127.0.0.1"].includes(u.hostname))
-        return reply(res,200,{url:u.toString(),model:"nano-banana-2.1"});
+        return reply(res,200,{url:u.toString(),edited:!!reference});
     }
-    return reply(res,502,{error:"Nano Banana не вернула изображение. Проверь формат ответа модели."});
+    return reply(res,502,{error:"Генератор не вернул готовое изображение. Проверь доступ к модели."});
   }catch(e){return reply(res,502,{error:e?.name==="TimeoutError"?"Истекло время генерации. Проверь баланс — запрос мог быть оплачен.":"Нет связи с API Market."})}
   finally{inFlight--;}
 }
