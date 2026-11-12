@@ -136,6 +136,12 @@ async function openChat(p){
   id('pf-peer').textContent=p.display_name;id('pf-peername').textContent='@'+p.handle;
   drawAvatar(id('pf-peer-avatar'),p);
   visible('pf-social',false);visible('pf-chat',true);await loadMessages();
+  // Share-video handoff is always a draft. Sending remains a user action.
+  const link=sessionStorage.getItem('plux_pending_shared_video');
+  if(link&&/^https:\/\/(?:www\.)?(?:youtube\.com|youtu\.be|rutube\.ru|vkvideo\.ru|vk\.com)\//i.test(link)){
+   id('pf-input').value=link;sessionStorage.removeItem('plux_pending_shared_video');
+   notice('Ссылка на видео добавлена в сообщение. Нажми отправить.');
+  }
  });
 }
 function leaveChat(){S.dialog=null;S.signature='';visible('pf-social',true);visible('pf-chat',false)}
