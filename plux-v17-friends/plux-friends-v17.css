@@ -180,3 +180,20 @@
  #plux-friends-panel .pf-avatar-own,#plux-friends-panel .pf-profile #pf-avatar-change{width:53px;height:53px;min-width:53px;flex-basis:53px}
  #plux-friends-panel .pf-profile-id .pf-avatar-hint{font-size:9px;white-space:normal}
 }
+
+/* V31.8.4: opt-in new-member discovery; no auto sharing of installs. */
+#plux-friends-panel .pf-tabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important}
+#plux-friends-panel .pf-tab{padding:11px 2px!important;font-size:clamp(10px,2.6vw,12px)!important;letter-spacing:-.1px!important}
+#plux-friends-panel .pf-discovery-info{margin:0 0 14px!important;color:#9dcab7!important;font-size:12px!important;line-height:1.6!important}
+#plux-friends-panel .pf-discovery-settings{
+ display:flex;gap:12px;align-items:center;margin:0 0 13px;padding:13px;border-radius:15px;
+ border:1px solid rgba(138,230,196,.36);background:linear-gradient(115deg,rgba(7,57,42,.66),rgba(3,26,27,.93));cursor:pointer
+}
+#plux-friends-panel .pf-discovery-settings[hidden]{display:none!important}
+#plux-friends-panel .pf-discovery-settings>input{
+ min-width:20px!important;width:20px!important;height:20px!important;min-height:20px!important;padding:0!important;
+ flex:0 0 20px;accent-color:var(--plux-theme-accent,#53ffc1)
+}
+#plux-friends-panel .pf-discovery-settings span{display:flex;flex-direction:column;gap:3px}
+#plux-friends-panel .pf-discovery-settings strong{font-size:12px;color:#edfff8}
+#plux-friends-panel .pf-discovery-settings small{font-size:10px;line-height:1.5;color:#95c7b0}
