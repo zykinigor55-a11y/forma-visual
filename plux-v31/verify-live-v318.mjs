@@ -5,7 +5,7 @@ try{
  const page=await browser.newPage({viewport:{width:390,height:860},deviceScaleFactor:1,isMobile:true,hasTouch:true});
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- const res=await page.goto('https://plux-v17-friends-preview.onrender.com/?mobile=1&v=3182',{waitUntil:'domcontentloaded',timeout:60000});
+ const res=await page.goto('https://plux-v17-friends-preview.onrender.com/?mobile=1&v=3183',{waitUntil:'domcontentloaded',timeout:60000});
  assert.equal(res.status(),200);
  await page.waitForFunction(()=>!!window.PLUXVideoHubV318&&!!window.PLUXCognitionV318&&!!window.PLUXDustV318&&!!window.PLUXThemesV31,{timeout:35000});
  await page.evaluate(()=>{
@@ -34,13 +34,14 @@ try{
  const headerAudit=await page.evaluate(()=>[...document.querySelector('#screen-home .home-head').querySelectorAll('img,svg,h1,h2,strong,span,div')].slice(0,35).map(n=>({tag:n.tagName,id:n.id,class:String(n.className?.baseVal||n.className||'').slice(0,80),src:(n.getAttribute('src')||'').slice(0,90),text:(n.textContent||'').trim().slice(0,25),visible:getComputedStyle(n).visibility,display:getComputedStyle(n).display,rect:[Math.round(n.getBoundingClientRect().width),Math.round(n.getBoundingClientRect().height)]})));
  console.log('PLUX318_HEADER_AUDIT '+JSON.stringify(headerAudit));
  const s=await state();console.log('PLUX318_LIVE_HOME '+JSON.stringify(s));
- assert(s.logo&&s.logo[2]>=90&&s.logo[2]<=175,'compact cognition logo mounted');
+ assert(s.logo&&s.logo[2]>=70&&s.logo[2]<=95,'compact cognition logo mounted');
  const legacy=await page.evaluate(()=>{
    const box=document.querySelector('#screen-home .home-head .branding');
    return {visible:box?getComputedStyle(box).visibility:'absent',opacity:box?getComputedStyle(box).opacity:'0'};
  });
  console.log('PLUX318_LEGACY_LOGO '+JSON.stringify(legacy));
  assert(legacy.visible==='hidden'||Number(legacy.opacity)===0,'old large logo is invisible');
+ assert(!s.logoText?.includes('INTELLIGENCE')&&!s.logoText?.includes('PLUX'),'AI orbit without branding text');
  assert(s.videoTab&&s.videoTab[2]>30,'video tab mounted and visible');
  assert(s.nav>=6,'five original tabs and new video tab');
  assert(s.ambient>=25,'animated ambient particles present');
