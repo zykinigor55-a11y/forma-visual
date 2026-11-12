@@ -11,9 +11,25 @@ try{
  await page.waitForFunction(()=>!!window.PLUXOrbsV314&&!!window.PLUXThemesV31,{timeout:30000});
  await page.evaluate(()=>{
    const home=document.getElementById('screen-home');
-   for(const other of document.querySelectorAll('.screen'))if(other!==home)other.hidden=true;
-   home.hidden=false;home.style.removeProperty('display');
+   for(const other of document.querySelectorAll('.screen'))if(other!==home){
+     other.hidden=true;other.style.setProperty('display','none','important');
+   }
+   for(const selector of ['#screen-onboard','#plux127-intro','#onboarding-screen','.onboard-overlay']){
+     for(const other of document.querySelectorAll(selector)){
+       other.hidden=true;other.style.setProperty('display','none','important');
+     }
+   }
+   home.hidden=false;
+   home.style.setProperty('display','flex','important');
  });
+ await page.waitForTimeout(100);
+ const overlay=await page.evaluate(()=>{
+   const center=document.elementFromPoint(innerWidth/2,innerHeight*.34);
+   return {id:center?.id,cls:center?.className?.toString(),name:center?.tagName,
+     onboard:document.getElementById('screen-onboard')?.getBoundingClientRect().height,
+     home:document.getElementById('screen-home')?.getBoundingClientRect().height};
+ });
+ console.log('PLUX316_ACTIVE_SCREEN '+JSON.stringify(overlay));
  await page.waitForTimeout(1200);
  const state=()=>page.evaluate(()=>{
    const B=e=>{const r=e.getBoundingClientRect();return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)}};
