@@ -1,0 +1,108 @@
+/* PLUX V23 four sapphire/ruby/solar/emerald themes — restrained optical glass. */
+:root[data-plux-theme="emerald"]{
+  --plux-theme-accent:#61f7bd;--plux-theme-soft:rgba(59,218,156,.27);
+  --plux-theme-bright:rgba(133,255,208,.65);--plux-theme-rotation:0deg;
+}
+:root[data-plux-theme="azure"]{
+  --plux-theme-accent:#79baff;--plux-theme-soft:rgba(51,125,245,.25);
+  --plux-theme-bright:rgba(158,210,255,.66);--plux-theme-rotation:120deg;
+}
+:root[data-plux-theme="ruby"]{
+  --plux-theme-accent:#ff7b89;--plux-theme-soft:rgba(241,58,82,.23);
+  --plux-theme-bright:rgba(255,169,170,.7);--plux-theme-rotation:-120deg;
+}
+:root[data-plux-theme="solar"]{
+  --plux-theme-accent:#ffd07a;--plux-theme-soft:rgba(235,171,56,.26);
+  --plux-theme-bright:rgba(255,226,154,.72);--plux-theme-rotation:-60deg;
+}
+#screen-home .home-head{position:relative}
+#screen-home .plux-theme-trigger{
+  position:relative!important;box-sizing:border-box;display:flex!important;align-items:center!important;
+  justify-content:center!important;flex:0 0 38px!important;width:38px!important;height:38px!important;
+  padding:0!important;margin:0 7px 0 auto!important;border:1px solid rgba(198,244,224,.35)!important;
+  border-radius:15px!important;cursor:pointer;z-index:4;
+  background:linear-gradient(140deg,rgba(240,255,251,.16),rgba(19,59,52,.42) 43%,rgba(1,11,14,.85))!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.33),inset 0 -5px 9px rgba(1,13,15,.63),0 5px 14px rgba(0,0,0,.2)!important;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+#screen-home .plux-theme-trigger:focus-visible,#plux-theme-backdrop button:focus-visible{outline:2px solid var(--plux-theme-accent);outline-offset:3px}
+#screen-home .plux-theme-four{width:20px;height:20px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;transform:none!important}
+#screen-home .plux-theme-four i{display:block;border-radius:50%;width:8px;height:8px;box-shadow:inset 0 1px 2px rgba(255,255,255,.65),0 0 6px rgba(255,255,255,.12)}
+#screen-home .plux-theme-four i:nth-child(1){background:#53dfb0}
+#screen-home .plux-theme-four i:nth-child(2){background:#529df7}
+#screen-home .plux-theme-four i:nth-child(3){background:#ef6e76}
+#screen-home .plux-theme-four i:nth-child(4){background:#f9c263}
+.plux-theme-backdrop[hidden]{display:none!important}
+.plux-theme-backdrop{
+  position:fixed;inset:0;z-index:2147483000;display:flex;align-items:flex-end;justify-content:center;
+  padding:18px max(14px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+  box-sizing:border-box;background:rgba(0,4,5,.67);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.plux-theme-dialog{width:100%;max-width:450px;box-sizing:border-box;border-radius:29px;padding:21px 18px 23px;
+  border:1px solid rgba(193,247,220,.42);
+  background:linear-gradient(145deg,rgba(20,57,51,.94),rgba(3,14,19,.98) 60%,rgba(11,12,26,.97));
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.23),0 -10px 44px rgba(40,219,147,.08),0 20px 60px rgba(0,0,0,.55);
+  color:#eefdf7;max-height:90vh;overflow-y:auto}
+.plux-theme-heading{display:flex;align-items:start;justify-content:space-between;gap:12px;margin:0 3px 21px}
+.plux-theme-heading strong{display:block;font-size:19px;font-weight:650;letter-spacing:.015em}
+.plux-theme-heading small{display:block;margin-top:5px;font-size:12px;color:#a0c8ba}
+.plux-theme-close{flex:0 0 34px;width:34px;height:34px;display:grid;place-items:center;
+  font:26px/1 system-ui;color:#e5fff4;border-radius:12px;border:1px solid rgba(215,255,244,.21);
+  background:rgba(172,245,220,.08);cursor:pointer}
+.plux-theme-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.plux-theme-option{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;
+  min-width:0;padding:15px 2px 12px;border-radius:18px;border:1px solid rgba(170,236,208,.2);
+  background:radial-gradient(ellipse at top,rgba(123,245,209,.08),transparent 60%),rgba(6,22,23,.58);
+  color:#e6fff5;cursor:pointer;transition:border-color .28s,box-shadow .28s,transform .28s}
+.plux-theme-option.selected{border-color:var(--plux-theme-accent);
+  background:linear-gradient(150deg,var(--plux-theme-soft),rgba(1,10,12,.7));box-shadow:inset 0 1px 2px rgba(255,255,255,.15),0 0 17px var(--plux-theme-soft)}
+.plux-theme-option:active{transform:scale(.96)}
+.plux-theme-swatch{display:block;width:min(48px,11vw);height:min(48px,11vw);border-radius:50%;
+  background:radial-gradient(circle at 31% 25%,rgba(255,255,255,.93) 0 4%,rgba(255,255,255,.4) 7%,transparent 26%),
+    radial-gradient(circle at 45% 42%,var(--swatch-color),rgba(0,12,15,.84) 89%);
+  box-shadow:inset -7px -8px 11px rgba(0,0,0,.42),inset 3px 3px 7px rgba(255,255,255,.32),
+    0 0 21px color-mix(in srgb,var(--swatch-color) 49%,transparent)}
+.plux-theme-name{font-size:12px;font-weight:550;white-space:nowrap}
+.plux-theme-check{position:absolute;right:5px;top:4px;font-size:12px;color:var(--plux-theme-accent);opacity:0}
+.plux-theme-option.selected .plux-theme-check{opacity:1}
+/* Tint only the original five mascot videos and their poster images. User content stays untouched. */
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #home-scene video,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #home-scene img[src*="states"],
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-voice .voice-image-layer video,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-voice .voice-image-layer img,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #screen-onboard video,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) #plux127-intro video,
+:root[data-plux-theme]:not([data-plux-theme="emerald"]) video[src*="/assets/videos-v106/"]{
+  filter:hue-rotate(var(--plux-theme-rotation)) saturate(1.16)!important;
+}
+:root[data-plux-theme] #screen-home .glass-icon,
+:root[data-plux-theme] #screen-home .action-round,
+:root[data-plux-theme] #screen-home .speech-glass,
+:root[data-plux-theme] #screen-voice .big-voice-mic,
+:root[data-plux-theme] #screen-chat .plux14-artifact,
+:root[data-plux-theme] #screen-chat .plux22-generating{
+  border-color:var(--plux-theme-bright)!important;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.29),inset 0 -6px 15px var(--plux-theme-soft),0 0 19px var(--plux-theme-soft)!important;
+  transition:border-color .28s,box-shadow .28s,background .28s!important
+}
+:root[data-plux-theme] #screen-home .nav-button.selected,
+:root[data-plux-theme] #screen-home .nav-button.selected svg,
+:root[data-plux-theme] #screen-chat .plux14-file-title,
+:root[data-plux-theme] #screen-voice #voice-toplabel{
+  color:var(--plux-theme-accent)!important;transition:color .3s
+}
+:root[data-plux-theme] #screen-chat .plux22-progress i{
+  background:linear-gradient(90deg,transparent,var(--plux-theme-accent),transparent)!important
+}
+:root[data-plux-theme] #screen-chat .plux22-orbit{
+  border-color:var(--plux-theme-bright)!important;box-shadow:inset 0 0 17px var(--plux-theme-soft),0 0 26px var(--plux-theme-soft)!important
+}
+@media(max-width:370px){
+ #screen-home .plux-theme-trigger{width:33px!important;height:33px!important;flex-basis:33px!important;margin-right:3px!important}
+ .plux-theme-options{gap:6px}
+ .plux-theme-dialog{padding:17px 12px 21px}
+}
+@media(prefers-reduced-motion:reduce){
+ .plux-theme-option,:root[data-plux-theme] #screen-home .glass-icon,
+ :root[data-plux-theme] #screen-voice .big-voice-mic{transition:none!important}
+}
