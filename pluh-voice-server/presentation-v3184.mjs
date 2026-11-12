@@ -40,13 +40,13 @@ function illustration(){
  '</svg>';
  return "data:image/svg+xml;base64,"+Buffer.from(svg).toString("base64");
 }
-export async function makePresentation(prompt,messages,key,ip){
+export async function makePresentation(prompt,messages,key,ip,imageKey=key){
  if(!key)throw fail("Не настроен ключ API Market.");
  const data=await outline(prompt,messages,key);
  let visual=fromAttachments(messages),imageNote="";
  if(!visual){
   try{
-   const img=await makeGptImage("Иллюстрация для презентации: "+clean(prompt,650)+". Без текста.",key,ip);
+   const img=await makeGptImage("Иллюстрация для презентации: "+clean(prompt,650)+". Без текста.",imageKey,ip);
    if(typeof img?.dataUrl==="string"&&/^data:image\/(png|jpeg|webp);base64,/.test(img.dataUrl))visual=img.dataUrl;
   }catch(e){imageNote="GPT Image 2 не создала картинку: "+clean(e.message,90)}
  }
