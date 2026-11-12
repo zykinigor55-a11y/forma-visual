@@ -1,0 +1,40 @@
+name: PLUX V31.8.6 Android Voice Memory APK download
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths: ['.github/workflows/plux-v3186-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download verified V31.8.6 Android build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43256975564 --repo "${{ github.repository }}" --name PLUX-V31.8-Android-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.8.6-Android.apk
+          unzip -tq release/PLUX-V31.8.6-Android.apk
+          sha256sum release/PLUX-V31.8.6-Android.apk
+      - name: Publish direct download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-8-6-gemini-voice-memory-20261112"
+          apk="release/PLUX-V31.8.6-Android.apk"
+          notes="PLUX V31.8.6 test APK. New device-local voice memory for Gemini/Arkheon: completed Russian audio transcripts (when provided by the realtime provider) stored across WebView reloads and reconnects, replayed as quoted prior conversation context, per account or guest. Displays compact memory count/clear controls. Does not store audio or secrets; not synced to other devices. Supports the V31.8.5 stable Gemini voice, Friends avatar persistence and premium OLED UI. WebSocket mocked tests and Android build passed. Live provider transcript delivery on physical Android remains to be tested."
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk" --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "PLUX V31.8.6 - Gemini Voice Memory" --notes "$notes"
+          else
+            gh release create "$tag" "$apk" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "PLUX V31.8.6 - Gemini Voice Memory" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[]|(.name+" "+.url)'
