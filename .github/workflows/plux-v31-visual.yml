@@ -1,0 +1,30 @@
+name: PLUX V31 visual UI verification
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - 'plux-v31/verify-ui-v31.mjs'
+      - '.github/workflows/plux-v31-visual.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser driver
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Verify six V30 tools, real video button, single eight-color theme
+        run: node plux-v31/verify-ui-v31.mjs
+      - name: Capture actual PLUX screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PLUX-V31-tools-and-colors-screenshots
+          path: plux-v31/smoke-shots/*.png
+          if-no-files-found: warn
