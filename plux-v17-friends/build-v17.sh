@@ -67,7 +67,7 @@ test -s plux-published/assets/videos-v106/01_idle.mp4
 test -s plux-published/assets/videos-v106/05_happy.mp4
 echo "PLUX V31.8 OLED: V31.7 preserved; Nano Banana errors, Friends avatars, Video, AI core, microphone, brighter particles and themes bundled"
 
-grep -q 'plux3185-prompt-count' plux-published/plux-v129.js
+grep -q 'plux3184-prompt-count' plux-published/plux-v129.js
 
 # V31.8.5 voice exclusivity, persistent account and profile avatar handling.
 node --check plux-published/gemini-voice-v3183.js
