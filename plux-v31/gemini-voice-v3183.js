@@ -56,15 +56,21 @@ function resumeAfterAnswer(generation){
 }
 const supported=()=>!!navigator.mediaDevices?.getUserMedia&&typeof WebSocket!=="undefined";
 const setState=(name,detail,state="idle")=>{
- title.textContent=name;status.textContent=detail;
+ const changed=voice.dataset.voiceState!==state;
+ if(title.textContent!==name)title.textContent=name;
+ if(status.textContent!==detail)status.textContent=detail;
  voice.dataset.voiceState=state;
  button.classList.toggle("live",connected);
  button.classList.toggle("plux3183-connecting",connecting);
  button.setAttribute("aria-pressed",connected?"true":"false");
- const layer=voice.querySelector(".voice-image-layer");
- const clip=layer?.querySelector("video");
- const videoState=state==="talking"?"talking":state==="thinking"?"thinking":state==="listening"?"listening":"idle";
- if(clip&&window.PLUXSeamless?.set)try{window.PLUXSeamless.set(clip,layer,videoState)}catch{}
+ // The old code reinitialized the mascot video on EVERY PCM chunk. Change it
+ // only when the voice phase changes, not dozens of times per second.
+ if(changed){
+  const layer=voice.querySelector(".voice-image-layer");
+  const clip=layer?.querySelector("video");
+  const videoState=state==="talking"?"talking":state==="thinking"?"thinking":state==="listening"?"listening":"idle";
+  if(clip&&window.PLUXSeamless?.set)try{window.PLUXSeamless.set(clip,layer,videoState)}catch{}
+ }
 };
 const showError=message=>setState("Голосовой режим",String(message||"Ошибка подключения").slice(0,220),"idle");
 const bytesToBase64=bytes=>{
@@ -157,7 +163,7 @@ function handle(data,generation){
   setState("Отвечаю","Готовый ответ ПЛЮХа.","talking");
   playDelta(data.delta);
  }
- if(type==="response.done"||type==="response.completed"||type==="response.cancelled"||type==="response.failed"){
+ if(type==="response.done"||type==="response.completed"||type==="response.output_audio.done"||type==="response.audio.done"||type==="response.cancelled"||type==="response.failed"){
   responseFinished=true;resumeAfterAnswer(generation);
  }
 }
