@@ -1,0 +1,90 @@
+/* PLUX V31.8.7 · Inline GPT Image 2 results and estimated progress.
+   Deliberately scoped to chat: premium OLED/Theme V31 remains untouched. */
+#screen-chat .plux3187-image-row,
+#screen-chat .plux3184-progress-row{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+#screen-chat .plux3187-image-row .plux3187-image-card{
+ box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+ align-items:stretch!important;gap:10px!important;
+ width:min(360px,calc(100vw - 112px))!important;min-width:0!important;
+ max-width:min(360px,calc(100vw - 112px))!important;
+ padding:13px!important;border-radius:20px!important;
+ background:linear-gradient(148deg,rgba(9,42,35,.96),rgba(1,14,19,.98) 75%)!important;
+ border:1px solid color-mix(in srgb,var(--plux-theme-accent,#6bf8c4) 43%,transparent)!important;
+ box-shadow:inset 0 1px 1px #ffffff25,0 10px 30px #0009!important;
+ overflow:hidden!important;color:#f2fff9!important;
+}
+#screen-chat .plux3187-image-title{
+ font:700 15px/1.4 system-ui,sans-serif!important;
+ color:#f4fff9!important;
+}
+#screen-chat .plux3187-image-open{
+ display:block!important;width:100%!important;min-height:170px!important;
+ border:0!important;border-radius:15px!important;background:#010706!important;
+ padding:0!important;margin:0!important;overflow:hidden!important;
+ cursor:zoom-in!important;box-shadow:inset 0 0 0 1px #d8fff42c!important;
+}
+#screen-chat .plux3187-image-open>.plux14-created-image,
+#screen-chat .plux3187-image-open>.plux3187-image-loaded{
+ display:block!important;width:100%!important;max-width:100%!important;
+ min-height:170px!important;max-height:420px!important;height:auto!important;
+ aspect-ratio:auto!important;object-fit:contain!important;
+ visibility:visible!important;opacity:1!important;
+ position:static!important;z-index:1!important;
+ border:0!important;border-radius:15px!important;
+ filter:none!important;transform:none!important;
+ content-visibility:visible!important;
+}
+#screen-chat .plux3187-image-card .plux14-file-title{
+ font:500 12px/1.35 system-ui,sans-serif!important;color:#a8cebf!important;
+ display:block!important;white-space:normal!important;margin:0!important;
+}
+#screen-chat .plux3187-image-card .plux3187-image-save{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-height:43px!important;
+ border-radius:13px!important;margin:0!important;cursor:pointer!important;
+ background:linear-gradient(130deg,#126047,#063728)!important;
+ border:1px solid color-mix(in srgb,var(--plux-theme-accent,#7cf5be) 60%,transparent)!important;
+ color:#f1fff8!important;font:600 13px/1.2 system-ui,sans-serif!important;
+}
+#screen-chat .plux3187-generation{min-height:110px!important;box-sizing:border-box!important}
+#screen-chat .plux3187-generation .plux3184-render-body{min-width:0!important}
+#screen-chat .plux3187-progressline{
+ display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:8px!important;
+ width:100%!important;margin-top:3px!important;
+}
+#screen-chat .plux3187-percent-note{
+ font:400 10px/1.35 system-ui,sans-serif!important;
+ color:#8fbdaa!important;white-space:normal!important;
+}
+#screen-chat .plux3187-percent{
+ font:700 17px/1.1 ui-monospace,SFMono-Regular,Consolas,monospace!important;
+ color:var(--plux-theme-accent,#6de8b7)!important;
+ font-variant-numeric:tabular-nums!important;
+}
+#screen-chat .plux3187-track{
+ position:relative!important;display:block!important;overflow:hidden!important;
+ width:100%!important;height:6px!important;
+ margin:0!important;border-radius:999px!important;background:#1f453a!important;
+}
+#screen-chat .plux3187-track>i{
+ display:block!important;position:absolute!important;left:0!important;top:0!important;bottom:0!important;
+ height:100%!important;max-width:100%!important;border-radius:inherit!important;
+ background:linear-gradient(90deg,var(--plux-theme-accent,#67f3ba),#defbec)!important;
+ box-shadow:0 0 8px color-mix(in srgb,var(--plux-theme-accent,#57e6ae) 55%,transparent)!important;
+ transform:none!important;animation:none!important;transition:width .55s ease!important;
+}
+#screen-chat .plux3187-failed{
+ border-color:#e86c8488!important;background:#210e16e8!important;
+}
+#screen-chat .plux3187-failed .plux3187-percent{color:#ffb0bd!important;font-size:12px!important}
+#screen-chat .plux3187-failed .plux3184-render-body small{color:#ffd3d9!important}
+@media(max-width:360px){
+ #screen-chat .plux3187-image-row .plux3187-image-card{
+  width:min(300px,calc(100vw - 98px))!important;
+  max-width:min(300px,calc(100vw - 98px))!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #screen-chat .plux3187-track>i{transition:none!important}
+}
