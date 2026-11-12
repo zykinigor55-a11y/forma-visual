@@ -348,7 +348,7 @@
       const payload={messages,attachments,requestedArtifact:kind||undefined,
         clientFeatures:{generationJobs:!!kind},clientJobId:jobId};
       let result=await requestChatWithRecovery(payload,kind,progress,jobId);
-      if(response.status===202&&result.job)result=await pollJob(result.job,progress||{state:()=>{}});
+      if(result.job)result=await pollJob(result.job,progress||{state:()=>{}});
       if(result.artifact){
         // The same pending bubble becomes the finished image or document.
         // No separate generic success text concealing the actual picture.
