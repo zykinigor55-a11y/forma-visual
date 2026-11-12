@@ -173,8 +173,25 @@
       const response=await fetch(base+'/api/image',{method:'POST',mode:'cors',credentials:'omit',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({prompt:description,style:styles[selected]||'realism',referenceImage:editMode?referenceImage:undefined}),signal:AbortSignal.timeout(125000)});
-      const data=await response.json().catch(()=>({}));
-      if(!response.ok)throw Error(data.error||'Не удалось создать изображение');
+      const raw=await response.text();
+      let data={};try{data=JSON.parse(raw)}catch{}
+      if(!response.ok){
+        const detail=typeof data.error==='string'?data.error:'';
+        const messages={
+          401:'Не прошла авторизация провайдера генерации (401). Проверьте API-ключ на сервере.',
+          402:'У провайдера не хватает средств или кредитов (402).',
+          403:'Генерация запрещена для текущего ключа или проекта (403).',
+          404:'Сервер ПЛЮХ не поддерживает /api/image (404). Нужно подключить генератор на Render.',
+          405:'На сервере нет рабочего обработчика POST /api/image (405).',
+          413:'Слишком большой запрос. Попробуй фото меньшего размера (413).',
+          429:'Провайдер ограничил частоту запросов или баланс (429).',
+          500:'Внутренняя ошибка сервера генерации (500).',
+          502:'Ошибка связи сервера с провайдером изображений (502).',
+          503:'Сервис генерации пока не настроен или временно недоступен (503).'
+        };
+        throw Error(messages[response.status]||(detail||'Не удалось создать изображение')+' (HTTP '+response.status+')');
+      }
+      if(!raw.trim())throw Error('Сервер вернул пустой ответ. Проверь обработчик /api/image.');
       const src=data.image||data.url;
       if(!src)throw Error('Генератор не вернул файл.');
       const image=document.createElement('img');image.src=src;image.alt=editMode?'Отредактированная фотография':'Сгенерированное изображение';
