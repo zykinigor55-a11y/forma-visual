@@ -1,0 +1,30 @@
+name: PLUX V31.4 mascot and glass theme test
+on:
+  push:
+    branches: [plux-v31-v30-base-friends-colors-music]
+    paths:
+      - 'plux-v31/verify-fix-v314.mjs'
+      - '.github/workflows/plux-v314-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install mobile Chrome driver
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Assert original drop visible and all three crystals match theme
+        run: node plux-v31/verify-fix-v314.mjs
+      - name: Preserve screenshots of all four color states
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PLUX-V314-Mobile-Home-Fixed
+          path: plux-v31/smoke-v314/*.png
+          if-no-files-found: warn
