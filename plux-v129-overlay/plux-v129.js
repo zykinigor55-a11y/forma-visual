@@ -166,7 +166,7 @@
     const styles={'Реализм':'realism','Арт':'art','3D':'3d','Анимация':'animation'};
     createButton.disabled=true;createButton.setAttribute('aria-busy','true');
     createButton.textContent='Создаю изображение…';
-    result.hidden=false;result.replaceChildren();
+    result.hidden=false;result.classList.remove('plux129-error');result.replaceChildren();
     const progress=document.createElement('p');progress.className='plux129-generating';progress.textContent=editMode?'Редактируем фотографию…':'Создаём изображение…';
     result.append(progress);
     try{
@@ -189,7 +189,8 @@
           502:'Ошибка связи сервера с провайдером изображений (502).',
           503:'Сервис генерации пока не настроен или временно недоступен (503).'
         };
-        throw Error(messages[response.status]||(detail||'Не удалось создать изображение')+' (HTTP '+response.status+')');
+        // Keep the provider error returned by our backend. Generic HTTP 502 hid API Market failures.
+        throw Error(detail ? detail+' (HTTP '+response.status+')' : (messages[response.status]||'Ошибка генерации (HTTP '+response.status+')'));
       }
       if(!raw.trim())throw Error('Сервер вернул пустой ответ. Проверь обработчик /api/image.');
       const src=data.image||data.url;
