@@ -1,7 +1,7 @@
-name: PLUX Android APK + iOS project
+name: PLUX Android APK + iOS project (v17 preview)
 on:
   push:
-    branches: [plux-v12-2-2k-fixes]
+    branches: [plux-v12-2-2k-fixes, plux-v17-photo-chat-music-plan]
     paths:
       - 'mobile-plux/**'
       - '.github/workflows/plux-mobile.yml'
@@ -42,7 +42,7 @@ jobs:
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: PLUX-Android-debug-APK
+          name: PLUX-v17-Android-debug-APK
           path: mobile-plux/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
   ios:
