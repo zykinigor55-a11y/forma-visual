@@ -110,3 +110,9 @@ grep -q '/generation-progress-v3188.css?v=3188' plux-published/index.html
 grep -q '/plux-chat-v128.js?v=3188' plux-published/index.html
 grep -q 'PLUXGenerationProgressV3188' plux-published/plux-chat-v128.js
 grep -q 'PLUXGenerationProgressV3188' plux-published/plux-v129.js
+
+# V31.8.9: registration must display email confirmation instead of silent failure.
+node --check plux-published/plux-friends-v17.js
+grep -q 'pf-confirm-address' plux-published/plux-friends-v17.js
+grep -q 'over_email_send_rate_limit' plux-published/plux-friends-v17.js
+grep -q '/plux-friends-v17.js?v=3189' plux-published/index.html
