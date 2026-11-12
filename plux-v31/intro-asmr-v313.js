@@ -71,6 +71,9 @@
  // Browser/iOS WebKit requires first actual touch before audio can be heard.
  document.addEventListener('pointerdown',initialize,{capture:true,passive:true});
  document.addEventListener('keydown',initialize,{capture:true,passive:true});
+ // Native PLUX WebViews can play the launch typewriter without a tap.
+ // Web/Safari still follows its own first-gesture autoplay restriction.
+ if(window.Capacitor?.isNativePlatform?.()===true)initialize();
  function tick(){
    if(!soundEnabled()||document.hidden||!C)return;
    const now=performance.now();
