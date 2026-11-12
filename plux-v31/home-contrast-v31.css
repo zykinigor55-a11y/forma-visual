@@ -1,0 +1,91 @@
+/* PLUX v31.1 — complementary home glass. The mascot keeps its chosen pigment.
+   Only home-screen chrome and atmospheric glows use the contrasting hue. */
+:root[data-plux-theme="emerald"]{--plux-home-contrast:#f8c77e;--plux-home-rgb:248,199,126;--plux-home-deep:#0d1118}
+:root[data-plux-theme="azure"]{--plux-home-contrast:#ffab79;--plux-home-rgb:255,171,121;--plux-home-deep:#140f17}
+:root[data-plux-theme="ruby"]{--plux-home-contrast:#58e6da;--plux-home-rgb:88,230,218;--plux-home-deep:#061619}
+:root[data-plux-theme="solar"]{--plux-home-contrast:#84aaff;--plux-home-rgb:132,170,255;--plux-home-deep:#0b1021}
+:root[data-plux-theme="turquoise"]{--plux-home-contrast:#ff93cb;--plux-home-rgb:255,147,203;--plux-home-deep:#160e1b}
+:root[data-plux-theme="violet"]{--plux-home-contrast:#ffd576;--plux-home-rgb:255,213,118;--plux-home-deep:#16120e}
+:root[data-plux-theme="rose"]{--plux-home-contrast:#60efc9;--plux-home-rgb:96,239,201;--plux-home-deep:#091715}
+:root[data-plux-theme="silver"]{--plux-home-contrast:#74a7ff;--plux-home-rgb:116,167,255;--plux-home-deep:#0b1221}
+
+:root[data-plux-theme] #screen-home{
+  background-color:var(--plux-home-deep)!important;
+  transition:background-color .33s ease!important;
+}
+:root[data-plux-theme] #screen-home .bottom-nav{
+  border-color:rgba(var(--plux-home-rgb),.45)!important;
+  background:linear-gradient(160deg,rgba(var(--plux-home-rgb),.22),rgba(0,13,20,.92) 45%,rgba(0,13,18,.97))!important;
+  box-shadow:inset 0 2px 4px #ffffff2a,inset 0 -4px 14px #0008,0 0 22px rgba(var(--plux-home-rgb),.18)!important;
+  transition:background .3s,border-color .3s,box-shadow .3s!important;
+}
+:root[data-plux-theme] #screen-home .bottom-nav>.nav-button.selected{
+  color:var(--plux-home-contrast)!important;
+  border-color:rgba(var(--plux-home-rgb),.68)!important;
+  background:radial-gradient(circle at 32% 18%,rgba(255,255,255,.20),transparent 31%),linear-gradient(145deg,rgba(var(--plux-home-rgb),.43),rgba(2,21,25,.85) 75%)!important;
+  box-shadow:inset 0 2px 5px #ffffff49,inset 0 -8px 18px #001519af,0 0 21px rgba(var(--plux-home-rgb),.35)!important;
+}
+:root[data-plux-theme] #screen-home .bottom-nav>.nav-button.selected svg{
+  color:var(--plux-home-contrast)!important;
+  stroke:var(--plux-home-contrast)!important;
+}
+:root[data-plux-theme] #screen-home .bottom-nav>.nav-button.selected span{
+  color:var(--plux-home-contrast)!important;
+}
+:root[data-plux-theme] #screen-home .bottom-nav>.nav-button:not(.selected){
+  color:#e8f6f4!important;
+}
+
+/* The first item is always Главная in the approved V30 five-item bar.
+   Center the house AND label, rather than shifting the button's position. */
+#screen-home .bottom-nav>.nav-button:first-child{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:5px!important;
+  text-align:center!important;
+  box-sizing:border-box!important;
+  min-width:0!important;
+  padding:6px 2px!important;
+}
+#screen-home .bottom-nav>.nav-button:first-child svg,
+#screen-home .bottom-nav>.nav-button:first-child img{
+  display:block!important;
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  flex:0 0 auto!important;
+  margin:0 auto!important;
+}
+#screen-home .bottom-nav>.nav-button:first-child span{
+  display:block!important;
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:0 auto!important;
+  padding:0!important;
+  text-align:center!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+}
+:root[data-plux-theme] #screen-home .speech-glass{
+  background:linear-gradient(114deg,rgba(var(--plux-home-rgb),.24),rgba(2,16,20,.94) 68%)!important;
+  border-color:rgba(var(--plux-home-rgb),.58)!important;
+  box-shadow:inset 0 2px 3px #ffffff39,inset 0 -8px 17px rgba(var(--plux-home-rgb),.14),0 0 21px rgba(var(--plux-home-rgb),.24)!important;
+}
+:root[data-plux-theme] #screen-home .action-round,
+:root[data-plux-theme] #screen-home .glass-icon{
+  border-color:rgba(var(--plux-home-rgb),.65)!important;
+  background:radial-gradient(circle at 24% 14%,rgba(255,255,255,.23),transparent 38%),linear-gradient(145deg,rgba(var(--plux-home-rgb),.27),rgba(1,20,24,.94) 75%)!important;
+  box-shadow:inset 0 2px 4px #ffffff3c,inset 0 -8px 16px #0008,0 0 17px rgba(var(--plux-home-rgb),.26)!important;
+}
+:root[data-plux-theme] #screen-home .scene-home::after{
+  background:radial-gradient(ellipse at 51% 70%,rgba(var(--plux-home-rgb),.19),transparent 65%)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ :root[data-plux-theme] #screen-home,
+ :root[data-plux-theme] #screen-home .bottom-nav{transition:none!important}
+}
