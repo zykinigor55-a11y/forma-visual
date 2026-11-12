@@ -50,14 +50,41 @@ function mimeOf(bytes){
   if(bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP")return "image/webp";
   return null;
 }
-export async function makeGptImage(prompt,key,ip){
+function sourceImage(messages){
+ const latest=Array.isArray(messages)?messages.at(-1)?.content:null;
+ if(!Array.isArray(latest))return null;
+ for(const p of latest){
+  if(p?.type!=="image_url")continue;
+  const raw=p?.image_url?.url;
+  if(typeof raw!=="string"||raw.length>4300000)continue;
+  const m=/^data:image\\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(raw);
+  if(!m)continue;
+  const bytes=Buffer.from(m[2],"base64");
+  if(bytes.length<100||bytes.length>3_000_000)continue;
+  const type="image/"+m[1];
+  if(mimeOf(bytes)!==type)continue;
+  return {bytes,type,ext:m[1]==="jpeg"?"jpg":m[1]};
+ }
+ return null;
+}
+export async function makeGptImage(prompt,key,ip,sourceMessages=null){
   limit("image:"+ip);
   try{
-    const upstream=await fetch(url+"/images/generations",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-      body:JSON.stringify({model:"gpt-image-2",prompt:clean(prompt,1700),size:"1024x1024",n:1}),
-      signal:AbortSignal.timeout(235000)
+    const reference=sourceImage(sourceMessages);
+    let endpoint=url+"/images/generations";
+    let headers={"Content-Type":"application/json","Authorization":"Bearer "+key};
+    let body=JSON.stringify({model:"gpt-image-2",prompt:clean(prompt,1700),size:"1024x1024",n:1});
+    if(reference){
+      endpoint=url+"/images/edits";
+      const form=new FormData();
+      form.set("model","gpt-image-2");
+      form.set("prompt",clean(prompt,1700)+"\\nUse the uploaded photo as the source image. Keep unchanged areas intact.");
+      form.set("size","1024x1024");
+      form.set("image",new Blob([reference.bytes],{type:reference.type}),"PLUX-upload."+reference.ext);
+      body=form;headers={"Authorization":"Bearer "+key};
+    }
+    const upstream=await fetch(endpoint,{
+      method:"POST",headers,body,signal:AbortSignal.timeout(235000)
     });
     const result=await upstream.json().catch(()=>null);
     if(!upstream.ok)throw err(502,failure(upstream,result));
@@ -67,14 +94,14 @@ export async function makeGptImage(prompt,key,ip){
       const mime=mimeOf(bytes);
       if(!mime||bytes.length>13_500_000)throw err(502,"Генератор вернул неподдерживаемый файл.");
       const suffix=mime==="image/jpeg"?"jpg":mime.split("/")[1];
-      return {type:"image",mime,filename:"PLUX-GPT-Image-2."+suffix,dataUrl:"data:"+mime+";base64,"+item.b64_json,model:"gpt-image-2"};
+      return {type:"image",mime,filename:"PLUX-GPT-Image-2."+suffix,dataUrl:"data:"+mime+";base64,"+item.b64_json,model:"gpt-image-2",edited:!!reference};
     }
     if(typeof item?.url==="string"){
       let target;try{target=new URL(item.url)}catch{}
       if(target?.hostname==="chatgpt.com"&&target.pathname.startsWith("/backend-api/"))
         throw err(502,"Провайдер вернул приватную ссылку ChatGPT вместо открытого изображения.");
       if(target?.protocol==="https:"&&!target.username&&!target.password)
-        return {type:"image",mime:"image/png",filename:"PLUX-GPT-Image-2.png",url:target.href,model:"gpt-image-2"};
+        return {type:"image",mime:"image/png",filename:"PLUX-GPT-Image-2.png",url:target.href,model:"gpt-image-2",edited:!!reference};
     }
     throw err(502,"GPT Image 2 не вернула изображение. Проверь формат ответа API Market.");
   }catch(e){if(e?.name==="TimeoutError")throw err(504,"Генерация заняла слишком много времени; запрос мог быть оплачен.");throw e}
