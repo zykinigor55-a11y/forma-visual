@@ -1,0 +1,17 @@
+name: PLUX V31.8.3 inspect live voice routing
+on:
+  push:
+    branches: [plux-v3183-gemini-voice-image]
+    paths: ['plux-v31/inspect-runtime-v3183.mjs', '.github/workflows/plux-v3183-inspect.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Inspect runtime files and validate no-charge endpoints
+        run: node plux-v31/inspect-runtime-v3183.mjs
