@@ -79,7 +79,6 @@
  opacity:.90!important;mix-blend-mode:screen!important;
  transition:background .45s ease!important;
 }
-#screen-home .scene-home>.plux31-home-ambient~*{position:relative;z-index:1}
 /* Exact home glyph and "Главная" label share the same vertical centerline.
    Do not change sizes/geometry of the other four tabs. */
 #screen-home .bottom-nav>button.nav-button[data-go="home"],
