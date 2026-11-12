@@ -26,6 +26,16 @@ if platform=="android":
     }
 }""")
             main.write_text(code)
+    # Restore the approved V30 Android WebView media setting: requested audio
+    # can start after an asynchronous welcome animation or AI/music response.
+    if main and main.exists():
+        code=main.read_text()
+        setting="getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);"
+        if setting not in code:
+            anchor="super.onCreate(state);"
+            if anchor not in code:raise SystemExit("Android onCreate missing for audio settings")
+            code=code.replace(anchor,anchor+"\n        "+setting,1)
+            main.write_text(code)
     # V31: Capacitor bridge into MediaStore for actual Android gallery saving.
     media_template=root/"scripts/plux-media-saver.java.txt"
     media_target=root/"android/app/src/main/java/com/plux/assistant/PLUXMediaSaver.java"
