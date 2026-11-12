@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 import { createServer } from "node:http";
 import { readJsonLimited, messagesWithAttachments, handleImageRequest } from "./media-v129.mjs";
 import { artifactIntent, makeGptImage, makePdf } from "./chat-artifacts-v14.mjs";
@@ -72,8 +73,8 @@ async function handler(req,res){
  if(pathname==="/api/chat") { // PLUX_CHAT_V128
   const allowedOrigin="https://plux-v12-2-2k-fixed.onrender.com";
   const origin=String(req.headers.origin||"");
-  if(origin!==allowedOrigin) return reply(res,403,{error:"Origin not allowed"});
-  res.setHeader("Access-Control-Allow-Origin",allowedOrigin);
+  if(!appOrigin(req)) return reply(res,403,{error:"Origin not allowed"});
+  res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
   res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
   res.setHeader("Vary","Origin");
