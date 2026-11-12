@@ -1,8 +1,9 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX 15.1 — limited-time ElevenLabs real-time voice session credential.
  * Cyhub text-to-dialogue is a separate asynchronous TTS workflow, not live voice.
  * Key stays server-side. Preview rate limits are not a replacement for user auth.
  */
-const appOrigin="https://plux-v12-2-2k-fixed.onrender.com";
+const originalAppOrigin="https://plux-v12-2-2k-fixed.onrender.com";
 const counters=new Map();
 let dayStart=Date.now(),daily=0;
 function json(res,status,data){
@@ -13,10 +14,10 @@ function json(res,status,data){
   res.end(JSON.stringify(data));
 }
 function allow(req,res){
-  if(req.headers.origin!==appOrigin){
+  if(!appOrigin(req)){
     json(res,403,{error:"Для голосового режима открой оригинальное приложение ПЛЮХ."});return false;
   }
-  res.setHeader("Access-Control-Allow-Origin",appOrigin);
+  res.setHeader("Access-Control-Allow-Origin",appOrigin(req));
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
   res.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS");
   res.setHeader("Vary","Origin");
