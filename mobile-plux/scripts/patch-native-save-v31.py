@@ -5,8 +5,13 @@ No dangerous broad storage permission; saves with MediaStore scoped storage.
 """
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-folder=root/"android/app/src/main/java/com/plux/assistant"
-main=folder/"MainActivity.java"
+main=next((root/"android/app/src/main/java").rglob("MainActivity.java"),None)
+if main is None:raise SystemExit("MainActivity missing after npx cap add android")
+folder=main.parent
+import re
+match=re.search(r"^\s*package\s+([\w.]+)\s*;",main.read_text(),re.M)
+if not match:raise SystemExit("Android package declaration missing")
+java_package=match.group(1)
 if not main.exists():
     raise SystemExit("MainActivity missing after npx cap add android")
 code=main.read_text()
@@ -138,5 +143,5 @@ public final class PLUXMediaSaver extends Plugin {
 }
 '''
 out=folder/"PLUXMediaSaver.java"
-out.write_text(java)
+out.write_text(java.replace("package com.plux.assistant;","package "+java_package+";"))
 print("V31 Android MediaStore saver registered")
