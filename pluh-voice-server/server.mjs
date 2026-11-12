@@ -7,6 +7,7 @@ import {handleCyhubVideo} from "./cyhub-video-v16.mjs";
 import { voiceSession } from "./live-voice-v151.mjs";
 import {arkheonSession,arkheonVoiceProbe,arkheonUsageProbe} from "./arkheon-realtime-v17.mjs";
 import { handleAudius } from "./music-audius-v24.mjs";
+import {handleRadio} from "./music-radio-v31.mjs";
 import {storeGeneratedPdf,sendGeneratedPdf} from "./pdf-download-v27.mjs";
 import {storeGeneratedImage,sendGeneratedImage} from "./image-download-v30.mjs";
 import {beginGenerationJob,handleGenerationJobStatus} from "./generation-jobs-v28.mjs";
@@ -64,7 +65,8 @@ async function handler(req,res){
  if(pathname==="/api/generation/status")return handleGenerationJobStatus(req,res,pathname);
  if(pathname.startsWith("/api/download/image/"))return sendGeneratedImage(req,res,pathname);
  if(pathname.startsWith("/api/download/pdf/"))return sendGeneratedPdf(req,res,pathname);
- if(pathname.startsWith("/api/music/"))return handleAudius(req,res);
+ if(pathname==="/api/music/radio")return handleRadio(req,res);
+  if(pathname.startsWith("/api/music/"))return handleAudius(req,res);
  if(pathname.startsWith("/api/arkheon/"))return arkheonSession(req,res);
  if(pathname.startsWith("/api/voice/"))return voiceSession(req,res);
  if(pathname.startsWith("/api/tts/"))return handleCyhub(req,res);
