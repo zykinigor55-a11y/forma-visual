@@ -1,0 +1,26 @@
+name: PLUX V31 backend checks (no paid API calls)
+on:
+  push:
+    branches: [pluh-v31-v30-compatible-preview]
+    paths:
+      - 'pluh-voice-server/**'
+      - '.github/workflows/plux-v31-backend-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safe-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: pluh-voice-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify without any real external model request
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
