@@ -1,0 +1,40 @@
+name: PLUX V31.8.4 Android APK direct download
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths: ['.github/workflows/plux-v3184-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download tested V31.8.4 APK artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43243452811 --repo "${{ github.repository }}" --name PLUX-V31.8-Android-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.8.4-Android.apk
+          unzip -tq release/PLUX-V31.8.4-Android.apk
+          sha256sum release/PLUX-V31.8.4-Android.apk
+      - name: Publish permanent APK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-8-4-friends-pptx-20261112"
+          file="release/PLUX-V31.8.4-Android.apk"
+          notes="PLUX 31.8.4 Android debug: profile and color palette symmetric on home header; real-time prompt character counter 0/1300; new Friends opt-in Newcomers tab, profile photo, discover by visible name without nickname, send friend request then chat; GPT Image 2 images with visible generation animation; editable PowerPoint presentation PPTX from chat; Gemini voice and video preserved. Requires Internet/Render. GPT Image 2 and text generation use API Market; live paid calls not tested."
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "$file" --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "PLUX 31.8.4 - Friends & Presentations" --notes "$notes"
+          else
+            gh release create "$tag" "$file" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "PLUX 31.8.4 - Friends & Presentations" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[]|(.name+" "+.url)'
