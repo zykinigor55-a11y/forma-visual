@@ -10,7 +10,7 @@
  if(!home||!greeting)return;
  const BACK='https://pluh-voice-demo.onrender.com';
  const audio=new Audio();audio.preload='none'; // Streaming servers need not support CORS for playback.
- const S={source:'radio',list:[],track:null,index:-1,busy:false};
+ const S={source:'radio',list:[],track:null,index:-1,busy:false,queue:[],queueSource:'radio'};
  const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x};
  const mini=el('div','plux31-mini-player');mini.id='plux31-mini-player';mini.hidden=true;
  mini.setAttribute('role','group');mini.setAttribute('aria-label','Музыкальный плеер ПЛЮХ');
@@ -18,8 +18,18 @@
  const desc=el('div','plux31-now');
  const title=el('strong','','Музыка и радио'),artist=el('small','','Бесплатные треки и станции');
  desc.append(title,artist);
+ // Eight original glass LED bars: they animate only while audio is playing.
+ // This indicates playback, not a fabricated live frequency spectrum.
+ const eq=el('div','plux31-equalizer');
+ eq.setAttribute('role','img');
+ eq.setAttribute('aria-label','Анимированный эквалайзер воспроизведения');
+ eq.title='Эквалайзер · листай влево и вправо для переключения музыки';
+ for(let i=0;i<8;i++){const bar=el('span','plux31-eq-bar');bar.setAttribute('aria-hidden','true');eq.append(bar)}
  const search=el('button','plux31-search','⌕');search.type='button';search.setAttribute('aria-label','Найти музыку и радиостанции');
- mini.append(play,desc,search);
+ mini.append(play,desc,eq,search);
+ mini.tabIndex=0;
+ mini.title='Свайп влево — следующая, вправо — предыдущая';
+ mini.setAttribute('aria-description','Проведи влево для следующего трека или станции, вправо для предыдущего');
  greeting.insertAdjacentElement('afterend',mini);
  const dialog=el('dialog','plux31-music-dialog');
  dialog.setAttribute('aria-label','Музыка и радио');
@@ -37,16 +47,21 @@
  const $=(sel)=>dialog.querySelector(sel);
  const note=$('.plux31-music-message'),list=$('.plux31-music-results'),inp=$('input');
  function sync(){
-  play.textContent=audio.paused?'▶':'Ⅱ';play.setAttribute('aria-label',audio.paused?'Воспроизвести':'Пауза');
+  const playing=!audio.paused&&!audio.ended;
+  mini.classList.toggle('plux31-is-playing',playing);
+  play.textContent=playing?'Ⅱ':'▶';play.setAttribute('aria-label',playing?'Пауза':'Воспроизвести');
   if(S.track){title.textContent=S.track.title;artist.textContent=S.track.artist||S.track.country||'Музыка'}
  }
- function choose(t,idx){
+ function choose(t,idx,queue=S.list,source=S.source){
+  // Capture the playlist of the current source at playback time.
+  // Switching between Audius/Radio in search must not corrupt swiping.
+  S.queue=queue.slice();S.queueSource=source;
   S.track=t;S.index=idx;audio.pause();audio.src=t.stream;audio.load();
   sync();
   if('mediaSession' in navigator){
    try{navigator.mediaSession.metadata=new MediaMetadata({
      title:t.title||'Радиостанция',artist:t.artist||'Интернет-радио',
-     album:S.source==='radio'?'PLUX Radio':'Audius',
+     album:source==='radio'?'PLUX Radio':'Audius',
      artwork:t.cover?[{src:t.cover,sizes:'any'}]:[]
    })}catch{}
   }
@@ -54,6 +69,40 @@
   if(started?.catch)started.catch(()=>{note.textContent='Не удалось начать воспроизведение. Попробуй другую станцию.';sync()});
   sync();
  }
+ // Left swipe = next, right swipe = previous, looping through loaded
+ // radio stations or Audius tracks; audio errors remain user-visible.
+ function skip(direction){
+  if(S.queue.length<2){
+   if(!dialog.open)dialog.showModal();
+   note.textContent=S.queue.length?'В списке пока один трек. Найди другие.':'Выбери трек или станцию, чтобы переключать свайпом.';
+   if(!S.queue.length&&!S.busy)void load();
+   return false;
+  }
+  const next=(Math.max(0,S.index)+direction+S.queue.length)%S.queue.length;
+  choose(S.queue[next],next,S.queue,S.queueSource);
+  return true;
+ }
+ // Touch gestures are passive, trigger only on an intentional horizontal
+ // movement and never steal taps on Play/Search or vertical screen scroll.
+ let start=null;
+ mini.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1||e.target.closest('button')){start=null;return}
+  const t=e.touches[0];
+  start={x:t.clientX,y:t.clientY,at:Date.now()};
+ },{passive:true});
+ mini.addEventListener('touchcancel',()=>{start=null},{passive:true});
+ mini.addEventListener('touchend',e=>{
+  if(!start||e.changedTouches.length!==1)return;
+  const t=e.changedTouches[0];
+  const dx=t.clientX-start.x,dy=t.clientY-start.y,dt=Date.now()-start.at;
+  start=null;
+  if(dt>1100||Math.abs(dx)<46||Math.abs(dx)<Math.abs(dy)*1.5)return;
+  skip(dx<0?1:-1);
+ },{passive:true});
+ mini.addEventListener('keydown',e=>{
+  if(e.target!==mini||!['ArrowLeft','ArrowRight'].includes(e.key))return;
+  e.preventDefault();skip(e.key==='ArrowLeft'?1:-1);
+ });
  function showRows(){
   list.replaceChildren();
   if(!S.list.length){note.textContent='Ничего не найдено. Попробуй другой запрос.';return}
@@ -100,6 +149,10 @@
    sync();
  };
  audio.onplay=sync;audio.onpause=sync;
+ audio.onended=()=>{sync();if(S.queueSource==='tracks')skip(1)};
+ audio.onwaiting=()=>mini.classList.add('plux31-is-buffering');
+ audio.onplaying=()=>{mini.classList.remove('plux31-is-buffering');sync()};
+ audio.onstalled=()=>mini.classList.add('plux31-is-buffering');
  audio.onerror=()=>{if(S.track){artist.textContent='Станция временно недоступна';sync()}};
  try{
   navigator.mediaSession?.setActionHandler?.('play',()=>{void audio.play().then(sync).catch(()=>{})});
@@ -117,5 +170,12 @@
  // Allow welcome typewriter to finish before substituting a useful module.
  const transitionMs=reduced?4500:9500;
  setTimeout(showMini,transitionMs);
- window.PLUXMusicV31={open:()=>{if(!dialog.open)dialog.showModal();void load()},stop:()=>audio.pause()};
+ window.PLUXMusicV31={
+  open:()=>{if(!dialog.open)dialog.showModal();void load()},
+  stop:()=>audio.pause(),
+  next:()=>skip(1),previous:()=>skip(-1),
+  state:()=>({title:S.track?.title||'',source:S.queueSource,index:S.index,count:S.queue.length,playing:!audio.paused}),
+  // Exposed for UI smoke testing; never starts audio automatically.
+  debug:{mini,equalizer:eq,audio}
+ };
 })();
