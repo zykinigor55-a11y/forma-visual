@@ -6,6 +6,8 @@ import path from 'node:path';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 const PORT = Number(process.env.PORT || 3000);
 const BRAVE_KEY = process.env.BRAVE_SEARCH_API_KEY || '';
+const TAVILY_KEY = process.env.TAVILY_API_KEY || '';
+const SEARCH_ENABLED = Boolean(TAVILY_KEY || BRAVE_KEY);
 const AI_KEY = process.env.VISION_API_KEY || '';
 const AI_BASE = (process.env.VISION_API_BASE || 'https://api.openai.com/v1').replace(/\/+$/, '');
 const AI_MODEL = process.env.VISION_MODEL || 'gpt-4.1-mini';
@@ -111,39 +113,71 @@ function filterResult(x,s){
   } catch{return null;}
 }
 async function searchSources(rawQuery){
-  if(!BRAVE_KEY) return {available:false,results:[],sources:SITE.map(s=>({id:s.id,label:s.label,count:0,status:'not-configured'}))};
+  if(!SEARCH_ENABLED) return {available:false,results:[],provider:null,sources:SITE.map(s=>({id:s.id,label:s.label,count:0,status:'not-configured'}))};
   const query=textLimited(rawQuery,110) || 'modern wooden house exterior';
-  const cacheKey=query.toLowerCase();
+  const provider=TAVILY_KEY ? 'tavily' : 'brave';
+  const cacheKey=provider+':'+query.toLowerCase();
   const cached=refCache.get(cacheKey);
   if(cached && Date.now()-cached.at<15*60*1000) return {...cached.data,cached:true};
+
   const fetched=await Promise.all(SITE.map(async s=>{
-    const url=new URL('https://api.search.brave.com/res/v1/images/search');
-    url.searchParams.set('q',`site:${s.domain} ${query} ${s.term}`.slice(0,320));
-    url.searchParams.set('count','25');
-    url.searchParams.set('safesearch','strict');
-    url.searchParams.set('country','ALL');
-    url.searchParams.set('search_lang','en');
-    try{
-      const r=await fetch(url,{headers:{'x-subscription-token':BRAVE_KEY,'accept':'application/json'},signal:timeout(15_000)});
-      if(!r.ok) return {id:s.id,label:s.label,count:0,status:`HTTP ${r.status}`,results:[]};
-      const data=await r.json();
-      const unique=new Map();
-      for(const x of data.results||[]) {
-        const p=filterResult(x,s);
-        if(p && !unique.has(p.link))unique.set(p.link,p);
+    const unique=new Map();
+    try {
+      if(TAVILY_KEY){
+        // Basic search costs one Tavily credit. Source-linked images keep provenance.
+        // One site-filtered request per source: approximately 5 credits per new project query.
+        const response=await fetch('https://api.tavily.com/search',{
+          method:'POST',
+          headers:{authorization:'Bearer '+TAVILY_KEY,'content-type':'application/json'},
+          body:JSON.stringify({
+            query:(query+' '+s.term+' professional daylight architecture photography').slice(0,370),
+            search_depth:'basic', max_results:12, include_images:true,
+            include_image_descriptions:false, include_answer:false, include_raw_content:false,
+            include_domains:[s.domain], include_domains_mode:'restrict',
+            auto_parameters:false, safe_search:true
+          }),
+          signal:timeout(24_000)
+        });
+        if(!response.ok) return {id:s.id,label:s.label,count:0,status:'Tavily HTTP '+response.status,results:[]};
+        const data=await response.json();
+        for(const page of Array.isArray(data.results)?data.results:[]){
+          // Only accept photographs explicitly associated with a page on the allowed domain.
+          const images=Array.isArray(page.images)?page.images:[];
+          for(const item of images.slice(0,4)){
+            const src=typeof item==='string'?item:item?.url;
+            if(typeof src!=='string'||!/^https:\/\//i.test(src))continue;
+            const matched=filterResult({url:page.url,title:page.title,thumbnail:{src}},s);
+            if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
+          }
+        }
+      }else{
+        // Backward compatibility for sites that already use Brave Search.
+        const url=new URL('https://api.search.brave.com/res/v1/images/search');
+        url.searchParams.set('q',('site:'+s.domain+' '+query+' '+s.term).slice(0,320));
+        url.searchParams.set('count','25');
+        url.searchParams.set('safesearch','strict');
+        url.searchParams.set('country','ALL');
+        url.searchParams.set('search_lang','en');
+        const response=await fetch(url,{headers:{'x-subscription-token':BRAVE_KEY,'accept':'application/json'},signal:timeout(18_000)});
+        if(!response.ok) return {id:s.id,label:s.label,count:0,status:'Brave HTTP '+response.status,results:[]};
+        const data=await response.json();
+        for(const item of data.results||[]){
+          const matched=filterResult(item,s);
+          if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
+        }
       }
       return {id:s.id,label:s.label,count:unique.size,status:'ok',results:[...unique.values()].slice(0,8)};
     }catch(e){return {id:s.id,label:s.label,count:0,status:errorOf(e),results:[]};}
   }));
   const results=fetched.flatMap(s=>s.results||[]);
-  const output={available:true,results,sources:fetched.map(({id,label,count,status})=>({id,label,count,status}))};
+  const output={available:true,provider,results,sources:fetched.map(({id,label,count,status})=>({id,label,count,status}))};
   if(refCache.size>50)refCache.clear();
   refCache.set(cacheKey,{at:Date.now(),data:output});
   return output;
 }
 function safeText(v, limit=250) { return textLimited(v,limit); }
 async function direct(input) {
-  if (!AI_KEY || !BRAVE_KEY) return {available:false, message:'Для автоматического сравнения фотографий требуются оба серверных ключа: VISION_API_KEY и BRAVE_SEARCH_API_KEY.'};
+  if (!AI_KEY || !SEARCH_ENABLED) return {available:false, message:'Для автоматического сравнения нужны ключ визуальной модели (VISION_API_KEY) и поиска (TAVILY_API_KEY либо BRAVE_SEARCH_API_KEY).'};
   if (!validImage(input?.image)) throw Object.assign(new Error('Для выбора референса нужно загрузить изображение JPG, PNG или WebP до 8 МБ.'),{status:400});
   const project = input.project || {};
   const q = safeText(input.query,110) || 'modern residential building architectural photo';
@@ -225,8 +259,8 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.3.0'});
-    if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:!!BRAVE_KEY,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.4.0'});
+    if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
     if(req.method==='POST'&&pathName==='/api/analyze')return json(res,200,await analyze(await bodyJson(req)));
     if(req.method==='POST'&&pathName==='/api/direct')return json(res,200,await direct(await bodyJson(req)));
     if(req.method==='GET'&&pathName==='/api/references'){

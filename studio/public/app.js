@@ -254,11 +254,11 @@ async function runProject(event) {
         alertStatus('Не удалось сравнить источники: ' + error.message, 'error');
       }
     } else if (state.isVisualAnalysis) {
-      setRecommendationMessage('AI изучил архитектуру, но поиск по профессиональным площадкам выключен. Чтобы выбрать лучший референс по изображениям, подключите BRAVE_SEARCH_API_KEY в Render.', 'ПОИСК НЕ ПОДКЛЮЧЁН');
-      alertStatus('Анализ изображения готов. Поиск профессиональных референсов требует BRAVE_SEARCH_API_KEY.');
+      setRecommendationMessage('AI изучил архитектуру, но поиск по профессиональным площадкам выключен. Чтобы выбрать лучший референс по изображениям, подключите TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY в Render.', 'ПОИСК НЕ ПОДКЛЮЧЁН');
+      alertStatus('Анализ изображения готов. Поиск профессиональных референсов требует TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY.');
     } else {
-      setRecommendationMessage('Автоматический арт-дирекшн ещё не запущен: нужен визуальный VISION_API_KEY и BRAVE_SEARCH_API_KEY. Ниже доступен лишь честно помеченный черновик промпта.', 'НЕ ХВАТАЕТ ПОДКЛЮЧЕНИЙ');
-      alertStatus(issue + '. Для поиска и выбора референса также нужен BRAVE_SEARCH_API_KEY.', 'error');
+      setRecommendationMessage('Автоматический арт-дирекшн ещё не запущен: нужен визуальный VISION_API_KEY и TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY. Ниже доступен лишь честно помеченный черновик промпта.', 'НЕ ХВАТАЕТ ПОДКЛЮЧЕНИЙ');
+      alertStatus(issue + '. Для поиска и выбора референса также нужен TAVILY_API_KEY (бесплатный) или BRAVE_SEARCH_API_KEY.', 'error');
     }
     makePrompt(project);
     $('#analysis').scrollIntoView({behavior:'smooth', block:'start'});
@@ -279,7 +279,7 @@ async function init() {
     $('#connectStatus').textContent = `● AI ${state.config.ai ? 'ON':'OFF'} · SEARCH ${state.config.search ? 'ON':'OFF'}`;
     $('#connectStatus').title = 'Статусы серверных ключей, без раскрытия значений';
     if (state.config.ai && state.config.search) alertStatus('Режим автоматического арт-дирекшна доступен. Загрузите исходную архитектуру.', 'success');
-    else alertStatus('Для настоящего автоматического поиска и визуального отбора нужны AI и Brave Search. Случайные карточки и имитация поиска отключены.');
+    else alertStatus('Для настоящего автоматического поиска и визуального отбора нужны AI и поисковый API. Случайные карточки и имитация поиска отключены.');
   } catch { alertStatus('Не удалось проверить сервер. Проверьте подключение к FORMA STUDIO.', 'error'); }
   const zone = $('#dropZone'); const input = $('#imageInput');
   zone.addEventListener('click', () => input.click());
