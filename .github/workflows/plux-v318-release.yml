@@ -1,0 +1,40 @@
+name: PLUX V31.8 Android APK permanent download
+on:
+  push:
+    branches: [plux-v17-photo-chat-music-plan]
+    paths: ['.github/workflows/plux-v318-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Fetch verified V31.8 APK from successful build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts release
+          gh run download 43219804127 --repo "${{ github.repository }}" --name PLUX-V31.8-Android-APK --dir artifacts
+          test -s artifacts/app-debug.apk
+          cp artifacts/app-debug.apk release/PLUX-V31.8-Android.apk
+          unzip -tq release/PLUX-V31.8-Android.apk
+          sha256sum release/PLUX-V31.8-Android.apk
+      - name: Publish direct GitHub APK link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="plux-v31-8-ai-voice-video-20261112"
+          apk="release/PLUX-V31.8-Android.apk"
+          notes="ПЛЮХ V31.8 Android debug APK: based on V31.7 OLED, adds AI thinking logo, upgraded microdust, 8 synchronized color themes, Nano Banana image diagnostics, YouTube/RUTUBE/VK Video section, Friends avatars and native RECORD_AUDIO request. Internet required: app loads https://plux-v17-friends-preview.onrender.com. Nano Banana requires backend API Market configuration. Test build, not a production-signed Google Play release."
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk" --clobber --repo "${{ github.repository }}"
+            gh release edit "$tag" --repo "${{ github.repository }}" --title "ПЛЮХ V31.8 - AI Video + Voice" --notes "$notes"
+          else
+            gh release create "$tag" "$apk" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "ПЛЮХ V31.8 - AI Video + Voice" --notes "$notes" --prerelease
+          fi
+          gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[]|(.name+" "+.url)'
