@@ -22,7 +22,7 @@ const third=beginGenerationJob(req);
 assert.equal(third.id,id,"same request after provider fail never issues another paid generation");
 assert.equal(upstreamCalls,1,"just one provider request, even with three POST attempts");
 const headers={};
-const response={setHeader:(k,v)=>headers[k]=v,writeHead(s,h)=>{response.code=s;Object.assign(headers,h||{})},
+const response={setHeader:(k,v)=>headers[k]=v,writeHead:(s,h)=>{response.code=s;Object.assign(headers,h||{})},
  end:body=>{response.body=body}};
 const query={url:"/api/generation/status?id="+id,method:"GET",headers:{origin:"https://plux-v17-friends-preview.onrender.com"}};
 handleGenerationJobStatus(query,response,"/api/generation/status");
