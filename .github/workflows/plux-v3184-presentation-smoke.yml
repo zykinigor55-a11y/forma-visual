@@ -1,0 +1,30 @@
+name: PLUX V31.8.4 PowerPoint server build
+on:
+  push:
+    branches: [pluh-v3184-chat-presentations]
+    paths:
+      - 'pluh-voice-server/**'
+      - '.github/workflows/plux-v3184-presentation-smoke.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  pptx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: pluh-voice-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install dependencies without hooks
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Smoke-test actual PPTX ZIP, chat artifact intent and upload reuse
+        run: |
+          node --check presentation-v3184.mjs
+          node --check presentation-download-v3184.mjs
+          node --check generation-jobs-v28.mjs
+          node --check chat-artifacts-v14.mjs
+          node --check server.mjs
+          node test-presentation-v3184.mjs

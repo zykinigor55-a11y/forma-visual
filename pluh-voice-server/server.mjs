@@ -13,6 +13,8 @@ import {storeGeneratedPdf,sendGeneratedPdf} from "./pdf-download-v27.mjs";
 import {storeGeneratedImage,sendGeneratedImage} from "./image-download-v30.mjs";
 import {beginGenerationJob,handleGenerationJobStatus} from "./generation-jobs-v28.mjs";
 import {streamPlainChat} from "./chat-stream-v29.mjs";
+import {makePresentation} from "./presentation-v3184.mjs";
+import {storePresentation,servePresentation} from "./presentation-download-v3184.mjs";
 import { readFile, stat } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -102,6 +104,7 @@ async function handler(req,res){
  if(pathname==="/api/image/config")return req.method==="GET"
   ?reply(res,200,{provider:"API Market",model:"nano-banana-2.1",configured:!!(process.env.API_MARKET_IMAGE_KEY||process.env.API_MARKET_KEY),quality:"high"})
   :reply(res,405,{error:"Use GET"});
+ if(servePresentation(req,res,pathname))return;
  if(pathname==="/api/image")return handleImageRequest(req,res);
  if(pathname==="/api/chat") { // PLUX_CHAT_V128
   const allowedOrigin="https://plux-v12-2-2k-fixed.onrender.com";
@@ -131,7 +134,8 @@ async function handler(req,res){
   /* PLUX V14: artifact generation is server-routed, not claimed by the text model. */
   const lastOriginal=data.messages.at(-1);
   const latestText=lastOriginal?.role==="user"&&typeof lastOriginal.content==="string"?lastOriginal.content:"";
-  const kind=data?.requestedArtifact==="image"&&latestText.trim()?"image":artifactIntent(latestText);
+  const kind=["image","presentation"].includes(data?.requestedArtifact)&&latestText.trim()
+    ?data.requestedArtifact:artifactIntent(latestText);
   if(kind&&data?.clientFeatures?.generationJobs===true){
     try{
       const job=beginGenerationJob({kind,prompt:latestText,messages,
@@ -146,10 +150,13 @@ async function handler(req,res){
       const imageKey=process.env.API_MARKET_IMAGE_KEY||secret;
       let artifact=kind==="image"
         ? await makeGptImage(latestText,imageKey,ip)
+        :kind==="presentation"
+        ? await makePresentation(latestText,messages,secret,ip,imageKey)
         : await makePdf(latestText,messages,secret,ip);
       if(kind==="image")artifact=storeGeneratedImage(artifact);
       if(kind==="pdf")artifact.url=storeGeneratedPdf(artifact);
-       const note=kind==="image"?"Создал изображение с GPT Image 2.":"Подготовил PDF-документ: "+artifact.title;
+      if(kind==="presentation")artifact=storePresentation(artifact);
+       const note=kind==="image"?"Создал изображение с GPT Image 2.":kind==="presentation"?"Собрал презентацию PowerPoint: "+artifact.title:"Подготовил PDF-документ: "+artifact.title;
       return reply(res,200,{reply:note,artifact});
     }catch(e){
       const status=Number(e?.status)||502;
