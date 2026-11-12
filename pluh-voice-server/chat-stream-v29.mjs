@@ -1,3 +1,4 @@
+import {appOrigin} from "./allowed-origins-v31.mjs";
 /* PLUX V29: stream plain-text conversation over a simple NDJSON transport.
  * Keep GPT Image 2/PDF routes as real generation jobs. No keys, prompts or
  * chat messages are stored in telemetry.
@@ -17,7 +18,7 @@ export function shortGreeting(messages){
  return "Привет! 👋 Я на связи. Чем займёмся сегодня?";
 }
 export async function streamPlainChat(req,res,{secret,messages}){
- res.setHeader("Access-Control-Allow-Origin",ORIGIN);
+ res.setHeader("Access-Control-Allow-Origin",appOrigin(req)||ORIGIN);
  res.setHeader("Access-Control-Expose-Headers","Content-Type");
  res.setHeader("Vary","Origin");
  res.setHeader("Cache-Control","no-store, no-transform");
