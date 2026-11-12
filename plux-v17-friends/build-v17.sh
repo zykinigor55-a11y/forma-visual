@@ -6,6 +6,10 @@ unzip -oq PLUX_V10_2_RENDER_READY.zip -d /tmp/plux112source; mkdir -p plux-publi
 node plux-v17-friends/install-media-v17.mjs plux-published
 node plux-v17-friends/apply-v17.mjs plux-published
 node plux-v31/apply-v31.mjs plux-published
+echo 'V316_CHECKPOINT: checking installed assets and linked styles'
+ls -l plux-published/mascot-fullscreen-v316.css
+grep -o 'mascot-fullscreen-v316.css' plux-published/index.html | head -1
+set -x
 node --check plux-published/plux-v129.js
 node --check plux-published/plux-video-v16.js
 node --check plux-published/plux-friends-v17.js
