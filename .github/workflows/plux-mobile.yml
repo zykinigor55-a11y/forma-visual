@@ -1,7 +1,7 @@
-name: PLUX Android APK + iOS project (v17 preview)
+name: PLUX V31 Android APK + iOS project
 on:
   push:
-    branches: [plux-v12-2-2k-fixes, plux-v17-photo-chat-music-plan]
+    branches: [plux-v31-v30-base-friends-colors-music]
     paths:
       - 'mobile-plux/**'
       - '.github/workflows/plux-mobile.yml'
@@ -36,13 +36,14 @@ jobs:
         run: |
           npx cap add android
           python3 scripts/patch-native.py android
+          python3 scripts/patch-native-save-v31.py
           npx cap sync android
       - name: Compile APK
         run: cd android && ./gradlew assembleDebug --no-daemon
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: PLUX-v17-Android-debug-APK
+          name: PLUX-v31-Android-debug-APK
           path: mobile-plux/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
   ios:
