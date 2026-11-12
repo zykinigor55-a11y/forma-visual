@@ -1,6 +1,6 @@
 /* PLUX V31 — compact free music & world-radio player.
  * Retains approved V30 greeting animation, then replaces that small capsule.
- * No music autoplay; streams Jamendo tracks, Audius, and radio from original hosts.
+ * No music autoplay; plays tracks from Audius and stations from Radio Browser.
  */
 (()=>{
  'use strict';
@@ -10,13 +10,13 @@
  if(!home||!greeting)return;
  const BACK='https://pluh-voice-demo.onrender.com';
  const audio=new Audio();audio.preload='none'; // Streaming servers need not support CORS for playback.
- const S={source:'jamendo',list:[],track:null,index:-1,busy:false};
+ const S={source:'radio',list:[],track:null,index:-1,busy:false};
  const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x};
  const mini=el('div','plux31-mini-player');mini.id='plux31-mini-player';mini.hidden=true;
  mini.setAttribute('role','group');mini.setAttribute('aria-label','Музыкальный плеер ПЛЮХ');
  const play=el('button','plux31-play','▶');play.type='button';play.setAttribute('aria-label','Воспроизвести музыку');
  const desc=el('div','plux31-now');
- const title=el('strong','','Музыка и радио'),artist=el('small','','Jamendo · Audius · радио');
+ const title=el('strong','','Музыка и радио'),artist=el('small','','Бесплатные треки и станции');
  desc.append(title,artist);
  const search=el('button','plux31-search','⌕');search.type='button';search.setAttribute('aria-label','Найти музыку и радиостанции');
  mini.append(play,desc,search);
@@ -26,11 +26,11 @@
  dialog.innerHTML=[
   '<section class="plux31-music-sheet">',
   '<header><div><strong>Музыка и радио</strong><small>PLUX • FREE MUSIC</small></div><button type="button" class="plux31-music-close" aria-label="Закрыть">×</button></header>',
-  '<div class="plux31-source"><button type="button" data-source="jamendo" class="active">Jamendo</button><button type="button" data-source="radio">Радио</button><button type="button" data-source="tracks">Audius</button></div>',
+  '<div class="plux31-source"><button type="button" data-source="radio" class="active">Радиостанции</button><button type="button" data-source="tracks">Треки Audius</button></div>',
   '<form class="plux31-query"><input type="search" placeholder="Поиск станции или исполнителя" maxlength="50" aria-label="Поиск музыки"><button type="submit">Найти</button></form>',
   '<div class="plux31-music-message" role="status">Выбери музыку или радиостанцию</div>',
   '<div class="plux31-music-results"></div>',
-  '<footer>Jamendo Music · независимые артисты · Creative Commons. Воспроизведение только онлайн с серверов правообладателей; доступность зависит от страны.</footer>',
+  '<footer>Потоки воспроизводятся с ресурсов правообладателей. Доступность зависит от страны и станции.</footer>',
   '</section>'
  ].join('');
  document.body.append(dialog);
@@ -46,7 +46,7 @@
   if('mediaSession' in navigator){
    try{navigator.mediaSession.metadata=new MediaMetadata({
      title:t.title||'Радиостанция',artist:t.artist||'Интернет-радио',
-     album:t.provider==='Jamendo'?'Jamendo Music':S.source==='radio'?'PLUX Radio':'Audius',
+     album:S.source==='radio'?'PLUX Radio':'Audius',
      artwork:t.cover?[{src:t.cover,sizes:'any'}]:[]
    })}catch{}
   }
@@ -62,7 +62,7 @@
    const b=el('button','plux31-result');b.type='button';
    const icon=el('span','plux31-result-icon',S.source==='radio'?'◉':'♫');
    const text=el('span','plux31-result-text');
-   text.append(el('strong','',t.title),el('small','',(t.artist||t.country||'')+(S.source==='jamendo'?' · Jamendo':'')));
+   text.append(el('strong','',t.title),el('small','',t.artist||t.country||''));
    b.append(icon,text,el('span','plux31-result-play','▶'));
    b.onclick=()=>{choose(t,i);dialog.close()};
    list.append(b);
@@ -72,8 +72,7 @@
   if(S.busy)return;
   S.busy=true;note.textContent='Ищу музыку…';list.replaceChildren();
   const url=BACK+(S.source==='radio'?'/api/music/radio'+(q?'?q='+encodeURIComponent(q):''):
-   S.source==='jamendo'?'/api/music/jamendo'+(q?'?q='+encodeURIComponent(q):''):
-   '/api/music/'+(q?'search?q='+encodeURIComponent(q):'trending'));
+    '/api/music/'+(q?'search?q='+encodeURIComponent(q):'trending'));
   try{
    const r=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(14000)});
    const d=await r.json().catch(()=>({}));
@@ -88,7 +87,7 @@
  dialog.querySelectorAll('[data-source]').forEach(b=>{
    b.onclick=()=>{
      S.source=b.dataset.source;dialog.querySelectorAll('[data-source]').forEach(x=>x.classList.toggle('active',x===b));
-     inp.placeholder=S.source==='radio'?'Название станции или жанр':S.source==='jamendo'?'Поиск в Jamendo: жанр или артист':'Исполнитель или название трека';
+     inp.placeholder=S.source==='radio'?'Название станции или жанр':'Исполнитель или название трека';
      inp.value='';void load();
    };
  });
