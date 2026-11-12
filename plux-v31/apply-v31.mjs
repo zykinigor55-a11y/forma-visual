@@ -6,21 +6,43 @@ const here=dirname(fileURLToPath(import.meta.url));
 const root=resolve(process.argv[2]||'plux-published');
 const htmlFile=join(root,'index.html');
 if(!existsSync(htmlFile))throw Error('PLUX page missing');
-const files=['music-player-v31.js','music-player-v31.css','drop-colors-v31.js','drop-colors-v31.css'];
-for(const file of files){
- const src=join(here,file);
- if(!existsSync(src))throw Error('Missing V31 file: '+file);
- copyFileSync(src,join(root,file));
+// Restore the exact V30 six-card tools, gallery, music and theme dependencies
+// in the same order as the approved original. Do not rebuild card DOM.
+const modules=[
+ ['plux-v23-overlay/plux-themes-v23.css','plux-themes-v23.css'],
+ ['plux-v24-overlay/plux-gallery-v24.css','plux-gallery-v24.css'],
+ ['plux-v24-overlay/plux-music-v24.css','plux-music-v24.css'],
+ ['plux-v24-overlay/plux-gallery-v24.js','plux-gallery-v24.js'],
+ ['plux-v24-overlay/plux-music-v24.js','plux-music-v24.js'],
+ ['plux-v25-overlay/plux-v25-style.css','plux-v25-style.css'],
+ ['plux-v26-overlay/plux-v26.css','plux-v26.css'],
+ ['plux-v26-overlay/plux-modes-v26.js','plux-modes-v26.js'],
+ ['plux-v26-overlay/plux-v26-images.js','plux-v26-images.js'],
+ ['plux-v30-overlay/plux-v30.css','plux-v30.css'],
+ ['plux-v31/plux-themes-v31.js','plux-themes-v31.js'],
+ ['plux-v31/music-player-v31.js','music-player-v31.js'],
+ ['plux-v31/music-player-v31.css','music-player-v31.css'],
+ ['plux-v31/drop-colors-v31.js','drop-colors-v31.js'],
+ ['plux-v31/drop-colors-v31.css','drop-colors-v31.css']
+];
+for(const [src,dest]of modules){
+ if(!existsSync(src))throw Error('V30/V31 dependency missing: '+src);
+ copyFileSync(src,join(root,dest));
 }
 let html=readFileSync(htmlFile,'utf8');
 if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
  throw Error('Original approved V30 layout changed; stop rather than overwrite');
-if(!html.includes('music-player-v31.css'))
- html=html.replace('</head>','<link rel="stylesheet" href="/music-player-v31.css?v=3102"></head>');
-if(!html.includes('music-player-v31.js'))
- html=html.replace('</body>','<script defer src="/music-player-v31.js?v=3102"></script></body>');
-if(!html.includes('drop-colors-v31.css'))html=html.replace('</head>','<link rel="stylesheet" href="/drop-colors-v31.css?v=3106"></head>');
-if(!html.includes('drop-colors-v31.js'))html=html.replace('</body>','<script defer src="/drop-colors-v31.js?v=3106"></script></body>');
-if(!html.includes('plux-release-v31'))html=html.replace('</head>','<meta name="plux-release-v31" content="V30-base-friends-music-photo-colors"></head>');
+const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
+ 'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css'];
+const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
+ 'plux-v26-images.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js'];
+for(const file of styles){
+ if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3112"></head>`);
+}
+for(const file of scripts){
+ if(!html.includes('/'+file))html=html.replace('</body>',`<script defer src="/${file}?v=3112"></script></body>`);
+}
+if(!html.includes('plux-release-v31'))html=html.replace('</head>',
+ '<meta name="plux-release-v31" content="V30-six-tools-eight-accurate-colors-friends"></head>');
 writeFileSync(htmlFile,html);
-console.log('PLUX V31: V30 original navigation intact, friends in fifth tab, music and true-color glass tint linked.');
+console.log('PLUX V31: exact V30 six tools and theme switcher restored, Friends preserved.');
