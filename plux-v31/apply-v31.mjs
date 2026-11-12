@@ -19,6 +19,7 @@ const modules=[
  ['plux-v26-overlay/plux-modes-v26.js','plux-modes-v26.js'],
  ['plux-v26-overlay/plux-v26-images.js','plux-v26-images.js'],
  ['plux-v30-overlay/plux-v30.css','plux-v30.css'],
+ ['plux-v31/tools-v30-bridge-v31.js','tools-v30-bridge-v31.js'],
  ['plux-v31/plux-themes-v31.js','plux-themes-v31.js'],
  ['plux-v31/music-player-v31.js','music-player-v31.js'],
  ['plux-v31/music-player-v31.css','music-player-v31.css'],
@@ -35,7 +36,7 @@ if(!html.includes('id="speech-button"')||!html.includes('class="bottom-nav"'))
 const styles=['plux-themes-v23.css','plux-gallery-v24.css','plux-music-v24.css',
  'plux-v25-style.css','plux-v26.css','plux-v30.css','music-player-v31.css','drop-colors-v31.css'];
 const scripts=['plux-gallery-v24.js','plux-music-v24.js','plux-modes-v26.js',
- 'plux-v26-images.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js'];
+ 'plux-v26-images.js','tools-v30-bridge-v31.js','plux-themes-v31.js','drop-colors-v31.js','music-player-v31.js'];
 for(const file of styles){
  if(!html.includes('/'+file))html=html.replace('</head>',`<link rel="stylesheet" href="/${file}?v=3112"></head>`);
 }
