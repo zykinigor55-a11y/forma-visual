@@ -4,9 +4,9 @@
  const STORAGE="plux_theme_v23";
  const THEMES=[
    {id:"emerald",title:"Изумрудный",description:"Фирменный цвет",accent:"#00bd7a"},
-   {id:"azure",title:"Синий",description:"Настоящий синий",accent:"#1761ee"},
-   {id:"ruby",title:"Красный",description:"Чистый красный",accent:"#e52034"},
-   {id:"solar",title:"Золотой",description:"Тёплое золото",accent:"#e7bd55"},
+   {id:"azure",title:"Синий",description:"Чистый синий",accent:"#1662f9"},
+   {id:"ruby",title:"Красный",description:"Чистый красный",accent:"#f32138"},
+   {id:"solar",title:"Жёлтый",description:"Яркий жёлтый",accent:"#ffcb16"},
    {id:"turquoise",title:"Бирюзовый",description:"Морская бирюза",accent:"#00c7c9"},
    {id:"violet",title:"Фиолетовый",description:"Глубокий фиолетовый",accent:"#8252e8"},
    {id:"rose",title:"Розовый",description:"Нежный розовый",accent:"#eb68ab"},
@@ -30,13 +30,13 @@
  dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");
  dialog.setAttribute("aria-label","Цвет ПЛЮХа");
  const heading=document.createElement("div");heading.className="plux-theme-heading";
- const title=document.createElement("div");title.innerHTML="<strong>Цвет капли</strong><small>Цвет меняет каплю, Инструменты и подсветку интерфейса</small>";
+ const title=document.createElement("div");title.innerHTML="<strong>Выбери цвет ПЛЮХа</strong><small>Капля, стеклянные карточки и подсветка меняются одновременно</small>";
  const close=document.createElement("button");close.type="button";close.className="plux-theme-close";close.textContent="×";close.setAttribute("aria-label","Закрыть выбор цвета");
  heading.append(title,close);dialog.append(heading);
  const list=document.createElement("div");list.className="plux-theme-options";
  for(const theme of THEMES){
    const button=document.createElement("button");button.type="button";button.className="plux-theme-option";
-   button.dataset.themeChoice=theme.id;button.setAttribute("aria-label",theme.title);
+   button.dataset.themeChoice=theme.id;button.setAttribute("aria-label","Цвет капли: "+theme.title);
    const swatch=document.createElement("span");swatch.className="plux-theme-swatch";swatch.style.setProperty("--swatch-color",theme.accent);
    const caption=document.createElement("span");caption.className="plux-theme-name";caption.textContent=theme.title;
    const check=document.createElement("span");check.className="plux-theme-check";check.setAttribute("aria-hidden","true");check.textContent="✓";
