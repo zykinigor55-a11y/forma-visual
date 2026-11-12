@@ -77,6 +77,23 @@ jobs:
           python3 scripts/patch-native.py ios
           python3 scripts/restore-v30-icon.py ios
           npx cap sync ios
+      - name: Build unsigned iPhone IPA for AltStore
+        run: |
+          set -euo pipefail
+          cd ios
+          xcodebuild -workspace App/App.xcworkspace -scheme App -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+          test -f build/Build/Products/Release-iphoneos/App.app/Info.plist
+          mkdir -p altstore/Payload
+          cp -a build/Build/Products/Release-iphoneos/App.app altstore/Payload/
+          cd altstore
+          ditto -c -k --sequesterRsrc --keepParent Payload PLUX-V31-iPhone-AltStore.ipa
+          test -s PLUX-V31-iPhone-AltStore.ipa
+      - name: Upload unsigned iPhone V31 IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PLUX-V31-iPhone-AltStore-IPA
+          path: mobile-plux/ios/altstore/PLUX-V31-iPhone-AltStore.ipa
+          if-no-files-found: error
       - name: Upload iOS project (signing required for iPhone)
         uses: actions/upload-artifact@v4
         with:
