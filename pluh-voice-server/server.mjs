@@ -149,7 +149,7 @@ async function handler(req,res){
     try{
       const imageKey=process.env.API_MARKET_IMAGE_KEY||secret;
       let artifact=kind==="image"
-        ? await makeGptImage(latestText,imageKey,ip)
+        ? await makeGptImage(latestText,imageKey,ip,messages)
         :kind==="presentation"
         ? await makePresentation(latestText,messages,secret,ip,imageKey)
         : await makePdf(latestText,messages,secret,ip);
