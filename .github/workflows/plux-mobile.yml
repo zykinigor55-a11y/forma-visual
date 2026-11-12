@@ -25,6 +25,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original V30 icon renderer
+        run: python -m pip install --disable-pip-version-check pillow==11.3.0
       - name: Verify Android SDK on hosted Ubuntu runner
         run: |
           echo "ANDROID_HOME=${ANDROID_HOME}"
@@ -37,6 +42,7 @@ jobs:
           npx cap add android
           python3 scripts/patch-native.py android
           python3 scripts/patch-native-save-v31.py
+          python3 scripts/restore-v30-icon.py android
           npx cap sync android
       - name: Compile APK
         run: cd android && ./gradlew assembleDebug --no-daemon
@@ -60,10 +66,16 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original V30 icon renderer
+        run: python -m pip install --disable-pip-version-check pillow==11.3.0
       - name: Generate iOS platform
         run: |
           npx cap add ios
           python3 scripts/patch-native.py ios
+          python3 scripts/restore-v30-icon.py ios
           npx cap sync ios
       - name: Upload iOS project (signing required for iPhone)
         uses: actions/upload-artifact@v4
