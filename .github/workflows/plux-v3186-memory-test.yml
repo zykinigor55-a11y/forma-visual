@@ -1,0 +1,26 @@
+name: PLUX V31.8.6 voice memory across disconnects
+on:
+  push:
+    branches: [plux-v3186-voice-session-memory]
+    paths: ['plux-v31/**', '.github/workflows/plux-v3186-memory-test.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  voice-memory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install browser runner
+        run: npm install --no-save --no-audit --no-fund playwright-core@1.58.2
+      - name: Check scripts
+        run: |
+          node --check plux-v31/voice-memory-v3186.js
+          node --check plux-v31/gemini-voice-v3183.js
+          node --check plux-v31/apply-v31.mjs
+          node --check plux-v31/verify-voice-memory-v3186.mjs
+      - name: Verify old conversations survive restart and clear correctly
+        run: node plux-v31/verify-voice-memory-v3186.mjs

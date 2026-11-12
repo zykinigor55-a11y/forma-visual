@@ -1,0 +1,43 @@
+/* V31.8.6 subtle local memory control in voice header. */
+#screen-voice .plux3186-memory{
+ position:absolute;z-index:88;top:calc(21px + env(safe-area-inset-top,0px));
+ right:15px;display:block;max-width:calc(100vw - 40px);
+ font-family:inherit;color:#b9e6d6;pointer-events:none;
+}
+#screen-voice .plux3186-memory>*{pointer-events:auto}
+#screen-voice .plux3186-trigger{
+ display:flex;align-items:center;justify-content:center;
+ min-width:81px;min-height:29px;border:1px solid rgba(112,222,178,.34);
+ border-radius:999px;background:rgba(3,29,25,.72);
+ color:var(--plux-theme-accent,#a2e7cd);font:500 11px/1.2 system-ui,sans-serif;
+ padding:6px 10px;box-shadow:0 0 10px rgba(5,70,51,.20);
+}
+#screen-voice .plux3186-trigger:focus-visible{outline:2px solid #b7fff0;outline-offset:2px}
+#screen-voice .plux3186-panel{
+ position:absolute;right:0;top:calc(100% + 9px);
+ width:min(290px,calc(100vw - 32px));max-height:43vh;
+ overflow-y:auto;padding:16px 14px 13px;border-radius:17px;
+ border:1px solid rgba(116,223,184,.44);background:#041f1bbf;
+ box-shadow:0 20px 40px #000b;backdrop-filter:blur(20px);
+ -webkit-backdrop-filter:blur(20px);
+}
+#screen-voice .plux3186-panel[hidden]{display:none!important}
+#screen-voice .plux3186-panel strong{display:block;font:700 14px/1.4 system-ui;color:#edfff7}
+#screen-voice .plux3186-panel p{
+ margin:8px 0 12px;font:400 12px/1.5 system-ui;color:#b6d9ce
+}
+#screen-voice .plux3186-panel button{
+ display:inline-flex;align-items:center;justify-content:center;
+ border:1px solid rgba(177,239,214,.37);background:#12372e;
+ color:#f3fff8;min-height:36px;border-radius:11px;
+ padding:8px 11px;margin:4px 5px 0 0;font:600 11px/1.3 system-ui;
+}
+#screen-voice .plux3186-panel button[hidden]{display:none!important}
+#screen-voice .plux3186-panel button:disabled{opacity:.4}
+#screen-voice .plux3186-panel .plux3186-clear-confirm{
+ background:#602b36;border-color:#f69ba4
+}
+@media(max-width:359px){
+ #screen-voice .plux3186-memory{right:10px;top:calc(17px + env(safe-area-inset-top,0px))}
+ #screen-voice .plux3186-trigger{min-width:70px;padding:5px 7px;font-size:10px}
+}
