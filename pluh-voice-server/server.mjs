@@ -139,7 +139,8 @@ async function handler(req,res){
   if(kind&&data?.clientFeatures?.generationJobs===true){
     try{
       const job=beginGenerationJob({kind,prompt:latestText,messages,
-        secret,imageKey:process.env.API_MARKET_IMAGE_KEY||secret,ip});
+        secret,imageKey:process.env.API_MARKET_IMAGE_KEY||secret,ip,
+        clientJobId:typeof data.clientJobId==="string"?data.clientJobId:undefined});
       return reply(res,202,{job});
     }catch(e){
       return reply(res,Number(e?.status)||502,{error:String(e?.message||"Не удалось создать задачу.").slice(0,210)});
