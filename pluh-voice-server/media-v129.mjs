@@ -84,6 +84,7 @@ export async function handleImageRequest(req,res){
   if(!mediaCors(req,res))return;
   if(req.method!=="POST")return reply(res,405,{error:"Используй POST."});
   const key=process.env.API_MARKET_IMAGE_KEY||process.env.API_MARKET_KEY;
+  const model=process.env.API_MARKET_IMAGE_MODEL==='nano-banana-2.1'?'nano-banana-2.1':'nano-banana-2.1';
   if(!key)return reply(res,503,{error:"Не задан API_MARKET_IMAGE_KEY в Render Environment."});
   const ip=String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0];
   const now=Date.now();
@@ -120,13 +121,13 @@ export async function handleImageRequest(req,res){
   try{
     let endpoint="https://api-market1.shop/v1/images/generations";
     let headers={"Authorization":"Bearer "+key,"Content-Type":"application/json"};
-    let requestBody=JSON.stringify({model:"nano-banana-2.1",prompt:prompt+"\n"+style,size:"1024x1024",quality:"high",n:1,response_format:"b64_json"});
+    let requestBody=JSON.stringify({model,prompt:prompt+"\n"+style,size:"1024x1024",quality:"high",n:1,response_format:"b64_json"});
     if(reference){
       // OpenAI-compatible image edit; no fallback to text-to-image on failure.
       // This preserves the user's source and prevents an unintended second charge.
       endpoint="https://api-market1.shop/v1/images/edits";
       const form=new FormData();
-      form.set("model","nano-banana-2.1");
+      form.set("model",model);
       form.set("prompt",prompt+"\n"+style+"\nUse the attached image as the source. Preserve all areas not requested to change.");
       form.set("size","1024x1024");form.set("quality","high");form.set("n","1");
       const ext=reference.mime==="image/png"?"png":reference.mime==="image/webp"?"webp":"jpg";
