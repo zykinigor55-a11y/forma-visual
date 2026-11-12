@@ -73,6 +73,9 @@ async function handler(req,res){
  if(pathname.startsWith("/api/voice/"))return voiceSession(req,res);
  if(pathname.startsWith("/api/tts/"))return handleCyhub(req,res);
  if(pathname.startsWith("/api/video/"))return handleCyhubVideo(req,res);
+ if(pathname==="/api/image/config")return req.method==="GET"
+  ?reply(res,200,{provider:"API Market",model:"nano-banana-2.1",configured:!!(process.env.API_MARKET_IMAGE_KEY||process.env.API_MARKET_KEY),quality:"high"})
+  :reply(res,405,{error:"Use GET"});
  if(pathname==="/api/image")return handleImageRequest(req,res);
  if(pathname==="/api/chat") { // PLUX_CHAT_V128
   const allowedOrigin="https://plux-v12-2-2k-fixed.onrender.com";
