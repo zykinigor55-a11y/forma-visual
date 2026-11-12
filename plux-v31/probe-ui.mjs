@@ -11,3 +11,12 @@ for(const f of ['index.html','app.js']){
  }
  console.log('V31_UI_INSPECT '+f+' '+JSON.stringify(snippets));
 }
+
+for(const f of ['index.html','app.js']){
+ const data=readFileSync(join(dir,f),'utf8');
+ const tokens=['<nav','bottom-nav','tab-bar','nav-item','nav-home','data-screen','color-options','color-palette','color-picker','speech-glass','palette','hue-rotate','plux-color'];
+ for(const token of tokens){
+   const index=data.indexOf(token);
+   if(index>=0) console.log('V31_TARGET '+f+' '+token+': '+JSON.stringify(data.slice(Math.max(0,index-180),Math.min(data.length,index+1150))));
+ }
+}
