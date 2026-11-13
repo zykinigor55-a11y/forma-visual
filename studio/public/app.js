@@ -179,26 +179,53 @@ PRIORITIES
   $('#copyPrompt').disabled = false;
   $('#downloadPrompt').disabled = false;
 }
-function updateImage(file) {
-  if (!file) return;
-  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) { alertStatus('Нужен JPG, PNG или WebP.', 'error'); return; }
-  if (file.size > 8 * 1024 * 1024) { alertStatus('Изображение больше 8 МБ. Уменьшите файл.', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = () => {
-    state.file = file; state.image = String(reader.result || '');
-    state.analysis = null; state.winner = null; state.curation = null; state.prompt = '';
-    $('#shotPlan').hidden = true;
-    $('#projectPreview').src = state.image; $('#projectPreview').hidden = false; $('#emptyScene').hidden = true;
-    $('#dropTitle').textContent = 'Заменить изображение'; $('#dropHint').textContent = 'Нажмите, чтобы загрузить другое';
-    $('#imageLabel').textContent = file.name.length > 28 ? file.name.slice(0,24) + '…' : file.name;
-    setRecommendationMessage('Новый проект загружен. Запустите автоматический отбор.', 'ОЖИДАНИЕ АНАЛИЗА');
-    $('#promptText').textContent = 'Начните анализ, чтобы составить промпт по этому изображению.';
-    $('#promptState').textContent = 'ПРОМПТ НЕ ГОТОВ';
-    $('#copyPrompt').disabled = true; $('#downloadPrompt').disabled = true;
-    alertStatus('Изображение загружено. Архитектура и ракурс останутся неизменными.', 'success');
-  };
-  reader.onerror = () => alertStatus('Не удалось прочитать изображение.', 'error');
-  reader.readAsDataURL(file);
+function imageAsDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(new Error('Не удалось прочитать изображение'));
+    reader.readAsDataURL(file);
+  });
+}
+async function prepareImage(file){
+  let bmp;
+  try{bmp=await createImageBitmap(file);}
+  catch{return imageAsDataURL(file);}
+  try{
+    const maxSide=1800;
+    if(Math.max(bmp.width,bmp.height)<=maxSide&&file.size<500000)return await imageAsDataURL(file);
+    const scale=Math.min(1,maxSide/Math.max(bmp.width,bmp.height));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(bmp.width*scale));
+    canvas.height=Math.max(1,Math.round(bmp.height*scale));
+    const ctx=canvas.getContext('2d',{alpha:false});
+    if(!ctx)return await imageAsDataURL(file);
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.imageSmoothingQuality='high';ctx.drawImage(bmp,0,0,canvas.width,canvas.height);
+    return canvas.toDataURL('image/jpeg',0.87);
+  }finally{bmp.close?.();}
+}
+async function updateImage(file){
+  if(!file)return;
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){alertStatus('Нужен JPG, PNG или WebP.','error');return;}
+  if(file.size>8*1024*1024){alertStatus('Изображение больше 8 МБ. Уменьшите файл.','error');return;}
+  const loadId=state.loadId=(state.loadId||0)+1;
+  alertStatus('Подготавливаем изображение для быстрого архитектурного анализа…');
+  try{
+    const modelImage=await prepareImage(file);
+    if(loadId!==state.loadId)return;
+    state.file=file;state.image=modelImage;
+    state.analysis=null;state.winner=null;state.curation=null;state.prompt='';
+    $('#shotPlan').hidden=true;
+    $('#projectPreview').src=modelImage;$('#projectPreview').hidden=false;$('#emptyScene').hidden=true;
+    $('#dropTitle').textContent='Заменить изображение';$('#dropHint').textContent='Нажмите, чтобы загрузить другое';
+    $('#imageLabel').textContent=file.name.length>28?file.name.slice(0,24)+'…':file.name;
+    setRecommendationMessage('Новый проект загружен. Запустите автоматический отбор.','ОЖИДАНИЕ АНАЛИЗА');
+    $('#promptText').textContent='Начните анализ, чтобы составить промпт по этому изображению.';
+    $('#promptState').textContent='ПРОМПТ НЕ ГОТОВ';
+    $('#copyPrompt').disabled=true;$('#downloadPrompt').disabled=true;
+    alertStatus('Изображение готово. Исходная геометрия и ракурс сохраняются.','success');
+  }catch(err){alertStatus('Не удалось подготовить изображение: '+String(err.message||err),'error');}
 }
 async function requestJson(url, options={}) {
   const response = await fetch(url, options);
@@ -218,7 +245,7 @@ async function runProject(event) {
   let issue = '';
   try {
     if (state.config.ai) {
-      alertStatus('AI исследует исходную архитектуру, материалы и неизменяемый ракурс…');
+      alertStatus('AI распознаёт форму дома и материалы; затем подберёт дневной свет и кадр…');
       try {
         const result = await requestJson('/api/analyze', {
           method:'POST', headers:{'content-type':'application/json'},
@@ -241,7 +268,7 @@ async function runProject(event) {
       try {
         const curated = await requestJson('/api/direct', {
           method:'POST', headers:{'content-type':'application/json'},
-          body:JSON.stringify({image:state.image, project, query:state.analysis.query})
+          body:JSON.stringify({image:state.image, project, query:state.analysis.query,analysis:state.analysis})
         });
         if (curated.available && curated.reference && curated.direction && showWinner(curated)) {
           alertStatus('Лучший референс выбран после визуального сравнения. Свет — дневной, архитектура и камера защищены.', 'success');

@@ -11,7 +11,8 @@ const SERPER_KEY = process.env.SERPER_API_KEY || '';
 const SEARCH_ENABLED = Boolean(SERPER_KEY || TAVILY_KEY || BRAVE_KEY);
 const AI_KEY = process.env.VISION_API_KEY || '';
 const AI_BASE = (process.env.VISION_API_BASE || 'https://api.openai.com/v1').replace(/\/+$/, '');
-const AI_MODEL = process.env.VISION_MODEL || 'gpt-4.1-mini';
+const AI_MODEL = process.env.VISION_MODEL || 'gemini-4-argon';
+const TEXT_MODEL = process.env.VISION_TEXT_MODEL || 'gemini-3.8-flash';
 const MAX_BYTES = 13 * 1024 * 1024;
 const requestCounts = new Map();
 const refCache = new Map();
@@ -74,33 +75,82 @@ function tryExtractJson(content){
     throw new Error('Модель вернула ответ не в формате JSON');
   }
 }
-async function analyze(input){
-  if(!AI_KEY) return {available:false,code:'AI_NOT_CONFIGURED', message:'Подключите VISION_API_KEY в настройках сервера для анализа фотографии.'};
-  const image = input.image;
-  if(!validImage(image)) throw Object.assign(new Error('Для AI-анализа загрузите JPG, PNG или WebP до 8 МБ'),{status:400});
-  const project = input.project || {};
-  const userContext = `Project inputs (may be assumptions): type=${textLimited(project.type,80)}, material=${textLimited(project.materials,200)}, scene=${textLimited(project.description,800)}, geometry_lock=${project.lockGeometry !== false ? 'yes':'no'}`;
-  const response=await fetch(`${AI_BASE}/chat/completions`,{
-    method:'POST',
-    headers:{'authorization':`Bearer ${AI_KEY}`,'content-type':'application/json'},
-    body:JSON.stringify({model:AI_MODEL,temperature:0.25,max_tokens:4096,messages:[
-      {role:'system',content:PROMPT_SYSTEM},
-      {role:'user',content:[{type:'text',text:`Analyze this original building image for professional architectural reference selection. ${userContext}`},{type:'image_url',image_url:{url:image,detail:'high'}}]}
-    ]}),signal:timeout(60_000)
-  });
-  if(!response.ok){const txt=await response.text();throw new Error(`AI API: ${response.status} ${txt.slice(0,180)}`);}
+async function requestModel(model,messages,maxTokens,timeoutMs){
+  let response;
+  try{
+    response=await fetch(AI_BASE+'/chat/completions',{
+      method:'POST',
+      headers:{authorization:'Bearer '+AI_KEY,'content-type':'application/json'},
+      body:JSON.stringify({model,max_tokens:maxTokens,messages}),
+      signal:timeout(timeoutMs)
+    });
+  }catch(err){
+    if(err?.name==='TimeoutError') throw new Error('Визуальная модель превысила время ожидания. Попробуйте ещё раз.');
+    throw new Error('Нет ответа от API Market: '+errorOf(err));
+  }
+  if(!response.ok){
+    const raw=await response.text();
+    let message=''; try{const e=JSON.parse(raw);message=e?.error?.message||e?.message||''}catch{}
+    throw new Error('AI API '+response.status+': '+textLimited(message||'Ошибка провайдера',180));
+  }
   const payload=await response.json();
-  const answer=tryExtractJson(payload?.choices?.[0]?.message?.content);
+  const raw=payload?.choices?.[0]?.message?.content;
+  const answer=typeof raw==='string'?raw:Array.isArray(raw)?raw.map(x=>x?.text||'').join('\n'):'';
+  if(!answer.trim())throw new Error('AI-модель вернула пустой ответ');
+  return answer.trim();
+}
+function captionFallback(caption,project){
+  const kind=textLimited(project.type,110),materials=textLimited(project.materials,200);
+  const query=(kind.includes('барн')?'contemporary barnhouse ':kind.includes('брус')?'timber house ':kind.includes('кирп')?'brick house ':'modern residential house ')+
+    (materials.toLowerCase().includes('дерев')?'timber ':'')+'daylight architectural editorial photography';
+  return {
+    architecture:textLimited(caption,240),
+    materials:materials||'Материалы уточняются по исходному изображению',
+    composition:'Сохранить исходную камеру, перспективу, масштаб, форму здания, размеры и положение всех проёмов.',
+    lighting:'Режиссёрский дневной свет; ночь и сумерки исключены.',
+    constraints:['Не менять геометрию и размеры здания','Не перемещать окна и двери','Не изменять исходный ракурс и перспективу','Сохранять реальные материалы фасада'],
+    query:textLimited(query,120),choice:'sunlit',
+    reason:'Свет и окружение выбираются под визуально распознанную архитектуру, а не по универсальному шаблону.',
+    confidence:'low'
+  };
+}
+async function analyze(input){
+  if(!AI_KEY)return {available:false,code:'AI_NOT_CONFIGURED',message:'Подключите VISION_API_KEY для анализа фотографии.'};
+  if(!validImage(input?.image))throw Object.assign(new Error('Загрузите JPG, PNG или WebP до 8 МБ.'),{status:400});
+  const project=input.project||{};
+  const visionInstruction='Briefly analyze the ACTUAL building in this image in Russian. Describe only visible evidence: building mass and roof form, facade and windows, exact observed camera angle, visible daylight, and environment. 3-5 compact sentences. Do not invent unseen elements. Do NOT output JSON. No generic advice. Preserve source camera and geometry.';
+  const caption=await requestModel(AI_MODEL,[{role:'user',content:[
+    {type:'text',text:visionInstruction},
+    {type:'image_url',image_url:{url:input.image,detail:'low'}}
+  ]}],650,35000);
+  const fallback=captionFallback(caption,project);
+  const notes='User notes, not observed facts: '+JSON.stringify({
+    type:textLimited(project.type,100),
+    materials:textLimited(project.materials,180),
+    description:textLimited(project.description,600)
+  });
+  let answer={};
+  try{
+    const structured=await requestModel(TEXT_MODEL,[
+      {role:'system',content:PROMPT_SYSTEM},
+      {role:'user',content:'Here is a TRUE visual observation of the original uploaded building photo, written by a vision model. Treat this as observed evidence and do not claim to see the image yourself: '+caption+'\n'+notes+'\nReturn all requested JSON keys. Keep the original camera, geometry and daylight only. Make a concise 4-9-word English architecture photo search query.'}
+    ],1900,22000);
+    answer=tryExtractJson(structured);
+  }catch(error){
+    console.log('[FORMA_AI_FORMAT_FALLBACK]',error?.name||'invalid_output');
+  }
+  const choice=['sunlit','soft','golden','atmospheric'].includes(answer.choice)?answer.choice:fallback.choice;
   return {available:true,result:{
-    architecture:textLimited(answer.architecture,240),
-    materials:textLimited(answer.materials,220),
-    composition:textLimited(answer.composition,260),
-    lighting:textLimited(answer.lighting,220),
-    constraints:Array.isArray(answer.constraints) ? answer.constraints.slice(0,5).map(x=>textLimited(x,160)):[],
-    query:textLimited(answer.query,120),
-    choice:['sunlit','soft','golden','atmospheric'].includes(answer.choice) ? answer.choice : 'sunlit',
-    reason:textLimited(answer.reason,480),
-    confidence:['high','medium','low'].includes(answer.confidence) ? answer.confidence : 'low'
+    architecture:textLimited(answer.architecture,240)||fallback.architecture,
+    materials:textLimited(answer.materials,220)||fallback.materials,
+    composition:textLimited(answer.composition,260)||fallback.composition,
+    lighting:textLimited(answer.lighting,220)||fallback.lighting,
+    constraints:Array.isArray(answer.constraints)&&answer.constraints.length?answer.constraints.slice(0,5).map(x=>textLimited(x,160)):fallback.constraints,
+    query:textLimited(answer.query,120)||fallback.query,
+    choice,
+    reason:textLimited(answer.reason,480)||fallback.reason,
+    confidence:['high','medium','low'].includes(answer.confidence)?answer.confidence:fallback.confidence,
+    visualCaption:textLimited(caption,1000)
   }};
 }
 function filterResult(x,s){
@@ -196,64 +246,68 @@ async function searchSources(rawQuery){
   return output;
 }
 function safeText(v, limit=250) { return textLimited(v,limit); }
-async function direct(input) {
-  if (!AI_KEY || !SEARCH_ENABLED) return {available:false, message:'Для автоматического сравнения нужны ключ визуальной модели (VISION_API_KEY) и поиска (SERPER_API_KEY, TAVILY_API_KEY либо BRAVE_SEARCH_API_KEY).'};
-  if (!validImage(input?.image)) throw Object.assign(new Error('Для выбора референса нужно загрузить изображение JPG, PNG или WebP до 8 МБ.'),{status:400});
-  const project = input.project || {};
-  const q = safeText(input.query,110) || 'modern residential building architectural photo';
-  const found = await searchSources(q);
-  // Round-robin balanced selection: no platform silently dominates the curation set.
-  const candidates = [];
-  for (let round=0;round<2;round++) {
-    for (const site of SITE) {
-      const item = found.results.filter(r=>r.source===site.id)[round];
-      if (item) candidates.push(item);
-    }
-  }
-  if (!candidates.length) return {available:false,message:'Поиск не вернул подходящих фотографий из профессиональных источников. Изображение не выбрано; случайные карточки не показываем.'};
-  const content = [
-    {type:'text',text:'Original user building image — immutable geometry and immutable original camera. Compare it against the following labelled real photographic search thumbnails. A reference is for mood, lighting and art direction, not its own building geometry.'},
-    {type:'image_url', image_url:{url:input.image, detail:'high'}},
-    {type:'text',text:`Context only (not facts about image): ${JSON.stringify({buildingType:safeText(project.type,90),materials:safeText(project.materials,220),notes:safeText(project.description,700)})}`}
+async function direct(input){
+  if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для автоматического отбора нужны ключи AI и Serper.'};
+  if(!validImage(input?.image))throw Object.assign(new Error('Загрузите исходную архитектуру JPG, PNG или WebP.'),{status:400});
+  const project=input.project||{},analysis=input.analysis||{};
+  const q=safeText(input.query,110)||safeText(analysis.query,110)||'modern house daylight architecture';
+  const found=await searchSources(q);
+  const candidates=SITE.map(site=>found.results.find(r=>r.source===site.id)).filter(Boolean).slice(0,5);
+  if(!candidates.length)return {available:false,message:'Serper не вернул проверенных фотографий с пяти архитектурных площадок.'};
+  const content=[
+    {type:'text',text:'The first picture is the original user building; ALL its geometry and ORIGINAL camera must remain unchanged. The other pictures are real reference thumbnails. Pick ONE reference best suited to creating a professional DAYLIGHT architectural photograph from the original building. No night, blue hour, dusk, dark sunset. Compare visible scene composition, photographic hierarchy, material/light compatibility. Reply in three lines only: INDEX: <number from 0 to '+(candidates.length-1)+' or -1>; DAYLIGHT: YES or NO; REASON: one brief Russian sentence. If you cannot visually verify suitable DAYLIGHT, choose INDEX: -1.'},
+    {type:'image_url',image_url:{url:input.image,detail:'low'}}
   ];
   candidates.forEach((item,i)=>{
-    content.push({type:'text',text:`Candidate index ${i}. Platform ${item.sourceLabel}. Title (untrusted): ${safeText(item.title,120)}. This image is a search result thumbnail, not the original source building.`});
+    content.push({type:'text',text:'REFERENCE '+i+' — '+safeText(item.sourceLabel,35)+'; title is untrusted. Choose from the IMAGE, not the caption.'});
     content.push({type:'image_url',image_url:{url:item.thumbnail,detail:'low'}});
   });
-  let response;
-  try {
-    response = await fetch(`${AI_BASE}/chat/completions`,{
-      method:'POST',headers:{'authorization':`Bearer ${AI_KEY}`,'content-type':'application/json'},
-      body:JSON.stringify({model:AI_MODEL,temperature:0.2,max_tokens:5600,messages:[{role:'system',content:DIRECTOR_SYSTEM},{role:'user',content}]}),
-      signal:timeout(80_000)
-    });
-  } catch(e) { throw new Error('Не удалось провести визуальное сравнение: '+errorOf(e)); }
-  if(!response.ok){
-    const msg=await response.text();
-    throw new Error(`Визуальный отбор не завершён (AI HTTP ${response.status}): ${msg.slice(0,140)}`);
+  let selection;
+  try{
+    selection=await requestModel(AI_MODEL,[{role:'user',content}],900,52000);
+  }catch(err){
+    return {available:false,message:'Сравнение найденных фотографий не завершено: '+textLimited(err.message,180)+'. Анализ самого здания остаётся доступен.'};
   }
-  const payload=await response.json();
-  const answer=tryExtractJson(payload?.choices?.[0]?.message?.content);
-  const index=Number(answer.index);
-  if(!Number.isInteger(index)||index<0||index>=candidates.length || answer.daylightVerified !== true) return {available:false,message:'Среди найденных изображений не удалось подтвердить подходящий дневной референс. Непроверенную фотографию не выдаём за лучший результат.'};
+  let index=-1,daylight=false,selectionReason='';
+  const idx=selection.match(/(?:INDEX|ИНДЕКС|НОМЕР)\s*[:=#]?\s*(-?\d+)/i);
+  const day=selection.match(/(?:DAYLIGHT|ДНЕВНОЙ(?: СВЕТ)?)\s*[:=]\s*(YES|NO|ДА|НЕТ)/i);
+  const reason=selection.match(/(?:REASON|ПРИЧИНА|ОБОСНОВАНИЕ)\s*[:=]\s*(.+)/i);
+  if(idx)index=Number(idx[1]);
+  if(day)daylight=/^(YES|ДА)$/i.test(day[1]);
+  if(reason)selectionReason=safeText(reason[1],320);
+  if(index<0||index>=candidates.length||!daylight)return {available:false,message:'Визуальная модель не подтвердила подходящий дневной референс; случайное изображение не показываем.'};
   const selected=candidates[index];
-  const proposedText=[answer.lightingDescription,answer.composition,answer.environment,answer.story,answer.reason].join(' ').toLowerCase();
-  if(/(?:\bnight\b|\bblue.hour\b|\bdusk\b|\btwilight\b|ночн|сумерк|синий час|после закат)/i.test(proposedText)) return {available:false,message:'Модель предложила вечернюю или ночную атмосферу. Выбор отклонён.'};
-  return {available:true,reference:selected,direction:{
-    lighting:['sunlit','soft','golden','atmospheric'].includes(answer.lighting) ? answer.lighting:'soft',
-    lightingDescription:safeText(answer.lightingDescription,330),
-    composition:safeText(answer.composition,500),
-    environment:safeText(answer.environment,500),
-    foreground:safeText(answer.foreground,450),
-    middleGround:safeText(answer.middleGround,450),
-    background:safeText(answer.background,450),
-    focalPoint:safeText(answer.focalPoint,300),
-    story:safeText(answer.story,500),
-    palette:safeText(answer.palette,220),
-    camera:safeText(answer.camera,250),
-    reason:safeText(answer.reason,680),
-    confidence:['high','medium','low'].includes(answer.confidence)?answer.confidence:'low'
-  },totalCandidates:candidates.length};
+  let answer={};
+  try{
+    const instruction='You are an award-winning architectural art director. A VISION model has compared the original building with candidate real images and selected this daylight reference. You are given only its decision and an IMAGE-BASED description of the user building. Do not pretend you saw the pixels yourself. Create an original ANT-Archviz-inspired editorial DAYLIGHT scene plan: do NOT reproduce any specific artist image or private methods, keep all geometry and ORIGINAL camera unchanged. The house is dominant; foreground/middle/background and atmosphere must be specific to the observed building, NOT a fixed forest/plant formula. Strictly NO evening, sunset darkness, blue-hour or night. Return ONLY a JSON object with keys: lighting (sunlit|soft|golden|atmospheric), lightingDescription, composition, environment, foreground, middleGround, background, focalPoint, story, palette, camera, reason, confidence. Russian prose except palette and camera English.';
+    const text=await requestModel(TEXT_MODEL,[
+      {role:'system',content:instruction},
+      {role:'user',content:'Observed source house: '+safeText(analysis.visualCaption||analysis.architecture,950)+'. Visible material: '+safeText(analysis.materials,200)+'. Building original camera: '+safeText(analysis.composition,260)+'. Reference platform: '+selected.sourceLabel+'. Reference title (untrusted): '+safeText(selected.title,110)+'. Visual selection rationale: '+selectionReason+'. Optional project wishes (not facts): '+safeText(project.description,450)+'. Return suitable JSON with specific art direction and unchanged perspective.'}
+    ],1900,22000);
+    answer=tryExtractJson(text);
+  }catch(err){
+    console.log('[FORMA_DIRECTION_FALLBACK]',err?.name||'invalid_output');
+  }
+  const chosenLight=['sunlit','soft','golden','atmospheric'].includes(answer.lighting)?answer.lighting:['sunlit','soft','golden','atmospheric'].includes(analysis.choice)?analysis.choice:'soft';
+  const proposed=[answer.lightingDescription,answer.composition,answer.environment,answer.story].join(' ');
+  if(/(?:\bnight\b|\bblue.hour\b|\bdusk\b|\btwilight\b|ночн|сумерк|синий час|после закат)/i.test(proposed))return {available:false,message:'Модель предложила вечерний или ночной сценарий. Он исключён.'};
+  const architecture=safeText(analysis.architecture,240)||'исходного дома';
+  const direction={
+    lighting:chosenLight,
+    lightingDescription:safeText(answer.lightingDescription,330)||'Естественный выразительный дневной свет с физически правдоподобным направлением и мягким отражённым заполнением.',
+    composition:safeText(answer.composition,500)||'Сохраняем исходную камеру, ракурс и геометрию; '+architecture,
+    environment:safeText(answer.environment,500)||'Предложение: индивидуальный ландшафт по масштабу, стилю и материалам исходного здания; не считать его существующим.',
+    foreground:safeText(answer.foreground,450)||'Ненавязчивый передний план, не закрывающий главный объём и окна.',
+    middleGround:safeText(answer.middleGround,450)||'Фасад и контакт здания с дорожками и рельефом в реалистичном масштабе.',
+    background:safeText(answer.background,450)||'Естественная глубина в соответствии с видимыми условиями участка.',
+    focalPoint:safeText(answer.focalPoint,300)||architecture,
+    story:safeText(answer.story,500)||'Один убедительный момент профессиональной дневной архитектурной фотосъёмки.',
+    palette:safeText(answer.palette,220)||'natural daylight, restrained warm stone and timber tones',
+    camera:safeText(answer.camera,250)||'original camera position and perspective, rectilinear architectural photography',
+    reason:safeText(answer.reason,680)||selectionReason||'Референс визуально выбран по дневному свету и совместимости с архитектурой дома.',
+    confidence:['high','medium','low'].includes(answer.confidence)?answer.confidence:'medium'
+  };
+  return {available:true,reference:selected,direction,totalCandidates:candidates.length};
 }
 function safePath(reqPath){
   let parsed;
@@ -279,7 +333,7 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.5.0'});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.6.0'});
     if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
     if(req.method==='POST'&&pathName==='/api/analyze')return json(res,200,await analyze(await bodyJson(req)));
     if(req.method==='POST'&&pathName==='/api/direct')return json(res,200,await direct(await bodyJson(req)));
@@ -291,27 +345,6 @@ const server=http.createServer(async(req,res)=>{
     return json(res,405,{error:'Метод не поддерживается'});
   }catch(e){json(res,e.status||502,{error:errorOf(e)});}
 });
-// BEGIN TEMP SHORT VISION PROBES; removed after checking results
-if(AI_KEY){
- (async()=>{
-  const photo="data:image/jpeg;base64,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";
-  const inputs=[
-   {label:'argon-short-photo',model:'gemini-4-argon',max_tokens:500,messages:[{role:'user',content:[{type:'text',text:'Describe the architecture visible in this image in one short Russian sentence.'},{type:'image_url',image_url:{url:photo}}]}]},
-   {label:'argon-short-json',model:'gemini-4-argon',max_tokens:2000,messages:[{role:'user',content:[{type:'text',text:'Look at this building image. Respond ONLY a small JSON object with two strings: {"architecture":"...","query":"..."}. Do not include any other text.'},{type:'image_url',image_url:{url:photo}}]}]},
-   {label:'sol-short-photo',model:'gpt-6.1-sol',max_tokens:300,messages:[{role:'user',content:[{type:'text',text:'Describe the house you see in this image in one sentence.'},{type:'image_url',image_url:{url:photo}}]}]}
-  ];
-  for(const task of inputs){
-   let started=Date.now();
-   try{
-    const {label,...payload}=task;
-    const r=await fetch(AI_BASE+'/chat/completions',{method:'POST',headers:{authorization:'Bearer '+AI_KEY,'content-type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(30000)});
-    const p=await r.json().catch(()=>({}));const content=p?.choices?.[0]?.message?.content;
-    console.log('[VISION_SHORT_PROBE]',JSON.stringify({name:label,http:r.status,ms:Date.now()-started,finish:p?.choices?.[0]?.finish_reason||null,contentType:typeof content,contentLength:typeof content==='string'?content.length:0,startsWithJson:typeof content==='string'&&content.trim().startsWith('{'),errorType:p?.error?.type||null}));
-   }catch(e){console.log('[VISION_SHORT_PROBE]',JSON.stringify({name:task.label,ms:Date.now()-started,error:e?.name==='TimeoutError'?'timeout':'transport-error'}));}
-  }
- })();
-}
-// END TEMP SHORT VISION PROBES
 
 
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
