@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -16,6 +17,9 @@ const TEXT_MODEL = process.env.VISION_TEXT_MODEL || 'gemini-3.8-flash';
 const MAX_BYTES = 13 * 1024 * 1024;
 const requestCounts = new Map();
 const refCache = new Map();
+const analysisJobs = new Map();
+const MAX_ACTIVE_JOBS = 2;
+const JOB_KEEP_MS = 15 * 60 * 1000;
 const SITE = [
   {id:'behance', label:'Behance', domain:'behance.net', term:'architectural visualization editorial daylight exterior photography'},
   {id:'divisare', label:'Divisare', domain:'divisare.com', term:'residential architectural editorial photography natural light'},
@@ -114,7 +118,7 @@ function captionFallback(caption,project){
     confidence:'low'
   };
 }
-async function analyze(input){
+async function analyze(input,onProgress=()=>{}){
   if(!AI_KEY)return {available:false,code:'AI_NOT_CONFIGURED',message:'Подключите VISION_API_KEY для анализа фотографии.'};
   if(!validImage(input?.image))throw Object.assign(new Error('Загрузите JPG, PNG или WebP до 8 МБ.'),{status:400});
   const project=input.project||{};
@@ -122,7 +126,8 @@ async function analyze(input){
   const caption=await requestModel(AI_MODEL,[{role:'user',content:[
     {type:'text',text:visionInstruction},
     {type:'image_url',image_url:{url:input.image,detail:'low'}}
-  ]}],650,35000);
+  ]}],420,85000);
+  onProgress('structure',42,'Архитектура распознана. Подготавливаем бриф…');
   const fallback=captionFallback(caption,project);
   const notes='User notes, not observed facts: '+JSON.stringify({
     type:textLimited(project.type,100),
@@ -139,6 +144,7 @@ async function analyze(input){
   }catch(error){
     console.log('[FORMA_AI_FORMAT_FALLBACK]',error?.name||'invalid_output');
   }
+  onProgress('brief',57,'Бриф готов. Подбираем свет и архитектурные референсы…');
   const choice=['sunlit','soft','golden','atmospheric'].includes(answer.choice)?answer.choice:fallback.choice;
   return {available:true,result:{
     architecture:textLimited(answer.architecture,240)||fallback.architecture,
@@ -246,12 +252,13 @@ async function searchSources(rawQuery){
   return output;
 }
 function safeText(v, limit=250) { return textLimited(v,limit); }
-async function direct(input){
+async function direct(input,onProgress=()=>{}){
   if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для автоматического отбора нужны ключи AI и Serper.'};
   if(!validImage(input?.image))throw Object.assign(new Error('Загрузите исходную архитектуру JPG, PNG или WebP.'),{status:400});
   const project=input.project||{},analysis=input.analysis||{};
   const q=safeText(input.query,110)||safeText(analysis.query,110)||'modern house daylight architecture';
   const found=await searchSources(q);
+  onProgress('ranking',77,'Референсы найдены. ИИ сравнивает дневные фотографии…');
   const candidates=SITE.map(site=>found.results.find(r=>r.source===site.id)).filter(Boolean).slice(0,5);
   if(!candidates.length)return {available:false,message:'Serper не вернул проверенных фотографий с пяти архитектурных площадок.'};
   const content=[
@@ -277,6 +284,7 @@ async function direct(input){
   if(reason)selectionReason=safeText(reason[1],320);
   if(index<0||index>=candidates.length||!daylight)return {available:false,message:'Визуальная модель не подтвердила подходящий дневной референс; случайное изображение не показываем.'};
   const selected=candidates[index];
+  onProgress('scene',92,'Референс подтверждён. Составляем режиссёрский план…');
   let answer={};
   try{
     const instruction='You are an award-winning architectural art director. A VISION model has compared the original building with candidate real images and selected this daylight reference. You are given only its decision and an IMAGE-BASED description of the user building. Do not pretend you saw the pixels yourself. Create an original ANT-Archviz-inspired editorial DAYLIGHT scene plan: do NOT reproduce any specific artist image or private methods, keep all geometry and ORIGINAL camera unchanged. The house is dominant; foreground/middle/background and atmosphere must be specific to the observed building, NOT a fixed forest/plant formula. Strictly NO evening, sunset darkness, blue-hour or night. Return ONLY a JSON object with keys: lighting (sunlit|soft|golden|atmospheric), lightingDescription, composition, environment, foreground, middleGround, background, focalPoint, story, palette, camera, reason, confidence. Russian prose except palette and camera English.';
@@ -329,12 +337,85 @@ async function staticServe(req,res){
     res.end(await readFile(file));
   } catch {json(res,404,{error:'Не найдено'});}
 }
+
+function cleanAnalysisJobs(){
+  const now=Date.now();
+  for(const [id,job] of analysisJobs){
+    if(job.finishedAt && now-job.finishedAt>JOB_KEEP_MS) analysisJobs.delete(id);
+    else if(job.status==='running' && now-job.createdAt>6*60*1000){
+      job.status='finished';job.phase='failed';job.error='Время анализа превышено. Повторите запрос.';
+      job.message=job.error;job.finishedAt=now;
+    }
+  }
+}
+function publicJob(job){
+  return {jobId:job.id,status:job.status,phase:job.phase,progress:job.progress,
+    message:job.message,analysis:job.analysis,curation:job.curation,
+    error:job.error,finishedAt:job.finishedAt||null};
+}
+function startAnalysisJob(input){
+  cleanAnalysisJobs();
+  if(!AI_KEY)throw Object.assign(new Error('Визуальный API ещё не подключён.'),{status:503});
+  if(!validImage(input?.image))throw Object.assign(new Error('Загрузите корректный JPG, PNG или WebP.'),{status:400});
+  if([...analysisJobs.values()].filter(j=>j.status==='running').length>=MAX_ACTIVE_JOBS){
+    throw Object.assign(new Error('Сейчас выполняются два анализа. Повторите отправку чуть позже.'),{status:429});
+  }
+  const job={id:randomUUID(),createdAt:Date.now(),finishedAt:null,status:'running',
+    phase:'vision',progress:12,message:'AI изучает геометрию и материалы здания…',
+    analysis:null,curation:null,error:null};
+  analysisJobs.set(job.id,job);
+  const image=input.image,project=input.project||{};
+  const progress=(phase,percent,message)=>{
+    if(job.status!=='running')return;
+    job.phase=phase;job.progress=Math.max(job.progress,Math.min(98,percent));job.message=message;
+  };
+  // The HTTP response returns immediately. Model inference runs independently of the browser request.
+  void (async()=>{
+    try{
+      const result=await analyze({image,project},progress);
+      if(job.status!=='running')return;
+      if(!result?.available||!result.result)throw new Error(result?.message||'Анализ изображения не завершён.');
+      job.analysis=result.result;
+      progress('search',63,SEARCH_ENABLED?
+        'Анализ дома готов. Ищем дневные референсы по пяти площадкам…':
+        'Анализ дома готов. Поиск референсов не подключён.');
+      if(SEARCH_ENABLED){
+        try{
+          const outcome=await direct({image,project,analysis:job.analysis,query:job.analysis.query},progress);
+          if(job.status!=='running')return;
+          job.curation=outcome;
+        }catch(err){
+          job.curation={available:false,message:'Референсы не удалось подтвердить: '+textLimited(errorOf(err),200)};
+        }
+      }
+      if(job.status!=='running')return;
+      job.progress=100;job.phase='completed';
+      job.message=job.curation?.available?
+        'Готово: найден референс и составлен план визуализации.':
+        'Анализ архитектуры готов. Подтверждённый референс не выбран.';
+    }catch(err){
+      if(job.status!=='running')return;
+      job.phase='failed';job.error=textLimited(errorOf(err),220);
+      job.message='Не удалось завершить анализ: '+job.error;
+      console.warn('[FORMA_JOB_FAILED]',JSON.stringify({elapsedMs:Date.now()-job.createdAt,timeout:/время|вовремя/i.test(job.error)}));
+    }finally{
+      if(job.status==='running'){job.status='finished';job.finishedAt=Date.now();}
+    }
+  })();
+  return {jobId:job.id,status:job.status,phase:job.phase,progress:job.progress,message:job.message};
+}
 const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.6.0'});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.7.0'});
     if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
+    if(req.method==='POST'&&pathName==='/api/jobs')return json(res,202,startAnalysisJob(await bodyJson(req)));
+    if(req.method==='GET'&&/^\/api\/jobs\/[a-f0-9-]{36}$/.test(pathName)){
+      cleanAnalysisJobs();
+      const job=analysisJobs.get(pathName.slice('/api/jobs/'.length));
+      return job?json(res,200,publicJob(job)):json(res,404,{error:'Задание не найдено. Запустите анализ повторно.'});
+    }
     if(req.method==='POST'&&pathName==='/api/analyze')return json(res,200,await analyze(await bodyJson(req)));
     if(req.method==='POST'&&pathName==='/api/direct')return json(res,200,await direct(await bodyJson(req)));
     if(req.method==='GET'&&pathName==='/api/references'){
