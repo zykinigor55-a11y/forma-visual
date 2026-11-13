@@ -210,15 +210,18 @@ async function searchSources(rawQuery,mode='exact'){
     const unique=new Map();
     try{
       const sourceQuery=source.id==='ant'?
-        'site:behance.net/gallery/ "ANT Archviz" '+(mode==='form'?'house exterior daylight ':q+' '):
-        'site:behance.net/gallery/ '+q+' professional daylight architectural visualization ';
+        'site:behance.net "ANT Archviz" '+(mode==='form'?'house exterior daylight ':q+' '):
+        'site:behance.net '+q+' professional daylight architectural visualization ';
       if(SERPER_KEY){
         const response=await fetch('https://google.serper.dev/images',{
           method:'POST',headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
           body:JSON.stringify({q:sourceQuery.slice(0,320),num:20,hl:'en',gl:'us',safe:'active'}),
           signal:timeout(18_000)
         });
-        if(!response.ok)return {id:source.id,label:source.label,count:0,status:'Serper HTTP '+response.status,results:[]};
+        if(!response.ok){
+          let detail='';try{const t=await response.json();detail=String(t?.message||t?.error||'').slice(0,150);}catch{}
+          return {id:source.id,label:source.label,count:0,status:'Serper HTTP '+response.status+(detail?': '+detail:''),results:[]};
+        }
         const data=await response.json();
         for(const item of Array.isArray(data.images)?data.images:[]){
           const matched=filterResult({url:item.link,title:item.title,thumbnail:{src:item.thumbnailUrl||item.imageUrl}},source);
