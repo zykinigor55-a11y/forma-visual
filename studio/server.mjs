@@ -210,12 +210,12 @@ async function searchSources(rawQuery,mode='exact'){
     const unique=new Map();
     try{
       const sourceQuery=source.id==='ant'?
-        'site:behance.net "ANT Archviz" '+(mode==='form'?'house exterior daylight ':q+' '):
+        'site:behance.net ANT Archviz '+(mode==='form'?'house exterior daylight ':q+' '):
         'site:behance.net '+q+' professional daylight architectural visualization ';
       if(SERPER_KEY){
         const response=await fetch('https://google.serper.dev/images',{
           method:'POST',headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
-          body:JSON.stringify({q:sourceQuery.slice(0,320),num:20,hl:'en',gl:'us',safe:'active'}),
+          body:JSON.stringify({q:sourceQuery.slice(0,320),num:10,hl:'en',gl:'us',safe:'active'}),
           signal:timeout(18_000)
         });
         if(!response.ok){
