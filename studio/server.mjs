@@ -223,6 +223,15 @@ async function searchSources(rawQuery,mode='exact'){
           return {id:source.id,label:source.label,count:0,status:'Serper HTTP '+response.status+(detail?': '+detail:''),results:[]};
         }
         const data=await response.json();
+        if(true){
+          console.log('[FORMA_SEARCH_SHAPE]',JSON.stringify({source:source.id,count:data.images?.length||0,
+            samples:(data.images||[]).slice(0,4).map(x=>({
+              landingHost:(()=>{try{return new URL(x.link).hostname}catch{return 'invalid'}})(),
+              landingPath:(()=>{try{return new URL(x.link).pathname.slice(0,80)}catch{return ''}})(),
+              hasThumb:Boolean(x.thumbnailUrl),hasImage:Boolean(x.imageUrl)
+            }))
+          }));
+        }
         for(const item of Array.isArray(data.images)?data.images:[]){
           const matched=filterResult({url:item.link,title:item.title,thumbnail:{src:item.thumbnailUrl||item.imageUrl}},source);
           if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
