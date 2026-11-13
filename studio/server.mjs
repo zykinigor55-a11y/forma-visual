@@ -532,6 +532,18 @@ const server=http.createServer(async(req,res)=>{
 });
 
 
+// BEGIN TEMP BEHANCE OG IMAGE PROBE
+(async()=>{
+  const url='https://www.behance.net/gallery/253000577/Timber-Apex-Concept-Visualization';
+  try{
+    const r=await fetch(url,{headers:{'user-agent':'Mozilla/5.0 (compatible; FORMA-Studio/1.0)','accept':'text/html'},signal:timeout(12000)});
+    const body=(await r.text()).slice(0,400000);
+    const meta=body.match(/<meta[^>]+(?:property|name)=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+      ||body.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']og:image["']/i);
+    console.log('[FORMA_BEHANCE_OG]',JSON.stringify({http:r.status,length:body.length,hasOg:!!meta,host:meta?new URL(meta[1].replace(/&amp;/g,'&')).hostname:null}));
+  }catch(e){console.log('[FORMA_BEHANCE_OG]',JSON.stringify({error:errorOf(e)}));}
+})();
+// END TEMP BEHANCE OG IMAGE PROBE
 // BEGIN TEMP SERPER ORGANIC SEARCH PROBE
 if(SERPER_KEY){
   (async()=>{
