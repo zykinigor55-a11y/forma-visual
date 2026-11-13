@@ -643,4 +643,29 @@ const server=http.createServer(async(req,res)=>{
 });
 
 
+// BEGIN TEMP ALTERNATE VISION MODEL CHECK
+if(AI_KEY){
+  (async()=>{
+    const img="data:image/jpeg;base64,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";
+    for(const model of ['gpt-6.1-sol','gpt-6.1-terra']){
+      const t=Date.now();
+      try{
+        const r=await fetch(AI_BASE+'/chat/completions',{
+          method:'POST',headers:{authorization:'Bearer '+AI_KEY,'content-type':'application/json'},
+          body:JSON.stringify({model,max_tokens:220,messages:[{role:'user',content:[
+            {type:'text',text:'In 10 words describe the building in the attached image.'},
+            {type:'image_url',image_url:{url:img,detail:'low'}}
+          ]}]}),signal:timeout(20000)
+        });
+        const result=await r.json().catch(()=>({}));
+        const content=result?.choices?.[0]?.message?.content||'';
+        console.log('[FORMA_ALT_VISION_CHECK]',JSON.stringify({model,http:r.status,durationMs:Date.now()-t,
+          hasText:typeof content==='string'&&content.trim().length>8,chars:String(content).length,
+          errorType:result.error?.type||null,finishReason:result.choices?.[0]?.finish_reason||null}));
+        if(r.ok&&typeof content==='string'&&content.trim().length>8)break;
+      }catch(e){console.log('[FORMA_ALT_VISION_CHECK]',JSON.stringify({model,durationMs:Date.now()-t,errorType:e?.name==='TimeoutError'?'timeout':'connection-error'}));}
+    }
+  })();
+}
+// END TEMP ALTERNATE VISION MODEL CHECK
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
