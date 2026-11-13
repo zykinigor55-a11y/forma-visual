@@ -83,10 +83,10 @@ async function analyze(input){
   const response=await fetch(`${AI_BASE}/chat/completions`,{
     method:'POST',
     headers:{'authorization':`Bearer ${AI_KEY}`,'content-type':'application/json'},
-    body:JSON.stringify({model:AI_MODEL,temperature:0.25,max_tokens:4096,response_format:{type:'json_object'},messages:[
+    body:JSON.stringify({model:AI_MODEL,temperature:0.25,max_tokens:4096,messages:[
       {role:'system',content:PROMPT_SYSTEM},
       {role:'user',content:[{type:'text',text:`Analyze this original building image for professional architectural reference selection. ${userContext}`},{type:'image_url',image_url:{url:image,detail:'high'}}]}
-    ]}),signal:timeout(32_000)
+    ]}),signal:timeout(60_000)
   });
   if(!response.ok){const txt=await response.text();throw new Error(`AI API: ${response.status} ${txt.slice(0,180)}`);}
   const payload=await response.json();
@@ -224,8 +224,8 @@ async function direct(input) {
   try {
     response = await fetch(`${AI_BASE}/chat/completions`,{
       method:'POST',headers:{'authorization':`Bearer ${AI_KEY}`,'content-type':'application/json'},
-      body:JSON.stringify({model:AI_MODEL,temperature:0.2,max_tokens:5600,response_format:{type:'json_object'},messages:[{role:'system',content:DIRECTOR_SYSTEM},{role:'user',content}]}),
-      signal:timeout(48_000)
+      body:JSON.stringify({model:AI_MODEL,temperature:0.2,max_tokens:5600,messages:[{role:'system',content:DIRECTOR_SYSTEM},{role:'user',content}]}),
+      signal:timeout(80_000)
     });
   } catch(e) { throw new Error('Не удалось провести визуальное сравнение: '+errorOf(e)); }
   if(!response.ok){
