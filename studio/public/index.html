@@ -56,12 +56,12 @@
               <label for="notes">ВАЖНЫЕ ДЕТАЛИ И ЗАДАЧА</label>
               <textarea id="notes" name="notes" rows="3" maxlength="900" placeholder="Необязательно · пожелания, которые нельзя менять"></textarea>
               <div class="controls-row"><div class="toggle-lock"><span class="lock-glyph">▣</span><span>Сохранить геометрию<br><small>Окна, ракурс, размеры, фасады</small></span></div><span class="locked-tag">LOCKED / ON</span></div>
-              <div class="panel-bottom"><span class="muted-caption">РЕЗУЛЬТАТ / NANO BANANA</span><button id="analyzeBtn" class="primary-button" type="submit">Найти лучшее решение <span>↗</span></button></div>
+              <div class="panel-bottom"><span class="muted-caption">ПОИСК / GOOGLE LENS</span><button id="analyzeBtn" class="primary-button" type="submit">Найти по фотографии <span>↗</span></button></div>
               <div id="processingProgress" class="processing-progress" hidden aria-live="polite">
                 <div class="progress-heading"><span>AI / PROCESSING</span><strong id="progressPercent">0%</strong></div>
                 <div class="progress-track"><div id="progressBar" class="progress-fill" role="progressbar" aria-label="Прогресс обработки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
                 <p id="progressPhase">Подготавливаем изображение…</p>
-                <small>Проценты показывают этапы работы, а не точное оставшееся время</small>
+                <small>Фото временно передаётся в Google Lens по защищённой ссылке, которая быстро истекает. Проценты обозначают этапы поиска.</small>
               </div>
             </form>
           </div>
@@ -77,7 +77,7 @@
         </section>
         <section id="references" class="references-section reveal-section">
           <div class="section-heading"><div><span class="micro">03 / AI ART DIRECTION</span><h2>Лучшее визуальное решение</h2></div><span id="refsLabel" class="section-note">АВТОМАТИЧЕСКИЙ ОТБОР</span></div>
-          <div id="refHelp" class="refs-help best-wait">После анализа FORMA подберёт референс на Behance или в портфолио ANT. Если точного совпадения нет, возьмёт похожий по форме дом и лучшие идеи освещения, окружения и подачи, сохранив геометрию твоего проекта.</div>
+          <div id="refHelp" class="refs-help best-wait">Поиск выполняется непосредственно по загруженной фотографии через Google Lens. Приоритет — реальные архитектурные работы Behance и ANT. Если совпадений нет, отдельно покажем профессиональные редакционные примеры.</div>
           <div id="referenceGrid" class="best-reference" hidden>
             <a id="bestRefLink" class="best-photo" target="_blank" rel="noopener noreferrer" href="#references"><img id="bestRefImage" loading="lazy" referrerpolicy="no-referrer" alt="Профессиональный референс, выбранный визуальной AI-моделью"><span>01 / CURATED REFERENCE</span></a>
             <div class="best-explanation">
@@ -93,6 +93,11 @@
               <a id="bestSourceLink" target="_blank" rel="noopener noreferrer" href="#references">Открыть оригинальную публикацию ↗</a>
             </div>
           </div>
+        </section>
+        <section id="lensResults" class="lens-section reveal-section" hidden>
+          <div class="section-heading"><div><span class="micro">VISUAL SEARCH / GOOGLE LENS</span><h2>Найдено по фотографии</h2></div><span id="lensCount" class="section-note">0 / IMAGE MATCHES</span></div>
+          <p class="lens-intro">Это реальные найденные страницы с визуально похожими изображениями. Совпадение по фото не является оценкой фотореализма или качества освещения. Откройте работы и сравните свет, материалы и подачу.</p>
+          <div id="lensGrid" class="lens-grid"></div>
         </section>
         <section id="directions" class="directions-section reveal-section">
           <div class="section-heading"><div><span class="micro">04 / FINAL DIRECTION</span><h2>Промпт для визуализации</h2></div><span id="directionTag" class="section-note">ДНЕВНОЙ СВЕТ / БЕЗ НОЧИ</span></div>

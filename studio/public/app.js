@@ -24,7 +24,7 @@ const MODES = {
 const state = {
   image: null, visionImage: null, file: null, config: {ai: false, search: false},
   analysis: null, isVisualAnalysis: false, winner: null, curation: null,
-  prompt: '', working: false, progressPct: 0
+  prompt: '', working: false, progressPct: 0, photoSearchConfirmed:false, searchMethod:null
 };
 
 function alertStatus(message, type='info') {
@@ -36,7 +36,7 @@ function setBusy(busy){
   state.working=busy;
   const button=$('#analyzeBtn');
   button.disabled=busy;
-  button.innerHTML=busy?'Обработка <span>'+state.progressPct+'%</span>':'Найти лучшее решение <span>↗</span>';
+  button.innerHTML=busy?'Обработка <span>'+state.progressPct+'%</span>':'Найти по фотографии <span>↗</span>';
 }
 function showProgress(value,message,finished=false){
   const percent=Math.max(0,Math.min(100,Math.round(Number(value)||0)));
@@ -74,7 +74,7 @@ function uploadJob(image,project){
 async function trackJob(jobId){
   const started=Date.now();
   let previousPhase='',phaseStarted=started;
-  const upperBounds={vision:40,'vision-fallback':60,structure:56,brief:62,search:76,ranking:91,scene:98};
+  const upperBounds={lens:72,vision:40,'vision-fallback':60,structure:56,brief:62,search:76,ranking:91,scene:98};
   while(Date.now()-started<6*60*1000){
     const job=await requestJson('/api/jobs/'+encodeURIComponent(jobId),{cache:'no-store'});
     if(job.phase!==previousPhase){previousPhase=job.phase;phaseStarted=Date.now();}
@@ -125,6 +125,31 @@ function setRecommendationMessage(text, label='ОЖИДАЕТ АНАЛИЗА') {
   $('#refHelp').textContent = text;
   $('#refsLabel').textContent = label;
 }
+function renderLensResults(matches){
+  const region=$('#lensResults'),grid=$('#lensGrid');
+  grid.replaceChildren();
+  const list=(Array.isArray(matches)?matches:[]).filter(item=>safeExternalUrl(item.link)).slice(0,8);
+  region.hidden=list.length===0;
+  $('#lensCount').textContent=list.length+' / IMAGE MATCHES';
+  for(const item of list){
+    const card=document.createElement('a');
+    card.className='lens-card';
+    card.href=safeExternalUrl(item.link);
+    card.target='_blank';card.rel='noopener noreferrer';
+    const photo=document.createElement('div');photo.className='lens-thumb';
+    if(safeExternalUrl(item.thumbnail)){
+      const image=document.createElement('img');image.loading='lazy';image.decoding='async';
+      image.referrerPolicy='no-referrer';image.alt=item.title||'Архитектурный референс';
+      image.src=item.thumbnail;image.onerror=()=>{image.remove();photo.textContent='ПРЕВЬЮ НЕДОСТУПНО';};
+      photo.append(image);
+    }else{photo.textContent='СМОТРЕТЬ ПРОЕКТ';}
+    const source=document.createElement('span');source.className='lens-source';source.textContent=item.sourceLabel||'Источник';
+    const title=document.createElement('strong');title.textContent=item.title||'Архитектурный проект';
+    const action=document.createElement('span');action.className='lens-go';action.textContent='Открыть публикацию ↗';
+    card.append(photo,source,title,action);grid.append(card);
+  }
+}
+
 function showWinner(result) {
   const ref = result.reference;
   const url = safeExternalUrl(ref?.link);
@@ -140,7 +165,7 @@ function showWinner(result) {
   $('#bestSourceLink').hidden=false;
   $('#referenceGrid').hidden = false;
   $('#refHelp').hidden = true;
-  $('#refsLabel').textContent = result.matchLevel==='approximate'?'01 / РЕФЕРЕНС ПО ПОХОЖЕЙ ФОРМЕ':'01 / ВЫБРАННЫЙ РЕФЕРЕНС';
+  $('#refsLabel').textContent = result.matchLevel==='lens'?'НАЙДЕНО ПО ФОТО / GOOGLE LENS':result.matchLevel==='approximate'?'01 / РЕФЕРЕНС ПО ПОХОЖЕЙ ФОРМЕ':'01 / ВЫБРАННЫЙ РЕФЕРЕНС';
   $('#bestRefImage').src = thumb;
   $('#bestRefImage').onerror = () => {
     $('#bestRefImage').alt = 'Превью не загрузилось — оригинал доступен по ссылке';
@@ -150,8 +175,8 @@ function showWinner(result) {
   $('#bestRefImage').style.display = '';
   $('#bestRefLink').href = url;
   $('#bestSourceLink').href = url;
-  $('#bestTitle').textContent = result.matchLevel==='approximate'?'Похожий силуэт. Лучшая подача.':'Лучшее направление для этого проекта';
-  $('#bestReason').textContent = result.matchLevel==='approximate'? 'Архитектура референса не повторяет твой дом. Используем только принцип подачи: освещение, окружение и художественную композицию. '+String(result.direction.reason||''):String(result.direction.reason || 'Референс выбран визуальной AI-моделью по архитектурному соответствию и качеству арт-дирекшна.');
+  $('#bestTitle').textContent = result.matchLevel==='lens'?'Архитектурное совпадение по фото':result.matchLevel==='approximate'?'Похожий силуэт. Лучшая подача.':'Лучшее направление для этого проекта';
+  $('#bestReason').textContent = result.matchLevel==='lens'?'Google Lens обнаружил визуальную схожесть с исходным изображением. Это реальная публикация, но её профессионализм, фотореализм и освещение не проверены нейросетью. Геометрию твоего дома не меняем.':result.matchLevel==='approximate'?'Референс используется только для художественной подачи. '+String(result.direction.reason||''):String(result.direction.reason||'Свет и окружение подбираются под исходный дом.');
   $('#bestLighting').textContent = String(result.direction.lightingDescription || MODES[result.direction.lighting]?.name || 'Выразительный натуральный дневной свет');
   $('#bestEnvironment').textContent = String(result.direction.environment || 'Индивидуальное окружение под стиль здания');
   $('#bestComposition').textContent = String(result.direction.composition || 'Архитектурная композиция при сохранении камеры исходного изображения');
@@ -164,7 +189,7 @@ function showWinner(result) {
   $('#bestBackground').textContent = shot.background || 'Естественный и правдоподобный дальний план';
   $('#autoDirection').textContent = MODES[result.direction.lighting]?.name || MODES.sunlit.name;
   $('#directionReason').textContent = result.direction.reason || 'Профессиональная дневная архитектурная фотография.';
-  $('#directionTag').textContent = 'ОТОБРАНО AI / ДЕНЬ';
+  $('#directionTag').textContent = result.matchLevel==='lens'?'ПОИСК ПО ФОТО / ДНЕВНАЯ ПОДАЧА':'РЕДАКЦИОННАЯ ПОДАЧА / ДЕНЬ';
   return true;
 }
 function showDirectorOnly(result){
@@ -178,16 +203,16 @@ function showDirectorOnly(result){
   $('#referenceGrid').hidden=false;
   $('#referenceGrid').classList.add('is-director-only');
   $('#refHelp').hidden=true;
-  $('#refsLabel').textContent=url?'01 / ПРИМЕР ПО ФОРМЕ + АВТОРСКАЯ ПОДАЧА':'01 / ПОСТАНОВКА БЕЗ ФОТОРЕФЕРЕНСА';
+  $('#refsLabel').textContent=url?'РЕДАКЦИОННЫЙ ПРИМЕР / НЕ СОВПАДЕНИЕ ПО ФОТО':'ПО ФОТО СОВПАДЕНИЙ НЕТ';
   const refLink=$('#bestSourceLink');
   refLink.hidden=!url;
   if(url){
     refLink.href=url;
     refLink.textContent='Открыть пример на '+String(source.sourceLabel||'Behance')+' ↗';
   }
-  $('#bestTitle').textContent=url?'Похожая форма. Индивидуальная подача.':'Свет, окружение и подача для твоего дома';
+  $('#bestTitle').textContent=url?'Профессиональная архитектурная подача':'Дневной свет и окружение для твоего дома';
   $('#bestReason').textContent=url?
-    'Публикация подобрана ориентировочно по форме и описанию. Фотография и освещение этого проекта не проверены. '+String(result.message||'Свет и окружение создаются отдельно для твоего дома.') :
+    'Публикация выбрана по редакционному описанию, а не по загруженному фото. '+String(result.message||'Свет и окружение создаются отдельно для твоего дома.') :
     (result.message||'Фотографически подходящий референс не подтверждён.')+' Геометрия и ракурс твоего здания остаются исходными.';
   $('#bestLighting').textContent=shot.lightingDescription||'Естественный дневной свет';
   $('#bestEnvironment').textContent=shot.environment||'Индивидуальное окружение под характер дома';
@@ -215,7 +240,7 @@ function makePrompt(project) {
   const curated = Boolean(state.winner && state.curation);
   const directed = Boolean(state.curation);
   const prompt = `FORMA STUDIO / ARCHITECTURAL EDITORIAL ART DIRECTION
-${curated ? 'VERIFIED REFERENCE SELECTION / ORIGINAL ARCHITECTURE LOCKED' : directed ? (state.isVisualAnalysis ? 'PHOTO ANALYZED / EDITORIAL STAGING WITHOUT VERIFIED REFERENCE' : 'VISUAL AI UNAVAILABLE / ART DIRECTION BASED ON USER BRIEF, NOT VERIFIED GEOMETRY') : state.isVisualAnalysis ? 'VISION ANALYSIS / NO VERIFIED REFERENCE' : 'DRAFT BRIEF / NO VISUAL AI ANALYSIS'}
+${curated ? (state.searchMethod==='google-lens'?'GOOGLE LENS VISUAL MATCH / PROFESSIONAL QUALITY NOT VERIFIED / ORIGINAL ARCHITECTURE LOCKED':'REFERENCE SELECTION / ORIGINAL ARCHITECTURE LOCKED') : directed ? (state.isVisualAnalysis ? 'PHOTO ANALYZED / EDITORIAL STAGING WITHOUT VERIFIED REFERENCE' : 'VISUAL AI UNAVAILABLE / ART DIRECTION BASED ON USER BRIEF, NOT VERIFIED GEOMETRY') : state.isVisualAnalysis ? 'VISION ANALYSIS / NO VERIFIED REFERENCE' : 'DRAFT BRIEF / NO VISUAL AI ANALYSIS'}
 
 NON-NEGOTIABLE SOURCE OF TRUTH
 If visual analysis failed, do NOT assume any model observed the building. The image-editing model must examine the ATTACHED ORIGINAL HOUSE IMAGE itself before changing only lighting, natural textures and the surrounding landscape.
@@ -240,7 +265,7 @@ ${mode.camera}
 Daylight only. Absolutely no night scenes, blue hour, dusk, twilight, dark evening, neon effects or artificially dominant window lighting.
 
 ${curated ? `REFERENCE-BASED ART DIRECTION (inspiration only, not geometry source)
-Chosen professional reference: ${state.winner.sourceLabel} — ${state.winner.link}
+Published visual-search match or editorial source (NOT necessarily professional or quality-verified): ${state.winner.sourceLabel} — ${state.winner.link}
 SIMILAR FORM INSPIRATION ONLY: The reference building may be different; NEVER copy its geometry, windows, camera or floor count into the original. Borrow ONLY professional natural light, environment hierarchy, colour and editorial mood.
 Why selected: ${chosen.reason || 'compatible architectural photo direction'}
 Composition treatment: ${chosen.composition || 'preserve image perspective, refine visual hierarchy'}
@@ -282,7 +307,7 @@ PRIORITIES
 1) EXACT source building and camera. 2) Context-specific editorial visual story. 3) AI-selected daylight. 4) Architectural light and composition. 5) Precise materials and photorealism.`;
   state.prompt = prompt;
   $('#promptText').textContent = prompt;
-  $('#promptState').textContent = curated ? 'ГОТОВ / ПО ВЫБРАННОМУ РЕФЕРЕНСУ' : directed ? (state.isVisualAnalysis ? 'ГОТОВ / ИНДИВИДУАЛЬНАЯ ПОСТАНОВКА' : 'ГОТОВ / ПО БРИФУ, ФОТО НЕ ПРОВЕРЕНО') : state.isVisualAnalysis ? 'ПО ФОТО / БЕЗ ПОИСКА' : 'ЧЕРНОВИК / БЕЗ AI';
+  $('#promptState').textContent = curated ? (state.searchMethod==='google-lens'?'ПОИСК ПО ФОТО / ПРОМПТ ГОТОВ':'ГОТОВ / ПО ВЫБРАННОМУ РЕФЕРЕНСУ') : directed ? (state.isVisualAnalysis ? 'ГОТОВ / ИНДИВИДУАЛЬНАЯ ПОСТАНОВКА' : 'ГОТОВ / ПО БРИФУ, ФОТО НЕ ПРОВЕРЕНО') : state.isVisualAnalysis ? 'ПО ФОТО / БЕЗ ПОИСКА' : 'ЧЕРНОВИК / БЕЗ AI';
   $('#copyPrompt').disabled = false;
   $('#downloadPrompt').disabled = false;
 }
@@ -323,8 +348,9 @@ async function updateImage(file){
     const visionImage=await prepareImage(file,768,0.74);
     if(loadId!==state.loadId)return;
     state.file=file;state.image=modelImage;state.visionImage=visionImage;
-    state.suggestedRef=null;
+    state.suggestedRef=null;state.photoSearchConfirmed=false;state.searchMethod=null;
     state.analysis=null;state.winner=null;state.curation=null;state.prompt='';
+    $('#lensResults').hidden=true;$('#lensGrid').replaceChildren();
     state.progressPct=0;$('#processingProgress').hidden=true;
     $('#shotPlan').hidden=true;
     $('#projectPreview').src=modelImage;$('#projectPreview').hidden=false;$('#emptyScene').hidden=true;
@@ -349,37 +375,44 @@ async function runProject(event){
   if(state.working)return;
   if(!state.image){alertStatus('Сначала загрузите изображение дома.','error');return;}
   const project=collectProject();
-  state.winner=null;state.suggestedRef=null;state.curation=null;state.analysis=null;state.isVisualAnalysis=false;
+  state.winner=null;state.suggestedRef=null;state.curation=null;state.analysis=null;state.isVisualAnalysis=false;state.photoSearchConfirmed=false;state.searchMethod=null;
+  $('#lensResults').hidden=true;$('#lensGrid').replaceChildren();
   state.progressPct=0;
-  setRecommendationMessage('Готовим анализ и поиск профессиональных референсов…','AI ART DIRECTOR');
+  setRecommendationMessage('Ищем реальные архитектурные изображения по загруженному фото…','GOOGLE LENS / ПОИСК ПО ФОТО');
   setBusy(true);
-  showProgress(1,'Подготовка проекта к отправке…');
+  showProgress(1,'Подготавливаем фото для поиска Google Lens…');
   try{
     const uploaded=await uploadJob(state.visionImage||state.image,project);
-    showProgress(uploaded.progress||12,'Изображение передано. Распознаём архитектуру…');
+    showProgress(uploaded.progress||12,'Изображение передано. Ищем визуально похожие работы…');
     const job=await trackJob(uploaded.jobId);
     if(job.analysis){
       state.analysis=job.analysis;
       state.isVisualAnalysis=state.analysis.visualVerified===true;
+      state.photoSearchConfirmed=job.curation?.photoSearchConfirmed===true;
+      state.searchMethod=job.curation?.searchMethod||null;
       showAnalysis(state.analysis,state.isVisualAnalysis);
+      if(state.photoSearchConfirmed){
+        $('#analysisTag').textContent='GOOGLE LENS / ПОИСК ПО ФОТО';
+        $('#analysisOrigin').textContent='ВИЗУАЛЬНЫЙ ПОИСК / НЕ АНАЛИЗ МОДЕЛЬЮ';
+        $('#analysisConfidence').textContent='ИСХОДНОЕ ИЗОБРАЖЕНИЕ ИСПОЛЬЗОВАНО';
+        $('#analysisReason').textContent='Поиск выполнен по загруженной фотографии. Форму дома отдельная визуальная модель не описывала.';
+      }
+      renderLensResults(job.curation?.visualMatches||[]);
       const suggested=MODES[modeFromAnalysis(state.analysis)];
       $('#autoDirection').textContent=suggested.name;
       $('#directionReason').textContent=state.analysis.reason||'Индивидуальная дневная постановка';
       $('#directionTag').textContent='ДЕНЬ / АВТОМАТИЧЕСКИ';
-      if(job.curation?.metadataOnly&&job.curation.direction&&showDirectorOnly(job.curation)){
-        alertStatus('Найден пример со сходной формой. Подготовлен независимый дневной арт-дирекшн для твоего дома.','success');
-      }else if(job.curation?.available&&job.curation.reference?.thumbnail&&job.curation.direction&&showWinner(job.curation)){
-        alertStatus(job.curation.matchLevel==='approximate'?'Подобран референс по похожей форме — свет, окружение и подача адаптированы к твоему дому.':'Готово: выбран дневной референс и подготовлен профессиональный промпт.','success');
+      if(job.curation?.searchMethod==='google-lens'&&job.curation.reference?.thumbnail&&job.curation.direction&&showWinner(job.curation)){
+        alertStatus('По загруженной фотографии найдены настоящие архитектурные публикации. Превью и ссылки доступны ниже.','success');
+      }else if(job.curation?.metadataOnly&&job.curation.direction&&showDirectorOnly(job.curation)){
+        alertStatus(job.curation.message||'Совпадений по фото нет: предложена отдельная подборка Behance / ANT.','info');
       }else if(job.curation?.direction&&showDirectorOnly(job.curation)){
-        alertStatus('Архитектура проанализирована. Подобран индивидуальный свет и окружение без неподтверждённой фотографии.','success');
+        alertStatus(job.curation.message||'Поиск завершён. Визуальные совпадения не найдены.','info');
       }else{
-        setRecommendationMessage(job.curation?.message||'Подходящих подтверждённых дневных референсов не найдено.','РЕФЕРЕНС НЕ ПОДТВЕРЖДЁН');
-        alertStatus('Анализ архитектуры готов. Подтверждённый референс не выбран.','info');
+        setRecommendationMessage(job.curation?.message||'Похожих архитектурных публикаций не найдено.','ПУБЛИКАЦИИ НЕ НАЙДЕНЫ');
+        alertStatus('Поиск завершён: архитектурных совпадений нет.','info');
       }
-      if(!state.isVisualAnalysis){
-        alertStatus('Визуальная модель не ответила. Резервный режим завершён: подобраны фотореалистичный свет, окружение и промпт по брифу. Геометрия исходного дома остаётся обязательным условием.','info');
-      }
-      showProgress(100,state.isVisualAnalysis?'Анализ завершён. Профессиональный промпт готов.':'Резервный режим завершён. Фотореалистичный арт-дирекшн и промпт готовы.',true);
+      showProgress(100,job.message||'Поиск по фото завершён.',true);
       makePrompt(project);
     }else{
       state.analysis=manualAnalysis(project);
