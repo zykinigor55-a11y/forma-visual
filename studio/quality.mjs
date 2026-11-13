@@ -45,7 +45,7 @@ function officialEmbed(raw,id){
   const found=raw.match(/<iframe[^>]+src=["']([^"']+)["']/i);
   if(!found)return null;
   try{
-    const url=new URL(found[1].replace(/&amp;/g,'&'));
+    const url=new URL(found[1].replace(/&amp;/g,'&'),'https://www.behance.net');
     if(url.protocol!=='https:'||url.hostname!=='www.behance.net')return null;
     const regex=new RegExp('^/embed/project/'+id+'(?:/|$)');
     if(!regex.test(url.pathname))return null;
