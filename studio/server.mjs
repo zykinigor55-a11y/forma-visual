@@ -24,9 +24,29 @@ const JOB_KEEP_MS = 15 * 60 * 1000;
 // Public ANT Archviz project pages were cross-checked against behance.net/designant1.
 const ANT_GALLERIES = new Set(['255467603','254721349','255956745','255105661','255284051','253353819','253000577','255105949']);
 const SITE = [
-  {id:'behance', label:'Behance', domain:'behance.net', term:'architecture visualization daylight photorealistic landscape editorial'},
-  {id:'ant', label:'ANT Archviz', domain:'behance.net', term:'ANT Archviz exterior daylight professional visualization'}
+  {id:'behance', label:'Behance', domain:'behance.net', term:'photoreal architectural editorial exterior photography daylight'},
+  {id:'ant', label:'ANT Archviz', domain:'behance.net', term:'ANT Archviz architecture natural light landscape photoreal'}
 ];
+// These are PUBLIC Behance gallery links, verified as professional ARCHVIZ projects.
+// They are metadata-only until an actual reference PHOTO has been retrieved and inspected.
+// A link appearing here does NOT imply that its daylight or photo quality was visually verified by this application.
+const PHOTO_BENCHMARKS = [
+  {source:'ant',title:'The Understorey',link:'https://www.behance.net/gallery/255467603/The-Understorey',
+   description:'ANT Archviz. Architectural visualization with soft natural daylight, layered native landscape, believable glass and facade materials, restrained editorial composition.'},
+  {source:'ant',title:'Dark Clearing',link:'https://www.behance.net/gallery/254721349/Dark-Clearing',
+   description:'ANT Archviz. High-end photorealistic architecture integrated into landscape, strong natural light and shadow volumes, quiet photographic composition.'},
+  {source:'ant',title:'White Hollow',link:'https://www.behance.net/gallery/255105661/White-Hollow',
+   description:'ANT Archviz. Architectural volumes revealed through layered tree light and shadow, detailed white facades, dark metal, timber and glass.'},
+  {source:'ant',title:'Quiet Monolith',link:'https://www.behance.net/gallery/253353819/Quiet-Monolith',
+   description:'ANT Archviz, featured architectural visualization. Premium editorial realism and strong architectural visual hierarchy.'},
+  {source:'behance',title:'C148 Bereldange',link:'https://www.behance.net/gallery/247548907/C148-Bereldange',
+   description:'High-end photorealistic residential architecture with Corona Renderer, natural lighting, atmospheric depth, premium realistic materials and cinematic composition.'},
+  {source:'behance',title:'Exterior Visualization — Residential Architecture',link:'https://www.behance.net/gallery/240676497/Exterior-Visualization-Residential-Architecture',
+   description:'Architectural photography-inspired visualization, daylight and material realism, lived-in environment, accurate architectural proportions.'},
+  {source:'behance',title:'Casa Monterrey | Architectural Visualization',link:'https://www.behance.net/gallery/254341431/Casa-Monterrey-Architectural-Visualization',
+   description:'High-end daylight architectural visualization with realistic material depth, landscape integration, nuanced photographic composition.'}
+];
+const PHOTO_DIRECTOR_QUALITY = 'Photorealism first: it must read as a high-end full-frame architectural photograph, not a 3D render. The image must reveal massing through physically plausible lateral sunlight, restrained highlight-to-shadow gradation, hard/soft shadow interplay, real-world microtexture and believable glazing, layered real landscape and photographic visual hierarchy. A photoreal image of a completely DIFFERENT building is an acceptable benchmark. Never copy its building, facade, camera or materials into the user source. Daylight only; absolutely no blue hour, dusk or night.';
 
 function json(res, status, body) {
   const out = JSON.stringify(body);
@@ -211,8 +231,8 @@ async function searchSources(rawQuery,mode='exact'){
     const unique=new Map();
     try{
       const sourceQuery=source.id==='ant'?
-        'site:behance.net/gallery ANT Archviz residential architecture exterior':
-        'site:behance.net/gallery '+q+' architectural visualization';
+        'site:behance.net/gallery ANT Archviz photoreal natural daylight architectural visualization':
+        'site:behance.net/gallery photorealistic exterior archviz editorial daylight corona materials';
       if(SERPER_KEY){
         // Free Serper allows max 10 operator-search results; organic results link to real Behance galleries.
         // Google Images may ignore site: and return unrelated domains, so we do not misattribute them.
@@ -275,14 +295,40 @@ async function searchSources(rawQuery,mode='exact'){
   return output;
 }
 function safeText(v, limit=250) { return textLimited(v,limit); }
+function editorialQualityScore(ref){
+  // Heuristic from publication title/description ONLY, NOT a visual image quality score.
+  const words=(String(ref.title||'')+' '+String(ref.description||'')).toLowerCase();
+  let score=0;
+  for(const [pattern,weight] of [
+    [/photoreal|photo.?real|photographic|photography|фотореал/i,8],
+    [/editorial|cinematic|composition|композиц|подач/i,5],
+    [/natural light|daylight|sunlight|shadow|lighting|солнеч|дневн/i,6],
+    [/corona|vray|v-ray|3ds max|magnific|d5 render/i,2],
+    [/material|roughness|texture|glass|reflection|фактур/i,3],
+    [/landscape|environment|forest|vegetation|atmosphere|окружен/i,3],
+    [/exterior|residential|house|villa|architecture|дом/i,2]
+  ])if(pattern.test(words))score+=weight;
+  if(/interior only|interior visualization only|character design|logo|icon|cartoon|low-poly|floor plan/i.test(words))score-=15;
+  if(ref.source==='ant'&&ref.verifiedAntAuthor)score+=6;
+  if(ref.curatedQualityBenchmark)score+=7;
+  return score;
+}
+function qualityBenchmarks(){
+  return PHOTO_BENCHMARKS.map(x=>({
+    ...x,sourceLabel:x.source==='ant'?'ANT Archviz':'Behance',thumbnail:null,
+    verifiedAntAuthor:x.source==='ant',curatedQualityBenchmark:true,confidence:'metadata-only'
+  }));
+}
 function chooseCandidates(all){
-  const deduped=[...new Map(all.map(ref=>[ref.link,ref])).values()];
-  const ant=deduped.filter(ref=>ref.source==='ant');
-  const other=deduped.filter(ref=>ref.source==='behance');
-  // Up to three thumbnails: two general Behance projects and one verified ANT project.
-  const chosen=[...other.slice(0,2),...ant.slice(0,1)];
-  if(chosen.length<3)chosen.push(...deduped.filter(x=>!chosen.some(c=>c.link===x.link)).slice(0,3-chosen.length));
-  return chosen.slice(0,3);
+  const deduped=[...new Map(all.filter(x=>x&&x.link).map(ref=>[ref.link,ref])).values()];
+  // Source architecture never contributes to score. Select photographic style leaders only.
+  deduped.sort((a,b)=>editorialQualityScore(b)-editorialQualityScore(a));
+  const top=deduped.slice(0,3);
+  if(!top.some(x=>x.source==='ant')){
+    const ant=deduped.find(x=>x.source==='ant');
+    if(ant&&top.length)top[top.length-1]=ant;
+  }
+  return top;
 }
 function safeRefThumbnailHost(urlString){
   try{
@@ -381,68 +427,61 @@ async function selectDaylightReference(input,candidates,matchContext){
 }
 function metadataReferenceChoice(candidates,analysis){
   if(!candidates.length)return null;
-  const shape=shapeSearchQuery(analysis);
-  const tokens=shape.toLowerCase().split(/\s+/).filter(x=>x.length>3 && !['house','architecture','daylight','modern','residential'].includes(x));
-  const scored=candidates.map(ref=>{
-    const haystack=(ref.title+' '+(ref.description||'')).toLowerCase();
-    const matches=tokens.reduce((sum,term)=>sum+(haystack.includes(term)?1:0),0);
-    return {ref,score:matches+(ref.source==='ant'?0.15:0),matches};
-  }).sort((a,b)=>b.score-a.score);
-  return scored[0]?{reference:scored[0].ref,matchCount:scored[0].matches}:null;
+  // Important: stylistic QUALITY wins. Never prefer a mediocre CGI merely because
+  // the reference has the same roof type or facade as the source house.
+  const scored=candidates.map(ref=>({ref,score:editorialQualityScore(ref)}))
+    .sort((a,b)=>b.score-a.score);
+  const first=scored[0];
+  return first?{reference:first.ref,qualitySignals:first.score,method:'metadata-quality-heuristic'}:null;
 }
 async function direct(input,onProgress=()=>{}){
-  if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для подбора нужны визуальная AI-модель и поиск Serper.'};
+  if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для подбора нужны визуальная модель и поиск Behance / ANT.'};
   if(!validImage(input?.image))throw Object.assign(new Error('Загрузите JPG, PNG или WebP.'),{status:400});
   const project=input.project||{},analysis=input.analysis||{};
-  const exactQuery=safeText(input.query,110)||safeText(analysis.query,110)||shapeSearchQuery(analysis);
-  const first=await searchSources(exactQuery,'exact');
-  let candidates=chooseCandidates(first.results);
-  let selected=null,verdict=null,mode='exact';
-  // Serper organic provides authentic Behance gallery URLs, but often no image thumbnail.
-  // In that case only the gallery TITLE/SNIPPET is matched: never claim visual verification.
-  if(candidates.length && !candidates.some(ref=>ref.thumbnail)){
-    onProgress('search',80,'Проверяем проекты Behance и ищем сходный силуэт…');
-    const broad=await searchSources(shapeSearchQuery(analysis),'form');
-    const combined=chooseCandidates([...candidates,...broad.results]);
-    const chosen=metadataReferenceChoice(combined,analysis);
-    onProgress('scene',92,'Форма референса подобрана по описанию. Создаём художественную постановку…');
-    const direction=await generateSceneDirection(analysis,project,chosen?.reference||null,
-      'Похожая форма определена только по описанию проекта. Фотография, освещение и визуальное сходство НЕ проверены.',
-      'approximate-metadata');
-    return {available:true,reference:chosen?.reference||null,direction,matchLevel:'approximate',
-      metadataOnly:true,visualVerified:false,matchReason:'Сопоставление приблизительное: по названию и описанию публикации, без анализа фотографии.',
-      message:chosen?'Найден проект со сходными признаками формы. Свет и окружение предложены отдельно по исходному дому.':'Не найдено проекта с подтверждённой фотографией; постановка разработана по исходной архитектуре.'};
-  }
-  onProgress('ranking',76,'Ищем близкую форму дома и качественное дневное окружение…');
-  if(candidates.length){
-    verdict=await selectDaylightReference(input,candidates,'architecture-oriented');
-    if(verdict?.index>=0)selected=candidates[verdict.index];
-  }
-  if(!selected){
-    // User-requested fallback: search roughly by massing/roof silhouette instead of exact architecture.
-    onProgress('search',82,'Точного аналога нет. Ищем похожий силуэт и лучшую постановку света…');
-    const broad=await searchSources(shapeSearchQuery(analysis),'form');
-    const supplemental=chooseCandidates(broad.results);
-    if(supplemental.length){
-      mode='form';
-      candidates=supplemental;
-      verdict=await selectDaylightReference(input,candidates,'shape-oriented and editorial-quality');
-      if(verdict?.index>=0)selected=candidates[verdict.index];
+  // The user wants PHOTOGRAPHIC artistry, not a similar house.
+  const found=await searchSources('photorealistic editorial architectural exterior natural daylight','photo-quality');
+  const results=found.results||[];
+  const options=chooseCandidates([...results,...qualityBenchmarks()]);
+  onProgress('ranking',77,'Выбираем эталон фотореализма: объём, дневной свет, материалы, глубина и подача…');
+
+  // A truly image-based selection is only possible for references that have real thumbnails.
+  const pictured=chooseCandidates(results.filter(ref=>Boolean(ref.thumbnail)));
+  let selected=null,verdict=null,visualVerified=false;
+  if(pictured.length){
+    verdict=await selectDaylightReference(input,pictured,'photo-realism and editorial quality, not house similarity');
+    if(verdict?.index>=0){
+      selected=pictured[verdict.index];
+      visualVerified=true;
     }
   }
-  onProgress('scene',93,selected?
-    'Подбираем свет, окружение и подачу для исходного дома…':
-    'Фотореференс не подтверждён. Создаём индивидуальную дневную постановку по дому…');
-  const direction=await generateSceneDirection(analysis,project,selected,verdict?.reason||'',verdict?.matchLevel||'approximate');
-  if(!selected)return {
-    available:false,direction,reference:null,matchLevel:'none',
-    message:'Фотографию с подтверждённым дневным светом не удалось выбрать. Постановка сцены предложена по анализу исходного дома без выдуманного референса.',
-    totalCandidates:candidates.length
+  if(!selected){
+    const best=metadataReferenceChoice(options,analysis);
+    selected=best?.reference||null;
+    onProgress('scene',91,'Подбираем авторскую фото-постановку для исходного дома. Сходство домов не требуется…');
+    const direction=await generateSceneDirection(analysis,project,selected,
+      'Публикация выбрана по признакам профессиональной фотографической подачи в открытом описании. Фотография и её освещение НЕ были визуально подтверждены.',
+      'quality-metadata');
+    return {
+      available:true,reference:selected,direction,
+      metadataOnly:true,visualVerified:false,matchLevel:'quality',
+      selectionBasis:'photorealistic-light-materials-and-editorial-depth',
+      message:selected?
+        'Найдена публикация с акцентом на профессиональную фотореалистичную подачу. Это ориентир качества, НЕ пример похожего дома. Её фотография не проверена — свет и окружение для твоего дома спроектированы отдельно.':
+        'Не удалось подтвердить фотопример. Свет, объём и окружение спроектированы по твоему дому без случайных референсов.',
+      totalCandidates:options.length
+    };
+  }
+  onProgress('scene',93,'Фотореференс проверен. Переносим только уровень света, объёма, материалов и подачи…');
+  const direction=await generateSceneDirection(analysis,project,selected,
+    verdict?.reason||'Фотографическое качество дневного света и объёма.',
+    'photo-quality-only');
+  return {
+    available:true,reference:selected,direction,matchLevel:'quality',
+    visualVerified,metadataOnly:false,
+    selectionBasis:'photorealistic-light-materials-and-editorial-depth',
+    matchReason:verdict?.reason||'Визуально выбран дневной фотореференс по качеству подачи.',
+    totalCandidates:pictured.length
   };
-  return {available:true,reference:selected,direction,
-    matchLevel:mode==='form'||verdict.matchLevel!=='close'?'approximate':'close',
-    matchReason:verdict.reason||'Референс используется только как художественный образец.',
-    totalCandidates:candidates.length};
 }
 function safePath(reqPath){
   let parsed;
