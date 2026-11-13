@@ -62,6 +62,7 @@ function findUser(req){
  const d=database(),row=d.prepare('SELECT u.id,u.email,u.role,u.organization_id,o.name AS company,o.status AS company_status FROM sessions s JOIN users u ON u.id=s.user_id LEFT JOIN organizations o ON o.id=u.organization_id WHERE s.token_hash=? AND s.expires_at>?').get(sha(token),Math.floor(Date.now()/1000));
  return row||null;
 }
+function userById(id){return database().prepare('SELECT u.id,u.email,u.role,u.organization_id,o.name AS company,o.status AS company_status FROM users u LEFT JOIN organizations o ON o.id=u.organization_id WHERE u.id=?').get(id)||null}
 function requireUser(req){const user=findUser(req);if(!user)fail(401,'Войдите в личный кабинет');return user}
 function requireManufacturer(req){const u=requireUser(req);if(u.role!=='manufacturer_admin'||u.company_status!=='approved'||!u.organization_id)fail(403,'Требуется подтверждённый кабинет производителя');return u}
 function issueSession(res,userId,req){
@@ -120,7 +121,7 @@ export async function handlePrimerkaApi(req,res){
     d.exec('COMMIT');
    }catch(e){d.exec('ROLLBACK');if(String(e.message).includes('UNIQUE'))fail(409,'Этот email уже зарегистрирован');throw e}
    issueSession(res,id,req);
-   json(res,201,{user:safeUser(findUser(req)),message:manufacturer?'Компания ожидает подтверждения':'Аккаунт создан'});
+   json(res,201,{user:safeUser(userById(id)),message:manufacturer?'Компания ожидает подтверждения':'Аккаунт создан'});
    return true;
   }
   if(req.method==='POST'&&path==='/login'){
@@ -129,7 +130,7 @@ export async function handlePrimerkaApi(req,res){
    if(!accountEmail(email)||typeof p.password!=='string')fail(401,'Неверная почта или пароль');
    const row=d.prepare('SELECT id,password_hash FROM users WHERE email=?').get(email);
    if(!row||!passVerify(p.password,row.password_hash))fail(401,'Неверная почта или пароль');
-   issueSession(res,row.id,req);json(res,200,{user:safeUser(findUser(req))});return true;
+   issueSession(res,row.id,req);json(res,200,{user:safeUser(userById(row.id))});return true;
   }
   if(req.method==='POST'&&path==='/logout'){
    checkMutation(req);clearSession(res,req);json(res,200,{success:true});return true;
