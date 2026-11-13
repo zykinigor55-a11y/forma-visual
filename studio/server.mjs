@@ -291,4 +291,22 @@ const server=http.createServer(async(req,res)=>{
     return json(res,405,{error:'Метод не поддерживается'});
   }catch(e){json(res,e.status||502,{error:errorOf(e)});}
 });
+// BEGIN TEMP VISION CONNECTIVITY CHECK (removed after one test)
+console.log('[FORMA_VISION_CONFIG]',JSON.stringify({keyPresent:!!AI_KEY,model:AI_MODEL,baseIsApiMarket:AI_BASE.includes('api-market1.shop'),serperPresent:!!SERPER_KEY}));
+if(AI_KEY){
+  (async()=>{
+    try{
+      const r=await fetch(AI_BASE+'/chat/completions',{
+        method:'POST',
+        headers:{authorization:'Bearer '+AI_KEY,'content-type':'application/json'},
+        body:JSON.stringify({model:AI_MODEL,max_tokens:150,temperature:0.1,messages:[{role:'user',content:[{type:'text',text:'This is a simple cartoon test image. In one short sentence describe the building visible. Do not include anything confidential.'},{type:'image_url',image_url:{url:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAABQCAIAAABd+SbeAAABh0lEQVR42u3ZLU6DQRSFYb4TMKwE1sASMJgqZAUGAwqFQOEwGEQlCsMmWAMV7AANBoNAEpKGfvd33qPb5M6T05vMdHp7/9gh9hEEQANNgAYaaAI00ARooIEmQAMdm6uzBdBOyuWsVbfLtaynQu/Rf8nePjwB7bSU81urgXKJNaIGyiWsU6+O/9nlXCNqppy22mqmnNY63eqY0SjVDskFbdHEJNzqrZxnjai3ch5rtVdOYh2/o50Jola2hlIOrHZYo2N/y/691oDKIQMENDrVtc2t2hpZ2XMejazsOZUGV3abzWNHF/oX1W5lC2WfaYWyz8xC2Wdyqx1dV9loZQtln4PM3Og2xLP3ek7o38rXF6flWG/uHi2sRZc3PN2WBxTKPse0vRl+rp/Lae4fnJS8GZKf7JaYcrl63ebrq+Vh+BFoNNBAkwI7+v5lb5OPnR990WgCNNAEaKCBJkADDTQEQANNgE4b70elfq9FNBpooAnQQBOggQaamGU6vlygQKOBJkADDTSxzzd/mIwc/axNCQAAAABJRU5ErkJggg=='}}]}]}),
+        signal:AbortSignal.timeout(45000)
+      });
+      let data={};try{data=await r.json()}catch{}
+      const out=data?.choices?.[0]?.message?.content;
+      console.log('[FORMA_VISION_TEST]',JSON.stringify({http:r.status,ok:r.ok,modelAnswered:typeof out==='string'&&out.length>0,hasError:!!data.error,errorCode:data.error?.code||null,errorType:data.error?.type||null}));
+    }catch(e){console.log('[FORMA_VISION_TEST]',JSON.stringify({ok:false,error:e?.name==='TimeoutError'?'timeout':'transport_failure'}));}
+  })();
+}
+// END TEMP VISION CONNECTIVITY CHECK
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
