@@ -266,70 +266,148 @@ async function searchSources(rawQuery,mode='exact'){
   return output;
 }
 function safeText(v, limit=250) { return textLimited(v,limit); }
-async function direct(input,onProgress=()=>{}){
-  if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для автоматического отбора нужны ключи AI и Serper.'};
-  if(!validImage(input?.image))throw Object.assign(new Error('Загрузите исходную архитектуру JPG, PNG или WebP.'),{status:400});
-  const project=input.project||{},analysis=input.analysis||{};
-  const q=safeText(input.query,110)||safeText(analysis.query,110)||'modern house daylight architecture';
-  const found=await searchSources(q);
-  onProgress('ranking',77,'Референсы найдены. ИИ сравнивает дневные фотографии…');
-  const candidates=SITE.map(site=>found.results.find(r=>r.source===site.id)).filter(Boolean).slice(0,5);
-  if(!candidates.length)return {available:false,message:'Serper не вернул проверенных фотографий с пяти архитектурных площадок.'};
-  const content=[
-    {type:'text',text:'The first picture is the original user building; ALL its geometry and ORIGINAL camera must remain unchanged. The other pictures are real reference thumbnails. Pick ONE reference best suited to creating a professional DAYLIGHT architectural photograph from the original building. No night, blue hour, dusk, dark sunset. Compare visible scene composition, photographic hierarchy, material/light compatibility. Reply in three lines only: INDEX: <number from 0 to '+(candidates.length-1)+' or -1>; DAYLIGHT: YES or NO; REASON: one brief Russian sentence. If you cannot visually verify suitable DAYLIGHT, choose INDEX: -1.'},
-    {type:'image_url',image_url:{url:input.image,detail:'low'}}
-  ];
-  candidates.forEach((item,i)=>{
-    content.push({type:'text',text:'REFERENCE '+i+' — '+safeText(item.sourceLabel,35)+'; title is untrusted. Choose from the IMAGE, not the caption.'});
-    content.push({type:'image_url',image_url:{url:item.thumbnail,detail:'low'}});
-  });
-  let selection;
+function chooseCandidates(all){
+  const deduped=[...new Map(all.map(ref=>[ref.link,ref])).values()];
+  const ant=deduped.filter(ref=>ref.source==='ant');
+  const other=deduped.filter(ref=>ref.source==='behance');
+  // Up to three thumbnails: two general Behance projects and one verified ANT project.
+  const chosen=[...other.slice(0,2),...ant.slice(0,1)];
+  if(chosen.length<3)chosen.push(...deduped.filter(x=>!chosen.some(c=>c.link===x.link)).slice(0,3-chosen.length));
+  return chosen.slice(0,3);
+}
+function safeRefThumbnailHost(urlString){
   try{
-    selection=await requestModel(AI_MODEL,[{role:'user',content}],900,52000);
-  }catch(err){
-    return {available:false,message:'Сравнение найденных фотографий не завершено: '+textLimited(err.message,180)+'. Анализ самого здания остаётся доступен.'};
-  }
-  let index=-1,daylight=false,selectionReason='';
-  const idx=selection.match(/(?:INDEX|ИНДЕКС|НОМЕР)\s*[:=#]?\s*(-?\d+)/i);
-  const day=selection.match(/(?:DAYLIGHT|ДНЕВНОЙ(?: СВЕТ)?)\s*[:=]\s*(YES|NO|ДА|НЕТ)/i);
-  const reason=selection.match(/(?:REASON|ПРИЧИНА|ОБОСНОВАНИЕ)\s*[:=]\s*(.+)/i);
-  if(idx)index=Number(idx[1]);
-  if(day)daylight=/^(YES|ДА)$/i.test(day[1]);
-  if(reason)selectionReason=safeText(reason[1],320);
-  if(index<0||index>=candidates.length||!daylight)return {available:false,message:'Визуальная модель не подтвердила подходящий дневной референс; случайное изображение не показываем.'};
-  const selected=candidates[index];
-  onProgress('scene',92,'Референс подтверждён. Составляем режиссёрский план…');
+    const u=new URL(urlString),h=u.hostname.toLowerCase();
+    return u.protocol==='https:'&&(
+      h==='behance.net'||h.endsWith('.behance.net')||
+      h==='gstatic.com'||h.endsWith('.gstatic.com')||
+      h==='googleusercontent.com'||h.endsWith('.googleusercontent.com')
+    );
+  }catch{return false;}
+}
+async function referenceForVision(urlString){
+  if(!safeRefThumbnailHost(urlString))return urlString;
+  try{
+    const response=await fetch(urlString,{redirect:'error',signal:timeout(6500),headers:{'accept':'image/jpeg,image/png,image/webp'}});
+    if(!response.ok)return urlString;
+    const type=(response.headers.get('content-type')||'').split(';')[0].toLowerCase();
+    if(!['image/jpeg','image/png','image/webp'].includes(type))return urlString;
+    if(Number(response.headers.get('content-length')||0)>650000)return urlString;
+    const buffer=Buffer.from(await response.arrayBuffer());
+    if(buffer.length<100||buffer.length>650000)return urlString;
+    return 'data:'+type+';base64,'+buffer.toString('base64');
+  }catch{return urlString;}
+}
+function fallbackSceneDirection(analysis={},project={},reference=null,explanation=''){
+  const observed=(safeText(analysis.visualCaption,550)||safeText(analysis.architecture,300));
+  const form=shapeSearchQuery(analysis);
+  const lighting=['sunlit','soft','golden','atmospheric'].includes(analysis.choice)?analysis.choice:'soft';
+  const materials=safeText(analysis.materials||project.materials,180);
+  return {
+    lighting,
+    lightingDescription:lighting==='sunlit'?'Чистый дневной боковой свет с физически правдоподобным направлением: архитектурный объём читается за счёт глубоких, но не проваленных теней.':'Светлое естественное дневное освещение, мягкое заполнение теней и точная передача фактуры фасадов.',
+    composition:'Использовать точно исходную перспективу и высоту камеры. Сохранить силуэт, пропорции, кровлю, размеры и расположение всех проёмов.',
+    environment:'Предложение окружения под видимый объём ('+safeText(form,110)+') и реальные материалы ('+materials+'). Построить естественный контекст без шаблонной посадки, сохраняя архитектуру главным героем.',
+    foreground:'Небольшие осмысленные акценты переднего плана для глубины кадра, не перекрывая контур здания и входы.',
+    middleGround:'Реалистичное сопряжение цоколя, дорожек, рельефа и растительности со зданием в исходном ракурсе.',
+    background:'Многоплановый естественный дальний фон по масштабу дома, без случайных деревьев и искусственного тумана.',
+    focalPoint:safeText(analysis.architecture,180)||'Форма и материалы исходного здания',
+    story:'Архитектурная редакционная фотография в один выразительный дневной момент; свет, цвет и окружение подчёркивают характер дома, не подменяют проект.',
+    palette:'natural daylight, restrained photographic colors and realistic facade material contrast',
+    camera:'camera, crop, eye level and all perspective lines exactly as the original supplied image',
+    reason:explanation||('Постановка подобрана по наблюдаемой архитектуре: '+safeText(observed,300)+'. Точная геометрия и ракурс исходного дома сохраняются.'),
+    confidence:'low'
+  };
+}
+async function generateSceneDirection(analysis,project,reference=null,selectionReason='',matchLevel='shape-similar'){
   let answer={};
   try{
-    const instruction='You are an award-winning architectural art director. A VISION model has compared the original building with candidate real images and selected this daylight reference. You are given only its decision and an IMAGE-BASED description of the user building. Do not pretend you saw the pixels yourself. Create an original ANT-Archviz-inspired editorial DAYLIGHT scene plan: do NOT reproduce any specific artist image or private methods, keep all geometry and ORIGINAL camera unchanged. The house is dominant; foreground/middle/background and atmosphere must be specific to the observed building, NOT a fixed forest/plant formula. Strictly NO evening, sunset darkness, blue-hour or night. Return ONLY a JSON object with keys: lighting (sunlit|soft|golden|atmospheric), lightingDescription, composition, environment, foreground, middleGround, background, focalPoint, story, palette, camera, reason, confidence. Russian prose except palette and camera English.';
-    const text=await requestModel(TEXT_MODEL,[
-      {role:'system',content:instruction},
-      {role:'user',content:'Observed source house: '+safeText(analysis.visualCaption||analysis.architecture,950)+'. Visible material: '+safeText(analysis.materials,200)+'. Building original camera: '+safeText(analysis.composition,260)+'. Reference platform: '+selected.sourceLabel+'. Reference title (untrusted): '+safeText(selected.title,110)+'. Visual selection rationale: '+selectionReason+'. Optional project wishes (not facts): '+safeText(project.description,450)+'. Return suitable JSON with specific art direction and unchanged perspective.'}
-    ],1900,22000);
-    answer=tryExtractJson(text);
+    const directionInstruction='You are an expert architectural editorial photographer. Design one ORIGINAL, exceptional DAYLIGHT photography plan for a homeowner\'s existing photographed building. Do NOT modify any building geometry, roof, openings, materials, scale, camera view or composition. If reference has different architecture, it is ONLY an inspiration for lighting, landscaping, atmosphere and visual hierarchy. Work like a high-end architectural art director, inspired by publicly visible photography principles, not any private materials or a copy. Determine specific scene-worthy near/middle/far depth from the building form; do not always choose forest. NO night, dusk, blue hour or dark evening. Return ONLY a compact JSON object with keys: lighting (sunlit|soft|golden|atmospheric), lightingDescription, composition, environment, foreground, middleGround, background, focalPoint, story, palette, camera, reason, confidence. Write creative Russian prose except palette/camera in English.';
+    const data=await requestModel(TEXT_MODEL,[
+      {role:'system',content:directionInstruction},
+      {role:'user',content:'ACTUAL building visual observation: '+safeText(analysis.visualCaption||analysis.architecture,900)+'. Materials observed: '+safeText(analysis.materials,200)+'. Source camera: '+safeText(analysis.composition,220)+'. Approximate form search: '+shapeSearchQuery(analysis)+'. User notes, not verified: '+safeText(project.description,300)+'. '+(reference?'Source for inspiration only: '+reference.sourceLabel+' / '+safeText(reference.title,90)+'. Its building may be different. Match type: '+matchLevel+'. Visual similarity verdict: '+safeText(selectionReason,260):'No visually verified source reference was found. Compose a photo staging plan only for the actual building; do not claim inspiration from any retrieved photograph.')+' Choose one striking daytime mood and a context-specific visual story. Return JSON.'}
+    ],1450,20000);
+    answer=tryExtractJson(data);
   }catch(err){
-    console.log('[FORMA_DIRECTION_FALLBACK]',err?.name||'invalid_output');
+    console.log('[FORMA_DIRECTION_TEXT_FALLBACK]',err?.name||'invalid_output');
   }
-  const chosenLight=['sunlit','soft','golden','atmospheric'].includes(answer.lighting)?answer.lighting:['sunlit','soft','golden','atmospheric'].includes(analysis.choice)?analysis.choice:'soft';
-  const proposed=[answer.lightingDescription,answer.composition,answer.environment,answer.story].join(' ');
-  if(/(?:\bnight\b|\bblue.hour\b|\bdusk\b|\btwilight\b|ночн|сумерк|синий час|после закат)/i.test(proposed))return {available:false,message:'Модель предложила вечерний или ночной сценарий. Он исключён.'};
-  const architecture=safeText(analysis.architecture,240)||'исходного дома';
-  const direction={
-    lighting:chosenLight,
-    lightingDescription:safeText(answer.lightingDescription,330)||'Естественный выразительный дневной свет с физически правдоподобным направлением и мягким отражённым заполнением.',
-    composition:safeText(answer.composition,500)||'Сохраняем исходную камеру, ракурс и геометрию; '+architecture,
-    environment:safeText(answer.environment,500)||'Предложение: индивидуальный ландшафт по масштабу, стилю и материалам исходного здания; не считать его существующим.',
-    foreground:safeText(answer.foreground,450)||'Ненавязчивый передний план, не закрывающий главный объём и окна.',
-    middleGround:safeText(answer.middleGround,450)||'Фасад и контакт здания с дорожками и рельефом в реалистичном масштабе.',
-    background:safeText(answer.background,450)||'Естественная глубина в соответствии с видимыми условиями участка.',
-    focalPoint:safeText(answer.focalPoint,300)||architecture,
-    story:safeText(answer.story,500)||'Один убедительный момент профессиональной дневной архитектурной фотосъёмки.',
-    palette:safeText(answer.palette,220)||'natural daylight, restrained warm stone and timber tones',
-    camera:safeText(answer.camera,250)||'original camera position and perspective, rectilinear architectural photography',
-    reason:safeText(answer.reason,680)||selectionReason||'Референс визуально выбран по дневному свету и совместимости с архитектурой дома.',
-    confidence:['high','medium','low'].includes(answer.confidence)?answer.confidence:'medium'
+  const fallback=fallbackSceneDirection(analysis,project,reference,selectionReason);
+  const result={...fallback};
+  for(const [field,limit] of Object.entries({lightingDescription:330,composition:500,environment:500,foreground:450,middleGround:450,background:450,focalPoint:300,story:500,palette:220,camera:250,reason:680})){
+    const proposed=safeText(answer[field],limit);
+    if(proposed)result[field]=proposed;
+  }
+  if(['sunlit','soft','golden','atmospheric'].includes(answer.lighting))result.lighting=answer.lighting;
+  if(['high','medium','low'].includes(answer.confidence))result.confidence=answer.confidence;
+  // Never pass night/evening back to the image-generation prompt.
+  const proposed=[result.lightingDescription,result.environment,result.story,result.reason].join(' ');
+  if(/(?:\bnight\b|\bblue.hour\b|\bdusk\b|\btwilight\b|ночн|сумерк|синий час|после закат)/i.test(proposed))return fallback;
+  return result;
+}
+async function selectDaylightReference(input,candidates,matchContext){
+  if(!candidates.length)return null;
+  const thumbnails=await Promise.all(candidates.map(ref=>referenceForVision(ref.thumbnail)));
+  const content=[{type:'text',text:
+    'Image 0 is the ORIGINAL building. Following images (up to 3) are professional Behance or verified ANT references. You are selecting only art-direction INSPIRATION (daylight, natural landscape, composition quality), NOT new house architecture. Compare roof silhouette, proportions, massing loosely. If no exact architecture match, SELECT the closest approximate house FORM with the BEST outdoor landscape and professional DAYLIGHT staging. Original building geometry, windows and camera must never change. Do not select any night, blue hour, dusk or dark evening reference. Return exactly four lines: INDEX: <0-based reference number or -1>; DAYLIGHT: YES/NO; MATCH: CLOSE/APPROX/STAGING; REASON: short Russian rationale. Say NO if you cannot verify daylight. This is '+matchContext+' selection.'},
+    {type:'image_url',image_url:{url:input.image,detail:'low'}}
+  ];
+  candidates.forEach((ref,i)=>{
+    content.push({type:'text',text:'REFERENCE '+i+' / '+ref.sourceLabel+'. The title is untrusted, judge pixels.'});
+    content.push({type:'image_url',image_url:{url:thumbnails[i],detail:'low'}});
+  });
+  let raw;
+  try{raw=await requestModel(AI_MODEL,[{role:'user',content}],320,38000);}
+  catch(err){return {index:-1,error:'Визуальное сравнение не завершилось: '+safeText(err.message,130)};}
+  const indexMatch=raw.match(/(?:INDEX|ИНДЕКС|НОМЕР)\s*[:=#]?\s*(-?\d+)/i);
+  const daylightMatch=raw.match(/(?:DAYLIGHT|ДНЕВНОЙ(?: СВЕТ)?)\s*[:=]\s*(YES|NO|ДА|НЕТ)/i);
+  const match=raw.match(/(?:MATCH|СХОДСТВО)\s*[:=]\s*(CLOSE|APPROX|STAGING)/i);
+  const reason=raw.match(/(?:REASON|ПРИЧИНА|ОБОСНОВАНИЕ)\s*[:=]\s*([^\n]+)/i);
+  const index=indexMatch?Number(indexMatch[1]):-1;
+  const verified=daylightMatch&&/^(YES|ДА)$/i.test(daylightMatch[1]);
+  return {
+    index:verified&&Number.isInteger(index)&&index>=0&&index<candidates.length?index:-1,
+    matchLevel:match?.[1]?.toLowerCase()==='close'?'close':'approximate',
+    reason:safeText(reason?.[1],400)
   };
-  return {available:true,reference:selected,direction,totalCandidates:candidates.length};
+}
+async function direct(input,onProgress=()=>{}){
+  if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для подбора нужны визуальная AI-модель и поиск Serper.'};
+  if(!validImage(input?.image))throw Object.assign(new Error('Загрузите JPG, PNG или WebP.'),{status:400});
+  const project=input.project||{},analysis=input.analysis||{};
+  const exactQuery=safeText(input.query,110)||safeText(analysis.query,110)||shapeSearchQuery(analysis);
+  const first=await searchSources(exactQuery,'exact');
+  let candidates=chooseCandidates(first.results);
+  let selected=null,verdict=null,mode='exact';
+  onProgress('ranking',76,'Ищем близкую форму дома и качественное дневное окружение…');
+  if(candidates.length){
+    verdict=await selectDaylightReference(input,candidates,'architecture-oriented');
+    if(verdict?.index>=0)selected=candidates[verdict.index];
+  }
+  if(!selected){
+    // User-requested fallback: search roughly by massing/roof silhouette instead of exact architecture.
+    onProgress('search',82,'Точного аналога нет. Ищем похожий силуэт и лучшую постановку света…');
+    const broad=await searchSources(shapeSearchQuery(analysis),'form');
+    const supplemental=chooseCandidates(broad.results);
+    if(supplemental.length){
+      mode='form';
+      candidates=supplemental;
+      verdict=await selectDaylightReference(input,candidates,'shape-oriented and editorial-quality');
+      if(verdict?.index>=0)selected=candidates[verdict.index];
+    }
+  }
+  onProgress('scene',93,selected?
+    'Подбираем свет, окружение и подачу для исходного дома…':
+    'Фотореференс не подтверждён. Создаём индивидуальную дневную постановку по дому…');
+  const direction=await generateSceneDirection(analysis,project,selected,verdict?.reason||'',verdict?.matchLevel||'approximate');
+  if(!selected)return {
+    available:false,direction,reference:null,matchLevel:'none',
+    message:'Фотографию с подтверждённым дневным светом не удалось выбрать. Постановка сцены предложена по анализу исходного дома без выдуманного референса.',
+    totalCandidates:candidates.length
+  };
+  return {available:true,reference:selected,direction,
+    matchLevel:mode==='form'||verdict.matchLevel!=='close'?'approximate':'close',
+    matchReason:verdict.reason||'Референс используется только как художественный образец.',
+    totalCandidates:candidates.length};
 }
 function safePath(reqPath){
   let parsed;
