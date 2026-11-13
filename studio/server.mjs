@@ -20,12 +20,12 @@ const refCache = new Map();
 const analysisJobs = new Map();
 const MAX_ACTIVE_JOBS = 2;
 const JOB_KEEP_MS = 15 * 60 * 1000;
+// ANT is a curated and attributed subset of Behance, not a separate image-search domain.
+// Public ANT Archviz project pages were cross-checked against behance.net/designant1.
+const ANT_GALLERIES = new Set(['255467603','254721349','255956745','255105661','255284051','253353819']);
 const SITE = [
-  {id:'behance', label:'Behance', domain:'behance.net', term:'architectural visualization editorial daylight exterior photography'},
-  {id:'divisare', label:'Divisare', domain:'divisare.com', term:'residential architectural editorial photography natural light'},
-  {id:'archdaily', label:'ArchDaily', domain:'archdaily.com', term:'residential architectural photography daylight'},
-  {id:'cgconnect', label:'CGconnect', domain:'cgconnect.chaos.com', term:'archviz exterior daylight editorial'},
-  {id:'dezeen', label:'Dezeen', domain:'dezeen.com', term:'contemporary house architecture exterior photography natural light'}
+  {id:'behance', label:'Behance', domain:'behance.net', term:'architecture visualization daylight photorealistic landscape editorial'},
+  {id:'ant', label:'ANT Archviz', domain:'behance.net', term:'ANT Archviz exterior daylight professional visualization'}
 ];
 
 function json(res, status, body) {
@@ -159,95 +159,109 @@ async function analyze(input,onProgress=()=>{}){
     visualCaption:textLimited(caption,1000)
   }};
 }
-function filterResult(x,s){
+function antGalleryFromUrl(raw){
   try {
-    const url=new URL(x.url), host=url.hostname.toLowerCase();
-    if(!['https:','http:'].includes(url.protocol))return null;
-    if(!(host===s.domain||host.endsWith('.'+s.domain)))return null;
-    const thumb= x.thumbnail?.src;
-    if(!thumb||!/^https:\/\//.test(thumb))return null;
-    return {source:s.id, sourceLabel:s.label, title:textLimited(x.title,120) || 'Архитектурный референс', link:url.href, thumbnail:thumb, confidence:x.confidence||'unknown'};
-  } catch{return null;}
+    const url=new URL(raw);
+    if(!['behance.net','www.behance.net'].includes(url.hostname.toLowerCase()))return null;
+    const match=url.pathname.match(/^\/gallery\/(\d+)(?:\/|$)/i);
+    return match&&ANT_GALLERIES.has(match[1])?match[1]:null;
+  }catch{return null;}
 }
-async function searchSources(rawQuery){
-  if(!SEARCH_ENABLED) return {available:false,results:[],provider:null,sources:SITE.map(s=>({id:s.id,label:s.label,count:0,status:'not-configured'}))};
-  const query=textLimited(rawQuery,110) || 'modern wooden house exterior';
-  const provider=SERPER_KEY ? 'serper' : TAVILY_KEY ? 'tavily' : 'brave';
-  const cacheKey=provider+':'+query.toLowerCase();
+function filterResult(x,source){
+  try{
+    const link=new URL(x.url),host=link.hostname.toLowerCase();
+    if(link.protocol!=='https:' || !(host===source.domain||host.endsWith('.'+source.domain)))return null;
+    if(!/^\/gallery\/\d+(?:\/|$)/i.test(link.pathname))return null;
+    const photo=x.thumbnail?.src;
+    if(typeof photo!=='string'||!/^https:\/\//i.test(photo))return null;
+    const isAnt=Boolean(antGalleryFromUrl(link.href));
+    // Never label unrelated Behance projects as authored by ANT.
+    if(source.id==='ant'&&!isAnt)return null;
+    return {
+      source:isAnt?'ant':'behance',
+      sourceLabel:isAnt?'ANT Archviz':'Behance',
+      title:textLimited(x.title,140)||'Архитектурный проект',
+      link:link.href,thumbnail:photo,confidence:'unverified-daylight',
+      verifiedAntAuthor:isAnt
+    };
+  }catch{return null;}
+}
+function shapeSearchQuery(analysis={}){
+  const observed=[analysis.visualCaption,analysis.architecture,analysis.materials].filter(Boolean).join(' ').toLowerCase();
+  const roof=/двускат|двухскат|щипцов|фронтон|gable|barn|барн|а-образ/.test(observed)?'gable roof':
+    /плоск(ая|ой|ую) кровл|flat roof|плоск(ая|ой) крыш|парапет/.test(observed)?'flat roof':
+    /вальмов|hipped roof/.test(observed)?'hip roof':'contemporary';
+  const scale=/одноэтаж|one.storey|single.storey|один этаж/.test(observed)?'single storey':
+    /двухэтаж|два этажа|two.storey|2.storey/.test(observed)?'two storey':'residential';
+  const exterior=/брус|wood|timber|дерев|планкен/.test(observed)?'timber':
+    /кирпич|brick/.test(observed)?'brick':
+    /бетон|concrete/.test(observed)?'concrete':'modern';
+  return [scale,roof,exterior,'house','daylight','architecture'].join(' ');
+}
+async function searchSources(rawQuery,mode='exact'){
+  if(!SEARCH_ENABLED)return {available:false,results:[],provider:null,sources:SITE.map(s=>({id:s.id,label:s.label,count:0,status:'not-configured'}))};
+  const q=textLimited(rawQuery,110)||'contemporary residential house';
+  const provider=SERPER_KEY?'serper':TAVILY_KEY?'tavily':'brave';
+  const cacheKey=provider+':'+mode+':'+q.toLowerCase();
   const cached=refCache.get(cacheKey);
-  if(cached && Date.now()-cached.at<15*60*1000) return {...cached.data,cached:true};
+  if(cached&&Date.now()-cached.at<15*60*1000)return {...cached.data,cached:true};
 
-  const fetched=await Promise.all(SITE.map(async s=>{
+  const fetched=await Promise.all(SITE.map(async source=>{
     const unique=new Map();
-    try {
+    try{
+      const sourceQuery=source.id==='ant'?
+        'site:behance.net/gallery/ "ANT Archviz" '+(mode==='form'?'house exterior daylight ':q+' '):
+        'site:behance.net/gallery/ '+q+' professional daylight architectural visualization ';
       if(SERPER_KEY){
-        // Serper.dev: 2,500 one-off free Google Image Search queries without a payment card.
-        // Keep source provenance: only images from pages on allowlisted architecture domains.
         const response=await fetch('https://google.serper.dev/images',{
-          method:'POST',
-          headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
-          body:JSON.stringify({
-            q:('site:'+s.domain+' '+query+' '+s.term+' daylight exterior').slice(0,320),
-            num:20,hl:'en',gl:'us',safe:'active'
-          }),
-          signal:timeout(20_000)
+          method:'POST',headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
+          body:JSON.stringify({q:sourceQuery.slice(0,320),num:20,hl:'en',gl:'us',safe:'active'}),
+          signal:timeout(18_000)
         });
-        if(!response.ok)return {id:s.id,label:s.label,count:0,status:'Serper HTTP '+response.status,results:[]};
+        if(!response.ok)return {id:source.id,label:source.label,count:0,status:'Serper HTTP '+response.status,results:[]};
         const data=await response.json();
         for(const item of Array.isArray(data.images)?data.images:[]){
-          const src=item.thumbnailUrl||item.imageUrl;
-          const matched=filterResult({url:item.link,title:item.title,thumbnail:{src}},s);
+          const matched=filterResult({url:item.link,title:item.title,thumbnail:{src:item.thumbnailUrl||item.imageUrl}},source);
           if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
         }
       }else if(TAVILY_KEY){
-        // Basic search costs one Tavily credit. Source-linked images keep provenance.
-        // One site-filtered request per source: approximately 5 credits per new project query.
         const response=await fetch('https://api.tavily.com/search',{
-          method:'POST',
-          headers:{authorization:'Bearer '+TAVILY_KEY,'content-type':'application/json'},
-          body:JSON.stringify({
-            query:(query+' '+s.term+' professional daylight architecture photography').slice(0,370),
-            search_depth:'basic', max_results:12, include_images:true,
-            include_image_descriptions:false, include_answer:false, include_raw_content:false,
-            include_domains:[s.domain], include_domains_mode:'restrict',
-            auto_parameters:false, safe_search:true
-          }),
-          signal:timeout(24_000)
+          method:'POST',headers:{authorization:'Bearer '+TAVILY_KEY,'content-type':'application/json'},
+          body:JSON.stringify({query:sourceQuery.slice(0,330),search_depth:'basic',max_results:12,
+            include_images:true,include_domains:['behance.net'],include_answer:false,
+            include_raw_content:false}),
+          signal:timeout(22_000)
         });
-        if(!response.ok) return {id:s.id,label:s.label,count:0,status:'Tavily HTTP '+response.status,results:[]};
+        if(!response.ok)return {id:source.id,label:source.label,count:0,status:'Tavily HTTP '+response.status,results:[]};
         const data=await response.json();
         for(const page of Array.isArray(data.results)?data.results:[]){
-          // Only accept photographs explicitly associated with a page on the allowed domain.
-          const images=Array.isArray(page.images)?page.images:[];
-          for(const item of images.slice(0,4)){
-            const src=typeof item==='string'?item:item?.url;
-            if(typeof src!=='string'||!/^https:\/\//i.test(src))continue;
-            const matched=filterResult({url:page.url,title:page.title,thumbnail:{src}},s);
+          for(const image of (Array.isArray(page.images)?page.images:[]).slice(0,4)){
+            const photo=typeof image==='string'?image:image?.url;
+            const matched=filterResult({url:page.url,title:page.title,thumbnail:{src:photo}},source);
             if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
           }
         }
       }else{
-        // Backward compatibility for sites that already use Brave Search.
         const url=new URL('https://api.search.brave.com/res/v1/images/search');
-        url.searchParams.set('q',('site:'+s.domain+' '+query+' '+s.term).slice(0,320));
-        url.searchParams.set('count','25');
+        url.searchParams.set('q',sourceQuery.slice(0,320));url.searchParams.set('count','20');
         url.searchParams.set('safesearch','strict');
-        url.searchParams.set('country','ALL');
-        url.searchParams.set('search_lang','en');
         const response=await fetch(url,{headers:{'x-subscription-token':BRAVE_KEY,'accept':'application/json'},signal:timeout(18_000)});
-        if(!response.ok) return {id:s.id,label:s.label,count:0,status:'Brave HTTP '+response.status,results:[]};
+        if(!response.ok)return {id:source.id,label:source.label,count:0,status:'Brave HTTP '+response.status,results:[]};
         const data=await response.json();
         for(const item of data.results||[]){
-          const matched=filterResult(item,s);
+          const matched=filterResult(item,source);
           if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
         }
       }
-      return {id:s.id,label:s.label,count:unique.size,status:'ok',results:[...unique.values()].slice(0,8)};
-    }catch(e){return {id:s.id,label:s.label,count:0,status:errorOf(e),results:[]};}
+      return {id:source.id,label:source.label,count:unique.size,status:'ok',results:[...unique.values()].slice(0,10)};
+    }catch(err){return {id:source.id,label:source.label,count:0,status:errorOf(err),results:[]};}
   }));
-  const results=fetched.flatMap(s=>s.results||[]);
-  const output={available:true,provider,results,sources:fetched.map(({id,label,count,status})=>({id,label,count,status}))};
-  if(refCache.size>50)refCache.clear();
+  const all=fetched.flatMap(source=>source.results);
+  const results=[...new Map(all.map(item=>[item.link,item])).values()];
+  const output={available:true,provider,results,mode,
+    sources:SITE.map(source=>({id:source.id,label:source.label,count:results.filter(r=>r.source===source.id).length,
+      status:fetched.find(x=>x.id===source.id)?.status||'unknown'}))};
+  if(refCache.size>60)refCache.clear();
   refCache.set(cacheKey,{at:Date.now(),data:output});
   return output;
 }
@@ -377,7 +391,7 @@ function startAnalysisJob(input){
       if(!result?.available||!result.result)throw new Error(result?.message||'Анализ изображения не завершён.');
       job.analysis=result.result;
       progress('search',63,SEARCH_ENABLED?
-        'Анализ дома готов. Ищем дневные референсы по пяти площадкам…':
+        'Анализ дома готов. Ищем референсы на Behance и в портфолио ANT…':
         'Анализ дома готов. Поиск референсов не подключён.');
       if(SEARCH_ENABLED){
         try{
@@ -408,7 +422,7 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.7.0'});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.8.0'});
     if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
     if(req.method==='POST'&&pathName==='/api/jobs')return json(res,202,startAnalysisJob(await bodyJson(req)));
     if(req.method==='GET'&&/^\/api\/jobs\/[a-f0-9-]{36}$/.test(pathName)){
