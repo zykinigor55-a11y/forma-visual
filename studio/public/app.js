@@ -22,7 +22,7 @@ const MODES = {
   }
 };
 const state = {
-  image: null, file: null, config: {ai: false, search: false},
+  image: null, visionImage: null, file: null, config: {ai: false, search: false},
   analysis: null, isVisualAnalysis: false, winner: null, curation: null,
   prompt: '', working: false, progressPct: 0
 };
@@ -294,12 +294,11 @@ function imageAsDataURL(file){
     reader.readAsDataURL(file);
   });
 }
-async function prepareImage(file){
+async function prepareImage(file,maxSide=1280,quality=0.82){
   let bmp;
   try{bmp=await createImageBitmap(file);}
   catch{return imageAsDataURL(file);}
   try{
-    const maxSide=1280;
     if(Math.max(bmp.width,bmp.height)<=maxSide&&file.size<500000)return await imageAsDataURL(file);
     const scale=Math.min(1,maxSide/Math.max(bmp.width,bmp.height));
     const canvas=document.createElement('canvas');
@@ -309,7 +308,7 @@ async function prepareImage(file){
     if(!ctx)return await imageAsDataURL(file);
     ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.imageSmoothingQuality='high';ctx.drawImage(bmp,0,0,canvas.width,canvas.height);
-    return canvas.toDataURL('image/jpeg',0.82);
+    return canvas.toDataURL('image/jpeg',quality);
   }finally{bmp.close?.();}
 }
 async function updateImage(file){
@@ -319,9 +318,11 @@ async function updateImage(file){
   const loadId=state.loadId=(state.loadId||0)+1;
   alertStatus('Подготавливаем изображение для быстрого архитектурного анализа…');
   try{
-    const modelImage=await prepareImage(file);
+    // 1280px preview preserves presentation; 768px is a temporary low-bandwidth visual-analysis copy.
+    const modelImage=await prepareImage(file,1280,0.82);
+    const visionImage=await prepareImage(file,768,0.74);
     if(loadId!==state.loadId)return;
-    state.file=file;state.image=modelImage;
+    state.file=file;state.image=modelImage;state.visionImage=visionImage;
     state.suggestedRef=null;
     state.analysis=null;state.winner=null;state.curation=null;state.prompt='';
     state.progressPct=0;$('#processingProgress').hidden=true;
@@ -354,7 +355,7 @@ async function runProject(event){
   setBusy(true);
   showProgress(1,'Подготовка проекта к отправке…');
   try{
-    const uploaded=await uploadJob(state.image,project);
+    const uploaded=await uploadJob(state.visionImage||state.image,project);
     showProgress(uploaded.progress||12,'Изображение передано. Распознаём архитектуру…');
     const job=await trackJob(uploaded.jobId);
     if(job.analysis){
