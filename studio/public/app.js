@@ -24,7 +24,7 @@ const MODES = {
 const state = {
   image: null, file: null, config: {ai: false, search: false},
   analysis: null, isVisualAnalysis: false, winner: null, curation: null,
-  prompt: '', working: false
+  prompt: '', working: false, progressPct: 0
 };
 
 function alertStatus(message, type='info') {
@@ -32,10 +32,54 @@ function alertStatus(message, type='info') {
   node.className = `live-notice ${type === 'info' ? '' : type}`;
   node.querySelector('span:last-child').textContent = message;
 }
-function setBusy(busy) {
-  state.working = busy;
-  const button = $('#analyzeBtn'); button.disabled = busy;
-  button.innerHTML = busy ? 'Идёт арт-дирекшн <span>⋯</span>' : 'Найти лучшее решение <span>↗</span>';
+function setBusy(busy){
+  state.working=busy;
+  const button=$('#analyzeBtn');
+  button.disabled=busy;
+  button.innerHTML=busy?'Обработка <span>'+state.progressPct+'%</span>':'Найти лучшее решение <span>↗</span>';
+}
+function showProgress(value,message,finished=false){
+  const percent=Math.max(0,Math.min(100,Math.round(Number(value)||0)));
+  state.progressPct=Math.max(state.progressPct,percent);
+  const panel=$('#processingProgress');
+  panel.hidden=false;
+  const bar=$('#progressBar');
+  bar.style.width=state.progressPct+'%';
+  bar.setAttribute('aria-valuenow',String(state.progressPct));
+  $('#progressPercent').textContent=state.progressPct+'%';
+  $('#progressPhase').textContent=message||'Обработка проекта…';
+  panel.classList.toggle('is-finished',finished);
+  if(state.working)$('#analyzeBtn').innerHTML='Обработка <span>'+state.progressPct+'%</span>';
+}
+function uploadJob(image,project){
+  return new Promise((resolve,reject)=>{
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST','/api/jobs');
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.timeout=45000;
+    xhr.upload.onprogress=event=>{
+      if(event.lengthComputable)showProgress(Math.round(event.loaded/event.total*10),'Передаём изображение на сервер…');
+    };
+    xhr.onload=()=>{
+      let body;
+      try{body=JSON.parse(xhr.responseText);}catch{reject(new Error('Сервер вернул некорректный ответ.'));return;}
+      if(xhr.status>=200&&xhr.status<300&&body.jobId)resolve(body);
+      else reject(new Error(body.error||'Не удалось запустить анализ.'));
+    };
+    xhr.onerror=()=>reject(new Error('Не удалось отправить изображение. Проверьте интернет.'));
+    xhr.ontimeout=()=>reject(new Error('Загрузка изображения заняла слишком много времени.'));
+    xhr.send(JSON.stringify({image,project}));
+  });
+}
+async function trackJob(jobId){
+  const started=Date.now();
+  while(Date.now()-started<6*60*1000){
+    const job=await requestJson('/api/jobs/'+encodeURIComponent(jobId),{cache:'no-store'});
+    showProgress(job.progress||12,job.message);
+    if(job.status==='finished')return job;
+    await new Promise(resolve=>setTimeout(resolve,1400));
+  }
+  throw new Error('Не удалось получить результат анализа. Обновите страницу и повторите попытку.');
 }
 function collectProject() {
   return {type: $('#buildingType').value, materials: $('#materials').value.trim(), description: $('#notes').value.trim(), lockGeometry: true};
@@ -192,7 +236,7 @@ async function prepareImage(file){
   try{bmp=await createImageBitmap(file);}
   catch{return imageAsDataURL(file);}
   try{
-    const maxSide=1800;
+    const maxSide=1280;
     if(Math.max(bmp.width,bmp.height)<=maxSide&&file.size<500000)return await imageAsDataURL(file);
     const scale=Math.min(1,maxSide/Math.max(bmp.width,bmp.height));
     const canvas=document.createElement('canvas');
@@ -202,7 +246,7 @@ async function prepareImage(file){
     if(!ctx)return await imageAsDataURL(file);
     ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.imageSmoothingQuality='high';ctx.drawImage(bmp,0,0,canvas.width,canvas.height);
-    return canvas.toDataURL('image/jpeg',0.87);
+    return canvas.toDataURL('image/jpeg',0.82);
   }finally{bmp.close?.();}
 }
 async function updateImage(file){
@@ -234,68 +278,51 @@ async function requestJson(url, options={}) {
   if (!response.ok) throw new Error(body?.error || `Ошибка ${response.status}`);
   return body;
 }
-async function runProject(event) {
+async function runProject(event){
   event.preventDefault();
-  if (state.working) return;
-  if (!state.image) { alertStatus('Сначала загрузите изображение дома, чтобы анализировать именно его.', 'error'); return; }
-  const project = collectProject();
-  state.winner = null; state.curation = null; state.isVisualAnalysis = false;
-  setRecommendationMessage('Анализируем архитектуру и подбираем визуальный сценарий…', 'AI ART DIRECTOR');
+  if(state.working)return;
+  if(!state.image){alertStatus('Сначала загрузите изображение дома.','error');return;}
+  const project=collectProject();
+  state.winner=null;state.curation=null;state.analysis=null;state.isVisualAnalysis=false;
+  state.progressPct=0;
+  setRecommendationMessage('Готовим анализ и поиск профессиональных референсов…','AI ART DIRECTOR');
   setBusy(true);
-  let issue = '';
-  try {
-    if (state.config.ai) {
-      alertStatus('AI распознаёт форму дома и материалы; затем подберёт дневной свет и кадр…');
-      try {
-        const result = await requestJson('/api/analyze', {
-          method:'POST', headers:{'content-type':'application/json'},
-          body:JSON.stringify({image:state.image, project})
-        });
-        if (result.available && result.result) {
-          state.analysis = result.result;
-          state.isVisualAnalysis = true;
-        } else issue = result.message || 'AI не настроен';
-      } catch (error) { issue = error.message; }
-    } else issue = 'Для анализа фото нужен VISION_API_KEY';
-    if (!state.isVisualAnalysis) state.analysis = manualAnalysis(project);
-    showAnalysis(state.analysis, state.isVisualAnalysis);
-    const suggested = MODES[modeFromAnalysis(state.analysis)];
-    $('#autoDirection').textContent = suggested.name;
-    $('#directionReason').textContent = state.isVisualAnalysis ? state.analysis.reason : 'Профессиональный выбор света по изображению пока не выполнен.';
-    $('#directionTag').textContent = 'ДЕНЬ / АВТОМАТИЧЕСКИ';
-    if (state.isVisualAnalysis && state.config.search) {
-      alertStatus('Ищем реальные работы по пяти площадкам и сравниваем их изображения с архитектурой дома…');
-      try {
-        const curated = await requestJson('/api/direct', {
-          method:'POST', headers:{'content-type':'application/json'},
-          body:JSON.stringify({image:state.image, project, query:state.analysis.query,analysis:state.analysis})
-        });
-        if (curated.available && curated.reference && curated.direction && showWinner(curated)) {
-          alertStatus('Лучший референс выбран после визуального сравнения. Свет — дневной, архитектура и камера защищены.', 'success');
-        } else {
-          setRecommendationMessage(curated.message || 'Подходящих дневных референсов для этого дома не найдено. Не будем выдавать случайное изображение за лучший вариант.', 'ОТБОР НЕ ПОДТВЕРЖДЁН');
-          alertStatus('Анализ дома выполнен, но визуальный выбор референса не подтверждён.', 'info');
-        }
-      } catch (error) {
-        setRecommendationMessage('Нельзя подтвердить лучший референс: ' + error.message, 'ОТБОР НЕ ЗАВЕРШЁН');
-        alertStatus('Не удалось сравнить источники: ' + error.message, 'error');
+  showProgress(1,'Подготовка проекта к отправке…');
+  try{
+    const uploaded=await uploadJob(state.image,project);
+    showProgress(uploaded.progress||12,'Изображение передано. Распознаём архитектуру…');
+    const job=await trackJob(uploaded.jobId);
+    if(job.analysis){
+      state.analysis=job.analysis;
+      state.isVisualAnalysis=true;
+      showAnalysis(state.analysis,true);
+      const suggested=MODES[modeFromAnalysis(state.analysis)];
+      $('#autoDirection').textContent=suggested.name;
+      $('#directionReason').textContent=state.analysis.reason||'Индивидуальная дневная постановка';
+      $('#directionTag').textContent='ДЕНЬ / АВТОМАТИЧЕСКИ';
+      if(job.curation?.available&&job.curation.reference&&job.curation.direction&&showWinner(job.curation)){
+        alertStatus('Готово: выбран дневной референс и подготовлен профессиональный промпт.','success');
+      }else{
+        setRecommendationMessage(job.curation?.message||'Архитектура проанализирована, но подходящий дневной референс не подтверждён. Промпт составлен по исходному дому.','РЕФЕРЕНС НЕ ПОДТВЕРЖДЁН');
+        alertStatus('Архитектура проанализирована. Подтверждённый референс не выбран.','info');
       }
-    } else if (state.isVisualAnalysis) {
-      setRecommendationMessage('AI изучил архитектуру, но поиск по профессиональным площадкам выключен. Чтобы выбрать лучший референс по изображениям, подключите SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY в Render.', 'ПОИСК НЕ ПОДКЛЮЧЁН');
-      alertStatus('Анализ изображения готов. Поиск профессиональных референсов требует SERPER_API_KEY (без карты), TAVILY_API_KEY или BRAVE_SEARCH_API_KEY.');
-    } else if (state.config.search) {
-      const provider = state.config.searchProvider === 'serper' ? 'Serper' : state.config.searchProvider === 'tavily' ? 'Tavily' : 'Brave';
-      const reason = state.config.ai ? 'Визуальная модель не завершила анализ: ' + issue : 'Для анализа фотографии требуется VISION_API_KEY в Render.';
-      setRecommendationMessage('Поиск архитектурных референсов через ' + provider + ' подключён и работает. ' + reason + ' Пока показываем только черновик промпта, а не выдуманный результат AI-отбора.', 'ПОИСК ПОДКЛЮЧЁН / НУЖЕН ВИЗУАЛЬНЫЙ AI');
-      alertStatus('Поиск через ' + provider + ' подключён. ' + reason, state.config.ai ? 'error' : 'info');
-    } else {
-      setRecommendationMessage('Поиск по профессиональным площадкам и визуальный AI-отбор пока недоступны. Добавьте SERPER_API_KEY для поиска и VISION_API_KEY для анализа фотографии. Ниже доступен только черновик промпта.', 'ПОИСК И AI НЕ ПОДКЛЮЧЕНЫ');
-      alertStatus(issue + '. Для поиска референсов нужен SERPER_API_KEY в Render.', 'error');
+      showProgress(100,'Анализ завершён. Промпт готов.',true);
+      makePrompt(project);
+    }else{
+      state.analysis=manualAnalysis(project);
+      showAnalysis(state.analysis,false);
+      const reason=job.error||job.message||'Неизвестная ошибка';
+      setRecommendationMessage('Визуальный анализ не завершён: '+reason+'. Промпт ниже — только черновик.','ОШИБКА АНАЛИЗА');
+      $('#directionReason').textContent='Выбор освещения по фотографии не подтверждён.';
+      alertStatus('Визуальная модель не завершила анализ: '+reason,'error');
+      showProgress(job.progress||12,reason);
+      makePrompt(project);
     }
-    makePrompt(project);
-    $('#analysis').scrollIntoView({behavior:'smooth', block:'start'});
-  } catch (error) { alertStatus('Ошибка анализа: ' + error.message, 'error'); }
-  finally { setBusy(false); }
+    $('#analysis').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){
+    alertStatus('Не удалось завершить обработку: '+String(err.message||err),'error');
+    showProgress(state.progressPct,'Ошибка: '+String(err.message||err));
+  }finally{setBusy(false);}
 }
 function downloadPrompt() {
   if (!state.prompt) return;

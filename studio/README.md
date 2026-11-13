@@ -30,3 +30,8 @@ Note: Tavily's pricing page may say 'no credit card' but sign-up has shown a pay
 ## v0.6 — Two-stage image analysis (November 2026)
 
 Fixes large-image and model timeout failures: the browser sends a camera-geometry-preserving JPEG rendition up to 1800px long edge, rather than a raw multi-megabyte upload. The server performs a short photo-caption pass with Gemini 4 Argon (VISION_MODEL), then uses Gemini 3.8 Flash (VISION_TEXT_MODEL, text only) to produce a structured architectural brief, English reference search query, and daytime editorial direction. If structuring fails, it preserves a clearly low-confidence caption-based analysis instead of inventing AI-ranked references. The Serper search and one-reference curation remain separate; candidate visual ranking requires the multimodal model to confirm daylight and a suitable image. Configure both model IDs in Render, with only VISION_API_KEY secret. A one-time smoke test successfully returned an image-based description and search query; test code was removed before production deployment.
+
+
+## v0.7: Step-based AI percentages and asynchronous jobs
+
+POST /api/jobs creates a limited background analysis job (HTTP 202); GET /api/jobs/:uuid returns status, progress, phase, analysis and photo curation. This avoids holding open a single browser request during slow model inference. Two concurrent jobs maximum; job result retention 15 minutes, in-memory only (a Render restart clears jobs). The upload bar uses XHR byte progress; remaining percentages are explicit stage milestones (not exact model token progress), and reach 100% only after the pipeline completes. Client downscales uploads to 1280px at JPEG quality .82; Serper and AI credentials remain server-side. No new charges/subscriptions.

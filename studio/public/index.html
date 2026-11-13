@@ -57,6 +57,12 @@
               <textarea id="notes" name="notes" rows="3" maxlength="900" placeholder="Необязательно · пожелания, которые нельзя менять"></textarea>
               <div class="controls-row"><div class="toggle-lock"><span class="lock-glyph">▣</span><span>Сохранить геометрию<br><small>Окна, ракурс, размеры, фасады</small></span></div><span class="locked-tag">LOCKED / ON</span></div>
               <div class="panel-bottom"><span class="muted-caption">РЕЗУЛЬТАТ / NANO BANANA</span><button id="analyzeBtn" class="primary-button" type="submit">Найти лучшее решение <span>↗</span></button></div>
+              <div id="processingProgress" class="processing-progress" hidden aria-live="polite">
+                <div class="progress-heading"><span>AI / PROCESSING</span><strong id="progressPercent">0%</strong></div>
+                <div class="progress-track"><div id="progressBar" class="progress-fill" role="progressbar" aria-label="Прогресс обработки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+                <p id="progressPhase">Подготавливаем изображение…</p>
+                <small>Проценты показывают этапы работы, а не точное оставшееся время</small>
+              </div>
             </form>
           </div>
         </section>
