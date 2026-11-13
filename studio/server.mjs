@@ -291,4 +291,25 @@ const server=http.createServer(async(req,res)=>{
     return json(res,405,{error:'Метод не поддерживается'});
   }catch(e){json(res,e.status||502,{error:errorOf(e)});}
 });
+// BEGIN TEMP E2E DIAGNOSTIC — automatically removed after inspection
+if(AI_KEY && SEARCH_ENABLED){
+ (async()=>{
+  const input={image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAABQCAIAAABd+SbeAAABh0lEQVR42u3ZLU6DQRSFYb4TMKwE1sASMJgqZAUGAwqFQOEwGEQlCsMmWAMV7AANBoNAEpKGfvd33qPb5M6T05vMdHp7/9gh9hEEQANNgAYaaAI00ARooIEmQAMdm6uzBdBOyuWsVbfLtaynQu/Rf8nePjwB7bSU81flWG/uHi2sRZc3PN2WBxTKPse0vRl+rp/Lae4fnJS8GZKf7JaYcrl63ebrq+Vh+BFoNNBAkwI7+v5lb5OPnR990WgCNNAEaKCBJkADDTQEQANNgE4b70elfq9FNBpooAnQQBOggQaamGU6vlygQKOBJkADDTSxzzd/mIwc/axNCQAAAABJRU5ErkJggg==',project:{type:'Современный барнхаус',materials:'dark timber and glass',description:'Preserve geometry and camera'}};
+  try {
+   const a=await analyze(input);
+   console.log('[FORMA_E2E_ANALYZE]',JSON.stringify({available:a.available,hasArchitecture:Boolean(a.result?.architecture),hasQuery:Boolean(a.result?.query),choice:a.result?.choice||null,confidence:a.result?.confidence||null}));
+   const q=a.result?.query || 'modern timber residence architectural photography daylight';
+   const f=await searchSources(q);
+   console.log('[FORMA_E2E_SEARCH]',JSON.stringify({available:f.available,provider:f.provider,total:f.results?.length||0,domains:f.sources?.map(x=>({id:x.id,count:x.count,status:x.status}))}));
+   if(f.results?.length){
+    const d=await direct({...input,query:q});
+    console.log('[FORMA_E2E_DIRECT]',JSON.stringify({available:d.available,source:d.reference?.source||null,daylight:d.direction?.lighting||null,hasFocalPoint:Boolean(d.direction?.focalPoint),hasStory:Boolean(d.direction?.story),reasonCategory:d.available?'selected':'not-selected'}));
+   }
+  } catch(e){
+    let message=String(e?.message||'unknown');message=message.replace(/sk-[A-Za-z0-9_-]+/g,'[REDACTED]').slice(0,250);
+    console.log('[FORMA_E2E_ERROR]',JSON.stringify({message}));
+  }
+ })();
+}
+// END TEMP E2E DIAGNOSTIC
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
