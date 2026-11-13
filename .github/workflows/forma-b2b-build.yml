@@ -22,6 +22,16 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke
+      - name: Screenshots of working UI
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-b2b-visual-smoke
+          path: b2b/e2e-artifacts/*.png
+          if-no-files-found: ignore
+          retention-days: 7
   python-syntax:
     runs-on: ubuntu-latest
     steps:
