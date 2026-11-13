@@ -135,9 +135,11 @@ function showWinner(result) {
   }
   state.winner = ref;
   state.curation = result.direction;
+  $('#referenceGrid').classList.remove('is-director-only');
+  $('#bestSourceLink').hidden=false;
   $('#referenceGrid').hidden = false;
   $('#refHelp').hidden = true;
-  $('#refsLabel').textContent = '01 / ВЫБРАННЫЙ РЕФЕРЕНС';
+  $('#refsLabel').textContent = result.matchLevel==='approximate'?'01 / РЕФЕРЕНС ПО ПОХОЖЕЙ ФОРМЕ':'01 / ВЫБРАННЫЙ РЕФЕРЕНС';
   $('#bestRefImage').src = thumb;
   $('#bestRefImage').onerror = () => {
     $('#bestRefImage').alt = 'Превью не загрузилось — оригинал доступен по ссылке';
@@ -147,8 +149,8 @@ function showWinner(result) {
   $('#bestRefImage').style.display = '';
   $('#bestRefLink').href = url;
   $('#bestSourceLink').href = url;
-  $('#bestTitle').textContent = 'Лучшее направление для этого проекта';
-  $('#bestReason').textContent = String(result.direction.reason || 'Референс выбран визуальной AI-моделью по архитектурному соответствию и качеству арт-дирекшна.');
+  $('#bestTitle').textContent = result.matchLevel==='approximate'?'Похожий силуэт. Лучшая подача.':'Лучшее направление для этого проекта';
+  $('#bestReason').textContent = result.matchLevel==='approximate'? 'Архитектура референса не повторяет твой дом. Используем только принцип подачи: освещение, окружение и художественную композицию. '+String(result.direction.reason||''):String(result.direction.reason || 'Референс выбран визуальной AI-моделью по архитектурному соответствию и качеству арт-дирекшна.');
   $('#bestLighting').textContent = String(result.direction.lightingDescription || MODES[result.direction.lighting]?.name || 'Выразительный натуральный дневной свет');
   $('#bestEnvironment').textContent = String(result.direction.environment || 'Индивидуальное окружение под стиль здания');
   $('#bestComposition').textContent = String(result.direction.composition || 'Архитектурная композиция при сохранении камеры исходного изображения');
@@ -164,6 +166,32 @@ function showWinner(result) {
   $('#directionTag').textContent = 'ОТОБРАНО AI / ДЕНЬ';
   return true;
 }
+function showDirectorOnly(result){
+  const shot=result?.direction;
+  if(!shot)return false;
+  state.winner=null;
+  state.curation=shot;
+  $('#referenceGrid').hidden=false;
+  $('#referenceGrid').classList.add('is-director-only');
+  $('#refHelp').hidden=true;
+  $('#bestSourceLink').hidden=true;
+  $('#refsLabel').textContent='01 / АВТОРСКАЯ ПОСТАНОВКА БЕЗ ФОТОРЕФЕРЕНСА';
+  $('#bestTitle').textContent='Свет, окружение и подача для твоего дома';
+  $('#bestReason').textContent=(result.message||'Фотографически подходящий референс не подтверждён.')+' Не изменяем геометрию и ракурс исходного здания.';
+  $('#bestLighting').textContent=shot.lightingDescription||'Выразительный естественный дневной свет';
+  $('#bestEnvironment').textContent=shot.environment||'Индивидуальный ландшафт по архитектуре';
+  $('#bestComposition').textContent=shot.composition||'Исходный ракурс и перспектива неизменны';
+  $('#shotPlan').hidden=false;
+  $('#bestFocalPoint').textContent=shot.focalPoint||'Архитектура — основной акцент';
+  $('#bestStory').textContent=shot.story||'Съёмка при естественном дневном свете';
+  $('#bestForeground').textContent=shot.foreground||'Деликатный первый план без перекрытия здания';
+  $('#bestMiddleGround').textContent=shot.middleGround||'Дом и участок в естественном масштабе';
+  $('#bestBackground').textContent=shot.background||'Дальний фон создаёт правдоподобную глубину';
+  $('#autoDirection').textContent=MODES[shot.lighting]?.name||MODES.soft.name;
+  $('#directionReason').textContent=shot.reason||'Арт-дирекшн по исходной архитектуре';
+  $('#directionTag').textContent='ДНЕВНАЯ ПОСТАНОВКА / АВТОМАТИЧЕСКИ';
+  return true;
+}
 function modeFromAnalysis(a) {
   // The old "cinematic" label can be returned by earlier configured models; never map it to night.
   return ['sunlit','soft','golden','atmospheric'].includes(a?.choice) ? a.choice : 'sunlit';
@@ -174,8 +202,9 @@ function makePrompt(project) {
   const chosen = state.curation || {};
   const mode = MODES[chosen.lighting] || MODES[modeFromAnalysis(a)];
   const curated = Boolean(state.winner && state.curation);
+  const directed = Boolean(state.curation);
   const prompt = `FORMA STUDIO / ARCHITECTURAL EDITORIAL ART DIRECTION
-${curated ? 'IMAGE-BASED AI CURATION / VERIFIED REFERENCE SELECTION' : state.isVisualAnalysis ? 'VISION ANALYSIS / NO VERIFIED REFERENCE SEARCH' : 'DRAFT BRIEF / NO VISUAL AI ANALYSIS'}
+${curated ? 'IMAGE-BASED REFERENCE SELECTION / SOURCE ARCHITECTURE LOCKED' : directed ? 'IMAGE-BASED ARCHITECTURE ANALYSIS / PROPOSED ART DIRECTION WITHOUT VERIFIED REFERENCE' : state.isVisualAnalysis ? 'VISION ANALYSIS / NO VERIFIED REFERENCE SEARCH' : 'DRAFT BRIEF / NO VISUAL AI ANALYSIS'}
 
 NON-NEGOTIABLE SOURCE OF TRUTH
 Use the ATTACHED ORIGINAL HOUSE IMAGE as the exact architectural source, not as loose inspiration. Preserve the entire building design: footprint, volume, roof configuration and pitch, overhangs, facade geometry and joints, material authenticity, window and door number, sizes, exact placement, mullions, plinth, levels, stairs, openings and every architectural line. Preserve ORIGINAL CAMERA POSITION, lens perspective, eye level, viewpoint, orientation and building framing. Do not change the house to resemble the reference's building. Do not invent architectural components or landscape structures.
@@ -200,6 +229,7 @@ Daylight only. Absolutely no night scenes, blue hour, dusk, twilight, dark eveni
 
 ${curated ? `REFERENCE-BASED ART DIRECTION (inspiration only, not geometry source)
 Chosen professional reference: ${state.winner.sourceLabel} — ${state.winner.link}
+SIMILAR FORM INSPIRATION ONLY: The reference building may be different; NEVER copy its geometry, windows, camera or floor count into the original. Borrow ONLY professional natural light, environment hierarchy, colour and editorial mood.
 Why selected: ${chosen.reason || 'compatible architectural photo direction'}
 Composition treatment: ${chosen.composition || 'preserve image perspective, refine visual hierarchy'}
 Architectural hero / visual anchor: ${chosen.focalPoint || 'determine from the original architecture'}
@@ -210,7 +240,18 @@ Editorial story / emotional intention: ${chosen.story || 'one purposeful, photog
 Environment concept: ${chosen.environment || 'bespoke landscape matching building'}
 Light treatment: ${chosen.lightingDescription || mode.lighting}
 Material and colour balance: ${chosen.palette || 'restrained premium neutral grade'}
-Camera treatment: ${chosen.camera || 'preserve original viewpoint'}` : `REFERENCE STATUS
+Camera treatment: ${chosen.camera || 'preserve original viewpoint'}` : directed ? `PROPOSED ORIGINAL ART DIRECTION — NO PHOTO REFERENCE VERIFIED
+The following scene concept was developed only from the UPLOADED HOUSE, NOT from any supposedly selected source photo. Never invent an external reference.
+Daylight lighting: ${chosen.lightingDescription || mode.lighting}
+Camera and composition (unchanged): ${chosen.composition || a.composition}
+Architectural focal point: ${chosen.focalPoint || a.architecture}
+Foreground treatment: ${chosen.foreground || 'create subtle natural depth'}
+Middle-ground: ${chosen.middleGround || 'make building-ground contact plausible'}
+Background: ${chosen.background || 'develop coherent distant scenery'}
+Proposed environment: ${chosen.environment || 'choose according to actual house'}
+Photographic narrative: ${chosen.story || 'natural editorial daytime moment'}
+Colour palette: ${chosen.palette || 'faithful restrained colour'}
+Optics (preserve source): ${chosen.camera || 'do not change source camera'}` : `REFERENCE STATUS
 No verified professional reference has been visually selected. Do NOT pretend one was searched or approved. Develop the mood exclusively from the real source image and supplied brief.`}
 
 ENVIRONMENT & VISUAL STORYTELLING
@@ -226,7 +267,7 @@ PRIORITIES
 1) EXACT source building and camera. 2) Context-specific editorial visual story. 3) AI-selected daylight. 4) Architectural light and composition. 5) Precise materials and photorealism.`;
   state.prompt = prompt;
   $('#promptText').textContent = prompt;
-  $('#promptState').textContent = curated ? 'ГОТОВ / ПО ВЫБРАННОМУ РЕФЕРЕНСУ' : state.isVisualAnalysis ? 'ПО ФОТО / БЕЗ ПОИСКА' : 'ЧЕРНОВИК / БЕЗ AI';
+  $('#promptState').textContent = curated ? 'ГОТОВ / ПО ВЫБРАННОМУ РЕФЕРЕНСУ' : directed ? 'ГОТОВ / ИНДИВИДУАЛЬНАЯ ПОСТАНОВКА' : state.isVisualAnalysis ? 'ПО ФОТО / БЕЗ ПОИСКА' : 'ЧЕРНОВИК / БЕЗ AI';
   $('#copyPrompt').disabled = false;
   $('#downloadPrompt').disabled = false;
 }
@@ -309,10 +350,12 @@ async function runProject(event){
       $('#directionReason').textContent=state.analysis.reason||'Индивидуальная дневная постановка';
       $('#directionTag').textContent='ДЕНЬ / АВТОМАТИЧЕСКИ';
       if(job.curation?.available&&job.curation.reference&&job.curation.direction&&showWinner(job.curation)){
-        alertStatus('Готово: выбран дневной референс и подготовлен профессиональный промпт.','success');
+        alertStatus(job.curation.matchLevel==='approximate'?'Подобран референс по похожей форме — свет, окружение и подача адаптированы к твоему дому.':'Готово: выбран дневной референс и подготовлен профессиональный промпт.','success');
+      }else if(job.curation?.direction&&showDirectorOnly(job.curation)){
+        alertStatus('Архитектура проанализирована. Подобран индивидуальный свет и окружение без неподтверждённой фотографии.','success');
       }else{
-        setRecommendationMessage(job.curation?.message||'Архитектура проанализирована, но подходящий дневной референс не подтверждён. Промпт составлен по исходному дому.','РЕФЕРЕНС НЕ ПОДТВЕРЖДЁН');
-        alertStatus('Архитектура проанализирована. Подтверждённый референс не выбран.','info');
+        setRecommendationMessage(job.curation?.message||'Подходящих подтверждённых дневных референсов не найдено.','РЕФЕРЕНС НЕ ПОДТВЕРЖДЁН');
+        alertStatus('Анализ архитектуры готов. Подтверждённый референс не выбран.','info');
       }
       showProgress(100,'Анализ завершён. Промпт готов.',true);
       makePrompt(project);
