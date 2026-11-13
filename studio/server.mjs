@@ -663,8 +663,8 @@ const server=http.createServer(async(req,res)=>{
 // BEGIN ONE-TIME IMAGE SERP QUALITY PROBE
 if(SERPER_KEY){(async()=>{
  const qs=[
-  'site:behance.net/gallery photorealistic architectural visualization house exterior overcast fog cinematic light',
-  '"Dark Clearing" "ANT Archviz" behance architectural visualization'
+  '"The Understorey" "ANT Archviz" behance 2026',
+  '"Modern Forest House" "Vadym ArchViz" behance'
  ];
  for(const [n,q] of qs.entries()){
    try{
