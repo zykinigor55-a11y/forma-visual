@@ -123,31 +123,68 @@ async function requestModel(model,messages,maxTokens,timeoutMs){
   if(!answer.trim())throw new Error('AI-модель вернула пустой ответ');
   return answer.trim();
 }
-function captionFallback(caption,project){
-  const kind=textLimited(project.type,110),materials=textLimited(project.materials,200);
-  const query=(kind.includes('барн')?'contemporary barnhouse ':kind.includes('брус')?'timber house ':kind.includes('кирп')?'brick house ':'modern residential house ')+
-    (materials.toLowerCase().includes('дерев')?'timber ':'')+'daylight architectural editorial photography';
+function captionFallback(caption,project={},unavailableReason=''){
+  // Never infer unseen architecture, materials or EXIF from an image that was not inspected.
+  const kind=textLimited(project.type,110);
+  const materials=textLimited(project.materials,200);
+  const haveCaption=Boolean(caption);
+  const architecture=haveCaption?textLimited(caption,240):
+    (kind?'Тип по брифу: '+kind+'. Геометрия на изображении визуальной моделью не подтверждена.':
+    'Изображение загружено. Визуальная модель не подтвердила форму, кровлю и расположение проёмов.');
   return {
-    architecture:textLimited(caption,240),
-    materials:materials||'Материалы уточняются по исходному изображению',
-    composition:'Сохранить исходную камеру, перспективу, масштаб, форму здания, размеры и положение всех проёмов.',
-    lighting:'Режиссёрский дневной свет; ночь и сумерки исключены.',
-    constraints:['Не менять геометрию и размеры здания','Не перемещать окна и двери','Не изменять исходный ракурс и перспективу','Сохранять реальные материалы фасада'],
-    query:textLimited(query,120),choice:'sunlit',
-    reason:'Свет и окружение выбираются под визуально распознанную архитектуру, а не по универсальному шаблону.',
-    confidence:'low'
+    architecture,
+    materials:materials?(haveCaption?'По заданию: ':'По брифу, без визуальной проверки: ')+materials:
+      'Материалы не подтверждены визуальной моделью. Сохранить строго как в исходном изображении.',
+    composition:'Исходную камеру, кадрирование, перспективу, все объёмы, крышу и проёмы оставить неизменными. Ракурс не определён автоматически.',
+    lighting:'Новые свет и окружение предлагаются отдельно: исключительно реалистичный дневной свет.',
+    constraints:[
+      'Сохранить точную архитектуру и геометрию исходного изображения',
+      'Не менять количество, размеры и расположение окон и дверей',
+      'Не изменять кровлю, материалы и существующую точку камеры',
+      'Референсы использовать только для света, окружения, глубины и качества фото'
+    ],
+    query:'photorealistic architectural exterior natural daylight editorial',
+    choice:'sunlit',
+    reason:haveCaption?'Архитектура описана по изображению. Цель — профессиональная архитектурная фотография с убедительным объёмом и натуральным светом.':
+      'Визуальная модель не ответила вовремя, поэтому форма здания не оценена. Поиск профессиональной фотографической подачи и создание сцены продолжаются в резервном режиме.',
+    confidence:haveCaption?'low':'not-analyzed',
+    visualVerified:haveCaption,
+    analysisStatus:haveCaption?'caption-only':'vision-unavailable',
+    analysisNote:unavailableReason?textLimited(unavailableReason,150):'',
+    visualCaption:haveCaption?textLimited(caption,1000):''
   };
 }
 async function analyze(input,onProgress=()=>{}){
-  if(!AI_KEY)return {available:false,code:'AI_NOT_CONFIGURED',message:'Подключите VISION_API_KEY для анализа фотографии.'};
   if(!validImage(input?.image))throw Object.assign(new Error('Загрузите JPG, PNG или WebP до 8 МБ.'),{status:400});
   const project=input.project||{};
-  const visionInstruction='Briefly analyze the ACTUAL building in this image in Russian. Describe only visible evidence: building mass and roof form, facade and windows, exact observed camera angle, visible daylight, and environment. 3-5 compact sentences. Do not invent unseen elements. Do NOT output JSON. No generic advice. Preserve source camera and geometry.';
-  const caption=await requestModel(AI_MODEL,[{role:'user',content:[
-    {type:'text',text:visionInstruction},
-    {type:'image_url',image_url:{url:input.image,detail:'low'}}
-  ]}],420,85000);
-  onProgress('structure',42,'Архитектура распознана. Подготавливаем бриф…');
+  const noVision=()=>captionFallback('',project,'Визуальная модель недоступна или превысила лимит времени.');
+  if(!AI_KEY){
+    onProgress('vision-fallback',42,'AI не подключён. Продолжаем подбор фотореалистичной подачи по брифу…');
+    return {available:true,result:noVision()};
+  }
+  // Deliberately keep the FIRST visual call short. No long JSON or combined art-direction.
+  const task='Briefly identify ONLY visible architecture: building massing, roof shape, facade materials if clear, openings, and source camera angle. Russian, maximum 45 words, one paragraph. If uncertain say unknown. Do not invent any geometry. Do not provide scene recommendations or JSON.';
+  let caption='';
+  const startTime=Date.now();
+  try{
+    caption=await requestModel(AI_MODEL,[{role:'user',content:[
+      {type:'text',text:task},
+      {type:'image_url',image_url:{url:input.image,detail:'low'}}
+    ]}],180,28000);
+  }catch(error){
+    const name=error?.name||'Error';
+    console.warn('[FORMA_VISION_FALLBACK]',JSON.stringify({
+      reason:/время|timed out|timeout/i.test(errorOf(error))?'timeout':'provider-error',
+      elapsedMs:Date.now()-startTime,type:name
+    }));
+    onProgress('vision-fallback',42,'Визуальная модель не ответила. Продолжаем поиск фотографического света и окружения…');
+    return {available:true,result:noVision()};
+  }
+  if(!caption.trim()){
+    onProgress('vision-fallback',42,'Нет подтверждённого описания дома. Подбираем арт-дирекшн без него…');
+    return {available:true,result:noVision()};
+  }
+  onProgress('structure',42,'Краткий анализ дома готов. Формируем бриф и фотореалистичную подачу…');
   const fallback=captionFallback(caption,project);
   const notes='User notes, not observed facts: '+JSON.stringify({
     type:textLimited(project.type,100),
@@ -158,13 +195,15 @@ async function analyze(input,onProgress=()=>{}){
   try{
     const structured=await requestModel(TEXT_MODEL,[
       {role:'system',content:PROMPT_SYSTEM},
-      {role:'user',content:'Here is a TRUE visual observation of the original uploaded building photo, written by a vision model. Treat this as observed evidence and do not claim to see the image yourself: '+caption+'\n'+notes+'\nReturn all requested JSON keys. Keep the original camera, geometry and daylight only. Make a concise 4-9-word English architecture photo search query.'}
-    ],1900,22000);
+      {role:'user',content:'Observed building caption from a vision model: '+caption+
+        '\n'+notes+
+        '\nReturn all requested JSON keys. Keep ORIGINAL architecture and camera and full daylight. The photographic benchmark is extreme professional realism: architectural light, volumetric shadow, physical materials, natural depth. Building similarity of external references is NOT needed.'}
+    ],1200,14000);
     answer=tryExtractJson(structured);
   }catch(error){
     console.log('[FORMA_AI_FORMAT_FALLBACK]',error?.name||'invalid_output');
   }
-  onProgress('brief',57,'Бриф готов. Подбираем свет и архитектурные референсы…');
+  onProgress('brief',57,'Бриф готов. Ищем эталоны профессионального света и объёма…');
   const choice=['sunlit','soft','golden','atmospheric'].includes(answer.choice)?answer.choice:fallback.choice;
   return {available:true,result:{
     architecture:textLimited(answer.architecture,240)||fallback.architecture,
@@ -172,10 +211,13 @@ async function analyze(input,onProgress=()=>{}){
     composition:textLimited(answer.composition,260)||fallback.composition,
     lighting:textLimited(answer.lighting,220)||fallback.lighting,
     constraints:Array.isArray(answer.constraints)&&answer.constraints.length?answer.constraints.slice(0,5).map(x=>textLimited(x,160)):fallback.constraints,
-    query:textLimited(answer.query,120)||fallback.query,
+    query:'photorealistic editorial architectural exterior daylight',
     choice,
     reason:textLimited(answer.reason,480)||fallback.reason,
-    confidence:['high','medium','low'].includes(answer.confidence)?answer.confidence:fallback.confidence,
+    confidence:['high','medium','low'].includes(answer.confidence)?answer.confidence:'medium',
+    visualVerified:true,
+    analysisStatus:'image-checked',
+    analysisNote:'',
     visualCaption:textLimited(caption,1000)
   }};
 }
@@ -435,7 +477,7 @@ function metadataReferenceChoice(candidates,analysis){
   return first?{reference:first.ref,qualitySignals:first.score,method:'metadata-quality-heuristic'}:null;
 }
 async function direct(input,onProgress=()=>{}){
-  if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для подбора нужны визуальная модель и поиск Behance / ANT.'};
+  if(!SEARCH_ENABLED)return {available:false,message:'Поисковый API не подключён.'};
   if(!validImage(input?.image))throw Object.assign(new Error('Загрузите JPG, PNG или WebP.'),{status:400});
   const project=input.project||{},analysis=input.analysis||{};
   // The user wants PHOTOGRAPHIC artistry, not a similar house.
@@ -445,7 +487,7 @@ async function direct(input,onProgress=()=>{}){
   onProgress('ranking',77,'Выбираем эталон фотореализма: объём, дневной свет, материалы, глубина и подача…');
 
   // A truly image-based selection is only possible for references that have real thumbnails.
-  const pictured=chooseCandidates(results.filter(ref=>Boolean(ref.thumbnail)));
+  const pictured=analysis.visualVerified===true?chooseCandidates(results.filter(ref=>Boolean(ref.thumbnail))):[];
   let selected=null,verdict=null,visualVerified=false;
   if(pictured.length){
     verdict=await selectDaylightReference(input,pictured,'photo-realism and editorial quality, not house similarity');
@@ -521,7 +563,7 @@ function publicJob(job){
 }
 function startAnalysisJob(input){
   cleanAnalysisJobs();
-  if(!AI_KEY)throw Object.assign(new Error('Визуальный API ещё не подключён.'),{status:503});
+  // Missing or slow vision must not prevent a quality reference / art-direction result.
   if(!validImage(input?.image))throw Object.assign(new Error('Загрузите корректный JPG, PNG или WebP.'),{status:400});
   if([...analysisJobs.values()].filter(j=>j.status==='running').length>=MAX_ACTIVE_JOBS){
     throw Object.assign(new Error('Сейчас выполняются два анализа. Повторите отправку чуть позже.'),{status:429});
@@ -542,6 +584,7 @@ function startAnalysisJob(input){
       if(job.status!=='running')return;
       if(!result?.available||!result.result)throw new Error(result?.message||'Анализ изображения не завершён.');
       job.analysis=result.result;
+      if(job.analysis.visualVerified!==true)progress('vision-fallback',54,'Анализ фотографии не подтвердился. Продолжаем по качественным референсам…');
       progress('search',63,SEARCH_ENABLED?
         'Анализ дома готов. Ищем референсы на Behance и в портфолио ANT…':
         'Анализ дома готов. Поиск референсов не подключён.');
@@ -551,14 +594,20 @@ function startAnalysisJob(input){
           if(job.status!=='running')return;
           job.curation=outcome;
         }catch(err){
-          job.curation={available:false,message:'Референсы не удалось подтвердить: '+textLimited(errorOf(err),200)};
+          job.curation={available:false,message:'Поиск не завершился: '+textLimited(errorOf(err),200)};
         }
+      } else {
+        // Even without a search service, produce a non-visual artistic direction.
+        progress('scene',91,'Предлагаем фото-постановку исходного дома без поисковых референсов…');
+        const direction=await generateSceneDirection(job.analysis,project,null,'','unverified-source');
+        job.curation={available:false,reference:null,direction,
+          message:'Поиск референсов не подключён: авторский дневной свет и окружение предложены по брифу.'};
       }
       if(job.status!=='running')return;
       job.progress=100;job.phase='completed';
-      job.message=job.curation?.available?
-        'Готово: найден референс и составлен план визуализации.':
-        'Анализ архитектуры готов. Подтверждённый референс не выбран.';
+      job.message=job.analysis?.visualVerified===true?
+        'Готово: анализ дома и профессиональная дневная постановка подготовлены.':
+        'Резервный режим завершён: визуальный анализ не подтвердился, но свет, окружение и промпт подготовлены.';
     }catch(err){
       if(job.status!=='running')return;
       job.phase='failed';job.error=textLimited(errorOf(err),220);
@@ -574,7 +623,7 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.9.0'});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'1.0.0'});
     if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
     if(req.method==='POST'&&pathName==='/api/jobs')return json(res,202,startAnalysisJob(await bodyJson(req)));
     if(req.method==='GET'&&/^\/api\/jobs\/[a-f0-9-]{36}$/.test(pathName)){
