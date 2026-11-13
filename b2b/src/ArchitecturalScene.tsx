@@ -23,9 +23,11 @@ type Props={
 };
 
 function CameraController({preset,width,depth}:{preset:CameraPreset;width:number;depth:number}){
- const {camera,controls}=useThree();
+ const {camera,controls,size}=useThree();
  useEffect(()=>{
-  const distance=Math.max(width,depth)*1.65;
+  const aspect=size.width/Math.max(1,size.height);
+  const narrowFactor=aspect<1.2?Math.min(2.7,1.8/Math.max(.5,aspect)):1;
+  const distance=Math.max(width,depth)*1.65*narrowFactor;
   const positions:Record<CameraPreset,[number,number,number]>={
    perspective:[distance*.82,distance*.54,distance*.98],
    facade:[0,distance*.32,distance*1.3],
@@ -37,7 +39,7 @@ function CameraController({preset,width,depth}:{preset:CameraPreset;width:number
   orbit?.target?.set(0,2.05,0);
   orbit?.update?.();
   camera.updateProjectionMatrix();
- },[preset,width,depth,camera,controls]);
+ },[preset,width,depth,camera,controls,size.width,size.height]);
  return null;
 }
 
@@ -98,7 +100,7 @@ function Building({config,mats,selected,onSelect,mode}:{config:Config;mats:Finis
      <boxGeometry args={[roofLen,.11,d+1.1]}/>
     </mesh>
     {Array.from({length:Math.max(3,Math.floor(d/.92))},(_,i)=>(
-     <mesh key={i} position={[side*half/2,elevation+h+roofRise/2,-d/2-.4+i*.92]} rotation={[0,0,side===-1?roofAngle:-roofAngle]} material={edgeColor}>
+     <mesh key={i} position={[side*(half/2+.085*Math.sin(roofAngle)),elevation+h+roofRise/2+.085*Math.cos(roofAngle),-d/2-.4+i*.92]} rotation={[0,0,side===-1?roofAngle:-roofAngle]} material={edgeColor}>
       <boxGeometry args={[roofLen,.018,.018]}/>
      </mesh>
     ))}
@@ -125,15 +127,25 @@ function Building({config,mats,selected,onSelect,mode}:{config:Config;mats:Finis
   </mesh>
   {mode==="home"&&<group>
     {[-1,1].map(side=><group key={side} position={[side*(w*.54+2),0,d/2+1.9]}>
-     {Array.from({length:8},(_,i)=><mesh key={i} position={[Math.sin(i*3.3)*1.7,.18,Math.cos(i*2.7)*1.6]} castShadow>
-      <icosahedronGeometry args={[.35+(i%4)*.11,1]}/>
-      <meshStandardMaterial color={i%3===0?"#6e8172":i%2===0?"#829486":"#a0a89b"} roughness={1}/>
-     </mesh>)}
+     {Array.from({length:42},(_,i)=>{
+       const angle=i*2.3999632,rad=Math.sqrt((i+.5)/42)*1.75;
+       const xx=Math.cos(angle)*rad,zz=Math.sin(angle)*rad;
+       const height=.25+(i%6)*.048;
+       return <mesh key={i} position={[xx,height/2,zz]} rotation={[(i%3-1)*.17,angle,(i%5-2)*.15]} castShadow>
+        <coneGeometry args={[.033+(i%3)*.009,height,5]}/>
+        <meshStandardMaterial color={i%4===0?"#667f6b":i%3===0?"#778e77":"#8da08b"} roughness={.99} side={THREE.DoubleSide}/>
+       </mesh>;
+     })}
     </group>)}
   </group>}
-  {mode==="studio"&&selected==="facade"&&<mesh position={[0,elevation+h/2,d/2+.235]}>
-    <boxGeometry args={[w+.04,h+.04,.015]}/><meshBasicMaterial color="#6a9abf" transparent opacity={.30} wireframe depthTest={false}/>
-  </mesh>}
+  {mode==="studio"&&selected==="facade"&&<group position={[0,elevation+h/2,d/2+.235]}>
+   {[-1,1].map(v=><mesh key={"vertical-edge"+v} position={[v*w/2,0,0]}>
+    <boxGeometry args={[.018,h+.04,.018]}/><meshBasicMaterial color="#7b9fb8" depthTest={false}/>
+   </mesh>)}
+   {[-1,1].map(v=><mesh key={"horizontal-edge"+v} position={[0,v*h/2,0]}>
+    <boxGeometry args={[w+.04,.018,.018]}/><meshBasicMaterial color="#7b9fb8" depthTest={false}/>
+   </mesh>)}
+  </group>}
  </group>;
 }
 
