@@ -248,7 +248,7 @@ function showDirectorOnly(result){
   $('#bestBackground').textContent=shot.background||'Правдоподобный дальний план';
   $('#autoDirection').textContent=MODES[shot.lighting]?.name||MODES.soft.name;
   $('#directionReason').textContent=shot.reason||'Арт-дирекшн по исходной архитектуре';
-  $('#directionTag').textContent='ДНЕВНАЯ ПОСТАНОВКА / АВТОМАТИЧЕСКИ';
+  $('#directionTag').textContent=shot.lighting==='blue_morning'?'РАННИЙ СИНИЙ ЧАС / ПЕРЕД ВОСХОДОМ':shot.lighting==='atmospheric'?'ПАСМУРНЫЙ ДЕНЬ / МЯГКИЙ СВЕТ':'ПРОФЕССИОНАЛЬНЫЙ ДНЕВНОЙ СВЕТ';
   return true;
 }
 function modeFromAnalysis(a) {
