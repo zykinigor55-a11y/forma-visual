@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
+import { createLensSearcher } from './lens.mjs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -20,6 +21,7 @@ const refCache = new Map();
 const analysisJobs = new Map();
 const MAX_ACTIVE_JOBS = 2;
 const JOB_KEEP_MS = 15 * 60 * 1000;
+const lensSearcher=createLensSearcher({serperKey:SERPER_KEY,origin:process.env.PUBLIC_BASE_URL||'https://forma-studio-architect.onrender.com'});
 // ANT is a curated and attributed subset of Behance, not a separate image-search domain.
 // Public ANT Archviz project pages were cross-checked against behance.net/designant1.
 const ANT_GALLERIES = new Set(['255467603','254721349','255956745','255105661','255284051','253353819','253000577','255105949']);
@@ -569,7 +571,7 @@ function startAnalysisJob(input){
     throw Object.assign(new Error('Сейчас выполняются два анализа. Повторите отправку чуть позже.'),{status:429});
   }
   const job={id:randomUUID(),createdAt:Date.now(),finishedAt:null,status:'running',
-    phase:'vision',progress:12,message:'AI изучает геометрию и материалы здания…',
+    phase:'lens',progress:12,message:'Ищем архитектурные фотографии по исходному изображению…',
     analysis:null,curation:null,error:null};
   analysisJobs.set(job.id,job);
   const image=input.image,project=input.project||{};
@@ -577,42 +579,55 @@ function startAnalysisJob(input){
     if(job.status!=='running')return;
     job.phase=phase;job.progress=Math.max(job.progress,Math.min(98,percent));job.message=message;
   };
-  // The HTTP response returns immediately. Model inference runs independently of the browser request.
+  // Main route uses actual photo-based Google Lens search; Gemini visual timeout is removed.
   void (async()=>{
     try{
-      const result=await analyze({image,project},progress);
+      job.analysis=captionFallback('',project,'Выполнен поиск по фото Google Lens. Форму дома текстовая модель не оценивала.');
+      progress('lens',19,'Отправляем защищённую временную ссылку на изображение в Google Lens…');
+      const lens=await lensSearcher.search(image,progress);
       if(job.status!=='running')return;
-      if(!result?.available||!result.result)throw new Error(result?.message||'Анализ изображения не завершён.');
-      job.analysis=result.result;
-      if(job.analysis.visualVerified!==true)progress('vision-fallback',54,'Анализ фотографии не подтвердился. Продолжаем по качественным референсам…');
-      progress('search',63,SEARCH_ENABLED?
-        'Анализ дома готов. Ищем референсы на Behance и в портфолио ANT…':
-        'Анализ дома готов. Поиск референсов не подключён.');
-      if(SEARCH_ENABLED){
+      const matches=lens.matches||[];
+      progress('ranking',75,matches.length?
+        'Найдены реальные публикации по фотографии. Выбираем архитектурные кадры…':
+        'По фото совпадений нет. Ищем профессиональные редакционные примеры…');
+      let reference=matches[0]||null,metadataOnly=false,selectionMessage='';
+      if(!reference){
         try{
-          const outcome=await direct({image,project,analysis:job.analysis,query:job.analysis.query},progress);
-          if(job.status!=='running')return;
-          job.curation=outcome;
-        }catch(err){
-          job.curation={available:false,message:'Поиск не завершился: '+textLimited(errorOf(err),200)};
+          const searchResult=await searchSources('professional architectural daylight photography photorealistic','photo-quality');
+          reference=chooseCandidates([...searchResult.results,...qualityBenchmarks()])[0]||null;
+          metadataOnly=Boolean(reference);
+          selectionMessage=lens.available?
+            'По этому фото Google Lens не нашёл архитектурных совпадений. Показан отдельный пример Behance/ANT, подобранный по описанию, НЕ по изображению.':
+            'Поиск Google Lens не завершился: '+textLimited(lens.error,140)+'. Показан редакционный пример Behance/ANT, НЕ визуальное совпадение.';
+        }catch(error){
+          selectionMessage='Поиск Google Lens недоступен: '+textLimited(lens.error||errorOf(error),170);
         }
-      } else {
-        // Even without a search service, produce a non-visual artistic direction.
-        progress('scene',91,'Предлагаем фото-постановку исходного дома без поисковых референсов…');
-        const direction=await generateSceneDirection(job.analysis,project,null,'','unverified-source');
-        job.curation={available:false,reference:null,direction,
-          message:'Поиск референсов не подключён: авторский дневной свет и окружение предложены по брифу.'};
       }
       if(job.status!=='running')return;
-      job.progress=100;job.phase='completed';
-      job.message=job.analysis?.visualVerified===true?
-        'Готово: анализ дома и профессиональная дневная постановка подготовлены.':
-        'Резервный режим завершён: визуальный анализ не подтвердился, но свет, окружение и промпт подготовлены.';
-    }catch(err){
+      progress('scene',91,'Готовим рекомендации по объёмному дневному свету, реалистичным материалам и глубине…');
+      const reason=matches.length?
+        'Google Lens сопоставил загруженное изображение с реальными опубликованными фотографиями. Фотореализм и дневной свет не проверены визуальной моделью.':
+        'Подтверждённых архитектурных совпадений по фото нет. Художественная постановка предложена по брифу.';
+      const direction=AI_KEY?
+        await generateSceneDirection(job.analysis,project,reference,reason,'lens-visual-search')
+        :fallbackSceneDirection(job.analysis,project,reference,reason);
       if(job.status!=='running')return;
-      job.phase='failed';job.error=textLimited(errorOf(err),220);
-      job.message='Не удалось завершить анализ: '+job.error;
-      console.warn('[FORMA_JOB_FAILED]',JSON.stringify({elapsedMs:Date.now()-job.createdAt,timeout:/время|вовремя/i.test(job.error)}));
+      job.curation={
+        available:Boolean(reference),reference,direction,visualMatches:matches,photoSearchConfirmed:lens.available,
+        searchMethod:matches.length?'google-lens':metadataOnly?'editorial-fallback':'none',
+        matchLevel:matches.length?'lens':'quality',metadataOnly,visualVerified:false,
+        selectionBasis:matches.length?'google-lens-visual-matching':'metadata-only',
+        message:matches.length?lens.message:selectionMessage||lens.message
+      };
+      job.progress=100;job.phase='completed';
+      job.message=matches.length?
+        'Готово: реальные визуальные совпадения по фотографии найдены.':
+        'Поиск завершён: совпадений по фото нет. Показаны отдельные референсы.';
+    }catch(error){
+      if(job.status!=='running')return;
+      job.phase='failed';job.error=textLimited(errorOf(error),220);
+      job.message='Поиск изображения не завершён: '+job.error;
+      console.warn('[FORMA_LENS_JOB_FAILED]',JSON.stringify({elapsedMs:Date.now()-job.createdAt,errorType:error?.name||'Error'}));
     }finally{
       if(job.status==='running'){job.status='finished';job.finishedAt=Date.now();}
     }
@@ -623,8 +638,10 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'1.0.0'});
-    if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'1.1.0'});
+    if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,photoSearch:!!SERPER_KEY,photoSearchProvider:'google-lens',sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
+    const lensPhoto=pathName.match(/^\/api\/lens-photo\/([a-f0-9-]{36})\.(jpg|png|webp)$/);
+    if(lensPhoto&&(req.method==='GET'||req.method==='HEAD'))return lensSearcher.serve(req,res,lensPhoto[1],lensPhoto[2]==='jpg'?'jpeg':lensPhoto[2]);
     if(req.method==='POST'&&pathName==='/api/jobs')return json(res,202,startAnalysisJob(await bodyJson(req)));
     if(req.method==='GET'&&/^\/api\/jobs\/[a-f0-9-]{36}$/.test(pathName)){
       cleanAnalysisJobs();
