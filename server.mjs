@@ -9,7 +9,6 @@ import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
 import {createWanVideo} from './wan-video.mjs';
 import {createWan3Video} from './wan3-video.mjs';
-import {handlePrimerkaApi} from './primerka/api.mjs';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // Optional simple local .env parser (no external packages). Environment variables win.
 try {const dotenv=await readFile(path.join(ROOT,'.env'),'utf8');for(const line of dotenv.split(/\r?\n/)){const m=line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);if(m&&!process.env[m[1]])process.env[m[1]]=m[2].replace(/^['"]|['"]$/g,'')}} catch {}
@@ -208,7 +207,7 @@ async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent
 const wanVideo=createWanVideo({json,readJSON,sameOrigin,imageBlob});
 const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
 const server=http.createServer(async(req,res)=>{
- if(req.url?.startsWith('/api/primerka/'))return handlePrimerkaApi(req,res);
+ if(req.url?.startsWith('/api/primerka/')){const {handlePrimerkaApi}=await import('./primerka/api.mjs');return handlePrimerkaApi(req,res)}
  if(req.url?.startsWith('/api/wan3/'))return wan3Video.handle(req,res);
  if(req.url?.startsWith('/api/wan/'))return wanVideo.handle(req,res);
  if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
