@@ -291,16 +291,27 @@ const server=http.createServer(async(req,res)=>{
     return json(res,405,{error:'Метод не поддерживается'});
   }catch(e){json(res,e.status||502,{error:errorOf(e)});}
 });
-// BEGIN TEMP SINGLE VISION MODEL CHECK — removed immediately after validation
+// BEGIN TEMP API MARKET MODEL COMPAT PROBES; remove after one startup
 if(AI_KEY){
- (async()=>{
-  try{
-    const result=await analyze({image:'data:image/jpeg;base64,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',project:{type:'Современный дом',materials:'wood/glass',description:'Preserve all proportions'}});
-    console.log('[VISION_COMPAT_TEST]',JSON.stringify({ok:result?.available===true,hasArchitecture:!!result?.result?.architecture,hasSearchTerms:!!result?.result?.query,choice:result?.result?.choice||null}));
-  }catch(e){
-    console.log('[VISION_COMPAT_TEST]',JSON.stringify({ok:false,error:String(e?.message||'unexpected').slice(0,190).replace(/sk-[A-Za-z0-9_-]+/g,'[redacted]')}));
-  }
- })();
+  (async()=>{
+    const photo="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCABIAIADASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAgMAAQQF/8QALhAAAgIBAwIFAwMFAQAAAAAAAQIAEQMSITEEURMyQWFxIoGRFCOhUmKCseFy/8QAFwEBAQEBAAAAAAAAAAAAAAAAAQACA//EABsRAQEBAQADAQAAAAAAAAAAAAABEQISITFR/9oADAMBAAIRAxEAPwDnqpfSgIBY2SfeObGV+kAbCwQbhY+nrGpPmO/G1ShlyUEKr7Ajj3mCVzdltXrcPG4AKMCFftN6418FvDAL1uW795nTp38JnyJwLAGxmsz4NIVD4hUGj6X6x+NA2SnJVkHbtLGZESiSr87i5QyZMrbWMv4BEJiaNGHMCykWRViCOlpQus6fUSYsIGXZdJX17zTU3M6ZvokYAjAr5aogw1ZH8jhq7GFkpcTEkDY8zndP1CYdJILHTVCUk5ur66IWW7JiQHIQp9zOfk6vK/lpB7c/mDjwlyXcmvUnczVqkaf1IckYlJA5ZtgI7GwyIGE5ebqNf7aDTiH8x3RZ/DbQ3EzO/bXj6dDYCyaETj6jVlKldr2MLJ1CeAzaCRxVX+ZgGp9wjfeN6/GZB+I2NgVAYtwBvHY0xhC5DHJyQBtt6TNiZdNnzXs1S8mTGWIctfY3OXMbrV02WmZjsDuZpw5FzJdaT2nMXIgsLkq9jvGYsvhtqV1J950mxmtmfp1a3RVOQcfMVjw5vDJ2V9XMWM2XUxDCyb2kbqM4xaFIH93rCzaj36hMChcjasg5AmbJ1+RtkAQfkzITpJ1Hf3k1jkAmOrBMWyG3Yn5MEIQ20hdj2EhUlSWJMNONCYwF1v5RGYswYjY0eBUWWL4QoAvYbmV07HG4BoA9xDSrqOntsjINl5EzDt6jidHM5TxAvLEf6mHNj0lSOTvKqUwscmMN6r5hcJK0gnUN+FMzpl0sCB8iPY6G07EXYgqzY2bGTW4PoYRxnWAGuxexuObBRNcLQJ7n1h5NyjKoXagK5gWatvN/EuuaYH7SLQcE8DtImNibFH5MQAuRzX4hDI4F0I3ONaAIqDazRqC2MqlmqPvLStUL070pHbe40pidtQNNXEzq+nENOx/7CtgCSljvM3UZlQAVSr94IW11HZRAH1CyaUQ7BBavpHAiTPFVGVinpsDF2GK0BKynXlxl7016CCFOrYNpkFnISzHjfgS2BL1v5YLY2DNpU0DvGV+5/jEEqo31E18czRrxsfK9/MQtsx1NVdzGgqDp1WpHpxCptOBNCjbZr/7BdUGMNkNV6f6Ez/qS2MrvZgjMQNLGuxHMJrWo+NC9liPYLLTHtS5CB8RZwoxtcpN+0M9PlxrqViB/5jlZWcVbeLQ7VKZFIps3xsYC+KDZGqWNBb6lpuxuOoY6MaRWUUPaOGrw3x6lOoVwYGAKCWVjYYitW00D6z6bHvLYWM9I2nfIAPiX+mP9a16CjNbMuoFNN9y0iOC1MwJJ9GIkiSgYpTi122EEoqKLyV/iIzqEQMQv0H8xCjKOCjD4ktGmXHiv9wNZvdOIkZVD2F1MeKjWwOyhgwv+kcxYU4Sf2ySTfEEYrk2Hwkj3EElDkqjXrf8AEA5nJ+pTXxIBjysNTMvptLABW1AXs3cRqocrBF0i+STJJCoRTRj0omrJe57CKXNkR9yexkkjzU04eo1uRQB7HgxOYE6rFEcSSRRSOyi+5j0zqBR5kkgjkYE7VI2QA0S33MkkYaFcmncEH8w1ypVsgJ96kkmgrXhBvw2v5gtlBP07SSSCj1Crsb+zSv1QJ+nV+RJJM0v/2Q==";
+    const tests=[
+      {name:'text-minimal',body:{model:AI_MODEL,messages:[{role:'user',content:'Reply with OK.'}]}},
+      {name:'image-minimal',body:{model:AI_MODEL,messages:[{role:'user',content:[{type:'text',text:'Describe the visible picture briefly.'},{type:'image_url',image_url:{url:photo}}]}]}},
+      {name:'image-json',body:{model:AI_MODEL,max_tokens:1800,messages:[{role:'system',content:'Return only valid JSON with keys "architecture" and "query".'},{role:'user',content:[{type:'text',text:'Analyze the house image and respond in JSON.'},{type:'image_url',image_url:{url:photo,detail:'high'}}]}]}}
+    ];
+    for(const test of tests){
+      const start=Date.now();
+      try{
+        const r=await fetch(AI_BASE+'/chat/completions',{method:'POST',headers:{authorization:'Bearer '+AI_KEY,'content-type':'application/json'},body:JSON.stringify(test.body),signal:AbortSignal.timeout(26000)});
+        const p=await r.json().catch(()=>({}));
+        const msg=p?.choices?.[0]?.message?.content;
+        const error=String(p?.error?.message||'').slice(0,240).replace(/sk-[\w-]+/g,'[redacted]');
+        console.log('[VISION_PROBE]',JSON.stringify({name:test.name,http:r.status,ms:Date.now()-start,contentType:typeof msg,contentLen:typeof msg==='string'?msg.length:0,finish:p?.choices?.[0]?.finish_reason||null,error}));
+      }catch(err){console.log('[VISION_PROBE]',JSON.stringify({name:test.name,ms:Date.now()-start,error:err?.name==='TimeoutError'?'timeout':'network_error'}));}
+    }
+  })();
 }
-// END TEMP SINGLE VISION MODEL CHECK
+// END TEMP API MARKET MODEL COMPAT PROBES
+
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
