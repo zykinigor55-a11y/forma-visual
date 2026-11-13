@@ -36,9 +36,13 @@ try{
  assert.equal(await page.locator(".variant-card").count(),1,"Home can save a variant");
  await page.screenshot({path:artifacts+"/home-desktop.png",fullPage:true});
  await page.setViewportSize({width:390,height:844});
+ await page.waitForTimeout(900);
  await page.screenshot({path:artifacts+"/home-mobile.png",fullPage:true});
  await page.locator(".global-switch button").first().click();
  await page.locator(".cad-viewport canvas").waitFor({state:"visible",timeout:15000});
+ await page.waitForTimeout(1400);
+ const imageLength=await page.locator(".cad-viewport canvas").evaluate(el=>el.toDataURL("image/png").length);
+ assert.ok(imageLength>10000,"Mobile 3D viewport appears blank, image length="+imageLength);
  await page.screenshot({path:artifacts+"/studio-mobile.png",fullPage:true});
  assert.equal(errors.length,0,"Browser application errors: "+errors.join("; "));
  console.log("PASS studio desktop + home desktop + responsive mobile; screenshots saved.");
