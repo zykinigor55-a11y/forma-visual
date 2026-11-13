@@ -532,6 +532,27 @@ const server=http.createServer(async(req,res)=>{
 });
 
 
+// BEGIN TEMP SERPER ORGANIC SEARCH PROBE
+if(SERPER_KEY){
+  (async()=>{
+    const q='site:behance.net/gallery modern timber residence architectural visualization';
+    try{
+      const response=await fetch('https://google.serper.dev/search',{
+        method:'POST',headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
+        body:JSON.stringify({q,num:10,hl:'en',gl:'us'}),signal:timeout(15000)});
+      const data=await response.json().catch(()=>({}));
+      console.log('[FORMA_ORGANIC_PROBE]',JSON.stringify({http:response.status,errors:response.ok?null:String(data.message||data.error||'').slice(0,140),
+        organicCount:data.organic?.length||0,
+        samples:(data.organic||[]).slice(0,5).map(x=>({
+          host:(()=>{try{return new URL(x.link).hostname}catch{return ''}})(),
+          path:(()=>{try{return new URL(x.link).pathname.slice(0,60)}catch{return ''}})(),
+          hasThumbnail:Boolean(x.thumbnailUrl||x.thumbnail),hasImages:Boolean(x.images),fields:Object.keys(x).slice(0,10)
+        }))
+      }));
+    }catch(err){console.log('[FORMA_ORGANIC_PROBE]',JSON.stringify({error:errorOf(err)}));}
+  })();
+}
+// END TEMP SERPER ORGANIC SEARCH PROBE
 // BEGIN TEMP ONE-TIME REFERENCE SEARCH DIAGNOSTIC
 if(SEARCH_ENABLED){
   (async()=>{
