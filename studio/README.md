@@ -45,3 +45,12 @@ The two search tracks are Behance editorial architecture and ANT Archviz's publi
 ## v0.9: Verified source-page search and truthful approximate-shape suggestions
 
 Serper free-tier Images ignores the site filter for landing pages and Behance returns HTTP 403 on direct HTML fetch in Render. Instead, query Serper organic search with 10 results maximum, accept only real Behance /gallery/<ID> pages and verify author attribution for ANT via known original profile gallery IDs. When indexed thumbnails are unavailable, match projects approximately by roof silhouette, scale and material words in the search titles/snippets. Clearly label these as unverified-image metadata suggestions, link to the publisher's project and never claim that the remote photo or daylight has been visually verified. Independently generate a high-end daylit art-direction plan using the visual analysis of the USER'S house and preserve exact architecture and camera. No fake source thumbnails or nightly lighting. Startup diagnostic probes were removed.
+
+
+## v1.0 — Stable fast image caption with graceful timeout fallback
+
+- First multimodal call now requests only a short architectural caption in Russian (maximum 45 words, 180 output tokens, low image detail) and aborts after 28 seconds instead of holding the job for 85 seconds.
+- If the vision provider times out, the server returns a **non-visual, explicitly unverified** brief based on the user-entered project type/materials (or leaves them unknown), never invents building geometry, and continues Serper/Behance/ANT photography-quality curation and generation of an art-direction prompt. Full job runs as a polling task to avoid an open browser HTTP request. 100% indicates finished workflow, not verified visual understanding.
+- If image caption returns, the secondary text structuring pass has a shorter 14 second limit; any failure uses the verified image caption rather than treating the pipeline as failed.
+- Visual ranking of downloaded reference photographs is skipped when the source house was not visually analyzed. Metadata-only reference suggestions are explicitly labeled as unverified photography and only used to influence high-end art-direction, never the building's geometry. The editing prompt is transparent about the fallback.
+- The prompt now emphasizes architectural-photo-level realism, sculptural daylight, realistic shadows, physically plausible facade microtextures, glazed reflections and natural landscape depth, not generic CGI.

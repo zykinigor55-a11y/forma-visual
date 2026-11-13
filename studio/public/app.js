@@ -74,7 +74,7 @@ function uploadJob(image,project){
 async function trackJob(jobId){
   const started=Date.now();
   let previousPhase='',phaseStarted=started;
-  const upperBounds={vision:40,structure:56,brief:62,search:76,ranking:91,scene:98};
+  const upperBounds={vision:40,'vision-fallback':60,structure:56,brief:62,search:76,ranking:91,scene:98};
   while(Date.now()-started<6*60*1000){
     const job=await requestJson('/api/jobs/'+encodeURIComponent(jobId),{cache:'no-store'});
     if(job.phase!==previousPhase){previousPhase=job.phase;phaseStarted=Date.now();}
@@ -106,9 +106,9 @@ function manualAnalysis(project) {
 function showAnalysis(a, visual) {
   $('#analysisEmpty').hidden = true;
   $('#analysisResults').hidden = false;
-  $('#analysisTag').textContent = visual ? 'AI / РАСПОЗНАНО ПО ФОТО' : 'БРИФ / НЕ AI-АНАЛИЗ';
-  $('#analysisOrigin').textContent = visual ? 'ARCHITECTURE / IMAGE-BASED' : 'PROJECT / PARAMETERS ONLY';
-  $('#analysisConfidence').textContent = visual ? `УВЕРЕННОСТЬ: ${String(a.confidence || '—').toUpperCase()}` : 'AI НЕ ПОДКЛЮЧЕН';
+  $('#analysisTag').textContent = visual ? 'AI / РАСПОЗНАНО ПО ФОТО' : 'РЕЗЕРВНЫЙ РЕЖИМ / ФОТО НЕ ПРОВЕРЕНО';
+  $('#analysisOrigin').textContent = visual ? 'ARCHITECTURE / IMAGE-BASED' : 'PROJECT / BRIEF ONLY';
+  $('#analysisConfidence').textContent = visual ? `УВЕРЕННОСТЬ: ${String(a.confidence || '—').toUpperCase()}` : 'ФОТО НЕ ПРОВЕРЕНО';
   $('#architectureText').textContent = a.architecture || 'Архитектура проекта';
   $('#analysisReason').textContent = a.reason || '—';
   $('#materialText').textContent = a.materials || '—';
@@ -215,9 +215,10 @@ function makePrompt(project) {
   const curated = Boolean(state.winner && state.curation);
   const directed = Boolean(state.curation);
   const prompt = `FORMA STUDIO / ARCHITECTURAL EDITORIAL ART DIRECTION
-${curated ? 'IMAGE-BASED REFERENCE SELECTION / SOURCE ARCHITECTURE LOCKED' : directed ? 'IMAGE-BASED ARCHITECTURE ANALYSIS / PROPOSED ART DIRECTION WITHOUT VERIFIED REFERENCE' : state.isVisualAnalysis ? 'VISION ANALYSIS / NO VERIFIED REFERENCE SEARCH' : 'DRAFT BRIEF / NO VISUAL AI ANALYSIS'}
+${curated ? 'VERIFIED REFERENCE SELECTION / ORIGINAL ARCHITECTURE LOCKED' : directed ? (state.isVisualAnalysis ? 'PHOTO ANALYZED / EDITORIAL STAGING WITHOUT VERIFIED REFERENCE' : 'VISUAL AI UNAVAILABLE / ART DIRECTION BASED ON USER BRIEF, NOT VERIFIED GEOMETRY') : state.isVisualAnalysis ? 'VISION ANALYSIS / NO VERIFIED REFERENCE' : 'DRAFT BRIEF / NO VISUAL AI ANALYSIS'}
 
 NON-NEGOTIABLE SOURCE OF TRUTH
+If visual analysis failed, do NOT assume any model observed the building. The image-editing model must examine the ATTACHED ORIGINAL HOUSE IMAGE itself before changing only lighting, natural textures and the surrounding landscape.
 Use the ATTACHED ORIGINAL HOUSE IMAGE as the exact architectural source, not as loose inspiration. Preserve the entire building design: footprint, volume, roof configuration and pitch, overhangs, facade geometry and joints, material authenticity, window and door number, sizes, exact placement, mullions, plinth, levels, stairs, openings and every architectural line. Preserve ORIGINAL CAMERA POSITION, lens perspective, eye level, viewpoint, orientation and building framing. Do not change the house to resemble the reference's building. Do not invent architectural components or landscape structures.
 
 EDITORIAL SHOT DIRECTOR / PUBLIC ARCHVIZ PRINCIPLES
@@ -227,8 +228,8 @@ ORIGINAL BUILDING
 Type (user note, not proof): ${project.type || 'determine from image'}
 User materials (preserve visible facts): ${project.materials || 'adhere to original image'}
 User constraints: ${project.description || 'none beyond exact architecture lock'}
-Observed architecture: ${a.architecture || 'unspecified'}
-Observed materials: ${a.materials || 'verify against original'}
+Architecture (VISUALLY VERIFIED ONLY IF STATED ABOVE; otherwise brief information, not facts): ${a.architecture || 'not inspected'}
+Materials (must be verified against the attached source, not invented): ${a.materials || 'not inspected'}
 Existing camera: ${a.composition || 'preserve original camera'}
 Original lighting: ${a.lighting || 'not assessed'}
 
@@ -252,7 +253,7 @@ Environment concept: ${chosen.environment || 'bespoke landscape matching buildin
 Light treatment: ${chosen.lightingDescription || mode.lighting}
 Material and colour balance: ${chosen.palette || 'restrained premium neutral grade'}
 Camera treatment: ${chosen.camera || 'preserve original viewpoint'}` : directed ? `PROPOSED ORIGINAL ART DIRECTION — NO PHOTO REFERENCE VERIFIED
-The following scene concept was developed only from the UPLOADED HOUSE, NOT from any supposedly selected source photo. Never invent an external reference.
+The following scene concept is a proposed artistic direction for the uploaded house. If visual AI was unavailable, it is based on USER-SUPPLIED BRIEF AND STRICT SOURCE-IMAGE PRESERVATION INSTRUCTIONS, NOT a verified reading of the image. Never invent unseen materials, geometry, site features or an external reference.
 ${state.suggestedRef ? `SIMILAR-FORM PROJECT PAGE ONLY (metadata match, image and daylight not verified): ${state.suggestedRef.sourceLabel} — ${state.suggestedRef.link}
 Use this page solely as optional broad massing inspiration. Do not copy its house, geometry, materials, windows or lens; all daylight staging below is original.` : 'No verified source page was selected.'}
 Daylight lighting: ${chosen.lightingDescription || mode.lighting}
@@ -271,6 +272,7 @@ ENVIRONMENT & VISUAL STORYTELLING
 Choose landscape and context appropriate to the actual building's style, location cues and scale; create architectural depth without blocking facade or openings. Use coherent scene-building: foreground accents, convincing middle-ground planting and a natural distant background, with authentic species, correct scale, fine branches, controlled softness and believable contact shadows. Vary light direction and site rhythm in a physically plausible manner, keep the architecture dominant, make the frame emotionally engaging but photographically truthful. DO NOT impose a fixed list of junipers, hostas, shrubs or forest on every project.
 
 QUALITY / CAMERA / OPTICAL REQUIREMENTS
+Photo-realism is the absolute visual standard: the result must convincingly look like a professional architectural photograph rather than 3D CGI. Build physically believable architectural volume using lateral sunlight and visible bounce; preserve hard-soft shadow transitions, natural high-dynamic-range exposure, imperfect micro-roughness of plaster, brick, timber, metal and glazing, believable botanical detail, precise contact shadows and richly layered depth. Avoid flat evenly illuminated facades, plasticky smooth materials, generic staged landscaping, oversharpening, excessive HDR and AI-looking vegetation. Respect original camera and architecture even if a stronger composition would require moving it.
 High-fidelity realistic architectural photography, microtexture, physically based reflections, credible roughness, clean contours, precise optical lines, convincing exposure, realistic atmospheric depth, rich colour separation, no excessive saturation, no AI textures, no smearing. Aim for 4K-level detail, 16:9 landscape output where compatible with the input; if cropping would alter the exact original framing, preserve the source framing instead.
 
 NEGATIVES
@@ -280,7 +282,7 @@ PRIORITIES
 1) EXACT source building and camera. 2) Context-specific editorial visual story. 3) AI-selected daylight. 4) Architectural light and composition. 5) Precise materials and photorealism.`;
   state.prompt = prompt;
   $('#promptText').textContent = prompt;
-  $('#promptState').textContent = curated ? 'ГОТОВ / ПО ВЫБРАННОМУ РЕФЕРЕНСУ' : directed ? 'ГОТОВ / ИНДИВИДУАЛЬНАЯ ПОСТАНОВКА' : state.isVisualAnalysis ? 'ПО ФОТО / БЕЗ ПОИСКА' : 'ЧЕРНОВИК / БЕЗ AI';
+  $('#promptState').textContent = curated ? 'ГОТОВ / ПО ВЫБРАННОМУ РЕФЕРЕНСУ' : directed ? (state.isVisualAnalysis ? 'ГОТОВ / ИНДИВИДУАЛЬНАЯ ПОСТАНОВКА' : 'ГОТОВ / ПО БРИФУ, ФОТО НЕ ПРОВЕРЕНО') : state.isVisualAnalysis ? 'ПО ФОТО / БЕЗ ПОИСКА' : 'ЧЕРНОВИК / БЕЗ AI';
   $('#copyPrompt').disabled = false;
   $('#downloadPrompt').disabled = false;
 }
@@ -357,8 +359,8 @@ async function runProject(event){
     const job=await trackJob(uploaded.jobId);
     if(job.analysis){
       state.analysis=job.analysis;
-      state.isVisualAnalysis=true;
-      showAnalysis(state.analysis,true);
+      state.isVisualAnalysis=state.analysis.visualVerified===true;
+      showAnalysis(state.analysis,state.isVisualAnalysis);
       const suggested=MODES[modeFromAnalysis(state.analysis)];
       $('#autoDirection').textContent=suggested.name;
       $('#directionReason').textContent=state.analysis.reason||'Индивидуальная дневная постановка';
@@ -373,7 +375,10 @@ async function runProject(event){
         setRecommendationMessage(job.curation?.message||'Подходящих подтверждённых дневных референсов не найдено.','РЕФЕРЕНС НЕ ПОДТВЕРЖДЁН');
         alertStatus('Анализ архитектуры готов. Подтверждённый референс не выбран.','info');
       }
-      showProgress(100,'Анализ завершён. Промпт готов.',true);
+      if(!state.isVisualAnalysis){
+        alertStatus('Визуальная модель не ответила. Резервный режим завершён: подобраны фотореалистичный свет, окружение и промпт по брифу. Геометрия исходного дома остаётся обязательным условием.','info');
+      }
+      showProgress(100,state.isVisualAnalysis?'Анализ завершён. Профессиональный промпт готов.':'Резервный режим завершён. Фотореалистичный арт-дирекшн и промпт готовы.',true);
       makePrompt(project);
     }else{
       state.analysis=manualAnalysis(project);
