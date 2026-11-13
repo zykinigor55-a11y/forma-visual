@@ -1,129 +1,307 @@
-import React,{Suspense,useEffect,useRef,useState} from "react";
-import {Canvas,ThreeEvent} from "@react-three/fiber";
-import {Grid,OrbitControls,ContactShadows,Html} from "@react-three/drei";
-import {importArchitecture,ImportReport} from "./importArchitecture";
+import React,{useEffect,useMemo,useRef,useState} from "react";
 import * as THREE from "three";
-import {Box,Layers,Settings2,Package,Home,Upload,Download,Check,Eye,RotateCcw,Info,FileBox,MousePointer2} from "lucide-react";
+import {
+ ArrowDownToLine,ArrowRight,Box,Camera,Check,ChevronDown,ChevronRight,Cloud,
+ Columns3,Download,FileBox,FileJson,FolderOpen,Grid3X3,Home,Image,
+ Info,Layers3,LayoutGrid,Menu,MousePointer2,Package,PanelBottom,PanelLeft,
+ PanelRight,Plus,RotateCcw,Ruler,Save,Search,Settings2,SlidersHorizontal,
+ SquareStack,Sun,Upload,Undo2,Redo2,X
+} from "lucide-react";
+import ArchitecturalScene,{CameraPreset,EnvironmentMode,MapSet} from "./ArchitecturalScene";
+import {importArchitecture,ImportReport} from "./importArchitecture";
+import {clamp,Config,estimate,Finish,getMaterial,INITIAL,MATERIALS,MaterialInfo,Zone,ZONE_NAME,ZONES} from "./model";
 
-type Zone="facade"|"roof"|"plinth"|"frames";
-type Material={id:string;name:string;color:string;sku:string;price:number};
-type Config={width:number;height:number;depth:number;panelWidth:number;gap:number;orientation:"vertical"|"horizontal";zoneMaterials:Record<Zone,string>};
-const materials:Material[]=[
-{id:"cedar",name:"Кедр натуральный",color:"#a88a6e",sku:"WD-001",price:5400},
-{id:"fiber",name:"Фиброцемент / минерал",color:"#d4d0c9",sku:"FC-204",price:3600},
-{id:"metal",name:"Титан сатин",color:"#909da6",sku:"MT-018",price:6200},
-{id:"charcoal",name:"Графит",color:"#454c52",sku:"MT-027",price:5800},
-{id:"slate",name:"Сланец",color:"#63696b",sku:"ST-006",price:7100},
-{id:"oak",name:"Термодерево",color:"#927558",sku:"WD-017",price:6900}
-];
-const initial:Config={width:9,height:3.2,depth:7,panelWidth:.18,gap:.012,orientation:"vertical",zoneMaterials:{facade:"cedar",roof:"charcoal",plinth:"slate",frames:"charcoal"}};
-const zones:Zone[]=["facade","roof","plinth","frames"];
-const zoneNames:Record<Zone,string>={facade:"Фасады",roof:"Кровля",plinth:"Цоколь",frames:"Окна и двери"};
-const byId=(id:string)=>materials.find(m=>m.id===id)||materials[0];
-const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
-function Standard({color,metalness=0,roughness=.77}:{color:string;metalness?:number;roughness?:number}){return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness}/>}
-type CutRect={x0:number;x1:number;y0:number;y1:number};
-function cutOut(panel:CutRect,openings:CutRect[]):CutRect[]{
- let parts=[panel];
- for(const opening of openings){
-  const next:CutRect[]=[];
-  for(const p of parts){
-   const x0=Math.max(p.x0,opening.x0),x1=Math.min(p.x1,opening.x1);
-   const y0=Math.max(p.y0,opening.y0),y1=Math.min(p.y1,opening.y1);
-   if(x1<=x0||y1<=y0){next.push(p);continue}
-   next.push({x0:p.x0,x1:p.x1,y0:p.y0,y1:y0},{x0:p.x0,x1:p.x1,y0:y1,y1:p.y1},{x0:p.x0,x1:x0,y0,y1},{x0:x1,x1:p.x1,y0,y1});
-  }
-  parts=next.filter(p=>p.x1-p.x0>.003&&p.y1-p.y0>.003);
- }
- return parts;
+type View="studio"|"home";
+type CatalogItem={id:string;name:string;config:Config;created:number};
+type Variant={id:string;name:string;config:Config};
+const copyConfig=(c:Config):Config=>({...c,zoneMaterials:{...c.zoneMaterials}});
+function readJSON<T>(key:string,fallback:T):T{
+ try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw) as T:fallback}catch{return fallback}
 }
-function Building({config,selected,onZone}:{config:Config;selected:Zone;onZone:(z:Zone)=>void}){
- const {width:w,height:h,depth:d}=config;const wallDepth=.18,roofRise=1.85;
- const color=(z:Zone)=>byId(config.zoneMaterials[z]).color;
- const sideWidth=w*.43; const groundHeight=.34;
- const segment=(x:number,y:number,z:number,sw:number,sh:number,sd:number,zone:Zone,key:string)=>(
- <mesh key={key} position={[x,y,z]} castShadow receiveShadow onClick={e=>{e.stopPropagation();onZone(zone)}}><boxGeometry args={[sw,sh,sd]}/><Standard color={zone==="facade"?"#c6c5c0":color(zone)} roughness={.84}/></mesh>);
- const frontOpenings=[{x:-w*.265,y:1.48,ww:1.45,hh:1.73},{x:w*.19,y:1.48,ww:1.45,hh:1.73}];
- const divisions=Array.from(new Set([-w/2,w/2,...frontOpenings.flatMap(o=>[o.x-o.ww/2,o.x+o.ww/2])])).sort((a,b)=>a-b);
- const frontPieces=divisions.slice(0,-1).flatMap((a,i)=>{const b=divisions[i+1],cx=(a+b)/2,sw=b-a;
- const opening=frontOpenings.find(o=>cx>o.x-o.ww/2+.001&&cx<o.x+o.ww/2-.001);
- if(!opening)return [segment(cx,h/2,d/2,sw,h,wallDepth,"facade","front"+i)];
- const bottom=opening.y-opening.hh/2,top=opening.y+opening.hh/2;return [segment(cx,bottom/2,d/2,sw,bottom,wallDepth,"facade","sill"+i),segment(cx,(h+top)/2,d/2,sw,h-top,wallDepth,"facade","header"+i)]});
- const pane=(x:number,y:number,z:number,ww:number,hh:number,rot=0,key="pane")=><group key={key} position={[x,y,z]} rotation={[0,rot,0]} onClick={e=>{e.stopPropagation();onZone("frames")}}><mesh castShadow><boxGeometry args={[ww,hh,.085]}/><Standard color={color("frames")} metalness={.25}/></mesh><mesh position={[0,0,.052]}><boxGeometry args={[ww-.115,hh-.115,.012]}/><Standard color="#78909d" metalness={.5} roughness={.16}/></mesh><mesh position={[0,0,.064]}><boxGeometry args={[.045,hh-.12,.015]}/><Standard color={color("frames")}/></mesh><mesh position={[0,0,.065]}><boxGeometry args={[ww-.12,.04,.016]}/><Standard color={color("frames")}/></mesh></group>;
- const halfSpan=w/2+.38;
- const roofAngle=Math.atan2(roofRise,halfSpan);
- const roofLength=Math.hypot(halfSpan,roofRise);
- const gableShape=React.useMemo(()=>{const s=new THREE.Shape();s.moveTo(-w/2,h);s.lineTo(w/2,h);s.lineTo(0,h+roofRise*(w/2)/halfSpan);s.closePath();return s},[w,h,roofRise]);
- const selectedOutline=(zone:Zone)=>selected===zone?"#7a98af":"#a9afb3";
- const slats=React.useMemo(()=>{const step=Math.max(.065,config.panelWidth+config.gap);return Math.min(135,Math.floor((config.orientation==="vertical"?w:h)/step))},[w,h,config.panelWidth,config.gap,config.orientation]);
- const {orientation,panelWidth:pw,gap}=config;
- return <group><group position={[0,groundHeight,0]}>
- {segment(0,h/2,-d/2,w,h,wallDepth,"facade","back")}
- {segment(-w/2,h/2,0,wallDepth,h,d,"facade","left")}
- {segment(w/2,h/2,0,wallDepth,h,d,"facade","right")}
- {frontPieces}
- {Array.from({length:slats},(_,i)=>{
-  const step=pw+gap,isV=orientation==="vertical";
-  const p:CutRect=isV?{x0:-w/2+i*step,x1:Math.min(w/2,-w/2+i*step+pw),y0:0,y1:h}:{x0:-w/2,x1:w/2,y0:i*step,y1:Math.min(h,i*step+pw)};
-  const openings=frontOpenings.map(o=>({x0:o.x-o.ww/2,x1:o.x+o.ww/2,y0:o.y-o.hh/2,y1:o.y+o.hh/2}));
-  return cutOut(p,openings).map((seg,j)=><mesh key={"clad"+i+"-"+j} position={[(seg.x0+seg.x1)/2,(seg.y0+seg.y1)/2,d/2+.11]} castShadow receiveShadow onClick={e=>{e.stopPropagation();onZone("facade")}}><boxGeometry args={[seg.x1-seg.x0,seg.y1-seg.y0,.03]}/><Standard color={color("facade")} metalness={config.zoneMaterials.facade==="metal"?.35:0}/></mesh>)
- })}
- {frontOpenings.map((o,i)=>pane(o.x,o.y,d/2+.155,o.ww,o.hh,0,"frontPane"+i))}
- {pane(w/2+.13,1.55,-d*.1,1.3,1.55,Math.PI/2,"sidePane")}
- {[-1,1].map((side)=><mesh key={"slope"+side} position={[side*halfSpan/2,h+roofRise/2,0]} rotation={[0,0,side===-1?roofAngle:-roofAngle]} castShadow receiveShadow onClick={e=>{e.stopPropagation();onZone("roof")}}><boxGeometry args={[roofLength,.14,d+.78]}/><Standard color={color("roof")} metalness={.2} roughness={.68}/></mesh>)}
- {[-1,1].map(side=><mesh key={"gable"+side} position={[0,0,side*d/2]}><shapeGeometry args={[gableShape]}/><meshStandardMaterial color="#c7c9c7" side={THREE.DoubleSide} roughness={.8}/></mesh>)}
- {segment(0,-.17,0,w+.06,.34,d+.06,"plinth","plinth")}
- </group>
- <mesh rotation={[-Math.PI/2,0,0]} position={[0,-.025,0]} receiveShadow><planeGeometry args={[120,120]}/><Standard color="#e2e6e9" roughness={1}/></mesh>
- {selected&&<mesh position={[0,groundHeight+h/2,d/2+.21]} visible={selected==="facade"}><boxGeometry args={[w+.04,h+.04,.015]}/><meshBasicMaterial color={selectedOutline("facade")} wireframe transparent opacity={.4}/></mesh>}
- </group>
+function num(n:number){return Math.round(n).toLocaleString("ru-RU")}
+function currency(n:number){return new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}).format(n)}
+function formatSize(v:number){return v.toFixed(2).replace(".",",")}
+function chip(zone:Zone){return ZONE_NAME[zone].toUpperCase()}
+function exportFile(filename:string,data:unknown){
+ const a=document.createElement("a"),blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
-function Imported({scene,selectedName,onSelect}:{scene:THREE.Group;selectedName:string;onSelect:(name:string)=>void}){
- return <primitive object={scene} onClick={(event:ThreeEvent<MouseEvent>)=>{event.stopPropagation();onSelect(event.object.uuid)}}/>;
+function Metric({label,value,unit}:{label:string;value:string;unit?:string}){
+ return <div className="metric"><div className="metric-label">{label}</div><div className="metric-value">{value} {unit&&<span>{unit}</span>}</div></div>;
 }
-function Scene({config,scene,selected,onZone,onMesh}:{config:Config;scene:THREE.Group|null;selected:Zone;onZone:(z:Zone)=>void;onMesh:(s:string)=>void}){
- return <Canvas shadows camera={{position:[13,9,14],fov:37,near:.05,far:300}} gl={{antialias:true,preserveDrawingBuffer:false}} onCreated={({gl})=>{gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.25}}>
- <color attach="background" args={["#edf0f2"]}/><ambientLight intensity={2.1}/><directionalLight position={[-6,13,9]} intensity={3.2} castShadow shadow-mapSize={[2048,2048]} shadow-camera-left={-25} shadow-camera-right={25} shadow-camera-top={25} shadow-camera-bottom={-25}/>
- <Suspense fallback={<Html center>Загрузка сцены…</Html>}>{scene?<Imported scene={scene} selectedName="" onSelect={onMesh}/>:<Building config={config} selected={selected} onZone={onZone}/>}<Grid infiniteGrid sectionColor="#cad3da" cellColor="#dce2e7" fadeDistance={55} position={[0,-.04,0]}/><ContactShadows opacity={.14} scale={35} blur={2} far={15}/><OrbitControls makeDefault minDistance={2} maxDistance={85} target={[0,1.8,0]}/></Suspense>
- </Canvas>
+function NumericControl({label,value,onChange,step=1,min=1,max=50000,disabled=false}:{label:string;value:number;onChange:(v:number)=>void;step?:number;min?:number;max?:number;disabled?:boolean}){
+ return <label className="field-row"><span>{label}</span><span className="num-field"><input aria-label={label} type="number" min={min} max={max} step={step} disabled={disabled} value={Math.round(value*1000)} onChange={e=>{const n=Number(e.target.value);if(Number.isFinite(n))onChange(clamp(n,min,max)/1000)}}/><small>мм</small></span></label>;
 }
+function MaterialCard({material,active,onClick,compact=false}:{material:MaterialInfo;active:boolean;onClick:()=>void;compact?:boolean}){
+ return <button className={"finish-card "+(compact?"compact ":"")+(active?"chosen":"")} onClick={onClick} title={material.name}>
+  <span className={"finish-swatch "+material.id} style={{backgroundColor:material.color}}/>
+  <span className="finish-data"><b>{material.name}</b><small>{material.sku} · {material.category}</small></span>
+  {active&&<Check size={14} className="finish-check"/>}
+ </button>;
+}
+
 export default function App(){
- const [app,setApp]=useState<"studio"|"home">("studio");const [config,setConfig]=useState<Config>(initial);const [name,setName]=useState("MODUL / 01");const [notice,setNotice]=useState("");
- const [selectedZone,setSelectedZone]=useState<Zone>("facade"),[selectedMesh,setSelectedMesh]=useState("");
- const [imported,setImported]=useState<THREE.Group|null>(null),[fileName,setFileName]=useState(""),[busy,setBusy]=useState(false);
- const [importInfo,setImportInfo]=useState<ImportReport|null>(null),[importStage,setImportStage]=useState("");
- const input=useRef<HTMLInputElement>(null);
- const [catalog,setCatalog]=useState<Config[]>(()=>{try{return JSON.parse(localStorage.getItem("forma-catalog")||"[]")}catch{return []}});
- const update=(key:keyof Config,value:any)=>setConfig(c=>({...c,[key]:value}));
- const updateMaterial=(id:string)=>{
-   setConfig(c=>({...c,zoneMaterials:{...c.zoneMaterials,[selectedZone]:id}}));
-   if(!imported)return;
-   if(!selectedMesh){setNotice("Для импортированной модели сначала выберите объект мышью.");return}
-   const mesh=imported.getObjectByProperty("uuid",selectedMesh);
-   if(!(mesh instanceof THREE.Mesh)){setNotice("Выбранный элемент не является 3D-сеткой.");return}
-   const material=byId(id);
-   const assign=(old:THREE.Material)=>{const copy=old.clone();if("color" in copy && copy.color instanceof THREE.Color)copy.color.set(material.color);if("roughness" in copy)(copy as THREE.MeshStandardMaterial).roughness=.72;copy.needsUpdate=true;return copy};
-   mesh.material=Array.isArray(mesh.material)?mesh.material.map(assign):assign(mesh.material);
-   setNotice("Материал назначен объекту: "+(mesh.name||selectedMesh.slice(0,8)));
- };
- const publish=()=>{const next=[...catalog,structuredClone(config)];setCatalog(next);localStorage.setItem("forma-catalog",JSON.stringify(next));setNotice("Компонент добавлен в локальный каталог")};
- const exportData=()=>{const a=document.createElement("a");const blob=new Blob([JSON.stringify({name,config,source:fileName||"procedural"},null,2)],{type:"application/json"});a.href=URL.createObjectURL(blob);a.download="forma-component.json";a.click();URL.revokeObjectURL(a.href)};
- const upload=async(files:File[])=>{
-  setBusy(true);setImportStage("Подготовка файлов…");setNotice("");
+ const [view,setView]=useState<View>(()=>new URLSearchParams(location.search).get("view")==="home"?"home":"studio");
+ const [config,setConfig]=useState<Config>(()=>readJSON("forma-b2b-config-v3",copyConfig(INITIAL)));
+ const [projectName,setProjectName]=useState("FORMA HOUSE / 001");
+ const [selected,setSelected]=useState<Zone>("facade"),[selectedMesh,setSelectedMesh]=useState("");
+ const [inspectorTab,setInspectorTab]=useState<"geometry"|"material">("geometry");
+ const [cameraPreset,setCameraPreset]=useState<CameraPreset>("perspective");
+ const [environment,setEnvironment]=useState<EnvironmentMode>("daylight");
+ const [grid,setGrid]=useState(true),[sceneOpen,setSceneOpen]=useState(true),[inspectorOpen,setInspectorOpen]=useState(true);
+ const [trayOpen,setTrayOpen]=useState(true),[search,setSearch]=useState("");
+ const [history,setHistory]=useState<Config[]>([]),[future,setFuture]=useState<Config[]>([]);
+ const [notice,setNotice]=useState(""),[stage,setStage]=useState(""),[busy,setBusy]=useState(false);
+ const [sourceName,setSourceName]=useState(""),[imported,setImported]=useState<THREE.Group|null>(null);
+ const [report,setReport]=useState<ImportReport|null>(null);
+ const [maps,setMaps]=useState<MapSet>({});
+ const [baseComparison,setBaseComparison]=useState(false);
+ const [catalog,setCatalog]=useState<CatalogItem[]>(()=>readJSON<CatalogItem[]>("forma-b2b-catalog-v3",[]));
+ const [variants,setVariants]=useState<Variant[]>(()=>readJSON<Variant[]>("forma-b2b-variants-v3",[]));
+ const fileRef=useRef<HTMLInputElement>(null),textureRef=useRef<HTMLInputElement>(null),canvasRef=useRef<HTMLCanvasElement|null>(null);
+ const stats=useMemo(()=>estimate(config),[config]);
+ const activeMaterial=getMaterial(config.zoneMaterials[selected]);
+ const displayedConfig=baseComparison&&view==="home"?{...config,zoneMaterials:{...config.zoneMaterials,facade:"ivory" as Finish}}:config;
+ const filtered=MATERIALS.filter(m=>(m.name+" "+m.category+" "+m.sku).toLowerCase().includes(search.toLowerCase()));
+ useEffect(()=>{localStorage.setItem("forma-b2b-config-v3",JSON.stringify(config))},[config]);
+ useEffect(()=>{localStorage.setItem("forma-b2b-catalog-v3",JSON.stringify(catalog))},[catalog]);
+ useEffect(()=>{localStorage.setItem("forma-b2b-variants-v3",JSON.stringify(variants))},[variants]);
+ useEffect(()=>{if(!notice)return;const id=setTimeout(()=>setNotice(""),4400);return()=>clearTimeout(id)},[notice]);
+ function changeView(next:View){
+  setView(next);
+  const url=new URL(location.href);url.searchParams.set("view",next);historyAPI(url);
+  setCameraPreset("perspective");setBaseComparison(false);
+ }
+ function historyAPI(url:URL){window.history.replaceState(null,"",url.pathname+url.search+url.hash)}
+ function update(next:Config){
+  setHistory(h=>[...h.slice(-29),copyConfig(config)]);setFuture([]);setConfig(copyConfig(next));
+ }
+ function patch<K extends keyof Config>(key:K,value:Config[K]){update({...config,[key]:value})}
+ function undo(){if(!history.length)return;setFuture(f=>[...f,copyConfig(config)]);setConfig(history[history.length-1]);setHistory(h=>h.slice(0,-1))}
+ function redo(){if(!future.length)return;setHistory(h=>[...h,copyConfig(config)]);setConfig(future[future.length-1]);setFuture(f=>f.slice(0,-1))}
+ function applyFinish(id:Finish){
+  if(imported&&selectedMesh){
+   const node=imported.getObjectByProperty("uuid",selectedMesh);
+   if(node instanceof THREE.Mesh){
+    const data=getMaterial(id);
+    const change=(m:THREE.Material)=>{const material=m.clone() as THREE.MeshStandardMaterial;if("color" in material&&material.color)material.color.set(data.color);material.needsUpdate=true;return material};
+    node.material=Array.isArray(node.material)?node.material.map(change):change(node.material);
+    setNotice("Материал применён к объекту "+(node.name||selectedMesh.slice(0,6)));
+   }
+  } else if(imported){
+   setNotice("Для импортированной модели сначала выберите объект мышью.");
+   return;
+  }
+  update({...config,zoneMaterials:{...config.zoneMaterials,[selected]:id}});
+ }
+ function saveComponent(){
+  const item={id:String(Date.now()),name:projectName,config:copyConfig(config),created:Date.now()};
+  setCatalog(c=>[item,...c].slice(0,30));
+  setNotice("Компонент добавлен в локальный каталог и доступен в FORMA Home.");
+ }
+ function saveVariant(){
+  const name="Концепция "+String(variants.length+1).padStart(2,"0");
+  setVariants(v=>[{id:String(Date.now()),name,config:copyConfig(config)},...v].slice(0,6));
+  setNotice("Вариант сохранён на этом устройстве.");
+ }
+ function resetScene(){setImported(null);setReport(null);setSourceName("");setSelectedMesh("");setNotice("Открыт демонстрационный архитектурный проект.")}
+ async function upload(files:File[]){
+  setBusy(true);setStage("Подготавливаем исходные файлы…");setNotice("");
   try{
-   const result=await importArchitecture(files,setImportStage);
-   setImported(result.scene);setImportInfo(result);setFileName(result.sourceName);setSelectedMesh("");
-   setNotice("Загружено: "+result.meshCount+" объектов · "+result.triangleCount.toLocaleString("ru-RU")+" полигонов");
-  }catch(err){setNotice("Ошибка импорта: "+(err instanceof Error?err.message:"проверьте формат файла"))}
-  finally{setBusy(false);setImportStage("");if(input.current)input.current.value=""}
- };
- return <div className="app"><header><div className="brand"><span className="logo">F</span><span><b>FORMA</b> <small>B2B</small><em>{app==="studio"?"STUDIO":"HOME"}</em></span></div><nav><button className={app==="studio"?"active":""} onClick={()=>setApp("studio")}><Package size={15}/> Производитель</button><button className={app==="home"?"active":""} onClick={()=>setApp("home")}><Home size={15}/> Клиент</button></nav><button className="primary" onClick={app==="studio"?publish:exportData}>{app==="studio"?"Опубликовать компонент":"Скачать конфигурацию"}</button></header>
- <div className="workspace"><aside className="left"><h3><Layers size={15}/> {app==="studio"?"Обозреватель сцены":"Материалы и изделия"}</h3><div className="tree"><div>▾ {fileName||name}</div>{zones.map(z=><button key={z} className={"zone "+(selectedZone===z?"selected":"")} onClick={()=>setSelectedZone(z)}>▤　{zoneNames[z]}</button>)}{selectedMesh&&<p>Выбран объект: {imported?.getObjectByProperty("uuid",selectedMesh)?.name||selectedMesh.slice(0,8)}</p>}</div><h3><Box size={15}/> Материалы · {zoneNames[selectedZone]}</h3>{materials.map(m=><button key={m.id} className={"material "+(config.zoneMaterials[selectedZone]===m.id?"selected":"")} onClick={()=>updateMaterial(m.id)}><span className="swatch" style={{background:m.color}}/><span>{m.name}<small>{m.sku} · {m.price.toLocaleString("ru-RU")} ₽/м²</small></span>{config.zoneMaterials[selectedZone]===m.id&&<Check size={14}/>}</button>)}{app==="home"&&<><h3>Каталог Studio</h3><div className="tree">{catalog.length?catalog.map((c,i)=><button key={i} onClick={()=>{setConfig(c);setImported(null);setFileName("")}}>Фасадная система {i+1} · Применить</button>):"Нет опубликованных компонентов"}</div></>}</aside>
- <section className="center" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(!busy)upload(Array.from(e.dataTransfer.files))}}><div className="toolbar"><b>{imported?"ИМПОРТИРОВАННАЯ МОДЕЛЬ":app==="studio"?"3D / РЕДАКТОР ЗДАНИЯ":"3D / КОНФИГУРАТОР ДОМА"}</b><span>Мышь — орбита · колесо — масштаб · клик — выбор элемента</span></div><div className="viewport"><Scene config={config} scene={imported} selected={selectedZone} onZone={setSelectedZone} onMesh={setSelectedMesh}/></div><div className="status"><span>Three.js / GLB · метрические единицы</span><span>{fileName||"Процедурная модель"} · фасад {(config.width*config.height).toFixed(2)} м²</span></div></section>
- <aside className="right"><h3><Settings2 size={15}/> {app==="studio"?"Параметры сцены":"Настройки дома"}</h3><div className="uploadbox"><input ref={input} aria-label="Загрузить архитектурную 3D-модель" type="file" multiple accept=".glb,.gltf,.fbx,.obj,.mtl,.bin,.ifc,.skp,.blend,.zip,.png,.jpg,.jpeg,.webp,.ktx2" hidden onChange={e=>{const files=Array.from(e.target.files||[]);if(files.length)upload(files)}}/><button className="secondary" disabled={busy} onClick={()=>input.current?.click()}><Upload size={15}/>{busy?"Обрабатываем…":"Импорт модели"}</button><p>GLB / GLTF / FBX / OBJ / ZIP. IFC / SKP / BLEND — через сервис конвертации. Для GLTF выбирайте модель вместе с BIN и текстурами.</p>{busy&&<div className="import-stage" role="status">{importStage}</div>}{importInfo&&<div className="import-report"><b>{importInfo.sourceName}</b><span>{importInfo.meshCount} объектов · {importInfo.triangleCount.toLocaleString("ru-RU")} треугольников</span><span>Размеры файла: {importInfo.originalSize.map(v=>v.toFixed(2)).join(" × ")} единиц</span><small>{importInfo.note}</small></div>}{imported&&<button className="reset" onClick={()=>{setImported(null);setImportInfo(null);setFileName("");setSelectedMesh("")}}><RotateCcw size={14}/> Вернуться к типовому дому</button>}</div>
- {app==="studio"&&<label>Название проекта<input value={name} onChange={e=>setName(e.target.value)}/></label>}
- {([["Ширина здания","width"],["Высота стен","height"],["Глубина здания","depth"],["Ширина панели","panelWidth"],["Монтажный зазор","gap"]] as const).map(([label,key])=><label key={key}>{label}<div className="number"><input disabled={!!imported} type="number" min=".001" max="100" step={key==="gap"?.001:.01} value={config[key]} onChange={e=>update(key,clamp(Number(e.target.value)||.001,.001,100))}/><span>м</span></div></label>)}
- <label>Раскладка<select disabled={!!imported} value={config.orientation} onChange={e=>update("orientation",e.target.value)}><option value="vertical">Вертикальная</option><option value="horizontal">Горизонтальная</option></select></label>
- <div className="summary"><h3>Спецификация · эскизная</h3><p>Площадь фасада <strong>{(config.width*config.height).toFixed(2)} м²</strong></p><p>Материал <strong>{byId(config.zoneMaterials[selectedZone]).sku}</strong></p><p>Выбранный раздел <strong>{zoneNames[selectedZone]}</strong></p></div><button className="secondary" onClick={exportData}><Download size={15}/> Экспорт JSON</button><p className="disclaimer">В импортированном доме выберите сетку мышью, затем назначьте материал слева. Размеры справа изменяют только типовой дом; масштаб при импорте нормализован для просмотра. IFC/SKP требуют отдельного запущенного API. Расчёты и цены демонстрационные, фоторендер не подключён.</p></aside></div>
- {notice&&<div className="toast" role="status" onClick={()=>setNotice("")}>{notice}</div>}</div>;
+   const result=await importArchitecture(files,setStage);
+   setImported(result.scene);setSourceName(result.sourceName);setReport(result);setSelectedMesh("");
+   setNotice("Модель загружена: "+result.meshCount+" объектов, "+num(result.triangleCount)+" треугольников.");
+  }catch(e){setNotice(e instanceof Error?e.message:"Не удалось импортировать модель.")}
+  finally{setBusy(false);setStage("");if(fileRef.current)fileRef.current.value=""}
+ }
+ async function uploadMaps(files:File[]){
+  if(!files.length)return;
+  const loader=new THREE.TextureLoader();
+  const uploaded:MapSet={};
+  let count=0;
+  for(const file of files){
+   if(!file.type.startsWith("image/"))continue;
+   let slot:"base"|"normal"|"roughness"="base";
+   const n=file.name.toLowerCase();
+   if(/normal|_nrm|_nor/.test(n))slot="normal";
+   else if(/rough|_rgh/.test(n))slot="roughness";
+   const url=URL.createObjectURL(file);
+   try{
+    const texture=await new Promise<THREE.Texture>((resolve,reject)=>loader.load(url,resolve,undefined,reject));
+    texture.colorSpace=slot==="base"?THREE.SRGBColorSpace:THREE.NoColorSpace;
+    texture.wrapS=THREE.RepeatWrapping;texture.wrapT=THREE.RepeatWrapping;
+    texture.anisotropy=8;texture.needsUpdate=true;
+    uploaded[selected]={...(uploaded[selected]||{}),[slot]:texture};
+    count++;
+   }catch{setNotice("Не удалось прочитать текстуру: "+file.name)}
+   finally{URL.revokeObjectURL(url)}
+  }
+  if(count){setMaps(m=>({...m,[selected]:{...(m[selected]||{}),...(uploaded[selected]||{})}}));setNotice("PBR-карты загружены в "+ZONE_NAME[selected]+": "+count+". Изменения пока локальные.")}
+  if(textureRef.current)textureRef.current.value="";
+ }
+ function exportScene(){
+  exportFile("forma-b2b-component.json",{schema:"forma-b2b/0.3",project:projectName,config,previewSource:sourceName||"forma-procedural-house",measurement:"m",illustrativeEstimate:stats});
+  setNotice("Параметры проекта сохранены в JSON.");
+ }
+ function capture(){
+  const canvas=canvasRef.current;
+  if(!canvas){setNotice("3D-сцена ещё не готова.");return}
+  try{
+   const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download="forma-"+view+"-preview.png";a.click();
+  }catch{setNotice("Не удалось сохранить изображение с видеокарты.")}
+ }
+ const cameraButtons:[CameraPreset,string][]=[["perspective","3D"],["facade","Фасад"],["side","Боковой"],["roof","Кровля"]];
+ const input=<><input ref={fileRef} type="file" hidden multiple aria-label="Импортировать трёхмерную модель" accept=".glb,.gltf,.fbx,.obj,.mtl,.bin,.ifc,.skp,.blend,.zip,.png,.jpg,.jpeg,.webp,.ktx2" onChange={e=>{const files=Array.from(e.target.files||[]);if(files.length)void upload(files)}}/><input ref={textureRef} type="file" hidden multiple accept="image/*" aria-label="Добавить PBR текстуры" onChange={e=>{void uploadMaps(Array.from(e.target.files||[]))}}/></>;
+ const scene=<ArchitecturalScene config={displayedConfig} selected={selected} onSelect={setSelected} imported={imported} onMesh={setSelectedMesh} mode={view} cameraPreset={cameraPreset} environment={view==="studio"?"studio":environment} showGrid={view==="studio"&&grid} maps={maps} onCanvasReady={el=>{canvasRef.current=el}}/>;
+ return <div className={"shell "+(view==="home"?"home-shell":"studio-shell")}>
+  {input}
+  <header className="global-header">
+   <div className="global-brand"><div className="brand-mark">F<span>.</span></div><div><div className="brand-name">FORMA <span>B2B</span></div><div className="brand-sub">ARCHITECTURAL TECHNOLOGY</div></div></div>
+   <div className="global-separator"/>
+   <div className="project-context"><span className="micro-label">PROJECT / 01</span><strong>{view==="studio"?"ПРОИЗВОДСТВЕННЫЙ РЕДАКТОР":"КОНФИГУРАТОР АРХИТЕКТУРЫ"}</strong></div>
+   <div className="global-spacer"/>
+   <nav className="global-switch" aria-label="Режим приложения">
+    <button className={view==="studio"?"active":""} onClick={()=>changeView("studio")}><Package size={14}/> Studio</button>
+    <button className={view==="home"?"active":""} onClick={()=>changeView("home")}><Home size={14}/> Home</button>
+   </nav>
+   <div className="global-separator hide-mobile"/>
+   <span className="local-indicator"><i/> LOCAL WORKSPACE</span>
+   <button className="header-cta" onClick={view==="studio"?saveComponent:saveVariant}>{view==="studio"?<Save size={15}/>:<Plus size={15}/>}<span>{view==="studio"?"Сохранить в каталог":"Сохранить вариант"}</span></button>
+  </header>
+
+  {view==="studio"? <div className="studio-main">
+   <div className="cad-rail">
+    <button className="rail-item active" title="Сцена" onClick={()=>setSceneOpen(x=>!x)}><Layers3 size={19}/></button>
+    <div className="rail-divider"/>
+    <button className="rail-item" title="Перспектива" onClick={()=>setCameraPreset("perspective")}><Box size={19}/></button>
+    <button className="rail-item" title="Фасад" onClick={()=>setCameraPreset("facade")}><Columns3 size={19}/></button>
+    <button className="rail-item" title="Кровля" onClick={()=>setCameraPreset("roof")}><Home size={19}/></button>
+    <div className="rail-divider"/>
+    <button className={"rail-item "+(grid?"active-muted":"")} title="Переключить сетку" onClick={()=>setGrid(x=>!x)}><Grid3X3 size={19}/></button>
+    <button className="rail-item" title="Инспектор" onClick={()=>setInspectorOpen(x=>!x)}><SlidersHorizontal size={19}/></button>
+    <div className="rail-grow"/>
+    <button className="rail-item" title="Импорт модели" onClick={()=>fileRef.current?.click()}><Upload size={19}/></button>
+    <button className="rail-item" title="Экспорт JSON" onClick={exportScene}><Download size={19}/></button>
+   </div>
+   {sceneOpen&&<aside className="cad-explorer">
+    <div className="panel-heading"><span>SCENE EXPLORER</span><button title="Скрыть" onClick={()=>setSceneOpen(false)}><PanelLeft size={15}/></button></div>
+    <div className="explorer-tabs"><button className="active">Объекты</button><button onClick={()=>setNotice("Библиотека компонентов: используйте нижнюю панель материалов.")}>Библиотека</button></div>
+    <div className="scene-search"><Search size={14}/><input placeholder="Найти объект..." aria-label="Поиск в дереве" value={search} onChange={e=>setSearch(e.target.value)}/></div>
+    <div className="explorer-path"><ChevronDown size={13}/><FolderOpen size={15}/><span>{sourceName||"FORMA HOUSE / 001"}</span><small>01</small></div>
+    <div className="scene-layer-list">
+     {ZONES.filter(z=>ZONE_NAME[z].toLowerCase().includes(search.toLowerCase())).map((z,i)=><button className={"scene-layer "+(selected===z?"active":"")} key={z} onClick={()=>{setSelected(z);setInspectorTab(z==="facade"?"geometry":"material")}}>
+      <span className="tree-line"/><Layers3 size={15}/><span className="layer-name"><b>{String(i+1).padStart(2,"0")}</b> {ZONE_NAME[z]}<small>{getMaterial(config.zoneMaterials[z]).sku}</small></span><span className={"layer-dot "+(selected===z?"on":"")}/>
+     </button>)}
+    </div>
+    <div className="explorer-group-title">СЛОИ ПРОЕКТА <span>4</span></div>
+    <div className="layer-simple"><span className="indicator-swatch"/> ARCH_BASE</div>
+    <div className="layer-simple"><span className="indicator-swatch pale"/> FACADE_SYSTEM</div>
+    <div className="layer-simple"><span className="indicator-swatch sand"/> MATERIAL_LIB</div>
+    {imported&&<div className="import-mini"><FileBox size={17}/><div><b>{sourceName}</b><small>{report?.meshCount} объектов · {num(report?.triangleCount||0)} граней</small></div></div>}
+    <div className="explorer-bottom"><span className="status-led"/> Модель сохранена локально</div>
+   </aside>}
+   <div className="cad-center" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(!busy)void upload(Array.from(e.dataTransfer.files))}}>
+    <div className="cad-command">
+     <div className="command-title"><span className="command-kicker">EDIT MODE</span><strong>{projectName}</strong><span className="command-stamp">v 0.3</span></div>
+     <div className="cmd-space"/>
+     <button className="command-icon" title="Отменить" disabled={!history.length} onClick={undo}><Undo2 size={17}/></button>
+     <button className="command-icon" title="Повторить" disabled={!future.length} onClick={redo}><Redo2 size={17}/></button>
+     <span className="command-separator"/>
+     <button className="command-icon" title="Снимок в PNG" onClick={capture}><Camera size={17}/></button>
+     <button className="command-icon" title="Импорт" onClick={()=>fileRef.current?.click()}><Upload size={17}/></button>
+     <button className="command-icon" title="Скрыть нижнюю панель" onClick={()=>setTrayOpen(x=>!x)}><PanelBottom size={17}/></button>
+    </div>
+    <div className="cad-viewport">
+     {scene}
+     <div className="viewport-corner upper-left"><span className="viewport-caption">01 / LIVE VIEWPORT</span><b>{sourceName||"Architectural envelope"}</b><small>Shaded + PBR · миллиметры в инспекторе</small></div>
+     <div className="viewport-corner upper-right">
+      <div className="camera-chooser">{cameraButtons.map(([id,label])=><button key={id} className={cameraPreset===id?"active":""} onClick={()=>setCameraPreset(id)}>{label}</button>)}</div>
+     </div>
+     <div className="axis-hint"><b>Y</b><span>X</span><i>Z</i></div>
+     <div className="viewport-footnote"><span className="view-led"/> REAL-TIME 3D <span className="view-sep"/> ORBIT / ZOOM / SELECT</div>
+     {busy&&<div className="busy-overlay"><div className="loading-ring"/><b>Подготовка геометрии</b><small>{stage}</small></div>}
+    </div>
+    {trayOpen&&<div className="cad-tray">
+     <div className="tray-header"><b>MATERIAL LIBRARY</b><span>{MATERIALS.length} образцов · PBR слоты</span><button onClick={()=>textureRef.current?.click()}><Upload size={13}/> Загрузить текстуры</button></div>
+     <div className="tray-grid">{MATERIALS.map(m=><MaterialCard key={m.id} material={m} compact active={config.zoneMaterials[selected]===m.id} onClick={()=>applyFinish(m.id)}/>)}</div>
+    </div>}
+    <div className="cad-status">
+     <span className="state-text"><i/> WEBGL / THREE.JS</span>
+     <span>Объект: {imported?(selectedMesh?imported.getObjectByProperty("uuid",selectedMesh)?.name||"Mesh":"не выбран"):ZONE_NAME[selected]}</span>
+     <span className="hide-mobile">X: 0.000　Y: 0.000　Z: 0.000</span>
+     <span className="status-right">1 UNIT = 1 M <span>·</span> DEMO GEOMETRY</span>
+    </div>
+   </div>
+   {inspectorOpen&&<aside className="cad-inspector">
+    <div className="panel-heading"><span>OBJECT PROPERTIES</span><button onClick={()=>setInspectorOpen(false)} title="Скрыть"><PanelRight size={15}/></button></div>
+    <div className="selected-object"><span className="obj-icon"><Box size={19}/></span><div><small>SELECTED OBJECT / {selected.toUpperCase()}</small><strong>{imported&&selectedMesh?imported.getObjectByProperty("uuid",selectedMesh)?.name||"Imported mesh":ZONE_NAME[selected]}</strong><span>ARCHITECTURAL SYSTEM</span></div></div>
+    <div className="inspector-tabs"><button className={inspectorTab==="geometry"?"active":""} onClick={()=>setInspectorTab("geometry")}>Геометрия</button><button className={inspectorTab==="material"?"active":""} onClick={()=>setInspectorTab("material")}>Материал</button></div>
+    {inspectorTab==="geometry"?<div className="inspector-scroll">
+     <div className="property-section"><span>ПАРАМЕТРЫ ЗДАНИЯ</span><ChevronDown size={15}/></div>
+     <NumericControl label="Ширина здания" value={config.width} onChange={n=>patch("width",n)} disabled={!!imported}/>
+     <NumericControl label="Высота стен" value={config.height} onChange={n=>patch("height",n)} disabled={!!imported}/>
+     <NumericControl label="Глубина здания" value={config.depth} onChange={n=>patch("depth",n)} disabled={!!imported}/>
+     <div className="property-section bordered"><span>ФАСАДНАЯ СИСТЕМА</span><ChevronDown size={15}/></div>
+     <NumericControl label="Ширина панели" value={config.panelWidth} min={20} max={1200} onChange={n=>patch("panelWidth",n)} disabled={!!imported}/>
+     <NumericControl label="Монтажный шов" value={config.gap} min={1} max={80} onChange={n=>patch("gap",n)} disabled={!!imported}/>
+     <div className="property-row"><span>Направление</span><select disabled={!!imported} value={config.orientation} onChange={e=>patch("orientation",e.target.value as Config["orientation"])}><option value="vertical">Вертикальное</option><option value="horizontal">Горизонтальное</option></select></div>
+     <div className="property-section bordered"><span>СМЕТА / ПРЕДВАРИТЕЛЬНО</span><ChevronDown size={15}/></div>
+     <div className="cad-metrics"><Metric label="Площадь фасада" value={formatSize(stats.net)} unit="м²"/><Metric label="Фрагментов раскладки" value={num(stats.pieces)}/></div>
+     <div className="estimate-note">Эскизные значения по переднему фасаду; монтажные отходы и доборные элементы не рассчитаны.</div>
+    </div>:<div className="inspector-scroll">
+     <div className="property-section"><span>НАЗНАЧЕННЫЙ МАТЕРИАЛ</span><ChevronDown size={15}/></div>
+     <div className="selected-finish"><span style={{background:activeMaterial.color}}/><div><b>{activeMaterial.name}</b><small>{activeMaterial.manufacturer}<br/>{activeMaterial.sku}</small></div></div>
+     <div className="property-row"><span>Roughness</span><strong>{activeMaterial.roughness.toFixed(2)}</strong></div>
+     <div className="property-row"><span>Metallic</span><strong>{activeMaterial.metalness.toFixed(2)}</strong></div>
+     <div className="property-section bordered"><span>КАРТЫ PBR</span><ChevronDown size={15}/></div>
+     {(["base","normal","roughness"] as const).map(k=><div className="map-slot" key={k}><span className="map-placeholder"><Image size={14}/></span><div><b>{k==="base"?"Base Color":k==="normal"?"Normal":"Roughness"}</b><small>{maps[selected]?.[k]?"Загружена":"Не загружена"}</small></div>{maps[selected]?.[k]&&<Check size={14}/>}</div>)}
+     <button className="wide-button" onClick={()=>textureRef.current?.click()}><Upload size={15}/> Импортировать PBR-карты</button>
+     <small className="editor-help">Имена файлов с «normal» и «roughness» автоматически заполняют соответствующие слоты.</small>
+    </div>}
+    <div className="inspector-action">
+     <button className="wide-button" onClick={()=>fileRef.current?.click()}><Upload size={15}/> Импорт CAD / BIM</button>
+     {imported&&<button className="wide-button subtle" onClick={resetScene}><RotateCcw size={15}/> Открыть демонстрационный дом</button>}
+     {report&&<p className="editor-help">{report.meshCount} mesh · исходные размеры: {report.originalSize.map(x=>x.toFixed(2)).join(" × ")} единиц. {report.note}</p>}
+     <button className="export-button" onClick={exportScene}><FileJson size={15}/> Экспорт проекта / JSON <ArrowDownToLine size={14}/></button>
+    </div>
+   </aside>}
+  </div> :
+  <div className="home-main">
+   <div className="home-topline"><span>FORMA HOME / CONFIGURATOR</span><span><i/> ИНТЕРАКТИВНЫЙ ПРОЕКТ</span></div>
+   <div className="home-heading"><div><div className="eyebrow">АРХИТЕКТУРА · МАТЕРИАЛЫ · ТЕХНОЛОГИИ</div><h1>Ваш дом. <span>В вашем материале.</span></h1><p>Выбирайте фактуры реальных фасадных систем и оценивайте сочетания на объёмной модели.</p></div><div className="home-heading-actions"><button onClick={saveVariant}><Plus size={15}/> Сохранить вариант</button><button onClick={capture}><Camera size={15}/> Снимок PNG</button></div></div>
+   <div className="home-content">
+    <main className="home-preview" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(!busy)void upload(Array.from(e.dataTransfer.files))}}>
+     {scene}
+     <div className="home-preview-label"><div className="preview-label-kicker">DESIGN SERIES / 001</div><b>Scandinavian Residence</b><span>10,8 × 8,2 м · демонстрационная модель</span></div>
+     <div className="home-view-tabs">{cameraButtons.map(([id,label])=><button key={id} onClick={()=>setCameraPreset(id)} className={cameraPreset===id?"active":""}>{label}</button>)}</div>
+     <div className="home-preview-bottom">
+      <div className="home-lighting"><Sun size={15}/><select aria-label="Освещение" value={environment} onChange={e=>setEnvironment(e.target.value as EnvironmentMode)}><option value="daylight">Ясный день</option><option value="overcast">Пасмурно</option><option value="evening">Вечерний свет</option></select></div>
+      <div className="home-compare"><button className={baseComparison?"active":""} onClick={()=>setBaseComparison(x=>!x)}>{baseComparison?"Исходный вариант":"Сравнить «до»"}</button><span>Drag to rotate · Scroll to zoom</span></div>
+     </div>
+     {busy&&<div className="busy-overlay"><div className="loading-ring"/><b>Загружаем 3D</b><small>{stage}</small></div>}
+    </main>
+    <aside className="home-material-panel">
+     <div className="home-panel-index">01 / МАТЕРИАЛЫ ЗДАНИЯ</div>
+     <h2>Подберите отделку</h2>
+     <p className="home-panel-description">Выберите конструкцию, затем материал. Изменения сразу отображаются на доме.</p>
+     <div className="home-zone-picker">{ZONES.map(z=><button key={z} className={selected===z?"active":""} onClick={()=>setSelected(z)}><span style={{backgroundColor:getMaterial(config.zoneMaterials[z]).color}}/>{ZONE_NAME[z]}<ChevronRight size={15}/></button>)}</div>
+     <div className="home-palette-header"><span>КОЛЛЕКЦИЯ / {chip(selected)}</span><span>{MATERIALS.length} вариантов</span></div>
+     <div className="home-palette">{MATERIALS.map(m=><MaterialCard key={m.id} material={m} active={config.zoneMaterials[selected]===m.id} onClick={()=>applyFinish(m.id)}/>)}</div>
+     <div className="home-spec"><div><span>Выбранный материал</span><b>{activeMaterial.name}</b></div><div><span>Артикул</span><b>{activeMaterial.sku}</b></div><div><span>Ориентир по материалу</span><b>{currency(activeMaterial.price)} ₽/м²</b></div></div>
+     <button className="home-primary" onClick={saveVariant}><Plus size={15}/> Сохранить концепцию <ArrowRight size={16}/></button>
+     <p className="home-footnote">Каталог демонстрационный. Стоимость приблизительная, не является офертой.</p>
+    </aside>
+   </div>
+   <div className="home-bottom">
+    <div className="home-bottom-heading"><span>02 / СОХРАНЁННЫЕ КОНЦЕПЦИИ</span><button onClick={()=>fileRef.current?.click()}><Upload size={15}/> Загрузить свой проект</button></div>
+    <div className="variant-list">
+     <button className="variant-default" onClick={()=>{setConfig(copyConfig(INITIAL));setBaseComparison(false)}}><span className="variant-color-sample" style={{background:"#ab886b"}}/><div><b>Исходная концепция</b><small>FORMA / STUDIO HOUSE</small></div><ArrowRight size={16}/></button>
+     {variants.map(v=><div className="variant-card" key={v.id}><button onClick={()=>{setConfig(copyConfig(v.config));setBaseComparison(false);setNotice("Концепция открыта.")}}><span className="variant-color-sample" style={{background:getMaterial(v.config.zoneMaterials.facade).color}}/><span><b>{v.name}</b><small>{getMaterial(v.config.zoneMaterials.facade).sku}</small></span></button><button className="variant-delete" title="Удалить" onClick={()=>setVariants(x=>x.filter(t=>t.id!==v.id))}><X size={14}/></button></div>)}
+     {!variants.length&&<div className="variant-empty">Ваши варианты отделки появятся здесь после сохранения.</div>}
+    </div>
+    {catalog.length>0&&<div className="catalog-row"><span>МАТЕРИАЛЫ ИЗ STUDIO</span>{catalog.map(x=><button key={x.id} onClick={()=>{setConfig(copyConfig(x.config));setBaseComparison(false);setNotice("Конфигурация Studio применена.")}}>{x.name} <ArrowRight size={13}/></button>)}</div>}
+   </div>
+  </div>}
+  {notice&&<div role="status" className="notice"><Info size={16}/><span>{notice}</span><button title="Закрыть" onClick={()=>setNotice("")}><X size={14}/></button></div>}
+ </div>;
 }
