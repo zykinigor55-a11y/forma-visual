@@ -26,7 +26,7 @@ function CameraController({preset,width,depth}:{preset:CameraPreset;width:number
  const {camera,controls,size}=useThree();
  useEffect(()=>{
   const aspect=size.width/Math.max(1,size.height);
-  const narrowFactor=aspect<1.2?Math.min(2.7,1.8/Math.max(.5,aspect)):1;
+  const narrowFactor=aspect<1.2?Math.min(1.85,1.25/Math.max(.5,aspect)):1;
   const distance=Math.max(width,depth)*1.65*narrowFactor;
   const positions:Record<CameraPreset,[number,number,number]>={
    perspective:[distance*.82,distance*.54,distance*.98],
@@ -67,7 +67,7 @@ function Building({config,mats,selected,onSelect,mode}:{config:Config;mats:Finis
  <group key={key} position={[x,elevation+y,z]} rotation={[0,rotationY,0]} onClick={e=>trigger(e,"frames")}>
   <mesh material={mats.frames} castShadow><boxGeometry args={[sw,sh,.125]}/></mesh>
   <mesh position={[0,0,.067]}><boxGeometry args={[Math.max(.1,sw-.145),Math.max(.1,sh-.145),.014]}/>
-   <meshPhysicalMaterial color={kind==="door"?"#374147":"#7192a2"} metalness={.36} roughness={.14} transparent opacity={.95} clearcoat={.8} clearcoatRoughness={.15}/>
+   <meshPhysicalMaterial color={kind==="door"?"#374147":"#586f7b"} metalness={.22} roughness={.1} transparent opacity={.94} clearcoat={.92} clearcoatRoughness={.15}/>
   </mesh>
   {kind==="window"&&<><mesh position={[0,0,.086]} material={mats.frames}><boxGeometry args={[.042,sh-.13,.03]}/></mesh>
    <mesh position={[0,0,.087]} material={mats.frames}><boxGeometry args={[sw-.13,.033,.025]}/></mesh>
@@ -125,19 +125,6 @@ function Building({config,mats,selected,onSelect,mode}:{config:Config;mats:Finis
   <mesh position={[0,-.085,0]} receiveShadow rotation={[-Math.PI/2,0,0]}>
     <planeGeometry args={[180,180]}/><meshStandardMaterial color={mode==="studio"?"#e8ebee":"#e0e5e0"} roughness={1}/>
   </mesh>
-  {mode==="home"&&<group>
-    {[-1,1].map(side=><group key={side} position={[side*(w*.54+2),0,d/2+1.9]}>
-     {Array.from({length:42},(_,i)=>{
-       const angle=i*2.3999632,rad=Math.sqrt((i+.5)/42)*1.75;
-       const xx=Math.cos(angle)*rad,zz=Math.sin(angle)*rad;
-       const height=.25+(i%6)*.048;
-       return <mesh key={i} position={[xx,height/2,zz]} rotation={[(i%3-1)*.17,angle,(i%5-2)*.15]} castShadow>
-        <coneGeometry args={[.033+(i%3)*.009,height,5]}/>
-        <meshStandardMaterial color={i%4===0?"#667f6b":i%3===0?"#778e77":"#8da08b"} roughness={.99} side={THREE.DoubleSide}/>
-       </mesh>;
-     })}
-    </group>)}
-  </group>}
   {mode==="studio"&&selected==="facade"&&<group position={[0,elevation+h/2,d/2+.235]}>
    {[-1,1].map(v=><mesh key={"vertical-edge"+v} position={[v*w/2,0,0]}>
     <boxGeometry args={[.018,h+.04,.018]}/><meshBasicMaterial color="#7b9fb8" depthTest={false}/>
