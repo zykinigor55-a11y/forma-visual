@@ -90,6 +90,7 @@ async function analyze(input){
   });
   if(!response.ok){const txt=await response.text();throw new Error(`AI API: ${response.status} ${txt.slice(0,180)}`);}
   const payload=await response.json();
+  console.log('[FORMA_MODEL_SHAPE]',JSON.stringify({finishReason:payload?.choices?.[0]?.finish_reason,rawType:typeof payload?.choices?.[0]?.message?.content,contentLength:String(payload?.choices?.[0]?.message?.content||'').length,preview:String(payload?.choices?.[0]?.message?.content||'').slice(0,420),completionTokens:payload?.usage?.completion_tokens||null}));
   const answer=tryExtractJson(payload?.choices?.[0]?.message?.content);
   return {available:true,result:{
     architecture:textLimited(answer.architecture,240),
