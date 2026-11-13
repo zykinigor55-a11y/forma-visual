@@ -73,11 +73,18 @@ function uploadJob(image,project){
 }
 async function trackJob(jobId){
   const started=Date.now();
+  let previousPhase='',phaseStarted=started;
+  const upperBounds={vision:40,structure:56,brief:62,search:76,ranking:91,scene:98};
   while(Date.now()-started<6*60*1000){
     const job=await requestJson('/api/jobs/'+encodeURIComponent(jobId),{cache:'no-store'});
-    showProgress(job.progress||12,job.message);
+    if(job.phase!==previousPhase){previousPhase=job.phase;phaseStarted=Date.now();}
+    const base=Number(job.progress||12);
+    const cap=upperBounds[job.phase]||base;
+    // Approximate progress within confirmed milestones; never reach 100 before completion.
+    const estimate=job.status==='running'?Math.min(cap,base+Math.floor((Date.now()-phaseStarted)/2600)):base;
+    showProgress(estimate,job.message);
     if(job.status==='finished')return job;
-    await new Promise(resolve=>setTimeout(resolve,1400));
+    await new Promise(resolve=>setTimeout(resolve,1900));
   }
   throw new Error('Не удалось получить результат анализа. Обновите страницу и повторите попытку.');
 }
@@ -260,6 +267,7 @@ async function updateImage(file){
     if(loadId!==state.loadId)return;
     state.file=file;state.image=modelImage;
     state.analysis=null;state.winner=null;state.curation=null;state.prompt='';
+    state.progressPct=0;$('#processingProgress').hidden=true;
     $('#shotPlan').hidden=true;
     $('#projectPreview').src=modelImage;$('#projectPreview').hidden=false;$('#emptyScene').hidden=true;
     $('#dropTitle').textContent='Заменить изображение';$('#dropHint').textContent='Нажмите, чтобы загрузить другое';
