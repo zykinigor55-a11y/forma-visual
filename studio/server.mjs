@@ -90,7 +90,6 @@ async function analyze(input){
   });
   if(!response.ok){const txt=await response.text();throw new Error(`AI API: ${response.status} ${txt.slice(0,180)}`);}
   const payload=await response.json();
-  console.log('[FORMA_MODEL_SHAPE]',JSON.stringify({finishReason:payload?.choices?.[0]?.finish_reason,rawType:typeof payload?.choices?.[0]?.message?.content,contentLength:String(payload?.choices?.[0]?.message?.content||'').length,preview:String(payload?.choices?.[0]?.message?.content||'').slice(0,420),completionTokens:payload?.usage?.completion_tokens||null}));
   const answer=tryExtractJson(payload?.choices?.[0]?.message?.content);
   return {available:true,result:{
     architecture:textLimited(answer.architecture,240),
@@ -292,25 +291,4 @@ const server=http.createServer(async(req,res)=>{
     return json(res,405,{error:'Метод не поддерживается'});
   }catch(e){json(res,e.status||502,{error:errorOf(e)});}
 });
-// BEGIN TEMP E2E DIAGNOSTIC — automatically removed after inspection
-if(AI_KEY && SEARCH_ENABLED){
- (async()=>{
-  const input={image:'data:image/jpeg;base64,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',project:{type:'Современный барнхаус',materials:'dark timber and glass',description:'Preserve geometry and camera'}};
-  try {
-   const a=await analyze(input);
-   console.log('[FORMA_E2E_ANALYZE]',JSON.stringify({available:a.available,hasArchitecture:Boolean(a.result?.architecture),hasQuery:Boolean(a.result?.query),choice:a.result?.choice||null,confidence:a.result?.confidence||null}));
-   const q=a.result?.query || 'modern timber residence architectural photography daylight';
-   const f=await searchSources(q);
-   console.log('[FORMA_E2E_SEARCH]',JSON.stringify({available:f.available,provider:f.provider,total:f.results?.length||0,domains:f.sources?.map(x=>({id:x.id,count:x.count,status:x.status}))}));
-   if(f.results?.length){
-    const d=await direct({...input,query:q});
-    console.log('[FORMA_E2E_DIRECT]',JSON.stringify({available:d.available,source:d.reference?.source||null,daylight:d.direction?.lighting||null,hasFocalPoint:Boolean(d.direction?.focalPoint),hasStory:Boolean(d.direction?.story),reasonCategory:d.available?'selected':'not-selected'}));
-   }
-  } catch(e){
-    let message=String(e?.message||'unknown');message=message.replace(/sk-[A-Za-z0-9_-]+/g,'[REDACTED]').slice(0,250);
-    console.log('[FORMA_E2E_ERROR]',JSON.stringify({message}));
-  }
- })();
-}
-// END TEMP E2E DIAGNOSTIC
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
