@@ -660,4 +660,26 @@ const server=http.createServer(async(req,res)=>{
 });
 
 
+// BEGIN ONE-TIME GOOGLE LENS PROVIDER COMPATIBILITY CHECK
+if(SERPER_KEY){
+  (async()=>{
+    try{
+      const source='https://media.architecturaldigest.com/photos/568b0318b313ecbd18115a7a/master/w_1024%2Cc_limit/architecture-on-the-rocks-01.jpg';
+      const start=Date.now();
+      const response=await fetch('https://google.serper.dev/lens',{
+        method:'POST',headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
+        body:JSON.stringify({url:source,gl:'us',hl:'en'}),signal:timeout(35000)
+      });
+      const parsed=await response.json().catch(()=>({}));
+      console.log('[FORMA_LENS_PROVIDER_CHECK]',JSON.stringify({
+        http:response.status,elapsedMs:Date.now()-start,
+        fields:Object.keys(parsed||{}).slice(0,12),
+        visualMatches:parsed?.visualMatches?.length||parsed?.visual_matches?.length||0,
+        resultCount:parsed?.results?.length||0,
+        error:response.ok?null:textLimited(parsed?.message||parsed?.error?.message||parsed?.error,120)
+      }));
+    }catch(error){console.log('[FORMA_LENS_PROVIDER_CHECK]',JSON.stringify({error:error?.name==='TimeoutError'?'timeout':'connection-failure'}));}
+  })();
+}
+// END ONE-TIME GOOGLE LENS PROVIDER COMPATIBILITY CHECK
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
