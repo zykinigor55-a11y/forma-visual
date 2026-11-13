@@ -1,0 +1,33 @@
+name: DOM.PRIMERKA · staging API tests
+
+on:
+  push:
+    branches:
+      - feature/dom-primerka-platform
+    paths:
+      - "primerka/**"
+      - "server.mjs"
+      - ".github/workflows/dom-primerka-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Node 22 · roles, tenant isolation and projects
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax
+        run: |
+          node --check server.mjs
+          node --check primerka/api.mjs
+          node --check primerka/portal.js
+          node --check primerka/tests/api.test.mjs
+      - name: Integration tests (no external API)
+        run: node --test primerka/tests/api.test.mjs
