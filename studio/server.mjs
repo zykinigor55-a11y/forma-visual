@@ -687,4 +687,18 @@ if(SERPER_KEY){(async()=>{
  }
 })()}
 // END ONE-TIME IMAGE SERP QUALITY PROBE
+// BEGIN ONE-TIME BEHANCE OEMBED TEST
+void (async()=>{
+  const target=new URL('https://www.behance.net/services/oembed');
+  target.searchParams.set('url','https://www.behance.net/gallery/255467603/The-Understorey');
+  target.searchParams.set('format','json');
+  try{
+    const r=await fetch(target,{headers:{'accept':'application/json','user-agent':'Mozilla/5.0'},signal:timeout(12000)});
+    const p=await r.json().catch(()=>({}));
+    console.log('[FORMA_OEMBED_PROBE]',JSON.stringify({http:r.status,keys:Object.keys(p).slice(0,12),
+      hasThumb:!!p.thumbnail_url,thumbHost:(()=>{try{return new URL(p.thumbnail_url).hostname}catch{return ''}})(),
+      author:textLimited(p.author_name,50),title:textLimited(p.title,70)}));
+  }catch(e){console.log('[FORMA_OEMBED_PROBE]',JSON.stringify({error:e?.name==='TimeoutError'?'timeout':'network'}))}
+})();
+// END ONE-TIME BEHANCE OEMBED TEST
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
