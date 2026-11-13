@@ -134,6 +134,7 @@ function showWinner(result) {
     return false;
   }
   state.winner = ref;
+  state.suggestedRef = null;
   state.curation = result.direction;
   $('#referenceGrid').classList.remove('is-director-only');
   $('#bestSourceLink').hidden=false;
@@ -169,24 +170,34 @@ function showWinner(result) {
 function showDirectorOnly(result){
   const shot=result?.direction;
   if(!shot)return false;
+  const source=result.reference;
+  const url=safeExternalUrl(source?.link);
   state.winner=null;
+  state.suggestedRef=url?{...source,link:url}:null;
   state.curation=shot;
   $('#referenceGrid').hidden=false;
   $('#referenceGrid').classList.add('is-director-only');
   $('#refHelp').hidden=true;
-  $('#bestSourceLink').hidden=true;
-  $('#refsLabel').textContent='01 / АВТОРСКАЯ ПОСТАНОВКА БЕЗ ФОТОРЕФЕРЕНСА';
-  $('#bestTitle').textContent='Свет, окружение и подача для твоего дома';
-  $('#bestReason').textContent=(result.message||'Фотографически подходящий референс не подтверждён.')+' Не изменяем геометрию и ракурс исходного здания.';
-  $('#bestLighting').textContent=shot.lightingDescription||'Выразительный естественный дневной свет';
-  $('#bestEnvironment').textContent=shot.environment||'Индивидуальный ландшафт по архитектуре';
-  $('#bestComposition').textContent=shot.composition||'Исходный ракурс и перспектива неизменны';
+  $('#refsLabel').textContent=url?'01 / ПРИМЕР ПО ФОРМЕ + АВТОРСКАЯ ПОДАЧА':'01 / ПОСТАНОВКА БЕЗ ФОТОРЕФЕРЕНСА';
+  const refLink=$('#bestSourceLink');
+  refLink.hidden=!url;
+  if(url){
+    refLink.href=url;
+    refLink.textContent='Открыть пример на '+String(source.sourceLabel||'Behance')+' ↗';
+  }
+  $('#bestTitle').textContent=url?'Похожая форма. Индивидуальная подача.':'Свет, окружение и подача для твоего дома';
+  $('#bestReason').textContent=url?
+    'Публикация подобрана ориентировочно по форме и описанию. Фотография и освещение этого проекта не проверены. '+String(result.message||'Свет и окружение создаются отдельно для твоего дома.') :
+    (result.message||'Фотографически подходящий референс не подтверждён.')+' Геометрия и ракурс твоего здания остаются исходными.';
+  $('#bestLighting').textContent=shot.lightingDescription||'Естественный дневной свет';
+  $('#bestEnvironment').textContent=shot.environment||'Индивидуальное окружение под характер дома';
+  $('#bestComposition').textContent=shot.composition||'Исходная перспектива сохраняется';
   $('#shotPlan').hidden=false;
-  $('#bestFocalPoint').textContent=shot.focalPoint||'Архитектура — основной акцент';
-  $('#bestStory').textContent=shot.story||'Съёмка при естественном дневном свете';
-  $('#bestForeground').textContent=shot.foreground||'Деликатный первый план без перекрытия здания';
-  $('#bestMiddleGround').textContent=shot.middleGround||'Дом и участок в естественном масштабе';
-  $('#bestBackground').textContent=shot.background||'Дальний фон создаёт правдоподобную глубину';
+  $('#bestFocalPoint').textContent=shot.focalPoint||'Архитектура — главная тема кадра';
+  $('#bestStory').textContent=shot.story||'Профессиональная дневная фотография';
+  $('#bestForeground').textContent=shot.foreground||'Передний план не перекрывает дом';
+  $('#bestMiddleGround').textContent=shot.middleGround||'Масштабная связь дома с участком';
+  $('#bestBackground').textContent=shot.background||'Правдоподобный дальний план';
   $('#autoDirection').textContent=MODES[shot.lighting]?.name||MODES.soft.name;
   $('#directionReason').textContent=shot.reason||'Арт-дирекшн по исходной архитектуре';
   $('#directionTag').textContent='ДНЕВНАЯ ПОСТАНОВКА / АВТОМАТИЧЕСКИ';
@@ -242,6 +253,8 @@ Light treatment: ${chosen.lightingDescription || mode.lighting}
 Material and colour balance: ${chosen.palette || 'restrained premium neutral grade'}
 Camera treatment: ${chosen.camera || 'preserve original viewpoint'}` : directed ? `PROPOSED ORIGINAL ART DIRECTION — NO PHOTO REFERENCE VERIFIED
 The following scene concept was developed only from the UPLOADED HOUSE, NOT from any supposedly selected source photo. Never invent an external reference.
+${state.suggestedRef ? `SIMILAR-FORM PROJECT PAGE ONLY (metadata match, image and daylight not verified): ${state.suggestedRef.sourceLabel} — ${state.suggestedRef.link}
+Use this page solely as optional broad massing inspiration. Do not copy its house, geometry, materials, windows or lens; all daylight staging below is original.` : 'No verified source page was selected.'}
 Daylight lighting: ${chosen.lightingDescription || mode.lighting}
 Camera and composition (unchanged): ${chosen.composition || a.composition}
 Architectural focal point: ${chosen.focalPoint || a.architecture}
@@ -307,6 +320,7 @@ async function updateImage(file){
     const modelImage=await prepareImage(file);
     if(loadId!==state.loadId)return;
     state.file=file;state.image=modelImage;
+    state.suggestedRef=null;
     state.analysis=null;state.winner=null;state.curation=null;state.prompt='';
     state.progressPct=0;$('#processingProgress').hidden=true;
     $('#shotPlan').hidden=true;
@@ -332,7 +346,7 @@ async function runProject(event){
   if(state.working)return;
   if(!state.image){alertStatus('Сначала загрузите изображение дома.','error');return;}
   const project=collectProject();
-  state.winner=null;state.curation=null;state.analysis=null;state.isVisualAnalysis=false;
+  state.winner=null;state.suggestedRef=null;state.curation=null;state.analysis=null;state.isVisualAnalysis=false;
   state.progressPct=0;
   setRecommendationMessage('Готовим анализ и поиск профессиональных референсов…','AI ART DIRECTOR');
   setBusy(true);
@@ -349,7 +363,9 @@ async function runProject(event){
       $('#autoDirection').textContent=suggested.name;
       $('#directionReason').textContent=state.analysis.reason||'Индивидуальная дневная постановка';
       $('#directionTag').textContent='ДЕНЬ / АВТОМАТИЧЕСКИ';
-      if(job.curation?.available&&job.curation.reference&&job.curation.direction&&showWinner(job.curation)){
+      if(job.curation?.metadataOnly&&job.curation.direction&&showDirectorOnly(job.curation)){
+        alertStatus('Найден пример со сходной формой. Подготовлен независимый дневной арт-дирекшн для твоего дома.','success');
+      }else if(job.curation?.available&&job.curation.reference?.thumbnail&&job.curation.direction&&showWinner(job.curation)){
         alertStatus(job.curation.matchLevel==='approximate'?'Подобран референс по похожей форме — свет, окружение и подача адаптированы к твоему дому.':'Готово: выбран дневной референс и подготовлен профессиональный промпт.','success');
       }else if(job.curation?.direction&&showDirectorOnly(job.curation)){
         alertStatus('Архитектура проанализирована. Подобран индивидуальный свет и окружение без неподтверждённой фотографии.','success');

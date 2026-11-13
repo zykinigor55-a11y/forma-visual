@@ -70,5 +70,5 @@
 .best-reference.is-director-only{grid-template-columns:minmax(0,1fr)}
 .best-reference.is-director-only .best-photo{display:none}
 .best-reference.is-director-only .best-explanation{max-width:950px;width:100%;padding:38px 42px}
-.best-reference.is-director-only #bestSourceLink{display:none}
+.best-reference.is-director-only #bestSourceLink[hidden]{display:none}
 @media(max-width:700px){.best-reference.is-director-only .best-explanation{padding:25px 21px}}
