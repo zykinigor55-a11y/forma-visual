@@ -660,4 +660,31 @@ const server=http.createServer(async(req,res)=>{
 });
 
 
+// BEGIN ONE-TIME IMAGE SERP QUALITY PROBE
+if(SERPER_KEY){(async()=>{
+ const qs=[
+  'site:behance.net/gallery photorealistic architectural visualization house exterior overcast fog cinematic light',
+  '"Dark Clearing" "ANT Archviz" behance architectural visualization'
+ ];
+ for(const [n,q] of qs.entries()){
+   try{
+     const response=await fetch('https://google.serper.dev/images',{
+       method:'POST',headers:{'X-API-KEY':SERPER_KEY,'Content-Type':'application/json'},
+       body:JSON.stringify({q,num:10,hl:'en',gl:'us'}),signal:timeout(16000)
+     });
+     const d=await response.json().catch(()=>({}));
+     console.log('[FORMA_IMAGES_QUALITY_PROBE]',JSON.stringify({
+       n,http:response.status,count:d?.images?.length||0,err:response.ok?null:textLimited(d?.message||d?.error?.message||d?.error,150),
+       sample:(d?.images||[]).slice(0,10).map(x=>({
+         title:textLimited(x.title,70),site:textLimited(x.source,42),
+         linkHost:(()=>{try{return new URL(x.link).hostname}catch{return ''}})(),
+         linkPath:(()=>{try{return new URL(x.link).pathname.slice(0,70)}catch{return ''}})(),
+         imageHost:(()=>{try{return new URL(x.imageUrl).hostname}catch{return ''}})(),
+         hasThumb:!!x.thumbnailUrl,width:x.imageWidth,height:x.imageHeight
+       }))
+     }));
+   }catch(e){console.log('[FORMA_IMAGES_QUALITY_PROBE]',JSON.stringify({n,err:e?.name==='TimeoutError'?'timeout':'network'}))}
+ }
+})()}
+// END ONE-TIME IMAGE SERP QUALITY PROBE
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
