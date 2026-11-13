@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101214">
-  <meta name="description" content="FORMA STUDIO — интеллектуальный арт-директор для архитектурной визуализации. Анализ архитектуры, автоматический выбор лучшей постановки кадра и дневного света, промпт для Nano Banana.">
+  <meta name="description" content="FORMA STUDIO — фотореалистичные архитектурные референсы Behance и ANT: солнце, пасмурный день, ранний утренний синий час. Исходная геометрия и камера сохраняются.">
   <title>FORMA STUDIO — Architectural Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +34,7 @@
       <div class="main-content">
         <section class="hero">
           <div class="eyebrow"><span class="eyebrow-line"></span> YOUR ARCHITECTURAL ART DIRECTOR</div>
-          <div class="hero-grid"><div><h1>Форма. Свет.<br><em>Впечатление.</em></h1><p class="hero-lead">Из архитектурной модели — в выразительную фотографию. Анализируем архитектуру, изучаем профессиональные работы и автоматически выбираем одну выразительную постановку кадра — без ночных сцен.</p></div><div class="hero-aside"><span class="hero-big-number">01<span>/</span>AI</span><p>Behance и ANT Archviz в фоновом режиме.<br>Одна авторская постановка сцены.<br>Геометрия неизменна.</p><span class="hero-aside-line"></span></div></div>
+          <div class="hero-grid"><div><h1>Форма. Свет.<br><em>Впечатление.</em></h1><p class="hero-lead">Из модели — в архитектурную фотографию. Отбираем лучшие примеры фотореализма, естественного света и художественной подачи. Солнце, пасмурный день и ранний синий час — без изменения геометрии.</p></div><div class="hero-aside"><span class="hero-big-number">01<span>/</span>AI</span><p>Проверенные работы Behance и ANT.<br>Фотографический реализм — прежде сходства.<br>Геометрия неизменна.</p><span class="hero-aside-line"></span></div></div>
         </section>
         <section class="workspace" id="project">
           <div class="section-heading"><div><span class="micro">01 / PROJECT INPUT</span><h2>Загрузите архитектуру</h2></div><span class="section-note">ГЕОМЕТРИЯ БЕЗ ИЗМЕНЕНИЙ</span></div>
@@ -51,12 +51,19 @@
               <div class="panel-header"><div><span class="micro">PROJECT PARAMETERS</span><h3>Параметры проекта</h3></div><span class="panel-icon">↗</span></div>
               <label for="buildingType">ТИП АРХИТЕКТУРЫ</label>
               <select id="buildingType" name="buildingType"><option value="Определить по изображению">Определить автоматически</option><option value="Тёплый дом из клеёного бруса">Дом из клеёного бруса</option><option value="Современный барнхаус">Современный барнхаус</option><option value="Дом из кирпича и штукатурки">Кирпич + штукатурка</option><option value="Скандинавский деревянный дом">Скандинавский деревянный дом</option><option value="Современная вилла / минимализм">Современный минимализм</option><option value="Другой жилой дом">Другой проект</option></select>
+              <label for="moodMode">СВЕТ И АТМОСФЕРА</label>
+              <select id="moodMode" name="moodMode">
+                <option value="auto">Автоматически · разные световые сценарии</option>
+                <option value="sunny">Выразительное солнце · объёмные тени</option>
+                <option value="overcast">Светлый пасмурный день · мягкая фактура</option>
+                <option value="morning_blue">Ранний синий час · перед восходом</option>
+              </select>
               <label for="materials">ФАСАД И МАТЕРИАЛЫ</label>
               <input id="materials" name="materials" maxlength="240" placeholder="Необязательно · AI определит по изображению">
               <label for="notes">ВАЖНЫЕ ДЕТАЛИ И ЗАДАЧА</label>
               <textarea id="notes" name="notes" rows="3" maxlength="900" placeholder="Необязательно · пожелания, которые нельзя менять"></textarea>
               <div class="controls-row"><div class="toggle-lock"><span class="lock-glyph">▣</span><span>Сохранить геометрию<br><small>Окна, ракурс, размеры, фасады</small></span></div><span class="locked-tag">LOCKED / ON</span></div>
-              <div class="panel-bottom"><span class="muted-caption">ПОИСК / GOOGLE LENS</span><button id="analyzeBtn" class="primary-button" type="submit">Найти по фотографии <span>↗</span></button></div>
+              <div class="panel-bottom"><span class="muted-caption">ПОИСК / GOOGLE LENS</span><button id="analyzeBtn" class="primary-button" type="submit">Найти профессиональные референсы <span>↗</span></button></div>
               <div id="processingProgress" class="processing-progress" hidden aria-live="polite">
                 <div class="progress-heading"><span>AI / PROCESSING</span><strong id="progressPercent">0%</strong></div>
                 <div class="progress-track"><div id="progressBar" class="progress-fill" role="progressbar" aria-label="Прогресс обработки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
@@ -77,7 +84,7 @@
         </section>
         <section id="references" class="references-section reveal-section">
           <div class="section-heading"><div><span class="micro">03 / AI ART DIRECTION</span><h2>Лучшее визуальное решение</h2></div><span id="refsLabel" class="section-note">АВТОМАТИЧЕСКИЙ ОТБОР</span></div>
-          <div id="refHelp" class="refs-help best-wait">Поиск выполняется непосредственно по загруженной фотографии через Google Lens. Приоритет — реальные архитектурные работы Behance и ANT. Если совпадений нет, отдельно покажем профессиональные редакционные примеры.</div>
+          <div id="refHelp" class="refs-help best-wait">Google Lens используется для контекста исходного дома. Итоговая подборка — профессиональные проекты Behance и ANT, выбранные по качеству света, фактур, окружения и художественной подачи, а не по похожести домов.</div>
           <div id="referenceGrid" class="best-reference" hidden>
             <a id="bestRefLink" class="best-photo" target="_blank" rel="noopener noreferrer" href="#references"><img id="bestRefImage" loading="lazy" referrerpolicy="no-referrer" alt="Профессиональный референс, выбранный визуальной AI-моделью"><span>01 / CURATED REFERENCE</span></a>
             <div class="best-explanation">
@@ -95,12 +102,12 @@
           </div>
         </section>
         <section id="lensResults" class="lens-section reveal-section" hidden>
-          <div class="section-heading"><div><span class="micro">VISUAL SEARCH / GOOGLE LENS</span><h2>Найдено по фотографии</h2></div><span id="lensCount" class="section-note">0 / IMAGE MATCHES</span></div>
-          <p class="lens-intro">Это реальные найденные страницы с визуально похожими изображениями. Совпадение по фото не является оценкой фотореализма или качества освещения. Откройте работы и сравните свет, материалы и подачу.</p>
+          <div class="section-heading"><div><span class="micro">CURATED / BEHANCE + ANT</span><h2>Профессиональные фотореференсы</h2></div><span id="lensCount" class="section-note">0 / IMAGE MATCHES</span></div>
+          <p class="lens-intro">Проверенные архитектурные публикации Behance и ANT: оцениваем фотореализм, объёмный свет, фактуры, атмосферу и ландшафт. Сходство архитектуры не обязательно. Просмотр проектов встроен с Behance, когда автор разрешил встраивание.</p>
           <div id="lensGrid" class="lens-grid"></div>
         </section>
         <section id="directions" class="directions-section reveal-section">
-          <div class="section-heading"><div><span class="micro">04 / FINAL DIRECTION</span><h2>Промпт для визуализации</h2></div><span id="directionTag" class="section-note">ДНЕВНОЙ СВЕТ / БЕЗ НОЧИ</span></div>
+          <div class="section-heading"><div><span class="micro">04 / FINAL DIRECTION</span><h2>Промпт для визуализации</h2></div><span id="directionTag" class="section-note">СОЛНЦЕ / ПАСМУРНО / РАННИЙ СИНИЙ ЧАС</span></div>
           <div class="director-caption"><span class="director-mark">✳</span><div><strong id="autoDirection">Свет и атмосфера подбираются автоматически</strong><p id="directionReason">Подход: исходное здание и точка камеры сохраняются, а свет, ландшафт и художественная режиссура подчиняются архитектуре.</p></div></div>
           <div class="prompt-workspace">
             <div class="prompt-topline"><div><span class="micro">FINAL OUTPUT / NANO BANANA</span><h3>Профессиональный промпт</h3></div><span id="promptState">ПРОМПТ НЕ ГОТОВ</span></div>

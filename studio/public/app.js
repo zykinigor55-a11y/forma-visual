@@ -1,5 +1,10 @@
 const $ = (selector) => document.querySelector(selector);
 const MODES = {
+  blue_morning: {
+    name: 'Ранний синий час · перед восходом',
+    lighting: 'EARLY MORNING blue hour BEFORE sunrise: a luminous soft steel-blue sky, a legible full-exposure building, cool natural skylight defining volumes, realistic blue ambient bounce, subtle warm glazing only where naturally present, deep but not black shadows. This is predawn architectural photography, NOT evening dusk, not sunset, not night, and not artificially illuminated CGI.',
+    camera: 'Professional full-frame pre-sunrise architectural photograph with a stable original camera and exact source viewpoint. Expose for readable facade materials, balanced cool skylight and believable highlights, preserve all geometry.'
+  },
   sunlit: {
     name: 'Режиссёрский солнечный свет',
     lighting: 'Distinctive late-morning or early-afternoon sunshine with believable direction, sculptural architectural shadows, legible material relief, restrained natural colour and controlled highlights. Keep all daylight, never blue hour or night.',
@@ -36,7 +41,7 @@ function setBusy(busy){
   state.working=busy;
   const button=$('#analyzeBtn');
   button.disabled=busy;
-  button.innerHTML=busy?'Обработка <span>'+state.progressPct+'%</span>':'Найти по фотографии <span>↗</span>';
+  button.innerHTML=busy?'Обработка <span>'+state.progressPct+'%</span>':'Найти профессиональные референсы <span>↗</span>';
 }
 function showProgress(value,message,finished=false){
   const percent=Math.max(0,Math.min(100,Math.round(Number(value)||0)));
@@ -89,7 +94,7 @@ async function trackJob(jobId){
   throw new Error('Не удалось получить результат анализа. Обновите страницу и повторите попытку.');
 }
 function collectProject() {
-  return {type: $('#buildingType').value, materials: $('#materials').value.trim(), description: $('#notes').value.trim(), lockGeometry: true};
+  return {type: $('#buildingType').value, materials: $('#materials').value.trim(), description: $('#notes').value.trim(), mood: $('#moodMode').value, lockGeometry: true};
 }
 function manualAnalysis(project) {
   return {
@@ -130,23 +135,41 @@ function renderLensResults(matches){
   grid.replaceChildren();
   const list=(Array.isArray(matches)?matches:[]).filter(item=>safeExternalUrl(item.link)).slice(0,8);
   region.hidden=list.length===0;
-  $('#lensCount').textContent=list.length+' / IMAGE MATCHES';
+  $('#lensCount').textContent=list.length+' / PROFESSIONAL PROJECTS';
   for(const item of list){
-    const card=document.createElement('a');
-    card.className='lens-card';
-    card.href=safeExternalUrl(item.link);
-    card.target='_blank';card.rel='noopener noreferrer';
-    const photo=document.createElement('div');photo.className='lens-thumb';
-    if(safeExternalUrl(item.thumbnail)){
+    const card=document.createElement('article');card.className='lens-card';
+    const preview=document.createElement('div');preview.className='lens-thumb';
+    let isEmbedded=false;
+    try{
+      const embed=new URL(item.embedUrl);
+      const sameGallery=embed.pathname.match(/^\/embed\/project\/(\d+)(?:\/|$)/)?.[1]===
+        new URL(item.link).pathname.match(/^\/gallery\/(\d+)(?:\/|$)/)?.[1];
+      if(embed.protocol==='https:'&&embed.hostname==='www.behance.net'&&sameGallery){
+        const frame=document.createElement('iframe');
+        frame.src=embed.href;frame.loading='lazy';
+        frame.title='Behance — '+String(item.title||'Architecture');
+        frame.referrerPolicy='strict-origin-when-cross-origin';
+        frame.setAttribute('allowfullscreen','');
+        preview.append(frame);isEmbedded=true;
+      }
+    }catch{}
+    if(!isEmbedded&&safeExternalUrl(item.thumbnail)){
       const image=document.createElement('img');image.loading='lazy';image.decoding='async';
-      image.referrerPolicy='no-referrer';image.alt=item.title||'Архитектурный референс';
-      image.src=item.thumbnail;image.onerror=()=>{image.remove();photo.textContent='ПРЕВЬЮ НЕДОСТУПНО';};
-      photo.append(image);
-    }else{photo.textContent='СМОТРЕТЬ ПРОЕКТ';}
-    const source=document.createElement('span');source.className='lens-source';source.textContent=item.sourceLabel||'Источник';
-    const title=document.createElement('strong');title.textContent=item.title||'Архитектурный проект';
-    const action=document.createElement('span');action.className='lens-go';action.textContent='Открыть публикацию ↗';
-    card.append(photo,source,title,action);grid.append(card);
+      image.referrerPolicy='no-referrer';image.alt=item.title||'Фотореалистичная архитектурная публикация';
+      image.src=item.thumbnail;
+      image.onerror=()=>{image.remove();preview.textContent='ОТКРЫТЬ ПРОЕКТ НА BEHANCE';};
+      preview.append(image);
+    }
+    if(!isEmbedded&&!preview.childElementCount)preview.textContent='ПРОСМОТРЕТЬ ПРОЕКТ ↗';
+    const source=document.createElement('span');source.className='lens-source';
+    source.textContent=(item.sourceLabel||'Behance')+' · '+(item.moodLabel||'АРХИТЕКТУРА');
+    const title=document.createElement('strong');title.textContent=item.title||'Профессиональная архитектурная фотография';
+    const caption=document.createElement('p');caption.className='lens-quality-note';
+    caption.textContent=item.description||'Референс художественной подачи; геометрия исходного дома сохраняется';
+    const link=document.createElement('a');link.className='lens-go';
+    link.href=safeExternalUrl(item.link);link.target='_blank';link.rel='noopener noreferrer';
+    link.textContent='Открыть работу на Behance ↗';
+    card.append(preview,source,title,caption,link);grid.append(card);
   }
 }
 
@@ -203,16 +226,16 @@ function showDirectorOnly(result){
   $('#referenceGrid').hidden=false;
   $('#referenceGrid').classList.add('is-director-only');
   $('#refHelp').hidden=true;
-  $('#refsLabel').textContent=url?'РЕДАКЦИОННЫЙ ПРИМЕР / НЕ СОВПАДЕНИЕ ПО ФОТО':'ПО ФОТО СОВПАДЕНИЙ НЕТ';
+  $('#refsLabel').textContent=result.searchMethod==='editorial-quality'?'ПРОФЕССИОНАЛЬНЫЙ АРТ-ДИРЕКШН / BEHANCE + ANT':url?'РЕДАКЦИОННЫЙ ПРИМЕР / НЕ СОВПАДЕНИЕ ПО ФОТО':'ПО ФОТО СОВПАДЕНИЙ НЕТ';
   const refLink=$('#bestSourceLink');
   refLink.hidden=!url;
   if(url){
     refLink.href=url;
     refLink.textContent='Открыть пример на '+String(source.sourceLabel||'Behance')+' ↗';
   }
-  $('#bestTitle').textContent=url?'Профессиональная архитектурная подача':'Дневной свет и окружение для твоего дома';
+  $('#bestTitle').textContent=url?'Фотографичный свет. Объём. Атмосфера.':'Архитектурная фото-подача для твоего дома';
   $('#bestReason').textContent=url?
-    'Публикация выбрана по редакционному описанию, а не по загруженному фото. '+String(result.message||'Свет и окружение создаются отдельно для твоего дома.') :
+    'Работа выбрана по подтверждённому авторству и профессиональному уровню публикации; архитектура может отличаться. Используем только свет, фотореализм, окружение и подачу. '+String(result.message||'') :
     (result.message||'Фотографически подходящий референс не подтверждён.')+' Геометрия и ракурс твоего здания остаются исходными.';
   $('#bestLighting').textContent=shot.lightingDescription||'Естественный дневной свет';
   $('#bestEnvironment').textContent=shot.environment||'Индивидуальное окружение под характер дома';
@@ -230,7 +253,7 @@ function showDirectorOnly(result){
 }
 function modeFromAnalysis(a) {
   // The old "cinematic" label can be returned by earlier configured models; never map it to night.
-  return ['sunlit','soft','golden','atmospheric'].includes(a?.choice) ? a.choice : 'sunlit';
+  return ['sunlit','soft','golden','atmospheric','blue_morning'].includes(a?.choice) ? a.choice : 'atmospheric';
 }
 function makePrompt(project) {
   if (!state.analysis) return;
@@ -239,6 +262,7 @@ function makePrompt(project) {
   const mode = MODES[chosen.lighting] || MODES[modeFromAnalysis(a)];
   const curated = Boolean(state.winner && state.curation);
   const directed = Boolean(state.curation);
+  const lightRule=mode===MODES.blue_morning?'Early morning BLUE HOUR before sunrise is permitted. Keep facade fully legible with natural sky exposure. Absolutely no evening, artificial dominant lighting, pitch black night or sunset.':'Bright natural light, including refined OVERCAST skies, is permitted. No underexposed night, after-sunset evening or fake neon.';
   const prompt = `FORMA STUDIO / ARCHITECTURAL EDITORIAL ART DIRECTION
 ${curated ? (state.searchMethod==='google-lens'?'GOOGLE LENS VISUAL MATCH / PROFESSIONAL QUALITY NOT VERIFIED / ORIGINAL ARCHITECTURE LOCKED':'REFERENCE SELECTION / ORIGINAL ARCHITECTURE LOCKED') : directed ? (state.isVisualAnalysis ? 'PHOTO ANALYZED / EDITORIAL STAGING WITHOUT VERIFIED REFERENCE' : 'VISUAL AI UNAVAILABLE / ART DIRECTION BASED ON USER BRIEF, NOT VERIFIED GEOMETRY') : state.isVisualAnalysis ? 'VISION ANALYSIS / NO VERIFIED REFERENCE' : 'DRAFT BRIEF / NO VISUAL AI ANALYSIS'}
 
@@ -262,7 +286,7 @@ AUTOMATICALLY CHOSEN PHOTOGRAPHIC DIRECTION
 ${mode.name}
 ${mode.lighting}
 ${mode.camera}
-Daylight only. Absolutely no night scenes, blue hour, dusk, twilight, dark evening, neon effects or artificially dominant window lighting.
+${lightRule}
 
 ${curated ? `REFERENCE-BASED ART DIRECTION (inspiration only, not geometry source)
 Published visual-search match or editorial source (NOT necessarily professional or quality-verified): ${state.winner.sourceLabel} — ${state.winner.link}
@@ -279,8 +303,8 @@ Light treatment: ${chosen.lightingDescription || mode.lighting}
 Material and colour balance: ${chosen.palette || 'restrained premium neutral grade'}
 Camera treatment: ${chosen.camera || 'preserve original viewpoint'}` : directed ? `PROPOSED ORIGINAL ART DIRECTION — NO PHOTO REFERENCE VERIFIED
 The following scene concept is a proposed artistic direction for the uploaded house. If visual AI was unavailable, it is based on USER-SUPPLIED BRIEF AND STRICT SOURCE-IMAGE PRESERVATION INSTRUCTIONS, NOT a verified reading of the image. Never invent unseen materials, geometry, site features or an external reference.
-${state.suggestedRef ? `SIMILAR-FORM PROJECT PAGE ONLY (metadata match, image and daylight not verified): ${state.suggestedRef.sourceLabel} — ${state.suggestedRef.link}
-Use this page solely as optional broad massing inspiration. Do not copy its house, geometry, materials, windows or lens; all daylight staging below is original.` : 'No verified source page was selected.'}
+${state.suggestedRef ? `PROFESSIONAL EDITORIAL STYLE REFERENCE (curated published work, not a building match): ${state.suggestedRef.sourceLabel} — ${state.suggestedRef.link}
+Use only its standards of photography, natural light, environment, material realism, and artistic depth. Do not copy its house geometry, window placement or camera.` : 'No verified source page was selected.'}
 Daylight lighting: ${chosen.lightingDescription || mode.lighting}
 Camera and composition (unchanged): ${chosen.composition || a.composition}
 Architectural focal point: ${chosen.focalPoint || a.architecture}
@@ -301,7 +325,7 @@ Photo-realism is the absolute visual standard: the result must convincingly look
 High-fidelity realistic architectural photography, microtexture, physically based reflections, credible roughness, clean contours, precise optical lines, convincing exposure, realistic atmospheric depth, rich colour separation, no excessive saturation, no AI textures, no smearing. Aim for 4K-level detail, 16:9 landscape output where compatible with the input; if cropping would alter the exact original framing, preserve the source framing instead.
 
 NEGATIVES
-Night, blue-hour darkness, dusk, purple sky, fake lighting, CGI plastic trees, generic luxury stock scenery, overdone sun flares, fake haze, blurred building details, inconsistent shadows, floating plants, duplicated windows, warped straight lines, moved camera, altered floor count, invented details, watermarks or text.
+Black night scenes, evening blue hour, after-sunset darkness, neon lighting, CGI plastic trees, generic luxury stock scenery, overdone sun flares, fake haze, blurred building details, inconsistent shadows, floating plants, duplicated windows, warped straight lines, moved camera, altered floor count, invented details, watermarks or text.
 
 PRIORITIES
 1) EXACT source building and camera. 2) Context-specific editorial visual story. 3) AI-selected daylight. 4) Architectural light and composition. 5) Precise materials and photorealism.`;
@@ -378,7 +402,7 @@ async function runProject(event){
   state.winner=null;state.suggestedRef=null;state.curation=null;state.analysis=null;state.isVisualAnalysis=false;state.photoSearchConfirmed=false;state.searchMethod=null;
   $('#lensResults').hidden=true;$('#lensGrid').replaceChildren();
   state.progressPct=0;
-  setRecommendationMessage('Ищем реальные архитектурные изображения по загруженному фото…','GOOGLE LENS / ПОИСК ПО ФОТО');
+  setRecommendationMessage('Отбираем фотореалистичные архитектурные работы Behance и ANT. Сходство домов вторично.','EDITORIAL QUALITY / BEHANCE + ANT');
   setBusy(true);
   showProgress(1,'Подготавливаем фото для поиска Google Lens…');
   try{
@@ -397,12 +421,14 @@ async function runProject(event){
         $('#analysisConfidence').textContent='ИСХОДНОЕ ИЗОБРАЖЕНИЕ ИСПОЛЬЗОВАНО';
         $('#analysisReason').textContent='Поиск выполнен по загруженной фотографии. Форму дома отдельная визуальная модель не описывала.';
       }
-      renderLensResults(job.curation?.visualMatches||[]);
+      renderLensResults(job.curation?.qualityReferences||[]);
       const suggested=MODES[modeFromAnalysis(state.analysis)];
       $('#autoDirection').textContent=suggested.name;
       $('#directionReason').textContent=state.analysis.reason||'Индивидуальная дневная постановка';
       $('#directionTag').textContent='ДЕНЬ / АВТОМАТИЧЕСКИ';
-      if(job.curation?.searchMethod==='google-lens'&&job.curation.reference?.thumbnail&&job.curation.direction&&showWinner(job.curation)){
+      if(job.curation?.searchMethod==='editorial-quality'&&job.curation.direction&&showDirectorOnly(job.curation)){
+        alertStatus('Подобраны профессиональные архитектурные работы Behance и ANT. Солнечный, пасмурный и ранний синий час доступны в настройках.','success');
+      }else if(job.curation?.searchMethod==='google-lens'&&job.curation.reference?.thumbnail&&job.curation.direction&&showWinner(job.curation)){
         alertStatus('По загруженной фотографии найдены настоящие архитектурные публикации. Превью и ссылки доступны ниже.','success');
       }else if(job.curation?.metadataOnly&&job.curation.direction&&showDirectorOnly(job.curation)){
         alertStatus(job.curation.message||'Совпадений по фото нет: предложена отдельная подборка Behance / ANT.','info');

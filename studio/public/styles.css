@@ -86,3 +86,14 @@
 .lens-go{font:600 10px/1.4 var(--t);color:#425749;margin-top:auto}
 @media(max-width:1000px){.lens-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.lens-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.lens-card{padding:8px;gap:8px}.lens-card strong{font-size:11px}.lens-intro{font-size:11px}}
+
+/* Professional editorial reference embeds: Behance owns the images, source links are explicit. */
+.lens-card{cursor:default}
+.lens-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.lens-thumb{aspect-ratio:1.32/1;position:relative;background:#191f1e;min-height:180px;color:#e5e7df}
+.lens-thumb iframe{display:block;width:100%;height:100%;position:absolute;inset:0;border:0;background:#1b2321}
+.lens-quality-note{font-size:11px;line-height:1.65;color:#777e77;flex:1}
+.lens-go{display:inline-flex;text-decoration:none;border-bottom:1px solid #b6c1b7;align-self:flex-start;padding-bottom:3px}
+.lens-go:hover{color:#13281c}
+@media(max-width:940px){.lens-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.lens-grid{grid-template-columns:1fr}.lens-thumb{aspect-ratio:1.6/1;min-height:215px}.lens-card strong{font-size:14px}}
