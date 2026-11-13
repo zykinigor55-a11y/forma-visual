@@ -22,7 +22,7 @@ const MAX_ACTIVE_JOBS = 2;
 const JOB_KEEP_MS = 15 * 60 * 1000;
 // ANT is a curated and attributed subset of Behance, not a separate image-search domain.
 // Public ANT Archviz project pages were cross-checked against behance.net/designant1.
-const ANT_GALLERIES = new Set(['255467603','254721349','255956745','255105661','255284051','253353819']);
+const ANT_GALLERIES = new Set(['255467603','254721349','255956745','255105661','255284051','253353819','253000577','255105949']);
 const SITE = [
   {id:'behance', label:'Behance', domain:'behance.net', term:'architecture visualization daylight photorealistic landscape editorial'},
   {id:'ant', label:'ANT Archviz', domain:'behance.net', term:'ANT Archviz exterior daylight professional visualization'}
@@ -172,8 +172,8 @@ function filterResult(x,source){
     const link=new URL(x.url),host=link.hostname.toLowerCase();
     if(link.protocol!=='https:' || !(host===source.domain||host.endsWith('.'+source.domain)))return null;
     if(!/^\/gallery\/\d+(?:\/|$)/i.test(link.pathname))return null;
-    const photo=x.thumbnail?.src;
-    if(typeof photo!=='string'||!/^https:\/\//i.test(photo))return null;
+    const rawPhoto=x.thumbnail?.src;
+    const photo=typeof rawPhoto==='string'&&/^https:\/\//i.test(rawPhoto)?rawPhoto:null;
     const isAnt=Boolean(antGalleryFromUrl(link.href));
     // Never label unrelated Behance projects as authored by ANT.
     if(source.id==='ant'&&!isAnt)return null;
@@ -181,7 +181,8 @@ function filterResult(x,source){
       source:isAnt?'ant':'behance',
       sourceLabel:isAnt?'ANT Archviz':'Behance',
       title:textLimited(x.title,140)||'Архитектурный проект',
-      link:link.href,thumbnail:photo,confidence:'unverified-daylight',
+      description:textLimited(x.description,400),
+      link:link.href,thumbnail:photo,confidence:photo?'unverified-daylight':'metadata-only',
       verifiedAntAuthor:isAnt
     };
   }catch{return null;}
@@ -210,32 +211,26 @@ async function searchSources(rawQuery,mode='exact'){
     const unique=new Map();
     try{
       const sourceQuery=source.id==='ant'?
-        'site:behance.net ANT Archviz '+(mode==='form'?'house exterior daylight ':q+' '):
-        'site:behance.net '+q+' professional daylight architectural visualization ';
+        'site:behance.net/gallery ANT Archviz residential architecture exterior':
+        'site:behance.net/gallery '+q+' architectural visualization';
       if(SERPER_KEY){
-        const response=await fetch('https://google.serper.dev/images',{
+        // Free Serper allows max 10 operator-search results; organic results link to real Behance galleries.
+        // Google Images may ignore site: and return unrelated domains, so we do not misattribute them.
+        const response=await fetch('https://google.serper.dev/search',{
           method:'POST',headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
-          body:JSON.stringify({q:sourceQuery.slice(0,320),num:10,hl:'en',gl:'us',safe:'active'}),
+          body:JSON.stringify({q:sourceQuery.slice(0,320),num:10,hl:'en',gl:'us'}),
           signal:timeout(18_000)
         });
         if(!response.ok){
-          let detail='';try{const t=await response.json();detail=String(t?.message||t?.error||'').slice(0,150);}catch{}
+          let detail='';try{const t=await response.json();detail=String(t?.message||t?.error||'').slice(0,150)}catch{}
           return {id:source.id,label:source.label,count:0,status:'Serper HTTP '+response.status+(detail?': '+detail:''),results:[]};
         }
         const data=await response.json();
-        if(true){
-          console.log('[FORMA_SEARCH_SHAPE]',JSON.stringify({source:source.id,count:data.images?.length||0,
-            samples:(data.images||[]).slice(0,4).map(x=>({
-              landingHost:(()=>{try{return new URL(x.link).hostname}catch{return 'invalid'}})(),
-              landingPath:(()=>{try{return new URL(x.link).pathname.slice(0,80)}catch{return ''}})(),
-              imageHost:(()=>{try{return new URL(x.imageUrl).hostname}catch{return ''}})(),
-              title:String(x.title||'').slice(0,90),
-              hasThumb:Boolean(x.thumbnailUrl),hasImage:Boolean(x.imageUrl)
-            }))
-          }));
-        }
-        for(const item of Array.isArray(data.images)?data.images:[]){
-          const matched=filterResult({url:item.link,title:item.title,thumbnail:{src:item.thumbnailUrl||item.imageUrl}},source);
+        for(const item of Array.isArray(data.organic)?data.organic:[]){
+          const matched=filterResult({
+            url:item.link,title:item.title,description:item.snippet,
+            thumbnail:{src:item.thumbnailUrl||item.thumbnail||null}
+          },source);
           if(matched&&!unique.has(matched.link))unique.set(matched.link,matched);
         }
       }else if(TAVILY_KEY){
@@ -384,6 +379,17 @@ async function selectDaylightReference(input,candidates,matchContext){
     reason:safeText(reason?.[1],400)
   };
 }
+function metadataReferenceChoice(candidates,analysis){
+  if(!candidates.length)return null;
+  const shape=shapeSearchQuery(analysis);
+  const tokens=shape.toLowerCase().split(/\s+/).filter(x=>x.length>3 && !['house','architecture','daylight','modern','residential'].includes(x));
+  const scored=candidates.map(ref=>{
+    const haystack=(ref.title+' '+(ref.description||'')).toLowerCase();
+    const matches=tokens.reduce((sum,term)=>sum+(haystack.includes(term)?1:0),0);
+    return {ref,score:matches+(ref.source==='ant'?0.15:0),matches};
+  }).sort((a,b)=>b.score-a.score);
+  return scored[0]?{reference:scored[0].ref,matchCount:scored[0].matches}:null;
+}
 async function direct(input,onProgress=()=>{}){
   if(!AI_KEY||!SEARCH_ENABLED)return {available:false,message:'Для подбора нужны визуальная AI-модель и поиск Serper.'};
   if(!validImage(input?.image))throw Object.assign(new Error('Загрузите JPG, PNG или WebP.'),{status:400});
@@ -392,6 +398,21 @@ async function direct(input,onProgress=()=>{}){
   const first=await searchSources(exactQuery,'exact');
   let candidates=chooseCandidates(first.results);
   let selected=null,verdict=null,mode='exact';
+  // Serper organic provides authentic Behance gallery URLs, but often no image thumbnail.
+  // In that case only the gallery TITLE/SNIPPET is matched: never claim visual verification.
+  if(candidates.length && !candidates.some(ref=>ref.thumbnail)){
+    onProgress('search',80,'Проверяем проекты Behance и ищем сходный силуэт…');
+    const broad=await searchSources(shapeSearchQuery(analysis),'form');
+    const combined=chooseCandidates([...candidates,...broad.results]);
+    const chosen=metadataReferenceChoice(combined,analysis);
+    onProgress('scene',92,'Форма референса подобрана по описанию. Создаём художественную постановку…');
+    const direction=await generateSceneDirection(analysis,project,chosen?.reference||null,
+      'Похожая форма определена только по описанию проекта. Фотография, освещение и визуальное сходство НЕ проверены.',
+      'approximate-metadata');
+    return {available:true,reference:chosen?.reference||null,direction,matchLevel:'approximate',
+      metadataOnly:true,visualVerified:false,matchReason:'Сопоставление приблизительное: по названию и описанию публикации, без анализа фотографии.',
+      message:chosen?'Найден проект со сходными признаками формы. Свет и окружение предложены отдельно по исходному дому.':'Не найдено проекта с подтверждённой фотографией; постановка разработана по исходной архитектуре.'};
+  }
   onProgress('ranking',76,'Ищем близкую форму дома и качественное дневное окружение…');
   if(candidates.length){
     verdict=await selectDaylightReference(input,candidates,'architecture-oriented');
@@ -514,7 +535,7 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(rateLimited(req))return json(res,429,{error:'Слишком много запросов. Повторите позже.'});
     const pathName=new URL(req.url,'http://localhost').pathname;
-    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.8.0'});
+    if(req.method==='GET'&&pathName==='/api/health')return json(res,200,{status:'ok',app:'forma-studio',version:'0.9.0'});
     if(req.method==='GET'&&pathName==='/api/config')return json(res,200,{ai:!!AI_KEY,search:SEARCH_ENABLED,searchProvider:SERPER_KEY?'serper':TAVILY_KEY?'tavily':BRAVE_KEY?'brave':null,model:AI_KEY?AI_MODEL:null,sources:SITE.map(({id,label,domain})=>({id,label,domain}))});
     if(req.method==='POST'&&pathName==='/api/jobs')return json(res,202,startAnalysisJob(await bodyJson(req)));
     if(req.method==='GET'&&/^\/api\/jobs\/[a-f0-9-]{36}$/.test(pathName)){
@@ -534,51 +555,4 @@ const server=http.createServer(async(req,res)=>{
 });
 
 
-// BEGIN TEMP BEHANCE OG IMAGE PROBE
-(async()=>{
-  const url='https://www.behance.net/gallery/253000577/Timber-Apex-Concept-Visualization';
-  try{
-    const r=await fetch(url,{headers:{'user-agent':'Mozilla/5.0 (compatible; FORMA-Studio/1.0)','accept':'text/html'},signal:timeout(12000)});
-    const body=(await r.text()).slice(0,400000);
-    const meta=body.match(/<meta[^>]+(?:property|name)=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-      ||body.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']og:image["']/i);
-    console.log('[FORMA_BEHANCE_OG]',JSON.stringify({http:r.status,length:body.length,hasOg:!!meta,host:meta?new URL(meta[1].replace(/&amp;/g,'&')).hostname:null}));
-  }catch(e){console.log('[FORMA_BEHANCE_OG]',JSON.stringify({error:errorOf(e)}));}
-})();
-// END TEMP BEHANCE OG IMAGE PROBE
-// BEGIN TEMP SERPER ORGANIC SEARCH PROBE
-if(SERPER_KEY){
-  (async()=>{
-    const q='site:behance.net/gallery modern timber residence architectural visualization';
-    try{
-      const response=await fetch('https://google.serper.dev/search',{
-        method:'POST',headers:{'X-API-KEY':SERPER_KEY,'content-type':'application/json'},
-        body:JSON.stringify({q,num:10,hl:'en',gl:'us'}),signal:timeout(15000)});
-      const data=await response.json().catch(()=>({}));
-      console.log('[FORMA_ORGANIC_PROBE]',JSON.stringify({http:response.status,errors:response.ok?null:String(data.message||data.error||'').slice(0,140),
-        organicCount:data.organic?.length||0,
-        samples:(data.organic||[]).slice(0,5).map(x=>({
-          host:(()=>{try{return new URL(x.link).hostname}catch{return ''}})(),
-          path:(()=>{try{return new URL(x.link).pathname.slice(0,60)}catch{return ''}})(),
-          hasThumbnail:Boolean(x.thumbnailUrl||x.thumbnail),hasImages:Boolean(x.images),fields:Object.keys(x).slice(0,10)
-        }))
-      }));
-    }catch(err){console.log('[FORMA_ORGANIC_PROBE]',JSON.stringify({error:errorOf(err)}));}
-  })();
-}
-// END TEMP SERPER ORGANIC SEARCH PROBE
-// BEGIN TEMP ONE-TIME REFERENCE SEARCH DIAGNOSTIC
-if(SEARCH_ENABLED){
-  (async()=>{
-    try {
-      const result=await searchSources('gable timber house daylight exterior architectural editorial','form');
-      console.log('[FORMA_SEARCH_V08]',JSON.stringify({
-        provider:result.provider,mode:result.mode,total:result.results.length,
-        counts:result.sources.map(x=>({id:x.id,count:x.count,status:x.status})),
-        samples:result.results.slice(0,4).map(x=>({source:x.source,gallery:/\/gallery\/\d+/.test(x.link)}))
-      }));
-    }catch(err){console.log('[FORMA_SEARCH_V08]',JSON.stringify({error:errorOf(err)}));}
-  })();
-}
-// END TEMP ONE-TIME REFERENCE SEARCH DIAGNOSTIC
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
