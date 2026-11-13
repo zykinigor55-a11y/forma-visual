@@ -228,6 +228,8 @@ async function searchSources(rawQuery,mode='exact'){
             samples:(data.images||[]).slice(0,4).map(x=>({
               landingHost:(()=>{try{return new URL(x.link).hostname}catch{return 'invalid'}})(),
               landingPath:(()=>{try{return new URL(x.link).pathname.slice(0,80)}catch{return ''}})(),
+              imageHost:(()=>{try{return new URL(x.imageUrl).hostname}catch{return ''}})(),
+              title:String(x.title||'').slice(0,90),
               hasThumb:Boolean(x.thumbnailUrl),hasImage:Boolean(x.imageUrl)
             }))
           }));
