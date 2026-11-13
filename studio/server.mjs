@@ -520,4 +520,18 @@ const server=http.createServer(async(req,res)=>{
 });
 
 
+// BEGIN TEMP ONE-TIME REFERENCE SEARCH DIAGNOSTIC
+if(SEARCH_ENABLED){
+  (async()=>{
+    try {
+      const result=await searchSources('gable timber house daylight exterior architectural editorial','form');
+      console.log('[FORMA_SEARCH_V08]',JSON.stringify({
+        provider:result.provider,mode:result.mode,total:result.results.length,
+        counts:result.sources.map(x=>({id:x.id,count:x.count,status:x.status})),
+        samples:result.results.slice(0,4).map(x=>({source:x.source,gallery:/\/gallery\/\d+/.test(x.link)}))
+      }));
+    }catch(err){console.log('[FORMA_SEARCH_V08]',JSON.stringify({error:errorOf(err)}));}
+  })();
+}
+// END TEMP ONE-TIME REFERENCE SEARCH DIAGNOSTIC
 server.listen(PORT,'0.0.0.0',()=>console.log(`FORMA STUDIO listening on ${PORT}`));
