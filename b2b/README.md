@@ -1,10 +1,39 @@
-# FORMA B2B — Studio + Home
+# FORMA B2B · Studio + Home
 
-**Status: development prototype, NOT a deployed production system.** Two roles share a React / Three.js application, data models and material catalog.
+An architectural B2B platform under active development. **Two distinct UI workspaces share one React/Three.js engine and catalog.** No production manufacturer's backend or physically certified BIM yet.
 
-## Working locally
+## Open the interfaces
 
-Prerequisites: Node.js 22+, npm.
+On a running development site:
+
+- `?view=studio` — **FORMA B2B Studio**, manufacturer's engineering workspace.
+- `?view=home` — **FORMA B2B Home**, consumer architectural material configurator.
+
+Switch at the top of either app. Both interfaces work without a user-supplied model: a procedural demonstration house is included.
+
+## Studio — available now
+
+- Professional light CAD workspace: object tree, viewport controls, properties inspector, material tray, status bar.
+- Dimension editing in millimeters: width, wall height, building depth, facade panel width and installation seam.
+- Front and side facade panel preview with window/door opening cutouts, standing-seam gable roof, glazing and plinth.
+- Independent facade, roof, plinth and window finish slots; standard material roughness/metalness.
+- **PBR upload** in Studio: base color, normal and roughness texture files. Filename detection for `normal` and `roughness`; the rest fills base color. Stored in memory only.
+- Undo/redo (parameter history, not scene mesh changes), grid, camera presets, PNG viewport capture, JSON export.
+- Save a component into a **localStorage-only** catalog, available in Home in the same browser.
+
+## Home — available now
+
+- Large live 3D architectural preview, independent surface materials, camera presets and lighting options.
+- Compare the working facade with an ivory-plaster baseline.
+- Save up to six visual variants in local browser storage, restore or remove them.
+- Preview PNG export.
+- Pricing is purely illustrative; **not** supplier quotations or an engineering estimate.
+
+## Import support
+
+Browser import: GLB, GLTF, OBJ, FBX and ZIP packages with auxiliary model files. Server conversion support is implemented for IFC (IfcConvert), SKP (OpenSKP, version coverage varies), and BLEND (Blender), **but the conversion server is not deployed**. Open the local importer if you want to try those formats; see [import-service/README.md](import-service/README.md).
+
+## Development
 
 ```bash
 cd b2b
@@ -12,55 +41,33 @@ npm install
 npm run dev
 ```
 
-The development Vite server proxies `/api` to `http://127.0.0.1:8000`. A separate import service is required for IFC / SKP / BLEND.
-
-## Loading architectural models
-
-Open either Studio or Home, select **«Импорт модели»** or drag files into the viewport.
-
-| Format | Current import pathway | Limitations |
-| --- | --- | --- |
-| GLB | Browser, Three.js GLTFLoader | Recommended; geometry, object names and embedded PBR materials |
-| GLTF | Browser | Choose GLTF **together with** external BIN and textures, or use a ZIP containing all of them |
-| OBJ | Browser OBJLoader | Choose associated MTL/textures too, or ZIP |
-| FBX | Browser FBXLoader | Some uncommon FBX variants and texture paths may not load correctly |
-| ZIP | Browser JSZip + loaders | One GLB / GLTF / OBJ / FBX scene per archive, plus its resources |
-| IFC | Server IfcConvert -> GLB | Install IfcConvert and run the Python import service |
-| SKP | Server OpenSKP -> GLB | OpenSKP is alpha: SketchUp version coverage and fidelity must be verified |
-| BLEND | Server Blender -> GLB | Only in a trusted isolated conversion environment |
-
-For a local IFC / SKP / BLEND server:
-
 ```bash
-cd b2b/import-service
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app:app --host 127.0.0.1 --port 8000
+npm test
+npm run build
 ```
 
-For IFC, separately install the IfcConvert binary. For BLEND and server conversion of OBJ/FBX, install Blender. See [import-service/README.md](import-service/README.md) for production security restrictions.
+Browser smoke testing (Chromium required):
 
-## Working features
+```bash
+npx playwright install chromium
+npm run smoke
+```
 
-- Procedural house with gable roof, facade, windows and plinth.
-- Facade panel layout **cut around the two front window openings** in the procedural preview.
-- Select facade / roof / plinth / frames on the sample building and assign independent catalog materials.
-- Orbit / pan / zoom, import of meshes with object names, local diagnostics (mesh and triangle count, source extents).
-- Click an imported mesh, then select a material on the left to reassign its base color; other original PBR characteristics are retained where the loader exposes them. Imported files are not edited on disk.
-- Importers normalize **viewport display only**; dimensions shown for imported models are source-unit extents, not verified meters.
-- Local project JSON export; Studio publishing into localStorage for another mode in the **same browser only**.
+Screenshots are uploaded as GitHub Actions artifact `forma-b2b-visual-smoke` after browser smoke passes.
 
-## Known blockers before commercial release
+## Current limitations
 
-- Neither Studio nor Home is separately deployed, despite two role modes existing in code.
-- Render service is source code only and NOT deployed. No real-time % progress for server conversions, only stage labels.
-- No certified BIM unit/axis normalization or validation. BIM metadata extraction and revision tracking are pending.
-- Mesh selection/material assignment works only on selected imported meshes, not on whole semantic construction systems. Material editor currently changes base color, not authoring full PBR maps.
-- The procedural demo cladding has simplified corner, fastener, roof, side opening and quantity logic. Not engineering-grade layouts or estimates.
-- This release does not include cloud manufacturer accounts, shared catalog, image textures upload screen, pricing backend or Blender Cycles rendering.
-- A public conversion server requires authenticated uploads, sandboxed converter workers, persistent queue and storage, metrics and resource quotas.
+1. The included building is a visually detailed **parametric demonstration house**, not a complete engineering/BIM assembly. Panel cutting and quantities must be independently verified before construction use.
+2. PBR texture uploads and imported-model material edits are local to the browser; cloud storage and revision publishing do not exist yet.
+3. The shared materials catalog is sample data. Prices, brands, specifications and inventory are not verified suppliers.
+4. GLB/glTF preview is the scene interchange format. IFC/SKP conversion requires external binaries and a sandboxed server; tests of real source files remain outstanding.
+5. There is no server-side Blender Cycles photo renderer yet. Downloaded PNG is a **live viewport screenshot**, not a final photoreal render.
+6. Both UIs are distinct but run inside one codebase and deploy target; independent deployments and manufacturer/customer authentication follow later.
 
-## Project direction
+## Preview publication
 
-Keep GLB / glTF 2.0 as the canonical preview format, retain original source (IFC / SKP / FBX / etc) plus structured metadata for future engineering editability. Next priorities: materials PBR editor, object/zone material slots, persistent projects and backend catalog, accurate building assemblies, server-rendered photography.
+A GitHub Actions workflow [forma-b2b-preview.yml](../.github/workflows/forma-b2b-preview.yml) builds a standalone frontend and pushes it to `gh-pages`. GitHub Pages must be enabled in repository settings (Deploy from branch `gh-pages`, root) to make the preview publicly accessible. A separate Render static site could not be created because the workspace reached its service quota; existing live services were not modified.
+
+## Next milestones
+
+Real source-file validation, IFC metadata preservation, accurate facade quantities and connections, proprietary catalog/approvals, cloud storage/authentication, and Blender Cycles render workers.
