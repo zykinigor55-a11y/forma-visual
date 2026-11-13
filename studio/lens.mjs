@@ -3,6 +3,7 @@ import {createHash, randomUUID} from 'node:crypto';
 const IMAGE_TTL=3*60*1000;
 const CACHE_TTL=12*60*1000;
 const MAX_IMAGE_BYTES=3*1024*1024;
+const VERIFIED_ANT_IDS=new Set(['255467603','254721349','255956745','255105661','255284051','253353819']);
 const ARCHITECTURE=/architect|archviz|architecture|house|home|villa|residen|exterior|building|facade|timber|wooden|cottage|contemporary|modern|дом|фасад|здани|коттедж|вилл|архитект/i;
 const PHOTOGRAPHY=/photo|realistic|render|corona|visualization|sunlight|daylight|landscape|archviz|nature|lighting/i;
 
@@ -49,13 +50,15 @@ export function createLensSearcher({serperKey,origin}){
       if(/(^|\.)google\./.test(target.hostname.toLowerCase()))return null;
       const host=target.hostname.toLowerCase();
       const isBehance=/(^|\.)behance\.net$/.test(host)&&/^\/gallery\/\d+/.test(target.pathname);
+      const galleryId=isBehance?target.pathname.match(/^\/gallery\/(\d+)/)?.[1]:null;
+      const isAnt=galleryId?VERIFIED_ANT_IDS.has(galleryId):false;
       const title=String(item.title||item.description||'Архитектурная публикация').slice(0,150);
       const source=String(item.source||host).slice(0,80);
       const thumbRaw=item.thumbnailUrl||item.thumbnail||item.imageUrl||item.image||null;
       const thumb=typeof thumbRaw==='string'&&/^https:\/\//i.test(thumbRaw)?thumbRaw:null;
       const relevant=ARCHITECTURE.test(title+' '+source)||isBehance;
-      return {source:isBehance?'behance':'lens',
-        sourceLabel:isBehance?'Behance':source,
+      return {source:isAnt?'ant':isBehance?'behance':'lens',
+        sourceLabel:isAnt?'ANT Archviz':isBehance?'Behance':source,
         title,link:target.href,thumbnail:thumb,
         visualMatch:true,visualVerified:false,architectureRelated:relevant,
         selectionBasis:'google-lens-visual-match',description:'Визуальное совпадение Google Lens; качество света не проверено'};
@@ -102,7 +105,7 @@ export function createLensSearcher({serperKey,origin}){
       const relevant=all.filter(x=>x.architectureRelated);
       const candidates=relevant.length?relevant:all; // Preserve genuine visual matches even if a page title omits architectural words.
       candidates.sort((a,b)=>{
-        const score=x=>(x.source==='behance'?30:0)+(x.thumbnail?8:0)+(PHOTOGRAPHY.test(x.title)?5:0);
+        const score=x=>(x.source==='ant'?36:0)+(x.source==='behance'?30:0)+(x.thumbnail?8:0)+(PHOTOGRAPHY.test(x.title)?5:0);
         return score(b)-score(a);
       });
       const value={available:true,method:'google-lens',matches:candidates.slice(0,10),
