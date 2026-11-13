@@ -48,7 +48,7 @@ export default function App(){
  const [inspectorTab,setInspectorTab]=useState<"geometry"|"material">("geometry");
  const [cameraPreset,setCameraPreset]=useState<CameraPreset>("perspective");
  const [environment,setEnvironment]=useState<EnvironmentMode>("daylight");
- const [grid,setGrid]=useState(true),[sceneOpen,setSceneOpen]=useState(true),[inspectorOpen,setInspectorOpen]=useState(true);
+ const [grid,setGrid]=useState(true),[sceneOpen,setSceneOpen]=useState(()=>innerWidth>1050),[inspectorOpen,setInspectorOpen]=useState(()=>innerWidth>620);
  const [trayOpen,setTrayOpen]=useState(true),[search,setSearch]=useState("");
  const [history,setHistory]=useState<Config[]>([]),[future,setFuture]=useState<Config[]>([]);
  const [notice,setNotice]=useState(""),[stage,setStage]=useState(""),[busy,setBusy]=useState(false);
@@ -63,6 +63,7 @@ export default function App(){
  const activeMaterial=getMaterial(config.zoneMaterials[selected]);
  const displayedConfig=baseComparison&&view==="home"?{...config,zoneMaterials:{...config.zoneMaterials,facade:"ivory" as Finish}}:config;
  const filtered=MATERIALS.filter(m=>(m.name+" "+m.category+" "+m.sku).toLowerCase().includes(search.toLowerCase()));
+ useEffect(()=>{const sync=()=>{setSceneOpen(innerWidth>1050);setInspectorOpen(innerWidth>620)};window.addEventListener("resize",sync);return()=>window.removeEventListener("resize",sync)},[]);
  useEffect(()=>{localStorage.setItem("forma-b2b-config-v3",JSON.stringify(config))},[config]);
  useEffect(()=>{localStorage.setItem("forma-b2b-catalog-v3",JSON.stringify(catalog))},[catalog]);
  useEffect(()=>{localStorage.setItem("forma-b2b-variants-v3",JSON.stringify(variants))},[variants]);
@@ -183,7 +184,7 @@ export default function App(){
     <button className="rail-item" title="Импорт модели" onClick={()=>fileRef.current?.click()}><Upload size={19}/></button>
     <button className="rail-item" title="Экспорт JSON" onClick={exportScene}><Download size={19}/></button>
    </div>
-   {sceneOpen&&<aside className="cad-explorer">
+   {sceneOpen&&<aside className="cad-explorer mobile-open">
     <div className="panel-heading"><span>SCENE EXPLORER</span><button title="Скрыть" onClick={()=>setSceneOpen(false)}><PanelLeft size={15}/></button></div>
     <div className="explorer-tabs"><button className="active">Объекты</button><button onClick={()=>setNotice("Библиотека компонентов: используйте нижнюю панель материалов.")}>Библиотека</button></div>
     <div className="scene-search"><Search size={14}/><input placeholder="Найти объект..." aria-label="Поиск в дереве" value={search} onChange={e=>setSearch(e.target.value)}/></div>
@@ -232,7 +233,7 @@ export default function App(){
      <span className="status-right">1 UNIT = 1 M <span>·</span> DEMO GEOMETRY</span>
     </div>
    </div>
-   {inspectorOpen&&<aside className="cad-inspector">
+   {inspectorOpen&&<aside className="cad-inspector mobile-open">
     <div className="panel-heading"><span>OBJECT PROPERTIES</span><button onClick={()=>setInspectorOpen(false)} title="Скрыть"><PanelRight size={15}/></button></div>
     <div className="selected-object"><span className="obj-icon"><Box size={19}/></span><div><small>SELECTED OBJECT / {selected.toUpperCase()}</small><strong>{imported&&selectedMesh?imported.getObjectByProperty("uuid",selectedMesh)?.name||"Imported mesh":ZONE_NAME[selected]}</strong><span>ARCHITECTURAL SYSTEM</span></div></div>
     <div className="inspector-tabs"><button className={inspectorTab==="geometry"?"active":""} onClick={()=>setInspectorTab("geometry")}>Геометрия</button><button className={inspectorTab==="material"?"active":""} onClick={()=>setInspectorTab("material")}>Материал</button></div>
