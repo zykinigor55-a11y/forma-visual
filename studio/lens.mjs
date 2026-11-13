@@ -88,6 +88,7 @@ export function createLensSearcher({serperKey,origin}){
       }
       const body=await response.json();
       const raw=[
+        ...(Array.isArray(body.organic)?body.organic:[]),
         ...(Array.isArray(body.visualMatches)?body.visualMatches:[]),
         ...(Array.isArray(body.visual_matches)?body.visual_matches:[]),
         ...(Array.isArray(body.results)?body.results:[])
@@ -98,13 +99,14 @@ export function createLensSearcher({serperKey,origin}){
         if(result&&!unique.has(result.link))unique.set(result.link,result);
       }
       const all=[...unique.values()];
-      const candidates=all.filter(x=>x.architectureRelated);
+      const relevant=all.filter(x=>x.architectureRelated);
+      const candidates=relevant.length?relevant:all; // Preserve genuine visual matches even if a page title omits architectural words.
       candidates.sort((a,b)=>{
         const score=x=>(x.source==='behance'?30:0)+(x.thumbnail?8:0)+(PHOTOGRAPHY.test(x.title)?5:0);
         return score(b)-score(a);
       });
       const value={available:true,method:'google-lens',matches:candidates.slice(0,10),
-        matchCount:all.length,architectureMatchCount:candidates.length,
+        matchCount:all.length,architectureMatchCount:relevant.length,
         message:candidates.length?
           'Google Lens нашёл визуально похожие архитектурные публикации. Фото и ссылки настоящие; качество света требуется оценить отдельно.':
           'Google Lens не нашёл архитектурных совпадений. Предложим отдельные профессиональные примеры, не выдавая их за поиск по фото.'};
