@@ -462,6 +462,7 @@ const ENV_SUBTYPES = Object.freeze({
   ]
  ]
 });
+const ENV_SUBTYPE_PHOTOS = Object.freeze({"garden":["assets/thumbs/hd/env-garden.webp","assets/thumbs/natural-luxury/env-garden.webp","assets/thumbs/env-garden.jpg","assets/thumbs/hd/env-nordic.webp"],"forest":["assets/thumbs/hd/env-forest.webp","assets/thumbs/natural-luxury/env-forest.webp","assets/thumbs/env-forest.jpg","assets/thumbs/hd/env-mist.webp"],"lake":["assets/thumbs/hd/env-lake.webp","assets/thumbs/natural-luxury/env-lake.webp","assets/thumbs/env-lake.jpg","public/images/demo/background-lake-summer.webp"],"mountains":["assets/thumbs/hd/env-mountains.webp","assets/thumbs/natural-luxury/env-mountains.webp","assets/thumbs/env-mountains.jpg","assets/thumbs/hd/env-nordic.webp"],"city":["assets/thumbs/hd/env-city.webp","assets/thumbs/natural-luxury/env-city.webp","assets/thumbs/env-city.jpg","assets/thumbs/hd/env-courtyard.webp"],"courtyard":["assets/thumbs/hd/env-courtyard.webp","assets/thumbs/natural-luxury/env-courtyard.webp","assets/thumbs/env-courtyard.jpg","assets/thumbs/hd/season-spring.webp"],"nordic":["assets/thumbs/hd/env-nordic.webp","assets/thumbs/natural-luxury/env-nordic.webp","assets/thumbs/env-nordic.jpg","assets/thumbs/hd/env-mist.webp"],"coast":["assets/thumbs/hd/env-coast.webp","assets/thumbs/natural-luxury/env-coast.webp","assets/thumbs/env-coast.jpg","assets/thumbs/hd/env-lake.webp"],"minimal":["assets/thumbs/hd/env-minimal.webp","assets/thumbs/natural-luxury/env-minimal.webp","assets/thumbs/env-minimal.jpg","assets/thumbs/hd/env-garden.webp"],"mist":["assets/thumbs/hd/env-mist.webp","assets/thumbs/natural-luxury/env-mist.webp","assets/thumbs/env-mist.jpg","assets/thumbs/presets/preset-fog.webp"]});
 const choices = {
  time:[['morning','Утро','Мягкое низкое утреннее солнце'],['day','День','Естественный дневной свет'],['golden','Вечер','Тёплый золотой час'],['night','Ночь','Ночная съёмка, мягкий интерьерный свет']],
  weather:[['clear','Ясно','Чистое небо'],['cloud','Облачно','Плотная переменная облачность'],['rain','Дождь','Реалистичный дождь, влажные поверхности'],['fog','Туман','Низкий мягкий туман'],['snow','Снег','Снег, зимний свет']],
@@ -728,7 +729,44 @@ function optionCards(group,arr,selected){return arr.map(([id,name])=>{
  const glyph = group==='time'?'sun':group==='weather'?'cloud':'tree';
  return `<button class="image-option preset-photo-card ${selected===id?'active':''}" data-choice-group="${group}" data-choice="${id}" aria-pressed="${selected===id}" title="${eHTML(name)}"><img src="${eHTML(sharp)}" data-asset-path="${eHTML(path)}" alt="${eHTML(name)}" loading="lazy" decoding="async"><span class="preset-card-icon" aria-hidden="true">${icon(glyph)}</span><span class="preset-card-label">${eHTML(name)}</span></button>`;
 }).join('')}
-function renderChoices(){const s=current();$('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);for(let group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group]);renderFlowLabels()}
+function renderInlineEnvironmentSubtypes(){
+ const grid=$('environmentOptions');if(!grid||!project)return;
+ const selectedEnvironment=current().environment;
+ const variants=ENV_SUBTYPES[selectedEnvironment]||[],photos=ENV_SUBTYPE_PHOTOS[selectedEnvironment]||[];
+ if(variants.length!==4||photos.length!==4)return;
+ const environmentLabel=environments.find(item=>item[0]===selectedEnvironment)?.[1]||'Окружение';
+ const activeId=explicitScene().environment?current().environmentSubtypes?.[selectedEnvironment]:null;
+ const subtypeCards=variants.map(([id,name,description],index)=>{
+  const chosen=activeId===id;
+  const pic=photos[index];
+  return '<button type="button" class="forma-env-inline-card'+(chosen?' is-active':'')+
+   '" data-env-subtype="'+eHTML(id)+'" aria-pressed="'+String(chosen)+'" aria-label="'+eHTML(name+'. '+description)+'">'+
+   '<span class="forma-env-inline-cover"><img loading="lazy" decoding="async" alt="" src="'+eHTML(pic)+'">'+
+   '<span class="forma-env-inline-check" aria-hidden="true">'+(chosen?'✓':'')+'</span></span>'+
+   '<span class="forma-env-inline-copy"><strong>'+eHTML(name)+'</strong><small>'+eHTML(description)+'</small></span></button>';
+ }).join('');
+ const panel=document.createElement('section');
+ panel.id='formaEnvironmentInline';panel.className='forma-env-inline';panel.setAttribute('aria-label','Характер окружения');
+ panel.innerHTML='<div class="forma-env-inline-heading"><span class="forma-env-inline-kicker">02 / УТОЧНИТЕ ЛАНДШАФТ</span>'+
+  '<strong>'+eHTML(environmentLabel)+' <span>— 4 варианта</span></strong>'+
+  '<p>Выберите характер природы. Если ничего не выбрать, AI сохранит его по исходному изображению.</p></div>'+
+  '<button type="button" class="forma-env-inline-auto'+(!activeId?' is-active':'')+
+  '" data-env-subtype="auto" aria-pressed="'+String(!activeId)+'">✦ Подобрать автоматически</button>'+
+  '<div class="forma-env-inline-grid">'+subtypeCards+'</div>';
+ // The 10 category cards remain a two-column grid. Insert the details immediately
+ // after the selected category's ROW, not below all ten cards.
+ const cards=Array.from(grid.querySelectorAll(':scope > [data-choice-group="environment"]'));
+ const idx=cards.findIndex(el=>el.dataset.choice===selectedEnvironment);
+ const lastInRow=Math.min((Math.floor(Math.max(0,idx)/2)+1)*2-1,cards.length-1);
+ if(cards[lastInRow])cards[lastInRow].after(panel);else grid.appendChild(panel);
+}
+function renderChoices(){
+ const s=current();
+ $('environmentOptions').innerHTML=optionCards('environment',environments,s.environment);
+ renderInlineEnvironmentSubtypes();
+ for(const group of ['time','weather','season','plants'])$(group+'Options').innerHTML=optionCards(group,choices[group],s[group]);
+ renderFlowLabels();
+}
 function materialAction(zone=current().zone){return current().materialActions?.[zone]||'keep'}
 function materialColor(zone=current().zone){const value=current().materialColors?.[zone];return /^#[0-9a-fA-F]{6}$/.test(value||'')?value:'#575c51'}
 let materialPreviewRevision=0;
@@ -1751,7 +1789,39 @@ for(const name of ['batchDetail1X','batchDetail1Y','batchDetail2X','batchDetail2
 }
 $('batchStart').onclick=generateBatch;
 $('dialogClose').onclick=closeModal;$('dialogCover').onclick=e=>{if(e.target===$('dialogCover'))closeModal()}}
-function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;explicitScene()[group]=true;current()[group]=btn.dataset.choice;if(['time','season','weather'].includes(group))current().sceneMood=null;renderChoices();renderFooter();save();if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();if(SCENE_SETUP_FIELDS.includes(group))openRenderPicker(null);toast('Выбрано: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
+function focusInlineEnvironment(){
+ const modal=document.getElementById('formaSceneSheet');
+ if(modal&&!modal.hidden)return;
+ requestAnimationFrame(()=>{
+  const area=document.getElementById('formaEnvironmentInline');
+  if(area&&!area.closest('[hidden]'))area.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
+ });
+}
+function pickChoice(e){
+ const subtype=e.target.closest('[data-env-subtype]');
+ if(subtype){
+  const env=current().environment,selection=subtype.dataset.envSubtype;
+  if(selection!=='auto'&&!ENV_SUBTYPES[env]?.some(option=>option[0]===selection))return;
+  if(!current().environmentSubtypes)current().environmentSubtypes={};
+  explicitScene().environment=true;
+  if(selection==='auto')delete current().environmentSubtypes[env];
+  else current().environmentSubtypes[env]=selection;
+  renderChoices();renderFooter();save();
+  window.FORMA_SCENE_QUICK?.refresh?.();
+  focusInlineEnvironment();
+  const label=ENV_SUBTYPES[env]?.find(option=>option[0]===selection)?.[1]||'По исходнику';
+  toast('Характер окружения: '+label);
+  return;
+ }
+ const btn=e.target.closest('[data-choice]');if(!btn)return;
+ const group=btn.dataset.choiceGroup;explicitScene()[group]=true;current()[group]=btn.dataset.choice;
+ if(['time','season','weather'].includes(group))current().sceneMood=null;
+ renderChoices();renderFooter();save();
+ if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();
+ if(SCENE_SETUP_FIELDS.includes(group)&&group!=='environment')openRenderPicker(null);
+ if(group==='environment')focusInlineEnvironment();
+ toast('Выбрано: '+(group==='environment'?envLabel():cLabel(group,current()[group])));
+}
 /* Bridge between the production project/media store and the node executor.
    No demo assets or secrets are exposed; nodes run against the user's source only. */
 window.FORMA_SCENE_BRIDGE={
