@@ -406,3 +406,71 @@ html.forma-scene-sheet-open{overflow:hidden!important}
  #formaSceneSheet .forma-scene-sheet-footer{padding:12px 16px;gap:8px}
  #formaSceneSheet .forma-scene-sheet-footer button{min-height:47px;font-size:11px}
 }
+
+
+/* SUN DIRECTOR: tap/drag to select directional light on the actual uploaded image. */
+#formaSceneSheet .forma-sun-section{
+ border-top:1px solid #55483e;padding-top:23px;
+}
+#formaSceneSheet .forma-sun-explainer{
+ padding:0;margin:0;color:#c3b5a5;font-size:11px;line-height:1.65;
+}
+#formaSceneSheet .forma-sun-empty{
+ margin:0;padding:18px 14px;background:#282426;border:1px solid #4b403a;
+ color:#b5a89a;border-radius:9px;font-size:12px;line-height:1.5
+}
+#formaSceneSheet .forma-sun-preview{
+ position:relative;isolation:isolate;width:100%;height:clamp(180px,30vh,265px);
+ overflow:hidden;border:1px solid #655443;border-radius:12px;background:#121316;
+ outline-offset:4px;touch-action:none;cursor:crosshair;user-select:none
+}
+#formaSceneSheet .forma-sun-preview>img{
+ width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;
+ display:block;filter:brightness(.86) contrast(1.03)
+}
+#formaSceneSheet .forma-sun-preview-caption{
+ position:absolute;bottom:11px;left:11px;pointer-events:none;font-size:9px;
+ font-weight:750;letter-spacing:.08em;background:#1b1a1fdc;color:#e0c5a2;
+ border:1px solid #8b74584f;padding:7px 10px;border-radius:6px
+}
+#formaSceneSheet .forma-sun-pin[hidden]{display:none!important}
+#formaSceneSheet .forma-sun-pin{
+ position:absolute;display:grid;place-items:center;width:44px;height:44px;
+ border:1px solid #f5e1c6;border-radius:50%;transform:translate(-50%,-50%);
+ background:#e8c395e0;color:#38271d;font-size:25px;pointer-events:none;
+ box-shadow:0 0 0 5px #f8deab27,0 0 0 18px #f1cf9e14,0 0 45px 13px #f4b9725c;
+ text-shadow:0 1px #fff7;z-index:3
+}
+#formaSceneSheet .forma-sun-actions{display:flex;justify-content:flex-start;gap:8px}
+#formaSceneSheet .forma-sun-reset{
+ background:#302b2d;border:1px solid #716051;color:#e6cfb0;border-radius:8px;
+ padding:10px 13px;font-size:11px;cursor:pointer
+}
+#formaSceneSheet .forma-sun-reset:hover{background:#3a322e}
+#formaSceneSheet .forma-sun-softness{display:flex;flex-wrap:wrap;gap:6px}
+#formaSceneSheet .forma-sun-softness button{
+ padding:8px 11px;min-height:37px;background:#292629;border:1px solid #554b45;
+ color:#c9bbae;border-radius:7px;font-size:10px;cursor:pointer
+}
+#formaSceneSheet .forma-sun-softness button.is-active{
+ background:#4a392c;border-color:#d1af88;color:#f4e0c1
+}
+#formaSceneSheet .forma-sun-night-hint{
+ margin:0;color:#d9b98d;background:#49372c99;border:1px solid #8b684b;
+ padding:12px 13px;border-radius:8px;font-size:11px;line-height:1.5
+}
+#formaSceneSheet .forma-sun-relight{
+ background:linear-gradient(120deg,#e9cba6,#bd9571);border:1px solid #c1a07a;
+ border-radius:9px;color:#271e18;padding:12px 15px;min-height:45px;
+ font-size:12px;font-weight:750;cursor:pointer
+}
+#formaSceneSheet .forma-sun-relight:hover{filter:brightness(1.09)}
+@media(max-width:760px){
+ #formaSceneSheet .forma-sun-section{padding-top:20px}
+ #formaSceneSheet .forma-sun-preview{height:clamp(175px,28vh,230px)}
+ #formaSceneSheet .forma-sun-pin{width:40px;height:40px;font-size:23px}
+ #formaSceneSheet .forma-sun-explainer{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ #formaSceneSheet .forma-sun-pin{transition:none;animation:none}
+}
