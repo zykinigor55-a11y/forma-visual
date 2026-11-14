@@ -45,9 +45,9 @@
   const rail=$('.rail'),nav=$('.rail-nav');
   if(rail && nav && !$('.forma-rail-brand')){
    const brand=node('div','forma-rail-brand',
-    '<span class="forma-brand-symbol" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg" alt="" width="30" height="30"></span><span class="forma-brand-copy"><strong>FORMA</strong><small>ARCHVIZ STUDIO</small></span>');
+    '<span class="forma-brand-symbol" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg" alt="" width="30" height="30"></span><span class="forma-brand-copy"><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span>');
    rail.insertBefore(brand,nav);
-   nav.prepend(node('div','forma-nav-section','WORKSPACE / 01'));
+   nav.prepend(node('div','forma-nav-section','РАБОЧАЯ СТУДИЯ'));
    const btn=(label,icon,action)=>{
     const b=node('button','rail-btn',icon+'<span class="rail-name">'+label+'</span>');
     b.type='button';b.setAttribute('data-studio-action',action);
@@ -56,15 +56,15 @@
    btn('Проверка',icons.layers,'qa');
    btn('Галерея',icons.image,'gallery');
    const railLast=$('.rail-monogram');
-   if(railLast)railLast.textContent='FA';
-   const version=$('.build-version');if(version)version.textContent='STUDIO · 01';
+   if(railLast && !railLast.querySelector('img'))railLast.innerHTML='<img src="assets/brand/forma-fa-mark.svg" alt="" width="22" height="22">';
+   const version=$('.build-version');if(version)version.textContent='СТУДИЯ · 01';
   }
  }
  function setupContext(){
   const workspace=$('#workspace'), intro=$('.page-intro');
   if(!workspace||!intro)return;
   const section=node('div','forma-context-bar',
-   '<div class="forma-context-breadcrumbs"><span>FORMA</span><span>/</span><b>ARCHVIZ WORKSPACE</b></div>'+
+   '<div class="forma-context-breadcrumbs"><span>ФОРМА</span><span>/</span><b>РАБОЧАЯ СТУДИЯ</b></div>'+
    '<div class="forma-context-actions">'+
    '<span class="forma-chip" id="formaServerState" data-server="offline" title="Статус сервера рендера"><span></span><b>Проверка сервера</b></span>'+
    '<button type="button" class="forma-mini-btn" data-studio-action="gallery">'+icons.image+' Галерея</button>'+
@@ -100,9 +100,9 @@
   const workspace=$('#workspace'),viewer=$('.viewer-card');if(!workspace||!viewer)return;
   const presets=node('section','forma-photo-presets',
     '<div class="forma-photo-caption"><strong>Фотографические сценарии</strong><small>Реальные настройки света и атмосферы сцены</small></div>'+
-    '<button type="button" class="forma-photo-card" data-studio-mood="sunny" style="background-image:url(look-noon.jpg)"><span><strong>EDITORIAL DAY</strong><small>Чистый дневной свет</small></span></button>'+
-    '<button type="button" class="forma-photo-card" data-studio-mood="overcast" style="background-image:url(look-fog.jpg)"><span><strong>SOFT OVERCAST</strong><small>Мягкая архитектурная подача</small></span></button>'+
-    '<button type="button" class="forma-photo-card" data-studio-mood="blue" style="background-image:url(look-dusk.jpg)"><span><strong>BLUE HOUR</strong><small>Вечер · тёплые окна</small></span></button>');
+    '<button type="button" class="forma-photo-card" data-studio-mood="sunny" style="background-image:url(look-noon.jpg)"><span><strong>ДНЕВНАЯ СЪЁМКА</strong><small>Чистый дневной свет</small></span></button>'+
+    '<button type="button" class="forma-photo-card" data-studio-mood="overcast" style="background-image:url(look-fog.jpg)"><span><strong>ПАСМУРНЫЙ СВЕТ</strong><small>Мягкая архитектурная подача</small></span></button>'+
+    '<button type="button" class="forma-photo-card" data-studio-mood="blue" style="background-image:url(look-dusk.jpg)"><span><strong>СИНИЙ ЧАС</strong><small>Вечер · тёплые окна</small></span></button>');
   viewer.insertAdjacentElement('afterend',presets);
  }
  function setPreset(mood){
@@ -250,7 +250,8 @@
   ['Параметры и качество','Экспорт','parameters'],['Галерея работ','Проекты','gallery'],
   ['Визуальный контроль геометрии','Инструменты','qa'],['Экспорт до 4K (без AI)','Экспорт','export'],
   ['Солнечный день','Свет','sunny'],['Мягкий пасмурный свет','Свет','overcast'],
-  ['Синий час','Свет','blue']
+  ['Синий час','Свет','blue'],
+  ['Интерьеры из скетча','Визуализация','interior'],['Нодовый редактор','Процесс','nodes'],['Профессиональные инструменты','Студия','pro']
  ];
  function runCommand(cmd){
   closeCommands();
@@ -258,6 +259,9 @@
   else if(cmd==='new')$('#newProjectBtn')?.click();
   else if(cmd==='upload')$('#sourceFile')?.click();
   else if(cmd==='gallery')gallery();
+  else if(cmd==='interior')window.FORMA_INTERIORS?.open?.();
+  else if(cmd==='nodes')window.FORMA_NODES?.open?.();
+  else if(cmd==='pro')window.FORMA_PRO?.open?.();
   else if(cmd==='qa')toggleQA();
   else if(cmd==='export')export4K();
   else if(['sunny','overcast','blue'].includes(cmd))setPreset(cmd);
@@ -296,6 +300,8 @@
     else if(action==='commands')openCommands();
     else if(action==='upload')$('#sourceFile')?.click();
     else if(action==='interior')window.FORMA_INTERIORS?.open?.();
+    else if(action==='render')navigate('environment');
+    else if(action==='nodes')window.FORMA_NODES?.open?.();
     return;
    }
    const p=e.target.closest('[data-studio-mood]');
