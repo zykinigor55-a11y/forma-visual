@@ -1,216 +1,164 @@
-/* FORMA / ARCHITECTURAL SIGNATURE — production opening scene.
-   The 4K mineral wall is stationary; the approved FA logo stays sharp as a DOM asset.
-   Only the silhouette shadow and a low-amplitude light layer move. */
-.forma-intro{
- display:none;position:fixed;inset:0;z-index:9999;isolation:isolate;
- width:100%;height:100vh;height:100dvh;overflow:hidden;
- background:#19181a;color:#f2eae0;opacity:1;visibility:visible;
- transition:opacity .56s cubic-bezier(.3,0,.2,1),visibility .56s;
+/* FORMA · ARCHITECTURAL BLACK / opening v8
+   One repeatable cinematic sequence: deep black -> preparation indicator ->
+   approved FA logo -> FORMA wordmark -> reveal finished studio.
+   No 4K textures, gradients that imitate a wall, plant shadows, or fake percentages. */
+#forma-intro.forma-intro{
+ position:fixed;inset:0;z-index:99999;isolation:isolate;
+ width:100%;height:100vh;height:100dvh;
+ background:#09090b!important;color:#f5f0e9;
+ overflow:hidden;opacity:1;visibility:visible;
+ transition:opacity .82s cubic-bezier(.22,1,.36,1),visibility .82s;
 }
 html.forma-intro-pending{overflow:hidden!important}
 html.forma-intro-pending #forma-intro{display:block}
-.forma-intro[hidden]{display:none!important}
-.forma-intro.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
-.forma-intro-wall,.forma-intro-light,.forma-intro-shadow,.forma-intro-vignette{
- position:absolute;inset:0;pointer-events:none
+#forma-intro[hidden]{display:none!important}
+#forma-intro.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+#forma-intro .forma-intro-content{
+ position:absolute;inset:0;display:grid;place-items:center;
+ padding:clamp(18px,5vw,50px);
+ text-align:center;transform:none!important;
+ background:#09090b;
 }
-.forma-intro-wall{
- background-color:#101012;
- background-image:url("assets/brand/intro-black-wall-shadow-4k.avif"),url("assets/brand/intro-graphite-wall-4k.webp");
- background-position:54% 50%;background-size:cover;background-repeat:no-repeat;
- filter:brightness(.95) contrast(1.025) saturate(.9);
- transform:translateZ(0);
+#forma-intro .forma-intro-center{
+ display:flex;align-items:center;justify-content:center;
+ position:relative;flex-direction:column;
+ width:100%;max-width:480px;min-height:320px;
 }
-.forma-intro-light{
- inset:-2%;
- background:
- radial-gradient(ellipse 72% 85% at 80% -12%,rgba(232,192,146,.14),rgba(160,125,90,.045) 45%,transparent 85%);
- mix-blend-mode:screen;opacity:.21;animation:forma-signature-light 19s ease-in-out infinite alternate
+/* Stage 1: a precisely weighted, non-numeric architectural load indicator */
+#forma-intro .forma-intro-loader{
+ position:absolute;top:50%;left:50%;width:min(320px,85vw);
+ transform:translate(-50%,-50%);
+ display:flex;align-items:center;flex-direction:column;gap:18px;
+ opacity:1;visibility:visible;
+ transition:opacity .4s ease,visibility .4s;
 }
-.forma-intro-shadow{
- inset:-14% auto -12% -22%;width:93%;
- background:url("assets/brand/intro-branch-shadows.svg") left top / contain no-repeat;
- mix-blend-mode:multiply;opacity:.13;
- filter:blur(13px);transform-origin:8% 10%;
- animation:forma-signature-shadow 23s ease-in-out infinite alternate;
- will-change:transform
+#forma-intro.is-loader-complete .forma-intro-loader{
+ opacity:0;visibility:hidden
 }
-.forma-intro-shadow.secondary{display:none!important}
-.forma-intro-vignette{
- background:
- radial-gradient(ellipse 78% 74% at 52% 49%,transparent 45%,rgba(6,6,8,.14) 100%);
-
+#forma-intro .forma-intro-loader-overline{
+ font:600 9px/1.4 Manrope,Inter,Arial,sans-serif;
+ letter-spacing:.25em;color:#938a81;
 }
-.forma-intro-content{
- position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;
- justify-content:center;align-items:center;text-align:center;
- padding:clamp(24px,5vw,64px) 22px;
- transform:translateY(-2.6%);
+#forma-intro .forma-intro-measure{
+ display:flex;align-items:center;gap:10px;width:min(236px,72vw);
+ height:26px;min-width:0
 }
-.forma-intro-lockup{
- display:flex;flex-direction:column;align-items:center;gap:0;
- opacity:0;transform:translate3d(0,11px,0);
- filter:blur(3px);
- transition:opacity .75s cubic-bezier(.22,1,.36,1),transform .95s cubic-bezier(.22,1,.36,1),filter .75s ease;
+#forma-intro .forma-intro-measure-tick{
+ width:1px;height:12px;background:#62574f;flex:none
 }
-.forma-intro.is-revealed .forma-intro-lockup{
- opacity:1;transform:translate3d(0,0,0);filter:blur(0)
+#forma-intro .forma-intro-measure-track{
+ position:relative;flex:1;height:2px;overflow:hidden;
+ background:#302c2a
 }
-.forma-intro-mark{
- width:clamp(108px,12vw,172px);height:auto;display:block;object-fit:contain;
- filter:drop-shadow(0 8px 15px rgba(0,0,0,.24))
+#forma-intro .forma-intro-measure-track::after{
+ content:"";display:block;position:absolute;inset:0 auto 0 0;
+ width:28%;background:linear-gradient(90deg,transparent,#b69b7d 25%,#f4e0c3 70%,transparent);
+ animation:forma-intro-scan 1.7s cubic-bezier(.48,.1,.52,.9) infinite;
+ transform:translateX(-130%)
 }
-.forma-intro-name{
- display:block;margin:15px 0 0;padding-left:.3em;
- font-family:Manrope,Inter,"Helvetica Neue",Arial,sans-serif;
- font-size:clamp(40px,5.5vw,73px);font-weight:310;line-height:1.2;letter-spacing:.30em;
- color:#f1e8dc;text-shadow:0 2px 15px rgba(0,0,0,.22)
+#forma-intro .forma-intro-loader-bottom{
+ display:flex;align-items:center;justify-content:center;gap:10px;
+ font:500 10px/1.5 Manrope,Inter,Arial,sans-serif;
+ letter-spacing:.12em;color:#b6aaa0
 }
-.forma-intro-descriptor{
- margin-top:13px;padding-left:.12em;display:block;
- font:500 clamp(9px,1vw,12px)/1.6 Manrope,Inter,"Helvetica Neue",Arial,sans-serif;
- letter-spacing:clamp(.11em,.28vw,.34em);color:#d4c4b1;white-space:nowrap
+#forma-intro .forma-intro-loader-dot{
+ display:block;width:5px;height:5px;border-radius:50%;
+ background:#d2b28d;box-shadow:0 0 10px #e5c49e33;
+ animation:forma-intro-dot 1.7s ease-in-out infinite
 }
-.forma-intro-line{display:none!important}
-.forma-intro-preparation{
- margin-top:clamp(38px,7vh,90px);width:min(300px,76vw);
- display:flex;flex-direction:column;align-items:center;gap:14px;
- opacity:0;transition:opacity .6s ease .25s
+@keyframes forma-intro-scan{
+ 0%{transform:translateX(-130%)} 55%,100%{transform:translateX(450%)}
 }
-.forma-intro.is-revealed .forma-intro-preparation{opacity:1}
-.forma-intro-progress{
- width:100%;height:1px;overflow:hidden;position:relative;
- background:rgba(220,199,172,.27);border-radius:1px
+@keyframes forma-intro-dot{
+ 50%{opacity:.36} 100%{opacity:1}
 }
-.forma-intro-progress::after{
- content:"";position:absolute;inset:0 auto 0 0;width:34%;
- background:linear-gradient(90deg,transparent,#d9bb94 45%,#f0dcc0 85%,transparent);
- transform:translateX(-110%);animation:forma-signature-loading 1.85s ease-in-out infinite
+/* Stage 2: the original FA symbol, never visible at initial paint */
+#forma-intro .forma-intro-lockup{
+ position:relative;display:flex;flex-direction:column;align-items:center;
+ opacity:1!important;filter:none!important;transform:none!important;
+ transition:none!important;pointer-events:none
 }
-.forma-intro-progress-label{
- font:500 10px/1.4 Manrope,Inter,"Helvetica Neue",Arial,sans-serif;
- letter-spacing:.075em;color:#c4b6a7;text-align:center
-}
-.forma-intro-skip{
- position:absolute;top:max(24px,env(safe-area-inset-top));
- right:max(24px,env(safe-area-inset-right));z-index:5;
- display:flex;align-items:center;gap:7px;min-height:36px;
- border:1px solid rgba(220,198,168,.29);border-radius:7px;
- background:rgba(21,20,20,.27);color:#e7d9c8;
- padding:8px 13px;font:600 11px/1.2 Manrope,Inter,Arial,sans-serif;
- letter-spacing:.035em;cursor:pointer;transition:background .2s,border-color .2s
-}
-.forma-intro-skip:hover{background:rgba(15,14,15,.5);border-color:rgba(226,196,152,.66)}
-.forma-intro-skip:focus-visible{outline:2px solid #d6b58c;outline-offset:3px}
-.forma-intro-skip svg{height:14px;width:14px;stroke:currentColor;fill:none;stroke-width:1.7}
-.forma-intro-caption{display:none!important}
-.forma-intro.is-ready .forma-intro-progress::after{
- width:100%;transform:translateX(0);animation:none;background:#dabb91
-}
-@keyframes forma-signature-loading{
- 0%{transform:translateX(-110%)}
- 58%,100%{transform:translateX(310%)}
-}
-@keyframes forma-signature-light{
- from{opacity:.76}to{opacity:.92}
-}
-@keyframes forma-signature-shadow{
- from{transform:translate3d(-8px,-5px,0) rotate(-.55deg) scale(1.03)}
- to{transform:translate3d(17px,9px,0) rotate(.8deg) scale(1.045)}
-}
-@media(max-width:760px){
- .forma-intro-wall{
-  background-image:url("assets/brand/intro-black-wall-shadow-4k.avif"),url("assets/brand/intro-graphite-wall-mobile.webp");
-  background-position:66% 50%;
-  filter:brightness(.94) contrast(1.025) saturate(.88)
- }
- .forma-intro-light{
-  background:radial-gradient(ellipse 120% 90% at 80% -10%,rgba(223,190,146,.12),transparent 80%);
- }
- .forma-intro-shadow{
-  inset:-3% auto 0 -57%;width:150%;opacity:.11;filter:blur(12px)
- }
- .forma-intro-content{transform:translateY(-4%);padding:30px 18px}
- .forma-intro-mark{width:clamp(109px,31vw,151px)}
- .forma-intro-name{font-size:clamp(38px,10vw,58px);letter-spacing:.26em;padding-left:.26em;margin-top:13px}
- .forma-intro-descriptor{font-size:clamp(8px,2.1vw,10px);letter-spacing:.105em}
- .forma-intro-preparation{margin-top:clamp(38px,7vh,66px);width:min(274px,75vw)}
- .forma-intro-skip{
-  top:max(17px,env(safe-area-inset-top));right:max(17px,env(safe-area-inset-right));
-  font-size:11px;min-height:41px;padding:10px 12px
- }
-}
-@media(max-width:370px){
- .forma-intro-descriptor{font-size:7.6px;letter-spacing:.06em}
- .forma-intro-name{font-size:37px}
-}
-@media(prefers-reduced-motion:reduce){
- .forma-intro,.forma-intro-lockup,.forma-intro-preparation{transition:none!important}
- .forma-intro-light,.forma-intro-shadow,.forma-intro-progress::after{animation:none!important}
- .forma-intro-lockup,.forma-intro-preparation{opacity:1;transform:none;filter:none}
- .forma-intro-shadow{will-change:auto}
-}
-
-
-/* SIGNATURE V5: the black wall is shown alone. No early "revealed" class can
-   expose the FA logo: only dedicated, intentionally delayed stage classes can. */
-.forma-intro-lockup,.forma-intro.is-revealed .forma-intro-lockup{
- opacity:1;transform:none;filter:none;transition:none
-}
-/* High-specificity initial guards prevent flash on cold and cached mobile loads. */
 #forma-intro .forma-intro-mark{
- opacity:0;visibility:hidden;transform:translate3d(0,11px,0);
- transition:opacity 1.7s cubic-bezier(.22,1,.36,1),
-            transform 1.85s cubic-bezier(.22,1,.36,1),
-            visibility 0s linear 1.7s;
+ width:clamp(110px,11vw,161px);height:auto;max-width:36vw;
+ display:block;object-fit:contain;
+ opacity:0!important;visibility:hidden!important;
+ filter:none!important;transform:translateY(9px);
+ transition:opacity 1.15s cubic-bezier(.22,1,.36,1),
+            transform 1.25s cubic-bezier(.22,1,.36,1),
+            visibility 0s linear 1.15s
 }
-#forma-intro.is-fa-visible .forma-intro-mark{
- opacity:1;visibility:visible;transform:translate3d(0,0,0);
- transition:opacity 1.7s cubic-bezier(.22,1,.36,1),
-            transform 1.85s cubic-bezier(.22,1,.36,1),
-            visibility 0s linear 0s;
+#forma-intro.is-logo-visible .forma-intro-mark{
+ opacity:1!important;visibility:visible!important;transform:translateY(0);
+ transition:opacity 1.15s cubic-bezier(.22,1,.36,1),
+            transform 1.25s cubic-bezier(.22,1,.36,1),
+            visibility 0s linear 0s
 }
 #forma-intro .forma-intro-name{
- opacity:0;visibility:hidden;transform:translate3d(0,9px,0);
- transition:opacity 1.05s ease,transform 1.15s cubic-bezier(.22,1,.36,1),visibility 0s linear 1.05s
+ margin:25px 0 0;padding-left:.24em;
+ display:block;font:350 clamp(35px,5vw,67px)/1.2 Manrope,Inter,Arial,sans-serif;
+ letter-spacing:.24em;color:#f4eee5;text-shadow:none!important;
+ opacity:0!important;visibility:hidden!important;transform:translateY(7px);
+ transition:opacity .95s cubic-bezier(.22,1,.36,1),transform 1s cubic-bezier(.22,1,.36,1),
+            visibility 0s linear .95s
 }
 #forma-intro.is-name-visible .forma-intro-name{
- opacity:1;visibility:visible;transform:translate3d(0,0,0);
- transition:opacity 1.05s ease,transform 1.15s cubic-bezier(.22,1,.36,1),visibility 0s linear 0s
+ opacity:1!important;visibility:visible!important;transform:translateY(0);
+ transition:opacity .95s cubic-bezier(.22,1,.36,1),transform 1s cubic-bezier(.22,1,.36,1),
+            visibility 0s linear 0s
 }
 #forma-intro .forma-intro-descriptor{
- opacity:0;visibility:hidden;transform:translate3d(0,7px,0);
- transition:opacity .9s ease,transform .95s ease,visibility 0s linear .9s
+ margin:13px 0 0;padding-left:.12em;
+ font:550 clamp(8px,1vw,11px)/1.6 Manrope,Inter,Arial,sans-serif;
+ letter-spacing:clamp(.1em,.23vw,.25em);color:#b9a78f;
+ white-space:nowrap;opacity:0!important;visibility:hidden!important;
+ transform:translateY(5px);
+ transition:opacity .85s ease,transform 1s ease,visibility 0s linear .85s
 }
 #forma-intro.is-descriptor-visible .forma-intro-descriptor{
- opacity:1;visibility:visible;transform:translate3d(0,0,0);
- transition:opacity .9s ease,transform .95s ease,visibility 0s linear 0s
+ opacity:1!important;visibility:visible!important;transform:translateY(0);
+ transition:opacity .85s ease,transform 1s ease,visibility 0s linear 0s
 }
-#forma-intro .forma-intro-preparation{opacity:0;transition:opacity .7s ease}
-#forma-intro.is-name-visible .forma-intro-preparation{opacity:1}
-@media(prefers-reduced-motion:reduce){
- #forma-intro .forma-intro-mark,#forma-intro .forma-intro-name,
- #forma-intro .forma-intro-descriptor,#forma-intro .forma-intro-preparation{
-  transform:none!important;transition:none!important
- }
- #forma-intro.is-fa-visible .forma-intro-mark,
- #forma-intro.is-name-visible .forma-intro-name,
- #forma-intro.is-descriptor-visible .forma-intro-descriptor{opacity:1!important;visibility:visible!important}
+/* The title stays visible until the workspace is genuinely ready. */
+#forma-intro .forma-intro-wait{
+ position:absolute;top:calc(50% + clamp(150px,22vh,236px));left:50%;
+ transform:translateX(-50%);width:min(320px,85vw);
+ display:flex;align-items:center;justify-content:center;gap:8px;
+ font:500 10px/1.5 Manrope,Inter,Arial,sans-serif;
+ color:#a89a89;letter-spacing:.04em;
+ opacity:0;transition:opacity .5s ease
 }
-
-/* Explicit ?previewIntro=1 is a requested animation demonstration.
-   On devices configured to reduce motion, regular browsing still respects that preference. */
+#forma-intro.is-holding .forma-intro-wait{opacity:1}
+#forma-intro .forma-intro-recover{
+ position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom));
+ transform:translateX(-50%);min-height:40px;padding:10px 18px;
+ white-space:nowrap;background:#292423;border:1px solid #6e5b4c;
+ border-radius:9px;color:#e9d5bd;font:600 12px/1.2 Manrope,Inter,Arial,sans-serif;
+ cursor:pointer
+}
+#forma-intro .forma-intro-recover[hidden]{display:none!important}
+#forma-intro .forma-intro-recover:focus-visible{
+ outline:2px solid #d7b58c;outline-offset:3px
+}
+@media(max-width:760px){
+ #forma-intro .forma-intro-center{min-height:275px}
+ #forma-intro .forma-intro-mark{width:clamp(110px,34vw,150px);max-width:42vw}
+ #forma-intro .forma-intro-name{margin-top:21px;font-size:clamp(36px,9.6vw,49px);letter-spacing:.23em}
+ #forma-intro .forma-intro-descriptor{font-size:clamp(8px,2.15vw,10px);letter-spacing:.08em}
+ #forma-intro .forma-intro-loader{gap:15px}
+ #forma-intro .forma-intro-wait{top:calc(50% + clamp(138px,22vh,190px))}
+}
+@media(max-width:365px){
+ #forma-intro .forma-intro-descriptor{font-size:7.4px;letter-spacing:.05em}
+ #forma-intro .forma-intro-name{font-size:35px}
+}
 @media(prefers-reduced-motion:reduce){
- html.forma-intro-force-preview-motion #forma-intro .forma-intro-mark{
-  transition:opacity 1.7s cubic-bezier(.22,1,.36,1)!important
+ /* Retain the same ordered stages and gentle opacity fades, avoid sweeping movement. */
+ #forma-intro .forma-intro-measure-track::after,
+ #forma-intro .forma-intro-loader-dot{animation:none!important}
+ #forma-intro .forma-intro-measure-track::after{
+  width:45%;transform:none!important;background:#b9a181
  }
- html.forma-intro-force-preview-motion #forma-intro .forma-intro-name{
-  transition:opacity 1.05s ease!important
- }
- html.forma-intro-force-preview-motion #forma-intro .forma-intro-descriptor{
-  transition:opacity .9s ease!important
- }
- html.forma-intro-force-preview-motion #forma-intro .forma-intro-preparation{
-  transition:opacity .7s ease!important
- }
+ #forma-intro .forma-intro-mark,
+ #forma-intro .forma-intro-name,
+ #forma-intro .forma-intro-descriptor{transform:none!important}
 }
