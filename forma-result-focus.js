@@ -40,8 +40,9 @@
     return;
    }
    if(action==='scene'){
-    close(false);document.querySelector('[data-tab="environment"]')?.click();
-    document.querySelector('#inspector')?.scrollIntoView({behavior:'smooth',block:'start'});
+    close(false);
+    if(window.FORMA_SCENE_QUICK?.open)window.FORMA_SCENE_QUICK.open();
+    else{document.querySelector('[data-tab="environment"]')?.click();document.querySelector('#inspector')?.scrollIntoView({behavior:'smooth',block:'start'})}
     return;
    }
    if(action==='close')close(true);
