@@ -11,7 +11,9 @@ test('FORMA ARCHVIZ shell mounts all independent tool modules', async () => {
    'forma-nodes.js','forma-nodes.css',
    'forma-pro-tools.js','forma-pro-tools.css'
  ])assert.ok(html.includes(asset),'Missing asset: '+asset);
- assert.match(html,/<title>FORMA ARCHVIZ/);
+ assert.match(html,/<title>ФОРМА/);
+ assert.match(html,/forma-workflow-card/);
+ assert.match(html,/АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ/);
 });
 
 test('interior sketch-to-photo settings reach the existing API render request', async () => {
@@ -64,5 +66,8 @@ test('selected FA vector identity is applied consistently', async () => {
  assert.match(nodeJs,/forma-fa-mark\.svg/);
  assert.match(proJs,/forma-fa-mark\.svg/);
  assert.match(mark,/viewBox="0 0 270 265"/);
+ const russianLogo=await fromRoot('assets/brand/forma-logotype-stacked.svg');
+ assert.match(russianLogo,/ФОРМА/);
+ assert.match(russianLogo,/АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ/);
  assert.match(favicon,/<svg/);
 });
