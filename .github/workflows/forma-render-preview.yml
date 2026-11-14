@@ -9,6 +9,9 @@ on:
       - forma-home-tools.css
       - forma-pro-tools.js
       - index.html
+      - forma-intro.css
+      - forma-intro.js
+      - assets/brand/**
   workflow_dispatch:
 
 permissions:
