@@ -171,14 +171,21 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
  const edit=semanticOnly?semanticText:specific?recolor?recolorText:`LOCAL EDIT ONLY: edit the transparent region of the supplied PNG mask on IMAGE 1. The masked area is the selected facade zone named '${compact(p.selectedZone)}'. Apply requested material '${compact(p.materialName)||compact(userRequest,100)||'as described in the user instruction'}' to that facade surface and keep the rest of the image, environment, lighting and all other surfaces as unchanged as possible. Use the material reference image (when provided) for accurate color, grain and texture repeat. ${Number(p.materialDimensions?.width)>0?`Material physical size: ${Number(p.materialDimensions.width)} by ${Number(p.materialDimensions.height)||Number(p.materialDimensions.width)} millimetres.`:''} Replace the material consistently through the ENTIRE transparent masked area, never only a small isolated patch. Respect the mask boundary, preserve the contours around glazing and doors, and keep all unmasked pixels as untouched as possible. The mask is a guide and may not be pixel exact. Material reference image is not the building.`:`FULL SCENE ENHANCEMENT: Transform the sketch/model screenshot into a realistic architectural photograph while preserving existing building materials, all visible texture divisions and exact architectural point of view. Develop only the selected surroundings, weather, season and photographic lighting. A photographed exterior must look realistic without redesigning or re-cladding any part of the house.`;
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
  return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,edit,homeEdit,extraRequest,physics,context,continuity].filter(Boolean).join('\n\n')}
+let generationSeq=0;
 async function proxyRender(req,res){
- if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
- if(!API_KEY)return json(res,503,{error:'AI не настроен: укажите API_MARKET_KEY в .env и перезапустите сервер.'});
+ const requestId=Date.now().toString(36)+'-'+(++generationSeq).toString(36);
+ const started=Date.now();
+ const failEarly=(status,message,code)=>{
+  console.warn('[AI]',requestId,'отклонён до отправки провайдеру:',code,'status:',status);
+  return json(res,status,{error:message,code,requestId});
+ };
+ if(!sameOrigin(req))return failEarly(403,'Недопустимый источник запроса.','invalid_origin');
+ if(!API_KEY)return failEarly(503,'AI не настроен: укажите API_MARKET_KEY в настройках Render.','key_not_configured');
  const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}
- if(dailyCount>=DAILY_CAP)return json(res,429,{error:'Достигнут дневной лимит генераций этого сервера.'});
- if(active>=1)return json(res,429,{error:'Другая визуализация уже выполняется. Дождитесь результата.'});
+ if(dailyCount>=DAILY_CAP)return failEarly(429,'Достигнут дневной лимит генераций этого сервера.','daily_limit');
+ if(active>=1)return failEarly(429,'Другая визуализация уже выполняется. Дождитесь её завершения.','server_busy');
  active++;
- console.info('[AI] Запрос генерации принят');
+ console.info('[AI]',requestId,'запрос принят; активных:',active,'дневной остаток:',DAILY_CAP-dailyCount);
  try{
   const p=await readJSON(req);if(!p.image)return json(res,400,{error:'Загрузите исходный скриншот'});
   const primary=imageBlob(p.image,'image');const mask=imageBlob(p.mask,'mask');const material=imageBlob(p.material,'material');const reference=imageBlob(p.reference,'reference');
@@ -200,8 +207,15 @@ async function proxyRender(req,res){
     break;
    }
   }
-  json(res,200,{images,mimes,model:MODEL,provider:'API Market',warning});
- }catch(err){const status=err.status||502;console.warn('[AI] Генерация не выполнена:',status,String(err.message||'Ошибка сервера').slice(0,240));json(res,status,{error:err.message||'Ошибка сервера'})}finally{active--}
+  console.info('[AI]',requestId,'завершено; кадров:',images.length,'длительность_мс:',Date.now()-started);
+  json(res,200,{images,mimes,model:MODEL,provider:'API Market',warning,requestId});
+ }catch(err){
+  const status=err.status||502;
+  const safeMessage=String(err.message||'Ошибка сервера').slice(0,240);
+  const code=status===400?'invalid_request':status===429?'limit':/время ожидания|timeout/i.test(safeMessage)?'provider_timeout':status>=500?'provider_error':'render_failed';
+  console.warn('[AI]',requestId,'генерация не выполнена; status:',status,'code:',code,'длительность_мс:',Date.now()-started,'детали:',safeMessage);
+  if(!res.headersSent)json(res,status,{error:safeMessage,code,requestId});
+ }finally{active--}
 }
 async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/index.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();const content=await readFile(file);res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
 const wanVideo=createWanVideo({json,readJSON,sameOrigin,imageBlob});
