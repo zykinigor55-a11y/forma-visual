@@ -12,6 +12,10 @@ on:
       - forma-pro-tools.js
       - forma-home-tools.js
       - forma-home-tools.css
+      - forma-world.html
+      - forma-world.css
+      - forma-world.js
+      - tests/check-world.mjs
       - tests/check-home-tools.mjs
       - tests/check-node-execution.mjs
       - forma-node-engine.js
@@ -60,6 +64,8 @@ jobs:
         run: node tests/check-home-tools.mjs
       - name: Verify executable node workflows with mocked API
         run: node tests/check-node-execution.mjs
+      - name: Test interactive 3D worlds in desktop and mobile browser
+        run: node tests/check-world.mjs
       - name: Capture cinematic opening
         run: node tests/capture-intro.mjs
       - name: Upload viewable screenshots
@@ -72,7 +78,7 @@ jobs:
         run: |
           git config user.name "FORMA Preview Bot"
           git config user.email "forma-preview-bot@users.noreply.github.com"
-          git add docs/previews/forma-archviz-home-desktop.png docs/previews/forma-archviz-home-mobile.png docs/previews/forma-archviz-home-full.png docs/previews/forma-opening-wall-desktop.png docs/previews/forma-opening-logo-desktop.png docs/previews/forma-opening-wall-mobile.png docs/previews/forma-opening-logo-mobile.png docs/previews/forma-project-panel-desktop.png docs/previews/forma-project-panel-mobile.png
+          git add docs/previews/forma-archviz-home-desktop.png docs/previews/forma-archviz-home-mobile.png docs/previews/forma-archviz-home-full.png docs/previews/forma-opening-wall-desktop.png docs/previews/forma-opening-logo-desktop.png docs/previews/forma-opening-wall-mobile.png docs/previews/forma-opening-logo-mobile.png docs/previews/forma-project-panel-desktop.png docs/previews/forma-project-panel-mobile.png docs/previews/forma-world-desktop.png docs/previews/forma-world-mobile.png
           if ! git diff --cached --quiet; then
             git commit -m "docs(preview): capture real FORMA home screen [skip ci]"
             git fetch origin feature/forma-archviz-studio
