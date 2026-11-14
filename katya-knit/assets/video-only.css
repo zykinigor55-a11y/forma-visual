@@ -63,46 +63,84 @@ button{font:inherit}
 @media(prefers-reduced-motion:reduce){.intro-emblem{opacity:1;animation:none;transform:none}}
 
 
-/* Animated brand emblem — restrained 2D motion over the main video.
-   The approved original SVG asset is never modified. */
-.masthead .brand-emblem{
-  width:46px;height:46px;display:block;position:relative;flex:0 0 auto;
-  isolation:isolate;
+/* KATYA KNIT, 15 Nov 2026: optically aligned, quiet 2D identity and consistent spacing. */
+:root{--kk-edge:clamp(24px,4.5vw,80px)}
+.masthead{padding:clamp(30px,3.5vw,46px) var(--kk-edge)}
+.masthead .brand{
+  display:inline-grid;grid-template-columns:50px auto;column-gap:17px;
+  align-items:center;min-height:50px;opacity:1;
 }
-.masthead .brand-emblem .brand-sign{
-  display:block;width:100%;height:100%;
-  object-fit:contain;filter:brightness(0) invert(1);
-  transform-origin:50% 50%;
-  animation:katyaBrandTurn 46s linear infinite;
-  will-change:transform;
+.masthead .brand-emblem{
+  display:block;position:relative;isolation:isolate;
+  width:50px;height:50px;place-self:center;
+  transform:translateY(5px);
+}
+.masthead .brand-sign{
+  display:block;width:100%;height:100%;object-fit:contain;
+  filter:brightness(0) invert(1);transform-origin:50% 50%;
+  animation:katyaMarkBreathe 8s ease-in-out infinite;
+}
+.masthead .brand-copy{
+  display:flex;flex-direction:column;gap:7px;justify-content:center;
+  min-width:0;transform:none;
+}
+.masthead .brand-copy strong{
+  font:400 clamp(20px,1.9vw,28px)/1.17 'Prata',Georgia,serif;
+  letter-spacing:.065em;white-space:nowrap;text-shadow:0 2px 15px #0009;
+}
+.masthead .brand-copy small{
+  font:500 clamp(8px,.75vw,10px)/1.35 'Manrope',Arial,sans-serif;
+  letter-spacing:.13em;color:#ead9ca;white-space:nowrap;text-shadow:0 1px 10px #0009;
 }
 .masthead .brand-thread-motion{
-  position:absolute;inset:0;width:100%;height:100%;
-  fill:none;stroke:#fff;stroke-width:.65;
-  stroke-linecap:round;opacity:.48;
-  pointer-events:none;
-  transform-origin:50% 50%;
-  animation:katyaThreadDrift 8s ease-in-out infinite alternate;
+  position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
+  fill:none;stroke:#fff;stroke-width:1.05;stroke-linecap:round;
+  stroke-linejoin:round;opacity:.65;
 }
 .masthead .brand-thread-motion path{
-  stroke-dasharray:65 8;
-  animation:katyaThreadSlide 13s ease-in-out infinite alternate;
+  stroke-dasharray:6 260;animation:katyaThreadWeave 8s linear infinite;
 }
-.masthead .brand-thread-motion path:nth-child(2){animation-delay:-5s;opacity:.75}
-@keyframes katyaBrandTurn{to{transform:rotate(360deg)}}
-@keyframes katyaThreadDrift{
-  0%{transform:rotate(-5deg) scale(.977)}
-  100%{transform:rotate(6deg) scale(1.025)}
+.masthead .brand-thread-motion path:nth-child(2){animation-delay:-2.6s;opacity:.78}
+.masthead .brand-thread-motion path:nth-child(3){animation-delay:-5.2s;opacity:.55}
+@keyframes katyaMarkBreathe{
+  0%,100%{transform:scale(1)}50%{transform:scale(1.016)}
 }
-@keyframes katyaThreadSlide{
-  from{stroke-dashoffset:1}to{stroke-dashoffset:14}
+@keyframes katyaThreadWeave{
+  from{stroke-dashoffset:0}to{stroke-dashoffset:-266}
 }
+/* The Android hero's two black crescent artifacts are absent in the clean
+   poster. Restore ONLY the affected pixels using a soft radial mask. */
+.hero-video-repair{display:none;pointer-events:none}
 @media(max-width:700px){
- .masthead .brand-emblem{width:37px;height:37px}
- .masthead .brand-thread-motion{stroke-width:.85}
+  :root{--kk-edge:24px}
+  .masthead{padding:29px var(--kk-edge)}
+  .masthead .brand{grid-template-columns:42px auto;column-gap:15px;min-height:42px}
+  .masthead .brand-emblem{width:42px;height:42px;transform:translateY(9px)}
+  .masthead .brand-copy{gap:7px}
+  .masthead .brand-copy strong{font-size:20px;line-height:1.18;letter-spacing:.045em}
+  .masthead .brand-copy small{font-size:8px;line-height:1.25;letter-spacing:.095em}
+  .masthead .brand-thread-motion{stroke-width:1.2}
+  .gallery-entry{left:var(--kk-edge);right:var(--kk-edge);bottom:max(34px,env(safe-area-inset-bottom))}
+  .entry-meta{font-size:9px;letter-spacing:.18em;margin-bottom:16px}
+  .gallery-button{padding:18px 2px 21px;gap:18px}
+  .gallery-button>span:first-child{gap:9px}
+  .gallery-button small{font-size:9px;letter-spacing:.14em}
+  .gallery-button strong{font-size:clamp(36px,9.4vw,43px);line-height:1.16}
+  .gallery-arrow{width:47px;height:47px;flex-shrink:0}
+  .hero-video-repair{
+    display:block;position:absolute;inset:0;z-index:0;
+    background:url('hero-mobile-poster.webp') center center/cover no-repeat;
+    -webkit-mask-image:radial-gradient(ellipse 39px 56px at 40px 81px,#000 50%,transparent 100%);
+    mask-image:radial-gradient(ellipse 39px 56px at 40px 81px,#000 50%,transparent 100%);
+  }
+}
+@media(max-width:360px){
+  .masthead .brand{grid-template-columns:39px auto;column-gap:12px}
+  .masthead .brand-emblem{width:39px;height:39px}
+  .masthead .brand-copy strong{font-size:18px}
+  .masthead .brand-copy small{font-size:7.2px}
+  .gallery-button strong{font-size:34px}
 }
 @media(prefers-reduced-motion:reduce){
- .masthead .brand-emblem .brand-sign,
- .masthead .brand-thread-motion,
- .masthead .brand-thread-motion path{animation:none!important;will-change:auto}
+  .masthead .brand-sign,.masthead .brand-thread-motion path{animation:none!important}
 }
