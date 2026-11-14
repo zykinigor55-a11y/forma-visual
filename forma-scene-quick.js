@@ -9,13 +9,13 @@
   "assets/thumbs/hd/env-garden.webp",
   "assets/thumbs/natural-luxury/env-garden.webp",
   "assets/thumbs/env-garden.jpg",
-  "assets/thumbs/hd/plants-decorative.webp"
+  "assets/thumbs/hd/env-nordic.webp"
  ],
  "forest": [
   "assets/thumbs/hd/env-forest.webp",
   "assets/thumbs/natural-luxury/env-forest.webp",
   "assets/thumbs/env-forest.jpg",
-  "assets/thumbs/hd/plants-forest.webp"
+  "assets/thumbs/hd/env-mist.webp"
  ],
  "lake": [
   "assets/thumbs/hd/env-lake.webp",
@@ -39,7 +39,7 @@
   "assets/thumbs/hd/env-courtyard.webp",
   "assets/thumbs/natural-luxury/env-courtyard.webp",
   "assets/thumbs/env-courtyard.jpg",
-  "assets/thumbs/hd/plants-decorative.webp"
+  "assets/thumbs/hd/season-spring.webp"
  ],
  "nordic": [
   "assets/thumbs/hd/env-nordic.webp",
@@ -57,13 +57,13 @@
   "assets/thumbs/hd/env-minimal.webp",
   "assets/thumbs/natural-luxury/env-minimal.webp",
   "assets/thumbs/env-minimal.jpg",
-  "assets/thumbs/hd/plants-minimal.webp"
+  "assets/thumbs/hd/env-garden.webp"
  ],
  "mist": [
   "assets/thumbs/hd/env-mist.webp",
   "assets/thumbs/natural-luxury/env-mist.webp",
   "assets/thumbs/env-mist.jpg",
-  "assets/thumbs/hd/weather-fog.webp"
+  "assets/thumbs/presets/preset-fog.webp"
  ]
 });
  const fields=[
