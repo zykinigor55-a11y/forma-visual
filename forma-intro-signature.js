@@ -1,107 +1,110 @@
-/* FORMA / SIGNATURE V5
-   Explicit wall -> FA -> title -> descriptor sequence. No logo is visible
-   until its dedicated timer fires, even when CSS and images are cached. */
+/* FORMA / ARCHITECTURAL BLACK · intro v8
+   Starts before heavyweight application scripts.
+   Strict order on every page entry: loader -> FA -> FORMA -> studio.
+   No session bypass, early skip, fake progress, or exit on raw window load.
+   The page opens only after both the minimum animation and app initialization. */
 (() => {
  'use strict';
- const STAGES={fa:1800,name:3380,descriptor:3830,minimum:5000};
+ const TIME={loaderEnd:1650,logo:2050,name:3300,descriptor:3740,minShow:5550,recovery:15000};
  const root=document.documentElement;
- const overlay=document.getElementById('forma-intro');
- const skip=document.getElementById('formaIntroSkip');
+ const screen=document.getElementById('forma-intro');
+ if(!screen)return;
+ const recover=document.getElementById('formaIntroRecover');
  const status=document.getElementById('formaIntroProgressStatus');
- if(!overlay)return;
- const reduceMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const waitLabel=document.getElementById('formaIntroWait');
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
- // Explicit preview request can demonstrate the visual effect even if OS animations are reduced.
- if(previewHold)root.classList.add('forma-intro-force-preview-motion');
+ let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false,pageLoaded=document.readyState==='complete';
+ let lastFocus=null,paintStart=0;
  const timers=new Set();
- let active=false,closing=false,previousFocus=null,startedAt=0,runId=0,loadReady=document.readyState==='complete',sequenceStarted=false;
- const label=value=>{if(status)status.textContent=value};
- function schedule(fn,delay){
-  const id=runId;
-  const timer=setTimeout(()=>{timers.delete(timer);if(active&&!closing&&runId===id)fn()},delay);
-  timers.add(timer);
- }
- function cancelSchedules(){for(const t of timers)clearTimeout(t);timers.clear()}
- function inertWorkspace(locked){
-  for(const element of [document.getElementById('app'),document.querySelector('.mobile-header'),document.querySelector('.mobile-nav')]){
-   if(!element)continue;
-   if(locked){
-    if(!element.hasAttribute('inert')){element.setAttribute('inert','');element.dataset.formaIntroInert='1'}
-   }else if(element.dataset.formaIntroInert==='1'){
-    element.removeAttribute('inert');delete element.dataset.formaIntroInert
-   }
+ const addTimeout=(task,ms)=>{
+  const id=run;const timer=setTimeout(()=>{
+   timers.delete(timer);
+   if(id===run&&active&&!closing)task();
+  },ms);timers.add(timer);return timer;
+ };
+ const clearTimers=()=>{for(const t of timers)clearTimeout(t);timers.clear()};
+ function lockWorkspace(lock){
+  const workspace=document.getElementById('app');
+  if(!workspace)return;
+  if(lock){
+   if(!workspace.hasAttribute('inert')){workspace.setAttribute('inert','');workspace.dataset.formaOpeningLock='1'}
+  }else if(workspace.dataset.formaOpeningLock==='1'){
+   workspace.removeAttribute('inert');delete workspace.dataset.formaOpeningLock;
   }
  }
- function finish(immediate=false){
-  if(!active||closing)return;
-  active=false;closing=true;cancelSchedules();
-  overlay.classList.add('is-leaving');
-  if(immediate)overlay.style.transition='none';
-  const done=()=>{
-   overlay.hidden=true;overlay.setAttribute('aria-hidden','true');
-   overlay.classList.remove('is-leaving','is-ready','is-revealed','is-fa-visible','is-name-visible','is-descriptor-visible');
-   root.classList.remove('forma-intro-pending');inertWorkspace(false);closing=false;
-   overlay.style.removeProperty('transition');
-   if(overlay.contains(document.activeElement)){
-    if(previousFocus?.isConnected&&previousFocus!==document.body)previousFocus.focus({preventScroll:true});
+ function ready(){
+  // The only source of truth for initialized projects is the core app.
+  return pageLoaded&&(window.FORMA_APP_READY===true);
+ }
+ function revealStudio(force=false){
+  if(!active||closing||previewHold&&!force||!force&&(!minimumPassed||!ready()))return;
+  closing=true;clearTimers();
+  screen.classList.remove('is-holding');
+  if(recover)recover.hidden=true;
+  screen.classList.add('is-leaving');
+  const id=run;
+  setTimeout(()=>{
+   if(id!==run)return;
+   active=false;closing=false;
+   screen.hidden=true;screen.setAttribute('aria-hidden','true');
+   screen.classList.remove('is-leaving','is-loader-complete','is-logo-visible','is-name-visible','is-descriptor-visible','is-holding');
+   root.classList.remove('forma-intro-pending');
+   lockWorkspace(false);
+   if(screen.contains(document.activeElement)){
+    if(lastFocus?.isConnected&&lastFocus!==document.body)lastFocus.focus({preventScroll:true});
     else document.querySelector('.forma-hero-primary')?.focus({preventScroll:true});
    }
-  };
-  if(immediate)done();
-  else setTimeout(done,590);
+  },850);
  }
- function scheduleExit(){
-  if(!active||previewHold||!loadReady||!sequenceStarted)return;
-  const remain=Math.max(0,STAGES.minimum-(performance.now()-startedAt));
-  // A loaded page may be available early, but logo introduction must finish first.
-  schedule(()=>{label('Рабочая студия готова');overlay.classList.add('is-ready');finish()},remain);
+ function checkReadiness(){
+  if(!active||closing||!minimumPassed)return;
+  if(previewHold)return;
+  if(ready()){revealStudio();return}
+  screen.classList.add('is-holding');
+  if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
  }
- function play(force=false){
-  if(active||closing)return;
-  if(!root.classList.contains('forma-intro-pending')&&!force&&!previewHold){overlay.hidden=true;return}
-  if(reduceMotion&&!force&&!previewHold){
-   overlay.hidden=true;root.classList.remove('forma-intro-pending');inertWorkspace(false);return
-  }
-  runId++;cancelSchedules();previousFocus=document.activeElement;
-  active=true;sequenceStarted=false;
-  // Reset BEFORE making the overlay visible to prevent a stale replay frame.
-  overlay.classList.remove('is-leaving','is-ready','is-revealed','is-fa-visible','is-name-visible','is-descriptor-visible');
-  overlay.hidden=false;overlay.setAttribute('aria-hidden','false');
-  root.classList.add('forma-intro-pending');inertWorkspace(true);
-  label('Открываем рабочую студию');
-  // Begin the timed reveal only AFTER the initial wall-only frame was painted.
-  // This prevents heavy Android page initialization from consuming the delay.
-  overlay.getBoundingClientRect();
-  const currentRun=runId;
+ function begin(){
+  run+=1;clearTimers();
+  active=true;closing=false;firstPaint=false;minimumPassed=false;
+  lastFocus=document.activeElement;
+  root.classList.add('forma-intro-pending');
+  screen.hidden=false;screen.setAttribute('aria-hidden','false');
+  screen.classList.remove('is-leaving','is-loader-complete','is-logo-visible','is-name-visible','is-descriptor-visible','is-holding');
+  if(recover)recover.hidden=true;
+  if(status)status.textContent='Загружаем инструменты';
+  if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
+  lockWorkspace(true);
+  screen.getBoundingClientRect();
+  const id=run;
+  // Run the clock after the browser has shown the first, fully black loader frame.
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-   if(!active||currentRun!==runId)return;
-   sequenceStarted=true;startedAt=performance.now();
-   schedule(()=>overlay.classList.add('is-fa-visible'),STAGES.fa);
-   schedule(()=>overlay.classList.add('is-name-visible'),STAGES.name);
-   schedule(()=>overlay.classList.add('is-descriptor-visible'),STAGES.descriptor);
-   scheduleExit();
+   if(id!==run||!active||closing)return;
+   firstPaint=true;paintStart=performance.now();
+   addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
+   addTimeout(()=>screen.classList.add('is-logo-visible'),TIME.logo);
+   addTimeout(()=>screen.classList.add('is-name-visible'),TIME.name);
+   addTimeout(()=>screen.classList.add('is-descriptor-visible'),TIME.descriptor);
+   addTimeout(()=>{minimumPassed=true;checkReadiness()},TIME.minShow);
+   addTimeout(()=>{
+    if(previewHold||ready()||!active)return;
+    screen.classList.add('is-holding');
+    if(waitLabel)waitLabel.textContent='Загрузка заняла больше времени';
+    if(recover)recover.hidden=false;
+   },TIME.recovery);
+   checkReadiness();
   }));
-  if(!previewHold){
-   if(document.readyState==='complete'){loadReady=true;scheduleExit()}
-   else {
-    const id=runId;
-    window.addEventListener('load',()=>{
-     if(id!==runId||!active)return;
-     loadReady=true;scheduleExit();
-    },{once:true});
-   }
-  }
  }
- skip?.addEventListener('click',()=>finish(true));
- document.addEventListener('keydown',event=>{
-  if(!active)return;
-  if(event.key==='Escape'||(event.key==='Enter'&&document.activeElement===skip)){
-   event.preventDefault();finish(true);
-  }else if(event.key==='Tab'){
-   event.preventDefault();skip?.focus({preventScroll:true});
-  }
- });
- window.FORMA_INTRO={replay:()=>play(true),skip:()=>finish(true),get active(){return active}};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>play(),{once:true});
- else play();
+ window.addEventListener('load',()=>{pageLoaded=true;checkReadiness()},{once:true});
+ document.addEventListener('forma:app-ready',()=>checkReadiness());
+ document.addEventListener('DOMContentLoaded',()=>{if(active)lockWorkspace(true)},{once:true});
+ recover?.addEventListener('click',()=>revealStudio(true));
+ // For navigation restored from browser back-forward cache: rerun the SAME sequence.
+ window.addEventListener('pageshow',event=>{if(event.persisted){pageLoaded=true;begin()}});
+ window.FORMA_INTRO={
+  replay:()=>begin(),
+  enter:()=>revealStudio(true),
+  get active(){return active},
+  get stage(){return !firstPaint?'preparing':screen.classList.contains('is-logo-visible')?'branding':'loading'}
+ };
+ begin();
 })();
