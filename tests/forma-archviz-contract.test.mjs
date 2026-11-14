@@ -48,3 +48,21 @@ test('no new frontend module exposes literal secret assignment', async () => {
   assert.doesNotMatch(text,/API_MARKET_KEY\s*=\s*['"][^'"]+['"]/);
  }
 });
+
+
+test('selected FA vector identity is applied consistently', async () => {
+ const html=await fromRoot('index.html');
+ const js=await fromRoot('forma-archviz-studio.js');
+ const nodeJs=await fromRoot('forma-nodes.js');
+ const proJs=await fromRoot('forma-pro-tools.js');
+ const favicon=await fromRoot('favicon.svg');
+ const mark=await fromRoot('assets/brand/forma-fa-mark.svg');
+ assert.match(html,/forma-fa-mark\.svg/);
+ assert.match(html,/forma-brand-identity\.css/);
+ assert.match(html,/favicon\.svg/);
+ assert.match(js,/forma-fa-mark\.svg/);
+ assert.match(nodeJs,/forma-fa-mark\.svg/);
+ assert.match(proJs,/forma-fa-mark\.svg/);
+ assert.match(mark,/viewBox="0 0 270 265"/);
+ assert.match(favicon,/<svg/);
+});
