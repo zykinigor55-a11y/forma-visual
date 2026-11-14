@@ -6,6 +6,10 @@ on:
       - feature/forma-archviz-studio
     paths:
       - .github/workflows/forma-archviz-preview.yml
+      - index.html
+      - forma-archviz-studio.css
+      - forma-archviz-studio.js
+      - tests/capture-homepage.mjs
 permissions:
   contents: write
 jobs:
