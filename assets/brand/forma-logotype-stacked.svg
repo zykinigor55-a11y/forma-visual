@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" role="img" aria-labelledby="title desc">
+<title id="title">ФОРМА — архитектурная визуализация</title>
+<desc id="desc">Графическая монограмма FA и геометрическая надпись ФОРМА; архитектурная визуализация, рендеры, интерьеры и презентации проектов</desc>
+<g transform="translate(390 22) scale(.82)"><g fill="#DCC9AD"><path d="M24 80 78 46H222l-21 20H85L51 93v126H24Z"/><path d="M51 116h101l-20 19H51Z"/><path d="m102 219 64-108h18l61 108h-32l-38-68-41 68Z"/></g></g>
+<g fill="#F5F1E8" text-anchor="middle" font-family="Manrope, 'Helvetica Neue', Arial, sans-serif">
+ <text x="512" y="352" font-size="110" font-weight="400" letter-spacing="30">ФОРМА</text>
+ <text x="500" y="430" font-size="24" font-weight="500" letter-spacing="10.2" fill="#DCC9AD">АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</text>
+ <text x="500" y="495" font-size="15" font-weight="400" letter-spacing="5.4" fill="#B6B3A9">РЕНДЕРЫ · ИНТЕРЬЕРЫ · ПРЕЗЕНТАЦИИ ПРОЕКТОВ</text>
+</g>
+<path d="M80 423H148M852 423H920" stroke="#DCC9AD" stroke-width="1.8"/>
+</svg>

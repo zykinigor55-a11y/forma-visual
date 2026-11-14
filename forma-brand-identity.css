@@ -1,0 +1,81 @@
+/* FORMA ARCHVIZ · FA identity kit (brand mark #2)
+   The emblem is SVG, without any decorative wall baked into the logo.
+   Graphite stucco + tree shadows are presentation treatment only. */
+.forma-brand-symbol{padding:2px!important;display:grid!important;place-items:center!important;background:#1a2627!important;border-color:#6a6258!important;border-radius:9px!important;line-height:1!important;letter-spacing:normal!important}
+.forma-brand-symbol img{display:block;width:31px;height:31px;object-fit:contain}
+.forma-brand-copy strong{font-family:Inter,"Helvetica Neue",Arial,sans-serif;font-weight:590;letter-spacing:.155em}
+.forma-brand-copy small{font-size:8px;letter-spacing:.135em;color:#c7b79f}
+.studio-wordmark .studio-wordmark-icon{display:grid!important;place-items:center!important;background:#1a2627!important;border:1px solid #3d4542!important;border-radius:9px!important;overflow:hidden}
+.studio-wordmark .forma-ui-mark{display:block!important;width:29px!important;height:29px!important;object-fit:contain}
+.studio-wordmark strong{font-size:17px!important;letter-spacing:.145em!important;font-weight:610!important}
+.studio-wordmark small{letter-spacing:.155em!important;font-size:8px!important;color:#817467!important;font-weight:650}
+.rail-bottom .rail-monogram{display:grid!important;place-items:center!important;overflow:hidden}
+.rail-bottom .rail-monogram img{display:block;width:24px;height:24px;object-fit:contain}
+.mobile-header .mobile-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mobile-header .forma-brand-mobile-logo{height:42px;width:42px;padding:5px;display:block;object-fit:contain;background:#1a2627;border:1px solid #444e48;border-radius:10px;flex:none}
+.mobile-header .forma-brand-mobile-name{display:flex;flex-direction:column;justify-content:center;gap:3px;font-size:16px!important;font-weight:580!important;letter-spacing:.105em!important;white-space:nowrap;line-height:1.1}
+.mobile-header .forma-brand-mobile-name small{font-size:8px!important;letter-spacing:.14em!important;color:#977f63;font-weight:650}
+.fa-flow-logo,.fa-pro-monogram{padding:3px!important;display:grid!important;place-items:center!important;font-size:0!important;letter-spacing:normal!important}
+.fa-flow-logo img,.fa-pro-monogram img{display:block!important;width:30px;height:30px;object-fit:contain}
+.fa-pro-monogram{background:#1b292b}
+.fa-flow-logo{background:#182829}
+@media(max-width:720px){
+ .fa-flow-logo img,.fa-pro-monogram img{width:24px;height:24px}
+ .mobile-header .forma-brand-mobile-logo{height:38px;width:38px}
+ .mobile-header .forma-brand-mobile-name{font-size:13px!important}
+ .mobile-header .forma-brand-mobile-name small{font-size:7px!important}
+}
+
+
+/* ─── ФОРМА · Russian-language brand release 02 ─── */
+.forma-brand-copy strong{font-size:16px!important;font-weight:570!important;letter-spacing:.13em!important}
+.forma-brand-copy small{font-size:7.1px!important;font-weight:600!important;letter-spacing:.028em!important;white-space:nowrap;color:#c3b9aa!important}
+.studio-wordmark strong{font-size:17px!important;font-weight:570!important;letter-spacing:.14em!important}
+.studio-wordmark small{font-size:7.8px!important;letter-spacing:.055em!important;white-space:nowrap;color:#99866e!important}
+.forma-brand-mobile-name{letter-spacing:.14em!important}
+.forma-brand-mobile-name small{letter-spacing:.025em!important;font-size:7.2px!important}
+.forma-context-breadcrumbs{letter-spacing:.075em!important}
+.forma-hero-emblem{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:0;opacity:.82!important;color:#e9d9c5}
+.forma-hero-emblem img{width:145px!important;height:145px!important;object-fit:contain!important;filter:drop-shadow(0 8px 20px #0004)}
+.forma-hero-emblem strong{display:block;font-size:26px;font-weight:380;letter-spacing:.2em;padding-left:.2em;line-height:1.1;white-space:nowrap;color:#f3eee4}
+.forma-hero-emblem span{font-size:8px;letter-spacing:.17em;line-height:1.7;text-align:center;color:#d4bd9d;margin-top:9px}
+.forma-hero .eyebrow{font-size:8px!important;letter-spacing:.12em!important;line-height:1.5!important}
+.forma-workflow-launcher{display:grid;grid-template-columns:1.13fr repeat(3,minmax(0,1fr));gap:9px;align-items:stretch;margin:0 0 18px}
+.forma-workflow-label{display:flex;flex-direction:column;justify-content:center;padding:6px 11px 6px 2px;min-width:0}
+.forma-workflow-label>span{font-size:8px;letter-spacing:.16em;color:#a08768;font-weight:740;margin-bottom:8px}
+.forma-workflow-label>strong{font-size:12px;letter-spacing:-.015em;color:#30433b;font-weight:660}
+.forma-workflow-label>small{font-size:10px;color:#84918a;line-height:1.4;margin-top:5px}
+.forma-workflow-card{display:flex;align-items:center;gap:10px;min-width:0;min-height:86px;text-align:left;border:1px solid #dce5de;border-radius:11px;background:linear-gradient(152deg,#fff,#f9faf7);padding:13px 11px;color:#344d44;box-shadow:0 6px 25px #203b2910;cursor:pointer;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+.forma-workflow-card:hover{transform:translateY(-2px);border-color:#bba78b;background:#fff;box-shadow:0 8px 29px #203b2920}
+.forma-workflow-card:focus-visible{outline:2px solid #ab9c85!important;outline-offset:2px}
+.forma-workflow-symbol{display:grid;place-items:center;flex:0 0 35px;width:35px;height:35px;border:1px solid #d8e2da;border-radius:8px;background:#f0f4f0;color:#5d776d}
+.forma-workflow-symbol .ico{width:18px;height:18px;stroke-width:1.6}
+.forma-workflow-copy{display:flex;flex:1;flex-direction:column;justify-content:center;min-width:0;gap:4px}
+.forma-workflow-copy strong{font-size:11px;color:#243f35;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forma-workflow-copy small{font-size:9px;color:#829489;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forma-workflow-arrow{color:#a18e72;font-size:15px;font-weight:400;align-self:flex-start;line-height:1;flex:none}
+@media(max-width:1520px){
+ .forma-workflow-launcher{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .forma-workflow-label{grid-column:1/-1;flex-direction:row;justify-content:flex-start;align-items:center;gap:13px;padding:4px 2px 2px}
+ .forma-workflow-label>span{margin:0}
+ .forma-workflow-label>small{margin:0}
+}
+@media(min-width:1180px) and (max-width:1320px){
+ .forma-workflow-card{gap:7px;padding:10px 7px}
+ .forma-workflow-symbol{width:30px;height:30px;flex-basis:30px}
+ .forma-workflow-copy strong{font-size:10px}
+ .forma-workflow-copy small{font-size:8px}
+}
+@media(max-width:760px){
+ .forma-hero-emblem{opacity:.18!important}
+ .forma-hero-emblem strong,.forma-hero-emblem span{display:none}
+ .forma-brand-mobile-name small{font-size:7px!important;letter-spacing:.015em!important}
+ .forma-workflow-launcher{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#ccd4ce transparent;padding:0 1px 8px;margin:0 0 10px}
+ .forma-workflow-label{display:none}
+ .forma-workflow-card{flex:0 0 175px;min-height:68px;padding:10px 8px;gap:8px;border-radius:9px}
+ .forma-workflow-symbol{width:31px;height:31px;flex-basis:31px}
+ .forma-workflow-copy strong{font-size:10px}
+ .forma-workflow-copy small{font-size:8px}
+ .forma-workflow-arrow{display:none}
+ .forma-hero .eyebrow{font-size:7px!important}
+}

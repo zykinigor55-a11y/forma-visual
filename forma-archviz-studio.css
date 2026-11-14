@@ -1,0 +1,217 @@
+/* FORMA ARCHVIZ STUDIO — professional workspace skin, 2026-11-14.
+   This file only adds presentation and workflow controls; legacy render logic stays intact. */
+:root{
+ --bg:#f3f4f2;--paper:#fff;--ink:#1b2526;--muted:#697677;--muted2:#99a3a3;
+ --hair:#dfe5e2;--dark:#182527;--dark2:#283637;--soft:#edf2f0;
+ --soft2:#f8faf8;--chosen:#e2eae7;--green:#314c49;--rail:#192225;
+ --shadow:0 10px 38px rgba(17,39,36,.045);--radius:12px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:Inter,"Helvetica Neue",Arial,sans-serif}
+:focus-visible{outline:2px solid #548a7e!important;outline-offset:3px}
+[hidden]{display:none!important}
+.app{max-width:none}
+.rail{background:#192427;border-color:#2b393a}
+.forma-rail-brand{width:100%;display:flex;align-items:center;gap:12px;color:#f4f4f0;text-align:left;text-decoration:none;padding:3px 4px 20px;border-bottom:1px solid #364242}
+.forma-brand-symbol{width:38px;height:38px;border:1px solid #73847f;border-radius:11px;display:grid;place-items:center;flex:none;font-size:23px;font-weight:600;letter-spacing:-.15em;line-height:1;padding-right:4px;color:#fff}
+.forma-brand-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.forma-brand-copy strong{font-size:15px;font-weight:650;letter-spacing:.12em;white-space:nowrap}
+.forma-brand-copy small{font-size:8px;font-weight:700;letter-spacing:.2em;color:#a9b9b5;white-space:nowrap}
+.rail>.brand-sign{display:none!important}
+.forma-nav-section{color:#7e9692;font-size:9px;font-weight:750;letter-spacing:.18em;text-transform:uppercase;padding:0 13px 9px}
+.rail-nav{gap:5px}
+.rail-nav .rail-btn{border:1px solid transparent;border-radius:9px;transition:background .2s,color .2s;position:relative}
+.rail-nav .rail-btn:hover{background:#2b393b;color:#fff}
+.rail-nav .rail-btn.active{background:#eef3ef;color:#182b2b;border-color:#eef3ef}
+.rail-nav .rail-btn .ico{width:18px;height:18px}
+.rail-bottom{width:100%}
+.rail-bottom .rail-monogram{border-radius:10px;font-weight:600;color:#dce8e3}
+.rail-bottom .build-version{color:#82938d;letter-spacing:.09em}
+.workspace{background:var(--bg)}
+.topline{border-bottom:1px solid var(--hair);padding-bottom:18px}
+.studio-wordmark strong{font-size:16px!important;letter-spacing:-.045em!important;color:#1d2c2d!important}
+.studio-wordmark small{letter-spacing:.18em!important;color:#768582!important}
+.studio-wordmark .studio-wordmark-icon{background:#19272a!important;color:#f8fbf9!important;border:0!important;border-radius:9px!important}
+.studio-wordmark .logo-mark{color:#fff}
+.breadcrumbs{font-size:10px}
+.header-account,.top-actions .btn{border-radius:9px!important}
+.page-intro{padding:28px 0 21px}
+.page-intro .eyebrow{font-size:9px;letter-spacing:.2em;color:#5d7770}
+.page-intro h1{font-weight:570;letter-spacing:-.055em}
+.page-intro h1 span{color:#6d8580}
+.page-intro .subtitle{font-size:12px;color:#697b79}
+.stepper{display:none!important}
+.viewer-card{border:1px solid #dfe6e2;border-radius:14px;overflow:hidden;box-shadow:0 15px 55px rgba(12,30,28,.045);background:#fff}
+.viewer-toolbar{min-height:59px;padding:0 17px}
+.viewer-heading b{color:#283a3a;font-size:10px}
+.viewer-actions{gap:7px}
+.viewer-actions .desktop-hint{display:none}
+.icon-button{border-radius:8px!important;height:35px;width:35px}
+.icon-button:hover{background:#f0f4f1}
+.view-modes{background:#fafbf9!important;border-top:1px solid #ebefed;border-bottom:1px solid #e6ece9}
+.view-mode{border-radius:7px!important}
+.stage{background:#c9cfc9}
+.viewer-footer{padding:17px}
+.viewer-footer-head{margin-bottom:11px}
+.results-strip{gap:12px}
+.result-thumb{border-radius:9px;overflow:hidden}
+.under-viewer{gap:12px}
+.upload-box{border-radius:11px;min-height:90px;background:#fff}
+.upload-symbol{border-radius:8px}
+.angle-consistency{border-radius:10px}
+.page-footer{opacity:.88}
+.inspector{background:#fcfdfc;border-left:1px solid #e2e9e5}
+.inspector-head{padding:27px 22px 17px;background:#fff}
+.inspector-kicker{font-size:10px;letter-spacing:.12em}
+.inspector-head h2{font-size:27px;letter-spacing:-.045em;margin-top:14px}
+.inspector-head>p{font-size:11px}
+.inspector-scroll{scrollbar-color:#d4ddda transparent}
+.inspector-footer{border-top:1px solid #e0e7e4}
+.inspector .btn,.inspector .scene-choice-trigger{border-radius:9px}
+.btn{border-radius:9px}
+.btn-dark,.btn-primary{background:#1d3334;border-color:#1d3334}
+.btn-dark:hover,.btn-primary:hover{background:#2f4b49;border-color:#2f4b49}
+.mood-card{border-radius:9px!important;overflow:hidden}
+.scene-variants-section,.scene-variants{border-radius:12px}
+.project-dashboard{border-radius:10px}
+.forma-context-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0 2px}
+.forma-context-breadcrumbs{display:flex;align-items:center;gap:8px;color:#6e817d;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:650}
+.forma-context-breadcrumbs b{color:#1c3534;font-weight:700}
+.forma-context-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.forma-chip,.forma-mini-btn{border:1px solid #dde5e1;border-radius:8px;background:#fff;color:#38504c;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:34px;padding:0 12px;font-size:10px;font-weight:700;white-space:nowrap}
+.forma-mini-btn:hover,.forma-chip:hover{background:#f0f5f2;border-color:#b6c9c2}
+.forma-chip{background:#edf3ef;border-color:#d7e4dd;color:#385c52}
+.forma-chip span{width:6px;height:6px;border-radius:50%;background:#6d9b83}
+.forma-chip[data-server=offline] span{background:#bb8b69}
+.forma-mini-btn svg{height:14px;width:14px}
+.forma-mini-btn[aria-pressed=true]{background:#1f3436;border-color:#1f3436;color:#fff}
+.forma-mini-btn.is-primary{background:#1f3436;color:#fff;border-color:#1f3436}
+.forma-mini-btn.is-primary:hover{background:#32504e}
+.forma-photo-presets{display:grid;grid-template-columns:190px repeat(3,minmax(0,1fr));gap:10px;align-items:stretch;margin:14px 0 14px}
+.forma-photo-caption{padding:15px 8px 15px 0;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.forma-photo-caption strong{font-size:12px;color:#243b3a;letter-spacing:-.015em}
+.forma-photo-caption small{font-size:10px;color:#7b8c86;line-height:1.45}
+.forma-photo-card{height:83px;border-radius:11px;position:relative;isolation:isolate;overflow:hidden;background-size:cover;background-position:center;border:1px solid #d9e2dd;color:white;text-align:left;padding:10px 13px;display:flex;align-items:flex-end;transition:transform .18s,border .18s}
+.forma-photo-card::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#061414c9,#07171712);z-index:-1}
+.forma-photo-card:hover{transform:translateY(-2px);border-color:#5d8177}
+.forma-photo-card strong{display:block;font-size:10px;font-weight:730;letter-spacing:.03em}
+.forma-photo-card small{display:block;font-size:9px;opacity:.8;margin-top:3px}
+.forma-photo-card.is-current{outline:2px solid #4b8174;outline-offset:1px}
+.forma-qa-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 16px;background:#edf3f0;border-top:1px solid #dce6df}
+.forma-qa-controls .forma-qa-left{display:flex;flex-direction:column;gap:4px}
+.forma-qa-controls strong{font-size:11px;color:#26413c}
+.forma-qa-controls small{font-size:10px;color:#677b75}
+.forma-qa-controls .forma-qa-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.forma-qa-controls label{display:flex;align-items:center;gap:8px;color:#54706a;font-size:10px}
+.forma-qa-controls input[type=range]{width:96px;accent-color:#305d55}
+.forma-qa-controls [data-qa-mode]{border:1px solid #c5d4ce;color:#34524b;border-radius:7px;background:#fff;padding:8px 10px;font-size:10px;font-weight:600}
+.forma-qa-controls [data-qa-mode][aria-pressed=true]{background:#294641;border-color:#294641;color:#fff}
+.stage #formaQaBefore,.stage #formaQaEdges{display:none;pointer-events:none;position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:5}
+.stage.forma-qa-active #formaQaBefore{display:block;opacity:var(--forma-qa-opacity,.5)}
+.stage.forma-qa-active.forma-qa-edge #formaQaBefore{display:none}
+.stage.forma-qa-active.forma-qa-edge #formaQaEdges{display:block}
+.stage.forma-qa-active #beforeImg{opacity:0!important}
+.stage.forma-qa-active .split-guide,.stage.forma-qa-active .split-slider{display:none!important}
+.stage.forma-qa-active .viewer-overlay-top,.stage.forma-qa-active .viewer-overlay-bottom{opacity:0}
+.forma-command-backdrop{position:fixed;z-index:2400;inset:0;background:#0d1a1dd1;display:flex;align-items:flex-start;justify-content:center;padding:12vh 18px 30px;backdrop-filter:blur(12px)}
+.forma-command-dialog{width:min(540px,100%);background:#fff;border-radius:17px;box-shadow:0 24px 90px #0007;overflow:hidden;border:1px solid #e2e6e3}
+.forma-command-head{padding:18px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e8edea}
+.forma-command-head svg{width:21px;height:21px;stroke:#56746d}
+.forma-command-head input{border:0;outline:none!important;width:100%;font-size:15px;font-weight:500;color:#1b2d2c;background:transparent}
+.forma-command-list{padding:11px;max-height:390px;overflow:auto}
+.forma-command-list button{width:100%;display:flex;justify-content:space-between;align-items:center;border:0;background:transparent;padding:13px 14px;text-align:left;border-radius:9px;font-size:12px;font-weight:600;color:#253a37}
+.forma-command-list button:hover,.forma-command-list button:focus-visible{background:#eaf1ed}
+.forma-command-list button small{color:#80928a;font-size:10px}
+.forma-command-hint{padding:12px 19px;border-top:1px solid #edf0ed;color:#85938e;font-size:10px}
+.forma-command-empty{padding:25px;color:#72847b;text-align:center;font-size:12px}
+@media (min-width:1490px){
+ .app{grid-template-columns:206px minmax(0,1fr) 390px}
+ .rail{padding:29px 13px 20px;align-items:stretch}
+ .rail-nav{margin-top:27px;align-items:stretch}
+ .rail-nav .rail-btn{width:100%;height:44px;display:flex;justify-content:flex-start;padding:0 12px;gap:12px;color:#c0d0ca;font-size:11px}
+ .rail-nav .rail-btn .rail-name{display:inline!important;font-size:11px;font-weight:600;white-space:nowrap}
+ .rail-bottom{justify-items:start;padding-left:8px}
+ .workspace{padding:25px clamp(23px,2.7vw,48px)}
+ .inspector-head .tab-bar{display:none}
+}
+@media (min-width:1180px) and (max-width:1489px){
+ .app{grid-template-columns:74px minmax(0,1fr) 358px}
+ .rail{padding:19px 8px}
+ .forma-rail-brand{justify-content:center;padding:0 0 14px}
+ .forma-brand-copy,.forma-nav-section{display:none}
+ .rail-nav{margin-top:31px}
+ .rail-nav .rail-btn{width:49px;height:48px}
+ .rail-bottom{justify-items:center}
+ .workspace{padding:21px 22px}
+ .inspector-head .tab-bar{display:none}
+ .forma-photo-presets{grid-template-columns:1fr 1fr 1fr}
+ .forma-photo-caption{grid-column:1/-1;padding:4px 2px}
+}
+@media (max-width:1179px){
+ .forma-rail-brand{display:none}
+ .forma-context-bar{padding:9px 0;flex-wrap:wrap}
+ .forma-photo-presets{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .forma-photo-caption{grid-column:1/-1;padding:4px 2px}
+}
+@media (max-width:760px){
+ .forma-context-actions{width:100%;justify-content:flex-start}
+ .forma-context-breadcrumbs{font-size:9px}
+ .forma-mini-btn{height:31px;padding:0 10px;font-size:9px}
+ .forma-chip{height:30px;font-size:9px}
+ .forma-photo-presets{gap:7px;margin:10px 0}
+ .forma-photo-card{height:72px;padding:8px;border-radius:8px}
+ .forma-photo-card strong{font-size:9px}
+ .forma-photo-card small{font-size:8px}
+ .forma-photo-caption{display:none}
+ .forma-qa-controls{align-items:stretch}
+ .forma-qa-controls .forma-qa-actions{width:100%}
+ .forma-qa-controls label{width:100%;justify-content:space-between}
+ .forma-qa-controls input[type=range]{width:45%}
+ .forma-command-backdrop{padding-top:7vh}
+ .forma-command-dialog{border-radius:13px}
+}
+@media (max-width:420px){
+ .forma-context-actions .forma-mini-btn{padding:0 8px}
+ .forma-photo-card small{display:none}
+ .forma-photo-card{height:61px}
+}
+
+
+/* FORMA — graphite architecture studio first screen, 2026-11-14 */
+.workspace .page-intro.forma-hero{position:relative;overflow:hidden;isolation:isolate;display:flex!important;align-items:center;justify-content:space-between;min-height:255px;padding:32px clamp(26px,3.6vw,54px)!important;margin:18px 0 21px!important;gap:24px;border-radius:15px;border:1px solid #37423e;background:#172023 url("assets/brand/graphite-branches-wall.svg") center/cover no-repeat;box-shadow:0 19px 52px #14252520;color:#f8f6ef}
+.workspace .forma-hero::after{content:"";pointer-events:none;position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,23,23,.37),rgba(16,24,24,.16) 70%,rgba(12,22,22,.3));z-index:-1}
+.forma-hero-content{position:relative;z-index:2;min-width:0;max-width:690px}
+.forma-hero .eyebrow{display:flex;align-items:center;flex-wrap:wrap;gap:14px;color:#d2c3aa!important;letter-spacing:.18em!important;font-weight:650!important;font-size:9px!important;margin:0 0 18px!important}
+.forma-hero-rule{display:inline-block;width:29px;height:1px;background:#beaa89}
+.forma-hero h1{color:#f6f3ed!important;font-size:clamp(32px,3.2vw,51px)!important;line-height:1.07!important;letter-spacing:-.047em!important;font-weight:500!important;margin:0 0 12px!important}
+.forma-hero h1 span{color:#d8c4a8!important}
+.forma-hero .subtitle{color:#c0cac4!important;line-height:1.7!important;font-size:11px!important;max-width:520px;margin:0!important}
+.forma-hero-tags{display:flex;gap:21px;flex-wrap:wrap;margin-top:21px}
+.forma-hero-tags span{color:#d6d7cb;font-size:9px;font-weight:650;letter-spacing:.11em;white-space:nowrap}
+.forma-hero-emblem{position:relative;z-index:1;width:min(28%,240px);max-height:210px;display:flex;justify-content:center;align-items:center;flex:none;opacity:.6;filter:drop-shadow(0 10px 18px #0006)}
+.forma-hero-emblem img{display:block;max-width:100%;width:180px;height:auto;object-fit:contain}
+.forma-hero .stepper{display:none!important}
+@media(max-width:1400px){.workspace .page-intro.forma-hero{min-height:224px;padding:27px!important}.forma-hero h1{font-size:37px!important}.forma-hero-emblem{width:22%;opacity:.49}}
+@media(max-width:760px){.workspace .page-intro.forma-hero{margin:10px 0 15px!important;min-height:216px;padding:24px 21px!important;border-radius:12px}.forma-hero h1{font-size:34px!important}.forma-hero .subtitle{font-size:10px!important}.forma-hero-emblem{position:absolute;right:-12px;bottom:12px;width:130px;opacity:.2}.forma-hero-tags{gap:11px;margin-top:16px}.forma-hero-tags span{font-size:8px}.forma-hero .eyebrow{font-size:8px!important}}
+@media(max-width:390px){.forma-hero-tags span:last-child{display:none}.forma-hero h1{font-size:31px!important}.forma-hero .subtitle{font-size:9px!important}}
+
+
+/* Explicit first-screen actions — refined editorial interaction */
+.forma-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:21px}
+.forma-hero-actions button{min-height:40px;display:inline-flex;gap:11px;align-items:center;justify-content:center;padding:0 15px;border:1px solid #c4b59f;border-radius:7px;font-size:10px;font-weight:720;letter-spacing:.03em;cursor:pointer;transition:background .15s,transform .15s}
+.forma-hero-actions button:hover{transform:translateY(-1px)}
+.forma-hero-actions button:focus-visible{outline:2px solid #d9bb87!important;outline-offset:3px}
+.forma-hero-primary{background:#e6d9c3;color:#1d2929;border-color:#e6d9c3!important}
+.forma-hero-primary:hover{background:#f0e6d5}
+.forma-hero-primary svg{width:15px;height:15px;stroke-width:1.7}
+.forma-hero-primary>span{opacity:.7;font-size:15px;margin-left:8px}
+.forma-hero-secondary{color:#f4f0e9;background:#e5e5dc0a;border:1px solid #8e9a92!important}
+.forma-hero-secondary:hover{background:#b5c4bb1b}
+.forma-hero-secondary>span{font-size:15px;color:#d6c09e;margin-left:10px}
+.forma-4k-export{font-size:11px!important;font-weight:800!important;color:#284f43!important;letter-spacing:.01em}
+@media(max-width:760px){
+ .workspace .page-intro.forma-hero{min-height:239px!important;padding:23px 19px!important}
+ .forma-hero-actions{gap:7px;margin-top:16px}
+ .forma-hero-actions button{min-height:37px;padding:0 11px;font-size:9px;gap:7px}
+ .forma-hero-primary>span,.forma-hero-secondary>span{margin-left:3px}
+}

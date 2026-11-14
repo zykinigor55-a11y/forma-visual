@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#192427"><meta name="description" content="ФОРМА — профессиональная AI-студия архитектурной визуализации. Экстерьеры и интерьеры из скетча, материалы, анимация, нодовые сценарии и контроль геометрии.">
+<title>ФОРМА — профессиональная архитектурная визуализация</title>
+<script>
+try{if(sessionStorage.getItem('forma-opening-seen-v2')!=='1')document.documentElement.classList.add('forma-intro-pending')}catch{document.documentElement.classList.add('forma-intro-pending')}
+</script>
+<style>html.forma-intro-pending body{background:#2c2e2d}html.forma-intro-pending #forma-intro{display:block}</style>
+<link rel="stylesheet" href="styles.css?v=geometry-v32-20261109">
+<link rel="stylesheet" href="dom-render-ux-v26.css?v=20261109-mobile">
+<link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
+<link rel="stylesheet" href="dom-render-materials-v28.css?v=20261109-material-preview-v31b">
+<link rel="stylesheet" href="dom-render-batch-v32.css?v=20261109-batch-v1">
+<link rel="stylesheet" href="dom-render-material-quick-v34.css?v=20261109-v1">
+<link rel="stylesheet" href="dom-render-simple-materials-v38.css?v=materials-simple-v38-20261109">
+<link rel="stylesheet" href="dom-render-nodes-v35.css?v=20261109-v1">
+<link rel="stylesheet" href="dom-render-mood-v36.css?v=20261109-v1">
+<link rel="stylesheet" href="dom-render-setup-v37.css?v=scene-setup-v37-20261109">
+<link rel="stylesheet" href="dom-render-animation-v39.css?v=three-camera-v42-20261109">
+<link rel="stylesheet" href="dom-render-cinema-premium-v43.css?v=icons-visible-v44-20261110">
+<link rel="stylesheet" href="dom-render-house-preview-v46.css?v=preview-my-project-after-v47-20261110">
+<link rel="stylesheet" href="dom-render-scene-variants-v48.css?v=before-after-season-scenes-20261110-v1">
+<link rel="stylesheet" href="dom-render-ui-polish-v51.css?v=restored-apple-jakub-20261110-v51">
+<link rel="stylesheet" href="dom-render-mobile-cinema-v52.css?v=mobile-cinema-20261110-v52">
+<link rel="stylesheet" href="dom-render-progress-v53.css?v=ai-progress-20261110-v53">
+<link rel="stylesheet" href="dom-render-scene-icons-v54.css?v=minimal-scene-icons-20261110-v55">
+<link rel="stylesheet" href="dom-render-gallery-v56.css?v=portfolio-20261110-v56">
+<link rel="stylesheet" href="dom-render-wan26.css?v=wan26-preview-1">
+<link rel="stylesheet" href="forma-archviz-studio.css?v=20261114-studio-01">
+<link rel="stylesheet" href="forma-interiors.css?v=20261114-interior-01">
+<link rel="stylesheet" href="forma-nodes.css?v=20261114-nodes-01">
+<link rel="stylesheet" href="forma-pro-tools.css?v=20261114-pro-01">
+<link rel="icon" type="image/svg+xml" href="assets/brand/forma-preview-favicon.svg?v=fa-mark-20261114">
+<link rel="stylesheet" href="forma-brand-identity.css?v=fa-mark-20261114">
+<link rel="preload" href="assets/brand/intro-graphite-wall.svg" as="image">
+<link rel="preload" href="assets/brand/intro-branch-shadows.svg" as="image">
+<link rel="stylesheet" href="forma-intro.css?v=20261114-opening-v2">
+<noscript><style>html.forma-intro-pending #forma-intro{display:none!important}</style></noscript>
+<meta name="robots" content="noindex,nofollow">
+</head>
+<body>
+<div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Вступительная заставка студии ФОРМА" aria-hidden="true">
+ <div class="forma-intro-wall" aria-hidden="true"></div>
+ <div class="forma-intro-light" aria-hidden="true"></div>
+ <div class="forma-intro-shadow" aria-hidden="true"></div>
+ <div class="forma-intro-shadow secondary" aria-hidden="true"></div>
+ <div class="forma-intro-vignette" aria-hidden="true"></div>
+ <button type="button" id="formaIntroSkip" class="forma-intro-skip" aria-label="Пропустить вступительную заставку">Пропустить <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 7 7-7 7M16 5v14"/></svg></button>
+ <div class="forma-intro-content">
+  <div class="forma-intro-lockup">
+   <img class="forma-intro-mark" src="assets/brand/forma-fa-mark.svg" width="200" height="197" alt="" decoding="async">
+   <span class="forma-intro-name">ФОРМА</span>
+   <span class="forma-intro-descriptor">АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</span>
+   <span class="forma-intro-line" aria-hidden="true"></span>
+  </div>
+ </div>
+ <span class="forma-intro-caption" aria-hidden="true">АРХИТЕКТУРА · СВЕТ · МАТЕРИАЛЫ</span>
+</div>
+
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+ <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
+ <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2ZM19 17l.6 2.4L22 20l-2.4.6L19 23l-.6-2.4L16 20l2.4-.6L19 17Z"/></symbol>
+ <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3V7Z"/></symbol>
+ <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m21 16-5-5-9 10"/></symbol>
+ <symbol id="i-layer" viewBox="0 0 24 24"><path d="m12 2 10 6-10 6L2 8l10-6Zm-10 11 10 6 10-6M2 18l10 5 10-5"/></symbol>
+ <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 3v8m8 2v8"/></symbol>
+ <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+ <symbol id="i-tree" viewBox="0 0 24 24"><path d="m7 4-5 9h4l-3 5h18l-3-5h4l-5-9-5 9-5-9ZM12 18v4"/></symbol>
+ <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 1 1 1.3-9.8A6 6 0 0 1 20 10a4 4 0 0 1-1 8H7Z"/></symbol>
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+ <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+ <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 17v4h16v-4"/></symbol>
+ <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+ <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+ <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+ <symbol id="i-chevrons" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5m8-10 5 5-5 5"/></symbol>
+ <symbol id="i-undo" viewBox="0 0 24 24"><path d="m9 14-5-5 5-5M4 9h10a6 6 0 0 1 0 12"/></symbol>
+ <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m4-7v7"/></symbol>
+ <symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11M13 3v3m0-3 0 3m-3-2 2 2m6-2-2 2m4 4h-3m-13 1-2 2m6-7V4"/></symbol><symbol id="i-brush" viewBox="0 0 24 24"><path d="m14 4 6 6-9 9-6 1 1-6 8-10ZM3 20h6"/></symbol>
+ <symbol id="i-poly" viewBox="0 0 24 24"><path d="m5 5 13-2 3 15-13 3L5 5Z"/><circle cx="5" cy="5" r="1.5"/><circle cx="18" cy="3" r="1.5"/><circle cx="21" cy="18" r="1.5"/><circle cx="8" cy="21" r="1.5"/></symbol>
+ <symbol id="i-eraser" viewBox="0 0 24 24"><path d="m9 4 11 11-6 6H8L2 15 13 4a3 3 0 0 1 4 0l3 3M8 21h14"/></symbol>
+ <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+ <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+ <symbol id="i-x" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+ <symbol id="i-full" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5"/></symbol>
+ <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2.2c0-3 3-5 7-5s7 2 7 5V21"/></symbol>
+ <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10v.1"/></symbol>
+ <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+ <symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5 9a8 8 0 0 1 14-2l1 5M4 12l1 5a8 8 0 0 0 14-2"/></symbol>
+ <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+ <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor" stroke="none"/></symbol>
+ <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4"/></symbol>
+ <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 3h13l4 4v14H3V3h1Zm3 0v7h10V3M7 21v-8h10v8"/></symbol>
+</svg>
+<header class="mobile-header"><div class="mobile-brand"><img class="forma-brand-mobile-logo" src="assets/brand/forma-fa-mark.svg" alt="Логотип FA" width="43" height="43"><b class="forma-brand-mobile-name">ФОРМА <small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></b></div><div class="mobile-header-actions"><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
+<div class="app" id="app">
+<aside class="rail" aria-label="Основная навигация">
+ <div class="brand-mark brand-sign" title="ФОРМА — архитектурная визуализация" aria-label="ФОРМА"><span class="brand-roof"></span><span class="brand-letters">FA</span></div>
+ <nav class="rail-nav">
+  <button class="rail-btn active" data-nav="project" title="Загрузка исходника и сравнение" aria-label="Проект"><svg class="ico"><use href="#i-folder"/></svg><span class="rail-name">Проект</span></button>
+  <button class="rail-btn" data-nav="environment" title="Окружение, сезоны и свет" aria-label="Окружение"><svg class="ico"><use href="#i-tree"/></svg><span class="rail-name">Рендер</span></button>
+  <button class="rail-btn" data-nav="materials" title="Выделение и AI-замена фактур" aria-label="Материалы"><svg class="ico"><use href="#i-layer"/></svg><span class="rail-name">Материалы</span></button>
+  <button class="rail-btn" data-nav="animation" title="Виртуальные камеры, объективы и движение" aria-label="Архитектурная анимация"><svg class="ico"><use href="#i-film"/></svg><span class="rail-name">Анимация</span></button>
+  <button class="rail-btn" data-nav="variants" title="Результаты и история" aria-label="Варианты"><svg class="ico"><use href="#i-image"/></svg><span class="rail-name">Варианты</span></button>
+  <button class="rail-btn" data-nav="parameters" title="Настройки изображения" aria-label="Настройки"><svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Настройки</span></button>
+ </nav>
+ <div class="rail-bottom"><button class="rail-btn" id="helpBtn" title="Как работает сервис" aria-label="Помощь"><svg class="ico"><use href="#i-info"/></svg></button><span class="rail-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="22" height="22"></span><span class="build-version" title="Новая версия с исправленными фотореференсами и предпросмотром">v3.2</span></div>
+</aside>
+<main class="workspace" id="workspace">
+ <div class="topline"><div class="studio-wordmark" aria-label="ФОРМА · AI-студия для архитекторов"><span class="studio-wordmark-icon"><img class="forma-ui-mark" src="assets/brand/forma-fa-mark.svg" alt="" width="28" height="28"></span><span><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span></div><div class="breadcrumbs"><span>ФОРМА</span><span class="crumb-slash">/</span><b id="breadcrumbName">Резиденция 01</b></div><div class="top-actions"><button type="button" class="header-account" data-open-cabinet="account" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span></button><button class="btn btn-outline btn-sm" id="newProjectBtn"><svg class="ico"><use href="#i-plus"/></svg><span>Новый проект</span></button></div></div>
+ <div class="page-intro forma-hero" aria-label="ФОРМА — профессиональная архитектурная визуализация">
+  <div class="forma-hero-content">
+   <p class="eyebrow">ПРОФЕССИОНАЛЬНАЯ СТУДИЯ <span class="forma-hero-rule"></span> АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</p>
+   <h1>Архитектура.<br><span>В кадре.</span></h1>
+   <p class="subtitle">Из архитектурной модели — в выразительную фотографию.<br>Экстерьеры, интерьеры, материалы, свет и анимация в одной студии.</p>
+   <div class="forma-hero-actions"><button type="button" class="forma-hero-primary" data-studio-action="upload"><svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg>Загрузить модель <span>↗</span></button><button type="button" class="forma-hero-secondary" data-studio-action="interior">Интерьеры <span aria-hidden="true">↗</span></button></div>
+  </div>
+  <div class="forma-hero-emblem" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg" alt="" loading="eager" width="185" height="185"><strong>ФОРМА</strong><span>АРХИТЕКТУРНАЯ<br>ВИЗУАЛИЗАЦИЯ</span></div>
+ </div>
+ <section class="forma-workflow-launcher" aria-label="Основные направления студии">
+ <div class="forma-workflow-label"><span>НАЧНИТЕ С ПРОЕКТА</span><strong>Ваш рабочий процесс</strong><small>Выберите задачу, которую нужно решить.</small></div>
+ <button type="button" class="forma-workflow-card" data-studio-action="render"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-house"/></svg></span><span class="forma-workflow-copy"><strong>Экстерьер</strong><small>Из модели в фотографию</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
+ <button type="button" class="forma-workflow-card" data-studio-action="interior"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-image"/></svg></span><span class="forma-workflow-copy"><strong>Интерьер</strong><small>Из скетча в фотографию</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
+ <button type="button" class="forma-workflow-card" data-studio-action="nodes"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-layer"/></svg></span><span class="forma-workflow-copy"><strong>Нодовый редактор</strong><small>Варианты и цепочки работ</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
+</section>
+ <section class="viewer-card" aria-label="Просмотр проекта">
+  <div class="viewer-toolbar"><div class="viewer-heading"><svg class="ico"><use href="#i-image"/></svg><b>ПРОЕКТ · СРАВНЕНИЕ</b><span class="divider"></span><span id="canvasProjectLabel">Резиденция 01</span></div><div class="viewer-actions"><span class="desktop-hint">Переместите ползунок для сравнения</span><button class="icon-button" id="downloadResult" title="Скачать выбранный результат" aria-label="Скачать изображение"><svg class="ico"><use href="#i-download"/></svg></button><button class="icon-button" id="resetSplit" title="Сравнить 50/50" aria-label="Сравнить пополам"><svg class="ico"><use href="#i-chevrons"/></svg></button><button class="icon-button" id="fullBtn" title="Развернуть" aria-label="Развернуть"><svg class="ico"><use href="#i-full"/></svg></button></div></div>
+  <div class="view-modes" role="group" aria-label="Режим просмотра изображений">
+  <span class="view-modes-label">Показать</span>
+  <button type="button" class="view-mode active" data-view-mode="slider" aria-pressed="true" title="Сравнение перемещаемой полосой">◧ <span>Ползунок</span></button>
+  <button type="button" class="view-mode" data-view-mode="side" aria-pressed="false" title="Исходник и результат рядом">▥ <span>Рядом</span></button>
+  <button type="button" class="view-mode" data-view-mode="result" aria-pressed="false" title="Показать только результат">▣ <span>Результат</span></button>
+ </div>
+ <p class="compare-hint" id="compareHint" role="status" hidden>Исходник загружен. Сравнение появится после генерации AI-результата.</p>
+ <div class="stage" id="stage" data-view-mode="slider" style="--split:36%">
+   <img id="afterImg" alt="Демонстрационная фотореалистичная визуализация" src="assets/residence-render-bluehour-fixed.webp?v=stable-20261109" draggable="false">
+   <img id="beforeImg" alt="Упрощённая модель дома в стиле SketchUp: без мебели и деревьев, тот же ракурс" src="assets/residence-model-clean-approved-v36.png?v=approved-clean-v36" onerror="this.onerror=null;this.src='assets/residence-model-user-approved-20261109.png?v=approved-photo-20261109'" draggable="false">
+   <canvas id="materialPreview" class="material-preview" aria-hidden="true"></canvas>
+   <canvas id="maskOverlay" aria-hidden="true"></canvas>
+   <svg id="polyOverlay" viewBox="0 0 1000 563" preserveAspectRatio="none" aria-hidden="true"></svg>
+   <button type="button" id="undoWandFloating" class="wand-undo-floating" title="Отменить последний щелчок выделения (Ctrl+Z)" aria-label="Назад — отменить последний клик" disabled><svg class="ico"><use href="#i-undo"/></svg><span>Назад</span><small>отменить клик</small></button>
+   <div class="split-guide" id="splitGuide"><span class="split-knob"><svg class="ico"><use href="#i-chevrons"/></svg></span></div>
+   <input id="splitSlider" class="split-slider" type="range" min="0" max="100" value="36" aria-label="Сравнение скриншота и результата">
+   <div class="viewer-overlay-top"><span class="image-tag image-tag-dark" id="resultTag">ДЕМОНСТРАЦИЯ</span></div>
+   <div class="viewer-overlay-bottom"><div><small>АРХИТЕКТУРА / ЭКСТЕРЬЕР</small><strong id="stageTitle">Резиденция 01</strong><span id="stageSubtitle">Сад и газон · Лето · День</span></div><span class="image-badge" id="stageRatio">16:9</span></div>
+   <div class="render-progress" id="renderProgress" role="status" aria-live="polite" aria-atomic="false" hidden>
+    <div class="render-progress-panel">
+     <span class="render-progress-kicker"><i aria-hidden="true"></i> ФОРМА · AI-ВИЗУАЛИЗАЦИЯ</span>
+     <strong id="renderProgressTitle">Подготавливаем сцену</strong>
+     <span id="renderProgressDetail">Обрабатываем изображение и настройки</span>
+     <div class="render-progress-statline">
+      <div class="render-progress-value"><b id="renderProgressPercent" aria-hidden="true">2%</b><span>выполнено · оценка</span></div>
+      <div class="render-progress-left"><strong id="renderProgressRemaining" aria-hidden="true">Осталось ≈ 98%</strong><small>Расчётный прогресс</small></div>
+     </div>
+     <div class="render-progress-meter" id="renderProgressMeter" role="progressbar" aria-label="Ориентировочный ход генерации" aria-valuemin="0" aria-valuemax="100" aria-valuenow="2"><span id="renderProgressBar"></span></div>
+     <div class="render-progress-steps" aria-label="Этапы создания изображения">
+      <div class="render-progress-step is-active" data-progress-phase="prepare">
+       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg></span>
+       <span class="render-progress-step-copy"><strong>Подготовка</strong><small>Исходник и настройки</small></span>
+      </div>
+      <div class="render-progress-step" data-progress-phase="ai">
+       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-spark"/></svg></span>
+       <span class="render-progress-step-copy"><strong>AI-рендер</strong><small>Создание фотографии</small></span>
+      </div>
+      <div class="render-progress-step" data-progress-phase="save">
+       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg></span>
+       <span class="render-progress-step-copy"><strong>Результат</strong><small>Сохранение в проект</small></span>
+      </div>
+     </div>
+     <p class="render-progress-note" id="renderProgressHint">Процент ориентировочный: API Market не передаёт точный ход выполнения.</p>
+    </div>
+   </div>
+   <div class="no-render" id="noRender" hidden><svg class="ico"><use href="#i-image"/></svg><strong>Результата пока нет</strong><span>Настройте сцену и запустите AI-визуализацию.</span></div>
+  </div>
+  <div class="editor-toolbar" id="editorToolbar" hidden>
+   <div class="editor-tools"><span class="editor-caption">ВЫДЕЛЕНИЕ · Кликайте по материалу несколько раз: области суммируются. Ошиблись? «Назад».</span><button class="tool-btn active" data-tool="brush" title="Добавить маску кистью"><svg class="ico"><use href="#i-brush"/></svg><span>Кисть</span></button><button class="tool-btn" data-tool="erase" title="Убрать маску"><svg class="ico"><use href="#i-eraser"/></svg><span>Ластик</span></button><button class="tool-btn" data-tool="polygon" title="Обвести полигоном"><svg class="ico"><use href="#i-poly"/></svg><span>Полигон</span></button><button class="tool-btn" data-tool="wand" title="Волшебная палочка: щёлкайте по нужным участкам материала, каждый клик расширяет выделение. Ctrl+Z отменяет последний."><svg class="ico"><use href="#i-wand"/></svg><span>Волшебная палочка</span></button><label class="brush-size similar-settings" title="Чем меньше допуск, тем строже выделение">Допуск <input id="similarTolerance" type="range" min="8" max="42" step="1" value="18"><output id="similarOut">18</output></label><label class="similar-connectivity wand-add-mode" title="Щёлкайте по пропущенным участкам стены: каждый клик сразу добавляется в выделение. Ошибку можно отменить кнопкой Назад."><input type="checkbox" id="wandAddMode" checked><span>Добавлять кликами</span></label><div class="wand-approval" id="wandApproval" hidden><span id="wandPreviewText">Предпросмотр</span><button type="button" class="btn btn-sm wand-apply" id="wandApply">Применить</button><button type="button" class="btn btn-quiet btn-sm" id="wandCancel">Отмена</button></div><label class="brush-size">Размер <input id="brushSize" type="range" min="5" max="100" value="32"><output id="brushOut">32</output></label></div>
+   <div class="editor-right"><button class="btn btn-quiet btn-sm wand-undo-toolbar" id="undoMask" title="Отменить последний клик (Ctrl+Z)" disabled><svg class="ico"><use href="#i-undo"/></svg>Назад · отменить клик</button><button class="btn btn-quiet btn-sm" id="clearMask" title="Очистить выделение">Очистить</button><button class="btn btn-dark btn-sm" id="finishMask"><svg class="ico"><use href="#i-check"/></svg>Готово</button></div>
+  </div>
+  <div class="viewer-footer"><div class="viewer-footer-head"><span class="section-label">ПОСЛЕДНИЕ РЕЗУЛЬТАТЫ</span><span class="viewer-footer-note" id="resultsHint">Демонстрационный проект</span></div><div class="results-strip" id="resultsStrip"></div><button type="button" class="btn btn-outline btn-sm variant-all-link" id="viewAllVariants">Все варианты и действия</button></div>
+ </section>
+ <svg class="scene-variant-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <!-- 7 light, legible 48px symbols: light/time + autumn leaf or winter snow -->
+  <symbol id="scene-icon-evening" viewBox="0 0 48 48">
+   <path d="M25.5 7.5a12 12 0 1 0 13 18.5A12 12 0 0 1 25.5 7.5Z"/>
+   <path d="M9 42h30M14 34v8M34 34v8"/>
+   <circle class="scene-light" cx="14" cy="33" r="2.4"/>
+   <circle class="scene-light" cx="34" cy="33" r="2.4"/>
+  </symbol>
+  <symbol id="scene-icon-autumn-overcast" viewBox="0 0 48 48">
+   <path d="M9 25h27a5.5 5.5 0 0 0 .1-11 9 9 0 0 0-17.2-2.3A7 7 0 0 0 9 25Z"/>
+   <path class="scene-warm" d="M29 38c-.8-7 4-12 12-13-.7 8-4.4 13.2-12 13Z"/>
+   <path class="scene-warm" d="M26 42l10-10"/>
+  </symbol>
+  <symbol id="scene-icon-autumn-sunny" viewBox="0 0 48 48">
+   <circle cx="16" cy="15" r="6"/>
+   <path d="M16 3v4m0 16v4M4 15h4m16 0h4M7.5 6.5l3 3m11 11 3 3m0-17-3 3m-11 11-3 3"/>
+   <path class="scene-warm" d="M28 38c-1-8 4-14 13-15-.4 8.5-5 15-13 15Z"/>
+   <path class="scene-warm" d="M25 42l11-11"/>
+  </symbol>
+  <symbol id="scene-icon-autumn-evening" viewBox="0 0 48 48">
+   <path d="M23.5 7.5a12 12 0 1 0 13 18.5A12 12 0 0 1 23.5 7.5Z"/>
+   <path class="scene-warm" d="M28 38c-.7-7.5 4-12.5 13-13.5-.8 8-5 14-13 13.5Z"/>
+   <path class="scene-warm" d="M25 42l11-11"/>
+  </symbol>
+  <symbol id="scene-icon-winter-overcast" viewBox="0 0 48 48">
+   <path d="M9 24h28a5.5 5.5 0 0 0 .1-11 9 9 0 0 0-17.3-2A7 7 0 0 0 9 24Z"/>
+   <path class="scene-snow" d="M24 30v13m-6.5-6.5h13m-11-4.5 9 9m0-9-9 9"/>
+  </symbol>
+  <symbol id="scene-icon-winter-sunny" viewBox="0 0 48 48">
+   <circle cx="16" cy="15" r="6"/>
+   <path d="M16 3v4m0 16v4M4 15h4m16 0h4M7.5 6.5l3 3m11 11 3 3m0-17-3 3m-11 11-3 3"/>
+   <path class="scene-snow" d="M34 28v16m-8-8h16m-13.6-5.6 11.2 11.2m0-11.2L28.4 41.6"/>
+  </symbol>
+  <symbol id="scene-icon-winter-evening" viewBox="0 0 48 48">
+   <path d="M23.5 7.5a12 12 0 1 0 13 18.5A12 12 0 0 1 23.5 7.5Z"/>
+   <path class="scene-snow" d="M34 28v16m-8-8h16m-13.6-5.6 11.2 11.2m0-11.2L28.4 41.6"/>
+  </symbol>
+ </svg>
+ <section id="sceneVariantsPanel" class="scene-variants-panel" aria-labelledby="sceneVariantsTitle" hidden>
+  <div class="scene-variants-heading">
+   <div><span class="scene-variants-eyebrow">ПОСЛЕ ГЕНЕРАЦИИ · СВЕТ И СЕЗОН</span><h3 id="sceneVariantsTitle">Атмосфера кадра</h3><p>Световые и сезонные сценарии для выбранного рендера. Ракурс, геометрия и материалы сохраняются.</p></div>
+  </div>
+  <div class="scene-variants-grid" id="sceneVariantsGrid">
+   <button type="button" data-scene-variant="evening" data-scene-number="01"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#scene-icon-evening"/></svg></span><span class="scene-variant-copy"><strong>Синий час · свет</strong><small>Тёплые окна · фонари участка</small></span></button>
+   <button type="button" data-scene-variant="autumn_overcast" data-scene-number="02"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#scene-icon-autumn-overcast"/></svg></span><span class="scene-variant-copy"><strong>Осень · рассеянный свет</strong><small>Пасмурное небо · мягкие тени</small></span></button>
+   <button type="button" data-scene-variant="autumn_sunny" data-scene-number="03"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#scene-icon-autumn-sunny"/></svg></span><span class="scene-variant-copy"><strong>Осень · тёплое солнце</strong><small>Золотая листва · ясный день</small></span></button>
+   <button type="button" data-scene-variant="autumn_evening" data-scene-number="04"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#scene-icon-autumn-evening"/></svg></span><span class="scene-variant-copy"><strong>Осень · синий час</strong><small>Вечерний свет · тёплые окна</small></span></button>
+   <button type="button" data-scene-variant="winter_overcast" data-scene-number="05"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#scene-icon-winter-overcast"/></svg></span><span class="scene-variant-copy"><strong>Зима · мягкий свет</strong><small>Облачный день · снежный покров</small></span></button>
+   <button type="button" data-scene-variant="winter_sunny" data-scene-number="06"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#scene-icon-winter-sunny"/></svg></span><span class="scene-variant-copy"><strong>Зима · ясный день</strong><small>Низкое солнце · чёткие тени</small></span></button>
+   <button type="button" data-scene-variant="winter_evening" data-scene-number="07"><span class="scene-variant-ico" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#scene-icon-winter-evening"/></svg></span><span class="scene-variant-copy"><strong>Зима · синий час</strong><small>Снег · свет в окнах · фонари</small></span></button>
+  </div>
+  <p class="scene-variants-note">Каждая карточка создаёт отдельный AI-вариант из готового рендера. Один запуск — один платный запрос к API Market.</p>
+  <p class="scene-variants-status" id="sceneVariantsStatus" role="status" aria-live="polite"></p>
+ </section>
+ <div class="under-viewer"><div class="upload-box" id="uploadBox" role="button" tabindex="0"><div class="upload-symbol"><svg class="ico"><use href="#i-upload"/></svg></div><div><b id="uploadTitle">Загрузить скриншот проекта</b><span id="uploadSubtitle">PNG, JPG, WEBP · Archicad, SketchUp, Revit и другие</span></div><span class="upload-action">Выбрать <svg class="ico"><use href="#i-arrow"/></svg></span><input id="sourceFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><label class="angle-consistency" title="Сохранять окружение на следующих ракурсах"><input type="checkbox" id="angleLandscapeLock" checked><span class="angle-lock-icon">◎</span><span><strong>Единый ландшафт</strong><small>Тот же участок на новых ракурсах</small></span></label><button class="btn btn-outline" id="newAngleBtn" title="Новый ракурс того же дома с сохранением параметров и окружения"><svg class="ico"><use href="#i-plus"/></svg>Новый ракурс</button><input id="angleFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
+ <div class="work-note"><svg class="ico"><use href="#i-info"/></svg><span id="workNote">Вы видите пример двух состояний одного дома. Для своей модели загрузите скриншот и подключите AI на сервере.</span></div>
+ <footer class="page-footer studio-footer"><span>© 2026 ФОРМА · АРХИТЕКТУРНАЯ AI-СТУДИЯ</span><nav aria-label="Информация о сервисе"><button type="button" data-open-cabinet="account">Личный кабинет</button><button type="button" data-open-cabinet="contacts">Контакты</button><a href="privacy.html">Политика конфиденциальности</a></nav></footer>
+</main>
+<aside class="inspector" id="inspector" aria-label="Панель визуализации">
+ <div class="inspector-head"><div class="inspector-kicker"><span>ФОРМА / СТУДИЯ</span></div><h2 id="panelTitle">Проект</h2><p id="panelSubtitle">Загрузите исходник и управляйте изображениями проекта.</p><div class="tab-bar" role="tablist"><button class="tab active" data-tab="project" role="tab" aria-selected="true"><svg class="ico"><use href="#i-folder"/></svg><span>Проект</span></button><button class="tab" data-tab="environment" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройка рендера</span></button><button class="tab" data-tab="materials" role="tab" aria-selected="false"><svg class="ico"><use href="#i-layer"/></svg><span>Материалы</span></button><button class="tab" data-tab="animation" role="tab" aria-selected="false"><svg class="ico"><use href="#i-film"/></svg><span>Анимация</span></button><button class="tab" data-tab="variants" role="tab" aria-selected="false"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button><button class="tab" data-tab="parameters" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Параметры</span></button></div></div>
+ <div class="inspector-scroll">
+<section id="projectPanel" class="tab-panel active" role="tabpanel">
+ <div class="project-dashboard">
+  <span class="section-label">ШАГ 1 · ИСХОДНОЕ ИЗОБРАЖЕНИЕ</span>
+  <h3 id="projectPanelName">Резиденция 01</h3>
+  <p class="muted" id="projectPanelMeta">Загрузите свой вид модели из SketchUp, Revit или Archicad.</p>
+  <div class="project-status" id="projectPanelStatus">Демонстрационный проект · фотографии не генерировались</div>
+  <button type="button" id="projectUpload" class="btn btn-dark btn-block"><svg class="ico"><use href="#i-upload"/></svg>Загрузить исходник</button>
+  <div class="project-short-actions"><button type="button" class="btn btn-outline" id="projectSwitch">Мои проекты</button><button type="button" class="btn btn-outline" id="projectCreate">Новый проект</button></div>
+  <div class="project-guide"><b>Как работать</b><p>1. Загрузите модель или скриншот. 2. В «Рендер» выберите условия. 3. В «Материалы» загрузите фактуру при необходимости. 4. Запустите AI и сравните результат.</p></div>
+  <button type="button" class="btn btn-outline btn-block" id="projectToRender">Далее: настройки рендера <svg class="ico"><use href="#i-arrow"/></svg></button>
+  <div class="project-preview-note">«До» — исходное изображение пользователя; «После» — выбранный AI-результат. Демонстрационная модель не является реальным файлом SketchUp.</div>
+ </div>
+</section>
+<section id="environmentPanel" class="tab-panel scene-setup-v37" role="tabpanel">
+ <div class="scene-setup-header">
+  <span class="scene-setup-eyebrow">ФОРМА / СТУДИЯ</span>
+  <h3>Настройка сцены</h3>
+  <p>Выберите, как должен выглядеть ваш дом на фотографии.</p>
+ </div>
+ <div class="scene-mode-switch" role="group" aria-label="Режим настройки сцены">
+  <button type="button" data-render-mode="auto" aria-pressed="true" class="active"><span>Готовая атмосфера</span></button>
+  <button type="button" data-render-mode="manual" aria-pressed="false"><span>Настроить самому</span></button>
+ </div>
+ <div id="renderAutoPanel" class="scene-mode-content">
+  <div class="scene-panel-heading">
+   <strong>Атмосфера кадра</strong>
+   <p>Выберите настроение — сезон, погода и освещение настроятся автоматически.</p>
+  </div>
+  <div class="mood-cards" role="group" aria-label="Готовые сценарии атмосферы">
+ <button type="button" class="mood-card" data-scene-demo="sunny" aria-pressed="false" title="Солнечный день: Лето · Ясно · День">
+ <img src="assets/thumbs/natural-luxury/season-summer.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-sunny.webp?v=preset-v36" alt="Природная атмосфера: Солнечный день, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Солнечный день</strong><small>Лето · Ясно · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="golden" aria-pressed="false" title="Золотой час: Лето · Вечер">
+ <img src="assets/thumbs/natural-luxury/time-morning.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-golden.webp?v=preset-v36" alt="Природная атмосфера: Золотой час, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Золотой час</strong><small>Лето · Вечер</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="fog" aria-pressed="false" title="Туманное утро: Осень · Туман · Утро">
+ <img src="assets/thumbs/natural-luxury/weather-fog.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-fog.webp?v=preset-v36" alt="Природная атмосфера: Туманное утро, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Туманное утро</strong><small>Осень · Туман · Утро</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="overcast" aria-pressed="false" title="Мягкий пасмурный: Лето · Облачно · День">
+ <img src="assets/thumbs/natural-luxury/weather-cloud.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-overcast.webp?v=preset-v36" alt="Природная атмосфера: Мягкий пасмурный, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Мягкий пасмурный</strong><small>Лето · Облачно · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="rain" aria-pressed="false" title="После дождя: Осень · Дождь · День">
+ <img src="assets/thumbs/natural-luxury/weather-rain.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-rain.webp?v=preset-v36" alt="Природная атмосфера: После дождя, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>После дождя</strong><small>Осень · Дождь · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="winter" aria-pressed="false" title="Зимняя тишина: Зима · Снег · День">
+ <img src="assets/thumbs/natural-luxury/season-winter.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-winter.webp?v=preset-v36" alt="Природная атмосфера: Зимняя тишина, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Зимняя тишина</strong><small>Зима · Снег · День</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="blue" aria-pressed="false" title="Синий час: Лето · Сумерки">
+ <img src="assets/thumbs/natural-luxury/env-nordic.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-blue.webp?v=preset-v36" alt="Природная атмосфера: Синий час, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Синий час</strong><small>Лето · Сумерки</small></span>
+ </button>
+<button type="button" class="mood-card" data-scene-demo="night" aria-pressed="false" title="Ночная архитектура: Лето · Ночь · Свет">
+ <img src="assets/thumbs/natural-luxury/env-forest.webp?v=nl28" data-preset-source="assets/thumbs/presets/preset-night.webp?v=preset-v36" alt="Природная атмосфера: Ночная архитектура, без зданий" loading="lazy" decoding="async">
+ <span class="mood-card-shade" aria-hidden="true"></span>
+ <span class="mood-card-check" aria-hidden="true">✓</span>
+ <span class="mood-card-body"><strong>Ночная архитектура</strong><small>Лето · Ночь · Свет</small></span>
+ </button>
+ </div>
+  <div class="mood-current" aria-live="polite"><span class="mood-current-bullet" aria-hidden="true">✓</span><span><small>ВЫБРАННАЯ АТМОСФЕРА</small><strong id="scenePresetSelected">Индивидуальная атмосфера</strong><em id="scenePresetDesc">Сезон · Погода · Свет</em></span></div>
+  <button type="button" class="scene-auto-environment" id="renderAutoEnvironment"><span class="scene-auto-env-ico">⌖</span><span><b>Окружение участка</b><small id="renderAutoEnvironmentValue">Сад и газон</small></span><span class="scene-auto-env-change">Изменить →</span></button>
+  <button type="button" class="mood-customize" id="moodCustomize">Настроить сезон, погоду и свет вручную <span aria-hidden="true">↗</span></button>
+ </div>
+ <div id="renderManualPanel" class="scene-mode-content" hidden>
+  <div class="scene-panel-heading">
+   <strong>Всего четыре простых выбора</strong>
+   <p>Нажмите на вопрос, выберите фотографию и продолжайте. Можно возвращаться к любому пункту.</p>
+  </div>
+  <div class="scene-choice-list" id="renderChoiceList">
+   <div class="scene-choice" data-scene-choice="environment">
+ <button type="button" class="scene-choice-trigger" data-render-open="environment" aria-expanded="false" aria-controls="renderChoicePanel-environment">
+  <span class="scene-choice-index">01</span>
+  <span class="scene-choice-label"><strong>Где расположен дом?</strong><small id="renderSettingValue-environment">Не выбрано</small></span>
+  <span class="scene-choice-arrow" aria-hidden="true">⌄</span>
+ </button>
+ <div class="scene-choice-panel" id="renderChoicePanel-environment" hidden>
+  <p class="scene-choice-hint">Сад, лес, горы или другое окружение. Нажмите на фотографию, чтобы выбрать.</p>
+  <div class="render-group" id="renderSection-environment"><div class="panel-section-title"><h3>Окружение участка</h3><span>10 вариантов</span></div><div class="image-options image-options-2" id="environmentOptions"></div></div>
+ </div>
+</div>
+<div class="scene-choice" data-scene-choice="season">
+ <button type="button" class="scene-choice-trigger" data-render-open="season" aria-expanded="false" aria-controls="renderChoicePanel-season">
+  <span class="scene-choice-index">02</span>
+  <span class="scene-choice-label"><strong>Какое время года?</strong><small id="renderSettingValue-season">Не выбрано</small></span>
+  <span class="scene-choice-arrow" aria-hidden="true">⌄</span>
+ </button>
+ <div class="scene-choice-panel" id="renderChoicePanel-season" hidden>
+  <p class="scene-choice-hint">Весна, лето, осень или зима. Нажмите на фотографию, чтобы выбрать.</p>
+  <div class="render-group" id="renderSection-season"><div class="param-group"><div class="panel-section-title"><h3>Сезон</h3></div><div class="image-options image-options-4" id="seasonOptions"></div></div></div>
+ </div>
+</div>
+<div class="scene-choice" data-scene-choice="weather">
+ <button type="button" class="scene-choice-trigger" data-render-open="weather" aria-expanded="false" aria-controls="renderChoicePanel-weather">
+  <span class="scene-choice-index">03</span>
+  <span class="scene-choice-label"><strong>Какая погода?</strong><small id="renderSettingValue-weather">Не выбрано</small></span>
+  <span class="scene-choice-arrow" aria-hidden="true">⌄</span>
+ </button>
+ <div class="scene-choice-panel" id="renderChoicePanel-weather" hidden>
+  <p class="scene-choice-hint">Ясно, облачно, дождь, туман или снег. Нажмите на фотографию, чтобы выбрать.</p>
+  <div class="render-group" id="renderSection-weather"><div class="param-group"><div class="panel-section-title"><h3>Погода</h3></div><div class="image-options image-options-3" id="weatherOptions"></div></div></div>
+ </div>
+</div>
+<div class="scene-choice" data-scene-choice="time">
+ <button type="button" class="scene-choice-trigger" data-render-open="time" aria-expanded="false" aria-controls="renderChoicePanel-time">
+  <span class="scene-choice-index">04</span>
+  <span class="scene-choice-label"><strong>Какое освещение?</strong><small id="renderSettingValue-time">Не выбрано</small></span>
+  <span class="scene-choice-arrow" aria-hidden="true">⌄</span>
+ </button>
+ <div class="scene-choice-panel" id="renderChoicePanel-time" hidden>
+  <p class="scene-choice-hint">Утро, день, вечер или ночь. Нажмите на фотографию, чтобы выбрать.</p>
+  <div class="render-group" id="renderSection-time"><div class="param-group"><div class="panel-section-title"><h3>Время суток</h3></div><div class="image-options image-options-4" id="timeOptions"></div></div></div>
+ </div>
+</div>
+  </div>
+  <details id="renderAdvancedPlants" class="scene-advanced-plants">
+   <summary><span class="scene-advanced-icon">✳</span><span><strong>Дополнительно: растения</strong><small id="renderSettingValue-plants">Декоративная</small></span><span class="scene-choice-arrow" aria-hidden="true">⌄</span></summary>
+   <div class="scene-advanced-content"><p class="scene-choice-hint">Если хотите точнее настроить характер озеленения.</p><div class="render-group" id="renderSection-plants"><div class="param-group"><div class="panel-section-title"><h3>Растительность</h3></div><div class="image-options image-options-3" id="plantsOptions"></div></div></div></div>
+  </details>
+ </div>
+ <div class="scene-home-edits" id="sceneHomeEdits">
+  <div class="scene-home-edits-heading"><span class="scene-home-edits-icon" aria-hidden="true">✦</span><div><strong>Что изменить в доме?</strong><small>Одно текстовое задание перед первой генерацией</small></div></div>
+  <label for="homeChangesInput" class="sr-only">Опишите изменения дома</label>
+  <textarea id="homeChangesInput" rows="3" maxlength="600" placeholder="Например: крышу сделать графитовой, оконные рамы чёрными, а фасад — из светлого кирпича."></textarea>
+  <p>AI применит указанные изменения во время создания рендера. Форма крыши, размеры окон и пропорции дома должны сохраниться.</p>
+ </div>
+ <div class="scene-final-summary">
+  <span class="scene-summary-eyebrow">ВАША СЦЕНА</span>
+  <strong id="renderSummaryLine">Окружение · Сезон · Погода · Освещение</strong>
+  <div class="scene-summary-lock" id="renderSummaryLock"><span aria-hidden="true">✓</span><span id="renderSummaryLockText">Архитектура и материалы исходника сохраняются</span></div>
+  <div class="scene-summary-actions">
+   <button type="button" id="renderSetupGenerate" class="btn btn-primary btn-block"><svg class="ico"><use href="#i-spark"/></svg>Создать визуализацию</button>
+   <button type="button" id="renderSetupBatch" class="scene-batch-button"><span>▦</span> Пакетная визуализация · 4 кадра</button>
+  </div>
+  <p class="scene-summary-note" id="renderSetupSourceNote">Используется выбранный проект. AI не должен менять геометрию и существующие материалы.</p>
+ </div>
+ </section>
+ <section id="materialsPanel" class="tab-panel" role="tabpanel">
+ <div class="material-simple" id="materialSimple">
+  <div class="material-simple-heading"><span>ФОРМА / МАТЕРИАЛЫ</span><h3>Изменить отделку дома</h3><p>Никаких сложных категорий. Выделите именно ту поверхность, которую хотите изменить, и примените свою фактуру или напишите задание для AI.</p></div>
+  <div class="material-simple-step">
+   <div class="material-simple-number">01</div>
+   <div class="material-simple-content">
+    <h4>Выделите область на изображении</h4>
+    <p>Нажмите на поверхность дома. Волшебная палочка добавляет участки кликами, кистью можно уточнить края. Кнопка «Назад» отменяет последний клик.</p>
+    <button type="button" class="btn btn-primary btn-block" id="simpleSelectArea"><svg class="ico"><use href="#i-brush"/></svg>Выделить поверхность</button>
+    <button type="button" class="btn btn-outline btn-block" id="simpleShowMask">Показать выделение</button>
+    <p class="material-simple-status" id="simpleMaskStatus" role="status">Область ещё не выделена</p>
+   </div>
+  </div>
+  <div class="material-simple-separator">ПОСЛЕ ВЫДЕЛЕНИЯ ВЫБЕРИТЕ СПОСОБ ИЗМЕНЕНИЯ</div>
+  <div class="material-simple-step">
+   <div class="material-simple-number">02</div>
+   <div class="material-simple-content">
+    <h4>Загрузите свой материал</h4>
+    <p>Добавьте фотографию или текстуру дерева, металла, кирпича, камня или любого другого покрытия.</p>
+    <button type="button" class="material-simple-upload" id="simpleUploadTexture"><svg class="ico"><use href="#i-plus"/></svg><span>Загрузить фактуру <small>JPG, PNG, WebP</small></span></button>
+    <div id="simpleMaterialGrid" class="material-simple-grid" aria-label="Загруженные материалы"></div>
+    <div class="material-simple-selected" id="simpleMaterialStatus" role="status">Материал пока не загружен</div>
+    <button type="button" class="btn btn-primary btn-block" id="simpleApplyTexture">Применить материал через AI</button>
+    <small class="material-simple-help">AI меняет только выделенную область. После проверки маски отправляется один платный запрос.</small>
+   </div>
+  </div>
+  <div class="material-simple-or"><span>ИЛИ</span></div>
+  <div class="material-simple-step">
+   <div class="material-simple-number">03</div>
+   <div class="material-simple-content">
+    <h4>Опишите изменение словами</h4>
+    <label class="material-simple-prompt-label" for="simpleMaterialPrompt">Ваш запрос для AI</label>
+    <textarea id="simpleMaterialPrompt" rows="3" maxlength="500" placeholder="Например: заменить отделку выделенной стены на натуральный светлый камень, сохранить окна, швы и всю геометрию."></textarea>
+    <p>Можно указать материал и цвет прямо текстом. С выделением AI меняет только отмеченную поверхность; без выделения определяет нужный элемент по описанию — такой результат требует проверки.</p>
+    <button type="button" class="btn btn-outline btn-block" id="simpleApplyPrompt">Применить запрос через AI</button>
+   </div>
+  </div>
+  <div class="material-simple-protection"><span aria-hidden="true">✓</span><p>При обычном рендере существующие материалы сохраняются. Здесь они меняются только по вашему отдельному запросу. Размеры, окна, кровля и геометрия должны остаться прежними.</p></div>
+ </div>
+ <div id="materialsLegacyBridge" hidden aria-hidden="true">
+  <div class="material-v28-head">
+   <span class="material-eyebrow">МАТЕРИАЛЫ И ЦВЕТА</span>
+   <h3>Материалы вашего дома</h3>
+   <p>Сохраните исходную отделку, перекрасьте нужный элемент или загрузите новую фактуру. Любое изменение касается только выбранной части дома.</p>
+  </div>
+  <div class="material-quick-actions" role="group" aria-label="Быстрые команды изменения цвета">
+   <div class="material-quick-heading"><strong>Быстро изменить цвет</strong><small>Выберите, что хотите перекрасить</small></div>
+   <div class="material-quick-grid">
+    <button type="button" data-quick-zone="windows">Цвет окон</button>
+    <button type="button" data-quick-zone="main">Цвет стен</button>
+    <button type="button" data-quick-zone="roof">Цвет кровли</button>
+    <button type="button" data-quick-zone="base">Цвет цоколя</button>
+    <button type="button" data-quick-zone="doors">Цвет дверей</button>
+    <button type="button" data-quick-zone="terrace">Цвет террасы</button>
+   </div>
+  </div>
+  <div class="material-step-title"><span>01</span><strong>Выберите элемент дома</strong></div>
+  <div class="zone-options material-zone-grid" id="zoneOptions"></div>
+  <div class="material-step-title"><span>02</span><strong>Выберите действие</strong></div>
+  <div class="material-action-options" role="group" aria-label="Действие с выбранной поверхностью">
+   <button type="button" class="material-action-card active" data-material-action="keep" aria-pressed="true">
+    <span class="material-action-ico">✓</span><strong>Оставить как есть</strong><small>Сохранить исходный материал и его фактуру</small>
+   </button>
+   <button type="button" class="material-action-card" data-material-action="color" aria-pressed="false">
+    <span class="material-action-ico">◑</span><strong>Изменить цвет</strong><small>Перекрасить поверхность, сохранив её материал</small>
+   </button>
+   <button type="button" class="material-action-card" data-material-action="replace" aria-pressed="false">
+    <span class="material-action-ico">▧</span><strong>Заменить материал</strong><small>Добавить собственную текстуру и применить её</small>
+   </button>
+  </div>
+  <div class="material-action-info" id="materialActionInfo" role="status">Исходное покрытие будет сохранено. При обычном рендере AI повысит его реализм.</div>
+  <div id="materialKeepPane" class="material-keep-pane"><span class="material-keep-icon">✓</span><div><strong>Материал сохранён</strong><p>Стены, фальц, дерево и другие видимые покрытия сохраняются по исходному скриншоту. Можно переходить к настройке окружения.</p></div></div>
+  <div id="materialEditPane" hidden>
+   <div class="material-text-brief" id="materialTextBrief">
+     <div class="material-step-title"><span>03</span><strong>Опишите изменение своими словами</strong></div>
+     <label for="materialInstruction">Задание для AI</label>
+     <textarea id="materialInstruction" rows="3" maxlength="500" placeholder="Например: оконные рамы сделать матово-чёрными, стекло, профиль и размеры сохранить. Или: террасу сделать из термодерева тёплого оттенка."></textarea>
+     <p>Например: «Сделать оконные рамы чёрными, стекло и форму сохранить». Можно описать цвет или отделку без ручного выделения. При отсутствии точной маски AI определяет элемент по изображению, результат нужно проверить.</p>
+     <button type="button" class="btn btn-outline btn-block" id="materialGenerateFromText">Создать изменение по описанию (AI)</button>
+     <small>Это платная генерация через API Market. Описания не дают гарантии пиксельного сохранения соседних областей без маски.</small>
+   </div>
+  <div class="material-divider"><span>ИЛИ УТОЧНИТЕ ПОВЕРХНОСТЬ НА ИЗОБРАЖЕНИИ</span></div>
+   <div class="material-step-title"><span>04</span><strong>Уточните область перед заменой</strong></div>
+   <p class="material-hint">Выберите участок автоматически или уточните на изображении. Все изменения применяются только после проверки.</p><div class="material-auto-find">
+ <div><strong>Определить элемент на изображении</strong><small>Быстрая предварительная оценка зоны. Для точных границ можно уточнить маску палочкой или кистью.</small></div>
+ <button type="button" class="btn btn-outline btn-block" id="materialFindZone">Найти выбранный элемент · β</button>
+ <p id="materialFindStatus" role="status">Для точного выделения AI-модель сегментации пока не подключена. Проверьте предложенную маску перед генерацией.</p><div class="material-find-review" id="materialFindReview" hidden><button type="button" class="btn btn-primary btn-block" id="materialFindApply">Подтвердить найденную область</button><button type="button" class="btn btn-quiet btn-block btn-sm" id="materialFindCancel">Отменить предложение</button></div>
+ </div>
+   <div class="zone-buttons"><button class="btn btn-outline" id="startMask"><svg class="ico"><use href="#i-brush"/></svg>Выделить на изображении</button><div class="selection-status" id="selectionStatus" role="status" aria-live="polite">Выделение ещё не задано</div><button class="btn btn-quiet" id="showMask"><svg class="ico"><use href="#i-eye"/></svg>Показать маску</button></div>
+   <label class="switch-row selection-only material-advanced"><span><b>AI: изменять только маску</b><small>Не затрагивать остальную часть изображения</small></span><input type="checkbox" id="editSelectedOnly" checked><i></i></label>
+   <div id="materialColorPane" hidden>
+    <div class="material-step-title"><span>05</span><strong>Выберите новый цвет</strong></div>
+    <div class="material-color-editor">
+     <label class="material-color-label" for="materialColor"><span>Выберите оттенок</span><input type="color" id="materialColor" value="#575c51" aria-label="Выберите цвет покрытия"></label><label class="material-hex-label" for="materialColorHex"><span>Точный цвет (HEX)</span><input type="text" id="materialColorHex" maxlength="7" value="#575C51" pattern="#[0-9a-fA-F]{6}" spellcheck="false" aria-label="Код цвета HEX"></label>
+     <div class="material-color-swatches" id="materialColorSwatches" aria-label="Популярные цвета">
+      <button type="button" data-color="#242624" style="--sw:#242624" title="Графит" aria-label="Графит"></button>
+      <button type="button" data-color="#575c51" style="--sw:#575c51" title="Тёмный оливковый" aria-label="Тёмный оливковый"></button>
+      <button type="button" data-color="#b7b4a7" style="--sw:#b7b4a7" title="Тёплый серый" aria-label="Тёплый серый"></button>
+      <button type="button" data-color="#e4ddcf" style="--sw:#e4ddcf" title="Светлый камень" aria-label="Светлый камень"></button>
+      <button type="button" data-color="#8b6246" style="--sw:#8b6246" title="Натуральный древесный" aria-label="Натуральный древесный"></button>
+      <button type="button" data-color="#fcfcfa" style="--sw:#fcfcfa" title="Белый" aria-label="Белый"></button>
+     </div>
+    </div>
+    <div class="material-quick-preview">
+ <div><strong>Предварительный просмотр цвета</strong><small>Без AI и списания генераций. Использует подтверждённую маску, сохраняет светотень и рисунок поверхности.</small></div>
+ <button type="button" class="btn btn-outline btn-block" id="materialPreviewColor">Примерить выбранный цвет</button>
+ <button type="button" class="btn btn-quiet btn-block btn-sm" id="materialPreviewReset">Убрать примерку</button>
+ <p id="materialColorPreviewStatus" role="status">Для точной примерки сначала найдите элемент или выделите его на изображении.</p>
+ </div><p class="material-hint">AI меняет только цвет выделенной поверхности. Фальцы, доски, швы, рельеф и расположение элементов должны сохраниться.</p>
+    <button type="button" class="btn btn-primary btn-block" id="generateColor"><svg class="ico"><use href="#i-spark"/></svg>Проверить выделение и изменить цвет (AI)</button>
+   </div>
+   <div id="materialReplacePane" hidden>
+    <div class="material-step-title"><span>05</span><strong>Загрузите новую фактуру</strong></div>
+    <div class="material-onboarding"><strong>Мои материалы</strong><p>Фото дерева, металла, кирпича, камня или другой поверхности. Материал будет применён только к выделенной зоне.</p></div>
+    <div id="catalogMaterials" class="material-grid" hidden></div><div id="myMaterials" class="material-grid" hidden></div>
+    <button class="upload-material" id="uploadMaterialBtn"><svg class="ico"><use href="#i-plus"/></svg><span>+ Загрузить фактуру <small>JPG, PNG или WebP</small></span></button>
+    <input type="file" id="materialFile" accept="image/png,image/jpeg,image/webp" hidden>
+    <button class="btn btn-quiet btn-sm" id="deleteMyMaterial" hidden style="margin-top:7px;color:#8a5548">Удалить выбранный материал</button>
+    <div class="material-tune"><label>Масштаб текстуры <output id="scaleValue">100%</output><input type="range" min="30" max="250" value="100" id="textureScale"></label><label>Поворот <select id="textureRotate"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></div>
+    <div class="material-process"><div><strong>05. Проверьте наложение</strong><p>Черновая примерка поможет оценить масштаб. Финальный реализм создаётся AI.</p></div>
+     <button class="btn btn-outline btn-block" id="tryMaterial"><svg class="ico"><use href="#i-eye"/></svg>Предпросмотр материала</button>
+     <button class="btn btn-quiet btn-sm btn-block" id="discardMaterialPreview">Скрыть примерку</button>
+     <button type="button" class="btn btn-outline btn-block mask-review-btn" id="reviewMask"><svg class="ico"><use href="#i-eye"/></svg>Проверить выделенную область</button>
+     <div class="mask-instructions">Прежде чем запускать генерацию, убедитесь, что границы маски точны.</div>
+     <button type="button" class="btn btn-primary btn-block" id="generateMaterial"><svg class="ico"><use href="#i-spark"/></svg>Заменить материал (AI)</button>
+    </div>
+   </div>
+
+  </div>
+ </div>
+</section>
+<section id="animationPanel" class="tab-panel animation-studio" role="tabpanel">
+ <div class="anim-hero"><span class="anim-eyebrow">ФОРМА · CINEMA STUDIO</span><h3>Архитектурная анимация</h3><p>Выберите камеру, объектив, движение и цвет будущего архитектурного фильма.</p></div>
+ <div class="anim-truth"><svg class="ico"><use href="#i-lock"/></svg><span><strong>Одна модель — неизменная архитектура</strong><small>Настройки удерживают геометрию, окна, крышу, отделку и существующее озеленение. Влияние камер и оптики показывается условно — это не фактическая съёмка.</small></span></div>
+ <div class="anim-preview-shell">
+  <div class="anim-preview-meta"><strong>Виртуальная киностудия</strong><span id="animPreviewState">Профессиональный демонстрационный дом</span></div>
+  <div class="anim-preview-source" role="group" aria-label="Источник для предпросмотра">
+   <button type="button" class="active" data-anim-source="demo" aria-pressed="true">Демо-дом</button>
+   <button type="button" data-anim-source="project" aria-pressed="false">Мой проект</button>
+  </div>
+  <div class="anim-preview-screen" id="animPreviewScreen">
+   <div class="anim-preview-frame" id="animPreviewFrame"><img id="animPreviewImage" alt="Демонстрационный архитектурный дом для оценки кинонастроек" loading="lazy"></div>
+   <div id="animThreeLayer" class="anim-three-layer" aria-hidden="true"></div>
+   <div class="anim-preview-overlay">
+    <div class="anim-preview-tags"><span id="animHUDCamera">ARRI ALEXA 35</span><span id="animHUDLens">24 мм</span><span id="animHUDMotion">Плавное приближение</span></div>
+    <span class="anim-preview-time" id="animPreviewDuration">6 с · 24 fps</span>
+   </div>
+   <div class="anim-view-finder" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+   <div class="anim-preview-play-holder"><button type="button" id="animPlayPreview" class="anim-play" aria-label="Воспроизвести пример движения"><svg class="ico"><use href="#i-play"/></svg>Предпросмотр</button></div>
+  </div>
+  <div class="anim-preview-foot">
+   <div class="anim-motion-trajectory"><span>Траектория камеры</span><svg id="animTrajectory" viewBox="0 0 220 55" role="img" aria-label="Схема траектории"><path id="animPath" d="M14 42 L202 15" fill="none" stroke="#7dbc90" stroke-width="3" stroke-linecap="round"/><circle id="animPathStart" cx="14" cy="42" r="5" fill="#a0b4a2"/><circle id="animPathEnd" cx="202" cy="15" r="6" fill="#5ed785"/></svg></div>
+   <div class="anim-lens-metrics"><span>Фокусное <b id="animFocalLabel">24 мм</b></span><span>Угол обзора <b id="animFovLabel">74°</b></span></div>
+  </div>
+  <p class="anim-preview-caption">Светящаяся линия — условная траектория съёмки; 3D-камера движется поверх исходного фото, не изменяя дом. Для точного облёта нужны дополнительные ракурсы или 3D-модель.</p>
+ </div>
+ <details class="anim-section" open>
+  <summary class="anim-section-head"><span class="anim-section-count">01</span><span class="anim-section-title"><strong>Кинокамера</strong><small>8 визуальных профилей: характер света, цвет и детализация</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animCameras"><div class="anim-loading">Загрузка кинокамер…</div></div>
+ </details>
+ <details class="anim-section" open>
+  <summary class="anim-section-head"><span class="anim-section-count">02</span><span class="anim-section-title"><strong>Объектив</strong><small>10 оптических профилей: ширина, перспектива и размытие</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animLenses"><div class="anim-loading">Загрузка объективов…</div></div>
+ </details>
+ <details class="anim-section" open>
+  <summary class="anim-section-head"><span class="anim-section-count">03</span><span class="anim-section-title"><strong>Движения</strong><small>8 плавных траекторий для архитектурной съёмки</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animMoves"><div class="anim-loading">Загрузка движений…</div></div>
+ </details>
+ <details class="anim-section" open>
+  <summary class="anim-section-head"><span class="anim-section-count">04</span><span class="anim-section-title"><strong>Цветокоррекция</strong><small>6 настроений — тот же дом в разных цветовых обработках</small></span><span class="anim-section-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="anim-option-grid" id="animGrades"><div class="anim-loading">Загрузка фильтров…</div></div>
+ </details>
+ <div class="anim-settings-section">
+  <div class="anim-settings-heading"><span>05</span><div><strong>Параметры будущего ролика</strong><small>Формат, длительность и ваши пожелания</small></div></div>
+  <div class="anim-settings-grid">
+   <label>Длительность<select id="animDuration"><option value="5">5 секунд</option><option value="6" selected>6 секунд</option><option value="8">8 секунд</option><option value="10">10 секунд</option></select></label>
+   <label>Частота кадров<select id="animFPS"><option value="24">24 fps · кино</option><option value="25">25 fps · видео</option><option value="30">30 fps · плавно</option></select></label>
+   <label>Формат<select id="animRatio"><option value="16:9">16:9 · горизонтальный</option><option value="9:16">9:16 · вертикальный</option></select></label>
+   <label>Амплитуда движения<select id="animIntensity"><option value="low">Минимальная · точнее</option><option value="moderate">Умеренная</option></select></label>
+  </div>
+  <label class="anim-extra-label" for="animExtra">Дополнительное пожелание <span>необязательно</span></label>
+  <textarea id="animExtra" rows="3" maxlength="350" placeholder="Например: очень медленный пролёт вдоль фасада, мягкий вечерний свет. Архитектуру и материалы сохранить."></textarea>
+ </div>
+ <div class="anim-final">
+  <span class="anim-final-eyebrow">ВЫБРАННЫЙ СЪЁМОЧНЫЙ КОМПЛЕКТ</span>
+  <strong id="animSummary">ARRI ALEXA 35 · 24 мм Tilt-Shift · Плавное приближение</strong>
+  <p id="animSummaryDetail">6 секунд · 24 fps · 16:9 · Natural Luxury</p>
+  <div class="anim-video-notice" id="animVideoStatus"><span class="anim-status-dot" aria-hidden="true"></span><span>Предпросмотр движения условный. Настоящее видео через Wan 3.0 — в блоке ниже.</span></div>
+ </div>
+ <div class="wan26-panel" id="wan26Panel">
+ <div class="wan26-heading"><b>Генерация видео Wan 3.0</b><span class="wan26-label">Alibaba Cloud · Trial</span></div>
+ <p class="wan26-description">Получите MP4 из текущего рендера. Камеры, объективы, движения и фильтры из выбранных карточек используются в запросе.</p>
+ <span id="wanAvailability" class="wan26-info" aria-live="polite">Проверяем подключение Wan 3.0…</span>
+ <div class="wan26-tools">
+  <label class="wan26-duration">Длительность Wan<select id="wanDuration"><option value="5" selected>5 секунд</option><option value="10">10 секунд</option></select></label>
+  <label class="wan26-upload">Свой кадр (необязательно)<input id="wanImageFile" type="file" accept="image/jpeg,image/png,image/webp"><span id="wanFilename" class="wan26-file">По умолчанию — текущий кадр предпросмотра</span></label>
+  <button class="wan26-clear" id="wanClearFile" type="button">Сбросить файл</button>
+ </div>
+ <label class="wan26-private-label" for="wan3AccessPin">Приватный код генерации (только для владельца)<input type="password" id="wan3AccessPin" autocomplete="off" minlength="12" placeholder="Код доступа из настроек Render"></label>
+ <button type="button" id="wanGenerate" disabled>Создать видео · Wan 3.0</button>
+ <div id="wanResult" class="wan26-result" hidden></div>
+ <div class="wan26-commands"><a id="wanDownload" hidden download="dom-render-wan3.mp4" href="#">Скачать MP4</a><button type="button" id="wanRefresh">Проверить статус</button></div>
+ <div id="wanMessage" role="status" aria-live="polite"></div>
+ <p class="wan26-foot">Для пробного доступа Alibaba Cloud (Singapore) требуется отдельный ключ, Workspace ID и включённый Free Quota Only. Новым пользователям может быть доступно 30 бесплатных секунд суммарно, не ежедневно; затем генерация остановится. Процент выполнения не предоставляется. После перезапуска сервера история задания может потеряться.</p>
+ </div>
+</section>
+<section id="variantsPanel" class="tab-panel" role="tabpanel">
+ <span class="section-label">ИСТОРИЯ ПРОЕКТА</span>
+ <p class="muted">Все реально сохранённые визуализации этого проекта. Откройте результат, назначьте его референсом для следующего ракурса или сравните с исходником.</p>
+ <div class="variant-history" id="variantHistory"></div>
+ <div class="project-guide"><b>Как появляются варианты?</b><p>Каждая успешная AI-генерация сохраняется отдельно в этом браузере. Черновая примерка материала не создаёт отдельный финальный вариант.</p></div>
+ <button type="button" id="variantsGenerate" class="btn btn-dark btn-block"><svg class="ico"><use href="#i-spark"/></svg>Создать новый AI-вариант</button>
+</section>
+<section id="parametersPanel" class="tab-panel" role="tabpanel"><div class="param-group"><div class="panel-section-title"><h3>Качество и формат изображения</h3></div><div class="select-grid"><label>Формат <select id="ratioSelect"><option>16:9</option><option>3:2</option><option>4:3</option><option>1:1</option><option>9:16</option></select></label><label>Качество <select id="qualitySelect"><option value="medium">Стандарт</option><option value="high" selected>Высокое</option></select></label><label>Вариантов <select id="quantitySelect"><option value="1">1</option><option value="2">2</option><option value="4">4</option></select></label></div></div><div class="param-group"><div class="panel-section-title"><h3>Сохранение архитектуры</h3></div><label class="switch-row"><span><b>Фиксировать геометрию</b><small>Просить AI сохранять окна, объёмы и пропорции</small></span><input type="checkbox" id="lockGeometry" checked><i></i></label><label class="switch-row"><span><b>Сохранять материалы исходника</b><small>AI улучшает реализм фальца, дерева, кирпича и других видимых покрытий, не заменяя их штукатуркой. Для смены материала используйте отдельный инструмент.</small></span><input type="checkbox" id="preserveMaterials" checked><i></i></label><label class="switch-row landscape-lock"><span><b>Сохранять окружение при смене ракурса</b><small>Передавать прошлый результат как референс: растения, материалы, сезон и свет остаются согласованными</small></span><input type="checkbox" id="keepReference" checked><i></i></label><p class="mini-disclaimer">Без 3D-модели совпадение окружения между ракурсами не гарантируется.</p></div></section>
+ </div>
+ <div class="inspector-footer"><div class="run-summary"><span id="summaryLine">Сад и газон · Лето · День</span><span id="summaryMaterial">Травертин · основной фасад</span></div><button class="btn btn-primary btn-block" id="generateBtn"><svg class="ico"><use href="#i-spark"/></svg><span id="generateText">Создать визуализацию</span><svg class="ico arrow"><use href="#i-arrow"/></svg></button><div class="batch-entry">
+ <button type="button" id="batchToggle" class="batch-toggle" aria-expanded="false" aria-controls="batchPanel"><span class="batch-toggle-icon">▦</span><span><b>Пакетная визуализация</b><small>4 кадра · 4 AI-генерации</small></span><svg class="ico"><use href="#i-arrow"/></svg></button>
+ <div class="batch-panel" id="batchPanel" hidden>
+ <div class="batch-panel-head"><strong>Четыре кадра одного проекта</strong><span>4 × изображение</span></div>
+ <div class="batch-shot-list" aria-label="Состав пакета">
+ <div class="batch-shot"><span>01</span><div><strong>Исходный ракурс</strong><small>Фотореализм, ракурс и геометрия как на загруженном изображении</small></div></div>
+ <div class="batch-shot"><span>02</span><div><strong>Фронтально на дом</strong><small>Перпендикулярно главному фасаду; для точности нужен фронтальный скрин модели</small></div></div>
+ <div class="batch-shot"><span>03</span><div><strong>Крупный план А · AI</strong><small>Новая фотореалистичная генерация выбранного фрагмента дома с детализацией существующих элементов</small></div></div>
+ <div class="batch-shot"><span>04</span><div><strong>Крупный план Б · AI</strong><small>Ещё одна генерация другого участка дома: точные формы и существующие материалы, новые микродетали</small></div></div>
+ </div>
+ <label class="batch-front-upload" for="batchFrontFile"><span><strong>Фронтальный скрин модели</strong><small>Необязательно, но нужен для геометрически точного кадра №2</small></span><span id="batchFrontName">Выбрать файл</span></label>
+ <input id="batchFrontFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+ <button type="button" id="batchFrontClear" class="batch-front-clear" hidden>Удалить фронтальный скрин</button>
+ <div class="batch-geometry-notice" id="batchGeometryNotice">Без отдельного фронтального вида кадр №2 будет AI-реконструкцией: строгое совпадение невидимой геометрии не гарантируется.</div>
+ <details class="batch-detail-adjust">
+  <summary>Настроить точки крупного плана <span>необязательно</span></summary>
+  <p>Выберите любые два выразительных участка именно вашего дома. Фрагменты задают область кадра, а AI выполняет полноценную генерацию фактур и света, не меняя архитектуру.</p>
+  <label>Кадр 3 · слева — справа <input id="batchDetail1X" type="range" min="15" max="85" value="60"></label>
+  <label>Кадр 3 · сверху — снизу <input id="batchDetail1Y" type="range" min="15" max="85" value="60"></label>
+  <label>Кадр 4 · слева — справа <input id="batchDetail2X" type="range" min="15" max="85" value="77"></label>
+  <label>Кадр 4 · сверху — снизу <input id="batchDetail2Y" type="range" min="15" max="85" value="40"></label>
+ </details>
+ <div class="batch-cost"><b>Расход: 4 платных обращения к AI Market</b><span>По одному на кадр. Каждое обращение учитывается отдельно. Если генерация прервётся, уже отправленные запросы могут быть оплачены.</span></div>
+ <button type="button" class="btn btn-primary btn-block" id="batchStart"><svg class="ico"><use href="#i-spark"/></svg><span>Создать пакет · 4 кадра</span></button>
+ <p class="batch-status" id="batchStatus" role="status" aria-live="polite">Готово к запуску. Результаты будут сохранены по одному.</p>
+ </div>
+ </div>
+ <div class="usage-foot"><span id="providerFoot" aria-live="polite">Генерация изображения</span><span>Только изображения · Без 3D</span></div></div>
+</aside>
+</div>
+<nav class="mobile-nav" aria-label="Мобильная навигация">
+ <button data-mobile="project" class="active"><svg class="ico"><use href="#i-folder"/></svg><span>Проект</span></button>
+ <button data-mobile="environment"><svg class="ico"><use href="#i-tree"/></svg><span>Рендер</span></button>
+ <button data-mobile="materials"><svg class="ico"><use href="#i-layer"/></svg><span>Материалы</span></button>
+ <button data-mobile="animation"><svg class="ico"><use href="#i-film"/></svg><span>Анимация</span></button>
+ <button data-mobile="variants"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button>
+ <button data-mobile="parameters"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройки</span></button>
+ </nav>
+<div class="dialog-cover" id="dialogCover" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-head"><div><span class="eyebrow">ФОРМА</span><h2 id="dialogTitle">Заголовок</h2></div><button class="icon-button" id="dialogClose" aria-label="Закрыть"><svg class="ico"><use href="#i-x"/></svg></button></div><div id="dialogBody"></div><div id="dialogActions"></div></div></div>
+<div class="cabinet-cover" id="cabinetCover" hidden>
+ <section class="cabinet-sheet" role="dialog" aria-modal="true" aria-labelledby="cabinetTitle" tabindex="-1">
+  <div class="cabinet-head"><div><small class="cabinet-eyebrow">ФОРМА · СЕРВИС</small><h2 id="cabinetTitle">Личный кабинет</h2></div><button type="button" id="cabinetClose" class="cabinet-close" aria-label="Закрыть">×</button></div>
+  <nav class="cabinet-tabs" aria-label="Разделы кабинета"><button type="button" data-cabinet-tab="account" class="active">Личный кабинет</button><button type="button" data-cabinet-tab="gallery">Галерея работ</button><button type="button" data-cabinet-tab="contacts">Контакты</button></nav>
+  <div id="cabinetAccount" class="cabinet-view">
+   <div class="cabinet-access"><span class="cabinet-dot"></span><span id="cabinetAccessStatus">Проверяем доступ…</span></div>
+   <div class="cabinet-stats">
+    <div class="cabinet-stat"><small>Осталось генераций сегодня</small><strong id="cabinetRemaining">—</strong><span id="cabinetLimitNote">Общий лимит сервера · не личная квота</span></div>
+    <div class="cabinet-stat"><small>Баланс API Market</small><strong id="cabinetBalance">Недоступен в API</strong><span>Проверяется в личном кабинете поставщика</span></div>
+    <div class="cabinet-stat cabinet-stat-wide"><small>Ваш тариф ФОРМА</small><strong id="cabinetTariff">Пока не назначен</strong><span>Персональные подписки и пользовательские счета ещё не подключены. API Market списывает средства за фактические запросы.</span></div>
+   </div>
+   <div class="cabinet-gallery-promo">
+    <div class="cabinet-gallery-promo-main"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg><span><strong>Галерея работ</strong><small>Все ваши рендеры и сохранённые видео в одном месте</small></span></div>
+    <button type="button" id="cabinetGoGallery">Открыть галерею</button>
+   </div>
+   <div class="cabinet-actions"><button type="button" id="cabinetRefresh">Обновить данные</button><a href="https://api-market1.shop/" target="_blank" rel="noopener noreferrer">Открыть баланс API Market ↗</a></div>
+   <p class="cabinet-disclaimer">Это информационный кабинет тестовой версии. Показанный лимит относится ко всему серверу и может сбрасываться при перезапуске. Здесь не отображается персональный оплаченный баланс.</p>
+  </div>
+  <div id="cabinetGallery" class="cabinet-view cabinet-gallery" hidden>
+   <div class="cabinet-gallery-top"><div><span class="cabinet-gallery-label">PORTFOLIO / PRIVATE COLLECTION</span><h3>Галерея работ</h3><p>Рендеры из всех проектов на этом устройстве и ваши сохранённые видеоролики.</p></div>
+   <button type="button" class="cabinet-gallery-import" id="cabinetGalleryImport"><svg class="ico"><use href="#i-plus"/></svg> Добавить видео</button>
+   <input id="cabinetGalleryFile" type="file" accept="video/mp4,video/webm,.mp4,.webm" hidden>
+   </div>
+   <div class="cabinet-gallery-stats">
+    <div><span>ВСЕГО РАБОТ</span><strong id="cabinetGalleryTotal">0</strong></div>
+    <div><span>РЕНДЕРЫ</span><strong id="cabinetGalleryRenders">0</strong></div>
+    <div><span>ВИДЕО</span><strong id="cabinetGalleryVideos">0</strong></div>
+   </div>
+   <div class="cabinet-gallery-tools">
+    <div class="cabinet-gallery-filters" role="group" aria-label="Типы работ"><button type="button" class="active" data-gallery-kind="all" aria-pressed="true">Все</button><button type="button" data-gallery-kind="image" aria-pressed="false">Рендеры</button><button type="button" data-gallery-kind="video" aria-pressed="false">Видео</button></div>
+    <select id="cabinetGalleryProject" aria-label="Фильтр по проекту"><option value="all">Все проекты</option></select>
+   </div>
+   <div id="cabinetGalleryGrid" class="cabinet-gallery-grid" aria-live="polite"></div>
+   <button id="cabinetGalleryMore" type="button" class="cabinet-gallery-more" hidden>Показать ещё</button>
+   <p class="cabinet-gallery-note">Работы хранятся локально в браузере. Они не синхронизируются между устройствами. Для сохранности скачивайте важные файлы.</p>
+  </div>
+  <div id="cabinetContacts" class="cabinet-view" hidden>
+   <p class="cabinet-description">Связь с командой ФОРМА по вопросам сайта, визуализации и сотрудничества.</p>
+   <div class="cabinet-contact-card"><small>Электронная почта для обращений</small><strong id="cabinetSupportEmail">Контактный адрес ещё не опубликован</strong><a id="cabinetSupportAction" href="#" hidden>Написать письмо ↗</a><p id="cabinetSupportNote">Владелец сайта должен добавить публичный адрес через настройку PUBLIC_SUPPORT_EMAIL на сервере.</p></div>
+   <p class="cabinet-disclaimer">По вопросам оплаты и баланса API Market обращайтесь непосредственно в поддержку <a href="https://api-market1.shop/" target="_blank" rel="noopener noreferrer">API Market</a>. Она не является поддержкой ФОРМА.</p>
+  </div>
+  <div id="cabinetGalleryLightbox" class="cabinet-gallery-lightbox" role="dialog" aria-modal="true" aria-label="Просмотр работы" hidden>
+    <div class="cabinet-gallery-lightbox-head"><div><strong id="cabinetGalleryViewTitle">Работа</strong><span id="cabinetGalleryViewMeta"></span></div><button id="cabinetGalleryViewClose" type="button" aria-label="Закрыть просмотр">×</button></div>
+    <div id="cabinetGalleryMedia" class="cabinet-gallery-lightbox-media"></div>
+    <div class="cabinet-gallery-lightbox-actions"><button id="cabinetGalleryDownload" type="button"><svg class="ico"><use href="#i-save"/></svg> Скачать оригинал</button><button id="cabinetGalleryDeleteVideo" type="button" hidden>Удалить видео</button></div>
+  </div>
+  <div class="cabinet-bottom"><a href="privacy.html">Политика конфиденциальности</a><span>© 2026 ФОРМА</span></div>
+ </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="dom-render-photo-assets.js?v=stable-demo-20261109"></script>
+<script src="dom-render-bluehour-assets.js?v=bluehour-20261108-1"></script>
+<script src="dom-render-sketchup-simple-asset.js?v=20261108-v4-correct-assets"></script>
+<script src="dom-render-preset-environment-1.js?v=cohesive-photo-20261108-2"></script>
+<script src="dom-render-preset-environment-2.js?v=cohesive-photo-20261108-2"></script>
+<script src="dom-render-preset-time.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-season.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-weather.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-preset-plants.js?v=cohesive-photo-20261108-1"></script>
+<script src="dom-render-unified-presets.js?v=deploy-ready-20261108-v25"></script>
+<script src="dom-render-clean-sketchup-v3.js?v=deploy-ready-20261108-v25"></script>
+<script src="dom-render-magic-wand-v29.js?v=magic-wand-micro-gaps-v30-20261109"></script>
+<script src="dom-render-material-preview-v31.js?v=20261109-v31b"></script>
+<script src="dom-render-animation-v39.js?v=cinema-profiles-20261109"></script>
+<script src="dom-render-animation-art-v40.js?v=premium-studio-art-20261109"></script>
+<script src="dom-render-cinema-premium-v43.js?v=distinct-optics-v44-20261110"></script>
+
+<script src="app.js?v=preview-my-project-after-v47-20261110"></script>
+<script defer src="dom-render-cabinet-v27.js?v=gallery-account-20261110-v56"></script>
+<script defer src="dom-render-gallery-v56.js?v=portfolio-20261110-v56"></script>
+<script src="dom-render-cinema-cards-fix-v45.js?v=mobile-atlas-performance-20261110-v52"></script>
+<script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
+<script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
+<script src="dom-render-progress-v53.js?v=ai-progress-20261110-v53"></script>
+<script src="dom-render-wan30.js?v=wan30-trial-1"></script>
+<script defer src="forma-archviz-studio.js?v=20261114-studio-01"></script>
+<script defer src="forma-interiors.js?v=20261114-interior-01"></script>
+<script defer src="forma-nodes.js?v=20261114-nodes-01"></script>
+<script defer src="forma-pro-tools.js?v=20261114-pro-01"></script>
+<script defer src="forma-intro.js?v=20261114-opening-v2"></script>
+<script defer src="forma-static-preview.js?v=render-static-1"></script>
+</body>
+</html>

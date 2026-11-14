@@ -1,0 +1,124 @@
+/* ФОРМА · Cinematic architectural opening scene
+   Ambient foliage is separate from the stationary plaster wall.
+   Motion affects only composite layers, never the user's project. */
+.forma-intro{
+ display:none;position:fixed;inset:0;z-index:9999;isolation:isolate;
+ width:100%;height:100vh;height:100dvh;overflow:hidden;background:#272a29;
+ color:#e9ded0;opacity:1;transition:opacity 1s cubic-bezier(.22,1,.36,1);
+}
+html.forma-intro-pending{overflow:hidden!important}
+html.forma-intro-pending #forma-intro{display:block}
+.forma-intro[hidden]{display:none!important}
+.forma-intro.is-leaving{opacity:0;pointer-events:none}
+.forma-intro-wall,.forma-intro-light,.forma-intro-shadow,.forma-intro-vignette{
+ position:absolute;inset:-2%;pointer-events:none
+}
+.forma-intro-wall{
+ inset:0;background:#2b2e2c url("assets/brand/intro-graphite-wall.svg") 50% 50% / cover no-repeat;
+}
+.forma-intro-light{
+ background:radial-gradient(ellipse 80% 87% at 0% 3%,rgba(240,224,194,.10),rgba(192,181,161,.03) 43%,transparent 78%);
+ mix-blend-mode:screen;opacity:.85;animation:forma-light-breathe 14s ease-in-out infinite alternate;
+}
+.forma-intro-shadow{
+ inset:-12% auto -10% -15%;width:78%;background:url("assets/brand/intro-branch-shadows.svg") left top / contain no-repeat;
+ opacity:.66;filter:blur(12px);transform-origin:0 0;will-change:transform;
+ animation:forma-shadow-branch 14s ease-in-out infinite alternate;
+}
+.forma-intro-shadow.secondary{
+ inset:22% auto -23% -14%;width:52%;
+ opacity:.37;filter:blur(23px);transform:scaleY(-1) rotate(-8deg);
+ transform-origin:28% 74%;animation:forma-shadow-branch-secondary 20s ease-in-out infinite alternate;
+}
+.forma-intro-vignette{
+ inset:0;background:linear-gradient(90deg,rgba(0,0,0,.07),transparent 45%,rgba(0,0,0,.2)),
+ linear-gradient(180deg,rgba(0,0,0,.09),transparent 40%,rgba(0,0,0,.24));
+}
+.forma-intro-content{
+ position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+ flex-direction:column;z-index:2;text-align:center;
+ padding:clamp(24px,6vw,74px) 22px;transform:translateY(-1.4%);
+}
+.forma-intro-lockup{
+ display:flex;flex-direction:column;align-items:center;gap:0;opacity:0;
+ transform:translate3d(0,19px,0) scale(.978);
+ filter:blur(6px);will-change:transform,opacity,filter;
+ transition:opacity 1.45s cubic-bezier(.22,1,.36,1), transform 1.55s cubic-bezier(.22,1,.36,1),filter 1.4s ease;
+}
+.forma-intro.is-revealed .forma-intro-lockup{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}
+.forma-intro-mark{
+ width:clamp(132px,15vw,218px);height:auto;display:block;object-fit:contain;
+ filter:drop-shadow(0 5px 6px rgba(0,0,0,.18));
+}
+.forma-intro-name{
+ display:block;margin:7px 0 0;padding-left:.29em;
+ font-family:Manrope,Inter,"Helvetica Neue",Arial,sans-serif;
+ font-size:clamp(43px,6.1vw,84px);font-weight:300;line-height:1.23;letter-spacing:.29em;
+ color:#f4e9d8;text-shadow:0 3px 5px rgba(0,0,0,.16);
+}
+.forma-intro-descriptor{
+ display:block;font-family:Manrope,Inter,"Helvetica Neue",Arial,sans-serif;
+ font-size:clamp(9px,1.15vw,15px);font-weight:400;letter-spacing:clamp(.11em,.44vw,.43em);
+ padding-left:.28em;line-height:1.6;white-space:nowrap;color:#d0baa0;
+ margin-top:11px;opacity:.95;
+}
+.forma-intro-line{
+ display:block;width:clamp(64px,11vw,124px);height:1px;margin-top:24px;
+ background:linear-gradient(90deg,transparent,#c9b396,transparent);opacity:0;
+ transform:scaleX(.55);transition:opacity 1s ease 1s,transform 1.5s ease 1s
+}
+.forma-intro.is-revealed .forma-intro-line{opacity:.8;transform:scaleX(1)}
+.forma-intro-skip{
+ position:absolute;top:max(27px,env(safe-area-inset-top));right:max(27px,env(safe-area-inset-right));
+ z-index:5;display:flex;gap:10px;align-items:center;padding:10px 13px;
+ color:#d8d1c6;background:rgba(37,41,40,.23);border:1px solid rgba(214,199,172,.28);
+ border-radius:6px;font-size:10px;font-weight:600;letter-spacing:.07em;
+ cursor:pointer;transition:background .25s,border-color .25s;
+ opacity:.65;
+}
+.forma-intro-skip:hover{background:rgba(15,20,20,.48);border-color:rgba(231,213,183,.65);opacity:1}
+.forma-intro-skip:focus-visible{outline:2px solid #e1caa5;outline-offset:3px;opacity:1}
+.forma-intro-skip svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7}
+.forma-intro-caption{
+ position:absolute;bottom:max(33px,env(safe-area-inset-bottom));
+ left:0;right:0;z-index:2;text-align:center;font-size:9px;
+ font-weight:600;letter-spacing:.29em;color:rgba(217,207,192,.58);
+ opacity:0;transition:opacity 1s ease;
+}
+.forma-intro.is-revealed .forma-intro-caption{opacity:1}
+@keyframes forma-shadow-branch{
+ 0%{transform:translate3d(-11px,-8px,0) rotate(-1.4deg) scale(1.03)}
+ 50%{transform:translate3d(6px,0px,0) rotate(.5deg) scale(1.045)}
+ 100%{transform:translate3d(25px,11px,0) rotate(1.7deg) scale(1.065)}
+}
+@keyframes forma-shadow-branch-secondary{
+ 0%{transform:translate3d(8px,0,0) scaleY(-1) rotate(-7deg) scale(1.05)}
+ 100%{transform:translate3d(-22px,14px,0) scaleY(-1) rotate(-10deg) scale(1.02)}
+}
+@keyframes forma-light-breathe{
+ from{opacity:.65;transform:translateX(-1.3%)}
+ to{opacity:1;transform:translateX(.8%)}
+}
+@media(max-width:760px){
+ .forma-intro-shadow{inset:-1% auto 0 -54%;width:145%;opacity:.65;filter:blur(9px)}
+ .forma-intro-shadow.secondary{inset:37% auto -22% -49%;width:105%;opacity:.33;filter:blur(18px)}
+ .forma-intro-content{transform:translateY(-3.2%)}
+ .forma-intro-mark{width:clamp(135px,36vw,180px)}
+ .forma-intro-name{font-size:clamp(43px,11vw,61px);letter-spacing:.24em;padding-left:.24em;margin-top:2px}
+ .forma-intro-descriptor{font-size:clamp(8px,2.1vw,11px);letter-spacing:.11em;padding-left:0;margin-top:13px}
+ .forma-intro-skip{top:max(22px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));font-size:9px}
+ .forma-intro-caption{bottom:max(26px,env(safe-area-inset-bottom));font-size:8px;letter-spacing:.19em}
+}
+@media(max-width:380px){
+ .forma-intro-descriptor{font-size:7.5px;letter-spacing:.07em}
+ .forma-intro-name{font-size:40px}
+}
+@media(prefers-reduced-motion:reduce){
+ .forma-intro-wall,.forma-intro-shadow,.forma-intro-shadow.secondary,.forma-intro-light{animation:none!important}
+ .forma-intro-lockup,.forma-intro-line,.forma-intro-caption,.forma-intro{transition-duration:.01ms!important;animation:none!important;filter:none!important}
+ .forma-intro-shadow{transform:none}
+ .forma-intro-lockup{opacity:1;transform:none}
+}
+
+/* Explicit phase lock for design review screenshots; not used during normal playback. */
+.forma-intro.is-wall-only .forma-intro-lockup,.forma-intro.is-wall-only .forma-intro-caption{opacity:0!important;visibility:hidden!important}
