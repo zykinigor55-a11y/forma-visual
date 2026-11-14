@@ -47,3 +47,24 @@
  .intro-video-nameplate span{font-size:8px;letter-spacing:.11em}
 }
 @media(prefers-reduced-motion:reduce){.intro-video-nameplate{animation:none;opacity:1;transform:translate(-50%,0)}}
+
+
+/* Playback reliability: show actual film rather than the static fallback logo. */
+.site-intro{background:#000!important}
+.intro-film{background:#000!important;opacity:1;visibility:visible}
+.intro-fallback{display:none!important}
+.intro-play[hidden]{display:none!important}
+.intro-play{
+ position:absolute;z-index:8;left:50%;top:50%;
+ transform:translate(-50%,-50%);
+ border:1px solid #ffffff7a;border-radius:4px;
+ background:#050505dc;color:#fff;min-height:52px;
+ padding:14px 22px;display:flex;align-items:center;gap:14px;
+ font:600 11px/1.4 'Manrope',Arial,sans-serif;letter-spacing:.13em;
+ cursor:pointer;white-space:nowrap;
+}
+.site-intro.needs-interaction .intro-video-nameplate{opacity:0;animation-play-state:paused}
+.site-intro:not(.is-playing) .intro-video-nameplate{animation-play-state:paused}
+.site-intro.is-playing .intro-video-nameplate{animation-play-state:running}
+/* Keep visible black background, use the actual frames once the video starts. */
+@media(max-width:700px){.intro-play{font-size:10px;padding:14px 15px;max-width:calc(100vw - 38px)}}
