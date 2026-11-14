@@ -175,3 +175,22 @@ body{background:var(--bg);color:var(--ink);font-family:Inter,"Helvetica Neue",Ar
  .forma-photo-card small{display:none}
  .forma-photo-card{height:61px}
 }
+
+
+/* FORMA — graphite architecture studio first screen, 2026-11-14 */
+.workspace .page-intro.forma-hero{position:relative;overflow:hidden;isolation:isolate;display:flex!important;align-items:center;justify-content:space-between;min-height:255px;padding:32px clamp(26px,3.6vw,54px)!important;margin:18px 0 21px!important;gap:24px;border-radius:15px;border:1px solid #37423e;background:#172023 url("assets/brand/graphite-branches-wall.svg") center/cover no-repeat;box-shadow:0 19px 52px #14252520;color:#f8f6ef}
+.workspace .forma-hero::after{content:"";pointer-events:none;position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,23,23,.37),rgba(16,24,24,.16) 70%,rgba(12,22,22,.3));z-index:-1}
+.forma-hero-content{position:relative;z-index:2;min-width:0;max-width:690px}
+.forma-hero .eyebrow{display:flex;align-items:center;flex-wrap:wrap;gap:14px;color:#d2c3aa!important;letter-spacing:.18em!important;font-weight:650!important;font-size:9px!important;margin:0 0 18px!important}
+.forma-hero-rule{display:inline-block;width:29px;height:1px;background:#beaa89}
+.forma-hero h1{color:#f6f3ed!important;font-size:clamp(32px,3.2vw,51px)!important;line-height:1.07!important;letter-spacing:-.047em!important;font-weight:500!important;margin:0 0 12px!important}
+.forma-hero h1 span{color:#d8c4a8!important}
+.forma-hero .subtitle{color:#c0cac4!important;line-height:1.7!important;font-size:11px!important;max-width:520px;margin:0!important}
+.forma-hero-tags{display:flex;gap:21px;flex-wrap:wrap;margin-top:21px}
+.forma-hero-tags span{color:#d6d7cb;font-size:9px;font-weight:650;letter-spacing:.11em;white-space:nowrap}
+.forma-hero-emblem{position:relative;z-index:1;width:min(28%,240px);max-height:210px;display:flex;justify-content:center;align-items:center;flex:none;opacity:.6;filter:drop-shadow(0 10px 18px #0006)}
+.forma-hero-emblem img{display:block;max-width:100%;width:180px;height:auto;object-fit:contain}
+.forma-hero .stepper{display:none!important}
+@media(max-width:1400px){.workspace .page-intro.forma-hero{min-height:224px;padding:27px!important}.forma-hero h1{font-size:37px!important}.forma-hero-emblem{width:22%;opacity:.49}}
+@media(max-width:760px){.workspace .page-intro.forma-hero{margin:10px 0 15px!important;min-height:216px;padding:24px 21px!important;border-radius:12px}.forma-hero h1{font-size:34px!important}.forma-hero .subtitle{font-size:10px!important}.forma-hero-emblem{position:absolute;right:-12px;bottom:12px;width:130px;opacity:.2}.forma-hero-tags{gap:11px;margin-top:16px}.forma-hero-tags span{font-size:8px}.forma-hero .eyebrow{font-size:8px!important}}
+@media(max-width:390px){.forma-hero-tags span:last-child{display:none}.forma-hero h1{font-size:31px!important}.forma-hero .subtitle{font-size:9px!important}}
