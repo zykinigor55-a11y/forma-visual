@@ -215,3 +215,32 @@ html.forma-intro-pending #forma-intro{display:block}
     will-change:auto!important;
   }
 }
+
+
+/* 4K visual QA · warm grazing light to reveal physical depth and botanical shadow separation */
+.forma-intro-light{
+  background:
+    radial-gradient(ellipse 92% 115% at -9% -12%,
+       rgba(242,210,170,.49) 0%,
+       rgba(194,162,123,.22) 35%,
+       rgba(142,115,84,.06) 59%,
+       transparent 79%),
+    radial-gradient(ellipse 70% 100% at 85% 100%,rgba(0,0,0,.08),transparent);
+  mix-blend-mode:screen;
+  opacity:.91;
+}
+.forma-intro-shadow{
+  mix-blend-mode:multiply;
+  filter:blur(10px);
+  opacity:.88;
+  background-size:contain;
+}
+.forma-intro-shadow.secondary{
+  filter:blur(24px);
+  opacity:.36;
+}
+@media(max-width:760px){
+  .forma-intro-light{opacity:.92}
+  .forma-intro-shadow{opacity:.72;filter:blur(9px)}
+  .forma-intro-shadow.secondary{opacity:.29;filter:blur(20px)}
+}
