@@ -17,6 +17,7 @@
 }
 </script>
 <script type="module" src="forma-world.js?v=20261114-01"></script>
+<script defer src="forma-world-ai.js?v=20261114-01"></script>
 </head>
 <body>
 <div class="fw-app">
@@ -60,7 +61,22 @@
    <div class="fw-actions"><button type="button" id="fwShot" class="fw-primary">Сохранить кадр PNG</button><button type="button" id="fwShot4K" class="fw-primary fw-primary-dark">Сохранить кадр 4K</button><button type="button" id="fwBookmark">Запомнить ракурс</button><button type="button" id="fwReturn">Вернуть ракурс</button></div>
    <p class="fw-muted">4K увеличивает разрешение WebGL-кадра до 3840 × 2160. Для фотореализма важны исходная модель, материалы и HDR-окружение.</p>
   </div>
-  <div class="fw-section fw-footer-note">Подключение AI Image-to-3D / 3D Worlds появится отдельно. Для точной архитектуры используйте GLB, экспортированный из CAD или Blender.</div>
+  <div class="fw-section fw-ai-section" id="fwAISection">
+  <div class="fw-section-heading"><span>05</span><b>Реалистичная AI-генерация</b></div>
+  <p class="fw-muted">По фотографии или описанию можно создать 3D-мир в World Labs либо отдельный GLB-объект в Meshy. <strong>AI не гарантирует точную геометрию здания.</strong></p>
+  <div class="fw-ai-status" id="fwAIStatus" role="status">Проверяем доступность AI-провайдеров…</div>
+  <label class="fw-label" for="fwAIToken">Приватный доступ к генерации</label>
+  <input id="fwAIToken" type="password" placeholder="Код доступа к серверу ФОРМЫ" autocomplete="off" spellcheck="false">
+  <label class="fw-label" for="fwAIPrompt">Описание окружения</label>
+  <textarea id="fwAIPrompt" maxlength="1800" rows="3" placeholder="Например: реалистичный сосновый лес, озеро за домом, рельеф, мягкое утреннее солнце, естественные материалы."></textarea>
+  <label for="fwAIFile" class="fw-hdr-upload">Фото участка или объекта <small>PNG, JPG, WEBP · до 8 МБ · необязательно для мира, обязательно для Meshy</small></label>
+  <input id="fwAIFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+  <span id="fwAIFileInfo" class="fw-muted">Фото ещё не выбрано</span>
+  <label class="fw-ai-consent"><input type="checkbox" id="fwAIConfirm"><span>Понимаю, что генерация платная и расходует кредиты выбранного сервиса.</span></label>
+  <div class="fw-ai-actions"><button type="button" id="fwCreateWorld" disabled>Создать AI-мир</button><button type="button" id="fwCreateObject" disabled>Создать 3D-объект</button></div>
+  <div class="fw-ai-result" id="fwAIResult" role="status" aria-live="polite"></div>
+ </div>
+ <div class="fw-section fw-footer-note">CAD-модель остаётся основной геометрией точного архитектурного проекта. AI-мир и GLB из фотографии — отдельные реконструкции. Для них нужны ключи поставщиков на сервере.</div>
  </aside>
  <section class="fw-canvas-area" aria-label="Интерактивный 3D-мир">
   <div class="fw-toolbar"><span class="fw-live-dot"></span><span id="fwSceneName">Демонстрационный архитектурный мир</span><span class="fw-divider"></span><span id="fwModeLabel">ОБЗОР</span></div>
