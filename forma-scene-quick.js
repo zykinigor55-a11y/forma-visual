@@ -118,6 +118,7 @@
    const caption=document.createElement('span');caption.className='forma-sun-preview-caption';
    caption.textContent=info.hasRender?'ТЕКУЩИЙ РЕНДЕР · МОЖНО ПЕРЕОСВЕТИТЬ':'ИСХОДНИК · ДЛЯ ПЕРВОГО РЕНДЕРА';
    preview.append(caption);sunSection.append(preview);
+   image.addEventListener('load',()=>{if(sheet&&!sheet.hidden)drawPin(get().sun)},{once:true});
    const actions=document.createElement('div');actions.className='forma-sun-actions';
    const reset=document.createElement('button');reset.type='button';reset.dataset.sunReset='1';
    reset.textContent='По исходному свету';reset.className='forma-sun-reset';
@@ -228,6 +229,7 @@
  function open(){
   if(!build())return;
   previousFocus=document.activeElement;paint();sheet.hidden=false;
+  requestAnimationFrame(()=>drawPin(get().sun));
   document.documentElement.classList.add('forma-scene-sheet-open');
   sheet.querySelector('[data-scene-close]')?.focus({preventScroll:true});
  }
