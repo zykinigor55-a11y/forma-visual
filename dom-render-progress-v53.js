@@ -28,7 +28,7 @@
  function syncScene(){
   const source=$('beforeImg');
   const preview=$('renderProgressSource');
-  if(source&&preview)preview.src=source.currentSrc||source.src;
+  if(preview){const candidate=window.FORMA_RELIGHT_PREVIEW||(source?.currentSrc||source?.src);if(candidate&&preview.src!==candidate)preview.src=candidate;}
   const settings=$('renderSummaryLine')?.textContent?.trim()||$('summaryLine')?.textContent?.trim();
   const summary=$('renderProgressScene');
   if(summary)summary.textContent=(settings||'Архитектурная визуализация').slice(0,165);
@@ -84,6 +84,7 @@
   const next=/сохраня|сохранение|галере|готовый результат/i.test(t)?'save':
    /кадр\s*\d|генераци|созда[её][тм]|рендер|обрабатыва/i.test(t)?'ai':'prepare';
   setPhase(next);
+  if(window.FORMA_RELIGHT_PREVIEW)syncScene();
   if(!minimized)overlay().hidden=false;
  }
  function complete(){
