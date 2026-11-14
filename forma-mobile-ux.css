@@ -109,3 +109,13 @@ html[data-forma-theme] .fa-node-picture:not(.has-image):not(.has-video){backgrou
 html[data-forma-theme] .fa-home-tool-arrow{color:var(--fa-accent)!important}
 html[data-forma-theme] .fa-home-tool-status:not(.pending){color:var(--fa-accent-text)!important}
 @media(max-width:760px){html[data-forma-theme] .forma-workflow-arrowbtn[hidden]{display:none!important}html[data-forma-theme] .fa-flow-more-menu{top:calc(100% - 3px)}}
+/* Keep one obvious entry point for all tools; eliminate the duplicated context button. */
+html[data-forma-theme] .forma-context-actions [data-studio-action="commands"]{display:none!important}
+@media(min-width:761px){html[data-forma-theme] #faFlowMore{display:none!important}}
+@media(max-width:760px){
+ html[data-forma-theme] .mobile-header-actions .forma-mobile-tools-quick{font-size:0!important;width:38px!important;min-width:38px!important;padding:0!important;display:inline-grid;place-items:center}
+ html[data-forma-theme] .mobile-header-actions .forma-mobile-tools-quick:before{content:"☷";font-size:21px;font-weight:550;line-height:1}
+ html[data-forma-theme] .mobile-header-actions #mobileAdd{width:40px!important;min-width:40px!important;padding:0!important;font-size:0!important;gap:0!important}
+ html[data-forma-theme] .mobile-header-actions #mobileAdd svg{width:19px;height:19px}
+ html[data-forma-theme] .mobile-header-actions .forma-mobile-tools-quick:focus-visible{outline:2px solid var(--fa-accent)!important}
+}
