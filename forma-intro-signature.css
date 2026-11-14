@@ -15,31 +15,31 @@ html.forma-intro-pending #forma-intro{display:block}
  position:absolute;inset:0;pointer-events:none
 }
 .forma-intro-wall{
- background:#292827 url("assets/brand/intro-graphite-wall-4k.webp") 50% 50% / cover no-repeat;
- filter:brightness(.81) contrast(1.035) saturate(.74);
+ background-color:#101012;
+ background-image:url("assets/brand/intro-black-wall-shadow-4k.avif"),url("assets/brand/intro-graphite-wall-4k.webp");
+ background-position:54% 50%;background-size:cover;background-repeat:no-repeat;
+ filter:brightness(.95) contrast(1.025) saturate(.9);
  transform:translateZ(0);
 }
 .forma-intro-light{
  inset:-2%;
  background:
- radial-gradient(ellipse 77% 100% at -2% -6%,
-  rgba(244,216,177,.32),rgba(192,148,107,.13) 40%,transparent 77%),
- linear-gradient(130deg,rgba(214,176,125,.055),transparent 60%);
- mix-blend-mode:screen;opacity:.86;animation:forma-signature-light 19s ease-in-out infinite alternate
+ radial-gradient(ellipse 72% 85% at 80% -12%,rgba(232,192,146,.14),rgba(160,125,90,.045) 45%,transparent 85%);
+ mix-blend-mode:screen;opacity:.21;animation:forma-signature-light 19s ease-in-out infinite alternate
 }
 .forma-intro-shadow{
  inset:-14% auto -12% -22%;width:93%;
  background:url("assets/brand/intro-branch-shadows.svg") left top / contain no-repeat;
- mix-blend-mode:multiply;opacity:.44;
- filter:blur(11px);transform-origin:8% 10%;
+ mix-blend-mode:multiply;opacity:.13;
+ filter:blur(13px);transform-origin:8% 10%;
  animation:forma-signature-shadow 23s ease-in-out infinite alternate;
  will-change:transform
 }
 .forma-intro-shadow.secondary{display:none!important}
 .forma-intro-vignette{
  background:
- radial-gradient(ellipse 74% 72% at 52% 46%,transparent 35%,rgba(6,6,8,.27) 100%),
- linear-gradient(0deg,rgba(4,4,6,.28),transparent 22%,transparent 78%,rgba(5,5,6,.12));
+ radial-gradient(ellipse 78% 74% at 52% 49%,transparent 45%,rgba(6,6,8,.14) 100%);
+
 }
 .forma-intro-content{
  position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;
@@ -120,15 +120,15 @@ html.forma-intro-pending #forma-intro{display:block}
 }
 @media(max-width:760px){
  .forma-intro-wall{
-  background-image:url("assets/brand/intro-graphite-wall-mobile.webp");
-  background-position:50% 50%;
-  filter:brightness(.80) contrast(1.04) saturate(.70)
+  background-image:url("assets/brand/intro-black-wall-shadow-4k.avif"),url("assets/brand/intro-graphite-wall-mobile.webp");
+  background-position:66% 50%;
+  filter:brightness(.94) contrast(1.025) saturate(.88)
  }
  .forma-intro-light{
-  background:radial-gradient(ellipse 110% 80% at -10% -3%,rgba(238,205,163,.32),rgba(165,119,85,.13) 43%,transparent 76%);
+  background:radial-gradient(ellipse 120% 90% at 80% -10%,rgba(223,190,146,.12),transparent 80%);
  }
  .forma-intro-shadow{
-  inset:-3% auto 0 -57%;width:150%;opacity:.41;filter:blur(9px)
+  inset:-3% auto 0 -57%;width:150%;opacity:.11;filter:blur(12px)
  }
  .forma-intro-content{transform:translateY(-4%);padding:30px 18px}
  .forma-intro-mark{width:clamp(109px,31vw,151px)}
