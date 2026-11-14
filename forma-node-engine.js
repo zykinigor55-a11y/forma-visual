@@ -36,7 +36,7 @@ function checkPlan(g,target){
  if(blocked)throw Error('Нода «'+(blocked.title||blocked.type)+'» пока требует отдельного движка или ручного подтверждения — результат не имитируется.');
  const unknown=path.find(n=>!AVAILABLE_TYPES.has(n.type));
  if(unknown)throw Error('Тип «'+unknown.type+'» пока не исполняется.');
- const invalid=path.find(n=>n.type==='materials'&&!String(n.options?.instruction||'').trim());
+ const invalid=path.find(n=>n.type==='materials'&&!String(n.options?.instruction||'').trim()&&(!n.options?.material||n.options.material==='custom'));
  if(invalid)throw Error('Для ноды «Материалы» напишите конкретную инструкцию по редактированию.');
  const calls=path.filter(n=>AI_TYPES.has(n.type)&&!(n.options?.reuse&&getAPI()?.getSnapshot?.(n.id))).length;
  const videoCalls=path.filter(n=>n.type==='video'&&!(n.options?.reuse&&getAPI()?.getVideoBlob?.(n.id))).length;
@@ -138,8 +138,8 @@ function settingsHTML(n){
   controls.push(select('overlay','Прозрачность линий исходника',{'0.25':'25% · Лёгкое','0.5':'50% · Среднее','0.75':'75% · Сильное'},getOpt(n,'overlay','0.5')));
   controls.push('<p>Наложение исходного CAD-скриншота для ручного сравнения. Не является автоматическим анализом геометрии.</p>');
  }
- if(n.type==='upscale'){controls.push(group('Размер итогового кадра'));controls.push('<p>Локальное увеличение до 3840 пикселей по длинной стороне. Это не AI-upscale: недостающая детализация не восстанавливается.</p>');}
- if(n.type==='export'){controls.push(group('Сохранение результата'));controls.push('<p>Скачать готовый кадр или MP4 и сохранить результаты AI-цепочки в галерее проекта.</p>');}
+ if(n.type==='upscale'){controls.push(group('Размер итогового кадра'));controls.push(select('target','Длинная сторона',{'2048':'2K · до 2048 px','3840':'4K · до 3840 px'},getOpt(n,'target','3840')));controls.push('<p>Локальное увеличение средствами браузера. Это не AI-upscale: недостающая детализация не восстанавливается.</p>');}
+ if(n.type==='export'){controls.push(group('Сохранение результата'));controls.push(select('format','Формат изображения',{'original':'Оригинальный формат','png':'PNG · без потерь','jpeg':'JPEG · качество 94%','webp':'WebP'},getOpt(n,'format','original')));controls.push('<p>Видеорезультат сохраняется в MP4. Кадры AI остаются в проекте, экспорт скачивает итог выбранной ветки.</p>');}
  if(BLOCKED_TYPES.has(n.type)){controls.push(group('3D-модель'));controls.push('<p>Требуется отдельная интеграция 3D-движка. Фальшивый 3D-результат не создаётся.</p>');}
  const history=getAPI()?.historyFor?.(n.id)||[];
  if(history.length)controls.push('<div class="fa-inspector-history"><b>ИСТОРИЯ РЕЗУЛЬТАТОВ</b>'+history.map((h,i)=>'<button type="button" data-fa-restore-history="'+esc(h.key)+'" data-fa-history-node="'+esc(n.id)+'">↶ Версия '+(i+1)+' · '+new Date(h.time).toLocaleString('ru-RU')+'</button>').join('')+'</div>');
@@ -211,11 +211,11 @@ async function imageAI(source,brief,ctx,options={}){
   throw err;
  }finally{clearTimeout(timer);aborter=null}
 }
-async function canvas4K(source){
+async function canvas4K(source,target=3840){
  const im=new Image();im.src=source;await im.decode();
  const longest=Math.max(im.naturalWidth,im.naturalHeight);
  if(!longest)throw Error('Невозможно определить размер изображения.');
- const scale=Math.max(1,3840/longest);
+ const scale=Math.max(1,Number(target)===2048?2048/longest:3840/longest);
  const w=Math.round(im.naturalWidth*scale),h=Math.round(im.naturalHeight*scale);
  if(w*h>25_000_000)throw Error('Это изображение превышает лимит локальной обработки.');
  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
@@ -223,11 +223,22 @@ async function canvas4K(source){
  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(im,0,0,w,h);
  return canvas.toDataURL('image/png');
 }
-function downloadImage(img){
- const ext=imageMime(img)==='jpeg'?'jpg':imageMime(img)||'png';
- const link=document.createElement('a');link.href=img;link.download='forma-node-'+Date.now()+'.'+ext;
+async function downloadImage(img,options={}){
+ const format=options?.format||'original';
+ let src=img,ext=imageMime(img)==='jpeg'?'jpg':imageMime(img)||'png';
+ if(['jpeg','webp','png'].includes(format)){
+  const im=new Image();im.src=img;await im.decode();
+  const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;
+  const ctx=c.getContext('2d');if(!ctx)throw Error('Экспорт в выбранный формат недоступен.');
+  if(format==='jpeg'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,c.width,c.height)}
+  ctx.drawImage(im,0,0);
+  src=c.toDataURL('image/'+format,format==='jpeg'?.94:undefined);
+  ext=format==='jpeg'?'jpg':format;
+ }
+ const link=document.createElement('a');link.href=src;link.download='forma-node-'+Date.now()+'.'+ext;
  document.body.append(link);link.click();link.remove();
 }
+
 async function geometryOverlay(image,source,opacity){
  const [im,ref]=await Promise.all([new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=image}),new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=source})]);
  const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;
@@ -361,7 +372,7 @@ async function runTo(target){
     const cached=n.options?.reuse?api.getSnapshot?.(n.id):null;
     if(cached){output=cached;tell('Использован готовый кадр: '+(n.title||n.type)+' · бесплатно');}
     else {
-     const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:String(n.options?.instruction||'').slice(0,500)}:{};
+     const materialChoice=n.options?.material&&n.options.material!=='custom'?MATERIALS[n.options.material]:'';const instruction=[materialChoice?'Заменить отделку на '+materialChoice+'. Не изменять другие элементы.':'',String(n.options?.instruction||'')].filter(Boolean).join(' ').slice(0,500);const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:instruction}:{};
      output=await imageAI(output,brief,ctx,opts);aiCompleted++;lastAI=n.title||n.type;
     }
    }else if(n.type==='video'){
@@ -369,8 +380,8 @@ async function runTo(target){
     videoBlob=cached||await makeVideo(output,n.options);
     if(!cached){videoCompleted++;lastAI=n.title||n.type;await api.setVideoSnapshot?.(n.id,videoBlob)}
    }else if(n.type==='geometry'){output=await geometryOverlay(output,ctx.source,n.options?.overlay)}
-   else if(n.type==='upscale'){output=await canvas4K(output)}
-   else if(n.type==='export'){if(videoBlob)downloadVideoBlob(videoBlob);else downloadImage(output)}
+   else if(n.type==='upscale'){output=await canvas4K(output,n.options?.target)}
+   else if(n.type==='export'){if(videoBlob)downloadVideoBlob(videoBlob);else await downloadImage(output,n.options)}
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
    if(!videoBlob&&(!api.getSnapshot?.(n.id)||api.getSnapshot(n.id)!==output))await api.setSnapshot?.(n.id,output);
    setState(n.id,'done');
