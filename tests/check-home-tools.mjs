@@ -6,7 +6,7 @@ try{
  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:3000/',{waitUntil:'domcontentloaded',timeout:45000});
  await page.locator('#formaProjectPanel').waitFor({state:'visible',timeout:10000});
- assert.equal(await page.locator('.fa-home-tool').count(),16,'All tools should be visible');
+ assert.equal(await page.locator('.fa-home-tool').count(),17,'All tools should be visible');
  assert.equal(await page.locator('.fa-home-tool.selected').getAttribute('data-tool-id'),'upscale');
  assert.equal(await page.locator('#faProUpscaleUpload').count(),1);
 
@@ -41,7 +41,7 @@ try{
  await page.locator('[data-filter="edit"]').click();
  assert.equal(await page.locator('.fa-home-tool:not([hidden])').count(),4);
  await page.locator('[data-filter="all"]').click();
- assert.equal(await page.locator('.fa-home-tool:not([hidden])').count(),16);
+ assert.equal(await page.locator('.fa-home-tool:not([hidden])').count(),17);
 
  await page.locator('[data-tool-id="image3d"]').click();
  assert.match(await page.locator('#faProjectToolContent').textContent(),/отдельной 3D-модели/);
@@ -54,8 +54,8 @@ try{
  await mp.locator('#formaProjectPanel').waitFor({state:'visible'});
  const dim=await mp.locator('#formaProjectPanel').evaluate(el=>({sw:el.scrollWidth,cw:el.clientWidth}));
  assert.ok(dim.sw<=dim.cw+2,'Project tools must fit inside mobile viewport: '+JSON.stringify(dim));
- assert.equal(await mp.locator('.fa-home-tool').count(),16);
+ assert.equal(await mp.locator('.fa-home-tool').count(),17);
  await mobile.close();
  await ctx.close();
- console.log('Project panel verified: all 16 tools, inline config, local 4K download, camera, filters, mobile.');
+ console.log('Project panel verified: all 17 tools, inline config, local 4K download, camera, filters, mobile.');
 }finally{await browser.close()}
