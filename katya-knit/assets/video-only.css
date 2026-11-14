@@ -54,3 +54,10 @@ button{font:inherit}
  .site-intro{transition:none}.intro-emblem path{stroke-dashoffset:0;animation:none}
  .gallery-button{transition:none}.gallery-button:hover{transform:none}
 }
+
+/* Approved 2D yarn-circle logo: traced from the selected artwork, not a substitute. */
+.intro-emblem{display:block;object-fit:contain;max-width:175px;height:auto;stroke:none;fill:none;filter:brightness(0) invert(1);opacity:0;animation:approvedRingReveal 1.75s cubic-bezier(.18,.75,.25,1) .12s forwards;transform-origin:center}
+.intro-emblem path{animation:none!important}
+@keyframes approvedRingReveal{0%{opacity:0;transform:translateY(8px) scale(.93) rotate(-13deg)}47%{opacity:.83}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+.catalog-page .brand-mark{object-fit:contain}
+@media(prefers-reduced-motion:reduce){.intro-emblem{opacity:1;animation:none;transform:none}}

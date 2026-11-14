@@ -66,3 +66,6 @@
  .art-modal figcaption{font-size:21px}
 }
 @media(prefers-reduced-motion:reduce){.exhibition-artworks>.exhibition-work:nth-child(n),.exhibition-work .exhibition-frame,.exhibition-progress-track i,.art-modal figure img{transition:none!important}.exhibition-viewport{scroll-behavior:auto!important}}
+
+/* Hero preview: no tan letterbox strips above and below the three artworks. */
+.exhibition-visual .exhibition-painting img{object-fit:cover!important;object-position:center}
