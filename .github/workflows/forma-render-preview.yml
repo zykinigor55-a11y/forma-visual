@@ -6,6 +6,10 @@ on:
     paths:
       - .github/workflows/forma-render-preview.yml
       - forma-home-tools.js
+      - forma-node-engine.js
+      - forma-node-engine.css
+      - forma-nodes.js
+      - forma-nodes.css
       - forma-home-tools.css
       - forma-pro-tools.js
       - index.html
@@ -44,6 +48,7 @@ jobs:
             forma-brand-identity.css \
             forma-interiors.js forma-interiors.css \
             forma-nodes.js forma-nodes.css \
+            forma-node-engine.js forma-node-engine.css \
             forma-pro-tools.js forma-pro-tools.css \
             forma-home-tools.js forma-home-tools.css \
             forma-intro.js forma-intro.css \
