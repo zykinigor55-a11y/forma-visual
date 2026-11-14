@@ -125,12 +125,6 @@
    if(tool){current=id;$('#faHomeToolTitle').textContent=tool.name;$('#faHomeToolSub').textContent=tool.desc}
    $$('.fa-home-tool',panel).forEach(b=>{const selected=b.dataset.toolId===id;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))})
   });
-  const actions=$('.forma-context-actions');
-  if(actions&&!$('#faHomeUpscaleQuick')){
-   const b=document.createElement('button');b.id='faHomeUpscaleQuick';b.type='button';b.className='forma-mini-btn fa-home-quick';b.textContent='↗ Upscaler 4K';
-   b.addEventListener('click',()=>{filterTools('all');choose('upscale');panel.scrollIntoView({behavior:'smooth',block:'start'})});
-   actions.insertBefore(b,actions.firstChild);
-  }
   window.FORMA_HOME_TOOLS={open:choose,filter:filterTools};
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
