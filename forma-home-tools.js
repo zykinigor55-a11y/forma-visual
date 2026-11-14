@@ -67,9 +67,11 @@
   if(tool.type==='pro'){
    window.FORMA_PRO?.open?.(id);
   }else{
-   openRoute(id);
+   const detail=$('#faProjectToolContent');
+   if(detail)detail.innerHTML='<div class="fa-home-route-context"><span>РАБОЧИЙ МОДУЛЬ</span><h4>'+tool.name+'</h4><p>'+tool.desc+'</p><p>Этот инструмент открывается в рабочей панели проекта. Все его параметры и результаты связаны с текущим проектом.</p><div class="fa-home-route-hint">Основные настройки: справа от изображения · История результатов: в галерее проекта</div></div>';
    const title=$('#faHomeToolTitle');if(title)title.textContent=tool.name;
-   const short=$('#faHomeToolSub');if(short)short.textContent='Открыт основной инструмент. Настройки находятся справа от окна проекта.';
+   const short=$('#faHomeToolSub');if(short)short.textContent='Рабочий модуль проекта';
+   openRoute(id);
   }
   $$('.fa-home-tool',panel).forEach(b=>{const selected=b.dataset.toolId===id;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
  }
