@@ -91,11 +91,12 @@ test('opening scene keeps the wall and shadows separate, then reveals Russian lo
  const css=await fromRoot('forma-intro.css');
  const js=await fromRoot('forma-intro.js');
  assert.match(html,/id="forma-intro"/);
- assert.match(html,/intro-graphite-wall\.svg/);
- assert.match(html,/intro-branch-shadows\.svg/);
+ assert.match(html,/intro-graphite-wall-4k\.webp/);
+ assert.match(html,/intro-graphite-wall-mobile\.webp/);
+ assert.match(css,/intro-branch-shadows\.svg/);
  assert.match(html,/forma-intro\.js/);
  assert.match(html,/forma-intro-name">ФОРМА/);
- assert.match(css,/@keyframes forma-shadow-branch/);
+ assert.match(css,/@keyframes forma-shadow-sway-premium/);
  assert.match(css,/prefers-reduced-motion/);
  assert.match(js,/setTimeout/);
  assert.match(js,/is-revealed/);
