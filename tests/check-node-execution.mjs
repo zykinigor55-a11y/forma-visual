@@ -26,6 +26,7 @@ try {
  await page.locator('[data-node-option="style"]').selectOption('japandi');
  await page.locator('[data-node="n3"] [data-run-node]').click();
  await page.locator('[data-node="n3"] .fa-run-state[data-state="done"]').waitFor({timeout:30000});
+ await page.waitForFunction(()=>!window.FORMA_NODE_ENGINE?.busy,null,{timeout:15000});
  assert.equal(requests.length,1);
  assert.equal(requests[0].brief.sceneType,'interior');
  assert.equal(requests[0].brief.room,'kitchen');
@@ -40,8 +41,19 @@ try {
  await page.locator('[data-node="n5"] .fa-node-top').click();
  await page.locator('[data-node-option="zone"]').selectOption('main');
  await page.locator('[data-node-option="instruction"]').fill('Заменить только отделку существующей стены на светлый травертин. Сохранить геометрию и камеры.');
+ const node5=await page.evaluate(()=>window.FORMA_NODES?.graph?.()?.nodes.find(n=>n.id==='n5')?.options);
+ console.log('Material node configuration',JSON.stringify(node5));
+ const pendingBefore=await page.evaluate(()=>window.FORMA_NODE_ENGINE?.busy);
+ console.log('Before second node run: busy=',pendingBefore,'requests=',requests.length);
  await page.locator('[data-node="n5"] [data-run-node]').click();
- await page.locator('[data-node="n5"] .fa-run-state[data-state="done"]').waitFor({timeout:30000});
+ try{await page.locator('[data-node="n5"] .fa-run-state[data-state="done"]').waitFor({timeout:12000})}
+ catch(error){
+  const diagnostics=await page.evaluate(()=>({status:document.querySelector('#faFlowStatus')?.textContent,busy:window.FORMA_NODE_ENGINE?.busy,options:window.FORMA_NODES?.graph?.()?.nodes.find(n=>n.id==='n5')?.options,
+   state:document.querySelector('[data-node="n5"] .fa-run-state')?.textContent}));
+  console.log('Second node diagnostic',JSON.stringify(diagnostics),'requests',requests.length);
+  throw error;
+ }
+ await page.waitForFunction(()=>!window.FORMA_NODE_ENGINE?.busy,null,{timeout:15000});
  assert.equal(requests.length,3,'Source -> interior -> materials must create 2 more AI calls');
  assert.equal(requests[2].brief.sceneType,'interior');
  assert.equal(requests[2].editMode,'text');
