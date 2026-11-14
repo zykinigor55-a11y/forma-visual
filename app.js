@@ -1894,4 +1894,16 @@ window.FORMA_RENDER_BRIDGE={
   openUpload:()=>$('sourceFile')?.click()
 };
 
-init().catch(err=>{console.error(err);toast('Не удалось загрузить приложение')});
+init()
+ .then(()=>{
+  // The opening scene waits for the actual project and tool state, not page onload.
+  window.FORMA_APP_READY=true;
+  document.dispatchEvent(new Event('forma:app-ready'));
+ })
+ .catch(err=>{
+  console.error(err);
+  window.FORMA_APP_READY=false;
+  window.FORMA_APP_ERROR=true;
+  document.dispatchEvent(new Event('forma:app-error'));
+  toast('Не удалось загрузить приложение');
+ });
