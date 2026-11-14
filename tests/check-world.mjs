@@ -33,9 +33,14 @@ try {
  await page.goto(base+'forma-world.html',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForFunction(()=>!!window.FORMA_WORLD,null,{timeout:30000});
  assert.equal(await page.locator('#fwLight').count(),1);
+ await page.waitForFunction(()=>/отключен|не включен|отключена|предпросмотре/i.test(document.querySelector('#fwAIStatus')?.textContent||''),null,{timeout:9000});
+ assert.equal(await page.locator('#fwCreateWorld').isDisabled(),true);
+ assert.equal(await page.locator('#fwCreateObject').isDisabled(),true);
  assert.equal(await page.evaluate(()=>window.FORMA_WORLD.mode),'orbit');
  assert.equal(await page.evaluate(()=>window.FORMA_WORLD.loadedFile),null);
  await page.locator('#fwLight').selectOption('golden');
+ assert.equal(await page.locator('#fwShot4K').count(),1);
+ assert.equal(await page.locator('#fwHDRFile').count(),1);
  await page.locator('#fwWalk').click();
  assert.equal(await page.evaluate(()=>window.FORMA_WORLD.mode),'walk');
  await page.locator('#fwOrbit').click();
