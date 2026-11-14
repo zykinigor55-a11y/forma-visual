@@ -178,6 +178,9 @@ function bindDetails(id,e){
    info.textContent=f.name+' · '+(f.size/1048576).toFixed(1)+' МБ';
   });
  }
+ if(!modal){
+  $('[data-fa-pro],[data-fa-delete-shot]',e).forEach(b=>b.addEventListener('click',actions));
+ }
 }
 async function upscaleTo4K(){
  if(!upscaleSource){$('#forma4KExport')?.click();return}
@@ -216,7 +219,7 @@ function actions(e){
  if(a==='exportShots'){download('forma-camera-shots.json',JSON.stringify(state.shots,null,2));return}
  if(a==='resetColor'){state.color={brightness:100,contrast:100,saturation:100};save();show('preview');return}
  if(a==='qaNotes'){download('forma-geometry-review.json',JSON.stringify({date:new Date().toISOString(),method:'manual visual overlay',verifiedAutomatically:false},null,2));return}
- if(a==='resize4k'){upscaleTo4K();return}
+ if(a==='resize4k'){note('Обрабатываем изображение 4K…');upscaleTo4K().catch(err=>{note('Ошибка масштабирования: '+(err?.message||'неизвестная ошибка'))});return}
  if(a==='status'){checkServer();return}
  if(a==='cadPackage'){download('forma-cad-bridge.json',JSON.stringify({workflow:'cad bridge',date:new Date().toISOString(),file:cadInfo,camera:state.camera,lens:state.lens,height:state.height,integrated:false},null,2));return}
  if(a==='image3dPackage'){download('forma-image-to-3d-task.json',JSON.stringify({date:new Date().toISOString(),file:cadInfo,requiresProvider:true,status:'not submitted'},null,2));return}
@@ -251,7 +254,7 @@ function init(){
  if(nav){
   const b=document.createElement('button');b.type='button';b.className='rail-btn fa-pro-nav-launch';b.innerHTML='<svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Инструменты</span>';b.title='Профессиональные инструменты';b.addEventListener('click',()=>open());nav.append(b);
  }
- window.FORMA_PRO={open,close,mountInline:(host,onSelect)=>{if(!host)return;inlineHost=host;inlineSelection=onSelect;host.addEventListener('click',actions);show('upscale')},cameraBrief:()=>{
+ window.FORMA_PRO={open,close,mountInline:(host,onSelect)=>{if(!host)return;inlineHost=host;inlineSelection=onSelect;show('upscale')},cameraBrief:()=>{
   if(!state.cameraConfigured)return null;
   return {enabled:true,camera:state.camera,lens:state.lens,height:Math.max(.1,Math.min(30,Number(state.height)||1.6)),notes:String(state.notes||'').slice(0,140)};
  }};
