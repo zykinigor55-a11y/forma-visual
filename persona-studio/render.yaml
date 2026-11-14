@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: persona-studio-editor
+    runtime: node
+    plan: free
+    buildCommand: echo ready
+    startCommand: npm start
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PERSONA_ACCESS_CODE
+        sync: false
+      - key: OPENAI_IMAGE_MODEL
+        value: gpt-image-2
