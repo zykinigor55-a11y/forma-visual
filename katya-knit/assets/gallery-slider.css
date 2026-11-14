@@ -1,0 +1,68 @@
+
+/* KATYA KNIT / exhibition redesign v11, no edit to individual artworks. */
+.exhibition-page{--gallery-linen:#e8ded2;--copper:#957457}
+.exhibition-hero{min-height:680px}
+.exhibition-visual{min-height:650px;background:radial-gradient(ellipse 65% 90% at 56% 10%,#f7eee5 0%,#e5d7c8 62%,#cbb7a3 100%)}
+.exhibition-visual .exhibition-painting{box-sizing:border-box;width:min(29%,230px)!important;height:auto!important;aspect-ratio:7/10;border:3px solid #957458;outline:1px solid #b89c81;outline-offset:-5px;background:#e1d4c5;box-shadow:9px 15px 19px #44321e49,2px 4px 7px #33221b3a;filter:none}
+.exhibition-visual .exhibition-painting img{width:100%;height:100%;display:block;object-fit:contain;object-position:center}
+.exhibition-visual .exhibition-painting.secondary{left:6%;top:25%;transform:none}
+.exhibition-visual .exhibition-painting.main{left:36%;top:25%;transform:none}
+.exhibition-visual .exhibition-painting.tertiary{left:66%;right:auto;top:25%;transform:none}
+.exhibition-visual-index{right:6%;bottom:30px}
+.exhibition-wall{overflow:hidden;padding:105px 0 115px;background:var(--gallery-linen)}
+.exhibition-wall:before{background:radial-gradient(ellipse 70% 55% at 5% 4%,#fffdf0a8,transparent 88%),linear-gradient(116deg,transparent 20%,#7b67510b 65%,transparent 93%)}
+.exhibition-wall>header{max-width:1500px;width:calc(100% - clamp(40px,10vw,150px));margin:auto;border-top:1px solid #b9a998;display:flex;align-items:end;justify-content:space-between;gap:26px;padding:24px 0 48px}
+.exhibition-wall h2{font-size:clamp(43px,5.1vw,84px);line-height:1.28;margin:19px 0 0}
+.exhibition-wall .wall-note{max-width:310px;line-height:1.9}
+.exhibition-controls{display:flex;align-items:center;gap:11px;flex:none}
+.exhibition-count{font:600 12px/1 var(--sans);letter-spacing:.14em;color:#423b34;white-space:nowrap;margin-right:6px}
+.exhibition-count span{color:#9d8978;margin-left:6px}
+.exhibition-nav{display:grid;place-items:center;width:47px;height:47px;border:1px solid #a3917b;background:transparent;border-radius:50%;font:400 23px/1 var(--sans);color:#4f4237;cursor:pointer;transition:background .3s,color .3s,transform .3s}
+.exhibition-nav:not(:disabled):hover,.exhibition-nav:focus-visible{color:#faf3e8;background:#343b39;transform:scale(1.05)}
+.exhibition-nav:disabled{opacity:.3;cursor:default}
+.exhibition-viewport{width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-inline:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.exhibition-viewport::-webkit-scrollbar{display:none}
+.exhibition-viewport:focus-visible{outline:1px solid #9e7658;outline-offset:-2px}
+.exhibition-artworks{display:flex!important;align-items:stretch;gap:clamp(18px,3vw,45px)!important;max-width:none!important;width:max-content!important;margin:0!important;padding:12px clamp(25px,5vw,80px) 50px!important;grid-template-columns:none!important;row-gap:0!important}
+.exhibition-artworks>.exhibition-work:nth-child(n){display:flex!important;flex-direction:column;grid-column:auto!important;flex:0 0 clamp(275px,30vw,420px)!important;width:clamp(275px,30vw,420px)!important;min-width:clamp(275px,30vw,420px)!important;justify-self:auto!important;align-self:stretch!important;margin:0!important;scroll-snap-align:start;scroll-snap-stop:always;opacity:.71;transform:translateY(8px) scale(.98);transition:opacity .55s ease,transform .65s cubic-bezier(.16,1,.3,1)}
+.exhibition-artworks>.exhibition-work.is-active{opacity:1;transform:translateY(0) scale(1)}
+.exhibition-work .exhibition-frame{aspect-ratio:7/10!important;width:100%!important;height:auto!important;flex:none;overflow:hidden;box-sizing:border-box;padding:0!important;border:3px solid var(--copper);outline:1px solid #d8bda0;outline-offset:-5px;background:#e3d8ca;box-shadow:5px 6px 10px #42302226,12px 19px 25px #44322429;filter:none!important;transition:transform .55s cubic-bezier(.16,1,.3,1),box-shadow .55s}
+.exhibition-work .exhibition-frame img{width:100%!important;height:100%!important;aspect-ratio:auto!important;object-fit:contain!important;object-position:center!important;max-height:none!important;display:block}
+.exhibition-work .exhibition-frame:hover{transform:translateY(-5px);box-shadow:7px 10px 13px #4230222b,14px 24px 28px #44322437}
+.exhibition-work .meta{min-height:130px;flex:1;margin-top:0;padding:22px 0 19px;border-bottom:1px solid #b4a594}
+.exhibition-work .meta h3{font-size:clamp(25px,2.7vw,34px);margin:8px 0}
+.exhibition-work .meta p{font-size:11px}
+.exhibition-slider-footer{max-width:1500px;width:calc(100% - clamp(40px,10vw,150px));margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:30px;font:700 9px/1.6 var(--sans);letter-spacing:.17em;color:#97816e}
+.exhibition-progress-track{width:27%;height:1px;background:#c7b7a6;position:relative}
+.exhibition-progress-track i{display:block;position:absolute;left:0;top:0;height:2px;width:10%;background:#6c4f39;transition:transform .55s cubic-bezier(.16,1,.3,1)}
+.art-modal figure img{transition:opacity .23s ease,transform .26s ease}
+.art-modal figure img.is-changing{opacity:.25;transform:translateX(13px)}
+.art-modal .modal-arrow{transition:background .25s,transform .25s}
+.art-modal .modal-arrow:hover{background:#ffffff30;transform:translateY(-50%) scale(1.05)}
+@media(max-width:1000px){.exhibition-wall>header{flex-wrap:wrap}.exhibition-controls{margin-left:auto}.exhibition-hero{min-height:0}}
+@media(max-width:750px){
+ .exhibition-hero{display:flex;flex-direction:column}
+ .exhibition-visual{height:47vh;min-height:320px;max-height:470px}
+ .exhibition-visual .exhibition-painting{width:27.5%!important;top:24%;aspect-ratio:7/10}
+ .exhibition-visual .exhibition-painting.secondary{left:5%}.exhibition-visual .exhibition-painting.main{left:36.25%}.exhibition-visual .exhibition-painting.tertiary{left:67.5%}
+ .exhibition-wall{padding:72px 0 90px}
+ .exhibition-wall>header{width:calc(100% - 38px);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:8px 10px;padding:21px 0 35px}
+ .exhibition-wall>header>div:first-child{grid-column:1/-1}
+ .exhibition-wall h2{font-size:clamp(46px,10.5vw,68px);line-height:1.25}
+ .exhibition-wall .wall-note{grid-column:1;grid-row:2;font-size:11px;line-height:1.6;margin:0}
+ .exhibition-controls{grid-column:2;grid-row:2;align-self:end;gap:7px}
+ .exhibition-count{font-size:10px;margin-right:4px}
+ .exhibition-nav{width:39px;height:39px;font-size:20px}
+ .exhibition-artworks{gap:18px!important;padding:7px 20px 40px!important}
+ .exhibition-artworks>.exhibition-work:nth-child(n){width:min(75vw,365px)!important;min-width:min(75vw,365px)!important;flex:0 0 min(75vw,365px)!important;opacity:.78}
+ .exhibition-work .meta{min-height:117px}
+ .exhibition-work .meta h3{font-size:27px}
+ .exhibition-slider-footer{width:calc(100% - 40px);gap:15px}
+ .exhibition-slider-footer span:last-child{display:none}
+ .exhibition-progress-track{width:35%}
+ .exhibition-swipe-hint{font-size:8px}
+ .art-modal figure{max-width:calc(100vw - 74px)}
+ .art-modal{padding:70px 30px 55px}
+ .art-modal figcaption{font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){.exhibition-artworks>.exhibition-work:nth-child(n),.exhibition-work .exhibition-frame,.exhibition-progress-track i,.art-modal figure img{transition:none!important}.exhibition-viewport{scroll-behavior:auto!important}}
