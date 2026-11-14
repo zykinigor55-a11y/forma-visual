@@ -12,12 +12,12 @@ function message(s){const e=$('#faInteriorStatus');if(e)e.textContent=s}
 function briefForProject(id){const x={...defaults(),...(saved[id]||{})};if(x.sceneType!=='interior')return {sceneType:'exterior'};return {sceneType:'interior',room:x.room,style:x.style,lighting:x.lighting,furniture:x.furniture,surfaces:x.surfaces.trim().slice(0,500),notes:x.notes.trim().slice(0,800)}}
 function view(){
  const select=(id,label,arr)=>`<label>${label}<select id="${id}">${arr.map(([key,name])=>`<option value="${key}">${name}</option>`).join('')}</select></label>`;
- return `<div class="fa-space-switch" role="group" aria-label="Тип архитектурной визуализации"><button type="button" data-fa-space="exterior">Экстерьер <small>Дом и участок</small></button><button type="button" data-fa-space="interior">Интерьер <small>Sketch → Photo</small></button></div>
+ return `<div class="fa-space-switch" role="group" aria-label="Тип архитектурной визуализации"><button type="button" data-fa-space="exterior">Экстерьер <small>Дом и участок</small></button><button type="button" data-fa-space="interior">Интерьер <small>из скетча в фото</small></button></div>
  <section class="fa-interior-panel" id="faInteriorPanel" hidden aria-label="Настройки интерьерной визуализации">
- <div class="fa-interior-intro"><span>FORMA / INTERIOR PHOTO STUDIO</span><h3>Из скетча — в интерьерную фотографию.</h3><p>Исходная модель определяет геометрию, ракурс и расстановку. Вы управляете стилем, освещением и материалами.</p></div>
+ <div class="fa-interior-intro"><span>ФОРМА / ИНТЕРЬЕРЫ</span><h3>Из скетча — в интерьерную фотографию.</h3><p>Исходная модель определяет геометрию, ракурс и расстановку. Вы управляете стилем, освещением и материалами.</p></div>
  <div class="fa-interior-fields">
  ${select('faInteriorRoom','Тип помещения',[['living','Гостиная'],['kitchen','Кухня'],['bedroom','Спальня'],['bathroom','Ванная'],['office','Кабинет'],['hall','Холл'],['dining','Столовая'],['commercial','Коммерческий интерьер']])}
- ${select('faInteriorStyle','Дизайн и отделка',[['as-is','Строго как на исходнике'],['warm-modern','Тёплый современный'],['japandi','Japandi'],['minimal','Архитектурный минимализм'],['scandinavian','Скандинавский'],['contemporary','Современный премиум'],['classic','Современная классика'],['loft','Лофт']])}
+ ${select('faInteriorStyle','Дизайн и отделка',[['as-is','Строго как на исходнике'],['warm-modern','Тёплый современный'],['japandi','Джапанди'],['minimal','Архитектурный минимализм'],['scandinavian','Скандинавский'],['contemporary','Современный премиум'],['classic','Современная классика'],['loft','Лофт']])}
  ${select('faInteriorLighting','Свет в помещении',[['soft-daylight','Мягкий дневной свет'],['sunny','Яркий солнечный день'],['overcast','Пасмурный рассеянный свет'],['evening','Вечер, включённые светильники'],['studio','Редакционная интерьерная съёмка']])}
  ${select('faInteriorFurniture','Мебель и предметы',[['preserve','Сохранить строго по скетчу'],['complete','Добавить мебель, если комната пуста'],['no-additions','Не добавлять ничего']])}
  <label class="full">Отделка и материалы<textarea id="faInteriorSurfaces" maxlength="500" rows="3" placeholder="Например: стены — тёплая белая штукатурка, пол — дуб, кухня — орех. Пусто = сохранить скетч."></textarea></label>
@@ -51,7 +51,7 @@ function init(){
   message('Запускаем AI-движок с настройками интерьера…');b.click();
  });
  const nav=$('.rail-nav');
- if(nav){const b=document.createElement('button');b.type='button';b.className='rail-btn fa-interior-nav';b.innerHTML='<svg class="ico"><use href="#i-image"/></svg><span class="rail-name">Интерьеры</span>';b.title='Интерьеры · Sketch → Photo';b.setAttribute('aria-label',b.title);b.addEventListener('click',open);const anchor=nav.querySelector('[data-nav="materials"]');if(anchor)nav.insertBefore(b,anchor);else nav.append(b);}
+ if(nav){const b=document.createElement('button');b.type='button';b.className='rail-btn fa-interior-nav';b.innerHTML='<svg class="ico"><use href="#i-image"/></svg><span class="rail-name">Интерьеры</span>';b.title='Интерьеры · из скетча в фото';b.setAttribute('aria-label',b.title);b.addEventListener('click',open);const anchor=nav.querySelector('[data-nav="materials"]');if(anchor)nav.insertBefore(b,anchor);else nav.append(b);}
  const mobile=$('.mobile-nav');
  if(mobile){const b=document.createElement('button');b.type='button';b.className='fa-interior-mobile';b.innerHTML='<svg class="ico"><use href="#i-image"/></svg><span>Интерьер</span>';b.addEventListener('click',open);mobile.append(b);}
  const breadcrumb=$('#breadcrumbName');
