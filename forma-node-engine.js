@@ -62,48 +62,88 @@ function decorate(){
  if(stop)stop.disabled=!busy;
 }
 function setState(id,value){statuses.set(id,value);decorate()}
+const ENVIRONMENTS={'keep':'Сохранить исходное','forest':'Хвойный лес','deciduous':'Лиственный лес','park':'Парк с крупными деревьями','lake':'Берег озера / реки','mountain':'Горный ландшафт','suburban':'Загородный участок','urban':'Городская застройка','minimal':'Минимальное окружение'};
+const WEATHER={'keep':'По исходному изображению','sunny':'Ясно и солнечно','partly':'Переменная облачность','overcast':'Пасмурно','rain':'Дождь / мокрые поверхности','fog':'Туман','snow':'Снег'};
+const SEASONS={'keep':'По исходнику','spring':'Весна','summer':'Лето','autumn':'Осень','winter':'Зима'};
+const TIMES={'keep':'По исходнику','morning':'Утро','noon':'День','golden':'Золотой час','blue':'Синий час','evening':'Вечер','night':'Ночь'};
+const PLANTS={'keep':'Сохранить растительность','garden':'Ухоженный сад','conifers':'Хвойные посадки','natural':'Естественная растительность','ornamental':'Декоративные травы и кустарники','none':'Без добавления растений'};
+const LENSES={'keep':'Сохранить ракурс','24mm':'Широкий 24 мм','35mm':'Архитектурный 35 мм','50mm':'Нормальный 50 мм','85mm':'Телеобъектив 85 мм'};
+const RATIOS={'16:9':'16:9 · Горизонтальный','3:2':'3:2 · Архитектурное фото','4:3':'4:3 · Каталог','1:1':'1:1 · Квадрат','9:16':'9:16 · Вертикальный'};
+const MATERIALS={'custom':'По текстовой инструкции','wood':'Натуральное дерево','brick':'Кирпич','plaster':'Штукатурка','stone':'Натуральный камень','metal':'Металл','concrete':'Бетон','glass':'Стекло'};
+const getOpt=(n,key,defaultValue)=>String(n.options?.[key]??defaultValue);
 function settingsHTML(n){
  const opts=n.options||{},controls=[];
- const select=(key,label,list,value)=>'<label>'+label+'<select data-node-option="'+key+'">'+
-  Object.entries(list).map(([k,v])=>'<option value="'+k+'"'+(k===value?' selected':'')+'>'+v+'</option>').join('')+'</select></label>';
- if(n.type==='exterior'||n.type==='lighting')controls.push(select('mood','Свет и атмосфера',LIGHTS,opts.mood||'overcast'));
+ const select=(key,label,list,value,info='')=>'<label>'+label+'<select data-node-option="'+key+'">'+
+  Object.entries(list).map(([k,v])=>'<option value="'+esc(k)+'"'+(String(k)===String(value)?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select>'+(info?'<small>'+esc(info)+'</small>':'')+'</label>';
+ const textarea=(key,label,value,placeholder,rows=3)=>'<label>'+label+'<textarea data-node-option="'+key+'" rows="'+rows+'" maxlength="500" placeholder="'+esc(placeholder)+'">'+esc(value||'')+'</textarea></label>';
+ const group=(name,description='')=>'<div class="fa-node-settings-section"><strong>'+name+'</strong>'+(description?'<p>'+description+'</p>':'')+'</div>';
+ const check=(key,label,defaultValue)=>'<label class="fa-flow-check"><input type="checkbox" data-node-option="'+key+'" '+(opts[key]===undefined?defaultValue:opts[key]?'checked':'')+'> '+label+'</label>';
+ const scene=()=>{
+   controls.push(group('Окружение, погода и свет','Все параметры сцены собраны здесь. Выбранные условия передаются в реальный AI-запрос.'));
+   controls.push(select('environment','Окружение',ENVIRONMENTS,getOpt(n,'environment','keep')));
+   controls.push(select('weather','Погода',WEATHER,getOpt(n,'weather','keep')));
+   controls.push('<div class="fa-node-two-col">'+select('season','Сезон',SEASONS,getOpt(n,'season','keep'))+select('time','Время суток',TIMES,getOpt(n,'time','keep'))+'</div>');
+   controls.push(select('plants','Растительность',PLANTS,getOpt(n,'plants','keep')));
+   controls.push(textarea('environmentInstructions','Описание участка / окружающей среды',opts.environmentInstructions,'Например: взрослые сосны, глубокий передний план, травы, природный камень',2));
+   controls.push(group('Камера и качество'));
+   controls.push('<div class="fa-node-two-col">'+select('lens','Объектив',LENSES,getOpt(n,'lens','keep'))+select('ratio','Формат кадра',RATIOS,getOpt(n,'ratio','16:9'))+'</div>');
+   controls.push(select('quality','Качество',{'high':'Высокое','medium':'Стандартное'},getOpt(n,'quality','high')));
+   controls.push(check('lockGeometry','Сохранить точную геометрию и ракурс',true));
+   controls.push(textarea('changes','Дополнительные изменения',opts.changes,'Только явно указанные изменения; остальное оставить как в оригинале',3));
+ };
+ if(n.type==='exterior'){scene();}
+ if(n.type==='lighting'){
+   scene();
+   controls.push('<p>Этап меняет атмосферу предыдущего кадра. Материалы и архитектуру следует сохранять.</p>');
+ }
  if(n.type==='interior'){
-  controls.push(select('room','Тип помещения',{living:'Гостиная',kitchen:'Кухня',bedroom:'Спальня',bathroom:'Ванная',office:'Кабинет',commercial:'Коммерческий'},opts.room||'living'));
-  controls.push(select('style','Стиль',{'as-is':'Строго по исходнику','warm-modern':'Тёплый современный','japandi':'Джапанди','minimal':'Минимализм','contemporary':'Премиум современный','classic':'Современная классика'},opts.style||'as-is'));
-  controls.push(select('lighting','Освещение',{'soft-daylight':'Мягкий дневной','sunny':'Солнечный','overcast':'Пасмурный','evening':'Вечер','studio':'Редакционная съёмка'},opts.lighting||'soft-daylight'));
+   controls.push(group('Помещение и дизайн'));
+   controls.push(select('room','Тип помещения',{living:'Гостиная',kitchen:'Кухня',bedroom:'Спальня',bathroom:'Ванная',office:'Кабинет',commercial:'Коммерческое помещение',hall:'Прихожая / холл',dining:'Столовая'},getOpt(n,'room','living')));
+   controls.push(select('style','Стиль интерьера',{'as-is':'Строго по исходнику','warm-modern':'Тёплый современный','japandi':'Джапанди','minimal':'Минимализм','contemporary':'Современный премиум','classic':'Современная классика','loft':'Лофт'},getOpt(n,'style','as-is')));
+   controls.push(select('lighting','Освещение',{'soft-daylight':'Мягкий дневной свет',sunny:'Солнечный день',overcast:'Пасмурный день',evening:'Вечерний свет',studio:'Архитектурная фотосъёмка'},getOpt(n,'lighting','soft-daylight')));
+   controls.push(textarea('changes','Отделка, мебель и пожелания',opts.changes,'Например: натуральный дуб, штукатурка, сохранить мебель, добавить скрытую подсветку'));
+   controls.push(group('Камера и контроль'));
+   controls.push('<div class="fa-node-two-col">'+select('lens','Объектив',LENSES,getOpt(n,'lens','keep'))+select('ratio','Формат',RATIOS,getOpt(n,'ratio','16:9'))+'</div>');
+   controls.push(select('quality','Качество',{'high':'Высокое',medium:'Стандартное'},getOpt(n,'quality','high')));
+   controls.push(check('lockGeometry','Не менять размеры и расположение объектов',true));
  }
  if(n.type==='materials'){
-  controls.push(select('zone','Элемент',ZONES,opts.zone||'custom'));
-  controls.push('<label>Точное изменение<textarea data-node-option="instruction" rows="4" maxlength="500" placeholder="Например: заменить только деревянную отделку стены на светлый травертин; сохранить ракурс и геометрию.">'+esc(opts.instruction||'')+'</textarea></label>');
+   controls.push(group('Выбор поверхности и материала'));
+   controls.push('<div class="fa-node-two-col">'+select('zone','Элемент',ZONES,getOpt(n,'zone','main'))+select('material','Новая отделка',MATERIALS,getOpt(n,'material','custom'))+'</div>');
+   controls.push(textarea('instruction','Точное изменение',opts.instruction,'Например: только цоколь заменить на тёмный графитовый сланец, сохранить швы и всё остальное',4));
+   controls.push('<p>Изменение передаётся в AI как локальная текстовая правка указанной зоны. Для точной кистевой маски используйте редактор материалов основного проекта.</p>');
  }
  if(n.type==='video'){
-  controls.push('<label>Движение камеры<textarea data-node-option="prompt" rows="4" maxlength="500" placeholder="Slow professional dolly-in, preserve exact house geometry and materials.">'+esc(opts.prompt||'Slow cinematic dolly forward towards the architectural facade, keep the existing building and landscape unchanged, stable optical motion.')+'</textarea></label>');
-  controls.push(select('duration','Продолжительность',{'5':'5 секунд','10':'10 секунд'},String(opts.duration||'5')));
-  controls.push(select('ratio','Формат',{'16:9':'16:9 · горизонтальный','9:16':'9:16 · вертикальный'},opts.ratio||'16:9'));
-  controls.push('<p>Видео выполняет подключённый движок Wan 2.6 через сервер ФОРМА. До подтверждения подключения платный запрос не начнётся.</p>');
-  if(getAPI()?.getVideoURL?.(n.id))controls.push('<div class="fa-inspector-result"><b>Видео этого этапа</b><video controls playsinline preload="metadata" src="'+getAPI().getVideoURL(n.id)+'"></video><button type="button" data-fa-download-video="'+esc(n.id)+'">Скачать MP4</button></div>');
-  controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!getAPI()?.getVideoBlob?.(n.id)?'disabled':'')+'> Использовать готовое видео без нового запроса</label>');
+   controls.push(group('Камера и видео'));
+   controls.push(select('cameraMove','Движение камеры',{'dolly':'Плавный наезд','pullback':'Плавный отъезд','truck':'Горизонтальный проезд','orbit':'Медленный облёт','static':'Статичная камера · движение окружения'},getOpt(n,'cameraMove','dolly')));
+   controls.push(textarea('prompt','Уточнения к анимации',opts.prompt,'Например: шевелится листва и трава, вода движется, в чаше горит небольшой огонь. Не менять геометрию.',3));
+   controls.push('<div class="fa-node-two-col">'+select('duration','Длительность',{'5':'5 секунд','10':'10 секунд'},getOpt(n,'duration','5'))+select('ratio','Формат',{'16:9':'16:9 · Горизонтальный','9:16':'9:16 · Вертикальный'},getOpt(n,'ratio','16:9'))+'</div>');
+   controls.push('<p>Генерация через подключённый Wan API. Сначала подтверждается стоимость запроса.</p>');
+   if(getAPI()?.getVideoURL?.(n.id))controls.push('<div class="fa-inspector-result"><b>Видео этого этапа</b><video controls playsinline preload="metadata" src="'+getAPI().getVideoURL(n.id)+'"></video><button type="button" data-fa-download-video="'+esc(n.id)+'">Скачать MP4</button></div>');
+   controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!getAPI()?.getVideoBlob?.(n.id)?'disabled':'')+'> Использовать уже готовое видео без нового запроса</label>');
  }
- if(n.type==='source')controls.push('<p>Нода получает реальный загруженный исходник активного проекта, не демонстрационный кадр.</p><button type="button" class="fa-inspector-upload" data-fa-upload-source>Загрузить свой исходник</button>');
+ if(n.type==='source'){
+   controls.push(group('Исходное изображение'));
+   controls.push('<p>В качестве входа используется загруженный CAD-скриншот или фотография активного проекта.</p><button type="button" class="fa-inspector-upload" data-fa-upload-source>Загрузить изображение в проект</button>');
+ }
  if(AI_TYPES.has(n.type)){
   const snapshot=getAPI()?.getSnapshot?.(n.id);
-  controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!snapshot?'disabled':'')+'> Повторно использовать уже готовый кадр без вызова AI</label>');
-  if(!snapshot)controls.push('<p>Повторное использование доступно после первого успешного запуска этого узла.</p>');
+  controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!snapshot?'disabled':'')+'> Использовать уже готовый кадр без нового AI-запроса</label>');
+  if(!snapshot)controls.push('<p>Повторное использование станет доступно после первого успешного запуска.</p>');
  }
  const snapshot=getAPI()?.getSnapshot?.(n.id);
- if(snapshot&&imageMime(snapshot))controls.push('<div class="fa-inspector-result"><b>Кадр этой ноды</b><img src="'+snapshot+'" alt="Сохранённый результат ноды"><button type="button" data-fa-download-snapshot="'+esc(n.id)+'">Скачать кадр</button><button type="button" data-fa-compare-snapshot="'+esc(n.id)+'">Добавить в сравнение A/B</button></div>');
+ if(snapshot&&imageMime(snapshot))controls.push('<div class="fa-inspector-result"><b>Результат выбранной ноды</b><img src="'+snapshot+'" alt="Результат ноды"><button type="button" data-fa-download-snapshot="'+esc(n.id)+'">Скачать изображение</button><button type="button" data-fa-compare-snapshot="'+esc(n.id)+'">Сравнить A/B</button></div>');
  if(n.type==='geometry'){
-  controls.push(select('overlay','Наложение исходных линий',{'0.25':'Лёгкое · 25%','0.5':'Среднее · 50%','0.75':'Сильное · 75%'},String(opts.overlay||'0.5')));
-  controls.push('<p>Локальное наложение исходного CAD-скриншота на результат для ручной проверки. Это не автоматическое распознавание геометрии и не инженерная экспертиза.</p>');
+  controls.push(group('Контроль геометрии'));
+  controls.push(select('overlay','Прозрачность линий исходника',{'0.25':'25% · Лёгкое','0.5':'50% · Среднее','0.75':'75% · Сильное'},getOpt(n,'overlay','0.5')));
+  controls.push('<p>Наложение исходного CAD-скриншота для ручного сравнения. Не является автоматическим анализом геометрии.</p>');
  }
- if(n.type==='upscale')controls.push('<p>Локальное увеличение до 3840 пикселей по длинной стороне. Это НЕ нейросетевое улучшение детализации.</p>');
- if(n.type==='export')controls.push('<p>Скачивание файла и сохранение результатов AI-цепочки в галерее проекта.</p>');
- if(BLOCKED_TYPES.has(n.type))controls.push('<p>Автоматическое выполнение требует отдельной интеграции. В этой версии такая операция не запускается.</p>');
+ if(n.type==='upscale'){controls.push(group('Размер итогового кадра'));controls.push('<p>Локальное увеличение до 3840 пикселей по длинной стороне. Это не AI-upscale: недостающая детализация не восстанавливается.</p>');}
+ if(n.type==='export'){controls.push(group('Сохранение результата'));controls.push('<p>Скачать готовый кадр или MP4 и сохранить результаты AI-цепочки в галерее проекта.</p>');}
+ if(BLOCKED_TYPES.has(n.type)){controls.push(group('3D-модель'));controls.push('<p>Требуется отдельная интеграция 3D-движка. Фальшивый 3D-результат не создаётся.</p>');}
  const history=getAPI()?.historyFor?.(n.id)||[];
- if(history.length)controls.push('<div class="fa-inspector-history"><b>ИСТОРИЯ КАДРОВ</b>'+history.map((h,i)=>'<button type="button" data-fa-restore-history="'+esc(h.key)+'" data-fa-history-node="'+esc(n.id)+'">↶ Версия '+(i+1)+' · '+new Date(h.time).toLocaleString('ru-RU')+'</button>').join('')+'</div>');
- return '<b>НАСТРОЙКИ НОДЫ</b><h4>'+esc(n.title||n.type)+'</h4><div class="fa-flow-node-fields">'+
-  (controls.join('')||'<p>Дополнительных параметров пока нет.</p>')+'</div>'+
-  '<small>ИИ может ошибаться с окнами, венцами и размерами — проверяйте результат по CAD-исходнику.</small>';
+ if(history.length)controls.push('<div class="fa-inspector-history"><b>ИСТОРИЯ РЕЗУЛЬТАТОВ</b>'+history.map((h,i)=>'<button type="button" data-fa-restore-history="'+esc(h.key)+'" data-fa-history-node="'+esc(n.id)+'">↶ Версия '+(i+1)+' · '+new Date(h.time).toLocaleString('ru-RU')+'</button>').join('')+'</div>');
+ return '<b>НАСТРОЙКИ НОДЫ</b><h4>'+esc(n.title||n.type)+'</h4><div class="fa-flow-node-fields">'+(controls.join('')||'<p>Дополнительных параметров нет.</p>')+'</div><small>Проверяйте полученное изображение по исходнику: генеративный AI может изменять отдельные детали.</small>';
 }
 function showSelection(){
  const host=$('#faFlowNodeSettings'),g=graph();if(!host||!g)return;
@@ -154,7 +194,7 @@ async function imageAI(source,brief,ctx,options={}){
    method:'POST',headers:{'Content-Type':'application/json'},
    signal:aborter.signal,
    body:JSON.stringify({
-    image:source,brief,quantity:1,size:ctx.size,quality:ctx.quality,
+    image:source,brief,quantity:1,size:({'16:9':'1536x864','3:2':'1536x1024','4:3':'1360x1024','1:1':'1024x1024','9:16':'864x1536'})[brief.output?.ratio]||ctx.size,quality:brief.output?.quality||ctx.quality,
     selectedZone:options.selectedZone||null,zoneId:options.zoneId||null,
     editMode:options.editMode||null,editAction:options.editAction||null,
     materialInstruction:options.materialInstruction||null
@@ -223,7 +263,8 @@ function downloadVideoBlob(blob){
 }
 async function makeVideo(source,options){
  const image=await prepareVideoFrame(source);
- const prompt=String(options?.prompt||'Slow cinematic dolly forward towards the architectural facade, preserve all architectural details and camera stability.').trim().slice(0,500);
+ const movements={dolly:'Slow cinematic dolly forward.',pullback:'Slow cinematic dolly backward.',truck:'Slow horizontal camera slide.',orbit:'Gentle partial orbit around the building.',static:'Camera absolutely locked off, only natural water, foliage and atmosphere move.'};
+ const prompt=(movements[options?.cameraMove||'dolly']+' '+String(options?.prompt||'Preserve exact building, camera geometry and natural lighting.')).trim().slice(0,500);
  const duration=Number(options?.duration||5),ratio=options?.ratio==='9:16'?'9:16':'16:9';
  if(prompt.length<12)throw Error('Для анимации укажите движение камеры.');
  const ctrl=new AbortController();aborter=ctrl;
@@ -254,18 +295,44 @@ async function makeVideo(source,options){
 
 function briefFor(ctx,previousMode,n){
  const b=JSON.parse(JSON.stringify(ctx.brief));
+ const o=n.options||{};
  b.sceneType=previousMode;
- if(n.type==='exterior'){b.sceneType='exterior';b.sceneMood=n.options?.mood||b.sceneMood||'overcast'}
+ if(n.type==='exterior')b.sceneType='exterior';
  if(n.type==='interior'){
-  b.sceneType='interior';b.room=n.options?.room||'living';
-  b.style=n.options?.style||'as-is';b.lighting=n.options?.lighting||'soft-daylight';
-  b.furniture='preserve';b.surfaces='';b.notes='';
+  b.sceneType='interior';b.room=o.room||'living';b.style=o.style||'as-is';
+  b.lighting=o.lighting||'soft-daylight';b.furniture='preserve';
+  b.surfaces='';b.notes=String(o.changes||'').trim().slice(0,500);
  }
- if(n.type==='lighting'){
-  const mood=n.options?.mood||'overcast';
-  if(previousMode==='interior')b.lighting=({blue:'evening',golden:'evening',night:'evening',winter:'overcast',rain:'overcast',sunny:'sunny',overcast:'overcast'})[mood]||'soft-daylight';
-  else b.sceneMood=mood;
+ const envLabel=ENVIRONMENTS[o.environment||'keep'];
+ const weatherLabel=WEATHER[o.weather||'keep'];
+ const seasonLabel=SEASONS[o.season||'keep'];
+ const timeLabel=TIMES[o.time||'keep'];
+ const plantsLabel=PLANTS[o.plants||'keep'];
+ if(n.type==='exterior'||n.type==='lighting'){
+   if(o.environment&&o.environment!=='keep')b.environment=envLabel;
+   if(o.weather&&o.weather!=='keep')b.weather=weatherLabel;
+   if(o.season&&o.season!=='keep')b.season=seasonLabel;
+   if(o.time&&o.time!=='keep')b.time=timeLabel;
+   if(o.plants&&o.plants!=='keep')b.plants=plantsLabel;
+   if(o.environmentInstructions)b.environmentInstructions=String(o.environmentInstructions).trim().slice(0,350);
+   // Derive a consistent atmosphere from the same controls rather than contradicting the weather.
+   if(o.time==='blue')b.sceneMood='blue';
+   else if(o.time==='golden')b.sceneMood='golden';
+   else if(o.time==='night')b.sceneMood='night';
+   else if(o.weather==='sunny')b.sceneMood='sunny';
+   else if(o.weather==='overcast')b.sceneMood='overcast';
+   else if(o.weather==='fog')b.sceneMood='fog';
+   else if(o.weather==='rain')b.sceneMood='rain';
+   else if(o.weather==='snow')b.sceneMood='winter';
+   if(n.type==='lighting'&&previousMode==='interior'){
+    b.lighting=({'blue':'evening','golden':'evening','night':'evening','sunny':'sunny','overcast':'overcast'})[b.sceneMood]||b.lighting||'soft-daylight';
+   }
  }
+ if(o.lens&&o.lens!=='keep'){const instruction='Architectural camera lens '+o.lens+'. Preserve the perspective and placement of all architectural elements.';b.homeChanges=[b.homeChanges,instruction].filter(Boolean).join(' ').slice(0,600);}
+ if(o.changes){b.homeChanges=[b.homeChanges,String(o.changes).trim()].filter(Boolean).join(' ').slice(0,600);}
+ if(o.lockGeometry===true||o.lockGeometry===undefined)b.lockGeometry=true;
+ if(o.ratio&&RATIOS[o.ratio])b.output={...(b.output||{}),ratio:o.ratio};
+ if(o.quality&&['high','medium'].includes(o.quality))b.output={...(b.output||{}),quality:o.quality};
  return b;
 }
 async function runTo(target){
