@@ -1,0 +1,106 @@
+/* FORMA · Touch-first polish and unified tool navigation. This layer is loaded after the selected theme. */
+html[data-forma-theme] .forma-command-backdrop{z-index:3700;background:#09090bd8;backdrop-filter:blur(15px);align-items:flex-start}
+html[data-forma-theme] .forma-command-dialog{background:var(--fa-panel);border:1px solid var(--fa-line-strong);color:var(--fa-ink);border-radius:15px;box-shadow:0 30px 100px #0008;max-width:630px}
+html[data-forma-theme] .forma-command-head{background:var(--fa-panel);border-bottom:1px solid var(--fa-line);padding:18px 20px}
+html[data-forma-theme] .forma-command-head svg{stroke:var(--fa-accent)}
+html[data-forma-theme] .forma-command-head input{color:var(--fa-ink);background:transparent;font-size:15px;min-width:0}
+html[data-forma-theme] .forma-command-head input::placeholder{color:var(--fa-muted)}
+html[data-forma-theme] .forma-command-list{padding:11px 12px 15px;max-height:min(60vh,640px);overscroll-behavior:contain}
+html[data-forma-theme] .forma-command-group{font-size:10px;letter-spacing:.16em;font-weight:750;color:var(--fa-accent-text);border-bottom:1px solid var(--fa-line);padding:15px 12px 8px;margin:2px 0 5px}
+html[data-forma-theme] .forma-command-choice{background:transparent;color:var(--fa-ink);border-radius:9px;min-height:50px;padding:12px 13px;display:flex;gap:12px;justify-content:space-between}
+html[data-forma-theme] .forma-command-choice:hover,html[data-forma-theme] .forma-command-choice:focus-visible{background:var(--fa-active)!important}
+html[data-forma-theme] .forma-command-choice small{color:var(--fa-accent-text)}
+html[data-forma-theme] .forma-command-hint{color:var(--fa-muted);background:var(--fa-elev);border-color:var(--fa-line)}
+html[data-forma-theme] .forma-chip{background:var(--fa-elev)!important;color:var(--fa-ink)!important;border-color:var(--fa-line)!important}
+html[data-forma-theme] .forma-chip[data-server="online"]{border-color:var(--fa-line-strong)!important}
+html[data-forma-theme] .forma-chip span{background:var(--fa-accent)!important}
+html[data-forma-theme] .forma-context-actions{gap:7px}
+html[data-forma-theme] .forma-context-actions [data-studio-action="qa"]{display:none!important}
+html[data-forma-theme] :is(.forma-desktop-tools-quick,.forma-mobile-tools-quick){border:1px solid var(--fa-line-strong);background:var(--fa-active);color:var(--fa-ink);border-radius:10px;padding:9px 12px;font-weight:700;min-height:37px;white-space:nowrap;cursor:pointer}
+html[data-forma-theme] :is(.forma-desktop-tools-quick,.forma-mobile-tools-quick):hover{border-color:var(--fa-accent);background:var(--fa-hover)}
+html[data-forma-theme] .forma-workflow-swipe{position:relative;min-width:0}
+html[data-forma-theme] .forma-workflow-arrowbtn{position:absolute;top:50%;z-index:3;width:33px;height:36px;display:grid;place-items:center;transform:translateY(-50%);border:1px solid var(--fa-line-strong);border-radius:9px;background:var(--fa-panel);color:var(--fa-accent);box-shadow:0 4px 13px #0003;cursor:pointer}
+html[data-forma-theme] .forma-workflow-arrowbtn[disabled]{opacity:.28;cursor:default}
+html[data-forma-theme] .forma-workflow-arrowbtn.prev{left:0}
+html[data-forma-theme] .forma-workflow-arrowbtn.next{right:0}
+html[data-forma-theme] .fa-flow-palette-toolbar{display:flex;align-items:center;gap:9px;padding:8px 8px 12px;color:var(--fa-muted);font-size:10px}
+html[data-forma-theme] .fa-flow-palette-toolbar select{min-width:0;max-width:100%;flex:1;height:34px;background:var(--fa-field);border:1px solid var(--fa-line-strong);border-radius:8px;padding:0 8px;color:var(--fa-ink)}
+html[data-forma-theme] #faFlowPalette [hidden]{display:none!important}
+html[data-forma-theme] .fa-flow-head{position:relative}
+html[data-forma-theme] .fa-flow-more-menu{position:absolute;top:calc(100% - 5px);right:65px;z-index:20;background:var(--fa-card);border:1px solid var(--fa-line-strong);padding:8px;border-radius:12px;min-width:220px;max-width:calc(100vw - 24px);box-shadow:0 14px 48px #0006}
+html[data-forma-theme] .fa-flow-more-menu[hidden]{display:none!important}
+html[data-forma-theme] .fa-flow-more-menu button{display:block;width:100%;border:0;border-radius:7px;text-align:left;padding:12px 11px;background:transparent;color:var(--fa-ink);font:600 12px Inter,Arial,sans-serif}
+html[data-forma-theme] .fa-flow-more-menu button:hover{background:var(--fa-active)}
+html[data-forma-theme] .fa-flow-more{min-width:34px;font-size:19px!important;font-weight:700;line-height:1}
+html[data-forma-theme] .fa-node-settings-section{display:flex;flex-direction:column;gap:5px;margin:18px 0 9px;padding-bottom:10px;border-bottom:1px solid var(--fa-line)}
+html[data-forma-theme] .fa-node-settings-section:first-child{margin-top:0}
+html[data-forma-theme] .fa-node-settings-section strong{font-size:12px;letter-spacing:.035em;color:var(--fa-accent);font-weight:700}
+html[data-forma-theme] .fa-node-settings-section p{font-size:10px;line-height:1.5;margin:0;color:var(--fa-muted)}
+html[data-forma-theme] .fa-node-two-col{display:grid;grid-template-columns:1fr 1fr;gap:9px;min-width:0}
+html[data-forma-theme] .fa-node-two-col label{min-width:0}
+html[data-forma-theme] .fa-flow-node-fields label{font-size:11px;color:var(--fa-muted);gap:7px}
+html[data-forma-theme] .fa-flow-node-fields select{width:100%;max-width:100%;font-size:12px;min-height:43px;padding:8px 10px}
+html[data-forma-theme] .fa-flow-node-fields textarea{width:100%;font-size:12px;line-height:1.5;padding:11px;min-height:67px}
+html[data-forma-theme] .fa-flow-check{font-size:11px;line-height:1.45}
+html[data-forma-theme] .fa-flow-check input{width:17px;height:17px}
+html[data-forma-theme] .fa-flow-node-fields select:focus-visible,html[data-forma-theme] .fa-flow-node-fields textarea:focus-visible{outline:2px solid var(--fa-accent)}
+html[data-forma-theme="light"] .fa-flow-note b{color:var(--fa-accent-text)}
+@media(min-width:761px){
+ html[data-forma-theme] .forma-workflow-arrowbtn{display:none}
+ html[data-forma-theme] .forma-mobile-tools-quick{display:none}
+}
+@media(max-width:760px){
+ html[data-forma-theme] .top-actions>.fa-theme-switch{display:none!important}
+ html[data-forma-theme] .forma-desktop-tools-quick{display:none!important}
+ html[data-forma-theme] .forma-workflow-swipe{margin:0 0 10px}
+ html[data-forma-theme] .forma-workflow-launcher{display:flex!important;align-items:stretch;overflow-x:auto!important;overflow-y:hidden!important;max-width:100%;width:100%;gap:10px;touch-action:pan-x!important;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding:3px 24px 12px!important;margin:0!important;scrollbar-width:none}
+ html[data-forma-theme] .forma-workflow-launcher::-webkit-scrollbar{display:none}
+ html[data-forma-theme] .forma-workflow-label{display:none!important}
+ html[data-forma-theme] .forma-workflow-card{flex:0 0 min(67vw,255px)!important;min-width:0!important;min-height:84px;scroll-snap-align:center;touch-action:pan-x!important;pointer-events:auto;border-radius:12px!important}
+ html[data-forma-theme] .forma-workflow-arrowbtn{display:grid}
+ html[data-forma-theme] .forma-workflow-arrowbtn.prev{left:1px}
+ html[data-forma-theme] .forma-workflow-arrowbtn.next{right:1px}
+ html[data-forma-theme] .forma-context-actions{display:flex!important;gap:7px;flex-wrap:wrap}
+ html[data-forma-theme] .forma-context-actions :is(.fa-home-quick,[data-studio-action="gallery"]){display:none!important}
+ html[data-forma-theme] .forma-context-actions [data-studio-action="commands"]{padding:0 10px}
+ html[data-forma-theme] .forma-context-bar{gap:8px}
+ html[data-forma-theme] .mobile-header{background:var(--fa-panel)!important;color:var(--fa-ink)!important}
+ html[data-forma-theme] .mobile-header-actions{gap:6px}
+ html[data-forma-theme] .mobile-header-actions .forma-mobile-tools-quick{padding:6px 8px;font-size:10px;min-height:35px}
+ html[data-forma-theme] .mobile-account-btn{background:var(--fa-elev)!important;border-color:var(--fa-line)!important;color:var(--fa-ink)!important}
+ html[data-forma-theme] .mobile-header-actions #mobileAdd{padding:0 8px;min-height:37px}
+ html[data-forma-theme] .forma-command-backdrop{padding:6vh 10px 30px;align-items:flex-start}
+ html[data-forma-theme] .forma-command-dialog{width:100%;max-width:100%;border-radius:14px}
+ html[data-forma-theme] .forma-command-list{max-height:70dvh}
+ html[data-forma-theme] .fa-flow-head-actions #faFlowCompare,html[data-forma-theme] .fa-flow-head-actions #faFlowStopChain,html[data-forma-theme] .fa-flow-head-actions #faFlowArrange,html[data-forma-theme] .fa-flow-head-actions #faFlowExport,html[data-forma-theme] .fa-flow-head-actions #faFlowImport{display:none!important}
+ html[data-forma-theme] .fa-flow-head-actions #faFlowMore{display:inline-flex!important;align-items:center;justify-content:center}
+ html[data-forma-theme] .fa-flow-palette-toolbar{min-width:105px;padding:3px 0}
+ html[data-forma-theme] .fa-flow-palette-toolbar label{display:none}
+ html[data-forma-theme] .fa-flow-palette-toolbar select{max-width:132px;min-height:38px;font-size:10px}
+ html[data-forma-theme] .fa-flow-sidebar{display:flex;align-items:stretch;gap:9px;flex-direction:row;overflow:hidden!important;padding:9px 10px!important}
+ html[data-forma-theme] .fa-flow-sidebar>h3,html[data-forma-theme] .fa-flow-sidebar>small,html[data-forma-theme] .fa-flow-sidebar>.fa-flow-note{display:none!important}
+ html[data-forma-theme] #faFlowPalette{display:flex!important;flex:1;min-width:0;max-height:none!important;overflow-x:auto!important;overflow-y:hidden!important;touch-action:pan-x!important;overscroll-behavior-x:contain;scrollbar-width:none;scroll-snap-type:x proximity;gap:7px}
+ html[data-forma-theme] #faFlowPalette button{flex:0 0 113px!important;width:113px!important;min-height:68px!important;padding:7px!important;border:1px solid var(--fa-line)!important;background:var(--fa-card)!important;border-radius:10px;scroll-snap-align:start;gap:6px!important;touch-action:pan-x!important}
+ html[data-forma-theme] #faFlowPalette button i{width:25px!important;height:27px!important;flex:none!important}
+ html[data-forma-theme] #faFlowPalette button i svg{width:17px!important;height:17px!important}
+ html[data-forma-theme] #faFlowPalette button span{gap:3px!important}
+ html[data-forma-theme] #faFlowPalette button b{font-size:10px!important}
+ html[data-forma-theme] #faFlowPalette button small{font-size:8px!important}
+ html[data-forma-theme] #faFlowPalette button strong{display:none}
+ html[data-forma-theme] .fa-flow-main{grid-template-rows:92px minmax(160px,1fr) minmax(240px,42dvh)!important}
+ html[data-forma-theme] .fa-flow-inspector{max-height:42dvh!important;overflow-y:auto!important;overscroll-behavior:contain;padding:0 15px 18px!important}
+ html[data-forma-theme] .fa-inspector-header{position:sticky;top:0;z-index:4;background:var(--fa-panel);padding:11px 0 9px!important}
+ html[data-forma-theme] .fa-inspector-header small{font-size:10px}
+ html[data-forma-theme] .fa-flow-node-fields label{font-size:12px}
+ html[data-forma-theme] .fa-flow-node-fields select{font-size:12px;min-height:46px}
+ html[data-forma-theme] .fa-flow-node-fields textarea{font-size:12px;min-height:72px}
+ html[data-forma-theme] .fa-flow-more-menu{right:8px}
+ html[data-forma-theme] .fa-flow-head-actions .fa-theme-switch{order:-1}
+}
+@media(max-width:370px){
+ html[data-forma-theme] .fa-node-two-col{grid-template-columns:1fr}
+ html[data-forma-theme] .mobile-header-actions .forma-mobile-tools-quick{font-size:0;min-width:35px}
+ html[data-forma-theme] .mobile-header-actions .forma-mobile-tools-quick:before{content:"☷";font-size:20px}
+ html[data-forma-theme] .fa-flow-head-actions{gap:2px!important}
+}
+@media(prefers-reduced-motion:reduce){html[data-forma-theme] .forma-workflow-launcher{scroll-behavior:auto}}
