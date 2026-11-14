@@ -9,6 +9,8 @@
  if(!overlay)return;
  const skip=get('formaIntroSkip');
  const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+ // Optional still-open preview for capturing the two visual phases without the 5.2s automatic outro.
+ const previewHold=new URLSearchParams(window.location.search).get('previewIntro')==='1';
  const timers=new Set();
  let active=false,closing=false,previousFocus=null;
  const scheduled=(fn,delay)=>{const timer=setTimeout(()=>{timers.delete(timer);fn()},delay);timers.add(timer)};
@@ -53,7 +55,7 @@
   lockWorkspace(true);
   // First the graphite wall and moving foliage; only after their gentle entrance do we reveal the logotype.
   scheduled(()=>{if(active)overlay.classList.add('is-revealed')},1250);
-  scheduled(()=>finish(),5200);
+  if(!previewHold)scheduled(()=>finish(),5200);
  }
  function onKeydown(e){
   if(!active)return;
