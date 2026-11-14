@@ -172,6 +172,37 @@ function openStep(id){
  if(inspector){inspector.classList.add('fa-inspector-active');inspector.scrollTop=0;}
  status('Настройте «'+n.title+'» справа и запустите этот этап или целую ветку.');
 }
+// A/B comparison uses the actual saved images attached to graph nodes.
+let comparePanel=null;
+const compareSlots={a:null,b:null};
+function addCompare(id){
+ if(!snapshots.has(id)){status('Сначала запустите узел или закрепите в нём результат.');return}
+ if(compareSlots.a===id)return showCompare();
+ if(!compareSlots.a)compareSlots.a=id;
+ else if(!compareSlots.b)compareSlots.b=id;
+ else {compareSlots.a=compareSlots.b;compareSlots.b=id}
+ showCompare();
+}
+function showCompare(){
+ if(!modal)return;
+ const ids=graph.nodes.filter(n=>snapshots.has(n.id));
+ if(!compareSlots.a||!snapshots.has(compareSlots.a))compareSlots.a=ids[0]?.id||null;
+ if(!compareSlots.b||!snapshots.has(compareSlots.b))compareSlots.b=ids.find(n=>n.id!==compareSlots.a)?.id||null;
+ comparePanel?.remove();comparePanel=document.createElement('div');
+ comparePanel.className='fa-compare-backdrop';comparePanel.setAttribute('role','dialog');
+ comparePanel.setAttribute('aria-modal','true');comparePanel.setAttribute('aria-label','Сравнение архитектурных кадров');
+ const selector=(slot,value)=>'<select aria-label="Выберите вариант '+slot+'" data-fa-compare-choice="'+slot+'">'+
+  '<option value="">Выберите кадр</option>'+ids.map(n=>'<option value="'+esc(n.id)+'"'+(value===n.id?' selected':'')+'>'+esc(n.title)+'</option>').join('')+'</select>';
+ const view=(slot,id)=>'<div class="fa-compare-slot"><div class="fa-compare-slot-title"><b>ВАРИАНТ '+slot.toUpperCase()+'</b>'+selector(slot,id)+'</div>'+
+ (id&&snapshots.has(id)?'<img src="'+snapshots.get(id)+'" alt="Архитектурная визуализация '+slot+'">':'<div class="fa-compare-empty">Нет выбранного кадра</div>')+'</div>';
+ comparePanel.innerHTML='<div class="fa-compare-window"><header><div><small>ФОРМА / ВИЗУАЛЬНЫЙ КОНТРОЛЬ</small><h2>Сравнение A / B</h2></div><button type="button" data-fa-compare-close aria-label="Закрыть сравнение">×</button></header>'+
+ (ids.length?'<div class="fa-compare-grid">'+view('a',compareSlots.a)+view('b',compareSlots.b)+'</div>':'<p class="fa-compare-empty">Выполните хотя бы один этап нодовой цепочки, чтобы сравнить полученные кадры.</p>')+
+ '<footer>Сравнивайте ракурс, формы окон, кровлю, материалы, освещение и детали окружения.</footer></div>';
+ document.body.append(comparePanel);
+ comparePanel.addEventListener('click',e=>{if(e.target===comparePanel||e.target.closest('[data-fa-compare-close]')){comparePanel.remove();comparePanel=null}});
+ comparePanel.addEventListener('change',e=>{const el=e.target.closest('[data-fa-compare-choice]');if(!el)return;compareSlots[el.dataset.faCompareChoice]=el.value||null;showCompare()});
+}
+
 function exportJSON(){
  const payload={format:'forma-archviz-node-graph',version:1,project:project(),graph};
  const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
@@ -273,7 +304,7 @@ function open(){
  redraw();restoreImages();
  window.FORMA_NODE_ENGINE?.onOpen?.();
 }
-function close(){if(!modal)return;window.FORMA_NODE_ENGINE?.onClose?.();save();modal.remove();modal=world=lines=nodeLayer=null;drag=pending=null;document.body.classList.remove('fa-flow-is-open');document.removeEventListener('keydown',keydown)}
+function close(){if(!modal)return;comparePanel?.remove();comparePanel=null;window.FORMA_NODE_ENGINE?.onClose?.();save();modal.remove();modal=world=lines=nodeLayer=null;drag=pending=null;document.body.classList.remove('fa-flow-is-open');document.removeEventListener('keydown',keydown)}
 function init(){
  const actions=$('.forma-context-actions');
  if(actions){
@@ -291,7 +322,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,restoreImages,save,redraw,showStatus:status,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,restoreImages,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
