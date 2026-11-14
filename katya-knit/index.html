@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ede8df">
+<meta name="description" content="KATYA KNIT — коллекция авторского текстильного искусства. Картины из нитей на холсте. Нить ставшая искусством">
+<title>KATYA KNIT — Нить ставшая искусством</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
+<link rel="preload" href="assets/hero-poster.webp" as="image" fetchpriority="high"><link rel="stylesheet" href="assets/site.css">
+</head>
+<body id="top">
+<div class="brand-intro" id="brand-intro" aria-label="Заставка KATYA KNIT">
+  <button class="brand-intro-skip" type="button" id="intro-skip" aria-label="Пропустить заставку">Пропустить <span aria-hidden="true">↗</span></button>
+  <video id="brand-intro-film" class="brand-intro-film" muted autoplay playsinline preload="auto" aria-hidden="true"><source src="assets/intro-ring.mp4" type="video/mp4"></video>
+  <div class="brand-intro-lockup" aria-label="KATYA KNIT — Нить ставшая искусством">
+    <div class="brand-intro-title">KATYA KNIT</div>
+    <div class="brand-intro-slogan">НИТЬ СТАВШАЯ ИСКУССТВОМ</div>
+  </div>
+</div>
+
+<main>
+<section class="hero-stage" aria-label="KATYA KNIT — авторские картины из нитей">
+  <div class="hero-image" role="img" aria-label="Макроизображение переплетения настоящих кремовых, медных и сине-графитовых нитей на фактурном льняном холсте"></div>
+  <video id="hero-video" class="hero-film" autoplay muted loop playsinline preload="metadata" poster="assets/hero-poster.webp" aria-hidden="true">
+    <source src="assets/hero-mobile-final-loop.mp4" type="video/mp4" media="(max-width: 700px)">
+    <source src="assets/hero-living-canvas.mp4" type="video/mp4">
+  </video>
+  <div class="hero-grazing" aria-hidden="true"></div><div class="hero-scrim" aria-hidden="true"></div>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="KATYA KNIT — на главную">
+      <img class="brand-mark" src="assets/brand-ring-monochrome.svg" width="46" height="46" alt="">
+      <span class="brand-name">KATYA KNIT</span>
+    </a>
+    <nav class="nav" id="navigation" aria-label="Главное меню"><a href="#selected">Избранное</a><a href="catalog.html">Коллекция</a><a href="#interior">В пространстве</a><a href="#about">О студии</a></nav>
+    <a class="nav-contact" href="#contact">Обсудить работу <span aria-hidden="true">↗</span></a>
+    <button class="menu-button" id="menu-button" aria-expanded="false" aria-controls="navigation" aria-label="Открыть меню"><span></span><span></span></button>
+  </header>
+  <div class="hero-caption hero-caption-minimal">
+    <h1 class="visually-hidden">KATYA KNIT — авторские картины из нитей</h1>
+    <div class="hero-editorial"><span class="hero-editorial-index">KATYA KNIT / 001</span><p>Искусство в деталях.</p></div>
+    <a href="#selected" class="hero-explore hero-collection-cta" aria-label="Перейти к пяти избранным картинам">
+       <span class="hero-collection-text">СМОТРЕТЬ КОЛЛЕКЦИЮ<small>ПЯТЬ ИЗБРАННЫХ РАБОТ</small></span>
+       <span class="hero-collection-arrow" aria-hidden="true">↘</span>
+    </a>
+  </div>
+  <a class="hero-side-label" href="#selected" aria-label="Смотреть галерею избранных работ"><span class="hero-side-rail" aria-hidden="true"></span><span>ОТКРЫТЬ ГАЛЕРЕЮ</span><span aria-hidden="true" class="hero-side-arrow">↙</span></a>
+</section>
+
+<section class="intro reveal shell"><div class="section-small">01 / THE APPROACH</div><p>Встреча материала и эмоции.<br><span>Искусство, которое хочется почувствовать.</span></p></section>
+<section class="curated shell" id="selected">
+  <div class="section-heading reveal"><div><span class="section-small">02 / CURATED SELECTION</span><h2>Избранное<span class="title-period">.</span></h2></div><p>Пять художественных концепций. Пять состояний. Каждое — со своим движением и тишиной.</p></div>
+  <div class="curated-grid">
+    <a class="work work-one reveal" href="catalog.html#potok"><div class="work-art"><img src="assets/art-01.webp" loading="lazy" alt="Поток — кремовые, медные и сине-графитовые нити"/></div><div class="work-label"><span>01 / 05</span><h3>Поток</h3><small>Движение материала</small></div></a>
+    <a class="work work-two reveal" href="catalog.html#krug"><div class="work-art"><img src="assets/art-04.webp" loading="lazy" alt="Круг — кольцевая композиция из нитей"/></div><div class="work-label"><span>02 / 05</span><h3>Круг</h3><small>Непрерывность формы</small></div></a>
+    <a class="work work-three reveal" href="catalog.html#svyaz"><div class="work-art"><img src="assets/art-03.webp" loading="lazy" alt="Связь — тонкие линии на рельефном полотне"/></div><div class="work-label"><span>03 / 05</span><h3>Связь</h3><small>Диалог линий</small></div></a>
+    <a class="work work-four reveal" href="catalog.html#peresechenie"><div class="work-art"><img src="assets/art-07.webp" loading="lazy" alt="Пересечение — терракотовая композиция"/></div><div class="work-label"><span>04 / 05</span><h3>Пересечение</h3><small>Геометрия чувств</small></div></a>
+    <a class="work work-five reveal" href="catalog.html#volna"><div class="work-art"><img src="assets/art-09.webp" loading="lazy" alt="Волна — текучие синие и молочные нити"/></div><div class="work-label"><span>05 / 05</span><h3>Волна</h3><small>Свобода движения</small></div></a>
+  </div>
+  <a class="catalog-link reveal" href="catalog.html"><span>ПОЛНАЯ КОЛЛЕКЦИЯ</span><strong>Все произведения</strong><span class="catalog-arrow">↗</span></a>
+</section>
+<section class="interior" id="interior"><div class="interior-photo reveal"><img src="assets/atmo-1.webp" alt="Текстильная картина в минималистичном интерьере" loading="lazy"></div><div class="interior-copy reveal"><span class="section-small">03 / ART IN SPACE</span><h2>Когда пространство<br>обретает <em>характер.</em></h2><p>Живопись, которую хочется рассматривать с расстояния и изучать вблизи. Каждая работа становится частью своего пространства.</p><a href="#contact">Работа для вашего интерьера ↗</a></div></section>
+<section class="manifesto shell reveal" id="about"><span class="section-small">04 / KATYA KNIT</span><p>Мы верим в искусство, которое не требует объяснений.<br><strong>Оно просто остаётся с вами.</strong></p><span class="manifesto-end">ТЕКСТИЛЬНОЕ ИСКУССТВО / СОВРЕМЕННАЯ ФОРМА</span></section>
+<section class="closing" id="contact"><div class="closing-inner shell reveal"><span class="section-small">05 / ДИАЛОГ</span><h2>Искусство<br>для вашего пространства.</h2><p>Авторская работа может начаться с одной идеи.</p><a class="closing-cta" href="mailto:?subject=KATYA%20KNIT%20%E2%80%94%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D1%82%D1%8C%20%D0%BA%D0%B0%D1%80%D1%82%D0%B8%D0%BD%D1%83">Начать разговор <span>↗</span></a><small>Контакты студии будут подключены перед публикацией.</small></div></section>
+</main>
+<footer class="footer shell"><a href="#top">KATYA KNIT <small>НИТЬ СТАВШАЯ ИСКУССТВОМ</small></a><span class="footer-slogan">НИТЬ СТАВШАЯ ИСКУССТВОМ</span><div><a href="catalog.html">Коллекция</a><a href="#top">Наверх ↑</a></div></footer>
+<script src="assets/site.js"></script>
+</body></html>
