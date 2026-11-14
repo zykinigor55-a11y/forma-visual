@@ -44,6 +44,27 @@ function project(){try{return JSON.parse(localStorage.getItem('domrender_mvp_pro
 function initial(){return {nodes:START.map(n=>({...n,options:{}})),edges:START_EDGES.map(([from,to])=>({from,to})),pan:{x:70,y:35},zoom:.75,count:7,selected:'n2'}}
 let graph,modal=null,world=null,lines=null,nodeLayer=null,drag=null,pending=null;
 const snapshots=new Map();let dbPromise=null;
+const HISTORY_PREFIX='forma-archviz-node-history-v1-';
+function historyIndex(){try{const arr=JSON.parse(localStorage.getItem(HISTORY_PREFIX+project())||'[]');return Array.isArray(arr)?arr.filter(x=>x&&/^n\d+$/.test(x.node)&&/^[a-z0-9_:-]{1,90}$/i.test(x.key)).slice(0,300):[]}catch{return []}}
+function historyFor(id){return historyIndex().filter(e=>e.node===id).slice(0,5)}
+async function archiveSnapshot(id,image,db){
+ if(!db)return;
+ const entry={node:id,key:'h_'+id+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),time:Date.now()};
+ const all=[entry,...historyIndex()],seen=all.filter(x=>x.node===id);
+ const removed=seen.slice(5),remaining=all.filter(x=>!removed.some(d=>d.key===x.key));
+ try{await new Promise((resolve,reject)=>{
+  const tx=db.transaction('images','readwrite');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  tx.objectStore('images').put(image,mediaKey(entry.key));
+ });for(const old of removed){try{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(mediaKey(old.key))}catch{}}
+ localStorage.setItem(HISTORY_PREFIX+project(),JSON.stringify(remaining))}catch{status('Кадр сохранён, но версия в истории могла не сохраниться.')}
+}
+async function recallHistory(id,key){
+ if(!historyFor(id).some(h=>h.key===key)){status('История для выбранной ноды не найдена.');return}
+ const db=await mediaDB();if(!db){status('Хранилище версий недоступно.');return}
+ const image=await new Promise(resolve=>{const tx=db.transaction('images','readonly');const req=tx.objectStore('images').get(mediaKey(key));req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null)});
+ if(!image){status('Этот кадр больше не хранится на устройстве.');return}
+ await setSnapshot(id,image);status('Восстановлена версия ноды без AI-запроса.');
+}
 function mediaDB(){
  if(dbPromise)return dbPromise;
  dbPromise=new Promise(resolve=>{
@@ -79,6 +100,7 @@ async function setSnapshot(id,image){
  if(!node(id))throw Error('Нода не найдена');
  if(!/^data:image\/(?:png|jpeg|webp);base64,/i.test(image))throw Error('Для цепочки требуется изображение в PNG, JPG или WEBP');
  if(image.length>24_000_000)throw Error('Слишком большой результат для сохранения в браузере');
+ if(snapshots.get(id)===image)return;
  snapshots.set(id,image);
  const db=await mediaDB();
  if(db){
@@ -88,6 +110,7 @@ async function setSnapshot(id,image){
    tx.objectStore('images').put(image,mediaKey(id));
   })}catch{status('Кадр отображается, но не удалось сохранить его в памяти')}
  }
+ await archiveSnapshot(id,image,db);
  redraw();
 }
 async function deleteImage(id){
@@ -322,7 +345,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,restoreImages,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
