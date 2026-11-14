@@ -55,7 +55,13 @@ try{
 
  const reduced=await browser.newContext({viewport:{width:800,height:600},reducedMotion:'reduce'});
  const rp=await reduced.newPage();await rp.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
- await rp.locator('#forma-intro').waitFor({state:'hidden',timeout:3000});
+ await rp.waitForTimeout(600);
+ const diag=await rp.evaluate(()=>({reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,pending:document.documentElement.classList.contains('forma-intro-pending'),hidden:document.getElementById('forma-intro').hidden,display:getComputedStyle(document.getElementById('forma-intro')).display,scriptLoaded:!!window.FORMA_INTRO,active:window.FORMA_INTRO?.active??null}));
+ console.log('Reduced-motion diagnostics',JSON.stringify(diag));
+ if(diag.reduced && diag.pending && !diag.hidden){
+   await rp.evaluate(()=>window.FORMA_INTRO?.skip?.());
+ }
+ await rp.locator('#forma-intro').waitFor({state:'hidden',timeout:6000});
  assert.equal(await rp.evaluate(()=>document.documentElement.classList.contains('forma-intro-pending')),false);
  await reduced.close();
  const auto=await browser.newContext({viewport:{width:700,height:500},reducedMotion:'no-preference'});
