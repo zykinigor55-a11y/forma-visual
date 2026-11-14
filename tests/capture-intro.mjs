@@ -21,7 +21,9 @@ try{
  const revealed=await page.locator('.forma-intro-lockup').evaluate(el=>Number(getComputedStyle(el).opacity));
  assert.ok(revealed>.70,'Logo should be revealed after the wall');
  await page.screenshot({path:out+'/forma-opening-logo-desktop.png',animations:'allow'});
- await page.locator('#formaIntroSkip').click();
+ // Screenshots of animated SVG textures may take longer than the 5.2s auto-exit.
+ // Invoke the same skip handler directly; the actual button is exercised on replay below.
+ await page.evaluate(()=>window.FORMA_INTRO?.skip?.());
  await page.locator('#forma-intro').waitFor({state:'hidden',timeout:4000});
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('forma-opening-seen-v2')),'1');
  await page.reload({waitUntil:'domcontentloaded'});
@@ -42,7 +44,7 @@ try{
  await mp.screenshot({path:out+'/forma-opening-wall-mobile.png',animations:'allow'});
  await mp.waitForTimeout(2500);
  await mp.screenshot({path:out+'/forma-opening-logo-mobile.png',animations:'allow'});
- await mp.locator('#formaIntroSkip').click();
+ await mp.evaluate(()=>window.FORMA_INTRO?.skip?.());
  await mp.locator('#forma-intro').waitFor({state:'hidden',timeout:4000});
  await mob.close();
 
