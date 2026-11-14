@@ -137,3 +137,11 @@
 .fa-home-route-context h4{color:#263f35;font-size:23px;letter-spacing:-.04em;font-weight:570;margin:0}
 .fa-home-route-context p{color:#71837a;font-size:11px;line-height:1.65;margin:0}
 .fa-home-route-hint{padding:13px 15px;border:1px solid #dbe5dc;border-radius:8px;background:#f1f5f0;color:#466656;font-size:10px;line-height:1.55}
+
+/* Workflows stay inside FORMA, with direct add-to-node actions. */
+.fa-home-add-node{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;min-height:44px;padding:12px 18px;border:1px solid #b59d78;border-radius:9px;background:#2c4139;color:#f6f3e9;font:650 12px Inter,Arial,sans-serif;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+.fa-home-add-node:hover{background:#3c594a;border-color:#d5bc96;transform:translateY(-1px)}
+.fa-home-add-node:focus-visible{outline:3px solid #d5bd94;outline-offset:2px}
+.fa-home-node-caution{border-left:2px solid #a28968;margin:16px 0 0;padding:8px 10px;background:#c5aa7d14;color:#725f48;font-size:11px;line-height:1.55}
+.fa-home-world-frame{width:100%;height:440px;border:1px solid #82958a;border-radius:10px;display:block;margin-top:14px;background:#142323}
+@media(max-width:720px){.fa-home-world-frame{height:540px}.fa-home-add-node{width:100%}}
