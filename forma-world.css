@@ -5,3 +5,17 @@
 .fw-hdr-upload small{color:#b1c0b5;font-size:9px;font-weight:400}
 .fw-actions .fw-primary-dark{background:#334943;border-color:#8b9d8a;color:#e4e2d7}
 .fw-actions .fw-primary-dark:hover{background:#3c594d}
+
+/* Paid AI generators: unobtrusive until server integrations are enabled */
+.fw-ai-section{padding-top:19px}
+.fw-ai-status{border:1px solid #53675c;background:#2e4239;color:#dccbaa;border-radius:7px;padding:10px 11px;margin:11px 0 14px;font-size:10px;line-height:1.55}
+.fw-ai-section input[type=password],.fw-ai-section textarea{width:100%;background:#283a36;border:1px solid #53675c;border-radius:7px;color:#f0efdf;font:500 11px Inter,Arial,sans-serif;padding:11px 12px;resize:vertical;outline-offset:2px}
+.fw-ai-section input[type=password]:focus-visible,.fw-ai-section textarea:focus-visible{outline:2px solid #d9c39e}
+.fw-ai-consent{display:flex;align-items:flex-start;gap:9px;color:#aebcb1;font-size:10px;line-height:1.5;margin:16px 0}
+.fw-ai-consent input{accent-color:#cfb38d;flex:none;margin:2px}
+.fw-ai-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fw-ai-actions button{min-height:42px;border:1px solid #b9a482;background:#cfb795;color:#263830;border-radius:7px;font-size:10px;font-weight:700;padding:7px 9px}
+.fw-ai-actions button:last-child{background:#344942;color:#e5ddcb;border-color:#647569}
+.fw-ai-actions button:disabled{opacity:.35;cursor:not-allowed}
+.fw-ai-result{margin-top:13px;font-size:10px;line-height:1.65;color:#d9c6a8;overflow-wrap:anywhere}
+.fw-ai-link{display:block;color:#f0dfc2;margin-top:9px;text-decoration:underline;text-underline-offset:4px}
