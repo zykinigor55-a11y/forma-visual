@@ -36,7 +36,7 @@ try{
  assert.equal(await page.locator('#faProBackdrop').count(),0);
 
  await page.locator('[data-tool-id="preview"]').click();
- await page.locator('[data-fa-color="brightness"]').fill('120');
+ await page.locator('[data-fa-color="brightness"]').evaluate(el=>{el.value='120';el.dispatchEvent(new Event('input',{bubbles:true}));});
  assert.match(await page.locator('#faProValue-brightness').textContent(),/120/);
  await page.locator('[data-filter="edit"]').click();
  assert.equal(await page.locator('.fa-home-tool:not([hidden])').count(),4);
