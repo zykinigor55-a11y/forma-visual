@@ -14,6 +14,21 @@ const TYPES={
  image3d:{title:'Из фото в 3D',icon:'⬡',kind:'Интеграция',input:'image',out:'model',action:'image3d',text:'Требуется 3D API'},
  export:{title:'Экспорт',icon:'⇩',kind:'Результат',input:'any',action:'variants',text:'Файлы и галерея'}
 };
+
+const ICON_PATHS={
+ source:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h5M8 15h8"/>',
+ exterior:'<path d="m3 11 9-7 9 7v10H3V11Z"/><path d="M3 11h18M9 21v-7h6v7"/>',
+ interior:'<path d="M4 21V4h16v17M4 9h16M8 21v-6h8v6"/>',
+ lighting:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
+ materials:'<path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/>',
+ geometry:'<path d="M3 3h8v8H3zM13 13h8v8h-8zM11 7h6v6M7 11v6h6"/>',
+ upscale:'<path d="M7 17 17 7M9 7h8v8M3 13v8h8M13 3h8v8"/>',
+ video:'<rect x="3" y="5" width="14" height="14" rx="2"/><path d="m17 10 4-3v10l-4-3"/>',
+ image3d:'<path d="m12 2 9 5v10l-9 5-9-5V7l9-5ZM3 7l9 5 9-5M12 12v10"/>',
+ export:'<path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/>'
+};
+const iconHTML=id=>'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON_PATHS[id]+'</svg>';
+
 const START=[
  {id:'n1',type:'source',x:65,y:250,title:'Исходный скетч'},
  {id:'n2',type:'exterior',x:355,y:140,title:'Фотография дома'},
@@ -94,7 +109,7 @@ function redraw(){
   const t=TYPES[n.type],card=document.createElement('div');
   card.className='fa-node'+(graph.selected===n.id?' selected':'');
   card.style.left=n.x+'px';card.style.top=n.y+'px';card.dataset.node=n.id;
-  card.innerHTML=`<div class="fa-node-top" data-move="${esc(n.id)}"><span class="fa-node-symbol">${t.icon}</span><div><small>${t.kind}</small><b>${esc(n.title||t.title)}</b></div><button type="button" data-fork="${esc(n.id)}" title="Добавить ответвление">+</button></div>
+  card.innerHTML=`<div class="fa-node-top" data-move="${esc(n.id)}"><span class="fa-node-symbol">${iconHTML(n.type)}</span><div><small>${t.kind}</small><b>${esc(n.title||t.title)}</b></div><button type="button" data-fork="${esc(n.id)}" title="Добавить ответвление">+</button></div>
   <div class="fa-node-picture"><span>${esc(t.text)}</span></div>
   <div class="fa-node-bottom"><button type="button" data-open-step="${esc(n.id)}">Открыть ↗</button><button type="button" data-pin="${esc(n.id)}" title="Закрепить текущий результат в ноде" aria-label="Закрепить текущий кадр">◫</button><button type="button" data-rename="${esc(n.id)}" aria-label="Переименовать ноду">✎</button></div>
   ${t.input?`<button type="button" class="fa-node-port input" data-port-in="${esc(n.id)}" aria-label="Вход"></button>`:''}
@@ -236,7 +251,7 @@ function open(){
  document.body.append(modal);document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
  const palette=$('#faFlowPalette');
  for(const [id,t] of Object.entries(TYPES)){
-  const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.innerHTML='<i>'+t.icon+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';palette.append(b);
+  const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.innerHTML='<i>'+iconHTML(id)+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';palette.append(b);
  }
  modal.addEventListener('click',click);
  modal.addEventListener('pointerdown',e=>{if(e.target===modal)close()});
