@@ -77,7 +77,7 @@ function settingsHTML(n){
   Object.entries(list).map(([k,v])=>'<option value="'+esc(k)+'"'+(String(k)===String(value)?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select>'+(info?'<small>'+esc(info)+'</small>':'')+'</label>';
  const textarea=(key,label,value,placeholder,rows=3)=>'<label>'+label+'<textarea data-node-option="'+key+'" rows="'+rows+'" maxlength="500" placeholder="'+esc(placeholder)+'">'+esc(value||'')+'</textarea></label>';
  const group=(name,description='')=>'<div class="fa-node-settings-section"><strong>'+name+'</strong>'+(description?'<p>'+description+'</p>':'')+'</div>';
- const check=(key,label,defaultValue)=>'<label class="fa-flow-check"><input type="checkbox" data-node-option="'+key+'" '+(opts[key]===undefined?defaultValue:opts[key]?'checked':'')+'> '+label+'</label>';
+ const check=(key,label,defaultValue)=>'<label class="fa-flow-check"><input type="checkbox" data-node-option="'+key+'" '+((opts[key]===undefined?defaultValue:opts[key])?'checked':'')+'> '+label+'</label>';
  const scene=()=>{
    controls.push(group('Окружение, погода и свет','Все параметры сцены собраны здесь. Выбранные условия передаются в реальный AI-запрос.'));
    controls.push(select('environment','Окружение',ENVIRONMENTS,getOpt(n,'environment','keep')));
