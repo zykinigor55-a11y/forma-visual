@@ -3,7 +3,6 @@
    until its dedicated timer fires, even when CSS and images are cached. */
 (() => {
  'use strict';
- const SESSION_KEY='forma-opening-seen-v5';
  const STAGES={fa:1800,name:3380,descriptor:3830,minimum:5000};
  const root=document.documentElement;
  const overlay=document.getElementById('forma-intro');
@@ -12,6 +11,8 @@
  if(!overlay)return;
  const reduceMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
+ // Explicit preview request can demonstrate the visual effect even if OS animations are reduced.
+ if(previewHold)root.classList.add('forma-intro-force-preview-motion');
  const timers=new Set();
  let active=false,closing=false,previousFocus=null,startedAt=0,runId=0,loadReady=document.readyState==='complete',sequenceStarted=false;
  const label=value=>{if(status)status.textContent=value};
@@ -34,7 +35,6 @@
  function finish(immediate=false){
   if(!active||closing)return;
   active=false;closing=true;cancelSchedules();
-  try{sessionStorage.setItem(SESSION_KEY,'1')}catch{}
   overlay.classList.add('is-leaving');
   if(immediate)overlay.style.transition='none';
   const done=()=>{
@@ -60,7 +60,6 @@
   if(active||closing)return;
   if(!root.classList.contains('forma-intro-pending')&&!force&&!previewHold){overlay.hidden=true;return}
   if(reduceMotion&&!force&&!previewHold){
-   try{sessionStorage.setItem(SESSION_KEY,'1')}catch{}
    overlay.hidden=true;root.classList.remove('forma-intro-pending');inertWorkspace(false);return
   }
   runId++;cancelSchedules();previousFocus=document.activeElement;
