@@ -327,6 +327,7 @@ function briefFor(ctx,previousMode,n){
    if(o.plants&&o.plants!=='keep')b.plants=plantsLabel;
    if(o.environmentInstructions)b.environmentInstructions=String(o.environmentInstructions).trim().slice(0,350);
    // Derive a consistent atmosphere from the same controls rather than contradicting the weather.
+   if(!o.time&&!o.weather&&o.mood)b.sceneMood=o.mood;
    if(o.time==='blue')b.sceneMood='blue';
    else if(o.time==='golden')b.sceneMood='golden';
    else if(o.time==='night')b.sceneMood='night';
@@ -360,7 +361,7 @@ async function runTo(target){
  const runId=++openedRunId;
  busy=true;wasCancelled=false;aborter=null;
  decorate();statuses.clear();
- let output=ctx.source,mode=ctx.brief?.sceneType||'exterior',aiCompleted=0,videoCompleted=0,lastAI='',videoBlob=null;
+ let output=ctx.source,mode=ctx.brief?.sceneType||'exterior',currentBrief=ctx.brief,aiCompleted=0,videoCompleted=0,lastAI='',videoBlob=null;
  try{
   for(const [i,n] of plan.path.entries()){
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
@@ -368,7 +369,7 @@ async function runTo(target){
    tell('Этап '+(i+1)+'/'+plan.path.length+': '+(n.title||n.type));
    if(n.type==='source'){output=ctx.source}
    else if(AI_TYPES.has(n.type)){
-    const brief=briefFor(ctx,mode,n);mode=brief.sceneType;
+    const brief=briefFor({...ctx,brief:currentBrief},mode,n);mode=brief.sceneType;currentBrief=brief;
     const cached=n.options?.reuse?api.getSnapshot?.(n.id):null;
     if(cached){output=cached;tell('Использован готовый кадр: '+(n.title||n.type)+' · бесплатно');}
     else {
