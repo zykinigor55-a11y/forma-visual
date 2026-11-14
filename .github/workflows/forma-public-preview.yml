@@ -1,0 +1,52 @@
+name: ФОРМА · Public preview (GitHub Pages)
+
+on:
+  push:
+    branches: [feature/forma-archviz-studio]
+    paths:
+      - .github/workflows/forma-public-preview.yml
+      - index.html
+      - assets/brand/**
+      - forma-intro.css
+      - forma-intro.js
+      - forma-brand-identity.css
+      - forma-archviz-studio.css
+      - forma-archviz-studio.js
+      - forma-static-preview.js
+      - scripts/build-forma-static-preview.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: forma-public-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/forma-archviz-studio
+      - name: Assemble public preview without AI backend
+        run: bash scripts/build-forma-static-preview.sh
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: forma-preview-site
+      - name: Publish preview
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Show public URL
+        run: echo "PUBLIC_PREVIEW=${{ steps.deployment.outputs.page_url }}"
