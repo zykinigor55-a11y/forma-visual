@@ -1,0 +1,73 @@
+name: ФОРМА · Build premium 4K wall asset
+on:
+  push:
+    branches: [feature/forma-archviz-studio]
+    paths:
+      - .github/workflows/forma-wall-4k.yml
+      - scripts/generate-premium-wall.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forma-build-4k-wall
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/forma-archviz-studio
+          fetch-depth: 0
+      - name: Python and dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install 4K texture libraries
+        run: python -m pip install --quiet pillow numpy "opencv-python-headless<5"
+      - name: Build wall textures in 4K and mobile
+        run: |
+          python scripts/generate-premium-wall.py
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          base=Path('assets/brand')
+          assert Image.open(base/'intro-graphite-wall-4k.webp').size==(3840,2160)
+          assert Image.open(base/'intro-graphite-wall-mobile.webp').size==(1080,1920)
+          assert (base/'intro-graphite-wall-4k.webp').stat().st_size < 5_000_000
+          print('4K and mobile images validated')
+          PY
+      - name: Save images to FORMA studio branch
+        run: |
+          git config user.name "FORMA Asset Builder"
+          git config user.email "forma-assets@users.noreply.github.com"
+          git add assets/brand/intro-graphite-wall-4k.webp assets/brand/intro-graphite-wall-mobile.webp
+          if ! git diff --cached --quiet; then
+            git commit -m "assets(intro): add production 4K graphite wall and mobile wall [skip ci]"
+            git fetch origin feature/forma-archviz-studio
+            git rebase -X theirs FETCH_HEAD
+            git push origin HEAD:feature/forma-archviz-studio
+          fi
+      - name: Copy only new image assets to old site's separate preview path
+        run: |
+          set -euo pipefail
+          git fetch origin dom-render-nanobanana feature/forma-archviz-studio
+          git switch -C forma-wall-preview-publish origin/dom-render-nanobanana
+          git restore --source=origin/feature/forma-archviz-studio --staged --worktree -- \
+            assets/brand/intro-graphite-wall-4k.webp \
+            assets/brand/intro-graphite-wall-mobile.webp
+          if ! git diff --cached --quiet; then
+            git commit -m "assets(preview): deploy 4K FORMA wall without editing old homepage [skip ci]"
+            git fetch origin dom-render-nanobanana
+            git rebase -X theirs FETCH_HEAD
+            git push origin HEAD:dom-render-nanobanana
+          fi
+      - name: Confirm existing site's code was untouched
+        run: |
+          git diff origin/dom-render-nanobanana HEAD -- index.html server.mjs app.js
+          test -z "$(git diff origin/dom-render-nanobanana HEAD -- index.html server.mjs app.js)"
