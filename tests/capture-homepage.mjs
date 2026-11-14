@@ -30,7 +30,7 @@ try {
  await page.locator('#faFlowClose').click();
  const pro=page.locator('.fa-pro-launch');await pro.click();
  await page.locator('#formaProjectPanel').waitFor({state:'visible'});
- assert.equal(await page.locator('.fa-home-tool').count(),16);
+ assert.equal(await page.locator('.fa-home-tool').count(),17);
  assert.equal(await page.locator('#faProBackdrop').count(),0);
  assert.match(await page.locator('#faProjectToolContent').textContent(),/Профессиональный набор инструментов/);
  await page.locator('[data-tool-id="upscale"]').click();
