@@ -102,6 +102,10 @@ export async function apiMarketEdit({apiKey,source,material,reference,mask,promp
     if(response.status>=500)throw new Error('API Market временно вернул ошибку сервера (HTTP '+response.status+'). Попробуйте позже; запрос мог быть оплачен.');
     throw new Error('API Market вернул некорректный формат ответа (HTTP '+response.status+').');
   }
-  if(!response.ok)throw new Error(sanitizeProviderError(response.status,body));
+  if(!response.ok){
+    const providerCode=String(body?.error?.code||body?.code||'unknown').replace(/[^a-zA-Z0-9_.-]/g,'').slice(0,50);
+    console.warn('[API Market] запрос отклонён; http:',response.status,'code:',providerCode);
+    throw new Error(sanitizeProviderError(response.status,body));
+  }
   return parseImageReply(body,{fetchImpl});
 }
