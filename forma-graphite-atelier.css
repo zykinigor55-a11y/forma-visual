@@ -555,3 +555,114 @@ html.forma-scene-sheet-open{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
  #formaSceneSheet .forma-environment-photo-card{transition:none}
 }
+
+
+/* INLINE ENVIRONMENT CHARACTER · visible immediately after the selected type row.
+   No extra modal, no blurred thumbnails, full photographic detail on every device. */
+#environmentPanel #environmentOptions .forma-env-inline{
+ grid-column:1 / -1!important;
+ min-width:0;display:flex;flex-direction:column;gap:12px;
+ padding:16px 13px 18px;margin:9px 0 15px;
+ border:1px solid var(--fa-line-strong,#b69b80);
+ border-radius:15px;background:var(--fa-panel,#faf8f5);
+ box-shadow:0 8px 24px #1613140b;isolation:isolate
+}
+#environmentPanel .forma-env-inline-heading{
+ display:flex;flex-direction:column;gap:6px;min-width:0
+}
+#environmentPanel .forma-env-inline-kicker{
+ font-size:9px;font-weight:800;letter-spacing:.13em;
+ color:var(--fa-accent-text,#967452)
+}
+#environmentPanel .forma-env-inline-heading>strong{
+ color:var(--fa-ink,#292522)!important;font-size:16px;font-weight:750;line-height:1.28;
+ letter-spacing:-.02em
+}
+#environmentPanel .forma-env-inline-heading>strong span{
+ color:var(--fa-muted,#72675e);font-weight:500;font-size:12px
+}
+#environmentPanel .forma-env-inline-heading>p{
+ margin:0;color:var(--fa-muted,#72675e);font-size:11px;line-height:1.5
+}
+#environmentPanel .forma-env-inline-auto{
+ display:flex;align-items:center;justify-content:center;align-self:flex-start;
+ min-height:39px;max-width:100%;padding:9px 12px;
+ border:1px solid var(--fa-line,#ddd3c9);border-radius:9px;
+ background:var(--fa-card,#fffdfa);color:var(--fa-muted,#72675e);
+ font-size:11px;font-weight:700;cursor:pointer
+}
+#environmentPanel .forma-env-inline-auto.is-active,
+#environmentPanel .forma-env-inline-auto:hover{
+ border-color:var(--fa-accent,#b79a7d);background:var(--fa-active,#eee0d1);
+ color:var(--fa-ink,#292522)
+}
+#environmentPanel .forma-env-inline-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px;min-width:0;width:100%
+}
+#environmentPanel .forma-env-inline-card{
+ display:flex;flex-direction:column;min-width:0;overflow:hidden;
+ padding:0;margin:0;text-align:left;cursor:pointer;
+ border:1px solid var(--fa-line,#ddd3c9);border-radius:12px;
+ background:var(--fa-card,#fffdfa);color:var(--fa-ink,#292522);
+ transition:border-color .18s ease,box-shadow .18s ease;
+}
+#environmentPanel .forma-env-inline-card:hover{
+ border-color:var(--fa-accent,#b69b80)
+}
+#environmentPanel .forma-env-inline-card.is-active{
+ border-color:var(--fa-accent,#ad845f);
+ box-shadow:0 0 0 2px color-mix(in srgb,var(--fa-accent,#ad845f) 30%,transparent)
+}
+#environmentPanel .forma-env-inline-card:focus-visible,
+#environmentPanel .forma-env-inline-auto:focus-visible{
+ outline:2px solid var(--fa-accent,#ad845f);outline-offset:3px
+}
+#environmentPanel .forma-env-inline-cover{
+ position:relative;display:block;width:100%;aspect-ratio:1.65;
+ overflow:hidden;background:var(--fa-elev,#f1ece6);
+ border-bottom:1px solid var(--fa-line,#ddd3c9)
+}
+#environmentPanel .forma-env-inline-cover>img{
+ display:block;width:100%;height:100%;object-fit:cover;object-position:center;
+ opacity:1!important;filter:none!important;transform:none!important;
+ mix-blend-mode:normal!important;backdrop-filter:none!important;
+ image-rendering:auto
+}
+#environmentPanel .forma-env-inline-check{
+ position:absolute;top:8px;right:8px;display:grid;place-items:center;
+ width:25px;height:25px;min-width:25px;border-radius:50%;
+ border:1px solid #b7a18a;background:#272424b9;
+ color:#f7e9d5;font-size:14px;line-height:1
+}
+#environmentPanel .forma-env-inline-card.is-active .forma-env-inline-check{
+ background:#e0c19a;border-color:#f0ddc2;color:#252019;
+ box-shadow:0 2px 12px #0002
+}
+#environmentPanel .forma-env-inline-copy{
+ display:flex;flex-direction:column;gap:5px;padding:11px 11px 12px;
+ min-width:0;flex:1
+}
+#environmentPanel .forma-env-inline-copy strong{
+ font-size:12px!important;font-weight:760;color:var(--fa-ink,#292522)!important;
+ line-height:1.3;overflow-wrap:anywhere
+}
+#environmentPanel .forma-env-inline-copy small{
+ color:var(--fa-muted,#72675e)!important;font-size:10px;line-height:1.48;
+ display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+@media(max-width:760px){
+ #environmentPanel #environmentOptions .forma-env-inline{
+  padding:13px 10px 14px;gap:10px;margin:7px 0 12px;border-radius:13px
+ }
+ #environmentPanel .forma-env-inline-grid{gap:8px}
+ #environmentPanel .forma-env-inline-cover{aspect-ratio:1.55}
+ #environmentPanel .forma-env-inline-copy{padding:9px 8px 10px}
+ #environmentPanel .forma-env-inline-copy strong{font-size:11px!important}
+ #environmentPanel .forma-env-inline-copy small{font-size:9px!important}
+ #environmentPanel .forma-env-inline-heading>strong{font-size:14px}
+ #environmentPanel .forma-env-inline-heading>p{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ #environmentPanel .forma-env-inline-card{transition:none}
+}
