@@ -43,7 +43,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function project(){try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'demo'}catch{return 'demo'}}
 function initial(){return {nodes:START.map(n=>({...n,options:{}})),edges:START_EDGES.map(([from,to])=>({from,to})),pan:{x:70,y:35},zoom:.75,count:7,selected:'n2'}}
 let graph,modal=null,world=null,lines=null,nodeLayer=null,drag=null,pending=null;
-const snapshots=new Map();let dbPromise=null;
+const snapshots=new Map(),videoBlobs=new Map(),videoURLs=new Map();let dbPromise=null;
 const HISTORY_PREFIX='forma-archviz-node-history-v1-';
 function historyIndex(){try{const arr=JSON.parse(localStorage.getItem(HISTORY_PREFIX+project())||'[]');return Array.isArray(arr)?arr.filter(x=>x&&/^n\d+$/.test(x.node)&&/^[a-z0-9_:-]{1,90}$/i.test(x.key)).slice(0,300):[]}catch{return []}}
 function historyFor(id){return historyIndex().filter(e=>e.node===id).slice(0,5)}
@@ -79,11 +79,17 @@ function mediaDB(){
 }
 function mediaKey(id){return project()+'__'+id}
 async function restoreImages(){
- snapshots.clear();const db=await mediaDB();if(!db)return;
+ snapshots.clear();videoBlobs.clear();for(const url of videoURLs.values())URL.revokeObjectURL(url);videoURLs.clear();
+ const db=await mediaDB();if(!db)return;
  await Promise.all(graph.nodes.map(n=>new Promise(resolve=>{
   const tx=db.transaction('images','readonly');
   const req=tx.objectStore('images').get(mediaKey(n.id));
   req.onsuccess=()=>{if(req.result)snapshots.set(n.id,req.result);resolve()};
+  req.onerror=()=>resolve();
+ })));
+ await Promise.all(graph.nodes.filter(n=>n.type==='video').map(n=>new Promise(resolve=>{
+  const tx=db.transaction('images','readonly'),req=tx.objectStore('images').get(mediaKey(n.id)+'__video');
+  req.onsuccess=()=>{if(req.result instanceof Blob){videoBlobs.set(n.id,req.result);videoURLs.set(n.id,URL.createObjectURL(req.result))}resolve()};
   req.onerror=()=>resolve();
  })));
  if(modal)redraw();
@@ -113,9 +119,26 @@ async function setSnapshot(id,image){
  await archiveSnapshot(id,image,db);
  redraw();
 }
+async function setVideoSnapshot(id,blob){
+ if(!node(id)||node(id).type!=='video')throw Error('Узел видео не найден.');
+ if(!(blob instanceof Blob)||blob.size<1000||blob.size>180*1024*1024)throw Error('Недопустимый размер MP4.');
+ const previous=videoURLs.get(id);if(previous)URL.revokeObjectURL(previous);
+ videoBlobs.set(id,blob);videoURLs.set(id,URL.createObjectURL(blob));
+ const db=await mediaDB();
+ if(db){try{await new Promise((resolve,reject)=>{
+  const tx=db.transaction('images','readwrite');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  tx.objectStore('images').put(blob,mediaKey(id)+'__video');
+ })}catch{status('Видео готово, но памяти браузера недостаточно. Скачайте MP4.')}}
+ redraw();
+}
+function downloadVideo(id){
+ const video=videoBlobs.get(id);if(!video){status('Сначала создайте видео.');return}
+ const url=videoURLs.get(id),a=document.createElement('a');a.href=url;a.download='forma-video-'+Date.now()+'.mp4';document.body.append(a);a.click();a.remove();
+}
 async function deleteImage(id){
- snapshots.delete(id);const db=await mediaDB();if(!db)return;
- try{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(mediaKey(id))}catch{}
+ snapshots.delete(id);videoBlobs.delete(id);if(videoURLs.has(id)){URL.revokeObjectURL(videoURLs.get(id));videoURLs.delete(id)}
+ const db=await mediaDB();if(!db)return;
+ try{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(mediaKey(id));tx.objectStore('images').delete(mediaKey(id)+'__video')}catch{}
 }
 function read(){
  try{const o=JSON.parse(localStorage.getItem(KEY+'-'+project())||'null');if(o&&Array.isArray(o.nodes)&&Array.isArray(o.edges)&&o.nodes.length<=100&&o.edges.length<=180&&o.nodes.every(n=>TYPES[n.type]&&Number.isFinite(n.x)&&Number.isFinite(n.y)))return o}catch{}
@@ -150,6 +173,12 @@ function redraw(){
    const ref=n.type==='source'?$('#beforeImg'):null;
    const image=snapshots.get(n.id)||(ref&&(ref.currentSrc||ref.src))||'';
    if(image){pic.style.backgroundImage='linear-gradient(0deg,#071d1dcc,#071d1c0c),url("'+String(image).replace(/["']/g,'')+'")';pic.classList.add('has-image')}
+  }
+ }
+ for(const card of nodeLayer.querySelectorAll('.fa-node[data-node]')){
+  const n=node(card.dataset.node),url=n?.type==='video'?videoURLs.get(n.id):null;
+  if(url){const pic=card.querySelector('.fa-node-picture');pic.classList.add('has-video');
+   pic.innerHTML='<video controls muted playsinline preload="metadata" src="'+url+'" aria-label="Готовое видео ноды"></video>';
   }
  }
  drawLines();position();
@@ -345,7 +374,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
