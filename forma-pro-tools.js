@@ -179,7 +179,7 @@ function bindDetails(id,e){
   });
  }
  if(!modal){
-  $('[data-fa-pro],[data-fa-delete-shot]',e).forEach(b=>b.addEventListener('click',actions));
+  e.querySelectorAll('[data-fa-pro],[data-fa-delete-shot]').forEach(b=>b.addEventListener('click',actions));
  }
 }
 async function upscaleTo4K(){
