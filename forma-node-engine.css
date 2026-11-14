@@ -1,0 +1,38 @@
+
+/* ФОРМА / НОДЫ · акцент только на состоянии исполнения. */
+.fa-flow-head-actions .fa-flow-run-main{background:#d9c5a7;color:#1d302d;border-color:#baa686;padding:0 15px;font-weight:750}
+.fa-flow-head-actions .fa-flow-run-main:hover{background:#f1ddbc;color:#20332e}
+.fa-flow-head-actions .fa-flow-stop-main{background:#352d2c;border-color:#775f55;color:#f0ddd5}
+.fa-flow-head-actions .fa-flow-stop-main:hover:not(:disabled){background:#5f3734}
+.fa-flow-head-actions button:disabled{opacity:.4;cursor:not-allowed}
+.fa-node-bottom{gap:1px}
+.fa-node-bottom button{font-size:9px!important;padding:6px 3px!important;white-space:nowrap}
+.fa-node-bottom button[data-run-node]{color:#e1c9a3;font-weight:750}
+.fa-node-bottom button[data-run-node]:hover{background:#43564e}
+.fa-run-state{position:absolute;right:11px;top:-10px;z-index:3;padding:4px 8px;border-radius:5px;font:700 9px Inter,Arial,sans-serif;letter-spacing:.08em;background:#486c58;color:#f7fff5;box-shadow:0 3px 10px #0005}
+.fa-run-state[data-state=running]{background:#c7a87e;color:#24352c}
+.fa-run-state[data-state=error]{background:#985b52;color:#fff}
+.fa-run-state[data-state=cancelled]{background:#586566;color:#e5ebea}
+.fa-node.fa-node-running{border-color:#d9bf96;box-shadow:0 0 0 1px #c3a47d44,0 8px 27px #0006}
+.fa-node.fa-node-done{border-color:#648b77}
+.fa-node.fa-node-failed{border-color:#a56b62}
+.fa-flow-note .fa-flow-node-settings{border-top:1px solid #475750;margin-top:17px;padding-top:15px}
+.fa-flow-node-settings>b{display:block;margin-bottom:8px;color:#cdbb9c;font-size:9px;letter-spacing:.12em}
+.fa-flow-node-settings h4{font-size:13px;font-weight:630;margin:2px 0 12px;color:#e6ebe6}
+.fa-flow-node-settings .fa-flow-node-fields{display:flex;flex-direction:column;gap:9px}
+.fa-flow-node-settings label{display:flex;flex-direction:column;gap:6px;color:#9db2a9;font-size:10px;line-height:1.4}
+.fa-flow-node-settings select,.fa-flow-node-settings textarea{width:100%;min-height:34px;background:#263638;color:#eff0e9;border:1px solid #5a6d65;border-radius:6px;font:500 11px Inter,Arial,sans-serif;padding:7px 8px;box-sizing:border-box;resize:vertical}
+.fa-flow-node-settings select:focus-visible,.fa-flow-node-settings textarea:focus-visible{outline:2px solid #c5ae87;outline-offset:2px}
+.fa-flow-node-settings p,.fa-flow-node-settings small{display:block;color:#8ea29a;font-size:9px;line-height:1.6;margin:8px 0}
+@media(max-width:720px){
+ .fa-flow-head-actions .fa-flow-run-main{width:33px!important;padding:0;font-size:0}
+ .fa-flow-head-actions .fa-flow-run-main:before{content:"▶";font-size:14px}
+ .fa-flow-head-actions .fa-flow-stop-main{width:33px!important;padding:0;font-size:0}
+ .fa-flow-head-actions .fa-flow-stop-main:before{content:"■";font-size:13px}
+ .fa-flow-sidebar{overflow-y:auto!important}
+ #faFlowPalette{max-height:89px}
+ .fa-flow-note{display:block!important;margin:12px 3px 0;padding:10px 2px 0}
+ .fa-flow-note>b,.fa-flow-note>p,.fa-flow-note>small{display:none}
+ .fa-flow-node-settings{margin-top:0!important;padding-top:0!important;border:0!important}
+ .fa-flow-node-settings>small{display:none!important}
+}
