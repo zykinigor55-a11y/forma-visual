@@ -474,3 +474,84 @@ html.forma-scene-sheet-open{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
  #formaSceneSheet .forma-sun-pin{transition:none;animation:none}
 }
+
+
+/* Crisp visual selectors: 10 landscape categories, 4 distinct photographic previews each. */
+#formaSceneSheet .forma-environment-variants{
+ display:flex;flex-direction:column;gap:12px;margin-top:6px;
+ padding-top:18px;border-top:1px solid #51463e
+}
+#formaSceneSheet .forma-environment-variants-head{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap
+}
+#formaSceneSheet .forma-environment-variants-head strong{
+ font-size:13px;color:#f2e9df;font-weight:750
+}
+#formaSceneSheet .forma-environment-variants-head small{
+ font-size:10px;color:#aa9a89
+}
+#formaSceneSheet .forma-environment-auto{
+ align-self:flex-start;border:1px solid #55483e;background:#2e292b;color:#dfc7a9;
+ padding:9px 13px;min-height:36px;border-radius:8px;font-size:11px;cursor:pointer
+}
+#formaSceneSheet .forma-environment-auto.is-active{
+ background:#45372d;border-color:#c5a57d;color:#f1dbc1
+}
+#formaSceneSheet .forma-environment-photo-grid{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px
+}
+#formaSceneSheet .forma-environment-photo-card{
+ min-width:0;overflow:hidden;padding:0;background:#242326;border:1px solid #4c4541;
+ border-radius:12px;color:#f4e9db;text-align:left;cursor:pointer;
+ transition:border-color .18s,transform .18s,box-shadow .18s
+}
+#formaSceneSheet .forma-environment-photo-card:hover{
+ border-color:#ba9972;transform:translateY(-2px)
+}
+#formaSceneSheet .forma-environment-photo-card.is-active{
+ border-color:#e1c095;box-shadow:0 0 0 1px #ddbd9380
+}
+#formaSceneSheet .forma-environment-photo-card:focus-visible{
+ outline:2px solid #e3c49a;outline-offset:3px
+}
+#formaSceneSheet .forma-environment-photo-cover{
+ position:relative;display:block;aspect-ratio:1.42;background:#2a2929;
+ overflow:hidden;border-bottom:1px solid #48413a
+}
+#formaSceneSheet .forma-environment-photo-cover>img{
+ display:block;width:100%;height:100%;object-fit:cover;
+ object-position:center center;filter:none!important;opacity:1!important;
+ transform:none!important;image-rendering:auto;mix-blend-mode:normal!important
+}
+#formaSceneSheet .forma-environment-photo-check{
+ position:absolute;right:8px;top:8px;width:23px;height:23px;
+ display:grid;place-items:center;border:1px solid #9e8973;border-radius:50%;
+ background:#17181ab8;color:#f4dbb9;font-size:13px;line-height:1;
+ box-shadow:0 1px 10px #0007
+}
+#formaSceneSheet .forma-environment-photo-card.is-active .forma-environment-photo-check{
+ background:#e8cda7;border-color:#f7e6ce;color:#211a16
+}
+#formaSceneSheet .forma-environment-photo-caption{
+ display:flex;flex-direction:column;gap:5px;min-width:0;padding:11px 10px 13px
+}
+#formaSceneSheet .forma-environment-photo-caption strong{
+ color:#f1e5d6;font-size:11px;font-weight:750;line-height:1.3;
+ overflow-wrap:anywhere
+}
+#formaSceneSheet .forma-environment-photo-caption small{
+ color:#b1a397;font-size:9px;line-height:1.35;
+ display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden
+}
+@media(max-width:760px){
+ #formaSceneSheet .forma-environment-photo-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:9px
+ }
+ #formaSceneSheet .forma-environment-photo-cover{aspect-ratio:1.68}
+ #formaSceneSheet .forma-environment-photo-caption{padding:10px 10px 12px}
+ #formaSceneSheet .forma-environment-photo-caption strong{font-size:12px}
+ #formaSceneSheet .forma-environment-photo-caption small{font-size:10px;-webkit-line-clamp:2}
+}
+@media(prefers-reduced-motion:reduce){
+ #formaSceneSheet .forma-environment-photo-card{transition:none}
+}
