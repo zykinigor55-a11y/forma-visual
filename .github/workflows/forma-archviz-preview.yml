@@ -1,0 +1,51 @@
+name: FORMA ARCHVIZ · homepage screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/forma-archviz-studio
+    paths:
+      - .github/workflows/forma-archviz-preview.yml
+permissions:
+  contents: write
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/forma-archviz-studio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start application
+        run: |
+          nohup node server.mjs >/tmp/forma-server.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/forma-server.log
+          exit 1
+      - name: Capture real user interface
+        run: node tests/capture-homepage.mjs
+      - name: Upload viewable screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: forma-archviz-real-screenshots
+          path: docs/previews/*.png
+          retention-days: 20
+      - name: Save screenshots to review branch
+        run: |
+          git config user.name "FORMA Preview Bot"
+          git config user.email "forma-preview-bot@users.noreply.github.com"
+          git add docs/previews/forma-archviz-home-desktop.png docs/previews/forma-archviz-home-mobile.png docs/previews/forma-archviz-home-full.png
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(preview): capture real FORMA home screen [skip ci]"
+            git push origin HEAD:feature/forma-archviz-studio
+          fi
