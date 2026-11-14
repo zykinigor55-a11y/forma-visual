@@ -14,9 +14,17 @@ try{
  await page.locator('#faProUpscaleUpload').setInputFiles('assets/residence-render-bluehour-fixed.webp');
  await page.locator('#faProUpscalePreview').waitFor({state:'visible'});
  assert.match(await page.locator('#faProUpscaleInfo').textContent(),/residence-render-bluehour-fixed/);
- const result=page.waitForEvent('download',{timeout:30000});
+ const original=await page.locator('#faProUpscalePreview').evaluate(img=>({src:img.src.slice(0,80),naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight}));
+ console.log('Upscale source',JSON.stringify(original));
+ const result=page.waitForEvent('download',{timeout:12000});
  await page.locator('#faProjectToolContent [data-fa-pro="resize4k"]').click();
- const downloaded=await result;
+ let downloaded;
+ try{downloaded=await result}
+ catch(err){
+  const diag=await page.evaluate(()=>({status:document.querySelector('#faProjectStatus')?.textContent,script:!!window.FORMA_PRO,img:document.querySelector('#faProUpscalePreview')?.naturalWidth}));
+  console.error('Upscale diagnostic',JSON.stringify(diag),'pageErrors',JSON.stringify(errors));
+  throw err;
+ }
  assert.match(downloaded.suggestedFilename(),/forma-4k-\d+x\d+\.png/);
 
  // Switching tools must replace their inline settings, not open a modal.
