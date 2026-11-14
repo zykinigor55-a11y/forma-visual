@@ -55,6 +55,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <link rel="stylesheet" href="forma-home-tools.css?v=20261114-vizworkflow-02">
 <link rel="stylesheet" href="forma-signature-theme.css?v=20261114-signature-v1">
 <link rel="stylesheet" href="forma-mobile-ux.css?v=20261114-mobile-ux-v1">
+<link rel="stylesheet" href="forma-graphite-atelier.css?v=forma-premium-states-v1-20261115">
 <meta name="robots" content="noindex,nofollow">
 </head>
 <body>
@@ -166,31 +167,32 @@ html.forma-intro-pending #forma-intro{display:block}
    <input id="splitSlider" class="split-slider" type="range" min="0" max="100" value="36" aria-label="Сравнение скриншота и результата">
    <div class="viewer-overlay-top"><span class="image-tag image-tag-dark" id="resultTag">ДЕМОНСТРАЦИЯ</span></div>
    <div class="viewer-overlay-bottom"><div><small>АРХИТЕКТУРА / ЭКСТЕРЬЕР</small><strong id="stageTitle">Резиденция 01</strong><span id="stageSubtitle">Сад и газон · Лето · День</span></div><span class="image-badge" id="stageRatio">16:9</span></div>
-   <div class="render-progress" id="renderProgress" role="status" aria-live="polite" aria-atomic="false" hidden>
+   <div class="render-progress" id="renderProgress" role="dialog" aria-modal="false" aria-labelledby="renderProgressTitle" hidden>
     <div class="render-progress-panel">
-     <span class="render-progress-kicker"><i aria-hidden="true"></i> ФОРМА · AI-ВИЗУАЛИЗАЦИЯ</span>
-     <strong id="renderProgressTitle">Подготавливаем сцену</strong>
-     <span id="renderProgressDetail">Обрабатываем изображение и настройки</span>
-     <div class="render-progress-statline">
-      <div class="render-progress-value"><b id="renderProgressPercent" aria-hidden="true">2%</b><span>выполнено · оценка</span></div>
-      <div class="render-progress-left"><strong id="renderProgressRemaining" aria-hidden="true">Осталось ≈ 98%</strong><small>Расчётный прогресс</small></div>
+     <header class="render-progress-top">
+      <div class="render-progress-brand"><img src="assets/brand/forma-fa-mark.svg" alt="" width="32" height="32"><span><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ AI-СТУДИЯ</small></span></div>
+      <button type="button" id="renderProgressMinimize" class="render-progress-minimize" aria-label="Свернуть ход генерации">Свернуть <span aria-hidden="true">↗</span></button>
+     </header>
+     <div class="render-progress-canvas">
+      <img id="renderProgressSource" src="assets/residence-model-clean-approved-v36.png" alt="Исходная архитектурная модель">
+      <span class="render-progress-canvas-caption">ИСХОДНАЯ МОДЕЛЬ</span>
+      <span class="render-progress-light" aria-hidden="true"></span>
      </div>
-     <div class="render-progress-meter" id="renderProgressMeter" role="progressbar" aria-label="Ориентировочный ход генерации" aria-valuemin="0" aria-valuemax="100" aria-valuenow="2"><span id="renderProgressBar"></span></div>
+     <div class="render-progress-copy">
+      <span class="render-progress-kicker">ФОРМА / AI-ВИЗУАЛИЗАЦИЯ</span>
+      <strong id="renderProgressTitle">Подготавливаем архитектурный кадр</strong>
+      <span id="renderProgressDetail">Проверяем исходное изображение и параметры сцены</span>
+      <p class="render-progress-scene" id="renderProgressScene">Окружение · Сезон · Время суток</p>
+     </div>
      <div class="render-progress-steps" aria-label="Этапы создания изображения">
-      <div class="render-progress-step is-active" data-progress-phase="prepare">
-       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg></span>
-       <span class="render-progress-step-copy"><strong>Подготовка</strong><small>Исходник и настройки</small></span>
-      </div>
-      <div class="render-progress-step" data-progress-phase="ai">
-       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-spark"/></svg></span>
-       <span class="render-progress-step-copy"><strong>AI-рендер</strong><small>Создание фотографии</small></span>
-      </div>
-      <div class="render-progress-step" data-progress-phase="save">
-       <span class="render-progress-step-icon"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg></span>
-       <span class="render-progress-step-copy"><strong>Результат</strong><small>Сохранение в проект</small></span>
-      </div>
+      <div class="render-progress-step is-active" data-progress-phase="prepare"><span class="render-progress-step-icon" aria-hidden="true">01</span><span class="render-progress-step-copy"><strong>Подготовка</strong><small>Исходник и настройки</small></span></div>
+      <div class="render-progress-step" data-progress-phase="ai"><span class="render-progress-step-icon" aria-hidden="true">02</span><span class="render-progress-step-copy"><strong>AI-рендер</strong><small>Создание фотографии</small></span></div>
+      <div class="render-progress-step" data-progress-phase="save"><span class="render-progress-step-icon" aria-hidden="true">03</span><span class="render-progress-step-copy"><strong>Результат</strong><small>Сохранение в проект</small></span></div>
      </div>
-     <p class="render-progress-note" id="renderProgressHint">Процент ориентировочный: API Market не передаёт точный ход выполнения.</p>
+     <div class="render-progress-foot">
+      <span id="renderProgressElapsed" class="render-progress-elapsed">Прошло 00:00</span>
+      <span id="renderProgressHint">API Market не сообщает точный процент готовности</span>
+     </div>
     </div>
    </div>
    <div class="no-render" id="noRender" hidden><svg class="ico"><use href="#i-image"/></svg><strong>Результата пока нет</strong><span>Настройте сцену и запустите AI-визуализацию.</span></div>
@@ -744,7 +746,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <script src="dom-render-cinema-cards-fix-v45.js?v=mobile-atlas-performance-20261110-v52"></script>
 <script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
 <script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
-<script src="dom-render-progress-v53.js?v=ai-progress-20261110-v53"></script>
+<script src="dom-render-progress-v53.js?v=forma-premium-states-v54-20261115"></script>
 <script src="dom-render-wan30.js?v=wan30-trial-1"></script>
 <script defer src="forma-archviz-studio.js?v=20261114-studio-01"></script>
 <script defer src="forma-interiors.js?v=20261114-interior-01"></script>
@@ -756,5 +758,6 @@ html.forma-intro-pending #forma-intro{display:block}
 <script defer src="forma-static-preview.js?v=20261114-vizworkflow-02"></script>
 <script defer src="forma-signature-theme.js?v=20261114-signature-v1"></script>
 <script defer src="forma-mobile-ux.js?v=20261114-mobile-ux-v1"></script>
+<script defer src="forma-result-focus.js?v=forma-premium-states-v1-20261115"></script>
 </body>
 </html>
