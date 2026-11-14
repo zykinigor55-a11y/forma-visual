@@ -131,7 +131,6 @@
     b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));modes.append(b);
    }
    sunSection.append(actions,modes);
-   drawPin(info.sun);
    if(info.explicit?.time&&info.time==='night'){
     const night=document.createElement('p');night.className='forma-sun-night-hint';
     night.textContent='Выбрана ночь — положение солнца не применяется. Для солнечного света выбери утро, день или вечер.';
@@ -144,6 +143,7 @@
    }
   }
   body.append(sunSection);
+  if(!sheet.hidden)requestAnimationFrame(()=>drawPin(get().sun));
  }
  function drawPin(sun){
   const preview=sheet?.querySelector('#formaSunPreview'),pin=preview?.querySelector('.forma-sun-pin');
