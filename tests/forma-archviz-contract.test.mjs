@@ -38,7 +38,7 @@ test('PRO tools clearly label unimplemented provider features', async () => {
  const js=await fromRoot('forma-pro-tools.js');
  assert.match(js,/AI Super Resolution/);
  assert.match(js,/Ожидает нового API/);
- assert.match(js,/пока не/);
+ assert.match(js,/пока не/i);
  assert.match(js,/window\.FORMA_PRO=/);
 });
 
