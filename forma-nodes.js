@@ -133,7 +133,7 @@ function arrange(){
  const cols=new Map();
  graph.nodes.forEach(n=>{const d=depth.get(n.id)||0;if(!cols.has(d))cols.set(d,[]);cols.get(d).push(n)});
  for(const [d,ns] of cols)ns.forEach((n,i)=>{n.x=55+d*267;n.y=45+i*215});
- graph.pan={x:60,y:40};graph.zoom:.78;save();redraw();
+ graph.pan={x:60,y:40};graph.zoom=.78;save();redraw();
 }
 function click(e){
  const b=e.target.closest('button');if(!b)return;
@@ -143,7 +143,7 @@ function click(e){
  if(b.id==='faFlowImport'){$('#faFlowFile')?.click();return}
  if(b.id==='faFlowArrange'){arrange();return}
  if(b.id==='faFlowDelete'){remove();return}
- if(b.id==='faFlowCenter'){graph.pan={x:40,y:40};graph.zoom:.78;save();position();return}
+ if(b.id==='faFlowCenter'){graph.pan={x:40,y:40};graph.zoom=.78;save();position();return}
  if(b.id==='faFlowPlus'||b.id==='faFlowMinus'){graph.zoom=Math.max(.3,Math.min(1.5,graph.zoom*(b.id==='faFlowPlus'?1.2:1/1.2)));save();position();return}
  if(a.addNode){add(a.addNode);return}
  if(a.fork){add('exterior',a.fork);return}
