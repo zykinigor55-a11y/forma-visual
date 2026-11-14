@@ -45,6 +45,7 @@
   {id:'account',name:'Аккаунты и тарифы',desc:'Подготовка коммерческого SaaS',group:'system',state:'pending',note:'Нужен сервер',type:'pro'},
   {id:'release',name:'Контроль публикации',desc:'Проверки и чек-лист запуска',group:'system',state:'local',note:'Локально',type:'pro'}
  ];
+ const NODE_TYPES={upscale:'upscale',render:'exterior',interior:'interior',materials:'materials',animation:'video',geometry:'geometry',image3d:'image3d'};
  const badge=t=>t.state==='local'?'ЛОКАЛЬНО':t.state==='api'?'ТРЕБУЕТ API':'ПОДКЛЮЧЕНИЕ';
  let current='upscale',filter='all',panel=null;
  function nav(name){
@@ -67,16 +68,23 @@
  function choose(id){
   const tool=tools.find(t=>t.id===id);if(!tool)return;
   current=id;
-  if(tool.type==='pro'){
+  const detail=$('#faProjectToolContent'),title=$('#faHomeToolTitle'),short=$('#faHomeToolSub');
+  if(title)title.textContent=tool.name;
+  if(short)short.textContent=tool.desc;
+  if(id==='nodes'){window.FORMA_NODES?.open?.()}
+  else if(NODE_TYPES[id]&&detail){
+   detail.innerHTML='<div class="fa-home-route-context"><span>ФОРМА / НОДОВАЯ РАБОТА</span><h4>'+tool.name+'</h4><p>'+tool.desc+'</p>'+
+    '<p>Добавьте этап к рабочей схеме, соедините с предыдущим изображением, настройте параметры и запускайте. Все полученные результаты сохраняются в нодах.</p>'+
+    '<button type="button" class="fa-home-add-node" data-fa-add-node="'+NODE_TYPES[id]+'">+ Добавить в нодовую схему</button>'+
+    (tool.state==='pending'?'<p class="fa-home-node-caution">Этот модуль требует собственного AI-движка. Без подключения генерация недоступна.</p>':'')+'</div>';
+  }else if(id==='world'&&detail){
+   detail.innerHTML='<div class="fa-home-route-context"><span>ИНТЕРАКТИВНАЯ СЦЕНА</span><h4>3D-мир</h4><p>Просмотр моделей GLB в рабочем пространстве ФОРМА.</p><iframe class="fa-home-world-frame" src="forma-world.html" title="3D-мир ФОРМА" loading="lazy"></iframe></div>';
+  }else if(id==='gallery'&&detail){
+   detail.innerHTML='<div class="fa-home-route-context"><span>ИСТОРИЯ ПРОЕКТА</span><h4>Галерея</h4><p>Результаты рендеринга и нодовые кадры привязаны к текущему проекту.</p><button type="button" class="fa-home-add-node" data-fa-home-gallery>Посмотреть галерею проекта</button></div>';
+  }else if(tool.type==='pro'){
    window.FORMA_PRO?.open?.(id);
-  }else{
-   const detail=$('#faProjectToolContent');
-   if(detail)detail.innerHTML='<div class="fa-home-route-context"><span>РАБОЧИЙ МОДУЛЬ</span><h4>'+tool.name+'</h4><p>'+tool.desc+'</p><p>Этот инструмент открывается в рабочей панели проекта. Все его параметры и результаты связаны с текущим проектом.</p><div class="fa-home-route-hint">Основные настройки: справа от изображения · История результатов: в галерее проекта</div></div>';
-   const title=$('#faHomeToolTitle');if(title)title.textContent=tool.name;
-   const short=$('#faHomeToolSub');if(short)short.textContent='Рабочий модуль проекта';
-   openRoute(id);
   }
-  $$('.fa-home-tool',panel).forEach(b=>{const selected=b.dataset.toolId===id;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
+  $('.fa-home-tool',panel).forEach(b=>{const selected=b.dataset.toolId===id;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
  }
  function filterTools(value){
   filter=value;
@@ -104,6 +112,9 @@
   panel.innerHTML=renderPanel();
   viewer.insertAdjacentElement('afterend',panel);
   panel.addEventListener('click',e=>{
+   const nodeButton=e.target.closest('[data-fa-add-node]');
+   if(nodeButton){window.FORMA_NODES?.openAndAdd?.(nodeButton.dataset.faAddNode);return}
+   if(e.target.closest('[data-fa-home-gallery]')){const b=$('[data-open-cabinet="account"]');if(b){b.click();requestAnimationFrame(()=>$('[data-cabinet-tab="gallery"]')?.click())}return}
    const filterButton=e.target.closest('[data-filter]');
    if(filterButton){filterTools(filterButton.dataset.filter);return}
    const tool=e.target.closest('[data-tool-id]');
