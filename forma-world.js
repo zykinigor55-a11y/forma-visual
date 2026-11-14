@@ -3,6 +3,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {RGBELoader} from 'three/addons/loaders/RGBELoader.js';
 
 /* ФОРМА / Архитектурный 3D-мир.
  * Local GLB, physical PBR light, responsive walk-through, screenshots and bookmarks.
@@ -54,6 +55,7 @@ const pmrem=new THREE.PMREMGenerator(renderer);
 const env=pmrem.fromScene(new RoomEnvironment(),.04);
 scene.environment=env.texture;
 scene.environmentIntensity=.28;
+let hdri=null,shotBusy=false;
 const materials={
  facade:new THREE.MeshStandardMaterial({color:'#c8c5ba',roughness:.87}),
  concrete:new THREE.MeshStandardMaterial({color:'#969b97',roughness:.91}),
@@ -283,8 +285,47 @@ function frame(){
  requestAnimationFrame(frame);
  const dt=walkClock.getDelta();
  if(mode==='walk')renderWalk(dt);else orbit.update();
- renderer.render(scene,camera);
+ if(!shotBusy)renderer.render(scene,camera);
 }
+async function export4K(){
+ if(shotBusy){info('Экспорт кадра уже выполняется.');return}
+ shotBusy=true;
+ const max=renderer.capabilities.maxTextureSize;
+ if(max<3840){shotBusy=false;info('Видеоустройство не поддерживает 4K, используйте обычный PNG.');return}
+ const prevW=Math.max(1,viewport.clientWidth),prevH=Math.max(1,viewport.clientHeight),oldRatio=renderer.getPixelRatio(),oldAspect=camera.aspect;
+ try {
+  info('Создаём кадр 3840 × 2160 — модель и материалы не меняются…');
+  renderer.setPixelRatio(1);renderer.setSize(3840,2160,false);
+  camera.aspect=3840/2160;camera.updateProjectionMatrix();renderer.render(scene,camera);
+  const blob=await new Promise(resolve=>renderer.domElement.toBlob(resolve,'image/png'));
+  if(!blob)throw Error('Не удалось сохранить изображение');
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='FORMA-3D-4K-'+Date.now()+'.png';document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+  info('4K-кадр сохранён. Это рендер текущей 3D-сцены, не результат нейросети.');
+ }catch(error){info('Экспорт 4K не выполнен: '+error.message)}
+ finally{
+  renderer.setPixelRatio(oldRatio);renderer.setSize(prevW,prevH,false);
+  camera.aspect=oldAspect;camera.updateProjectionMatrix();shotBusy=false;
+ }
+}
+async function loadHDR(file){
+ if(!file)return;
+ if(!/\.hdr$/i.test(file.name)||file.size>50*1024*1024||file.size<100){info('Выберите файл окружения .hdr до 50 МБ.');return}
+ const url=URL.createObjectURL(file);
+ try{
+  const hdr=await new RGBELoader().loadAsync(url);
+  hdr.mapping=THREE.EquirectangularReflectionMapping;
+  const next=pmrem.fromEquirectangular(hdr);
+  hdr.dispose();
+  if(hdri)hdri.dispose();
+  hdri=next;
+  scene.environment=next.texture;scene.environmentIntensity=.9;
+  info('HDR-освещение '+file.name+' загружено. Отражения рассчитаны локально.');
+ }catch(error){info('HDR не удалось прочитать: '+error.message)}
+ finally{URL.revokeObjectURL(url)}
+}
+function resetHDR(){if(hdri){hdri.dispose();hdri=null}scene.environment=env.texture;scene.environmentIntensity=.28;info('Возвращено стандартное освещение студии.');}
 function saveShot(){
  const w=renderer.domElement.width,h=renderer.domElement.height;
  try{
@@ -341,7 +382,10 @@ orbitButton.addEventListener('click',()=>enterMode('orbit'));
 lightControl.addEventListener('change',()=>setLight(lightControl.value));
 $('#fwFov').addEventListener('input',e=>{camera.fov=Number(e.target.value);camera.updateProjectionMatrix();$('#fwFovValue').textContent=camera.fov+'°'});
 $('#fwShot').addEventListener('click',saveShot);
+$('#fwShot4K').addEventListener('click',export4K);
+$('#fwHDRFile').addEventListener('change',e=>{const f=e.target.files?.[0];e.target.value='';loadHDR(f)});
+$('#fwDefaultHDR').addEventListener('click',resetHDR);
 $('#fwBookmark').addEventListener('click',bookmarkCamera);
 $('#fwReturn').addEventListener('click',restoreCamera);
-window.FORMA_WORLD={loadFile,demoHouse,setLight,enterMode,get scene(){return scene},get loadedFile(){return source},get mode(){return mode}};
+window.FORMA_WORLD={loadFile,demoHouse,setLight,enterMode,export4K,loadHDR,get scene(){return scene},get loadedFile(){return source},get mode(){return mode}};
 demoHouse();setLight('day');resize();frame();
