@@ -5,6 +5,10 @@ on:
     branches: [feature/forma-archviz-studio]
     paths:
       - .github/workflows/forma-render-preview.yml
+      - forma-home-tools.js
+      - forma-home-tools.css
+      - forma-pro-tools.js
+      - index.html
   workflow_dispatch:
 
 permissions:
@@ -38,6 +42,7 @@ jobs:
             forma-interiors.js forma-interiors.css \
             forma-nodes.js forma-nodes.css \
             forma-pro-tools.js forma-pro-tools.css \
+            forma-home-tools.js forma-home-tools.css \
             forma-intro.js forma-intro.css \
             forma-static-preview.js \
             assets/brand
