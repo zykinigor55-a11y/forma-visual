@@ -1,8 +1,8 @@
-/* FORMA / ARCHITECTURAL SIGNATURE · actual-load opening, no fake progress.
-   Shows once per tab and dismisses as soon as the browser has loaded all critical page resources. */
+/* FORMA / ARCHITECTURAL SIGNATURE · staged fade-in, no fake progress.
+   Shows once per tab; dismisses when critical page resources are ready and the brief FA reveal is complete. */
 (() => {
  'use strict';
- const SESSION_KEY='forma-opening-seen-v3';
+ const SESSION_KEY='forma-opening-seen-v4';
  const root=document.documentElement;
  const overlay=document.getElementById('forma-intro');
  const skip=document.getElementById('formaIntroSkip');
@@ -56,15 +56,15 @@
   requestAnimationFrame(()=>requestAnimationFrame(()=>{if(active)overlay.classList.add('is-revealed')}));
   if(force){
    // Replay is an optional visual presentation, never a mandatory wait on normal visits.
-   if(!previewHold)setTimeout(()=>{if(active)finish()},1750);
+   if(!previewHold)setTimeout(()=>{if(active)finish()},2650);
    return;
   }
   if(previewHold)return;
   const started=performance.now();
   const maybeClose=()=>{
    if(!active)return;
-   // Short optical buffer prevents a one-frame flash on fast loads; no 5s hold.
-   const buffer=Math.max(0,420-(performance.now()-started));
+   // Allow the wall-first FA reveal and wordmark to finish on the initial visit; never hold for the old 5s.
+   const buffer=Math.max(0,2600-(performance.now()-started));
    setTimeout(()=>{if(active){text('Рабочая студия готова');overlay.classList.add('is-ready');finish()}},buffer);
   };
   if(document.readyState==='complete')maybeClose();
