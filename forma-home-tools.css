@@ -131,3 +131,9 @@
  .fa-home-heading p{max-width:235px}
 }
 @media(prefers-reduced-motion:reduce){.fa-home-tool{transition:none!important}}
+
+.fa-home-route-context{display:flex;flex-direction:column;gap:12px;min-height:240px;padding:6px 2px 15px}
+.fa-home-route-context>span{font-size:9px;color:#a58d6d;font-weight:750;letter-spacing:.15em}
+.fa-home-route-context h4{color:#263f35;font-size:23px;letter-spacing:-.04em;font-weight:570;margin:0}
+.fa-home-route-context p{color:#71837a;font-size:11px;line-height:1.65;margin:0}
+.fa-home-route-hint{padding:13px 15px;border:1px solid #dbe5dc;border-radius:8px;background:#f1f5f0;color:#466656;font-size:10px;line-height:1.55}
