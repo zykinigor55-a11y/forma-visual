@@ -15,6 +15,9 @@ on:
       - forma-intro.js
       - assets/brand/intro-graphite-wall.svg
       - assets/brand/intro-branch-shadows.svg
+concurrency:
+  group: forma-archviz-preview
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
