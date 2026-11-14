@@ -28,6 +28,50 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function project(){try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'demo'}catch{return 'demo'}}
 function initial(){return {nodes:START.map(n=>({...n})),edges:START_EDGES.map(([from,to])=>({from,to})),pan:{x:70,y:35},zoom:.75,count:7,selected:'n3'}}
 let graph,modal=null,world=null,lines=null,nodeLayer=null,drag=null,pending=null;
+const snapshots=new Map();let dbPromise=null;
+function mediaDB(){
+ if(dbPromise)return dbPromise;
+ dbPromise=new Promise(resolve=>{
+  if(!('indexedDB' in window)){resolve(null);return}
+  try{
+   const req=indexedDB.open('forma-archviz-node-media-v1',1);
+   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('images'))req.result.createObjectStore('images')};
+   req.onsuccess=()=>resolve(req.result);req.onerror=()=>resolve(null);
+  }catch{resolve(null)}
+ });
+ return dbPromise;
+}
+function mediaKey(id){return project()+'__'+id}
+async function restoreImages(){
+ snapshots.clear();const db=await mediaDB();if(!db)return;
+ await Promise.all(graph.nodes.map(n=>new Promise(resolve=>{
+  const tx=db.transaction('images','readonly');
+  const req=tx.objectStore('images').get(mediaKey(n.id));
+  req.onsuccess=()=>{if(req.result)snapshots.set(n.id,req.result);resolve()};
+  req.onerror=()=>resolve();
+ })));
+ if(modal)redraw();
+}
+async function pinImage(id){
+ const target=node(id),ref=$('#afterImg');
+ if(!target||!ref||!ref.src){status('Нет изображения для сохранения в эту ноду');return}
+ const image=ref.currentSrc||ref.src;
+ if(!image){status('Сначала создайте или выберите изображение');return}
+ snapshots.set(id,image);
+ const db=await mediaDB();
+ if(db){
+  try{await new Promise((resolve,reject)=>{
+   const tx=db.transaction('images','readwrite');
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+   tx.objectStore('images').put(image,mediaKey(id));
+  })}catch{status('Кадр отображается, но не удалось сохранить его в памяти')}
+ }
+ redraw();status('Текущий кадр закреплён за нодой «'+target.title+'».');
+}
+async function deleteImage(id){
+ snapshots.delete(id);const db=await mediaDB();if(!db)return;
+ try{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(mediaKey(id))}catch{}
+}
 function read(){
  try{const o=JSON.parse(localStorage.getItem(KEY+'-'+project())||'null');if(o&&Array.isArray(o.nodes)&&Array.isArray(o.edges)&&o.nodes.length<=100&&o.edges.length<=180&&o.nodes.every(n=>TYPES[n.type]&&Number.isFinite(n.x)&&Number.isFinite(n.y)))return o}catch{}
  return initial();
@@ -52,14 +96,15 @@ function redraw(){
   card.style.left=n.x+'px';card.style.top=n.y+'px';card.dataset.node=n.id;
   card.innerHTML=`<div class="fa-node-top" data-move="${esc(n.id)}"><span class="fa-node-symbol">${t.icon}</span><div><small>${t.kind}</small><b>${esc(n.title||t.title)}</b></div><button type="button" data-fork="${esc(n.id)}" title="Добавить ответвление">+</button></div>
   <div class="fa-node-picture"><span>${esc(t.text)}</span></div>
-  <div class="fa-node-bottom"><button type="button" data-open-step="${esc(n.id)}">Открыть инструмент ↗</button><button type="button" data-rename="${esc(n.id)}" aria-label="Переименовать ноду">✎</button></div>
+  <div class="fa-node-bottom"><button type="button" data-open-step="${esc(n.id)}">Открыть ↗</button><button type="button" data-pin="${esc(n.id)}" title="Закрепить текущий результат в ноде" aria-label="Закрепить текущий кадр">◫</button><button type="button" data-rename="${esc(n.id)}" aria-label="Переименовать ноду">✎</button></div>
   ${t.input?`<button type="button" class="fa-node-port input" data-port-in="${esc(n.id)}" aria-label="Вход"></button>`:''}
   ${t.out?`<button type="button" class="fa-node-port output ${pending===n.id?'pending':''}" data-port-out="${esc(n.id)}" aria-label="Выход"></button>`:''}`;
   nodeLayer.append(card);
   const pic=$('.fa-node-picture',card);
   if(n.type==='source'||['exterior','interior','lighting','materials','geometry','upscale','video','export'].includes(n.type)){
-   const ref=n.type==='source'?$('#beforeImg'):$('#afterImg');
-   if(ref?.src){pic.style.backgroundImage='linear-gradient(0deg,#071d1dcc,#071d1c0c),url("'+String(ref.currentSrc||ref.src).replace(/["']/g,'')+'")';pic.classList.add('has-image')}
+   const ref=n.type==='source'?$('#beforeImg'):null;
+   const image=snapshots.get(n.id)||(ref&&(ref.currentSrc||ref.src))||'';
+   if(image){pic.style.backgroundImage='linear-gradient(0deg,#071d1dcc,#071d1c0c),url("'+String(image).replace(/["']/g,'')+'")';pic.classList.add('has-image')}
   }
  }
  drawLines();position();
@@ -94,14 +139,15 @@ function remove(){
  if(!graph.selected)return;
  graph.nodes=graph.nodes.filter(n=>n.id!==graph.selected);
  graph.edges=graph.edges.filter(e=>e.from!==graph.selected&&e.to!==graph.selected);
- graph.selected=graph.nodes[0]?.id||null;pending=null;save();redraw();
+ graph.selected=graph.nodes[0]?.id||null;pending=null;deleteImage(id);save();redraw();
 }
 function openStep(id){
  const n=node(id);if(!n)return;
  const action=TYPES[n.type].action;close();
  if(action==='interior'){window.FORMA_INTERIORS?.open?.();return}
  if(action==='qa'){$('#formaQaToggle')?.click();return}
- if(action==='image3d'){status('Для 3D необходим отдельный API — раздел пока готовится');return}
+ if(action==='image3d'){window.FORMA_PRO?.open?.('image3d');return}
+ if(n.type==='upscale'){window.FORMA_PRO?.open?.('upscale');return}
  document.querySelector('[data-nav="'+action+'"]')?.click();
  if(action==='project')$('#projectUpload')?.focus();
 }
@@ -150,6 +196,7 @@ function click(e){
  if(a.portOut){pending=a.portOut;redraw();status('Выберите вход другой ноды или нажмите Escape.');return}
  if(a.portIn){if(pending)link(pending,a.portIn);else status('Сначала нажмите выход исходной ноды.');return}
  if(a.openStep){openStep(a.openStep);return}
+ if(a.pin){pinImage(a.pin);return}
  if(a.rename){const n=node(a.rename),title=prompt('Название ноды',n.title);if(title?.trim()){n.title=title.trim().slice(0,70);save();redraw()}return}
 }
 function down(e){
@@ -198,7 +245,7 @@ function open(){
  viewport.addEventListener('pointerup',up);viewport.addEventListener('pointercancel',up);
  $('#faFlowFile').addEventListener('change',e=>{importJSON(e.target.files?.[0]);e.target.value=''});
  document.addEventListener('keydown',keydown);
- redraw();
+ redraw();restoreImages();
 }
 function close(){if(!modal)return;save();modal.remove();modal=world=lines=nodeLayer=null;drag=pending=null;document.body.classList.remove('fa-flow-is-open');document.removeEventListener('keydown',keydown)}
 function init(){
