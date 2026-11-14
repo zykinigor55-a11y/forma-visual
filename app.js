@@ -248,7 +248,7 @@ const choices = {
 };
 const zones = [['main','Стены фасада'],['accent','Декоративная отделка'],['base','Цоколь'],['roof','Кровля'],['windows','Оконные рамы'],['doors','Двери'],['terrace','Терраса'],['steps','Ступени'],['custom','Другой участок']];
 const catalog = [['plaster','Штукатурка','mat-plaster.jpg'],['travertine','Травертин','mat-travertine.jpg'],['limestone','Природный камень','mat-limestone.jpg'],['wood','Дерево','mat-wood.jpg'],['brick','Клинкер','mat-brick.jpg'],['concrete','Бетон','mat-concrete.jpg'],['metal','Металл','mat-metal.jpg'],['ceramic','Керамогранит','mat-ceramic.jpg'],['glass','Стекло','mat-glass.jpg']];
-const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},materialInstructions:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false,homeChanges:'',batchDetail1X:60,batchDetail1Y:60,batchDetail2X:77,batchDetail2Y:40});
+const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',sceneExplicit:{},sunLighting:null,ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},materialInstructions:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false,homeChanges:'',batchDetail1X:60,batchDetail1Y:60,batchDetail2X:77,batchDetail2Y:40});
 const makeProject=(name='Новый проект',isDemo=false)=>({id:isDemo?'demo':uuid(),name,createdAt:Date.now(),modifiedAt:Date.now(),demo:isDemo,settings:defaultSettings(),renders:[],activeRender:null,reference:null,sourceWidth:1672,sourceHeight:941,hasSource:isDemo,angle:1});
 const STKEY='domrender_mvp_projects_v1', MTKEY='domrender_mvp_materials_v1';
 let projects=[],project=null,customMaterials=[],currentTab='project',materialTab='mine',viewerMode=localStorage.getItem('domrender_view_mode')||'slider';
@@ -385,18 +385,37 @@ function setViewerMode(mode){
 
 /* Two clear studio modes: preset atmosphere or four editable scene settings. */
 const SCENE_SETUP_FIELDS=['environment','season','weather','time'];
+function explicitScene(){
+ const s=current();if(!s)return {};
+ if(!s.sceneExplicit){
+  // Migrate stored projects without pretending the untouched garden/summer/cloud defaults were selected.
+  const defaults=defaultSettings();s.sceneExplicit={};
+  for(const key of [...SCENE_SETUP_FIELDS,'plants']){
+   if(s[key]!==defaults[key])s.sceneExplicit[key]=true;
+  }
+  if(s.sceneMood)for(const key of ['season','weather','time'])s.sceneExplicit[key]=true;
+ }
+ return s.sceneExplicit;
+}
+function sceneVisibleSummary(){
+ const s=current(),flags=explicitScene();
+ const values={environment:envLabel(),season:cLabel('season',s.season),weather:cLabel('weather',s.weather),time:cLabel('time',s.time)};
+ const manual=SCENE_SETUP_FIELDS.filter(key=>flags[key]).map(key=>values[key]);
+ return manual.length?(manual.join(' · ')+(manual.length<4?' · Остальное по исходнику':'')):'По исходному изображению · Без изменений атмосферы';
+}
 function renderFlowLabels(){
  if(!project||!$('renderSummaryLine'))return;
  const p=current(),values={
   environment:envLabel(),season:cLabel('season',p.season),weather:cLabel('weather',p.weather),
   time:cLabel('time',p.time),plants:cLabel('plants',p.plants)
  };
+ const overrides=explicitScene();
  for(const k of [...SCENE_SETUP_FIELDS,'plants']){
   const el=$('renderSettingValue-'+k);
-  if(el)el.textContent=values[k];
+  if(el)el.textContent=overrides[k]?values[k]:'По исходнику';
  }
- $('renderAutoEnvironmentValue').textContent=values.environment;
- $('renderSummaryLine').textContent=[values.environment,values.season,values.weather,values.time].join(' · ');
+ $('renderAutoEnvironmentValue').textContent=overrides.environment?values.environment:'По исходнику';
+ $('renderSummaryLine').textContent=sceneVisibleSummary();
  const locked=p.lockGeometry!==false&&p.preserveMaterials!==false;
  $('renderSummaryLock').classList.toggle('is-warning',!locked);
  $('renderSummaryLockText').textContent=locked?
@@ -950,7 +969,16 @@ function settingsBrief(){
   const chosen=customMaterials.find(m=>m.id===materialId);
   return chosen?[[name,chosen.name]]:[];
  }));
- return {project:project.name,source:project.hasSource?'Скриншот':'Нет',environment:envLabel(),environmentInstructions:environments.find(e=>e[0]===s.environment)?.[2],time:cLabel('time',s.time),weather:cLabel('weather',s.weather),season:cLabel('season',s.season),plants:cLabel('plants',s.plants),sceneMood:s.sceneMood||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',homeChanges:String(s.homeChanges||'').trim().slice(0,600),lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.'}}
+ const flags=explicitScene();
+ return {project:project.name,source:project.hasSource?'Скриншот':'Нет',
+ environment:flags.environment?envLabel():null,
+ environmentInstructions:flags.environment?(environments.find(e=>e[0]===s.environment)?.[2]):null,
+ time:flags.time?cLabel('time',s.time):null,
+ weather:flags.weather?cLabel('weather',s.weather):null,
+ season:flags.season?cLabel('season',s.season):null,
+ plants:flags.plants?cLabel('plants',s.plants):null,
+ sunLighting:s.sunLighting||null,
+ sceneMood:s.sceneMood||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',homeChanges:String(s.homeChanges||'').trim().slice(0,600),lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.'}}
 function showBrief(){const text=JSON.stringify(settingsBrief(),null,2);modal('Техническое задание',`<p class="muted">Собрано автоматически из выбранных карточек. Пользователю не требуется писать промпт.</p><pre>${eHTML(text)}</pre>`,[{label:'Скопировать',primary:true,click:async()=>{try{await navigator.clipboard.writeText(text);toast('Бриф скопирован')}catch{downloadText('dom-render-brief.json',text,'application/json')}closeModal()}},{label:'Скачать JSON',click:()=>downloadText('dom-render-brief.json',text,'application/json')}])}
 function downloadText(filename,text,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
 function downloadDataURL(url,filename){const a=document.createElement('a');a.href=url;a.download=filename;a.click()}
@@ -1112,20 +1140,20 @@ async function applyWandPreview(){
 function asPNGMask(baseWidth,baseHeight){const total=maskCanvas.width*maskCanvas.height;if(!total||!selectedMaskPixels())return null;const cn=document.createElement('canvas');cn.width=baseWidth;cn.height=baseHeight;const ctx=cn.getContext('2d');ctx.fillStyle='rgba(0,0,0,1)';ctx.fillRect(0,0,cn.width,cn.height);ctx.globalCompositeOperation='destination-out';ctx.drawImage(maskCanvas,0,0,cn.width,cn.height);ctx.globalCompositeOperation='source-over';return cn.toDataURL('image/png')}
 function getImageSize(url){return imageFrom(url).then(im=>({w:im.naturalWidth,h:im.naturalHeight}))}
 function imageSizeForRatio(ratio){return {'16:9':'1536x864','3:2':'1536x1024','4:3':'1360x1024','1:1':'1024x1024','9:16':'864x1536'}[ratio]||'1536x864'}
-async function generate(options={}){if(rendering)return;if(!project.hasSource){toast('Сначала загрузите скриншот');return}if(!aiConnected){$('generateText').textContent='Проверяем подключение…';$('generateBtn').disabled=true;try{await checkAPI(30000)}finally{$('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию'}if(!aiConnected){toast(apiCheckError||'Генерация сейчас недоступна. Проверьте подключение API Market.');return}}if(Number(current().quantity)>1&&!confirm('Вы выбрали '+current().quantity+' варианта. Каждый AI-рендер оплачивается по тарифу API. Продолжить?'))return;rendering=true;const generationProjectId=project.id;let focusResult=null;setRenderProgress('Подготавливаем изображение','Проверяем ракурс, материалы и параметры сцены');$('generateBtn').disabled=true;$('generateText').textContent='Генерация…';$('providerFoot').textContent='AI обрабатывает изображение. Не закрывайте страницу.';try{const editRequested=options?.materialEdit===true;
+async function generate(options={}){if(rendering)return;if(!project.hasSource){toast('Сначала загрузите скриншот');return}if(!aiConnected){$('generateText').textContent='Проверяем подключение…';$('generateBtn').disabled=true;try{await checkAPI(30000)}finally{$('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию'}if(!aiConnected){toast(apiCheckError||'Генерация сейчас недоступна. Проверьте подключение API Market.');return}}if(Number(current().quantity)>1&&!confirm('Вы выбрали '+current().quantity+' варианта. Каждый AI-рендер оплачивается по тарифу API. Продолжить?'))return;rendering=true;const generationProjectId=project.id;let focusResult=null;setRenderProgress('Подготавливаем изображение','Проверяем ракурс, материалы и параметры сцены');$('generateBtn').disabled=true;$('generateText').textContent='Генерация…';$('providerFoot').textContent='AI обрабатывает изображение. Не закрывайте страницу.';try{const editRequested=options?.materialEdit===true;const relight=options?.relight===true;
 const instruction=editRequested?materialInstruction().trim():'';
 const useMask=editRequested&&current().editSelectedOnly&&selectedMaskPixels()>0;
 const textOnly=editRequested&&!useMask&&options?.textRequested===true;
 if(textOnly&&!instruction)throw Error('Опишите изменение выбранного элемента дома.');
 if(editRequested&&!useMask&&!textOnly)throw Error('Сначала выделите поверхность либо воспользуйтесь текстовым запросом.');
 const action=materialAction(),editMode=useMask?(action==='color'?'recolor':'replace'):textOnly?'text':null;
-const base=editRequested?(renderURL||sourceURL):sourceURL; // Edits target the current visual; ordinary full-scene rendering uses the original screenshot.
+const base=(editRequested||relight)?(renderURL||sourceURL):sourceURL; // Initial render uses source. Only explicit edit/relight uses the active result.
 const imSize=await getImageSize(base);
 const maskData=useMask?asPNGMask(imSize.w,imSize.h):null;
 const m=matById(current().mats[current().zone]);
 if(useMask&&editMode==='replace'&&!m.custom&&!instruction)throw Error('Для замены выберите фактуру или опишите новый материал текстом.');
 const materialData=useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?await getMedia('material_'+m.id):null;
-if(useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly&&!materialData)throw Error('Загрузите выбранную фактуру повторно.');let refData=null;if(current().keepReference&&!renderURL&&!project.demo){refData=await getMedia(mediaKey('ref'))}else if(current().keepReference&&project.reference){refData=await getMedia(mediaKey(project.reference))}const payload={image:await urlToDataURL(base),mask:maskData,material:materialData,reference:refData,brief:options?.materialPromptOnly?{...settingsBrief(),materials:{}}:settingsBrief(),selectedZone:editRequested?zoneLabel():null,zoneId:editRequested?current().zone:null,editMode,editAction:editRequested?action:null,materialInstruction:editRequested?instruction:null,targetColor:editRequested&&action==='color'?materialColor():null,materialName:useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?m.name:null,materialDimensions:useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?{width:m.width||0,height:m.height||0}:null,size:imageSizeForRatio(current().ratio),quality:current().quality,quantity:Number(current().quantity)};setRenderProgress('AI создаёт визуализацию','Сервер обрабатывает сцену. Время зависит от сложности изображения.');const ac=new AbortController();const id=setTimeout(()=>ac.abort(),240000);let response;try{response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ac.signal})}finally{clearTimeout(id)}const data=await response.json().catch(()=>({error:'Некорректный ответ сервера'}));if(!response.ok||!Array.isArray(data.images)||!data.images.length)throw new Error((data.error||'Сервер не вернул изображение')+(data.requestId?' · Код запроса: '+data.requestId:''));if(project.id!==generationProjectId)throw Error('Проект изменился во время генерации. Результат не должен сохраняться в другой проект.');setRenderProgress('Сохраняем результат','Добавляем изображение в галерею проекта');for(const [index,out] of data.images.entries()){const id='r'+uuid().slice(0,8);const url='data:'+(data.mimes?.[index]||'image/png')+';base64,'+out;try{await setMedia(mediaKey('render_'+id),url)}catch(storageErr){console.warn('[FORMA] AI image received but browser storage failed:',storageErr?.name||'storage_error');window.FORMA_RENDER_STORAGE_WARNING=true}project.renders.push({id,number:project.renders.length+1,createdAt:Date.now()});project.activeRender=id;renderURL=url}if(current().keepReference){await setMedia(mediaKey('ref'),renderURL);project.reference='ref'}save();await loadProject(project.id);setViewerMode('result');focusResult={image:renderURL,project:project.name,scene:document.getElementById('renderSummaryLine')?.textContent};window.DOM_RENDER_PROGRESS?.complete?.();toast(window.FORMA_RENDER_STORAGE_WARNING?'Изображение получено, но память браузера заполнена. Скачайте кадр сейчас: после перезагрузки он может исчезнуть.':(data.warning||'AI-визуализация готова. Сохраните изображение через галерею.'));window.FORMA_RENDER_STORAGE_WARNING=false}catch(err){toast((err.name==='AbortError'?'Превышено время ожидания. Генерация могла продолжиться у провайдера; проверьте историю и баланс перед повтором.':err.message)||'Ошибка генерации')}finally{rendering=false;stopRenderProgress();$('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию';$('providerFoot').textContent=aiConnected?'Nano Banana подключена':'Демо: AI не подключён';if(focusResult)requestAnimationFrame(()=>window.FORMA_RESULT_FOCUS?.show?.(focusResult))}}
+if(useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly&&!materialData)throw Error('Загрузите выбранную фактуру повторно.');let refData=null;if(!relight&&current().keepReference&&!renderURL&&!project.demo){refData=await getMedia(mediaKey('ref'))}else if(!relight&&current().keepReference&&project.reference){refData=await getMedia(mediaKey(project.reference))}const payload={image:await urlToDataURL(base),mask:maskData,material:materialData,reference:refData,brief:relight?{...settingsBrief(),homeChanges:'',materials:{},preserveMaterials:true}:options?.materialPromptOnly?{...settingsBrief(),materials:{}}:settingsBrief(),relightOnly:relight,selectedZone:editRequested?zoneLabel():null,zoneId:editRequested?current().zone:null,editMode,editAction:editRequested?action:null,materialInstruction:editRequested?instruction:null,targetColor:editRequested&&action==='color'?materialColor():null,materialName:useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?m.name:null,materialDimensions:useMask&&editMode==='replace'&&m.custom&&!options?.materialPromptOnly?{width:m.width||0,height:m.height||0}:null,size:imageSizeForRatio(current().ratio),quality:current().quality,quantity:relight?1:Number(current().quantity)};setRenderProgress('AI создаёт визуализацию','Сервер обрабатывает сцену. Время зависит от сложности изображения.');const ac=new AbortController();const id=setTimeout(()=>ac.abort(),240000);let response;try{response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ac.signal})}finally{clearTimeout(id)}const data=await response.json().catch(()=>({error:'Некорректный ответ сервера'}));if(!response.ok||!Array.isArray(data.images)||!data.images.length)throw new Error((data.error||'Сервер не вернул изображение')+(data.requestId?' · Код запроса: '+data.requestId:''));if(project.id!==generationProjectId)throw Error('Проект изменился во время генерации. Результат не должен сохраняться в другой проект.');setRenderProgress('Сохраняем результат','Добавляем изображение в галерею проекта');for(const [index,out] of data.images.entries()){const id='r'+uuid().slice(0,8);const url='data:'+(data.mimes?.[index]||'image/png')+';base64,'+out;try{await setMedia(mediaKey('render_'+id),url)}catch(storageErr){console.warn('[FORMA] AI image received but browser storage failed:',storageErr?.name||'storage_error');window.FORMA_RENDER_STORAGE_WARNING=true}if(relight)await setMedia(mediaKey('input_'+id),base).catch(()=>{});project.renders.push({id,number:project.renders.length+1,createdAt:Date.now(),...(relight?{batchLabel:'Новое освещение'}:{})});project.activeRender=id;renderURL=url}if(current().keepReference&&!relight){await setMedia(mediaKey('ref'),renderURL);project.reference='ref'}save();await loadProject(project.id);setViewerMode('result');focusResult={image:renderURL,project:project.name,scene:document.getElementById('renderSummaryLine')?.textContent};window.DOM_RENDER_PROGRESS?.complete?.();toast(window.FORMA_RENDER_STORAGE_WARNING?'Изображение получено, но память браузера заполнена. Скачайте кадр сейчас: после перезагрузки он может исчезнуть.':(data.warning||'AI-визуализация готова. Сохраните изображение через галерею.'));window.FORMA_RENDER_STORAGE_WARNING=false}catch(err){toast((err.name==='AbortError'?'Превышено время ожидания. Генерация могла продолжиться у провайдера; проверьте историю и баланс перед повтором.':err.message)||'Ошибка генерации')}finally{rendering=false;stopRenderProgress();$('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию';$('providerFoot').textContent=aiConnected?'Nano Banana подключена':'Демо: AI не подключён';if(focusResult)requestAnimationFrame(()=>window.FORMA_RESULT_FOCUS?.show?.(focusResult))}}
 const BATCH_SHOTS=[
  {id:'original',label:'01 · Исходный ракурс',title:'Исходный ракурс'},
  {id:'front',label:'02 · Фронтальный вид',title:'Фронтальный вид'},
@@ -1315,7 +1343,7 @@ function syncDemoWithSettings(){
 function setDemoScene(id,applySettings=true){
  const p=SCENE_PRESETS[id];if(!p)return;
  if(applySettings){
-  Object.assign(current(),{season:p.season,weather:p.weather,time:p.time,sceneMood:id});
+  Object.assign(current(),{season:p.season,weather:p.weather,time:p.time,sceneMood:id});for(const key of ['season','weather','time'])explicitScene()[key]=true;
   renderChoices();renderFooter();save();
   toast('Атмосфера «'+p.title+'» сохранена: сезон, погода и свет обновлены. Окружение участка осталось прежним.');
  }
@@ -1490,9 +1518,36 @@ for(const name of ['batchDetail1X','batchDetail1Y','batchDetail2X','batchDetail2
 }
 $('batchStart').onclick=generateBatch;
 $('dialogClose').onclick=closeModal;$('dialogCover').onclick=e=>{if(e.target===$('dialogCover'))closeModal()}}
-function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;current()[group]=btn.dataset.choice;if(['time','season','weather'].includes(group))current().sceneMood=null;renderChoices();renderFooter();save();if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();if(SCENE_SETUP_FIELDS.includes(group))openRenderPicker(null);toast('Выбрано: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
+function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;explicitScene()[group]=true;current()[group]=btn.dataset.choice;if(['time','season','weather'].includes(group))current().sceneMood=null;renderChoices();renderFooter();save();if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();if(SCENE_SETUP_FIELDS.includes(group))openRenderPicker(null);toast('Выбрано: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
 /* Bridge between the production project/media store and the node executor.
    No demo assets or secrets are exposed; nodes run against the user's source only. */
+window.FORMA_SCENE_BRIDGE={
+ get(){
+  if(!project)return null;
+  const s=current();return {explicit:{...explicitScene()},time:s.time,weather:s.weather,
+   sun:s.sunLighting||null,hasSource:!!project.hasSource,hasRender:!!renderURL,
+   sourceImage:sourceURL,renderImage:renderURL,sceneSummary:sceneVisibleSummary()};
+ },
+ resetField(group){
+  if(!['environment','season','weather','time','plants'].includes(group))return;
+  delete explicitScene()[group];
+  current().sceneMood=null;renderFlowLabels();renderFooter();save();
+ },
+ setSun(position){
+  if(!project||!project.hasSource)return false;
+  const x=Math.max(0,Math.min(1,Number(position?.x)));
+  const y=Math.max(0,Math.min(1,Number(position?.y)));
+  if(!Number.isFinite(x)||!Number.isFinite(y))return false;
+  current().sunLighting={x:Math.round(x*1000)/1000,y:Math.round(y*1000)/1000,
+   softness:['soft','natural','defined'].includes(position?.softness)?position.softness:'natural'};
+  save();return true;
+ },
+ resetSun(){if(!project)return;current().sunLighting=null;save()},
+ relight(){
+  if(!project?.hasSource||!renderURL){toast('Сначала создайте визуализацию');return}
+  return generate({relight:true});
+ }
+};
 window.FORMA_RENDER_BRIDGE={
   async capture(){
     if(!project||project.demo||!project.hasSource)throw Error('Загрузите свой скриншот в проект перед запуском цепочки.');
