@@ -13,7 +13,7 @@
  const status=document.getElementById('formaIntroProgressStatus');
  const waitLabel=document.getElementById('formaIntroWait');
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
- let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false,pageLoaded=document.readyState==='complete';
+ let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false;
  let lastFocus=null,paintStart=0;
  const timers=new Set();
  const addTimeout=(task,ms)=>{
@@ -34,7 +34,7 @@
  }
  function ready(){
   // The only source of truth for initialized projects is the core app.
-  return pageLoaded&&(window.FORMA_APP_READY===true);
+  return window.FORMA_APP_READY===true;
  }
  function revealStudio(force=false){
   if(!active||closing||previewHold&&!force||!force&&(!minimumPassed||!ready()))return;
@@ -94,12 +94,11 @@
    checkReadiness();
   }));
  }
- window.addEventListener('load',()=>{pageLoaded=true;checkReadiness()},{once:true});
  document.addEventListener('forma:app-ready',()=>checkReadiness());
  document.addEventListener('DOMContentLoaded',()=>{if(active)lockWorkspace(true)},{once:true});
  recover?.addEventListener('click',()=>revealStudio(true));
  // For navigation restored from browser back-forward cache: rerun the SAME sequence.
- window.addEventListener('pageshow',event=>{if(event.persisted){pageLoaded=true;begin()}});
+ window.addEventListener('pageshow',event=>{if(event.persisted)begin()});
  window.FORMA_INTRO={
   replay:()=>begin(),
   enter:()=>revealStudio(true),
