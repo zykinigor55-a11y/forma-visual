@@ -3,6 +3,8 @@
 (() => {
  'use strict';
  const init=()=>{
+  // Render serves the real application. Only static file/GitHub Pages is an AI-free preview.
+  if(location.protocol!=='file:'&&!/\.github\.io$/i.test(location.hostname))return;
   if(document.getElementById('formaPreviewNotice'))return;
   const banner=document.createElement('aside');
   banner.id='formaPreviewNotice';
