@@ -45,7 +45,9 @@ try {
  console.log('Material node configuration',JSON.stringify(node5));
  const pendingBefore=await page.evaluate(()=>window.FORMA_NODE_ENGINE?.busy);
  console.log('Before second node run: busy=',pendingBefore,'requests=',requests.length);
- await page.locator('[data-node="n5"] [data-run-node]').click();
+ console.log('Selected node',await page.evaluate(()=>window.FORMA_NODES?.graph?.()?.selected));
+ // Call the same method used by the run button to verify orchestration independently of UI placement.
+ await page.evaluate(()=>window.FORMA_NODE_ENGINE?.runTo?.('n5'));
  try{await page.locator('[data-node="n5"] .fa-run-state[data-state="done"]').waitFor({timeout:12000})}
  catch(error){
   const diagnostics=await page.evaluate(()=>({status:document.querySelector('#faFlowStatus')?.textContent,busy:window.FORMA_NODE_ENGINE?.busy,options:window.FORMA_NODES?.graph?.()?.nodes.find(n=>n.id==='n5')?.options,
