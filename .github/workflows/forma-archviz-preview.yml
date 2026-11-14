@@ -61,5 +61,7 @@ jobs:
           git add docs/previews/forma-archviz-home-desktop.png docs/previews/forma-archviz-home-mobile.png docs/previews/forma-archviz-home-full.png docs/previews/forma-opening-wall-desktop.png docs/previews/forma-opening-logo-desktop.png docs/previews/forma-opening-wall-mobile.png docs/previews/forma-opening-logo-mobile.png
           if ! git diff --cached --quiet; then
             git commit -m "docs(preview): capture real FORMA home screen [skip ci]"
+            git fetch origin feature/forma-archviz-studio
+            git rebase -X theirs FETCH_HEAD
             git push origin HEAD:feature/forma-archviz-studio
           fi
