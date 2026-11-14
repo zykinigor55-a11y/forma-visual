@@ -42,7 +42,8 @@ const START_EDGES=[['n1','n2'],['n1','n3'],['n2','n4'],['n3','n5'],['n4','n6'],[
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function project(){try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'demo'}catch{return 'demo'}}
 function initial(){return {nodes:START.map(n=>({...n,options:{}})),edges:START_EDGES.map(([from,to])=>({from,to})),pan:{x:70,y:35},zoom:.75,count:7,selected:'n2'}}
-let graph,modal=null,world=null,lines=null,nodeLayer=null,drag=null,pending=null;
+let graph,modal=null,world=null,lines=null,nodeLayer=null,drag=null,pending=null,lastWireDrop=0;
+let undoStack=[],redoStack=[],lastGraphJSON='';
 const snapshots=new Map(),videoBlobs=new Map(),videoURLs=new Map();let dbPromise=null;
 const HISTORY_PREFIX='forma-archviz-node-history-v1-';
 function historyIndex(){try{const arr=JSON.parse(localStorage.getItem(HISTORY_PREFIX+project())||'[]');return Array.isArray(arr)?arr.filter(x=>x&&/^n\d+$/.test(x.node)&&/^[a-z0-9_:-]{1,90}$/i.test(x.key)).slice(0,300):[]}catch{return []}}
@@ -144,7 +145,21 @@ function read(){
  try{const o=JSON.parse(localStorage.getItem(KEY+'-'+project())||'null');if(o&&Array.isArray(o.nodes)&&Array.isArray(o.edges)&&o.nodes.length<=100&&o.edges.length<=180&&o.nodes.every(n=>TYPES[n.type]&&Number.isFinite(n.x)&&Number.isFinite(n.y)))return o}catch{}
  return initial();
 }
-function save(){try{localStorage.setItem(KEY+'-'+project(),JSON.stringify(graph))}catch{status('Не удалось сохранить схему в браузере')}}
+function save(){
+ try{
+  const json=JSON.stringify(graph);
+  if(lastGraphJSON&&json!==lastGraphJSON){undoStack.push(lastGraphJSON);if(undoStack.length>70)undoStack.shift();redoStack=[]}
+  lastGraphJSON=json;localStorage.setItem(KEY+'-'+project(),json);
+ }catch{status('Не удалось сохранить схему в браузере')}
+}
+function stepHistory(direction){
+ const from=direction==='undo'?undoStack:redoStack,to=direction==='undo'?redoStack:undoStack;
+ if(!from.length){status(direction==='undo'?'Отменять больше нечего.':'Нет действий для повтора.');return}
+ to.push(JSON.stringify(graph));graph=JSON.parse(from.pop());lastGraphJSON=JSON.stringify(graph);
+ try{localStorage.setItem(KEY+'-'+project(),lastGraphJSON)}catch{}
+ pending=null;redraw();
+ status(direction==='undo'?'Последнее действие отменено.':'Действие восстановлено.');
+}
 function node(id){return graph.nodes.find(n=>n.id===id)}
 function canLink(from,to){
  if(from===to)return false;
@@ -290,6 +305,8 @@ function click(e){
  const a=b.dataset;
  if(b.id==='faFlowClose'){close();return}
  if(b.id==='faFlowRunChain'){window.FORMA_NODE_ENGINE?.runTo?.(graph.selected);return}
+ if(b.id==='faFlowUndo'){stepHistory('undo');return}
+ if(b.id==='faFlowRedo'){stepHistory('redo');return}
  if(b.id==='faFlowCompare'){showCompare();return}
  if(b.id==='faFlowStopChain'){window.FORMA_NODE_ENGINE?.stop?.();return}
  if(b.id==='faFlowExport'){exportJSON();return}
@@ -327,18 +344,21 @@ function move(e){
 }
 function up(){if(drag){save();redraw()}drag=null}
 function keydown(e){
+ const editing=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
+ if(!editing&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();stepHistory(e.shiftKey?'redo':'undo');return}
+ if(!editing&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();stepHistory('redo');return}
  if(e.key==='Escape'){if(pending){pending=null;redraw()}else close()}
- if(e.key==='Delete'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))remove();
+ if(e.key==='Delete'&&!editing)remove();
 }
 function open(){
  if(modal)return;
- graph=read();
+ graph=read();lastGraphJSON=JSON.stringify(graph);undoStack=[];redoStack=[];
  modal=document.createElement('div');modal.id='faFlowBackdrop';modal.className='fa-flow-backdrop';
  modal.innerHTML=`<div class="fa-flow-shell" role="dialog" aria-modal="true" aria-label="Нодовый редактор ФОРМА">
  <div class="fa-flow-head"><div class="fa-flow-logo"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div class="fa-flow-name"><b>ФОРМА <span>/ НОДЫ</span></b><small>Профессиональные цепочки визуализации</small></div>
  <div class="fa-flow-head-actions"><button type="button" id="faFlowCompare" title="Сравнение двух результатов">Сравнение A/B</button><button type="button" id="faFlowRunChain" class="fa-flow-run-main" title="Запустить ветку до выделенной ноды">▶ Запустить</button><button type="button" id="faFlowStopChain" class="fa-flow-stop-main" disabled>Стоп</button><button type="button" id="faFlowArrange">Упорядочить</button><button type="button" id="faFlowExport">Экспорт JSON</button><button type="button" id="faFlowImport">Импорт</button><input type="file" id="faFlowFile" accept=".json,application/json" hidden><button type="button" id="faFlowClose" aria-label="Закрыть">×</button></div></div>
  <div class="fa-flow-main"><aside class="fa-flow-sidebar"><h3>Библиотека нод</h3><small>Добавляйте узлы на холст</small><div id="faFlowPalette"></div><div class="fa-flow-note"><b>Как работать</b><p>Добавьте операцию и соедините её вход с выходом предыдущей. Один исходник может запускать несколько веток.</p><small>Настройки справа. Результаты хранятся в нодах. Новые AI-этапы оплачиваются отдельно после подтверждения.</small></div></aside>
- <section class="fa-flow-center"><div class="fa-flow-controls"><span id="faFlowCount">0 нод</span><div><button id="faFlowMinus" type="button">−</button><span id="faFlowZoom">75%</span><button id="faFlowPlus" type="button">+</button><button id="faFlowCenter" type="button">Центр</button></div></div>
+ <section class="fa-flow-center"><div class="fa-flow-controls"><span id="faFlowCount">0 нод</span><div><button type="button" id="faFlowUndo" title="Отменить Ctrl+Z" aria-label="Отменить действие">↶</button><button type="button" id="faFlowRedo" title="Повторить Ctrl+Shift+Z" aria-label="Повторить действие">↷</button><button id="faFlowMinus" type="button">−</button><span id="faFlowZoom">75%</span><button id="faFlowPlus" type="button">+</button><button id="faFlowCenter" type="button">Центр</button></div></div>
  <div id="faFlowViewport" class="fa-flow-viewport" tabindex="0"><div id="faFlowWorld" class="fa-flow-world"><svg id="faFlowLines" width="2600" height="2100" xmlns="http://www.w3.org/2000/svg"></svg><div id="faFlowNodes"></div></div></div>
  <div class="fa-flow-bottom"><span id="faFlowStatus" role="status">Выберите ноду, настройте её справа и запустите ветку.</span><button type="button" id="faFlowDelete">Удалить ноду</button></div></section><aside class="fa-flow-inspector" id="faFlowInspector"><div class="fa-inspector-header"><small>ФОРМА / ПАРАМЕТРЫ</small><h3 id="faFlowInspectorTitle">Выберите этап</h3><p>Параметры, история и готовые результаты остаются на рабочем холсте.</p></div><div id="faFlowNodeSettings" class="fa-flow-node-settings" aria-label="Настройки выбранного этапа"></div></aside></div></div>`;
  document.body.append(modal);document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
