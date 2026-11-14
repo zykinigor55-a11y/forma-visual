@@ -1,0 +1,306 @@
+/* FORMA / GRAPHITE ATELIER · 2026-11-15
+ * Graphite, warm ivory, champagne, bronze. No green AI accents.
+ * A cinematic generation focus and full-screen saved render review.
+ */
+html[data-forma-theme="dark"]{
+ --fa-back:#121214;--fa-canvas:#171719;--fa-panel:#1e1e20;--fa-card:#242326;--fa-elev:#2c2a2d;
+ --fa-field:#29272a;--fa-ink:#f6f1e9;--fa-muted:#b6ada3;--fa-line:#403b39;--fa-line-strong:#66574b;
+ --fa-accent:#d3b28c;--fa-accent-text:#c4a583;--fa-side:#151517;--fa-active:#40342e;--fa-hover:#302b2a;
+ --bg:#121214;--paper:#242326;--ink:#f6f1e9;--muted:#b6ada3;--dark:#151517;--rail:#151517;
+ --green:#c8a781;--chosen:#40342e;--hair:#403b39;--soft:#2c2a2d;--soft2:#1e1e20;
+}
+html[data-forma-theme="light"]{
+ --fa-back:#f3f0ec;--fa-canvas:#ece8e2;--fa-panel:#faf8f5;--fa-card:#fffdfa;--fa-elev:#f1ece6;
+ --fa-field:#f5f0eb;--fa-ink:#292522;--fa-muted:#72675e;--fa-line:#ddd3c9;--fa-line-strong:#ac977e;
+ --fa-accent:#ad845f;--fa-accent-text:#936d47;--fa-side:#faf8f5;--fa-active:#eee0d1;--fa-hover:#f1e8dd;
+ --bg:#f3f0ec;--paper:#fffdfa;--ink:#292522;--muted:#72675e;--dark:#292522;--rail:#faf8f5;
+ --green:#ad845f;--chosen:#eee0d1;--hair:#ddd3c9;--soft:#f1ece6;--soft2:#faf8f5;
+}
+html[data-forma-theme] :is(.mobile-account-btn,.forma-chip,.status,.status.ready,.scene-panel-heading,.scene-choice-panel,.scene-choice-trigger,.scene-setup-header,.mood-current,.scene-auto-environment,.render-summary-card,.angle-consistency,.render-status-card,.materials-quick-panel,.cinema-select,.cinema-selector,.cinema-preview-panel,.model-status,.fa-home-panel-count){
+ color:var(--fa-ink)!important;background:var(--fa-card)!important;border-color:var(--fa-line)!important
+}
+html[data-forma-theme] :is(.status-dot,.status.ready .status-dot,.forma-chip span,.mood-current-bullet,.scene-mode-switch .active:before,.scene-current-bullet){
+ background:var(--fa-accent)!important;box-shadow:none!important
+}
+html[data-forma-theme] :is(.eyebrow,.inspector-kicker,.scene-setup-eyebrow,.render-progress-kicker,.mood-current small,.scene-variants-eyebrow,.scene-panel-heading small,.render-setup-eyebrow,.forma-nav-section,.section-label,.fa-home-heading>span){
+ color:var(--fa-accent-text)!important
+}
+html[data-forma-theme] :is(.tab.active,.view-mode.active,.scene-mode-switch .active,.mood-card.active,.mood-card[aria-pressed="true"],.scene-variant-card.active,.scene-choice-item.selected,.image-option.active,.preset-photo-card.active,.render-jump-btn.active,.rail-btn.active,.mobile-nav button.active){
+ background:var(--fa-active)!important;color:var(--fa-ink)!important;border-color:var(--fa-accent)!important;box-shadow:0 0 0 1px #c0a18218!important
+}
+html[data-forma-theme] :is(.tab,.view-mode,.scene-mode-switch button,.scene-choice-item,.scene-choice-trigger,.mood-card,.image-option,.preset-photo-card,.scene-variant-card,.render-jump-btn,.rail-btn,.mobile-nav button){
+ color:var(--fa-ink);border-color:var(--fa-line)
+}
+html[data-forma-theme] :is(.btn-primary,.btn-dark,.forma-hero-primary,.scene-action-primary,.scene-variant-run,.generate-btn,.fa-pro-action.primary){
+ background:linear-gradient(120deg,#e7cda9,#bd9571)!important;border-color:#b98f69!important;color:#201911!important;
+ box-shadow:none!important
+}
+html[data-forma-theme] :is(.btn-primary,.btn-dark,.forma-hero-primary,.scene-action-primary,.scene-variant-run,.generate-btn):hover{
+ background:linear-gradient(120deg,#f2dabe,#c49e79)!important
+}
+html[data-forma-theme] :is(.btn-outline,.btn-quiet,.btn-sm,.icon-button,.scene-auto-env-change,.fa-pro-action:not(.primary)){
+ color:var(--fa-ink)!important;border-color:var(--fa-line)!important;background:var(--fa-card)!important
+}
+html[data-forma-theme] :is(.btn-outline,.btn-quiet,.btn-sm,.icon-button,.scene-auto-env-change):hover{
+ background:var(--fa-hover)!important;border-color:var(--fa-accent)!important
+}
+html[data-forma-theme] :is(.scene-demo-top,.scene-demo-bottom,.scene-demo-actions,.scene-variant-status,.render-summary-lock,.stage-toolbar,.inspector-footer,.viewer-footer,.render-setup){
+ color:var(--fa-ink)!important;border-color:var(--fa-line)!important
+}
+html[data-forma-theme] :is(.stage,.viewer-card,.viewer-toolbar,.view-modes,.viewer-footer,.inspector,.tab-panel,.panel-section-title,.inspector-head,.under-viewer,.render-jump,.forma-workflow-card,.fa-home-tool){
+ border-color:var(--fa-line)!important
+}
+html[data-forma-theme] :is(.scene-setup-v37,.scene-choice-panel,.scene-mode-switch,.scene-variants-panel,.scene-variants-grid,.batch-section,.animation-panel,.animation-controls){
+ --green:var(--fa-accent);--chosen:var(--fa-active);--hair:var(--fa-line);
+}
+html[data-forma-theme] :is(.status.ready,.stage .image-tag-dark,.scene-mode-switch .active,.scene-demo-control,.scene-variants-status){
+ color:var(--fa-accent-text)!important
+}
+html[data-forma-theme] :is(input:not([type="checkbox"]),textarea,select,.forma-command-head input){
+ accent-color:var(--fa-accent)
+}
+html[data-forma-theme] :is(input[type="checkbox"],input[type="radio"],input[type="range"]){
+ accent-color:var(--fa-accent)!important
+}
+html[data-forma-theme] :is(.mobile-header,.mobile-nav,.topline,.forma-context-bar,.inspector,.viewer-card,.viewer-toolbar,.viewer-footer){
+ box-shadow:none;border-color:var(--fa-line)!important
+}
+html[data-forma-theme] .stage{background:var(--fa-elev)!important}
+html[data-forma-theme] .stage img{filter:none}
+html[data-forma-theme] :is(.scene-variants-panel,.fa-home-tool-details,.mood-current,.render-progress-note){background:var(--fa-panel)!important}
+html[data-forma-theme] .rail{background:var(--fa-side)!important}
+html[data-forma-theme] .rail .rail-btn.active{color:var(--fa-accent)!important}
+html[data-forma-theme] .forma-hero .eyebrow{color:#dbc5a8!important}
+html[data-forma-theme] .viewer-overlay-top .image-tag{background:#292728dc;color:#e4d2b8;border-color:#998065}
+html[data-forma-theme] .scene-variant-ico .scene-light{fill:#d4b28e}
+html[data-forma-theme] .fa-home-tool-status{color:var(--fa-accent-text)!important}
+html[data-forma-theme] .fa-theme-switch-track{background:var(--fa-elev)!important}
+/* CINEMATIC RENDER FOCUS · fixed even when the original DOM node lives within stage */
+html[data-forma-theme] #renderProgress[hidden]{display:none!important}
+html[data-forma-theme] #renderProgress:not([hidden]){
+ position:fixed!important;inset:0!important;z-index:3100!important;
+ padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom))!important;
+ margin:0!important;display:flex!important;justify-content:center!important;align-items:center!important;
+ overflow-y:auto!important;overscroll-behavior:contain;
+ background:rgba(8,8,10,.84)!important;backdrop-filter:blur(18px) saturate(.6)!important;
+ pointer-events:auto!important;isolation:isolate
+}
+html[data-forma-theme] #renderProgress:not([hidden])::before{display:none!important}
+html[data-forma-theme] #renderProgress .render-progress-panel{
+ position:relative!important;width:min(620px,100%)!important;max-width:620px!important;
+ max-height:calc(100dvh - 42px)!important;overflow:auto!important;
+ padding:0!important;margin:0 auto!important;gap:0!important;
+ display:flex!important;flex-direction:column!important;
+ background:#1b1a1c!important;border:1px solid #544b44!important;border-radius:19px!important;
+ box-shadow:0 28px 105px rgba(0,0,0,.68)!important;color:#f4eee6!important;text-align:left!important;
+ backdrop-filter:none!important
+}
+html[data-forma-theme] #renderProgress .render-progress-top{
+ display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px 22px;
+ border-bottom:1px solid #3c3633
+}
+html[data-forma-theme] #renderProgress .render-progress-brand{display:flex;align-items:center;gap:11px;min-width:0}
+html[data-forma-theme] #renderProgress .render-progress-brand img{
+ width:32px;height:32px;object-fit:contain;background:#2d2928;border:1px solid #554637;
+ padding:5px;border-radius:7px
+}
+html[data-forma-theme] #renderProgress .render-progress-brand span{display:flex;flex-direction:column;gap:2px;min-width:0}
+html[data-forma-theme] #renderProgress .render-progress-brand strong{font-size:12px!important;font-weight:750;letter-spacing:.13em;color:#f3eee7}
+html[data-forma-theme] #renderProgress .render-progress-brand small{font-size:9px;letter-spacing:.08em;color:#ae9e8e}
+html[data-forma-theme] #renderProgress .render-progress-minimize{
+ padding:9px 12px;border:1px solid #585047;background:#282426;border-radius:8px;
+ font-size:11px;white-space:nowrap;color:#dcc6ae;cursor:pointer
+}
+html[data-forma-theme] #renderProgress .render-progress-minimize:hover{border-color:#c2a27f;background:#353033}
+html[data-forma-theme] #renderProgress .render-progress-canvas{
+ height:clamp(130px,24dvh,205px);min-height:110px;position:relative;
+ overflow:hidden;background:linear-gradient(135deg,#2b2828,#111114);isolation:isolate
+}
+html[data-forma-theme] #renderProgress .render-progress-canvas>img{
+ display:block;width:100%;height:100%;object-fit:contain;opacity:.81;
+ filter:grayscale(.24) brightness(.75)
+}
+html[data-forma-theme] #renderProgress .render-progress-canvas::after{
+ content:"";position:absolute;inset:0;
+ background:linear-gradient(0deg,#151416ec 0%,transparent 49%,#1311132b 100%);pointer-events:none
+}
+html[data-forma-theme] #renderProgress .render-progress-canvas-caption{
+ position:absolute;left:20px;bottom:17px;z-index:3;font-size:9px;color:#d5c3b0;
+ letter-spacing:.16em;font-weight:750
+}
+html[data-forma-theme] #renderProgress .render-progress-light{
+ position:absolute;z-index:2;top:0;bottom:0;left:-24%;width:17%;pointer-events:none;
+ transform:skewX(-16deg);filter:blur(20px);
+ background:linear-gradient(90deg,transparent,#e1c2a626,transparent);
+ animation:forma-atelier-glint 7s ease-in-out infinite;
+}
+@keyframes forma-atelier-glint{0%,15%{transform:translateX(0) skewX(-16deg);opacity:0}35%{opacity:.7}65%,100%{transform:translateX(790%) skewX(-16deg);opacity:0}}
+html[data-forma-theme] #renderProgress .render-progress-copy{display:flex;flex-direction:column;gap:8px;padding:22px 24px 20px}
+html[data-forma-theme] #renderProgress .render-progress-kicker{
+ display:block!important;font-size:9px!important;color:#c4a581!important;letter-spacing:.15em!important;
+ font-weight:750!important
+}
+html[data-forma-theme] #renderProgress #renderProgressTitle{
+ display:block;font-size:clamp(23px,3vw,30px)!important;line-height:1.2!important;font-weight:600!important;
+ letter-spacing:-.045em!important;color:#f6f1e9!important
+}
+html[data-forma-theme] #renderProgress #renderProgressDetail{font-size:12px!important;color:#c4bbb0!important;line-height:1.5!important}
+html[data-forma-theme] #renderProgress .render-progress-scene{
+ display:block;max-width:100%;padding:9px 11px;border:1px solid #4c4036;
+ border-radius:7px;background:#342d29;color:#d5b792;font-size:11px;line-height:1.4
+}
+html[data-forma-theme] #renderProgress .render-progress-steps{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;
+ padding:0 24px 20px!important;margin:0!important;border:0!important;width:100%!important
+}
+html[data-forma-theme] #renderProgress .render-progress-step{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important;
+ padding:12px 10px;border:1px solid #3e3835;border-radius:9px;background:#242224;
+ opacity:.53;min-width:0;text-align:left!important;transition:opacity .2s,border-color .2s,background .2s
+}
+html[data-forma-theme] #renderProgress .render-progress-step.is-active{
+ opacity:1;border-color:#b99a76;background:#322b27;box-shadow:inset 0 0 0 1px #b99a7619
+}
+html[data-forma-theme] #renderProgress .render-progress-step.is-done{
+ opacity:1;border-color:#675747;background:#2a2625
+}
+html[data-forma-theme] #renderProgress .render-progress-step-icon{
+ display:grid!important;place-items:center;width:30px!important;height:30px!important;min-width:30px!important;
+ border-radius:7px;background:#38312b!important;border:1px solid #675846!important;
+ color:#e2c39e!important;font:700 10px Inter,Arial,sans-serif
+}
+html[data-forma-theme] #renderProgress .render-progress-step.is-active .render-progress-step-icon{
+ background:#c6a47b!important;color:#201915!important;box-shadow:0 0 19px #b795683b
+}
+html[data-forma-theme] #renderProgress .render-progress-step.is-done .render-progress-step-icon{
+ background:#554637!important;color:#e5ccae!important;border-color:#ad8e6a!important
+}
+html[data-forma-theme] #renderProgress .render-progress-step-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+html[data-forma-theme] #renderProgress .render-progress-step-copy strong{
+ font-size:12px!important;color:#f2ebe1!important;letter-spacing:-.01em;font-weight:650
+}
+html[data-forma-theme] #renderProgress .render-progress-step-copy small{font-size:10px!important;color:#ad9f8e!important;line-height:1.3}
+html[data-forma-theme] #renderProgress .render-progress-foot{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding:14px 24px 19px;border-top:1px solid #3b3633
+}
+html[data-forma-theme] #renderProgress .render-progress-elapsed{
+ color:#e0cfb9;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap
+}
+html[data-forma-theme] #renderProgress #renderProgressHint{font-size:10px!important;color:#a9a098!important;text-align:right;line-height:1.4}
+html[data-forma-theme] #renderProgress.is-complete .render-progress-canvas{filter:brightness(1.07)}
+/* Minimized background status, always reachable. */
+.forma-ai-mini[hidden]{display:none!important}
+.forma-ai-mini{
+ display:flex;align-items:center;gap:9px;position:fixed;right:16px;
+ bottom:calc(82px + env(safe-area-inset-bottom));z-index:2900;
+ min-height:47px;max-width:calc(100vw - 32px);padding:9px 13px;
+ border-radius:12px;border:1px solid #a78a69;background:#211f21;color:#eee4d7;
+ box-shadow:0 11px 42px #0008;cursor:pointer;font-size:11px
+}
+.forma-ai-mini-dot{display:block;width:8px;height:8px;flex:none;border-radius:50%;background:#d2b188;box-shadow:0 0 12px #ddbe906b;animation:forma-dot-breathe 2.4s ease-in-out infinite}
+@keyframes forma-dot-breathe{50%{opacity:.4;transform:scale(.85)}}
+.forma-ai-mini-title{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forma-ai-mini-time{color:#bba88f;font-variant-numeric:tabular-nums}
+.forma-ai-mini-chevron{font-size:18px;color:#ceb28e}
+/* Result focus screen; new work is always in front of the user, without scrolling. */
+#formaResultFocus[hidden]{display:none!important}
+#formaResultFocus{
+ position:fixed;inset:0;z-index:3300;display:flex;align-items:center;justify-content:center;
+ background:#08080bef;backdrop-filter:blur(20px) saturate(.72);
+ padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+ overscroll-behavior:contain;
+}
+#formaResultFocus .forma-result-window{
+ display:flex;flex-direction:column;max-width:1180px;width:100%;
+ height:min(900px,calc(100dvh - 24px));max-height:100%;min-height:0;
+ border:1px solid #51473e;border-radius:18px;background:#1b1a1d;
+ box-shadow:0 28px 100px #000b;color:#f3ebe1;overflow:hidden
+}
+#formaResultFocus .forma-result-header{
+ display:flex;align-items:center;justify-content:space-between;gap:14px;
+ border-bottom:1px solid #403a37;padding:17px 22px;flex:none;
+}
+#formaResultFocus .forma-result-brand{display:flex;align-items:center;gap:12px;min-width:0}
+#formaResultFocus .forma-result-brand img{width:38px;height:38px;background:#252225;border:1px solid #55493e;border-radius:9px;padding:5px;object-fit:contain;flex:none}
+#formaResultFocus .forma-result-brand-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+#formaResultFocus .forma-result-overline{color:#d7b78e;font-size:10px;letter-spacing:.13em;font-weight:700}
+#formaResultFocus #formaResultTitle{margin:0;font-size:clamp(18px,2.4vw,28px);font-weight:600;line-height:1.12;letter-spacing:-.036em}
+#formaResultFocus .forma-result-close{border:1px solid #5b524b;border-radius:10px;background:#2d292b;color:#e5d5c4;min-width:42px;min-height:42px;font-size:20px;cursor:pointer}
+#formaResultFocus .forma-result-close:hover{border-color:#cdb08b;background:#3a3332}
+#formaResultFocus .forma-result-meta{display:flex;gap:9px;flex-wrap:wrap;align-items:center;padding:11px 22px;flex:none;border-bottom:1px solid #403a37}
+#formaResultFocus .forma-result-meta span{color:#bfad9b;background:#282528;border-radius:7px;padding:6px 9px;font-size:11px}
+#formaResultFocus .forma-result-figure{position:relative;flex:1;min-height:0;background:radial-gradient(ellipse at 50% 40%,#282729,#131316 70%);display:grid;place-items:center;padding:11px 22px}
+#formaResultFocus .forma-result-figure img{display:block;width:100%;height:100%;max-height:100%;object-fit:contain;min-height:0;filter:none}
+#formaResultFocus .forma-result-counter{position:absolute;right:22px;top:18px;padding:7px 10px;background:#1c1a1cbb;border:1px solid #625343;border-radius:8px;font-size:10px;letter-spacing:.08em;color:#dec6a8}
+#formaResultFocus .forma-result-actions{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
+ padding:15px 22px;border-top:1px solid #403a37;flex:none;background:#1e1d20
+}
+#formaResultFocus .forma-result-actions button{
+ display:flex;gap:8px;align-items:center;justify-content:center;
+ min-height:48px;padding:8px 12px;border-radius:10px;
+ border:1px solid #605247;background:#2d292a;color:#f2e9dd;
+ font-size:12px;font-weight:650;cursor:pointer;text-align:center
+}
+#formaResultFocus .forma-result-actions button:hover{border-color:#c7aa87;background:#39302a}
+#formaResultFocus .forma-result-actions button[data-result-action="download"]{
+ background:linear-gradient(135deg,#eed3ad,#bd9470);border-color:#cba980;color:#241b14
+}
+#formaResultFocus .forma-result-actions button:focus-visible{outline:2px solid #e5c29c;outline-offset:3px}
+#formaResultFocus .forma-result-actions svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;flex:none}
+#formaResultFocus .forma-result-footer{
+ padding:0 22px 15px;flex:none;background:#1e1d20;
+ color:#958a80;font-size:10px;text-align:center
+}
+@media(max-width:760px){
+ html[data-forma-theme] #renderProgress:not([hidden]){
+  inset:0!important;padding:calc(12px + env(safe-area-inset-top)) 11px calc(12px + env(safe-area-inset-bottom))!important;
+  overflow-y:auto!important;align-items:center!important
+ }
+ html[data-forma-theme] #renderProgress .render-progress-panel{
+  max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  width:min(440px,100%)!important
+ }
+ html[data-forma-theme] #renderProgress .render-progress-top{padding:13px 15px}
+ html[data-forma-theme] #renderProgress .render-progress-canvas{height:clamp(112px,20dvh,185px)}
+ html[data-forma-theme] #renderProgress .render-progress-copy{padding:16px 17px 15px;gap:6px}
+ html[data-forma-theme] #renderProgress #renderProgressTitle{font-size:22px!important}
+ html[data-forma-theme] #renderProgress #renderProgressDetail{font-size:11px!important}
+ html[data-forma-theme] #renderProgress .render-progress-steps{padding:0 14px 15px!important;gap:7px!important}
+ html[data-forma-theme] #renderProgress .render-progress-step{padding:10px 7px;gap:6px!important}
+ html[data-forma-theme] #renderProgress .render-progress-step-copy strong{font-size:10px!important}
+ html[data-forma-theme] #renderProgress .render-progress-step-copy small{font-size:9px!important}
+ html[data-forma-theme] #renderProgress .render-progress-foot{padding:10px 16px 14px}
+ html[data-forma-theme] #renderProgress #renderProgressHint{font-size:9px!important}
+ #formaResultFocus{padding:0!important;align-items:stretch}
+ #formaResultFocus .forma-result-window{
+  height:100dvh;max-height:100dvh;max-width:100%;border:0;border-radius:0;
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)
+ }
+ #formaResultFocus .forma-result-header{padding:13px 15px}
+ #formaResultFocus .forma-result-brand img{height:33px;width:33px}
+ #formaResultFocus .forma-result-overline{font-size:9px}
+ #formaResultFocus #formaResultTitle{font-size:19px}
+ #formaResultFocus .forma-result-meta{padding:9px 15px;gap:5px}
+ #formaResultFocus .forma-result-meta span{font-size:10px;padding:5px 7px}
+ #formaResultFocus .forma-result-figure{padding:6px;min-height:0}
+ #formaResultFocus .forma-result-counter{right:12px;top:12px}
+ #formaResultFocus .forma-result-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 13px}
+ #formaResultFocus .forma-result-actions button{min-height:46px;font-size:11px;padding:8px}
+ #formaResultFocus .forma-result-footer{padding:0 12px 10px;font-size:9px}
+}
+@media(max-height:650px){
+ html[data-forma-theme] #renderProgress .render-progress-canvas{height:108px}
+ html[data-forma-theme] #renderProgress .render-progress-copy{padding:12px 16px 10px}
+ html[data-forma-theme] #renderProgress .render-progress-steps{padding:0 13px 12px!important}
+ html[data-forma-theme] #renderProgress .render-progress-step{padding:7px!important}
+ html[data-forma-theme] #renderProgress .render-progress-foot{padding:9px 14px 11px}
+ #formaResultFocus .forma-result-meta{padding-block:6px}
+ #formaResultFocus .forma-result-figure{min-height:110px}
+ #formaResultFocus .forma-result-footer{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-forma-theme] #renderProgress .render-progress-light,.forma-ai-mini-dot{animation:none!important}
+ html[data-forma-theme] #renderProgress .render-progress-step{transition:none}
+}
