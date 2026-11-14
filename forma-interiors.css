@@ -1,0 +1,32 @@
+#faSpaceSelector{margin:12px 0 19px}
+.fa-space-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#edf2ef;border:1px solid #dce7e1;border-radius:11px;padding:5px}
+.fa-space-switch button{border:1px solid transparent;background:transparent;color:#627772;border-radius:8px;padding:12px 9px;font-size:12px;font-weight:740;text-align:left;transition:background .18s}
+.fa-space-switch button small{display:block;margin-top:3px;font-size:9px;font-weight:500;color:#80918b}
+.fa-space-switch button.active{background:#fff;color:#1d3d36;border-color:#cedfd5;box-shadow:0 2px 7px #1e48331a}
+.fa-space-switch button.active small{color:#688479}
+.fa-interior-panel{background:#fff;border-radius:12px;border:1px solid #e0e6e2;padding:14px 14px 16px}
+.fa-interior-intro{padding:8px 3px 14px}
+.fa-interior-intro span{display:block;font-size:9px;letter-spacing:.16em;font-weight:780;color:#678277;margin-bottom:10px}
+.fa-interior-intro h3{font-size:19px;line-height:1.25;color:#253d38;font-weight:640;letter-spacing:-.045em;margin:0 0 8px}
+.fa-interior-intro p{font-size:11px;line-height:1.5;color:#768980;margin:0}
+.fa-interior-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px 9px}
+.fa-interior-fields label{display:block;min-width:0;color:#47615a;font-size:10px;font-weight:700;line-height:1.5}
+.fa-interior-fields label.full{grid-column:1/-1}
+.fa-interior-fields select,.fa-interior-fields textarea{display:block;width:100%;min-width:0;margin-top:6px;border:1px solid #dbe6e0;border-radius:8px;background:#fafcfb;color:#273f39;padding:11px 9px;font-size:11px;outline:0;font-weight:500;resize:vertical}
+.fa-interior-fields select:focus-visible,.fa-interior-fields textarea:focus-visible{outline:2px solid #6d9a8a;outline-offset:1px}
+.fa-interior-lock{display:flex;gap:10px;background:#eaf2ee;border:1px solid #cfdfd5;border-radius:9px;padding:12px;margin:15px 0}
+.fa-interior-lock>span{width:30px;height:30px;flex:none;background:#d4e4da;display:grid;place-items:center;border-radius:8px;color:#416659;font-size:18px}
+.fa-interior-lock b{display:block;font-size:11px;color:#2d5145;margin-bottom:4px}
+.fa-interior-lock small{display:block;font-size:10px;line-height:1.45;color:#668076}
+.fa-interior-submit{width:100%;display:flex;justify-content:space-between;align-items:center;padding:15px;border:0;border-radius:9px;background:#1c3432;color:#fff;font-size:12px;font-weight:720;text-align:left}
+.fa-interior-submit:hover{background:#2e5149}
+.fa-interior-submit:disabled{opacity:.55}
+#faInteriorStatus{font-size:10px;color:#84938a;line-height:1.5;margin:10px 0 0}
+.forma-interior-mode .scene-mode-switch,.forma-interior-mode #renderAutoPanel,.forma-interior-mode #renderManualPanel,
+.forma-interior-mode .scene-variants,.forma-interior-mode .scene-variants-section,
+.forma-interior-mode .forma-photo-presets,.forma-interior-mode #batchToggle,
+.forma-interior-mode #batchPanel,.forma-interior-mode #renderSetupBatch{display:none!important}
+.forma-interior-mode #environmentPanel>.scene-setup-header>p{display:none}
+.forma-interior-mode #environmentPanel>.scene-setup-header h3{font-size:21px}
+.forma-interior-mode .rail-nav .fa-interior-nav{background:#dcece4;color:#234137}
+@media(max-width:660px){.fa-interior-fields{grid-template-columns:1fr}.fa-interior-fields label.full{grid-column:auto}.fa-interior-panel{padding:12px}.fa-interior-intro h3{font-size:17px}}
