@@ -201,8 +201,8 @@ async function imageAI(source,brief,ctx,options={}){
    })
   });
   const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw Error(data.error||'Сервер вернул ошибку '+r.status);
-  if(!Array.isArray(data.images)||!data.images[0])throw Error('Сервер не вернул изображение.');
+  if(!r.ok)throw Error((data.error||'Сервер вернул ошибку '+r.status)+(data.requestId?' · Код запроса: '+data.requestId:''));
+  if(!Array.isArray(data.images)||!data.images[0])throw Error('Сервер не вернул изображение.'+(data.requestId?' · Код запроса: '+data.requestId:''));
   const img='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
   if(!imageMime(img))throw Error('Сервер вернул неподдерживаемый файл.');
   return img;
