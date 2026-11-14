@@ -308,7 +308,7 @@ function click(e){
  if(a.rename){const n=node(a.rename),title=prompt('Название ноды',n.title);if(title?.trim()){n.title=title.trim().slice(0,70);save();redraw()}return}
 }
 function down(e){
- if(e.button!==0||e.target.closest('button'))return;
+ if(e.button!==0||e.target.closest('button,video,select,textarea,input'))return;
  const head=e.target.closest('[data-move]'),n=head?node(head.dataset.move):null;
  if(n){graph.selected=n.id;drag={kind:'node',id:n.id,x:e.clientX,y:e.clientY,ox:n.x,oy:n.y};}
  else if(!e.target.closest('.fa-node'))drag={kind:'pan',x:e.clientX,y:e.clientY,ox:graph.pan.x,oy:graph.pan.y};
