@@ -13,6 +13,10 @@ on:
       - forma-home-tools.js
       - forma-home-tools.css
       - tests/check-home-tools.mjs
+      - tests/check-node-execution.mjs
+      - forma-node-engine.js
+      - forma-node-engine.css
+      - forma-nodes.js
       - tests/capture-homepage.mjs
       - tests/capture-intro.mjs
       - forma-intro.css
@@ -54,6 +58,8 @@ jobs:
         run: node tests/capture-homepage.mjs
       - name: Verify project tools and real 4K export
         run: node tests/check-home-tools.mjs
+      - name: Verify executable node workflows with mocked API
+        run: node tests/check-node-execution.mjs
       - name: Capture cinematic opening
         run: node tests/capture-intro.mjs
       - name: Upload viewable screenshots
