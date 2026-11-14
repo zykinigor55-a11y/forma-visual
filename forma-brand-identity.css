@@ -1,0 +1,27 @@
+/* FORMA ARCHVIZ · FA identity kit (brand mark #2)
+   The emblem is SVG, without any decorative wall baked into the logo.
+   Graphite stucco + tree shadows are presentation treatment only. */
+.forma-brand-symbol{padding:2px!important;display:grid!important;place-items:center!important;background:#1a2627!important;border-color:#6a6258!important;border-radius:9px!important;line-height:1!important;letter-spacing:normal!important}
+.forma-brand-symbol img{display:block;width:31px;height:31px;object-fit:contain}
+.forma-brand-copy strong{font-family:Inter,"Helvetica Neue",Arial,sans-serif;font-weight:590;letter-spacing:.155em}
+.forma-brand-copy small{font-size:8px;letter-spacing:.135em;color:#c7b79f}
+.studio-wordmark .studio-wordmark-icon{display:grid!important;place-items:center!important;background:#1a2627!important;border:1px solid #3d4542!important;border-radius:9px!important;overflow:hidden}
+.studio-wordmark .forma-ui-mark{display:block!important;width:29px!important;height:29px!important;object-fit:contain}
+.studio-wordmark strong{font-size:17px!important;letter-spacing:.145em!important;font-weight:610!important}
+.studio-wordmark small{letter-spacing:.155em!important;font-size:8px!important;color:#817467!important;font-weight:650}
+.rail-bottom .rail-monogram{display:grid!important;place-items:center!important;overflow:hidden}
+.rail-bottom .rail-monogram img{display:block;width:24px;height:24px;object-fit:contain}
+.mobile-header .mobile-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mobile-header .forma-brand-mobile-logo{height:42px;width:42px;padding:5px;display:block;object-fit:contain;background:#1a2627;border:1px solid #444e48;border-radius:10px;flex:none}
+.mobile-header .forma-brand-mobile-name{display:flex;flex-direction:column;justify-content:center;gap:3px;font-size:16px!important;font-weight:580!important;letter-spacing:.105em!important;white-space:nowrap;line-height:1.1}
+.mobile-header .forma-brand-mobile-name small{font-size:8px!important;letter-spacing:.14em!important;color:#977f63;font-weight:650}
+.fa-flow-logo,.fa-pro-monogram{padding:3px!important;display:grid!important;place-items:center!important;font-size:0!important;letter-spacing:normal!important}
+.fa-flow-logo img,.fa-pro-monogram img{display:block!important;width:30px;height:30px;object-fit:contain}
+.fa-pro-monogram{background:#1b292b}
+.fa-flow-logo{background:#182829}
+@media(max-width:720px){
+ .fa-flow-logo img,.fa-pro-monogram img{width:24px;height:24px}
+ .mobile-header .forma-brand-mobile-logo{height:38px;width:38px}
+ .mobile-header .forma-brand-mobile-name{font-size:13px!important}
+ .mobile-header .forma-brand-mobile-name small{font-size:7px!important}
+}
