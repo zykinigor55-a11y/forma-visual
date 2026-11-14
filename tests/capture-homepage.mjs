@@ -13,10 +13,11 @@ try {
  page.on('pageerror',err=>errors.push(err.message));
  await page.goto(origin,{waitUntil:'domcontentloaded',timeout:45000});
  await page.locator('.forma-hero').waitFor({state:'visible',timeout:15000});
+ await page.locator('.forma-workflow-launcher').waitFor({state:'visible',timeout:15000});
  await page.locator('.forma-rail-brand').waitFor({state:'visible',timeout:15000});
  await page.evaluate(()=>document.fonts.ready);
  await page.waitForTimeout(1700);
- assert.match(await page.title(),/FORMA ARCHVIZ/);
+ assert.match(await page.title(),/ФОРМА/);
  assert.equal(await page.locator('.forma-hero').count(),1);
  assert.equal(await page.locator('.forma-hero-emblem img').evaluate(el=>el.naturalWidth>0),true);
  await page.screenshot({path:output+'/forma-archviz-home-desktop.png',fullPage:false,animations:'disabled'});
@@ -29,10 +30,13 @@ try {
  const pro=page.locator('.fa-pro-launch');await pro.click();
  await page.locator('#faProBackdrop').waitFor({state:'visible'});
  await page.locator('#faProClose').click();
- const interior=page.locator('[data-studio-action="interior"]');
+ const interior=page.locator('[data-studio-action="interior"]').first();
  await interior.click();
  await page.locator('#faInteriorPanel').waitFor({state:'visible',timeout:9000});
  await page.locator('[data-fa-space="exterior"]').click();
+ await page.locator('[data-studio-action="render"]').click();
+ assert.equal(await page.locator('#environmentPanel').isVisible(),true);
+ await page.locator('[data-nav="project"]').click();
  console.log('Interior hero action is working');
  console.log('Desktop capture complete; '+errors.length+' page errors. '+errors.slice(0,4).join(' | '));
  await context.close();
@@ -41,6 +45,7 @@ try {
  const mp=await mobile.newPage();
  await mp.goto(origin,{waitUntil:'domcontentloaded',timeout:45000});
  await mp.locator('.forma-hero').waitFor({state:'visible'});
+ assert.match(await mp.locator('.forma-brand-mobile-name').textContent(),/ФОРМА/);
  await mp.evaluate(()=>document.fonts.ready);
  await mp.waitForTimeout(1500);
  await mp.screenshot({path:output+'/forma-archviz-home-mobile.png',fullPage:false,animations:'disabled'});
