@@ -92,7 +92,7 @@ export function createFormaWorldApi({json,readJSON,sameOrigin}){
       },
       model:process.env.FORMA_WORLDLABS_MODEL||'marble-1.1'
      });
-     return json(res,202,{provider:'World Labs',operationId:data.operation_id||data.name||null,status:'PENDING',notes:'AI-мир может менять архитектурную геометрию'});
+     return json(res,202,{provider:'World Labs',operationId:String(data.operation_id||data.name||'').split('/').pop()||null,status:'PENDING',notes:'AI-мир может менять архитектурную геометрию'});
     }finally{active--}
    }
    if(req.method==='GET'&&url.pathname.startsWith('/api/forma-world/world/')){
