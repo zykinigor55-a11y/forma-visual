@@ -15,8 +15,8 @@ try {
   await r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({images:[tiny],mimes:['image/png'],model:'MOCK'})});
  });
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
- await page.locator('#sourceFile').setInputFiles('assets/residence-model-clean-approved-v36.png');
- await page.waitForFunction(()=>JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId!=='demo',{timeout:25000});
+ await page.locator('#sourceFile').setInputFiles('assets/residence-render-bluehour-fixed.webp');
+ await page.waitForFunction(()=>{const x=JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}');return x.activeId && x.activeId!=='demo';},null,{timeout:25000});
  await page.evaluate(()=>window.FORMA_NODES?.open());
  await page.locator('#faFlowBackdrop').waitFor({state:'visible',timeout:9000});
  await page.locator('.fa-flow-node-settings').waitFor({state:'visible',timeout:7000});
