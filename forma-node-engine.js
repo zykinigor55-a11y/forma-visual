@@ -188,7 +188,7 @@ async function availability(calls){
 async function imageAI(source,brief,ctx,options={}){
  if(!imageMime(source))throw Error('Неподдерживаемый формат исходного изображения.');
  aborter=new AbortController();
- const timer=setTimeout(()=>aborter?.abort(),180000);
+ const timer=setTimeout(()=>aborter?.abort(),240000);
  try{
   const r=await fetch('/api/render',{
    method:'POST',headers:{'Content-Type':'application/json'},
