@@ -122,3 +122,96 @@ html.forma-intro-pending #forma-intro{display:block}
 
 /* Explicit phase lock for design review screenshots; not used during normal playback. */
 .forma-intro.is-wall-only .forma-intro-lockup,.forma-intro.is-wall-only .forma-intro-caption{opacity:0!important;visibility:hidden!important}
+
+
+/* ──────────────────────────────────────────────────────────────
+   ФОРМА / INTRO · 4K mineral plaster, premium moving daylight
+   Only the background changes; the approved FA mark and Russian
+   typography remain DOM/SVG elements above the scene.
+   ────────────────────────────────────────────────────────────── */
+.forma-intro{background:#252827}
+.forma-intro-wall{
+  background-color:#242625;
+  background-image:url("assets/brand/intro-graphite-wall-4k.webp"),url("assets/brand/intro-graphite-wall.svg");
+  background-position:50% 50%;
+  background-size:cover;
+  background-repeat:no-repeat;
+  filter:contrast(1.035) saturate(.88);
+  transform:translateZ(0); /* stationary painted mineral surface */
+}
+.forma-intro-light{
+  inset:0;
+  background:
+    radial-gradient(ellipse 67% 100% at 1% 4%,rgba(237,205,163,.12),rgba(172,144,104,.025) 56%,transparent 78%),
+    radial-gradient(ellipse 95% 105% at 48% 94%,rgba(5,9,9,0),rgba(5,9,9,.28) 100%);
+  mix-blend-mode:soft-light;
+  opacity:.94;
+  animation:forma-light-breathe-premium 19s ease-in-out infinite alternate;
+}
+.forma-intro-shadow{
+  inset:-15% auto -14% -19%;
+  width:82%;
+  background-image:url("assets/brand/intro-branch-shadows.svg");
+  background-size:contain;
+  background-position:left top;
+  background-repeat:no-repeat;
+  filter:blur(16px);
+  mix-blend-mode:multiply;
+  opacity:.47;
+  transform-origin:8% 3%;
+  backface-visibility:hidden;
+  animation:forma-shadow-sway-premium 19s cubic-bezier(.45,.03,.55,.96) infinite alternate;
+}
+.forma-intro-shadow.secondary{
+  inset:21% auto -25% -13%;
+  width:66%;
+  opacity:.21;
+  filter:blur(32px);
+  transform-origin:5% 16%;
+  animation:forma-shadow-sway-deep 27s cubic-bezier(.45,.03,.55,.96) infinite alternate-reverse;
+}
+.forma-intro-vignette{
+  background:
+    linear-gradient(90deg,rgba(5,9,10,.075),transparent 46%,rgba(5,9,10,.26)),
+    linear-gradient(180deg,rgba(2,5,5,.06),transparent 40%,rgba(2,5,5,.28));
+}
+.forma-intro-lockup{
+  filter:blur(6px);
+}
+@keyframes forma-shadow-sway-premium{
+  0%{transform:translate3d(-12px,-6px,0) rotate(-.75deg) scale(1.025)}
+  48%{transform:translate3d(5px,1px,0) rotate(.24deg) scale(1.035)}
+  100%{transform:translate3d(17px,10px,0) rotate(1.1deg) scale(1.035)}
+}
+@keyframes forma-shadow-sway-deep{
+  0%{transform:translate3d(-19px,7px,0) scaleY(-1) rotate(-5.6deg) scale(1.025)}
+  100%{transform:translate3d(23px,-6px,0) scaleY(-1) rotate(-2.5deg) scale(1.038)}
+}
+@keyframes forma-light-breathe-premium{
+  from{opacity:.82}
+  to{opacity:1}
+}
+@media(max-width:760px){
+  .forma-intro-wall{
+    background-image:url("assets/brand/intro-graphite-wall-mobile.webp"),url("assets/brand/intro-graphite-wall.svg");
+    background-position:50% 50%;
+  }
+  .forma-intro-shadow{
+    inset:-3% auto 0 -55%;
+    width:149%;
+    opacity:.50;
+    filter:blur(11px);
+  }
+  .forma-intro-shadow.secondary{
+    inset:32% auto -31% -52%;
+    width:119%;
+    opacity:.23;
+    filter:blur(25px);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .forma-intro-shadow,.forma-intro-shadow.secondary,.forma-intro-light{
+    animation:none!important;
+    will-change:auto!important;
+  }
+}
