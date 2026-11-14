@@ -1,136 +1,116 @@
-/* DOM.RENDER • Real request state + ESTIMATED image generation progress v53.
- * API Market does not expose an exact completion percentage. Never claim
- * server-sourced accuracy, never show 100% before receipt and persistence.
- */
-(function(){
+/* FORMA / Graphite Atelier · real request phases, no synthetic percentages or ETA.
+ * API Market does not provide a progress API. We display only states controlled
+ * by the local request and actual elapsed time. */
+(() => {
  'use strict';
  const $=id=>document.getElementById(id);
- let active=false,completed=false,phase='prepare',percent=0,aiStarted=0,phaseStarted=0;
- let batchTotal=0,batchIndex=0,runner=null,hideTimer=null,lastReported=-1;
- const clocks=()=>Date.now();
- const clamp=(x,min,max)=>Math.min(max,Math.max(min,x));
- const mobile=window.matchMedia?.('(max-width:700px)');
- let originalParent=null,originalSibling=null;
- function placeOverlay(){
-  const overlay=$('renderProgress');
-  if(!overlay)return;
-  if(!originalParent){originalParent=overlay.parentNode;originalSibling=overlay.nextSibling}
-  // On phones the viewer is too short for a tall progress card. Mount the
-  // overlay at body level, avoiding clipping by .viewer-card overflow:hidden.
-  if(mobile?.matches){
-   if(overlay.parentNode!==document.body)document.body.appendChild(overlay);
-  }else if(originalParent&&overlay.parentNode!==originalParent){
-   if(originalSibling?.parentNode===originalParent)originalParent.insertBefore(overlay,originalSibling);
-   else originalParent.appendChild(overlay);
-  }
+ let active=false,completed=false,phase='prepare',started=0,clock=null,minimized=false,successTimer=null;
+ let mini=null;
+ const phases=['prepare','ai','save'];
+ function readableTime(seconds){
+  const n=Math.max(0,seconds|0);
+  return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
  }
- function nodes(){return {
-  panel:$('renderProgress'),percent:$('renderProgressPercent'),remaining:$('renderProgressRemaining'),
-  meter:$('renderProgressMeter'),bar:$('renderProgressBar'),
-  hint:$('renderProgressHint'),steps:document.querySelectorAll('#renderProgress .render-progress-step')
- }}
- function paint(){
-  const n=nodes();
-  if(!n.panel)return;
-  const value=clamp(Math.round(percent),0,100);
-  if(n.percent)n.percent.textContent=value+'%';
-  if(n.remaining)n.remaining.textContent=value===100?'Завершено':('Осталось ≈ '+(100-value)+'%');
-  if(n.bar)n.bar.style.width=value+'%';
-  if(n.meter&&lastReported!==Math.floor(value/5)){
-   lastReported=Math.floor(value/5);
-   n.meter.setAttribute('aria-valuenow',String(value));
-   n.meter.setAttribute('aria-valuetext',value===100?'Результат сохранён':'Ориентировочно '+value+' процентов выполнено');
-  }
-  if(n.hint){
-   n.hint.textContent=completed
-    ?'Результат получен и сохранён в проекте.'
-    :phase==='ai'&&clocks()-aiStarted>125000
-     ?'AI продолжает обработку. Процент расчётный: API Market не передаёт фактический прогресс.'
-     :'Процент ориентировочный: API Market не передаёт точный ход выполнения.';
-  }
-  const activeIndex=completed?3:phase==='prepare'?0:phase==='ai'?1:2;
-  n.steps.forEach((el,i)=>{
-   el.classList.toggle('is-active',i===activeIndex);
-   el.classList.toggle('is-done',i<activeIndex);
+ function miniButton(){
+  if(mini&&mini.isConnected)return mini;
+  mini=document.createElement('button');
+  mini.type='button';mini.className='forma-ai-mini';mini.hidden=true;
+  mini.setAttribute('aria-label','Развернуть ход генерации');
+  mini.innerHTML='<span class="forma-ai-mini-dot" aria-hidden="true"></span><span class="forma-ai-mini-title">ФОРМА · AI-рендер</span><span class="forma-ai-mini-time">00:00</span><span class="forma-ai-mini-chevron" aria-hidden="true">↗</span>';
+  mini.addEventListener('click',()=>expand());
+  document.body.appendChild(mini);return mini;
+ }
+ function overlay(){
+  const el=$('renderProgress');
+  if(el&&el.parentNode!==document.body)document.body.appendChild(el);
+  return el;
+ }
+ function syncScene(){
+  const source=$('beforeImg');
+  const preview=$('renderProgressSource');
+  if(source&&preview)preview.src=source.currentSrc||source.src;
+  const settings=$('renderSummaryLine')?.textContent?.trim()||$('summaryLine')?.textContent?.trim();
+  const summary=$('renderProgressScene');
+  if(summary)summary.textContent=(settings||'Архитектурная визуализация').slice(0,165);
+ }
+ function setPhase(next){
+  if(!phases.includes(next))next='prepare';
+  phase=next;
+  const el=overlay();
+  if(!el)return;
+  el.dataset.phase=next;
+  el.querySelectorAll('.render-progress-step').forEach((step,i)=>{
+   const n=phases.indexOf(next);
+   step.classList.toggle('is-active',!completed&&i===n);
+   step.classList.toggle('is-done',completed||i<n);
   });
-  n.panel.classList.toggle('is-complete',completed);
+  if(mini)mini.querySelector('.forma-ai-mini-title').textContent=completed?'ФОРМА · Результат готов':next==='ai'?'ФОРМА · AI-рендер':next==='save'?'ФОРМА · Сохраняем':'ФОРМА · Подготовка';
  }
- function estimate(){
-  if(!active||completed)return;
-  const elapsed=(clocks()-phaseStarted)/1000;
-  let target=percent;
-  if(phase==='prepare')target=Math.max(target,2+6*(1-Math.exp(-elapsed/12)));
-  if(phase==='ai'){
-   const aiElapsed=(clocks()-aiStarted)/1000;
-   if(batchIndex&&batchTotal){
-    const slice=100/batchTotal;
-    const floor=slice*(batchIndex-1);
-    target=Math.max(target,floor+2+(slice-3)*(1-Math.exp(-aiElapsed/40)));
-    target=Math.min(target,Math.min(99,floor+slice-1));
-   }else{
-    target=Math.max(target,11+82*(1-Math.exp(-aiElapsed/54)));
-    target=Math.min(target,93);
-   }
-  }
-  if(phase==='save')target=Math.max(target,96);
-  percent=Math.min(99,Math.max(percent,target));
-  paint();
+ function elapsed(){
+  if(!active)return;
+  const seconds=(Date.now()-started)/1000;
+  const text=readableTime(seconds);
+  const label=$('renderProgressElapsed');if(label)label.textContent='Прошло '+text;
+  if(mini)mini.querySelector('.forma-ai-mini-time').textContent=text;
+ }
+ function expand(){
+  if(!active)return;
+  minimized=false;overlay().hidden=false;miniButton().hidden=true;
+  document.documentElement.classList.add('forma-progress-expanded');
+ }
+ function shrink(){
+  if(!active)return;
+  minimized=true;overlay().hidden=true;miniButton().hidden=false;
+  document.documentElement.classList.remove('forma-progress-expanded');
  }
  function begin(){
-  placeOverlay();
-  if(hideTimer){clearTimeout(hideTimer);hideTimer=null}
-  active=true;completed=false;phase='prepare';phaseStarted=clocks();
-  aiStarted=0;batchIndex=0;batchTotal=0;percent=2;lastReported=-1;
-  if(runner)clearInterval(runner);
-  runner=setInterval(estimate,760);
-  const n=nodes();if(n.panel)n.panel.hidden=false;
-  paint();
+  if(successTimer){clearTimeout(successTimer);successTimer=null}
+  if(clock)clearInterval(clock);
+  active=true;completed=false;started=Date.now();minimized=false;
+  const el=overlay();if(!el)return;
+  el.hidden=false;el.classList.remove('is-complete');
+  miniButton().hidden=true;
+  const note=$('renderProgressHint');
+  if(note)note.textContent='Точное время и процент готовности API Market не передаёт';
+  syncScene();setPhase('prepare');elapsed();
+  clock=setInterval(elapsed,1000);
+  document.documentElement.classList.add('forma-progress-expanded');
  }
  function update(title,detail){
   if(!active||completed)begin();
+  if($('renderProgressTitle'))$('renderProgressTitle').textContent=title||'Создаём архитектурный кадр';
+  if($('renderProgressDetail'))$('renderProgressDetail').textContent=detail||'Обрабатываем сцену';
   const t=String(title||'');
-  const frame=t.match(/Кадр\s+(\d+)\s+из\s+(\d+)/i);
-  if(frame){
-   const idx=Number(frame[1]),total=Number(frame[2]);
-   if(idx>=1&&total>=2&&idx<=total){
-    const newFrame=batchIndex!==idx||batchTotal!==total;
-    batchIndex=idx;batchTotal=total;
-    if(newFrame){aiStarted=clocks();phaseStarted=aiStarted;percent=Math.max(percent,Math.floor(100*(idx-1)/total)+2)}
-   }
-  }
-  let next='prepare';
-  if(/сохраня|сохранение|галере|готовый результат/i.test(t))next='save';
-  else if(frame||/генераци|созда[её][тм]|рендер|обрабатыва/i.test(t))next='ai';
-  if(next!==phase){
-   phase=next;phaseStarted=clocks();
-   if(next==='ai')aiStarted=clocks();
-   if(next==='save')percent=Math.max(percent,96);
-  }
-  if(phase==='ai'&&!aiStarted)aiStarted=clocks();
-  estimate();
+  const next=/сохраня|сохранение|галере|готовый результат/i.test(t)?'save':
+   /кадр\s*\d|генераци|созда[её][тм]|рендер|обрабатыва/i.test(t)?'ai':'prepare';
+  setPhase(next);
+  if(!minimized)overlay().hidden=false;
  }
  function complete(){
   if(!active)return;
-  completed=true;phase='save';percent=100;
-  if(runner){clearInterval(runner);runner=null}
-  paint();
+  completed=true;setPhase('save');
+  const el=overlay();if(el)el.classList.add('is-complete');
+  if($('renderProgressTitle'))$('renderProgressTitle').textContent='Архитектурный кадр готов';
+  if($('renderProgressDetail'))$('renderProgressDetail').textContent='Результат получен и добавлен в проект';
+  if($('renderProgressHint'))$('renderProgressHint').textContent='Готово · кадр сохранён';
+  elapsed();
  }
  function stop(){
-  if(runner){clearInterval(runner);runner=null}
-  if(hideTimer){clearTimeout(hideTimer);hideTimer=null}
-  const n=nodes();
-  const success=active&&completed;
-  active=false;
-  if(success){
-   hideTimer=setTimeout(()=>{
-    if(!active&&n.panel){n.panel.hidden=true;n.panel.classList.remove('is-complete')}
-    hideTimer=null;
-   },750);
-  }else{
-   if(n.panel){n.panel.hidden=true;n.panel.classList.remove('is-complete')}
+  if(clock){clearInterval(clock);clock=null}
+  if(successTimer){clearTimeout(successTimer);successTimer=null}
+  const el=overlay(),miniEl=miniButton();
+  const wasSuccessful=active&&completed;
+  active=false;minimized=false;miniEl.hidden=true;
+  document.documentElement.classList.remove('forma-progress-expanded');
+  if(el){
+   if(wasSuccessful){
+    successTimer=setTimeout(()=>{if(!active){el.hidden=true;el.classList.remove('is-complete')}successTimer=null},420);
+   }else{el.hidden=true;el.classList.remove('is-complete')}
   }
-  return !!n.panel;
+  return !!el;
  }
- mobile?.addEventListener?.('change',placeOverlay);
- window.DOM_RENDER_PROGRESS={update,complete,stop};
+ document.addEventListener('click',event=>{
+  if(event.target.closest('#renderProgressMinimize'))shrink();
+ });
+ window.DOM_RENDER_PROGRESS={update,complete,stop,expand,collapse:shrink,get active(){return active}};
 })();
