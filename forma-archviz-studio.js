@@ -69,7 +69,7 @@
    '<span class="forma-chip" id="formaServerState" data-server="offline" title="Статус сервера рендера"><span></span><b>Проверка сервера</b></span>'+
    '<button type="button" class="forma-mini-btn" data-studio-action="gallery">'+icons.image+' Галерея</button>'+
    '<button type="button" class="forma-mini-btn" id="formaQaToggle" data-studio-action="qa" aria-pressed="false">'+icons.layers+' Контроль</button>'+
-   '<button type="button" class="forma-mini-btn is-primary" data-studio-action="commands">'+icons.search+' Команды <span aria-hidden="true">⌘K</span></button>'+
+   '<button type="button" class="forma-mini-btn is-primary" data-studio-action="commands">'+icons.search+' Все инструменты <span aria-hidden="true">⌘K</span></button>'+
    '</div>');
   intro.parentNode.insertBefore(section,intro);
   const viewerBtns=$('.viewer-toolbar .viewer-actions');
@@ -244,37 +244,53 @@
   }
  }
  const commands=[
-  ['Новый проект','Проекты','new'],['Загрузить исходник','Проекты','upload'],
-  ['Настройка рендера','Сцена','environment'],['Редактировать материалы','Сцена','materials'],
-  ['Архитектурная анимация','Кино','animation'],['История вариантов','Проекты','variants'],
-  ['Параметры и качество','Экспорт','parameters'],['Галерея работ','Проекты','gallery'],
-  ['Визуальный контроль геометрии','Инструменты','qa'],['Экспорт до 4K (без AI)','Экспорт','export'],
-  ['Солнечный день','Свет','sunny'],['Мягкий пасмурный свет','Свет','overcast'],
-  ['Синий час','Свет','blue'],
-  ['Интерьеры из скетча','Визуализация','interior'],['Нодовый редактор','Процесс','nodes'],['Профессиональные инструменты','Студия','pro'],['Посмотреть заставку','Студия','replayIntro']
+  ['Сцена: окружение, погода, сезон и свет','01 · Визуализация','scene'],
+  ['Создать экстерьер','01 · Визуализация','exteriorNode'],
+  ['Создать интерьер','01 · Визуализация','interiorNode'],
+  ['Материалы и локальная правка','02 · Обработка','materialsNode'],
+  ['Контроль геометрии','02 · Обработка','geometryNode'],
+  ['Увеличение / экспорт 4K','02 · Обработка','upscaleNode'],
+  ['Анимация: камера и движение','03 · Видео','videoNode'],
+  ['Экспорт кадра или видео','03 · Видео','exportNode'],
+  ['Нодовый редактор','04 · Рабочая студия','nodes'],
+  ['Камера и оптика','04 · Рабочая студия','camera'],
+  ['CAD Bridge','04 · Рабочая студия','cad'],
+  ['3D-мир','04 · Рабочая студия','world'],
+  ['Создание 3D из изображения','04 · Рабочая студия','image3d'],
+  ['Альбом проекта','04 · Рабочая студия','presentation'],
+  ['Новый проект','05 · Проект','new'],
+  ['Загрузить исходник','05 · Проект','upload'],
+  ['История вариантов','05 · Проект','variants'],
+  ['Галерея изображений','05 · Проект','gallery'],
+  ['Параметры изображения','05 · Проект','parameters'],
+  ['AI-модели и подключение','06 · Система','models'],
+  ['Аккаунт и тарифы','06 · Система','account'],
+  ['Контроль публикации','06 · Система','release']
  ];
  function runCommand(cmd){
   closeCommands();
-  if(['environment','materials','animation','variants','parameters'].includes(cmd))navigate(cmd);
+  const nodeTypes={scene:'exterior',exteriorNode:'exterior',interiorNode:'interior',materialsNode:'materials',geometryNode:'geometry',upscaleNode:'upscale',videoNode:'video',exportNode:'export'};
+  if(nodeTypes[cmd]){window.FORMA_NODES?.openFor?.(nodeTypes[cmd]);return}
+  if(['variants','parameters'].includes(cmd))navigate(cmd);
   else if(cmd==='new')$('#newProjectBtn')?.click();
   else if(cmd==='upload')$('#sourceFile')?.click();
   else if(cmd==='gallery')gallery();
-  else if(cmd==='interior')window.FORMA_INTERIORS?.open?.();
   else if(cmd==='nodes')window.FORMA_NODES?.open?.();
-  else if(cmd==='pro')window.FORMA_PRO?.open?.();
-  else if(cmd==='replayIntro')window.FORMA_INTRO?.replay?.();
-  else if(cmd==='qa')toggleQA();
-  else if(cmd==='export')export4K();
-  else if(['sunny','overcast','blue'].includes(cmd))setPreset(cmd);
+  else if(['camera','cad','world','image3d','presentation','models','account','release'].includes(cmd)){
+   if(cmd==='world'){window.FORMA_HOME_TOOLS?.open?.('world');document.querySelector('#formaProjectPanel')?.scrollIntoView({behavior:'smooth',block:'start'})}
+   else window.FORMA_PRO?.open?.(cmd);
+  }
  }
  function renderCommands(query=''){
   const list=$('#formaCommandList');if(!list)return;
   list.replaceChildren();
   const q=query.toLocaleLowerCase('ru').trim();
   const found=commands.filter(([label,category])=>(label+' '+category).toLocaleLowerCase('ru').includes(q));
-  if(!found.length){list.append(node('div','forma-command-empty','Команд не найдено'));return}
+  if(!found.length){list.append(node('div','forma-command-empty','Инструмент не найден'));return}
+  let previous='';
   found.forEach(([label,category,action])=>{
-   const b=node('button','', '<span>'+label+'</span><small>'+category+'</small>');
+   if(category!==previous){const group=node('div','forma-command-group',category);list.append(group);previous=category}
+   const b=node('button','forma-command-choice','<span>'+label+'</span><small>Открыть ↗</small>');
    b.type='button';b.addEventListener('click',()=>runCommand(action));list.append(b);
   });
  }
@@ -282,7 +298,7 @@
   if(commandBackdrop){$('#formaCommandSearch')?.focus();return}
   commandBackdrop=node('div','forma-command-backdrop',
    '<div class="forma-command-dialog" role="dialog" aria-modal="true" aria-label="Команды студии">'+
-   '<div class="forma-command-head">'+icons.search+'<input id="formaCommandSearch" type="text" placeholder="Найти инструмент или действие…" autocomplete="off" aria-label="Поиск команд"></div>'+
+   '<div class="forma-command-head">'+icons.search+'<input id="formaCommandSearch" type="text" placeholder="Найти задачу: погода, свет, 3D, материалы…" autocomplete="off" aria-label="Поиск команд"></div>'+
    '<div class="forma-command-list" id="formaCommandList"></div>'+
    '<div class="forma-command-hint">Нажмите Esc, чтобы закрыть · Ctrl+K / ⌘K, чтобы открыть</div></div>');
   document.body.append(commandBackdrop);
@@ -320,6 +336,11 @@
   if(document.body.dataset.formaStudioReady)return;
   document.body.dataset.formaStudioReady='1';
   setupBrand();setupContext();setupPresets();setupQA();setupEvents();
+  const mobile=document.querySelector('.mobile-header-actions');
+  if(mobile&&!mobile.querySelector('[data-studio-action="commands"]')){const quick=node('button','forma-mobile-tools-quick','Инструменты');quick.type='button';quick.dataset.studioAction='commands';mobile.prepend(quick)}
+  const top=document.querySelector('.top-actions');
+  if(top&&!top.querySelector('[data-studio-action="commands"]')){const quick=node('button','forma-desktop-tools-quick','⌕ Инструменты');quick.type='button';quick.dataset.studioAction='commands';top.prepend(quick)}
+
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
  else init();
