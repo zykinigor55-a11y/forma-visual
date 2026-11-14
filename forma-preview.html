@@ -8,9 +8,18 @@
 try{document.documentElement.dataset.formaTheme=localStorage.getItem('forma-signature-theme-v1')==='light'?'light':'dark'}catch{document.documentElement.dataset.formaTheme='dark'}
 </script>
 <script>
-try{if(sessionStorage.getItem('forma-opening-seen-v5')!=='1')document.documentElement.classList.add('forma-intro-pending')}catch{document.documentElement.classList.add('forma-intro-pending')}
+/* Always show the greeting on page entry; no sessionStorage bypass on repeat visits. */
+document.documentElement.classList.add('forma-intro-pending');
 </script>
-<style>html.forma-intro-pending body{background:#2c2e2d}html.forma-intro-pending #forma-intro{display:block}</style>
+<style>
+html.forma-intro-pending body{background:#101012}
+html.forma-intro-pending #forma-intro{display:block}
+#forma-intro:not(.is-fa-visible) .forma-intro-mark,
+#forma-intro:not(.is-name-visible) .forma-intro-name,
+#forma-intro:not(.is-descriptor-visible) .forma-intro-descriptor{
+ opacity:0!important;visibility:hidden!important
+}
+</style>
 <link rel="stylesheet" href="styles.css?v=geometry-v32-20261109">
 <link rel="stylesheet" href="dom-render-ux-v26.css?v=20261109-mobile">
 <link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
@@ -41,7 +50,7 @@ try{if(sessionStorage.getItem('forma-opening-seen-v5')!=='1')document.documentEl
 <link rel="preload" href="assets/brand/intro-black-wall-shadow-4k.avif" as="image" type="image/avif">
 
 <link rel="preload" href="assets/brand/intro-branch-shadows.svg" as="image">
-<link rel="stylesheet" href="forma-intro-signature.css?v=wall-first-logo-timed-v5">
+<link rel="stylesheet" href="forma-intro-signature.css?v=wall-first-visible-stages-v6">
 <noscript><style>html.forma-intro-pending #forma-intro{display:none!important}</style></noscript>
 <link rel="stylesheet" href="forma-home-tools.css?v=20261114-vizworkflow-02">
 <link rel="stylesheet" href="forma-signature-theme.css?v=20261114-signature-v1">
@@ -743,7 +752,7 @@ try{if(sessionStorage.getItem('forma-opening-seen-v5')!=='1')document.documentEl
 <script defer src="forma-node-engine.js?v=20261114-vizworkflow-02"></script>
 <script defer src="forma-pro-tools.js?v=20261114-pro-01"></script>
 <script defer src="forma-home-tools.js?v=20261114-vizworkflow-02"></script>
-<script defer src="forma-intro-signature.js?v=wall-first-logo-timed-v5"></script>
+<script defer src="forma-intro-signature.js?v=wall-first-visible-stages-v6"></script>
 <script defer src="forma-static-preview.js?v=20261114-vizworkflow-02"></script>
 <script defer src="forma-signature-theme.js?v=20261114-signature-v1"></script>
 <script defer src="forma-mobile-ux.js?v=20261114-mobile-ux-v1"></script>
