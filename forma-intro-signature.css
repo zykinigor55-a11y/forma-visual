@@ -197,3 +197,20 @@ html.forma-intro-pending #forma-intro{display:block}
  #forma-intro.is-name-visible .forma-intro-name,
  #forma-intro.is-descriptor-visible .forma-intro-descriptor{opacity:1!important;visibility:visible!important}
 }
+
+/* Explicit ?previewIntro=1 is a requested animation demonstration.
+   On devices configured to reduce motion, regular browsing still respects that preference. */
+@media(prefers-reduced-motion:reduce){
+ html.forma-intro-force-preview-motion #forma-intro .forma-intro-mark{
+  transition:opacity 1.7s cubic-bezier(.22,1,.36,1)!important
+ }
+ html.forma-intro-force-preview-motion #forma-intro .forma-intro-name{
+  transition:opacity 1.05s ease!important
+ }
+ html.forma-intro-force-preview-motion #forma-intro .forma-intro-descriptor{
+  transition:opacity .9s ease!important
+ }
+ html.forma-intro-force-preview-motion #forma-intro .forma-intro-preparation{
+  transition:opacity .7s ease!important
+ }
+}
