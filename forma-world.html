@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#192426">
+<meta name="description" content="ФОРМА — просмотр архитектурных 3D-миров, GLB, экстерьеры, прогулка и освещение.">
+<title>ФОРМА · 3D-мир</title>
+<link rel="icon" href="assets/brand/forma-preview-favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="forma-world.css?v=20261114-01">
+<script type="importmap">
+{
+ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"
+ }
+}
+</script>
+<script type="module" src="forma-world.js?v=20261114-01"></script>
+</head>
+<body>
+<div class="fw-app">
+<header class="fw-header">
+ <a class="fw-home" href="forma-preview.html" aria-label="Вернуться в ФОРМА"><img src="assets/brand/forma-fa-mark.svg" alt="" width="38" height="38"><span><b>ФОРМА</b><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span></a>
+ <div class="fw-title"><span>ИНСТРУМЕНТ / 3D WORLD</span><strong>Пространство проекта</strong></div>
+ <a href="forma-preview.html" class="fw-back">← К проекту</a>
+</header>
+<main class="fw-workspace">
+ <aside class="fw-panel" aria-label="Управление 3D-миром">
+  <span class="fw-kicker">ПРОФЕССИОНАЛЬНЫЙ ИНСТРУМЕНТ</span>
+  <h1>3D-мир</h1>
+  <p class="fw-intro">Изучайте архитектуру в реальном масштабе: окружение, ракурсы, свет и свободная прогулка.</p>
+  <div class="fw-section">
+   <div class="fw-section-heading"><span>01</span><b>Исходная геометрия</b></div>
+   <label for="fwFile" class="fw-upload"><strong>Загрузить 3D-модель</strong><span>GLB · со встроенными материалами · до 120 МБ</span></label>
+   <input id="fwFile" type="file" accept=".glb,model/gltf-binary" hidden>
+   <button type="button" class="fw-link" id="fwDemo">Показать демонстрационный дом ↻</button>
+   <p class="fw-muted">Демонстрационная сцена условная. Загруженная модель не передаётся на сервер и не изменяется.</p>
+  </div>
+  <div class="fw-section">
+   <div class="fw-section-heading"><span>02</span><b>Режим просмотра</b></div>
+   <div class="fw-segments" role="group" aria-label="Режим камеры">
+    <button type="button" id="fwOrbit" class="active" aria-pressed="true">Обзор</button>
+    <button type="button" id="fwWalk" aria-pressed="false">Прогулка</button>
+   </div>
+   <p id="fwHelp" class="fw-muted">Поверните мышью или пальцем. Колесо мыши или два пальца — приближение.</p>
+  </div>
+  <div class="fw-section">
+   <div class="fw-section-heading"><span>03</span><b>Свет и атмосфера</b></div>
+   <label class="fw-label" for="fwLight">Время суток</label>
+   <select id="fwLight"><option value="day">Мягкий день</option><option value="golden">Золотой час</option><option value="blue">Синий час</option><option value="night">Ночь</option></select>
+   <label class="fw-label" for="fwFov">Угол обзора</label>
+   <input type="range" id="fwFov" min="35" max="85" value="60"><span class="fw-small" id="fwFovValue">60°</span>
+  </div>
+  <div class="fw-section">
+   <div class="fw-section-heading"><span>04</span><b>Съёмка и экспорт</b></div>
+   <div class="fw-actions"><button type="button" id="fwShot" class="fw-primary">Сохранить кадр PNG</button><button type="button" id="fwBookmark">Запомнить ракурс</button><button type="button" id="fwReturn">Вернуть ракурс</button></div>
+  </div>
+  <div class="fw-section fw-footer-note">Подключение AI Image-to-3D / 3D Worlds появится отдельно. Для точной архитектуры используйте GLB, экспортированный из CAD или Blender.</div>
+ </aside>
+ <section class="fw-canvas-area" aria-label="Интерактивный 3D-мир">
+  <div class="fw-toolbar"><span class="fw-live-dot"></span><span id="fwSceneName">Демонстрационный архитектурный мир</span><span class="fw-divider"></span><span id="fwModeLabel">ОБЗОР</span></div>
+  <div id="fwCanvas" class="fw-viewport"><div class="fw-wait" id="fwWait">Подготавливаем архитектурную сцену…</div></div>
+  <div class="fw-overlay" aria-hidden="true"><div class="fw-coordinates">FORMA / WORLD 01</div><div class="fw-scale">ГЕОМЕТРИЯ БЕЗ ИЗМЕНЕНИЙ</div></div>
+  <div class="fw-joystick" id="fwTouchMove" aria-label="Управление перемещением" hidden>
+   <button type="button" data-move="forward" aria-label="Вперёд">↑</button>
+   <div><button type="button" data-move="left" aria-label="Влево">←</button><button type="button" data-move="back" aria-label="Назад">↓</button><button type="button" data-move="right" aria-label="Вправо">→</button></div>
+  </div>
+  <div class="fw-status" id="fwStatus" role="status">Пробный 3D-мир: свободный обзор архитектуры и окружения.</div>
+ </section>
+</main>
+</div>
+</body>
+</html>
