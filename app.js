@@ -240,6 +240,228 @@ const asset = path => isPhotoPreset(path)
   ? (luxuryLocalAsset(path) || window.DOM_RENDER_UNIFIED_PRESETS?.[path] || window.DOM_RENDER_ASSETS?.[path] || naturePhoto(path) || HD_PRESETS[path] || path)
   : (window.DOM_RENDER_ASSETS?.[path] || window.DOM_RENDER_UNIFIED_PRESETS?.[path] || naturePhoto(path) || premiumPhoto(path) || HD_PRESETS[path] || path);
 const environments = [['garden','Сад и газон','Ухоженный приватный сад, аккуратный газон и декоративные посадки.'],['forest','Хвойный лес','Высокие хвойные деревья на заднем плане, натуральный лесной рельеф.'],['lake','У озера','Естественная береговая линия и спокойное озеро на заднем плане, берег не перемещать между видами произвольно.'],['mountains','Горы','Дальний горный горизонт и каменистый рельеф.'],['city','Городской парк','Ландшафт современного городского парка без новых построек.'],['courtyard','Тихий парк','Приватный озеленённый участок с высокими деревьями.'],['nordic','Северный пейзаж','Сдержанная северная природа, камни, хвойники.'],['coast','У побережья','Прибрежная природа, дальняя горизонтальная линия моря.'],['minimal','Минимализм','Сдержанный ландшафт, гравий, небольшие деревья и злаки.'],['mist','Туманный лес','Мягкий дальний лесной пейзаж с атмосферной дымкой.']];
+const ENV_SUBTYPES = Object.freeze({
+ "garden": [
+  [
+   "formal",
+   "Парадный газон",
+   "Ровный аккуратный газон, подстриженные группы кустарников, минимальные аккуратные цветники, свободный обзор здания."
+  ],
+  [
+   "natural",
+   "Природный сад",
+   "Натуральное разнотравье, злаки, мягкая нерегулярная структура посадок и деликатный ландшафт."
+  ],
+  [
+   "park",
+   "Пейзажный сад",
+   "Разновысотные деревья, естественные группы кустарников, спокойный ухоженный зелёный участок."
+  ],
+  [
+   "conifers",
+   "Сад с хвойниками",
+   "Композиции из декоративных сосен, можжевельников и невысоких хвойников с естественной фактурой."
+  ]
+ ],
+ "forest": [
+  [
+   "young",
+   "Молодые сосны",
+   "Молодые стройные сосны с тонкими стволами, сравнительно открытый подлесок, лёгкая прозрачность леса."
+  ],
+  [
+   "mature",
+   "Зрелый сосновый бор",
+   "Высокие зрелые сосны с характерной корой, просторный сухой сосновый бор, мох и хвойная подстилка."
+  ],
+  [
+   "ancient",
+   "Вековые сосны",
+   "Очень старые мощные сосны с крупными стволами, выразительной рельефной корой, высокими кронами и сложным лесным покровом."
+  ],
+  [
+   "mixed",
+   "Смешанный хвойный лес",
+   "Сочетание высоких сосен и елей разного возраста, разнообразный подлесок и природная глубина лесного кадра."
+  ]
+ ],
+ "lake": [
+  [
+   "forest",
+   "Лесное озеро",
+   "Естественное лесное озеро с тихой водой, природным берегом и деревьями на дальнем плане."
+  ],
+  [
+   "mountain",
+   "Горное озеро",
+   "Прозрачное озеро среди горных склонов и каменистых берегов, спокойные реалистичные отражения."
+  ],
+  [
+   "open",
+   "Большое озеро",
+   "Просторная открытая водная гладь с далёким горизонтом и небольшими волнами от ветра."
+  ],
+  [
+   "reeds",
+   "Озеро с камышами",
+   "Небольшое природное озеро с прибрежными камышами и осокой, неровной естественной кромкой воды."
+  ]
+ ],
+ "mountains": [
+  [
+   "foothills",
+   "Лесистые предгорья",
+   "Мягкие горные склоны, покрытые естественным лесом, плавная смена планов и глубина кадра."
+  ],
+  [
+   "alpine",
+   "Альпийские луга",
+   "Открытые горные луга с низкими травами и редкими камнями, дальние хребты."
+  ],
+  [
+   "rocky",
+   "Скалистые вершины",
+   "Выразительные скальные горные массивы, сложная каменная фактура и строгий рельеф."
+  ],
+  [
+   "valley",
+   "Горная долина",
+   "Широкая спокойная горная долина с дальними вершинами и природным ландшафтом."
+  ]
+ ],
+ "city": [
+  [
+   "modern",
+   "Современный парк",
+   "Современный городской парк с ухоженными деревьями, газонами и аккуратной городской растительностью."
+  ],
+  [
+   "classic",
+   "Исторический парк",
+   "Зрелые лиственные деревья, классические аллеи и сдержанный исторический характер озеленения."
+  ],
+  [
+   "square",
+   "Тихий сквер",
+   "Компактный зелёный сквер с аккуратными аллеями, живыми изгородями и группами деревьев."
+  ],
+  [
+   "natural",
+   "Природный экопарк",
+   "Более свободный городской парк с природными посадками и минимально обработанным зелёным ландшафтом."
+  ]
+ ],
+ "courtyard": [
+  [
+   "oldpark",
+   "Старый лиственный парк",
+   "Высокие взрослые дубы, клёны и липы, широкие кроны, глубокие естественные тени."
+  ],
+  [
+   "birch",
+   "Берёзовая роща",
+   "Группа стройных берёз со светлой корой и ажурными кронами, лёгкая лесная атмосфера."
+  ],
+  [
+   "shady",
+   "Тенистый сад",
+   "Плотные большие деревья, полутень, хосты, папоротники и низкие теневыносливые растения."
+  ],
+  [
+   "meadow",
+   "Открытая поляна",
+   "Небольшая спокойная открытая лужайка с деревьями по периметру, лёгкая и воздушная композиция."
+  ]
+ ],
+ "nordic": [
+  [
+   "pine",
+   "Северный сосновый лес",
+   "Невысокие суровые северные сосны, скалы, лишайники и сдержанная природная палитра."
+  ],
+  [
+   "stone",
+   "Скалы и мхи",
+   "Гранитные выходы и валуны с мхами и лишайниками, редкие низкие растения."
+  ],
+  [
+   "tundra",
+   "Северная тундра",
+   "Открытый северный ландшафт с низкими кустарниками, мхами и редкими деревьями."
+  ],
+  [
+   "boulders",
+   "Лес и валуны",
+   "Смешанный редкий северный лес, крупные естественные валуны и хвойный подлесок."
+  ]
+ ],
+ "coast": [
+  [
+   "sand",
+   "Песчаный берег",
+   "Мягкая песчаная береговая линия, светлые дюны, море и естественные приморские травы."
+  ],
+  [
+   "rock",
+   "Скалистый берег",
+   "Каменистые уступы и природные скалы у воды, выразительный рельеф побережья."
+  ],
+  [
+   "pine",
+   "Сосны у моря",
+   "Приморские сосны с ветвистыми кронами, песчаная почва и дальний горизонт моря."
+  ],
+  [
+   "dunes",
+   "Дюны и злаки",
+   "Прибрежные дюны с естественными злаками и сухими травами, ветер и открытый горизонт."
+  ]
+ ],
+ "minimal": [
+  [
+   "gravel",
+   "Гравий и злаки",
+   "Чистые зоны гравия, тонкие группы декоративных злаков и сдержанное озеленение."
+  ],
+  [
+   "stone",
+   "Камень и мох",
+   "Крупные плоские природные камни, мхи и минимальные низкие посадки."
+  ],
+  [
+   "lawn",
+   "Чистый газон",
+   "Почти непрерывный минималистичный газон с несколькими аккуратными зелёными акцентами."
+  ],
+  [
+   "shapes",
+   "Формованные кустарники",
+   "Редкие геометричные кустарники и строгие лаконичные посадки с понятной композицией."
+  ]
+ ],
+ "mist": [
+  [
+   "pine",
+   "Сосны в тумане",
+   "Высокие сосны с мягкой лесной дымкой между стволами и естественной многоплановостью."
+  ],
+  [
+   "mixed",
+   "Смешанный лес",
+   "Хвойные и лиственные деревья, лёгкие слои тумана в дальних планах."
+  ],
+  [
+   "ancient",
+   "Вековой туманный лес",
+   "Крупные возрастные стволы и глубокая лесная перспектива, сдержанная утренняя дымка."
+  ],
+  [
+   "birch",
+   "Светлая роща",
+   "Светлые берёзы и мягкая прозрачная дымка, деликатное спокойное освещение."
+  ]
+ ]
+});
 const choices = {
  time:[['morning','Утро','Мягкое низкое утреннее солнце'],['day','День','Естественный дневной свет'],['golden','Вечер','Тёплый золотой час'],['night','Ночь','Ночная съёмка, мягкий интерьерный свет']],
  weather:[['clear','Ясно','Чистое небо'],['cloud','Облачно','Плотная переменная облачность'],['rain','Дождь','Реалистичный дождь, влажные поверхности'],['fog','Туман','Низкий мягкий туман'],['snow','Снег','Снег, зимний свет']],
@@ -248,7 +470,7 @@ const choices = {
 };
 const zones = [['main','Стены фасада'],['accent','Декоративная отделка'],['base','Цоколь'],['roof','Кровля'],['windows','Оконные рамы'],['doors','Двери'],['terrace','Терраса'],['steps','Ступени'],['custom','Другой участок']];
 const catalog = [['plaster','Штукатурка','mat-plaster.jpg'],['travertine','Травертин','mat-travertine.jpg'],['limestone','Природный камень','mat-limestone.jpg'],['wood','Дерево','mat-wood.jpg'],['brick','Клинкер','mat-brick.jpg'],['concrete','Бетон','mat-concrete.jpg'],['metal','Металл','mat-metal.jpg'],['ceramic','Керамогранит','mat-ceramic.jpg'],['glass','Стекло','mat-glass.jpg']];
-const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',sceneExplicit:{},sunLighting:null,ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},materialInstructions:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false,homeChanges:'',batchDetail1X:60,batchDetail1Y:60,batchDetail2X:77,batchDetail2Y:40});
+const defaultSettings = ()=>({environment:'garden',time:'day',weather:'cloud',season:'summer',plants:'decorative',sceneExplicit:{},environmentSubtypes:{},sunLighting:null,ratio:'16:9',quality:'high',quantity:'1',zone:'main',mats:{main:null,accent:null,base:null,roof:null,windows:null,doors:null,terrace:null,steps:null,custom:null},materialActions:{},materialColors:{},materialInstructions:{},textureScale:100,textureRotate:0,lockGeometry:true,preserveMaterials:true,keepReference:true,editSelectedOnly:false,homeChanges:'',batchDetail1X:60,batchDetail1Y:60,batchDetail2X:77,batchDetail2Y:40});
 const makeProject=(name='Новый проект',isDemo=false)=>({id:isDemo?'demo':uuid(),name,createdAt:Date.now(),modifiedAt:Date.now(),demo:isDemo,settings:defaultSettings(),renders:[],activeRender:null,reference:null,sourceWidth:1672,sourceHeight:941,hasSource:isDemo,angle:1});
 const STKEY='domrender_mvp_projects_v1', MTKEY='domrender_mvp_materials_v1';
 let projects=[],project=null,customMaterials=[],currentTab='project',materialTab='mine',viewerMode=localStorage.getItem('domrender_view_mode')||'slider';
@@ -397,16 +619,24 @@ function explicitScene(){
  }
  return s.sceneExplicit;
 }
+function activeEnvironmentSubtype(){
+ const currentSettings=current(),env=currentSettings?.environment;
+ if(!env||!explicitScene().environment)return null;
+ const id=currentSettings.environmentSubtypes?.[env];
+ const option=(ENV_SUBTYPES[env]||[]).find(v=>v[0]===id);
+ return option||null;
+}
 function sceneVisibleSummary(){
  const s=current(),flags=explicitScene();
- const values={environment:envLabel(),season:cLabel('season',s.season),weather:cLabel('weather',s.weather),time:cLabel('time',s.time)};
+ const envDetail=activeEnvironmentSubtype();
+ const values={environment:envLabel()+(envDetail?' · '+envDetail[1]:''),season:cLabel('season',s.season),weather:cLabel('weather',s.weather),time:cLabel('time',s.time)};
  const manual=SCENE_SETUP_FIELDS.filter(key=>flags[key]).map(key=>values[key]);
  return manual.length?(manual.join(' · ')+(manual.length<4?' · Остальное по исходнику':'')):'По исходному изображению · Без изменений атмосферы';
 }
 function renderFlowLabels(){
  if(!project||!$('renderSummaryLine'))return;
  const p=current(),values={
-  environment:envLabel(),season:cLabel('season',p.season),weather:cLabel('weather',p.weather),
+  environment:envLabel()+(activeEnvironmentSubtype()?' · '+activeEnvironmentSubtype()[1]:''),season:cLabel('season',p.season),weather:cLabel('weather',p.weather),
   time:cLabel('time',p.time),plants:cLabel('plants',p.plants)
  };
  const overrides=explicitScene();
@@ -972,7 +1202,9 @@ function settingsBrief(){
  const flags=explicitScene();
  return {project:project.name,source:project.hasSource?'Скриншот':'Нет',
  environment:flags.environment?envLabel():null,
- environmentInstructions:flags.environment?(environments.find(e=>e[0]===s.environment)?.[2]):null,
+ environmentInstructions:flags.environment?(activeEnvironmentSubtype()?.[2]||environments.find(e=>e[0]===s.environment)?.[2]):null,
+ environmentSubtype:flags.environment?(activeEnvironmentSubtype()?.[1]||null):null,
+ environmentSubtypeInstructions:flags.environment?(activeEnvironmentSubtype()?.[2]||null):null,
  time:flags.time?cLabel('time',s.time):null,
  weather:flags.weather?cLabel('weather',s.weather):null,
  season:flags.season?cLabel('season',s.season):null,
@@ -1525,7 +1757,12 @@ function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)retur
 window.FORMA_SCENE_BRIDGE={
  get(){
   if(!project)return null;
-  const s=current();return {explicit:{...explicitScene()},time:s.time,weather:s.weather,
+  const s=current();
+  const envId=s.environment,opts=ENV_SUBTYPES[envId]||[],selected=s.environmentSubtypes?.[envId]||null;
+  return {explicit:{...explicitScene()},environmentId:envId,
+   environmentSubtypes:opts.map(([id,label,description])=>({id,label,description})),
+   selectedEnvironmentSubtype:explicitScene().environment?selected:null,
+   time:s.time,weather:s.weather,
    sun:s.sunLighting||null,hasSource:!!project.hasSource,hasRender:!!renderURL,
    sourceImage:sourceURL,renderImage:renderURL,sceneSummary:sceneVisibleSummary()};
  },
@@ -1534,7 +1771,15 @@ window.FORMA_SCENE_BRIDGE={
   delete explicitScene()[group];
   current().sceneMood=null;renderFlowLabels();renderFooter();save();
  },
- setSun(position){
+ setEnvironmentSubtype(environmentId,subtypeId){
+  if(!project||!ENV_SUBTYPES[environmentId]||current().environment!==environmentId||!explicitScene().environment)return false;
+  if(subtypeId!==null&&!(ENV_SUBTYPES[environmentId]||[]).some(v=>v[0]===subtypeId))return false;
+  if(!current().environmentSubtypes)current().environmentSubtypes={};
+  if(subtypeId===null)delete current().environmentSubtypes[environmentId];
+  else current().environmentSubtypes[environmentId]=subtypeId;
+  renderFlowLabels();renderFooter();save();return true;
+ },
+  setSun(position){
   if(!project||!project.hasSource)return false;
   const x=Math.max(0,Math.min(1,Number(position?.x)));
   const y=Math.max(0,Math.min(1,Number(position?.y)));
