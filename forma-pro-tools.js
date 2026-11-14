@@ -34,7 +34,7 @@ const warning=str=>`<div class="fa-pro-warning">${str}</div>`;
 function inner(id){
  switch(id){
  case 'overview':
- return section('Профессиональный набор инструментов','PROJECT WORKSPACE / FORMA ARCHVIZ','Управление полноценной архитектурной визуализацией из одной рабочей среды.',
+ return section('Профессиональный набор инструментов','ФОРМА / РАБОЧАЯ СТУДИЯ','Управление полноценной архитектурной визуализацией из одной рабочей среды.',
  `<div class="fa-pro-tile-grid">
  ${tile('Экстерьеры','Исходный скриншот → профессиональная архитектурная фотография.','AI / ТЕКУЩИЙ ДВИЖОК')}
  ${tile('Интерьеры','Sketch → Photo: материалы, свет и фиксация планировки.','AI / ТЕКУЩИЙ ДВИЖОК')}
@@ -95,7 +95,7 @@ function inner(id){
  case 'presentation':
  return section('Архитектурный альбом','PRESENTATION STUDIO / 09','Оформите исходник и визуализацию как профессиональный лист проекта.',
  `<label class="fa-pro-single">Название проекта<input id="faProProjectTitle" maxlength="100" value="${esc(state.projectTitle)}"></label>
- <div class="fa-pro-presentation"><div><small>FORMA ARCHVIZ / 001</small><b>ARCHITECTURAL STUDY</b><p>Исходная модель</p></div><div><small>FORMA ARCHVIZ / 002</small><b>FINAL PHOTOGRAPHY</b><p>Архитектурный рендер</p></div></div>
+ <div class="fa-pro-presentation"><div><small>ФОРМА / 001</small><b>АРХИТЕКТУРНЫЙ ПРОЕКТ</b><p>Исходная модель</p></div><div><small>ФОРМА / 002</small><b>ФОТОРЕАЛИСТИЧНЫЙ РЕНДЕР</b><p>Архитектурный рендер</p></div></div>
  <div class="fa-pro-actions">${button('print','Открыть печатный лист PDF',true)}${button('downloadBrief','Скачать описание проекта')}</div>
  ${warning('PDF сохраняется через печать браузера. Планы не создаются автоматически и не выдаются за проектную документацию.')}`);
  case 'account':
@@ -123,7 +123,7 @@ function printSheet(){
  const w=window.open('','_blank');if(!w){note('Разрешите всплывающие окна для экспорта альбома');return}
  const cleanTitle=esc(title);
  w.document.open();
- w.document.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>'+cleanTitle+' | FORMA ARCHVIZ</title><style>@page{size:A4 landscape;margin:15mm}body{font:12px Arial,sans-serif;color:#222;margin:0}header{display:flex;justify-content:space-between;border-bottom:1px solid #999;padding:16px 0}h1{font-size:29px;font-weight:500}article{display:grid;grid-template-columns:1fr 1fr;gap:16px}article img{width:100%;max-height:142mm;object-fit:contain;background:#e7e9e8}h3{font-size:12px;font-weight:600;letter-spacing:.08em}footer{margin-top:20px;color:#777}</style></head><body><header><b>FORMA ARCHVIZ</b><span>ARCHITECTURAL STUDY</span></header><h1>'+cleanTitle+'</h1><article><section><h3>01 / ИСХОДНАЯ МОДЕЛЬ</h3><img alt="Исходник" src="'+esc(src)+'"></section><section><h3>02 / ВИЗУАЛИЗАЦИЯ</h3><img alt="Рендер" src="'+esc(out)+'"></section></article><footer>FORMA ARCHVIZ · VISUAL PROJECT DOCUMENT · '+new Date().toLocaleDateString('ru-RU')+'</footer></body></html>');
+ w.document.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>'+cleanTitle+' | ФОРМА</title><style>@page{size:A4 landscape;margin:15mm}body{font:12px Arial,sans-serif;color:#222;margin:0}header{display:flex;justify-content:space-between;border-bottom:1px solid #999;padding:16px 0}h1{font-size:29px;font-weight:500}article{display:grid;grid-template-columns:1fr 1fr;gap:16px}article img{width:100%;max-height:142mm;object-fit:contain;background:#e7e9e8}h3{font-size:12px;font-weight:600;letter-spacing:.08em}footer{margin-top:20px;color:#777}</style></head><body><header><b>ФОРМА</b><span>АРХИТЕКТУРНЫЙ ПРОЕКТ</span></header><h1>'+cleanTitle+'</h1><article><section><h3>01 / ИСХОДНАЯ МОДЕЛЬ</h3><img alt="Исходник" src="'+esc(src)+'"></section><section><h3>02 / ВИЗУАЛИЗАЦИЯ</h3><img alt="Рендер" src="'+esc(out)+'"></section></article><footer>ФОРМА · VISUAL PROJECT DOCUMENT · '+new Date().toLocaleDateString('ru-RU')+'</footer></body></html>');
  w.document.close();note('Открыт печатный лист — сохраните его через меню печати как PDF');
 }
 async function checkServer(){
@@ -175,7 +175,7 @@ function actions(e){
 function open(id='overview'){
  if(modal){show(id);return}
  modal=document.createElement('div');modal.className='fa-pro-backdrop';modal.id='faProBackdrop';
- modal.innerHTML='<div class="fa-pro-shell" role="dialog" aria-modal="true" aria-label="Профессиональные инструменты"><header class="fa-pro-head"><div class="fa-pro-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div><b>FORMA ARCHVIZ <span>/ PRO TOOLS</span></b><small>PROFESSIONAL ARCHITECTURAL WORKSPACE</small></div><button id="faProClose" type="button" aria-label="Закрыть">×</button></header><div class="fa-pro-main"><nav class="fa-pro-nav" aria-label="Разделы инструментов"></nav><div id="faProContent" class="fa-pro-content"></div></div><footer class="fa-pro-footer"><span id="faProStatus" role="status">Проекты и настройки могут храниться локально в этом браузере.</span><span>FORMA / STUDIO 01</span></footer></div>';
+ modal.innerHTML='<div class="fa-pro-shell" role="dialog" aria-modal="true" aria-label="Профессиональные инструменты"><header class="fa-pro-head"><div class="fa-pro-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div><b>ФОРМА <span>/ ИНСТРУМЕНТЫ</span></b><small>ПРОФЕССИОНАЛЬНАЯ АРХИТЕКТУРНАЯ СТУДИЯ</small></div><button id="faProClose" type="button" aria-label="Закрыть">×</button></header><div class="fa-pro-main"><nav class="fa-pro-nav" aria-label="Разделы инструментов"></nav><div id="faProContent" class="fa-pro-content"></div></div><footer class="fa-pro-footer"><span id="faProStatus" role="status">Проекты и настройки могут храниться локально в этом браузере.</span><span>ФОРМА / СТУДИЯ 01</span></footer></div>';
  document.body.append(modal);document.body.classList.add('fa-pro-is-open');
  const nav=$('.fa-pro-nav');
  nav.innerHTML=ITEMS.map(([id,title,caption,icon])=>`<button type="button" data-pro-tab="${id}"><i>${icon}</i><span><b>${title}</b><small>${caption}</small></span></button>`).join('');
@@ -191,12 +191,12 @@ function close(){if(!modal)return;modal.remove();modal=null;document.body.classL
 function init(){
  const actions=$('.forma-context-actions');
  if(actions){
-  const b=document.createElement('button');b.type='button';b.className='forma-mini-btn fa-pro-launch';b.textContent='◈ PRO tools';b.title='Профессиональные инструменты студии';b.addEventListener('click',()=>open());
+  const b=document.createElement('button');b.type='button';b.className='forma-mini-btn fa-pro-launch';b.textContent='◈ Инструменты';b.title='Профессиональные инструменты студии';b.addEventListener('click',()=>open());
   const c=actions.querySelector('[data-studio-action="commands"]');if(c)actions.insertBefore(b,c);else actions.append(b);
  }
  const nav=$('.rail-nav');
  if(nav){
-  const b=document.createElement('button');b.type='button';b.className='rail-btn fa-pro-nav-launch';b.innerHTML='<svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">PRO tools</span>';b.title='Профессиональные инструменты';b.addEventListener('click',()=>open());nav.append(b);
+  const b=document.createElement('button');b.type='button';b.className='rail-btn fa-pro-nav-launch';b.innerHTML='<svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Инструменты</span>';b.title='Профессиональные инструменты';b.addEventListener('click',()=>open());nav.append(b);
  }
  window.FORMA_PRO={open,close};
  window.addEventListener('forma:open-tool',e=>open(e.detail?.tool||'overview'));
