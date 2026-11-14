@@ -119,3 +119,6 @@ html.forma-intro-pending #forma-intro{display:block}
  .forma-intro-shadow{transform:none}
  .forma-intro-lockup{opacity:1;transform:none}
 }
+
+/* Explicit phase lock for design review screenshots; not used during normal playback. */
+.forma-intro.is-wall-only .forma-intro-lockup,.forma-intro.is-wall-only .forma-intro-caption{opacity:0!important;visibility:hidden!important}
