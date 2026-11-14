@@ -237,7 +237,7 @@ function setLight(key){
  scene.fog=new THREE.FogExp2(new THREE.Color(s.fog),key==='night'?.007:.005);
  hemisphere.intensity=s.hem;sun.intensity=s.sun;sun.color.setHex(s.tint);
  sun.position.set(...s.from);renderer.toneMappingExposure=s.exposure;
- ground.material.color.set(s.ground);
+ if(ground)ground.material.color.set(s.ground);
 }
 function enterMode(next){
  if(next===mode)return;
@@ -344,4 +344,4 @@ $('#fwShot').addEventListener('click',saveShot);
 $('#fwBookmark').addEventListener('click',bookmarkCamera);
 $('#fwReturn').addEventListener('click',restoreCamera);
 window.FORMA_WORLD={loadFile,demoHouse,setLight,enterMode,get scene(){return scene},get loadedFile(){return source},get mode(){return mode}};
-setLight('day');demoHouse();resize();frame();
+demoHouse();setLight('day');resize();frame();
