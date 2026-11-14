@@ -15,7 +15,7 @@ const ZONES={main:'Фасад',roof:'Кровля',windows:'Окна',doors:'Д�
 let busy=false,aborter=null,wasCancelled=false,nodeSettingsBound=null,openedRunId=0;
 const statuses=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const apiPreview=()=>document.documentElement.classList.contains('forma-static-preview')||location.pathname.endsWith('/forma-preview.html');
+const apiPreview=()=>location.protocol==='file:'||/\.github\.io$/i.test(location.hostname);
 function graph(){return getAPI()?.graph?.()}
 function tell(s){getAPI()?.showStatus?.(s)}
 function checkPlan(g,target){
@@ -38,7 +38,7 @@ function checkPlan(g,target){
  if(unknown)throw Error('Тип «'+unknown.type+'» пока не исполняется.');
  const invalid=path.find(n=>n.type==='materials'&&!String(n.options?.instruction||'').trim());
  if(invalid)throw Error('Для ноды «Материалы» напишите конкретную инструкцию по редактированию.');
- const calls=path.filter(n=>AI_TYPES.has(n.type)).length;
+ const calls=path.filter(n=>AI_TYPES.has(n.type)&&!(n.options?.reuse&&getAPI()?.getSnapshot?.(n.id))).length;
  if(calls>8)throw Error('Для контроля стоимости разрешено не более 8 AI-этапов в цепочке.');
  return {path,calls};
 }
@@ -75,7 +75,14 @@ function settingsHTML(n){
   controls.push(select('zone','Элемент',ZONES,opts.zone||'custom'));
   controls.push('<label>Точное изменение<textarea data-node-option="instruction" rows="4" maxlength="500" placeholder="Например: заменить только деревянную отделку стены на светлый травертин; сохранить ракурс и геометрию.">'+esc(opts.instruction||'')+'</textarea></label>');
  }
- if(n.type==='source')controls.push('<p>Исходник берётся только из активного пользовательского проекта, а не из демонстрационного изображения.</p>');
+ if(n.type==='source')controls.push('<p>Нода получает реальный загруженный исходник активного проекта, не демонстрационный кадр.</p><button type="button" class="fa-inspector-upload" data-fa-upload-source>Загрузить свой исходник</button>');
+ if(AI_TYPES.has(n.type)){
+  const snapshot=getAPI()?.getSnapshot?.(n.id);
+  controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!snapshot?'disabled':'')+'> Повторно использовать уже готовый кадр без вызова AI</label>');
+  if(!snapshot)controls.push('<p>Повторное использование доступно после первого успешного запуска этого узла.</p>');
+ }
+ const snapshot=getAPI()?.getSnapshot?.(n.id);
+ if(snapshot&&imageMime(snapshot))controls.push('<div class="fa-inspector-result"><b>Кадр этой ноды</b><img src="'+snapshot+'" alt="Сохранённый результат ноды"><button type="button" data-fa-download-snapshot="'+esc(n.id)+'">Скачать кадр</button><button type="button" data-fa-compare-snapshot="'+esc(n.id)+'">Добавить в сравнение A/B</button></div>');
  if(n.type==='upscale')controls.push('<p>Локальное увеличение до 3840 пикселей по длинной стороне. Это НЕ нейросетевое улучшение детализации.</p>');
  if(n.type==='export')controls.push('<p>Скачивание файла и сохранение результатов AI-цепочки в галерее проекта.</p>');
  if(BLOCKED_TYPES.has(n.type))controls.push('<p>Автоматическое выполнение требует отдельной интеграции. В этой версии такая операция не запускается.</p>');
@@ -86,17 +93,26 @@ function settingsHTML(n){
 function showSelection(){
  const host=$('#faFlowNodeSettings'),g=graph();if(!host||!g)return;
  const n=g.nodes.find(n=>n.id===g.selected);
- host.innerHTML=n?settingsHTML(n):'<p>Выберите карточку на холсте.</p>';
+ host.innerHTML=n?settingsHTML(n):'<p>Выберите карточку на холсте и настройте операцию. Кнопка «Настроить» больше не открывает другие страницы.</p>';
+ const heading=$('#faFlowInspectorTitle');if(heading)heading.textContent=n?n.title||n.type:'Параметры ноды';
  if(nodeSettingsBound===host)return;
  host.addEventListener('change',event=>{
   const field=event.target.closest('[data-node-option]');if(!field)return;
-  getAPI()?.setOptions?.(graph()?.selected,{[field.dataset.nodeOption]:field.value});
+  getAPI()?.setOptions?.(graph()?.selected,{[field.dataset.nodeOption]:field.type==='checkbox'?field.checked:field.value});
  });
  host.addEventListener('input',event=>{
   const field=event.target.closest('textarea[data-node-option]');
   if(!field)return;
   const n=graph()?.nodes.find(n=>n.id===graph()?.selected);
   if(n){n.options={...(n.options||{}),[field.dataset.nodeOption]:field.value};getAPI()?.save?.()}
+ });
+ host.addEventListener('click',e=>{
+  const upload=e.target.closest('[data-fa-upload-source]');
+  if(upload){window.FORMA_RENDER_BRIDGE?.openUpload?.();return}
+  const download=e.target.closest('[data-fa-download-snapshot]');
+  if(download){const image=getAPI()?.getSnapshot?.(download.dataset.faDownloadSnapshot);if(image)downloadImage(image);return}
+  const compare=e.target.closest('[data-fa-compare-snapshot]');
+  if(compare){getAPI()?.addCompare?.(compare.dataset.faCompareSnapshot);return}
  });
  nodeSettingsBound=host;
 }
@@ -192,16 +208,20 @@ async function runTo(target){
    if(n.type==='source'){output=ctx.source}
    else if(AI_TYPES.has(n.type)){
     const brief=briefFor(ctx,mode,n);mode=brief.sceneType;
-    const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:String(n.options?.instruction||'').slice(0,500)}:{};
-    output=await imageAI(output,brief,ctx,opts);aiCompleted++;lastAI=n.title||n.type;
+    const cached=n.options?.reuse?api.getSnapshot?.(n.id):null;
+    if(cached){output=cached;tell('Использован готовый кадр: '+(n.title||n.type)+' · бесплатно');}
+    else {
+     const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:String(n.options?.instruction||'').slice(0,500)}:{};
+     output=await imageAI(output,brief,ctx,opts);aiCompleted++;lastAI=n.title||n.type;
+    }
    }else if(n.type==='upscale'){output=await canvas4K(output)}
    else if(n.type==='export'){downloadImage(output)}
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
-   await api.setSnapshot?.(n.id,output);
+   if(!api.getSnapshot?.(n.id)||api.getSnapshot(n.id)!==output)await api.setSnapshot?.(n.id,output);
    setState(n.id,'done');
   }
   if(aiCompleted){
-   await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Ноды · '+lastAI);
+   await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Ноды · '+lastAI,ctx.projectId);
   }
   tell('Готово: '+plan.path.length+' этапов · '+aiCompleted+' AI-вызовов. Результаты закреплены за нодами и сохранены в галерею.');
  }catch(err){
