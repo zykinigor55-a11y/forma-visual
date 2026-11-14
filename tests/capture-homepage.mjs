@@ -22,14 +22,17 @@ try {
  assert.equal(await page.locator('.forma-hero-emblem img').evaluate(el=>el.naturalWidth>0),true);
  await page.screenshot({path:output+'/forma-archviz-home-desktop.png',fullPage:false,animations:'disabled'});
  await page.screenshot({path:output+'/forma-archviz-home-full.png',fullPage:true,animations:'disabled'});
+ await page.locator('#formaProjectPanel').screenshot({path:output+'/forma-project-panel-desktop.png',animations:'disabled'});
  const nodes=page.locator('.fa-flow-launch');
  await nodes.click();
  await page.locator('#faFlowBackdrop').waitFor({state:'visible'});
  assert.ok(await page.locator('.fa-node').count()>0);
  await page.locator('#faFlowClose').click();
  const pro=page.locator('.fa-pro-launch');await pro.click();
- await page.locator('#faProBackdrop').waitFor({state:'visible'});
- await page.locator('#faProClose').click();
+ await page.locator('#formaProjectPanel').waitFor({state:'visible'});
+ assert.equal(await page.locator('.fa-home-tool').count(),16);
+ assert.equal(await page.locator('#faProBackdrop').count(),0);
+ assert.equal(await page.locator('#faProUpscaleUpload').isVisible(),true);
  const interior=page.locator('[data-studio-action="interior"]').first();
  await interior.click();
  await page.locator('#faInteriorPanel').waitFor({state:'visible',timeout:9000});
@@ -49,6 +52,7 @@ try {
  await mp.evaluate(()=>document.fonts.ready);
  await mp.waitForTimeout(1500);
  await mp.screenshot({path:output+'/forma-archviz-home-mobile.png',fullPage:false,animations:'disabled'});
+ await mp.locator('#formaProjectPanel').screenshot({path:output+'/forma-project-panel-mobile.png',animations:'disabled'});
  console.log('Mobile capture complete');
  await mobile.close();
 } finally {await browser.close();}
