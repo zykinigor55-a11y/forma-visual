@@ -41,7 +41,7 @@ try{if(sessionStorage.getItem('forma-opening-seen-v2')!=='1')document.documentEl
 <link rel="preload" href="assets/brand/intro-graphite-wall-4k.webp" as="image" type="image/webp" media="(min-width:761px)">
 <link rel="preload" href="assets/brand/intro-graphite-wall-mobile.webp" as="image" type="image/webp" media="(max-width:760px)">
 <link rel="preload" href="assets/brand/intro-branch-shadows.svg" as="image">
-<link rel="stylesheet" href="forma-intro.css?v=premium-wall-4k-v4">
+<link rel="stylesheet" href="forma-intro-signature.css?v=architectural-signature-20261114-v1">
 <noscript><style>html.forma-intro-pending #forma-intro{display:none!important}</style></noscript>
 <link rel="stylesheet" href="forma-home-tools.css?v=20261114-vizworkflow-02">
 <link rel="stylesheet" href="forma-signature-theme.css?v=20261114-signature-v1">
@@ -55,13 +55,17 @@ try{if(sessionStorage.getItem('forma-opening-seen-v2')!=='1')document.documentEl
  <div class="forma-intro-shadow" aria-hidden="true"></div>
  <div class="forma-intro-shadow secondary" aria-hidden="true"></div>
  <div class="forma-intro-vignette" aria-hidden="true"></div>
- <button type="button" id="formaIntroSkip" class="forma-intro-skip" aria-label="Пропустить вступительную заставку">Пропустить <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 7 7-7 7M16 5v14"/></svg></button>
+ <button type="button" id="formaIntroSkip" class="forma-intro-skip" aria-label="Пропустить вступительную заставку">Войти в студию <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 7 7-7 7M16 5v14"/></svg></button>
  <div class="forma-intro-content">
   <div class="forma-intro-lockup">
    <img class="forma-intro-mark" src="assets/brand/forma-fa-mark.svg" width="200" height="197" alt="" decoding="async">
    <span class="forma-intro-name">ФОРМА</span>
    <span class="forma-intro-descriptor">АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</span>
    <span class="forma-intro-line" aria-hidden="true"></span>
+  </div>
+  <div class="forma-intro-preparation" role="status" aria-live="polite" aria-atomic="true">
+   <span class="forma-intro-progress" aria-hidden="true"></span>
+   <span class="forma-intro-progress-label" id="formaIntroProgressStatus">Открываем рабочую студию</span>
   </div>
  </div>
  <span class="forma-intro-caption" aria-hidden="true">АРХИТЕКТУРА · СВЕТ · МАТЕРИАЛЫ</span>
@@ -739,7 +743,7 @@ try{if(sessionStorage.getItem('forma-opening-seen-v2')!=='1')document.documentEl
 <script defer src="forma-node-engine.js?v=20261114-vizworkflow-02"></script>
 <script defer src="forma-pro-tools.js?v=20261114-pro-01"></script>
 <script defer src="forma-home-tools.js?v=20261114-vizworkflow-02"></script>
-<script defer src="forma-intro.js?v=20261114-opening-v2"></script>
+<script defer src="forma-intro-signature.js?v=architectural-signature-20261114-v1"></script>
 <script defer src="forma-static-preview.js?v=20261114-vizworkflow-02"></script>
 <script defer src="forma-signature-theme.js?v=20261114-signature-v1"></script>
 <script defer src="forma-mobile-ux.js?v=20261114-mobile-ux-v1"></script>
