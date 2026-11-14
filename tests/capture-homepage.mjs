@@ -32,6 +32,8 @@ try {
  await page.locator('#formaProjectPanel').waitFor({state:'visible'});
  assert.equal(await page.locator('.fa-home-tool').count(),16);
  assert.equal(await page.locator('#faProBackdrop').count(),0);
+ assert.match(await page.locator('#faProjectToolContent').textContent(),/Профессиональный набор инструментов/);
+ await page.locator('[data-tool-id="upscale"]').click();
  assert.equal(await page.locator('#faProUpscaleUpload').isVisible(),true);
  const interior=page.locator('[data-studio-action="interior"]').first();
  await interior.click();
