@@ -54,3 +54,8 @@ body.exhibition-page{background:#e9dfd2;color:#262827}
 body.modal-active{overflow:hidden}
 @media(max-width:750px){.exhibition-hero{display:flex;flex-direction:column;min-height:0}.exhibition-copy{padding:68px 25px 44px;min-height:355px}.exhibition-copy h1{font-size:clamp(56px,11vw,78px);margin:26px 0 20px}.exhibition-copy p{font-size:12px}.exhibition-intro-link{margin-top:32px}.exhibition-visual{min-height:0;height:49vh;max-height:440px}.exhibition-wall{padding:77px 17px 95px}.exhibition-wall header{display:block;padding:18px 0 35px}.exhibition-wall h2{font-size:56px;margin:22px 0}.exhibition-artworks{grid-template-columns:1fr 1fr;column-gap:17px;row-gap:47px}.exhibition-work,.exhibition-work:nth-child(n){grid-column:auto;margin-top:0}.exhibition-work:nth-child(5n+1){grid-column:1/-1;justify-self:center;width:82%;margin-bottom:0}.exhibition-work .meta h3{font-size:22px}.exhibition-work .meta .number{font-size:8px}.exhibition-work .meta p{font-size:10px}.exhibition-finale{padding:85px 22px}.exhibition-finale h2{font-size:45px}.art-modal{padding:80px 42px 50px}.art-modal figure{max-width:calc(100vw - 100px)}.art-modal figure img{max-height:68vh}.art-modal figcaption{font-size:19px}.art-modal .modal-arrow{width:35px;height:45px;border:0;background:transparent}.art-modal .modal-prev{left:1px}.art-modal .modal-next{right:1px}}
 @media(prefers-reduced-motion:reduce){.exhibition-frame{transition:none}.exhibition-frame:hover{transform:none}}
+
+/* Display the full uncropped high-resolution original works. */
+.exhibition-work .exhibition-frame img{aspect-ratio:auto;object-fit:contain;max-height:none}
+.exhibition-visual .exhibition-painting img{object-fit:contain}
+.catalog-page.exhibition-page .brand-mark{filter:grayscale(1)!important}
