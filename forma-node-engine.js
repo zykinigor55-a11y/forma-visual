@@ -7,8 +7,8 @@ const $=(q,root=document)=>root.querySelector(q);
 const $$=(q,root=document)=>[...root.querySelectorAll(q)];
 const getAPI=()=>window.FORMA_NODES;
 const AI_TYPES=new Set(['exterior','interior','lighting','materials']);
-const BLOCKED_TYPES=new Set(['image3d','geometry']);
-const AVAILABLE_TYPES=new Set(['source','exterior','interior','lighting','materials','upscale','video','export']);
+const BLOCKED_TYPES=new Set(['image3d']);
+const AVAILABLE_TYPES=new Set(['source','exterior','interior','lighting','materials','geometry','upscale','video','export']);
 const LABELS={running:'ВЫПОЛНЯЕТСЯ',done:'ГОТОВО',error:'ОШИБКА',cancelled:'ОСТАНОВЛЕНО'};
 const LIGHTS={sunny:'Солнечный день',golden:'Золотой час',overcast:'Пасмурно',blue:'Синий час',rain:'После дождя',winter:'Зима',night:'Ночь'};
 const ZONES={main:'Фасад',roof:'Кровля',windows:'Окна',doors:'Двери',base:'Цоколь',terrace:'Терраса',custom:'Другая поверхность'};
@@ -92,6 +92,10 @@ function settingsHTML(n){
  }
  const snapshot=getAPI()?.getSnapshot?.(n.id);
  if(snapshot&&imageMime(snapshot))controls.push('<div class="fa-inspector-result"><b>Кадр этой ноды</b><img src="'+snapshot+'" alt="Сохранённый результат ноды"><button type="button" data-fa-download-snapshot="'+esc(n.id)+'">Скачать кадр</button><button type="button" data-fa-compare-snapshot="'+esc(n.id)+'">Добавить в сравнение A/B</button></div>');
+ if(n.type==='geometry'){
+  controls.push(select('overlay','Наложение исходных линий',{'0.25':'Лёгкое · 25%','0.5':'Среднее · 50%','0.75':'Сильное · 75%'},String(opts.overlay||'0.5')));
+  controls.push('<p>Локальное наложение исходного CAD-скриншота на результат для ручной проверки. Это не автоматическое распознавание геометрии и не инженерная экспертиза.</p>');
+ }
  if(n.type==='upscale')controls.push('<p>Локальное увеличение до 3840 пикселей по длинной стороне. Это НЕ нейросетевое улучшение детализации.</p>');
  if(n.type==='export')controls.push('<p>Скачивание файла и сохранение результатов AI-цепочки в галерее проекта.</p>');
  if(BLOCKED_TYPES.has(n.type))controls.push('<p>Автоматическое выполнение требует отдельной интеграции. В этой версии такая операция не запускается.</p>');
@@ -183,6 +187,17 @@ function downloadImage(img){
  const ext=imageMime(img)==='jpeg'?'jpg':imageMime(img)||'png';
  const link=document.createElement('a');link.href=img;link.download='forma-node-'+Date.now()+'.'+ext;
  document.body.append(link);link.click();link.remove();
+}
+async function geometryOverlay(image,source,opacity){
+ const [im,ref]=await Promise.all([new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=image}),new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=source})]);
+ const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;
+ if(c.width*c.height>25_000_000)throw Error('Слишком большой кадр для визуального наложения.');
+ const ctx=c.getContext('2d');if(!ctx)throw Error('Наложение недоступно.');
+ ctx.drawImage(im,0,0,c.width,c.height);
+ ctx.globalAlpha=Math.max(.05,Math.min(.95,Number(opacity)||.5));
+ ctx.drawImage(ref,0,0,c.width,c.height);
+ ctx.globalAlpha=1;
+ return c.toDataURL('image/png');
 }
 async function checkVideoAvailability(){
  if(apiPreview())throw Error('Видео требует серверную версию ФОРМА.');
@@ -286,7 +301,8 @@ async function runTo(target){
     const cached=n.options?.reuse?api.getVideoBlob?.(n.id):null;
     videoBlob=cached||await makeVideo(output,n.options);
     if(!cached){videoCompleted++;lastAI=n.title||n.type;await api.setVideoSnapshot?.(n.id,videoBlob)}
-   }else if(n.type==='upscale'){output=await canvas4K(output)}
+   }else if(n.type==='geometry'){output=await geometryOverlay(output,ctx.source,n.options?.overlay)}
+   else if(n.type==='upscale'){output=await canvas4K(output)}
    else if(n.type==='export'){if(videoBlob)downloadVideoBlob(videoBlob);else downloadImage(output)}
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
    if(!videoBlob&&(!api.getSnapshot?.(n.id)||api.getSnapshot(n.id)!==output))await api.setSnapshot?.(n.id,output);
