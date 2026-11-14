@@ -103,3 +103,18 @@ test('opening scene keeps the wall and shadows separate, then reveals Russian lo
  assert.match(js,/sessionStorage\.setItem/);
  assert.match(js,/replay:/);
 });
+
+
+test('project dashboard exposes all work tools, with honest 4K non-AI source processing',async()=>{
+ const html=await fromRoot('index.html');
+ const dock=await fromRoot('forma-home-tools.js');
+ const pro=await fromRoot('forma-pro-tools.js');
+ assert.match(html,/forma-home-tools\.css/);
+ assert.match(html,/forma-home-tools\.js/);
+ assert.match(dock,/Панель проекта/);
+ assert.match(dock,/Upscaler/);
+ assert.match(dock,/mountInline/);
+ assert.match(pro,/function upscaleTo4K\(/);
+ assert.match(pro,/НЕ AI-upscale/);
+ assert.match(pro,/mountInline:/);
+});
