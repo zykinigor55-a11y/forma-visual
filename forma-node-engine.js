@@ -184,6 +184,59 @@ function downloadImage(img){
  const link=document.createElement('a');link.href=img;link.download='forma-node-'+Date.now()+'.'+ext;
  document.body.append(link);link.click();link.remove();
 }
+async function checkVideoAvailability(){
+ if(apiPreview())throw Error('Видео требует серверную версию ФОРМА.');
+ let res;try{res=await fetch('/api/wan/status',{cache:'no-store'})}catch{throw Error('Видеосервис недоступен.')}
+ if(!res.ok)throw Error('Состояние видеомодели не получено.');
+ const data=await res.json();
+ if(!data.ready)throw Error(data.reason||'Wan 2.6 не подключена к серверу. Нужен OpenRouter API и разрешение WAN_VIDEO_ENABLED.');
+ if(Number.isFinite(data.remaining)&&data.remaining<1)throw Error('Дневной лимит видео исчерпан.');
+}
+async function prepareVideoFrame(source){
+ const im=new Image();im.src=source;await im.decode();
+ const scale=Math.min(1,1920/Math.max(im.naturalWidth,im.naturalHeight));
+ const w=Math.max(1,Math.round(im.naturalWidth*scale)),h=Math.max(1,Math.round(im.naturalHeight*scale));
+ const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d');if(!ctx)throw Error('Не удалось подготовить видео-кадр.');
+ ctx.drawImage(im,0,0,w,h);
+ const image=canvas.toDataURL('image/jpeg',.88);
+ if(image.length>10_500_000)throw Error('Первый кадр видео больше 8 МБ. Используйте меньший кадр.');
+ return image;
+}
+function downloadVideoBlob(blob){
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='forma-architecture-'+Date.now()+'.mp4';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+}
+async function makeVideo(source,options){
+ const image=await prepareVideoFrame(source);
+ const prompt=String(options?.prompt||'Slow cinematic dolly forward towards the architectural facade, preserve all architectural details and camera stability.').trim().slice(0,500);
+ const duration=Number(options?.duration||5),ratio=options?.ratio==='9:16'?'9:16':'16:9';
+ if(prompt.length<12)throw Error('Для анимации укажите движение камеры.');
+ const ctrl=new AbortController();aborter=ctrl;
+ try{
+  let res=await fetch('/api/wan/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,prompt,duration,ratio}),signal:ctrl.signal});
+  let info=await res.json().catch(()=>({}));
+  if(!res.ok||!info.id)throw Error(info.error||'Видеомодель не приняла задание.');
+  const jobId=encodeURIComponent(info.id);
+  for(let attempt=0;attempt<90;attempt++){
+   if(wasCancelled)throw Error('Генерация видео остановлена. Задание у провайдера могло продолжиться.');
+   await new Promise(resolve=>setTimeout(resolve,4000));
+   res=await fetch('/api/wan/job?id='+jobId,{cache:'no-store',signal:ctrl.signal});
+   info=await res.json().catch(()=>({}));
+   if(!res.ok)throw Error(info.error||'Не удаётся получить состояние видео.');
+   if(info.status==='completed'){
+    const file=await fetch('/api/wan/download?id='+jobId,{signal:ctrl.signal});
+    if(!file.ok)throw Error('Видео создано, но сервер не отдал MP4. Проверьте видео-проект.');
+    const blob=await file.blob();
+    if(!blob.size||blob.size>180*1024*1024)throw Error('Недопустимый размер видео от провайдера.');
+    return blob;
+   }
+   if(['failed','cancelled','expired'].includes(info.status))throw Error(info.error||'Видео не создано.');
+   tell('Видео Wan · '+(info.status==='in_progress'?'генерируется':'ожидание')+' · проверка '+(attempt+1));
+  }
+  throw Error('Истекло время проверки статуса видео. Проверьте историю заданий.');
+ }finally{aborter=null}
+}
+
 function briefFor(ctx,previousMode,n){
  const b=JSON.parse(JSON.stringify(ctx.brief));
  b.sceneType=previousMode;
@@ -204,17 +257,17 @@ async function runTo(target){
  if(busy){tell('Сначала остановите текущую цепочку.');return}
  const api=getAPI(),g=graph();if(!api||!g)return;
  let plan;try{plan=checkPlan(g,target)}catch(err){tell(err.message);return}
- const calls=plan.calls;
- let ctx;try{ctx=await window.FORMA_RENDER_BRIDGE?.capture?.();if(!ctx)throw Error('Сначала загрузите собственный проект в «ФОРМА».');await availability(calls)}
+ const calls=plan.calls,videoCalls=plan.videoCalls;
+ let ctx;try{ctx=await window.FORMA_RENDER_BRIDGE?.capture?.();if(!ctx)throw Error('Сначала загрузите собственный проект в «ФОРМА».');await availability(calls);if(videoCalls)await checkVideoAvailability()}
  catch(err){tell(err.message);return}
- if(calls){
-  const ok=confirm('Запустить ветку с '+calls+' платными AI-вызовами? Каждый этап оплачивается отдельно у провайдера. Остановка в браузере не отменяет уже начатое списание.');
+ if(calls||videoCalls){
+  const ok=confirm('Запустить цепочку? Генераций изображений: '+calls+'. Генераций видео: '+videoCalls+'. Каждый запрос учитывается по тарифу/квоте провайдера; отмена в браузере может не отменить списание.');
   if(!ok){tell('Запуск отменён.');return}
  }
  const runId=++openedRunId;
  busy=true;wasCancelled=false;aborter=null;
  decorate();statuses.clear();
- let output=ctx.source,mode=ctx.brief?.sceneType||'exterior',aiCompleted=0,lastAI='';
+ let output=ctx.source,mode=ctx.brief?.sceneType||'exterior',aiCompleted=0,videoCompleted=0,lastAI='',videoBlob=null;
  try{
   for(const [i,n] of plan.path.entries()){
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
@@ -229,16 +282,20 @@ async function runTo(target){
      const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:String(n.options?.instruction||'').slice(0,500)}:{};
      output=await imageAI(output,brief,ctx,opts);aiCompleted++;lastAI=n.title||n.type;
     }
+   }else if(n.type==='video'){
+    const cached=n.options?.reuse?api.getVideoBlob?.(n.id):null;
+    videoBlob=cached||await makeVideo(output,n.options);
+    if(!cached){videoCompleted++;lastAI=n.title||n.type;await api.setVideoSnapshot?.(n.id,videoBlob)}
    }else if(n.type==='upscale'){output=await canvas4K(output)}
-   else if(n.type==='export'){downloadImage(output)}
+   else if(n.type==='export'){if(videoBlob)downloadVideoBlob(videoBlob);else downloadImage(output)}
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
-   if(!api.getSnapshot?.(n.id)||api.getSnapshot(n.id)!==output)await api.setSnapshot?.(n.id,output);
+   if(!videoBlob&&(!api.getSnapshot?.(n.id)||api.getSnapshot(n.id)!==output))await api.setSnapshot?.(n.id,output);
    setState(n.id,'done');
   }
   if(aiCompleted){
    await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Ноды · '+lastAI,ctx.projectId);
   }
-  tell('Готово: '+plan.path.length+' этапов · '+aiCompleted+' AI-вызовов. Результаты закреплены за нодами и сохранены в галерею.');
+  tell('Готово: '+plan.path.length+' этапов · '+aiCompleted+' изображений · '+videoCompleted+' видео. Кадры и MP4 сохранены в нодах, AI-кадры — в галерее.');
  }catch(err){
   const pending=plan.path.find(n=>statuses.get(n.id)==='running');
   if(pending)setState(pending.id,wasCancelled?'cancelled':'error');
