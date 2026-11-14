@@ -942,7 +942,30 @@ function settingsBrief(){
   const chosen=customMaterials.find(m=>m.id===materialId);
   return chosen?[[name,chosen.name]]:[];
  }));
- return {project:project.name,source:project.hasSource?'Скриншот':'Нет',environment:envLabel(),environmentInstructions:environments.find(e=>e[0]===s.environment)?.[2],time:cLabel('time',s.time),weather:cLabel('weather',s.weather),season:cLabel('season',s.season),plants:cLabel('plants',s.plants),sceneMood:s.sceneMood||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',homeChanges:String(s.homeChanges||'').trim().slice(0,600),lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.'}}
+ return {...(window.FORMA_INTERIORS?.briefForProject(project.id)||{sceneType:'exterior'}),photography:window.FORMA_PRO?.cameraBrief?.()||null,project:project.name,source:project.hasSource?'Скриншот':'Нет',environment:envLabel(),environmentInstructions:environments.find(e=>e[0]===s.environment)?.[2],time:cLabel('time',s.time),weather:cLabel('weather',s.weather),season:cLabel('season',s.season),plants:cLabel('plants',s.plants),sceneMood:s.sceneMood||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',homeChanges:String(s.homeChanges||'').trim().slice(0,600),lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.'}}
+/* Render bridge for the FORMA workflow engine.
+   Source media comes from the active project only. No API key is available in browser code. */
+window.FORMA_RENDER_BRIDGE={
+ async capture(){
+  if(!project?.hasSource||!sourceURL||project.demo)throw Error('Создайте свой проект и загрузите исходный скриншот. Демонстрационный кадр не запускает платную цепочку.');
+  if(rendering)throw Error('Уже выполняется рендер. Завершите его перед запуском цепочки.');
+  const source=await urlToDataURL(sourceURL);
+  if(!/^data:image\/(?:png|jpeg|webp);base64,/i.test(source))throw Error('Не удалось прочитать исходник проекта');
+  return {projectId:project.id,projectName:project.name,source,brief:settingsBrief(),quality:current().quality,
+   size:imageSizeForRatio(current().ratio),ratio:current().ratio};
+ },
+ async saveWorkflowResult(image,label){
+  if(!project||project.demo)throw Error('Текущий проект недоступен для сохранения');
+  if(!/^data:image\/(?:png|jpeg|webp);base64,/i.test(image))throw Error('Неподдерживаемый формат AI-результата');
+  const id='r'+uuid().slice(0,8);
+  await setMedia(mediaKey('render_'+id),image);
+  project.renders.push({id,number:project.renders.length+1,createdAt:Date.now(),batchLabel:String(label||'Нодовый рендер').slice(0,80)});
+  project.activeRender=id;renderURL=image;
+  save();await loadProject(project.id);
+  return id;
+ }
+};
+
 function showBrief(){const text=JSON.stringify(settingsBrief(),null,2);modal('Техническое задание',`<p class="muted">Собрано автоматически из выбранных карточек. Пользователю не требуется писать промпт.</p><pre>${eHTML(text)}</pre>`,[{label:'Скопировать',primary:true,click:async()=>{try{await navigator.clipboard.writeText(text);toast('Бриф скопирован')}catch{downloadText('dom-render-brief.json',text,'application/json')}closeModal()}},{label:'Скачать JSON',click:()=>downloadText('dom-render-brief.json',text,'application/json')}])}
 function downloadText(filename,text,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
 function downloadDataURL(url,filename){const a=document.createElement('a');a.href=url;a.download=filename;a.click()}
@@ -1468,7 +1491,7 @@ $('materialFile').onchange=e=>{uploadOwnMaterial(e.target.files[0]);e.target.val
    const del=e.target.closest('[data-variant-delete]');
    if(del){await deleteVariant(del.dataset.variantDelete)}
  });
- $('newProjectBtn').onclick=showNewProject;$('mobileAdd').onclick=showNewProject;$('helpBtn').onclick=()=>modal('Как работает ДОМ.РЕНДЕР',`<p class="muted"><b>1.</b> Загрузите скриншот из Archicad, SketchUp или Revit.<br><b>2.</b> Выберите окружение, погоду, сезон и время суток кнопками с изображениями.<br><b>3.</b> Во вкладке «Материалы и цвета» выберите элемент: стены, окна, террасу или кровлю. Примерьте цвет бесплатно или введите текстовое задание для AI. Для точной замены подтвердите маску.<br><b>4.</b> Запустите AI-генерацию при подключённом API.<br><b>5.</b> Для следующего вида используйте «Новый ракурс»: настройки и референс сохранятся.</p><p class="muted">Без 3D совпадение положения объектов между разными ракурсами является приблизительным. Работа AI-редактора тоже не гарантирует идеальное сохранение геометрии.</p>`,[{label:'Понятно',primary:true,click:closeModal}]);$('generateBtn').onclick=generate;
+ $('newProjectBtn').onclick=showNewProject;$('mobileAdd').onclick=showNewProject;$('helpBtn').onclick=()=>modal('Как работает ФОРМА',`<p class="muted"><b>1.</b> Загрузите скриншот из Archicad, SketchUp или Revit.<br><b>2.</b> Выберите окружение, погоду, сезон и время суток кнопками с изображениями.<br><b>3.</b> Во вкладке «Материалы и цвета» выберите элемент: стены, окна, террасу или кровлю. Примерьте цвет бесплатно или введите текстовое задание для AI. Для точной замены подтвердите маску.<br><b>4.</b> Запустите AI-генерацию при подключённом API.<br><b>5.</b> Для следующего вида используйте «Новый ракурс»: настройки и референс сохранятся.</p><p class="muted">Без 3D совпадение положения объектов между разными ракурсами является приблизительным. Работа AI-редактора тоже не гарантирует идеальное сохранение геометрии.</p>`,[{label:'Понятно',primary:true,click:closeModal}]);$('generateBtn').onclick=generate;
 $('batchToggle').onclick=()=>{
  const open=$('batchPanel').hidden;
  $('batchPanel').hidden=!open;

@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
 import {createWanVideo} from './wan-video.mjs';
 import {createWan3Video} from './wan3-video.mjs';
+import {createFormaWorldApi} from './forma-world-providers.mjs';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // Optional simple local .env parser (no external packages). Environment variables win.
 try {const dotenv=await readFile(path.join(ROOT,'.env'),'utf8');for(const line of dotenv.split(/\r?\n/)){const m=line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);if(m&&!process.env[m[1]])process.env[m[1]]=m[2].replace(/^['"]|['"]$/g,'')}} catch {}
@@ -116,7 +117,43 @@ function sceneVariationPrompt(p){
  'Keep the same exact house as Image 1. This is an image-to-image edit, not a new design.'
  ].join('\n\n');
 }
-function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);const b=p.brief||{};const specific=Boolean(p.selectedZone&&(p.mask||p.editMode==='text'));const shot=compact(p.batchShot,32);
+function createInteriorPrompt(p){
+ const b=p.brief||{},spec=Boolean(p.selectedZone&&(p.mask||p.editMode==='text'));
+ const rooms={living:'living room',kitchen:'kitchen',bedroom:'bedroom',bathroom:'bathroom',office:'home office',hall:'hallway or entrance',dining:'dining room',commercial:'commercial interior'};
+ const styles={'as-is':'STRICTLY preserve all finishes and colours shown in the source screenshot. Do not impose a new style.','warm-modern':'Warm modern interior: natural wood, calm mineral surfaces, harmonious warm neutrals.','japandi':'Japandi: balanced Japanese-Scandinavian materiality, timber and subtle textures.','minimal':'Architectural minimalism: restrained monolithic surfaces and crisp details.','scandinavian':'Scandinavian: natural timber, light neutrals and tactile materials.','contemporary':'Premium contemporary: sophisticated refined materials, understated luxury.','classic':'Modern classic: refined proportions and tasteful traditional accents, no new architecture.','loft':'Industrial loft surfaces and muted metals, without moving walls.'};
+ const lights={'soft-daylight':'Soft natural daylight from the windows already in IMAGE 1, believable indirect bounce.','sunny':'Natural clear daylight and geometrically correct sunlight from EXISTING glazing.','overcast':'Overcast diffuse illumination, soft broad shadows and realistic material response.','evening':'Warm evening interior scene: realistic artificial light only from the EXISTING visible light fixtures and window glow.','studio':'High-end interior editorial photography, clean dynamic range, subtle believable window and practical lighting.'};
+ const furniture={preserve:'STRICTLY preserve the identity, number, placement, dimensions and orientation of every visible furniture item, lamp, fixture and object in the sketch. No additions or removals.',complete:'Only if an area is genuinely empty, modestly complete furnishing in the selected style without changing existing furniture, wall layout, doors, openings or the camera. Do not clutter.', 'no-additions':'Never add furniture or new decorations. If the source room is empty, keep it empty.'};
+ const style=styles[b.style]||styles['as-is'];
+ const surfaces=compact(b.surfaces,500),notes=compact(b.notes,800);
+ const original='IMAGE 1 is the single authoritative ORIGINAL interior sketch / 3D screenshot: retain exact camera coordinates, perspective, vanishing points, focal length appearance, room boundaries, floor levels, ceiling height, soffits, doors, windows, openings, columns, beams, built-in cabinetry, stairs, radiators, room proportions, furniture positions and quantity. NEVER reframe, zoom, move walls, invent windows/doors, or change the structural design. This is a sketch-to-photo material/light transformation of the SAME exact space, not an interior redesign.';
+ const edit=spec?`LOCAL INTERIOR SURFACE EDIT: edit ONLY the user-selected surface '${compact(p.selectedZone,80)}'. Instruction: ${compact(p.materialInstruction,500)}. Keep all unselected parts unchanged. A mask, when supplied, is an approximate guide rather than guaranteed exact segmentation.`:'FULL ROOM PHOTO TRANSFORMATION: enhance believable textures, small-scale material realism, contact shadows, ambient occlusion, glass reflections, textiles and photographic details while preserving the scene structure.';
+ return [
+  'PROFESSIONAL INTERIOR ARCHITECTURAL PHOTOGRAPH FROM A CAD / SKETCHUP / REVIT SCREENSHOT. Image should look like a carefully photographed real interior at editorial architectural-magazine quality, not CG, a stylized drawing, an AI fantasy or a staged replacement scene.',
+  original,
+  'ROOM TYPE: '+(rooms[b.room]||rooms.living)+'.',
+  'FINISH STYLE: '+style,
+  'LIGHTING: '+(lights[b.lighting]||lights['soft-daylight']),
+  'FURNITURE POLICY: '+(furniture[b.furniture]||furniture.preserve),
+  surfaces?'USER-DEFINED FINISH CHANGES (only where applicable and without modifying shape or location): '+surfaces:'MATERIALS: preserve all existing material identities, patterns, construction seams and finish boundaries unless another explicit instruction requests a change.',
+  notes?'SPECIFIC USER INSTRUCTIONS (must preserve geometry): '+notes:'',
+  edit,
+  'For any editable material or color, retain exact scale, patterns, panel joints and physical thickness. Preserve camera and geometrical contours. Realistic exposure, clean white balance, accurate roughness, realistic daylight distribution, complex but natural light transport, crisp microdetail and natural image noise. Avoid distorted perspective, duplicates, extra furnishings, extra doors or windows, floating decor, exaggerated gloss, oversaturated lighting, people, titles, letters and watermarks.',
+  'Output exactly the same view of exactly the same room shown in image 1. Even with these instructions, model output should be visually checked for accidental geometric changes.'
+ ].filter(Boolean).join('\n\n');
+}
+function userCameraBrief(b){
+ const x=b?.photography;if(!x?.enabled)return '';
+ const name=compact(x.camera,70),lens=compact(x.lens,70),note=compact(x.notes,140);
+ const height=Number(x.height),safeHeight=Number.isFinite(height)&&height>=.1&&height<=30?height.toFixed(1):null;
+ return ['USER CAMERA PASSPORT (a photographic styling guide, not a request to alter viewpoint):',
+  name?'Camera body character: '+name+'.':'',
+  lens?'Lens rendering aesthetics: '+lens+'.':'',
+  safeHeight?'Recorded design camera height: '+safeHeight+' metres (informational only).':'',
+  note?'User shot note: '+note+'.':'',
+  'ABSOLUTE RULE: The source screenshot dictates perspective, geometry, viewpoint, crop and field of view. Do not physically reposition the camera, zoom or change any visible architectural geometry to mimic these metadata values. Treat the passport only as color/exposure/optical style guidance.'
+ ].filter(Boolean).join(' ');
+}
+function createPrompt(p){if(p.brief?.sceneType==='interior')return [createInteriorPrompt(p),userCameraBrief(p.brief)].filter(Boolean).join('\n\n');if(p.sceneVariation)return sceneVariationPrompt(p);const b=p.brief||{};const specific=Boolean(p.selectedZone&&(p.mask||p.editMode==='text'));const shot=compact(p.batchShot,32);
  const essential=`You are an expert architectural photographer and material visualization artist. Produce a genuinely photorealistic high-end editorial architectural photograph, never a CGI-looking image, illustration, or concept sketch. Source input image 1 is the authoritative architectural building; ${shot==='front'&&!p.batchFrontProvided?'the user requires a NEW frontal camera position inferred conservatively from the oblique source, so do not preserve the oblique camera angle, but preserve the architecture; unseen geometry cannot be guaranteed accurate':'keep the exact supplied camera viewpoint'}. Preserve the exact building massing, facade proportions, number/size/locations of windows and doors, roof silhouette, entrance and horizontal lines; ${shot==='front'&&!p.batchFrontProvided?'change ONLY camera orientation toward a straight-on frontal facade view, treating occluded elements conservatively':'preserve camera perspective and framing'}. Do NOT invent extra rooms, balconies, windows, roofs, storeys or structural elements. Natural light transport, plausible surface textures, realistic reflections, detailed landscaping, restrained photographic grading. No logos, text, people, watermarks or distracting objects.`;
  const materialMap=specific?Object.entries(b.materials||{}).filter(([,name])=>String(name||'').trim()):[];
  const homeChanges=compact(b.homeChanges,600);const preserve=b.preserveMaterials!==false&&!specific&&!homeChanges;
@@ -170,7 +207,7 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
  const extraRequest=!semanticOnly&&specific&&userRequest?`Additional user instruction scoped ONLY to the named masked component: "${userRequest}". ${category} Keep every unmasked pixel untouched.`:null;
  const edit=semanticOnly?semanticText:specific?recolor?recolorText:`LOCAL EDIT ONLY: edit the transparent region of the supplied PNG mask on IMAGE 1. The masked area is the selected facade zone named '${compact(p.selectedZone)}'. Apply requested material '${compact(p.materialName)||compact(userRequest,100)||'as described in the user instruction'}' to that facade surface and keep the rest of the image, environment, lighting and all other surfaces as unchanged as possible. Use the material reference image (when provided) for accurate color, grain and texture repeat. ${Number(p.materialDimensions?.width)>0?`Material physical size: ${Number(p.materialDimensions.width)} by ${Number(p.materialDimensions.height)||Number(p.materialDimensions.width)} millimetres.`:''} Replace the material consistently through the ENTIRE transparent masked area, never only a small isolated patch. Respect the mask boundary, preserve the contours around glazing and doors, and keep all unmasked pixels as untouched as possible. The mask is a guide and may not be pixel exact. Material reference image is not the building.`:`FULL SCENE ENHANCEMENT: Transform the sketch/model screenshot into a realistic architectural photograph while preserving existing building materials, all visible texture divisions and exact architectural point of view. Develop only the selected surroundings, weather, season and photographic lighting. A photographed exterior must look realistic without redesigning or re-cladding any part of the house.`;
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
- return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,edit,homeEdit,extraRequest,physics,context,continuity].filter(Boolean).join('\n\n')}
+ return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,edit,homeEdit,extraRequest,physics,context,continuity,userCameraBrief(b)].filter(Boolean).join('\n\n')}
 async function proxyRender(req,res){
  if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
  if(!API_KEY)return json(res,503,{error:'AI не настроен: укажите API_MARKET_KEY в .env и перезапустите сервер.'});
@@ -206,7 +243,9 @@ async function proxyRender(req,res){
 async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/index.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();const content=await readFile(file);res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
 const wanVideo=createWanVideo({json,readJSON,sameOrigin,imageBlob});
 const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
+const formaWorldApi=createFormaWorldApi({json,readJSON,sameOrigin});
 const server=http.createServer(async(req,res)=>{
+ if(req.url?.startsWith('/api/forma-world/'))return formaWorldApi(req,res);
  if(req.url?.startsWith('/api/wan3/'))return wan3Video.handle(req,res);
  if(req.url?.startsWith('/api/wan/'))return wanVideo.handle(req,res);
  if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}

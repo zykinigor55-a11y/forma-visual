@@ -1,0 +1,90 @@
+name: FORMA ARCHVIZ · homepage screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/forma-archviz-studio
+    paths:
+      - .github/workflows/forma-archviz-preview.yml
+      - index.html
+      - forma-archviz-studio.css
+      - forma-archviz-studio.js
+      - forma-pro-tools.js
+      - forma-home-tools.js
+      - forma-home-tools.css
+      - forma-world.html
+      - forma-world.css
+      - forma-world.js
+      - forma-world-ai.js
+      - forma-world-providers.mjs
+      - tests/forma-world-providers.test.mjs
+      - tests/check-world.mjs
+      - tests/check-home-tools.mjs
+      - tests/check-node-execution.mjs
+      - forma-node-engine.js
+      - forma-node-engine.css
+      - forma-nodes.js
+      - tests/capture-homepage.mjs
+      - tests/capture-intro.mjs
+      - forma-intro.css
+      - assets/brand/intro-graphite-wall-4k.webp
+      - assets/brand/intro-graphite-wall-mobile.webp
+      - forma-intro.js
+      - assets/brand/intro-graphite-wall.svg
+      - assets/brand/intro-branch-shadows.svg
+concurrency:
+  group: forma-archviz-preview
+  cancel-in-progress: true
+permissions:
+  contents: write
+jobs:
+  screenshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/forma-archviz-studio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start application
+        run: |
+          nohup node server.mjs >/tmp/forma-server.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/forma-server.log
+          exit 1
+      - name: Capture real user interface
+        run: node tests/capture-homepage.mjs
+      - name: Verify project tools and real 4K export
+        run: node tests/check-home-tools.mjs
+      - name: Verify executable node workflows with mocked API
+        run: node tests/check-node-execution.mjs
+      - name: Test interactive 3D worlds in desktop and mobile browser
+        run: node tests/check-world.mjs
+      - name: Capture cinematic opening
+        run: node tests/capture-intro.mjs
+      - name: Upload viewable screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: forma-archviz-real-screenshots
+          path: docs/previews/*.png
+          retention-days: 20
+      - name: Save screenshots to review branch
+        run: |
+          git config user.name "FORMA Preview Bot"
+          git config user.email "forma-preview-bot@users.noreply.github.com"
+          git add docs/previews/forma-archviz-home-desktop.png docs/previews/forma-archviz-home-mobile.png docs/previews/forma-archviz-home-full.png docs/previews/forma-opening-wall-desktop.png docs/previews/forma-opening-logo-desktop.png docs/previews/forma-opening-wall-mobile.png docs/previews/forma-opening-logo-mobile.png docs/previews/forma-project-panel-desktop.png docs/previews/forma-project-panel-mobile.png docs/previews/forma-world-desktop.png docs/previews/forma-world-mobile.png
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(preview): capture real FORMA home screen [skip ci]"
+            git fetch origin feature/forma-archviz-studio
+            git rebase -X theirs FETCH_HEAD
+            git push origin HEAD:feature/forma-archviz-studio
+          fi

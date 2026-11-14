@@ -2,8 +2,12 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f5f5f2"><meta name="description" content="ДОМ.РЕНДЕР — архитектурная визуализация из скриншота. Управление окружением, светом и материалами.">
-<title>ДОМ.РЕНДЕР — AI-визуализация архитектуры</title>
+<meta name="theme-color" content="#192427"><meta name="description" content="ФОРМА — профессиональная AI-студия архитектурной визуализации. Экстерьеры и интерьеры из скетча, материалы, анимация, нодовые сценарии и контроль геометрии.">
+<title>ФОРМА — профессиональная архитектурная визуализация</title>
+<script>
+try{if(sessionStorage.getItem('forma-opening-seen-v2')!=='1')document.documentElement.classList.add('forma-intro-pending')}catch{document.documentElement.classList.add('forma-intro-pending')}
+</script>
+<style>html.forma-intro-pending body{background:#2c2e2d}html.forma-intro-pending #forma-intro{display:block}</style>
 <link rel="stylesheet" href="styles.css?v=geometry-v32-20261109">
 <link rel="stylesheet" href="dom-render-ux-v26.css?v=20261109-mobile">
 <link rel="stylesheet" href="dom-render-cabinet-v27.css?v=20261109-cabinet">
@@ -24,8 +28,39 @@
 <link rel="stylesheet" href="dom-render-scene-icons-v54.css?v=minimal-scene-icons-20261110-v55">
 <link rel="stylesheet" href="dom-render-gallery-v56.css?v=portfolio-20261110-v56">
 <link rel="stylesheet" href="dom-render-wan26.css?v=wan26-preview-1">
+<link rel="stylesheet" href="forma-archviz-studio.css?v=20261114-studio-01">
+<link rel="stylesheet" href="forma-interiors.css?v=20261114-interior-01">
+<link rel="stylesheet" href="forma-nodes.css?v=20261114-nodes-01">
+<link rel="stylesheet" href="forma-node-engine.css?v=20261114-executable-01">
+<link rel="stylesheet" href="forma-pro-tools.css?v=20261114-pro-01">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=fa-mark-20261114">
+<link rel="stylesheet" href="forma-brand-identity.css?v=fa-mark-20261114">
+<link rel="preload" href="assets/brand/intro-graphite-wall-4k.webp" as="image" type="image/webp" media="(min-width:761px)">
+<link rel="preload" href="assets/brand/intro-graphite-wall-mobile.webp" as="image" type="image/webp" media="(max-width:760px)">
+<link rel="preload" href="assets/brand/intro-branch-shadows.svg" as="image">
+<link rel="stylesheet" href="forma-intro.css?v=premium-wall-4k-v4">
+<noscript><style>html.forma-intro-pending #forma-intro{display:none!important}</style></noscript>
+<link rel="stylesheet" href="forma-home-tools.css?v=20261114-panel-01">
 </head>
 <body>
+<div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Вступительная заставка студии ФОРМА" aria-hidden="true">
+ <div class="forma-intro-wall" aria-hidden="true"></div>
+ <div class="forma-intro-light" aria-hidden="true"></div>
+ <div class="forma-intro-shadow" aria-hidden="true"></div>
+ <div class="forma-intro-shadow secondary" aria-hidden="true"></div>
+ <div class="forma-intro-vignette" aria-hidden="true"></div>
+ <button type="button" id="formaIntroSkip" class="forma-intro-skip" aria-label="Пропустить вступительную заставку">Пропустить <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 7 7-7 7M16 5v14"/></svg></button>
+ <div class="forma-intro-content">
+  <div class="forma-intro-lockup">
+   <img class="forma-intro-mark" src="assets/brand/forma-fa-mark.svg" width="200" height="197" alt="" decoding="async">
+   <span class="forma-intro-name">ФОРМА</span>
+   <span class="forma-intro-descriptor">АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</span>
+   <span class="forma-intro-line" aria-hidden="true"></span>
+  </div>
+ </div>
+ <span class="forma-intro-caption" aria-hidden="true">АРХИТЕКТУРА · СВЕТ · МАТЕРИАЛЫ</span>
+</div>
+
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2ZM19 17l.6 2.4L22 20l-2.4.6L19 23l-.6-2.4L16 20l2.4-.6L19 17Z"/></symbol>
@@ -61,10 +96,10 @@
  <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4"/></symbol>
  <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 3h13l4 4v14H3V3h1Zm3 0v7h10V3M7 21v-8h10v8"/></symbol>
 </svg>
-<header class="mobile-header"><div class="mobile-brand"><span class="brand-mark brand-sign mobile-brand-emblem" title="ДОМ.РЕНДЕР" aria-label="Фирменный знак ДОМ.РЕНДЕР"><span class="brand-roof"></span><span class="brand-letters">DR</span></span><b>ДОМ<span>.</span>РЕНДЕР</b></div><div class="mobile-header-actions"><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
+<header class="mobile-header"><div class="mobile-brand"><img class="forma-brand-mobile-logo" src="assets/brand/forma-fa-mark.svg" alt="Логотип FA" width="43" height="43"><b class="forma-brand-mobile-name">ФОРМА <small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></b></div><div class="mobile-header-actions"><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
 <div class="app" id="app">
 <aside class="rail" aria-label="Основная навигация">
- <div class="brand-mark brand-sign" title="ДОМ.РЕНДЕР — архитектурная визуализация" aria-label="ДОМ.РЕНДЕР"><span class="brand-roof"></span><span class="brand-letters">DR</span></div>
+ <div class="brand-mark brand-sign" title="ФОРМА — архитектурная визуализация" aria-label="ФОРМА"><span class="brand-roof"></span><span class="brand-letters">FA</span></div>
  <nav class="rail-nav">
   <button class="rail-btn active" data-nav="project" title="Загрузка исходника и сравнение" aria-label="Проект"><svg class="ico"><use href="#i-folder"/></svg><span class="rail-name">Проект</span></button>
   <button class="rail-btn" data-nav="environment" title="Окружение, сезоны и свет" aria-label="Окружение"><svg class="ico"><use href="#i-tree"/></svg><span class="rail-name">Рендер</span></button>
@@ -73,11 +108,25 @@
   <button class="rail-btn" data-nav="variants" title="Результаты и история" aria-label="Варианты"><svg class="ico"><use href="#i-image"/></svg><span class="rail-name">Варианты</span></button>
   <button class="rail-btn" data-nav="parameters" title="Настройки изображения" aria-label="Настройки"><svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Настройки</span></button>
  </nav>
- <div class="rail-bottom"><button class="rail-btn" id="helpBtn" title="Как работает сервис" aria-label="Помощь"><svg class="ico"><use href="#i-info"/></svg></button><span class="rail-monogram">DR</span><span class="build-version" title="Новая версия с исправленными фотореференсами и предпросмотром">v3.2</span></div>
+ <div class="rail-bottom"><button class="rail-btn" id="helpBtn" title="Как работает сервис" aria-label="Помощь"><svg class="ico"><use href="#i-info"/></svg></button><span class="rail-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="22" height="22"></span><span class="build-version" title="Новая версия с исправленными фотореференсами и предпросмотром">v3.2</span></div>
 </aside>
 <main class="workspace" id="workspace">
- <div class="topline"><div class="studio-wordmark" aria-label="ДОМ.РЕНДЕР · AI-студия для архитекторов"><span class="studio-wordmark-icon"><svg class="logo-mark"><use href="#i-house"/></svg></span><span><strong>ДОМ<span class="wordmark-point">.</span>РЕНДЕР</strong><small>AI VISUALIZATION STUDIO</small></span></div><div class="breadcrumbs"><span>ДОМ.РЕНДЕР</span><span class="crumb-slash">/</span><b id="breadcrumbName">Резиденция 01</b></div><div class="top-actions"><button type="button" class="header-account" data-open-cabinet="account" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span></button><button class="btn btn-outline btn-sm" id="newProjectBtn"><svg class="ico"><use href="#i-plus"/></svg><span>Новый проект</span></button></div></div>
- <div class="page-intro"><div><p class="eyebrow">AI-СТУДИЯ ДЛЯ АРХИТЕКТОРОВ</p><h1>Из проекта. <span>В фотографию.</span></h1><p class="subtitle">Скриншот дома → окружение, свет и материалы → архитектурное фото.</p></div><div class="stepper"><span class="step completed">01 <b>Проект</b></span><i></i><span class="step current">02 <b>Настройка</b></span><i></i><span class="step">03 <b>Результат</b></span></div></div>
+ <div class="topline"><div class="studio-wordmark" aria-label="ФОРМА · AI-студия для архитекторов"><span class="studio-wordmark-icon"><img class="forma-ui-mark" src="assets/brand/forma-fa-mark.svg" alt="" width="28" height="28"></span><span><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span></div><div class="breadcrumbs"><span>ФОРМА</span><span class="crumb-slash">/</span><b id="breadcrumbName">Резиденция 01</b></div><div class="top-actions"><button type="button" class="header-account" data-open-cabinet="account" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span></button><button class="btn btn-outline btn-sm" id="newProjectBtn"><svg class="ico"><use href="#i-plus"/></svg><span>Новый проект</span></button></div></div>
+ <div class="page-intro forma-hero" aria-label="ФОРМА — профессиональная архитектурная визуализация">
+  <div class="forma-hero-content">
+   <p class="eyebrow">ПРОФЕССИОНАЛЬНАЯ СТУДИЯ <span class="forma-hero-rule"></span> АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</p>
+   <h1>Архитектура.<br><span>В кадре.</span></h1>
+   <p class="subtitle">Из архитектурной модели — в выразительную фотографию.<br>Экстерьеры, интерьеры, материалы, свет и анимация в одной студии.</p>
+   <div class="forma-hero-actions"><button type="button" class="forma-hero-primary" data-studio-action="upload"><svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg>Загрузить модель <span>↗</span></button><button type="button" class="forma-hero-secondary" data-studio-action="interior">Интерьеры <span aria-hidden="true">↗</span></button></div>
+  </div>
+  <div class="forma-hero-emblem" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg" alt="" loading="eager" width="185" height="185"><strong>ФОРМА</strong><span>АРХИТЕКТУРНАЯ<br>ВИЗУАЛИЗАЦИЯ</span></div>
+ </div>
+ <section class="forma-workflow-launcher" aria-label="Основные направления студии">
+ <div class="forma-workflow-label"><span>НАЧНИТЕ С ПРОЕКТА</span><strong>Ваш рабочий процесс</strong><small>Выберите задачу, которую нужно решить.</small></div>
+ <button type="button" class="forma-workflow-card" data-studio-action="render"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-house"/></svg></span><span class="forma-workflow-copy"><strong>Экстерьер</strong><small>Из модели в фотографию</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
+ <button type="button" class="forma-workflow-card" data-studio-action="interior"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-image"/></svg></span><span class="forma-workflow-copy"><strong>Интерьер</strong><small>Из скетча в фотографию</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
+ <button type="button" class="forma-workflow-card" data-studio-action="nodes"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-layer"/></svg></span><span class="forma-workflow-copy"><strong>Нодовый редактор</strong><small>Варианты и цепочки работ</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
+</section>
  <section class="viewer-card" aria-label="Просмотр проекта">
   <div class="viewer-toolbar"><div class="viewer-heading"><svg class="ico"><use href="#i-image"/></svg><b>ПРОЕКТ · СРАВНЕНИЕ</b><span class="divider"></span><span id="canvasProjectLabel">Резиденция 01</span></div><div class="viewer-actions"><span class="desktop-hint">Переместите ползунок для сравнения</span><button class="icon-button" id="downloadResult" title="Скачать выбранный результат" aria-label="Скачать изображение"><svg class="ico"><use href="#i-download"/></svg></button><button class="icon-button" id="resetSplit" title="Сравнить 50/50" aria-label="Сравнить пополам"><svg class="ico"><use href="#i-chevrons"/></svg></button><button class="icon-button" id="fullBtn" title="Развернуть" aria-label="Развернуть"><svg class="ico"><use href="#i-full"/></svg></button></div></div>
   <div class="view-modes" role="group" aria-label="Режим просмотра изображений">
@@ -100,7 +149,7 @@
    <div class="viewer-overlay-bottom"><div><small>АРХИТЕКТУРА / ЭКСТЕРЬЕР</small><strong id="stageTitle">Резиденция 01</strong><span id="stageSubtitle">Сад и газон · Лето · День</span></div><span class="image-badge" id="stageRatio">16:9</span></div>
    <div class="render-progress" id="renderProgress" role="status" aria-live="polite" aria-atomic="false" hidden>
     <div class="render-progress-panel">
-     <span class="render-progress-kicker"><i aria-hidden="true"></i> ДОМ.РЕНДЕР · AI-ВИЗУАЛИЗАЦИЯ</span>
+     <span class="render-progress-kicker"><i aria-hidden="true"></i> ФОРМА · AI-ВИЗУАЛИЗАЦИЯ</span>
      <strong id="renderProgressTitle">Подготавливаем сцену</strong>
      <span id="renderProgressDetail">Обрабатываем изображение и настройки</span>
      <div class="render-progress-statline">
@@ -189,10 +238,10 @@
  </section>
  <div class="under-viewer"><div class="upload-box" id="uploadBox" role="button" tabindex="0"><div class="upload-symbol"><svg class="ico"><use href="#i-upload"/></svg></div><div><b id="uploadTitle">Загрузить скриншот проекта</b><span id="uploadSubtitle">PNG, JPG, WEBP · Archicad, SketchUp, Revit и другие</span></div><span class="upload-action">Выбрать <svg class="ico"><use href="#i-arrow"/></svg></span><input id="sourceFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><label class="angle-consistency" title="Сохранять окружение на следующих ракурсах"><input type="checkbox" id="angleLandscapeLock" checked><span class="angle-lock-icon">◎</span><span><strong>Единый ландшафт</strong><small>Тот же участок на новых ракурсах</small></span></label><button class="btn btn-outline" id="newAngleBtn" title="Новый ракурс того же дома с сохранением параметров и окружения"><svg class="ico"><use href="#i-plus"/></svg>Новый ракурс</button><input id="angleFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
  <div class="work-note"><svg class="ico"><use href="#i-info"/></svg><span id="workNote">Вы видите пример двух состояний одного дома. Для своей модели загрузите скриншот и подключите AI на сервере.</span></div>
- <footer class="page-footer studio-footer"><span>© 2026 ДОМ.РЕНДЕР · АРХИТЕКТУРНАЯ AI-СТУДИЯ</span><nav aria-label="Информация о сервисе"><button type="button" data-open-cabinet="account">Личный кабинет</button><button type="button" data-open-cabinet="contacts">Контакты</button><a href="privacy.html">Политика конфиденциальности</a></nav></footer>
+ <footer class="page-footer studio-footer"><span>© 2026 ФОРМА · АРХИТЕКТУРНАЯ AI-СТУДИЯ</span><nav aria-label="Информация о сервисе"><button type="button" data-open-cabinet="account">Личный кабинет</button><button type="button" data-open-cabinet="contacts">Контакты</button><a href="privacy.html">Политика конфиденциальности</a></nav></footer>
 </main>
 <aside class="inspector" id="inspector" aria-label="Панель визуализации">
- <div class="inspector-head"><div class="inspector-kicker"><span>ДОМ.РЕНДЕР / СТУДИЯ</span></div><h2 id="panelTitle">Проект</h2><p id="panelSubtitle">Загрузите исходник и управляйте изображениями проекта.</p><div class="tab-bar" role="tablist"><button class="tab active" data-tab="project" role="tab" aria-selected="true"><svg class="ico"><use href="#i-folder"/></svg><span>Проект</span></button><button class="tab" data-tab="environment" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройка рендера</span></button><button class="tab" data-tab="materials" role="tab" aria-selected="false"><svg class="ico"><use href="#i-layer"/></svg><span>Материалы</span></button><button class="tab" data-tab="animation" role="tab" aria-selected="false"><svg class="ico"><use href="#i-film"/></svg><span>Анимация</span></button><button class="tab" data-tab="variants" role="tab" aria-selected="false"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button><button class="tab" data-tab="parameters" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Параметры</span></button></div></div>
+ <div class="inspector-head"><div class="inspector-kicker"><span>ФОРМА / СТУДИЯ</span></div><h2 id="panelTitle">Проект</h2><p id="panelSubtitle">Загрузите исходник и управляйте изображениями проекта.</p><div class="tab-bar" role="tablist"><button class="tab active" data-tab="project" role="tab" aria-selected="true"><svg class="ico"><use href="#i-folder"/></svg><span>Проект</span></button><button class="tab" data-tab="environment" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройка рендера</span></button><button class="tab" data-tab="materials" role="tab" aria-selected="false"><svg class="ico"><use href="#i-layer"/></svg><span>Материалы</span></button><button class="tab" data-tab="animation" role="tab" aria-selected="false"><svg class="ico"><use href="#i-film"/></svg><span>Анимация</span></button><button class="tab" data-tab="variants" role="tab" aria-selected="false"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button><button class="tab" data-tab="parameters" role="tab" aria-selected="false"><svg class="ico"><use href="#i-sliders"/></svg><span>Параметры</span></button></div></div>
  <div class="inspector-scroll">
 <section id="projectPanel" class="tab-panel active" role="tabpanel">
  <div class="project-dashboard">
@@ -209,7 +258,7 @@
 </section>
 <section id="environmentPanel" class="tab-panel scene-setup-v37" role="tabpanel">
  <div class="scene-setup-header">
-  <span class="scene-setup-eyebrow">ДОМ.РЕНДЕР / СТУДИЯ</span>
+  <span class="scene-setup-eyebrow">ФОРМА / СТУДИЯ</span>
   <h3>Настройка сцены</h3>
   <p>Выберите, как должен выглядеть ваш дом на фотографии.</p>
  </div>
@@ -351,7 +400,7 @@
  </section>
  <section id="materialsPanel" class="tab-panel" role="tabpanel">
  <div class="material-simple" id="materialSimple">
-  <div class="material-simple-heading"><span>ДОМ.РЕНДЕР / МАТЕРИАЛЫ</span><h3>Изменить отделку дома</h3><p>Никаких сложных категорий. Выделите именно ту поверхность, которую хотите изменить, и примените свою фактуру или напишите задание для AI.</p></div>
+  <div class="material-simple-heading"><span>ФОРМА / МАТЕРИАЛЫ</span><h3>Изменить отделку дома</h3><p>Никаких сложных категорий. Выделите именно ту поверхность, которую хотите изменить, и примените свою фактуру или напишите задание для AI.</p></div>
   <div class="material-simple-step">
    <div class="material-simple-number">01</div>
    <div class="material-simple-content">
@@ -481,7 +530,7 @@
  </div>
 </section>
 <section id="animationPanel" class="tab-panel animation-studio" role="tabpanel">
- <div class="anim-hero"><span class="anim-eyebrow">ДОМ.РЕНДЕР · CINEMA STUDIO</span><h3>Архитектурная анимация</h3><p>Выберите камеру, объектив, движение и цвет будущего архитектурного фильма.</p></div>
+ <div class="anim-hero"><span class="anim-eyebrow">ФОРМА · CINEMA STUDIO</span><h3>Архитектурная анимация</h3><p>Выберите камеру, объектив, движение и цвет будущего архитектурного фильма.</p></div>
  <div class="anim-truth"><svg class="ico"><use href="#i-lock"/></svg><span><strong>Одна модель — неизменная архитектура</strong><small>Настройки удерживают геометрию, окна, крышу, отделку и существующее озеленение. Влияние камер и оптики показывается условно — это не фактическая съёмка.</small></span></div>
  <div class="anim-preview-shell">
   <div class="anim-preview-meta"><strong>Виртуальная киностудия</strong><span id="animPreviewState">Профессиональный демонстрационный дом</span></div>
@@ -602,17 +651,17 @@
  <button data-mobile="variants"><svg class="ico"><use href="#i-image"/></svg><span>Варианты</span></button>
  <button data-mobile="parameters"><svg class="ico"><use href="#i-sliders"/></svg><span>Настройки</span></button>
  </nav>
-<div class="dialog-cover" id="dialogCover" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-head"><div><span class="eyebrow">ДОМ.РЕНДЕР</span><h2 id="dialogTitle">Заголовок</h2></div><button class="icon-button" id="dialogClose" aria-label="Закрыть"><svg class="ico"><use href="#i-x"/></svg></button></div><div id="dialogBody"></div><div id="dialogActions"></div></div></div>
+<div class="dialog-cover" id="dialogCover" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-head"><div><span class="eyebrow">ФОРМА</span><h2 id="dialogTitle">Заголовок</h2></div><button class="icon-button" id="dialogClose" aria-label="Закрыть"><svg class="ico"><use href="#i-x"/></svg></button></div><div id="dialogBody"></div><div id="dialogActions"></div></div></div>
 <div class="cabinet-cover" id="cabinetCover" hidden>
  <section class="cabinet-sheet" role="dialog" aria-modal="true" aria-labelledby="cabinetTitle" tabindex="-1">
-  <div class="cabinet-head"><div><small class="cabinet-eyebrow">ДОМ.РЕНДЕР · СЕРВИС</small><h2 id="cabinetTitle">Личный кабинет</h2></div><button type="button" id="cabinetClose" class="cabinet-close" aria-label="Закрыть">×</button></div>
+  <div class="cabinet-head"><div><small class="cabinet-eyebrow">ФОРМА · СЕРВИС</small><h2 id="cabinetTitle">Личный кабинет</h2></div><button type="button" id="cabinetClose" class="cabinet-close" aria-label="Закрыть">×</button></div>
   <nav class="cabinet-tabs" aria-label="Разделы кабинета"><button type="button" data-cabinet-tab="account" class="active">Личный кабинет</button><button type="button" data-cabinet-tab="gallery">Галерея работ</button><button type="button" data-cabinet-tab="contacts">Контакты</button></nav>
   <div id="cabinetAccount" class="cabinet-view">
    <div class="cabinet-access"><span class="cabinet-dot"></span><span id="cabinetAccessStatus">Проверяем доступ…</span></div>
    <div class="cabinet-stats">
     <div class="cabinet-stat"><small>Осталось генераций сегодня</small><strong id="cabinetRemaining">—</strong><span id="cabinetLimitNote">Общий лимит сервера · не личная квота</span></div>
     <div class="cabinet-stat"><small>Баланс API Market</small><strong id="cabinetBalance">Недоступен в API</strong><span>Проверяется в личном кабинете поставщика</span></div>
-    <div class="cabinet-stat cabinet-stat-wide"><small>Ваш тариф ДОМ.РЕНДЕР</small><strong id="cabinetTariff">Пока не назначен</strong><span>Персональные подписки и пользовательские счета ещё не подключены. API Market списывает средства за фактические запросы.</span></div>
+    <div class="cabinet-stat cabinet-stat-wide"><small>Ваш тариф ФОРМА</small><strong id="cabinetTariff">Пока не назначен</strong><span>Персональные подписки и пользовательские счета ещё не подключены. API Market списывает средства за фактические запросы.</span></div>
    </div>
    <div class="cabinet-gallery-promo">
     <div class="cabinet-gallery-promo-main"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg><span><strong>Галерея работ</strong><small>Все ваши рендеры и сохранённые видео в одном месте</small></span></div>
@@ -640,16 +689,16 @@
    <p class="cabinet-gallery-note">Работы хранятся локально в браузере. Они не синхронизируются между устройствами. Для сохранности скачивайте важные файлы.</p>
   </div>
   <div id="cabinetContacts" class="cabinet-view" hidden>
-   <p class="cabinet-description">Связь с командой ДОМ.РЕНДЕР по вопросам сайта, визуализации и сотрудничества.</p>
+   <p class="cabinet-description">Связь с командой ФОРМА по вопросам сайта, визуализации и сотрудничества.</p>
    <div class="cabinet-contact-card"><small>Электронная почта для обращений</small><strong id="cabinetSupportEmail">Контактный адрес ещё не опубликован</strong><a id="cabinetSupportAction" href="#" hidden>Написать письмо ↗</a><p id="cabinetSupportNote">Владелец сайта должен добавить публичный адрес через настройку PUBLIC_SUPPORT_EMAIL на сервере.</p></div>
-   <p class="cabinet-disclaimer">По вопросам оплаты и баланса API Market обращайтесь непосредственно в поддержку <a href="https://api-market1.shop/" target="_blank" rel="noopener noreferrer">API Market</a>. Она не является поддержкой ДОМ.РЕНДЕР.</p>
+   <p class="cabinet-disclaimer">По вопросам оплаты и баланса API Market обращайтесь непосредственно в поддержку <a href="https://api-market1.shop/" target="_blank" rel="noopener noreferrer">API Market</a>. Она не является поддержкой ФОРМА.</p>
   </div>
   <div id="cabinetGalleryLightbox" class="cabinet-gallery-lightbox" role="dialog" aria-modal="true" aria-label="Просмотр работы" hidden>
     <div class="cabinet-gallery-lightbox-head"><div><strong id="cabinetGalleryViewTitle">Работа</strong><span id="cabinetGalleryViewMeta"></span></div><button id="cabinetGalleryViewClose" type="button" aria-label="Закрыть просмотр">×</button></div>
     <div id="cabinetGalleryMedia" class="cabinet-gallery-lightbox-media"></div>
     <div class="cabinet-gallery-lightbox-actions"><button id="cabinetGalleryDownload" type="button"><svg class="ico"><use href="#i-save"/></svg> Скачать оригинал</button><button id="cabinetGalleryDeleteVideo" type="button" hidden>Удалить видео</button></div>
   </div>
-  <div class="cabinet-bottom"><a href="privacy.html">Политика конфиденциальности</a><span>© 2026 ДОМ.РЕНДЕР</span></div>
+  <div class="cabinet-bottom"><a href="privacy.html">Политика конфиденциальности</a><span>© 2026 ФОРМА</span></div>
  </section>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -678,5 +727,12 @@
 <script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
 <script src="dom-render-progress-v53.js?v=ai-progress-20261110-v53"></script>
 <script src="dom-render-wan30.js?v=wan30-trial-1"></script>
+<script defer src="forma-archviz-studio.js?v=20261114-studio-01"></script>
+<script defer src="forma-interiors.js?v=20261114-interior-01"></script>
+<script defer src="forma-nodes.js?v=20261114-nodes-01"></script>
+<script defer src="forma-node-engine.js?v=20261114-executable-01"></script>
+<script defer src="forma-pro-tools.js?v=20261114-pro-01"></script>
+<script defer src="forma-home-tools.js?v=20261114-panel-01"></script>
+<script defer src="forma-intro.js?v=20261114-opening-v2"></script>
 </body>
 </html>
