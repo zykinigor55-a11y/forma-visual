@@ -71,7 +71,7 @@
   el.hidden=false;el.classList.remove('is-complete');
   miniButton().hidden=true;
   const note=$('renderProgressHint');
-  if(note)note.textContent='Точное время и процент готовности API Market не передаёт';
+  if(note)note.textContent='Результат откроется автоматически, когда кадр будет готов';
   syncScene();setPhase('prepare');elapsed();
   clock=setInterval(elapsed,1000);
   document.documentElement.classList.add('forma-progress-expanded');
