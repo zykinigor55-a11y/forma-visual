@@ -13,6 +13,12 @@ try{
  await page.goto(preview,{waitUntil:'domcontentloaded',timeout:45000});
  await page.locator('#forma-intro').waitFor({state:'visible',timeout:10000});
  assert.equal(await page.locator('.forma-intro-mark').evaluate(el=>el.naturalWidth>0),true);
+ const fullTexture=await page.evaluate(async()=>{
+  const img=new Image();img.src='assets/brand/intro-graphite-wall-4k.webp';await img.decode();
+  return [img.naturalWidth,img.naturalHeight];
+ });
+ assert.deepEqual(fullTexture,[3840,2160],'Desktop wall must load real 3840×2160 WebP asset');
+
  assert.equal(await page.locator('.forma-intro-wall').evaluate(el=>getComputedStyle(el).backgroundImage.includes('intro-graphite-wall.svg')),true);
  assert.equal(await page.locator('.forma-intro-shadow').first().evaluate(el=>getComputedStyle(el).animationName.includes('forma-shadow-sway-premium')),true);
  const openingOpacity=await page.locator('.forma-intro-lockup').evaluate(el=>Number(getComputedStyle(el).opacity));
@@ -44,6 +50,12 @@ try{
  const mp=await mob.newPage();
  await mp.goto(preview,{waitUntil:'domcontentloaded',timeout:45000});
  await mp.locator('#forma-intro').waitFor({state:'visible',timeout:6000});
+ const mobileTexture=await mp.evaluate(async()=>{
+  const img=new Image();img.src='assets/brand/intro-graphite-wall-mobile.webp';await img.decode();
+  return [img.naturalWidth,img.naturalHeight];
+ });
+ assert.deepEqual(mobileTexture,[1080,1920],'Mobile background must load its optimized WebP');
+
  await mp.evaluate(()=>document.querySelector('#forma-intro')?.classList.add('is-wall-only'));
  await mp.screenshot({path:out+'/forma-opening-wall-mobile.png',animations:'allow'});
  await mp.evaluate(()=>document.querySelector('#forma-intro')?.classList.remove('is-wall-only'));
