@@ -251,7 +251,7 @@
   ['Визуальный контроль геометрии','Инструменты','qa'],['Экспорт до 4K (без AI)','Экспорт','export'],
   ['Солнечный день','Свет','sunny'],['Мягкий пасмурный свет','Свет','overcast'],
   ['Синий час','Свет','blue'],
-  ['Интерьеры из скетча','Визуализация','interior'],['Нодовый редактор','Процесс','nodes'],['Профессиональные инструменты','Студия','pro']
+  ['Интерьеры из скетча','Визуализация','interior'],['Нодовый редактор','Процесс','nodes'],['Профессиональные инструменты','Студия','pro'],['Посмотреть заставку','Студия','replayIntro']
  ];
  function runCommand(cmd){
   closeCommands();
@@ -262,6 +262,7 @@
   else if(cmd==='interior')window.FORMA_INTERIORS?.open?.();
   else if(cmd==='nodes')window.FORMA_NODES?.open?.();
   else if(cmd==='pro')window.FORMA_PRO?.open?.();
+  else if(cmd==='replayIntro')window.FORMA_INTRO?.replay?.();
   else if(cmd==='qa')toggleQA();
   else if(cmd==='export')export4K();
   else if(['sunny','overcast','blue'].includes(cmd))setPreset(cmd);
