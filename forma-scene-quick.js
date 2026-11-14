@@ -4,6 +4,68 @@
 (() => {
  'use strict';
  let sheet=null,launcher=null,dragging=false,dragPointer=null,draftSun=null,previousFocus=null;
+ const subtypePhotos=Object.freeze({
+ "garden": [
+  "assets/thumbs/hd/env-garden.webp",
+  "assets/thumbs/natural-luxury/env-garden.webp",
+  "assets/thumbs/env-garden.jpg",
+  "assets/thumbs/hd/plants-decorative.webp"
+ ],
+ "forest": [
+  "assets/thumbs/hd/env-forest.webp",
+  "assets/thumbs/natural-luxury/env-forest.webp",
+  "assets/thumbs/env-forest.jpg",
+  "assets/thumbs/hd/plants-forest.webp"
+ ],
+ "lake": [
+  "assets/thumbs/hd/env-lake.webp",
+  "assets/thumbs/natural-luxury/env-lake.webp",
+  "assets/thumbs/env-lake.jpg",
+  "public/images/demo/background-lake-summer.webp"
+ ],
+ "mountains": [
+  "assets/thumbs/hd/env-mountains.webp",
+  "assets/thumbs/natural-luxury/env-mountains.webp",
+  "assets/thumbs/env-mountains.jpg",
+  "assets/thumbs/hd/env-nordic.webp"
+ ],
+ "city": [
+  "assets/thumbs/hd/env-city.webp",
+  "assets/thumbs/natural-luxury/env-city.webp",
+  "assets/thumbs/env-city.jpg",
+  "assets/thumbs/hd/env-courtyard.webp"
+ ],
+ "courtyard": [
+  "assets/thumbs/hd/env-courtyard.webp",
+  "assets/thumbs/natural-luxury/env-courtyard.webp",
+  "assets/thumbs/env-courtyard.jpg",
+  "assets/thumbs/hd/plants-decorative.webp"
+ ],
+ "nordic": [
+  "assets/thumbs/hd/env-nordic.webp",
+  "assets/thumbs/natural-luxury/env-nordic.webp",
+  "assets/thumbs/env-nordic.jpg",
+  "assets/thumbs/hd/env-mist.webp"
+ ],
+ "coast": [
+  "assets/thumbs/hd/env-coast.webp",
+  "assets/thumbs/natural-luxury/env-coast.webp",
+  "assets/thumbs/env-coast.jpg",
+  "assets/thumbs/hd/env-lake.webp"
+ ],
+ "minimal": [
+  "assets/thumbs/hd/env-minimal.webp",
+  "assets/thumbs/natural-luxury/env-minimal.webp",
+  "assets/thumbs/env-minimal.jpg",
+  "assets/thumbs/hd/plants-minimal.webp"
+ ],
+ "mist": [
+  "assets/thumbs/hd/env-mist.webp",
+  "assets/thumbs/natural-luxury/env-mist.webp",
+  "assets/thumbs/env-mist.jpg",
+  "assets/thumbs/hd/weather-fog.webp"
+ ]
+});
  const fields=[
   ['environment','Окружение','Где находится дом?'],
   ['season','Сезон','Какое время года?'],
@@ -19,7 +81,12 @@
   return button?.querySelector('.preset-card-label')?.textContent?.trim()||button?.title||'Не выбрано';
  };
  function summary(){
-  const info=get(),values=fields.filter(([g])=>info.explicit?.[g]).map(([g])=>labelFor(g,chosen(g)));
+  const info=get(),values=fields.filter(([g])=>info.explicit?.[g]).map(([g])=>{
+   const label=labelFor(g,chosen(g));
+   if(g!=='environment')return label;
+   const option=info.environmentSubtypes?.find(v=>v.id===info.selectedEnvironmentSubtype);
+   return label+(option?' · '+option.label:'');
+  });
   return values.length?(values.join(' · ')+(values.length<4?' · Остальное по исходнику':'')):'Атмосфера по исходному изображению';
  }
  function updateLauncher(){
@@ -89,6 +156,47 @@
     chips.append(button);
    }
    section.append(chips);body.append(section);
+   if(group==='environment'&&info.explicit?.environment){
+    const variants=info.environmentSubtypes||[];
+    if(variants.length===4){
+     const variantsBlock=document.createElement('div');
+     variantsBlock.className='forma-environment-variants';
+     const label=document.createElement('div');label.className='forma-environment-variants-head';
+     const title=document.createElement('strong');title.textContent='Характер окружения';
+     const note=document.createElement('small');note.textContent='Выбери 1 из 4 · необязательно';
+     label.append(title,note);variantsBlock.append(label);
+     const gallery=document.createElement('div');gallery.className='forma-environment-photo-grid';
+     const optional=document.createElement('button');optional.type='button';
+     optional.className='forma-environment-auto';
+     optional.dataset.environmentSubtype='auto';optional.textContent='Подобрать автоматически';
+     optional.classList.toggle('is-active',!info.selectedEnvironmentSubtype);
+     optional.setAttribute('aria-pressed',String(!info.selectedEnvironmentSubtype));
+     variantsBlock.append(optional);
+     variants.forEach((variant,index)=>{
+      const card=document.createElement('button');card.type='button';
+      card.className='forma-environment-photo-card';
+      card.dataset.environmentSubtype=variant.id;
+      const picked=variant.id===info.selectedEnvironmentSubtype;
+      card.classList.toggle('is-active',picked);
+      card.setAttribute('aria-pressed',String(picked));
+      card.setAttribute('aria-label',variant.label+'. '+variant.description);
+      const cover=document.createElement('span');cover.className='forma-environment-photo-cover';
+      const image=document.createElement('img');image.alt='';
+      image.loading='lazy';image.decoding='async';image.width=520;image.height=300;
+      image.src=subtypePhotos[info.environmentId]?.[index]||'assets/thumbs/hd/env-forest.webp';
+      image.addEventListener('error',()=>{if(image.dataset.fallback)return;image.dataset.fallback='1';image.src='assets/thumbs/hd/env-'+info.environmentId+'.webp'},{once:true});
+      cover.append(image);
+      const check=document.createElement('span');check.className='forma-environment-photo-check';
+      check.setAttribute('aria-hidden','true');check.textContent=picked?'✓':'';
+      cover.append(check);
+      const meta=document.createElement('span');meta.className='forma-environment-photo-caption';
+      const name=document.createElement('strong');name.textContent=variant.label;
+      const detail=document.createElement('small');detail.textContent=variant.description;
+      meta.append(name,detail);card.append(cover,meta);gallery.append(card);
+     });
+     variantsBlock.append(gallery);section.append(variantsBlock);
+    }
+   }
   }
   const sunSection=document.createElement('section');sunSection.className='forma-scene-sheet-group forma-sun-section';
   const sunTitle=document.createElement('div');sunTitle.className='forma-scene-sheet-group-head';
@@ -197,6 +305,12 @@
     const original=Array.from(optionsFor(group)?.querySelectorAll('[data-choice]')||[]).find(x=>x.dataset.choice===value);
     original?.click();
    }
+   paint();updateLauncher();return;
+  }
+  const subtype=event.target.closest('[data-environment-subtype]');
+  if(subtype){
+   const info=get(),id=subtype.dataset.environmentSubtype;
+   bridge()?.setEnvironmentSubtype?.(info.environmentId,id==='auto'?null:id);
    paint();updateLauncher();return;
   }
   if(event.target.closest('[data-sun-reset]')){bridge()?.resetSun?.();paint();return}
