@@ -15,6 +15,9 @@ on:
       - forma-world.html
       - forma-world.css
       - forma-world.js
+      - forma-world-ai.js
+      - forma-world-providers.mjs
+      - tests/forma-world-providers.test.mjs
       - tests/check-world.mjs
       - tests/check-home-tools.mjs
       - tests/check-node-execution.mjs
