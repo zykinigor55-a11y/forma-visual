@@ -29,6 +29,11 @@ try {
  const pro=page.locator('.fa-pro-launch');await pro.click();
  await page.locator('#faProBackdrop').waitFor({state:'visible'});
  await page.locator('#faProClose').click();
+ const interior=page.locator('[data-studio-action="interior"]');
+ await interior.click();
+ await page.locator('#faInteriorPanel').waitFor({state:'visible',timeout:9000});
+ await page.locator('[data-fa-space="exterior"]').click();
+ console.log('Interior hero action is working');
  console.log('Desktop capture complete; '+errors.length+' page errors. '+errors.slice(0,4).join(' | '));
  await context.close();
 
