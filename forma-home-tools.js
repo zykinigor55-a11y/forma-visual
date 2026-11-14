@@ -31,7 +31,7 @@
   {id:'interior',name:'Интерьеры',desc:'Sketch → Photo · свет и отделка',group:'render',state:'api',note:'AI-модель',type:'route'},
   {id:'materials',name:'Редактор материалов',desc:'Маски и локальные изменения',group:'edit',state:'api',note:'AI-модель',type:'route'},
   {id:'animation',name:'Анимация',desc:'Камеры, движение, видео',group:'render',state:'api',note:'Видео API',type:'route'},
-  {id:'nodes',name:'Нодовый редактор',desc:'Ветки и варианты проекта',group:'studio',state:'local',note:'Локально',type:'route'},
+  {id:'nodes',name:'Нодовый редактор',desc:'Исполняемые AI-цепочки и ветки проекта',group:'studio',state:'api',note:'Схема локально · рендер по API',type:'route'},
   {id:'camera',name:'Камера и оптика',desc:'Паспорта ракурсов и объективы',group:'studio',state:'local',note:'Локально',type:'pro'},
   {id:'preview',name:'Свет и цвет',desc:'Контраст, яркость, цвет',group:'edit',state:'local',note:'Локально',type:'pro'},
   {id:'geometry',name:'Контроль геометрии',desc:'Наложение и линии исходника',group:'studio',state:'local',note:'Визуально',type:'pro'},
