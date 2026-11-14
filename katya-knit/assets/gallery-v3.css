@@ -87,3 +87,39 @@ body.modal-active{overflow:hidden}
  .art-modal figure img{max-height:73vh}.modal-prev{left:3px}.modal-next{right:3px}.modal-arrow{border:0;width:34px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.artwork-frame,.ribbon-frame,.art-modal img{transition:none!important}}
+
+
+/* Finishing pass: consistent gallery proportions, remove light bars from
+   letterboxed images without changing/corrupting original source assets. */
+.ribbon-frame,
+.artwork-frame{
+ aspect-ratio:7/10;
+ overflow:hidden;
+ background:#aa825f;
+ border:3px solid #a4805d;
+ outline:1px solid #d3b898;
+ outline-offset:-5px;
+ box-shadow:5px 7px 10px #39261732,10px 16px 20px #3926172b;
+}
+.ribbon-frame img,
+.artwork-frame img{
+ display:block;
+ width:100%;
+ height:100%;
+ max-width:none;
+ object-fit:cover;
+ object-position:50% 50%;
+ image-rendering:auto;
+}
+.artwork-open:hover .artwork-frame,
+.artwork-open:focus-visible .artwork-frame {
+ box-shadow:7px 10px 12px #39261733,12px 20px 25px #39261734;
+}
+.art-modal figure img{
+ border:3px solid #a4805d;
+ box-shadow:0 0 0 1px #d0aa89,8px 16px 25px #0008;
+}
+@media(max-width:750px){
+ .ribbon-frame,.artwork-frame{border-width:2px;outline-offset:-4px}
+ .art-modal figure img{border-width:2px}
+}

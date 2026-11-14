@@ -11,3 +11,39 @@
 .intro-skip{position:absolute;z-index:3;right:clamp(20px,4vw,50px);top:clamp(20px,4vw,50px);bottom:auto;background:#07090955;border:1px solid #ffffff54;border-radius:1px;color:#fff;padding:12px 15px;letter-spacing:.15em;font:600 10px/1.2 'Manrope',Arial,sans-serif}
 @media(max-width:700px){.intro-film{object-fit:contain}.intro-fallback img{width:115px;height:115px}.intro-fallback span{font-size:30px}.intro-fallback small{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.site-intro{transition:none}}
+
+
+/* Brand film polish: mathematically pure black behind the cinematic 16:9 source.
+   The title appears below the finished colour-thread ring on the video. */
+.site-intro,.intro-film{background:#000!important}
+.site-intro{background-image:none!important}
+.intro-film{mix-blend-mode:screen;filter:brightness(.98) contrast(1.14)}
+.intro-video-nameplate{
+ position:absolute;z-index:2;left:50%;
+ top:calc(50% + min(17vw, 230px) + 12px);
+ transform:translate(-50%,12px);
+ display:flex;flex-direction:column;align-items:center;gap:12px;
+ width:max-content;max-width:calc(100vw - 30px);
+ color:#f4f2ef;text-align:center;
+ opacity:0;pointer-events:none;
+ animation:katyaFilmNameReveal 1s cubic-bezier(.16,1,.3,1) 3.05s forwards;
+}
+.intro-video-nameplate strong{
+ display:block;font:400 clamp(22px,3.1vw,47px)/1.25 'Prata',Georgia,serif;
+ letter-spacing:.16em;white-space:nowrap;text-shadow:0 1px 8px #000b;
+}
+.intro-video-nameplate span{
+ font:500 clamp(8px,.92vw,11px)/1.4 'Manrope',Arial,sans-serif;
+ letter-spacing:.18em;white-space:nowrap;color:#d8cfbf;
+}
+@keyframes katyaFilmNameReveal {
+ 0%{opacity:0;transform:translate(-50%,14px)}
+ 100%{opacity:1;transform:translate(-50%,0)}
+}
+.site-intro.has-error .intro-video-nameplate{display:none}
+@media(max-width:700px){
+ .intro-video-nameplate{top:calc(50% + 17vw + 17px);gap:9px}
+ .intro-video-nameplate strong{font-size:26px;letter-spacing:.105em}
+ .intro-video-nameplate span{font-size:8px;letter-spacing:.11em}
+}
+@media(prefers-reduced-motion:reduce){.intro-video-nameplate{animation:none;opacity:1;transform:translate(-50%,0)}}
