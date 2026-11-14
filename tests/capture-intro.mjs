@@ -5,11 +5,12 @@ const out='docs/previews';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 const url='http://127.0.0.1:3000';
+const preview=url+'/?previewIntro=1';
 try{
  const ctx=await browser.newContext({viewport:{width:1600,height:900},deviceScaleFactor:1,reducedMotion:'no-preference'});
  const page=await ctx.newPage();const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
+ await page.goto(preview,{waitUntil:'domcontentloaded',timeout:45000});
  await page.locator('#forma-intro').waitFor({state:'visible',timeout:10000});
  assert.equal(await page.locator('.forma-intro-mark').evaluate(el=>el.naturalWidth>0),true);
  assert.equal(await page.locator('.forma-intro-wall').evaluate(el=>getComputedStyle(el).backgroundImage.includes('intro-graphite-wall.svg')),true);
@@ -39,7 +40,7 @@ try{
 
  const mob=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'no-preference'});
  const mp=await mob.newPage();
- await mp.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
+ await mp.goto(preview,{waitUntil:'domcontentloaded',timeout:45000});
  await mp.locator('#forma-intro').waitFor({state:'visible',timeout:6000});
  await mp.screenshot({path:out+'/forma-opening-wall-mobile.png',animations:'allow'});
  await mp.waitForTimeout(2500);
@@ -53,5 +54,10 @@ try{
  await rp.locator('#forma-intro').waitFor({state:'hidden',timeout:3000});
  assert.equal(await rp.evaluate(()=>document.documentElement.classList.contains('forma-intro-pending')),false);
  await reduced.close();
- console.log('Opening scene verified: wall movement, delayed logo reveal, skip, single-play, replay, mobile and reduced motion.');
+ const auto=await browser.newContext({viewport:{width:700,height:500},reducedMotion:'no-preference'});
+ const ap=await auto.newPage();await ap.goto(url,{waitUntil:'domcontentloaded'});
+ await ap.locator('#forma-intro').waitFor({state:'visible',timeout:3000});
+ await ap.locator('#forma-intro').waitFor({state:'hidden',timeout:9000});
+ await auto.close();
+ console.log('Opening verified: animated shadows, delayed logo, automatic outro, skip/replay, mobile and reduced motion.');
 }finally{await browser.close()}
