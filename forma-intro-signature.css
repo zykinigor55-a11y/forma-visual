@@ -150,3 +150,37 @@ html.forma-intro-pending #forma-intro{display:block}
  .forma-intro-lockup,.forma-intro-preparation{opacity:1;transform:none;filter:none}
  .forma-intro-shadow{will-change:auto}
 }
+
+
+/* Premium staged identity: wall first, FA fades in, then the studio name. */
+.forma-intro-lockup,
+.forma-intro.is-revealed .forma-intro-lockup{
+ opacity:1;transform:none;filter:none;transition:none
+}
+.forma-intro-mark{
+ opacity:0;
+ transform:translate3d(0,10px,0);
+ transition:opacity 1.25s cubic-bezier(.22,1,.36,1) .52s,
+            transform 1.45s cubic-bezier(.22,1,.36,1) .52s;
+}
+.forma-intro-name{
+ opacity:0;transform:translate3d(0,8px,0);
+ transition:opacity 1s cubic-bezier(.22,1,.36,1) 1.08s,
+            transform 1.15s cubic-bezier(.22,1,.36,1) 1.08s
+}
+.forma-intro-descriptor{
+ opacity:0;transform:translate3d(0,6px,0);
+ transition:opacity .85s ease 1.38s,
+            transform 1s cubic-bezier(.22,1,.36,1) 1.38s
+}
+.forma-intro.is-revealed .forma-intro-mark,
+.forma-intro.is-revealed .forma-intro-name,
+.forma-intro.is-revealed .forma-intro-descriptor{
+ opacity:1;transform:translate3d(0,0,0)
+}
+.forma-intro-preparation{transition:opacity .6s ease 1.48s}
+@media(prefers-reduced-motion:reduce){
+ .forma-intro-mark,.forma-intro-name,.forma-intro-descriptor,.forma-intro-preparation{
+  opacity:1!important;transform:none!important;transition:none!important
+ }
+}
