@@ -2,13 +2,13 @@
    Shows once per tab and dismisses as soon as the browser has loaded all critical page resources. */
 (() => {
  'use strict';
- const SESSION_KEY='forma-opening-seen-v2';
+ const SESSION_KEY='forma-opening-seen-v3';
  const root=document.documentElement;
  const overlay=document.getElementById('forma-intro');
  const skip=document.getElementById('formaIntroSkip');
  const status=document.getElementById('formaIntroProgressStatus');
  if(!overlay)return;
- const reduceMotion=matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
+ const reduceMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  let active=false,closing=false,previousFocus=null,finishTimer=0;
  const text=value=>{if(status)status.textContent=value};
@@ -42,7 +42,7 @@
  function play(force=false){
   if(active||closing)return;
   const firstVisit=root.classList.contains('forma-intro-pending');
-  if(!firstVisit&&!force){overlay.hidden=true;return}
+  if(!firstVisit&&!force&&!previewHold){overlay.hidden=true;return}
   if(reduceMotion&&!force){
    try{sessionStorage.setItem(SESSION_KEY,'1')}catch{}
    overlay.hidden=true;root.classList.remove('forma-intro-pending');inertWorkspace(false);return
