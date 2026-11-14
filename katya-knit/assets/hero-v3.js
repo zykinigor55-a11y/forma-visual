@@ -45,6 +45,7 @@ function beginPlayback(){
  film.setAttribute('playsinline','');
  film.setAttribute('webkit-playsinline','');
  film.playsInline=true;film.autoplay=true;film.loop=false;
+ film.defaultPlaybackRate=1.2;film.playbackRate=1.2;
  try{
   const p=film.play();
   if(p&&typeof p.then==='function'){
@@ -57,6 +58,7 @@ function tapPlay(){
  if(done)return;
  // Direct call inside trusted user tap, for Yandex Browser / Android policies.
  film.muted=true;film.setAttribute('muted','');
+ film.defaultPlaybackRate=1.2;film.playbackRate=1.2;
  try{
   const p=film.play();
   if(p&&typeof p.then==='function'){
@@ -64,6 +66,7 @@ function tapPlay(){
   }
  }catch{showLaunch()}
 }
+film.addEventListener('loadedmetadata',()=>{film.defaultPlaybackRate=1.2;film.playbackRate=1.2});
 film.addEventListener('playing',()=>{started=true;hideLaunch();intro.classList.add('is-playing')});
 // The brand text is revealed only after the coloured threads have formed a complete circle.
 const revealName=()=>{
