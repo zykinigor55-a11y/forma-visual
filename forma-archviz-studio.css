@@ -194,3 +194,24 @@ body{background:var(--bg);color:var(--ink);font-family:Inter,"Helvetica Neue",Ar
 @media(max-width:1400px){.workspace .page-intro.forma-hero{min-height:224px;padding:27px!important}.forma-hero h1{font-size:37px!important}.forma-hero-emblem{width:22%;opacity:.49}}
 @media(max-width:760px){.workspace .page-intro.forma-hero{margin:10px 0 15px!important;min-height:216px;padding:24px 21px!important;border-radius:12px}.forma-hero h1{font-size:34px!important}.forma-hero .subtitle{font-size:10px!important}.forma-hero-emblem{position:absolute;right:-12px;bottom:12px;width:130px;opacity:.2}.forma-hero-tags{gap:11px;margin-top:16px}.forma-hero-tags span{font-size:8px}.forma-hero .eyebrow{font-size:8px!important}}
 @media(max-width:390px){.forma-hero-tags span:last-child{display:none}.forma-hero h1{font-size:31px!important}.forma-hero .subtitle{font-size:9px!important}}
+
+
+/* Explicit first-screen actions — refined editorial interaction */
+.forma-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:21px}
+.forma-hero-actions button{min-height:40px;display:inline-flex;gap:11px;align-items:center;justify-content:center;padding:0 15px;border:1px solid #c4b59f;border-radius:7px;font-size:10px;font-weight:720;letter-spacing:.03em;cursor:pointer;transition:background .15s,transform .15s}
+.forma-hero-actions button:hover{transform:translateY(-1px)}
+.forma-hero-actions button:focus-visible{outline:2px solid #d9bb87!important;outline-offset:3px}
+.forma-hero-primary{background:#e6d9c3;color:#1d2929;border-color:#e6d9c3!important}
+.forma-hero-primary:hover{background:#f0e6d5}
+.forma-hero-primary svg{width:15px;height:15px;stroke-width:1.7}
+.forma-hero-primary>span{opacity:.7;font-size:15px;margin-left:8px}
+.forma-hero-secondary{color:#f4f0e9;background:#e5e5dc0a;border:1px solid #8e9a92!important}
+.forma-hero-secondary:hover{background:#b5c4bb1b}
+.forma-hero-secondary>span{font-size:15px;color:#d6c09e;margin-left:10px}
+.forma-4k-export{font-size:11px!important;font-weight:800!important;color:#284f43!important;letter-spacing:.01em}
+@media(max-width:760px){
+ .workspace .page-intro.forma-hero{min-height:239px!important;padding:23px 19px!important}
+ .forma-hero-actions{gap:7px;margin-top:16px}
+ .forma-hero-actions button{min-height:37px;padding:0 11px;font-size:9px;gap:7px}
+ .forma-hero-primary>span,.forma-hero-secondary>span{margin-left:3px}
+}
