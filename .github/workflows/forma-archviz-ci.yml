@@ -26,5 +26,6 @@ jobs:
           node --check forma-interiors.js
           node --check forma-nodes.js
           node --check forma-pro-tools.js
+          node --check forma-home-tools.js
       - name: Unit and contract tests
         run: node --test tests/*.test.mjs
