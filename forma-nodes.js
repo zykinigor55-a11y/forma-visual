@@ -33,7 +33,7 @@ const START=[
  {id:'n1',type:'source',x:65,y:250,title:'Исходный скетч'},
  {id:'n2',type:'exterior',x:355,y:140,title:'Фотография дома'},
  {id:'n3',type:'interior',x:355,y:420,title:'Интерьер · Из скетча в фото'},
- {id:'n4',type:'lighting',x:645,y:85,title:'Синий час'},
+ {id:'n4',type:'lighting',x:645,y:85,title:'Свет и погода'},
  {id:'n5',type:'materials',x:645,y:420,title:'Изменить отделку'},
  {id:'n6',type:'upscale',x:935,y:85,title:'Экспорт · 4K'},
  {id:'n7',type:'export',x:935,y:420,title:'Финальный результат'}
@@ -142,7 +142,7 @@ async function deleteImage(id){
  try{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(mediaKey(id));tx.objectStore('images').delete(mediaKey(id)+'__video')}catch{}
 }
 function read(){
- try{const o=JSON.parse(localStorage.getItem(KEY+'-'+project())||'null');if(o&&Array.isArray(o.nodes)&&Array.isArray(o.edges)&&o.nodes.length<=100&&o.edges.length<=180&&o.nodes.every(n=>TYPES[n.type]&&Number.isFinite(n.x)&&Number.isFinite(n.y)))return o}catch{}
+ try{const o=JSON.parse(localStorage.getItem(KEY+'-'+project())||'null');if(o&&Array.isArray(o.nodes)&&Array.isArray(o.edges)&&o.nodes.length<=100&&o.edges.length<=180&&o.nodes.every(n=>TYPES[n.type]&&Number.isFinite(n.x)&&Number.isFinite(n.y))){for(const n of o.nodes)if(n.type==='lighting'&&n.title==='Синий час')n.title='Свет и погода';return o}}catch{}
  return initial();
 }
 function save(){
@@ -283,7 +283,7 @@ async function importJSON(file){
   const ids=new Set(g.nodes.map(n=>n.id));
   if(ids.size!==g.nodes.length||!g.nodes.every(n=>TYPES[n.type]&&/^n\d+$/.test(n.id)&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Math.abs(n.x)<10000&&Math.abs(n.y)<10000&&String(n.title||'').length<90))throw Error();
   if(!g.edges.every(e=>ids.has(e.from)&&ids.has(e.to)))throw Error();
-  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|reuse|prompt|duration|ratio|overlay)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
+  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|reuse|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|lens|quality|lockGeometry|changes|material|cameraMove)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
   for(const e of g.edges)if(canLink(e.from,e.to)){graph.edges=graph.edges.filter(x=>x.to!==e.to);graph.edges.push({from:e.from,to:e.to})}
   pending=null;save();redraw();status('Рабочая схема загружена.');
  }catch{status('Невозможно импортировать эту схему. Нужен экспорт ФОРМА.')}
@@ -303,6 +303,8 @@ function arrange(){
 function click(e){
  const b=e.target.closest('button');if(!b)return;
  const a=b.dataset;
+ if(b.id==='faFlowMore'){const menu=$('#faFlowMoreMenu');menu.hidden=!menu.hidden;b.setAttribute('aria-expanded',String(!menu.hidden));return}
+ if(a.faFlowQuick){const action=$('#'+a.faFlowQuick);$('#faFlowMoreMenu').hidden=true;$('#faFlowMore').setAttribute('aria-expanded','false');if(action&&!action.disabled)action.click();return}
  if(b.id==='faFlowClose'){close();return}
  if(b.id==='faFlowRunChain'){window.FORMA_NODE_ENGINE?.runTo?.(graph.selected);return}
  if(b.id==='faFlowUndo'){stepHistory('undo');return}
@@ -383,16 +385,17 @@ function open(){
  modal=document.createElement('div');modal.id='faFlowBackdrop';modal.className='fa-flow-backdrop';
  modal.innerHTML=`<div class="fa-flow-shell" role="dialog" aria-modal="true" aria-label="Нодовый редактор ФОРМА">
  <div class="fa-flow-head"><div class="fa-flow-logo"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div class="fa-flow-name"><b>ФОРМА <span>/ НОДЫ</span></b><small>Профессиональные цепочки визуализации</small></div>
- <div class="fa-flow-head-actions"><button type="button" id="faFlowCompare" title="Сравнение двух результатов">Сравнение A/B</button><button type="button" id="faFlowRunChain" class="fa-flow-run-main" title="Запустить ветку до выделенной ноды">▶ Запустить</button><button type="button" id="faFlowStopChain" class="fa-flow-stop-main" disabled>Стоп</button><button type="button" id="faFlowArrange">Упорядочить</button><button type="button" id="faFlowExport">Экспорт JSON</button><button type="button" id="faFlowImport">Импорт</button><input type="file" id="faFlowFile" accept=".json,application/json" hidden><button type="button" id="faFlowClose" aria-label="Закрыть">×</button></div></div>
- <div class="fa-flow-main"><aside class="fa-flow-sidebar"><h3>Библиотека нод</h3><small>Добавляйте узлы на холст</small><div id="faFlowPalette"></div><div class="fa-flow-note"><b>Как работать</b><p>Добавьте операцию и соедините её вход с выходом предыдущей. Один исходник может запускать несколько веток.</p><small>Настройки справа. Результаты хранятся в нодах. Новые AI-этапы оплачиваются отдельно после подтверждения.</small></div></aside>
+ <div class="fa-flow-head-actions"><button type="button" id="faFlowMore" class="fa-flow-more" aria-haspopup="menu" aria-expanded="false" title="Дополнительные действия">···</button><button type="button" id="faFlowCompare" title="Сравнение двух результатов">Сравнение A/B</button><button type="button" id="faFlowRunChain" class="fa-flow-run-main" title="Запустить ветку до выделенной ноды">▶ Запустить</button><button type="button" id="faFlowStopChain" class="fa-flow-stop-main" disabled>Стоп</button><button type="button" id="faFlowArrange">Упорядочить</button><button type="button" id="faFlowExport">Экспорт JSON</button><button type="button" id="faFlowImport">Импорт</button><input type="file" id="faFlowFile" accept=".json,application/json" hidden><button type="button" id="faFlowClose" aria-label="Закрыть">×</button></div><div id="faFlowMoreMenu" class="fa-flow-more-menu" role="menu" hidden><button type="button" data-fa-flow-quick="faFlowCompare">Сравнить A/B</button><button type="button" data-fa-flow-quick="faFlowArrange">Упорядочить ноды</button><button type="button" data-fa-flow-quick="faFlowExport">Скачать схему</button><button type="button" data-fa-flow-quick="faFlowImport">Импортировать схему</button><button type="button" data-fa-flow-quick="faFlowStopChain">Остановить генерацию</button></div></div>
+ <div class="fa-flow-main"><aside class="fa-flow-sidebar"><h3>Библиотека нод</h3><small>Выберите задачу и добавьте её в цепочку</small><div class="fa-flow-palette-toolbar"><label for="faFlowGroup">Категория</label><select id="faFlowGroup" aria-label="Категория нод"><option value="all">Все инструменты</option><option value="render">Визуализация</option><option value="edit">Обработка</option><option value="output">Результат</option></select></div><div id="faFlowPalette"></div><div class="fa-flow-note"><b>Как работать</b><p>Добавьте операцию и соедините её вход с выходом предыдущей. Один исходник может запускать несколько веток.</p><small>Настройки справа. Результаты хранятся в нодах. Новые AI-этапы оплачиваются отдельно после подтверждения.</small></div></aside>
  <section class="fa-flow-center"><div class="fa-flow-controls"><span id="faFlowCount">0 нод</span><div><button type="button" id="faFlowUndo" title="Отменить Ctrl+Z" aria-label="Отменить действие">↶</button><button type="button" id="faFlowRedo" title="Повторить Ctrl+Shift+Z" aria-label="Повторить действие">↷</button><button id="faFlowMinus" type="button">−</button><span id="faFlowZoom">75%</span><button id="faFlowPlus" type="button">+</button><button id="faFlowCenter" type="button">Центр</button></div></div>
  <div id="faFlowViewport" class="fa-flow-viewport" tabindex="0"><div id="faFlowWorld" class="fa-flow-world"><svg id="faFlowLines" width="2600" height="2100" xmlns="http://www.w3.org/2000/svg"></svg><div id="faFlowNodes"></div></div></div>
  <div class="fa-flow-bottom"><span id="faFlowStatus" role="status">Выберите ноду, настройте её справа и запустите ветку.</span><button type="button" id="faFlowDelete">Удалить ноду</button></div></section><aside class="fa-flow-inspector" id="faFlowInspector"><div class="fa-inspector-header"><small>ФОРМА / ПАРАМЕТРЫ</small><h3 id="faFlowInspectorTitle">Выберите этап</h3><p>Параметры, история и готовые результаты остаются на рабочем холсте.</p></div><div id="faFlowNodeSettings" class="fa-flow-node-settings" aria-label="Настройки выбранного этапа"></div></aside></div></div>`;
  document.body.append(modal);document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
  const palette=$('#faFlowPalette');
  for(const [id,t] of Object.entries(TYPES)){
-  const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.innerHTML='<i>'+iconHTML(id)+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';palette.append(b);
+  const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.dataset.group=({source:'render',exterior:'render',interior:'render',lighting:'render',materials:'edit',geometry:'edit',upscale:'edit',video:'output',image3d:'output',export:'output'})[id]||'render';b.innerHTML='<i>'+iconHTML(id)+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';palette.append(b);
  }
+ $('#faFlowGroup')?.addEventListener('change',e=>filterPalette(e.target.value));
  modal.addEventListener('click',click);
  modal.addEventListener('pointerdown',e=>{if(e.target===modal)close()});
  const viewport=$('#faFlowViewport');
@@ -403,6 +406,22 @@ function open(){
  redraw();restoreImages();
  window.FORMA_NODE_ENGINE?.onOpen?.();
 }
+
+ function filterPalette(value){
+  const root=$('#faFlowPalette');if(!root)return;
+  for(const btn of root.querySelectorAll('[data-add-node]')){
+   btn.hidden=value!=='all'&&btn.dataset.group!==value;
+  }
+ }
+ function openFor(type='exterior'){
+  if(!TYPES[type])type='exterior';
+  open();
+  const found=graph.nodes.find(n=>n.type===type);
+  if(found){graph.selected=found.id;redraw();status('Выбран инструмент «'+TYPES[type].title+'». Все настройки — в панели параметров.');}
+  else {const previous=graph.nodes.find(n=>n.type==='source')?.id||null;add(type,previous);}
+  $('#faFlowInspector')?.scrollTo?.({top:0,behavior:'instant'});
+ }
+
 function openAndAdd(type){
  if(!TYPES[type])return;
  open();
@@ -428,7 +447,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,openAndAdd,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,openAndAdd,openFor,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return;n.options={...(n.options||{}),...changes};save()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
