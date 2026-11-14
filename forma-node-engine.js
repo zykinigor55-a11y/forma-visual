@@ -79,7 +79,7 @@ function settingsHTML(n){
  if(n.type==='video'){
   controls.push('<label>Движение камеры<textarea data-node-option="prompt" rows="4" maxlength="500" placeholder="Slow professional dolly-in, preserve exact house geometry and materials.">'+esc(opts.prompt||'Slow cinematic dolly forward towards the architectural facade, keep the existing building and landscape unchanged, stable optical motion.')+'</textarea></label>');
   controls.push(select('duration','Продолжительность',{'5':'5 секунд','10':'10 секунд'},String(opts.duration||'5')));
-  controls.push(select('ratio','Формат',{'16:9':'16:9 · горизонтальный','9:16':'9:16 · вертикальный','1:1':'1:1 · квадратный'},opts.ratio||'16:9'));
+  controls.push(select('ratio','Формат',{'16:9':'16:9 · горизонтальный','9:16':'9:16 · вертикальный'},opts.ratio||'16:9'));
   controls.push('<p>Видео выполняет подключённый движок Wan 2.6 через сервер ФОРМА. До подтверждения подключения платный запрос не начнётся.</p>');
   if(getAPI()?.getVideoURL?.(n.id))controls.push('<div class="fa-inspector-result"><b>Видео этого этапа</b><video controls playsinline preload="metadata" src="'+getAPI().getVideoURL(n.id)+'"></video><button type="button" data-fa-download-video="'+esc(n.id)+'">Скачать MP4</button></div>');
   controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!getAPI()?.getVideoBlob?.(n.id)?'disabled':'')+'> Использовать готовое видео без нового запроса</label>');
