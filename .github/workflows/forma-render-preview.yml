@@ -14,6 +14,7 @@ on:
       - forma-world.html
       - forma-world.css
       - forma-world.js
+      - forma-world-ai.js
       - forma-pro-tools.js
       - index.html
       - forma-intro.css
@@ -54,7 +55,7 @@ jobs:
             forma-node-engine.js forma-node-engine.css \
             forma-pro-tools.js forma-pro-tools.css \
             forma-home-tools.js forma-home-tools.css \
-            forma-world.html forma-world.css forma-world.js \
+            forma-world.html forma-world.css forma-world.js forma-world-ai.js \
             forma-intro.js forma-intro.css \
             forma-static-preview.js \
             assets/brand
