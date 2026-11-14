@@ -17,7 +17,9 @@ try{
  assert.equal(await page.locator('.forma-intro-shadow').first().evaluate(el=>getComputedStyle(el).animationName.includes('forma-shadow-branch')),true);
  const openingOpacity=await page.locator('.forma-intro-lockup').evaluate(el=>Number(getComputedStyle(el).opacity));
  assert.ok(openingOpacity<.2,'Logo should be invisible while the shadows start moving');
+ await page.evaluate(()=>document.querySelector('#forma-intro')?.classList.add('is-wall-only'));
  await page.screenshot({path:out+'/forma-opening-wall-desktop.png',animations:'allow'});
+ await page.evaluate(()=>document.querySelector('#forma-intro')?.classList.remove('is-wall-only'));
  await page.waitForTimeout(2500);
  const revealed=await page.locator('.forma-intro-lockup').evaluate(el=>Number(getComputedStyle(el).opacity));
  assert.ok(revealed>.70,'Logo should be revealed after the wall');
@@ -42,7 +44,9 @@ try{
  const mp=await mob.newPage();
  await mp.goto(preview,{waitUntil:'domcontentloaded',timeout:45000});
  await mp.locator('#forma-intro').waitFor({state:'visible',timeout:6000});
+ await mp.evaluate(()=>document.querySelector('#forma-intro')?.classList.add('is-wall-only'));
  await mp.screenshot({path:out+'/forma-opening-wall-mobile.png',animations:'allow'});
+ await mp.evaluate(()=>document.querySelector('#forma-intro')?.classList.remove('is-wall-only'));
  await mp.waitForTimeout(2500);
  await mp.screenshot({path:out+'/forma-opening-logo-mobile.png',animations:'allow'});
  await mp.evaluate(()=>window.FORMA_INTRO?.skip?.());
