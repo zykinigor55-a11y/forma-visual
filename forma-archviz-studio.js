@@ -45,7 +45,7 @@
   const rail=$('.rail'),nav=$('.rail-nav');
   if(rail && nav && !$('.forma-rail-brand')){
    const brand=node('div','forma-rail-brand',
-    '<span class="forma-brand-symbol" aria-hidden="true">F</span><span class="forma-brand-copy"><strong>FORMA</strong><small>ARCHVIZ STUDIO</small></span>');
+    '<span class="forma-brand-symbol" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg" alt="" width="30" height="30"></span><span class="forma-brand-copy"><strong>FORMA</strong><small>ARCHVIZ STUDIO</small></span>');
    rail.insertBefore(brand,nav);
    nav.prepend(node('div','forma-nav-section','WORKSPACE / 01'));
    const btn=(label,icon,action)=>{
