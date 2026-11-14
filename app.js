@@ -1489,7 +1489,7 @@ window.FORMA_RENDER_BRIDGE={
   async capture(){
     if(!project||project.demo||!project.hasSource)throw Error('Загрузите свой скриншот в проект перед запуском цепочки.');
     const source=await getMedia(mediaKey('source',project.id));
-    if(!/^data:image\\/(?:png|jpeg|webp);base64,/i.test(source||''))throw Error('Исходник проекта не найден. Загрузите изображение снова.');
+    if(!/^data:image\/(?:png|jpeg|webp);base64,/i.test(source||''))throw Error('Исходник проекта не найден. Загрузите изображение снова.');
     const brief=settingsBrief();
     return {source,projectId:project.id,projectName:project.name,
       brief:{...brief,sceneType:'exterior'},
@@ -1499,7 +1499,7 @@ window.FORMA_RENDER_BRIDGE={
   async saveWorkflowResult(image,label,expectedId){
     if(!project||!project.hasSource||project.demo)throw Error('Проект для результата недоступен.');
     if(expectedId&&expectedId!==project.id)throw Error('Проект сменился во время работы. Результат остался в истории ноды.');
-    if(!/^data:image\\/(?:png|jpeg|webp);base64,/i.test(image||''))throw Error('Некорректный формат результата ноды.');
+    if(!/^data:image\/(?:png|jpeg|webp);base64,/i.test(image||''))throw Error('Некорректный формат результата ноды.');
     const id='r'+uuid().slice(0,8),input=await getMedia(mediaKey('source',project.id));
     await setMedia(mediaKey('render_'+id,project.id),image);
     if(input)await setMedia(mediaKey('input_'+id,project.id),input);
