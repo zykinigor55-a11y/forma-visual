@@ -16,7 +16,7 @@ const ITEMS=[
  ['release','Контроль публикации','Чек-лист','✓']
 ];
 const CHECKS=['Сохранена конфигурация проекта','Проверены результаты генерации и ошибки','Проверена геометрия контрольных сцен','Проверена мобильная версия','Проверен серверный API и лимиты','Проверена безопасность и хранение секретов','Подтверждена публикация отдельного релиза'];
-let state={camera:'Nikon Z8',lens:'24mm tilt-shift',height:1.6,notes:'',shots:[],check:{},color:{brightness:100,contrast:100,saturation:100},projectTitle:'Резиденция 01'};
+let state={camera:'Nikon Z8',lens:'24mm tilt-shift',height:1.6,notes:'',shots:[],check:{},color:{brightness:100,contrast:100,saturation:100},projectTitle:'Резиденция 01',cameraConfigured:false};
 try{state={...state,...JSON.parse(localStorage.getItem(STORE)||'{}')}}catch{}
 let modal=null,tab='overview',cadInfo=null,health=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -54,7 +54,7 @@ function inner(id){
  </div><div class="fa-pro-actions">${button('saveShot','Сохранить ракурс',true)}${button('exportShots','Скачать JSON')}</div>
  <div class="fa-pro-section-title">Сохранённые ракурсы</div>
  <div class="fa-pro-shotlist">${state.shots.length?state.shots.map((s,i)=>`<div><span><b>${esc(s.notes||'Ракурс '+(i+1))}</b><small>${esc(s.camera)} · ${esc(s.lens)} · ${esc(s.height)} м</small></span><button type="button" data-fa-delete-shot="${i}" aria-label="Удалить ракурс">×</button></div>`).join(''):'<p>Ракурсы пока не сохранены.</p>'}</div>
- ${warning('Настройки сохраняются как паспорт съёмки; автоматическое управление CAD-камерой и параметрами AI потребует отдельной интеграции.')}`);
+ ${warning('Паспорт камеры передаётся в текущий AI-бриф как пожелание к оптическому характеру снимка. Ракурс и геометрия по-прежнему определяются исходным изображением; управлять камерой внутри CAD можно будет после отдельной интеграции.')}`);
  case 'preview':
  return section('Предпросмотр экспозиции','LOCAL LOOK DEVELOPMENT / 03','Быстрая цветовая проба текущего результата, без обращения к AI.',
  `<div class="fa-pro-preview"><img id="faProPreviewImage" alt="Цветовой предпросмотр проекта"><span>LOCAL PREVIEW · NO AI</span></div>
@@ -159,6 +159,7 @@ function actions(e){
  if(a==='render'){close();document.querySelector('[data-nav="environment"]')?.click();return}
  if(a==='saveShot'){
   state.camera=$('#faProCamera').value;state.lens=$('#faProLens').value;state.height=Number($('#faProHeight').value)||1.6;state.notes=$('#faProNotes').value.trim();
+  state.cameraConfigured=true;
   state.shots.unshift({camera:state.camera,lens:state.lens,height:state.height,notes:state.notes,date:new Date().toISOString()});state.shots=state.shots.slice(0,40);save();show('camera');note('Паспорт камеры сохранён локально');return;
  }
  if(a==='exportShots'){download('forma-camera-shots.json',JSON.stringify(state.shots,null,2));return}
@@ -198,7 +199,10 @@ function init(){
  if(nav){
   const b=document.createElement('button');b.type='button';b.className='rail-btn fa-pro-nav-launch';b.innerHTML='<svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Инструменты</span>';b.title='Профессиональные инструменты';b.addEventListener('click',()=>open());nav.append(b);
  }
- window.FORMA_PRO={open,close};
+ window.FORMA_PRO={open,close,cameraBrief:()=>{
+  if(!state.cameraConfigured)return null;
+  return {enabled:true,camera:state.camera,lens:state.lens,height:Math.max(.1,Math.min(30,Number(state.height)||1.6)),notes:String(state.notes||'').slice(0,140)};
+ }};
  window.addEventListener('forma:open-tool',e=>open(e.detail?.tool||'overview'));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
