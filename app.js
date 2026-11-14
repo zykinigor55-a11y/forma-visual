@@ -731,6 +731,7 @@ function optionCards(group,arr,selected){return arr.map(([id,name])=>{
 }).join('')}
 function renderInlineEnvironmentSubtypes(){
  const grid=$('environmentOptions');if(!grid||!project)return;
+ grid.querySelector('#formaEnvironmentInline')?.remove();
  const selectedEnvironment=current().environment;
  const variants=ENV_SUBTYPES[selectedEnvironment]||[],photos=ENV_SUBTYPE_PHOTOS[selectedEnvironment]||[];
  if(variants.length!==4||photos.length!==4)return;
@@ -1847,7 +1848,7 @@ window.FORMA_SCENE_BRIDGE={
   if(!current().environmentSubtypes)current().environmentSubtypes={};
   if(subtypeId===null)delete current().environmentSubtypes[environmentId];
   else current().environmentSubtypes[environmentId]=subtypeId;
-  renderFlowLabels();renderFooter();save();return true;
+  renderInlineEnvironmentSubtypes();renderFlowLabels();renderFooter();save();return true;
  },
   setSun(position){
   if(!project||!project.hasSource)return false;
