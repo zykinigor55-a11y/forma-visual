@@ -123,3 +123,36 @@ body.modal-active{overflow:hidden}
  .ribbon-frame,.artwork-frame{border-width:2px;outline-offset:-4px}
  .art-modal figure img{border-width:2px}
 }
+
+
+/* Single bronze frame at every scale. Source images already have their visual
+   artwork edge; remove the extra outline and secondary light-coloured border.
+   One restrained outer frame remains in the ribbon, wall and detail viewer. */
+.ribbon-frame,
+.artwork-frame{
+  border:2px solid #9d7755!important;
+  outline:0!important;
+  background:#9d7755;
+  box-shadow:7px 12px 18px #43322337!important;
+}
+.ribbon-frame img,
+.artwork-frame img{
+  object-fit:cover!important;
+  object-position:center!important;
+  /* Trim duplicate edge marks baked into the artwork previews. */
+  transform:scale(1.045);
+  transform-origin:center;
+}
+.artwork-open:hover .artwork-frame,
+.artwork-open:focus-visible .artwork-frame{
+  box-shadow:10px 17px 26px #43322344!important;
+}
+.art-modal figure img{
+  border:2px solid #9d7755!important;
+  outline:0!important;
+  box-shadow:6px 12px 22px #0009!important;
+}
+@media(max-width:750px){
+ .ribbon-frame,.artwork-frame{border-width:2px!important;outline:0!important}
+ .art-modal figure img{border-width:2px!important}
+}

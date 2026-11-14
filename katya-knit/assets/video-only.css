@@ -61,3 +61,48 @@ button{font:inherit}
 @keyframes approvedRingReveal{0%{opacity:0;transform:translateY(8px) scale(.93) rotate(-13deg)}47%{opacity:.83}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
 .catalog-page .brand-mark{object-fit:contain}
 @media(prefers-reduced-motion:reduce){.intro-emblem{opacity:1;animation:none;transform:none}}
+
+
+/* Animated brand emblem — restrained 2D motion over the main video.
+   The approved original SVG asset is never modified. */
+.masthead .brand-emblem{
+  width:46px;height:46px;display:block;position:relative;flex:0 0 auto;
+  isolation:isolate;
+}
+.masthead .brand-emblem .brand-sign{
+  display:block;width:100%;height:100%;
+  object-fit:contain;filter:brightness(0) invert(1);
+  transform-origin:50% 50%;
+  animation:katyaBrandTurn 46s linear infinite;
+  will-change:transform;
+}
+.masthead .brand-thread-motion{
+  position:absolute;inset:0;width:100%;height:100%;
+  fill:none;stroke:#fff;stroke-width:.65;
+  stroke-linecap:round;opacity:.48;
+  pointer-events:none;
+  transform-origin:50% 50%;
+  animation:katyaThreadDrift 8s ease-in-out infinite alternate;
+}
+.masthead .brand-thread-motion path{
+  stroke-dasharray:65 8;
+  animation:katyaThreadSlide 13s ease-in-out infinite alternate;
+}
+.masthead .brand-thread-motion path:nth-child(2){animation-delay:-5s;opacity:.75}
+@keyframes katyaBrandTurn{to{transform:rotate(360deg)}}
+@keyframes katyaThreadDrift{
+  0%{transform:rotate(-5deg) scale(.977)}
+  100%{transform:rotate(6deg) scale(1.025)}
+}
+@keyframes katyaThreadSlide{
+  from{stroke-dashoffset:1}to{stroke-dashoffset:14}
+}
+@media(max-width:700px){
+ .masthead .brand-emblem{width:37px;height:37px}
+ .masthead .brand-thread-motion{stroke-width:.85}
+}
+@media(prefers-reduced-motion:reduce){
+ .masthead .brand-emblem .brand-sign,
+ .masthead .brand-thread-motion,
+ .masthead .brand-thread-motion path{animation:none!important;will-change:auto}
+}

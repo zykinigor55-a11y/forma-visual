@@ -65,8 +65,20 @@ function tapPlay(){
  }catch{showLaunch()}
 }
 film.addEventListener('playing',()=>{started=true;hideLaunch();intro.classList.add('is-playing')});
-film.addEventListener('timeupdate',()=>{if(film.currentTime>=.1){started=true;hideLaunch();intro.classList.add('is-playing')}});
-film.addEventListener('ended',closeIntro,{once:true});
+// The brand text is revealed only after the coloured threads have formed a complete circle.
+const revealName=()=>{
+ if(!done && film.currentTime>=4.05){intro.classList.add('show-name')}
+};
+film.addEventListener('timeupdate',()=>{
+ if(film.currentTime>=.1){started=true;hideLaunch();intro.classList.add('is-playing')}
+ revealName();
+});
+film.addEventListener('seeked',revealName);
+film.addEventListener('ended',()=>{
+ // Allow time to read the studio name and tagline after the logo is complete.
+ intro.classList.add('show-name');
+ window.setTimeout(closeIntro,1550);
+},{once:true});
 film.addEventListener('error',()=>{console.warn('KATYA KNIT intro media error',film.error?.code);showLaunch()});
 film.addEventListener('stalled',()=>{if(!started)showLaunch()});
 launch?.addEventListener('click',e=>{e.preventDefault();tapPlay()});
@@ -82,5 +94,10 @@ beginPlayback();
 if(film.readyState<2)film.addEventListener('canplay',()=>{if(!done&&film.paused)beginPlayback()},{once:true});
 setTimeout(()=>{if(!done&&!started&&!document.hidden)beginPlayback()},1100);
 setTimeout(()=>{if(!done&&!started)showLaunch()},3500);
-setTimeout(()=>{if(!done&&started&&Number.isFinite(film.duration)&&film.currentTime>=film.duration-.25)closeIntro()},11000);
+setTimeout(()=>{
+ if(!done&&started&&Number.isFinite(film.duration)&&film.currentTime>=film.duration-.25){
+  intro.classList.add('show-name');
+  setTimeout(closeIntro,1450);
+ }
+},11000);
 })();

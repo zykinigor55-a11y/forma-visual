@@ -68,3 +68,25 @@
 .site-intro.is-playing .intro-video-nameplate{animation-play-state:running}
 /* Keep visible black background, use the actual frames once the video starts. */
 @media(max-width:700px){.intro-play{font-size:10px;padding:14px 15px;max-width:calc(100vw - 38px)}}
+
+
+/* 2026-11-15: synchronize the brand signature to the actual finished ring,
+   not to a CSS wall-clock delay that can run before Android starts playback. */
+.intro-video-nameplate,
+.site-intro.is-playing .intro-video-nameplate,
+.site-intro:not(.is-playing) .intro-video-nameplate{
+  animation:none!important;
+  animation-play-state:initial!important;
+  opacity:0;
+  transform:translate(-50%,14px);
+  transition:opacity .85s ease,transform .85s cubic-bezier(.16,1,.3,1);
+}
+.site-intro.show-name .intro-video-nameplate,
+.site-intro.is-playing.show-name .intro-video-nameplate{
+  opacity:1;
+  transform:translate(-50%,0);
+}
+.site-intro.needs-interaction:not(.show-name) .intro-video-nameplate{opacity:0}
+@media(prefers-reduced-motion:reduce){
+ .site-intro.show-name .intro-video-nameplate{opacity:1;transform:translate(-50%,0)}
+}
