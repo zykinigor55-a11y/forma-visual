@@ -17,6 +17,7 @@
   geometry:'<path d="M3 3h8v8H3zM13 13h8v8h-8zM11 7h6v6M7 11v6h6"/>',
   cad:'<path d="M5 3h10l5 5v13H5zM15 3v5h5M8 12h8M8 16h6"/>',
   image3d:'<path d="m12 2 9 5v10l-9 5-9-5V7l9-5ZM3 7l9 5 9-5M12 12v10"/>',
+  world:'<path d="M3 9 12 4l9 5v10l-9 5-9-5V9Zm0 0 9 5 9-5M12 14v10"/>',
   presentation:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>',
   gallery:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m4 19 5-5 3 3 4-5 4 6"/>',
   models:'<path d="m12 2 2.6 6.9L22 12l-7.4 3.1L12 22l-2.6-6.9L2 12l7.4-3.1Z"/>',
@@ -37,6 +38,7 @@
   {id:'geometry',name:'Контроль геометрии',desc:'Наложение и линии исходника',group:'studio',state:'local',note:'Визуально',type:'pro'},
   {id:'cad',name:'CAD Bridge',desc:'Revit · SketchUp · Archicad',group:'studio',state:'pending',note:'Подготовка',type:'pro'},
   {id:'image3d',name:'Из фото в 3D',desc:'Подготовить задание для 3D',group:'edit',state:'pending',note:'Нужен API',type:'pro'},
+  {id:'world',name:'3D-мир',desc:'Прогулка по GLB · свет · кадры',group:'studio',state:'local',note:'Работает без API',type:'route'},
   {id:'presentation',name:'Альбом проекта',desc:'Печатный лист и экспорт PDF',group:'studio',state:'local',note:'Локально',type:'pro'},
   {id:'gallery',name:'Галерея',desc:'Сохранённые изображения проекта',group:'studio',state:'local',note:'Локально',type:'route'},
   {id:'models',name:'AI-движки',desc:'Модели и статус подключения',group:'system',state:'pending',note:'Статус API',type:'pro'},
@@ -51,6 +53,7 @@
   return false;
  }
  function openRoute(id){
+  if(id==='world'){window.location.assign('forma-world.html');return}
   if(id==='nodes')return window.FORMA_NODES?.open?.();
   if(id==='interior')return window.FORMA_INTERIORS?.open?.();
   if(id==='gallery'){
@@ -87,7 +90,7 @@
    '<span class="fa-home-tool-arrow" aria-hidden="true">↗</span></button>';
   return '<div class="fa-home-panel-head">'+
    '<div class="fa-home-heading"><span>ФОРМА / РАБОЧЕЕ ПРОСТРАНСТВО</span><h2>Панель проекта</h2><p>Все инструменты архитектурной визуализации — на одном экране.</p></div>'+
-   '<div class="fa-home-panel-count"><strong>16</strong><span>ИНСТРУМЕНТОВ</span></div></div>'+
+   '<div class="fa-home-panel-count"><strong>'+tools.length+'</strong><span>ИНСТРУМЕНТОВ</span></div></div>'+
    '<div class="fa-home-panel-filters" role="group" aria-label="Категории инструментов">'+Object.entries(groups).map(([id,name])=>'<button type="button" class="fa-home-filter'+(id==='all'?' active':'')+'" data-filter="'+id+'" aria-pressed="'+(id==='all')+'">'+name+'</button>').join('')+'</div>'+
    '<div class="fa-home-panel-layout"><div class="fa-home-tool-grid" aria-label="Инструменты проекта">'+tools.map(card).join('')+'</div>'+
    '<div class="fa-home-inspector"><div class="fa-home-inspector-head"><span>ПАРАМЕТРЫ ИНСТРУМЕНТА</span><h3 id="faHomeToolTitle">Upscaler · 4K</h3><p id="faHomeToolSub">Настраивайте выбранный инструмент, не покидая главную страницу.</p></div>'+
