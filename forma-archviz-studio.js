@@ -74,7 +74,7 @@
   intro.parentNode.insertBefore(section,intro);
   const viewerBtns=$('.viewer-toolbar .viewer-actions');
   if(viewerBtns){
-   const exportBtn=node('button','icon-button',icons.download);
+   const exportBtn=node('button','icon-button forma-4k-export','4K');
    exportBtn.type='button';exportBtn.id='forma4KExport';
    exportBtn.title='Экспорт до 3840 пикселей по длинной стороне (масштабирование без AI)';
    exportBtn.setAttribute('aria-label','Экспорт до 4K без AI');
@@ -294,6 +294,8 @@
     if(action==='qa')toggleQA();
     else if(action==='gallery')gallery();
     else if(action==='commands')openCommands();
+    else if(action==='upload')$('#sourceFile')?.click();
+    else if(action==='interior')window.FORMA_INTERIORS?.open?.();
     return;
    }
    const p=e.target.closest('[data-studio-mood]');
