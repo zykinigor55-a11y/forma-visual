@@ -1,0 +1,65 @@
+name: ФОРМА · Separate Render preview (preserve old site)
+
+on:
+  push:
+    branches: [feature/forma-archviz-studio]
+    paths:
+      - .github/workflows/forma-render-preview.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forma-preview-on-existing-render
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout studio sources
+        uses: actions/checkout@v4
+        with:
+          ref: feature/forma-archviz-studio
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Add separate preview page without touching the old homepage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "FORMA Preview Publisher"
+          git config user.email "forma-preview@users.noreply.github.com"
+          git fetch origin dom-render-nanobanana feature/forma-archviz-studio
+          git switch -C forma-preview-sync origin/dom-render-nanobanana
+          git restore --source=origin/feature/forma-archviz-studio --worktree --staged -- \
+            forma-archviz-studio.js forma-archviz-studio.css \
+            forma-brand-identity.css \
+            forma-interiors.js forma-interiors.css \
+            forma-nodes.js forma-nodes.css \
+            forma-pro-tools.js forma-pro-tools.css \
+            forma-intro.js forma-intro.css \
+            forma-static-preview.js \
+            assets/brand
+          git show origin/feature/forma-archviz-studio:index.html > forma-preview.html
+          git show origin/feature/forma-archviz-studio:favicon.svg > assets/brand/forma-preview-favicon.svg
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('forma-preview.html')
+          html=p.read_text(encoding='utf-8')
+          html=html.replace('</head>','<meta name="robots" content="noindex,nofollow">\n</head>')
+          html=html.replace('href="favicon.svg?v=fa-mark-20261114"','href="assets/brand/forma-preview-favicon.svg?v=fa-mark-20261114"')
+          html=html.replace('</body>','<script defer src="forma-static-preview.js?v=render-static-1"></script>\n</body>')
+          p.write_text(html,encoding='utf-8')
+          PY
+          git add forma-preview.html assets/brand/forma-preview-favicon.svg
+          if ! git diff --cached --quiet; then
+            git commit -m "feat(preview): add isolated ФОРМА interface preview at /forma-preview.html [skip ci]"
+            git push origin HEAD:dom-render-nanobanana
+          fi
+      - name: Confirm old index has not changed
+        run: |
+          git diff origin/dom-render-nanobanana HEAD -- index.html server.mjs app.js | tee /tmp/forma-root-diff
+          test ! -s /tmp/forma-root-diff
+      - name: Published path
+        run: echo "Preview URL = https://dom-render-nanobanana.onrender.com/forma-preview.html"
