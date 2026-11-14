@@ -49,12 +49,16 @@
    <div class="fw-section-heading"><span>03</span><b>Свет и атмосфера</b></div>
    <label class="fw-label" for="fwLight">Время суток</label>
    <select id="fwLight"><option value="day">Мягкий день</option><option value="golden">Золотой час</option><option value="blue">Синий час</option><option value="night">Ночь</option></select>
+   <label for="fwHDRFile" class="fw-hdr-upload">Загрузить HDR-освещение <small>Панорама .hdr · до 50 МБ · локально</small></label>
+   <input id="fwHDRFile" type="file" accept=".hdr,image/vnd.radiance" hidden>
+   <button type="button" class="fw-link" id="fwDefaultHDR">Стандартное освещение ↺</button>
    <label class="fw-label" for="fwFov">Угол обзора</label>
    <input type="range" id="fwFov" min="35" max="85" value="60"><span class="fw-small" id="fwFovValue">60°</span>
   </div>
   <div class="fw-section">
    <div class="fw-section-heading"><span>04</span><b>Съёмка и экспорт</b></div>
-   <div class="fw-actions"><button type="button" id="fwShot" class="fw-primary">Сохранить кадр PNG</button><button type="button" id="fwBookmark">Запомнить ракурс</button><button type="button" id="fwReturn">Вернуть ракурс</button></div>
+   <div class="fw-actions"><button type="button" id="fwShot" class="fw-primary">Сохранить кадр PNG</button><button type="button" id="fwShot4K" class="fw-primary fw-primary-dark">Сохранить кадр 4K</button><button type="button" id="fwBookmark">Запомнить ракурс</button><button type="button" id="fwReturn">Вернуть ракурс</button></div>
+   <p class="fw-muted">4K увеличивает разрешение WebGL-кадра до 3840 × 2160. Для фотореализма важны исходная модель, материалы и HDR-окружение.</p>
   </div>
   <div class="fw-section fw-footer-note">Подключение AI Image-to-3D / 3D Worlds появится отдельно. Для точной архитектуры используйте GLB, экспортированный из CAD или Blender.</div>
  </aside>
