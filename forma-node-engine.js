@@ -7,8 +7,8 @@ const $=(q,root=document)=>root.querySelector(q);
 const $$=(q,root=document)=>[...root.querySelectorAll(q)];
 const getAPI=()=>window.FORMA_NODES;
 const AI_TYPES=new Set(['exterior','interior','lighting','materials']);
-const BLOCKED_TYPES=new Set(['video','image3d','geometry']);
-const AVAILABLE_TYPES=new Set(['source','exterior','interior','lighting','materials','upscale','export']);
+const BLOCKED_TYPES=new Set(['image3d','geometry']);
+const AVAILABLE_TYPES=new Set(['source','exterior','interior','lighting','materials','upscale','video','export']);
 const LABELS={running:'ВЫПОЛНЯЕТСЯ',done:'ГОТОВО',error:'ОШИБКА',cancelled:'ОСТАНОВЛЕНО'};
 const LIGHTS={sunny:'Солнечный день',golden:'Золотой час',overcast:'Пасмурно',blue:'Синий час',rain:'После дождя',winter:'Зима',night:'Ночь'};
 const ZONES={main:'Фасад',roof:'Кровля',windows:'Окна',doors:'Двери',base:'Цоколь',terrace:'Терраса',custom:'Другая поверхность'};
@@ -39,8 +39,9 @@ function checkPlan(g,target){
  const invalid=path.find(n=>n.type==='materials'&&!String(n.options?.instruction||'').trim());
  if(invalid)throw Error('Для ноды «Материалы» напишите конкретную инструкцию по редактированию.');
  const calls=path.filter(n=>AI_TYPES.has(n.type)&&!(n.options?.reuse&&getAPI()?.getSnapshot?.(n.id))).length;
+ const videoCalls=path.filter(n=>n.type==='video'&&!(n.options?.reuse&&getAPI()?.getVideoBlob?.(n.id))).length;
  if(calls>8)throw Error('Для контроля стоимости разрешено не более 8 AI-этапов в цепочке.');
- return {path,calls};
+ return {path,calls,videoCalls};
 }
 function decorate(){
  const root=$('#faFlowBackdrop');if(!root)return;
@@ -74,6 +75,14 @@ function settingsHTML(n){
  if(n.type==='materials'){
   controls.push(select('zone','Элемент',ZONES,opts.zone||'custom'));
   controls.push('<label>Точное изменение<textarea data-node-option="instruction" rows="4" maxlength="500" placeholder="Например: заменить только деревянную отделку стены на светлый травертин; сохранить ракурс и геометрию.">'+esc(opts.instruction||'')+'</textarea></label>');
+ }
+ if(n.type==='video'){
+  controls.push('<label>Движение камеры<textarea data-node-option="prompt" rows="4" maxlength="500" placeholder="Slow professional dolly-in, preserve exact house geometry and materials.">'+esc(opts.prompt||'Slow cinematic dolly forward towards the architectural facade, keep the existing building and landscape unchanged, stable optical motion.')+'</textarea></label>');
+  controls.push(select('duration','Продолжительность',{'5':'5 секунд','10':'10 секунд'},String(opts.duration||'5')));
+  controls.push(select('ratio','Формат',{'16:9':'16:9 · горизонтальный','9:16':'9:16 · вертикальный','1:1':'1:1 · квадратный'},opts.ratio||'16:9'));
+  controls.push('<p>Видео выполняет подключённый движок Wan 2.6 через сервер ФОРМА. До подтверждения подключения платный запрос не начнётся.</p>');
+  if(getAPI()?.getVideoURL?.(n.id))controls.push('<div class="fa-inspector-result"><b>Видео этого этапа</b><video controls playsinline preload="metadata" src="'+getAPI().getVideoURL(n.id)+'"></video><button type="button" data-fa-download-video="'+esc(n.id)+'">Скачать MP4</button></div>');
+  controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!getAPI()?.getVideoBlob?.(n.id)?'disabled':'')+'> Использовать готовое видео без нового запроса</label>');
  }
  if(n.type==='source')controls.push('<p>Нода получает реальный загруженный исходник активного проекта, не демонстрационный кадр.</p><button type="button" class="fa-inspector-upload" data-fa-upload-source>Загрузить свой исходник</button>');
  if(AI_TYPES.has(n.type)){
@@ -117,6 +126,8 @@ function showSelection(){
   if(compare){getAPI()?.addCompare?.(compare.dataset.faCompareSnapshot);return}
   const previous=e.target.closest('[data-fa-restore-history]');
   if(previous){getAPI()?.recallHistory?.(previous.dataset.faHistoryNode,previous.dataset.faRestoreHistory);return}
+  const video=e.target.closest('[data-fa-download-video]');
+  if(video){getAPI()?.downloadVideo?.(video.dataset.faDownloadVideo);return}
  });
  nodeSettingsBound=host;
 }
