@@ -12,17 +12,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Prata&display=swap" rel="stylesheet">
 <link rel="preload" href="assets/hero-mobile-poster.webp" as="image" media="(max-width: 700px)">
 <link rel="preload" href="assets/hero-poster.webp" as="image" media="(min-width: 701px)">
-<link rel="stylesheet" href="assets/video-only.css">
+<link rel="stylesheet" href="assets/video-only.css"><link rel="stylesheet" href="assets/intro-film.css">
 </head>
 <body>
-<div class="site-intro" id="site-intro" aria-label="Загрузка KATYA KNIT">
-  <div class="intro-center">
-    <img class="intro-emblem" src="assets/brand-ring-approved.svg" alt="" width="178" height="176" draggable="false">
-    <div class="intro-title">KATYA KNIT</div>
-    <div class="intro-tagline">НИТЬ СТАВШАЯ ИСКУССТВОМ</div>
-  </div>
-  <span class="intro-count" id="intro-count">01 / 100</span>
-  <button class="intro-skip" id="intro-skip" type="button" aria-label="Пропустить загрузку">ПРОПУСТИТЬ ↗</button>
+<div class="site-intro" id="site-intro" aria-label="Видео заставка KATYA KNIT">
+ <video class="intro-film" id="intro-film" autoplay muted playsinline webkit-playsinline preload="auto" aria-label="Разноцветные нити переплетаются в логотип KATYA KNIT">
+  <source src="assets/intro-ring.mp4" type="video/mp4">
+ </video>
+ <div class="intro-fallback" id="intro-fallback" aria-hidden="true">
+  <img src="assets/brand-ring-approved.svg" width="180" height="180" alt="">
+  <span>KATYA KNIT</span><small>НИТЬ СТАВШАЯ ИСКУССТВОМ</small>
+ </div>
+ <button class="intro-skip" id="intro-skip" type="button">ПРОПУСТИТЬ ↗</button>
 </div>
 <main class="video-stage" aria-label="KATYA KNIT — видео и вход в галерею">
   <video class="hero-video" id="hero-video" autoplay muted loop playsinline webkit-playsinline preload="auto" poster="assets/hero-poster.webp" aria-hidden="true">
@@ -44,6 +45,6 @@
   </div>
   <button id="video-replay" class="video-replay" type="button" hidden aria-label="Запустить фоновое видео">▶ <span>ЗАПУСТИТЬ ВИДЕО</span></button>
 </main>
-<script src="assets/hero-controller.js" defer></script>
+<script src="assets/hero-v3.js" defer></script>
 </body>
 </html>
