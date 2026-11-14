@@ -84,3 +84,22 @@ test('camera passport reaches both interior and exterior AI prompts without movi
  assert.match(server,/userCameraBrief\(p\.brief\)/);
  assert.match(server,/continuity,userCameraBrief\(b\)/);
 });
+
+
+test('opening scene keeps the wall and shadows separate, then reveals Russian logo', async () => {
+ const html=await fromRoot('index.html');
+ const css=await fromRoot('forma-intro.css');
+ const js=await fromRoot('forma-intro.js');
+ assert.match(html,/id="forma-intro"/);
+ assert.match(html,/intro-graphite-wall\.svg/);
+ assert.match(html,/intro-branch-shadows\.svg/);
+ assert.match(html,/forma-intro\.js/);
+ assert.match(html,/forma-intro-name">ФОРМА/);
+ assert.match(css,/@keyframes forma-shadow-branch/);
+ assert.match(css,/prefers-reduced-motion/);
+ assert.match(js,/setTimeout/);
+ assert.match(js,/is-revealed/);
+ assert.match(js,/scheduled\(\(\)=>finish\(\),5200\)/);
+ assert.match(js,/sessionStorage\.setItem/);
+ assert.match(js,/replay:/);
+});
