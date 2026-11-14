@@ -283,7 +283,7 @@ async function importJSON(file){
   const ids=new Set(g.nodes.map(n=>n.id));
   if(ids.size!==g.nodes.length||!g.nodes.every(n=>TYPES[n.type]&&/^n\d+$/.test(n.id)&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Math.abs(n.x)<10000&&Math.abs(n.y)<10000&&String(n.title||'').length<90))throw Error();
   if(!g.edges.every(e=>ids.has(e.from)&&ids.has(e.to)))throw Error();
-  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|reuse)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
+  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|reuse|prompt|duration|ratio|overlay)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
   for(const e of g.edges)if(canLink(e.from,e.to)){graph.edges=graph.edges.filter(x=>x.to!==e.to);graph.edges.push({from:e.from,to:e.to})}
   pending=null;save();redraw();status('Рабочая схема загружена.');
  }catch{status('Невозможно импортировать эту схему. Нужен экспорт ФОРМА.')}
@@ -403,6 +403,13 @@ function open(){
  redraw();restoreImages();
  window.FORMA_NODE_ENGINE?.onOpen?.();
 }
+function openAndAdd(type){
+ if(!TYPES[type])return;
+ open();
+ const previous=graph.selected;
+ add(type,previous);
+ status('Добавлен инструмент «'+TYPES[type].title+'». '+(graph.edges.some(e=>e.from===previous&&e.to===graph.selected)?'Нода автоматически соединена с выбранным этапом.':'Соедините вход новой ноды с совместимым выходом.'));
+}
 function close(){if(!modal)return;comparePanel?.remove();comparePanel=null;window.FORMA_NODE_ENGINE?.onClose?.();save();modal.remove();modal=world=lines=nodeLayer=null;drag=pending=null;document.body.classList.remove('fa-flow-is-open');document.removeEventListener('keydown',keydown)}
 function init(){
  const actions=$('.forma-context-actions');
@@ -421,7 +428,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,openAndAdd,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return; n.options={...(n.options||{}),...changes};save();redraw()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
