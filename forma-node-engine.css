@@ -94,3 +94,15 @@
  .fa-compare-window header{padding:11px 16px}
  .fa-compare-window header h2{font-size:14px}
 }
+
+/* Snapshots, node history and true MP4 review. */
+.fa-inspector-history{display:flex;flex-direction:column;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid #425750}
+.fa-inspector-history>b{font:650 10px Inter,Arial,sans-serif;letter-spacing:.1em;color:#d5bc95;margin-bottom:3px}
+.fa-inspector-history button{width:100%;text-align:left;background:#263a36;border:1px solid #456056;border-radius:7px;color:#d8e4dc;padding:9px 10px;font:500 10px Inter,Arial,sans-serif;cursor:pointer}
+.fa-inspector-history button:hover{border-color:#c7ad85;background:#344a41}
+.fa-inspector-result video{max-width:100%;width:100%;max-height:190px;border:1px solid #455b54;border-radius:7px;background:#071010;display:block}
+.fa-node-picture.has-video{padding:0;overflow:hidden}
+.fa-node-picture.has-video:before{display:none}
+.fa-node-picture.has-video video{width:100%;height:91px;object-fit:cover;position:relative;z-index:2;background:#111;display:block}
+.fa-flow-viewport .fa-node-picture video{touch-action:auto}
+.fa-flow-viewport .fa-inspector-history{user-select:text}
