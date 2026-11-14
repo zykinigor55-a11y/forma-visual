@@ -9,7 +9,7 @@ const TYPES={
  lighting:{title:'Свет / сезоны',icon:'☼',kind:'Сцена',input:'image',out:'image',action:'environment',text:'Дневной, пасмурный, вечер'},
  materials:{title:'Материалы',icon:'▤',kind:'Правки',input:'image',out:'image',action:'materials',text:'Маски и локальные изменения'},
  geometry:{title:'Контроль',icon:'⌗',kind:'Сравнение',input:'image',out:'image',action:'qa',text:'Визуальный контроль контуров'},
- upscale:{title:'Upscale 4K',icon:'↗',kind:'Интеграция',input:'image',out:'image',action:'parameters',text:'AI API подключается отдельно'},
+ upscale:{title:'Upscale 4K',icon:'↗',kind:'4K локально',input:'image',out:'image',action:'parameters',text:'3840 px · увеличение без AI-детализации'},
  video:{title:'Анимация',icon:'▶',kind:'Видео',input:'image',out:'video',action:'animation',text:'Камеры и движения'},
  image3d:{title:'Из фото в 3D',icon:'⬡',kind:'Интеграция',input:'image',out:'model',action:'image3d',text:'Требуется 3D API'},
  export:{title:'Экспорт',icon:'⇩',kind:'Результат',input:'any',action:'variants',text:'Файлы и галерея'}
