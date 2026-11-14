@@ -104,3 +104,8 @@ html[data-forma-theme="light"] .fa-flow-note b{color:var(--fa-accent-text)}
  html[data-forma-theme] .fa-flow-head-actions{gap:2px!important}
 }
 @media(prefers-reduced-motion:reduce){html[data-forma-theme] .forma-workflow-launcher{scroll-behavior:auto}}
+
+html[data-forma-theme] .fa-node-picture:not(.has-image):not(.has-video){background:linear-gradient(145deg,var(--fa-elev),var(--fa-canvas))!important}
+html[data-forma-theme] .fa-home-tool-arrow{color:var(--fa-accent)!important}
+html[data-forma-theme] .fa-home-tool-status:not(.pending){color:var(--fa-accent-text)!important}
+@media(max-width:760px){html[data-forma-theme] .forma-workflow-arrowbtn[hidden]{display:none!important}html[data-forma-theme] .fa-flow-more-menu{top:calc(100% - 3px)}}
