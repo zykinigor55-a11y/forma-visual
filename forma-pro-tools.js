@@ -18,10 +18,10 @@ const ITEMS=[
 const CHECKS=['Сохранена конфигурация проекта','Проверены результаты генерации и ошибки','Проверена геометрия контрольных сцен','Проверена мобильная версия','Проверен серверный API и лимиты','Проверена безопасность и хранение секретов','Подтверждена публикация отдельного релиза'];
 let state={camera:'Nikon Z8',lens:'24mm tilt-shift',height:1.6,notes:'',shots:[],check:{},color:{brightness:100,contrast:100,saturation:100},projectTitle:'Резиденция 01',cameraConfigured:false};
 try{state={...state,...JSON.parse(localStorage.getItem(STORE)||'{}')}}catch{}
-let modal=null,tab='overview',cadInfo=null,health=null;
+let modal=null,tab='overview',cadInfo=null,health=null,inlineHost=null,inlineSelection=null,upscaleSource=null,upscalePreviewURL=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(state))}catch{note('Не удалось сохранить настройки локально')}};
-function note(str){const n=$('#faProStatus');if(n)n.textContent=str;}
+function note(str){for(const n of [$('#faProStatus'),$('#faProjectStatus')])if(n)n.textContent=str;}
 function download(name,str,type='application/json'){
  const url=URL.createObjectURL(new Blob([str],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
@@ -82,10 +82,13 @@ function inner(id){
  </div>${button('status','Обновить статус API',true)}`);
  case 'upscale':
  return section('Upscale / 4K','IMAGE FINISHING / 07','Разделяйте увеличение количества пикселей и реконструкцию реальных деталей.',
- `<div class="fa-pro-tile-grid">${tile('Resize 4K','Масштабирование до 3840 px на длинной стороне. Новые детали не создаются.','ЛОКАЛЬНО')}
- ${tile('AI Super Resolution','Глубокое улучшение текстур и деталей через отдельную нейросеть.','ОЖИДАЕТ API')}</div>
- <div class="fa-pro-actions">${button('resize4k','Экспорт до 4K',true)}</div>
- ${warning('При отсутствии API-upscaler экспорт 4K увеличивает пиксельные размеры, а не фактическую детализацию.')}`);
+ `<div class="fa-pro-tile-grid">${tile('Масштабирование 4K','Изменение размера до 3840 px по длинной стороне без дорисовывания деталей.','РАБОТАЕТ БЕЗ AI')}
+ ${tile('AI Upscaler','Нейросетевое улучшение мелких деталей потребует отдельного API.','ОЖИДАЕТ API')}</div>
+ <label class="fa-pro-drop fa-upscale-drop"><strong>Загрузить изображение для 4K</strong><span>Выберите JPG, PNG или WEBP · файл останется на вашем устройстве</span><input id="faProUpscaleUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
+ <div class="fa-pro-info" id="faProUpscaleInfo">Или используйте текущий результат в окне проекта.</div>
+ <div class="fa-upscale-image"><img id="faProUpscalePreview" alt="Изображение для увеличения до 4K" hidden></div>
+ <div class="fa-pro-actions">${button('resize4k','Скачать увеличенное изображение 4K',true)}</div>
+ ${warning('Это обычное изменение размера изображения, НЕ AI-upscale. Новые текстуры и детализация не создаются.')}`);
  case 'image3d':
  return section('Image to 3D','MODEL CONVERSION / 08','Подготовьте исходную фотографию и задание для будущей генерации 3D.',
  `<label class="fa-pro-drop"><strong>Выбрать референс для 3D</strong><span>PNG / JPEG / WEBP — только локальная подготовка</span><input type="file" id="faPro3DFile" accept="image/png,image/jpeg,image/webp"></label>
@@ -112,10 +115,17 @@ function inner(id){
  }
 }
 function show(id){
- tab=id;if(!modal)return;
- $$('.fa-pro-nav button',modal).forEach(b=>b.classList.toggle('active',b.dataset.proTab===id));
- $('#faProContent').innerHTML=inner(id);$('#faProContent').scrollTop=0;
- bindDetails(id);if(['models','account'].includes(id))checkServer();
+ tab=id;
+ if(modal){
+  $('.fa-pro-nav button',modal).forEach(b=>b.classList.toggle('active',b.dataset.proTab===id));
+ }
+ const host=modal?$('#faProContent',modal):inlineHost;
+ if(!host)return;
+ host.innerHTML=inner(id);
+ host.scrollTop=0;
+ bindDetails(id,host);
+ inlineSelection?.(id);
+ if(['models','account'].includes(id))checkServer(host);
 }
 function printSheet(){
  const title=state.projectTitle.trim()||'Архитектурный проект';
@@ -126,8 +136,12 @@ function printSheet(){
  w.document.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>'+cleanTitle+' | ФОРМА</title><style>@page{size:A4 landscape;margin:15mm}body{font:12px Arial,sans-serif;color:#222;margin:0}header{display:flex;justify-content:space-between;border-bottom:1px solid #999;padding:16px 0}h1{font-size:29px;font-weight:500}article{display:grid;grid-template-columns:1fr 1fr;gap:16px}article img{width:100%;max-height:142mm;object-fit:contain;background:#e7e9e8}h3{font-size:12px;font-weight:600;letter-spacing:.08em}footer{margin-top:20px;color:#777}</style></head><body><header><b>ФОРМА</b><span>АРХИТЕКТУРНЫЙ ПРОЕКТ</span></header><h1>'+cleanTitle+'</h1><article><section><h3>01 / ИСХОДНАЯ МОДЕЛЬ</h3><img alt="Исходник" src="'+esc(src)+'"></section><section><h3>02 / ВИЗУАЛИЗАЦИЯ</h3><img alt="Рендер" src="'+esc(out)+'"></section></article><footer>ФОРМА · VISUAL PROJECT DOCUMENT · '+new Date().toLocaleDateString('ru-RU')+'</footer></body></html>');
  w.document.close();note('Открыт печатный лист — сохраните его через меню печати как PDF');
 }
-async function checkServer(){
- const el=$('#faProHealth');if(!el)return;
+async function checkServer(host=modal?$('#faProContent'):inlineHost){
+ const el=host?.querySelector('#faProHealth');if(!el)return;
+ if(document.documentElement.classList.contains('forma-static-preview')){
+  el.textContent='Режим предпросмотра. AI-генерация на этой странице отключена.';
+  el.dataset.online='false';return;
+ }
  try{
   const r=await fetch('/api/status',{cache:'no-store'});if(!r.ok)throw Error();
   const data=await r.json();
@@ -135,17 +149,54 @@ async function checkServer(){
   el.dataset.online=data.ready?'true':'false';
  }catch{el.textContent='Сервер API не отвечает. Рендеринг недоступен.';el.dataset.online='false'}
 }
-function bindDetails(id){
- const e=$('#faProContent');if(!e)return;
+function bindDetails(id,e){
+ if(!e)return;
  if(id==='preview'){
-  const img=$('#faProPreviewImage'),a=$('#afterImg');if(img&&a)img.src=a.currentSrc||a.src;
+  const img=$('#faProPreviewImage',e),a=$('#afterImg');if(img&&a)img.src=a.currentSrc||a.src;
   const apply=()=>{if(img)img.style.filter='brightness('+state.color.brightness+'%) contrast('+state.color.contrast+'%) saturate('+state.color.saturation+'%)';};apply();
-  $$('[data-fa-color]',e).forEach(el=>el.addEventListener('input',ev=>{const k=el.dataset.faColor;state.color[k]=Number(el.value);$('#faProValue-'+k).textContent=el.value+'%';apply();save()}));
+  $$('[data-fa-color]',e).forEach(el=>el.addEventListener('input',ev=>{const k=el.dataset.faColor;state.color[k]=Number(el.value);$('#faProValue-'+k,e).textContent=el.value+'%';apply();save()}));
  }
  if(id==='release')$$('[data-fa-check]',e).forEach(el=>el.addEventListener('change',()=>{state.check[el.dataset.faCheck]=el.checked;save()}));
- if(id==='presentation')$('#faProProjectTitle')?.addEventListener('input',x=>{state.projectTitle=x.target.value;save()});
- if(id==='cad')$('#faProCad')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;cadInfo={name:f.name,size:f.size,format:f.name.split('.').pop()};$('#faProCadInfo').textContent=f.name+' · '+(f.size/1048576).toFixed(2)+' MB · метаданные получены'});
- if(id==='image3d')$('#faPro3DFile')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;cadInfo={name:f.name,size:f.size,format:f.type};$('#faPro3DInfo').textContent=f.name+' · '+(f.size/1048576).toFixed(2)+' MB · готово к подготовке задания'});
+ if(id==='presentation')$('#faProProjectTitle',e)?.addEventListener('input',x=>{state.projectTitle=x.target.value;save()});
+ if(id==='cad')$('#faProCad',e)?.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;cadInfo={name:f.name,size:f.size,format:f.name.split('.').pop()};$('#faProCadInfo',e).textContent=f.name+' · '+(f.size/1048576).toFixed(2)+' MB · метаданные получены'});
+ if(id==='image3d')$('#faPro3DFile',e)?.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;cadInfo={name:f.name,size:f.size,format:f.type};$('#faPro3DInfo',e).textContent=f.name+' · '+(f.size/1048576).toFixed(2)+' MB · готово к подготовке задания'});
+ if(id==='upscale'){
+  const upload=$('#faProUpscaleUpload',e),preview=$('#faProUpscalePreview',e),info=$('#faProUpscaleInfo',e);
+  const fromResult=()=>{
+   const image=$('#afterImg');
+   if(!upscaleSource&&preview&&image?.src){preview.src=image.currentSrc||image.src;preview.hidden=false}
+  };
+  fromResult();
+  if(upscaleSource&&upscalePreviewURL){preview.src=upscalePreviewURL;preview.hidden=false;info.textContent=upscaleSource.name+' · файл выбран для локального масштабирования'}
+  upload?.addEventListener('change',event=>{
+   const f=event.target.files?.[0];
+   if(!f)return;
+   if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>40*1024*1024){note('Поддерживаются PNG, JPG и WEBP до 40 МБ');upload.value='';return}
+   if(upscalePreviewURL)URL.revokeObjectURL(upscalePreviewURL);
+   upscaleSource=f;upscalePreviewURL=URL.createObjectURL(f);
+   if(preview){preview.src=upscalePreviewURL;preview.hidden=false}
+   info.textContent=f.name+' · '+(f.size/1048576).toFixed(1)+' МБ';
+  });
+ }
+}
+async function upscaleTo4K(){
+ if(!upscaleSource){$('#forma4KExport')?.click();return}
+ const img=new Image();
+ img.src=upscalePreviewURL;
+ try{await img.decode()}catch{note('Не удалось прочитать изображение');return}
+ const maxSide=Math.max(img.naturalWidth,img.naturalHeight);
+ if(!maxSide){note('Не удалось определить размеры изображения');return}
+ const scale=Math.max(1,3840/maxSide);
+ const w=Math.round(img.naturalWidth*scale),h=Math.round(img.naturalHeight*scale);
+ if(w*h>25000000){note('Слишком большое изображение для локальной обработки');return}
+ const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+ const context=canvas.getContext('2d');if(!context){note('Canvas не поддерживается');return}
+ context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(img,0,0,w,h);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+ if(!blob){note('Не удалось создать PNG');return}
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='forma-4k-'+w+'x'+h+'.png';
+ document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+ note('Файл '+w+'×'+h+' сохранён (масштабирование, не AI).');
 }
 function actions(e){
  const del=e.target.closest('[data-fa-delete-shot]');
@@ -165,7 +216,7 @@ function actions(e){
  if(a==='exportShots'){download('forma-camera-shots.json',JSON.stringify(state.shots,null,2));return}
  if(a==='resetColor'){state.color={brightness:100,contrast:100,saturation:100};save();show('preview');return}
  if(a==='qaNotes'){download('forma-geometry-review.json',JSON.stringify({date:new Date().toISOString(),method:'manual visual overlay',verifiedAutomatically:false},null,2));return}
- if(a==='resize4k'){close();$('#forma4KExport')?.click();return}
+ if(a==='resize4k'){upscaleTo4K();return}
  if(a==='status'){checkServer();return}
  if(a==='cadPackage'){download('forma-cad-bridge.json',JSON.stringify({workflow:'cad bridge',date:new Date().toISOString(),file:cadInfo,camera:state.camera,lens:state.lens,height:state.height,integrated:false},null,2));return}
  if(a==='image3dPackage'){download('forma-image-to-3d-task.json',JSON.stringify({date:new Date().toISOString(),file:cadInfo,requiresProvider:true,status:'not submitted'},null,2));return}
@@ -174,6 +225,7 @@ function actions(e){
  if(a==='checkExport'){download('forma-release-checklist.json',JSON.stringify({date:new Date().toISOString(),items:CHECKS.map((name,i)=>({name,checked:!!state.check[i]}))},null,2));return}
 }
 function open(id='overview'){
+ if(inlineHost&&!modal){show(id);inlineHost.closest('#formaProjectPanel')?.scrollIntoView({behavior:'smooth',block:'start'});return}
  if(modal){show(id);return}
  modal=document.createElement('div');modal.className='fa-pro-backdrop';modal.id='faProBackdrop';
  modal.innerHTML='<div class="fa-pro-shell" role="dialog" aria-modal="true" aria-label="Профессиональные инструменты"><header class="fa-pro-head"><div class="fa-pro-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div><b>ФОРМА <span>/ ИНСТРУМЕНТЫ</span></b><small>ПРОФЕССИОНАЛЬНАЯ АРХИТЕКТУРНАЯ СТУДИЯ</small></div><button id="faProClose" type="button" aria-label="Закрыть">×</button></header><div class="fa-pro-main"><nav class="fa-pro-nav" aria-label="Разделы инструментов"></nav><div id="faProContent" class="fa-pro-content"></div></div><footer class="fa-pro-footer"><span id="faProStatus" role="status">Проекты и настройки могут храниться локально в этом браузере.</span><span>ФОРМА / СТУДИЯ 01</span></footer></div>';
@@ -199,7 +251,7 @@ function init(){
  if(nav){
   const b=document.createElement('button');b.type='button';b.className='rail-btn fa-pro-nav-launch';b.innerHTML='<svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Инструменты</span>';b.title='Профессиональные инструменты';b.addEventListener('click',()=>open());nav.append(b);
  }
- window.FORMA_PRO={open,close,cameraBrief:()=>{
+ window.FORMA_PRO={open,close,mountInline:(host,onSelect)=>{if(!host)return;inlineHost=host;inlineSelection=onSelect;host.addEventListener('click',actions);show('upscale')},cameraBrief:()=>{
   if(!state.cameraConfigured)return null;
   return {enabled:true,camera:state.camera,lens:state.lens,height:Math.max(.1,Math.min(30,Number(state.height)||1.6)),notes:String(state.notes||'').slice(0,140)};
  }};
