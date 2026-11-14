@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111216" />
+  <meta name="description" content="PERSONA STUDIO — профессиональный конструктор цифровых персонажей" />
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>PERSONA STUDIO — Конструктор персонажей</title>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar" aria-label="Главная навигация">
+      <div class="brand"><span class="brand-symbol" aria-hidden="true">P<span class="brand-dot">.</span></span><span class="brand-words"><strong>PERSONA</strong><small>STUDIO / 02</small></span></div>
+      <button class="primary-create" id="newCharacter"><span class="btn-symbol">＋</span> Новый персонаж <span class="new-shortcut">N</span></button>
+      <div class="side-section-label">РАБОЧАЯ СТУДИЯ</div>
+      <nav class="side-nav" id="sections"></nav>
+      <div class="side-section-label library-heading">ВАША БИБЛИОТЕКА <button class="count" id="libraryCount">0</button></div>
+      <div id="libraryList" class="library-list"></div>
+      <div class="sidebar-bottom"><span class="status-glow"></span><div><b>Локальная версия</b><small>Локально · AI при подключении</small></div><button class="help-icon" id="aboutButton" title="О версии">?</button></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div class="breadcrumb"><span>ПРОЕКТЫ</span><span class="slash">/</span><strong id="characterNameTop">Новый персонаж</strong><span class="top-state" id="characterState">ЧЕРНОВИК</span></div>
+        <div class="top-actions"><button class="top-link" id="uploadPhotoTop"><span class="icon-photo">▧</span><span>Создать по фото</span></button><button class="top-icon" id="undoButton" aria-label="Отменить последнюю кисть" title="Отменить последнюю кисть">↶</button><button class="save-button" id="saveButton">Сохранить <span>↗</span></button></div>
+      </header>
+
+      <div class="workspace-body">
+        <section class="stage-column" aria-label="Предпросмотр персонажа">
+          <div class="stage-top"><div class="small-eyebrow">DIGITAL HUMAN / EDITOR</div><div class="stage-right-metadata"><span id="sourceLabel">ORIGINAL / 01</span><span class="meta-separator">•</span><span id="stageModeLabel">Живой эскиз</span></div></div>
+          <div id="stage" class="stage">
+            <div class="stage-ambient stage-ambient-1"></div><div class="stage-ambient stage-ambient-2"></div>
+            <div class="stage-grid"></div><div class="stage-floor"></div>
+            <div class="stage-serial">P—001 <span>FIGURE STUDY</span></div>
+            <div class="stage-coordinates">FRONT VIEW <span>◦</span> 01 / 04</div>
+            <div class="avatar-container" id="avatarContainer" title="В режиме кисти нажмите на нужную область лица"></div>
+            <div class="stage-bottom-rail"><span class="stage-side-text">PRECISION CHARACTER SYSTEM</span><span class="stage-side-text">PERSONA © 2026</span></div>
+          </div>
+          <div class="stage-controls"><div class="view-switch" id="viewSwitch"><button class="selected" data-view="front">Анфас</button><button data-view="quarter">¾</button><button data-view="side">Профиль</button></div><div class="stage-tools"><button id="stageZoomOut" title="Уменьшить">−</button><span id="zoomReadout">100%</span><button id="stageZoomIn" title="Увеличить">＋</button><button id="stageReset" title="Сбросить масштаб">⤢</button></div></div>
+          <div class="stage-disclaimer" id="stageDisclaimer"><span class="disclaimer-asterisk">✦</span> Параметрический эскиз. Фотореалистичная AI-генерация доступна через защищённый сервер.</div>
+        </section>
+
+        <aside class="inspector" aria-label="Редактор параметров">
+          <div class="inspector-head"><div class="inspector-kicker" id="inspectorKicker">01 / ОСНОВА</div><div class="inspector-title-row"><h1 id="inspectorTitle">Внешность</h1><span class="inspector-icon">✳</span></div><p id="inspectorDescription">Создайте своего героя. Каждая характеристика изменяется отдельно.</p></div>
+          <div class="inspector-scroll" id="inspectorContent"></div>
+          <div class="inspector-footer"><div class="identity-indicator"><span id="identityIcon">◇</span><span id="identityText">Внешность не зафиксирована</span></div><button id="mainAction" class="main-action">Создать варианты <span>↗</span></button></div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="mobile-bottom-nav" id="mobileNav" aria-label="Разделы"></div>
+  <div id="modalRoot" aria-live="polite"></div>
+  <div id="toastRoot" aria-live="polite"></div>
+  <input type="file" id="photoFile" accept="image/*" hidden />
+  <input type="file" id="garmentFile" accept="image/*" hidden />
+  <script src="./app.js" defer></script>
+</body>
+</html>
