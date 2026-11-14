@@ -86,6 +86,8 @@ function settingsHTML(n){
  if(n.type==='upscale')controls.push('<p>Локальное увеличение до 3840 пикселей по длинной стороне. Это НЕ нейросетевое улучшение детализации.</p>');
  if(n.type==='export')controls.push('<p>Скачивание файла и сохранение результатов AI-цепочки в галерее проекта.</p>');
  if(BLOCKED_TYPES.has(n.type))controls.push('<p>Автоматическое выполнение требует отдельной интеграции. В этой версии такая операция не запускается.</p>');
+ const history=getAPI()?.historyFor?.(n.id)||[];
+ if(history.length)controls.push('<div class="fa-inspector-history"><b>ИСТОРИЯ КАДРОВ</b>'+history.map((h,i)=>'<button type="button" data-fa-restore-history="'+esc(h.key)+'" data-fa-history-node="'+esc(n.id)+'">↶ Версия '+(i+1)+' · '+new Date(h.time).toLocaleString('ru-RU')+'</button>').join('')+'</div>');
  return '<b>НАСТРОЙКИ НОДЫ</b><h4>'+esc(n.title||n.type)+'</h4><div class="fa-flow-node-fields">'+
   (controls.join('')||'<p>Дополнительных параметров пока нет.</p>')+'</div>'+
   '<small>ИИ может ошибаться с окнами, венцами и размерами — проверяйте результат по CAD-исходнику.</small>';
@@ -113,6 +115,8 @@ function showSelection(){
   if(download){const image=getAPI()?.getSnapshot?.(download.dataset.faDownloadSnapshot);if(image)downloadImage(image);return}
   const compare=e.target.closest('[data-fa-compare-snapshot]');
   if(compare){getAPI()?.addCompare?.(compare.dataset.faCompareSnapshot);return}
+  const previous=e.target.closest('[data-fa-restore-history]');
+  if(previous){getAPI()?.recallHistory?.(previous.dataset.faHistoryNode,previous.dataset.faRestoreHistory);return}
  });
  nodeSettingsBound=host;
 }
