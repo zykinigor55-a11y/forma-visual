@@ -1483,4 +1483,33 @@ for(const name of ['batchDetail1X','batchDetail1Y','batchDetail2X','batchDetail2
 $('batchStart').onclick=generateBatch;
 $('dialogClose').onclick=closeModal;$('dialogCover').onclick=e=>{if(e.target===$('dialogCover'))closeModal()}}
 function pickChoice(e){const btn=e.target.closest('[data-choice]');if(!btn)return;const group=btn.dataset.choiceGroup;current()[group]=btn.dataset.choice;if(['time','season','weather'].includes(group))current().sceneMood=null;renderChoices();renderFooter();save();if(['environment','time','season','weather'].includes(group))syncDemoWithSettings();if(SCENE_SETUP_FIELDS.includes(group))openRenderPicker(null);toast('Выбрано: '+(group==='environment'?envLabel():cLabel(group,current()[group])))}
+/* Bridge between the production project/media store and the node executor.
+   No demo assets or secrets are exposed; nodes run against the user's source only. */
+window.FORMA_RENDER_BRIDGE={
+  async capture(){
+    if(!project||project.demo||!project.hasSource)throw Error('Загрузите свой скриншот в проект перед запуском цепочки.');
+    const source=await getMedia(mediaKey('source',project.id));
+    if(!/^data:image\\/(?:png|jpeg|webp);base64,/i.test(source||''))throw Error('Исходник проекта не найден. Загрузите изображение снова.');
+    const brief=settingsBrief();
+    return {source,projectId:project.id,projectName:project.name,
+      brief:{...brief,sceneType:'exterior'},
+      size:imageSizeForRatio(current().ratio),
+      quality:current().quality||'high'};
+  },
+  async saveWorkflowResult(image,label,expectedId){
+    if(!project||!project.hasSource||project.demo)throw Error('Проект для результата недоступен.');
+    if(expectedId&&expectedId!==project.id)throw Error('Проект сменился во время работы. Результат остался в истории ноды.');
+    if(!/^data:image\\/(?:png|jpeg|webp);base64,/i.test(image||''))throw Error('Некорректный формат результата ноды.');
+    const id='r'+uuid().slice(0,8),input=await getMedia(mediaKey('source',project.id));
+    await setMedia(mediaKey('render_'+id,project.id),image);
+    if(input)await setMedia(mediaKey('input_'+id,project.id),input);
+    project.renders.push({id,number:project.renders.length+1,createdAt:Date.now(),batchLabel:String(label||'Нодовый результат').slice(0,90)});
+    project.activeRender=id;renderURL=image;save();
+    await showResult(id);
+    return id;
+  },
+  currentProject:()=>project?{id:project.id,name:project.name,demo:!!project.demo,hasSource:!!project.hasSource}:null,
+  openUpload:()=>$('sourceFile')?.click()
+};
+
 init().catch(err=>{console.error(err);toast('Не удалось загрузить приложение')});
