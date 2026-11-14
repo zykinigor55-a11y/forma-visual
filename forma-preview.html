@@ -8,7 +8,7 @@
 try{document.documentElement.dataset.formaTheme=localStorage.getItem('forma-signature-theme-v1')==='light'?'light':'dark'}catch{document.documentElement.dataset.formaTheme='dark'}
 </script>
 <script>
-try{if(sessionStorage.getItem('forma-opening-seen-v2')!=='1')document.documentElement.classList.add('forma-intro-pending')}catch{document.documentElement.classList.add('forma-intro-pending')}
+try{if(sessionStorage.getItem('forma-opening-seen-v3')!=='1')document.documentElement.classList.add('forma-intro-pending')}catch{document.documentElement.classList.add('forma-intro-pending')}
 </script>
 <style>html.forma-intro-pending body{background:#2c2e2d}html.forma-intro-pending #forma-intro{display:block}</style>
 <link rel="stylesheet" href="styles.css?v=geometry-v32-20261109">
@@ -55,7 +55,7 @@ try{if(sessionStorage.getItem('forma-opening-seen-v2')!=='1')document.documentEl
  <div class="forma-intro-shadow" aria-hidden="true"></div>
  <div class="forma-intro-shadow secondary" aria-hidden="true"></div>
  <div class="forma-intro-vignette" aria-hidden="true"></div>
- <button type="button" id="formaIntroSkip" class="forma-intro-skip" aria-label="Пропустить вступительную заставку">Войти в студию <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 7 7-7 7M16 5v14"/></svg></button>
+ <button type="button" id="formaIntroSkip" class="forma-intro-skip" aria-label="Войти в рабочую студию ФОРМА">Войти в студию <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 7 7-7 7M16 5v14"/></svg></button>
  <div class="forma-intro-content">
   <div class="forma-intro-lockup">
    <img class="forma-intro-mark" src="assets/brand/forma-fa-mark.svg" width="200" height="197" alt="" decoding="async">
