@@ -304,3 +304,105 @@ html[data-forma-theme] #renderProgress.is-complete .render-progress-canvas{filte
  html[data-forma-theme] #renderProgress .render-progress-light,.forma-ai-mini-dot{animation:none!important}
  html[data-forma-theme] #renderProgress .render-progress-step{transition:none}
 }
+
+
+/* One-tap scene control directly below the image toolbar. */
+html[data-forma-theme] .forma-scene-quick{
+ display:flex;align-items:center;gap:13px;min-width:0;width:100%;padding:12px 20px;
+ background:var(--fa-card);border:0;border-bottom:1px solid var(--fa-line);
+ color:var(--fa-ink);text-align:left;cursor:pointer
+}
+html[data-forma-theme] .forma-scene-quick:hover{background:var(--fa-hover)}
+html[data-forma-theme] .forma-scene-quick:focus-visible{outline:2px solid var(--fa-accent);outline-offset:-2px}
+html[data-forma-theme] .forma-scene-quick-icon{
+ display:grid;place-items:center;width:38px;height:38px;min-width:38px;border:1px solid var(--fa-line-strong);
+ border-radius:10px;color:var(--fa-accent);font-size:23px;background:var(--fa-elev)
+}
+html[data-forma-theme] .forma-scene-quick-copy{display:flex;flex-direction:column;min-width:0;gap:5px;flex:1}
+html[data-forma-theme] .forma-scene-quick-copy strong{font-size:12px!important;font-weight:750;color:var(--fa-ink)}
+html[data-forma-theme] .forma-scene-quick-value{font-size:11px;color:var(--fa-muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+html[data-forma-theme] .forma-scene-quick-arrow{
+ color:var(--fa-accent-text);font-size:11px;font-weight:750;white-space:nowrap
+}
+html.forma-scene-sheet-open{overflow:hidden!important}
+#formaSceneSheet[hidden]{display:none!important}
+#formaSceneSheet{
+ position:fixed;inset:0;z-index:3550;display:flex;justify-content:center;align-items:center;
+ padding:22px;isolation:isolate
+}
+#formaSceneSheet .forma-scene-sheet-scrim{
+ position:absolute;inset:0;background:#08080cd9;backdrop-filter:blur(14px)
+}
+#formaSceneSheet .forma-scene-sheet-card{
+ z-index:1;position:relative;display:flex;flex-direction:column;
+ width:min(660px,100%);max-height:min(90dvh,770px);overflow:hidden;
+ background:#1d1b1e;border:1px solid #62554a;border-radius:18px;
+ box-shadow:0 22px 100px #0009;color:#f2eae0
+}
+#formaSceneSheet .forma-scene-sheet-head{
+ display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+ padding:22px 24px 20px;border-bottom:1px solid #433b36
+}
+#formaSceneSheet .forma-scene-sheet-head span{display:flex;flex-direction:column;gap:6px}
+#formaSceneSheet .forma-scene-sheet-head small{
+ color:#bda182;font-size:9px;letter-spacing:.17em;font-weight:750
+}
+#formaSceneSheet .forma-scene-sheet-head strong{
+ font-size:25px;font-weight:600;letter-spacing:-.045em;color:#f3ebe1
+}
+#formaSceneSheet .forma-scene-sheet-head em{font-size:11px;color:#ae9f90;font-style:normal}
+#formaSceneSheet .forma-scene-sheet-head button{
+ width:38px;height:38px;min-width:38px;display:grid;place-items:center;
+ border:1px solid #675a4d;border-radius:9px;background:#302b2c;color:#f5e9da;font-size:22px;cursor:pointer
+}
+#formaSceneSheet .forma-scene-sheet-body{
+ padding:20px 24px;overflow-y:auto;overscroll-behavior:contain;
+ display:flex;flex-direction:column;gap:23px
+}
+#formaSceneSheet .forma-scene-sheet-group{display:flex;flex-direction:column;gap:12px}
+#formaSceneSheet .forma-scene-sheet-group-head{
+ display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px
+}
+#formaSceneSheet .forma-scene-sheet-group-head strong{color:#f2e9df;font-size:13px;font-weight:700}
+#formaSceneSheet .forma-scene-sheet-group-head small{color:#a99b8e;font-size:10px}
+#formaSceneSheet .forma-scene-sheet-chips{display:flex;gap:8px;flex-wrap:wrap}
+#formaSceneSheet .forma-scene-sheet-chip{
+ min-height:42px;padding:10px 13px;display:inline-grid;place-items:center;
+ background:#2a2729;border:1px solid #574b43;border-radius:9px;
+ font-size:12px;font-weight:650;color:#e9dfd3;cursor:pointer
+}
+#formaSceneSheet .forma-scene-sheet-chip.is-active,
+#formaSceneSheet .forma-scene-sheet-chip[aria-pressed="true"]{
+ background:#e4c59e;border-color:#e4c59e;color:#292018;box-shadow:0 0 0 2px #c9aa8525
+}
+#formaSceneSheet .forma-scene-sheet-chip:focus-visible{outline:2px solid #e4c59e;outline-offset:3px}
+#formaSceneSheet .forma-scene-sheet-footer{
+ display:flex;gap:9px;padding:18px 24px;border-top:1px solid #433b36
+}
+#formaSceneSheet .forma-scene-sheet-footer button{
+ flex:1;min-height:46px;border-radius:9px;padding:10px;
+ border:1px solid #67594b;background:#2a2627;color:#eee2d2;
+ font-size:12px;font-weight:700;cursor:pointer
+}
+#formaSceneSheet .forma-scene-sheet-footer .forma-scene-sheet-run{
+ background:linear-gradient(120deg,#e9cba6,#bd9571);
+ border-color:#b99a76;color:#271e17
+}
+#formaSceneSheet .forma-scene-sheet-footer button:hover{filter:brightness(1.1)}
+@media(max-width:760px){
+ html[data-forma-theme] .forma-scene-quick{padding:10px 14px;gap:10px}
+ html[data-forma-theme] .forma-scene-quick-icon{width:35px;height:35px;min-width:35px}
+ html[data-forma-theme] .forma-scene-quick-arrow{font-size:10px}
+ #formaSceneSheet{align-items:flex-end;justify-content:center;padding:0}
+ #formaSceneSheet .forma-scene-sheet-card{
+  width:100%;max-height:calc(90dvh - env(safe-area-inset-top));border-radius:18px 18px 0 0;
+  border-bottom:0;padding-bottom:env(safe-area-inset-bottom)
+ }
+ #formaSceneSheet .forma-scene-sheet-head{padding:19px 18px 15px}
+ #formaSceneSheet .forma-scene-sheet-head strong{font-size:22px}
+ #formaSceneSheet .forma-scene-sheet-body{padding:17px 17px 20px;gap:19px}
+ #formaSceneSheet .forma-scene-sheet-chips{gap:7px}
+ #formaSceneSheet .forma-scene-sheet-chip{min-height:43px;font-size:11px;padding:9px 12px}
+ #formaSceneSheet .forma-scene-sheet-footer{padding:12px 16px;gap:8px}
+ #formaSceneSheet .forma-scene-sheet-footer button{min-height:47px;font-size:11px}
+}
