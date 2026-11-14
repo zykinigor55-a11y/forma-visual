@@ -317,7 +317,7 @@ function click(e){
  if(b.id==='faFlowPlus'||b.id==='faFlowMinus'){graph.zoom=Math.max(.3,Math.min(1.5,graph.zoom*(b.id==='faFlowPlus'?1.2:1/1.2)));save();position();return}
  if(a.addNode){add(a.addNode);return}
  if(a.fork){add('exterior',a.fork);return}
- if(a.portOut){pending=a.portOut;redraw();status('Выберите вход другой ноды или нажмите Escape.');return}
+ if(a.portOut){if(Date.now()-lastWireDrop<350)return;pending=a.portOut;redraw();status('Выберите вход другой ноды или нажмите Escape.');return}
  if(a.portIn){if(pending)link(pending,a.portIn);else status('Сначала нажмите выход исходной ноды.');return}
  if(a.runNode){window.FORMA_NODE_ENGINE?.runTo?.(a.runNode);return}
  if(a.openStep){openStep(a.openStep);return}
@@ -325,6 +325,13 @@ function click(e){
  if(a.rename){const n=node(a.rename),title=prompt('Название ноды',n.title);if(title?.trim()){n.title=title.trim().slice(0,70);save();redraw()}return}
 }
 function down(e){
+ const output=e.target.closest('[data-port-out]');
+ if(output&&e.button===0){
+  drag={kind:'wire',id:output.dataset.portOut};pending=null;
+  $('#faFlowViewport').setPointerCapture(e.pointerId);
+  status('Проведите соединение к входу нужной ноды.');
+  return;
+ }
  if(e.button!==0||e.target.closest('button,video,select,textarea,input'))return;
  const head=e.target.closest('[data-move]'),n=head?node(head.dataset.move):null;
  if(n){graph.selected=n.id;drag={kind:'node',id:n.id,x:e.clientX,y:e.clientY,ox:n.x,oy:n.y};}
@@ -334,6 +341,15 @@ function down(e){
 }
 function move(e){
  if(!drag)return;
+ if(drag.kind==='wire'){
+  const a=node(drag.id),rect=$('#faFlowViewport').getBoundingClientRect();if(!a)return;
+  const x=(e.clientX-rect.left-graph.pan.x)/graph.zoom,y=(e.clientY-rect.top-graph.pan.y)/graph.zoom;
+  const ax=a.x+230,ay=a.y+80,ctrl=Math.max(65,Math.abs(x-ax)*.4);
+  let ghost=lines.querySelector('.fa-flow-link-draft');
+  if(!ghost){ghost=document.createElementNS('http://www.w3.org/2000/svg','path');ghost.setAttribute('class','fa-flow-link-draft');lines.append(ghost)}
+  ghost.setAttribute('d','M'+ax+' '+ay+' C'+(ax+ctrl)+' '+ay+','+(x-ctrl)+' '+y+','+x+' '+y);
+  return;
+ }
  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
  if(drag.kind==='node'){
   const n=node(drag.id);if(!n)return;
@@ -342,7 +358,18 @@ function move(e){
   drawLines();
  } else {graph.pan={x:drag.ox+dx,y:drag.oy+dy};position()}
 }
-function up(){if(drag){save();redraw()}drag=null}
+function up(e){
+ if(drag?.kind==='wire'){
+  const from=drag.id;
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  const target=under?.closest?.('[data-port-in]');
+  drag=null;lastWireDrop=Date.now();
+  if(target){link(from,target.dataset.portIn)}
+  else {pending=from;redraw();status('Выход выбран. Нажмите вход другой ноды или перетащите соединение.')}
+  return;
+ }
+ if(drag){save();redraw()}drag=null;
+}
 function keydown(e){
  const editing=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
  if(!editing&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();stepHistory(e.shiftKey?'redo':'undo');return}
