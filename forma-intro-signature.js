@@ -13,7 +13,7 @@
  const reduceMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  const timers=new Set();
- let active=false,closing=false,previousFocus=null,startedAt=0,runId=0,loadReady=document.readyState==='complete';
+ let active=false,closing=false,previousFocus=null,startedAt=0,runId=0,loadReady=document.readyState==='complete',sequenceStarted=false;
  const label=value=>{if(status)status.textContent=value};
  function schedule(fn,delay){
   const id=runId;
@@ -51,7 +51,7 @@
   else setTimeout(done,590);
  }
  function scheduleExit(){
-  if(!active||previewHold||!loadReady)return;
+  if(!active||previewHold||!loadReady||!sequenceStarted)return;
   const remain=Math.max(0,STAGES.minimum-(performance.now()-startedAt));
   // A loaded page may be available early, but logo introduction must finish first.
   schedule(()=>{label('Рабочая студия готова');overlay.classList.add('is-ready');finish()},remain);
@@ -64,18 +64,24 @@
    overlay.hidden=true;root.classList.remove('forma-intro-pending');inertWorkspace(false);return
   }
   runId++;cancelSchedules();previousFocus=document.activeElement;
-  active=true;startedAt=performance.now();
+  active=true;sequenceStarted=false;
   // Reset BEFORE making the overlay visible to prevent a stale replay frame.
   overlay.classList.remove('is-leaving','is-ready','is-revealed','is-fa-visible','is-name-visible','is-descriptor-visible');
   overlay.hidden=false;overlay.setAttribute('aria-hidden','false');
   root.classList.add('forma-intro-pending');inertWorkspace(true);
   label('Открываем рабочую студию');
-  // Force a style/layout calculation while FA and title are fully hidden.
+  // Begin the timed reveal only AFTER the initial wall-only frame was painted.
+  // This prevents heavy Android page initialization from consuming the delay.
   overlay.getBoundingClientRect();
-  // The real wall-only pause comes from JS timers, not transition-delay.
-  schedule(()=>overlay.classList.add('is-fa-visible'),STAGES.fa);
-  schedule(()=>overlay.classList.add('is-name-visible'),STAGES.name);
-  schedule(()=>overlay.classList.add('is-descriptor-visible'),STAGES.descriptor);
+  const currentRun=runId;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   if(!active||currentRun!==runId)return;
+   sequenceStarted=true;startedAt=performance.now();
+   schedule(()=>overlay.classList.add('is-fa-visible'),STAGES.fa);
+   schedule(()=>overlay.classList.add('is-name-visible'),STAGES.name);
+   schedule(()=>overlay.classList.add('is-descriptor-visible'),STAGES.descriptor);
+   scheduleExit();
+  }));
   if(!previewHold){
    if(document.readyState==='complete'){loadReady=true;scheduleExit()}
    else {
