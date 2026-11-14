@@ -14,7 +14,7 @@ try{
  await page.locator('#forma-intro').waitFor({state:'visible',timeout:10000});
  assert.equal(await page.locator('.forma-intro-mark').evaluate(el=>el.naturalWidth>0),true);
  assert.equal(await page.locator('.forma-intro-wall').evaluate(el=>getComputedStyle(el).backgroundImage.includes('intro-graphite-wall.svg')),true);
- assert.equal(await page.locator('.forma-intro-shadow').first().evaluate(el=>getComputedStyle(el).animationName.includes('forma-shadow-branch')),true);
+ assert.equal(await page.locator('.forma-intro-shadow').first().evaluate(el=>getComputedStyle(el).animationName.includes('forma-shadow-sway-premium')),true);
  const openingOpacity=await page.locator('.forma-intro-lockup').evaluate(el=>Number(getComputedStyle(el).opacity));
  assert.ok(openingOpacity<.2,'Logo should be invisible while the shadows start moving');
  await page.evaluate(()=>document.querySelector('#forma-intro')?.classList.add('is-wall-only'));
