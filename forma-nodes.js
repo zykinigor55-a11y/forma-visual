@@ -187,7 +187,7 @@ function redraw(){
   if(n.type==='source'||['exterior','interior','lighting','materials','geometry','upscale','video','export'].includes(n.type)){
    const ref=n.type==='source'?$('#beforeImg'):null;
    const image=snapshots.get(n.id)||(ref&&(ref.currentSrc||ref.src))||'';
-   if(image){pic.style.backgroundImage='linear-gradient(0deg,#071d1dcc,#071d1c0c),url("'+String(image).replace(/["']/g,'')+'")';pic.classList.add('has-image')}
+   if(image){pic.style.backgroundImage='linear-gradient(0deg,#161215cc,#2119140c),url("'+String(image).replace(/["']/g,'')+'")';pic.classList.add('has-image')}
   }
  }
  for(const card of nodeLayer.querySelectorAll('.fa-node[data-node]')){
@@ -283,7 +283,7 @@ async function importJSON(file){
   const ids=new Set(g.nodes.map(n=>n.id));
   if(ids.size!==g.nodes.length||!g.nodes.every(n=>TYPES[n.type]&&/^n\d+$/.test(n.id)&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Math.abs(n.x)<10000&&Math.abs(n.y)<10000&&String(n.title||'').length<90))throw Error();
   if(!g.edges.every(e=>ids.has(e.from)&&ids.has(e.to)))throw Error();
-  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|reuse|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|lens|quality|lockGeometry|changes|material|cameraMove)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
+  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|reuse|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|lens|quality|lockGeometry|changes|material|cameraMove|target|format)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
   for(const e of g.edges)if(canLink(e.from,e.to)){graph.edges=graph.edges.filter(x=>x.to!==e.to);graph.edges.push({from:e.from,to:e.to})}
   pending=null;save();redraw();status('Рабочая схема загружена.');
  }catch{status('Невозможно импортировать эту схему. Нужен экспорт ФОРМА.')}
