@@ -646,7 +646,7 @@ function renderMaterials(){
  $('deleteMyMaterial').hidden=!matById(s.mats[s.zone]).custom;
  updateSimpleMaterialsUI();
 }
-function renderFooter(){const s=current();$('projectPanelName').textContent=project.name;$('projectPanelMeta').textContent=(project.demo?'Демонстрационная модель':'Ракурс '+(project.angle||1))+' · '+(project.sourceWidth||1672)+'×'+(project.sourceHeight||941);$('projectPanelStatus').textContent=project.demo?'Демонстрация · AI-фото не генерировалось':(project.renders.length?project.renders.length+' сохранённых AI-результатов':'Исходник загружен · AI-результатов пока нет');$('summaryLine').textContent=`${envLabel()} · ${cLabel('season',s.season)} · ${cLabel('time',s.time)}`;$('summaryMaterial').textContent=`${customMaterials.some(m=>m.id===s.mats[s.zone])?matById(s.mats[s.zone]).name:(s.preserveMaterials!==false?'Материалы исходника':'Материал не выбран')} · ${zoneLabel().toLowerCase()}`;$('stageSubtitle').textContent=$('summaryLine').textContent;$('stageTitle').textContent=project.name;$('canvasProjectLabel').textContent=project.name;$('breadcrumbName').textContent=project.name;$('stageRatio').textContent=s.ratio;$('ratioSelect').value=s.ratio;$('qualitySelect').value=s.quality;$('quantitySelect').value=s.quantity;$('lockGeometry').checked=s.lockGeometry;$('preserveMaterials').checked=s.preserveMaterials!==false;$('keepReference').checked=s.keepReference;if($('angleLandscapeLock'))$('angleLandscapeLock').checked=s.keepReference;$('editSelectedOnly').checked=!!s.editSelectedOnly;renderFlowLabels()}
+function renderFooter(){const s=current();$('projectPanelName').textContent=project.name;$('projectPanelMeta').textContent=(project.demo?'Демонстрационная модель':'Ракурс '+(project.angle||1))+' · '+(project.sourceWidth||1672)+'×'+(project.sourceHeight||941);$('projectPanelStatus').textContent=project.demo?'Демонстрация · AI-фото не генерировалось':(project.renders.length?project.renders.length+' сохранённых AI-результатов':'Исходник загружен · AI-результатов пока нет');$('summaryLine').textContent=sceneVisibleSummary();$('summaryMaterial').textContent=`${customMaterials.some(m=>m.id===s.mats[s.zone])?matById(s.mats[s.zone]).name:(s.preserveMaterials!==false?'Материалы исходника':'Материал не выбран')} · ${zoneLabel().toLowerCase()}`;$('stageSubtitle').textContent=$('summaryLine').textContent;$('stageTitle').textContent=project.name;$('canvasProjectLabel').textContent=project.name;$('breadcrumbName').textContent=project.name;$('stageRatio').textContent=s.ratio;$('ratioSelect').value=s.ratio;$('qualitySelect').value=s.quality;$('quantitySelect').value=s.quantity;$('lockGeometry').checked=s.lockGeometry;$('preserveMaterials').checked=s.preserveMaterials!==false;$('keepReference').checked=s.keepReference;if($('angleLandscapeLock'))$('angleLandscapeLock').checked=s.keepReference;$('editSelectedOnly').checked=!!s.editSelectedOnly;renderFlowLabels()}
 /* Cinematic equipment and optical preview are local UI simulations, not billed video. */
 /* Individual 1K images are faithfully cropped from the user's approved 6x4 cinema atlas.
    Each tile is 160x120 in the reference; upscale to 1024x768 without inventing new visuals. */
@@ -1329,8 +1329,9 @@ function presetMatchesSettings(id,s){
 }
 function syncDemoWithSettings(){
  const s=current();
- let id=s.sceneMood;
- if(!presetMatchesSettings(id,s))id=Object.keys(SCENE_PRESETS).find(k=>presetMatchesSettings(k,s))||null;
+ let id=s.sceneMood||null;
+ // Never infer a manually selected preset from the default season/weather/time values.
+ if(id&&!presetMatchesSettings(id,s))id=null;
  const preset=id?SCENE_PRESETS[id]:null;
  document.querySelectorAll('[data-scene-demo]').forEach(b=>{
   const active=b.dataset.sceneDemo===id;
@@ -1338,7 +1339,7 @@ function syncDemoWithSettings(){
   b.setAttribute('aria-pressed',String(active));
  });
  if($('scenePresetSelected'))$('scenePresetSelected').textContent=preset?preset.title:'Индивидуальная атмосфера';
- if($('scenePresetDesc'))$('scenePresetDesc').textContent=preset?preset.caption:(cLabel('season',s.season)+' · '+cLabel('weather',s.weather)+' · '+cLabel('time',s.time));
+ if($('scenePresetDesc'))$('scenePresetDesc').textContent=preset?preset.caption:sceneVisibleSummary();
 }
 function setDemoScene(id,applySettings=true){
  const p=SCENE_PRESETS[id];if(!p)return;
