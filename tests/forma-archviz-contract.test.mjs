@@ -119,3 +119,21 @@ test('project dashboard exposes all work tools, with honest 4K non-AI source pro
  assert.match(pro,/НЕ AI-upscale/);
  assert.match(pro,/mountInline:/);
 });
+
+
+test('executable nodes enforce cost confirmation and protect unsupported tools',async()=>{
+ const html=await fromRoot('index.html');
+ const node=await fromRoot('forma-nodes.js');
+ const engine=await fromRoot('forma-node-engine.js');
+ const bridge=await fromRoot('app.js');
+ assert.match(html,/forma-node-engine\.js/);
+ assert.match(html,/forma-node-engine\.css/);
+ assert.match(node,/faFlowRunChain/);
+ assert.match(node,/setSnapshot/);
+ assert.match(engine,/checkPlan/);
+ assert.match(engine,/confirm\(/);
+ assert.match(engine,/\/api\/render/);
+ assert.match(engine,/apiPreview/);
+ assert.match(engine,/Остановка/);
+ assert.match(bridge,/window\.FORMA_RENDER_BRIDGE/);
+});
