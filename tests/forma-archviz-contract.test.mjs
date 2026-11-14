@@ -71,3 +71,16 @@ test('selected FA vector identity is applied consistently', async () => {
  assert.match(russianLogo,/АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ/);
  assert.match(favicon,/<svg/);
 });
+
+
+test('camera passport reaches both interior and exterior AI prompts without moving the viewpoint',async()=>{
+ const app=await fromRoot('app.js');
+ const pro=await fromRoot('forma-pro-tools.js');
+ const server=await fromRoot('server.mjs');
+ assert.match(pro,/cameraBrief:/);
+ assert.match(app,/photography:window\.FORMA_PRO\?\.cameraBrief\?\.\(\)/);
+ assert.match(server,/function userCameraBrief\(b\)/);
+ assert.match(server,/not a request to alter viewpoint/);
+ assert.match(server,/userCameraBrief\(p\.brief\)/);
+ assert.match(server,/continuity,userCameraBrief\(b\)/);
+});
