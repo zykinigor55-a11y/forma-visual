@@ -5,7 +5,7 @@ const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelecto
 const TYPES={
  source:{title:'Исходник',icon:'▧',kind:'Источник',out:'image',action:'project',text:'Скетч или CAD-скриншот'},
  exterior:{title:'Экстерьер',icon:'⌂',kind:'Рендер',input:'image',out:'image',action:'environment',text:'Дом и участок'},
- interior:{title:'Sketch → Photo',icon:'▣',kind:'Интерьер',input:'image',out:'image',action:'interior',text:'Из скетча в фото'},
+ interior:{title:'Из скетча в фото',icon:'▣',kind:'Интерьер',input:'image',out:'image',action:'interior',text:'Из скетча в фото'},
  lighting:{title:'Свет / сезоны',icon:'☼',kind:'Сцена',input:'image',out:'image',action:'environment',text:'Дневной, пасмурный, вечер'},
  materials:{title:'Материалы',icon:'▤',kind:'Правки',input:'image',out:'image',action:'materials',text:'Маски и локальные изменения'},
  geometry:{title:'Контроль',icon:'⌗',kind:'Сравнение',input:'image',out:'image',action:'qa',text:'Визуальный контроль контуров'},
@@ -32,7 +32,7 @@ const iconHTML=id=>'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" 
 const START=[
  {id:'n1',type:'source',x:65,y:250,title:'Исходный скетч'},
  {id:'n2',type:'exterior',x:355,y:140,title:'Фотография дома'},
- {id:'n3',type:'interior',x:355,y:420,title:'Интерьер · Sketch → Photo'},
+ {id:'n3',type:'interior',x:355,y:420,title:'Интерьер · Из скетча в фото'},
  {id:'n4',type:'lighting',x:645,y:85,title:'Синий час'},
  {id:'n5',type:'materials',x:645,y:420,title:'Изменить отделку'},
  {id:'n6',type:'video',x:935,y:85,title:'Архитектурное видео'},
@@ -182,7 +182,7 @@ async function importJSON(file){
   graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
   for(const e of g.edges)if(canLink(e.from,e.to)){graph.edges=graph.edges.filter(x=>x.to!==e.to);graph.edges.push({from:e.from,to:e.to})}
   pending=null;save();redraw();status('Рабочая схема загружена.');
- }catch{status('Невозможно импортировать эту схему. Нужен экспорт FORMA ARCHVIZ.')}
+ }catch{status('Невозможно импортировать эту схему. Нужен экспорт ФОРМА.')}
 }
 function arrange(){
  const indeg=new Map(graph.nodes.map(n=>[n.id,0])),depth=new Map(graph.nodes.map(n=>[n.id,0]));
@@ -241,8 +241,8 @@ function open(){
  if(modal)return;
  graph=read();
  modal=document.createElement('div');modal.id='faFlowBackdrop';modal.className='fa-flow-backdrop';
- modal.innerHTML=`<div class="fa-flow-shell" role="dialog" aria-modal="true" aria-label="Нодовый редактор FORMA ARCHVIZ">
- <div class="fa-flow-head"><div class="fa-flow-logo"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div class="fa-flow-name"><b>FORMA ARCHVIZ <span>/ NODES</span></b><small>Профессиональные цепочки визуализации</small></div>
+ modal.innerHTML=`<div class="fa-flow-shell" role="dialog" aria-modal="true" aria-label="Нодовый редактор ФОРМА">
+ <div class="fa-flow-head"><div class="fa-flow-logo"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div class="fa-flow-name"><b>ФОРМА <span>/ НОДЫ</span></b><small>Профессиональные цепочки визуализации</small></div>
  <div class="fa-flow-head-actions"><button type="button" id="faFlowArrange">Упорядочить</button><button type="button" id="faFlowExport">Экспорт JSON</button><button type="button" id="faFlowImport">Импорт</button><input type="file" id="faFlowFile" accept=".json,application/json" hidden><button type="button" id="faFlowClose" aria-label="Закрыть">×</button></div></div>
  <div class="fa-flow-main"><aside class="fa-flow-sidebar"><h3>Библиотека нод</h3><small>Добавляйте узлы на холст</small><div id="faFlowPalette"></div><div class="fa-flow-note"><b>Как работать</b><p>Потяните карточку за заголовок. Соедините выход одного узла со входом другого. Нода может иметь несколько веток.</p><p>Кнопка «Открыть инструмент» ведёт в настоящий рендер, интерьер, материалы или анимацию.</p><small>Связи — схема проекта, не автоматический запуск AI.</small></div></aside>
  <section class="fa-flow-center"><div class="fa-flow-controls"><span id="faFlowCount">0 нод</span><div><button id="faFlowMinus" type="button">−</button><span id="faFlowZoom">75%</span><button id="faFlowPlus" type="button">+</button><button id="faFlowCenter" type="button">Центр</button></div></div>
