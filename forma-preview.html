@@ -67,6 +67,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <link rel="stylesheet" href="forma-upload-next-v14.css?v=20261115-v14">
 <link rel="stylesheet" href="forma-sun-studio-v15.css?v=20261115-sun15">
 <link rel="stylesheet" href="forma-plan-entry.css?v=20261115-plan1">
+<link rel="stylesheet" href="forma-direction-catalog-v22.css?v=20261115-v22">
 <link rel="stylesheet" href="forma-render-atelier-v16.css?v=20261115-r16">
 <link rel="stylesheet" href="forma-render-circle-v21.css?v=20261115-r21">
 </head>
@@ -160,17 +161,39 @@ html.forma-intro-pending #forma-intro{display:block}
   </div>
   <div class="forma-hero-emblem" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg" alt="" loading="eager" width="185" height="185"><strong>ФОРМА</strong><span>АРХИТЕКТУРНАЯ<br>ВИЗУАЛИЗАЦИЯ</span></div>
  </div>
- <section class="forma-workflow-launcher" aria-label="Основные направления студии">
- <div class="forma-workflow-label"><span>НАЧНИТЕ С ПРОЕКТА</span><strong>Ваш рабочий процесс</strong><small>Выберите задачу, которую нужно решить.</small></div>
- <button type="button" class="forma-workflow-card" data-studio-action="render"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-house"/></svg></span><span class="forma-workflow-copy"><strong>Экстерьер</strong><small>Из модели в фотографию</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
- <button type="button" class="forma-workflow-card" data-studio-action="interior"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-image"/></svg></span><span class="forma-workflow-copy"><strong>Интерьер</strong><small>Из скетча в фотографию</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
- <button type="button" class="forma-workflow-card" data-studio-action="nodes"><span class="forma-workflow-symbol" aria-hidden="true"><svg class="ico"><use href="#i-layer"/></svg></span><span class="forma-workflow-copy"><strong>Нодовый редактор</strong><small>Варианты и цепочки работ</small></span><span class="forma-workflow-arrow" aria-hidden="true">↗</span></button>
-</section>
- <a href="/plan-to-interior.html" class="forma-plan-to-interior-entry" aria-label="Открыть PLAN TO INTERIOR — конструктор 3D по плану">
-  <span class="forma-plan-entry-mark" aria-hidden="true">⌗</span>
-  <span class="forma-plan-entry-copy"><small>НОВЫЙ ИНСТРУМЕНТ / BETA 01</small><strong>PLAN TO INTERIOR <em>— из 2D-плана в 3D-пространство</em></strong><span>Автоматический черновик стен · подтверждение масштаба · настоящая 3D-модель · интерьерные фото</span></span>
-  <span class="forma-plan-entry-action" aria-hidden="true">Открыть ↗</span>
- </a>
+ <section class="forma-direction-catalog" aria-label="Главное меню профессиональных инструментов FORMA">
+  <header class="forma-direction-head"><div><span class="forma-direction-kicker">FORMA / ПРОФЕССИОНАЛЬНЫЕ ИНСТРУМЕНТЫ</span><h2>Выберите задачу</h2><p>Один проект — точные инструменты для каждого этапа архитектурной визуализации.</p></div><span class="forma-direction-index">01—06 <i>СТУДИЯ</i></span></header>
+  <div class="forma-direction-grid">
+   <button type="button" class="forma-direction-card is-main" data-studio-action="upload">
+    <span class="forma-direction-photo forma-direction-split" aria-hidden="true"><img src="assets/residence-model-sketch.jpg" alt="" loading="lazy" decoding="async"><img src="assets/residence-render.jpg" alt="" loading="lazy" decoding="async"><span class="forma-direction-split-line"></span><span class="forma-direction-image-label">SKETCH <i>→</i> PHOTO</span></span>
+    <span class="forma-direction-card-info"><span><small>01 / ВИЗУАЛИЗАЦИЯ</small><strong>Из скетча в фотографию</strong><em>Загрузите модель и создайте фотореалистичный архитектурный кадр.</em></span><b aria-hidden="true">↗</b></span>
+   </button>
+   <button type="button" class="forma-direction-card" data-studio-action="materials">
+    <span class="forma-direction-photo" aria-hidden="true"><img src="mat-travertine.jpg" alt="" loading="lazy" decoding="async"><span class="forma-direction-image-label">MATERIAL / EDIT</span></span>
+    <span class="forma-direction-card-info"><span><small>02 / МАТЕРИАЛЫ</small><strong>Материалы и отделка</strong><em>Замените цвет или фактуру конкретной поверхности готового рендера.</em></span><b aria-hidden="true">↗</b></span>
+   </button>
+   <button type="button" class="forma-direction-card" data-studio-action="interior">
+    <span class="forma-direction-photo" aria-hidden="true"><img src="assets/thumbs/hd/env-minimal.webp" alt="" loading="lazy" decoding="async"><span class="forma-direction-image-label">INTERIOR / PHOTO</span></span>
+    <span class="forma-direction-card-info"><span><small>03 / ИНТЕРЬЕРЫ</small><strong>Интерьеры</strong><em>Превратите скетч помещения в интерьерную фотографию.</em></span><b aria-hidden="true">↗</b></span>
+   </button>
+   <button type="button" class="forma-direction-card" data-studio-action="relight">
+    <span class="forma-direction-photo" aria-hidden="true"><img src="assets/residence-render-bluehour-fixed.webp" alt="" loading="lazy" decoding="async"><span class="forma-direction-image-label">LIGHT / STUDIO</span></span>
+    <span class="forma-direction-card-info"><span><small>04 / ОСВЕЩЕНИЕ</small><strong>Переосвещение</strong><em>Солнце, высота, тени, лучи и смена атмосферы готового кадра.</em></span><b aria-hidden="true">↗</b></span>
+   </button>
+   <button type="button" class="forma-direction-card" data-studio-action="animation">
+    <span class="forma-direction-photo" aria-hidden="true"><img src="assets/cinema/forma-cinema-atlas.webp" alt="" loading="lazy" decoding="async"><span class="forma-direction-image-label">CINEMA / MOTION</span></span>
+    <span class="forma-direction-card-info"><span><small>05 / АНИМАЦИЯ</small><strong>Архитектурная анимация</strong><em>Кинооптика, движения камеры и видеогенерация.</em></span><b aria-hidden="true">↗</b></span>
+   </button>
+   <a class="forma-direction-card" href="/plan-to-interior.html">
+    <span class="forma-direction-photo forma-direction-plan" aria-hidden="true">
+     <svg viewBox="0 0 420 240" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="#bea68a" stroke-linecap="square"><path d="M72 47H345V196H72V47Zm102 0V146H345M174 146H72M270 146V196" stroke-width="6"/><path d="M125 146v-16a16 16 0 0 0-16 16M209 146v-17a17 17 0 0 0-17 17M270 169h18" stroke-width="2.3"/><path d="M280 47v58h65M123 47v49H72" stroke-width="1.4" stroke="#f5e5c4"/><path d="M57 34H360M57 210H360M58 34v176M360 34v176" stroke-width=".7" stroke-dasharray="3 7" opacity=".6"/></g><g fill="#d7c19b"><circle cx="72" cy="47" r="4"/><circle cx="345" cy="47" r="4"/><circle cx="345" cy="196" r="4"/></g></svg>
+     <span class="forma-direction-image-label">PLAN / TO 3D</span>
+    </span>
+    <span class="forma-direction-card-info"><span><small>06 / 3D КОНСТРУКТОР · BETA</small><strong>Из плана в 3D</strong><em>Постройте модель из чертежа, проверьте стены и проёмы.</em></span><b aria-hidden="true">↗</b></span>
+   </a>
+  </div>
+  <div class="forma-direction-foot"><span><i aria-hidden="true"></i> Редактор проекта остаётся ниже — все настройки и предыдущие результаты сохраняются.</span><button type="button" data-studio-action="nodes">Нодовый редактор <span aria-hidden="true">↗</span></button></div>
+ </section>
  <section class="viewer-card" aria-label="Просмотр проекта">
   <div class="viewer-toolbar"><div class="viewer-heading"><svg class="ico"><use href="#i-image"/></svg><b>ПРОЕКТ · СРАВНЕНИЕ</b><span class="divider"></span><span id="canvasProjectLabel">Резиденция 01</span></div><div class="viewer-actions"><span class="desktop-hint">Переместите ползунок для сравнения</span><button class="icon-button" id="downloadResult" title="Скачать выбранный результат" aria-label="Скачать изображение"><svg class="ico"><use href="#i-download"/></svg></button><button class="icon-button" id="resetSplit" title="Сравнить 50/50" aria-label="Сравнить пополам"><svg class="ico"><use href="#i-chevrons"/></svg></button><button class="icon-button" id="fullBtn" title="Развернуть" aria-label="Развернуть"><svg class="ico"><use href="#i-full"/></svg></button></div></div>
   <div class="view-modes" role="group" aria-label="Режим просмотра изображений">
