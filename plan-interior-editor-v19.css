@@ -27,3 +27,24 @@
 @media(max-width:1030px){.results{display:flex;flex-direction:column}.results .tool-section{width:100%;border-right:0!important;border-bottom:1px solid #3d4a40!important}}
 @media(max-width:700px){.next-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.next-actions button{min-height:70px}.style-presets{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:420px){.next-actions button{min-height:80px}.style-presets{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Purposeful two- versus three-light sash diagrams */
+.sash-diagram{display:flex;align-items:stretch;gap:1px;width:76px;height:37px;padding:3px;border:2px solid #a1acaa;border-radius:3px;background:#75919e16}
+.sash-diagram i{flex:1;display:block;border:1.5px solid #aab8b6;box-shadow:inset 0 0 0 1px #455958;background:#9ad0d51d}
+.sash-options button.selected .sash-diagram{border-color:#eed6ab}
+.sash-options button.selected .sash-diagram i{border-color:#edc899;background:#e7ca9b25}
+.editor-close{float:right;margin:-4px -2px 7px 6px;display:grid;place-items:center;width:32px;height:32px;min-height:32px!important;border:1px solid #737368!important;border-radius:8px;background:#343b35;color:#efe9dc;font-size:20px!important}
+#propertyOverlay[hidden]{display:none!important}
+@media(min-width:701px){.results{position:sticky;top:12px;max-height:calc(100dvh - 25px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#646456 #1d221d}}
+@media(max-width:700px){
+ #propertyOverlay:not([hidden]){position:fixed;inset:0;background:#05080799;z-index:1009;backdrop-filter:blur(3px)}
+ .surface-editor:not([hidden]),.opening-editor:not([hidden]){
+  position:fixed;bottom:0;left:0;right:0;z-index:1010;
+  max-height:78dvh;overflow-y:auto;overscroll-behavior:contain;
+  background:#202622;border:1px solid #a58a66!important;border-radius:23px 23px 0 0;
+  box-shadow:0 -20px 90px #000b;padding:20px 18px max(22px,env(safe-area-inset-bottom));
+  width:100%;-webkit-overflow-scrolling:touch
+ }
+ .surface-editor .section-num,.opening-editor .section-num{padding-right:40px}
+ .surface-editor input[type=file]{max-width:100%}
+}
