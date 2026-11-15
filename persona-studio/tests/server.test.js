@@ -24,8 +24,8 @@ test('rate limit protects AI usage',()=>{
 test('health, static files and unauthorized request',async(t)=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   t.after(()=>server.close());const url='http://127.0.0.1:'+server.address().port;
-  let r=await fetch(url+'/api/status');assert.equal(r.status,200);assert.equal((await r.json()).aiConfigured,false);
+  let r=await fetch(url+'/api/status');assert.equal(r.status,200);const configured=Boolean(process.env.OPENAI_API_KEY && process.env.PERSONA_ACCESS_CODE);assert.equal((await r.json()).aiConfigured,configured);
   r=await fetch(url+'/');assert.equal(r.status,200);assert.match(await r.text(),/PERSONA STUDIO/);
   r=await fetch(url+'/.env');assert.equal(r.status,404);
-  r=await fetch(url+'/api/ai/generate',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(r.status,503);
+  r=await fetch(url+'/api/ai/generate',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(r.status,configured?401:503);
 });
