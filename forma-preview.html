@@ -65,6 +65,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <link rel="stylesheet" href="forma-nodes-safety-v13.css?v=20261115-v13">
 <link rel="stylesheet" href="forma-upload-next-v14.css?v=20261115-v14">
 <link rel="stylesheet" href="forma-sun-studio-v15.css?v=20261115-sun15">
+<link rel="stylesheet" href="forma-render-atelier-v16.css?v=20261115-r16">
 </head>
 <body>
 <div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Загрузка студии ФОРМА" aria-hidden="false">
@@ -212,9 +213,10 @@ html.forma-intro-pending #forma-intro{display:block}
      </div>
      <span class="forma-render-active-line" aria-hidden="true"></span>
      <div class="render-progress-foot">
-      <span id="renderProgressElapsed" class="render-progress-elapsed">Прошло 00:00</span>
+      <span class="forma-render-timing"><span id="renderProgressElapsed" class="render-progress-elapsed">Прошло 00:00</span><span id="renderProgressRemaining" class="render-progress-remaining" role="status" aria-live="off">До завершения: AI не передаёт прогноз</span></span>
       <span id="renderProgressHint">Результат откроется автоматически, когда кадр будет готов</span>
      </div>
+     <span class="forma-render-truth-note">Точные проценты AI-провайдер не сообщает. Отображаются реальные этапы и время работы.</span>
     </div>
    </div>
    <div class="no-render" id="noRender" hidden><svg class="ico"><use href="#i-image"/></svg><strong>Результата пока нет</strong><span>Настройте сцену и запустите AI-визуализацию.</span></div>
@@ -768,7 +770,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <script src="dom-render-cinema-cards-fix-v45.js?v=mobile-atlas-performance-20261110-v52"></script>
 <script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
 <script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
-<script src="dom-render-progress-v53.js?v=scene-explicit-sun-v4-20261115"></script>
+<script src="dom-render-progress-v53.js?v=render-atelier-v16-20261115"></script>
 <script src="dom-render-wan30.js?v=wan30-trial-1"></script>
 <script defer src="forma-archviz-studio.js?v=remove-duplicate-presets-v10"></script>
 <script defer src="forma-interiors.js?v=20261114-interior-01"></script>
