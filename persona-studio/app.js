@@ -1,4 +1,4 @@
-/* PERSONA STUDIO — zero-dependency, privacy-first interactive prototype.
+/* PERSONA STUDIO v0.3 — zero-dependency, privacy-first interactive prototype.
    Image generation and photographic identity transfer are intentionally NOT simulated. */
 (() => {
   'use strict';
@@ -22,7 +22,7 @@
     return base;
   }
   const initial = () => ({
-    id:uid(),name:'Персонаж 001',createdAt:Date.now(),updatedAt:Date.now(),source:'builder',photo:null,aiImage:null,hasAIImage:false,locked:false,identity:null,marks:[],wardrobe:[],
+    id:uid(),name:'Персонаж 001',createdAt:Date.now(),updatedAt:Date.now(),source:'builder',photo:null,aiImage:null,hasAIImage:false,locked:false,identity:null,identityImage:null,hasIdentityImage:false,previousAIImage:null,hasPreviousAIImage:false,marks:[],wardrobe:[],
     params:{age:32,height:180,body:44,muscle:43,skin:36,undertone:'neutral',origin:'Не указано',originNote:'',faceWidth:50,jaw:53,nose:46,eyes:51,mouth:53,hairStyle:'parted',hairLength:42,hairDensity:86,hairColor:'#3f322d',grey:0,teeth:'natural',teethTone:26,smile:30,expression:'neutral',outfit:'casual',background:'studio',pose:'front'}
   });
   const sections=[
@@ -42,7 +42,7 @@
   let saved=[];
   try{const raw=JSON.parse(localStorage.getItem(STORAGE_KEY));if(Array.isArray(raw?.characters))saved=raw.characters;}catch(e){}
   if(!saved.length)saved=[initial()];
-  let state={characters:saved,id:saved[0].id,section:'appearance',brushEnabled:false,brushType:'scar',brushSize:44,brushStrength:65,view:'front',zoom:100,previewAI:false,aiBusy:false,aiReady:false,aiCode:'',aiInstruction:'',aiQuality:'medium',aiSize:'1024x1536',aiGarment:-1};
+  let state={characters:saved,id:saved[0].id,section:'appearance',brushEnabled:false,brushType:'scar',brushSize:44,brushStrength:65,view:'front',zoom:100,previewAI:false,previewPrevious:false,aiBusy:false,aiReady:false,aiCode:'',aiInstruction:'',aiMode:'create',hairReference:null,aiQuality:'medium',aiSize:'1024x1536',aiGarment:-1};
   let savingTimer=null, storageWarningShown=false;
   const current=()=>state.characters.find(c=>c.id===state.id)||state.characters[0];
   // Generated images are larger than localStorage quotas. Store their bytes in IndexedDB.
@@ -57,16 +57,23 @@
     const db=await aiDB();
     await new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.objectStore('images').put(image,id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();
   }
+  async function deleteAI(id){
+    try{const db=await aiDB();await new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}catch(e){console.warn('Could not remove stored image',e);}
+  }
   async function readAI(id){
     try{const db=await aiDB();const image=await new Promise((resolve,reject)=>{const tx=db.transaction('images','readonly'),req=tx.objectStore('images').get(id);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});db.close();return image;}
     catch{return null;}
   }
   async function hydrateAI(id){
     const c=state.characters.find(x=>x.id===id);
-    if(c?.hasAIImage&&!c.aiImage){const image=await readAI(id);if(image){c.aiImage=image;if(current().id===id)renderStage();}}
+    if(!c)return;
+    if(c.hasAIImage&&!c.aiImage)c.aiImage=await readAI(id);
+    if(c.hasIdentityImage&&!c.identityImage)c.identityImage=await readAI('identity:'+id);
+    if(c.hasPreviousAIImage&&!c.previousAIImage)c.previousAIImage=await readAI('previous:'+id);
+    if(current().id===id){renderStage();if(state.section==='ai')renderInspector();}
   }
   function saveNow(){
-    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({version:2,characters:state.characters.map(({aiImage,...character})=>character)}));return true;}
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({version:2,characters:state.characters.map(({aiImage,identityImage,previousAIImage,...character})=>character)}));return true;}
     catch(e){if(!storageWarningShown){storageWarningShown=true;toast('Автосохранение недоступно или место браузера заполнено. Скачайте паспорт.');}return false;}
   }
   function persist(){clearTimeout(savingTimer);savingTimer=setTimeout(saveNow,200);}
@@ -118,7 +125,7 @@
           ${slider('grey','Седина',0,100,'%',['Нет','Полная'])}
         </section><section class="control-section separated">${heading('Цвет волос','03 / 03')}
           <div class="color-grid">${hairColors.map(color=>`<button class="color-swatch ${p.hairColor===color?'selected':''}" style="background:${color}" data-hair-color="${color}" aria-label="Цвет ${color}" title="${color}"></button>`).join('')}</div>
-          ${note('В следующей версии можно будет загрузить фото причёски и перенести её на выбранного человека через AI.')}</section>`;
+          <button id="uploadHairReference" class="ghost-action">＋ Загрузить референс причёски</button>${state.hairReference?'<div class="reference-ready">✓ Фото причёски выбрано для AI</div>':''}${note('Загруженная причёска используется как отдельный референс в режиме AI «Причёска». Изменение реального фото потребует генерации.')}</section>`;
       case 'skin':return `<section class="control-section">${heading('Ретушь и индивидуальные черты','01 / 03')}
           <div class="brush-grid">${brushTypes.map(([val,label,glyph])=>`<button data-brush="${val}" class="option-tile ${state.brushType===val?'selected':''}"><span class="option-glyph">${glyph}</span>${label}</button>`).join('')}</div>
           <p class="brush-target">Выберите инструмент, включите кисть и укажите на изображении место изменения.</p>
@@ -148,19 +155,22 @@
           <button id="lockIdentity" class="ghost-action">${c.locked?'◇ Зафиксировано — снять фиксацию':'◆ Зафиксировать основу персонажа'}</button>
           <p class="field-note">${c.locked?'Базовые параметры сохранены в паспорте. Вы по-прежнему можете вносить изменения в текущий эскиз.':'Фиксация записывает эталонные параметры, с которыми позже сможет сравниваться AI-результат.'}</p>
         </section>`;
-      case 'ai':return `<section class="control-section">${heading('Фотореалистичная генерация','01 / 03')}
+      case 'ai':return `<section class="control-section">${heading('Фотореалистичная генерация','01 / 04')}
           <div class="ai-state ${state.aiReady?'ai-online':'ai-offline'}" id="aiStatus">${state.aiReady?'● AI-сервер готов к работе':'○ AI не настроен или недоступен'}</div>
-          ${note('Изображение создаётся на сервере с использованием GPT Image. Одна генерация может быть платной. Не отправляйте чужие фотографии без разрешения.')}
+          ${note('Фотореалистичная генерация выполняется только после подключения API. Оплачивается отдельно. Отправляйте только фотографии, которые имеете право использовать.')}
           <div class="field"><div class="field-name"><label for="aiAccessCode">Код доступа</label></div><input class="text-control" id="aiAccessCode" type="password" autocomplete="off" placeholder="Задаётся владельцем приложения" value="${esc(state.aiCode)}" /></div>
+          <div class="field"><div class="field-name"><label for="aiMode">Режим генерации</label></div><select id="aiMode" class="select-control"><option value="create" ${state.aiMode==='create'?'selected':''}>Создать нового по параметрам</option><option value="identity" ${state.aiMode==='identity'?'selected':''}>Сохранить лицо — изменить по запросу</option><option value="hair" ${state.aiMode==='hair'?'selected':''}>Изменить только причёску</option><option value="outfit" ${state.aiMode==='outfit'?'selected':''}>Переодеть персонажа</option><option value="skin" ${state.aiMode==='skin'?'selected':''}>Изменить детали кожи</option></select></div>
+          <div class="reference-ready">${c.locked?(c.hasIdentityImage||c.identityImage?'◆ Фотореференс личности закреплён':'◆ Параметры закреплены — для точности создайте эталонное фото'):'◇ Личность не закреплена'} ${c.source==='photo'?' · Есть исходное фото':''}</div>
           <div class="field"><div class="field-name"><label for="aiInstruction">Что изменить или добавить</label></div><textarea class="text-control ai-textarea" id="aiInstruction" maxlength="450" placeholder="Например: лёгкий шрам на правой щеке, строгий взгляд">${esc(state.aiInstruction)}</textarea></div>
         </section><section class="control-section separated">${heading('Параметры вывода','02 / 03')}
           <div class="field"><div class="field-name"><label for="aiQuality">Детализация</label></div><select class="select-control" id="aiQuality"><option value="low" ${state.aiQuality==='low'?'selected':''}>Черновик / экономно</option><option value="medium" ${state.aiQuality==='medium'?'selected':''}>Стандарт</option><option value="high" ${state.aiQuality==='high'?'selected':''}>Высокое качество</option></select></div>
           <div class="field"><div class="field-name"><label for="aiSize">Формат изображения</label></div><select class="select-control" id="aiSize"><option value="1024x1536" ${state.aiSize==='1024x1536'?'selected':''}>Портрет — 1024×1536</option><option value="1024x1024" ${state.aiSize==='1024x1024'?'selected':''}>Квадрат — 1024×1024</option><option value="1536x1024" ${state.aiSize==='1536x1024'?'selected':''}>Горизонтально — 1536×1024</option></select></div>
           <div class="field"><div class="field-name"><label for="aiGarment">Фото одежды</label></div><select class="select-control" id="aiGarment"><option value="-1">Без фото одежды</option>${c.wardrobe.map((w,i)=>`<option value="${i}" ${state.aiGarment===i?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
-          <button id="showAI" class="ghost-action" ${!c.hasAIImage?'disabled':''}>◈ Показать последний AI-результат</button>
           <button id="showSketch" class="ghost-action">◇ Вернуться к эскизу / исходному фото</button>
         </section><section class="control-section separated">${heading('Как сохраняется внешность','03 / 03')}
-          ${note('При наличии фотографии или прошлого результата AI использует её как референс. Абсолютная идентичность лица не гарантирована. Подробные точечные правки кистью пока передаются как координаты и текст, без точной маски.')}
+          ${note('В режиме создания выполняется новая генерация. В режимах правки используется закреплённый портрет, исходное фото или последний результат. Полная идентичность не гарантирована: сравнивайте лицо после каждой операции.')}
+          <button id="lockIdentity" class="ghost-action">${c.locked?'◇ Снять фиксацию персонажа':'◆ Зафиксировать текущую личность'}</button>
+          <div class="ai-compare"><button id="showPrevious" class="ghost-action" ${!c.hasPreviousAIImage?'disabled':''}>◐ Показать предыдущий результат</button><button id="showAI" class="ghost-action" ${!c.hasAIImage?'disabled':''}>◑ Показать текущий результат</button></div>
           <div class="ai-progress" id="aiProgress" style="display:${state.aiBusy?'block':'none'}"><div class="ai-progress-bar"></div><small>AI создаёт изображение. Это индикатор ожидания, не измерение процента готовности.</small></div>
         </section>`;
       case 'export':return `<section class="control-section">${heading('Файлы для проекта','01 / 02')}
@@ -197,17 +207,17 @@
     $('#mainAction').innerHTML=esc(mainLabels[state.section])+' <span>↗</span>';
     $('#mainAction').disabled=state.aiBusy;
     $('#sourceLabel').textContent=c.source==='photo'?'PHOTO / USER FILE':'ORIGINAL / 01';
-    $('#stageModeLabel').textContent=state.previewAI&&c.aiImage?'AI / ФОТОРЕАЛИЗМ':c.source==='photo'?'Фото пользователя':'Живой эскиз';
+    $('#stageModeLabel').textContent=state.previewAI&&c.aiImage?(state.previewPrevious?'AI / ДО':'AI / ПОСЛЕ'):c.source==='photo'?'Фото пользователя':'Живой эскиз';
     $('#stageDisclaimer').innerHTML=state.previewAI&&c.aiImage?'<span class="disclaimer-asterisk">✦</span> AI-изображение готово. Проверяйте сохранение внешности и точность одежды.':c.source==='photo'?'<span class="disclaimer-asterisk">✦</span> Загруженное фото показано без изменения внешности. Кисть добавляет отдельный слой; AI пока не подключён.':'<span class="disclaimer-asterisk">✦</span> Параметрический 2D-эскиз, не фотография и не 3D-модель. AI-генерация подключается следующим этапом.';
   }
   function renderStage(){
     const c=current(),target=$('#avatarContainer');
     const view=state.view;
-    const displayingAI=state.previewAI&&!!c.aiImage;
+    const displayingAI=state.previewAI&&!!(state.previewPrevious?c.previousAIImage:c.aiImage);
     target.className='avatar-container '+(c.source==='photo'||displayingAI?'photo-mode':'')+(state.brushEnabled?' brush-active':'');
     target.style.transform=`scale(${state.zoom/100})`;
     if(displayingAI || (c.source==='photo'&&c.photo)){
-      const shownImage=displayingAI?c.aiImage:c.photo;
+      const shownImage=displayingAI?(state.previewPrevious?c.previousAIImage:c.aiImage):c.photo;
       target.innerHTML=`<div class="photo-scene"><img class="uploaded-photo" src="${shownImage}" alt="${displayingAI?'AI-изображение персонажа':'Загруженное фото персонажа'}"/><svg class="photo-overlay" viewBox="0 0 600 720" preserveAspectRatio="none"><g>${marksSvg(c.marks)}</g></svg></div>`;
     } else {
       target.innerHTML=avatarSVG(c.params,c.marks,view,'large');
@@ -309,12 +319,12 @@
     return img;
   }
   function activateSection(section){state.section=section;state.brushEnabled=false;renderAll(); if(window.innerWidth<700){$('#inspectorTitle').scrollIntoView({behavior:'smooth',block:'center'});}}
-  function switchCharacter(id){state.previewAI=false;state.id=id;state.section='appearance';state.brushEnabled=false;state.zoom=100;state.view='front';renderAll();hydrateAI(id);}
-  function addCharacter(fromPhoto=false, photo=null){let c=initial();c.name='Персонаж '+String(state.characters.length+1).padStart(3,'0');if(fromPhoto){c.source='photo';c.photo=photo;}state.characters.unshift(c);switchCharacter(c.id);toast(fromPhoto?'Фотография добавлена. AI-перенос внешности будет подключён позже.':'Новый персонаж создан. Настройте внешность.');}
+  function switchCharacter(id){state.previewAI=false;state.previewPrevious=false;state.id=id;state.section='appearance';state.brushEnabled=false;state.zoom=100;state.view='front';renderAll();hydrateAI(id);}
+  function addCharacter(fromPhoto=false, photo=null){let c=initial();c.name='Персонаж '+String(state.characters.length+1).padStart(3,'0');if(fromPhoto){c.source='photo';c.photo=photo;state.aiMode='identity';}else{state.aiMode='create';}state.characters.unshift(c);switchCharacter(c.id);toast(fromPhoto?'Фотография добавлена. AI-перенос внешности будет подключён позже.':'Новый персонаж создан. Настройте внешность.');}
   function modal(html){$('#modalRoot').innerHTML=`<div class="modal-backdrop" role="presentation"><section class="modal" role="dialog" aria-modal="true"><button class="modal-close" aria-label="Закрыть" id="closeModal">×</button>${html}</section></div>`;$('#closeModal').addEventListener('click',closeModal);$('#modalRoot .modal-backdrop').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal();});}
   function closeModal(){$('#modalRoot').innerHTML='';}
-  function openCreateModal(){modal(`<div class="modal-eyebrow">PERSONA / NEW CHARACTER</div><h2>Создадим нового героя.</h2><p>Выберите отправную точку. Обе возможности доступны в одном редакторе.</p><div class="creation-choices"><button class="creation-choice" id="choiceBlank"><i>◉</i><strong>Создать с нуля</strong><small>Параметры, лицо, причёска, рост, тон кожи</small></button><button class="creation-choice" id="choicePhoto"><i>▧</i><strong>По фотографии</strong><small>Загрузить собственное фото и работать с деталями</small></button></div><p style="font-size:10px;margin-top:18px">Фото хранятся только в браузере на этом устройстве, пока вы сами не экспортируете их.</p>`);$('#choiceBlank').onclick=()=>{closeModal();addCharacter()};$('#choicePhoto').onclick=()=>{closeModal();$('#photoFile').click()};}
-  function openAbout(){modal(`<div class="modal-eyebrow">PERSONA / PREVIEW 0.2</div><h2>Первая рабочая версия</h2><p>Это локальный интерактивный прототип, позволяющий проверить работу редактора до подключения дорогих генеративных моделей.</p><p><strong style="color:#eee">Уже работает:</strong> бегунки с живым векторным эскизом, создание нескольких персонажей, загрузка своего фото, косметические метки кистью, библиотека одежды, выбор причёски, паспорт, скачивание PNG, сохранение в браузере.</p><p><strong style="color:#eee">Ещё не работает:</strong> фотореалистичная генерация, перенос одежды на фото, изменение загруженного лица по бегункам, настоящая 3D-геометрия и новые ракурсы по фото. Для этого нужен защищённый AI-бэкенд.</p><div class="modal-actions"><button id="gotIt">Понятно</button></div>`);$('#gotIt').onclick=closeModal;}
+  function openCreateModal(){modal(`<div class="modal-eyebrow">PERSONA / NEW CHARACTER</div><h2>Создадим нового героя.</h2><p>Выберите отправную точку. Обе возможности доступны в одном редакторе.</p><div class="creation-choices"><button class="creation-choice" id="choiceBlank"><i>◉</i><strong>Создать с нуля</strong><small>Параметры, лицо, причёска, рост, тон кожи</small></button><button class="creation-choice" id="choicePhoto"><i>▧</i><strong>По фотографии</strong><small>Загрузить собственное фото и работать с деталями</small></button></div><p style="font-size:10px;margin-top:18px">Фото хранятся локально до момента, когда вы нажмёте AI-генерацию. Тогда выбранные изображения отправляются на сервер и провайдеру AI.</p>`);$('#choiceBlank').onclick=()=>{closeModal();addCharacter()};$('#choicePhoto').onclick=()=>{closeModal();$('#photoFile').click()};}
+  function openAbout(){modal(`<div class="modal-eyebrow">PERSONA / PREVIEW 0.3</div><h2>Первая рабочая версия</h2><p>Это локальный интерактивный прототип, позволяющий проверить работу редактора до подключения дорогих генеративных моделей.</p><p><strong style="color:#eee">Уже работает:</strong> бегунки с живым векторным эскизом, создание нескольких персонажей, загрузка своего фото, косметические метки кистью, библиотека одежды, выбор причёски, паспорт, скачивание PNG, сохранение в браузере.</p><p><strong style="color:#eee">AI-функции:</strong> доступны после подключения ключей на сервере. Новые режимы позволяют попробовать редактировать причёску, одежду и детали кожи. Точность сохранения внешности не гарантирована. Настоящей 3D-геометрии пока нет.</p><div class="modal-actions"><button id="gotIt">Понятно</button></div>`);$('#gotIt').onclick=closeModal;}
   async function resizedImage(file){
     if(!file.type.startsWith('image/')) throw new Error('Нужно изображение');
     if(file.size>15*1024*1024) throw new Error('Максимальный размер исходного файла 15 МБ');
@@ -344,14 +354,22 @@
     let selected=0;$$('[data-variant]').forEach(b=>b.onclick=()=>{selected=Number(b.dataset.variant);$$('[data-variant]').forEach(x=>x.classList.toggle('active',x===b));$('#chooseVariant').textContent='Выбрать вариант 0'+(selected+1);});
     $('#cancelVariants').onclick=closeModal;$('#chooseVariant').onclick=()=>{current().params={...copies[selected]};current().updatedAt=Date.now();closeModal();renderAll();toast('Вариант сохранён в текущем персонаже.');};
   }
-  function lockIdentity(){const c=current();c.locked=!c.locked;c.identity=c.locked?structuredClone(c.params):null;renderAll();toast(c.locked?'Эталонные параметры сохранены.':'Фиксация внешности снята.');}
+  async function lockIdentity(){
+    const c=current();c.locked=!c.locked;c.identity=c.locked?structuredClone(c.params):null;
+    if(c.locked){
+      c.identityImage=c.aiImage||c.photo||null;c.hasIdentityImage=!!c.identityImage;
+      if(c.identityImage)try{await storeAI('identity:'+c.id,c.identityImage);}catch{toast('Эталонное фото не удалось надёжно сохранить. Скачайте копию.');}
+      toast(c.identityImage?'Лицо и эталонное фото зафиксированы.':'Параметры зафиксированы. Для фотоэталона сначала создайте AI-портрет.');
+    }else{c.identityImage=null;c.hasIdentityImage=false;toast('Фиксация внешности снята.');}
+    renderAll();
+  }
   function downloadBlob(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
   const filenameBase=c=>String(c.name||'persona').toLowerCase().normalize('NFKD').replace(/[^a-z0-9а-яё_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,45)||'persona';
   async function exportPNG(){
     const c=current(),w=1200,h=1440,can=document.createElement('canvas');can.width=w;can.height=h;const ctx=can.getContext('2d');
     if(c.params.background==='studio'){const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,'#b3a99b');g.addColorStop(1,'#77766f');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}
     try{
-      if(state.previewAI&&c.aiImage){const img=await loadImage(c.aiImage);const scale=Math.min(w/img.width,h/img.height);ctx.drawImage(img,(w-img.width*scale)/2,(h-img.height*scale)/2,img.width*scale,img.height*scale);}
+      if(state.previewAI&&(state.previewPrevious?c.previousAIImage:c.aiImage)){const img=await loadImage(state.previewPrevious?c.previousAIImage:c.aiImage);const scale=Math.min(w/img.width,h/img.height);ctx.drawImage(img,(w-img.width*scale)/2,(h-img.height*scale)/2,img.width*scale,img.height*scale);}
       else if(c.source==='photo'&&c.photo){const photo=await loadImage(c.photo);const scale=Math.min(w/photo.width,h/photo.height);const ww=photo.width*scale,hh=photo.height*scale;ctx.drawImage(photo,(w-ww)/2,(h-hh)/2,ww,hh);}
       else{const svg=avatarSVG(c.params,[],state.view,'export').replace('class="avatar-svg"','');const img=await loadImage('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg));ctx.drawImage(img,0,0,w,h);}
       if(c.marks.length&&!state.previewAI){const markDoc=`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="720" viewBox="0 0 600 720">${marksSvg(c.marks)}</svg>`;const overlay=await loadImage('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markDoc));ctx.drawImage(overlay,0,0,w,h);}
@@ -360,7 +378,7 @@
   }
   function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});}
   function exportJSON(){const c=current();const passport={format:'persona-studio-character-v1',exportedAt:new Date().toISOString(),id:c.id,name:c.name,source:c.source,photoIncluded:false,locked:c.locked,identity:c.identity,params:c.params,marks:c.marks,wardrobe:c.wardrobe.map(w=>({name:w.name})),hasAIImage:c.hasAIImage,notes:'Изображения не включены в паспорт; сохраните фото отдельно.'};downloadBlob(new Blob([JSON.stringify(passport,null,2)],{type:'application/json;charset=utf-8'}),filenameBase(c)+'-passport.json');toast('Паспорт персонажа скачан.');}
-  function removeCharacter(){if(state.characters.length===1){toast('Оставьте хотя бы одного персонажа.');return;}const c=current();modal(`<div class="modal-eyebrow">DELETE CHARACTER</div><h2>Удалить ${esc(c.name)}?</h2><p>Локальные параметры, фото и одежда этого персонажа будут удалены из библиотеки браузера.</p><div class="modal-actions"><button class="secondary" id="cancelDelete">Отмена</button><button id="confirmDelete">Удалить</button></div>`);$('#cancelDelete').onclick=closeModal;$('#confirmDelete').onclick=()=>{state.characters=state.characters.filter(ch=>ch.id!==c.id);closeModal();switchCharacter(state.characters[0].id);toast('Персонаж удалён.');};}
+  function removeCharacter(){if(state.characters.length===1){toast('Оставьте хотя бы одного персонажа.');return;}const c=current();modal(`<div class="modal-eyebrow">DELETE CHARACTER</div><h2>Удалить ${esc(c.name)}?</h2><p>Локальные параметры, фото и одежда этого персонажа будут удалены из библиотеки браузера.</p><div class="modal-actions"><button class="secondary" id="cancelDelete">Отмена</button><button id="confirmDelete">Удалить</button></div>`);$('#cancelDelete').onclick=closeModal;$('#confirmDelete').onclick=()=>{state.characters=state.characters.filter(ch=>ch.id!==c.id);closeModal();switchCharacter(state.characters[0].id);Promise.all([deleteAI(c.id),deleteAI('identity:'+c.id),deleteAI('previous:'+c.id)]);toast('Персонаж и сохранённые снимки удаляются с этого устройства.');};}
   function handleMainAction(){switch(state.section){case 'ai':generateAI();break;case 'skin':state.brushEnabled=!state.brushEnabled;renderAll();if(state.brushEnabled)toast('Коснитесь лица или фото, чтобы добавить деталь.');break;case 'wardrobe':$('#garmentFile').click();break;case 'pose':lockIdentity();break;case 'export':exportPNG();break;default:variations();}}
   document.addEventListener('click',e=>{
     const section=e.target.closest('[data-section]');if(section){activateSection(section.dataset.section);return;}
@@ -379,7 +397,7 @@
     if(t.id==='aiInstruction')state.aiInstruction=t.value;
     if(t.matches('[data-brush-setting]')){state[t.dataset.brushSetting]=Number(t.value);const label=$('#'+t.dataset.brushSetting+'Value');if(label)label.textContent=t.value+'%';}
   });
-  document.addEventListener('change',e=>{if(e.target.id==='originSelect'){current().params.origin=e.target.value;persist();}if(e.target.id==='aiQuality')state.aiQuality=e.target.value;if(e.target.id==='aiSize')state.aiSize=e.target.value;if(e.target.id==='aiGarment')state.aiGarment=Number(e.target.value);});
+  document.addEventListener('change',e=>{if(e.target.id==='originSelect'){current().params.origin=e.target.value;persist();}if(e.target.id==='aiMode')state.aiMode=e.target.value;if(e.target.id==='aiQuality')state.aiQuality=e.target.value;if(e.target.id==='aiSize')state.aiSize=e.target.value;if(e.target.id==='aiGarment')state.aiGarment=Number(e.target.value);});
   $('#newCharacter').onclick=openCreateModal;
   $('#uploadPhotoTop').onclick=()=>$('#photoFile').click();
   $('#saveButton').onclick=()=>{clearTimeout(savingTimer);if(saveNow())toast('Сохранено локально в этом браузере.');};
@@ -399,11 +417,14 @@
       case 'uploadGarment':$('#garmentFile').click();break;
       case 'lockIdentity':lockIdentity();break;
       case 'deleteCharacter':removeCharacter();break;
-      case 'showAI':if(current().aiImage){state.previewAI=true;renderStage();renderInspector();}else hydrateAI(current().id);break;
-      case 'showSketch':state.previewAI=false;renderStage();renderInspector();break;
+      case 'showAI':if(current().aiImage){state.previewAI=true;state.previewPrevious=false;renderStage();renderInspector();}else hydrateAI(current().id);break;
+      case 'showPrevious':if(current().previousAIImage){state.previewAI=true;state.previewPrevious=true;renderStage();renderInspector();}else hydrateAI(current().id);break;
+      case 'uploadHairReference':$('#hairReferenceFile').click();break;
+      case 'showSketch':state.previewAI=false;state.previewPrevious=false;renderStage();renderInspector();break;
       case 'notReady':toast('Пока доступен только экспорт эскиза и параметров.');break;}
   });
   $('#photoFile').addEventListener('change',async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;try{const photo=await resizedImage(f);addCharacter(true,photo);state.section='skin';renderAll();}catch(err){toast(err.message||'Не удалось открыть фото.');}});
+  $('#hairReferenceFile').addEventListener('change',async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;try{state.hairReference=await resizedImage(f);renderInspector();toast('Референс причёски готов. Откройте раздел AI-генерация.');}catch(err){toast(err.message||'Не удалось открыть фотографию.');}});
   $('#garmentFile').addEventListener('change',async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;try{const image=await resizedImage(f);const name=f.name.replace(/\.[^.]+$/,'');current().wardrobe.push({name,image});renderAll();toast('Фото одежды сохранено как референс.');}catch(err){toast(err.message||'Не удалось загрузить одежду.');}});
   document.addEventListener('keydown',e=>{const el=document.activeElement;const editing=el&&/INPUT|TEXTAREA|SELECT/.test(el.tagName);if(e.key.toLowerCase()==='n'&&!editing&&!$('#modalRoot').children.length){e.preventDefault();openCreateModal();}if(e.key==='Escape')closeModal();});
   async function checkAI(){
@@ -417,17 +438,20 @@
     if(!state.aiCode){toast('Введите код доступа к AI-генерации.');return;}
     const c=current();
     const clothing=c.wardrobe[state.aiGarment]?.image||null;
-    const reference=c.aiImage||c.photo||null;
+    const reference=state.aiMode==='create'?null:(c.locked?(c.identityImage||c.photo||c.aiImage):(c.aiImage||c.photo))||null;
+    if(state.aiMode!=='create'&&!reference){toast('Для редактирования сначала загрузите фото или создайте персонажа в AI.');return;}
+    if(state.aiMode==='outfit'&&!clothing){toast('Для примерки выберите фото одежды в настройках AI.');return;}
     state.aiBusy=true;renderInspector();
     try{
       const response=await fetch('/api/ai/generate',{
         method:'POST',headers:{'Content-Type':'application/json','x-persona-access-code':state.aiCode},
-        body:JSON.stringify({params:c.params,marks:c.marks,referenceImage:reference,clothingImage:clothing,instruction:state.aiInstruction,quality:state.aiQuality,size:state.aiSize}),
+        body:JSON.stringify({params:c.params,marks:c.marks,mode:state.aiMode,referenceImage:reference,clothingImage:state.aiMode==='outfit'?clothing:null,hairImage:state.aiMode==='hair'?state.hairReference:null,instruction:state.aiInstruction,quality:state.aiQuality,size:state.aiSize}),
       });
       const result=await response.json();
       if(!response.ok)throw new Error(result.error||'Не удалось сгенерировать изображение.');
       if(!result.image?.startsWith('data:image/'))throw new Error('Неправильный формат ответа AI.');
-      c.aiImage=result.image;c.hasAIImage=true;c.updatedAt=Date.now();state.previewAI=true;
+      if(c.aiImage){c.previousAIImage=c.aiImage;c.hasPreviousAIImage=true;try{await storeAI('previous:'+c.id,c.aiImage);}catch{toast('Не удалось сохранить предыдущий результат.');}}
+      c.aiImage=result.image;c.hasAIImage=true;c.updatedAt=Date.now();state.previewAI=true;state.previewPrevious=false;
       try{await storeAI(c.id,c.aiImage);}catch{toast('Фото готово, но браузер не сохранил его между сеансами. Скачайте PNG.');}
       renderAll();toast('AI-изображение создано. При необходимости проверьте детали и внешность.');
     }catch(err){toast(err.message||'Ошибка подключения к AI');}
@@ -436,5 +460,5 @@
   window.PERSONA_TEST={getState:()=>({characters:state.characters.map(c=>({name:c.name,source:c.source,marks:c.marks.length})),section:state.section,photo:!!current().photo,avatar:!!$('#avatarContainer svg')})};
   renderAll();
   checkAI();
-  state.characters.filter(c=>c.hasAIImage).forEach(c=>hydrateAI(c.id));
+  state.characters.filter(c=>c.hasAIImage||c.hasIdentityImage||c.hasPreviousAIImage).forEach(c=>hydrateAI(c.id));
 })();
