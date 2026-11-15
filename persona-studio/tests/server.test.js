@@ -59,3 +59,41 @@ test('Arkheon selection, safe status and standard image endpoint transport',asyn
     for(const k of vars){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}
   }
 });
+
+
+test('API Market routes image creation to Sunburst and edits to Nano Banana',async()=>{
+  const keys=['PERSONA_AI_PROVIDER','API_MARKET_KEY','API_MARKET_IMAGE_MODEL','API_MARKET_EDIT_MODEL','PERSONA_ACCESS_CODE'];
+  const saved=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
+  const previousFetch=global.fetch;
+  try{
+    process.env.PERSONA_AI_PROVIDER='apimarket';
+    process.env.API_MARKET_KEY='test-not-real-key';
+    process.env.PERSONA_ACCESS_CODE='test-code';
+    delete process.env.API_MARKET_IMAGE_MODEL;
+    delete process.env.API_MARKET_EDIT_MODEL;
+    assert.equal(isReady(),true);
+    const cfg=providerConfig();
+    assert.equal(cfg.baseUrl,'https://api-market1.shop/v1');
+    assert.equal(cfg.model,'gpt-image-2.5-sunburst');
+    assert.equal(cfg.editModel,'nano-banana-2.1');
+    const calls=[];
+    global.fetch=async(url,options)=>{
+      assert.equal(options.headers.Authorization,'Bearer test-not-real-key');
+      calls.push({url,options});
+      return {ok:true,json:async()=>({data:[{b64_json:'aGVsbG8='}]})};
+    };
+    const generated=await callImageAPI({params:{age:40}});
+    assert.equal(generated.provider,'apimarket');
+    assert.equal(generated.model,'gpt-image-2.5-sunburst');
+    assert.equal(calls[0].url,'https://api-market1.shop/v1/images/generations');
+    assert.equal(JSON.parse(calls[0].options.body).model,'gpt-image-2.5-sunburst');
+    const edited=await callImageAPI({params:{age:40},referenceImage:'data:image/png;base64,aGVsbG8='});
+    assert.equal(edited.model,'nano-banana-2.1');
+    assert.equal(calls[1].url,'https://api-market1.shop/v1/images/edits');
+    assert.equal(calls[1].options.body.get('model'),'nano-banana-2.1');
+    assert.ok(calls[1].options.body.getAll('image[]').length===1);
+  }finally{
+    global.fetch=previousFetch;
+    for(const k of keys){if(saved[k]===undefined)delete process.env[k];else process.env[k]=saved[k];}
+  }
+});
