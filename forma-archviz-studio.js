@@ -335,7 +335,7 @@
  function init(){
   if(document.body.dataset.formaStudioReady)return;
   document.body.dataset.formaStudioReady='1';
-  setupBrand();setupContext();setupPresets();setupQA();setupEvents();
+  setupBrand();setupContext();setupQA();setupEvents();
   const mobile=document.querySelector('.mobile-header-actions');
   if(mobile&&!mobile.querySelector('[data-studio-action="commands"]')){const quick=node('button','forma-mobile-tools-quick','Инструменты');quick.type='button';quick.dataset.studioAction='commands';mobile.prepend(quick)}
   const top=document.querySelector('.top-actions');
