@@ -193,21 +193,41 @@
    const active=b.dataset.sunIndoorSource===scene.indoorSource;
    b.classList.toggle('is-selected',active);b.setAttribute('aria-pressed',String(active));
   });
+  const pos=sunPosition(d,h);
+  root.querySelectorAll('[data-sun-visibility]').forEach(btn=>{
+   const active=scene[btn.dataset.sunVisibility]===true;
+   btn.classList.toggle('is-selected',active);btn.setAttribute('aria-pressed',String(active));
+  });
+  const note=$('#formaSunVisibilityNote');if(note)note.textContent=scene.showSunRays?
+   'Видимые лучи возникают при атмосферной дымке, тумане или пыли. Без них остаются обычные свет и тени.':
+   'Диск солнца и лучи — независимые эффекты. Маркер на фото показывает условную схему освещения.';
   const area=$('#formaSunStudioImageArea');if(area){
    area.dataset.lightDirection=d.id;area.dataset.shadow=sh.id;area.dataset.elevation=h.id;
+   area.classList.toggle('show-sun-disk',scene.showSunDisk);area.classList.toggle('show-sun-rays',scene.showSunRays);
    const pin=$('#formaSunStudioMarker'),shadowPin=$('#formaSunStudioShadowMarker');
-   pin.style.left=(d.x*100)+'%';pin.style.top=(d.y*100)+'%';
-   const dx=d.x-.5,dy=d.y-.5,len=Math.hypot(dx,dy)||1;
-   const targetX=Math.max(.13,Math.min(.87,.5-dx/len*.37));
-   const targetY=Math.max(.15,Math.min(.85,.5-dy/len*.33));
+   pin.style.left=(pos.x*100)+'%';pin.style.top=(pos.y*100)+'%';
+   const dx=pos.x-.5,dy=pos.y-.5,len=Math.hypot(dx,dy)||1;
+   const length={low:.39,medium:.29,high:.16}[h.id]??.29;
+   const targetX=Math.max(.12,Math.min(.88,.5-dx/len*length));
+   const targetY=Math.max(.12,Math.min(.88,.5-dy/len*length));
    shadowPin.style.left=(targetX*100)+'%';shadowPin.style.top=(targetY*100)+'%';
    const ray=$('#formaSunStudioDirectionLine'),shade=$('#formaSunStudioShadowLine');
-   if(ray){ray.setAttribute('x2',String(Math.round(d.x*1000)));ray.setAttribute('y2',String(Math.round(d.y*600)))}
+   if(ray){ray.setAttribute('x2',String(Math.round(pos.x*1000)));ray.setAttribute('y2',String(Math.round(pos.y*600)))}
    if(shade){shade.setAttribute('x2',String(Math.round(targetX*1000)));shade.setAttribute('y2',String(Math.round(targetY*600)))}
+   const group=$('#formaSunStudioRays');if(group)group.style.display=scene.showSunRays?'':'none';
+   if(scene.showSunRays){
+    const sx=pos.x*1000,sy=pos.y*600,vx=.5-pos.x,vy=.55-pos.y,mag=Math.hypot(vx,vy)||1;
+    const ex=sx+vx/mag*490,ey=sy+vy/mag*350;
+    [-1,0,1].forEach((spread,i)=>{
+     const beam=$('#formaSunBeam'+i);if(!beam)return;
+     const shift=spread*105;
+     beam.setAttribute('d','M '+sx+' '+sy+' L '+(ex+shift-30)+' '+(ey+60)+' L '+(ex+shift+30)+' '+(ey+60)+' Z');
+    });
+   }
    const grade=$('#formaSunStudioGrade');
    if(grade){
     const strength=sh.id==='soft'?.10:sh.id==='cinematic'?.3:sh.id==='defined'?.24:.16;
-    grade.style.background='radial-gradient(circle at '+Math.round(d.x*100)+'% '+Math.round(d.y*100)+'%, rgba(245,217,158,'+(strength*.9).toFixed(2)+') 0%, transparent 39%), linear-gradient('+Math.round(Math.atan2(-dy,-dx)*180/Math.PI)+'deg, rgba(4,13,15,'+(strength*.52).toFixed(2)+'), transparent 67%)';
+    grade.style.background='radial-gradient(circle at '+Math.round(pos.x*100)+'% '+Math.round(pos.y*100)+'%, rgba(245,217,158,'+(strength*.9).toFixed(2)+') 0%, transparent 39%), linear-gradient('+Math.round(Math.atan2(-dy,-dx)*180/Math.PI)+'deg, rgba(4,13,15,'+(strength*.52).toFixed(2)+'), transparent 67%)';
    }
   }
   const indoorNames={back:'Сзади',front:'Спереди','back-left':'Сзади слева','back-right':'Сзади справа'};
