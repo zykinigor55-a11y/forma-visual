@@ -159,7 +159,7 @@ async function visionStatus(){
  try{
   const r=await fetch('/api/plan/status',{cache:'no-store'});
   const d=await r.json();window.planVisionReady=!!d.ready;
-  $('aiHelp').textContent=d.ready?'AI Vision: '+(d.model||'подключена')+'. Платный анализ запускается только по подтверждению.':'AI Vision пока не подключена; автоматический черновик доступен без AI. Для AI нужен PLAN_VISION_MODEL на сервере.';
+  $('aiHelp').textContent=d.ready?'Vision-модель указана: '+(d.model||'неизвестная')+'. Доступность подтверждается при первом запросе. Платный анализ — только по нажатию.':'AI Vision пока не подключена; автоматический черновик доступен без AI. Для AI нужен PLAN_VISION_MODEL на сервере.';
  }catch{window.planVisionReady=false;$('aiHelp').textContent='AI Vision недоступна; черновое распознавание работает локально.'}
  sync();
 }
