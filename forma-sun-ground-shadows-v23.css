@@ -1,0 +1,33 @@
+/* FORMA / SUN STUDIO v23 — architectural ground-shadow sketch.
+   Drawn in screen space only: actual photometric shadow calculation happens later in AI. */
+.forma-sun-ground-shadows{
+ position:absolute;inset:0;width:100%;height:100%;
+ pointer-events:none;overflow:hidden;z-index:2;
+ opacity:1;mix-blend-mode:multiply;
+}
+.forma-sun-shadow-soft{
+ fill:url(#formaSunCastFade);
+ stroke:none;
+ opacity:.5;
+}
+.forma-sun-shadow-core{
+ fill:url(#formaSunCastFade);
+ stroke:#0a1a18;stroke-width:.65;
+ stroke-opacity:.35;
+}
+.forma-sun-shadow-edge{
+ fill:none;stroke:#d2d9cf;stroke-width:1.15;
+ stroke-dasharray:8 9;opacity:.22;
+ filter:drop-shadow(0 1px 2px #000);
+}
+.forma-sun-shadow-contact{
+ fill:none;stroke:#e5bf8f;stroke-width:2;
+ stroke-dasharray:4 8;opacity:.65;
+}
+.forma-sunstudio-image-area .forma-sunstudio-light-grade{z-index:1}
+.forma-sunstudio-image-area .forma-sunstudio-orbit{z-index:3}
+.forma-sunstudio-image-area .forma-sunstudio-atmosphere{z-index:4}
+.forma-sunstudio-image-area .forma-sunstudio-marker,
+.forma-sunstudio-image-area .forma-sunstudio-shadow-marker{z-index:5}
+.forma-sunstudio-photo-footer small{max-width:60%;line-height:1.45}
+@media(prefers-reduced-motion:reduce){.forma-sun-ground-shadows{transition:none}}
