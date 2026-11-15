@@ -70,7 +70,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <link rel="stylesheet" href="forma-plan-entry.css?v=20261115-plan1">
 <link rel="stylesheet" href="forma-direction-catalog-v22.css?v=20261115-v22">
 <link rel="stylesheet" href="forma-render-atelier-v16.css?v=20261115-r16">
-<link rel="stylesheet" href="forma-render-circle-v21.css?v=20261115-r21">
+<link rel="stylesheet" href="forma-render-light-trace-v24.css?v=20261115-v24">
 </head>
 <body>
 <div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Загрузка студии ФОРМА" aria-hidden="false">
@@ -223,7 +223,13 @@ html.forma-intro-pending #forma-intro{display:block}
      </header>
      <div class="render-progress-canvas">
       <img id="renderProgressSource" src="assets/residence-model-clean-approved-v36.png" alt="Исходная архитектурная модель">
-      <div class="forma-render-estimate-overlay" role="status" aria-live="off" aria-label="Ориентировочный прогресс генерации"><svg class="forma-render-estimate-ring" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="82" class="forma-render-estimate-track"/><circle cx="100" cy="100" r="82" class="forma-render-estimate-fill" id="renderProgressArc"/></svg><div class="forma-render-estimate-center"><span class="forma-render-estimate-caption">ПРОГНОЗ</span><strong id="renderProgressPercent">0%</strong><span class="forma-render-estimate-divider"></span><span class="forma-render-estimate-remaining">ОСТАЛОСЬ ПРИМЕРНО</span><b id="renderProgressEta">≈ —:—</b></div></div>
+      <div class="forma-render-frame" aria-hidden="true">
+       <span class="forma-render-frame-corner is-tl"></span>
+       <span class="forma-render-frame-corner is-tr"></span>
+       <span class="forma-render-frame-corner is-bl"></span>
+       <span class="forma-render-frame-corner is-br"></span>
+       <span class="forma-render-frame-glint"></span>
+      </div>
       <span class="render-progress-canvas-caption">ИСХОДНАЯ МОДЕЛЬ</span>
       <span class="render-progress-light" aria-hidden="true"></span>
       <svg class="forma-render-trace" viewBox="0 0 130 85" aria-hidden="true" focusable="false">
@@ -232,6 +238,13 @@ html.forma-intro-pending #forma-intro{display:block}
        <path d="M39 49h24v25H39z"/>
        <path d="M75 49h19v17H75z"/>
       </svg>
+     </div>
+     <div class="forma-render-linear" role="group" aria-label="Прогноз хода рендера — проценты приблизительные">
+      <div class="forma-render-linear-track" aria-hidden="true"><span id="renderProgressBar" class="forma-render-linear-fill"><i></i></span></div>
+      <div class="forma-render-linear-meta">
+       <span>ПРОГНОЗ ПО ВРЕМЕНИ <strong id="renderProgressPercent">≈ 0%</strong></span>
+       <span>ОСТАЛОСЬ ПРИМЕРНО <strong id="renderProgressEta">≈ 02:00</strong></span>
+      </div>
      </div>
      <div class="render-progress-copy">
       <span class="render-progress-kicker">ФОРМА / AI-ВИЗУАЛИЗАЦИЯ</span>
@@ -803,7 +816,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <script src="dom-render-cinema-cards-fix-v45.js?v=mobile-atlas-performance-20261110-v52"></script>
 <script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
 <script src="dom-render-mobile-cinema-v52.js?v=mobile-cinema-20261110-v52"></script>
-<script src="dom-render-progress-v53.js?v=render-circle-v21-20261115"></script>
+<script src="dom-render-progress-v53.js?v=render-light-trace-v24-20261115"></script>
 <script src="dom-render-wan30.js?v=wan30-trial-1"></script>
 <script defer src="forma-archviz-studio.js?v=remove-duplicate-presets-v10"></script>
 <script defer src="forma-interiors.js?v=light-studio-v16-20261115"></script>
