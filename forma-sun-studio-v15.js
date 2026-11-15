@@ -18,7 +18,7 @@
  const INDOOR_SOURCES=[{id:'window',name:'Через окна',hint:'Естественный дневной свет'},{id:'ceiling',name:'Потолочный',hint:'Общий свет'},{id:'fixtures',name:'Светильники',hint:'Локальный уютный свет'},{id:'mixed',name:'Комбинированный',hint:'Дневной + искусственный'}];
  const interiorMode=()=>window.FORMA_INTERIORS?.state?.().sceneType==='interior';
  const SHADOWS=[{id:'soft',name:'Мягкие',hint:'Широкая полутень'},{id:'natural',name:'Естественные',hint:'Реалистичный баланс'},{id:'defined',name:'Контрастные',hint:'Чёткие границы'},{id:'cinematic',name:'Кинематографичные',hint:'Глубокий светотеневой рисунок'}];
- let visible=false,previousFocus=null,scene={direction:'front-left',elevation:'medium',shadow:'natural',indoorSource:'window'},userMoved=false;
+ let visible=false,previousFocus=null,scene={direction:'front-left',elevation:'medium',shadow:'natural',indoorSource:'window',showSunDisk:false,showSunRays:false},userMoved=false;
  const direction=id=>DIRECTIONS.find(d=>d.id===id)||DIRECTIONS[6];
  const height=id=>HEIGHTS.find(h=>h.id===id)||HEIGHTS[1];
  const shadow=id=>SHADOWS.find(s=>s.id===id)||SHADOWS[1];
@@ -29,12 +29,19 @@
   return {direction:DIRECTIONS.some(d=>d.id===p.direction)?p.direction:'front-left',
    elevation:HEIGHTS.some(h=>h.id===p.elevation)?p.elevation:'medium',
    shadow:SHADOWS.some(s=>s.id===p.shadow)?p.shadow:(p.softness==='soft'?'soft':p.softness==='defined'?'defined':'natural'),
-   indoorSource:INDOOR_SOURCES.some(o=>o.id===p.indoorSource)?p.indoorSource:'window'};
+   indoorSource:INDOOR_SOURCES.some(o=>o.id===p.indoorSource)?p.indoorSource:'window',showSunDisk:p.showSunDisk===true,showSunRays:p.showSunRays===true};
+ }
+ function sunPosition(d,h){
+  const alt={low:.65,medium:.43,high:.19}[h.id]??.43;
+  const bias=d.id.startsWith('front')?.10:d.id.startsWith('back')?-.06:0;
+  return {x:d.x,y:Math.max(.09,Math.min(.84,alt+bias))};
  }
  function payload(){
   const d=direction(scene.direction),h=height(scene.elevation);
+  const pos=sunPosition(d,h);
   return {direction:d.id,elevation:h.id,shadow:scene.shadow,indoorSource:scene.indoorSource,
-   x:d.x,y:d.y,softness:scene.shadow==='cinematic'?'defined':scene.shadow,
+   showSunDisk:scene.showSunDisk,showSunRays:scene.showSunRays,
+   x:pos.x,y:pos.y,softness:scene.shadow==='cinematic'?'defined':scene.shadow,
    elevationDegrees:h.degrees};
  }
  function persist(){
@@ -93,6 +100,8 @@
          '<line id="formaSunStudioShadowLine" x1="500" y1="300" x2="730" y2="450" class="forma-sunstudio-shadow-line"/>'+
          '<circle cx="500" cy="300" r="4" class="forma-sunstudio-center"/>'+
         '</svg>'+
+        '<svg class="forma-sunstudio-atmosphere" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">'+
+         '<g id="formaSunStudioRays"><path class="forma-sunstudio-beam" id="formaSunBeam0"/><path class="forma-sunstudio-beam" id="formaSunBeam1"/><path class="forma-sunstudio-beam" id="formaSunBeam2"/></g></svg>'+
         '<div class="forma-sunstudio-marker" id="formaSunStudioMarker" aria-hidden="true"><span></span></div>'+
         '<div class="forma-sunstudio-shadow-marker" id="formaSunStudioShadowMarker" aria-hidden="true">ТЕНИ</div>'+
        '</div>'+
@@ -104,6 +113,12 @@
       '<section class="forma-sunstudio-control"><header><span>01</span><div><strong>Направление солнца</strong><small>Относительно камеры и фасада дома</small></div></header><div class="forma-sunstudio-direction-grid" role="group" aria-label="Направление света">'+dirBtns+'</div></section>'+
       '<section class="forma-sunstudio-control"><header><span>02</span><div><strong>Высота солнца</strong><small>Влияет на длину теней</small></div></header><div class="forma-sunstudio-height-grid" role="group" aria-label="Высота солнца">'+heightBtns+'</div></section>'+
       '<section class="forma-sunstudio-control"><header><span>03</span><div><strong>Характер теней</strong><small>Выберите мягкость и контраст</small></div></header><div class="forma-sunstudio-shadow-grid" role="group" aria-label="Характер теней">'+shadowBtns+'</div></section>'+
+      '<section id="formaSunStudioVisibility" class="forma-sunstudio-control forma-sunstudio-visibility">'+
+       '<header><span>04</span><div><strong>Видимость солнца</strong><small>Эффекты на готовой фотографии</small></div></header>'+
+       '<div class="forma-sunstudio-visibility-grid">'+
+        '<button type="button" data-sun-visibility="showSunDisk" aria-pressed="false"><span class="forma-sun-visibility-icon" aria-hidden="true">◎</span><span><strong>Солнечный диск</strong><small>Видимое солнце в небе</small></span><i class="forma-sun-toggle" aria-hidden="true"></i></button>'+
+        '<button type="button" data-sun-visibility="showSunRays" aria-pressed="false"><span class="forma-sun-visibility-icon" aria-hidden="true">☀</span><span><strong>Световые лучи</strong><small>В атмосфере с лёгкой дымкой</small></span><i class="forma-sun-toggle" aria-hidden="true"></i></button>'+
+       '</div><p class="forma-sunstudio-visibility-note" id="formaSunVisibilityNote">Солнечный свет и тени работают независимо от видимости диска и лучей.</p></section>'+
       '<section id="formaSunStudioIndoor" class="forma-sunstudio-control forma-sunstudio-indoor" hidden><header><span>04</span><div><strong>Источники света</strong><small>Для интерьерной фотографии</small></div></header><div class="forma-sunstudio-indoor-grid" role="group" aria-label="Тип интерьерного света">'+indoorBtns+'</div></section>'+
      '</div>'+
     '</div>'+
@@ -121,6 +136,8 @@
    if(d){scene.direction=d.dataset.sunDirection;persist();render();return}
    if(h){scene.elevation=h.dataset.sunHeight;persist();render();return}
    if(sh){scene.shadow=sh.dataset.sunShadow;persist();render();return}
+   const vis=e.target.closest('[data-sun-visibility]');
+   if(vis){const key=vis.dataset.sunVisibility;if(key==='showSunDisk'||key==='showSunRays'){scene[key]=!scene[key];persist();render()}return}
    const indoor=e.target.closest('[data-sun-indoor-source]');if(indoor){scene.indoorSource=indoor.dataset.sunIndoorSource;persist();render();return}
    if(e.target.closest('[data-sun-save]')){persist();close();return}
    if(e.target.closest('[data-sun-continue]')){
