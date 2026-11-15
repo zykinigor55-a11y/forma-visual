@@ -11,8 +11,8 @@ test('door creates two sides and overhead lintel, not a filled wall',()=>{
  const result=buildWalls({...floor,openings:[{wallId:'w1',kind:'door',offset:.5,width:.2}]});
  assert.equal(result.length,3);assert.equal(result.filter(r=>r.y<2.2).length,2);
 });
-test('window adds sill and header with a physical opening',()=>{
- const result=buildWalls({...floor,openings:[{wallId:'w1',kind:'window',offset:.5,width:.2}]});
+test('window with explicit 1.2m height adds sill and header around its physical opening',()=>{
+ const result=buildWalls({...floor,openings:[{wallId:'w1',kind:'window',offset:.5,width:.2,heightM:1.2}]});
  assert.equal(result.length,4);
  assert.ok(result.some(p=>Math.abs(p.wallHeight-.9)<1e-8));
  assert.ok(result.some(p=>Math.abs(p.y-2.45)<1e-8));
@@ -54,4 +54,10 @@ test('raster detector finds a dark rectangular wall drawing',()=>{
  }};
  try{assert.ok(suggestWalls(source).length>=4)}
  finally{globalThis.document=oldDocument}
+});
+
+test('default window height is 1.35m and its header is aligned above the opening',()=>{
+ const parts=buildWalls({...floor,openings:[{wallId:'w1',kind:'window',offset:.5,width:.2}]});
+ const header=parts.find(p=>Math.abs(p.bottomM-2.25)<1e-8);
+ assert.ok(header);assert.equal(header.topM,2.8);assert.ok(Math.abs(header.y-2.525)<1e-8);
 });

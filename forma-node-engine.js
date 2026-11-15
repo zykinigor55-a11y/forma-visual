@@ -80,7 +80,7 @@ function decorate(){
  if(run)run.disabled=busy||preparing;
  if(stop)stop.disabled=!busy;
  const retry=$('#faFlowRetryChain');if(retry){retry.hidden=busy||preparing||!lastFailure;retry.disabled=busy||preparing;}
- if(busy||preparing){$('[data-node-option]', $('#faFlowNodeSettings')||document).forEach(el=>el.disabled=true)}
+ if(busy||preparing){$$('[data-node-option]', $('#faFlowNodeSettings')||document).forEach(el=>el.disabled=true)}
 }
 function setState(id,value){statuses.set(id,value);decorate()}
 const ENVIRONMENTS={'keep':'Сохранить исходное','forest':'Хвойный лес','deciduous':'Лиственный лес','park':'Парк с крупными деревьями','lake':'Берег озера / реки','mountain':'Горный ландшафт','suburban':'Загородный участок','urban':'Городская застройка','minimal':'Минимальное окружение'};
