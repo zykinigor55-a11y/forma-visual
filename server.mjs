@@ -166,6 +166,13 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
   :sunlight&&!nightRequested&&!specific&&b.sceneType!=='interior'&&Number.isFinite(x)&&Number.isFinite(y)&&x>=0&&x<=1&&y>=0&&y<=1
   ?'LEGACY VIRTUAL SUN MARKER: approximate sunlight from photo coordinate ('+x.toFixed(3)+', '+y.toFixed(3)+'), '+(x<.33?'camera-left.':x>.67?'camera-right.':'near camera axis.')+' '+(y>.65?'Low grazing sunlight and long cast shadows.':y<.35?'Higher sunlight and shorter shadows.':'Medium sunlight and medium shadows.')+' Make the directional light and facade shading visibly change; keep geometry identical.'
   :null;
+ const sunlightAppearance=sunlight&&!nightRequested&&!specific&&b.sceneType!=='interior'?
+  'SUN VISIBILITY FROM USER: '+(sunlight.showSunDisk===true?
+   'Show the NATURAL PHOTOGRAPHIC solar disk only IF the actual sun is in the visible unobstructed sky, within the camera frame. If behind the roof, building, clouds, or outside the frame, NEVER paint a visible sun disk on the structure or invent a second light source.':
+   'Do NOT depict a visible solar disk even if the sky is bright; keep natural illumination and shadows.')+' '+(sunlight.showSunRays===true?
+   'User requests visible atmospheric crepuscular rays ONLY if a physically credible veil of haze, mist, or suspended particles exists, with correct occlusion by existing geometry. Subtle restrained editorial light shafts, never opaque stylized beams. They must originate at the user-selected sun position. Do not invent heavy fog.':
+   'NO VISIBLE ATMOSPHERIC LIGHT SHAFTS, god rays or artificial radial flare. Normal directional sun and shadows must remain unaffected.')+
+   ' Keep all SUN STUDIO marker graphics, sun orbits, diagrams and arrows OUT OF THE FINAL IMAGE.':null;
  const relightInstruction=p.relightOnly===true
   ?'RELIGHT EDIT OF AN EXISTING FINISHED IMAGE: IMAGE 1 IS THE APPROVED ARCHITECTURAL PHOTOGRAPH. Change ONLY lighting, plausible direction/softness of sunlight and cast shadows, sky luminance consistent with the expressly selected time/weather, and related exposure/reflections. Keep the same architectural geometry, framing, windows, finishes, landscaping, existing objects and the exact camera position. NO scene redesign, no extra structures, no invented lamps or props. Preserve content identically as far as image editing allows.'
   :null;
@@ -289,7 +296,7 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
    '. Respect actual window positions: do not pretend physically impossible sunlight arrives through solid walls. For a finished-photo relight, alter lighting, direct and indirect shadows, window exposure and reflections ONLY. Preserve architecture, camera and furniture.';
  })();
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
- return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,continuity].filter(Boolean).join('\n\n')}
+ return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,sunlightAppearance,continuity].filter(Boolean).join('\n\n')}
 let generationSeq=0;
 async function proxyRender(req,res){
  const requestId=Date.now().toString(36)+'-'+(++generationSeq).toString(36);
