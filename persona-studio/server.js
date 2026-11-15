@@ -31,7 +31,7 @@ function providerConfig(){
   const provider=process.env.PERSONA_AI_PROVIDER==='arkheon'?'arkheon':'openai';
   const arkheon=provider==='arkheon';
   const baseUrl=arkheon
-    ? (process.env.ARKHEON_API_BASE || 'https://arkheonchat.com/v1').replace(/\\/+$/,'')
+    ? (process.env.ARKHEON_API_BASE || 'https://arkheonchat.com/v1').replace(/\/+$/,'')
     : 'https://api.openai.com/v1';
   if(!/^https:\/\//.test(baseUrl))throw new Error('Provider base URL must use HTTPS.');
   return {
