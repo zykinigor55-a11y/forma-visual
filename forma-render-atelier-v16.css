@@ -1,0 +1,77 @@
+/* FORMA / RENDER ATELIER v16 — no invented percentages. Real stages, elapsed and estimated ETA from actual history. */
+html[data-forma-theme] #renderProgress:not([hidden]){background:rgba(0,0,0,.92)!important;backdrop-filter:blur(14px) grayscale(.15)!important}
+html[data-forma-theme] #renderProgress .render-progress-panel{
+ width:min(680px,100%)!important;max-width:680px!important;
+ background:#101112!important;border:1px solid #4f493f!important;border-radius:18px!important;
+ box-shadow:0 36px 130px #000b,0 0 0 1px #b1976810!important
+}
+html[data-forma-theme] #renderProgress .render-progress-top{padding:19px 24px!important;border-color:#34312e!important}
+html[data-forma-theme] #renderProgress .render-progress-brand img{background:#141516;border-color:#454138;filter:grayscale(.25)}
+html[data-forma-theme] #renderProgress .render-progress-canvas{
+ position:relative;height:clamp(165px,27dvh,245px);background:#111214!important;
+ border-bottom:1px solid #322e29
+}
+html[data-forma-theme] #renderProgress .render-progress-canvas>img{
+ filter:grayscale(.3) brightness(.77) contrast(1.08)!important;opacity:.95!important
+}
+html[data-forma-theme] #renderProgress .render-progress-canvas::before{
+ content:"";pointer-events:none;position:absolute;inset:0;z-index:2;
+ background:linear-gradient(90deg,#c7b49b0f 1px,transparent 1px),linear-gradient(#c7b49b0b 1px,transparent 1px);
+ background-size:32px 32px;
+ mask-image:linear-gradient(to bottom,transparent,#000 70%);
+}
+html[data-forma-theme] #renderProgress .render-progress-canvas::after{
+ content:"";pointer-events:none;position:absolute;z-index:3;top:-18%;left:0;right:0;height:22%;
+ background:linear-gradient(to bottom,transparent 0%,#d8b78922 55%,#efc9955e 99%,transparent 100%);
+ border-bottom:1px solid #e7c89987;
+ animation:forma-render-atlas-scan 5.2s cubic-bezier(.34,.12,.51,.92) infinite;
+}
+@keyframes forma-render-atlas-scan{0%{transform:translateY(-35%);opacity:0}12%{opacity:1}64%{opacity:.65}89%,100%{transform:translateY(540%);opacity:0}}
+html[data-forma-theme] #renderProgress .forma-render-trace{
+ position:absolute;z-index:4;right:22px;bottom:17px;width:80px;height:auto;stroke:#ecd1ae;
+ fill:none;stroke-width:1.05;opacity:.68;stroke-dasharray:220;stroke-dashoffset:220;
+ animation:forma-render-trace 5s ease-in-out infinite
+}
+@keyframes forma-render-trace{0%{stroke-dashoffset:220;opacity:0}28%,70%{opacity:.75}80%,100%{stroke-dashoffset:0;opacity:0}}
+html[data-forma-theme] #renderProgress .render-progress-light{display:none!important}
+html[data-forma-theme] #renderProgress .render-progress-copy{padding:24px 26px 18px!important;gap:9px!important}
+html[data-forma-theme] #renderProgress #renderProgressTitle{font-size:clamp(23px,4vw,32px)!important;letter-spacing:-.035em!important}
+html[data-forma-theme] #renderProgress .render-progress-kicker{letter-spacing:.24em!important;color:#e0bd91!important}
+html[data-forma-theme] #renderProgress .render-progress-scene{border-color:#4b3f32;background:#231f1b;color:#c4b19b}
+html[data-forma-theme] #renderProgress .render-progress-steps{gap:0!important;padding:0 25px 19px!important}
+html[data-forma-theme] #renderProgress .render-progress-step{
+ position:relative;gap:10px!important;padding:12px 13px 12px 10px!important;border:0!important;
+ border-radius:0!important;border-top:1px solid #4d473d!important;background:transparent!important;
+ box-shadow:none!important
+}
+html[data-forma-theme] #renderProgress .render-progress-step.is-active{border-top:2px solid #ddba90!important}
+html[data-forma-theme] #renderProgress .render-progress-step.is-done{border-top:1px solid #a18c71!important}
+html[data-forma-theme] #renderProgress .render-progress-step-icon{width:29px!important;height:29px!important;min-width:29px!important;border-radius:50%!important;border:1px solid #6c5b46!important;background:#1b1a18!important;color:#d5b58e!important}
+html[data-forma-theme] #renderProgress .render-progress-step.is-active .render-progress-step-icon{box-shadow:0 0 0 5px #caa27713,0 0 30px #bb92553f!important;animation:forma-render-phase-pulse 2.6s ease-in-out infinite}
+@keyframes forma-render-phase-pulse{50%{box-shadow:0 0 0 8px #caa27708,0 0 20px #bb92552b}}
+html[data-forma-theme] #renderProgress .render-progress-foot{padding:15px 25px 20px!important;align-items:center;flex-wrap:wrap}
+html[data-forma-theme] #renderProgress .forma-render-timing{display:flex;flex-direction:column;gap:6px;min-width:0}
+html[data-forma-theme] #renderProgress .render-progress-elapsed{font-variant-numeric:tabular-nums;color:#f0dcc2;font-weight:650;font-size:13px}
+html[data-forma-theme] #renderProgress .render-progress-remaining{color:#bbac98;font-size:11px;line-height:1.4}
+html[data-forma-theme] #renderProgress #renderProgressHint{max-width:250px;font-size:10px!important}
+html[data-forma-theme] #renderProgress .forma-render-truth-note{
+ display:block;letter-spacing:.02em;margin:0 25px 18px;padding-top:9px;
+ color:#8c8984;font-size:10px;line-height:1.5;border-top:1px solid #2e2c2a
+}
+@media(max-width:720px){
+ html[data-forma-theme] #renderProgress .render-progress-panel{max-height:calc(100dvh - 34px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important}
+ html[data-forma-theme] #renderProgress .render-progress-top{padding:13px 15px!important}
+ html[data-forma-theme] #renderProgress .render-progress-canvas{height:clamp(130px,21dvh,190px)}
+ html[data-forma-theme] #renderProgress .render-progress-copy{padding:16px 16px 13px!important;gap:6px!important}
+ html[data-forma-theme] #renderProgress #renderProgressTitle{font-size:23px!important}
+ html[data-forma-theme] #renderProgress .render-progress-steps{padding:0 12px 12px!important}
+ html[data-forma-theme] #renderProgress .render-progress-step{padding:11px 6px!important}
+ html[data-forma-theme] #renderProgress .render-progress-step-copy strong{font-size:10px!important}
+ html[data-forma-theme] #renderProgress .render-progress-foot{padding:10px 15px 14px!important;gap:12px}
+ html[data-forma-theme] #renderProgress .forma-render-truth-note{margin:0 15px 13px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-forma-theme] #renderProgress .render-progress-canvas::after,
+ html[data-forma-theme] #renderProgress .forma-render-trace,
+ html[data-forma-theme] #renderProgress .render-progress-step.is-active .render-progress-step-icon{animation:none!important}
+}
