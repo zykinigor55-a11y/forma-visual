@@ -1,21 +1,25 @@
 import {suggestWalls,buildWalls,boundsMeters,nearestWall,validateModel,dist} from './plan-geometry.js';
+import {openingSpec,openingProblems,buildOpeningAssemblies} from './plan-openings-v2.js';
+import {INTERIOR_STYLES,materialZonesForWall,materialTargetName,normalizeMaterial} from './plan-finishes-v3.js';
 /* FORMA / PLAN TO INTERIOR — geometry-first browser editor. 3D via Three.js.
  * AI vision and photorender are explicit, separately paid operations.
  * The source drawing is never replaced by a generated photograph. */
 const $=id=>document.getElementById(id);
 const STORE='forma-plan-to-interior-mvp-v1';
 const state={image:null,width:0,height:0,bitmap:null,walls:[],openings:[],furniture:[],scale:.02,scaleVerified:false,
- wallHeight:2.8,wallThickness:.2,wallColor:'#e7dfd1',floorColor:'#af9172',style:'warm-modern',lighting:'soft-daylight'};
+ wallHeight:2.8,wallThickness:.2,wallColor:'#e7dfd1',floorColor:'#af9172',style:'warm-modern',lighting:'soft-daylight',materials:{walls:{},floor:null,zones:[]}};
 let mode='select',selection=null,pending=null,calibration=[],history=[],photo=null,photoHistory=[];
 let screen={x:0,y:0,k:1,w:0,h:0},three=null,lastMessage='',toastTimer=null,dragWall=null;
+let selectedSurface=null,selectedOpeningId=null,materialDraft={color:'#e7dfd1',texture:null,textureScale:1};
+const textureCache=new Map();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const round=(v,n=2)=>Number(Number(v).toFixed(n));
 function message(text){lastMessage=text;const e=$('toast');e.textContent=text;e.classList.add('visible');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('visible'),4700)}
-function snapshot(){history.push(JSON.stringify({walls:state.walls,openings:state.openings,furniture:state.furniture,scale:state.scale,scaleVerified:state.scaleVerified}));if(history.length>25)history.shift()}
+function snapshot(){history.push(JSON.stringify({walls:state.walls,openings:state.openings,furniture:state.furniture,materials:state.materials,scale:state.scale,scaleVerified:state.scaleVerified}));if(history.length>25)history.shift()}
 function save(){
  const payload={version:1,image:state.image,width:state.width,height:state.height,walls:state.walls,openings:state.openings,
  furniture:state.furniture,scale:state.scale,scaleVerified:state.scaleVerified,wallHeight:state.wallHeight,
- wallThickness:state.wallThickness,wallColor:state.wallColor,floorColor:state.floorColor,style:state.style,lighting:state.lighting};
+ wallThickness:state.wallThickness,wallColor:state.wallColor,floorColor:state.floorColor,style:state.style,lighting:state.lighting,materials:state.materials};
  try{localStorage.setItem(STORE,JSON.stringify(payload));$('autosaveStatus').textContent='Сохранено на устройстве'}
  catch{$('autosaveStatus').textContent='Недостаточно места для автосохранения'}
 }
@@ -25,7 +29,7 @@ function sync(){
  $('aiDetect').disabled=!has||!window.planVisionReady;
  $('applyScale').disabled=calibration.length!==2;
  $('saveModel').disabled=!hasWalls;$('exportOBJ').disabled=!hasWalls||!three;
- $('renderPhoto').disabled=!hasWalls||!scaled||!three;
+ $('renderPhoto').disabled=!hasWalls||!scaled||!three||validateModel(state).length>0;
  $('deleteWall').disabled=!selection;$('undo').disabled=!history.length;
  $('confirmWalls').disabled=!hasWalls||!scaled;
  $('planEmpty').hidden=has;$('threeEmpty').hidden=hasWalls&&!!three;
@@ -64,7 +68,8 @@ function redraw(){
   if(wall.id===selection){for(const end of [a,b]){ctx.fillStyle='#f5d4a5';ctx.strokeStyle='#1a211d';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(end.x,end.y,6,0,Math.PI*2);ctx.fill();ctx.stroke()}}
   for(const o of state.openings.filter(o=>o.wallId===wall.id)){
    const t=clamp(o.offset,0,1),cx=a.x+(b.x-a.x)*t,cy=a.y+(b.y-a.y)*t;
-   ctx.fillStyle=o.kind==='window'?'#8bcfde':'#eb986c';ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle=o.kind==='window'?'#8bcfde':'#eb986c';ctx.beginPath();ctx.arc(cx,cy,o.id===selectedOpeningId?8:5,0,Math.PI*2);ctx.fill();
+   if(o.id===selectedOpeningId){ctx.strokeStyle='#1d2420';ctx.lineWidth=2;ctx.stroke();}
   }
  }
  for(const point of calibration){const q=toCanvas(point);ctx.fillStyle='#92dece';ctx.beginPath();ctx.arc(q.x,q.y,5,0,Math.PI*2);ctx.fill();}
@@ -80,7 +85,7 @@ function fromPointer(e){
  return {x:clamp(x,0,state.width),y:clamp(y,0,state.height)};
 }
 function worldToCanvas(x,z){return toCanvas({x:x/state.scale+state.width/2,y:state.height/2-z/state.scale})}
-function afterChange(){redraw();sync();refresh3D();save()}
+function afterChange(){redraw();sync();refresh3D();refreshInspectors();save()}
 function setTool(next){mode=next;pending=null;calibration=next==='calibrate'?[]:calibration;
  for(const e of document.querySelectorAll('[data-tool]'))e.classList.toggle('selected',e.dataset.tool===mode);
  $('calibrate').classList.toggle('selected',mode==='calibrate');sync();redraw();
@@ -99,7 +104,15 @@ function canvasTap(e){
  }
  const candidate=nearestWall(state.walls,p,Math.max(14,13/screen.k));
  if(mode==='select'){
-  selection=candidate?.wall.id||null;
+  const nearOpening=state.openings.find(o=>{
+   const w=state.walls.find(w=>w.id===o.wallId);if(!w)return false;
+   const a=toCanvas(w.a),b=toCanvas(w.b),t=clamp(o.offset,0,1);
+   const point={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+   const click={x:e.clientX-$('planCanvas').getBoundingClientRect().left,y:e.clientY-$('planCanvas').getBoundingClientRect().top};
+   return dist(point,click)<=12;
+  });
+  if(nearOpening){selectOpening(nearOpening.id,true);return}
+  selectedOpeningId=null;selection=candidate?.wall.id||null;
   sync();redraw();return;
  }
  if(!candidate){message('Нажмите ближе к линии стены.');return}
@@ -108,8 +121,11 @@ function canvasTap(e){
  const length=dist(candidate.wall.a,candidate.wall.b)*state.scale;
  snapshot();
  const portion=clamp(widthM/Math.max(.1,length),.04,.67);
- state.openings.push({id:'open_'+Date.now().toString(36),wallId:candidate.wall.id,offset:candidate.t,width:portion,kind,verified:false});
- afterChange();message((kind==='window'?'Окно':'Дверь')+' добавлено. Проверьте размер и расположение.');
+ const newOpening={id:'open_'+Date.now().toString(36),wallId:candidate.wall.id,offset:candidate.t,width:portion,widthM:length*portion,
+  heightM:kind==='window'?1.35:2.1,sillM:kind==='window'?.9:0,kind,
+  sashes:null,sashVerified:false,verified:false,frameColor:'#303633'};
+ state.openings.push(newOpening);
+ afterChange();selectOpening(newOpening.id,true);message((kind==='window'?'Окно':'Дверь')+' добавлено. Проверьте размер и расположение.');
 }
 async function readImageFile(file){
  if(file.size>13*1024*1024)throw Error('План слишком большой. Используйте файл до 13 МБ.');
@@ -145,7 +161,7 @@ async function applyImage(canvas,fromRestore=false){
  storeCanvas.width=Math.round(canvas.width*k);storeCanvas.height=Math.round(canvas.height*k);
  storeCanvas.getContext('2d').drawImage(canvas,0,0,storeCanvas.width,storeCanvas.height);
  state.image=storeCanvas.toDataURL('image/jpeg',.76);
- if(!fromRestore){history=[];state.walls=[];state.openings=[];state.furniture=[];state.scaleVerified=false;selection=null;calibration=[];state.scale=.02}
+ if(!fromRestore){history=[];state.walls=[];state.openings=[];state.furniture=[];state.materials={walls:{},floor:null,zones:[]};state.scaleVerified=false;selection=null;selectedSurface=null;selectedOpeningId=null;calibration=[];state.scale=.02}
  afterChange();return canvas;
 }
 function autoDetect(){
@@ -176,7 +192,8 @@ async function useVision(){
   const data=await res.json();if(!res.ok)throw Error(data.error||'Ошибка AI-распознавания.');
   snapshot();
   state.walls=data.walls.map(w=>({id:w.id,a:{x:w.x1*state.width,y:w.y1*state.height},b:{x:w.x2*state.width,y:w.y2*state.height},confidence:w.confidence,verified:false}));
-  state.openings=data.openings||[];selection=null;afterChange();
+  state.openings=(data.openings||[]).map(o=>({...o,verified:false,sashVerified:false,
+   widthM:undefined,frameColor:'#303633'}));selection=null;selectedOpeningId=null;afterChange();
   message('AI нашёл '+state.walls.length+' стен и '+state.openings.length+' проёмов. Подтвердите масштаб и исправьте неточности.');
  }catch(e){message(e.message||'Ошибка Vision API. Используйте ручное редактирование.')}
  finally{sync()}
@@ -192,12 +209,14 @@ function deleteSelected(){
  if(!selection)return;
  snapshot();state.walls=state.walls.filter(w=>w.id!==selection);
  state.openings=state.openings.filter(o=>o.wallId!==selection);
- selection=null;afterChange();
+ delete state.materials.walls[selection];state.materials.zones=state.materials.zones.filter(z=>z.wallId!==selection);
+ selectedSurface=null;selectedOpeningId=null;selection=null;afterChange();
 }
 function undo(){
  if(!history.length)return;
  const prev=JSON.parse(history.pop());
  for(const k of Object.keys(prev))state[k]=prev[k];
+ state.materials=state.materials||{walls:{},floor:null,zones:[]};
  selection=null;pending=null;afterChange();
 }
 function addFurniture(type){
@@ -306,7 +325,7 @@ function download(name,blob){
 function exportJSON(){
  const out={format:'FORMA-PLAN-TO-INTERIOR',version:1,units:'m',sourceWidth:state.width,sourceHeight:state.height,
  scaleMPerPixel:state.scale,scaleVerified:state.scaleVerified,wallHeightM:state.wallHeight,wallThicknessM:state.wallThickness,
- walls:state.walls,openings:state.openings,furniture:state.furniture,style:state.style,lighting:state.lighting,wallColor:state.wallColor,floorColor:state.floorColor};
+ walls:state.walls,openings:state.openings,furniture:state.furniture,materials:state.materials,style:state.style,lighting:state.lighting,wallColor:state.wallColor,floorColor:state.floorColor};
  download('forma-plan-interior.json',new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));
 }
 function exportOBJ(){
@@ -337,6 +356,7 @@ async function importJSON(file){
   state.walls=d.walls.filter(w=>w.a&&w.b&&Number.isFinite(w.a.x)&&Number.isFinite(w.b.x)&&Number.isFinite(w.a.y)&&Number.isFinite(w.b.y)).slice(0,250);
   state.openings=Array.isArray(d.openings)?d.openings.slice(0,150):[];
   state.furniture=Array.isArray(d.furniture)?d.furniture.slice(0,70):[];
+  state.materials=d.materials&&typeof d.materials==='object'?{walls:d.materials.walls||{},floor:d.materials.floor||null,zones:Array.isArray(d.materials.zones)?d.materials.zones.slice(0,100):[]}:{walls:{},floor:null,zones:[]};
   state.scale=clamp(Number(d.scaleMPerPixel)||.02,.0001,2);state.scaleVerified=d.scaleVerified===true;
   state.wallHeight=clamp(Number(d.wallHeightM)||2.8,2,8);state.wallThickness=clamp(Number(d.wallThicknessM)||.2,.08,.6);
   $('wallHeight').value=state.wallHeight;$('wallWidth').value=state.wallThickness;
@@ -434,9 +454,10 @@ async function restore(){
   const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=saved.image});
   const c=document.createElement('canvas');c.width=Math.max(1,Math.min(2000,Number(saved.width)||img.width));c.height=Math.max(1,Math.min(2000,Number(saved.height)||img.height));c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   await applyImage(c,true);
-  const allowed=['walls','openings','furniture','scale','scaleVerified','wallHeight','wallThickness','wallColor','floorColor','style','lighting'];
+  const allowed=['walls','openings','furniture','materials','scale','scaleVerified','wallHeight','wallThickness','wallColor','floorColor','style','lighting'];
   for(const k of allowed){if(saved[k]!==undefined)state[k]=saved[k]}
   state.walls=Array.isArray(state.walls)?state.walls:[];state.openings=Array.isArray(state.openings)?state.openings:[];
+  state.materials=state.materials&&typeof state.materials==='object'?{walls:state.materials.walls||{},floor:state.materials.floor||null,zones:Array.isArray(state.materials.zones)?state.materials.zones:[]}:{walls:{},floor:null,zones:[]};
   $('wallHeight').value=state.wallHeight;$('wallWidth').value=state.wallThickness;
   for(const k of ['wallColor','floorColor','style','lighting'])$(k).value=state[k];
   afterChange();message('Ваш предыдущий план восстановлен из памяти браузера.');
