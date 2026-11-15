@@ -1942,7 +1942,7 @@ window.FORMA_SCENE_BRIDGE={
   const shadow=['soft','natural','defined','cinematic'].includes(position?.shadow)?position.shadow:null;
   current().sunLighting={x:Math.round(x*1000)/1000,y:Math.round(y*1000)/1000,
    softness:['soft','natural','defined'].includes(position?.softness)?position.softness:'natural',
-   ...(direction?{direction}:{}),...(elevation?{elevation}:{}),...(shadow?{shadow}:{}),...(['window','ceiling','fixtures','mixed'].includes(position?.indoorSource)?{indoorSource:position.indoorSource}:{})};
+   ...(direction?{direction}:{}),...(elevation?{elevation}:{}),...(shadow?{shadow}:{}),...(['window','ceiling','fixtures','mixed'].includes(position?.indoorSource)?{indoorSource:position.indoorSource}:{}),showSunDisk:position?.showSunDisk===true,showSunRays:position?.showSunRays===true};
   save();return true;
  },
  resetSun(){if(!project)return;current().sunLighting=null;save()},
