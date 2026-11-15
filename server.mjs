@@ -132,8 +132,32 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
  const sunlight=b.sunLighting&&typeof b.sunLighting==='object'?b.sunLighting:null;
  const nightRequested=/ночь|night|сумер|blue.hour/i.test(String(b.time||''));
  const x=Number(sunlight?.x),y=Number(sunlight?.y);
- const sunHint=sunlight&&Number.isFinite(x)&&Number.isFinite(y)&&x>=0&&x<=1&&y>=0&&y<=1&&!nightRequested
-  ?`USER-DIRECTED SUNLIGHT: The user positioned a virtual sun direction marker at normalized image coordinate (${x.toFixed(3)}, ${y.toFixed(3)}) measured from left/top of the ORIGINAL photo frame. Treat the horizontal position as desired light-source side and the vertical position as an approximate apparent solar elevation, NOT a depth-mapped world location. ${x<.33?'Light comes prominently from camera-left.':x>.67?'Light comes prominently from camera-right.':'Sunlight is near the central camera axis.'} ${y<.35?'Prefer high or medium solar elevation.':y>.65?'Prefer low grazing sunlight and correspondingly longer shadows.':'Prefer medium solar elevation.'} ${sunlight.softness==='soft'?'Use soft shadow penumbrae.':sunlight.softness==='defined'?'Use defined but natural directional shadows.':'Use physically natural shadow softness.'} Recalculate facade highlights, skylight, environmental bounce and shadows coherently in the opposite direction. Do not literally paint a sun icon or move the camera. Approximate this lighting on a single view; exact 3D shadow geometry cannot be guaranteed without scene geometry.`
+ const directionalLight={
+  'front-left':'LIGHT COMES FROM THE CAMERA-FRONT-LEFT OF THE HOUSE: the left-front facade is directly sunlit; shadows fall backward/right.',
+  'front':'LIGHT COMES FROM CAMERA-FRONT, not behind the house. The camera-facing facade is clearly sunlit; house and tree shadows fall AWAY from the camera.',
+  'front-right':'LIGHT COMES FROM CAMERA-FRONT-RIGHT: sunlit front-right facade and cast shadows toward the back-left.',
+  'left':'LIGHT COMES FROM CAMERA-LEFT SIDE: left-facing facade planes are lit; right-facing planes are shaded; cast shadows fall to camera-right.',
+  'right':'LIGHT COMES FROM CAMERA-RIGHT SIDE: right-facing facade planes are lit; left-facing planes are shaded; cast shadows fall to camera-left.',
+  'back-left':'THE SUN IS BEHIND THE HOUSE ON CAMERA-BACK-LEFT. STRONG REAR-LEFT BACKLIGHT: the camera-facing facade is noticeably darker; luminous roof silhouettes and left rim light. Tree and house shadows extend diagonally TOWARD CAMERA-RIGHT. Do not front-light the house.',
+  'back':'THE SUN IS DIRECTLY BEHIND THE HOUSE, ON THE FAR SIDE FROM THE CAMERA. STRONG BACKLIGHT: THE FRONT CAMERA-FACING FACADE MUST BE SIGNIFICANTLY DARKER; only restrained luminous roof edges and vegetation rim light. The rear roof slopes and sky behind the building are brighter. House and tree shadows fall TOWARD THE CAMERA. NEVER FRONT-LIGHT THIS BUILDING.',
+  'back-right':'THE SUN IS BEHIND THE HOUSE ON CAMERA-BACK-RIGHT. STRONG REAR-RIGHT BACKLIGHT: the camera-facing facade is noticeably darker, silhouette gains right-side rim lighting, house and tree shadows extend diagonally TOWARD CAMERA-LEFT. Do not front-light the house.'
+ };
+ const elevationDirections={
+  low:'LOW SUN at about 16 degrees above horizon; create visibly LONG directional shadows and grazing facade illumination.',
+  medium:'MEDIUM SUN at about 38 degrees above horizon; realistic medium-length cast shadows.',
+  high:'HIGH SUN at about 66 degrees above horizon; clearly SHORTER downward cast shadows.'
+ };
+ const shadowModes={
+  soft:'SOFT SHADOWS: gradual penumbrae and low local light contrast, but the selected sun direction must stay clear.',
+  natural:'NATURAL SHADOWS: balanced contrast, physically plausible penumbrae and realistic bounced skylight.',
+  defined:'CONTRAST SHADOWS: strong clear separation between sunlit and shaded facades, defined physically plausible cast-shadow edges.',
+  cinematic:'CINEMATIC SHADOWS: deep directional yet readable shadows, refined negative fill, editorial photographic contrast, no clipped blacks.'
+ };
+ const direction=sunlight&&Object.hasOwn(directionalLight,String(sunlight.direction||''))?sunlight.direction:null;
+ const sunHint=sunlight&&direction&&!nightRequested&&!specific
+  ?'CRITICAL USER-DEFINED ARCHITECTURAL LIGHTING. APPLY VISIBLY; PRIORITY OVER GENERAL LIGHT PRESETS. '+directionalLight[direction]+' '+(elevationDirections[sunlight.elevation]||elevationDirections.medium)+' '+(shadowModes[sunlight.shadow]||shadowModes.natural)+' RECOMPUTE the lighting distribution: facade highlights and shadows, cast shadows on site, sky, window reflections, bounced fill, and directional atmosphere. A new lighting direction must noticeably change the photographic lighting, not just tint/brightness. NEVER render sun glyphs, orbits, UI arrows or any on-image markers. Keep camera, building geometry, materials, windows, doors and landscape layout unchanged. User direction is camera-relative, not an exact geographic azimuth. Exact 3D shadow geometry cannot be guaranteed from a 2D screenshot.'
+  :sunlight&&!nightRequested&&!specific&&Number.isFinite(x)&&Number.isFinite(y)&&x>=0&&x<=1&&y>=0&&y<=1
+  ?'LEGACY VIRTUAL SUN MARKER: approximate sunlight from photo coordinate ('+x.toFixed(3)+', '+y.toFixed(3)+'), '+(x<.33?'camera-left.':x>.67?'camera-right.':'near camera axis.')+' '+(y>.65?'Low grazing sunlight and long cast shadows.':y<.35?'Higher sunlight and shorter shadows.':'Medium sunlight and medium shadows.')+' Make the directional light and facade shading visibly change; keep geometry identical.'
   :null;
  const relightInstruction=p.relightOnly===true
   ?'RELIGHT EDIT OF AN EXISTING FINISHED IMAGE: IMAGE 1 IS THE APPROVED ARCHITECTURAL PHOTOGRAPH. Change ONLY lighting, plausible direction/softness of sunlight and cast shadows, sky luminance consistent with the expressly selected time/weather, and related exposure/reflections. Keep the same architectural geometry, framing, windows, finishes, landscaping, existing objects and the exact camera position. NO scene redesign, no extra structures, no invented lamps or props. Preserve content identically as far as image editing allows.'
