@@ -8,7 +8,8 @@
  let mini=null;
  const phases=['prepare','ai','save'];
  const historyKey='forma-render-real-durations-v1';
- let observedEstimate=null;
+ let observedEstimate=null,estimateSource='heuristic';
+ const estimateFallback=120; // labelled approximate; AI backend does not stream percent or ETA
  function history(){
   try{const data=JSON.parse(localStorage.getItem(historyKey)||'[]');return Array.isArray(data)?data.filter(n=>Number.isFinite(n)&&n>=5&&n<=360).slice(-15):[]}
   catch{return []}
@@ -19,7 +20,7 @@
  }
  function estimateLabel(seconds){
   if(completed)return 'Готово';
-  if(observedEstimate==null)return 'До завершения: AI не передаёт прогноз';
+  if(observedEstimate==null)return 'Ориентир: условные 2 минуты, AI не сообщает ETA';
   const left=Math.round(observedEstimate-seconds);
   return left>0?'Ориентир ещё ≈ '+readableTime(left):'Дольше среднего · ожидаем ответ AI';
  }
@@ -62,12 +63,37 @@
   });
   if(mini)mini.querySelector('.forma-ai-mini-title').textContent=completed?'ФОРМА · Результат готов':next==='ai'?'ФОРМА · AI-рендер':next==='save'?'ФОРМА · Сохраняем':'ФОРМА · Подготовка';
  }
+ function updateEstimate(seconds){
+  const eta=observedEstimate??estimateFallback;
+  // Time-based, advisory progress ONLY. Never report as a provider completion metric.
+  // At the estimate threshold stop at 94%, then wait for the actual server reply.
+  let pct=completed?100:Math.min(94,Math.round(Math.max(0,seconds)/eta*90));
+  if(!completed&&seconds>=eta)pct=Math.min(94,90+Math.floor(Math.log2(Math.max(1,seconds/eta))*3));
+  const pctLabel=$('renderProgressPercent'),remaining=$('renderProgressEta');
+  const circle=$('renderProgressArc');
+  if(pctLabel)pctLabel.textContent=pct+'%';
+  if(circle){
+   const circumference=2*Math.PI*82;
+   circle.style.strokeDasharray=circumference.toFixed(2);
+   circle.style.strokeDashoffset=(circumference*(1-pct/100)).toFixed(2);
+  }
+  if(remaining){
+   const left=Math.round(eta-seconds);
+   remaining.textContent=completed?'00:00':left>0?'≈ '+readableTime(left):'≈ больше';
+   remaining.title=observedEstimate!=null?
+     'Приблизительный прогноз на основании последних успешных рендеров в этом браузере.':
+     'Условный ориентир 2 минуты, а не фактическое время сервера.';
+  }
+  const caption=document.querySelector('.forma-render-estimate-caption');
+  if(caption)caption.textContent=completed?'ГОТОВО':observedEstimate!=null?'ОЦЕНКА':'УСЛОВНО';
+ }
  function elapsed(){
   if(!active)return;
   const seconds=(Date.now()-started)/1000;
   const text=readableTime(seconds);
   const label=$('renderProgressElapsed');if(label)label.textContent='Прошло '+text;
   if(mini)mini.querySelector('.forma-ai-mini-time').textContent=text;
+  updateEstimate(seconds);
   const remaining=$('renderProgressRemaining');
   if(remaining){
    remaining.textContent=estimateLabel(seconds);
@@ -89,11 +115,16 @@
   if(clock)clearInterval(clock);
   active=true;completed=false;started=Date.now();minimized=false;
   const samples=history();observedEstimate=samples.length>=3?median(samples):null;
+  estimateSource=observedEstimate!=null?'history':'heuristic';
   const el=overlay();if(!el)return;
   el.hidden=false;el.classList.remove('is-complete');
   miniButton().hidden=true;
   const note=$('renderProgressHint');
-  if(note)note.textContent='Результат откроется автоматически, когда кадр будет готов';
+  if(note)note.textContent='Результат откроется автоматически после ответа AI';
+  const truth=document.querySelector('.forma-render-truth-note');
+  if(truth)truth.textContent=observedEstimate!=null?
+   'Круг показывает расчётную оценку по прошлым рендерам на этом устройстве. AI не сообщает точные проценты и время.':
+   'Круг показывает условный прогноз по времени (ориентир 2 мин). AI не сообщает точные проценты и оставшееся время.';
   syncScene();setPhase('prepare');elapsed();
   clock=setInterval(elapsed,1000);
   document.documentElement.classList.add('forma-progress-expanded');
@@ -116,6 +147,7 @@
    try{localStorage.setItem(historyKey,JSON.stringify([...history(),seconds].slice(-15)))}catch{}
   }
   completed=true;setPhase('save');
+  updateEstimate(seconds);
   const el=overlay();if(el)el.classList.add('is-complete');
   if($('renderProgressTitle'))$('renderProgressTitle').textContent='Архитектурный кадр готов';
   if($('renderProgressDetail'))$('renderProgressDetail').textContent='Результат получен и добавлен в проект';
