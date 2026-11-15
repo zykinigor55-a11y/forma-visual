@@ -1,0 +1,16 @@
+/* FORMA Scene Logic v12 */
+.forma-solar-exact{margin-top:18px;padding:17px;border:1px solid rgba(135,146,155,.24);border-radius:14px;background:rgba(124,139,146,.065)}
+.forma-solar-caption{font-size:12px;font-weight:700;letter-spacing:.02em;margin-bottom:16px}
+.forma-solar-row{display:block;margin:15px 0;color:inherit}
+.forma-solar-row>span{display:flex;justify-content:space-between;gap:16px;font-size:12px}
+.forma-solar-row output{font-variant-numeric:tabular-nums;font-weight:700}
+.forma-solar-row input{width:100%;margin-top:10px;accent-color:#a8b2ae;cursor:pointer}
+.forma-solar-row input:disabled{opacity:.35;cursor:not-allowed}
+.forma-solar-disclaimer{font-size:11px;line-height:1.55;opacity:.67;margin:12px 0 0}
+.forma-scene-logic-check{padding:13px 18px;border-top:1px solid rgba(145,150,150,.19);font-size:12px;line-height:1.5}
+.forma-scene-logic-check strong{display:block;font-size:12px}
+.forma-scene-logic-check p{margin:6px 0 0;opacity:.82}
+.forma-scene-logic-check.has-warnings{border-left:3px solid #b18d60}
+.forma-scene-logic-check.has-errors{border-left:3px solid #b65f5b}
+#formaSceneQuickGenerate:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){.forma-solar-exact{padding:13px}.forma-scene-logic-check{padding:12px 14px}}
