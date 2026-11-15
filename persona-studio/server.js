@@ -1,6 +1,8 @@
 /** PERSONA STUDIO server — Node.js 20+, no dependencies.
  * API tokens never reach the browser or GitHub. AI is disabled until an
- * administrator sets OPENAI_API_KEY and PERSONA_ACCESS_CODE on the server.
+ * administrator configures a provider key, model and PERSONA_ACCESS_CODE.
+ * Arkheon image endpoints are provisionally OpenAI-shaped: publication of
+ * Arkheon image API methods has not been independently confirmed.
  */
 'use strict';
 const http = require('node:http');
@@ -25,8 +27,22 @@ function respond(res, status, payload) {
   });
   res.end(JSON.stringify(payload));
 }
-function isReady() {
-  return !!(process.env.OPENAI_API_KEY && process.env.PERSONA_ACCESS_CODE);
+function providerConfig(){
+  const provider=process.env.PERSONA_AI_PROVIDER==='arkheon'?'arkheon':'openai';
+  const arkheon=provider==='arkheon';
+  const baseUrl=arkheon
+    ? (process.env.ARKHEON_API_BASE || 'https://arkheonchat.com/v1').replace(/\\/+$/,'')
+    : 'https://api.openai.com/v1';
+  if(!/^https:\/\//.test(baseUrl))throw new Error('Provider base URL must use HTTPS.');
+  return {
+    provider,baseUrl,
+    apiKey:arkheon?process.env.ARKHEON_API_KEY:process.env.OPENAI_API_KEY,
+    model:arkheon?(process.env.ARKHEON_IMAGE_MODEL||''):(process.env.OPENAI_IMAGE_MODEL||'gpt-image-2'),
+  };
+}
+function isReady(){
+  const config=providerConfig();
+  return !!(config.apiKey && config.model && process.env.PERSONA_ACCESS_CODE);
 }
 function getClientIP(req) {
   // Render provides this forwarding header. Prefer the connecting peer otherwise.
@@ -68,16 +84,18 @@ async function callImageAPI(data) {
   const reference=toBlob(data.referenceImage);
   const clothing=toBlob(data.clothingImage);
   const hairstyle=toBlob(data.hairImage);
-  const model=process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2';
+  const config=providerConfig();
+  if(!config.apiKey||!config.model)throw Object.assign(new Error('Не настроен ключ или модель выбранного AI-провайдера.'),{status:503});
+  const model=config.model;
   const quality=['low','medium','high'].includes(data.quality)?data.quality:'medium';
   const size=['1024x1024','1024x1536','1536x1024'].includes(data.size)?data.size:'1024x1536';
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),115000);
   try{
-    let body,headers={'Authorization':`Bearer ${process.env.OPENAI_API_KEY}`};
+    let body,headers={'Authorization':`Bearer ${config.apiKey}`};
     let endpoint;
     if(reference || clothing || hairstyle){
-      endpoint='https://api.openai.com/v1/images/edits';
+      endpoint=config.baseUrl+'/images/edits';
       body=new FormData();
       body.append('model',model);body.append('prompt',prompt);
       body.append('size',size);body.append('quality',quality);
@@ -85,7 +103,7 @@ async function callImageAPI(data) {
       if(clothing)body.append('image[]',clothing,'outfit.png');
       if(hairstyle)body.append('image[]',hairstyle,'hair.png');
     }else{
-      endpoint='https://api.openai.com/v1/images/generations';
+      endpoint=config.baseUrl+'/images/generations';
       headers['Content-Type']='application/json';
       body=JSON.stringify({model,prompt,size,quality,n:1});
     }
@@ -94,11 +112,16 @@ async function callImageAPI(data) {
     try{json=await answer.json();}catch{json=null;}
     if(!answer.ok){
       const msg=typeof json?.error?.message==='string'?json.error.message.slice(0,260):'Не удалось выполнить генерацию.';
-      const err=new Error(msg);err.status=answer.status===429?429:502;throw err;
+      const noImageAPI=config.provider==='arkheon' && [404,405,501].includes(answer.status);
+      const err=new Error(noImageAPI
+        ? 'Arkheon: метод генерации изображений не подтверждён или недоступен по этому адресу. Уточните у Arkheon API endpoint для image generation / image edits.'
+        : msg);
+      err.status=noImageAPI?501:(answer.status===429?429:(answer.status===401?502:(answer.status===402?402:502)));
+      throw err;
     }
     const base64=json?.data?.[0]?.b64_json;
     if(!base64)throw Object.assign(new Error('AI не вернул изображение. Проверьте модель и параметры.'),{status:502});
-    return {image:'data:image/png;base64,'+base64, model};
+    return {image:'data:image/png;base64,'+base64,model,provider:config.provider};
   }finally{clearTimeout(timer);}
 }
 const FILES={
@@ -108,7 +131,10 @@ const FILES={
 const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.svg':'image/svg+xml'};
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url||'/', 'http://localhost').pathname;
-  if(req.method==='GET'&&pathname==='/api/status')return respond(res,200,{aiConfigured:isReady(),model:process.env.OPENAI_IMAGE_MODEL||'gpt-image-2',authRequired:true});
+  if(req.method==='GET'&&pathname==='/api/status'){
+    const config=providerConfig();
+    return respond(res,200,{aiConfigured:isReady(),provider:config.provider,model:config.model||null,authRequired:true,imageEndpointVerified:false});
+  }
   if(req.method==='POST'&&pathname==='/api/ai/generate'){
     if(!isReady())return respond(res,503,{error:'Генерация выключена: владелец ещё не настроил серверные ключи.'});
     const access=req.headers['x-persona-access-code'];
@@ -129,4 +155,4 @@ const server=http.createServer(async(req,res)=>{
   catch{respond(res,500,{error:'File unavailable'});}
 });
 if(require.main===module) server.listen(PORT,'0.0.0.0',()=>console.log(`PERSONA STUDIO http://localhost:${PORT}`));
-module.exports={server,callImageAPI,toBlob,readJson,checkRate};
+module.exports={server,callImageAPI,toBlob,readJson,checkRate,isReady,providerConfig};
