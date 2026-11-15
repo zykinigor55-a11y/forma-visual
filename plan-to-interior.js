@@ -169,7 +169,7 @@ function autoDetect(){
  if(state.walls.length&&!confirm('Заменить текущие линии стен автоматическим черновиком? Исходное изображение сохранится.'))return;
  const guessed=suggestWalls(state.bitmap);
  if(!guessed.length){message('Линии не найдены. Добавьте стены вручную или используйте AI Vision.');return}
- snapshot();state.walls=guessed;state.openings=[];selection=null;afterChange();message('Автоматический черновик: '+guessed.length+' линий. Проверьте лишние и недостающие стены.');
+ snapshot();state.walls=guessed;state.openings=[];state.materials.walls={};state.materials.zones=[];selection=null;selectedSurface=null;selectedOpeningId=null;afterChange();message('Автоматический черновик: '+guessed.length+' линий. Проверьте лишние и недостающие стены.');
 }
 async function visionStatus(){
  try{
@@ -512,8 +512,13 @@ function refresh3D(){
   mesh.userData={surfaceType:'furniture',furnitureId:f.id};
   mesh.name='furniture_'+f.id;group.add(mesh);
  }
- three.orbit.target.set((bb.minX+bb.maxX)/2,Math.min(1,state.wallHeight*.42),(bb.minZ+bb.maxZ)/2);
- three.orbit.radius=clamp(Math.max(bb.width,bb.depth)*1.8,5,55);three.updateCamera();
+ const frameKey=[round(bb.minX,1),round(bb.maxX,1),round(bb.minZ,1),round(bb.maxZ,1),state.wallHeight].join(',');
+ if(three.frameKey!==frameKey){
+  three.frameKey=frameKey;
+  three.orbit.target.set((bb.minX+bb.maxX)/2,Math.min(1,state.wallHeight*.42),(bb.minZ+bb.maxZ)/2);
+  three.orbit.radius=clamp(Math.max(bb.width,bb.depth)*1.8,5,55);
+  three.updateCamera();
+ }
  lightPreview();sync();
 }
 function pick3D(e){
@@ -654,7 +659,37 @@ function bind(){
  $('undo').addEventListener('click',undo);
  $('wallHeight').addEventListener('change',e=>{state.wallHeight=clamp(Number(e.target.value)||2.8,2,8);afterChange()});
  $('wallWidth').addEventListener('change',e=>{state.wallThickness=clamp(Number(e.target.value)||.2,.08,.6);afterChange()});
- for(const id of ['style','lighting','wallColor','floorColor'])$(id).addEventListener('input',e=>{state[id]=e.target.value;afterChange()});
+ $('style').addEventListener('change',e=>useStyle(e.target.value));
+ for(const id of ['lighting','wallColor','floorColor'])$(id).addEventListener('input',e=>{state[id]=e.target.value;afterChange()});
+ for(const button of document.querySelectorAll('[data-style-preset]')){
+  button.addEventListener('click',()=>useStyle(button.dataset.stylePreset));
+ }
+ for(const button of document.querySelectorAll('[data-next]'))button.addEventListener('click',()=>{
+  const step=button.dataset.next;
+  if(step==='style'){$('styleEditor').scrollIntoView({behavior:'smooth',block:'start'});return}
+  if(step==='surface'){if(!selectedSurface)message('Нажмите на пол или любую стену в правом окне 3D.');$('threeArea').scrollIntoView({behavior:'smooth',block:'center'});return}
+  if(step==='window'){if(!selectedOpeningId)message('Нажмите на точку проёма на плане или на оконную раму в 3D.');$('threeArea').scrollIntoView({behavior:'smooth',block:'center'});return}
+  $('renderPhoto').scrollIntoView({behavior:'smooth',block:'center'});
+ });
+ $('surfaceScope').addEventListener('change',e=>{
+  $('patchOptions').hidden=e.target.value!=='patch';
+  if(e.target.value==='patch'&&selectedSurface?.type==='floor'){e.target.value='whole';$('patchOptions').hidden=true}
+ });
+ $('surfaceColor').addEventListener('input',e=>{materialDraft.color=e.target.value});
+ $('surfaceTextureScale').addEventListener('change',e=>{materialDraft.textureScale=Number(e.target.value)||1;renderMaterialPreview()});
+ $('materialFile').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];e.target.value='';if(!file)return;
+  try{await loadMaterialImage(file)}catch(error){message(error.message||'Ошибка загрузки текстуры.')}
+ });
+ $('applySurface').addEventListener('click',materialForSelection);
+ $('resetSurface').addEventListener('click',clearMaterial);
+ for(const btn of document.querySelectorAll('[data-sashes]'))btn.addEventListener('click',()=>{
+  stagedSashes=Number(btn.dataset.sashes);
+  document.querySelectorAll('[data-sashes]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.sashes)===stagedSashes));
+  $('sashConfidence').textContent='Выбрано '+stagedSashes+' створки. Нажмите «Сохранить и подтвердить».';
+ });
+ $('saveOpening').addEventListener('click',saveSelectedOpening);
+ $('deleteOpening').addEventListener('click',deleteSelectedOpening);
  $('addSofa').addEventListener('click',()=>addFurniture('sofa'));
  $('addTable').addEventListener('click',()=>addFurniture('table'));
  $('addBed').addEventListener('click',()=>addFurniture('bed'));
@@ -687,4 +722,4 @@ async function restore(){
  }catch{message('Не удалось восстановить сохранённый план. Загрузите его снова.')}
 }
 bind();sync();new ResizeObserver(redraw).observe($('planArea'));
-restore().then(()=>{init3D();visionStatus()});
+restore().then(()=>{init3D();visionStatus();refreshInspectors()});
