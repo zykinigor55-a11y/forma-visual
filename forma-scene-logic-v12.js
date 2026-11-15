@@ -87,9 +87,9 @@
  }
  // Capture phase executes before Scene Director click handlers; do not initiate additional AI jobs.
  document.addEventListener('click',event=>{
-  const target=event.target.closest('#formaSceneQuickGenerate, [data-sun-relight]');
+  const target=event.target.closest('#formaSceneQuickGenerate');
   if(!target)return;
-  const action=target.matches('[data-sun-relight]')?'relight':'generate';
+  const action='generate';
   if(!confirmation(action)){event.preventDefault();event.stopImmediatePropagation();return}
   // Existing relight control already prompts; avoid redundant dialogs by retaining its prompt.
  },true);
