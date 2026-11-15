@@ -63,7 +63,7 @@ html.forma-intro-pending #forma-intro{display:block}
 }
 #forma-intro .forma-intro-loader-dot{
  display:block;width:5px;height:5px;border-radius:50%;
- background:#d2b28d;box-shadow:0 0 10px #e5c49e33;
+ background:#D4B690;box-shadow:0 0 10px #D4B69033;
  animation:forma-intro-dot 1.7s ease-in-out infinite
 }
 @keyframes forma-intro-scan{
@@ -96,7 +96,7 @@ html.forma-intro-pending #forma-intro{display:block}
 #forma-intro .forma-intro-name{
  margin:25px 0 0;padding-left:.24em;
  display:block;font:350 clamp(35px,5vw,67px)/1.2 Manrope,Inter,Arial,sans-serif;
- letter-spacing:.24em;color:#f4eee5;text-shadow:none!important;
+ letter-spacing:.24em;color:#FAFAFA;text-shadow:none!important;
  opacity:0!important;visibility:hidden!important;transform:translateY(7px);
  transition:opacity .95s cubic-bezier(.22,1,.36,1),transform 1s cubic-bezier(.22,1,.36,1),
             visibility 0s linear .95s
@@ -109,7 +109,7 @@ html.forma-intro-pending #forma-intro{display:block}
 #forma-intro .forma-intro-descriptor{
  margin:13px 0 0;padding-left:.12em;
  font:550 clamp(8px,1vw,11px)/1.6 Manrope,Inter,Arial,sans-serif;
- letter-spacing:clamp(.1em,.23vw,.25em);color:#b9a78f;
+ letter-spacing:clamp(.1em,.23vw,.25em);color:#F2F2F2;
  white-space:nowrap;opacity:0!important;visibility:hidden!important;
  transform:translateY(5px);
  transition:opacity .85s ease,transform 1s ease,visibility 0s linear .85s
