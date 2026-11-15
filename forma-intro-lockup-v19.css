@@ -1,0 +1,48 @@
+/* FORMA / NOIR REVEAL v19
+   A real five-second opening, FA mark inside the geometric circle,
+   and the selected architectural-visualization-laboratory name. */
+html.forma-intro-pending,html.forma-intro-pending body{background:#000!important}
+#forma-intro,#forma-intro .forma-intro-content{background:#000!important}
+#forma-intro .forma-intro-center{min-height:350px}
+#forma-intro .forma-intro-loader{top:calc(50% - 52px);width:min(310px,90vw)}
+#forma-intro.is-loader-complete .forma-intro-loader{opacity:1!important;visibility:visible!important}
+#forma-intro.is-loader-complete .forma-intro-loader-overline,
+#forma-intro.is-loader-complete .forma-intro-loader-bottom{opacity:0;visibility:hidden;transition:opacity .35s}
+#forma-intro.is-loader-complete .forma-intro-geometry{animation:none!important;opacity:1;transform:none}
+#forma-intro .forma-intro-measure{position:relative;display:block;width:138px;height:138px;overflow:visible}
+#forma-intro .forma-intro-measure>.forma-intro-mark{
+ position:absolute;left:50%;top:50%;width:75px;height:75px;max-width:none;margin:0;
+ opacity:0!important;visibility:hidden!important;transform:translate(-50%,-45%);
+ filter:none!important;
+ transition:opacity .9s ease,transform 1s cubic-bezier(.22,1,.36,1),visibility 0s linear .9s
+}
+#forma-intro.is-logo-visible .forma-intro-measure>.forma-intro-mark{
+ opacity:1!important;visibility:visible!important;transform:translate(-50%,-50%);
+ transition:opacity .9s ease,transform 1s cubic-bezier(.22,1,.36,1),visibility 0s
+}
+#forma-intro .forma-intro-lockup{
+ position:absolute;top:calc(50% + 43px);left:50%;
+ width:min(440px,96vw);max-width:100%;
+ transform:translateX(-50%)!important;display:flex;flex-direction:column;align-items:center
+}
+#forma-intro .forma-intro-lockup .forma-intro-name{margin:0;font-weight:380}
+#forma-intro .forma-intro-lockup .forma-intro-descriptor{
+ font-size:clamp(7.5px,1.55vw,10px);line-height:1.6;
+ letter-spacing:clamp(.035em,.12vw,.12em);
+ max-width:440px;white-space:normal;text-align:center;margin-top:11px
+}
+#forma-intro .forma-intro-wait{top:calc(50% + 157px)}
+@media(max-width:760px){
+ #forma-intro .forma-intro-center{min-height:320px}
+ #forma-intro .forma-intro-loader{top:calc(50% - 59px)}
+ #forma-intro .forma-intro-measure{width:122px;height:122px}
+ #forma-intro .forma-intro-measure>.forma-intro-mark{width:68px;height:68px}
+ #forma-intro .forma-intro-lockup{top:calc(50% + 34px);width:calc(100vw - 22px)}
+ #forma-intro .forma-intro-lockup .forma-intro-name{font-size:clamp(35px,10vw,46px)}
+ #forma-intro .forma-intro-lockup .forma-intro-descriptor{max-width:320px;font-size:clamp(7.3px,2.15vw,9px);letter-spacing:.04em;margin-top:11px}
+ #forma-intro .forma-intro-wait{top:calc(50% + 149px)}
+}
+@media(prefers-reduced-motion:reduce){
+ #forma-intro .forma-intro-measure>.forma-intro-mark{transform:translate(-50%,-50%)!important}
+ #forma-intro .forma-intro-geometry-ring{animation:none!important}
+}
