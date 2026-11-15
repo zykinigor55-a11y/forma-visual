@@ -1,0 +1,10 @@
+.forma-plan-to-interior-entry{display:flex;align-items:center;gap:17px;margin:0 0 20px;padding:18px 21px;border:1px solid #988268;border-radius:13px;background:linear-gradient(110deg,#1d2420,#111614 80%);color:#e8e7df;text-decoration:none;box-shadow:0 13px 35px #0002;transition:border-color .2s,background .2s}
+.forma-plan-to-interior-entry:hover{border-color:#e2bc85;background:linear-gradient(110deg,#263028,#131a15 85%)}
+.forma-plan-entry-mark{width:52px;height:52px;flex:0 0 52px;display:grid;place-items:center;border:1px solid #7e6e52;color:#d6bb91;font-size:29px;border-radius:12px;background:#32342b}
+.forma-plan-entry-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:6px}
+.forma-plan-entry-copy small{font-size:9px;letter-spacing:.15em;font-weight:850;color:#cdb38b}
+.forma-plan-entry-copy strong{font-size:17px;font-weight:720;letter-spacing:-.02em;color:#f0ece4}
+.forma-plan-entry-copy strong em{font-style:normal;font-weight:480;color:#c6cac3}
+.forma-plan-entry-copy>span{font-size:11px;color:#aab4ad;line-height:1.5}
+.forma-plan-entry-action{flex-shrink:0;border:1px solid #a38e6a;background:#c8ad83;color:#1d2520;padding:11px 15px;border-radius:8px;font-weight:800;font-size:11px}
+@media(max-width:700px){.forma-plan-to-interior-entry{padding:14px;gap:10px;margin:0 0 16px}.forma-plan-entry-mark{width:42px;height:42px;flex-basis:42px;font-size:24px}.forma-plan-entry-copy strong{font-size:13px}.forma-plan-entry-copy strong em{display:block;margin-top:2px;font-size:11px}.forma-plan-entry-copy>span{font-size:10px}.forma-plan-entry-action{font-size:0;padding:9px 10px}.forma-plan-entry-action::after{content:'↗';font-size:17px}}
