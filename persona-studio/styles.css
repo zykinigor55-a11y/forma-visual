@@ -12,5 +12,7 @@
 .ai-progress{padding:12px;background:#292a2f;border:1px solid #48474b;border-radius:10px;margin:14px 0;overflow:hidden}
 .ai-progress-bar{height:4px;border-radius:4px;background:linear-gradient(90deg,#9e856c,#f5ddba);width:42%;animation:ai-loading 1.8s ease-in-out infinite alternate}
 .ai-progress small{display:block;margin-top:10px;line-height:1.5;color:#b9b2ad;font-size:10px}
+.reference-ready{font-size:11px;line-height:1.6;color:#c8baaa;border:1px solid #49433d;background:#2b2928;border-radius:8px;padding:9px 10px;margin:9px 0 12px}
+.ai-compare{display:flex;gap:8px;margin-top:10px}.ai-compare .ghost-action{flex:1;font-size:10px;padding:10px 5px}
 @keyframes ai-loading{from{transform:translateX(-48%)}to{transform:translateX(185%)}}
 button:disabled{opacity:.52;cursor:not-allowed}
