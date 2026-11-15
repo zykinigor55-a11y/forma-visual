@@ -22,6 +22,7 @@ function view(){
  ${select('faInteriorFurniture','Мебель и предметы',[['preserve','Сохранить строго по скетчу'],['complete','Добавить мебель, если комната пуста'],['no-additions','Не добавлять ничего']])}
  <label class="full">Отделка и материалы<textarea id="faInteriorSurfaces" maxlength="500" rows="3" placeholder="Например: стены — тёплая белая штукатурка, пол — дуб, кухня — орех. Пусто = сохранить скетч."></textarea></label>
  <label class="full">Точные пожелания<textarea id="faInteriorNotes" maxlength="800" rows="3" placeholder="Например: не менять количество стульев, размеры окон и положение светильников."></textarea></label></div>
+ <section class="fa-interior-light-studio"><div><span>LIGHT STUDIO / ИНТЕРЬЕР</span><h4>Свет в помещении</h4><p>Настройте направление света через окна, яркость естественного освещения, характер теней и светильники. После рендера можно переосветить готовый интерьер отдельно.</p></div><button type="button" id="faInteriorLightStudio">☼ Открыть LIGHT STUDIO <span>↗</span></button></section>
  <div class="fa-interior-lock"><span>⌗</span><div><b>Фиксация планировки и ракурса</b><small>Стены, проёмы, высота, мебель и конструктив сохраняются по исходному скетчу. AI может ошибаться — проверяйте изображение.</small></div></div>
  <button type="button" id="faInteriorGenerate" class="fa-interior-submit">Создать фотографию интерьера <span>↗</span></button>
  <p id="faInteriorStatus" role="status">Загрузите скриншот помещения и запустите генерацию через текущий API.</p>
@@ -44,6 +45,13 @@ function init(){
  $$('[data-fa-space]').forEach(b=>b.addEventListener('click',()=>{persist({sceneType:b.dataset.faSpace});populate();message(b.dataset.faSpace==='interior'?'Режим интерьеров включён.':'Режим экстерьеров включён.')}));
  const fields={faInteriorRoom:'room',faInteriorStyle:'style',faInteriorLighting:'lighting',faInteriorFurniture:'furniture',faInteriorSurfaces:'surfaces',faInteriorNotes:'notes'};
  for(const [id,key] of Object.entries(fields))$('#'+id)?.addEventListener('input',e=>persist({[key]:e.target.value}));
+ $('#faInteriorLightStudio')?.addEventListener('click',()=>{
+  if(!window.FORMA_SCENE_BRIDGE?.get?.()?.hasSource){
+   message('Сначала загрузите изображение интерьера, затем откройте LIGHT STUDIO.');
+   return;
+  }
+  window.FORMA_SUN_STUDIO?.open?.();
+ });
  $('#faInteriorGenerate')?.addEventListener('click',()=>{
   if(state().sceneType!=='interior')return;
   const b=$('#generateBtn');if(!b){message('Не найден основной инструмент генерации');return}
