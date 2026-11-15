@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="550" viewBox="0 0 920 550">
+<title>Architectural floor plan to 3D room model</title>
+<defs>
+ <linearGradient id="ground" x2="1" y2="1"><stop stop-color="#343b38"/><stop offset="1" stop-color="#171c1a"/></linearGradient>
+ <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#e8dfce"/><stop offset="1" stop-color="#b7ab94"/></linearGradient>
+ <linearGradient id="floor" x2="1" y2="0"><stop stop-color="#b2a38a"/><stop offset="1" stop-color="#928672"/></linearGradient>
+ <linearGradient id="glass" x2="1" y2="1"><stop stop-color="#b6c9c8" stop-opacity=".5"/><stop offset="1" stop-color="#293a3b" stop-opacity=".7"/></linearGradient>
+ <filter id="shadow"><feGaussianBlur stdDeviation="18"/></filter>
+ <filter id="light"><feGaussianBlur stdDeviation="5"/></filter>
+ <pattern id="cad" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" stroke="#ffffff" stroke-width=".65" fill="none" opacity=".045"/></pattern>
+</defs>
+<rect width="920" height="550" fill="url(#ground)"/>
+<rect width="920" height="550" fill="url(#cad)"/>
+<path d="M18 439L318 439" stroke="#c3a779" stroke-opacity=".45" stroke-width="1"/>
+<g transform="translate(45 112)" stroke-linejoin="miter">
+ <rect x="0" y="0" width="303" height="286" rx="2" fill="#202826" stroke="#776e5d" stroke-width="1.7"/>
+ <path d="M34 26H267V252H34Z M34 136H267 M139 26V136 M204 136V252" fill="none" stroke="#dfd2b7" stroke-width="9"/>
+ <path d="M144 126H174M199 184V206M139 65V100" stroke="#182523" stroke-width="10"/>
+ <path d="M144 126c0-29 25-34 30 0 M199 184c-26 0-26 22 0 22" stroke="#bda78a" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+ <path d="M34 72V116M202 26H245" stroke="#a3d6d5" stroke-width="8"/>
+ <path d="M17 26H6V252H17M25 5V-6H277V5M286 26h12v226h-12M25 273v11h252v-11" stroke="#a9ae9e" fill="none" stroke-width="1" opacity=".66"/>
+ <g fill="#d4c7af" font-family="Arial,sans-serif" font-size="11" letter-spacing="2"><text x="66" y="93">01</text><text x="178" y="81">02</text><text x="77" y="214">03</text><text x="231" y="212">04</text></g>
+</g>
+<path d="M425 453L820 453" stroke="#c9b389" opacity=".22"/>
+<ellipse cx="680" cy="435" rx="255" ry="54" fill="#000" opacity=".42" filter="url(#shadow)"/>
+<g stroke-linejoin="round">
+ <path d="M458 290L660 196L864 278L666 379Z" fill="url(#floor)" stroke="#dfcaa4" stroke-width="3"/>
+ <path d="M458 290L666 379V413L458 326Z" fill="#68665d" stroke="#b4a38b" stroke-width="1.3"/>
+ <path d="M666 379L864 278V311L666 413Z" fill="#817b6b" stroke="#b4a38b" stroke-width="1.3"/>
+ <path d="M458 290V176L660 87V196Z" fill="url(#wall)" stroke="#f3e3c5" stroke-width="2"/>
+ <path d="M660 87L864 169V278L660 196Z" fill="#ded5c6" stroke="#eee3d1" stroke-width="2"/>
+ <path d="M475 274V187L643 113V199Z" fill="#8b826e" stroke="#c5b7a0" stroke-width="1"/>
+ <path d="M670 110L847 181V268L670 192Z" fill="#a59b8d"/>
+ <path d="M709 128V207M762 152V228M813 173V252" stroke="#e7dcd0" stroke-width="6"/>
+ <path d="M663 188L866 274" stroke="#f1e6d4" stroke-width="7"/>
+ <path d="M671 117L849 189" stroke="#f1e6d4" stroke-width="7"/>
+ <path d="M714 131V198L748 213V146Z" fill="url(#glass)" stroke="#3e5554" stroke-width="3"/>
+ <path d="M763 151V220L798 237V166Z" fill="url(#glass)" stroke="#3e5554" stroke-width="3"/>
+ <path d="M481 258L633 190L633 133L481 197Z" fill="url(#glass)" stroke="#778b89" stroke-width="1.6" opacity=".63"/>
+ <path d="M558 159V225" stroke="#eee0c7" stroke-width="5"/>
+ <path d="M552 270L666 320L762 279L660 237Z" fill="#c6b499" stroke="#e5cba7" stroke-width="2"/>
+ <path d="M552 270V298L666 347V320Z" fill="#9e8b70"/>
+ <path d="M666 320V347L762 305V279Z" fill="#b4a17f"/>
+ <path d="M551 254L650 212L704 234L609 278Z" fill="#ebe3d5" stroke="#b9a891" stroke-width="1.5"/>
+ <path d="M609 278L704 234V256L609 298Z" fill="#9e9786"/>
+ <path d="M551 254L609 278V298L551 273Z" fill="#afa693"/>
+ <path d="M746 333L798 308L826 318L774 343Z" fill="#b3a88f" stroke="#dcd0b9"/>
+ <path d="M771 342L771 372" stroke="#9b8d79" stroke-width="4"/>
+ <path d="M735 336L735 365" stroke="#9b8d79" stroke-width="4"/>
+ <path d="M799 317L799 345" stroke="#9b8d79" stroke-width="4"/>
+</g>
+<g stroke="#d9bd8f" stroke-width="1.25" fill="none" opacity=".88"><path d="M360 260H403" stroke-dasharray="5 7"/><path d="M398 254L410 260L398 266"/></g>
+<g fill="#dec7a4" font-family="Arial,sans-serif" font-size="12" letter-spacing="3"><text x="54" y="425">2D / FLOOR PLAN</text><text x="681" y="473" text-anchor="middle">3D / ARCHITECTURE</text></g>
+</svg>
