@@ -42,7 +42,7 @@
   let saved=[];
   try{const raw=JSON.parse(localStorage.getItem(STORAGE_KEY));if(Array.isArray(raw?.characters))saved=raw.characters;}catch(e){}
   if(!saved.length)saved=[initial()];
-  let state={characters:saved,id:saved[0].id,section:'appearance',brushEnabled:false,brushType:'scar',brushSize:44,brushStrength:65,view:'front',zoom:100,previewAI:false,previewPrevious:false,aiBusy:false,aiReady:false,aiCode:'',aiInstruction:'',aiMode:'create',hairReference:null,aiQuality:'medium',aiSize:'1024x1536',aiGarment:-1};
+  let state={characters:saved,id:saved[0].id,section:'appearance',brushEnabled:false,brushType:'scar',brushSize:44,brushStrength:65,view:'front',zoom:100,previewAI:false,previewPrevious:false,aiBusy:false,aiReady:false,aiProvider:'openai',aiModel:'',aiCode:'',aiInstruction:'',aiMode:'create',hairReference:null,aiQuality:'medium',aiSize:'1024x1536',aiGarment:-1};
   let savingTimer=null, storageWarningShown=false;
   const current=()=>state.characters.find(c=>c.id===state.id)||state.characters[0];
   // Generated images are larger than localStorage quotas. Store their bytes in IndexedDB.
@@ -156,8 +156,8 @@
           <p class="field-note">${c.locked?'Базовые параметры сохранены в паспорте. Вы по-прежнему можете вносить изменения в текущий эскиз.':'Фиксация записывает эталонные параметры, с которыми позже сможет сравниваться AI-результат.'}</p>
         </section>`;
       case 'ai':return `<section class="control-section">${heading('Фотореалистичная генерация','01 / 04')}
-          <div class="ai-state ${state.aiReady?'ai-online':'ai-offline'}" id="aiStatus">${state.aiReady?'● AI-сервер готов к работе':'○ AI не настроен или недоступен'}</div>
-          ${note('Фотореалистичная генерация выполняется только после подключения API. Оплачивается отдельно. Отправляйте только фотографии, которые имеете право использовать.')}
+          <div class="ai-state ${state.aiReady?'ai-online':'ai-offline'}" id="aiStatus">${state.aiReady?(state.aiProvider==='arkheon'?'● Arkheon настроен · Image API пока не проверен':'● AI-сервер готов к работе'):(state.aiProvider==='arkheon'?'○ Arkheon: нужен API-ключ и ID модели изображений':'○ AI не настроен или недоступен')}</div>
+          ${note(state.aiProvider==='arkheon'?'Выбран Arkheon. Поддержка генерации и редактирования изображений через публичный API ещё не подтверждена. После настройки проверьте доступность метода и модели; кредиты Arkheon могут списываться за успешный запрос.':'Фотореалистичная генерация выполняется только после подключения API. Оплачивается отдельно. Отправляйте только фотографии, которые имеете право использовать.')}
           <div class="field"><div class="field-name"><label for="aiAccessCode">Код доступа</label></div><input class="text-control" id="aiAccessCode" type="password" autocomplete="off" placeholder="Задаётся владельцем приложения" value="${esc(state.aiCode)}" /></div>
           <div class="field"><div class="field-name"><label for="aiMode">Режим генерации</label></div><select id="aiMode" class="select-control"><option value="create" ${state.aiMode==='create'?'selected':''}>Создать нового по параметрам</option><option value="identity" ${state.aiMode==='identity'?'selected':''}>Сохранить лицо — изменить по запросу</option><option value="hair" ${state.aiMode==='hair'?'selected':''}>Изменить только причёску</option><option value="outfit" ${state.aiMode==='outfit'?'selected':''}>Переодеть персонажа</option><option value="skin" ${state.aiMode==='skin'?'selected':''}>Изменить детали кожи</option></select></div>
           <div class="reference-ready">${c.locked?(c.hasIdentityImage||c.identityImage?'◆ Фотореференс личности закреплён':'◆ Параметры закреплены — для точности создайте эталонное фото'):'◇ Личность не закреплена'} ${c.source==='photo'?' · Есть исходное фото':''}</div>
@@ -428,7 +428,7 @@
   $('#garmentFile').addEventListener('change',async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;try{const image=await resizedImage(f);const name=f.name.replace(/\.[^.]+$/,'');current().wardrobe.push({name,image});renderAll();toast('Фото одежды сохранено как референс.');}catch(err){toast(err.message||'Не удалось загрузить одежду.');}});
   document.addEventListener('keydown',e=>{const el=document.activeElement;const editing=el&&/INPUT|TEXTAREA|SELECT/.test(el.tagName);if(e.key.toLowerCase()==='n'&&!editing&&!$('#modalRoot').children.length){e.preventDefault();openCreateModal();}if(e.key==='Escape')closeModal();});
   async function checkAI(){
-    try{const response=await fetch('/api/status',{signal:AbortSignal.timeout(4000)});const info=await response.json();state.aiReady=!!info.aiConfigured;}
+    try{const response=await fetch('/api/status',{signal:AbortSignal.timeout(4000)});const info=await response.json();state.aiReady=!!info.aiConfigured;state.aiProvider=info.provider||'openai';state.aiModel=info.model||'';}
     catch{state.aiReady=false;}
     if(state.section==='ai')renderInspector();
   }
