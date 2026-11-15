@@ -86,3 +86,18 @@ body.forma-sunstudio-open{overflow:hidden!important}
  .forma-sun-studio-launcher{width:calc(100% - 20px);margin:8px 10px;padding:10px}
 }
 @media(prefers-reduced-motion:reduce){.forma-sunstudio-marker,.forma-sunstudio-shadow-marker,.forma-sunstudio-control button{transition:none}}
+
+
+/* Shared LIGHT STUDIO controls inside the existing interior workflow */
+.forma-interior-light-studio{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0;padding:18px;border:1px solid #8e785d;background:linear-gradient(125deg,#232623,#191b1a);border-radius:14px;color:#f2e8dc}
+.forma-interior-light-studio>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.forma-interior-light-studio span{font-size:10px;font-weight:800;letter-spacing:.12em;color:#d5b58b}
+.forma-interior-light-studio h4{margin:0;font-size:17px;letter-spacing:-.025em}
+.forma-interior-light-studio p{font-size:11px;line-height:1.5;margin:0;color:#c5c2b8}
+.forma-interior-light-studio button{background:#d6b990;border:1px solid #e0c49e;color:#1a1d1a;padding:11px 13px;border-radius:9px;cursor:pointer;font-weight:800;font-size:11px;white-space:nowrap}
+.forma-sunstudio-indoor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.forma-sunstudio-indoor-grid button{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-height:56px;padding:10px;border:1px solid #4a514c;border-radius:9px;background:#292e29;color:#dddcd6;cursor:pointer}
+.forma-sunstudio-indoor-grid button strong{font-size:11px}.forma-sunstudio-indoor-grid button small{font-size:10px;color:#b2b7b0}
+.forma-sunstudio-indoor-grid button.is-selected{border-color:#ddbd90;background:#514636}
+.forma-sunstudio-control[hidden]{display:none!important}
+@media(max-width:640px){.forma-interior-light-studio{flex-direction:column;align-items:stretch;padding:14px}.forma-interior-light-studio button{width:100%}}
