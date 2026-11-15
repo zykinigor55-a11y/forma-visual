@@ -5,7 +5,7 @@
    The page opens only after both the minimum animation and app initialization. */
 (() => {
  'use strict';
- const TIME={loaderEnd:1650,logo:2050,name:3300,descriptor:3740,minShow:5550,recovery:15000};
+ const TIME={loaderEnd:1350,logo:1750,name:2600,descriptor:3130,minShow:4600,recovery:14000};
  const root=document.documentElement;
  const screen=document.getElementById('forma-intro');
  if(!screen)return;
@@ -15,6 +15,52 @@
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false;
  let lastFocus=null,paintStart=0;
+ let soundEnabled=false,audioContext=null;
+ const soundKey='forma-noir-open-sound-v1';
+ try{soundEnabled=localStorage.getItem(soundKey)==='on'}catch{}
+ const soundButton=document.getElementById('formaIntroSound');
+ function soundUI(){
+  if(!soundButton)return;
+  soundButton.textContent=soundEnabled?'◉  Звук включён':'○  Включить звук';
+  soundButton.setAttribute('aria-pressed',String(soundEnabled));
+ }
+ function unlockSound(){
+  if(!soundEnabled)return;
+  try{
+   const A=window.AudioContext||window.webkitAudioContext;
+   if(!A)return;
+   if(!audioContext)audioContext=new A();
+   if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
+  }catch{}
+ }
+ function entranceSound(){
+  if(!soundEnabled||!audioContext||audioContext.state!=='running')return;
+  try{
+   const context=audioContext,now=context.currentTime;
+   const mix=context.createGain(),filter=context.createBiquadFilter();
+   filter.type='lowpass';filter.frequency.setValueAtTime(630,now);
+   mix.gain.setValueAtTime(.0001,now);
+   mix.gain.exponentialRampToValueAtTime(.024,now+.12);
+   mix.gain.exponentialRampToValueAtTime(.0001,now+.84);
+   mix.connect(filter);filter.connect(context.destination);
+   for(const [frequency,type,volume,offset] of [[196,'sine',.64,0],[293.66,'sine',.29,.04],[392,'triangle',.07,.07]]){
+    const oscillator=context.createOscillator(),gain=context.createGain();
+    oscillator.type=type;oscillator.frequency.setValueAtTime(frequency,now);
+    gain.gain.value=volume;oscillator.connect(gain);gain.connect(mix);
+    oscillator.start(now+offset);oscillator.stop(now+.87);
+    oscillator.addEventListener('ended',()=>{oscillator.disconnect();gain.disconnect()},{once:true});
+   }
+   setTimeout(()=>{mix.disconnect();filter.disconnect()},1200);
+  }catch{}
+ }
+ soundButton?.addEventListener('click',()=>{
+  soundEnabled=!soundEnabled;
+  try{localStorage.setItem(soundKey,soundEnabled?'on':'off')}catch{}
+  soundUI();
+  if(soundEnabled)unlockSound();
+ });
+ screen.addEventListener('pointerdown',()=>{if(soundEnabled)unlockSound()},{passive:true});
+ soundUI();
  const timers=new Set();
  const addTimeout=(task,ms)=>{
   const id=run;const timer=setTimeout(()=>{
@@ -41,6 +87,7 @@
   closing=true;clearTimers();
   screen.classList.remove('is-holding');
   if(recover)recover.hidden=true;
+  entranceSound();
   screen.classList.add('is-leaving');
   const id=run;
   setTimeout(()=>{
