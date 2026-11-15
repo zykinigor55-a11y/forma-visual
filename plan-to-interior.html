@@ -82,7 +82,7 @@
    </section>
    <section class="tool-section surface-editor" id="surfaceEditorPanel" hidden>
     <div class="section-num">МАТЕРИАЛ ВЫБРАННОГО ЭЛЕМЕНТА</div>
-    <strong id="surfaceName" class="selected-surface">Выберите объект в 3D</strong>
+    <button type="button" class="editor-close" data-close-properties aria-label="Закрыть свойства">×</button><strong id="surfaceName" class="selected-surface">Выберите объект в 3D</strong>
     <p id="surfaceHint" class="assist">Нажмите на пол или стену в окне 3D.</p>
     <label>Область изменения<select id="surfaceScope"><option value="whole">Вся поверхность</option><option value="patch">Только выбранный участок стены</option></select></label>
     <div id="patchOptions" hidden><div class="tool-grid">
@@ -98,13 +98,13 @@
    </section>
    <section class="tool-section opening-editor" id="openingEditorPanel" hidden>
     <div class="section-num">АРХИТЕКТУРНЫЙ ПРОЁМ / BIM-СВОЙСТВА</div>
-    <strong id="openingName" class="selected-surface">Выбрано окно</strong>
+    <button type="button" class="editor-close" data-close-properties aria-label="Закрыть свойства">×</button><strong id="openingName" class="selected-surface">Выбрано окно</strong>
     <p class="assist" id="openingHint">По одному плану невозможно всегда узнать количество створок. Проверьте по фасаду или спецификации.</p>
     <div class="tool-grid"><label>Ширина проёма, м<input id="openingWidth" type="number" step=".05" min=".35" max="5.9"></label>
     <label>Высота, м<input id="openingHeight" type="number" step=".05" min=".35" max="3.5"></label></div>
     <label id="sillLabel">Высота подоконника, м<input id="openingSill" type="number" step=".05" min="0" max="3"></label>
     <div id="windowSashes"><div class="section-num">КОЛИЧЕСТВО СТВОРОК</div>
-      <div class="sash-options"><button type="button" data-sashes="2">▥ <strong>2 створки</strong></button><button type="button" data-sashes="3">▥ <strong>3 створки</strong></button></div>
+      <div class="sash-options"><button type="button" data-sashes="2"><span class="sash-diagram" aria-hidden="true"><i></i><i></i></span><strong>2 створки</strong></button><button type="button" data-sashes="3"><span class="sash-diagram" aria-hidden="true"><i></i><i></i><i></i></span><strong>3 створки</strong></button></div>
       <p id="sashConfidence" class="assist">Количество створок требует подтверждения.</p>
     </div>
     <label>Цвет рамы<input type="color" id="openingFrameColor" value="#303633"></label>
@@ -129,6 +129,6 @@
  </div>
  <section class="privacy-note"><strong>Проверяемая геометрия, а не выдуманное 3D.</strong> Автоматическое определение стен работает как черновик. Пока масштаб не подтверждён, размеры и площади являются условными. AI-анализ доступен только при подключённой Vision-модели, а генерация фотографии — после согласования проекта.</section>
 </main>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="propertyOverlay" hidden></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script type="module" src="plan-to-interior.js?v=20261115-arch-v19"></script>
 </body></html>
