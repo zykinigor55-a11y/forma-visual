@@ -1937,8 +1937,12 @@ window.FORMA_SCENE_BRIDGE={
   const x=Math.max(0,Math.min(1,Number(position?.x)));
   const y=Math.max(0,Math.min(1,Number(position?.y)));
   if(!Number.isFinite(x)||!Number.isFinite(y))return false;
+  const direction=['front-left','front','front-right','left','right','back-left','back','back-right'].includes(position?.direction)?position.direction:null;
+  const elevation=['low','medium','high'].includes(position?.elevation)?position.elevation:null;
+  const shadow=['soft','natural','defined','cinematic'].includes(position?.shadow)?position.shadow:null;
   current().sunLighting={x:Math.round(x*1000)/1000,y:Math.round(y*1000)/1000,
-   softness:['soft','natural','defined'].includes(position?.softness)?position.softness:'natural'};
+   softness:['soft','natural','defined'].includes(position?.softness)?position.softness:'natural',
+   ...(direction?{direction}:{}),...(elevation?{elevation}:{}),...(shadow?{shadow}:{})};
   save();return true;
  },
  resetSun(){if(!project)return;current().sunLighting=null;save()},
