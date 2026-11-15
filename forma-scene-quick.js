@@ -250,7 +250,18 @@
     sunSection.append(relight);
    }
   }
-  body.append(sunSection);
+  // SUN STUDIO supersedes the old photo-drag marker to avoid ambiguous camera-relative sun directions.
+  const relightButton=sunSection.querySelector('[data-sun-relight]');
+  sunSection.replaceChildren();
+  const heading=document.createElement('div');heading.className='forma-scene-sheet-group-head';
+  heading.innerHTML='<strong>Свет и тени / SUN STUDIO</strong><small>Точное направление относительно камеры</small>';
+  const explainer=document.createElement('p');explainer.className='forma-sun-explainer';
+  explainer.textContent='Выберите направление солнца, его высоту и характер теней в профессиональной световой схеме. Геометрия исходного дома остаётся основой AI-рендера.';
+  const sunButton=document.createElement('button');sunButton.type='button';sunButton.className='forma-sun-studio-inline-button';sunButton.dataset.sunStudioOpen='1';
+  sunButton.innerHTML='<strong>☼ Открыть SUN STUDIO</strong><small>Орбита · 8 направлений · тени ↗</small>';
+  sunSection.append(heading,explainer,sunButton);
+  if(relightButton)sunSection.append(relightButton);
+  body.prepend(sunSection);
   if(!sheet.hidden)requestAnimationFrame(()=>drawPin(get().sun));
  }
  function drawPin(sun){
@@ -296,6 +307,7 @@
  }
  function cancelSunPointer(){dragging=false;dragPointer=null;draftSun=null}
  function onSheetClick(event){
+  if(event.target.closest('[data-sun-studio-open]')){close();window.FORMA_SUN_STUDIO?.open?.();return}
   if(event.target.closest('[data-scene-close]')){close();return}
   const choice=event.target.closest('[data-quick-group][data-quick-choice]');
   if(choice){
