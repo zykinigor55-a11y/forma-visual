@@ -3,8 +3,8 @@
 .fa-flow-head-actions #faFlowRetryChain{border:1px solid #8e9d8e;background:rgba(134,164,147,.12);color:#e3eee7;font-weight:700;padding:0 12px;white-space:nowrap}
 .fa-flow-head-actions #faFlowRetryChain:hover:not(:disabled){background:rgba(134,164,147,.23)}
 .fa-flow-head-actions #faFlowRetryChain[hidden]{display:none!important}
-.fa-flow-palette button.fa-flow-not-ready{opacity:.46;cursor:not-allowed}
-.fa-flow-palette button.fa-flow-not-ready:after{content:"НЕТ API";display:block;font:700 9px Inter,Arial,sans-serif;letter-spacing:.06em;color:#d7b7a0}
+#faFlowPalette button.fa-flow-not-ready{opacity:.46;cursor:not-allowed}
+#faFlowPalette button.fa-flow-not-ready:after{content:"НЕТ API";display:block;font:700 9px Inter,Arial,sans-serif;letter-spacing:.06em;color:#d7b7a0}
 @media(max-width:720px){
  .fa-flow-head-actions #faFlowRetryChain{min-width:33px;width:33px!important;padding:0;font-size:0;position:relative}
  .fa-flow-head-actions #faFlowRetryChain:before{content:"↻";font-size:19px;font-weight:500}
