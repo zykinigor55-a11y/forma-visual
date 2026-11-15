@@ -462,7 +462,68 @@ const ENV_SUBTYPES = Object.freeze({
   ]
  ]
 });
-const ENV_SUBTYPE_PHOTOS = Object.freeze({"garden":["assets/thumbs/hd/env-garden.webp","assets/thumbs/natural-luxury/env-garden.webp","assets/thumbs/env-garden.jpg","assets/thumbs/hd/env-nordic.webp"],"forest":["assets/thumbs/hd/env-forest.webp","assets/thumbs/natural-luxury/env-forest.webp","assets/thumbs/env-forest.jpg","assets/thumbs/hd/env-mist.webp"],"lake":["assets/thumbs/hd/env-lake.webp","assets/thumbs/natural-luxury/env-lake.webp","assets/thumbs/env-lake.jpg","public/images/demo/background-lake-summer.webp"],"mountains":["assets/thumbs/hd/env-mountains.webp","assets/thumbs/natural-luxury/env-mountains.webp","assets/thumbs/env-mountains.jpg","assets/thumbs/hd/env-nordic.webp"],"city":["assets/thumbs/hd/env-city.webp","assets/thumbs/natural-luxury/env-city.webp","assets/thumbs/env-city.jpg","assets/thumbs/hd/env-courtyard.webp"],"courtyard":["assets/thumbs/hd/env-courtyard.webp","assets/thumbs/natural-luxury/env-courtyard.webp","assets/thumbs/env-courtyard.jpg","assets/thumbs/hd/season-spring.webp"],"nordic":["assets/thumbs/hd/env-nordic.webp","assets/thumbs/natural-luxury/env-nordic.webp","assets/thumbs/env-nordic.jpg","assets/thumbs/hd/env-mist.webp"],"coast":["assets/thumbs/hd/env-coast.webp","assets/thumbs/natural-luxury/env-coast.webp","assets/thumbs/env-coast.jpg","assets/thumbs/hd/env-lake.webp"],"minimal":["assets/thumbs/hd/env-minimal.webp","assets/thumbs/natural-luxury/env-minimal.webp","assets/thumbs/env-minimal.jpg","assets/thumbs/hd/env-garden.webp"],"mist":["assets/thumbs/hd/env-mist.webp","assets/thumbs/natural-luxury/env-mist.webp","assets/thumbs/env-mist.jpg","assets/thumbs/presets/preset-fog.webp"]});
+const ENV_SUBTYPE_PHOTOS = Object.freeze({
+ "garden": [
+  "assets/thumbs/hd/env-garden.webp",
+  "assets/thumbs/natural-luxury/env-garden.webp",
+  "assets/thumbs/env-garden.jpg",
+  "assets/thumbs/hd/plants-decorative.webp"
+ ],
+ "forest": [
+  "assets/thumbs/hd/env-forest.webp",
+  "assets/thumbs/natural-luxury/env-forest.webp",
+  "assets/thumbs/env-forest.jpg",
+  "assets/thumbs/hd/plants-forest.webp"
+ ],
+ "lake": [
+  "assets/thumbs/hd/env-lake.webp",
+  "assets/thumbs/natural-luxury/env-lake.webp",
+  "assets/thumbs/env-lake.jpg",
+  "public/images/demo/background-lake-summer.webp"
+ ],
+ "mountains": [
+  "assets/thumbs/hd/env-mountains.webp",
+  "assets/thumbs/natural-luxury/env-mountains.webp",
+  "assets/thumbs/env-mountains.jpg",
+  "assets/thumbs/hd/env-nordic.webp"
+ ],
+ "city": [
+  "assets/thumbs/hd/env-city.webp",
+  "assets/thumbs/natural-luxury/env-city.webp",
+  "assets/thumbs/env-city.jpg",
+  "assets/thumbs/hd/env-courtyard.webp"
+ ],
+ "courtyard": [
+  "assets/thumbs/hd/env-courtyard.webp",
+  "assets/thumbs/natural-luxury/env-courtyard.webp",
+  "assets/thumbs/env-courtyard.jpg",
+  "assets/thumbs/hd/season-spring.webp"
+ ],
+ "nordic": [
+  "assets/thumbs/hd/env-nordic.webp",
+  "assets/thumbs/natural-luxury/env-nordic.webp",
+  "assets/thumbs/env-nordic.jpg",
+  "assets/thumbs/hd/env-mist.webp"
+ ],
+ "coast": [
+  "assets/thumbs/hd/env-coast.webp",
+  "assets/thumbs/natural-luxury/env-coast.webp",
+  "assets/thumbs/env-coast.jpg",
+  "assets/thumbs/hd/plants-mediterranean.webp"
+ ],
+ "minimal": [
+  "assets/thumbs/hd/env-minimal.webp",
+  "assets/thumbs/natural-luxury/env-minimal.webp",
+  "assets/thumbs/env-minimal.jpg",
+  "assets/thumbs/hd/plants-minimal.webp"
+ ],
+ "mist": [
+  "assets/thumbs/hd/env-mist.webp",
+  "assets/thumbs/natural-luxury/env-mist.webp",
+  "assets/thumbs/env-mist.jpg",
+  "assets/thumbs/presets/preset-fog.webp"
+ ]
+});
 const choices = {
  time:[['morning','Утро','Мягкое низкое утреннее солнце'],['day','День','Естественный дневной свет'],['golden','Вечер','Тёплый золотой час'],['night','Ночь','Ночная съёмка, мягкий интерьерный свет']],
  weather:[['clear','Ясно','Чистое небо'],['cloud','Облачно','Плотная переменная облачность'],['rain','Дождь','Реалистичный дождь, влажные поверхности'],['fog','Туман','Низкий мягкий туман'],['snow','Снег','Снег, зимний свет']],
