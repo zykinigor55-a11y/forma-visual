@@ -1555,6 +1555,14 @@ async function cropBatchDetail(source,focusX,focusY,ratioString,zoom=.5){
  out.width=out.height=1;
  return data;
 }
+function approveBatchEnvironment(url){
+ const dialog=document.createElement('dialog');
+ dialog.style.cssText='max-width:min(92vw,720px);border:0;border-radius:16px;padding:16px';
+ dialog.innerHTML='<form method="dialog"><h2>Окружение первого ракурса</h2><img alt="Первый ракурс участка" style="width:100%;max-height:55vh;object-fit:contain"><p>Этот кадр задаст расположение окружения, сезон и свет для остальных видов.</p><button value="stop">Остановить пакет</button> <button class="btn btn-primary" value="approve">Утвердить окружение и продолжить</button></form>';
+ dialog.querySelector('img').src=url;
+ document.body.append(dialog);
+ return new Promise(resolve=>{dialog.onclose=()=>{const ok=dialog.returnValue==='approve';dialog.remove();resolve(ok)};dialog.showModal()});
+}
 async function generateBatch(){
  if(rendering){toast('Другая генерация уже выполняется');return}
  if(!project?.hasSource){toast('Сначала загрузите исходный скриншот дома');return}
@@ -1577,7 +1585,7 @@ async function generateBatch(){
  rendering=true;
  $('batchStart').disabled=true;$('generateBtn').disabled=true;$('batchToggle').disabled=true;$('batchFrontFile').disabled=true;
  $('batchStart').textContent='Создаём пакет…';
- setRenderProgress('Пакетная визуализация','Готовим четыре независимых кадра');
+ setRenderProgress('Пакетная визуализация','Готовим первый ракурс для утверждения');
  try{
   const images=[
    src,
@@ -1593,7 +1601,8 @@ async function generateBatch(){
    setRenderProgress('Кадр '+position,shot.title+' · один запрос к AI Market');
    const payload={
     image:await urlToDataURL(images[i]),
-    reference:i===0?null:(i===1&&!front?null:src), // The original complete MODEL anchors geometry in frontal and AI-generated macro crops.
+    reference:i===0?null:firstResult,
+    environmentAnchor:i>0,
     brief:{...brief,lockGeometry:true,preserveMaterials:true,output:{...brief.output,quantity:1}},
     batchShot:shot.id,batchFrontProvided:!!front,
     quantity:1,quality,size:imageSizeForRatio(ratio)
@@ -1621,6 +1630,7 @@ async function generateBatch(){
    renderURL=url;
    $('afterImg').src=url;$('noRender').hidden=true;$('resultTag').textContent='ПАКЕТ '+position.toUpperCase();
    made++;save();renderResults();renderVariantsPanel();renderAnimationPanel();
+   if(i===0){if(!await approveBatchEnvironment(url)){batchStatus('Первый кадр сохранён. Пакет остановлен.');return}batchProject.environmentRender=id;save()}
   }
   if(current().keepReference&&firstResult){
    await setMedia(mediaKey('ref'),firstResult);batchProject.reference='ref';save();

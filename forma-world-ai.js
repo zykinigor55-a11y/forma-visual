@@ -116,6 +116,21 @@ async function submit(kind){
   await poll(kind,id);
  }catch(e){say('Не удалось запустить AI: '+e.message);busy=false;update()}
 }
+async function offerEnvironment(){
+ const saved=JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}');
+ const project=saved.projects?.find(p=>p.id===saved.activeId);
+ if(!project?.environmentRender)return;
+ const key=project.id+'_render_'+project.environmentRender;
+ const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('domrender-media-v1');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+ let image;
+ try{if(db.objectStoreNames.contains('media'))image=await new Promise((resolve,reject)=>{const req=db.transaction('media').objectStore('media').get(key);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}finally{db.close()}
+ image ||= localStorage.getItem('domrender_fallback_'+key);
+ if(!image)return;
+ const button=document.createElement('button');button.type='button';button.textContent='Использовать утверждённое окружение · '+project.name;
+ file.parentElement.after(button);
+ button.onclick=async()=>{try{const blob=await (await fetch(image)).blob();const candidate=new File([blob],'Окружение проекта',{type:blob.type});await getImageData(candidate);photo=candidate;file.value='';$('#fwAIFileInfo').textContent='Утверждённое окружение · '+project.name}catch(e){say(e.message)}};
+}
+offerEnvironment().catch(()=>{});
 file.addEventListener('change',event=>{
  const f=event.target.files?.[0]||null;photo=f;
  $('#fwAIFileInfo').textContent=f?f.name+' · '+(f.size/1024/1024).toFixed(1)+' МБ':'Фото ещё не выбрано';
