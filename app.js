@@ -497,13 +497,13 @@ const ENV_SUBTYPE_PHOTOS = Object.freeze({
   "assets/thumbs/hd/env-courtyard.webp",
   "assets/thumbs/natural-luxury/env-courtyard.webp",
   "assets/thumbs/env-courtyard.jpg",
-  "assets/thumbs/hd/season-spring.webp"
+  "assets/thumbs/hd/env-garden.webp"
  ],
  "nordic": [
   "assets/thumbs/hd/env-nordic.webp",
   "assets/thumbs/natural-luxury/env-nordic.webp",
   "assets/thumbs/env-nordic.jpg",
-  "assets/thumbs/hd/env-mist.webp"
+  "assets/thumbs/hd/env-mountains.webp"
  ],
  "coast": [
   "assets/thumbs/hd/env-coast.webp",
