@@ -7,6 +7,22 @@
  let active=false,completed=false,phase='prepare',started=0,clock=null,minimized=false,successTimer=null;
  let mini=null;
  const phases=['prepare','ai','save'];
+ const historyKey='forma-render-real-durations-v1';
+ let observedEstimate=null;
+ function history(){
+  try{const data=JSON.parse(localStorage.getItem(historyKey)||'[]');return Array.isArray(data)?data.filter(n=>Number.isFinite(n)&&n>=5&&n<=360).slice(-15):[]}
+  catch{return []}
+ }
+ function median(samples){
+  const sorted=[...samples].sort((a,b)=>a-b);
+  return sorted.length?sorted[Math.floor(sorted.length/2)]:null;
+ }
+ function estimateLabel(seconds){
+  if(completed)return 'Готово';
+  if(observedEstimate==null)return 'До завершения: AI не передаёт прогноз';
+  const left=Math.round(observedEstimate-seconds);
+  return left>0?'Ориентир ещё ≈ '+readableTime(left):'Дольше среднего · ожидаем ответ AI';
+ }
  function readableTime(seconds){
   const n=Math.max(0,seconds|0);
   return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
@@ -52,6 +68,11 @@
   const text=readableTime(seconds);
   const label=$('renderProgressElapsed');if(label)label.textContent='Прошло '+text;
   if(mini)mini.querySelector('.forma-ai-mini-time').textContent=text;
+  const remaining=$('renderProgressRemaining');
+  if(remaining){
+   remaining.textContent=estimateLabel(seconds);
+   remaining.title=observedEstimate==null?'Сервис генерации не предоставляет точный ETA.':'Это приблизительная оценка по нескольким предыдущим успешным генерациям на этом устройстве, не прогресс от AI.';
+  }
  }
  function expand(){
   if(!active)return;
@@ -67,6 +88,7 @@
   if(successTimer){clearTimeout(successTimer);successTimer=null}
   if(clock)clearInterval(clock);
   active=true;completed=false;started=Date.now();minimized=false;
+  const samples=history();observedEstimate=samples.length>=3?median(samples):null;
   const el=overlay();if(!el)return;
   el.hidden=false;el.classList.remove('is-complete');
   miniButton().hidden=true;
@@ -89,6 +111,10 @@
  }
  function complete(){
   if(!active)return;
+  const seconds=Math.round((Date.now()-started)/1000);
+  if(seconds>=5&&seconds<=360){
+   try{localStorage.setItem(historyKey,JSON.stringify([...history(),seconds].slice(-15)))}catch{}
+  }
   completed=true;setPhase('save');
   const el=overlay();if(el)el.classList.add('is-complete');
   if($('renderProgressTitle'))$('renderProgressTitle').textContent='Архитектурный кадр готов';
