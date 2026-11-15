@@ -9,13 +9,13 @@
   "assets/thumbs/hd/env-garden.webp",
   "assets/thumbs/natural-luxury/env-garden.webp",
   "assets/thumbs/env-garden.jpg",
-  "assets/thumbs/hd/env-nordic.webp"
+  "assets/thumbs/hd/plants-decorative.webp"
  ],
  "forest": [
   "assets/thumbs/hd/env-forest.webp",
   "assets/thumbs/natural-luxury/env-forest.webp",
   "assets/thumbs/env-forest.jpg",
-  "assets/thumbs/hd/env-mist.webp"
+  "assets/thumbs/hd/plants-forest.webp"
  ],
  "lake": [
   "assets/thumbs/hd/env-lake.webp",
@@ -51,13 +51,13 @@
   "assets/thumbs/hd/env-coast.webp",
   "assets/thumbs/natural-luxury/env-coast.webp",
   "assets/thumbs/env-coast.jpg",
-  "assets/thumbs/hd/env-lake.webp"
+  "assets/thumbs/hd/plants-mediterranean.webp"
  ],
  "minimal": [
   "assets/thumbs/hd/env-minimal.webp",
   "assets/thumbs/natural-luxury/env-minimal.webp",
   "assets/thumbs/env-minimal.jpg",
-  "assets/thumbs/hd/env-garden.webp"
+  "assets/thumbs/hd/plants-minimal.webp"
  ],
  "mist": [
   "assets/thumbs/hd/env-mist.webp",
