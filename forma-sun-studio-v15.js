@@ -15,21 +15,25 @@
   {id:'front-right',name:'Спереди справа',short:'↘',x:.81,y:.78,desc:'Правый передний свет'}
  ];
  const HEIGHTS=[{id:'low',name:'Низкое',hint:'Длинные тени',degrees:16},{id:'medium',name:'Среднее',hint:'Умеренные тени',degrees:38},{id:'high',name:'Высокое',hint:'Короткие тени',degrees:66}];
+ const INDOOR_SOURCES=[{id:'window',name:'Через окна',hint:'Естественный дневной свет'},{id:'ceiling',name:'Потолочный',hint:'Общий свет'},{id:'fixtures',name:'Светильники',hint:'Локальный уютный свет'},{id:'mixed',name:'Комбинированный',hint:'Дневной + искусственный'}];
+ const interiorMode=()=>window.FORMA_INTERIORS?.state?.().sceneType==='interior';
  const SHADOWS=[{id:'soft',name:'Мягкие',hint:'Широкая полутень'},{id:'natural',name:'Естественные',hint:'Реалистичный баланс'},{id:'defined',name:'Контрастные',hint:'Чёткие границы'},{id:'cinematic',name:'Кинематографичные',hint:'Глубокий светотеневой рисунок'}];
- let visible=false,previousFocus=null,scene={direction:'front-left',elevation:'medium',shadow:'natural'},userMoved=false;
+ let visible=false,previousFocus=null,scene={direction:'front-left',elevation:'medium',shadow:'natural',indoorSource:'window'},userMoved=false;
  const direction=id=>DIRECTIONS.find(d=>d.id===id)||DIRECTIONS[6];
  const height=id=>HEIGHTS.find(h=>h.id===id)||HEIGHTS[1];
  const shadow=id=>SHADOWS.find(s=>s.id===id)||SHADOWS[1];
+ const source=id=>INDOOR_SOURCES.find(s=>s.id===id)||INDOOR_SOURCES[0];
  const docBody=()=>document.body;
  function infoFromState(){
   const p=SOURCE().sun||{};
   return {direction:DIRECTIONS.some(d=>d.id===p.direction)?p.direction:'front-left',
    elevation:HEIGHTS.some(h=>h.id===p.elevation)?p.elevation:'medium',
-   shadow:SHADOWS.some(s=>s.id===p.shadow)?p.shadow:(p.softness==='soft'?'soft':p.softness==='defined'?'defined':'natural')};
+   shadow:SHADOWS.some(s=>s.id===p.shadow)?p.shadow:(p.softness==='soft'?'soft':p.softness==='defined'?'defined':'natural'),
+   indoorSource:INDOOR_SOURCES.some(o=>o.id===p.indoorSource)?p.indoorSource:'window'};
  }
  function payload(){
   const d=direction(scene.direction),h=height(scene.elevation);
-  return {direction:d.id,elevation:h.id,shadow:scene.shadow,
+  return {direction:d.id,elevation:h.id,shadow:scene.shadow,indoorSource:scene.indoorSource,
    x:d.x,y:d.y,softness:scene.shadow==='cinematic'?'defined':scene.shadow,
    elevationDegrees:h.degrees};
  }
@@ -68,6 +72,7 @@
   root=document.createElement('div');root.id='formaSunStudio';root.className='forma-sunstudio-backdrop';root.hidden=true;
   const dirBtns=DIRECTIONS.map(d=>'<button type="button" data-sun-direction="'+d.id+'" aria-pressed="false"><span aria-hidden="true">'+d.short+'</span><small>'+d.name+'</small></button>').join('');
   const heightBtns=HEIGHTS.map(h=>'<button type="button" data-sun-height="'+h.id+'" aria-pressed="false"><strong>'+h.name+'</strong><small>'+h.hint+'</small></button>').join('');
+  const indoorBtns=INDOOR_SOURCES.map(s=>'<button type="button" data-sun-indoor-source="'+s.id+'" aria-pressed="false"><strong>'+s.name+'</strong><small>'+s.hint+'</small></button>').join('');
   const shadowBtns=SHADOWS.map(s=>'<button type="button" data-sun-shadow="'+s.id+'" aria-pressed="false"><strong>'+s.name+'</strong><small>'+s.hint+'</small></button>').join('');
   root.innerHTML='<div class="forma-sunstudio-scrim" data-sun-close></div>'+
    '<section class="forma-sunstudio-panel" role="dialog" aria-modal="true" aria-labelledby="formaSunStudioTitle">'+
@@ -96,6 +101,7 @@
       '<section class="forma-sunstudio-control"><header><span>01</span><div><strong>Направление солнца</strong><small>Относительно камеры и фасада дома</small></div></header><div class="forma-sunstudio-direction-grid" role="group" aria-label="Направление света">'+dirBtns+'</div></section>'+
       '<section class="forma-sunstudio-control"><header><span>02</span><div><strong>Высота солнца</strong><small>Влияет на длину теней</small></div></header><div class="forma-sunstudio-height-grid" role="group" aria-label="Высота солнца">'+heightBtns+'</div></section>'+
       '<section class="forma-sunstudio-control"><header><span>03</span><div><strong>Характер теней</strong><small>Выберите мягкость и контраст</small></div></header><div class="forma-sunstudio-shadow-grid" role="group" aria-label="Характер теней">'+shadowBtns+'</div></section>'+
+      '<section id="formaSunStudioIndoor" class="forma-sunstudio-control forma-sunstudio-indoor" hidden><header><span>04</span><div><strong>Источники света</strong><small>Для интерьерной фотографии</small></div></header><div class="forma-sunstudio-indoor-grid" role="group" aria-label="Тип интерьерного света">'+indoorBtns+'</div></section>'+
      '</div>'+
     '</div>'+
     '<div class="forma-sunstudio-info" id="formaSunStudioNightNote" hidden>При выбранной ночной атмосфере солнечный свет не действует. Выберите дневное время для видимого солнечного эффекта.</div>'+
@@ -112,6 +118,7 @@
    if(d){scene.direction=d.dataset.sunDirection;persist();render();return}
    if(h){scene.elevation=h.dataset.sunHeight;persist();render();return}
    if(sh){scene.shadow=sh.dataset.sunShadow;persist();render();return}
+   const indoor=e.target.closest('[data-sun-indoor-source]');if(indoor){scene.indoorSource=indoor.dataset.sunIndoorSource;persist();render();return}
    if(e.target.closest('[data-sun-save]')){persist();close();return}
    if(e.target.closest('[data-sun-continue]')){
     persist();const existing=!!SOURCE().hasRender;
@@ -153,6 +160,18 @@
     button.classList.toggle('is-selected',active);button.setAttribute('aria-pressed',String(active));
    });
   }
+  const interior=interiorMode(),indoor=$('#formaSunStudioIndoor',root);
+  if(indoor)indoor.hidden=!interior;
+  root.classList.toggle('is-interior',interior);
+  const kicker=root.querySelector('.forma-sunstudio-kicker');if(kicker)kicker.textContent=interior?'FORMA / LIGHT STUDIO':'FORMA / SUN STUDIO';
+  const head=root.querySelector('.forma-sunstudio-control-stack .forma-sunstudio-control header strong');
+  if(head)head.textContent=interior?'Направление дневного света':'Направление солнца';
+  const infoText=root.querySelector('.forma-sunstudio-visual-head>span:first-child');
+  if(infoText)infoText.textContent=interior?'01 / ИНТЕРЬЕРНОЕ ОСВЕЩЕНИЕ':'01 / СВЕТОВАЯ СХЕМА';
+  root.querySelectorAll('[data-sun-indoor-source]').forEach(b=>{
+   const active=b.dataset.sunIndoorSource===scene.indoorSource;
+   b.classList.toggle('is-selected',active);b.setAttribute('aria-pressed',String(active));
+  });
   const area=$('#formaSunStudioImageArea');if(area){
    area.dataset.lightDirection=d.id;area.dataset.shadow=sh.id;area.dataset.elevation=h.id;
    const pin=$('#formaSunStudioMarker'),shadowPin=$('#formaSunStudioShadowMarker');
@@ -172,7 +191,7 @@
   }
   $('#formaSunStudioDirectionName').textContent=d.name;
   $('#formaSunStudioLiveStatus').textContent=d.desc.toUpperCase();
-  $('#formaSunStudioResultSummary').textContent=d.desc+' · '+h.hint.toLowerCase()+' · '+sh.name.toLowerCase()+' тени';
+  $('#formaSunStudioResultSummary').textContent=interior?'Интерьер · '+source(scene.indoorSource).name+' · '+sh.name.toLowerCase()+' тени':d.desc+' · '+h.hint.toLowerCase()+' · '+sh.name.toLowerCase()+' тени';
   const info=SOURCE();const night=info.explicit?.time&&/ночь|night/i.test(String(info.time||''));
   $('#formaSunStudioNightNote').hidden=!night;
   const continueButton=root.querySelector('[data-sun-continue]');
@@ -181,7 +200,7 @@
  function open(){
   if(!SOURCE().hasSource)return;
   const root=build();scene=infoFromState();userMoved=false;previousFocus=document.activeElement;
-  const img=$('#formaSunStudioSource'),url=SOURCE().sourceImage||'';
+  const img=$('#formaSunStudioSource'),url=SOURCE().hasRender&&SOURCE().renderImage?SOURCE().renderImage:SOURCE().sourceImage||'';
   if(img.src!==url)img.src=url;
   root.hidden=false;visible=true;docBody().classList.add('forma-sunstudio-open');
   render();requestAnimationFrame(layoutOverlay);
