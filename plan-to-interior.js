@@ -219,6 +219,139 @@ function undo(){
  state.materials=state.materials||{walls:{},floor:null,zones:[]};
  selection=null;pending=null;afterChange();
 }
+function selectedOpening(){return state.openings.find(o=>o.id===selectedOpeningId)||null}
+function selectOpening(id,scroll=false){
+ const found=state.openings.find(o=>o.id===id);if(!found)return;
+ selectedOpeningId=id;selectedSurface=null;selection=found.wallId;
+ stagedSashes=[2,3].includes(Number(found.sashes))?Number(found.sashes):null;
+ refreshInspectors();redraw();
+ if(scroll)$('openingEditorPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+let stagedSashes=null;
+function surfaceMaterial(){
+ if(!selectedSurface)return normalizeMaterial({color:state.wallColor});
+ if(selectedSurface.type==='floor')return normalizeMaterial(state.materials.floor||{color:state.floorColor});
+ if(selectedSurface.type==='zone')return normalizeMaterial(state.materials.zones.find(z=>z.id===selectedSurface.zoneId)||{color:state.wallColor});
+ return normalizeMaterial(state.materials.walls[selectedSurface.wallId]||{color:state.wallColor});
+}
+function selectSurface(target,scroll=false){
+ selectedSurface=target;selectedOpeningId=null;selection=target?.wallId||null;
+ materialDraft=surfaceMaterial();
+ $('surfaceScope').value=target?.type==='zone'?'patch':'whole';
+ refreshInspectors();redraw();
+ if(scroll)$('surfaceEditorPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function renderMaterialPreview(){
+ const el=$('materialPreview');el.replaceChildren();
+ if(!materialDraft.texture){el.textContent='Текстура не загружена — будет использован выбранный цвет';return}
+ const img=document.createElement('img');img.src=materialDraft.texture;img.alt='Загруженный материал';
+ const label=document.createElement('span');label.textContent='Собственная текстура · масштаб '+materialDraft.textureScale;
+ el.append(img,label);
+}
+function refreshInspectors(){
+ document.querySelectorAll('[data-style-preset]').forEach(b=>b.classList.toggle('selected',b.dataset.stylePreset===state.style));
+ $('surfaceEditorPanel').hidden=!selectedSurface;
+ $('openingEditorPanel').hidden=!selectedOpeningId;
+ $('selectionStatus').textContent=selectedOpeningId?'Выбран архитектурный проём':selectedSurface?'Выбрано: '+materialTargetName(selectedSurface):'Нажмите на поверхность, чтобы изменить материал';
+ if(selectedSurface){
+  $('surfaceName').textContent=materialTargetName(selectedSurface)+(selectedSurface.wallId?' · '+selectedSurface.wallId:'');
+  $('surfaceHint').textContent=selectedSurface.type==='floor'?'Меняется только пол. Стены и окна не затрагиваются.':
+   selectedSurface.type==='zone'?'Выделен готовый фрагмент отделки.':'Можно изменить всю стену или только участок вокруг выбранной точки. Проёмы сохранятся.';
+  const scope=$('surfaceScope');if(selectedSurface.type==='floor'){scope.value='whole';scope.disabled=true}else scope.disabled=false;
+  if(selectedSurface.type==='zone')scope.value='patch';
+  $('patchOptions').hidden=scope.value!=='patch'||selectedSurface.type==='floor';
+  $('surfaceColor').value=materialDraft.color;
+  $('surfaceTextureScale').value=String(materialDraft.textureScale);
+  renderMaterialPreview();
+ }
+ const o=selectedOpening();if(o){
+  const wall=state.walls.find(w=>w.id===o.wallId),spec=wall?openingSpec(wall,o,state.scale,state.wallHeight):null;
+  $('openingName').textContent=(o.kind==='window'?'Окно':'Дверь')+' · '+o.id;
+  $('openingHint').textContent=o.kind==='window'?
+    (o.sashVerified?'Количество створок подтверждено.':'2 или 3 створки не определяются надёжно по одному плану. Выберите по фасаду или спецификации.'):'Уточните размер дверного проёма и цвет рамы.';
+  $('openingWidth').value=Number((spec?.widthM||o.widthM||1.4).toFixed(2));
+  $('openingHeight').value=Number((spec?.heightM||o.heightM||1.35).toFixed(2));
+  $('openingSill').value=Number((spec?.sillM||0).toFixed(2));
+  $('sillLabel').hidden=o.kind!=='window';
+  $('windowSashes').hidden=o.kind!=='window';
+  $('openingFrameColor').value=/^#[0-9a-f]{6}$/i.test(o.frameColor)?o.frameColor:(INTERIOR_STYLES[state.style]?.frame||'#303633');
+  document.querySelectorAll('[data-sashes]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.sashes)===stagedSashes));
+  $('sashConfidence').textContent=o.sashVerified?'Створки подтверждены пользователем.':
+    stagedSashes?'Вариант предложен AI или выбран в текущем сеансе. Нажмите «Сохранить и подтвердить».':'Количество створок неизвестно. Без фасада или спецификации 3D покажет условный двухстворчатый вариант.';
+ }
+}
+function useStyle(style){
+ const preset=INTERIOR_STYLES[style];if(!preset)return;
+ snapshot();state.style=style;state.wallColor=preset.walls;state.floorColor=preset.floor;
+ $('style').value=style;$('wallColor').value=preset.walls;$('floorColor').value=preset.floor;
+ afterChange();message('Стиль '+preset.name+' применён к базовым поверхностям. Индивидуальные материалы стен и пола сохранены.');
+}
+function materialForSelection(){
+ if(!selectedSurface){message('Нажмите на стену или пол прямо в 3D-просмотре.');return}
+ const color=$('surfaceColor').value,texture=materialDraft.texture,textureScale=Number($('surfaceTextureScale').value)||1;
+ const mat=normalizeMaterial({color,texture,textureScale});
+ snapshot();
+ if(selectedSurface.type==='floor')state.materials.floor=mat;
+ else if(selectedSurface.type==='zone'){
+  const zone=state.materials.zones.find(z=>z.id===selectedSurface.zoneId);
+  if(zone)Object.assign(zone,mat);
+ }else if($('surfaceScope').value==='patch'){
+  const wall=state.walls.find(w=>w.id===selectedSurface.wallId);if(!wall)return;
+  const len=dist(wall.a,wall.b)*state.scale;
+  const patchW=clamp(Number($('patchWidth').value)||1.6,.2,Math.max(.2,len-.04));
+  const patchH=clamp(Number($('patchHeight').value)||1.5,.2,state.wallHeight);
+  const centerM=clamp(Number(selectedSurface.centerM)||len/2,patchW/2,Math.max(patchW/2,len-patchW/2));
+  const bottomM=clamp((Number(selectedSurface.hitY)||1.35)-patchH/2,0,Math.max(0,state.wallHeight-patchH));
+  const id='zone_'+Date.now().toString(36);
+  state.materials.zones.push({id,wallId:wall.id,centerM,bottomM,widthM:patchW,heightM:patchH,side:selectedSurface.side===-1?-1:1,...mat});
+  selectedSurface={type:'zone',wallId:wall.id,zoneId:id};
+ }else{
+  state.materials.walls[selectedSurface.wallId]=mat;
+ }
+ materialDraft=mat;afterChange();message('Материал изменён только у выбранного объекта. Геометрия и оконные проёмы сохранены.');
+}
+function clearMaterial(){
+ if(!selectedSurface)return;
+ snapshot();
+ if(selectedSurface.type==='floor')state.materials.floor=null;
+ else if(selectedSurface.type==='zone'){
+  state.materials.zones=state.materials.zones.filter(z=>z.id!==selectedSurface.zoneId);
+  selectedSurface={type:'wall',wallId:selectedSurface.wallId,centerM:1,hitY:1.4,side:1};
+ }else delete state.materials.walls[selectedSurface.wallId];
+ materialDraft=surfaceMaterial();$('surfaceScope').value='whole';
+ afterChange();message('Локальная отделка удалена, вернулась базовая отделка стиля.');
+}
+async function loadMaterialImage(file){
+ if(!selectedSurface)return;
+ if(!/^image\/(png|jpeg|webp)$/.test(file.type)||file.size>5_000_000)throw Error('Нужна текстура PNG, JPG или WEBP до 5 МБ.');
+ const url=URL.createObjectURL(file);
+ try{
+  const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(Error('Не удалось открыть изображение материала'));im.src=url});
+  const c=document.createElement('canvas'),k=Math.min(1,850/Math.max(img.width,img.height));c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  materialDraft.texture=c.toDataURL('image/jpeg',.78);
+  renderMaterialPreview();message('Текстура загружена. Нажмите «Применить», чтобы назначить её объекту.');
+ }finally{URL.revokeObjectURL(url)}
+}
+function saveSelectedOpening(){
+ const original=selectedOpening();if(!original)return;
+ const wall=state.walls.find(w=>w.id===original.wallId);if(!wall)return;
+ const widthM=Number($('openingWidth').value),heightM=Number($('openingHeight').value),sillM=original.kind==='window'?Number($('openingSill').value):0;
+ if(original.kind==='window'&&!([2,3].includes(stagedSashes))){message('Для точной модели сначала выберите: 2 или 3 створки.');return}
+ const candidate={...original,widthM,heightM,sillM,frameColor:$('openingFrameColor').value,
+  sashes:original.kind==='window'?stagedSashes:null,sashVerified:original.kind==='window',verified:true};
+ if(!openingSpec(wall,candidate,state.scale,state.wallHeight)){message('Некорректные размеры: проверьте ширину, отступ, высоту и подоконник.');return}
+ const problems=openingProblems({...state,openings:state.openings.map(o=>o.id===candidate.id?candidate:o)});
+ if(problems.some(p=>p.includes('пересекаются')||p.includes('Некорректная'))){message('Проём пересекается с соседним или выходит за границы стены.');return}
+ snapshot();Object.assign(original,candidate);afterChange();
+ message((original.kind==='window'?'Окно':'Дверь')+' подтверждено: '+widthM.toFixed(2)+' × '+heightM.toFixed(2)+' м.'+(original.kind==='window'?' '+stagedSashes+' створки.':''));
+}
+function deleteSelectedOpening(){
+ const o=selectedOpening();if(!o)return;
+ snapshot();state.openings=state.openings.filter(x=>x.id!==o.id);
+ selectedOpeningId=null;selection=null;afterChange();message('Проём удалён.');
+}
+
 function addFurniture(type){
  if(!state.walls.length){message('Сначала создайте стены.');return}
  snapshot();
