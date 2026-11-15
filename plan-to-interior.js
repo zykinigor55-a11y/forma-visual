@@ -7,7 +7,7 @@ const STORE='forma-plan-to-interior-mvp-v1';
 const state={image:null,width:0,height:0,bitmap:null,walls:[],openings:[],furniture:[],scale:.02,scaleVerified:false,
  wallHeight:2.8,wallThickness:.2,wallColor:'#e7dfd1',floorColor:'#af9172',style:'warm-modern',lighting:'soft-daylight'};
 let mode='select',selection=null,pending=null,calibration=[],history=[],photo=null,photoHistory=[];
-let screen={x:0,y:0,k:1,w:0,h:0},three=null,lastMessage='',toastTimer=null;
+let screen={x:0,y:0,k:1,w:0,h:0},three=null,lastMessage='',toastTimer=null,dragWall=null;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const round=(v,n=2)=>Number(Number(v).toFixed(n));
 function message(text){lastMessage=text;const e=$('toast');e.textContent=text;e.classList.add('visible');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('visible'),4700)}
@@ -27,6 +27,7 @@ function sync(){
  $('saveModel').disabled=!hasWalls;$('exportOBJ').disabled=!hasWalls||!three;
  $('renderPhoto').disabled=!hasWalls||!scaled||!three;
  $('deleteWall').disabled=!selection;$('undo').disabled=!history.length;
+ $('confirmWalls').disabled=!hasWalls||!scaled;
  $('planEmpty').hidden=has;$('threeEmpty').hidden=hasWalls&&!!three;
  $('sourceStatus').textContent=has?'ПЛАН ЗАГРУЖЕН':'НЕТ ПЛАНА';
  $('sourceStatus').classList.toggle('warn',!has);
@@ -60,6 +61,7 @@ function redraw(){
   ctx.lineWidth=wall.id===selection?5:3;ctx.lineCap='round';
   ctx.strokeStyle=wall.id===selection?'#ffce8a':wall.verified?'#a8dab1':'#ddbb89';
   ctx.shadowColor='#000';ctx.shadowBlur=1;ctx.stroke();ctx.shadowBlur=0;
+  if(wall.id===selection){for(const end of [a,b]){ctx.fillStyle='#f5d4a5';ctx.strokeStyle='#1a211d';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(end.x,end.y,6,0,Math.PI*2);ctx.fill();ctx.stroke()}}
   for(const o of state.openings.filter(o=>o.wallId===wall.id)){
    const t=clamp(o.offset,0,1),cx=a.x+(b.x-a.x)*t,cy=a.y+(b.y-a.y)*t;
    ctx.fillStyle=o.kind==='window'?'#8bcfde':'#eb986c';ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fill();
@@ -380,13 +382,32 @@ function bind(){
   try{await applyImage(await readImageFile(file));autoDetect();message('План загружен. Распознанные стены — предварительные. Подтвердите масштаб и проверьте линии.')}
   catch(err){message(err.message||'Не удалось открыть план.')}
  });
- $('planCanvas').addEventListener('pointerdown',e=>{e.preventDefault();canvasTap(e)});
+ $('planCanvas').addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  if(mode==='select'&&selection){
+   const wall=state.walls.find(w=>w.id===selection);
+   if(wall){
+    const p=fromPointer(e);const endpoint=dist(p,wall.a)<=13/screen.k?'a':dist(p,wall.b)<=13/screen.k?'b':null;
+    if(endpoint){snapshot();dragWall={id:wall.id,endpoint};$('planCanvas').setPointerCapture(e.pointerId);return}
+   }
+  }
+  canvasTap(e);
+ });
+ $('planCanvas').addEventListener('pointermove',e=>{
+  if(!dragWall)return;
+  const wall=state.walls.find(w=>w.id===dragWall.id);if(!wall)return;
+  wall[dragWall.endpoint]=fromPointer(e);redraw();
+ });
+ const finishDrag=()=>{if(!dragWall)return;dragWall=null;state.scaleVerified=false;afterChange();message('Стена изменена: проверьте размерные цепочки и повторно подтвердите масштаб при необходимости.');};
+ $('planCanvas').addEventListener('pointerup',finishDrag);
+ $('planCanvas').addEventListener('pointercancel',finishDrag);
  $('autoDetect').addEventListener('click',autoDetect);
  $('aiDetect').addEventListener('click',useVision);
  $('calibrate').addEventListener('click',()=>setTool('calibrate'));
  $('applyScale').addEventListener('click',applyCalibration);
  for(const tool of document.querySelectorAll('[data-tool]'))tool.addEventListener('click',()=>setTool(tool.dataset.tool));
  $('deleteWall').addEventListener('click',deleteSelected);
+ $('confirmWalls').addEventListener('click',()=>{if(!state.scaleVerified)return; if(!confirm('Вы проверили все линии стен и положение проёмов по чертежу? Отмечаем стены подтверждёнными; окна и двери должны быть проверены отдельно.'))return;state.walls.forEach(w=>w.verified=true);afterChange();message('Стены подтверждены. Проёмы остаются предварительными до отдельной проверки.')});
  $('undo').addEventListener('click',undo);
  $('wallHeight').addEventListener('change',e=>{state.wallHeight=clamp(Number(e.target.value)||2.8,2,8);afterChange()});
  $('wallWidth').addEventListener('change',e=>{state.wallThickness=clamp(Number(e.target.value)||.2,.08,.6);afterChange()});
@@ -411,7 +432,7 @@ async function restore(){
   const raw=localStorage.getItem(STORE);if(!raw)return;
   const saved=JSON.parse(raw);if(!saved?.image)return;
   const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=saved.image});
-  const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').drawImage(img,0,0);
+  const c=document.createElement('canvas');c.width=Math.max(1,Math.min(2000,Number(saved.width)||img.width));c.height=Math.max(1,Math.min(2000,Number(saved.height)||img.height));c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   await applyImage(c,true);
   const allowed=['walls','openings','furniture','scale','scaleVerified','wallHeight','wallThickness','wallColor','floorColor','style','lighting'];
   for(const k of allowed){if(saved[k]!==undefined)state[k]=saved[k]}
