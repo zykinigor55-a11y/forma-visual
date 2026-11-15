@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="480" viewBox="0 0 840 480" role="img" aria-label="Архитектурная иллюстрация современного интерьера">
+<defs>
+ <linearGradient id="wall" x1="0" x2=".6" y2="1"><stop stop-color="#c0b8a7"/><stop offset="1" stop-color="#807a71"/></linearGradient>
+ <linearGradient id="floor" x1="0" x2="1" y2=".65"><stop stop-color="#665b4d"/><stop offset="1" stop-color="#b6a084"/></linearGradient>
+ <linearGradient id="glass" x1="0" x2="1" y2="1"><stop stop-color="#526666"/><stop offset="1" stop-color="#1c2826"/></linearGradient>
+ <linearGradient id="sofa" x1="0" x2="1" y2="1"><stop stop-color="#e9e3d6"/><stop offset="1" stop-color="#a89f92"/></linearGradient>
+ <radialGradient id="light" cx=".68" cy=".2" r=".8"><stop stop-color="#e8d7bd" stop-opacity=".4"/><stop offset="1" stop-color="#282b29" stop-opacity=".05"/></radialGradient>
+</defs>
+<rect width="840" height="480" fill="#363a35"/>
+<path d="M0 0H840V298L0 365Z" fill="url(#wall)"/>
+<path d="M0 365L840 298V480H0Z" fill="url(#floor)"/>
+<path d="M533 0H840V303L533 330Z" fill="#454843"/>
+<path d="M555 16H821V292L555 314Z" fill="#212b29" stroke="#252b28" stroke-width="12"/>
+<path d="M572 20H806V270L572 294Z" fill="url(#glass)"/>
+<path d="M600 19V287M690 15V281M776 15V275" stroke="#222a29" stroke-width="11"/>
+<path d="M572 154H807" stroke="#53605d" stroke-width="4" opacity=".6"/>
+<path d="M583 195L655 125L693 165L759 99L806 133V267L583 293Z" fill="#3c524c" opacity=".76"/>
+<path d="M578 300L819 290L840 318L553 352Z" fill="#a59880" opacity=".42"/>
+<path d="M557 331L160 480H0V450Z" fill="#f1e5c6" opacity=".14"/>
+<path d="M66 302L512 261L588 347L161 416Z" fill="#b5aaa0" opacity=".5"/>
+<path d="M95 300L474 276L534 350L180 392Z" fill="url(#sofa)" stroke="#948d7f" stroke-width="3"/>
+<path d="M88 292L474 268L480 322L95 350Z" fill="#cfc7bb" stroke="#a7a094" stroke-width="4"/>
+<path d="M87 281L120 277L135 339L92 351Z" fill="#a9a093"/>
+<path d="M456 261L489 264L502 340L460 337Z" fill="#8c847a"/>
+<path d="M164 291L280 283L290 322L165 332Z" fill="#ded7c9"/>
+<path d="M300 283L415 276L426 314L305 321Z" fill="#ded7c9"/>
+<path d="M194 368L485 349L540 404L255 433Z" fill="#262b28" opacity=".35"/>
+<ellipse cx="358" cy="378" rx="150" ry="44" fill="#a89e8c"/>
+<ellipse cx="357" cy="367" rx="142" ry="32" fill="#d6c9b6" stroke="#eee4d3" stroke-width="3"/>
+<ellipse cx="358" cy="379" rx="115" ry="21" fill="#9c9180" opacity=".6"/>
+<rect x="352" y="383" width="16" height="44" fill="#5b5043"/>
+<path d="M352 429L321 441M368 429L399 441" stroke="#5b5043" stroke-width="8"/>
+<ellipse cx="361" cy="343" rx="19" ry="10" fill="#6e6558"/><path d="M341 342Q335 318 353 297M343 344Q365 317 372 291M354 341Q373 328 382 308" fill="none" stroke="#b7a181" stroke-width="6" stroke-linecap="round"/>
+<path d="M0 0H840V480H0Z" fill="url(#light)" opacity=".8"/>
+<path d="M0 0H840V480H0Z" fill="#192420" opacity=".12"/>
+</svg>
