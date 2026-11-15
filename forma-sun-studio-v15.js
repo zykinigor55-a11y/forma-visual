@@ -65,7 +65,10 @@
   launcher.hidden=!info.hasSource;
   const output=$('#formaSunStudioLauncherStatus',launcher);
   const s=info.sun||null;
-  output.textContent=s?.direction?direction(s.direction).name+' · '+height(s.elevation).name.toLowerCase()+' · '+shadow(s.shadow).name.toLowerCase():'Направление солнца ещё не выбрано';
+  const interior=interiorMode();
+  const title=launcher.querySelector('.forma-sun-studio-launch-copy strong');
+  if(title)title.innerHTML=interior?'LIGHT STUDIO <i>/ Свет интерьера</i>':'SUN STUDIO <i>/ Свет сцены</i>';
+  output.textContent=s?.direction?(interior?'Интерьер · ':'')+direction(s.direction).name+' · '+height(s.elevation).name.toLowerCase()+' · '+shadow(s.shadow).name.toLowerCase():interior?'Выберите источники и направление света':'Направление солнца ещё не выбрано';
  }
  function build(){
   let root=$('#formaSunStudio');if(root)return root;
@@ -164,6 +167,7 @@
   if(indoor)indoor.hidden=!interior;
   root.classList.toggle('is-interior',interior);
   const kicker=root.querySelector('.forma-sunstudio-kicker');if(kicker)kicker.textContent=interior?'FORMA / LIGHT STUDIO':'FORMA / SUN STUDIO';
+  const panelTitle=root.querySelector('#formaSunStudioTitle');if(panelTitle)panelTitle.textContent=interior?'Свет интерьера':'Свет и тени';
   const head=root.querySelector('.forma-sunstudio-control-stack .forma-sunstudio-control header strong');
   if(head)head.textContent=interior?'Направление дневного света':'Направление солнца';
   const infoText=root.querySelector('.forma-sunstudio-visual-head>span:first-child');
@@ -189,7 +193,13 @@
     grade.style.background='radial-gradient(circle at '+Math.round(d.x*100)+'% '+Math.round(d.y*100)+'%, rgba(245,217,158,'+(strength*.9).toFixed(2)+') 0%, transparent 39%), linear-gradient('+Math.round(Math.atan2(-dy,-dx)*180/Math.PI)+'deg, rgba(4,13,15,'+(strength*.52).toFixed(2)+'), transparent 67%)';
    }
   }
-  $('#formaSunStudioDirectionName').textContent=d.name;
+  const indoorNames={back:'Сзади',front:'Спереди','back-left':'Сзади слева','back-right':'Сзади справа'};
+  $('#formaSunStudioDirectionName').textContent=interior?(indoorNames[d.id]||d.name):d.name;
+  root.querySelectorAll('[data-sun-direction]').forEach(button=>{
+   const id=button.dataset.sunDirection;const original=direction(id);
+   const mapped=interior?(indoorNames[id]||original.name):original.name;
+   const small=button.querySelector('small');if(small)small.textContent=mapped;
+  });
   $('#formaSunStudioLiveStatus').textContent=d.desc.toUpperCase();
   $('#formaSunStudioResultSummary').textContent=interior?'Интерьер · '+source(scene.indoorSource).name+' · '+sh.name.toLowerCase()+' тени':d.desc+' · '+h.hint.toLowerCase()+' · '+sh.name.toLowerCase()+' тени';
   const info=SOURCE();const night=info.explicit?.time&&/ночь|night/i.test(String(info.time||''));
@@ -217,6 +227,7 @@
   document.addEventListener('forma:project-ready',refreshLauncher);
   document.addEventListener('forma:source-uploaded',refreshLauncher);
   document.addEventListener('forma:sun-updated',refreshLauncher);
+  document.addEventListener('forma:interior-mode-changed',refreshLauncher);
   window.addEventListener('resize',()=>{if(visible)layoutOverlay()},{passive:true});
   if(typeof ResizeObserver!=='undefined'){new ResizeObserver(()=>{if(visible)layoutOverlay()}).observe($('#formaSunStudioPhoto'))}
  }
