@@ -471,7 +471,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,openAndAdd,openFor,close,graph:()=>graph, getNode:id=>node(id),setOptions:setNodeOptions,markFresh, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,openAndAdd,openFor,close,graph:()=>graph, getNode:id=>node(id),setOptions:setNodeOptions,markFresh,invalidateFrom, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
