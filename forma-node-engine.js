@@ -183,6 +183,7 @@ function showSelection(){
   getAPI()?.setOptions?.(graph()?.selected,{[field.dataset.nodeOption]:field.value});
  });
  host.addEventListener('click',e=>{
+  if(busy||preparing){tell('Изменения нод недоступны во время выполнения.');return}
   const upload=e.target.closest('[data-fa-upload-source]');
   if(upload){window.FORMA_RENDER_BRIDGE?.openUpload?.();return}
   const download=e.target.closest('[data-fa-download-snapshot]');
@@ -473,5 +474,5 @@ function onOpen(){
 }
 function onGraphDrawn(){showSelection();decorate()}
 function onClose(){if(busy)stop();nodeSettingsBound=null}
-window.FORMA_NODE_ENGINE={runTo,stop,onOpen,onGraphDrawn,onClose,plan:checkPlan,get busy(){return busy}};
+window.FORMA_NODE_ENGINE={runTo,stop,onOpen,onGraphDrawn,onClose,plan:checkPlan,get busy(){return busy},get preparing(){return preparing}};
 })();
