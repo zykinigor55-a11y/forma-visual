@@ -24,7 +24,11 @@ export function validatePlan(data){
  const openings=(Array.isArray(data?.openings)?data.openings:[]).slice(0,90).map((o,i)=>{
   const wallIndex=Number(o.wallIndex),offset=Number(o.offset),width=Number(o.width);
   if(!Number.isInteger(wallIndex)||wallIndex<0||wallIndex>=original.length||!original[wallIndex]||!Number.isFinite(offset)||!Number.isFinite(width)||offset<0||offset>1||width<=0||width>1)return null;
-  return {id:'opening_'+i,wallId:original[wallIndex].id,offset,width,kind:o.kind==='window'?'window':'door',verified:false};
+  const kind=o.kind==='window'?'window':'door';
+  const count=Number(o.sashes),confidence=Number(o.sashConfidence);
+  const sashes=kind==='window'&&(count===2||count===3)&&Number.isFinite(confidence)&&confidence>=.83?count:null;
+  return {id:'opening_'+i,wallId:original[wallIndex].id,offset,width,kind,
+   sashes,sashConfidence:sashes===null?null:confidence,sashVerified:false,verified:false};
  }).filter(Boolean);
  return {walls,openings,scaleSource:'unverified',warning:'AI выдал предполагаемые линии стен. Подтвердите масштаб, геометрию и проёмы.'};
 }
@@ -49,7 +53,7 @@ export function createPlanVision({json,readJSON,sameOrigin}){
     body:JSON.stringify({
      model:MODEL,temperature:0,max_tokens:3000,
      messages:[
-      {role:'system',content:'You are a floor plan geometry parser. Return ONLY a compact JSON object. Detect major walls from the supplied 2D architectural plan, not furniture lines or texts. Use normalised image coordinates 0..1 with top-left origin. JSON schema: {"walls":[{"x1":0,"y1":0,"x2":1,"y2":0,"confidence":0.8}],"openings":[{"wallIndex":0,"kind":"door","offset":0.5,"width":0.1}]}. Wall endpoints should be in the CENTER of each wall band, along the wall axis. Only output positions you can infer; do not invent measurements. Do not output lengths in meters. Straight segments only. Max 100 walls and 70 openings. If unsure, omit the uncertain element. No prose.'},
+      {role:'system',content:'You are a floor plan geometry parser. Return ONLY a compact JSON object. Detect major walls from the supplied 2D architectural plan, not furniture lines or texts. Use normalised image coordinates 0..1 with top-left origin. JSON schema: {"walls":[{"x1":0,"y1":0,"x2":1,"y2":0,"confidence":0.8}],"openings":[{"wallIndex":0,"kind":"window","offset":0.5,"width":0.1,"sashes":null,"sashConfidence":0.0}]}. Wall endpoints should be in the CENTER of each wall band, along the wall axis. Only output positions you can infer; do not invent measurements. Do not output lengths in meters. Straight segments only. Max 100 walls and 70 openings. IMPORTANT: for each clearly identified window, inspect visible division symbols or an explicitly associated window schedule/annotation. If the plan explicitly shows 2 panes/sashes, return sashes:2 with sashConfidence 0..1. If it explicitly shows 3 panes/sashes, return sashes:3. A window width alone DOES NOT indicate the number of sashes; do not infer it from width. If absent, unclear or plan-only without a readable window symbol, set sashes:null and sashConfidence:0. Always require user verification. Do not pretend to recover window elevation or sill dimensions from a top view. If unsure, omit the uncertain element. No prose.'},
       {role:'user',content:[{type:'text',text:'Trace the walls and visible door/window openings in this plan. Output JSON only. User will calibrate actual meters afterwards.'},{type:'image_url',image_url:{url:image,detail:'high'}}]}
      ]
     })
