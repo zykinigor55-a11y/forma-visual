@@ -7,6 +7,7 @@ import path from 'node:path';
 import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
+import {createPlanVision,visionStatus} from './plan-vision.mjs';
 import {createWanVideo} from './wan-video.mjs';
 import {createWan3Video} from './wan3-video.mjs';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -336,12 +337,15 @@ async function proxyRender(req,res){
  }finally{active--}
 }
 async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/forma-preview.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();const content=await readFile(file);res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
+const planVision=createPlanVision({json,readJSON,sameOrigin});
 const wanVideo=createWanVideo({json,readJSON,sameOrigin,imageBlob});
 const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
 const server=http.createServer(async(req,res)=>{
  if(req.url?.startsWith('/api/wan3/'))return wan3Video.handle(req,res);
  if(req.url?.startsWith('/api/wan/'))return wanVideo.handle(req,res);
  if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
+ if(req.url==='/api/plan/status'&&req.method==='GET')return json(res,200,visionStatus());
+ if(req.url==='/api/plan/recognize')return planVision(req,res);
  if(req.url==='/api/render'&&req.method==='POST')return proxyRender(req,res);
  if(req.url?.startsWith('/api/'))return json(res,404,{error:'Не найдено'});
  if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Метод запрещён'});
