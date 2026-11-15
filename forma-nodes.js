@@ -417,7 +417,7 @@ function open(){
  document.body.append(modal);document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
  const palette=$('#faFlowPalette');
  for(const [id,t] of Object.entries(TYPES)){
-  const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.dataset.group=({source:'render',exterior:'render',interior:'render',lighting:'render',materials:'edit',geometry:'edit',upscale:'edit',video:'output',image3d:'output',export:'output'})[id]||'render';b.innerHTML='<i>'+iconHTML(id)+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';palette.append(b);
+  const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.dataset.group=({source:'render',exterior:'render',interior:'render',lighting:'render',materials:'edit',geometry:'edit',upscale:'edit',video:'output',image3d:'output',export:'output'})[id]||'render';b.innerHTML='<i>'+iconHTML(id)+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';if(id==='image3d'){b.classList.add('fa-flow-not-ready');b.disabled=true;b.title='3D-модель пока недоступна: требуется отдельный API'}palette.append(b);
  }
  $('#faFlowGroup')?.addEventListener('change',e=>filterPalette(e.target.value));
  modal.addEventListener('click',click);
