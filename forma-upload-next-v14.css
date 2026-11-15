@@ -1,0 +1,68 @@
+/* FORMA / Upload next step — premium workflow guidance v14 */
+.forma-upload-next-opened{overflow:hidden!important}
+.forma-upload-next-bar[hidden],.forma-upload-next-backdrop[hidden]{display:none!important}
+.forma-upload-next-bar{box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:14px 18px;background:#242522;color:#eeeae2;border:1px solid rgba(202,171,135,.42);border-left:3px solid #cbb091;margin:10px 16px 4px;border-radius:13px;box-shadow:0 12px 38px rgba(0,0,0,.1)}
+.forma-upload-next-step{white-space:nowrap;font-size:10px;letter-spacing:.14em;color:#cbb091;font-weight:800}
+.forma-upload-next-bar-copy{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.forma-upload-next-bar-copy strong{font-size:13px;letter-spacing:.01em}
+.forma-upload-next-bar-copy small{font-size:11px;color:#bfb9b0}
+.forma-upload-next-open{flex-shrink:0;display:flex;align-items:center;gap:12px;min-height:37px;padding:0 12px;border:1px solid #aa8e72;border-radius:8px;background:#d3b796;color:#181c1a;font-size:12px;font-weight:800;cursor:pointer}
+.forma-upload-next-open:hover{background:#e4c8a6}
+.forma-upload-next-backdrop{position:fixed;inset:0;z-index:30000;display:flex;justify-content:center;align-items:center;padding:24px;box-sizing:border-box}
+.forma-upload-next-scrim{position:absolute;inset:0;background:rgba(4,6,5,.78);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.forma-upload-next-dialog{position:relative;box-sizing:border-box;z-index:1;display:flex;flex-direction:column;width:min(100%,560px);max-height:min(90dvh,850px);overflow:auto;padding:25px 27px 21px;background:#1d201f;color:#f4f1eb;border:1px solid rgba(204,180,148,.39);border-radius:22px;box-shadow:0 24px 110px rgba(0,0,0,.66);font-family:inherit;overscroll-behavior:contain}
+.forma-upload-next-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px}
+.forma-upload-next-head>div{display:flex;flex-direction:column;gap:8px}
+.forma-upload-next-kicker{font-size:10px;line-height:1.2;letter-spacing:.15em;font-weight:800;color:#cfb18c}
+.forma-upload-next-count{display:flex;align-items:center;gap:9px;color:#d1c4b3;font-size:11px;font-variant-numeric:tabular-nums;font-weight:650}
+.forma-upload-next-count i{display:block;width:56px;height:2px;background:linear-gradient(90deg,#d6b897 55%,#525450 55%);border-radius:4px}
+.forma-upload-next-close{display:grid;place-items:center;flex:0 0 auto;width:39px;height:39px;border-radius:11px;border:1px solid #4c4d48;background:#2a2b29;color:#f3eee5;font-size:25px;font-weight:300;cursor:pointer}
+.forma-upload-next-loaded{display:flex;align-items:center;gap:15px;min-width:0;background:#252a27;border:1px solid #3c4740;border-radius:13px;padding:10px;margin-bottom:20px}
+.forma-upload-next-loaded img{display:block;object-fit:cover;width:99px;height:76px;background:#333;border-radius:7px;flex:0 0 auto}
+.forma-upload-next-loaded>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.forma-upload-next-loaded strong{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.forma-upload-next-loaded small{color:#aaaead;font-size:10px;line-height:1.5}
+.forma-upload-next-success{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:.09em;color:#b0cfb2;font-weight:800}
+.forma-upload-next-success span{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#47684f;color:#fff;font-size:11px}
+.forma-upload-next-dialog h2{margin:0 0 8px;font-size:clamp(24px,4vw,31px);line-height:1.12;font-weight:650;letter-spacing:-.035em;color:#fff}
+.forma-upload-next-intro{margin:0 0 20px;line-height:1.55;font-size:13px;color:#b9b8b1}
+.forma-upload-next-choices{display:flex;flex-direction:column;gap:9px}
+.forma-upload-next-choice{box-sizing:border-box;width:100%;display:grid;grid-template-columns:42px minmax(0,1fr) 16px;align-items:center;gap:12px;padding:12px 14px;text-align:left;border-radius:12px;border:1px solid #50504d;background:#292c29;color:#f4f2ee;cursor:pointer;min-height:74px;transition:border-color .15s,background .15s}
+.forma-upload-next-choice:hover,.forma-upload-next-choice:focus-visible{border-color:#ceb495;background:#35352f}
+.forma-upload-next-choice.is-primary{border-color:#bba281;background:#353029}
+.forma-upload-next-choice>span:nth-child(2){display:flex;flex-direction:column;gap:5px;min-width:0}
+.forma-upload-next-choice strong{font-size:13px;line-height:1.25;font-weight:750;letter-spacing:-.005em}
+.forma-upload-next-choice small{font-size:11px;line-height:1.35;color:#b8b7b1}
+.forma-upload-next-symbol{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:#353d38;color:#d6b995;font-size:22px}
+.forma-upload-next-choice.is-primary .forma-upload-next-symbol{background:#54483c}
+.forma-upload-next-choice>span:last-child{color:#c4ad8c;font-size:18px}
+.forma-upload-next-prompt{display:flex;flex-direction:column;gap:9px;margin-top:19px}
+.forma-upload-next-prompt strong{font-size:12px;color:#f2f1ed;font-weight:750}
+.forma-upload-next-prompt strong span{color:#8f9990;font-size:11px;font-weight:500;padding-left:5px}
+.forma-upload-next-prompt textarea{box-sizing:border-box;resize:vertical;width:100%;min-height:68px;padding:12px 14px;border:1px solid #525750;border-radius:10px;outline:none;background:#292d2a;color:#f6f4ec;font-family:inherit;font-size:13px;line-height:1.5}
+.forma-upload-next-prompt textarea::placeholder{color:#969d96}
+.forma-upload-next-prompt textarea:focus{border-color:#d2b597;box-shadow:0 0 0 2px rgba(210,181,151,.12)}
+.forma-upload-next-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid #3b3f3a}
+.forma-upload-next-footer span{font-size:10px;line-height:1.4;color:#a7aea7;max-width:360px}
+.forma-upload-next-footer button{padding:10px 14px;color:#d4c0a7;background:transparent;border:1px solid #50564d;border-radius:8px;font-size:11px;white-space:nowrap;cursor:pointer}
+.forma-upload-next-backdrop button:focus-visible,.forma-upload-next-bar button:focus-visible{outline:2px solid #e3c89c;outline-offset:3px}
+@media(max-width:700px){
+ .forma-upload-next-bar{margin:8px 10px;padding:12px;gap:9px}
+ .forma-upload-next-step{display:none}
+ .forma-upload-next-open{min-height:35px;padding:0 9px;gap:5px;font-size:11px}
+ .forma-upload-next-backdrop{padding:0;align-items:flex-end}
+ .forma-upload-next-dialog{width:100%;max-height:min(90dvh,880px);border-radius:23px 23px 0 0;border-left:0;border-right:0;border-bottom:0;padding:19px 19px max(18px,env(safe-area-inset-bottom));box-shadow:0 -24px 75px rgba(0,0,0,.46)}
+ .forma-upload-next-head{margin-bottom:13px}
+ .forma-upload-next-loaded{gap:11px;margin-bottom:16px}
+ .forma-upload-next-loaded img{width:75px;height:66px}
+ .forma-upload-next-dialog h2{font-size:27px}
+ .forma-upload-next-intro{margin-bottom:15px;font-size:12px}
+ .forma-upload-next-choices{gap:8px}
+ .forma-upload-next-choice{min-height:68px;grid-template-columns:36px minmax(0,1fr) 14px;gap:11px;padding:10px 11px}
+ .forma-upload-next-symbol{width:36px;height:36px;font-size:19px}
+ .forma-upload-next-choice strong{font-size:12px}
+ .forma-upload-next-choice small{font-size:10px}
+ .forma-upload-next-prompt{margin-top:15px}
+ .forma-upload-next-footer{margin-top:13px;padding-top:12px}
+}
+@media(prefers-reduced-motion:reduce){.forma-upload-next-choice{transition:none}}
