@@ -29,6 +29,7 @@
   return {errors,warnings,night};
  }
  function addSolarControls(sheet){
+  if(window.FORMA_SUN_STUDIO)return; // SUN STUDIO replaces the legacy numeric sun sliders.
   const sectionEl=sheet.querySelector('.forma-sun-section');if(!sectionEl)return;
   sectionEl.querySelector('.forma-solar-exact')?.remove();
   const s=state(),sun=s.sun,angles=sunToAngles(sun);
@@ -96,7 +97,7 @@
  const observer=new MutationObserver(()=>{
   if(busy)return;
   const sheet=$('#'+rootId);if(!sheet||sheet.hidden)return;
-  if(!sheet.querySelector('.forma-scene-logic-check')||!sheet.querySelector('.forma-solar-exact')){
+  if(!sheet.querySelector('.forma-scene-logic-check')){
    busy=true;try{refresh()}finally{busy=false}
   }
  });
