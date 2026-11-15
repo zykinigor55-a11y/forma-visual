@@ -37,12 +37,12 @@ function populate(){
  const up=$('#uploadSubtitle');if(up)up.textContent=x.sceneType==='interior'?'PNG, JPG, WEBP · интерьер из Revit, SketchUp или Archicad':'PNG, JPG, WEBP · Archicad, SketchUp, Revit и другие';
  const src=$('#uploadTitle');if(src && (src.textContent.includes('скриншот')||src.textContent.includes('помещения')))src.textContent=x.sceneType==='interior'?'Загрузить скриншот помещения':'Загрузить скриншот проекта';
 }
-function open(){document.querySelector('[data-nav="environment"]')?.click();persist({sceneType:'interior'});populate();$('#faInteriorRoom')?.focus({preventScroll:true})}
+function open(){document.querySelector('[data-nav="environment"]')?.click();persist({sceneType:'interior'});populate();document.dispatchEvent(new CustomEvent('forma:interior-mode-changed'));$('#faInteriorRoom')?.focus({preventScroll:true})}
 function init(){
  const panel=$('#environmentPanel');if(!panel||$('#faInteriorPanel'))return;
  const wrap=document.createElement('div');wrap.id='faSpaceSelector';wrap.innerHTML=view();
  const after=$('.scene-setup-header',panel);if(after)after.insertAdjacentElement('afterend',wrap);else panel.prepend(wrap);
- $$('[data-fa-space]').forEach(b=>b.addEventListener('click',()=>{persist({sceneType:b.dataset.faSpace});populate();message(b.dataset.faSpace==='interior'?'Режим интерьеров включён.':'Режим экстерьеров включён.')}));
+ $$('[data-fa-space]').forEach(b=>b.addEventListener('click',()=>{persist({sceneType:b.dataset.faSpace});populate();document.dispatchEvent(new CustomEvent('forma:interior-mode-changed'));message(b.dataset.faSpace==='interior'?'Режим интерьеров включён.':'Режим экстерьеров включён.')}));
  const fields={faInteriorRoom:'room',faInteriorStyle:'style',faInteriorLighting:'lighting',faInteriorFurniture:'furniture',faInteriorSurfaces:'surfaces',faInteriorNotes:'notes'};
  for(const [id,key] of Object.entries(fields))$('#'+id)?.addEventListener('input',e=>persist({[key]:e.target.value}));
  $('#faInteriorLightStudio')?.addEventListener('click',()=>{
