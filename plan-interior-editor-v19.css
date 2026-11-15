@@ -1,0 +1,29 @@
+/* FORMA / Interior architectural workflow v19 */
+.workflow-next{background:linear-gradient(145deg,#232722,#121714);border-bottom:1px solid #746448!important}
+.next-title,.selected-surface{display:block;font-size:14px;color:#f2ece0;line-height:1.4;font-weight:700}
+.next-actions{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+.next-actions button{display:grid;grid-template-columns:23px 1fr;gap:1px 8px;align-items:center;padding:10px 11px;text-align:left;background:#262b27;border:1px solid #53554b;color:#f1ede5;border-radius:9px;min-height:52px}
+.next-actions button:hover{border-color:#d4b793;background:#34362d}
+.next-actions button>span{grid-row:1/3;align-self:start;font:750 10px/1.4 Inter,Arial,sans-serif;color:#cbb18f}
+.next-actions strong{font-size:12px}.next-actions small{font-size:10px;color:#a5b2a4}
+.style-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0 0 14px}
+.style-presets button{min-height:58px;display:flex;flex-direction:column;gap:6px;justify-content:center;align-items:start;border:1px solid #535d52;border-radius:9px;background:#252a25;padding:9px 10px;text-align:left;color:#eae7e0}
+.style-presets button>span{font-weight:850;font-size:10px;color:#bfa17b;letter-spacing:.08em}
+.style-presets button strong{font-size:11px;font-weight:700}
+.style-presets button.selected{background:#504637;border-color:#dac49e}
+.surface-editor,.opening-editor{background:#222724;border-bottom:1px solid #9a7e5b!important}
+.surface-editor[hidden],.opening-editor[hidden],#patchOptions[hidden],#windowSashes[hidden]{display:none!important}
+.selected-surface{margin-bottom:8px}
+.material-preview{display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid #586055;border-radius:9px;background:#171e19;padding:10px;min-height:48px;color:#a7b1a7;font-size:11px;margin-top:9px;word-break:break-word}
+.material-preview img{width:50px;height:45px;object-fit:cover;border-radius:6px;border:1px solid #73786e;flex-shrink:0}
+.sash-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sash-options button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#242b27;border:1px solid #5c6257;color:#f4f0e9;border-radius:9px;padding:10px 5px;font-size:23px;min-height:65px}
+.sash-options button strong{font-size:11px}
+.sash-options button.selected{border-color:#e0bb86;background:#564937;color:#f8e4c4}
+.selected-hint{display:block;margin-top:5px;font-size:10px;line-height:1.4;font-weight:450;color:#c7b08a;max-width:260px}
+#threeCanvas{cursor:crosshair!important}
+#threeArea.is-selecting{outline:2px solid #d1b08b;outline-offset:-2px}
+#materialFile{cursor:pointer}
+@media(max-width:1030px){.results{display:flex;flex-direction:column}.results .tool-section{width:100%;border-right:0!important;border-bottom:1px solid #3d4a40!important}}
+@media(max-width:700px){.next-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.next-actions button{min-height:70px}.style-presets{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:420px){.next-actions button{min-height:80px}.style-presets{grid-template-columns:repeat(2,minmax(0,1fr))}}
