@@ -1,0 +1,16 @@
+/* FORMA · approved card 06 artwork, neutral 2D-plan / photo comparison.
+   The source graphic contains its own charcoal background and foliage shadows;
+   no additional color grading or gradient overlay may diminish its legibility. */
+.forma-direction-photo.forma-direction-plan{background:#171918!important}
+.forma-direction-photo.forma-direction-plan>img{
+ width:100%!important;height:100%!important;
+ object-fit:contain!important;object-position:center!important;
+ filter:none!important;opacity:1!important;
+}
+.forma-direction-photo.forma-direction-plan::after{display:none!important}
+.forma-direction-card:hover .forma-direction-photo.forma-direction-plan>img{
+ filter:none!important;transform:scale(1.015)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .forma-direction-photo.forma-direction-plan>img{transition:none!important}
+}
