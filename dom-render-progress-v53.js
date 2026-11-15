@@ -1,6 +1,5 @@
-/* FORMA / Graphite Atelier · real request phases, no synthetic percentages or ETA.
- * API Market does not provide a progress API. We display only states controlled
- * by the local request and actual elapsed time. */
+/* FORMA / LIGHT TRACE v24 — elapsed-time estimate on a subtle line, not actual AI progress.
+ * The provider does not expose completion percentages or ETA. Never claim otherwise. */
 (() => {
  'use strict';
  const $=id=>document.getElementById(id);
@@ -70,13 +69,9 @@
   let pct=completed?100:Math.min(94,Math.round(Math.max(0,seconds)/eta*90));
   if(!completed&&seconds>=eta)pct=Math.min(94,90+Math.floor(Math.log2(Math.max(1,seconds/eta))*3));
   const pctLabel=$('renderProgressPercent'),remaining=$('renderProgressEta');
-  const circle=$('renderProgressArc');
-  if(pctLabel)pctLabel.textContent=pct+'%';
-  if(circle){
-   const circumference=2*Math.PI*82;
-   circle.style.strokeDasharray=circumference.toFixed(2);
-   circle.style.strokeDashoffset=(circumference*(1-pct/100)).toFixed(2);
-  }
+  const bar=$('renderProgressBar');
+  if(pctLabel)pctLabel.textContent=(completed?'':'≈ ')+pct+'%';
+  if(bar)bar.style.width=pct+'%';
   if(remaining){
    const left=Math.round(eta-seconds);
    remaining.textContent=completed?'00:00':left>0?'≈ '+readableTime(left):'≈ больше';
@@ -84,8 +79,8 @@
      'Приблизительный прогноз на основании последних успешных рендеров в этом браузере.':
      'Условный ориентир 2 минуты, а не фактическое время сервера.';
   }
-  const caption=document.querySelector('.forma-render-estimate-caption');
-  if(caption)caption.textContent=completed?'ГОТОВО':observedEstimate!=null?'ОЦЕНКА':'УСЛОВНО';
+  const frame=document.querySelector('#renderProgress .forma-render-frame');
+  if(frame)frame.dataset.progressKind=completed?'complete':observedEstimate!=null?'history':'initial';
  }
  function elapsed(){
   if(!active)return;
@@ -123,8 +118,8 @@
   if(note)note.textContent='Результат откроется автоматически после ответа AI';
   const truth=document.querySelector('.forma-render-truth-note');
   if(truth)truth.textContent=observedEstimate!=null?
-   'Круг показывает расчётную оценку по прошлым рендерам на этом устройстве. AI не сообщает точные проценты и время.':
-   'Круг показывает условный прогноз по времени (ориентир 2 мин). AI не сообщает точные проценты и оставшееся время.';
+   'Тонкая линия — прогноз по прошлым генерациям на этом устройстве. AI не передаёт реальные проценты и оставшееся время.':
+   'Тонкая линия — условный прогноз по времени. AI не сообщает реальные проценты или срок завершения.';
   syncScene();setPhase('prepare');elapsed();
   clock=setInterval(elapsed,1000);
   document.documentElement.classList.add('forma-progress-expanded');
