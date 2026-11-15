@@ -170,6 +170,30 @@ function canLink(from,to){
  return true;
 }
 function status(str){const s=$('#faFlowStatus');if(s)s.textContent=str}
+// A changed input invalidates reuse of this node and every dependent stage.
+// Keep historical files: only the cache eligibility changes.
+function invalidateFrom(id){
+ const queue=[id],seen=new Set();
+ while(queue.length){
+  const current=queue.shift();if(seen.has(current))continue;seen.add(current);
+  const item=node(current);
+  if(item&&item.type!=='source'){item.options={...(item.options||{}),reuse:false,needsRun:true}}
+  graph.edges.filter(e=>e.from===current).forEach(e=>queue.push(e.to));
+ }
+}
+function setNodeOptions(id,changes){
+ const n=node(id);if(!n)return;
+ const old=n.options||{};
+ const changed=Object.entries(changes).some(([key,value])=>key!=='reuse'&&old[key]!==value);
+ n.options={...old,...changes};
+ if(changed)invalidateFrom(id);
+ if(n.options.needsRun&&n.options.reuse){n.options.reuse=false;status('Настройки изменились: старый результат сохранён в истории, но его повторное использование отключено.')}
+ save();
+}
+function markFresh(id){
+ const n=node(id);if(!n||!n.options?.needsRun)return;
+ n.options={...n.options,needsRun:false};save();redraw();
+}
 function redraw(){
  if(!modal)return;
  nodeLayer.replaceChildren();
@@ -223,7 +247,7 @@ function add(type,from=null){
 function link(a,b){
  if(!canLink(a,b)){status('Несовместимые данные или циклическая связь.');return}
  graph.edges=graph.edges.filter(e=>e.to!==b);
- graph.edges.push({from:a,to:b});pending=null;save();redraw();status('Соединение создано.');
+ graph.edges.push({from:a,to:b});invalidateFrom(b);pending=null;save();redraw();status('Соединение создано. Зависимые результаты требуют нового запуска.');
 }
 function remove(){
  if(!graph.selected)return;
@@ -283,7 +307,7 @@ async function importJSON(file){
   const ids=new Set(g.nodes.map(n=>n.id));
   if(ids.size!==g.nodes.length||!g.nodes.every(n=>TYPES[n.type]&&/^n\d+$/.test(n.id)&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Math.abs(n.x)<10000&&Math.abs(n.y)<10000&&String(n.title||'').length<90))throw Error();
   if(!g.edges.every(e=>ids.has(e.from)&&ids.has(e.to)))throw Error();
-  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|reuse|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|lens|quality|lockGeometry|changes|material|cameraMove|target|format)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
+  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:{...(typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|lens|quality|lockGeometry|changes|material|cameraMove|target|format)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}),reuse:false,needsRun:true}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
   for(const e of g.edges)if(canLink(e.from,e.to)){graph.edges=graph.edges.filter(x=>x.to!==e.to);graph.edges.push({from:e.from,to:e.to})}
   pending=null;save();redraw();status('Рабочая схема загружена.');
  }catch{status('Невозможно импортировать эту схему. Нужен экспорт ФОРМА.')}
@@ -447,7 +471,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,openAndAdd,openFor,close,graph:()=>graph, getNode:id=>node(id),setOptions:(id,changes)=>{const n=node(id);if(!n)return;n.options={...(n.options||{}),...changes};save()}, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,openAndAdd,openFor,close,graph:()=>graph, getNode:id=>node(id),setOptions:setNodeOptions,markFresh, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
