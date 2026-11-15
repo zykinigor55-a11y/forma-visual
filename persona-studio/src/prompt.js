@@ -15,9 +15,18 @@ function buildPrompt(input={}) {
   const marks=Array.isArray(input.marks)?input.marks.slice(0,30).map(m=>`${markNames[m.type]||'skin detail'} near (${num(Number(m.x)/600*100,0,100)}%, ${num(Number(m.y)/720*100,0,100)}%) intensity ${num(m.strength,0,100)}%`).join('; '):'';
   const reference=!!input.referenceImage;
   const garment=!!input.clothingImage;
+  const hairReference=!!input.hairImage;
+  const mode=['create','identity','hair','outfit','skin'].includes(input.mode)?input.mode:'create';
+  const editInstruction={
+    identity:'Preserve the original person and their recognizable face, change ONLY what the user specifically requests.',
+    hair:'Change ONLY hair / hairstyle; keep face, eyes, nose, age, expression, body and clothing as close to the primary reference as possible.',
+    outfit:'Replace ONLY the clothing using the supplied garment reference; do not modify face, hairstyle, body shape, pose or identity.',
+    skin:'Apply subtle LOCAL skin details as specified. Do not modify facial structure, eyes, hair, clothes, or identity.',
+  }[mode]||'Generate an original person according to the settings.';
   return [
     'Create a SINGLE photorealistic professional digital-human character photograph for production character reference.',
     'One person only, visible full body with complete head and footwear, natural anatomy, realistic skin pores, textured fabric, professional restrained studio lighting, sharply focused, premium editorial photography.',
+    `EDIT MODE: ${mode}. ${editInstruction}`,
     `Appearance request: visual age ${num(p.age,1,100)} years; approximate height ${num(p.height,110,230)} cm; body fullness ${num(p.body,0,100)}/100; muscularity ${num(p.muscle,0,100)}/100.`,
     `Skin-lightness control ${num(p.skin,0,100)}/100 (0=lightest, 100=deepest), undertone ${str(p.undertone,20)}. This setting takes precedence over any cultural labels.`,
     `Facial settings (0..100): face width ${num(p.faceWidth,0,100)}, jaw definition ${num(p.jaw,0,100)}, nose width ${num(p.nose,0,100)}, eye size ${num(p.eyes,0,100)}, lip fullness ${num(p.mouth,0,100)}.`,
@@ -28,6 +37,7 @@ function buildPrompt(input={}) {
     p.originNote?`Additional self-described background: ${str(p.originNote,150)}.`:'',
     reference?'Use the first supplied image as the primary identity reference. Preserve the same recognizable individual and distinctive facial features. Only make explicitly requested adjustments; avoid replacing the person with a new random face.':'Create a wholly original fictional person.',
     garment?'Use the additional garment photo to dress this same character. Preserve garment material, shape, colors, trims and any visible pattern as closely as possible.':'',
+    hairReference?'Use the additional hairstyle photo only as a haircut reference. Do not transfer the hairstyle model’s identity or facial features.':'',
     marks?`Local skin details requested from the editor (positions are approximate in the normalized figure): ${marks}. Keep them natural and not exaggerated.`:'',
     input.instruction?`USER-REQUESTED REFINEMENT: ${str(input.instruction,450)}.`:'',
     'No watermarks, no text, no logos, no collages, no duplicated limbs. Keep consistent identity within the result.',
