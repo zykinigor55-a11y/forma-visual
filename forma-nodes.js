@@ -327,6 +327,11 @@ function arrange(){
 function click(e){
  const b=e.target.closest('button');if(!b)return;
  const a=b.dataset;
+ if(window.FORMA_NODE_ENGINE?.busy||window.FORMA_NODE_ENGINE?.preparing){
+  const mutation=['faFlowUndo','faFlowRedo','faFlowImport','faFlowDelete','faFlowArrange'].includes(b.id)||
+   !!(a.addNode||a.fork||a.portOut||a.portIn||a.pin||a.rename);
+  if(mutation){status('Во время AI-запроса схема заблокирована. Остановите или завершите цепочку.');return}
+ }
  if(b.id==='faFlowMore'){const menu=$('#faFlowMoreMenu');menu.hidden=!menu.hidden;b.setAttribute('aria-expanded',String(!menu.hidden));return}
  if(a.faFlowQuick){const action=$('#'+a.faFlowQuick);$('#faFlowMoreMenu').hidden=true;$('#faFlowMore').setAttribute('aria-expanded','false');if(action&&!action.disabled)action.click();return}
  if(b.id==='faFlowClose'){close();return}
@@ -351,6 +356,9 @@ function click(e){
  if(a.rename){const n=node(a.rename),title=prompt('Название ноды',n.title);if(title?.trim()){n.title=title.trim().slice(0,70);save();redraw()}return}
 }
 function down(e){
+ if((window.FORMA_NODE_ENGINE?.busy||window.FORMA_NODE_ENGINE?.preparing)&&e.target.closest('[data-port-out],[data-move]')){
+  status('Перемещение и изменение соединений недоступны во время генерации.');return;
+ }
  const output=e.target.closest('[data-port-out]');
  if(output&&e.button===0){
   drag={kind:'wire',id:output.dataset.portOut};pending=null;
