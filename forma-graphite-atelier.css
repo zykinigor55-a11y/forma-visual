@@ -666,3 +666,111 @@ html.forma-scene-sheet-open{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
  #environmentPanel .forma-env-inline-card{transition:none}
 }
+
+
+/* RESULT STUDIO V2 — every completed generation leads to practical follow-up choices. */
+#formaResultFocus .forma-result-next{
+ display:flex;flex-direction:column;gap:13px;flex:none;max-height:min(31dvh,295px);
+ overflow:auto;padding:15px 22px 14px;
+ background:#211f21;border-top:1px solid #4c4038;border-bottom:1px solid #4c4038;
+ scrollbar-width:thin;scrollbar-color:#8e7965 transparent;
+}
+#formaResultFocus .forma-result-next-heading{
+ display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap
+}
+#formaResultFocus .forma-result-next-heading>span{display:flex;flex-direction:column;gap:4px}
+#formaResultFocus .forma-result-next-heading strong{font-size:16px;font-weight:650;color:#f7efe5}
+#formaResultFocus .forma-result-next-heading small{font-size:10px;color:#b3a698;line-height:1.4}
+#formaResultFocus .forma-result-next-angle{
+ min-height:37px;padding:8px 12px;border:1px solid #a58a6a;border-radius:8px;
+ background:#322b29;color:#e9cb9f;font-size:11px;font-weight:750;cursor:pointer
+}
+#formaResultFocus .forma-result-next-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#formaResultFocus .forma-next-group{display:flex;flex-direction:column;gap:8px;min-width:0}
+#formaResultFocus .forma-next-group-title{font-size:11px;color:#e7d5bc;font-weight:750}
+#formaResultFocus .forma-next-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#formaResultFocus .forma-next-chip{
+ min-height:34px;border-radius:7px;border:1px solid #554b43;
+ background:#302c2c;padding:6px 10px;color:#eadfd2;
+ font-size:10px;font-weight:650;cursor:pointer
+}
+#formaResultFocus .forma-next-chip:hover{border-color:#b6a084;background:#413832}
+#formaResultFocus .forma-next-chip.is-active{
+ background:#ead1b0;color:#282019;border-color:#e9d0ad
+}
+#formaResultFocus .forma-result-next-footer{
+ display:flex;justify-content:space-between;align-items:center;gap:12px;
+ border-top:1px solid #413b37;padding-top:10px
+}
+#formaResultFocus #formaResultPending{font-size:10px;color:#bfb0a0;line-height:1.45}
+#formaResultFocus .forma-result-make-variant{
+ min-height:41px;border-radius:9px;padding:10px 14px;font-size:11px;font-weight:750;
+ color:#211a15;background:linear-gradient(105deg,#efd6b6,#bd9674);
+ border:1px solid #ccb091;cursor:pointer;white-space:nowrap
+}
+#formaResultFocus .forma-result-make-variant:disabled{
+ color:#9b8e82;border-color:#48413d;background:#34302f;cursor:not-allowed
+}
+#formaResultFocus .forma-next-chip:focus-visible,
+#formaResultFocus .forma-result-make-variant:focus-visible,
+#formaResultFocus .forma-result-next-angle:focus-visible{outline:2px solid #e6c49a;outline-offset:3px}
+@media(max-width:760px){
+ #formaResultFocus .forma-result-figure{min-height:21dvh;max-height:35dvh;flex:1}
+ #formaResultFocus .forma-result-next{
+  gap:10px;padding:11px 13px 10px;max-height:38dvh;
+ }
+ #formaResultFocus .forma-result-next-heading strong{font-size:14px}
+ #formaResultFocus .forma-result-next-heading small{font-size:9px}
+ #formaResultFocus .forma-result-next-angle{padding:7px 11px;font-size:10px;min-height:34px}
+ #formaResultFocus .forma-result-next-groups{grid-template-columns:1fr;gap:11px}
+ #formaResultFocus .forma-next-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 1px 5px}
+ #formaResultFocus .forma-next-chips::-webkit-scrollbar{display:none}
+ #formaResultFocus .forma-next-chip{white-space:nowrap;min-height:35px;flex:none}
+ #formaResultFocus .forma-result-next-footer{position:sticky;bottom:-10px;background:#211f21;padding:9px 0 5px}
+ #formaResultFocus .forma-result-make-variant{min-height:40px;white-space:normal;text-align:center;font-size:10px}
+ #formaResultFocus #formaResultPending{max-width:47%;font-size:9px}
+ #formaResultFocus .forma-result-actions{padding:9px 13px;gap:6px}
+ #formaResultFocus .forma-result-actions button{min-height:40px;padding:6px;font-size:10px}
+ #formaResultFocus .forma-result-footer{padding:0 12px 7px}
+}
+@media(max-height:630px){
+ #formaResultFocus .forma-result-figure{min-height:80px}
+ #formaResultFocus .forma-result-next{max-height:29dvh}
+}
+/* Real render activity: editorial blueprint traces, never a fake percentage. */
+html[data-forma-theme] #renderProgress .forma-render-trace{
+ position:absolute;right:7%;top:10%;width:clamp(80px,30%,160px);height:auto;
+ z-index:3;pointer-events:none;fill:none;stroke:#e9d8c2;
+ stroke-width:1.05;stroke-linecap:round;stroke-linejoin:round;
+ opacity:.78;filter:drop-shadow(0 0 4px #000b)
+}
+html[data-forma-theme] #renderProgress .forma-render-trace path{
+ stroke-dasharray:145;stroke-dashoffset:145;
+ animation:forma-render-draw 4.5s ease-in-out infinite
+}
+html[data-forma-theme] #renderProgress .forma-render-trace path:nth-child(2){animation-delay:.35s}
+html[data-forma-theme] #renderProgress .forma-render-trace path:nth-child(3){animation-delay:.7s}
+html[data-forma-theme] #renderProgress .forma-render-trace path:nth-child(4){animation-delay:1s}
+@keyframes forma-render-draw{
+ 0%,10%{stroke-dashoffset:145;opacity:0}
+ 38%,70%{stroke-dashoffset:0;opacity:.95}
+ 92%,100%{stroke-dashoffset:-145;opacity:0}
+}
+html[data-forma-theme] #renderProgress .forma-render-active-line{
+ display:block;height:1px;margin:-4px 24px 18px;
+ background:linear-gradient(90deg,#d1b68e18,#d8bc97,#d1b68e18);
+ opacity:.9;position:relative;overflow:hidden
+}
+html[data-forma-theme] #renderProgress .forma-render-active-line:after{
+ content:"";position:absolute;left:0;top:0;height:100%;width:26%;
+ background:linear-gradient(90deg,transparent,#fff7de,transparent);
+ animation:forma-render-line-scan 2.8s ease-in-out infinite
+}
+@keyframes forma-render-line-scan{0%{transform:translateX(-150%)}100%{transform:translateX(470%)}}
+@media(max-width:760px){
+ html[data-forma-theme] #renderProgress .forma-render-active-line{margin:0 14px 13px}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-forma-theme] #renderProgress .forma-render-trace path{animation:none;stroke-dashoffset:0}
+ html[data-forma-theme] #renderProgress .forma-render-active-line:after{animation:none}
+}
