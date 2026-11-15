@@ -112,7 +112,8 @@
   if(!ready())return close();
   savePrompt(action);close();
   if(action==='scene'){
-   if(window.FORMA_SCENE_QUICK?.open)window.FORMA_SCENE_QUICK.open();
+   if(window.FORMA_SUN_STUDIO?.open)window.FORMA_SUN_STUDIO.open();
+   else if(window.FORMA_SCENE_QUICK?.open)window.FORMA_SCENE_QUICK.open();
    else tab('environment');
    return;
   }
@@ -124,7 +125,11 @@
   if(!info?.hasSource)return;
   lastProjectId=detail.projectId||lastProjectId;
   refreshBar();
-  requestAnimationFrame(()=>open({sourceName:detail.sourceName||'Исходный кадр'}));
+  // The first step after uploading is now SUN STUDIO, not a generic menu.
+  requestAnimationFrame(()=>{
+   if(window.FORMA_SUN_STUDIO?.open)window.FORMA_SUN_STUDIO.open();
+   else open({sourceName:detail.sourceName||'Исходный кадр'});
+  });
  }
  function handleProjectReady(event){
   lastProjectId=event.detail?.projectId||lastProjectId;
