@@ -11,7 +11,7 @@ const { buildPrompt } = require('./src/prompt.js');
 
 const ROOT = __dirname;
 const PORT = Number(process.env.PORT || 3000);
-const MAX_JSON_BYTES = 13 * 1024 * 1024;
+const MAX_JSON_BYTES = 22 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const LIMIT_COUNT = 3;
 const WINDOW_MS = 10 * 60_000;
@@ -67,6 +67,7 @@ async function callImageAPI(data) {
   const prompt=buildPrompt(data);
   const reference=toBlob(data.referenceImage);
   const clothing=toBlob(data.clothingImage);
+  const hairstyle=toBlob(data.hairImage);
   const model=process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2';
   const quality=['low','medium','high'].includes(data.quality)?data.quality:'medium';
   const size=['1024x1024','1024x1536','1536x1024'].includes(data.size)?data.size:'1024x1536';
@@ -75,13 +76,14 @@ async function callImageAPI(data) {
   try{
     let body,headers={'Authorization':`Bearer ${process.env.OPENAI_API_KEY}`};
     let endpoint;
-    if(reference || clothing){
+    if(reference || clothing || hairstyle){
       endpoint='https://api.openai.com/v1/images/edits';
       body=new FormData();
       body.append('model',model);body.append('prompt',prompt);
       body.append('size',size);body.append('quality',quality);
       if(reference)body.append('image[]',reference,'character.png');
       if(clothing)body.append('image[]',clothing,'outfit.png');
+      if(hairstyle)body.append('image[]',hairstyle,'hair.png');
     }else{
       endpoint='https://api.openai.com/v1/images/generations';
       headers['Content-Type']='application/json';
