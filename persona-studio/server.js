@@ -1,8 +1,8 @@
 /** PERSONA STUDIO server — Node.js 20+, no dependencies.
  * API tokens never reach the browser or GitHub. AI is disabled until an
  * administrator configures a provider key, model and PERSONA_ACCESS_CODE.
- * Arkheon image endpoints are provisionally OpenAI-shaped: publication of
- * Arkheon image API methods has not been independently confirmed.
+ * API Market supports documented OpenAI-compatible generation and edits.
+ * Arkheon image endpoints remain provisional and unverified.
  */
 'use strict';
 const http = require('node:http');
@@ -28,16 +28,23 @@ function respond(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 function providerConfig(){
-  const provider=process.env.PERSONA_AI_PROVIDER==='arkheon'?'arkheon':'openai';
-  const arkheon=provider==='arkheon';
-  const baseUrl=arkheon
-    ? (process.env.ARKHEON_API_BASE || 'https://arkheonchat.com/v1').replace(/\/+$/,'')
-    : 'https://api.openai.com/v1';
+  const selected=process.env.PERSONA_AI_PROVIDER;
+  const provider=['arkheon','apimarket'].includes(selected)?selected:'openai';
+  const baseUrl=(provider==='arkheon'
+    ? process.env.ARKHEON_API_BASE || 'https://arkheonchat.com/v1'
+    : provider==='apimarket'
+    ? 'https://api-market1.shop/v1'
+    : 'https://api.openai.com/v1').replace(/\/+$/,'');
   if(!/^https:\/\//.test(baseUrl))throw new Error('Provider base URL must use HTTPS.');
+  const model=provider==='apimarket'?(process.env.API_MARKET_IMAGE_MODEL||'gpt-image-2.5-sunburst')
+    :provider==='arkheon'?(process.env.ARKHEON_IMAGE_MODEL||'')
+    :(process.env.OPENAI_IMAGE_MODEL||'gpt-image-2');
   return {
     provider,baseUrl,
-    apiKey:arkheon?process.env.ARKHEON_API_KEY:process.env.OPENAI_API_KEY,
-    model:arkheon?(process.env.ARKHEON_IMAGE_MODEL||''):(process.env.OPENAI_IMAGE_MODEL||'gpt-image-2'),
+    apiKey:provider==='apimarket'?process.env.API_MARKET_KEY
+      :provider==='arkheon'?process.env.ARKHEON_API_KEY:process.env.OPENAI_API_KEY,
+    model,
+    editModel:provider==='apimarket'?(process.env.API_MARKET_EDIT_MODEL||'nano-banana-2.1'):model,
   };
 }
 function isReady(){
@@ -86,7 +93,8 @@ async function callImageAPI(data) {
   const hairstyle=toBlob(data.hairImage);
   const config=providerConfig();
   if(!config.apiKey||!config.model)throw Object.assign(new Error('Не настроен ключ или модель выбранного AI-провайдера.'),{status:503});
-  const model=config.model;
+  const editing=Boolean(reference || clothing || hairstyle);
+  const model=editing?config.editModel:config.model;
   const quality=['low','medium','high'].includes(data.quality)?data.quality:'medium';
   const size=['1024x1024','1024x1536','1536x1024'].includes(data.size)?data.size:'1024x1536';
   const controller=new AbortController();
@@ -94,7 +102,7 @@ async function callImageAPI(data) {
   try{
     let body,headers={'Authorization':`Bearer ${config.apiKey}`};
     let endpoint;
-    if(reference || clothing || hairstyle){
+    if(editing){
       endpoint=config.baseUrl+'/images/edits';
       body=new FormData();
       body.append('model',model);body.append('prompt',prompt);
@@ -133,7 +141,7 @@ const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url||'/', 'http://localhost').pathname;
   if(req.method==='GET'&&pathname==='/api/status'){
     const config=providerConfig();
-    return respond(res,200,{aiConfigured:isReady(),provider:config.provider,model:config.model||null,authRequired:true,imageEndpointVerified:false});
+    return respond(res,200,{aiConfigured:isReady(),provider:config.provider,model:config.model||null,editModel:config.editModel||null,authRequired:true,imageEndpointVerified:config.provider==='apimarket'});
   }
   if(req.method==='POST'&&pathname==='/api/ai/generate'){
     if(!isReady())return respond(res,503,{error:'Генерация выключена: владелец ещё не настроил серверные ключи.'});
