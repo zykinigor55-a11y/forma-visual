@@ -391,8 +391,8 @@ async function runTo(target,resume=false){
   plan=checkPlan(g,target,resumeNodes);
   await availability(plan.calls);
   if(plan.videoCalls)await checkVideoAvailability();
- }catch(err){preparing=false;decorate();tell('Проверка цепочки: '+(err.message||'ошибка'));return}
- preparing=false;decorate();
+ }catch(err){preparing=false;showSelection();decorate();tell('Проверка цепочки: '+(err.message||'ошибка'));return}
+ preparing=false;showSelection();decorate();
  const steps=plan.path.map((n,i)=>{
   let step='локально';
   if(AI_TYPES.has(n.type))step=cacheAllowed(n,resumeNodes)?'готовый кадр · без AI':'новая AI-генерация';
