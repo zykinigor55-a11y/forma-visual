@@ -114,8 +114,14 @@
    if(sh){scene.shadow=sh.dataset.sunShadow;persist();render();return}
    if(e.target.closest('[data-sun-save]')){persist();close();return}
    if(e.target.closest('[data-sun-continue]')){
-    persist();close();if(window.FORMA_SCENE_QUICK?.open)window.FORMA_SCENE_QUICK.open();
-    else ($('[data-mobile="environment"]')||$('[data-tab="environment"]'))?.click();
+    persist();const existing=!!SOURCE().hasRender;
+    if(existing){
+     if(!confirm('Переосветить готовое изображение в выбранном направлении? Это один новый платный AI-запрос; предыдущий результат сохраняется.'))return;
+     close();B()?.relight?.();
+    }else{
+     close();if(window.FORMA_SCENE_QUICK?.open)window.FORMA_SCENE_QUICK.open();
+     else ($('[data-mobile="environment"]')||$('[data-tab="environment"]'))?.click();
+    }
    }
   });
   root.addEventListener('keydown',e=>{
@@ -169,6 +175,8 @@
   $('#formaSunStudioResultSummary').textContent=d.desc+' · '+h.hint.toLowerCase()+' · '+sh.name.toLowerCase()+' тени';
   const info=SOURCE();const night=info.explicit?.time&&/ночь|night/i.test(String(info.time||''));
   $('#formaSunStudioNightNote').hidden=!night;
+  const continueButton=root.querySelector('[data-sun-continue]');
+  if(continueButton)continueButton.innerHTML=info.hasRender?'Переосветить рендер · AI <span aria-hidden="true">↗</span>':'Далее · окружение <span aria-hidden="true">↗</span>';
  }
  function open(){
   if(!SOURCE().hasSource)return;
