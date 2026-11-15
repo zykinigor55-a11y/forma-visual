@@ -7,6 +7,7 @@
 <meta name="description" content="FORMA PLAN TO INTERIOR — проверяемая геометрия 2D-плана, 3D-пространство, интерьерные ракурсы и AI-фото.">
 <title>FORMA · PLAN TO INTERIOR</title>
 <link rel="stylesheet" href="plan-to-interior.css?v=20261115-p1">
+<link rel="stylesheet" href="plan-interior-editor-v19.css?v=20261115-v19">
 </head>
 <body>
 <header class="topbar">
@@ -40,7 +41,14 @@
     <button class="full tool-secondary" id="confirmWalls" disabled>✓ Подтвердить геометрию стен</button>
     <p class="assist">«Стена»: две точки. «Дверь» или «Окно»: нажмите на распознанную стену. Удаление не затрагивает исходный чертёж.</p>
    </section>
-   <section class="tool-section"><div class="section-num">04 / ДИЗАЙН</div>
+   <section class="tool-section" id="styleEditor"><div class="section-num">04 / ДИЗАЙН</div>
+    <div id="stylePresetButtons" class="style-presets" role="group" aria-label="Стиль интерьера">
+     <button type="button" data-style-preset="warm-modern" class="selected"><span>WARM</span><strong>Современный</strong></button>
+     <button type="button" data-style-preset="japandi"><span>JP</span><strong>Japandi</strong></button>
+     <button type="button" data-style-preset="contemporary"><span>CL</span><strong>Luxury</strong></button>
+     <button type="button" data-style-preset="minimal"><span>MN</span><strong>Минимализм</strong></button>
+     <button type="button" data-style-preset="scandinavian"><span>SC</span><strong>Сканди</strong></button>
+    </div>
     <label>Стиль интерьера<select id="style"><option value="warm-modern">Тёплый современный</option><option value="japandi">Japandi</option><option value="contemporary">Contemporary luxury</option><option value="minimal">Минимализм</option><option value="scandinavian">Скандинавский</option></select></label>
     <label>Цвет стен<input type="color" id="wallColor" value="#e7dfd1"></label>
     <label>Цвет пола<input type="color" id="floorColor" value="#af9172"></label>
@@ -55,12 +63,54 @@
     <footer class="canvas-foot"><span id="planHint">Распознанные линии можно редактировать.</span><span id="wallCount">0 стен</span></footer>
    </section>
    <section class="canvas-section model">
-    <header class="canvas-head"><div><span class="canvas-code">02 / LIVE GEOMETRY</span><h2>3D-модель</h2></div><span class="status-chip warn" id="modelStatus">НЕ КАЛИБРОВАНО</span></header>
+    <header class="canvas-head"><div><span class="canvas-code">02 / LIVE GEOMETRY</span><h2>3D-модель</h2><small id="selectionStatus" class="selected-hint">Нажмите на поверхность, чтобы изменить материал</small></div><span class="status-chip warn" id="modelStatus">НЕ КАЛИБРОВАНО</span></header>
     <div class="three-area" id="threeArea"><canvas id="threeCanvas" aria-label="Интерактивная 3D-модель помещения"></canvas><div class="canvas-empty" id="threeEmpty"><span>◈</span><strong>Ожидаем геометрию</strong><small>После распознавания здесь появится 3D</small></div></div>
     <footer class="canvas-foot"><span id="modelHint">Вращайте пальцем / мышью. Масштаб — колёсиком.</span><button type="button" id="resetCamera" class="text-button">Сброс камеры</button></footer>
    </section>
   </div>
   <aside class="results">
+   <section class="tool-section workflow-next" id="nextActions">
+    <div class="section-num">ПОСЛЕ ПОСТРОЕНИЯ / РАБОЧИЙ ПРОЦЕСС</div>
+    <strong class="next-title">Выберите следующий шаг</strong>
+    <p class="assist">Сначала утвердите архитектуру, затем назначьте стиль и материалы. Нажмите прямо на стену, пол или окно в 3D — справа появятся свойства.</p>
+    <div class="next-actions">
+     <button type="button" data-next="style"><span>01</span><strong>Стиль интерьера</strong><small>Палитра и характер отделки</small></button>
+     <button type="button" data-next="surface"><span>02</span><strong>Выбрать материал</strong><small>Стена, пол, фрагмент</small></button>
+     <button type="button" data-next="window"><span>03</span><strong>Окна и двери</strong><small>Рамы, 2 или 3 створки</small></button>
+     <button type="button" data-next="render"><span>04</span><strong>Камера и фото</strong><small>После проверки геометрии</small></button>
+    </div>
+   </section>
+   <section class="tool-section surface-editor" id="surfaceEditorPanel" hidden>
+    <div class="section-num">МАТЕРИАЛ ВЫБРАННОГО ЭЛЕМЕНТА</div>
+    <strong id="surfaceName" class="selected-surface">Выберите объект в 3D</strong>
+    <p id="surfaceHint" class="assist">Нажмите на пол или стену в окне 3D.</p>
+    <label>Область изменения<select id="surfaceScope"><option value="whole">Вся поверхность</option><option value="patch">Только выбранный участок стены</option></select></label>
+    <div id="patchOptions" hidden><div class="tool-grid">
+     <label>Ширина участка, м<input id="patchWidth" type="number" min=".2" max="8" step=".1" value="1.6"></label>
+     <label>Высота участка, м<input id="patchHeight" type="number" min=".2" max="6" step=".1" value="1.5"></label>
+    </div><p class="assist">Участок размещается по точке касания стены; проёмы остаются открытыми.</p></div>
+    <label>Цвет выбранного элемента<input type="color" id="surfaceColor" value="#e7dfd1"></label>
+    <label>Свой материал<input type="file" id="materialFile" accept="image/png,image/jpeg,image/webp"></label>
+    <div class="material-preview" id="materialPreview">Материал не загружен</div>
+    <label>Масштаб текстуры<select id="surfaceTextureScale"><option value=".5">Крупная текстура</option><option value="1" selected>Стандарт</option><option value="2">Мелкая текстура</option><option value="4">Очень мелкая</option></select></label>
+    <button type="button" id="applySurface" class="full tool-primary">✓ Применить к выбранному элементу</button>
+    <button type="button" id="resetSurface" class="full outline">Сбросить локальный материал</button>
+   </section>
+   <section class="tool-section opening-editor" id="openingEditorPanel" hidden>
+    <div class="section-num">АРХИТЕКТУРНЫЙ ПРОЁМ / BIM-СВОЙСТВА</div>
+    <strong id="openingName" class="selected-surface">Выбрано окно</strong>
+    <p class="assist" id="openingHint">По одному плану невозможно всегда узнать количество створок. Проверьте по фасаду или спецификации.</p>
+    <div class="tool-grid"><label>Ширина проёма, м<input id="openingWidth" type="number" step=".05" min=".35" max="5.9"></label>
+    <label>Высота, м<input id="openingHeight" type="number" step=".05" min=".35" max="3.5"></label></div>
+    <label id="sillLabel">Высота подоконника, м<input id="openingSill" type="number" step=".05" min="0" max="3"></label>
+    <div id="windowSashes"><div class="section-num">КОЛИЧЕСТВО СТВОРОК</div>
+      <div class="sash-options"><button type="button" data-sashes="2">▥ <strong>2 створки</strong></button><button type="button" data-sashes="3">▥ <strong>3 створки</strong></button></div>
+      <p id="sashConfidence" class="assist">Количество створок требует подтверждения.</p>
+    </div>
+    <label>Цвет рамы<input type="color" id="openingFrameColor" value="#303633"></label>
+    <button type="button" class="full tool-primary" id="saveOpening">✓ Сохранить и подтвердить проём</button>
+    <button type="button" class="full outline" id="deleteOpening">Удалить этот проём</button>
+   </section>
    <section class="tool-section"><div class="section-num">МОДЕЛЬ / СОСТОЯНИЕ</div>
     <div class="metric"><strong id="metricWalls">0</strong><small>Стен</small></div><div class="metric"><strong id="metricOpenings">0</strong><small>Проёмов</small></div>
     <div class="metric"><strong id="metricArea">—</strong><small>Габариты модели, м</small></div>
@@ -80,5 +130,5 @@
  <section class="privacy-note"><strong>Проверяемая геометрия, а не выдуманное 3D.</strong> Автоматическое определение стен работает как черновик. Пока масштаб не подтверждён, размеры и площади являются условными. AI-анализ доступен только при подключённой Vision-модели, а генерация фотографии — после согласования проекта.</section>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script type="module" src="plan-to-interior.js?v=20261115-p1"></script>
+<script type="module" src="plan-to-interior.js?v=20261115-arch-v19"></script>
 </body></html>
