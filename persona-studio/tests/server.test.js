@@ -53,7 +53,7 @@ test('Arkheon selection, safe status and standard image endpoint transport',asyn
     };
     const result=await callImageAPI({params:{age:39}});
     assert.equal(result.provider,'arkheon');
-    assert.match(result.image,/^data:image\\/png;base64,/);
+    assert.match(result.image,/^data:image\/png;base64,/);
   } finally {
     global.fetch=originalFetch;
     for(const k of vars){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}
