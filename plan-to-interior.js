@@ -219,13 +219,17 @@ function undo(){
  state.materials=state.materials||{walls:{},floor:null,zones:[]};
  selection=null;pending=null;afterChange();
 }
+function closeProperties(){
+ selectedSurface=null;selectedOpeningId=null;selection=null;
+ refreshInspectors();redraw();
+}
 function selectedOpening(){return state.openings.find(o=>o.id===selectedOpeningId)||null}
 function selectOpening(id,scroll=false){
  const found=state.openings.find(o=>o.id===id);if(!found)return;
  selectedOpeningId=id;selectedSurface=null;selection=found.wallId;
  stagedSashes=[2,3].includes(Number(found.sashes))?Number(found.sashes):null;
  refreshInspectors();redraw();
- if(scroll)$('openingEditorPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+ if(scroll&&!window.matchMedia('(max-width:700px)').matches)$('openingEditorPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 let stagedSashes=null;
 function surfaceMaterial(){
@@ -239,7 +243,7 @@ function selectSurface(target,scroll=false){
  materialDraft=surfaceMaterial();
  $('surfaceScope').value=target?.type==='zone'?'patch':'whole';
  refreshInspectors();redraw();
- if(scroll)$('surfaceEditorPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+ if(scroll&&!window.matchMedia('(max-width:700px)').matches)$('surfaceEditorPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function renderMaterialPreview(){
  const el=$('materialPreview');el.replaceChildren();
@@ -252,6 +256,8 @@ function refreshInspectors(){
  document.querySelectorAll('[data-style-preset]').forEach(b=>b.classList.toggle('selected',b.dataset.stylePreset===state.style));
  $('surfaceEditorPanel').hidden=!selectedSurface;
  $('openingEditorPanel').hidden=!selectedOpeningId;
+ const isMobile=window.matchMedia('(max-width:700px)').matches;
+ $('propertyOverlay').hidden=!(isMobile&&(!!selectedOpeningId||!!selectedSurface));
  $('selectionStatus').textContent=selectedOpeningId?'Выбран архитектурный проём':selectedSurface?'Выбрано: '+materialTargetName(selectedSurface):'Нажмите на поверхность, чтобы изменить материал';
  if(selectedSurface){
   $('surfaceName').textContent=materialTargetName(selectedSurface)+(selectedSurface.wallId?' · '+selectedSurface.wallId:'');
@@ -689,6 +695,8 @@ function bind(){
   $('sashConfidence').textContent='Выбрано '+stagedSashes+' створки. Нажмите «Сохранить и подтвердить».';
  });
  $('saveOpening').addEventListener('click',saveSelectedOpening);
+ $('propertyOverlay').addEventListener('click',closeProperties);
+ for(const button of document.querySelectorAll('[data-close-properties]'))button.addEventListener('click',closeProperties);
  $('deleteOpening').addEventListener('click',deleteSelectedOpening);
  $('addSofa').addEventListener('click',()=>addFurniture('sofa'));
  $('addTable').addEventListener('click',()=>addFurniture('table'));
@@ -702,8 +710,8 @@ function bind(){
  $('renderPhoto').addEventListener('click',()=>createPhoto(false));
  $('relightPhoto').addEventListener('click',()=>createPhoto(true));
  $('downloadPhoto').addEventListener('click',()=>{if(photo)download('forma-interior-photo.png',new Blob([Uint8Array.from(atob(photo.split(',')[1]),c=>c.charCodeAt(0))],{type:photo.slice(5,photo.indexOf(';'))}))});
- window.addEventListener('resize',()=>{redraw();refresh3D()},{passive:true});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'){pending=null;setTool('select')}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){e.preventDefault();undo()}});
+ window.addEventListener('resize',()=>{redraw();refresh3D();refreshInspectors()},{passive:true});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){pending=null;closeProperties();setTool('select')}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){e.preventDefault();undo()}});
 }
 async function restore(){
  try{
