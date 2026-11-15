@@ -117,7 +117,9 @@ function sceneVariationPrompt(p){
  ].join('\n\n');
 }
 function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);const b=p.brief||{};const specific=Boolean(p.selectedZone&&(p.mask||p.editMode==='text'));const shot=compact(p.batchShot,32);
- const essential=`You are an expert architectural photographer and material visualization artist. Produce a genuinely photorealistic high-end editorial architectural photograph, never a CGI-looking image, illustration, or concept sketch. Source input image 1 is the authoritative architectural building; ${shot==='front'&&!p.batchFrontProvided?'the user requires a NEW frontal camera position inferred conservatively from the oblique source, so do not preserve the oblique camera angle, but preserve the architecture; unseen geometry cannot be guaranteed accurate':'keep the exact supplied camera viewpoint'}. Preserve the exact building massing, facade proportions, number/size/locations of windows and doors, roof silhouette, entrance and horizontal lines; ${shot==='front'&&!p.batchFrontProvided?'change ONLY camera orientation toward a straight-on frontal facade view, treating occluded elements conservatively':'preserve camera perspective and framing'}. Do NOT invent extra rooms, balconies, windows, roofs, storeys or structural elements. Natural light transport, plausible surface textures, realistic reflections, detailed landscaping, restrained photographic grading. No logos, text, people, watermarks or distracting objects.`;
+ const essential=String(b.sceneType||'')==='interior'
+  ?'You are an expert architectural interior photographer and 3D-based visualization artist. Create a photorealistic premium INTERIOR photograph from Image 1. Image 1 is the authoritative approved room geometry and camera composition. Preserve all visible wall positions, room proportions, ceiling height implied by the supplied view, exact door and window locations/count/sizes, structural columns and fixed openings. Do NOT move openings, distort perspective or invent additional rooms. Keep the approved virtual camera fixed. Physically plausible lighting, material microdetail, reflections, natural scale and architectural editorial photography. No people, logos, captions or graphic overlays. If the source is only a 2D floor plan rather than a 3D room or interior image, DO NOT pretend that hidden elevations or wall heights are known: the project must first be verified as a 3D layout.'
+  :`You are an expert architectural photographer and material visualization artist. Produce a genuinely photorealistic high-end editorial architectural photograph, never a CGI-looking image, illustration, or concept sketch. Source input image 1 is the authoritative architectural building; ${shot==='front'&&!p.batchFrontProvided?'the user requires a NEW frontal camera position inferred conservatively from the oblique source, so do not preserve the oblique camera angle, but preserve the architecture; unseen geometry cannot be guaranteed accurate':'keep the exact supplied camera viewpoint'}. Preserve the exact building massing, facade proportions, number/size/locations of windows and doors, roof silhouette, entrance and horizontal lines; ${shot==='front'&&!p.batchFrontProvided?'change ONLY camera orientation toward a straight-on frontal facade view, treating occluded elements conservatively':'preserve camera perspective and framing'}. Do NOT invent extra rooms, balconies, windows, roofs, storeys or structural elements. Natural light transport, plausible surface textures, realistic reflections, detailed landscaping, restrained photographic grading. No logos, text, people, watermarks or distracting objects.`;
  const materialMap=specific?Object.entries(b.materials||{}).filter(([,name])=>String(name||'').trim()):[];
  const homeChanges=compact(b.homeChanges,600);const preserve=b.preserveMaterials!==false&&!specific&&!homeChanges;
  const materialPolicy=preserve?`MATERIAL AND DESIGN FIDELITY — MANDATORY FOR EVERY ARCHITECTURAL STYLE: Identify the ACTUAL existing finishes and material boundaries in the supplied original building image. Preserve each material exactly as visible, without guessing a different covering, inventing an architectural feature, changing a material type, recoloring a surface or modifying its construction pattern. Preserve every existing seam, joint, relief, edge, opening, trim, proportion and arrangement. Improve ONLY physically plausible microdetail, surface response, lighting, photographic realism and resolution, consistent with the already visible source. Where the material or geometry is unclear, remain conservative and preserve the original appearance rather than creating or replacing details. The original image is the authority: do not impose any preset architectural style or predefined material palette. Absolutely no redesign.`:`Follow the source building geometry and appearance unless a user explicitly requested and scoped an edit.`;
@@ -154,9 +156,9 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
   cinematic:'CINEMATIC SHADOWS: deep directional yet readable shadows, refined negative fill, editorial photographic contrast, no clipped blacks.'
  };
  const direction=sunlight&&Object.hasOwn(directionalLight,String(sunlight.direction||''))?sunlight.direction:null;
- const sunHint=sunlight&&direction&&!nightRequested&&!specific
+ const sunHint=sunlight&&direction&&!nightRequested&&!specific&&b.sceneType!=='interior'
   ?'CRITICAL USER-DEFINED ARCHITECTURAL LIGHTING. APPLY VISIBLY; PRIORITY OVER GENERAL LIGHT PRESETS. '+directionalLight[direction]+' '+(elevationDirections[sunlight.elevation]||elevationDirections.medium)+' '+(shadowModes[sunlight.shadow]||shadowModes.natural)+' RECOMPUTE the lighting distribution: facade highlights and shadows, cast shadows on site, sky, window reflections, bounced fill, and directional atmosphere. A new lighting direction must noticeably change the photographic lighting, not just tint/brightness. NEVER render sun glyphs, orbits, UI arrows or any on-image markers. Keep camera, building geometry, materials, windows, doors and landscape layout unchanged. User direction is camera-relative, not an exact geographic azimuth. Exact 3D shadow geometry cannot be guaranteed from a 2D screenshot.'
-  :sunlight&&!nightRequested&&!specific&&Number.isFinite(x)&&Number.isFinite(y)&&x>=0&&x<=1&&y>=0&&y<=1
+  :sunlight&&!nightRequested&&!specific&&b.sceneType!=='interior'&&Number.isFinite(x)&&Number.isFinite(y)&&x>=0&&x<=1&&y>=0&&y<=1
   ?'LEGACY VIRTUAL SUN MARKER: approximate sunlight from photo coordinate ('+x.toFixed(3)+', '+y.toFixed(3)+'), '+(x<.33?'camera-left.':x>.67?'camera-right.':'near camera axis.')+' '+(y>.65?'Low grazing sunlight and long cast shadows.':y<.35?'Higher sunlight and shorter shadows.':'Medium sunlight and medium shadows.')+' Make the directional light and facade shading visibly change; keep geometry identical.'
   :null;
  const relightInstruction=p.relightOnly===true
@@ -232,8 +234,57 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
  const semanticText=semanticOnly?`TARGETED ARCHITECTURAL COMPONENT EDIT WITHOUT A MASK: IMAGE 1 is authoritative. Visually identify each visible component called "${targetZone}" by architectural function, never by a simple color match. Component rules: ${category} User instruction: "${userRequest}". ${recolor?`Recolor ONLY this component according to the COLOR NAMED IN THE USER INSTRUCTION while preserving its original material, grain, surface texture and geometry. If no color is named, use ${/^#[0-9a-fA-F]{6}$/.test(color)?color:'the existing selected shade'}.`:'Replace or adjust ONLY the selected component according to the text description with physically plausible material scale and reflections.'} Keep EVERY other building material and color unchanged. Do not touch glazing, landscape, sky, camera, windows, roof, terrace, doors or adjacent areas except the named target. Preserve architectural geometry exactly. NO MASK WAS SUPPLIED; the model must locate the target visually, and the result requires user review.`:null;
  const extraRequest=!semanticOnly&&specific&&userRequest?`Additional user instruction scoped ONLY to the named masked component: "${userRequest}". ${category} Keep every unmasked pixel untouched.`:null;
  const edit=semanticOnly?semanticText:specific?recolor?recolorText:`LOCAL EDIT ONLY: edit the transparent region of the supplied PNG mask on IMAGE 1. The masked area is the selected facade zone named '${compact(p.selectedZone)}'. Apply requested material '${compact(p.materialName)||compact(userRequest,100)||'as described in the user instruction'}' to that facade surface and keep the rest of the image, environment, lighting and all other surfaces as unchanged as possible. Use the material reference image (when provided) for accurate color, grain and texture repeat. ${Number(p.materialDimensions?.width)>0?`Material physical size: ${Number(p.materialDimensions.width)} by ${Number(p.materialDimensions.height)||Number(p.materialDimensions.width)} millimetres.`:''} Replace the material consistently through the ENTIRE transparent masked area, never only a small isolated patch. Respect the mask boundary, preserve the contours around glazing and doors, and keep all unmasked pixels as untouched as possible. The mask is a guide and may not be pixel exact. Material reference image is not the building.`:`FULL SCENE ENHANCEMENT: Transform the sketch/model screenshot into a realistic architectural photograph while preserving existing building materials, all visible texture divisions and exact architectural point of view. Develop only the selected surroundings, weather, season and photographic lighting. A photographed exterior must look realistic without redesigning or re-cladding any part of the house.`;
+ const interiorRules=(()=>{
+  if(String(b.sceneType||'')!=='interior')return null;
+  const styles={
+   'as-is':'KEEP the existing interior style and finishes as closely as visible.',
+   'warm-modern':'Warm modern: considered walnut/oak textures, neutral plaster, elegant restrained furniture, natural stone accents.',
+   'japandi':'Premium Japandi: precise minimal forms, soft tactile oak, quiet natural palette and restrained handmade details.',
+   'minimal':'Architectural minimalism: refined detailing, continuous surfaces, warm neutral volumes and quality materials.',
+   'scandinavian':'High-end Scandinavian: daylight, warm oak, soft natural textile and calm proportions.',
+   'contemporary':'Contemporary luxury: refined custom joinery, carefully proportioned furniture and premium materials without excessive decor.',
+   'classic':'Modern classic: elegant restrained moulding, balanced proportions and refined materials without excessive ornament.',
+   'loft':'Refined loft: restrained metal, stone, timber and industrial accents while respecting the existing building.'
+  };
+  const furnishings={
+   preserve:'KEEP furniture already visible in Image 1 in precisely the same positions and sizes; no replacement.',
+   complete:'Furnish empty zones appropriately to actual room scale, maintain clear paths, never block doorways, windows or access.',
+   'no-additions':'Do not add any new furniture, decoration or lighting fixtures.'
+  };
+  const lighting={
+   'soft-daylight':'Natural diffused daylight through EXISTING windows, physically realistic soft illumination.',
+   sunny:'Distinct clear-sky sun patches through existing windows, directional indoor shadows.',
+   overcast:'Uniform elegant soft overcast window light, extremely gentle shadows.',
+   evening:'Evening interior with existing practical light fixtures, warm but balanced and realistic exposure.',
+   studio:'Professional editorial interior photography with accurate soft light and restrained bounce fill.'
+  };
+  const sun=b.sunLighting&&typeof b.sunLighting==='object'?b.sunLighting:{};
+  const dir={
+   'front-left':'from the front-left relative to the camera','front':'from camera-front','front-right':'from camera-front-right',
+   left:'from camera-left',right:'from camera-right','back-left':'from rear-left','back':'from behind the camera-facing room','back-right':'from rear-right'
+  };
+  const shadows={
+   soft:'soft wide penumbrae, gentle contrast',natural:'balanced natural shadow contrast',defined:'crisp realistic strong shadows',
+   cinematic:'cinematic controlled pools of light and dark, still preserving readable details'
+  };
+  const sources={
+   window:'DAYLIGHT THROUGH THE WINDOWS already present in the original room. Never add windows.',
+   ceiling:'Use ceiling light fixtures where already represented in Image 1. Do not add fixture positions without explicit instruction.',
+   fixtures:'Use existing wall, table, floor and pendant fixtures without relocating or inventing new ones.',
+   mixed:'Combine existing window daylight and existing indoor fixtures with balanced realistic exposure.'
+  };
+  const current=compact(b.room,48);
+  const style=styles[b.style]||styles['as-is'];
+  const furniture=furnishings[b.furniture]||furnishings.preserve;
+  const additional=compact(b.notes,800),surfaces=compact(b.surfaces,500);
+  return 'INTERIOR ROOM REQUIREMENTS: Room type: '+current+'. '+(p.relightOnly===true?'RELIGHT ONLY: preserve furniture, existing finishes, materials, wall colors and camera exactly; no redesign.':style+' '+furniture+' '+(surfaces?'Finish requests: '+surfaces+'. ':'')+(additional?'Additional user requests: '+additional+'. ':''))+
+   ' Base lighting: '+(lighting[b.lighting]||lighting['soft-daylight'])+' '+(sources[sun.indoorSource]||sources.window)+
+   ' If selected indoor daylight is available, directional light '+(dir[sun.direction]||'according to the visible window configuration')+
+   ', sun elevation '+(sun.elevation||'medium')+', '+(shadows[sun.shadow]||shadows.natural)+
+   '. Respect actual window positions: do not pretend physically impossible sunlight arrives through solid walls. For a finished-photo relight, alter lighting, direct and indirect shadows, window exposure and reflections ONLY. Preserve architecture, camera and furniture.';
+ })();
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
- return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,edit,homeEdit,extraRequest,physics,context,sunHint,continuity].filter(Boolean).join('\n\n')}
+ return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,continuity].filter(Boolean).join('\n\n')}
 let generationSeq=0;
 async function proxyRender(req,res){
  const requestId=Date.now().toString(36)+'-'+(++generationSeq).toString(36);
