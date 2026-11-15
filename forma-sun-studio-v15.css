@@ -1,0 +1,88 @@
+/* FORMA SUN STUDIO v15 · graphite and champagne */
+body.forma-sunstudio-open{overflow:hidden!important}
+.forma-sunstudio-backdrop[hidden],#formaSunStudioLauncher[hidden]{display:none!important}
+.forma-sun-studio-launcher{display:flex;align-items:center;width:calc(100% - 32px);margin:10px 16px;padding:12px 15px;box-sizing:border-box;text-align:left;gap:12px;background:linear-gradient(105deg,#222724,#171b1a);border:1px solid #9a856b;border-radius:13px;color:#f2eee5;cursor:pointer;box-shadow:0 8px 28px #0002}
+.forma-sun-studio-launcher:hover{border-color:#e0bb91}
+.forma-sun-studio-mark{display:grid;place-items:center;width:42px;height:42px;flex-shrink:0;border-radius:11px;border:1px solid #655d4a;color:#dfbd88;font-size:27px;background:#39382f}
+.forma-sun-studio-launch-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.forma-sun-studio-launch-copy strong{font-size:12px;letter-spacing:.08em;color:#e9d3ac}
+.forma-sun-studio-launch-copy strong i{font-size:12px;font-weight:500;letter-spacing:0;color:#eee9df;font-style:normal}
+.forma-sun-studio-launch-copy small{font-size:11px;color:#b9bdb7}
+.forma-sun-studio-launch-arrow{font-size:23px;color:#ddc19b}
+.forma-sunstudio-backdrop{position:fixed;inset:0;z-index:32000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:22px;color:#f1eee6;font-family:inherit}
+.forma-sunstudio-scrim{position:absolute;inset:0;background:rgba(5,7,6,.84);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.forma-sunstudio-panel{position:relative;box-sizing:border-box;display:flex;flex-direction:column;max-height:min(94dvh,1000px);overflow:auto;width:min(1110px,100%);padding:25px 28px 22px;border-radius:21px;border:1px solid #554c3e;background:#171a19;box-shadow:0 35px 120px #000b}
+.forma-sunstudio-head{display:flex;align-items:start;justify-content:space-between;gap:15px;margin:0 0 22px}
+.forma-sunstudio-kicker{font-size:10px;letter-spacing:.2em;color:#cfb38c;font-weight:800}
+.forma-sunstudio-head h2{font-size:clamp(29px,4vw,43px);font-weight:600;letter-spacing:-.04em;line-height:1.1;margin:7px 0 8px;color:#faf7ef}
+.forma-sunstudio-head p{margin:0;color:#abb0a8;font-size:12px}
+.forma-sunstudio-close{display:grid;place-items:center;width:40px;height:40px;flex-shrink:0;background:#242823;color:#eae2d7;border:1px solid #52534b;border-radius:10px;cursor:pointer;font-size:26px}
+.forma-sunstudio-inner{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(330px,1fr);gap:25px}
+.forma-sunstudio-visual{min-width:0;display:flex;flex-direction:column;gap:0}
+.forma-sunstudio-visual-head,.forma-sunstudio-photo-footer{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.forma-sunstudio-visual-head{padding:0 1px 12px;color:#c1bbae;letter-spacing:.12em;font-weight:700;font-size:10px}
+#formaSunStudioLiveStatus{color:#d7b994;text-align:right}
+.forma-sunstudio-photo{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;width:100%;aspect-ratio:16/10;border-radius:13px;background:#101312;box-shadow:0 0 0 1px #454940}
+.forma-sunstudio-photo>img{width:100%;height:100%;object-fit:contain;display:block}
+.forma-sunstudio-image-area{position:absolute;pointer-events:none;overflow:hidden;transition:width .15s,height .15s}
+.forma-sunstudio-light-grade{position:absolute;inset:0;transition:background .35s;mix-blend-mode:screen}
+.forma-sunstudio-orbit{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 3px #0009)}
+.forma-sunstudio-orbit-path{stroke:#f3d9aa;stroke-width:1.35;stroke-dasharray:6 8;opacity:.58;fill:none}
+.forma-sunstudio-orbit-forward{fill:none;stroke:#f6e1bc;stroke-width:2;opacity:.6}
+.forma-sunstudio-direction-line{stroke:#ebc794;stroke-width:2;stroke-dasharray:9 8;opacity:.86}
+.forma-sunstudio-shadow-line{stroke:#c6d7d3;stroke-width:2;stroke-dasharray:4 10;opacity:.76}
+.forma-sunstudio-center{fill:#ebd6ae}
+.forma-sunstudio-marker{position:absolute;transform:translate(-50%,-50%);width:42px;height:42px;border:1px solid #f5dfbd;border-radius:50%;background:radial-gradient(circle,rgba(252,225,162,.21),rgba(250,203,132,.08) 58%,transparent 65%);box-shadow:0 0 0 8px #edca8820,0 0 30px #e9bd765a;display:grid;place-items:center;transition:left .35s,top .35s}
+.forma-sunstudio-marker span{width:11px;height:11px;background:#ffe4ad;border-radius:50%;box-shadow:0 0 16px #f7c47d}
+.forma-sunstudio-shadow-marker{position:absolute;transform:translate(-50%,-50%);font-size:9px;letter-spacing:.12em;font-weight:800;color:#d6e1dd;text-shadow:0 2px 7px #000;transition:left .35s,top .35s}
+.forma-sunstudio-image-note{position:absolute;bottom:12px;left:12px;font-size:9px;letter-spacing:.11em;color:#ebe2d3;background:#151719c7;border:1px solid #ffffff3d;border-radius:5px;padding:6px 8px}
+.forma-sunstudio-photo-footer{padding:13px 3px 0}
+.forma-sunstudio-photo-footer>span{display:flex;gap:8px;align-items:center;font-size:12px}
+.forma-sunstudio-photo-led{width:7px;height:7px;border-radius:50%;background:#dbb884;box-shadow:0 0 9px #e3c193}
+.forma-sunstudio-photo-footer small{font-size:10px;color:#a9aaa3;text-align:right}
+.forma-sunstudio-control-stack{display:flex;flex-direction:column;gap:16px}
+.forma-sunstudio-control{padding:14px 15px 16px;border:1px solid #3d433f;border-radius:13px;background:#202421}
+.forma-sunstudio-control>header{display:flex;gap:11px;align-items:start;margin-bottom:12px}
+.forma-sunstudio-control>header>span{font:700 11px/1.5 sans-serif;color:#cbb18d}
+.forma-sunstudio-control>header>div{display:flex;flex-direction:column;gap:4px}
+.forma-sunstudio-control>header strong{font-size:13px;font-weight:700;color:#eee9df}
+.forma-sunstudio-control>header small{font-size:10px;color:#9fa9a2}
+.forma-sunstudio-direction-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.forma-sunstudio-direction-grid button,.forma-sunstudio-height-grid button,.forma-sunstudio-shadow-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;box-sizing:border-box;min-width:0;background:#292e29;color:#dddcd6;border:1px solid #4a514c;border-radius:9px;cursor:pointer;transition:border-color .15s,background .15s}
+.forma-sunstudio-direction-grid button{min-height:64px;padding:6px 3px}
+.forma-sunstudio-direction-grid button span{font:400 22px/1 sans-serif;color:#d5b990}
+.forma-sunstudio-direction-grid button small{font-size:10px;line-height:1.15;text-align:center;color:#d5d8d2}
+.forma-sunstudio-height-grid,.forma-sunstudio-shadow-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.forma-sunstudio-shadow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.forma-sunstudio-height-grid button,.forma-sunstudio-shadow-grid button{min-height:57px;padding:8px}
+.forma-sunstudio-height-grid strong,.forma-sunstudio-shadow-grid strong{font-size:11px;font-weight:750;color:#eae8df}
+.forma-sunstudio-height-grid small,.forma-sunstudio-shadow-grid small{font-size:10px;text-align:center;color:#acb1aa}
+.forma-sunstudio-control button.is-selected{border-color:#ddbd90;background:#514636;color:#f7e2bc;box-shadow:inset 0 0 0 1px #ddbd9038}
+.forma-sunstudio-control button.is-selected strong,.forma-sunstudio-control button.is-selected span{color:#f5d2a0}
+.forma-sunstudio-info{padding:10px 15px;background:#3e3126;border:1px solid #8e7056;border-radius:9px;margin-top:12px;font-size:11px;color:#ebcda7}
+.forma-sunstudio-info[hidden]{display:none}
+.forma-sunstudio-footer{display:flex;align-items:center;gap:10px;border-top:1px solid #3e403b;margin-top:21px;padding-top:18px}
+.forma-sunstudio-footer>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.forma-sunstudio-footer>div strong{font-size:12px;color:#efeadf}
+.forma-sunstudio-footer>div small{font-size:10px;color:#a6aaa2}
+.forma-sunstudio-footer button{border-radius:9px;padding:12px 15px;font-weight:750;font-size:11px;white-space:nowrap;cursor:pointer}
+.forma-sunstudio-secondary{background:transparent;border:1px solid #696760;color:#e3d9c9}
+.forma-sunstudio-primary{background:#d2b58d;border:1px solid #e1c69f;color:#1d221f}
+.forma-sunstudio-backdrop button:focus-visible,.forma-sun-studio-launcher:focus-visible{outline:2px solid #f0cea2;outline-offset:2px}
+.forma-sun-section .forma-sun-studio-inline-button{display:flex;justify-content:space-between;align-items:center;width:100%;gap:14px;background:#292a26;border:1px solid #bd9e79;border-radius:12px;padding:14px;text-align:left;color:#e8dfcf;cursor:pointer}
+.forma-sun-section .forma-sun-studio-inline-button strong{font-size:13px}
+.forma-sun-section .forma-sun-studio-inline-button small{font-size:11px;color:#bcbaaf}
+@media(max-width:790px){.forma-sunstudio-inner{grid-template-columns:1fr}.forma-sunstudio-panel{max-width:660px}.forma-sunstudio-visual{max-width:none}}
+@media(max-width:640px){
+ .forma-sunstudio-backdrop{padding:0;align-items:flex-end}
+ .forma-sunstudio-panel{border-radius:20px 20px 0 0;border-left:0;border-right:0;border-bottom:0;padding:19px 16px max(18px,env(safe-area-inset-bottom));max-height:94dvh;width:100%;box-shadow:0 -25px 75px #0009}
+ .forma-sunstudio-head{margin-bottom:13px}.forma-sunstudio-head h2{font-size:30px}
+ .forma-sunstudio-inner{gap:16px}.forma-sunstudio-photo{aspect-ratio:16/9}
+ .forma-sunstudio-control-stack{gap:11px}.forma-sunstudio-control{padding:12px}
+ .forma-sunstudio-direction-grid button{min-height:56px}.forma-sunstudio-direction-grid button small{font-size:9px}
+ .forma-sunstudio-footer{flex-wrap:wrap;margin-top:14px;padding-top:14px}
+ .forma-sunstudio-footer>div{flex-basis:100%}
+ .forma-sunstudio-footer button{flex:1}
+ .forma-sun-studio-launcher{width:calc(100% - 20px);margin:8px 10px;padding:10px}
+}
+@media(prefers-reduced-motion:reduce){.forma-sunstudio-marker,.forma-sunstudio-shadow-marker,.forma-sunstudio-control button{transition:none}}
