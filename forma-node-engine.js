@@ -12,13 +12,24 @@ const AVAILABLE_TYPES=new Set(['source','exterior','interior','lighting','materi
 const LABELS={running:'ВЫПОЛНЯЕТСЯ',done:'ГОТОВО',error:'ОШИБКА',cancelled:'ОСТАНОВЛЕНО'};
 const LIGHTS={sunny:'Солнечный день',golden:'Золотой час',overcast:'Пасмурно',blue:'Синий час',rain:'После дождя',winter:'Зима',night:'Ночь'};
 const ZONES={main:'Фасад',roof:'Кровля',windows:'Окна',doors:'Двери',base:'Цоколь',terrace:'Терраса',custom:'Другая поверхность'};
-let busy=false,aborter=null,wasCancelled=false,nodeSettingsBound=null,openedRunId=0;
+let busy=false,preparing=false,aborter=null,wasCancelled=false,nodeSettingsBound=null,openedRunId=0,lastFailure=null;
 const statuses=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const apiPreview=()=>location.protocol==='file:'||/\.github\.io$/i.test(location.hostname);
 function graph(){return getAPI()?.graph?.()}
 function tell(s){getAPI()?.showStatus?.(s)}
-function checkPlan(g,target){
+function sourceFingerprint(source){
+ let hash=2166136261;
+ for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619)}
+ return source.length.toString(36)+'-'+(hash>>>0).toString(36);
+}
+function cacheAllowed(n,resumeNodes=new Set()){
+ const api=getAPI();
+ if(n.options?.needsRun)return false;
+ if(!(n.options?.reuse||resumeNodes.has(n.id)))return false;
+ return n.type==='video'?!!api?.getVideoBlob?.(n.id):!!api?.getSnapshot?.(n.id);
+}
+function checkPlan(g,target,resumeNodes=new Set()){
  if(!g?.nodes?.length||!target)throw Error('Сначала выберите ноду.');
  const nodes=new Map(g.nodes.map(n=>[n.id,n]));
  const path=[],seen=new Set();let id=target;
@@ -38,10 +49,18 @@ function checkPlan(g,target){
  if(unknown)throw Error('Тип «'+unknown.type+'» пока не исполняется.');
  const invalid=path.find(n=>n.type==='materials'&&!String(n.options?.instruction||'').trim()&&(!n.options?.material||n.options.material==='custom'));
  if(invalid)throw Error('Для ноды «Материалы» напишите конкретную инструкцию по редактированию.');
- const calls=path.filter(n=>AI_TYPES.has(n.type)&&!(n.options?.reuse&&getAPI()?.getSnapshot?.(n.id))).length;
- const videoCalls=path.filter(n=>n.type==='video'&&!(n.options?.reuse&&getAPI()?.getVideoBlob?.(n.id))).length;
+ const warnings=[];
+ for(const n of path){
+  if(!['exterior','lighting'].includes(n.type))continue;
+  const o=n.options||{};
+  if(o.season==='summer'&&o.weather==='snow')throw Error('Нода «'+(n.title||n.type)+'»: снег летом противоречит выбранному сезону. Выберите зиму или другую погоду.');
+  if(o.time==='night'&&o.weather==='sunny')throw Error('Нода «'+(n.title||n.type)+'»: солнечная погода и ночь несовместимы. Исправьте время суток или погоду.');
+  if(['fog','overcast'].includes(o.weather)&&o.time==='golden')warnings.push('«'+(n.title||n.type)+'»: золотой час при плотной облачности может быть незаметен.');
+ }
+ const calls=path.filter(n=>AI_TYPES.has(n.type)&&!cacheAllowed(n,resumeNodes)).length;
+ const videoCalls=path.filter(n=>n.type==='video'&&!cacheAllowed(n,resumeNodes)).length;
  if(calls>8)throw Error('Для контроля стоимости разрешено не более 8 AI-этапов в цепочке.');
- return {path,calls,videoCalls};
+ return {path,calls,videoCalls,warnings};
 }
 function decorate(){
  const root=$('#faFlowBackdrop');if(!root)return;
@@ -58,8 +77,10 @@ function decorate(){
   }else label?.remove();
  }
  const run=$('#faFlowRunChain'),stop=$('#faFlowStopChain');
- if(run)run.disabled=busy;
+ if(run)run.disabled=busy||preparing;
  if(stop)stop.disabled=!busy;
+ const retry=$('#faFlowRetryChain');if(retry){retry.hidden=busy||preparing||!lastFailure;retry.disabled=busy||preparing;}
+ if(busy){$('[data-node-option]', $('#faFlowNodeSettings')||document).forEach(el=>el.disabled=true)}
 }
 function setState(id,value){statuses.set(id,value);decorate()}
 const ENVIRONMENTS={'keep':'Сохранить исходное','forest':'Хвойный лес','deciduous':'Лиственный лес','park':'Парк с крупными деревьями','lake':'Берег озера / реки','mountain':'Горный ландшафт','suburban':'Загородный участок','urban':'Городская застройка','minimal':'Минимальное окружение'};
@@ -120,7 +141,7 @@ function settingsHTML(n){
    controls.push('<div class="fa-node-two-col">'+select('duration','Длительность',{'5':'5 секунд','10':'10 секунд'},getOpt(n,'duration','5'))+select('ratio','Формат',{'16:9':'16:9 · Горизонтальный','9:16':'9:16 · Вертикальный'},getOpt(n,'ratio','16:9'))+'</div>');
    controls.push('<p>Генерация через подключённый Wan API. Сначала подтверждается стоимость запроса.</p>');
    if(getAPI()?.getVideoURL?.(n.id))controls.push('<div class="fa-inspector-result"><b>Видео этого этапа</b><video controls playsinline preload="metadata" src="'+getAPI().getVideoURL(n.id)+'"></video><button type="button" data-fa-download-video="'+esc(n.id)+'">Скачать MP4</button></div>');
-   controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!getAPI()?.getVideoBlob?.(n.id)?'disabled':'')+'> Использовать уже готовое видео без нового запроса</label>');
+   controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!getAPI()?.getVideoBlob?.(n.id)||opts.needsRun?'disabled':'')+'> Использовать уже готовое видео без нового запроса</label>');
  }
  if(n.type==='source'){
    controls.push(group('Исходное изображение'));
@@ -128,7 +149,8 @@ function settingsHTML(n){
  }
  if(AI_TYPES.has(n.type)){
   const snapshot=getAPI()?.getSnapshot?.(n.id);
-  controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse?'checked':'')+' '+(!snapshot?'disabled':'')+'> Использовать уже готовый кадр без нового AI-запроса</label>');
+  controls.push('<label class="fa-flow-check"><input type="checkbox" data-node-option="reuse" '+(opts.reuse&&!opts.needsRun?'checked':'')+' '+(!snapshot||opts.needsRun?'disabled':'')+'> Использовать уже готовый кадр без нового AI-запроса</label>');
+  if(opts.needsRun)controls.push('<p class="fa-node-stale-warning">Настройки или источник изменились. Старый кадр сохранён, но повторное использование отключено до нового запуска.</p>');
   if(!snapshot)controls.push('<p>Повторное использование станет доступно после первого успешного запуска.</p>');
  }
  const snapshot=getAPI()?.getSnapshot?.(n.id);
@@ -158,8 +180,7 @@ function showSelection(){
  host.addEventListener('input',event=>{
   const field=event.target.closest('textarea[data-node-option]');
   if(!field)return;
-  const n=graph()?.nodes.find(n=>n.id===graph()?.selected);
-  if(n){n.options={...(n.options||{}),[field.dataset.nodeOption]:field.value};getAPI()?.save?.()}
+  getAPI()?.setOptions?.(graph()?.selected,{[field.dataset.nodeOption]:field.value});
  });
  host.addEventListener('click',e=>{
   const upload=e.target.closest('[data-fa-upload-source]');
