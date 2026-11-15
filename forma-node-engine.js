@@ -368,20 +368,49 @@ function briefFor(ctx,previousMode,n){
  if(o.quality&&['high','medium'].includes(o.quality))b.output={...(b.output||{}),quality:o.quality};
  return b;
 }
-async function runTo(target){
- if(busy){tell('Сначала остановите текущую цепочку.');return}
+async function runTo(target,resume=false){
+ if(busy||preparing){tell('Другая цепочка уже запущена или проверяется.');return}
  const api=getAPI(),g=graph();if(!api||!g)return;
- let plan;try{plan=checkPlan(g,target)}catch(err){tell(err.message);return}
- const calls=plan.calls,videoCalls=plan.videoCalls;
- let ctx;try{ctx=await window.FORMA_RENDER_BRIDGE?.capture?.();if(!ctx)throw Error('Сначала загрузите собственный проект в «ФОРМА».');await availability(calls);if(videoCalls)await checkVideoAvailability()}
- catch(err){tell(err.message);return}
- if(calls||videoCalls){
-  const ok=confirm('Запустить цепочку? Генераций изображений: '+calls+'. Генераций видео: '+videoCalls+'. Каждый запрос учитывается по тарифу/квоте провайдера; отмена в браузере может не отменить списание.');
-  if(!ok){tell('Запуск отменён.');return}
- }
+ preparing=true;decorate();
+ let ctx,plan,resumeNodes=new Set();
+ try{
+  ctx=await window.FORMA_RENDER_BRIDGE?.capture?.();
+  if(!ctx)throw Error('Сначала загрузите собственный проект в «ФОРМА».');
+  const fingerprint=sourceFingerprint(ctx.source);
+  if(g.sourceFingerprint!==fingerprint){
+   for(const n of g.nodes.filter(n=>n.type==='source'))api.invalidateFrom?.(n.id);
+   g.sourceFingerprint=fingerprint;
+   api.save?.();
+   if(resume)throw Error('Исходное изображение изменилось. Запустите цепочку заново — старые кадры не будут повторно использованы.');
+  }
+  if(resume){
+   if(!lastFailure||lastFailure.target!==target||lastFailure.projectId!==ctx.projectId||lastFailure.source!==ctx.source)
+    throw Error('Предыдущий запуск относится к другому исходнику или цепочке. Запустите цепочку заново.');
+   resumeNodes=new Set(lastFailure.completed.filter(id=>g.nodes.some(n=>n.id===id)));
+  }
+  plan=checkPlan(g,target,resumeNodes);
+  await availability(plan.calls);
+  if(plan.videoCalls)await checkVideoAvailability();
+ }catch(err){preparing=false;decorate();tell('Проверка цепочки: '+(err.message||'ошибка'));return}
+ preparing=false;decorate();
+ const steps=plan.path.map((n,i)=>{
+  let step='локально';
+  if(AI_TYPES.has(n.type))step=cacheAllowed(n,resumeNodes)?'готовый кадр · без AI':'новая AI-генерация';
+  else if(n.type==='video')step=cacheAllowed(n,resumeNodes)?'готовое видео':'новое AI-видео';
+  else if(n.type==='export')step='скачивание файла';
+  return (i+1)+'. '+(n.title||n.type)+' — '+step;
+ });
+ const message='План цепочки ФОРМА\n\n'+steps.join('\n')+
+  '\n\nНовых изображений: '+plan.calls+' · новых видео: '+plan.videoCalls+
+  (plan.warnings.length?'\n\nПроверьте условия:\n'+plan.warnings.join('\n'):'')+
+  '\n\nТочная стоимость зависит от подключённого API. Отмена в браузере НЕ гарантирует отмены списания.\nЗапустить?';
+ if((plan.calls||plan.videoCalls)&&!confirm(message)){tell('Запуск отменён. Готовые результаты сохранены.');return}
+ if(!plan.calls&&!plan.videoCalls){tell('Используются готовые результаты и локальные операции.');}
  const runId=++openedRunId;
- busy=true;wasCancelled=false;aborter=null;
- decorate();statuses.clear();
+ busy=true;wasCancelled=false;aborter=null;lastFailure=null;
+ // Copy settings so they cannot change partway through an asynchronous request.
+ plan.path=plan.path.map(n=>({...n,options:{...(n.options||{})}}));
+ decorate();statuses.clear();decorate();
  let output=ctx.source,mode=ctx.brief?.sceneType||'exterior',currentBrief=ctx.brief,aiCompleted=0,videoCompleted=0,lastAI='',videoBlob=null;
  try{
   for(const [i,n] of plan.path.entries()){
@@ -391,14 +420,16 @@ async function runTo(target){
    if(n.type==='source'){output=ctx.source}
    else if(AI_TYPES.has(n.type)){
     const brief=briefFor({...ctx,brief:currentBrief},mode,n);mode=brief.sceneType;currentBrief=brief;
-    const cached=n.options?.reuse?api.getSnapshot?.(n.id):null;
-    if(cached){output=cached;tell('Использован готовый кадр: '+(n.title||n.type)+' · бесплатно');}
-    else {
-     const materialChoice=n.options?.material&&n.options.material!=='custom'?MATERIALS[n.options.material]:'';const instruction=[materialChoice?'Заменить отделку на '+materialChoice+'. Не изменять другие элементы.':'',String(n.options?.instruction||'')].filter(Boolean).join(' ').slice(0,500);const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:instruction}:{};
+    const cached=cacheAllowed(n,resumeNodes)?api.getSnapshot?.(n.id):null;
+    if(cached){output=cached;tell('Готовый кадр: '+(n.title||n.type)+' · без нового AI-запроса');}
+    else{
+     const materialChoice=n.options?.material&&n.options.material!=='custom'?MATERIALS[n.options.material]:'';
+     const instruction=[materialChoice?'Заменить отделку на '+materialChoice+'. Не изменять другие элементы.':'',String(n.options?.instruction||'')].filter(Boolean).join(' ').slice(0,500);
+     const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:instruction}:{};
      output=await imageAI(output,brief,ctx,opts);aiCompleted++;lastAI=n.title||n.type;
     }
    }else if(n.type==='video'){
-    const cached=n.options?.reuse?api.getVideoBlob?.(n.id):null;
+    const cached=cacheAllowed(n,resumeNodes)?api.getVideoBlob?.(n.id):null;
     videoBlob=cached||await makeVideo(output,n.options);
     if(!cached){videoCompleted++;lastAI=n.title||n.type;await api.setVideoSnapshot?.(n.id,videoBlob)}
    }else if(n.type==='geometry'){output=await geometryOverlay(output,ctx.source,n.options?.overlay)}
@@ -406,18 +437,21 @@ async function runTo(target){
    else if(n.type==='export'){if(videoBlob)downloadVideoBlob(videoBlob);else await downloadImage(output,n.options)}
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
    if(!videoBlob&&(!api.getSnapshot?.(n.id)||api.getSnapshot(n.id)!==output))await api.setSnapshot?.(n.id,output);
+   api.markFresh?.(n.id);
    setState(n.id,'done');
   }
-  if(aiCompleted){
-   await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Ноды · '+lastAI,ctx.projectId);
-  }
-  tell('Готово: '+plan.path.length+' этапов · '+aiCompleted+' изображений · '+videoCompleted+' видео. Кадры и MP4 сохранены в нодах, AI-кадры — в галерее.');
+  if(aiCompleted)await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Ноды · '+lastAI,ctx.projectId);
+  tell('Готово: '+plan.path.length+' этапов · '+aiCompleted+' изображений · '+videoCompleted+' видео. Результаты сохранены в нодах и проекте.');
  }catch(err){
   const pending=plan.path.find(n=>statuses.get(n.id)==='running');
   if(pending)setState(pending.id,wasCancelled?'cancelled':'error');
-  tell((wasCancelled?'Остановлено. ':'Ошибка: ')+(err.message||'неизвестная ошибка')+(aiCompleted?' · Выполнено AI-вызовов: '+aiCompleted:''));
+  const completed=plan.path.filter(n=>statuses.get(n.id)==='done').map(n=>n.id);
+  lastFailure={target,completed,projectId:ctx.projectId,source:ctx.source};
+  tell((wasCancelled?'Остановлено. ':'Ошибка: ')+(err.message||'неизвестная ошибка')+
+   (aiCompleted?' · Выполнено AI-вызовов: '+aiCompleted:'')+
+   ' · Готовые этапы сохранены; для повтора нажмите «Повторить».');
  }finally{
-  if(runId===openedRunId){busy=false;aborter=null;decorate()}
+  if(runId===openedRunId){busy=false;aborter=null;showSelection();decorate()}
  }
 }
 function stop(){
@@ -425,7 +459,18 @@ function stop(){
  wasCancelled=true;aborter?.abort();
  tell('Остановка запрошена. Провайдер может продолжить уже начатую генерацию и списать её стоимость.');
 }
-function onOpen(){nodeSettingsBound=null;showSelection();decorate()}
+function onOpen(){
+ nodeSettingsBound=null;
+ const run=$('#faFlowRunChain');
+ if(run&&!$('#faFlowRetryChain')){
+  const retry=document.createElement('button');
+  retry.type='button';retry.id='faFlowRetryChain';retry.textContent='↻ Повторить';retry.hidden=true;
+  retry.title='Продолжить после ошибки, сохранив уже готовые этапы без повторной генерации';
+  retry.addEventListener('click',()=>{if(lastFailure)runTo(lastFailure.target,true)});
+  run.after(retry);
+ }
+ showSelection();decorate();
+}
 function onGraphDrawn(){showSelection();decorate()}
 function onClose(){if(busy)stop();nodeSettingsBound=null}
 window.FORMA_NODE_ENGINE={runTo,stop,onOpen,onGraphDrawn,onClose,plan:checkPlan,get busy(){return busy}};
