@@ -7,7 +7,7 @@ import path from 'node:path';
 import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
-import {landscapePrompt,atmospherePrompt,normalizeAtmosphere} from './forma-art-direction-core.js';
+import {landscapePrompt,atmospherePrompt,normalizeAtmosphere,materialTextPrompt,materialCropPrompt} from './forma-art-direction-core.js';
 import {createPlanVision,visionStatus} from './plan-vision.mjs';
 import {createWanVideo} from './wan-video.mjs';
 import {createWan3Video} from './wan3-video.mjs';
@@ -125,6 +125,8 @@ function sceneVariationPrompt(p){
  ].join('\n\n');
 }
 export function createPrompt(p){
+ if(p.editMode==='text')return [architecturalReferenceLock(p),materialTextPrompt(p.materialInstruction,p)].join('\n\n');
+ if(p.localCrop)return [architecturalReferenceLock(p),materialCropPrompt(p)].join('\n\n');
  if(p.landscapeEdit){if(!p.mask)throw Object.assign(Error('Для ландшафта нужна маска'),{status:400});return landscapePrompt(p.landscapeEdit);}
  if(p.atmosphereOnly){const art=atmospherePrompt(p.brief?.atmosphere);if(!art)throw Object.assign(Error('Выберите атмосферу и её интенсивность'),{status:400});return [architecturalReferenceLock(p),art].join('\n\n');}
  if(p.sceneVariation)return sceneVariationPrompt(p);const b=p.brief||{};const specific=Boolean(p.selectedZone&&(p.mask||p.editMode==='text'));const shot=compact(p.batchShot,32);
@@ -304,7 +306,8 @@ export function createPrompt(p){
    '. Respect actual window positions: do not pretend physically impossible sunlight arrives through solid walls. For a finished-photo relight, alter lighting, direct and indirect shadows, window exposure and reflections ONLY. Preserve architecture, camera and furniture.';
  })();
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
- return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,sunlightAppearance,continuity,!specific?atmospherePrompt(b.atmosphere,{preserveScene:false}):null].filter(Boolean).join('\n\n')}
+ return [p.localCrop?'LOCAL CROP ALIGNMENT: Image 1 is a clean square crop centred on the selected material surface, with neutral padding. Return EXACTLY this same square framing and pixel alignment; do not zoom, crop or expand to the full context reference. The full reference photo is context only, not the output camera. Edit only the transparent mask; preserve all original construction edges and protected windows.':null,architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,sunlightAppearance,continuity,!specific?atmospherePrompt(b.atmosphere,{preserveScene:false}):null].filter(Boolean).join('\n\n')}
+export function renderQuantity(p){return p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.editMode==='text'?1:([1,2,4].includes(Number(p.quantity))?Number(p.quantity):1);}
 let generationSeq=0;
 async function proxyRender(req,res){
  const requestId=Date.now().toString(36)+'-'+(++generationSeq).toString(36);
@@ -324,7 +327,7 @@ async function proxyRender(req,res){
   const p=await readJSON(req);if(!p.image)return json(res,400,{error:'Загрузите исходный скриншот'});
   const primary=imageBlob(p.image,'image');const mask=imageBlob(p.mask,'mask');const material=imageBlob(p.material,'material');const reference=imageBlob(p.reference,'reference');
   if(mask&&mask.type!=='image/png')return json(res,400,{error:'Маска должна быть PNG'});
-  const n=[1,2,4].includes(Number(p.quantity))?Number(p.quantity):1;
+  const n=renderQuantity(p);
   if(p.batchShot&&(!['original','front','detailEntry','detailMaterial'].includes(p.batchShot)||n!==1))return json(res,400,{error:'Для пакета допускается один кадр в запросе, ракурс должен быть из списка.'});
   if(dailyCount+n>DAILY_CAP)return json(res,429,{error:`Осталось генераций на сегодня: ${Math.max(0,DAILY_CAP-dailyCount)}.`});
   const prompt=createPrompt(p);

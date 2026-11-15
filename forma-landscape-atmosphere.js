@@ -1,5 +1,5 @@
-import {PLANTS,PAVINGS,LIGHTS,LOOKS,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView} from './forma-art-direction-core.js';
-import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming} from './forma-local-composite.js';
+import {PLANTS,PAVINGS,LIGHTS,LOOKS,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js';
+import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming,prepareMaterialEdit} from './forma-local-composite.js';
 const $=id=>document.getElementById(id),bridge=()=>window.FORMA_ART_BRIDGE;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=(kind)=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4">'+(kind==='landscape'?'<path d="M3 21h18M6 21v-6m12 6v-9M6 5c-5 2-5 10 0 10s5-8 0-10Zm12-3-5 10h10Z"/>':'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/>')+'</svg>';
@@ -32,6 +32,7 @@ async function open(which){
  if(!dialog)makeDialog();
  items=Array.isArray(snap.landscape?.items)&&snap.landscape.sourceKey===snap.sourceKey&&(snap.landscape.renderId||null)===(snap.renderId||null)?structuredClone(snap.landscape.items):[];
  atmosphere=normalizeAtmosphere(snap.atmosphere)||{preset:'natural',strength:65,contrast:0,saturation:0,temperature:0,dof:0,depth:10,bloom:0,grain:0,focus:{x:.5,y:.5}};
+ $('artCanvasInput').setAttribute('aria-label',mode==='landscape'?'Размещение объектов: стрелки — переместить курсор, Enter — поставить точку':'Фокус: включите выбор фокуса, стрелки — переместить, Enter — подтвердить');
  $('artTitle').textContent=mode==='landscape'?'Ландшафт':'Атмосфера';
  $('artSubtitle').textContent=mode==='landscape'?'Посадки, дорожки и свет — в выбранных местах кадра.':'Характер фотографии. Окружение и архитектура сохраняются.';
  $('artGenerate').textContent=mode==='landscape'?'Создать ландшафт':'Применить атмосферу';
@@ -47,7 +48,7 @@ function renderInspector(){
  }else{
   $('artInspector').innerHTML=`<div class="fa-art-look-grid">${LOOKS.map(e=>`<button type="button" data-art="look" data-value="${e.id}" class="fa-art-look" aria-pressed="${atmosphere.preset===e.id}"><span class="fa-art-look-image" data-look="${e.id}"></span><b>${e.name}</b><small>${e.description}</small></button>`).join('')}</div><div class="fa-art-sliders">${[
    ['strength','Интенсивность',0,100],['contrast','Контраст',-30,30],['saturation','Насыщенность',-30,30],['temperature','Теплее / холоднее',-30,30],['dof','Глубина резкости',0,100],['depth','Воздушная глубина',0,40],['bloom','Свечение светов',0,30],['grain','Плёночное зерно',0,20]
-  ].map(([field,label,min,max])=>`<label>${label}<output id="artOut-${field}">${atmosphere[field]}</output><input type="range" data-atmosphere="${field}" min="${min}" max="${max}" value="${atmosphere[field]}"></label>`).join('')}</div><button type="button" class="fa-art-secondary" data-art="focus" aria-pressed="false">Указать точку фокуса</button><p class="fa-art-help">Дом остаётся резким. Размытие относится к переднему и дальнему плану. Это фотографическая интерпретация по 2D-кадру.</p><button type="button" class="fa-art-text" data-art="reset-look">По исходнику · сбросить</button>`;
+  ].map(([field,label,min,max])=>`<label for="artSlider-${field}">${label}<output id="artOut-${field}">${atmosphere[field]}</output><input id="artSlider-${field}" type="range" data-atmosphere="${field}" min="${min}" max="${max}" value="${atmosphere[field]}"></label>`).join('')}</div><button type="button" class="fa-art-secondary" data-art="focus" aria-pressed="false">Указать точку фокуса</button><p class="fa-art-help">Дом остаётся резким. Размытие относится к переднему и дальнему плану. Это фотографическая интерпретация по 2D-кадру.</p><button type="button" class="fa-art-text" data-art="reset-look">По исходнику · сбросить</button>`;
   for(const card of dialog.querySelectorAll('.fa-art-look-image')){card.style.backgroundImage=`url("${snap.image.replace(/"/g,'%22')}")`;}
  }
  $('artCanvasTools').innerHTML=mode==='landscape'?'<button type="button" class="fa-art-secondary" data-art="undo">Отменить</button><button type="button" class="fa-art-secondary" data-art="finish-path">Замкнуть дорожку</button><button type="button" class="fa-art-text" data-art="cancel-path">Отменить контур</button>':'<span class="fa-art-help">Цвет · контраст — цветопроба. Глубина · зерно · свечение — после AI.</span>';
@@ -88,8 +89,8 @@ function renderOverlay(){
 function place(e){
  if(busy||!ensureSource())return;const r=$('artStage').getBoundingClientRect();const p={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
  cursor=p;cursorVisible=true;
- if(mode==='atmosphere'){if(focusMode){atmosphere.focus=p;persist();renderOverlay();focusMode=false;dialog.querySelector('[data-art="focus"]').setAttribute('aria-pressed','false');message('Точка фокуса сохранена. Дом остаётся главным резким объектом.');}return;}
- if(category==='path'){if(points.length>=32){message('Максимум 32 точки. Замкните контур.');return;}points.push(p);message('Контур: '+points.length+' точек. Обведите края дорожки и нажмите «Замкнуть дорожку».');renderOverlay();return;}
+ if(mode==='atmosphere'){if(focusMode){atmosphere.focus={...p};persist();renderOverlay();focusMode=false;dialog.querySelector('[data-art="focus"]').setAttribute('aria-pressed','false');message('Точка фокуса сохранена. Дом остаётся главным резким объектом.');}return;}
+ if(category==='path'){if(points.length>=32){message('Максимум 32 точки. Замкните контур.');return;}points=appendPathPoint(points,p);message('Контур: '+points.length+' точек. Обведите края дорожки и нажмите «Замкнуть дорожку».');renderOverlay();return;}
  if(items.length>=80){message('На одном кадре можно разместить до 80 объектов.');return;}
  remember();const item={id:id(),kind:category,catalogId:chosen,x:p.x,y:p.y,w:category==='light'?.045:.14,h:category==='light'?.16:.22};items.push(item);selected=item.id;persist();renderList();renderOverlay();message('Область добавлена. Выберите её в списке, чтобы изменить размер или удалить.');
 }
@@ -181,5 +182,5 @@ function init(){
  const viewer=document.querySelector('.viewer-card');if(viewer&&!$('formaArtLaunchers')){const box=document.createElement('div');box.id='formaArtLaunchers';box.className='fa-art-launchers';box.innerHTML=`<button type="button" data-art-open="landscape">${icon('landscape')}<span><b>Ландшафт</b><small>Растения · дорожки · свет</small></span><span aria-hidden="true">↗</span></button><button type="button" data-art-open="atmosphere">${icon('atmosphere')}<span><b>Атмосфера</b><small>Цвет · оптика · характер кадра</small></span><span aria-hidden="true">↗</span></button>`;const anchor=viewer.querySelector('.viewer-toolbar');anchor?anchor.insertAdjacentElement('afterend',box):viewer.prepend(box);}
  document.addEventListener('click',e=>{const b=e.target.closest('[data-art-open]');if(b)open(b.dataset.artOpen);});
 }
-window.FORMA_ART_DIRECTION={openLandscape:()=>open('landscape'),openAtmosphere:()=>open('atmosphere'),composeMaterial};
+window.FORMA_ART_DIRECTION={openLandscape:()=>open('landscape'),openAtmosphere:()=>open('atmosphere'),composeMaterial,prepareMaterial:prepareMaterialEdit};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();

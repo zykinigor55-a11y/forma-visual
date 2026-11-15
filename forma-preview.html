@@ -504,7 +504,7 @@ html.forma-intro-pending #forma-intro{display:block}
  </section>
  <section id="materialsPanel" class="tab-panel" role="tabpanel">
  <div class="material-simple" id="materialSimple">
-  <div class="material-simple-heading"><span>ФОРМА / МАТЕРИАЛЫ</span><h3>Изменить отделку дома</h3><p>Никаких сложных категорий. Выделите именно ту поверхность, которую хотите изменить, и примените свою фактуру или напишите задание для AI.</p></div>
+  <div class="material-simple-heading"><span>ФОРМА / МАТЕРИАЛЫ</span><h3>Отделка и цвет</h3><p>Опишите изменение обычными словами или выделите поверхность для точной локальной замены.</p></div><div class="material-edit-modes" role="group" aria-label="Способ изменения материала"><button type="button" data-simple-edit-mode="text" aria-pressed="true">По описанию</button><button type="button" data-simple-edit-mode="area" aria-pressed="false">Точно по области</button></div>
   <div class="material-simple-step">
    <div class="material-simple-number">01</div>
    <div class="material-simple-content">
@@ -524,6 +524,14 @@ html.forma-intro-pending #forma-intro{display:block}
     <button type="button" class="material-simple-upload" id="simpleUploadTexture"><svg class="ico"><use href="#i-plus"/></svg><span>Загрузить фактуру <small>JPG, PNG, WebP</small></span></button>
     <div id="simpleMaterialGrid" class="material-simple-grid" aria-label="Загруженные материалы"></div>
     <div class="material-simple-selected" id="simpleMaterialStatus" role="status">Материал пока не загружен</div>
+    <details id="simpleTextureSettings" class="material-texture-settings" hidden>
+ <summary>Масштаб и направление фактуры</summary>
+ <label for="simpleTextureScale">Масштаб повтора <output id="simpleTextureScaleOut">100%</output></label><input type="range" id="simpleTextureScale" min="30" max="250" value="100">
+ <label for="simpleTextureRotate">Направление рисунка</label><select id="simpleTextureRotate"><option value="0">Исходное · 0°</option><option value="90">Поперёк · 90°</option><option value="180">Обратно · 180°</option><option value="270">Поперёк · 270°</option></select>
+ <p id="simpleTexturePhysical">Физический размер не задан</p><button type="button" class="btn btn-outline btn-block" id="simpleTextureDimensions">Указать размеры фактуры</button>
+ <div class="material-preview-actions"><button type="button" class="btn btn-outline" id="simplePreviewTexture">Примерить без AI</button><button type="button" class="btn btn-outline" id="simpleDiscardTexture">Скрыть примерку</button></div>
+ <small>Примерка показывает повтор и поворот. Перспектива и физический свет рассчитываются AI по исходной поверхности.</small>
+</details>
     <button type="button" class="btn btn-primary btn-block" id="simpleApplyTexture">Применить материал через AI</button>
     <small class="material-simple-help">AI меняет только выделенную область. После проверки маски отправляется один платный запрос.</small>
    </div>
@@ -533,9 +541,9 @@ html.forma-intro-pending #forma-intro{display:block}
    <div class="material-simple-number">03</div>
    <div class="material-simple-content">
     <h4>Опишите изменение словами</h4>
-    <label class="material-simple-prompt-label" for="simpleMaterialPrompt">Ваш запрос для AI</label>
-    <textarea id="simpleMaterialPrompt" rows="3" maxlength="500" placeholder="Например: заменить отделку выделенной стены на натуральный светлый камень, сохранить окна, швы и всю геометрию."></textarea>
-    <p>Можно указать материал и цвет прямо текстом. С выделением AI меняет только отмеченную поверхность; без выделения определяет нужный элемент по описанию — такой результат требует проверки.</p>
+    <label class="material-simple-prompt-label" for="simpleMaterialPrompt">Что изменить?</label>
+    <textarea id="simpleMaterialPrompt" rows="3" maxlength="500" placeholder="Например: плитку на дорожке сделай песочной. Сохрани фактуру, швы и освещение."></textarea>
+    <div class="material-text-examples"><button type="button" data-material-example="Плитку на дорожке сделай песочной, сохрани фактуру и швы.">Плитку — песочной</button><button type="button" data-material-example="Оконные рамы сделай чёрными, стёкла и отражения не меняй.">Рамы — чёрными</button><button type="button" data-material-example="Замени отделку стены на натуральный светлый камень, сохрани окна и геометрию.">Стены — в камне</button></div><p>Можно указать материал и цвет прямо текстом. С выделением AI меняет только отмеченную поверхность; без выделения определяет нужный элемент по описанию — такой результат требует проверки.</p>
     <button type="button" class="btn btn-outline btn-block" id="simpleApplyPrompt">Применить запрос через AI</button>
    </div>
   </div>

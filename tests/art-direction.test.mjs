@@ -70,3 +70,36 @@ test('atmosphere grading follows explicitly requested resulting weather in an in
  assert.match(result,/requested resulting scene conditions/);
  assert.doesNotMatch(result,/Preserve existing weather, season, time of day/);
 });
+
+test('keyboard cursor movement never drags previously placed path vertices',()=>{
+ const cursor={x:.4,y:.5};let points=core.appendPathPoint([],cursor);
+ cursor.x=.6;points=core.appendPathPoint(points,cursor);cursor.y=.7;
+ assert.deepEqual(points,[{x:.4,y:.5},{x:.6,y:.5}]);
+});
+
+test('plain Russian color requests keep tile material, grout and lighting',()=>{
+ const p=core.materialTextPrompt('плитку сделай песочную');
+ assert.match(p,/COLOR ONLY/);assert.match(p,/tile|paving/i);assert.match(p,/grout/);assert.match(p,/sand/);
+ const replace=core.materialTextPrompt('замени плитку на песчаник');assert.match(replace,/MATERIAL REPLACEMENT/);
+ assert.throws(()=>core.materialTextPrompt(''));
+});
+test('semantic edits use the written component instead of generic custom zone defaults',async()=>{
+ const {createPrompt}=await import('../server.mjs');const p=createPrompt({editMode:'text',selectedZone:'Произвольная область',zoneId:'custom',materialInstruction:'плитку сделай песочную',brief:{environment:'Лес'}});
+ assert.match(p,/COLOR ONLY/);assert.doesNotMatch(p,/Replace or adjust ONLY the selected component/);assert.doesNotMatch(p,/FULL SCENE ENHANCEMENT/);
+});
+
+test('material grammar distinguishes replacement stone from recoloring existing wood',()=>{
+ assert.match(core.materialTextPrompt('Замени отделку стены на натуральный светлый камень, сохрани окна и геометрию.'),/MATERIAL REPLACEMENT ONLY/);
+ assert.match(core.materialTextPrompt('Поменяй цвет деревянной стены на песочный.'),/COLOR ONLY/);
+});
+test('masked crops never inherit full-scene output ratios or settings',async()=>{
+ const {createPrompt,renderQuantity}=await import('../server.mjs');
+ const p={localCrop:true,mask:'mask',editMode:'replace',materialName:'wood',selectedZone:'custom',brief:{output:{ratio:'16:9'},weather:'Снег'}};
+ const prompt=createPrompt(p);assert.match(prompt,/square/);assert.doesNotMatch(prompt,/16:9|FULL SCENE|Снег|previous view/i);
+ assert.equal(renderQuantity({...p,quantity:4}),1);
+ assert.equal(renderQuantity({editMode:'text',quantity:4}),1);assert.equal(renderQuantity({quantity:4}),4);
+});
+test('advanced semantic recoloring retains the explicitly selected component and HEX',async()=>{
+ const {createPrompt}=await import('../server.mjs');const p=createPrompt({editMode:'text',editAction:'color',selectedZone:'Оконные рамы',zoneId:'windows',targetColor:'#151515',materialInstruction:'Сделай темнее'});
+ assert.match(p,/#151515/);assert.match(p,/Оконные рамы/);
+});

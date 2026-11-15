@@ -16,3 +16,21 @@
 @media(min-width:1250px){.fa-art-stage{max-height:calc(100dvh - 300px)}.fa-art-stage canvas{max-height:calc(100dvh - 300px);object-fit:contain;width:auto;max-width:100%;margin:auto}.fa-art-stage{width:fit-content;max-width:100%}}
 @media(max-width:800px){.fa-art-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:13px}.fa-art-head{padding:18px 17px 15px}.fa-art-head h2{font-size:26px}.fa-art-head p{font-size:11px}.fa-art-workspace{grid-template-columns:1fr;gap:17px;padding:17px}.fa-art-view{position:static}.fa-art-inspector{border-top:1px solid var(--art-line);padding-top:16px}.fa-art-catalog{grid-template-columns:repeat(3,minmax(0,1fr))}.fa-art-option{padding:8px;gap:7px}.fa-art-option b{font-size:10px}.fa-art-option small{font-size:9px}.fa-art-swatch{height:45px}.fa-art-look-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.fa-art-look-image{height:64px}.fa-art-foot{position:sticky;bottom:0;z-index:2;padding:12px 16px;gap:8px;flex-wrap:wrap}.fa-art-foot p{flex-basis:100%;font-size:10px;max-width:none}.fa-art-foot>.fa-art-primary{flex:1}.fa-art-launchers{padding:9px;gap:7px}.fa-art-launchers button{padding:11px 9px;gap:8px}.fa-art-launchers small{font-size:9px}.fa-art-launchers svg{width:21px;height:21px}.fa-art-stage>button{min-height:44px}.fa-art-tabs button,.fa-art-items button,.fa-art-secondary,.fa-art-primary{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.fa-art-dialog *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+/* Visible texture precision controls, shared by both app entry points. */
+#materialsPanel .material-texture-settings{border:1px solid #d9d8cc;border-radius:9px;padding:12px;background:#f7f6f0;color:#35453c}
+#materialsPanel .material-texture-settings summary{cursor:pointer;font-size:11px;font-weight:650;line-height:1.5}
+#materialsPanel .material-texture-settings label{display:flex;justify-content:space-between;gap:10px;font-size:11px;margin-top:14px}
+#materialsPanel .material-texture-settings input,#materialsPanel .material-texture-settings select{width:100%;margin-top:9px;accent-color:#566950;min-height:32px}
+#materialsPanel .material-texture-settings select{border:1px solid #cccec2;border-radius:6px;background:#fff;color:#35453c;padding:8px}
+#materialsPanel .material-texture-settings p,#materialsPanel .material-texture-settings small{font-size:10px;line-height:1.6;color:#63715f}
+#materialsPanel .material-preview-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+#materialsPanel .material-texture-settings summary:focus-visible{outline:2px solid #8e7854;outline-offset:3px}
+#materialsPanel .material-edit-modes{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#e8ebe2;border:1px solid #d6ddce;border-radius:9px;padding:4px;margin-bottom:16px}
+#materialsPanel .material-edit-modes button{border:0;background:transparent;color:#5c695c;padding:12px 8px;border-radius:6px;font:inherit;font-size:11px;font-weight:600;line-height:1.4;cursor:pointer;min-height:44px}
+#materialsPanel .material-edit-modes button[aria-pressed=true]{background:#2d4236;color:#fff}
+#materialsPanel[data-edit-mode=text] .material-simple-step:has(#simpleSelectArea),#materialsPanel[data-edit-mode=text] .material-simple-step:has(#simpleUploadTexture),#materialsPanel[data-edit-mode=text] .material-simple-separator,#materialsPanel[data-edit-mode=text] .material-simple-or{display:none}
+#materialsPanel[data-edit-mode=text] .material-simple-step:has(#simpleMaterialPrompt) .material-simple-number{font-size:0}
+#materialsPanel[data-edit-mode=text] .material-simple-step:has(#simpleMaterialPrompt) .material-simple-number::after{content:'01';font-size:11px}
+#materialsPanel .material-text-examples{display:flex;gap:5px;flex-wrap:wrap}
+#materialsPanel .material-text-examples button{border:1px solid #d5dbd0;border-radius:6px;background:#f1f3eb;padding:8px;color:#4b5c4d;font-size:10px;cursor:pointer;min-height:36px}
+#materialsPanel .material-text-examples button:focus-visible,#materialsPanel .material-edit-modes button:focus-visible{outline:2px solid #967f59;outline-offset:2px}

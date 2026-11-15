@@ -47,3 +47,12 @@
 - Independent review completed. Fixed view-bound drafts and late result identity, padded provider framing and bounded provider copies, compositor dependency on both HTML entry points plus before-charge check, DOF exposure conflict, scene-override conflict, keyboard cursor, and double grading on result.
 - Browser checks in local runtime blocked by Chromium Unix socket permissions. Shared browser cannot reach the local port. Live interface verification remains after deployment.
 - No paid AI request used in development verification. No automatic artifact-detection capability is claimed. Existing manual architecture overlay remains available.
+
+## Materials follow-up (user requested)
+
+- Added explicit text/selected-area modes. Text mode ignores a stale manual mask; the server receives a dedicated semantic edit prompt without environment or weather changes. “Sand-coloured tile” means recoloring existing tile, retaining joints and texture, not adding loose sand or replacing it with sandstone. The text mode remains semantic, not guaranteed exact segmentation.
+- Exposed texture repeat scale, rotation, physical dimensions and free local proof before AI.
+- Masked material requests now send a bounded square crop plus mask/context and composite to native source dimensions.
+- Live desktop UI verified: both workspaces open; plant placement and atmosphere cards work. Found/fixed keyboard cursor aliasing and explicitly associated range labels. Paid generation not invoked. Local mobile browser verification remains unavailable; responsive CSS is implemented.
+
+Materials follow-up verification: 17/17 art-direction tests, native Canvas crop tests pass. Review fixes: both entry points expose mode switching; replacement grammar preserves explicit color edits and HEX/target context; local material prompt is independent of full-scene output ratios; each material action submits exactly one provider request. Whole suite retains only the same pre-existing window-elevation test failure.

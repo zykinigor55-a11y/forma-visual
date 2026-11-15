@@ -25,3 +25,11 @@ for(let y=0;y<640;y++)for(let x=0;x<960;x++){
 assert.equal(decoded.width,960);assert.equal(decoded.height,640);
 const wrong=createCanvas(300,100);await assert.rejects(()=>composeMasked(base.toDataURL('image/png'),wrong.toDataURL('image/png'),mask,crop,frame),/пропорции/);
 console.log(`Native canvas composition passed: ${protectedPixels} protected pixels unchanged; padded/resized AI crop aligned; wrong aspect rejected.`);
+const {prepareMaterialEdit}=await import('../forma-local-composite.js');
+assert.equal(typeof prepareMaterialEdit,'function','material edits need a bounded cropped provider payload');
+const providerMask=createCanvas(960,640),pm=providerMask.getContext('2d');pm.fillStyle='#000';pm.fillRect(0,0,960,640);pm.clearRect(410,290,90,60);
+const prepared=await prepareMaterialEdit(base.toDataURL('image/png'),providerMask.toDataURL('image/png'));
+const sent=await loadImage(prepared.image);assert.ok(sent.width<=1536&&sent.height<=1536);assert.equal(sent.width,sent.height);
+const applied=await prepared.compose(edit.toDataURL('image/png'));assert.equal((await loadImage(applied)).width,960);
+const empty=createCanvas(960,640);empty.getContext('2d').fillRect(0,0,960,640);await assert.rejects(()=>prepareMaterialEdit(base.toDataURL('image/png'),empty.toDataURL('image/png')),/выделение/);
+console.log('Material crop preparation passed: square bounded payload, native result composition, empty masks rejected.');

@@ -83,3 +83,34 @@ export function gradePixel(r,g,b,value){
  const l=.2126*r+.7152*g+.0722*b;
  return [r,g,b].map((v,i)=>Math.max(0,Math.min(255,Math.round(((l+(v-l)*sat)-127.5)*contrast+127.5+(i===0?t:i===2?-t:0)))));
 }
+
+export function appendPathPoint(points,cursor){return [...points,{x:cursor.x,y:cursor.y}];}
+
+export function materialTextPrompt(value,options={}){
+ const request=String(value||'').trim().slice(0,600);if(!request)invalid('Напишите, что изменить в материале');
+ const newMaterial=/(?:^|\s)на\s+(.+)/i.exec(request)?.[1]||'';
+ const material=/песчаник|мрамор|травертин|кирпич|планкен|дерев|сланц|гранит|штукатур|бетон|керамогранит|металл|камень|камен|пробк/i.test(newMaterial);
+ const colorObject=/(?:замен|поменя)[^.!?]{0,20}(?:цвет|оттенок|тон)\s/i.test(request);
+ const replace=material&&!colorObject&&/замен|поменя|облиц|отдел/i.test(request);
+ const color=options.editAction==='color'||(/цвет|оттен|перекрас|песоч|беж|сер[аоыуё]|черн|чёрн|бел[аоыу]|графит|коричнев|светл|т[её]мн/i.test(request)&&!replace);
+ const selected=options.zoneId&&options.zoneId!=='custom'?String(options.selectedZone||'').slice(0,100):'';
+ const hex=/^#[0-9a-f]{6}$/i.test(options.targetColor||'')?options.targetColor:null;
+ const explicit=(selected?' Explicitly selected component: '+selected+'. ':'')+(hex&&options.editAction==='color'?'User-selected exact target shade: '+hex+'. Use this color for the named component while retaining its texture. ':'');
+ const action=replace?'MATERIAL REPLACEMENT ONLY: change the named surface finish to the explicitly requested new material, preserving the physical surface geometry and all openings.':color?'COLOR ONLY: keep the existing material identity and texture. Recolor only its surface finish; preserve grout layout, relief, tile sizes, roughness and existing construction joints.':'Infer whether the wording requests color only or explicit material replacement. A shade name alone NEVER authorizes changing material or geometry.';
+ const clarification=/песоч/i.test(request)?'The Russian shade “песочный/песочная” means a restrained natural sand-beige COLOR, not loose sand, not a new sand surface and not sandstone. Keep existing tile or paving texture and grout.':'';
+ return explicit+'SEMANTIC MATERIAL EDIT / NO MANUAL MASK. The original Image 1 is the exact authoritative current photograph. User request in Russian: '+JSON.stringify(request)+'. '+
+  'First visually locate the EXISTING surface explicitly named in this request, using object meaning, boundaries, perspective, occlusion and material continuity, never just matching similar pixel colors. The target comes from the user words, not an internal “custom zone” label. Tile / paving means the actual existing tiled surface in the indicated area; do not tint all beige/grey objects in the scene. Apply consistently to the visible connected faces of that named component. '+
+  action+' '+clarification+' Preserve source shading and reflections, microtexture, dirt variation, grout and joint geometry, contact shadows, edge bevels and depth. Keep windows, glazing, frames, adjacent walls, roof and vegetation untouched unless the request explicitly names those as the target. Preserve all remaining image regions, sky, season, weather, time, lighting direction, site layout, building dimensions, openings, camera and crop exactly. Do not beautify or redesign the rest of the image. If the named surface is absent, preserve the image instead of inventing it or editing an unrelated surface. If multiple plausible surfaces exist, obey any location qualifier such as terrace, path, floor or wall, and avoid extending to unrelated tiled objects. No text, arrows or comparison collage in output. Output the same full-frame aspect ratio. This is semantic localization, not guaranteed pixel-exact segmentation; the user reviews the result.';
+}
+
+export function materialCropPrompt(p){
+ if(!p.mask)invalid('Для точной замены нужна маска');
+ const b=p.brief||{},instruction=String(p.materialInstruction||'').slice(0,600),name=String(p.materialName||'').slice(0,120);
+ const recolor=p.editMode==='recolor';if(recolor&&!/^#[0-9a-f]{6}$/i.test(p.targetColor||''))invalid('Выберите корректный цвет');
+ const dimensions=p.materialDimensions&&Number(p.materialDimensions.width)>0?`${Math.min(10000,Number(p.materialDimensions.width))} × ${Math.min(10000,Number(p.materialDimensions.height)||Number(p.materialDimensions.width))} mm`:'';
+ return 'LOCAL MASKED MATERIAL EDIT. The PRIMARY IMAGE is a clean SQUARE crop of the existing photograph, centred with neutral padding; return EXACTLY the same square framing, aspect, camera alignment and object positions. Never crop, zoom or expand to context. Only transparent pixels in the PNG mask may change. All opaque mask regions, windows, frames, edges and surrounding materials remain identical. '+
+ (recolor?`COLOR ONLY: recolor the masked existing surface to ${p.targetColor}. Preserve original material identity, grain, grout, seams, relief and roughness.`:`Apply ONLY the requested material ${JSON.stringify(name||instruction)} to the selected surface. Use the supplied texture reference for its identity, scale and appearance; it is not the building. `)+
+ (instruction?' User instruction scoped to the masked surface: '+JSON.stringify(instruction)+'. ':'')+
+ `Texture repeat scale ${String(b.textureScale||'100%').slice(0,20)}; pattern rotation ${String(b.textureRotation||'0°').slice(0,20)}. `+(dimensions?'Physical size of one texture sample: '+dimensions+'. ':'')+
+ 'Fit texture perspective to each existing facade plane, preserving exact openings, tile and board boundaries where retained, physical shading, contact shadows, highlights and source illumination. Match the SOURCE season, weather, time and lighting exactly. The full-photo reference is only lighting/material context; do not use it as output framing. Keep padding intact. No text, UI, arrows or new architectural details.';
+}

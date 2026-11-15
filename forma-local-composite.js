@@ -37,3 +37,19 @@ export async function composeMasked(baseURL,editedURL,maskCanvas,crop=null,frame
  original.data.set(compositePixels(original.data,fresh.data,mask.data));ctx.putImageData(original,region.x,region.y);
  return output.toDataURL('image/png');
 }
+
+/** Provider-facing copies are bounded; the composited result keeps the native source. */
+export async function prepareMaterialEdit(baseURL,providerMaskURL){
+ const [base,maskImage]=await Promise.all([loadImage(baseURL),loadImage(providerMaskURL)]),w=base.naturalWidth,h=base.naturalHeight;
+ const selection=canvas(w,h),sc=selection.getContext('2d',{willReadFrequently:true});sc.drawImage(maskImage,0,0,w,h);
+ const pixels=sc.getImageData(0,0,w,h);let minX=w,minY=h,maxX=-1,maxY=-1;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;pixels.data[i+3]=255-pixels.data[i+3];if(pixels.data[i+3]){minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}}
+ if(maxX<0)throw Error('Пустое выделение. Отметьте поверхность перед генерацией.');
+ sc.putImageData(pixels,0,0);
+ const pad=Math.max(16,Math.round(Math.max(w,h)*.025)),x=Math.max(0,minX-pad),y=Math.max(0,minY-pad),right=Math.min(w,maxX+1+pad),bottom=Math.min(h,maxY+1+pad);
+ const crop={x,y,width:right-x,height:bottom-y},edge=Math.max(crop.width,crop.height),frame={width:edge,height:edge,x:Math.floor((edge-crop.width)/2),y:Math.floor((edge-crop.height)/2)};
+ const outputEdge=Math.min(1536,edge),scale=outputEdge/edge,clean=canvas(outputEdge,outputEdge),cc=clean.getContext('2d');cc.fillStyle='#d5d4ce';cc.fillRect(0,0,outputEdge,outputEdge);cc.drawImage(base,x,y,crop.width,crop.height,frame.x*scale,frame.y*scale,crop.width*scale,crop.height*scale);
+ const editMask=canvas(outputEdge,outputEdge),mc=editMask.getContext('2d');mc.fillStyle='#000';mc.fillRect(0,0,outputEdge,outputEdge);mc.globalCompositeOperation='destination-out';mc.drawImage(selection,x,y,crop.width,crop.height,frame.x*scale,frame.y*scale,crop.width*scale,crop.height*scale);
+ const context=canvas(Math.min(w,1400),Math.round(Math.min(w,1400)*h/w));context.getContext('2d').drawImage(base,0,0,context.width,context.height);
+ return {image:clean.toDataURL('image/png'),mask:editMask.toDataURL('image/png'),reference:context.toDataURL('image/jpeg',.93),compose:generated=>composeMasked(baseURL,generated,selection,crop,frame)};
+}
