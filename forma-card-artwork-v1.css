@@ -1,0 +1,22 @@
+/* FORMA · six user-supplied approved artwork cards · 2026-11-15. Preserve their own compositions. */
+.forma-direction-catalog .forma-direction-photo.forma-direction-approved,
+.forma-direction-catalog .forma-direction-card.is-main .forma-direction-photo.forma-direction-approved {
+ display:block!important; position:relative!important; width:100%!important;
+ height:auto!important; aspect-ratio:16/9!important; overflow:hidden!important;
+ background:#171918!important;
+}
+.forma-direction-catalog .forma-direction-photo.forma-direction-approved::after { display:none!important;content:none!important; }
+.forma-direction-catalog .forma-direction-photo.forma-direction-approved>img,
+.forma-direction-catalog .forma-direction-card.is-main .forma-direction-photo.forma-direction-approved>img {
+ display:block!important;width:100%!important;height:100%!important;
+ object-fit:contain!important;object-position:50% 50%!important;
+ filter:none!important;opacity:1!important;transform:none!important;
+ transition:transform .48s ease!important;
+}
+.forma-direction-catalog .forma-direction-card:hover .forma-direction-photo.forma-direction-approved>img,
+.forma-direction-catalog .forma-direction-card.is-main:hover .forma-direction-photo.forma-direction-approved>img {
+ filter:none!important;transform:scale(1.01)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .forma-direction-catalog .forma-direction-photo.forma-direction-approved>img {transition:none!important;transform:none!important;}
+}
