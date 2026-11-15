@@ -138,6 +138,29 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
  const relightInstruction=p.relightOnly===true
   ?'RELIGHT EDIT OF AN EXISTING FINISHED IMAGE: IMAGE 1 IS THE APPROVED ARCHITECTURAL PHOTOGRAPH. Change ONLY lighting, plausible direction/softness of sunlight and cast shadows, sky luminance consistent with the expressly selected time/weather, and related exposure/reflections. Keep the same architectural geometry, framing, windows, finishes, landscaping, existing objects and the exact camera position. NO scene redesign, no extra structures, no invented lamps or props. Preserve content identically as far as image editing allows.'
   :null;
+ const sceneChangeCatalog={
+  time:{morning:'early morning, soft low-angle sunlight',day:'clear professional daytime illumination',golden:'warm low golden-hour light with long plausible shadows',night:'realistic nighttime lighting, warm existing windows and correct dark sky'},
+  season:{spring:'spring vegetation, young leaves and appropriate seasonal colors',summer:'full realistic summer foliage',autumn:'autumn leaves and seasonal foliage with realistic local colors',winter:'winter vegetation, bare deciduous trees and cold natural ground detail'},
+  weather:{clear:'clear sky and physically coherent direct sunlight',cloud:'overcast sky, soft diffuse light and subdued shadows',rain:'credible rainfall, wet surfaces, realistic puddles and reflections without obscuring architecture',fog:'natural layered ground fog, building remains legible',snow:'falling or settled snow, physically credible accumulation and cold seasonal light'},
+  lighting:{natural:'natural physically plausible photographic lighting',soft:'gentle soft diffused lighting and soft natural shadows',dramatic:'expressive but physically credible contrast, directional highlights and deep readable shadows',windows:'subtle warm illumination in EXISTING windows; do not create new openings',exterior:'switch on EXISTING exterior luminaires only; do not invent new light fixtures'}
+ };
+ const changes=Array.isArray(p.sceneChanges)?p.sceneChanges.slice(0,6).map(entry=>{
+  const group=typeof entry?.group==='string'?entry.group:'';
+  const id=typeof entry?.id==='string'?entry.id:'';
+  const description=sceneChangeCatalog[group]?.[id];
+  return description?group+': '+description:null;
+ }).filter(Boolean):[];
+ const editExistingScene=p.sceneTransformOnly===true&&changes.length?
+ 'EDIT AN EXISTING COMPLETED ARCHITECTURAL PHOTOGRAPH (IMAGE 1). The user explicitly requests ONLY these revisions: '+changes.join('; ')+
+ '. Keep camera position, building geometry, window sizes, materials, architectural details, landscape terrain, plants and props unchanged EXCEPT seasonal plant changes, precipitation or lighting directly required by the listed revisions. Do not reinterpret the building or create a new composition. Make physically consistent light and shadows. Preserve all previous visual decisions that do not conflict with the specified revisions. This is a controlled edit of IMAGE 1, not a brand new design.':null;
+ const lightingChoices={
+  natural:'Keep physically plausible natural daylight and illumination.',
+  soft:'Use soft directional or diffused illumination and broad realistic penumbrae.',
+  dramatic:'Use cinematic but realistic directional lighting and controlled shadow contrast.',
+  windows:'Illuminate existing interior windows realistically; no new openings or invented fixtures.',
+  exterior:'Switch on existing external architectural light fixtures; do not add new fixtures.'
+ };
+ const lightingRule=lightingChoices[b.lightingPreset]||null;
  const sceneMood=compact(b.sceneMood,32);
  const atmosphere={
   sunny:'Crisp bright summer daylight with credible sunlight, deep natural green foliage and controlled contrast. A clean professional daytime photograph, not oversaturated.',
@@ -186,7 +209,7 @@ function createPrompt(p){if(p.sceneVariation)return sceneVariationPrompt(p);cons
  const extraRequest=!semanticOnly&&specific&&userRequest?`Additional user instruction scoped ONLY to the named masked component: "${userRequest}". ${category} Keep every unmasked pixel untouched.`:null;
  const edit=semanticOnly?semanticText:specific?recolor?recolorText:`LOCAL EDIT ONLY: edit the transparent region of the supplied PNG mask on IMAGE 1. The masked area is the selected facade zone named '${compact(p.selectedZone)}'. Apply requested material '${compact(p.materialName)||compact(userRequest,100)||'as described in the user instruction'}' to that facade surface and keep the rest of the image, environment, lighting and all other surfaces as unchanged as possible. Use the material reference image (when provided) for accurate color, grain and texture repeat. ${Number(p.materialDimensions?.width)>0?`Material physical size: ${Number(p.materialDimensions.width)} by ${Number(p.materialDimensions.height)||Number(p.materialDimensions.width)} millimetres.`:''} Replace the material consistently through the ENTIRE transparent masked area, never only a small isolated patch. Respect the mask boundary, preserve the contours around glazing and doors, and keep all unmasked pixels as untouched as possible. The mask is a guide and may not be pixel exact. Material reference image is not the building.`:`FULL SCENE ENHANCEMENT: Transform the sketch/model screenshot into a realistic architectural photograph while preserving existing building materials, all visible texture divisions and exact architectural point of view. Develop only the selected surroundings, weather, season and photographic lighting. A photographed exterior must look realistic without redesigning or re-cladding any part of the house.`;
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
- return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,edit,homeEdit,extraRequest,physics,context,sunHint,continuity].filter(Boolean).join('\n\n')}
+ return [architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,edit,homeEdit,extraRequest,physics,context,sunHint,continuity].filter(Boolean).join('\n\n')}
 let generationSeq=0;
 async function proxyRender(req,res){
  const requestId=Date.now().toString(36)+'-'+(++generationSeq).toString(36);
