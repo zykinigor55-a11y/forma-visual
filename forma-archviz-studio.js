@@ -318,6 +318,16 @@
     else if(action==='upload')$('#sourceFile')?.click();
     else if(action==='interior')window.FORMA_INTERIORS?.open?.();
     else if(action==='render')navigate('environment');
+    else if(action==='materials')navigate('materials');
+    else if(action==='animation')navigate('animation');
+    else if(action==='relight'){
+     const bridge=window.FORMA_SCENE_BRIDGE;
+     const source=bridge?.get?.();
+     if(!source?.hasSource){toast('Для переосвещения сначала загрузите архитектурную модель.');$('#sourceFile')?.click()}
+     else if(!source.hasRender){toast('Сначала создайте AI-рендер, затем выберите новое освещение.');navigate('environment')}
+     else if(window.FORMA_SUN_STUDIO?.open)window.FORMA_SUN_STUDIO.open();
+     else toast('SUN STUDIO недоступна: обновите страницу.');
+    }
     else if(action==='nodes')window.FORMA_NODES?.open?.();
     return;
    }
