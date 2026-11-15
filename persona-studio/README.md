@@ -41,6 +41,28 @@ npm start
 npm test
 ```
 
+## API Market: основной провайдер для PERSONA STUDIO
+
+Подтверждённый публичной документацией endpoint: \`https://api-market1.shop/v1\`.
+
+- Создание персонажа: \`POST /v1/images/generations\`, модель \`gpt-image-2.5-sunburst\`.
+- Редактирование по фото: \`POST /v1/images/edits\`, модель \`nano-banana-2.1\`.
+- API-ключ начинается с \`sk-\` и хранится только в переменных окружения Render.
+- Если API Market вернёт только URL изображения вместо b64_json, понадобится поддержка URL-ответов в сервере; пока ожидаем base64, как в примерах сервиса.
+- Генерация расходует баланс API Market и не включена в подписку ChatGPT.
+
+Переменные Render:
+
+\`\`\`env
+PERSONA_AI_PROVIDER=apimarket
+API_MARKET_KEY=секретное_значение_из_кабинета_API_Market
+API_MARKET_IMAGE_MODEL=gpt-image-2.5-sunburst
+API_MARKET_EDIT_MODEL=nano-banana-2.1
+PERSONA_ACCESS_CODE=уже_установленный_личный_код
+\`\`\`
+
+Ключ API Market можно также скопировать из уже работающего проекта ПЛЮХ в настройках Render (\`Environment\`), если там сохранён действующий \`API_MARKET_KEY\` или \`API_MARKET_IMAGE_KEY\`. Наша интеграция не может программно читать скрытые значения Render и не копирует их автоматически. Не публикуйте секретный ключ в GitHub и чате.
+
 ## Arkheon: интеграция 0.3.1
 
 Для выбора Arkheon установите на Render (`Environment`):
