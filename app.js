@@ -1310,7 +1310,7 @@ function settingsBrief(){
  season:flags.season?cLabel('season',s.season):null,
  plants:flags.plants?cLabel('plants',s.plants):null,
  sunLighting:s.sunLighting||null,
- sceneMood:s.sceneMood||null,lightingPreset:s.lightingPreset||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',homeChanges:String(s.homeChanges||'').trim().slice(0,600),lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.'}}
+ sceneMood:s.sceneMood||null,lightingPreset:s.lightingPreset||null,materials:assignedMaterials,textureScale:s.textureScale+'%',textureRotation:s.textureRotate+'°',homeChanges:String(s.homeChanges||'').trim().slice(0,600),lockGeometry:s.lockGeometry,preserveMaterials:s.preserveMaterials!==false,sceneReference:s.keepReference,output:{ratio:s.ratio,quality:s.quality,quantity:Number(s.quantity)},note:'Серия ракурсов использует визуальные референсы. Без 3D геометрическая идентичность окружения не гарантируется.',...((window.FORMA_INTERIORS?.briefForProject?.(project.id))||{})}}
 function showBrief(){const text=JSON.stringify(settingsBrief(),null,2);modal('Техническое задание',`<p class="muted">Собрано автоматически из выбранных карточек. Пользователю не требуется писать промпт.</p><pre>${eHTML(text)}</pre>`,[{label:'Скопировать',primary:true,click:async()=>{try{await navigator.clipboard.writeText(text);toast('Бриф скопирован')}catch{downloadText('dom-render-brief.json',text,'application/json')}closeModal()}},{label:'Скачать JSON',click:()=>downloadText('dom-render-brief.json',text,'application/json')}])}
 function downloadText(filename,text,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
 function downloadDataURL(url,filename){const a=document.createElement('a');a.href=url;a.download=filename;a.click()}
@@ -1942,7 +1942,7 @@ window.FORMA_SCENE_BRIDGE={
   const shadow=['soft','natural','defined','cinematic'].includes(position?.shadow)?position.shadow:null;
   current().sunLighting={x:Math.round(x*1000)/1000,y:Math.round(y*1000)/1000,
    softness:['soft','natural','defined'].includes(position?.softness)?position.softness:'natural',
-   ...(direction?{direction}:{}),...(elevation?{elevation}:{}),...(shadow?{shadow}:{})};
+   ...(direction?{direction}:{}),...(elevation?{elevation}:{}),...(shadow?{shadow}:{}),...(['window','ceiling','fixtures','mixed'].includes(position?.indoorSource)?{indoorSource:position.indoorSource}:{})};
   save();return true;
  },
  resetSun(){if(!project)return;current().sunLighting=null;save()},
