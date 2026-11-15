@@ -208,12 +208,20 @@
    pin.style.left=(pos.x*100)+'%';pin.style.top=(pos.y*100)+'%';
    const dx=pos.x-.5,dy=pos.y-.5,len=Math.hypot(dx,dy)||1;
    const length={low:.39,medium:.29,high:.16}[h.id]??.29;
-   const targetX=Math.max(.12,Math.min(.88,.5-dx/len*length));
-   const targetY=Math.max(.12,Math.min(.88,.5-dy/len*length));
+   const fallbackX=Math.max(.12,Math.min(.88,.5-dx/len*length));
+   const fallbackY=Math.max(.15,Math.min(.85,.5-dy/len*length));
+   const projection=window.FORMA_SUN_GROUND_SHADOWS?.render?.(scene);
+   const targetX=projection?projection.marker.x/1000:fallbackX;
+   const targetY=projection?projection.marker.y/600:fallbackY;
    shadowPin.style.left=(targetX*100)+'%';shadowPin.style.top=(targetY*100)+'%';
    const ray=$('#formaSunStudioDirectionLine'),shade=$('#formaSunStudioShadowLine');
    if(ray){ray.setAttribute('x2',String(Math.round(pos.x*1000)));ray.setAttribute('y2',String(Math.round(pos.y*600)))}
-   if(shade){shade.setAttribute('x2',String(Math.round(targetX*1000)));shade.setAttribute('y2',String(Math.round(targetY*600)))}
+   if(shade){
+    shade.setAttribute('x1',String(projection?.origin.x??500));
+    shade.setAttribute('y1',String(projection?.origin.y??300));
+    shade.setAttribute('x2',String(Math.round(targetX*1000)));
+    shade.setAttribute('y2',String(Math.round(targetY*600)));
+   }
    const group=$('#formaSunStudioRays');if(group)group.style.display=scene.showSunRays?'':'none';
    if(scene.showSunRays){
     const sx=pos.x*1000,sy=pos.y*600,vx=.5-pos.x,vy=.55-pos.y,mag=Math.hypot(vx,vy)||1;
@@ -239,6 +247,9 @@
   });
   $('#formaSunStudioLiveStatus').textContent=d.desc.toUpperCase();
   $('#formaSunStudioResultSummary').textContent=interior?'Интерьер · '+source(scene.indoorSource).name+' · '+sh.name.toLowerCase()+' тени':d.desc+' · '+h.hint.toLowerCase()+' · '+sh.name.toLowerCase()+' тени';
+  const photoNote=root.querySelector('.forma-sunstudio-photo-footer small');
+  if(photoNote)photoNote.textContent=interior?'Световая схема интерьера · точный результат после AI':
+   'Тени на фото — схема: '+h.hint.toLowerCase()+' · '+sh.name.toLowerCase()+'. Реальные тени сформирует AI.';
   const info=SOURCE();const night=info.explicit?.time&&/ночь|night/i.test(String(info.time||''));
   $('#formaSunStudioNightNote').hidden=!night;
   const continueButton=root.querySelector('[data-sun-continue]');
