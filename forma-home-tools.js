@@ -67,6 +67,7 @@
  }
  function choose(id){
   const tool=tools.find(t=>t.id===id);if(!tool)return;
+  const disclosure=$('#formaAdvancedTools');if(disclosure)disclosure.open=true;
   current=id;
   const detail=$('#faProjectToolContent'),title=$('#faHomeToolTitle'),short=$('#faHomeToolSub');
   if(title)title.textContent=tool.name;
@@ -109,7 +110,10 @@
   if($('#formaProjectPanel'))return;
   const viewer=$('.viewer-card');if(!viewer)return;
   panel=document.createElement('section');panel.id='formaProjectPanel';panel.className='fa-home-panel';panel.setAttribute('aria-label','Панель проекта и инструменты');
-  panel.innerHTML=renderPanel();
+  // Keep secondary engineering tools accessible without repeating the six main catalogue entries.
+  panel.innerHTML='<details class="fa-home-disclosure" id="formaAdvancedTools">'+
+   '<summary><span class="fa-home-disclosure-mark">+</span><span><strong>Расширенные инструменты</strong><small>Камеры, ноды, проверка геометрии и профессиональные настройки</small></span><b>17 ИНСТРУМЕНТОВ</b></summary>'+
+   '<div class="fa-home-disclosure-body">'+renderPanel()+'</div></details>';
   viewer.insertAdjacentElement('afterend',panel);
   panel.addEventListener('click',e=>{
    const nodeButton=e.target.closest('[data-fa-add-node]');
