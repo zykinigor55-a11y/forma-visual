@@ -30,7 +30,7 @@
 .forma-direction-foot{border-top:1px solid #353a34;margin-top:16px;padding-top:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .forma-direction-foot>span{font-size:10px;color:#9da8a0;line-height:1.45}
 .forma-direction-foot>span i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:#b8b09b;vertical-align:middle}
-.forma-direction-foot button{background:transparent;color:#d6bd99;border:0;font:750 10px/1.4 inherit;cursor:pointer;white-space:nowrap;padding:7px}
+.forma-direction-foot button{background:transparent;color:#d6bd99;border:0;font:750 10px/1.4 Arial,sans-serif;cursor:pointer;white-space:nowrap;padding:7px}
 @media(min-width:1200px){
  .forma-direction-card.is-main{grid-column:span 2;display:grid;grid-template-columns:1.36fr .9fr}
  .forma-direction-card.is-main .forma-direction-photo{height:100%;aspect-ratio:auto}
