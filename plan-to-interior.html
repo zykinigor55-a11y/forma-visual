@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b0b">
+<meta name="description" content="FORMA PLAN TO INTERIOR — проверяемая геометрия 2D-плана, 3D-пространство, интерьерные ракурсы и AI-фото.">
+<title>FORMA · PLAN TO INTERIOR</title>
+<link rel="stylesheet" href="plan-to-interior.css?v=20261115-p1">
+</head>
+<body>
+<header class="topbar">
+ <a class="brand" href="/"><span class="brand-logo">FA</span><span><strong>FORMA</strong><small>ARCHITECTURE / AI STUDIO</small></span></a>
+ <span class="brand-section">PLAN TO INTERIOR <span class="tag">BETA 01</span></span>
+ <div class="topnav"><span id="autosaveStatus">Проект не сохранён</span><a href="/">В студию <span aria-hidden="true">↗</span></a></div>
+</header>
+<main>
+ <section class="lead"><div><p class="eyebrow">FORMA / INTERIOR ENGINE · ПРОВЕРЯЕМАЯ ГЕОМЕТРИЯ</p><h1>Из плана — <em>в пространство.</em></h1><p>Сначала определяем стены и размеры. Затем собираем реальную редактируемую 3D-модель — и только после этого создаём фотографии интерьера.</p></div>
+ <button type="button" class="ghost" id="loadDemo">Открыть демонстрационный план <span>↗</span></button></section>
+ <div class="steps" aria-label="Этапы проекта"><span class="on">01 <b>План</b></span><span class="on">02 <b>Масштаб</b></span><span class="on">03 <b>Геометрия 3D</b></span><span>04 <b>Дизайн</b></span><span>05 <b>Фоторендер</b></span></div>
+ <div class="work">
+  <aside class="tools">
+   <section class="tool-section"><div class="section-num">01 / ИСХОДНЫЙ ПЛАН</div>
+    <label class="upload" for="planFile"><span class="upload-symbol">↥</span><strong>Загрузить план</strong><small>PNG, JPG, WEBP, PDF (1-я стр.)</small></label>
+    <input type="file" id="planFile" accept=".png,.jpg,.jpeg,.webp,.pdf,image/png,image/jpeg,image/webp,application/pdf" hidden>
+    <button type="button" class="full tool-primary" id="autoDetect" disabled>⌗ <span>Найти линии стен</span></button>
+    <button type="button" class="full tool-secondary" id="aiDetect" disabled>✦ <span>Распознать через AI</span></button>
+    <p class="assist" id="aiHelp">AI Vision проверяется…</p>
+   </section>
+   <section class="tool-section"><div class="section-num">02 / ТОЧНЫЕ РАЗМЕРЫ</div>
+    <div class="tool-row"><button type="button" id="calibrate" class="outline full" disabled>⇥ Указать размер на плане</button></div>
+    <label>Длина отмеченного участка, м<input type="number" id="knownLength" step="0.01" min="0.1" max="200" value="4.00"></label>
+    <button type="button" class="full tool-secondary" id="applyScale" disabled>Подтвердить масштаб</button>
+    <p id="scaleMessage" class="assist">Для точных метров укажите известный размер двумя точками.</p>
+    <div class="tool-grid"><label>Высота стен, м<input id="wallHeight" type="number" min="2" max="8" step="0.1" value="2.8"></label><label>Толщина, м<input id="wallWidth" type="number" min=".08" max=".6" step=".01" value=".2"></label></div>
+   </section>
+   <section class="tool-section"><div class="section-num">03 / РЕДАКТОР</div>
+    <div class="tool-grid two"><button type="button" id="selectTool" data-tool="select" class="selected">Выбрать</button><button type="button" data-tool="wall" id="wallTool">＋ Стена</button><button type="button" data-tool="door" id="doorTool">Дверь</button><button type="button" data-tool="window" id="windowTool">Окно</button></div>
+    <div class="tool-grid two"><button type="button" id="undo" disabled>↶ Отменить</button><button type="button" id="deleteWall" disabled>Удалить стену</button></div>
+    <p class="assist">«Стена»: две точки. «Дверь» или «Окно»: нажмите на распознанную стену. Удаление не затрагивает исходный чертёж.</p>
+   </section>
+   <section class="tool-section"><div class="section-num">04 / ДИЗАЙН</div>
+    <label>Стиль интерьера<select id="style"><option value="warm-modern">Тёплый современный</option><option value="japandi">Japandi</option><option value="contemporary">Contemporary luxury</option><option value="minimal">Минимализм</option><option value="scandinavian">Скандинавский</option></select></label>
+    <label>Цвет стен<input type="color" id="wallColor" value="#e7dfd1"></label>
+    <label>Цвет пола<input type="color" id="floorColor" value="#af9172"></label>
+    <div class="tool-grid two"><button type="button" id="addSofa">+ Диван</button><button type="button" id="addTable">+ Стол</button><button type="button" id="addBed">+ Кровать</button><button type="button" id="clearFurniture">Убрать мебель</button></div>
+    <p class="assist">Мебель пока в виде простых 3D-объёмов с реальными размерами. Детальный каталог GLB добавляется отдельно.</p>
+   </section>
+  </aside>
+  <div class="canvases">
+   <section class="canvas-section">
+    <header class="canvas-head"><div><span class="canvas-code">01 / 2D DRAWING</span><h2>Исходный план</h2></div><span class="status-chip" id="sourceStatus">НЕТ ПЛАНА</span></header>
+    <div class="plan-area" id="planArea"><canvas id="planCanvas" aria-label="Интерактивный редактор 2D-плана"></canvas><div class="canvas-empty" id="planEmpty"><span>⌗</span><strong>Начните с плана</strong><small>Загрузите изображение или откройте пример</small></div></div>
+    <footer class="canvas-foot"><span id="planHint">Распознанные линии можно редактировать.</span><span id="wallCount">0 стен</span></footer>
+   </section>
+   <section class="canvas-section model">
+    <header class="canvas-head"><div><span class="canvas-code">02 / LIVE GEOMETRY</span><h2>3D-модель</h2></div><span class="status-chip warn" id="modelStatus">НЕ КАЛИБРОВАНО</span></header>
+    <div class="three-area" id="threeArea"><canvas id="threeCanvas" aria-label="Интерактивная 3D-модель помещения"></canvas><div class="canvas-empty" id="threeEmpty"><span>◈</span><strong>Ожидаем геометрию</strong><small>После распознавания здесь появится 3D</small></div></div>
+    <footer class="canvas-foot"><span id="modelHint">Вращайте пальцем / мышью. Масштаб — колёсиком.</span><button type="button" id="resetCamera" class="text-button">Сброс камеры</button></footer>
+   </section>
+  </div>
+  <aside class="results">
+   <section class="tool-section"><div class="section-num">МОДЕЛЬ / СОСТОЯНИЕ</div>
+    <div class="metric"><strong id="metricWalls">0</strong><small>Стен</small></div><div class="metric"><strong id="metricOpenings">0</strong><small>Проёмов</small></div>
+    <div class="metric"><strong id="metricArea">—</strong><small>Габариты модели, м</small></div>
+    <div id="validation" class="validation">Загрузите план. Геометрия требует проверки перед фоторендером.</div>
+    <button type="button" id="saveModel" class="full tool-secondary" disabled>Скачать модель JSON</button>
+    <button type="button" id="exportOBJ" class="full outline" disabled>Экспортировать OBJ</button>
+    <label class="restore-label">Открыть сохранённую модель<input type="file" accept=".json,application/json" id="importModel" hidden></label>
+   </section>
+   <section class="tool-section"><div class="section-num">05 / СВЕТ И ФОТО</div>
+    <label>Освещение<select id="lighting"><option value="soft-daylight">Мягкий дневной свет</option><option value="sunny">Солнечно, чёткие тени</option><option value="overcast">Пасмурно, рассеянный свет</option><option value="evening">Вечер, тёплые светильники</option><option value="studio">Студийный мягкий свет</option></select></label>
+    <button type="button" id="renderPhoto" class="full tool-primary" disabled>✧ Создать интерьерное фото</button>
+    <p class="assist">Платный AI-запрос. Используется кадр построенной 3D-модели. Камера, геометрия и мебель служат референсом, но точное совпадение AI не гарантирует.</p>
+    <div id="photoResult" hidden><img id="photoImg" alt="Фотореалистичный интерьерный результат"><p id="photoStatus"></p><div class="tool-grid two"><button id="downloadPhoto" type="button">Скачать</button><button id="relightPhoto" type="button">Переосветить</button></div></div>
+   </section>
+  </aside>
+ </div>
+ <section class="privacy-note"><strong>Проверяемая геометрия, а не выдуманное 3D.</strong> Автоматическое определение стен работает как черновик. Пока масштаб не подтверждён, размеры и площади являются условными. AI-анализ доступен только при подключённой Vision-модели, а генерация фотографии — после согласования проекта.</section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="plan-to-interior.js?v=20261115-p1"></script>
+</body></html>
