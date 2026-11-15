@@ -1,3 +1,4 @@
+import {openingsForWall,openingProblems} from './plan-openings-v2.js';
 /* PLAN TO INTERIOR geometry kernel: raster line proposals and physical wall segments.
    Auto tracing is a proposal, not a metric measurement or certified AI detection. */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -56,39 +57,29 @@ export function suggestWalls(imageCanvas){
   .map((l,i)=>({id:'auto_'+i,a:{x:l.a.x/k,y:l.a.y/k},b:{x:l.b.x/k,y:l.b.y/k},confidence:clamp(l.support/7,.28,.84),verified:false}));
 }
 export function buildWalls({walls=[],openings=[],width=1,height=1,scale=.02,wallThickness=.2,wallHeight=2.8}){
- const parts=[];const add=(wall,start,end,bottom,top)=>{
-  if(end-start<=.001||top-bottom<=.001)return;
+ const parts=[];
+ const add=(wall,startM,endM,bottomM,topM)=>{
+  if(endM-startM<.005||topM-bottomM<.005)return;
   const x1=(wall.a.x-width/2)*scale,z1=(height/2-wall.a.y)*scale;
   const x2=(wall.b.x-width/2)*scale,z2=(height/2-wall.b.y)*scale;
   const dx=x2-x1,dz=z2-z1,wallLength=Math.hypot(dx,dz);
-  if(!wallLength)return;
-  const t=(start+end)/2;
-  parts.push({id:wall.id,x:x1+dx*t,z:z1+dz*t,y:(bottom+top)/2,
-   length:wallLength*(end-start),wallHeight:top-bottom,thickness:wallThickness,rotation:-Math.atan2(dz,dx)});
+  if(wallLength<=0)return;
+  const t=(startM+endM)/(2*wallLength);
+  parts.push({id:wall.id,wallId:wall.id,x:x1+dx*t,z:z1+dz*t,y:(bottomM+topM)/2,
+   length:endM-startM,wallHeight:topM-bottomM,thickness:wallThickness,rotation:-Math.atan2(dz,dx),
+   startM,endM,bottomM,topM});
  };
  for(const wall of walls){
-  const lengthM=dist(wall.a,wall.b)*scale;if(lengthM<.02)continue;
-  const openingsOnWall=openings.filter(o=>o.wallId===wall.id).map(o=>{
-   const middle=clamp(Number(o.offset)||.5,0,1);
-   const portion=clamp(Number(o.width)||((o.kind==='window'?1.4:.9)/lengthM),.001,.8);
-   return {...o,start:clamp(middle-portion/2,0,1),end:clamp(middle+portion/2,0,1)};
-  }).sort((a,b)=>a.start-b.start);
+  const wallLength=dist(wall.a,wall.b)*scale;if(wallLength<.02)continue;
   let current=0;
-  for(const o of openingsOnWall){
-   if(o.end<=current)continue;
-   add(wall,current,Math.max(current,o.start),0,wallHeight);
-   const from=Math.max(current,o.start);
-   if(o.kind==='window'){
-    const sill=clamp(Number(o.sill)||.9,.3,wallHeight-.6);
-    const windowH=clamp(Number(o.height)||1.25,.4,wallHeight-sill-.05);
-    add(wall,from,o.end,0,sill);add(wall,from,o.end,sill+windowH,wallHeight);
-   }else{
-    const doorH=clamp(Number(o.height)||2.1,1.5,wallHeight);
-    add(wall,from,o.end,doorH,wallHeight);
-   }
-   current=o.end;
+  for(const opening of openingsForWall(wall,openings,scale,wallHeight)){
+   if(opening.startM<current+.045)continue;
+   add(wall,current,opening.startM,0,wallHeight);
+   if(opening.sillM>.004)add(wall,opening.startM,opening.endM,0,opening.sillM);
+   if(opening.topM<wallHeight-.004)add(wall,opening.startM,opening.endM,opening.topM,wallHeight);
+   current=opening.endM;
   }
-  add(wall,current,1,0,wallHeight);
+  add(wall,current,wallLength,0,wallHeight);
  }
  return parts;
 }
@@ -116,6 +107,6 @@ export function validateModel(s){
  if(!s.scaleVerified)warnings.push('Масштаб в метрах не подтверждён.');
  if(!s.walls.length)warnings.push('Не распознаны стены.');
  if(s.walls.some(w=>!w.verified))warnings.push('Часть стен не проверена; геометрия предварительная.');
- if(s.openings.some(o=>!o.verified))warnings.push('Двери и окна требуют проверки размеров и высоты.');
+ warnings.push(...openingProblems(s));
  return warnings;
 }
