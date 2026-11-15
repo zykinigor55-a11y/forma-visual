@@ -393,6 +393,7 @@ async function runTo(target,resume=false){
   await availability(plan.calls);
   if(plan.videoCalls)await checkVideoAvailability();
  }catch(err){preparing=false;showSelection();decorate();tell('Проверка цепочки: '+(err.message||'ошибка'));return}
+ if(!$('#faFlowBackdrop')){preparing=false;return}
  preparing=false;showSelection();decorate();
  const steps=plan.path.map((n,i)=>{
   let step='локально';
