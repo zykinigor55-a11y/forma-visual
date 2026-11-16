@@ -257,7 +257,7 @@ async function imageAI(source,brief,ctx,options={}){
  aborter=new AbortController();
  const timer=setTimeout(()=>aborter?.abort(),240000);
  try{
-  const r=await fetch('/api/render',{
+  const r=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{
    method:'POST',headers:{'Content-Type':'application/json'},
    signal:aborter.signal,
    body:JSON.stringify({

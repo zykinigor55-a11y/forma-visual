@@ -1,0 +1,20 @@
+name: FORMA — tests and render queue checks
+on:
+  push:
+    branches: [dom-render-nanobanana]
+  pull_request:
+    branches: [dom-render-nanobanana]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm test
+      - run: node --check server.mjs
+      - run: node --check forma-render-jobs.mjs
+      - run: node --check forma-render-queue-client.js
+      - run: node --check app.js

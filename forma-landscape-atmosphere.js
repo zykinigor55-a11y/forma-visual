@@ -229,7 +229,7 @@ async function generate(){
   let local=null,payload;
   if(mode==='landscape'){normalizeLandscape({items});local=await landscapePayload(expected);payload=local.payload;}
   else{persist();const copy=await providerCopy(expected.image);payload={image:copy,atmosphereOnly:true,brief:{...expected.brief,atmosphere:normalizeAtmosphere(atmosphere)},quality:'high',quantity:1};}
-  const response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(240000)});
+  const response=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(240000)});
   const result=await response.json();if(!response.ok||!result.images?.[0])throw Error(result.error||'AI не вернул изображение');
   let image='data:'+(result.mimes?.[0]||'image/png')+';base64,'+result.images[0];
   if(!local){const output=await loadImage(image),original=await loadImage(expected.image);assertFraming(output.naturalWidth,output.naturalHeight,original.naturalWidth,original.naturalHeight);}

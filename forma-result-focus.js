@@ -141,7 +141,7 @@ import {createReviewQueue} from './forma-result-queue.js';
    enhanceStatus('Подготавливаем готовый кадр для нового AI-рендера…');
    const image=await toDataURL(source.image);
    enhanceStatus('AI заново прорисовывает фактуры, растительность и оптические детали. Не закрывайте страницу.');
-   const response=await fetch('/api/render',{
+   const response=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({image,enhanceOnly:true,quantity:1,quality:'high',brief:{sceneType:expected.brief?.sceneType||'auto'}}),
     signal:AbortSignal.timeout(240000)
