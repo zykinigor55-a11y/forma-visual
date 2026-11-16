@@ -81,7 +81,7 @@ export const catalogFor=kind=>({plant:PLANTS,tree:TREES,path:PAVINGS,fill:FILLS,
 export const isLinearEdge=item=>item?.kind==='edge'&&['steel-edge','stone-edge','concrete-edge'].includes(item.catalogId);
 export function normalizeLandscape(value){
  if(!value||!Array.isArray(value.items)||!value.items.length||value.items.length>80)invalid('Добавьте от 1 до 80 объектов ландшафта');
- return {speciesBoard:value.speciesBoard===true,items:value.items.map((raw,i)=>{
+ return {placementGuide:value.placementGuide===true,speciesBoard:value.speciesBoard===true,items:value.items.map((raw,i)=>{
   if(!catalogFor(raw?.kind).some(v=>v.id===raw.catalogId))invalid('Неизвестный объект ландшафта');
   const item={id:typeof raw.id==='string'?raw.id.slice(0,48):String(i),kind:raw.kind,catalogId:raw.catalogId};
   if(raw.kind==='fill'){
@@ -99,18 +99,18 @@ export function normalizeLandscape(value){
 }
 const pct=n=>+(n*100).toFixed(2);
 export function landscapePrompt(value){
- const {items,speciesBoard}=normalizeLandscape(value);
+ const {items,speciesBoard,placementGuide}=normalizeLandscape(value);
  const references=[...new Set(items.map(i=>i.catalogId))];
  const instructions=items.map((item,i)=>{
   const entry=catalogFor(item.kind).find(x=>x.id===item.catalogId);
   const shape=isLinearEdge(item)?'open curb centreline '+item.points.map(p=>`(${pct(p.x)}%, ${pct(p.y)}%)`).join(' → ')+', strip width '+pct(item.edgeWidth)+'% of crop; build a continuous raised curb with a readable vertical face, NOT a tiled paved area':item.kind==='fill'?'painted ground area with brush strokes '+JSON.stringify(item.strokes):['path','edge'].includes(item.kind)?'ground polygon vertices, paving rotation '+(item.rotation||0)+' degrees, repeat scale '+(item.tileScale||100)+' percent, crop percentages '+item.points.map(p=>`(${pct(p.x)}, ${pct(p.y)})`).join(', '):`bottom-centre at (${pct(item.x)}%, ${pct(item.y)}%), width ${pct(item.w)}%, height ${pct(item.h)}% of crop`;
-  return `${i+1}. ${entry.prompt}; ${speciesBoard?'reference #'+(references.indexOf(item.catalogId)+1)+' on Image 2; ':''}${shape}.`;
+  return `${i+1}. ${entry.prompt}; ${speciesBoard?'reference #'+(references.indexOf(item.catalogId)+1)+' on Image '+(placementGuide?'3':'2')+'; ':''}${shape}.`;
  }).join('\n');
  return 'LOCAL LANDSCAPE EDIT ONLY. Image 1 is a clean crop of the current photograph, the transparent PNG mask is the only editable region. The crop is centred in a square canvas; return the exact same square framing and object alignment. Keep any neutral padding opaque and unchanged. Do not expand to the full reference photo or crop/zoom the image. Coordinates below are relative to this square canvas, origin top-left. '+
-  'Preserve architecture, house geometry, facade materials, camera, light direction, existing terrain and every object outside the mask. No text, diagrams, selection outlines or UI. Replace the indicated region with real photographed objects, do not paint an icon or a sticker. Respect existing occlusion; do not cover foreground walls with plants. '+
+  'Preserve architecture, house geometry, facade materials, camera, light direction, existing terrain and every object outside the mask. No text, diagrams, selection outlines or UI. Replace the indicated region with real photographed objects, do not paint an icon or a sticker. Respect depth ordering from the requested placement. A new foreground plant may occlude background architecture where it is drawn, while existing nearer objects must still occlude the new plant. Do not relocate it to avoid covering a background facade. '+
   'All supplied plant cutouts are species/shape references only. Reconstruct real volumetric photographed foliage, NEVER paste a flat cutout or icon into the output. The editable influence region includes user-authorized cast shadows and reflections; make them consistent with existing light and water only, do not invent water. '+
   'Match current season, weather and time exactly. In daytime fixtures remain unlit or very subtle; never turn daytime into night. At night warm 2700–3000K light has physically plausible falloff within the selected region. '+
-  (speciesBoard?'Image 2 is a numbered botanical, fixture and material reference board, never the scene; Image 3 is the clean full scene for context only. ':'Image 2 if present is the clean full scene for context only. ')+
+  (placementGuide?'Image 2 is a spatial placement guide ALIGNED EXACTLY with clean Image 1. Use ONLY its object locations, scales and numbered root anchors. Its cutouts, crosshairs, numbers and outlines are instructions, NEVER output pixels. Image 3 is the numbered species and material reference board, not a scene or output camera. The plant root must contact the ground exactly at its drawn anchor, and the complete canopy must fit its drawn size. Never relocate the root to a terrace, balcony, roof or another ground plane. Keep the full tree crown inside its requested object bounds and mask; do not cut it at the crop edge. Rebuild the placed flat guide as a fully volumetric photograph with physically matched light, contact and cast shadows. ':speciesBoard?'Image 2 is a numbered botanical, fixture and material reference board, never the scene; Image 3 is the clean full scene for context only. ':'Image 2 if present is the clean full scene for context only. ')+
   'Paving follows ground perspective and has believable joints and thickness. Preserve the drawn path boundary. Resolve individual foliage, natural size variation, root contact and physically consistent contact and cast shadows on the ground, matching the original scene light direction, softness and color. Keep cast shadows entirely inside the transparent edit mask; do not omit ground contact. Treat numbered reference tiles as material or object examples only; never reproduce their sheet layout. The clean cropped Image 1 remains the exact output camera.\n'+instructions;
 }
 export function normalizeAtmosphere(value){

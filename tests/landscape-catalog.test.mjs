@@ -44,3 +44,14 @@ test('a curb follows an open two-point line and reserves its actual strip width'
  assert.equal(item.edgeWidth,.04);const b=itemBounds(item);assert.ok(b.y<=.68+1e-9);assert.ok(b.bottom>=.72-1e-9);
  assert.throws(()=>normalizeLandscape({items:[{...item,points:[{x:.4,y:.4},{x:.4,y:.4}]}]}));
 });
+test('visual placement guide uses the same bottom anchor and full size as the editor',()=>{
+ assert.equal(typeof ui.placementGuideGeometry,'function');
+ const [guide]=ui.placementGuideGeometry([{kind:'tree',catalogId:'spruce-tall',x:.8,y:.9,w:.1,h:.3}],1000,1000);
+ assert.equal(guide.number,1);assert.equal(guide.catalogId,'spruce-tall');assert.deepEqual(guide.anchor,{x:800,y:900});for(const [field,want] of Object.entries({x:750,y:600,w:100,h:300}))assert.ok(Math.abs(guide[field]-want)<1e-8,field);
+});
+test('guided landscape prompts distinguish clean crop, layout, and species board and lock the root to the drawn ground',async()=>{
+ const {normalizeLandscape}=await import('../forma-art-direction-core.js');
+ const input={placementGuide:true,speciesBoard:true,items:[{kind:'tree',catalogId:'spruce-tall',x:.8,y:.9,w:.1,h:.3}]};
+ assert.equal(normalizeLandscape(normalizeLandscape(input)).placementGuide,true);
+ const p=landscapePrompt(input);assert.match(p,/Image 2.*placement guide/i);assert.match(p,/Image 3.*reference board/i);assert.match(p,/Never relocate.*terrace|balcony/i);assert.match(p,/root.*anchor/i);
+});

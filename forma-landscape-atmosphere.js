@@ -1,4 +1,4 @@
-import {LANDSCAPE_GROUPS,catalogGroup,assetLayers,placementMarkup,referenceEntries} from './forma-landscape-catalog.js';
+import {LANDSCAPE_GROUPS,catalogGroup,assetLayers,placementMarkup,referenceEntries,placementGuideGeometry} from './forma-landscape-catalog.js';
 import {scalePlacement,linePlacements,drawStrokes,translateGroup,selectionHasCoverage} from './forma-landscape-tools.js';
 import {PLANTS,PAVINGS,LIGHTS,LOOKS,isLinearEdge,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js';
 import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming,prepareMaterialEdit} from './forma-local-composite.js';
@@ -213,8 +213,8 @@ async function landscapePayload(expected){
  const position=p=>({x:(p.x*w-crop.x+frame.x)/edge,y:(p.y*h-crop.y+frame.y)/edge});
  const transformed=items.map(item=>item.kind==='fill'?{...item,strokes:item.strokes.map(s=>({...s,size:s.size*Math.min(w,h)/edge,points:s.points.map(position)}))}:['path','edge'].includes(item.kind)?{...item,...(isLinearEdge(item)?{edgeWidth:(item.edgeWidth||.015)*Math.min(w,h)/edge}:{}),points:item.points.map(position)}:{...item,...position(item),w:item.w*w/edge,h:item.h*h/edge});
 
- // Context is compact and clean; guide graphics are never sent as source pixels.
- const context=canvas(Math.min(w,1400),Math.round(Math.min(w,1400)*h/w));context.getContext('2d').drawImage(base,0,0,context.width,context.height);
+ // Clean Image 1 stays untouched. A separate aligned guide conveys spatial placement, not source pixels.
+ const guide=canvas(edgeOut,edgeOut),gc=guide.getContext('2d');gc.drawImage(clean,0,0);
  const entries=referenceEntries(items);
  const board=canvas(1024,Math.max(288,Math.ceil(entries.length/4)*288)),bc=board.getContext('2d');bc.fillStyle='#727873';bc.fillRect(0,0,board.width,board.height);
  for(let i=0;i<entries.length;i++){
@@ -226,13 +226,23 @@ async function landscapePayload(expected){
   bc.fillStyle='#fff';bc.font='14px Arial';bc.fillText('#'+(i+1)+' · '+entries[i].entry.name,bx+10,by+273,236);
  }
 
- return {crop,selection,frame,payload:{image:clean.toDataURL('image/png'),mask:mask.toDataURL('image/png'),reference:context.toDataURL('image/jpeg',.9),material:entries.length?board.toDataURL('image/png'):null,landscapeEdit:normalizeLandscape({items:transformed,speciesBoard:entries.length>0}),quality:'high',quantity:1}};
+ for(const g of placementGuideGeometry(transformed,edgeOut,edgeOut)){
+  const entry=entries.find(e=>e.entry.id===g.catalogId).entry;
+  for(const l of assetLayers(entry)){
+   let picture=assetCache.get(l.url);if(!picture){picture=await loadImage(l.url);assetCache.set(l.url,picture);}
+   gc.drawImage(picture,g.x+l.x*g.w,g.y+l.y*g.h,l.w*g.w,l.h*g.h);
+  }
+  gc.strokeStyle='#f6d076';gc.lineWidth=2;gc.strokeRect(g.x,g.y,g.w,g.h);
+  gc.beginPath();gc.moveTo(g.anchor.x-10,g.anchor.y);gc.lineTo(g.anchor.x+10,g.anchor.y);gc.moveTo(g.anchor.x,g.anchor.y-10);gc.lineTo(g.anchor.x,g.anchor.y+10);gc.stroke();
+  gc.fillStyle='#f6d076';gc.font='bold 18px Arial';gc.fillText('#'+g.number,g.x+5,g.y+21);
+ }
+ return {crop,selection,frame,payload:{image:clean.toDataURL('image/png'),mask:mask.toDataURL('image/png'),material:guide.toDataURL('image/png'),reference:board.toDataURL('image/png'),landscapeEdit:normalizeLandscape({items:transformed,speciesBoard:true,placementGuide:true}),quality:'high',quantity:1}};
 }
 async function providerCopy(url){const image=await loadImage(url),scale=Math.min(1,2048/Math.max(image.naturalWidth,image.naturalHeight));const c=canvas(Math.round(image.naturalWidth*scale),Math.round(image.naturalHeight*scale));c.getContext('2d').drawImage(image,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.97);}
 async function generate(){
  if(busy||!ensureSource()||!snap.hasSource||snap.demo)return;
  const expected=bridge().snapshot();if(!expected||expected.busy)return message('Дождитесь текущей генерации.');
- if(!bridge().acquire())return;busy=true;updateGenerate();dialog.classList.add('is-busy');
+ if(!bridge().acquire())return;let completed=false;busy=true;updateGenerate();dialog.classList.add('is-busy');
  message('AI обрабатывает кадр. Настройки временно заблокированы.');
  try{
   let local=null,payload;
@@ -244,10 +254,10 @@ async function generate(){
   if(!local){const output=await loadImage(image),original=await loadImage(expected.image);assertFraming(output.naturalWidth,output.naturalHeight,original.naturalWidth,original.naturalHeight);}
   if(local)image=await composeMasked(expected.image,image,local.selection,local.crop,local.frame);
   const label=mode==='landscape'?'Ландшафт · локальная правка':'Атмосфера · '+LOOKS.find(x=>x.id===atmosphere.preset).name;
-  await bridge().saveResult(image,label,expected);snap=bridge().snapshot();dialog.close();
+  await bridge().saveResult(image,label,expected);snap=bridge().snapshot();completed=true;dialog.close();
   message('Готово. Новый вариант сохранён в галерее. Исходник остаётся доступен.');
  }catch(e){message(e.name==='TimeoutError'?'Время ожидания истекло. Запрос мог продолжиться у провайдера; проверьте историю перед повтором.':e.message||'Не удалось обработать кадр');}
- finally{busy=false;bridge().release();dialog.classList.remove('is-busy');updateGenerate();}
+ finally{busy=false;bridge().release();dialog.classList.remove('is-busy');updateGenerate();if(completed)window.FORMA_STUDIO?.open('project');}
 }
 async function composeMaterial(base,result,providerMask){
  const maskImage=await loadImage(providerMask),selection=canvas(maskImage.naturalWidth,maskImage.naturalHeight),ctx=selection.getContext('2d',{willReadFrequently:true});ctx.drawImage(maskImage,0,0);const pixels=ctx.getImageData(0,0,selection.width,selection.height);

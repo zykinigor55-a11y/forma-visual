@@ -24,3 +24,8 @@ export function placementMarkup(entry,{x=0,y=0,w=320,h=320}={}){
 export function referenceEntries(items){
  return [...new Map(items.map(i=>[i.catalogId,{kind:i.kind,entry:catalogFor(i.kind).find(e=>e.id===i.catalogId)}])).values()];
 }
+export function placementGuideGeometry(items,width,height){
+ return items.flatMap((item,i)=>['fill','edge','path'].includes(item.kind)?[]:[{
+  number:i+1,catalogId:item.catalogId,x:(item.x-item.w/2)*width,y:(item.y-item.h)*height,w:item.w*width,h:item.h*height,anchor:{x:item.x*width,y:item.y*height}
+ }]);
+}
