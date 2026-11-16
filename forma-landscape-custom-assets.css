@@ -1,0 +1,34 @@
+/* Local user-image import in landscape: theme-safe and touch-friendly */
+#formaArtDialog[data-mode="landscape"] .fa-art-custom-upload{
+ display:flex;flex-direction:column;gap:8px;margin-bottom:16px;
+ padding:14px;border:1px dashed var(--art-line,var(--fs-line,#61666e));
+ border-radius:10px;background:var(--art-paper,var(--fs-panel,#2d3035));
+}
+#formaArtDialog .fa-art-custom-upload button.fa-art-custom-trigger{
+ width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;
+ border:1px solid var(--fs-accent,#c4aa82);border-radius:8px;
+ background:var(--fs-raised,#33353b)!important;color:var(--fs-text,#f0f0f2)!important;
+ font-size:13px!important;font-weight:650!important;letter-spacing:.01em;
+}
+#formaArtDialog .fa-art-custom-upload button.fa-art-custom-trigger:hover{border-color:var(--fs-accent,#c4aa82);filter:brightness(1.09)}
+#formaArtDialog .fa-art-custom-upload small{font-size:10px;line-height:1.5;color:var(--art-muted,var(--fs-muted,#afb1b7))}
+#formaArtDialog .fa-art-custom-option{border-color:var(--fs-accent,#c4aa82)!important}
+#formaArtDialog .fa-art-custom-option img.fa-art-reference{
+ display:block;max-width:100%;height:90px;object-fit:contain;border-radius:6px;
+ background:repeating-conic-gradient(#3e4148 0% 25%,#30333a 0% 50%) 50% / 14px 14px;
+}
+#formaArtDialog .fa-art-custom-option b{overflow-wrap:anywhere}
+#formaArtDialog .fa-art-custom-option[aria-pressed="true"]{outline:2px solid var(--fs-accent,#c4aa82);outline-offset:-2px}
+#formaArtDialog .fa-art-custom-desc{display:block;max-width:100%;font-size:11px;line-height:1.6;margin:13px 0;color:var(--fs-text,#f0f0f2)}
+#formaArtDialog .fa-art-custom-desc textarea{
+ display:block;width:100%;margin-top:6px;padding:10px;border-radius:8px;
+ border:1px solid var(--art-line,var(--fs-line,#44474f));
+ background:var(--fs-panel,#292b30);color:var(--fs-text,#f0f0f2);
+ resize:vertical;min-height:62px;font:inherit;font-size:12px;
+}
+#formaArtDialog .fa-art-custom-desc textarea:focus-visible{outline:2px solid var(--fs-accent,#c4aa82);outline-offset:2px}
+@media(max-width:760px){
+ #formaArtDialog .fa-art-custom-upload{padding:10px;margin-bottom:12px}
+ #formaArtDialog .fa-art-custom-upload .fa-art-custom-trigger{min-height:50px}
+ #formaArtDialog .fa-art-custom-option img.fa-art-reference{height:76px}
+}
