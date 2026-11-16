@@ -8,6 +8,7 @@ import path from 'node:path';
 import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
+import {createRenderJobQueue} from './forma-render-jobs.mjs';
 import {createEnhancementPrompt} from './forma-enhancement-prompt.js';
 import {landscapePrompt,atmospherePrompt,normalizeAtmosphere,materialTextPrompt,materialCropPrompt} from './forma-art-direction-core.js';
 import {imageTaskPrompt,normalizeImageTask,assertSeriesSource} from './forma-image-workflows.js';
@@ -30,7 +31,6 @@ let dailyCount=0, day=new Date().toISOString().slice(0,10);
 function sameOrigin(req){const origin=req.headers.origin;if(!origin)return true;const host=req.headers.host;try{return new URL(origin).host===host}catch{return false}}
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.avif':'image/avif','.svg':'image/svg+xml','.json':'application/json; charset=utf-8'};
 const MAX_BODY=44*1024*1024; // Up to two full-quality 12MB references plus edit metadata; each file also capped at 14MB.
-let active=0;
 function json(res,status,payload){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(payload))}
 async function readJSON(req){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY){const err=Error('Запрос слишком большой');err.status=413;throw err}chunks.push(chunk)}try{return JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{const err=Error('Некорректный JSON');err.status=400;throw err}}
 function imageBlob(data,field){if(!data)return null;const m=String(data).match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+\/=]+)$/);if(!m)throw Object.assign(Error(`Некорректное изображение: ${field}`),{status:400});const bytes=Buffer.from(m[2],'base64');if(bytes.length>14*1024*1024||bytes.length<100)throw Object.assign(Error(`Неверный размер: ${field}`),{status:400});const type=m[1]==='jpeg'?'image/jpeg':`image/${m[1]}`;return new Blob([bytes],{type})}
@@ -315,57 +315,84 @@ export function createPrompt(p){
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
  return [p.localCrop?'LOCAL CROP ALIGNMENT: Image 1 is a clean square crop centred on the selected material surface, with neutral padding. Return EXACTLY this same square framing and pixel alignment; do not zoom, crop or expand to the full context reference. The full reference photo is context only, not the output camera. Edit only the transparent mask; preserve all original construction edges and protected windows.':null,architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,sunlightAppearance,continuity,!specific?atmospherePrompt(b.atmosphere,{preserveScene:false}):null].filter(Boolean).join('\n\n')}
 export function renderQuantity(p){return p.imageTask||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.enhanceOnly===true||p.editMode==='text'?1:([1,2,4].includes(Number(p.quantity))?Number(p.quantity):1);}
-let generationSeq=0;
-async function proxyRender(req,res){
- const requestId=Date.now().toString(36)+'-'+(++generationSeq).toString(36);
+function renderError(error,requestId){
+ const status=Number.isInteger(error?.status)&&error.status>=400&&error.status<=599?error.status:502;
+ const message=String(error?.message||'Ошибка сервера').slice(0,240);
+ const code=error?.code||((status===400||status===413)?'invalid_request':status===429?'daily_limit':/время ожидания|timeout/i.test(message)?'provider_timeout':status>=500?'provider_error':'render_failed');
+ console.warn('[AI]',requestId,'ошибка:',code,'http:',status,'детали:',message);
+ return Object.assign(Error(message),{status,code});
+}
+async function performRender(p,requestId){
  const started=Date.now();
- const failEarly=(status,message,code)=>{
-  console.warn('[AI]',requestId,'отклонён до отправки провайдеру:',code,'status:',status);
-  return json(res,status,{error:message,code,requestId});
- };
- if(!sameOrigin(req))return failEarly(403,'Недопустимый источник запроса.','invalid_origin');
- if(!API_KEY)return failEarly(503,'AI не настроен: укажите API_MARKET_KEY в настройках Render.','key_not_configured');
- const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}
- if(dailyCount>=DAILY_CAP)return failEarly(429,'Достигнут дневной лимит генераций этого сервера.','daily_limit');
- if(active>=1)return failEarly(429,'Другая визуализация уже выполняется. Дождитесь её завершения.','server_busy');
- active++;
- console.info('[AI]',requestId,'запрос принят; активных:',active,'дневной остаток:',DAILY_CAP-dailyCount);
- try{
-  const p=await readJSON(req);if(!p.image)return json(res,400,{error:'Загрузите исходный скриншот'});
-  if(p.enhanceOnly===true&&(p.mask||p.material||p.reference||p.imageTask||p.landscapeEdit||p.localCrop||p.atmosphereOnly))return json(res,400,{error:'Улучшение фотографии не совмещается с другими изменениями.'});
-  const primary=imageBlob(p.image,'image');const mask=imageBlob(p.mask,'mask');const material=imageBlob(p.material,'material');const reference=imageBlob(p.reference,'reference');
-  if(mask&&mask.type!=='image/png')return json(res,400,{error:'Маска должна быть PNG'});
-  const n=renderQuantity(p);
-  if(p.batchShot&&(!['original','front','detailEntry','detailMaterial'].includes(p.batchShot)||n!==1))return json(res,400,{error:'Для пакета допускается один кадр в запросе, ракурс должен быть из списка.'});
-  if(dailyCount+n>DAILY_CAP)return json(res,429,{error:`Осталось генераций на сегодня: ${Math.max(0,DAILY_CAP-dailyCount)}.`});
-  assertSeriesSource(p);
-  const task=p.imageTask?normalizeImageTask(p.imageTask):null;
-  const needsPlan=task&&['plan','room'].includes(task.kind)&&task.engine!=='nano-banana-2.1';
-  if(needsPlan&&(!PLAN_IMAGE_MODEL||task.engine!==PLAN_IMAGE_MODEL))return json(res,503,{error:'Для «План → интерьер» настройте PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render и доступ к этой модели у API Market. Другой моделью запрос не заменяется.'});
-  if(['room','view'].includes(task?.kind)&&!reference)return json(res,400,{error:'Сначала утвердите главный кадр или визуализацию плана.'});
-  const prompt=task?imageTaskPrompt(task):createPrompt(p);
-  const images=[];const mimes=[];let warning='';
-  for(let i=0;i<n;i++){
-   // Count before call: timeout does not prove supplier hasn't charged the request.
-   dailyCount++;
-   try{
-    const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,prompt: n>1?prompt+`\nCreate variation ${i+1} of ${n} with the same architecture and camera.`:prompt,quality:p.quality});
-    images.push(result.b64);mimes.push(result.mimeType);
-   }catch(error){
-    if(!images.length)throw error;
-    warning='Часть визуализаций не создана: '+error.message;
-    break;
-   }
+ const fail=(message,status=400,code='invalid_request')=>{throw Object.assign(Error(message),{status,code})};
+ if(!API_KEY)fail('AI не настроен: укажите API_MARKET_KEY в Render.',503,'key_not_configured');
+ if(!p?.image)fail('Загрузите исходный скриншот',400);
+ if(p.enhanceOnly===true&&(p.mask||p.material||p.reference||p.imageTask||p.landscapeEdit||p.localCrop||p.atmosphereOnly))fail('Улучшение фотографии не совмещается с другими изменениями.',400);
+ const primary=imageBlob(p.image,'image'),mask=imageBlob(p.mask,'mask'),material=imageBlob(p.material,'material'),reference=imageBlob(p.reference,'reference');
+ if(mask&&mask.type!=='image/png')fail('Маска должна быть PNG',400);
+ const n=renderQuantity(p);
+ if(p.batchShot&&(!['original','front','detailEntry','detailMaterial'].includes(p.batchShot)||n!==1))fail('Для пакета допускается один кадр в запросе, ракурс должен быть из списка.',400);
+ const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0}
+ if(dailyCount+n>DAILY_CAP)fail('Осталось генераций на сегодня: '+Math.max(0,DAILY_CAP-dailyCount),429,'daily_limit');
+ assertSeriesSource(p);
+ const task=p.imageTask?normalizeImageTask(p.imageTask):null;
+ const needsPlan=task&&['plan','room'].includes(task.kind)&&task.engine!=='nano-banana-2.1';
+ if(needsPlan&&(!PLAN_IMAGE_MODEL||task.engine!==PLAN_IMAGE_MODEL))fail('Для «План → интерьер» настройте PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render и доступ к этой модели у API Market. Другой моделью запрос не заменяется.',503,'plan_model_missing');
+ if(['room','view'].includes(task?.kind)&&!reference)fail('Сначала утвердите главный кадр или визуализацию плана.',400);
+ const prompt=task?imageTaskPrompt(task):createPrompt(p);
+ console.info('[AI]',requestId,'начинаем оплачиваемую генерацию; осталось:',DAILY_CAP-dailyCount,'кадров:',n);
+ const images=[],mimes=[];let warning='';
+ for(let i=0;i<n;i++){
+  // Count BEFORE the external request: even a timeout may be billed by the provider.
+  dailyCount++;
+  try{
+   const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,prompt:n>1?prompt+'\\nCreate variation '+(i+1)+' of '+n+' with the same architecture and camera.':prompt,quality:p.quality});
+   images.push(result.b64);mimes.push(result.mimeType);
+  }catch(error){
+   if(!images.length)throw error;
+   warning='Часть визуализаций не создана: '+error.message;break;
   }
-  console.info('[AI]',requestId,'завершено; кадров:',images.length,'длительность_мс:',Date.now()-started);
-  json(res,200,{images,mimes,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,provider:'API Market',warning,requestId});
- }catch(err){
-  const status=err.status||502;
-  const safeMessage=String(err.message||'Ошибка сервера').slice(0,240);
-  const code=status===400?'invalid_request':status===429?'limit':/время ожидания|timeout/i.test(safeMessage)?'provider_timeout':status>=500?'provider_error':'render_failed';
-  console.warn('[AI]',requestId,'генерация не выполнена; status:',status,'code:',code,'длительность_мс:',Date.now()-started,'детали:',safeMessage);
-  if(!res.headersSent)json(res,status,{error:safeMessage,code,requestId});
- }finally{active--}
+ }
+ console.info('[AI]',requestId,'готово',images.length,'кадров; длительность_мс:',Date.now()-started);
+ return {images,mimes,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,provider:'API Market',warning};
+}
+const renderJobs=createRenderJobQueue({
+ worker:async(p,requestId)=>{
+  try{return await performRender(p,requestId)}catch(error){throw renderError(error,requestId)}
+ },
+ maxWaiting:3,ttlMs:10*60*1000,maxFinished:5
+});
+async function proxyRender(req,res,{queued=false}={}){
+ const requestId='request-'+Date.now().toString(36);
+ if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.',code:'invalid_origin',requestId});
+ if(!API_KEY)return json(res,503,{error:'AI не настроен: укажите API_MARKET_KEY в Render.',code:'key_not_configured',requestId});
+ try{
+  const payload=await readJSON(req);
+  const job=renderJobs.enqueue(payload,{idempotencyKey:req.headers['x-forma-idempotency-key']});
+  console.info('[AI]',job.jobId.slice(0,12),'задание:',job.status,'позиция:',job.position);
+  if(queued)return json(res,202,job);
+  // Older cached site clients may still call /api/render. Keep their old JSON
+  // contract while sharing the SAME FIFO queue (no more busy-rejection 429).
+  const completed=await renderJobs.wait(job.jobId);
+  const output=renderJobs.result(job.jobId);
+  if(res.destroyed||res.writableEnded)return;
+  return json(res,output?.status||502,output?.body||{error:'Результат задания недоступен.',code:'job_missing',requestId});
+ }catch(error){
+  const safe=renderError(error,requestId);
+  if(!res.destroyed&&!res.writableEnded)return json(res,safe.status,{error:safe.message,code:safe.code,requestId});
+ }
+}
+function getRenderJob(req,res){
+ if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
+ const match=req.url?.match(/^\\/api\\/render\\/jobs\\/([a-f0-9]{48})(\\/result)?$/);
+ if(!match)return json(res,404,{error:'Задание не найдено',code:'job_not_found'});
+ const jobId=match[1],wantResult=!!match[2];
+ if(!wantResult){
+  const job=renderJobs.get(jobId);
+  return json(res,job?200:404,job||{error:'Задание не найдено или срок хранения истёк.',code:'job_not_found'});
+ }
+ const result=renderJobs.result(jobId);
+ return json(res,result?.status||404,result?.body||{error:'Результат задания не найден или срок хранения истёк.',code:'job_not_found'});
 }
 async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/forma-preview.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();const content=await readFile(file);res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
 const planVision=createPlanVision({json,readJSON,sameOrigin});
@@ -374,9 +401,11 @@ const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
 const server=http.createServer(async(req,res)=>{
  if(req.url?.startsWith('/api/wan3/'))return wan3Video.handle(req,res);
  if(req.url?.startsWith('/api/wan/'))return wanVideo.handle(req,res);
- if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,planImageReady:!!API_KEY&&!!PLAN_IMAGE_MODEL,planImageModel:PLAN_IMAGE_MODEL,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
+ if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,planImageReady:!!API_KEY&&!!PLAN_IMAGE_MODEL,planImageModel:PLAN_IMAGE_MODEL,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,renderQueue:renderJobs.stats(),quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
  if(req.url==='/api/plan/status'&&req.method==='GET')return json(res,200,visionStatus());
  if(req.url==='/api/plan/recognize')return planVision(req,res);
+ if(req.url==='/api/render/jobs'&&req.method==='POST')return proxyRender(req,res,{queued:true});
+ if(req.url?.startsWith('/api/render/jobs/')&&req.method==='GET')return getRenderJob(req,res);
  if(req.url==='/api/render'&&req.method==='POST')return proxyRender(req,res);
  if(req.url?.startsWith('/api/'))return json(res,404,{error:'Не найдено'});
  if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Метод запрещён'});
