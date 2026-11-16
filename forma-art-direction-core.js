@@ -10,11 +10,11 @@ export const PLANTS=Object.freeze([
  {id:'thuja',name:'Туя',description:'Вертикальный хвойный акцент',prompt:'slender upright Thuja evergreen with detailed non-repeating foliage',color:'#4d6953'}
 ]);
 export const PAVINGS=Object.freeze([
- {id:'clinker',name:'Клинкер',description:'Тёплый кирпич · ёлочка',prompt:'warm natural clay clinker brick pavers in a herringbone pattern, fine realistic joints',color:'#aa7c64'},
+ {id:'clinker',name:'Клинкер',description:'Серо-коричневый · ёлочка',prompt:'grey-brown natural clay clinker brick pavers in a herringbone pattern, fine realistic joints',color:'#aa7c64'},
  {id:'granite',name:'Гранит',description:'Колотая серая брусчатка',prompt:'small grey granite setts with subtly irregular split natural faces',color:'#92938e'},
  {id:'concrete',name:'Бетон',description:'Крупные светлые плиты',prompt:'large light-grey concrete paving slabs with narrow joints and fine aggregate',color:'#c6c4ba'},
- {id:'slate',name:'Сланец',description:'Тёмные вытянутые плиты',prompt:'elongated charcoal slate paving with layered mineral texture',color:'#555d5e'},
- {id:'limestone',name:'Известняк',description:'Светлый природный камень',prompt:'warm pale limestone paving with subtle pores and restrained natural variation',color:'#d3c8af'},
+ {id:'slate',name:'Сланец',description:'Тёмный камень · живой рисунок',prompt:'charcoal slate paving with naturally varied slab shapes with layered mineral texture',color:'#555d5e'},
+ {id:'limestone',name:'Каменные плиты',description:'Серо-бежевый природный камень',prompt:'natural grey-beige sandstone paving slabs with subtly irregular edges and fine mineral texture',color:'#d3c8af'},
  {id:'mix',name:'Мультиформат',description:'Серая брусчатка трёх размеров',prompt:'three-size neutral grey concrete pavers laid in an offset random modular bond',color:'#9b9c95'}
 ]);
 export const LIGHTS=Object.freeze([
@@ -42,7 +42,7 @@ export const FILLS=Object.freeze([
  {id:'white-gravel',name:'Светлая галька',description:'Светлая округлая фракция',prompt:'warm pale rounded river pebbles ground cover',color:'#d0cbbd'},
  {id:'bark',name:'Кора и мульча',description:'Тёмная натуральная кора',prompt:'dark natural chipped pine bark mulch ground cover',color:'#6b5441'},
  {id:'grass',name:'Газон',description:'Живой ровный газон',prompt:'healthy natural trimmed lawn with individual fine grass blades and subtle color variation',color:'#708552'},
- {id:'groundcover',name:'Почвопокровные',description:'Низкий зелёный ковёр',prompt:'low dense natural green groundcover plants, tiny leaves and organic non-repeating growth',color:'#607b48'}
+ {id:'groundcover',name:'Почвопокровные',description:'Низкая зелень · светлое цветение',prompt:'low natural flowering green groundcover plants, small leaves, tiny pale flower clusters and organic non-repeating growth',color:'#607b48'}
 ]);
 export const OBJECTS=Object.freeze([
  {id:'granite-rock',name:'Валуны гранитные',description:'Природная группа камней',prompt:'irregular group of large natural dark granite boulders, embedded in the ground',color:'#888987',cell:12},
@@ -78,6 +78,7 @@ const invalid=message=>{throw Object.assign(new Error(message),{status:400});};
 const finite=(value,fallback,min,max)=>{if(value==null)return fallback;const n=Number(value);if(!Number.isFinite(n))invalid('Параметр должен быть числом');return Math.min(max,Math.max(min,n));};
 const point=p=>{if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<0||p.x>1||p.y<0||p.y>1)invalid('Точка должна находиться внутри изображения');return {x:p.x,y:p.y};};
 export const catalogFor=kind=>({plant:PLANTS,tree:TREES,path:PAVINGS,fill:FILLS,object:OBJECTS,edge:EDGES,light:[...LIGHTS,...EXTRA_LIGHTS]})[kind]||[];
+export const isLinearEdge=item=>item?.kind==='edge'&&['steel-edge','stone-edge','concrete-edge'].includes(item.catalogId);
 export function normalizeLandscape(value){
  if(!value||!Array.isArray(value.items)||!value.items.length||value.items.length>80)invalid('Добавьте от 1 до 80 объектов ландшафта');
  return {speciesBoard:value.speciesBoard===true,items:value.items.map((raw,i)=>{
@@ -87,10 +88,11 @@ export function normalizeLandscape(value){
    if(!Array.isArray(raw.strokes)||!raw.strokes.length||raw.strokes.length>200)invalid('Нарисуйте область кистью');
    let total=0;item.strokes=raw.strokes.map(st=>{if(!Array.isArray(st.points)||!st.points.length||(total+=st.points.length)>12000)invalid('Слишком сложная кистевая область');return {size:finite(st.size,.03,.003,.3),erase:st.erase===true,points:st.points.map(point)};});
   }else if(raw.kind==='path'||raw.kind==='edge'){
-   if(!Array.isArray(raw.points)||raw.points.length<3||raw.points.length>32)invalid('Для дорожки нужно от 3 до 32 точек');
+   const linear=isLinearEdge(item),minimum=linear?2:3;
+   if(!Array.isArray(raw.points)||raw.points.length<minimum||raw.points.length>32)invalid(`Нужно от ${minimum} до 32 точек`);
    item.points=raw.points.map(point);item.rotation=finite(raw.rotation,0,-180,180);item.tileScale=finite(raw.tileScale,100,10,300);
-   const area=Math.abs(item.points.reduce((s,p,j)=>{const q=item.points[(j+1)%item.points.length];return s+p.x*q.y-q.x*p.y},0))/2;
-   if(area<.00001)invalid('Контур дорожки слишком мал или пересекается');
+   if(linear){item.edgeWidth=finite(raw.edgeWidth,.015,.003,.1);if(!item.points.some(p=>Math.hypot(p.x-item.points[0].x,p.y-item.points[0].y)>.003))invalid('Линия бордюра слишком короткая');}
+   else{const area=Math.abs(item.points.reduce((s,p,j)=>{const q=item.points[(j+1)%item.points.length];return s+p.x*q.y-q.x*p.y},0))/2;if(area<.00001)invalid('Контур дорожки слишком мал или пересекается');}
   }else{Object.assign(item,point(raw));if(raw.influence)item.influence={shadow:finite(raw.influence.shadow,0,0,.4),reflection:finite(raw.influence.reflection,0,0,.7)};item.rotation=finite(raw.rotation,0,-180,180);item.w=finite(raw.w,.1,.001,1);item.h=finite(raw.h,.18,.001,1);}
   return item;
  })};
@@ -98,17 +100,18 @@ export function normalizeLandscape(value){
 const pct=n=>+(n*100).toFixed(2);
 export function landscapePrompt(value){
  const {items,speciesBoard}=normalizeLandscape(value);
+ const references=[...new Set(items.map(i=>i.catalogId))];
  const instructions=items.map((item,i)=>{
   const entry=catalogFor(item.kind).find(x=>x.id===item.catalogId);
-  const shape=item.kind==='fill'?'painted ground area with brush strokes '+JSON.stringify(item.strokes):['path','edge'].includes(item.kind)?'ground polygon vertices, paving rotation '+(item.rotation||0)+' degrees, repeat scale '+(item.tileScale||100)+' percent, crop percentages '+item.points.map(p=>`(${pct(p.x)}, ${pct(p.y)})`).join(', '):`bottom-centre at (${pct(item.x)}%, ${pct(item.y)}%), width ${pct(item.w)}%, height ${pct(item.h)}% of crop`;
-  return `${i+1}. ${entry.prompt}; ${shape}.`;
+  const shape=isLinearEdge(item)?'open curb centreline '+item.points.map(p=>`(${pct(p.x)}%, ${pct(p.y)}%)`).join(' → ')+', strip width '+pct(item.edgeWidth)+'% of crop; build a continuous raised curb with a readable vertical face, NOT a tiled paved area':item.kind==='fill'?'painted ground area with brush strokes '+JSON.stringify(item.strokes):['path','edge'].includes(item.kind)?'ground polygon vertices, paving rotation '+(item.rotation||0)+' degrees, repeat scale '+(item.tileScale||100)+' percent, crop percentages '+item.points.map(p=>`(${pct(p.x)}, ${pct(p.y)})`).join(', '):`bottom-centre at (${pct(item.x)}%, ${pct(item.y)}%), width ${pct(item.w)}%, height ${pct(item.h)}% of crop`;
+  return `${i+1}. ${entry.prompt}; ${speciesBoard?'reference #'+(references.indexOf(item.catalogId)+1)+' on Image 2; ':''}${shape}.`;
  }).join('\n');
  return 'LOCAL LANDSCAPE EDIT ONLY. Image 1 is a clean crop of the current photograph, the transparent PNG mask is the only editable region. The crop is centred in a square canvas; return the exact same square framing and object alignment. Keep any neutral padding opaque and unchanged. Do not expand to the full reference photo or crop/zoom the image. Coordinates below are relative to this square canvas, origin top-left. '+
   'Preserve architecture, house geometry, facade materials, camera, light direction, existing terrain and every object outside the mask. No text, diagrams, selection outlines or UI. Replace the indicated region with real photographed objects, do not paint an icon or a sticker. Respect existing occlusion; do not cover foreground walls with plants. '+
   'All supplied plant cutouts are species/shape references only. Reconstruct real volumetric photographed foliage, NEVER paste a flat cutout or icon into the output. The editable influence region includes user-authorized cast shadows and reflections; make them consistent with existing light and water only, do not invent water. '+
   'Match current season, weather and time exactly. In daytime fixtures remain unlit or very subtle; never turn daytime into night. At night warm 2700–3000K light has physically plausible falloff within the selected region. '+
-  (speciesBoard?'Image 2 is a botanical and fixture reference board, never the scene; Image 3 is the clean full scene for context only. ':'Image 2 if present is the clean full scene for context only. ')+
-  'Paving follows ground perspective and has believable joints and thickness. Preserve the drawn path boundary. Resolve individual foliage, natural size variation, root contact and restrained contact shadows. The clean cropped Image 1 remains the exact output camera.\n'+instructions;
+  (speciesBoard?'Image 2 is a numbered botanical, fixture and material reference board, never the scene; Image 3 is the clean full scene for context only. ':'Image 2 if present is the clean full scene for context only. ')+
+  'Paving follows ground perspective and has believable joints and thickness. Preserve the drawn path boundary. Resolve individual foliage, natural size variation, root contact and physically consistent contact and cast shadows on the ground, matching the original scene light direction, softness and color. Keep cast shadows entirely inside the transparent edit mask; do not omit ground contact. Treat numbered reference tiles as material or object examples only; never reproduce their sheet layout. The clean cropped Image 1 remains the exact output camera.\n'+instructions;
 }
 export function normalizeAtmosphere(value){
  if(value==null)return null;

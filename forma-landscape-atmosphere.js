@@ -1,22 +1,22 @@
+import {LANDSCAPE_GROUPS,catalogGroup,assetLayers,placementMarkup,referenceEntries} from './forma-landscape-catalog.js';
 import {scalePlacement,linePlacements,drawStrokes,translateGroup,selectionHasCoverage} from './forma-landscape-tools.js';
-import {PLANTS,PAVINGS,LIGHTS,LOOKS,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js';
+import {PLANTS,PAVINGS,LIGHTS,LOOKS,isLinearEdge,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js';
 import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming,prepareMaterialEdit} from './forma-local-composite.js';
 const $=id=>document.getElementById(id),bridge=()=>window.FORMA_ART_BRIDGE;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=(kind)=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4">'+(kind==='landscape'?'<path d="M3 21h18M6 21v-6m12 6v-9M6 5c-5 2-5 10 0 10s5-8 0-10Zm12-3-5 10h10Z"/>':'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/>')+'</svg>';
 let dragging=null,brushSize=.04,eraser=false,placingMode='single',cleanPreview=false,linePoints=[],selectedGroup=new Set();
-const atlases=['assets/landscape/botanical-atlas.webp','assets/landscape/garden-atlas.webp','assets/landscape/details-atlas.webp'];
-const atlasCache=new Map();
-function assetFor(entry,kind){const index=entry.cell??(kind==='plant'?PLANTS.findIndex(x=>x.id===entry.id):kind==='light'?({bollard:4,blade:11,mushroom:6,spot:7,lantern:14,recessed:8}[entry.id]):null);return index==null?null:{index,url:atlases[(entry.atlas||(kind==='light'?2:1))-1]};}
-function assetSVG(entry,kind,attrs=''){
- const a=assetFor(entry,kind);if(!a)return `<span class="fa-art-swatch ${kind}" style="--swatch:${entry.color}"></span>`;
- const cut=(asset,x,y,w,h)=>`<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${asset.index%4*320} ${Math.floor(asset.index/4)*320} 320 320" preserveAspectRatio="none"><image href="${asset.url}" width="1280" height="1280"/></svg>`;
- if(entry.planted){const plant=[...catalogFor('tree'),...PLANTS].find(v=>v.id===entry.planted),pa=assetFor(plant,entry.planted==='thuja'?'plant':'tree');return `<svg ${attrs} viewBox="0 0 320 320" preserveAspectRatio="none" aria-hidden="true">${cut(pa,20,0,280,255)}${cut(a,74,218,172,102)}</svg>`;}
- return `<svg ${attrs} viewBox="${a.index%4*320} ${Math.floor(a.index/4)*320} 320 320" preserveAspectRatio="none" aria-hidden="true"><image href="${a.url}" width="1280" height="1280"/></svg>`;
+const assetCache=new Map();
+function cachedAsset(url){
+ if(!assetCache.has(url)){assetCache.set(url,null);loadImage(url).then(picture=>{assetCache.set(url,picture);if(dialog?.open)renderOverlay();}).catch(()=>{assetCache.delete(url);});}
+ return assetCache.get(url);
 }
-function sprite(entry,kind,attrs=''){return assetSVG(entry,kind,attrs);}
+function sprite(entry,kind){
+ if(entry.planted)return `<svg viewBox="0 0 320 320" aria-hidden="true">${placementMarkup(entry)}</svg>`;
+ return `<img class="fa-art-reference ${['fill','path'].includes(kind)?'surface':''}" src="${assetLayers(entry)[0].url}" alt="" draggable="false">`;
+}
 
-let dialog,mode='landscape',category='plant',chosen='juniper',items=[],points=[],selected=null,history=[],snap=null,img=null,busy=false,focusMode=false,lastFocus=null,atmosphere=null,cursor={x:.5,y:.5},cursorVisible=false;
+let dialog,mode='landscape',category='plant',catalogCategory='plant',chosen='juniper',items=[],points=[],selected=null,history=[],snap=null,img=null,busy=false,focusMode=false,lastFocus=null,atmosphere=null,cursor={x:.5,y:.5},cursorVisible=false;
 const id=()=>globalThis.crypto.randomUUID();
 function message(text){$('artStatus').textContent=text;}
 function remember(){history.push(JSON.stringify(items));if(history.length>50)history.shift();}
@@ -59,8 +59,8 @@ async function open(which){
 }
 function renderInspector(){
  if(mode==='landscape'){
-  $('artInspector').innerHTML=`<div class="fa-art-tabs" role="group" aria-label="Каталог ландшафта">${[['plant','Кусты'],['tree','Деревья'],['fill','Кисть'],['path','Мощение'],['object','Камни · кашпо'],['edge','Бордюры · ступени'],['light','Свет']].map(([v,t])=>`<button type="button" data-art="category" data-value="${v}" aria-pressed="${category===v}">${t}</button>`).join('')}</div><div class="fa-art-catalog">${catalogFor(category).map(e=>`<button type="button" class="fa-art-option" data-art="catalog" data-value="${e.id}" aria-pressed="${chosen===e.id}">${sprite(e,category)}<span><b>${e.name}</b><small>${e.description}</small></span></button>`).join('')}</div><div id="artPlacementTools"></div><section id="artSelection"></section><details class="fa-art-guide"><summary>Как работать с кадром</summary><p>Растение или светильник: нажмите в точку основания. Размер области задаёт размер объекта и место для контактной тени. Дорожка: отметьте границы мощения по перспективе, затем замкните контур.</p><p>Выбрать и удалить объект можно в списке. На клавиатуре стрелки перемещают выбранный объект, Delete удаляет, Enter добавляет объект в центр кадра.</p></details><h3 class="fa-art-list-title">На кадре <span id="artCount"></span></h3><div id="artItemList" class="fa-art-items"></div><button type="button" class="fa-art-text" data-art="upload">Загрузить свой кадр</button>`;
-  const tools=$('artPlacementTools');tools.innerHTML=category==='fill'?`<label class="fa-art-size">Размер кисти<input type="range" data-brush-size min="1" max="20" value="${brushSize*100}"></label><button type="button" data-art="eraser" aria-pressed="${eraser}">${eraser?'Ластик включён':'Ластик'}</button>`:['plant','tree','light'].includes(category)?`<div class="fa-art-row"><button type="button" data-art="place-single" aria-pressed="${placingMode==='single'}">По одному</button><button type="button" data-art="place-line" aria-pressed="${placingMode==='line'}">Вдоль линии</button></div><label class="fa-art-size">Расстояние в ряду<input type="range" id="artSpacing" min="2" max="20" value="7"></label>`:'';
+  $('artInspector').innerHTML=`<div class="fa-art-tabs" role="group" aria-label="Каталог ландшафта">${LANDSCAPE_GROUPS.map(g=>`<button type="button" data-art="category" data-value="${g.id}" aria-pressed="${catalogCategory===g.id}">${g.name}</button>`).join('')}</div><div class="fa-art-catalog">${catalogGroup(catalogCategory).map(e=>`<button type="button" class="fa-art-option" data-art="catalog" data-value="${e.id}" aria-pressed="${chosen===e.id}">${sprite(e,category)}<span><b>${e.name}</b><small>${e.description}</small></span></button>`).join('')}</div><div id="artPlacementTools"></div><section id="artSelection"></section><details class="fa-art-guide"><summary>Как работать с кадром</summary><p>Растение или светильник: нажмите в точку основания. Пунктир показывает зону, доступную для объекта, падающей тени и отражений. Газон и отсыпки рисуются кистью, мощение и бордюры — контуром. Выбранный образец передаётся AI вместе с областью.</p><p>Выбрать и удалить объект можно в списке. На клавиатуре стрелки перемещают выбранный объект, Delete удаляет, Enter добавляет объект в центр кадра.</p></details><h3 class="fa-art-list-title">На кадре <span id="artCount"></span></h3><div id="artItemList" class="fa-art-items"></div><button type="button" class="fa-art-text" data-art="upload">Загрузить свой кадр</button>`;
+  const tools=$('artPlacementTools');tools.innerHTML=category==='fill'?`<label class="fa-art-size">Размер кисти<input type="range" data-brush-size min="1" max="20" value="${brushSize*100}"></label><button type="button" class="fa-art-secondary" data-art="eraser" aria-pressed="${eraser}">${eraser?'Ластик включён':'Ластик'}</button>`:['plant','tree','light'].includes(category)?`<div class="fa-art-row"><button type="button" class="fa-art-secondary" data-art="place-single" aria-pressed="${placingMode==='single'}">По одному</button><button type="button" class="fa-art-secondary" data-art="place-line" aria-pressed="${placingMode==='line'}">Вдоль линии</button></div><label class="fa-art-size">Расстояние в ряду<input type="range" id="artSpacing" min="2" max="20" value="7"></label>`:'';
   renderList();
  }else{
   $('artInspector').innerHTML=`<div class="fa-art-look-grid">${LOOKS.map(e=>`<button type="button" data-art="look" data-value="${e.id}" class="fa-art-look" aria-pressed="${atmosphere.preset===e.id}"><span class="fa-art-look-image" data-look="${e.id}"></span><b>${e.name}</b><small>${e.description}</small></button>`).join('')}</div><div class="fa-art-sliders">${[
@@ -68,14 +68,14 @@ function renderInspector(){
   ].map(([field,label,min,max])=>`<label for="artSlider-${field}">${label}<output id="artOut-${field}">${atmosphere[field]}</output><input id="artSlider-${field}" type="range" data-atmosphere="${field}" min="${min}" max="${max}" value="${atmosphere[field]}"></label>`).join('')}</div><button type="button" class="fa-art-secondary" data-art="focus" aria-pressed="false">Указать точку фокуса</button><p class="fa-art-help">Дом остаётся резким. Размытие относится к переднему и дальнему плану. Это фотографическая интерпретация по 2D-кадру.</p><button type="button" class="fa-art-text" data-art="reset-look">По исходнику · сбросить</button>`;
   for(const card of dialog.querySelectorAll('.fa-art-look-image')){card.style.backgroundImage=`url("${snap.image.replace(/"/g,'%22')}")`;}
  }
- $('artCanvasTools').innerHTML=mode==='landscape'?'<button type="button" class="fa-art-secondary" data-art="undo">Отменить</button><button type="button" class="fa-art-secondary" data-art="finish-path">Замкнуть дорожку</button><button type="button" class="fa-art-text" data-art="cancel-path">Отменить контур</button><button type="button" class="fa-art-secondary" data-art="clean">Чистый просмотр</button>':'<span class="fa-art-help">Цвет · контраст — цветопроба. Глубина · зерно · свечение — после AI.</span>';
+ $('artCanvasTools').innerHTML=mode==='landscape'?'<button type="button" class="fa-art-secondary" data-art="undo">Отменить</button><button type="button" class="fa-art-secondary" data-art="finish-path">Замкнуть область</button><button type="button" class="fa-art-text" data-art="cancel-path">Отменить контур</button><button type="button" class="fa-art-secondary" data-art="clean">Чистый просмотр</button>':'<span class="fa-art-help">Цвет · контраст — цветопроба. Глубина · зерно · свечение — после AI.</span>';
  updateGenerate();
 }
 function renderList(){
  $('artCount').textContent=items.length;
  $('artItemList').innerHTML=items.map((item,i)=>{const entry=catalogFor(item.kind).find(x=>x.id===item.catalogId);return `<button type="button" data-art="select" data-value="${item.id}" aria-pressed="${selected===item.id}"><span>${String(i+1).padStart(2,'0')}</span>${esc(entry?.name||'Объект')}</button>`}).join('')||'<p class="fa-art-help">Пока нет объектов. Выберите растение, покрытие или светильник.</p>';
  const item=items.find(x=>x.id===selected);
- $('artSelection').innerHTML=item?`<h3>Выбранный объект</h3>${!['path','edge','fill'].includes(item.kind)?`<label class="fa-art-size">Размер · пропорционально<input type="range" data-size="scale" min="20" max="300" value="${Math.round(item.w/(item.baseW||item.w)*100)}"></label><label class="fa-art-size">Зона тени<input type="range" data-influence="shadow" min="0" max="30" value="${(item.influence?.shadow||0)*100}"></label><label class="fa-art-size">Зона отражения<input type="range" data-influence="reflection" min="0" max="60" value="${(item.influence?.reflection||0)*100}"></label>`:item.kind==='fill'?'<p class="fa-art-help">Кисть рисует покрытие. Ластик уточняет только эту область.</p>':`<p class="fa-art-help">Перетаскивайте точки контура на изображении.</p><label class="fa-art-size">Направление укладки<input type="range" data-paving="rotation" min="-180" max="180" value="${item.rotation||0}"></label><label class="fa-art-size">Размер рисунка<input type="range" data-paving="tileScale" min="20" max="250" value="${item.tileScale||100}"></label>`}<div class="fa-art-row"><button type="button" data-art="duplicate">Дублировать</button><button type="button" data-art="group">${selectedGroup.has(item.id)?'Убрать из группы':'В группу'}</button><button type="button" data-art="delete">Удалить</button></div><p class="fa-art-help">${selectedGroup.size?selectedGroup.size+' в группе · стрелки перемещают группу':''}</p>`:'';
+ $('artSelection').innerHTML=item?`<h3>Выбранный объект</h3>${!['path','edge','fill'].includes(item.kind)?`<label class="fa-art-size">Размер · пропорционально<input type="range" data-size="scale" min="20" max="300" value="${Math.round(item.w/(item.baseW||item.w)*100)}"></label><label class="fa-art-size">Зона тени<input type="range" data-influence="shadow" min="0" max="40" value="${(item.influence?.shadow||0)*100}"></label><label class="fa-art-size">Зона отражения · вода и стекло<input type="range" data-influence="reflection" min="0" max="60" value="${(item.influence?.reflection||0)*100}"></label>`:item.kind==='fill'?'<p class="fa-art-help">Кисть рисует покрытие. Ластик уточняет только эту область.</p>':`<p class="fa-art-help">Перетаскивайте точки контура на изображении.</p>${isLinearEdge(item)?`<label class="fa-art-size">Толщина полосы<input type="range" data-paving="edgeWidth" min="3" max="100" value="${(item.edgeWidth||.015)*1000}"></label>`:`<label class="fa-art-size">Направление укладки<input type="range" data-paving="rotation" min="-180" max="180" value="${item.rotation||0}"></label><label class="fa-art-size">Размер рисунка<input type="range" data-paving="tileScale" min="20" max="250" value="${item.tileScale||100}"></label>`}` }<div class="fa-art-row"><button type="button" class="fa-art-secondary" data-art="duplicate">Дублировать</button><button type="button" class="fa-art-secondary" data-art="group">${selectedGroup.has(item.id)?'Убрать из группы':'В группу'}</button><button type="button" class="fa-art-secondary" data-art="delete">Удалить</button></div><p class="fa-art-help">${selectedGroup.size?selectedGroup.size+' в группе · стрелки перемещают группу':''}</p>`:'';
  updateGenerate();
 }
 function drawPhoto(){
@@ -100,26 +100,30 @@ function renderOverlay(){
   let shape;
   if(item.kind==='fill'){
    const c=canvas(650,Math.round(650*(img?.naturalHeight||1)/(img?.naturalWidth||1))),ctx=c.getContext('2d');ctx.strokeStyle=color;drawStrokes(ctx,item.strokes,c.width,c.height);
+   const photo=cachedAsset(assetLayers(entry)[0].url);if(photo){const tile=canvas(110,110);tile.getContext('2d').drawImage(photo,0,0,110,110);ctx.globalCompositeOperation='source-in';ctx.fillStyle=ctx.createPattern(tile,'repeat');ctx.fillRect(0,0,c.width,c.height);}
    shape=`<image href="${c.toDataURL()}" x="0" y="0" width="1000" height="1000" opacity=".45"/>`;
   }else if(['path','edge'].includes(item.kind)){
-   const pattern='artPattern'+i;shape=`<defs><pattern id="${pattern}" patternUnits="userSpaceOnUse" width="${40*(item.tileScale||100)/100}" height="${22*(item.tileScale||100)/100}" patternTransform="rotate(${item.rotation||0})"><rect width="100%" height="100%" fill="${color}"/><path d="M0 0H100M0 0V100" stroke="#515958" stroke-width="2"/></pattern></defs><polygon points="${item.points.map(p=>p.x*1000+','+p.y*1000).join(' ')}" style="fill:url(#${pattern});fill-opacity:.65"/>`+(active&&!cleanPreview?item.points.map(p=>`<circle class="fa-art-point" cx="${p.x*1000}" cy="${p.y*1000}" r="7"/>`).join(''):'');
+   const vertices=item.points.map(p=>p.x*1000+','+p.y*1000).join(' '),pattern='artPattern'+i;
+   if(isLinearEdge(item))shape=`<polyline points="${vertices}" fill="none" stroke="${color}" stroke-width="${(item.edgeWidth||.015)*1000}" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${vertices}" fill="none" stroke="#e0d9c5" stroke-opacity=".65" stroke-width="1.5"/>`;
+   else shape=`<defs><pattern id="${pattern}" patternUnits="userSpaceOnUse" width="${120*(item.tileScale||100)/100}" height="${120*(item.tileScale||100)/100}" patternTransform="rotate(${item.rotation||0})"><image href="${assetLayers(entry)[0].url}" width="${120*(item.tileScale||100)/100}" height="${120*(item.tileScale||100)/100}" preserveAspectRatio="none"/></pattern></defs><polygon points="${vertices}" style="fill:url(#${pattern});fill-opacity:.8"/>`;
+   if(active&&!cleanPreview)shape+=item.points.map(p=>`<circle class="fa-art-point" cx="${p.x*1000}" cy="${p.y*1000}" r="7"/>`).join('');
   }else{
-   shape=assetSVG(entry,item.kind,`x="${(item.x-item.w/2)*1000}" y="${(item.y-item.h)*1000}" width="${item.w*1000}" height="${item.h*1000}"`);
-   if(active&&!cleanPreview)shape+=`<rect x="${b.x*1000}" y="${b.y*1000}" width="${(b.right-b.x)*1000}" height="${(b.bottom-b.y)*1000}" rx="6"/><path class="fa-art-anchor" d="M${item.x*1000-9} ${item.y*1000}h18m-9-9v18"/>`;
+   shape=placementMarkup(entry,{x:(item.x-item.w/2)*1000,y:(item.y-item.h)*1000,w:item.w*1000,h:item.h*1000});
+   if(active&&!cleanPreview)shape+=`<rect class="fa-art-influence" x="${b.x*1000}" y="${b.y*1000}" width="${(b.right-b.x)*1000}" height="${(b.bottom-b.y)*1000}" rx="6"/><path class="fa-art-anchor" d="M${item.x*1000-9} ${item.y*1000}h18m-9-9v18"/>`;
   }
   return `<g class="fa-art-region ${active?'selected':''}" style="--region:${color}">${shape}${cleanPreview?'':`<text x="${b.x*1000+9}" y="${b.y*1000+29}">${i+1}</text>`}</g>`;
  }).join('')+(points.length?`<polyline class="fa-art-pending" points="${points.map(p=>p.x*1000+','+p.y*1000).join(' ')}"/>`+points.map(p=>`<circle class="fa-art-point" cx="${p.x*1000}" cy="${p.y*1000}" r="6"/>`).join(''):'');
  if(cursorVisible)overlay.innerHTML+=`<g class="fa-art-focus" transform="translate(${cursor.x*1000} ${cursor.y*1000})"><circle r="11"/><path d="M-22 0h12M10 0h12M0-22v12M0 10v12"/></g>`;
- const finish=dialog.querySelector('[data-art="finish-path"]');if(finish)finish.disabled=points.length<3;
+ const finish=dialog.querySelector('[data-art="finish-path"]');if(finish){const linear=isLinearEdge({kind:category,catalogId:chosen});finish.disabled=points.length<(linear?2:3);finish.textContent=linear?'Готово · линия бордюра':'Замкнуть область';}
  const undo=dialog.querySelector('[data-art="undo"]');if(undo)undo.disabled=!history.length&&!points.length;
 }
 function place(e){
  if(busy||!ensureSource())return;const r=$('artStage').getBoundingClientRect();const p={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
  cursor=p;cursorVisible=true;
  if(mode==='atmosphere'){if(focusMode){atmosphere.focus={...p};persist();renderOverlay();focusMode=false;dialog.querySelector('[data-art="focus"]').setAttribute('aria-pressed','false');message('Точка фокуса сохранена. Дом остаётся главным резким объектом.');}return;}
- if(category==='path'||category==='edge'){if(points.length>=32){message('Максимум 32 точки. Замкните контур.');return;}points=appendPathPoint(points,p);message('Контур: '+points.length+' точек. Обведите края дорожки и нажмите «Замкнуть дорожку».');renderOverlay();return;}
+ if(category==='path'||category==='edge'){if(points.length>=32){message('Максимум 32 точки. Замкните контур.');return;}points=appendPathPoint(points,p);message('Контур: '+points.length+' точек. Обведите границы выбранного элемента и нажмите «Замкнуть область».');renderOverlay();return;}
  if(items.length>=80){message('На одном кадре можно разместить до 80 объектов.');return;}
- remember();const h=category==='tree'?.48:category==='light'?.18:.24,w=h*(img?.naturalHeight||1)/(img?.naturalWidth||1),item={id:id(),kind:category,catalogId:chosen,x:p.x,y:p.y,w,h,baseW:w,baseH:h,influence:{shadow:.025,reflection:0}};items.push(item);selected=item.id;persist();renderList();renderOverlay();message('Область добавлена. Выберите её в списке, чтобы изменить размер или удалить.');
+ remember();const h=category==='tree'?.48:category==='light'?.18:.24,w=h*(img?.naturalHeight||1)/(img?.naturalWidth||1),item={id:id(),kind:category,catalogId:chosen,x:p.x,y:p.y,w,h,baseW:w,baseH:h,influence:{shadow:category==='tree'?.12:.06,reflection:0}};items.push(item);selected=item.id;persist();renderList();renderOverlay();message('Область добавлена. Выберите её в списке, чтобы изменить размер или удалить.');
 }
 function eventPoint(e){const r=$('artStage').getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};}
 function pointerStart(e){
@@ -135,7 +139,7 @@ function pointerStart(e){
  if(placingMode==='line'&&['plant','tree','light'].includes(category)){
   linePoints.push(p);if(linePoints.length===1){message('Теперь отметьте конец ряда.');return;}
   remember();const spacing=Number($('artSpacing')?.value||7)/100,h=category==='tree'?.4:.16,w=h*img.naturalHeight/img.naturalWidth;
-  for(const q of linePlacements(linePoints[0],linePoints[1],spacing).slice(0,80-items.length))items.push({id:id(),kind:category,catalogId:chosen,...q,w,h,baseW:w,baseH:h,influence:{shadow:.02,reflection:0}});
+  for(const q of linePlacements(linePoints[0],linePoints[1],spacing).slice(0,80-items.length))items.push({id:id(),kind:category,catalogId:chosen,...q,w,h,baseW:w,baseH:h,influence:{shadow:category==='tree'?.12:.06,reflection:0}});
   linePoints=[];persist();renderList();renderOverlay();message('Ряд объектов добавлен. Размер каждого можно уточнить.');return;
  }
  place(e);
@@ -170,15 +174,15 @@ function change(e){
  if(busy||!ensureSource())return;
  if(e.target.dataset.size){const item=items.find(x=>x.id===selected);if(item){remember();item.baseW||=item.w;item.baseH||=item.h;Object.assign(item,scalePlacement(item,Number(e.target.value)/100));persist();renderOverlay();}}
  if(e.target.hasAttribute('data-brush-size'))brushSize=Number(e.target.value)/100;
- if(e.target.dataset.influence||e.target.dataset.paving){const item=items.find(x=>x.id===selected);if(item){remember();if(e.target.dataset.influence)item.influence={...item.influence,[e.target.dataset.influence]:Number(e.target.value)/100};else item[e.target.dataset.paving]=Number(e.target.value);persist();renderOverlay();}}
+ if(e.target.dataset.influence||e.target.dataset.paving){const item=items.find(x=>x.id===selected);if(item){remember();if(e.target.dataset.influence)item.influence={...item.influence,[e.target.dataset.influence]:Number(e.target.value)/100};else item[e.target.dataset.paving]=Number(e.target.value)/(e.target.dataset.paving==='edgeWidth'?1000:1);persist();renderOverlay();}}
  if(e.target.dataset.atmosphere){const field=e.target.dataset.atmosphere;atmosphere[field]=Number(e.target.value);$('artOut-'+field).value=e.target.value;persist();drawPhoto();renderOverlay();updateGenerate();}
 }
 function act(action,button){
  if(action==='close'){if(!busy)dialog.close();return;}
  if(busy)return;if(action==='upload'){dialog.close();bridge().upload();return;}
  if(!ensureSource())return;
- if(action==='category'){linePoints=[];category=button.dataset.value;selected=null;chosen=catalogFor(category)[0].id;points=[];renderInspector();renderOverlay();}
- if(action==='catalog'){chosen=button.dataset.value;renderInspector();renderOverlay();}
+ if(action==='category'){linePoints=[];catalogCategory=button.dataset.value;category=LANDSCAPE_GROUPS.find(g=>g.id===catalogCategory).kind;eraser=false;selected=null;chosen=catalogGroup(catalogCategory)[0].id;points=[];renderInspector();renderOverlay();message(category==='fill'?'Выберите образец и рисуйте покрытие кистью. Ластик уточняет только выбранную область.':category==='edge'?'Бордюр: отметьте линию двумя или более точками. Ступени и стенка: обведите область.':category==='path'?'Выберите покрытие, обведите площадку и нажмите «Замкнуть область».':'Выберите один объект и нажмите в точку его основания.');}
+ if(action==='catalog'){chosen=button.dataset.value;points=[];eraser=false;renderInspector();renderOverlay();}
  if(action==='clean'){cleanPreview=!cleanPreview;button.setAttribute('aria-pressed',String(cleanPreview));renderOverlay();}
  if(action==='eraser'){eraser=!eraser;renderInspector();}
  if(action==='place-single'||action==='place-line'){placingMode=action==='place-line'?'line':'single';linePoints=[];renderInspector();message(placingMode==='line'?'Отметьте начало и конец ряда.':'Нажмите в точку основания объекта.');}
@@ -189,7 +193,7 @@ function act(action,button){
  if(action==='undo'){if(points.length)points.pop();else if(history.length){items=JSON.parse(history.pop());selected=null;persist();}renderList();renderOverlay();}
  if(action==='cancel-path'){points=[];renderOverlay();message('Контур отменён.');}
  if(action==='finish-path'){
-  try{if(items.length>=80)throw Error('Максимум 80 объектов.');const item={id:id(),kind:category==='edge'?'edge':'path',catalogId:chosen,points:structuredClone(points)};normalizeLandscape({items:[item]});remember();items.push(item);selected=item.id;points=[];persist();renderList();renderOverlay();message('Дорожка добавлена. В генерацию уйдёт только область внутри контура.');}catch(e){message(e.message);}
+  try{if(items.length>=80)throw Error('Максимум 80 объектов.');const item={id:id(),kind:category==='edge'?'edge':'path',catalogId:chosen,points:structuredClone(points)};normalizeLandscape({items:[item]});remember();items.push(item);selected=item.id;points=[];persist();renderList();renderOverlay();message('Область добавлена. AI применит выбранный образец внутри контура.');}catch(e){message(e.message);}
  }
  if(action==='look'){atmosphere.preset=button.dataset.value;persist();renderInspector();drawPhoto();renderOverlay();}
  if(action==='focus'){focusMode=!focusMode;cursor={...atmosphere.focus};cursorVisible=true;button.setAttribute('aria-pressed',String(focusMode));message('Нажмите на дом в кадре, чтобы указать фокус.');$('artCanvasInput').focus();}
@@ -197,7 +201,7 @@ function act(action,button){
 }
 function updateGenerate(){if(!$('artGenerate'))return;$('artGenerate').disabled=busy||!snap?.hasSource||snap?.demo||(mode==='landscape'?!items.length:!atmosphere.strength);}
 function drawSelection(context,w,h){
- context.fillStyle='#fff';for(const item of items){const b=itemBounds(item);if(item.kind==='fill'){const c=canvas(w,h),ctx=c.getContext('2d');ctx.strokeStyle='#fff';drawStrokes(ctx,item.strokes,w,h);context.drawImage(c,0,0);}else if(['path','edge'].includes(item.kind)){context.beginPath();item.points.forEach((p,i)=>i?context.lineTo(p.x*w,p.y*h):context.moveTo(p.x*w,p.y*h));context.closePath();context.fill();}else context.fillRect(Math.floor(b.x*w),Math.floor(b.y*h),Math.ceil((b.right-b.x)*w),Math.ceil((b.bottom-b.y)*h));}
+ context.fillStyle='#fff';for(const item of items){const b=itemBounds(item);if(item.kind==='fill'){const c=canvas(w,h),ctx=c.getContext('2d');ctx.strokeStyle='#fff';drawStrokes(ctx,item.strokes,w,h);context.drawImage(c,0,0);}else if(['path','edge'].includes(item.kind)){context.beginPath();item.points.forEach((p,i)=>i?context.lineTo(p.x*w,p.y*h):context.moveTo(p.x*w,p.y*h));if(isLinearEdge(item)){context.strokeStyle='#fff';context.lineCap='round';context.lineJoin='round';context.lineWidth=(item.edgeWidth||.015)*Math.min(w,h);context.stroke();}else{context.closePath();context.fill();}}else context.fillRect(Math.floor(b.x*w),Math.floor(b.y*h),Math.ceil((b.right-b.x)*w),Math.ceil((b.bottom-b.y)*h));}
 }
 async function landscapePayload(expected){
  const base=await loadImage(expected.image),w=base.naturalWidth,h=base.naturalHeight,crop=cropBounds(items,w,h);
@@ -207,14 +211,21 @@ async function landscapePayload(expected){
  cc.fillStyle='#d5d4ce';cc.fillRect(0,0,edgeOut,edgeOut);cc.drawImage(base,crop.x,crop.y,crop.width,crop.height,frame.x*scale,frame.y*scale,crop.width*scale,crop.height*scale);
  const mask=canvas(edgeOut,edgeOut),mc=mask.getContext('2d');mc.fillStyle='#000';mc.fillRect(0,0,edgeOut,edgeOut);mc.globalCompositeOperation='destination-out';mc.drawImage(selection,crop.x,crop.y,crop.width,crop.height,frame.x*scale,frame.y*scale,crop.width*scale,crop.height*scale);
  const position=p=>({x:(p.x*w-crop.x+frame.x)/edge,y:(p.y*h-crop.y+frame.y)/edge});
- const transformed=items.map(item=>item.kind==='fill'?{...item,strokes:item.strokes.map(s=>({...s,size:s.size*Math.min(w,h)/edge,points:s.points.map(position)}))}:['path','edge'].includes(item.kind)?{...item,points:item.points.map(position)}:{...item,...position(item),w:item.w*w/edge,h:item.h*h/edge});
+ const transformed=items.map(item=>item.kind==='fill'?{...item,strokes:item.strokes.map(s=>({...s,size:s.size*Math.min(w,h)/edge,points:s.points.map(position)}))}:['path','edge'].includes(item.kind)?{...item,...(isLinearEdge(item)?{edgeWidth:(item.edgeWidth||.015)*Math.min(w,h)/edge}:{}),points:item.points.map(position)}:{...item,...position(item),w:item.w*w/edge,h:item.h*h/edge});
 
  // Context is compact and clean; guide graphics are never sent as source pixels.
  const context=canvas(Math.min(w,1400),Math.round(Math.min(w,1400)*h/w));context.getContext('2d').drawImage(base,0,0,context.width,context.height);
- const entries=[...new Map(items.filter(i=>!['fill','path','edge'].includes(i.kind)).map(i=>[i.catalogId,{kind:i.kind,entry:catalogFor(i.kind).find(e=>e.id===i.catalogId)}])).values()];
- const board=canvas(1024,Math.max(256,Math.ceil(entries.length/4)*256)),bc=board.getContext('2d');bc.fillStyle='#7a7f78';bc.fillRect(0,0,board.width,board.height);
- for(let i=0;i<entries.length;i++){const a=assetFor(entries[i].entry,entries[i].kind);if(!a)continue;let im=atlasCache.get(a.url);if(!im){im=await loadImage(a.url);atlasCache.set(a.url,im);}const edge=im.naturalWidth/4;const bx=i%4*256,by=Math.floor(i/4)*256;
- if(entries[i].entry.planted){const pe=[...catalogFor('tree'),...PLANTS].find(v=>v.id===entries[i].entry.planted),pa=assetFor(pe,pe.id==='thuja'?'plant':'tree');let pi=atlasCache.get(pa.url);if(!pi){pi=await loadImage(pa.url);atlasCache.set(pa.url,pi);}const ps=pi.naturalWidth/4;bc.drawImage(pi,pa.index%4*ps,Math.floor(pa.index/4)*ps,ps,ps,bx+16,by,224,204);bc.drawImage(im,a.index%4*edge,Math.floor(a.index/4)*edge,edge,edge,bx+59,by+174,138,82);}else bc.drawImage(im,a.index%4*edge,Math.floor(a.index/4)*edge,edge,edge,bx,by,256,256);}
+ const entries=referenceEntries(items);
+ const board=canvas(1024,Math.max(288,Math.ceil(entries.length/4)*288)),bc=board.getContext('2d');bc.fillStyle='#727873';bc.fillRect(0,0,board.width,board.height);
+ for(let i=0;i<entries.length;i++){
+  const bx=i%4*256,by=Math.floor(i/4)*288;
+  for(const l of assetLayers(entries[i].entry)){
+   let picture=assetCache.get(l.url);if(!picture){picture=await loadImage(l.url);assetCache.set(l.url,picture);}
+   bc.drawImage(picture,bx+8+l.x*240,by+8+l.y*240,l.w*240,l.h*240);
+  }
+  bc.fillStyle='#fff';bc.font='14px Arial';bc.fillText('#'+(i+1)+' · '+entries[i].entry.name,bx+10,by+273,236);
+ }
+
  return {crop,selection,frame,payload:{image:clean.toDataURL('image/png'),mask:mask.toDataURL('image/png'),reference:context.toDataURL('image/jpeg',.9),material:entries.length?board.toDataURL('image/png'):null,landscapeEdit:normalizeLandscape({items:transformed,speciesBoard:entries.length>0}),quality:'high',quantity:1}};
 }
 async function providerCopy(url){const image=await loadImage(url),scale=Math.min(1,2048/Math.max(image.naturalWidth,image.naturalHeight));const c=canvas(Math.round(image.naturalWidth*scale),Math.round(image.naturalHeight*scale));c.getContext('2d').drawImage(image,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.97);}
