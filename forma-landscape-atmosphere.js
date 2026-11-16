@@ -52,7 +52,7 @@ async function open(which){
  mode=which;cleanPreview=false;dragging=null;pinchStart=null;activePointers.clear();selectedGroup.clear();linePoints=[];lastFocus=document.activeElement;snap=next;history=[];points=[];selected=null;focusMode=false;cursor={x:.5,y:.5};cursorVisible=false;
  if(!dialog)makeDialog();
  items=Array.isArray(snap.landscape?.items)&&snap.landscape.sourceKey===snap.sourceKey&&(snap.landscape.renderId||null)===(snap.renderId||null)?structuredClone(snap.landscape.items):[];
- items=items.map(item=>['path','edge','fill'].includes(item.kind)?item:{...clampLegacyPlacement(item),influence:automaticInfluence(clampLegacyPlacement(item)),influenceManual:false});
+ items=items.map(item=>['path','edge','fill','scatter','garland','climber'].includes(item.kind)?item:{...clampLegacyPlacement(item),influence:automaticInfluence(clampLegacyPlacement(item)),influenceManual:false});
  customAssets=mode==='landscape'&&snap.landscape?.sourceKey===snap.sourceKey&&(snap.landscape.renderId||null)===(snap.renderId||null)&&Array.isArray(snap.landscape.customAssets)?snap.landscape.customAssets.slice(0,CUSTOM_ASSET_LIMIT).filter(a=>/^landscape_[a-f0-9]{32}$/.test(a?.key)):[];
  customImages.clear();selectedCustomKey=null;
  if(mode==='landscape'&&customAssets.length)await Promise.all(customAssets.map(async entry=>{
