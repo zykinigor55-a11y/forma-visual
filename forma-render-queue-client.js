@@ -1,0 +1,99 @@
+/* FORMA RENDER QUEUE — shared client for every image tool.
+ * Enqueues each paid request exactly once, polls its result after network
+ * interruptions and exposes status without asking a provider to regenerate.
+ * Old cached pages still work via the compatible /api/render endpoint.
+ */
+(()=>{
+ 'use strict';
+ if(window.FORMA_RENDER_QUEUE)return;
+ const PREFIX='/api/render/jobs';
+ const WAIT_LIMIT=16*60*1000;
+ const RECOVERY_KEY='forma:last-render-job:v1';
+ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ const guid=()=>window.crypto?.randomUUID?.()||('forma-'+Date.now()+'-'+Math.random().toString(36).slice(2).padEnd(16,'0'));
+ const fallbackResponse=(status,message,code='job_failed')=>new Response(JSON.stringify({error:message,code}),{status,headers:{'Content-Type':'application/json'}});
+ function tell(stage,meta){
+  const status=stage==='queued'?'В очереди · позиция '+Math.max(1,meta.position||1):
+   stage==='running'?'AI генерирует изображение. Это может занять несколько минут.':
+   stage==='completed'?'Генерация завершена. Сохраняем изображение…':
+   stage==='recovering'?'Восстанавливаем результат ранее отправленного задания…':
+   stage==='failed'?'Генерация не удалась. Повторный запрос автоматически не отправлялся.':'';
+  document.dispatchEvent(new CustomEvent('forma:render-job-status',{detail:{...meta,status:stage,message:status}}));
+  for(const selector of ['#artStatus','#formaEnhanceStatus']){
+   const element=document.querySelector(selector);
+   if(element&&element.closest('dialog[open]'))element.textContent=status;
+  }
+ }
+ function remember(record){
+  try{sessionStorage.setItem(RECOVERY_KEY,JSON.stringify(record))}catch{}
+ }
+ function forget(jobId){
+  try{
+   const old=JSON.parse(sessionStorage.getItem(RECOVERY_KEY)||'null');
+   if(old?.jobId===jobId)sessionStorage.removeItem(RECOVERY_KEY);
+  }catch{}
+ }
+ async function recoverLast(){
+  let job;try{job=JSON.parse(sessionStorage.getItem(RECOVERY_KEY)||'null')}catch{return null}
+  if(!job?.jobId||!/^[a-f0-9]{48}$/.test(job.jobId)||Date.now()-(job.created||0)>20*60*1000)return null;
+  const status=await fetch(PREFIX+'/'+job.jobId,{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+  if(!status)return null;
+  return { ...job, ...status };
+ }
+ async function queuedFetch(url,options={}){
+  if(url!=='/api/render')return fetch(url,options);
+  const key='forma-'+guid();
+  const request={method:'POST',headers:{...Object.fromEntries(new Headers(options.headers||{}).entries()),'X-Forma-Idempotency-Key':key},
+   body:options.body,credentials:'same-origin',cache:'no-store'};
+  let res;
+  // Network failure after a successful server accept is ambiguous; use the
+  // SAME idempotency key, never a fresh one, for a single safe retry.
+  for(let attempt=0;attempt<2;attempt++){
+   try{res=await fetch(PREFIX,request);break}
+   catch(error){if(attempt)throw new Error('Нет связи с сервером. Повторная платная генерация не запускалась.');await pause(1600);}
+  }
+  if(!res.ok)return res;
+  const job=await res.json().catch(()=>null);
+  if(!job?.jobId)return fallbackResponse(502,'Сервер не выдал номер задания.');
+  remember({jobId:job.jobId,key,created:Date.now()});
+  const started=Date.now();
+  let state=job,failures=0,lastStatus='';
+  while(Date.now()-started<WAIT_LIMIT){
+   const phase=state.status;
+   if(phase!==lastStatus||phase==='queued'&&state.position!==job.position){
+    tell(phase,state);lastStatus=phase;
+   }
+   if(phase==='completed'){
+    tell('completed',state);
+    for(let attempt=0;attempt<3;attempt++){
+     try{
+      const imageResult=await fetch(PREFIX+'/'+job.jobId+'/result',{cache:'no-store',credentials:'same-origin'});
+      if(imageResult.ok){forget(job.jobId);return imageResult;}
+      if(imageResult.status!==502&&imageResult.status!==503) return imageResult;
+     }catch{}
+     await pause(1800);
+    }
+    return fallbackResponse(503,'Изображение готово, но соединение прервалось. Номер задания: '+job.jobId+'. Его можно восстановить без повторной генерации.','result_download_failed');
+   }
+   if(phase==='failed'){
+    tell('failed',state);
+    return fallbackResponse(state.error?.status||502,state.error?.message||'Генерация не выполнена.',state.error?.code||'render_failed');
+   }
+   await pause(Math.max(1200,Math.min(5000,Number(state.pollAfterMs)||2500)));
+   try{
+    const next=await fetch(PREFIX+'/'+job.jobId,{cache:'no-store',credentials:'same-origin'});
+    if(next.status===404)return fallbackResponse(404,'Результат задания недоступен после перезапуска сервера. Номер: '+job.jobId+'. Проверьте расходы перед повтором.','job_missing');
+    if(!next.ok)throw new Error('Сервер временно недоступен');
+    state=await next.json();
+    failures=0;
+   }catch(error){
+    failures++;
+    tell('recovering',{...state,jobId:job.jobId});
+    if(failures>=18)return fallbackResponse(503,'Связь с сервером потеряна. Номер задания: '+job.jobId+'. Проверьте его статус перед новой генерацией.','connection_lost');
+    await pause(Math.min(10000,1800*failures));
+   }
+  }
+  return fallbackResponse(504,'Превышено время ожидания очереди. Не отправляйте повторную генерацию без проверки задания '+job.jobId+'.','job_wait_timeout');
+ }
+ window.FORMA_RENDER_QUEUE={fetch:queuedFetch,recoverLast};
+})();
