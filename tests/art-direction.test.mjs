@@ -17,7 +17,7 @@ test('atmosphere normalizes finite controls and never overrides scene choices',(
  const a=core.normalizeAtmosphere({preset:'cinema',strength:999,dof:50,focus:{x:.25,y:.4},season:'winter'});
  assert.equal(a.strength,100); assert.equal(a.season,undefined); assert.equal(a.focus.x,.25);
  assert.throws(()=>core.normalizeAtmosphere({preset:'unknown'}));
- const p=core.atmospherePrompt(a);assert.match(p,/depth of field/i);assert.match(p,/preserve.*weather/i);assert.match(p,/architecture/i);
+ const p=core.atmospherePrompt(a);assert.match(p,/foreground defocus 50\/100/);assert.match(p,/Preserve other site and climate cues/);assert.match(p,/architecture/i);
  assert.equal(core.atmospherePrompt(null),'');
 });
 test('compositing retains every channel outside edit mask byte for byte',()=>{
@@ -39,8 +39,8 @@ test('server routes local landscape and atmosphere without conflicting scene pro
  const lp=createPrompt({landscapeEdit:{items:[{kind:'plant',catalogId:'juniper',x:.5,y:.7,w:.1,h:.2}]},mask:'data:image/png;base64,stub',brief:{weather:'Снег'}});
  assert.match(lp,/LOCAL LANDSCAPE/);assert.doesNotMatch(lp,/FULL SCENE ENHANCEMENT/);
  const ap=createPrompt({atmosphereOnly:true,brief:{atmosphere:a,environment:'Тропики',weather:'Дождь'}});
- assert.match(ap,/PHOTOGRAPHIC ATMOSPHERE/);assert.doesNotMatch(ap,/FULL SCENE ENHANCEMENT|FULL SCENE CONTEXT/);
- const first=createPrompt({brief:{atmosphere:a}});assert.match(first,/Selective photographic depth of field/);assert.doesNotMatch(first,/f\/8-style deep architectural depth/);
+ assert.match(ap,/ART-DIRECTED ARCHITECTURAL PHOTOGRAPH/);assert.match(ap,/SOURCE LOCK/);assert.doesNotMatch(ap,/FULL SCENE ENHANCEMENT|FULL SCENE CONTEXT/);
+ const first=createPrompt({brief:{atmosphere:a}});assert.match(first,/foreground defocus 70\/100/);assert.doesNotMatch(first,/f\/8-style deep architectural depth/);
  assert.throws(()=>createPrompt({landscapeEdit:{items:[]}}));
  assert.throws(()=>createPrompt({atmosphereOnly:true,brief:{}}));
 });
@@ -67,7 +67,7 @@ test('provider output framing is validated instead of stretched',async()=>{
 test('atmosphere grading follows explicitly requested resulting weather in an initial render',async()=>{
  const {createPrompt}=await import('../server.mjs');
  const result=createPrompt({brief:{weather:'Дождь',atmosphere:{preset:'cinema',strength:60}}});
- assert.match(result,/requested resulting scene conditions/);
+ assert.match(result,/These are the user's explicit selected changes/);assert.match(result,/DAYPART:/);
  assert.doesNotMatch(result,/Preserve existing weather, season, time of day/);
 });
 
