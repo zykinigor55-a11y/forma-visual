@@ -384,7 +384,7 @@ async function proxyRender(req,res,{queued=false}={}){
 }
 function getRenderJob(req,res){
  if(!sameOrigin(req))return json(res,403,{error:'Недопустимый источник запроса.'});
- const match=req.url?.match(/^\\/api\\/render\\/jobs\\/([a-f0-9]{48})(\\/result)?$/);
+ const match=req.url?.match(/^\/api\/render\/jobs\/([a-f0-9]{48})(\/result)?$/);
  if(!match)return json(res,404,{error:'Задание не найдено',code:'job_not_found'});
  const jobId=match[1],wantResult=!!match[2];
  if(!wantResult){
