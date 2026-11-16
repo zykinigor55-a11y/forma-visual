@@ -1,0 +1,30 @@
+/* FORMA · Floor plan art direction: 5 true 2D styles + room photography. */
+.fs-plan-part{border:1px solid var(--fs-line,#55575e);background:var(--fs-panel,#292b30);border-radius:12px;padding:17px;margin:15px 0}
+.fs-plan-part h3{margin:8px 0 9px;font-size:17px;letter-spacing:-.025em;color:var(--fs-text,#eaeaea)}
+.fs-plan-step{display:block;font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--fs-accent,#c4aa82)}
+.fs-plan-part .fa-art-help{font-size:11px;line-height:1.6;color:var(--fs-muted,#abb0b9);margin:8px 0 13px}
+.fs-plan-2d-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0 14px}
+.fs-plan-2d-option{position:relative;display:flex;flex-direction:column;gap:9px;align-items:stretch;text-align:left;border:1px solid var(--fs-line,#55575e);border-radius:9px;background:var(--fs-raised,#33353b);padding:7px 7px 11px;color:var(--fs-text,#f0f0f2);font:inherit;cursor:pointer;min-height:130px;transition:border-color .17s ease,background .17s ease}
+.fs-plan-2d-option:focus-visible{outline:2px solid var(--fs-accent,#c4aa82);outline-offset:2px}
+.fs-plan-2d-option[aria-pressed="true"]{border-color:var(--fs-accent,#c4aa82);box-shadow:inset 0 0 0 1px var(--fs-accent,#c4aa82);background:var(--fs-panel,#292b30)}
+.fs-plan-2d-option b{font-size:11px;font-weight:650;line-height:1.32}
+.fs-plan-2d-swatch{position:relative;display:block;height:89px;border-radius:5px;overflow:hidden;background:#f4f3f1}
+.fs-plan-2d-swatch:before{content:"";position:absolute;inset:18% 17%;border:3px solid currentColor;border-right-width:5px;border-bottom-width:4px;opacity:.85}
+.fs-plan-2d-swatch i{position:absolute;display:block;background:currentColor;opacity:.85}
+.fs-plan-2d-swatch i:first-child{height:3px;width:40%;top:48%;left:17%}
+.fs-plan-2d-swatch i:nth-child(2){height:42%;width:3px;top:18%;left:57%}
+.fs-plan-2d-swatch i:nth-child(3){height:3px;width:26%;top:70%;left:57%}
+.fs-plan-2d-swatch[data-style="technical"]{background:#f9f8f5;color:#3b3d3e}
+.fs-plan-2d-swatch[data-style="warm"]{background:#e9dfcf;color:#8f7055}
+.fs-plan-2d-swatch[data-style="warm"]:after{content:"";position:absolute;inset:30% 60% 29% 18%;background:#c7aa87aa}
+.fs-plan-2d-swatch[data-style="zoning"]{background:linear-gradient(110deg,#d7e6d7 0% 40%,#edd3cb 40% 72%,#d4dfea 72%);color:#546572}
+.fs-plan-2d-swatch[data-style="graphite"]{background:#24262b;color:#d8c9b3}
+.fs-plan-2d-swatch[data-style="graphite"]:after{content:"";position:absolute;left:17%;top:18%;height:3px;width:66%;background:#ba9a71}
+.fs-plan-2d-swatch[data-style="watercolor"]{background:radial-gradient(ellipse at 35% 45%,#e9cdb0bb,transparent 54%),radial-gradient(ellipse at 67% 55%,#bfd5cbcc,transparent 56%),#f3eee7;color:#5e5d59}
+.fs-plan-view-switch{display:flex;gap:7px;margin-top:10px}
+.fs-plan-view-switch button{flex:1;min-width:0;min-height:40px;border:1px solid var(--fs-line,#55575e);background:var(--fs-raised,#33353b);color:var(--fs-text,#f0f0f2);border-radius:8px;font:inherit;font-size:11px}
+.fs-plan-view-switch button:disabled{opacity:.5;cursor:default}
+.fs-plan-part .fa-studio-primary{width:100%;min-height:43px}
+.fs-plan-part #fsApprovePlan{display:block;width:100%;min-height:42px;border-radius:8px;background:var(--fs-raised,#33353b);border:1px solid var(--fs-accent,#c4aa82);color:var(--fs-text,#f0f0f2);font-weight:630;margin:10px 0}
+.fs-plan-part #fsApprovePlan:disabled,.fs-plan-part #fsRoomGenerate:disabled{opacity:.48;cursor:default}
+@media(max-width:780px){.fs-plan-part{padding:12px;margin:11px 0}.fs-plan-2d-options{gap:7px}.fs-plan-2d-swatch{height:74px}.fs-plan-2d-option{min-height:115px}.fs-plan-2d-option b{font-size:10px}.fs-plan-part .fa-studio-primary{min-height:48px}}
