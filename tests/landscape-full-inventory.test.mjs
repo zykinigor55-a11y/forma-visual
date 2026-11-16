@@ -5,6 +5,7 @@ import {catalogFor,landscapePrompt} from '../forma-art-direction-core.js';
 import {LANDSCAPE_REALISM,landscapePhysicalDetail} from '../forma-landscape-physical-details.js';
 import {LANDSCAPE_GROUPS,catalogGroup,assetLayers,placementMarkup} from '../forma-landscape-catalog.js';
 import {READY_HD_ASSETS} from '../forma-landscape-hd.js';
+import {SPECIAL_LANDSCAPE_TOOLS} from '../forma-landscape-special-tools.js';
 
 const categories=['plant','tree','fill','path','edge','object','light'];
 const entries=categories.flatMap(kind=>catalogFor(kind).map(entry=>({kind,...entry})));
@@ -23,10 +24,11 @@ test('all 51 landscape catalog assets exist in complete categorized inventory',(
  }
 });
 
-test('all eight landscape navigation groups account for every item without duplication',()=>{
- assert.equal(LANDSCAPE_GROUPS.length,8);
+test('all 51 original items and new vector tools appear in their groups without duplicates',()=>{
+ assert.equal(LANDSCAPE_GROUPS.length,12);
  const ids=LANDSCAPE_GROUPS.flatMap(g=>catalogGroup(g.id).map(x=>x.id));
- assert.deepEqual(ids.slice().sort(),entries.map(e=>e.id).sort());
+ assert.deepEqual(ids.slice().sort(),[...entries.map(e=>e.id),...SPECIAL_LANDSCAPE_TOOLS.map(x=>x.id)].sort());
+ assert.equal(new Set(ids).size,ids.length);
 });
 
 test('all 51 assets have individual paths and composite pots reference their live plant',()=>{
