@@ -52,7 +52,7 @@ import {createReviewQueue} from './forma-result-queue.js';
     '<footer class="forma-result-footer">Изменения не запускают AI автоматически · Новый вариант — отдельный запрос</footer>',
    '</section>'
   ].join('');
-  screen.addEventListener('click',event=>{
+  screen.addEventListener('click',async event=>{
    if(inFlight)return;
    const chip=event.target.closest('[data-quick-group][data-quick-value]');
    if(chip){pick(chip);return}
@@ -104,6 +104,7 @@ import {createReviewQueue} from './forma-result-queue.js';
      const result=await bridge.generateVariant(changes,source.image);
      if(!result?.image)throw Error('Не удалось получить новый готовый вариант.');
      pending={};
+     inFlight=false;
      close(false);
     }catch(error){
      if(status)status.textContent='Ошибка: '+(error?.message||'Не удалось создать вариант. Можно повторить без потери исходника.');
@@ -116,9 +117,9 @@ import {createReviewQueue} from './forma-result-queue.js';
    }
    if(type==='close')close(true);
   });
-  screen.addEventListener('cancel',event=>{event.preventDefault();if(!reviewSaving&&!enhancing)close(true);});
+  screen.addEventListener('cancel',event=>{event.preventDefault();if(!reviewSaving&&!enhancing&&!inFlight)close(true);});
   screen.addEventListener('keydown',event=>{
-   if(event.key==='Escape'){event.preventDefault();if(!reviewSaving&&!enhancing)close(true);return}
+   if(event.key==='Escape'){event.preventDefault();if(!reviewSaving&&!enhancing&&!inFlight)close(true);return}
    if(event.key==='Tab'){
     const focus=Array.from(screen.querySelectorAll('button:not([disabled])'));
     const first=focus[0],last=focus[focus.length-1];
@@ -198,7 +199,7 @@ import {createReviewQueue} from './forma-result-queue.js';
  }
  function close(scrollToResult=true){
   if(!screen||!opened)return;
-  if(reviewSaving||enhancing)return;
+  if(reviewSaving||enhancing||inFlight)return;
   if(reviews.active?.decision===null)reviews.decide('later');
   opened=false;screen.close();screen.hidden=true;
   screen.querySelector('video')?.pause();
