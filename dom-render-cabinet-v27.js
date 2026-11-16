@@ -3,14 +3,24 @@
 function $(id){return document.getElementById(id)}
 const d=document;
 let previousFocus=null,shown='account',lastStatus=null;
+function mountTools(){
+ const dock=$('cabinetToolsDock'),panel=$('formaProjectPanel');
+ if(!dock||!panel||dock.contains(panel))return;
+ dock.append(panel);panel.classList.add('fa-cabinet-tools-panel');
+ const details=panel.querySelector('#formaAdvancedTools');if(details){details.open=true;details.addEventListener('toggle',()=>{if(!details.open)details.open=true});}
+}
+
 function txt(id,value){const e=$(id);if(e)e.textContent=String(value)}
 function switchView(view){
- shown=['account','gallery','contacts'].includes(view)?view:'account';
+ shown=['account','tools','gallery','contacts'].includes(view)?view:'account';
  $('cabinetAccount').hidden=shown!=='account';
+ $('cabinetTools').hidden=shown!=='tools';
  $('cabinetGallery').hidden=shown!=='gallery';
  $('cabinetContacts').hidden=shown!=='contacts';
- txt('cabinetTitle',shown==='account'?'Личный кабинет':shown==='gallery'?'Галерея работ':'Контакты');
+ txt('cabinetTitle',shown==='account'?'Личный кабинет':shown==='gallery'?'Галерея работ':shown==='tools'?'Инструменты':'Контакты');
  $('cabinetCover').classList.toggle('is-gallery',shown==='gallery');
+ $('cabinetCover').classList.toggle('is-tools',shown==='tools');
+ if(shown==='tools')mountTools();
  d.querySelectorAll('[data-cabinet-tab]').forEach(btn=>{const on=btn.dataset.cabinetTab===shown;btn.classList.toggle('active',on);btn.setAttribute('aria-selected',String(on))});
  if(shown==='gallery')window.DOM_RENDER_GALLERY?.activate?.();
 }
@@ -24,7 +34,7 @@ function open(view){
 }
 function close(){
  $('cabinetCover').hidden=true;
- $('cabinetCover').classList.remove('is-gallery');
+ $('cabinetCover').classList.remove('is-gallery','is-tools');
  d.body.classList.remove('cabinet-open');
  if(previousFocus&&previousFocus.isConnected)previousFocus.focus();
 }
@@ -64,6 +74,7 @@ async function refresh(){
 }
 function init(){
  if(!$('cabinetCover'))return;
+ mountTools();
  d.querySelectorAll('[data-open-cabinet]').forEach(el=>el.addEventListener('click',()=>open(el.dataset.openCabinet)));
  d.querySelectorAll('[data-cabinet-tab]').forEach(el=>el.addEventListener('click',()=>switchView(el.dataset.cabinetTab)));
  $('cabinetClose').addEventListener('click',close);
