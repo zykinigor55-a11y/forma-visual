@@ -1,6 +1,6 @@
 import {LANDSCAPE_GROUPS,catalogGroup,assetLayers,placementMarkup} from './forma-landscape-catalog.js';
 import {scalePlacement,clampLegacyPlacement,automaticInfluence,linePlacements,drawStrokes,translateGroup,selectionHasCoverage} from './forma-landscape-tools.js?v=composition-v2';
-import {PLANTS,PAVINGS,LIGHTS,LOOKS,ATMOSPHERE_VEGETATION,isLinearEdge,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js?v=composition-v2';
+import {PLANTS,PAVINGS,LIGHTS,LOOKS,ATMOSPHERE_VEGETATION,isLinearEdge,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js?v=landscape-custom-image-v1';
 import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_SCENE_GROUPS,ATMOSPHERE_FOREGROUND_PLANS} from './forma-atmosphere-scenes.js?v=composition-v2';
 import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming,prepareMaterialEdit} from './forma-local-composite.js';
 import {CUSTOM_LANDSCAPE_ID,CUSTOM_ASSET_LIMIT,customAssetKey,decodeLandscapeFile,makeCustomReferenceBoard} from './forma-landscape-custom-assets.js';
