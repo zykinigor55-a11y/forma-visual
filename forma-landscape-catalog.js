@@ -1,20 +1,25 @@
 import {catalogFor} from './forma-art-direction-core.js';
 import {READY_HD_ASSETS} from './forma-landscape-hd.js';
+import {specialById,specialForGroup} from './forma-landscape-special-tools.js';
 // One file per object. Neither canvas placements nor thumbnails expose an atlas.
 export const LANDSCAPE_GROUPS=Object.freeze([
  {id:'plant',name:'Кусты',kind:'plant'}, {id:'tree',name:'Деревья',kind:'tree'},
+ {id:'climber',name:'Вьющиеся',kind:'climber'},
  {id:'lawn',name:'Газон',kind:'fill'}, {id:'fill',name:'Отсыпки',kind:'fill'},
  {id:'path',name:'Мощение',kind:'path'}, {id:'edge',name:'Бордюры · ступени',kind:'edge'},
- {id:'object',name:'Камни · кашпо',kind:'object'}, {id:'light',name:'Свет',kind:'light'}
+ {id:'object',name:'Камни · кашпо',kind:'object'}, {id:'light',name:'Свет · гирлянды',kind:'light'},
+ {id:'leaves',name:'Сухие листья',kind:'scatter'}, {id:'snow',name:'Снег · иней',kind:'scatter'},
+ {id:'details',name:'Детали среды',kind:'scatter'}
 ]);
 export function catalogGroup(group){
  const kind=LANDSCAPE_GROUPS.find(g=>g.id===group)?.kind;
- return catalogFor(kind).filter(e=>kind!=='fill'||(['grass','groundcover'].includes(e.id)===(group==='lawn')));
+ return [...catalogFor(kind).filter(e=>kind!=='fill'||(['grass','groundcover'].includes(e.id)===(group==='lawn'))),...specialForGroup(group)];
 }
 const hdIds=new Set(READY_HD_ASSETS);
 const asset=(id,{detail=false}={})=>'assets/landscape/'+(detail&&hdIds.has(id)?'hd/':'items/')+id+'.webp';
 export function assetLayers(entry,{detail=false}={}){
  if(!entry)return [];
+ if(specialById(entry.id))return [];
  if(!entry.planted)return [{url:asset(entry.id,{detail}),x:0,y:0,w:1,h:1}];
  const pot={url:asset(entry.id,{detail}),x:.15,y:.60,w:.70,h:.40};
  // Draw the back of the container, insert the stem into its mouth, then occlude it with the front rim.
@@ -37,7 +42,7 @@ export function referenceEntries(items){
  return [...new Map(items.map(i=>[i.catalogId,{kind:i.kind,entry:catalogFor(i.kind).find(e=>e.id===i.catalogId)}])).values()];
 }
 export function placementGuideGeometry(items,width,height){
- return items.flatMap((item,i)=>['fill','edge','path'].includes(item.kind)?[]:[{
+ return items.flatMap((item,i)=>['fill','scatter','edge','path','climber','garland'].includes(item.kind)?[]:[{
   number:i+1,catalogId:item.catalogId,x:(item.x-item.w/2)*width,y:(item.y-item.h)*height,w:item.w*width,h:item.h*height,anchor:{x:item.x*width,y:item.y*height}
  }]);
 }

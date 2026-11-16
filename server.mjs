@@ -336,8 +336,8 @@ async function performRender(p,requestId){
  if(dailyCount+n>DAILY_CAP)fail('Осталось генераций на сегодня: '+Math.max(0,DAILY_CAP-dailyCount),429,'daily_limit');
  assertSeriesSource(p);
  const task=p.imageTask?normalizeImageTask(p.imageTask):null;
- const needsPlan=task&&['plan','room'].includes(task.kind)&&task.engine!=='nano-banana-2.1';
- if(needsPlan&&(!PLAN_IMAGE_MODEL||task.engine!==PLAN_IMAGE_MODEL))fail('Для «План → интерьер» настройте PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render и доступ к этой модели у API Market. Другой моделью запрос не заменяется.',503,'plan_model_missing');
+ const needsPlan=task&&['plan','plan2d','room'].includes(task.kind);
+ if(needsPlan&&!PLAN_IMAGE_MODEL)fail('Модель GPT Image 2.6 для планов не настроена на сервере. Укажите PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render. Nano Banana для этого раздела не используется.',503,'plan_model_missing');
  if(['room','view'].includes(task?.kind)&&!reference)fail('Сначала утвердите главный кадр или визуализацию плана.',400);
  const prompt=task?imageTaskPrompt(task):createPrompt(p);
  console.info('[AI]',requestId,'начинаем оплачиваемую генерацию; осталось:',DAILY_CAP-dailyCount,'кадров:',n);

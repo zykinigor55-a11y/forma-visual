@@ -8,7 +8,11 @@ export function compositePixels(base,edited,mask){
  return out;
 }
 export function itemBounds(item){
- if(item.kind==='fill')return strokeBounds(item.strokes);
+ if(item.kind==='fill'||item.kind==='scatter')return strokeBounds(item.strokes);
+ if(item.kind==='garland'||item.kind==='climber'){
+  const pad=item.kind==='garland'?.045:.065;
+  return {x:Math.max(0,Math.min(...item.points.map(p=>p.x))-pad),y:Math.max(0,Math.min(...item.points.map(p=>p.y))-pad),right:Math.min(1,Math.max(...item.points.map(p=>p.x))+pad),bottom:Math.min(1,Math.max(...item.points.map(p=>p.y))+pad)};
+ }
  if(isLinearEdge(item)){const half=(item.edgeWidth||.015)/2;return {x:Math.max(0,Math.min(...item.points.map(p=>p.x))-half),y:Math.max(0,Math.min(...item.points.map(p=>p.y))-half),right:Math.min(1,Math.max(...item.points.map(p=>p.x))+half),bottom:Math.min(1,Math.max(...item.points.map(p=>p.y))+half)};}
  if(item.kind==='path'||item.kind==='edge')return {x:Math.min(...item.points.map(p=>p.x)),y:Math.min(...item.points.map(p=>p.y)),right:Math.max(...item.points.map(p=>p.x)),bottom:Math.max(...item.points.map(p=>p.y))};
  // Include room for contact shadows, entirely visible in the editor mask.

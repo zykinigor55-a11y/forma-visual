@@ -25,4 +25,4 @@ test('a frontal reconstruction is refused without its own source',()=>{
  assert.doesNotThrow(()=>workflows.assertSeriesSource({batchShot:'front',batchFrontProvided:true}));
 });
 test('image tasks always use one request even when quantity is supplied as four',async()=>{const {renderQuantity,createPrompt}=await import('../server.mjs');assert.equal(renderQuantity({imageTask:{kind:'detail'},quantity:4}),1);assert.throws(()=>createPrompt({batchShot:'front',batchFrontProvided:false}),/исходник/);});
-test('plan rendering accepts only explicitly selected allowlisted engines',()=>{assert.equal(workflows.normalizeImageTask({kind:'plan',engine:'nano-banana-2.1'}).engine,'nano-banana-2.1');assert.throws(()=>workflows.normalizeImageTask({kind:'plan',engine:'untrusted-model'}),/модель/);});
+test('2D and 3D plans are forced to server-authorized GPT Image without browser engine selection',()=>{assert.equal(workflows.normalizeImageTask({kind:'plan',engine:'nano-banana-2.1'}).engine,'gpt-image-2.6-sunburst');assert.equal(workflows.normalizeImageTask({kind:'plan2d',engine:'untrusted-model'}).engine,'gpt-image-2.6-sunburst');});

@@ -73,6 +73,14 @@ export async function apiMarketEdit({apiKey,source,material,reference,mask,promp
   form.append('model',model);
   form.append('prompt',prompt);
   form.append('quality',quality==='medium'?'medium':'high');
+  // GPT Image 2.6 floor plan / interior workflow requests native 2K output.
+  // Do not upscale a smaller image in the browser and call it 2K.
+  // The API Market OpenAI-compatible proxy is responsible for forwarding these
+  // optional model-specific parameters; no fallback to Nano Banana.
+  if(/^gpt-image-2\.6-(?:sunburst|flare)$/.test(model)){
+    form.append('size','auto');
+    form.append('resolution','2K');
+  }
   form.append('response_format','b64_json');
   form.append('n','1');
   // File extensions must match the actual Blob MIME type (JPEG is common here).
