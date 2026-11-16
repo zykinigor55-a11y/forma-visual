@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_SCENE_GROUPS} from '../forma-atmosphere-scenes.js';
+import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_SCENE_GROUPS,ATMOSPHERE_FOREGROUND_PLANS} from '../forma-atmosphere-scenes.js';
 import {normalizeAtmosphere,atmospherePrompt} from '../forma-art-direction-core.js';
 import {scalePlacement} from '../forma-landscape-tools.js';
 
@@ -43,4 +43,33 @@ test('landscape object scale cannot exceed 200%',()=>{
  const item={w:.2,h:.3,baseW:.2,baseH:.3};
  const out=scalePlacement(item,50);
  assert.equal(out.w,.4);assert.equal(out.h,.6);
+});
+
+test('each of nine scenes has an explicit, distinct spatial tree / shrub plan',()=>{
+ const ids=ATMOSPHERE_SCENARIOS.map(s=>s.id);
+ assert.deepEqual(Object.keys(ATMOSPHERE_FOREGROUND_PLANS).sort(),ids.slice().sort());
+ assert.equal(new Set(ids.map(id=>ATMOSPHERE_FOREGROUND_PLANS[id].label)).size,9);
+ for(const id of ids){
+  const plan=ATMOSPHERE_FOREGROUND_PLANS[id];
+  assert.match(plan.trunk,/LEFT|RIGHT/);
+  assert.match(plan.trunk,/trunk/i);
+  assert.match(plan.shrubs,/LEFT|RIGHT/);
+  assert.match(plan.shrubs,/shrub/i);
+  const prompt=atmospherePrompt({scenario:id,vegetation:'match'});
+  assert.ok(prompt.includes(plan.trunk),'tree composition: '+id);
+  assert.ok(prompt.includes(plan.shrubs),'shrub composition: '+id);
+  assert.ok(prompt.includes(plan.canopy),'canopy composition: '+id);
+  assert.match(prompt,/Existing trees and shrubs remain anchored/);
+  assert.match(prompt,/RETAIN its exact position, root/);
+ }
+});
+
+test('existing planting is preserved and vegetation sliders can disable new objects',()=>{
+ const noTrees=atmospherePrompt({scenario:'blue-cinema',trunks:0,shrubs:0,vegetation:'birch',foreground:50});
+ assert.match(noTrees,/Do not introduce a new foreground trunk/);
+ assert.match(noTrees,/Do not introduce new foreground shrubs/);
+ assert.match(noTrees,/Do not add new branches or leaves/);
+ const noPlant=atmospherePrompt({scenario:'day-side',vegetation:'none'});
+ assert.match(noPlant,/Do not add any new plants/);
+ assert.doesNotMatch(noPlant,/TRUNK AMOUNT/);
 });
