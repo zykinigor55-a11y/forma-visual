@@ -1,8 +1,8 @@
 /* A single active workspace; existing controls are moved, never duplicated. */
 const $=(s,r=document)=>r.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const paths={render:'M3 11 12 4l9 7v10H3Z M9 21v-7h6v7',interior:'M3 21V3h18v18 M3 10h18 M8 21v-7h8v7',materials:'m12 3 9 5-9 5-9-5Z M3 12l9 5 9-5 M3 16l9 5 9-5',landscape:'M3 21h18 M7 21v-7 M7 3C0 8 1 15 7 15S14 8 7 3 M17 21V10 M17 3l-5 10h10Z',atmosphere:'M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2',animation:'M3 5h14v14H3Z m14 5 4-3v10l-4-3',frames:'M3 3h18v18H3Z M7 7h10v10H7Z M3 12h4 M17 12h4',plan:'M3 3h18v18H3Z M12 3v10h9 M3 13h5 M12 17v4',nodes:'M2 3h6v6H2Z M16 15h6v6h-6Z M2 15h6v6H2Z M8 6h4v12h4 M8 18h8',project:'M3 6h7l2 3h9v12H3Z',settings:'M4 5h16 M4 12h16 M4 19h16 M8 2v6 M16 9v6 M10 16v6'};
+const paths={render:'M3 11 12 4l9 7v10H3Z M9 21v-7h6v7',interior:'M3 21V3h18v18 M3 10h18 M8 21v-7h8v7',materials:'m12 3 9 5-9 5-9-5Z M3 12l9 5 9-5 M3 16l9 5 9-5',landscape:'M3 21h18 M7 21v-7 M7 3C0 8 1 15 7 15S14 8 7 3 M17 21V10 M17 3l-5 10h10Z',atmosphere:'M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2',animation:'M3 5h14v14H3Z m14 5 4-3v10l-4-3',frames:'M3 3h18v18H3Z M7 7h10v10H7Z M3 12h4 M17 12h4',enhance:'M12 2l2.1 6.8L21 11l-6.9 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2Z M19 17l1 2.2L22 20l-2 .8-1 2.2-.8-2.2L16 20l2.2-.8L19 17Z',world:'M12 2l9 5v10l-9 5-9-5V7l9-5Z M3 7l9 5 9-5 M12 12v10',plan:'M3 3h18v18H3Z M12 3v10h9 M3 13h5 M12 17v4',nodes:'M2 3h6v6H2Z M16 15h6v6h-6Z M2 15h6v6H2Z M8 6h4v12h4 M8 18h8',project:'M3 6h7l2 3h9v12H3Z',settings:'M4 5h16 M4 12h16 M4 19h16 M8 2v6 M16 9v6 M10 16v6'};
 export const studioIcon=id=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[id]||paths.project}"/>${id==='atmosphere'?'<circle cx="12" cy="12" r="4"/>':''}</svg>`;
-const tasks=[['render','Экстерьеры','Скриншот → фотография'],['interior','Интерьеры','Свет, отделка и пространство'],['materials','Материалы','Цвет и фактура поверхности'],['landscape','Ландшафт','Растения, покрытия и свет'],['atmosphere','Атмосфера','Цвет и характер фотографии'],['animation','Анимация','Камера, движение и цвет'],['plan','План → интерьер','Объёмная подача и комнаты'],['frames','Кадры и детали','Приближения и серии проекта']];
+const tasks=[['render','Экстерьеры','Скриншот → фотография'],['interior','Интерьеры','Свет, отделка и пространство'],['materials','Материалы','Цвет и фактура поверхности'],['landscape','Ландшафт','Растения, покрытия и свет'],['atmosphere','Атмосфера','Цвет и характер фотографии'],['animation','Анимация','Камера, движение и цвет'],['plan','План → интерьер','Объёмная подача и комнаты'],['frames','Кадры и детали','Приближения и серии проекта'],['enhance','Улучшить · AI','Новая фотореалистичная прорисовка'],['nodes','Сценарии','Связанные AI-этапы'],['world','3D-мир','Просмотр GLB-моделей'],['settings','Настройки','Качество, формат, параметры']];
 let workspace=null,moves=[],active=null,bypass=false,origin=null;const confirmedSources=new Set();
 const bindingKey=snap=>snap?`${active}:${snap.projectId}:${snap.sourceKey}`:'';
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -29,6 +29,13 @@ function mountDialog(id,title){
 export async function openWorkspace(id){
  if(bypass)return;if(workspace&&active===id)return;if(!closeWorkspace())return;
  origin=document.activeElement;active=id;
+ if(id==='enhance'){
+  active=null;
+  const opened=window.FORMA_RESULT_FOCUS?.openForEnhancement?.();
+  if(!opened)window.FORMA_ART_BRIDGE?.notify?.('Для улучшения сначала создайте или выберите готовый рендер проекта.');
+  return;
+ }
+ if(id==='world'){active=null;window.location.assign('forma-world.html');return;}
  if(id==='landscape'||id==='atmosphere'){active=null;window.FORMA_ART_DIRECTION?.[id==='landscape'?'openLandscape':'openAtmosphere']();return;}
  if(id==='nodes'){active=null;window.FORMA_NODES?.open();return;}
  const task=tasks.find(t=>t[0]===id);mountDialog(id,task?.[1]||({project:'Проект',settings:'Настройки'}[id]||id));
@@ -58,10 +65,24 @@ function refreshHome(){
 }
 function init(){
  document.body.classList.add('fa-unified-studio');
- const home=document.createElement('section');home.id='formaStudioHome';home.innerHTML=`<div class="fa-studio-home-heading"><div><small>ФОРМА / РАБОЧАЯ СТУДИЯ</small><h1>Пространство для архитектуры.</h1><p>От первого скриншота до готовой подачи проекта.</p></div><div class="fa-studio-main-actions"><button type="button" class="fa-studio-gallery-launch" data-studio-gallery>▤ Галерея</button><button type="button" class="fa-studio-primary" data-studio-new>＋ Новый проект</button></div></div><div class="fa-studio-task-grid">${tasks.map(([id,name,desc])=>`<button type="button" data-studio-tool="${id}" class="fa-studio-task">${studioIcon(id)}<strong>${name}</strong><small>${desc}</small><span>↗</span></button>`).join('')}</div><div class="fa-studio-section-title"><h2>Последние проекты</h2><button type="button" data-studio-tool="project">Все проекты ↗</button></div><div id="studioRecent"></div><div class="fa-studio-utilities"><button type="button" data-studio-tool="nodes">${studioIcon('nodes')}Сценарии<span>Соберите цепочку обработки</span></button><button type="button" data-studio-tool="settings">${studioIcon('settings')}Настройки<span>Формат и качество</span></button></div>`;
+ const home=document.createElement('section');home.id='formaStudioHome';home.innerHTML=`<div class="fa-studio-home-heading"><div><small>ФОРМА / РАБОЧАЯ СТУДИЯ</small><h1>Пространство для архитектуры.</h1><p>От первого скриншота до готовой подачи проекта.</p></div><div class="fa-studio-main-actions"><button type="button" class="fa-studio-gallery-launch" data-studio-gallery>▤ Галерея</button><button type="button" class="fa-studio-primary" data-studio-new>＋ Новый проект</button></div></div><div class="fa-studio-enhance-feature"><div class="fa-studio-enhance-icon">${studioIcon('enhance')}</div><div class="fa-studio-enhance-copy"><strong>Улучшить готовый рендер</strong><p>Новая AI-прорисовка того же кадра: листва, кора, газон, кусты и микрофактура материалов — без фильтра резкости.</p></div><button type="button" class="fa-studio-enhance-launch" data-studio-enhance>✦ Улучшить · AI</button></div><div class="fa-studio-task-grid">${tasks.map(([id,name,desc])=>`<button type="button" data-studio-tool="${id}" class="fa-studio-task">${studioIcon(id)}<strong>${name}</strong><small>${desc}</small><span>↗</span></button>`).join('')}</div><div class="fa-studio-section-title"><h2>Последние проекты</h2><button type="button" data-studio-tool="project">Все проекты ↗</button></div><div id="studioRecent"></div><div class="fa-studio-utilities"><button type="button" data-studio-tool="nodes">${studioIcon('nodes')}Сценарии<span>Соберите цепочку обработки</span></button><button type="button" data-studio-tool="settings">${studioIcon('settings')}Настройки<span>Формат и качество</span></button></div>`;
  $('.topline')?.after(home);
+ // All available pro / workflow tools were previously hidden behind a disclosure
+ // after the viewer; make the actual existing working catalog visible on the homepage.
+ const fullCatalog=$('#formaProjectPanel');
+ if(fullCatalog){
+  home.append(fullCatalog);
+  fullCatalog.classList.add('fa-studio-catalog-inline');
+  const disclosure=fullCatalog.querySelector('#formaAdvancedTools');
+  if(disclosure){
+   disclosure.open=true;
+   disclosure.addEventListener('toggle',()=>{if(!disclosure.open)disclosure.open=true});
+   const summary=disclosure.querySelector('summary');
+   if(summary){summary.setAttribute('aria-label','Дополнительные инструменты: все доступны ниже');summary.style.cursor='default';}
+  }
+ }
  document.addEventListener('click',e=>{
-  if(bypass)return;if(e.target.closest('[data-studio-gallery]')){e.preventDefault();e.stopImmediatePropagation();if(closeWorkspace()){window.FORMA_CABINET?.open('gallery');}return;}if(e.target.closest('.top-actions [data-studio-action=commands]')){e.preventDefault();e.stopImmediatePropagation();closeWorkspace();$('#formaStudioHome').scrollIntoView({behavior:'smooth'});return;}const tool=e.target.closest('[data-studio-tool]');
+  if(bypass)return;if(e.target.closest('[data-studio-enhance]')){e.preventDefault();e.stopImmediatePropagation();openWorkspace('enhance');return;}if(e.target.closest('[data-studio-gallery]')){e.preventDefault();e.stopImmediatePropagation();if(closeWorkspace()){window.FORMA_CABINET?.open('gallery');}return;}if(e.target.closest('.top-actions [data-studio-action=commands]')){e.preventDefault();e.stopImmediatePropagation();closeWorkspace();$('#formaStudioHome').scrollIntoView({behavior:'smooth'});return;}const tool=e.target.closest('[data-studio-tool]');
   if(tool){e.preventDefault();e.stopImmediatePropagation();openWorkspace(tool.dataset.studioTool);return;}
   if(e.target.closest('[data-studio-new]')){e.preventDefault();window.FORMA_ART_BRIDGE.newProject().then(()=>openWorkspace('project'));return;return;}
   const project=e.target.closest('[data-studio-project]');if(project){const selector=`[data-project="${CSS.escape(project.dataset.studioProject)}"]`;window.FORMA_ART_BRIDGE.selectProject(project.dataset.studioProject).then(()=>openWorkspace('project'));return;}
