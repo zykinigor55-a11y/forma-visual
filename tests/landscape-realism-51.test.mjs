@@ -34,10 +34,14 @@ test('all 18 shrub and tree botanical species are distinct, not just birches',()
 });
 
 test('a 2K master is never invented for a small local WebP thumbnail',()=>{
- assert.deepEqual(READY_HD_ASSETS,[]);
- const source=assetLayers(catalogFor('tree').find(x=>x.id==='birch'),{detail:true})[0].url;
- assert.equal(source,'assets/landscape/items/birch.webp');
- assert.match(placementMarkup(catalogFor('plant').find(x=>x.id==='juniper'),{detail:true}),/items\/juniper\.webp/);
+ assert.ok(Array.isArray(READY_HD_ASSETS));
+ assert.equal(new Set(READY_HD_ASSETS).size,READY_HD_ASSETS.length);
+ for(const [kind,id] of [['tree','birch'],['plant','juniper']]){
+  const source=assetLayers(catalogFor(kind).find(x=>x.id===id),{detail:true})[0].url;
+  const folder=READY_HD_ASSETS.includes(id)?'hd':'items';
+  assert.equal(source,'assets/landscape/'+folder+'/'+id+'.webp');
+ }
+ assert.match(placementMarkup(catalogFor('plant').find(x=>x.id==='juniper')),/items\/juniper\.webp/);
 });
 
 test('grass, groundcover, tree and shrub instructions reach the actual AI request',()=>{
