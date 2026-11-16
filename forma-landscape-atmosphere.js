@@ -4,7 +4,7 @@ import {PLANTS,PAVINGS,LIGHTS,LOOKS,ATMOSPHERE_VEGETATION,isLinearEdge,catalogFo
 import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_SCENE_GROUPS,ATMOSPHERE_FOREGROUND_PLANS} from './forma-atmosphere-scenes.js?v=composition-v2';
 import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming,prepareMaterialEdit} from './forma-local-composite.js';
 import {CUSTOM_LANDSCAPE_ID,CUSTOM_ASSET_LIMIT,customAssetKey,decodeLandscapeFile,makeCustomReferenceBoard} from './forma-landscape-custom-assets.js';
-import {specialById,isCurveKind,isBrushKind,curvePath,pointOnPolyline} from './forma-landscape-special-tools.js';
+import {specialById,isCurveKind,isBrushKind,curvePath,pointOnPolyline,drapedGarlandPoints} from './forma-landscape-special-tools.js?v=landscape-premium-v2';
 import {specialCardArt,landscapeMethod} from './forma-landscape-card-art.js';
 const $=id=>document.getElementById(id),bridge=()=>window.FORMA_ART_BRIDGE;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -137,12 +137,13 @@ function renderOverlay(){
    }
    shape=`<image href="${c.toDataURL()}" x="0" y="0" width="1000" height="1000" opacity=".45"/>`;
   }else if(isCurveKind(item.kind)){
-   const curve=curvePath(item.points,item.tension??.7),stroke=item.kind==='garland'?'#dfc394':color;
+   const plotted=item.kind==='garland'?drapedGarlandPoints(item.points,item.sag??.15):item.points;
+   const curve=curvePath(plotted,item.kind==='garland'?.25:item.tension??.7),stroke=item.kind==='garland'?'#dfc394':color;
    shape=`<path d="${curve}" fill="none" stroke="#20252a" stroke-width="${item.kind==='garland'?3:9}" stroke-linecap="round" stroke-linejoin="round"/><path d="${curve}" fill="none" stroke="${stroke}" stroke-opacity=".9" stroke-width="${item.kind==='garland'?1.3:5}" stroke-linecap="round"/>`;
    if(item.kind==='garland'){
-    const total=item.points.slice(1).reduce((v,p,j)=>v+Math.hypot(p.x-item.points[j].x,p.y-item.points[j].y),0);
+    const total=plotted.slice(1).reduce((v,p,j)=>v+Math.hypot(p.x-plotted[j].x,p.y-plotted[j].y),0);
     const n=Math.min(75,Math.max(2,Math.floor(total/(item.bulbSpacing||.035))));
-    shape+=Array.from({length:n+1},(_,k)=>{const p=pointOnPolyline(item.points,k/n);return `<circle cx="${p.x*1000}" cy="${p.y*1000}" r="3.4" fill="#f6d49a" stroke="#806c55" stroke-width=".8"/>`}).join('');
+    shape+=Array.from({length:n+1},(_,k)=>{const p=pointOnPolyline(plotted,k/n);return `<circle cx="${p.x*1000}" cy="${p.y*1000}" r="3.4" fill="#f6d49a" stroke="#806c55" stroke-width=".8"/>`}).join('');
    }
    if(active&&!cleanPreview)shape+=item.points.map(p=>`<circle class="fa-art-point" cx="${p.x*1000}" cy="${p.y*1000}" r="8"/>`).join('');
   }else if(['path','edge'].includes(item.kind)){
@@ -192,6 +193,7 @@ function pointerStart(e){
    const distance=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
    if(distance>.003){remember();pinchStart={itemId:item.id,distance,scale:item.w/(item.baseW||item.w)};dragging={type:'pinch'};message('Масштабирование двумя пальцами · максимум 200%.');return;}
   }
+  if(dragging?.type==='curve-brush')points=[];
   dragging=null;return;
  }
  if(activePointers.size>2)return;
@@ -214,6 +216,11 @@ function pointerStart(e){
  if(current?.points){const r=$('artStage').getBoundingClientRect(),vertex=current.points.findIndex(v=>Math.hypot((v.x-p.x)*r.width,(v.y-p.y)*r.height)<14);if(vertex>=0){remember();dragging={type:'vertex',item:current,vertex};return;}}
  const hit=[...items].reverse().find(i=>!['fill','scatter','path','edge','garland','climber'].includes(i.kind)&&p.x>=i.x-i.w/2&&p.x<=i.x+i.w/2&&p.y>=i.y-i.h&&p.y<=i.y);
  if(hit&&!e.altKey){remember();selected=hit.id;dragging={type:'object',item:hit,last:p};renderList();renderOverlay();return;}
+ if(isCurveKind(category)&&curveDrawMode==='brush'){
+  points=[p];dragging={type:'curve-brush'};
+  message('Проведите тонкую линию по нужной поверхности. После отпускания пальца её точки можно редактировать.');
+  renderOverlay();return;
+ }
  if(placingMode==='line'&&['plant','tree','light'].includes(category)){
   linePoints.push(p);if(linePoints.length===1){message('Теперь отметьте конец ряда.');return;}
   remember();const spacing=Number($('artSpacing')?.value||7)/100,h=category==='tree'?.4:.16,w=h*img.naturalHeight/img.naturalWidth;
@@ -243,6 +250,9 @@ function pointerMove(e){
   }
  }
  if(dragging.type==='brush'){const pts=dragging.stroke.points;if(pts.length<1000&&Math.hypot(p.x-pts.at(-1).x,p.y-pts.at(-1).y)>.002)pts.push(p);}
+ if(dragging.type==='curve-brush'){
+  if(points.length<80&&Math.hypot(p.x-points.at(-1).x,p.y-points.at(-1).y)>.012)points.push(p);
+ }
  if(dragging.type==='vertex')dragging.item.points[dragging.vertex]=p;
  if(dragging.type==='object'){
   const dx=p.x-dragging.last.x,dy=p.y-dragging.last.y,ids=selectedGroup.has(dragging.item.id)?selectedGroup:new Set([dragging.item.id]);
@@ -253,6 +263,11 @@ function pointerMove(e){
 function pointerEnd(e){
  if(e?.pointerId!=null)activePointers.delete(e.pointerId);
  if(activePointers.size>=2)return;
+ if(dragging?.type==='curve-brush'){
+  dragging=null;
+  if(e?.type==='pointercancel'||points.length<2){points=[];renderOverlay();message('Для гирлянды или плюща проведите достаточно длинную линию.');return;}
+  act('finish-path');return;
+ }
  if(dragging){
   dragging=null;pinchStart=null;persist();renderList();renderOverlay();
  }else pinchStart=null;
@@ -335,7 +350,7 @@ function act(action,button){
 }
 function updateGenerate(){if(!$('artGenerate'))return;$('artGenerate').disabled=busy||!snap?.hasSource||snap?.demo||(mode==='landscape'?!items.length:!atmosphere.strength);}
 function drawSelection(context,w,h){
- context.fillStyle='#fff';for(const item of items){const b=itemBounds(item);if(isBrushKind(item.kind)){const c=canvas(w,h),ctx=c.getContext('2d');ctx.strokeStyle='#fff';drawStrokes(ctx,item.strokes,w,h);context.drawImage(c,0,0);}else if(isCurveKind(item.kind)){context.strokeStyle='#fff';context.lineCap='round';context.lineJoin='round';context.lineWidth=(item.kind==='garland'?.035:.095)*Math.min(w,h);context.beginPath();item.points.forEach((p,i)=>i?context.lineTo(p.x*w,p.y*h):context.moveTo(p.x*w,p.y*h));context.stroke();}else if(['path','edge'].includes(item.kind)){context.beginPath();item.points.forEach((p,i)=>i?context.lineTo(p.x*w,p.y*h):context.moveTo(p.x*w,p.y*h));if(isLinearEdge(item)){context.strokeStyle='#fff';context.lineCap='round';context.lineJoin='round';context.lineWidth=(item.edgeWidth||.015)*Math.min(w,h);context.stroke();}else{context.closePath();context.fill();}}else context.fillRect(Math.floor(b.x*w),Math.floor(b.y*h),Math.ceil((b.right-b.x)*w),Math.ceil((b.bottom-b.y)*h));}
+ context.fillStyle='#fff';for(const item of items){const b=itemBounds(item);if(isBrushKind(item.kind)){const c=canvas(w,h),ctx=c.getContext('2d');ctx.strokeStyle='#fff';drawStrokes(ctx,item.strokes,w,h);context.drawImage(c,0,0); }else if(isCurveKind(item.kind)){context.strokeStyle='#fff';context.lineCap='round';context.lineJoin='round';context.lineWidth=(item.kind==='garland'?.035:.095)*Math.min(w,h);context.beginPath();const control=item.kind==='garland'?drapedGarlandPoints(item.points,item.sag??.15):item.points;control.forEach((p,i)=>i?context.lineTo(p.x*w,p.y*h):context.moveTo(p.x*w,p.y*h));context.stroke();}else if(['path','edge'].includes(item.kind)){context.beginPath();item.points.forEach((p,i)=>i?context.lineTo(p.x*w,p.y*h):context.moveTo(p.x*w,p.y*h));if(isLinearEdge(item)){context.strokeStyle='#fff';context.lineCap='round';context.lineJoin='round';context.lineWidth=(item.edgeWidth||.015)*Math.min(w,h);context.stroke();}else{context.closePath();context.fill();}}else context.fillRect(Math.floor(b.x*w),Math.floor(b.y*h),Math.ceil((b.right-b.x)*w),Math.ceil((b.bottom-b.y)*h));}
 }
 async function landscapePayload(expected){
  const base=await loadImage(expected.image),w=base.naturalWidth,h=base.naturalHeight,crop=cropBounds(items,w,h);
