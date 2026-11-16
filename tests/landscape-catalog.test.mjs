@@ -55,3 +55,13 @@ test('guided landscape prompts distinguish clean crop, layout, and species board
  assert.equal(normalizeLandscape(normalizeLandscape(input)).placementGuide,true);
  const p=landscapePrompt(input);assert.match(p,/Image 2.*placement guide/i);assert.match(p,/Image 3.*reference board/i);assert.match(p,/Never relocate.*terrace|balcony/i);assert.match(p,/root.*anchor/i);
 });
+test('planted pots share one assembly with the stem inside the rim and ground anchor at container base',()=>{
+ const entry=catalogFor('object').find(e=>e.id==='metal-pot'),layers=ui.assetLayers(entry);
+ assert.equal(layers.length,3);assert.match(layers[0].url,/metal-pot/);assert.match(layers[1].url,/thuja/);assert.ok(layers[2].clip.length>=4);
+ assert.ok(layers[1].y+layers[1].h>layers[0].y+.15*layers[0].h);
+ assert.ok(layers[1].y+layers[1].h<layers[0].y+.4*layers[0].h);
+ assert.match(ui.placementMarkup(entry),/clipPath/);
+ const p=landscapePrompt({placementGuide:true,speciesBoard:true,items:[{kind:'object',catalogId:'metal-pot',x:.5,y:.8,w:.2,h:.4}]});
+ assert.match(p,/container bottom.*ground anchor/i);assert.match(p,/front rim.*occlude/i);assert.match(p,/regenerate.*all.*object pixels/i);assert.match(p,/depth of field/i);
+ assert.doesNotMatch(p,/The plant root must contact the ground exactly/);
+});

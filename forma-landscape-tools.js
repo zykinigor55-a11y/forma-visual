@@ -1,6 +1,6 @@
 export function scalePlacement(item,factor){
- const f=Math.max(.1,Math.min(6,Number(factor)||1));
- const w=(item.baseW||item.w)*f,h=(item.baseH||item.h)*f,limit=Math.min(1,.9/Math.max(w,h));
+ const f=Math.max(.1,Math.min(12,Number(factor)||1));
+ const w=(item.baseW||item.w)*f,h=(item.baseH||item.h)*f,limit=Math.min(1,3/Math.max(w,h));
  return {...item,w:w*limit,h:h*limit};
 }
 export function linePlacements(a,b,spacing=.05){const distance=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.min(40,Math.round(distance/Math.max(.01,spacing))));return Array.from({length:n+1},(_,i)=>({x:a.x+(b.x-a.x)*i/n,y:a.y+(b.y-a.y)*i/n}));}
@@ -14,3 +14,5 @@ export function translateGroup(items,ids,dx,dy){
  return items.map(i=>{if(!ids.has(i.id))return i;const out=structuredClone(i),shift=p=>{p.x+=dx;p.y+=dy;};if(out.points)out.points.forEach(shift);else if(out.strokes)out.strokes.forEach(s=>s.points.forEach(shift));else shift(out);return out;});
 }
 export function selectionHasCoverage(pixels){for(let i=3;i<pixels.length;i+=4)if(pixels[i]>0)return true;return false;}
+
+export function automaticInfluence(item){return {shadow:Math.min(.4,item.h*.55),reflection:Math.min(.7,item.h*.8)};}

@@ -14,7 +14,7 @@ function openSettings(){
 }
 function closeSettings(){if(!dialog)return;marker?.replaceWith(settingsHost);settingsHost?.classList.remove('is-dialog');dialog.close();dialog.remove();dialog=null;lastFocus?.focus({preventScroll:true});}
 function showAdd(from){
- const d=document.createElement('dialog');d.className='fa-workflow-add';d.setAttribute('aria-label','Добавить следующий блок');d.innerHTML='<header><h2>Следующий шаг</h2><button type="button" data-dismiss aria-label="Закрыть">×</button></header><p>Блок подключится к выбранному выходу.</p><div>'+Object.entries(names).filter(([k])=>k!=='source').map(([k,v])=>`<button type="button" data-add="${k}">${v}<span>＋</span></button>`).join('')+'</div>';document.body.append(d);d.showModal();
+ const d=document.createElement('dialog');d.className='fa-workflow-add';d.setAttribute('aria-label','Добавить следующий блок');d.innerHTML='<header><h2>Следующий шаг</h2><button type="button" data-dismiss aria-label="Закрыть">×</button></header><p>Блок подключится к выбранному выходу.</p><div>'+Object.entries(names).map(([k,v])=>`<button type="button" data-add="${k}">${v}<span>＋</span></button>`).join('')+'</div>';document.body.append(d);d.showModal();
  d.addEventListener('click',e=>{const add=e.target.closest('[data-add]');if(add){window.FORMA_NODES.add(add.dataset.add,window.FORMA_NODES.getNode(from)?.type==='export'?null:from);d.close();d.remove();window.FORMA_NODES.openStep(window.FORMA_NODES.graph().selected);}if(e.target.closest('[data-dismiss]')){d.close();d.remove();}});d.addEventListener('cancel',()=>d.remove(),{once:true});
 }
 async function uploadSource(node){
@@ -65,7 +65,7 @@ function enhanceSettings(){
 }
 function enhance(){
  const flow=$('#faFlowBackdrop');if(!flow)return;
- if(!$('#faFlowAddBlock')){const b=document.createElement('button');b.id='faFlowAddBlock';b.type='button';b.textContent='＋ Шаг';b.onclick=()=>showAdd(window.FORMA_NODES.graph().selected);$('.fa-flow-head-actions',flow)?.prepend(b);}
+ if(!$('#faFlowAddBlock')){const b=document.createElement('button');b.id='faFlowAddBlock';b.type='button';b.textContent='＋ Добавить блок';b.onclick=()=>showAdd(window.FORMA_NODES.graph().selected);$('.fa-flow-head-actions',flow)?.prepend(b);}
  const title=$('.fa-flow-name b',flow);if(title&&title.textContent.includes('НОДЫ'))title.innerHTML='ФОРМА <span>/ СЦЕНАРИИ</span>';
  const label=$('.fa-flow-name small',flow);if(label&&label.textContent!=='Исходник → обработка → результат')label.textContent='Исходник → обработка → результат';
  if(!$('#faFlowSearch')){

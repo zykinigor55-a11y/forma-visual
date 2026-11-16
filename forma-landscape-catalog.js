@@ -13,13 +13,23 @@ export function catalogGroup(group){
 const asset=id=>'assets/landscape/items/'+id+'.webp';
 export function assetLayers(entry){
  if(!entry)return [];
- return entry.planted?[
-  {url:asset(entry.planted),x:.04,y:0,w:.92,h:.78},
-  {url:asset(entry.id),x:.22,y:.59,w:.56,h:.41}
- ]:[{url:asset(entry.id),x:0,y:0,w:1,h:1}];
+ if(!entry.planted)return [{url:asset(entry.id),x:0,y:0,w:1,h:1}];
+ const pot={url:asset(entry.id),x:.15,y:.60,w:.70,h:.40};
+ // Draw the back of the container, insert the stem into its mouth, then occlude it with the front rim.
+ const lips={'metal-pot':[[.08,.24],[.75,.25],[.94,.12],[.94,1],[.08,1]],'concrete-pot':[[.025,.38],[.25,.46],[.75,.46],[.975,.38],[.975,1],[.025,1]],'stone-pot':[[.025,.30],[.30,.38],[.75,.38],[.975,.30],[.975,1],[.025,1]]};
+ return [pot,{url:asset(entry.planted),x:.15,y:0,w:.70,h:entry.id==='metal-pot'?.69:.73},{...pot,clip:lips[entry.id]}];
 }
+let clipSequence=0;
 export function placementMarkup(entry,{x=0,y=0,w=320,h=320}={}){
- return assetLayers(entry).map(l=>`<image href="${l.url}" x="${x+l.x*w}" y="${y+l.y*h}" width="${l.w*w}" height="${l.h*h}" preserveAspectRatio="none"/>`).join('');
+ return assetLayers(entry).map(l=>{
+  const id='planter-rim-'+(++clipSequence),clip=l.clip?`<defs><clipPath id="${id}"><polygon points="${l.clip.map(([px,py])=>`${x+(l.x+px*l.w)*w},${y+(l.y+py*l.h)*h}`).join(' ')}"/></clipPath></defs>`:'';
+  return clip+`<image href="${l.url}" x="${x+l.x*w}" y="${y+l.y*h}" width="${l.w*w}" height="${l.h*h}" preserveAspectRatio="none"${l.clip?` clip-path="url(#${id})"`:''}/>`;
+ }).join('');
+}
+export function drawAssetLayer(ctx,picture,layer,x,y,w,h){
+ ctx.save();
+ if(layer.clip){ctx.beginPath();layer.clip.forEach(([px,py],i)=>ctx[i?'lineTo':'moveTo'](x+(layer.x+px*layer.w)*w,y+(layer.y+py*layer.h)*h));ctx.closePath();ctx.clip();}
+ ctx.drawImage(picture,x+layer.x*w,y+layer.y*h,layer.w*w,layer.h*h);ctx.restore();
 }
 export function referenceEntries(items){
  return [...new Map(items.map(i=>[i.catalogId,{kind:i.kind,entry:catalogFor(i.kind).find(e=>e.id===i.catalogId)}])).values()];

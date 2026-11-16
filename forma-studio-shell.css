@@ -67,3 +67,17 @@ html[data-forma-theme] body.fa-unified-studio #formaStudioWorkspace :is(.materia
 #formaStudioWorkspace #animationPanel :is(.anim-section-title strong,.anim-section-title small,.anim-option-copy em,.anim-option-copy small,.anim-section-chevron){color:var(--fs-muted)!important}
 #formaStudioWorkspace #animationPanel .anim-section-title strong{color:var(--fs-text)!important}
 #formaStudioWorkspace .compare-hint{background:var(--fs-raised)!important;color:var(--fs-muted)!important;border-color:var(--fs-line)!important}
+
+[data-studio-sun] svg{width:18px;height:18px;vertical-align:middle;margin-right:5px} [data-studio-sun]{display:inline-flex;align-items:center;gap:5px}
+
+/* Keep the canvas in the sole remaining mobile grid row after hiding the palette. */
+#faFlowBackdrop #faFlowAddBlock{display:inline-flex!important;align-items:center;justify-content:center;width:auto!important;min-height:34px;padding:6px 10px!important;font-size:11px!important;white-space:nowrap}
+@media(max-width:760px){
+ html[data-forma-theme] #faFlowBackdrop .fa-flow-main{display:flex!important;flex-direction:column;min-height:0;overflow:hidden}
+ html[data-forma-theme] #faFlowBackdrop .fa-flow-center{grid-row:auto!important;flex:1;min-height:0;width:100%}
+ html[data-forma-theme] #faFlowBackdrop .fa-flow-sidebar{display:none!important}
+ #faFlowBackdrop .fa-flow-controls{flex-wrap:wrap;flex:none;gap:5px!important}
+ #faFlowBackdrop .fa-flow-controls>div{flex-wrap:wrap;gap:5px}
+ #faFlowBackdrop .fa-flow-viewport{min-height:140px;flex:1}
+ #faFlowBackdrop .fa-flow-bottom{flex:none}
+}
