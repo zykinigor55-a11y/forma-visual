@@ -1,0 +1,12 @@
+/* FORMA — post-render generative photo enhancement, matching both light and dark workspaces. */
+#formaResultFocus .forma-result-enhance{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:12px 0 18px;padding:17px 19px;border:1px solid rgba(175,157,120,.42);border-radius:14px;background:rgba(171,147,106,.075);color:inherit}
+#formaResultFocus .forma-result-enhance[hidden]{display:none!important}
+#formaResultFocus .forma-result-enhance-copy{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:760px}
+#formaResultFocus .forma-result-enhance-copy strong{font-size:14px;line-height:1.3;font-weight:650;letter-spacing:.005em}
+#formaResultFocus .forma-result-enhance-copy small{display:block;font-size:12px;line-height:1.55;opacity:.78}
+#formaResultFocus #formaEnhanceStatus{display:block;margin-top:3px;font-size:11px;line-height:1.5;opacity:.9}
+#formaResultFocus .forma-result-enhance-btn{font:inherit;font-size:13px;font-weight:650;letter-spacing:.01em;white-space:nowrap;border:1px solid #b39b72;background:#b39b72;color:#171717;border-radius:9px;min-height:47px;padding:12px 18px;cursor:pointer;transition:background .15s ease,transform .15s ease,opacity .15s ease}
+#formaResultFocus .forma-result-enhance-btn:hover:not(:disabled){background:#c4ac82;transform:translateY(-1px)}
+#formaResultFocus .forma-result-enhance-btn:focus-visible{outline:2px solid #b39b72;outline-offset:3px}
+#formaResultFocus .forma-result-enhance-btn:disabled{opacity:.6;cursor:wait}
+@media(max-width:680px){#formaResultFocus .forma-result-enhance{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin:10px 0 14px;padding:14px}#formaResultFocus .forma-result-enhance-btn{width:100%}}
