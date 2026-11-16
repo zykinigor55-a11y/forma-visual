@@ -19,6 +19,13 @@
    stage==='recovering'?'Восстанавливаем результат ранее отправленного задания…':
    stage==='failed'?'Генерация не удалась. Повторный запрос автоматически не отправлялся.':'';
   document.dispatchEvent(new CustomEvent('forma:render-job-status',{detail:{...meta,status:stage,message:status}}));
+  const progress=document.getElementById('renderProgress');
+  if(progress&&!progress.hidden){
+   const detail=document.getElementById('renderProgressDetail');
+   if(detail&&status)detail.textContent=status;
+   const hint=document.getElementById('renderProgressHint');
+   if(hint&&stage==='queued')hint.textContent='Рендер запустится автоматически, когда сервер освободится. Не нажимайте создание повторно.';
+  }
   for(const selector of ['#artStatus','#formaEnhanceStatus']){
    const element=document.querySelector(selector);
    if(element&&element.closest('dialog[open]'))element.textContent=status;
@@ -57,11 +64,11 @@
   if(!job?.jobId)return fallbackResponse(502,'Сервер не выдал номер задания.');
   remember({jobId:job.jobId,key,created:Date.now()});
   const started=Date.now();
-  let state=job,failures=0,lastStatus='';
+  let state=job,failures=0,lastStatus='',lastPosition=-1;
   while(Date.now()-started<WAIT_LIMIT){
    const phase=state.status;
-   if(phase!==lastStatus||phase==='queued'&&state.position!==job.position){
-    tell(phase,state);lastStatus=phase;
+   if(phase!==lastStatus||phase==='queued'&&state.position!==lastPosition){
+    tell(phase,state);lastStatus=phase;lastPosition=state.position;
    }
    if(phase==='completed'){
     tell('completed',state);
