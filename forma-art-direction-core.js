@@ -1,6 +1,6 @@
 /* Shared, allowlisted art-direction contract. No provider or browser dependencies. */
-import {ATMOSPHERE_SCENARIOS} from './forma-atmosphere-scenes.js';
-import {authoredAtmospherePrompt} from './forma-atmosphere-prompt.js';
+import {ATMOSPHERE_SCENARIOS} from './forma-atmosphere-scenes.js?v=composition-v2';
+import {authoredAtmospherePrompt} from './forma-atmosphere-prompt.js?v=composition-v2';
 export const PLANTS=Object.freeze([
  {id:'juniper',name:'Можжевельник',description:'Низкий хвойный куст',prompt:'low spreading Juniperus horizontalis Blue Chip, fine natural blue-green needles',color:'#637b68'},
  {id:'willow-nana',name:'Ива Nana',description:'Округлая воздушная крона',prompt:'compact Salix purpurea Nana shrub with fine silvery-green leaves',color:'#9da886'},
