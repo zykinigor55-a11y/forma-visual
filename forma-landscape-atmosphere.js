@@ -49,7 +49,7 @@ function makeDialog(){
 }
 async function open(which){
  if(!bridge()||busy)return;const next=bridge().snapshot();if(!next)return;
- mode=which;cleanPreview=false;dragging=null;selectedGroup.clear();linePoints=[];lastFocus=document.activeElement;snap=next;history=[];points=[];selected=null;focusMode=false;cursor={x:.5,y:.5};cursorVisible=false;
+ mode=which;cleanPreview=false;dragging=null;pinchStart=null;activePointers.clear();selectedGroup.clear();linePoints=[];lastFocus=document.activeElement;snap=next;history=[];points=[];selected=null;focusMode=false;cursor={x:.5,y:.5};cursorVisible=false;
  if(!dialog)makeDialog();
  items=Array.isArray(snap.landscape?.items)&&snap.landscape.sourceKey===snap.sourceKey&&(snap.landscape.renderId||null)===(snap.renderId||null)?structuredClone(snap.landscape.items):[];
  items=items.map(item=>['path','edge','fill'].includes(item.kind)?item:{...clampLegacyPlacement(item),influence:automaticInfluence(clampLegacyPlacement(item)),influenceManual:false});
@@ -179,7 +179,32 @@ function place(e){
 }
 function eventPoint(e){const r=$('artStage').getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};}
 function pointerStart(e){
- if(busy||!ensureSource())return;if(mode!=='landscape'){place(e);return;}const p=eventPoint(e);$('artCanvasInput').setPointerCapture(e.pointerId);
+ if(busy||!ensureSource())return;
+ if(mode!=='landscape'){place(e);return;}
+ const p=eventPoint(e);
+ activePointers.set(e.pointerId,p);
+ $('artCanvasInput').setPointerCapture(e.pointerId);
+ if(activePointers.size===2){
+  const item=items.find(i=>i.id===selected&&!isBrushKind(i.kind)&&!isCurveKind(i.kind)&&!['path','edge'].includes(i.kind));
+  if(item){
+   const pts=[...activePointers.values()];
+   const distance=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+   if(distance>.003){remember();pinchStart={itemId:item.id,distance,scale:item.w/(item.baseW||item.w)};dragging={type:'pinch'};message('Масштабирование двумя пальцами · максимум 200%.');return;}
+  }
+  dragging=null;return;
+ }
+ if(activePointers.size>2)return;
+ const currentScale=items.find(i=>i.id===selected&&!isBrushKind(i.kind)&&!isCurveKind(i.kind)&&!['path','edge'].includes(i.kind));
+ if(currentScale){
+  const stage=$('artStage').getBoundingClientRect();
+  const hx=currentScale.x+currentScale.w/2,hy=currentScale.y-currentScale.h;
+  if(Math.hypot((p.x-hx)*stage.width,(p.y-hy)*stage.height)<=24){
+   remember();
+   dragging={type:'resize',itemId:currentScale.id,startFactor:currentScale.w/(currentScale.baseW||currentScale.w),
+    startDistance:Math.max(.001,Math.hypot(p.x-currentScale.x,p.y-currentScale.y))};
+   message('Перемещайте угловой маркер, чтобы изменить размер объекта до 200%.');return;
+  }
+ }
  if(isBrushKind(category)){
   remember();let item=items.find(i=>i.id===selected&&i.kind===category&&i.catalogId===chosen);if(!item&&eraser){message('Сначала нарисуйте покрытие кистью.');return;}if(!item){item={id:id(),kind:category,catalogId:chosen,strokes:[],...(category==='scatter'?{density:60,wind:0}:{})};items.push(item);selected=item.id;}
   const stroke={size:brushSize,erase:eraser,points:[p]};item.strokes.push(stroke);dragging={type:'brush',stroke};renderList();renderOverlay();return;
@@ -197,15 +222,40 @@ function pointerStart(e){
  place(e);
 }
 function pointerMove(e){
- if(!dragging||busy)return;const p=eventPoint(e);
+ if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,eventPoint(e));
+ if(busy||!dragging)return;
+ if(pinchStart&&activePointers.size>=2){
+  const item=items.find(i=>i.id===pinchStart.itemId);
+  if(!item)return;
+  const pts=[...activePointers.values()],distance=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+  const factor=Math.min(2,Math.max(.2,pinchStart.scale*distance/Math.max(.001,pinchStart.distance)));
+  Object.assign(item,scalePlacement(item,factor));item.influence=automaticInfluence(item);
+  renderOverlay();e.preventDefault();return;
+ }
+ const p=eventPoint(e);
+ if(dragging.type==='resize'){
+  const item=items.find(i=>i.id===dragging.itemId);
+  if(item){
+   const distance=Math.hypot(p.x-item.x,p.y-item.y);
+   const factor=Math.min(2,Math.max(.2,dragging.startFactor*distance/dragging.startDistance));
+   Object.assign(item,scalePlacement(item,factor));item.influence=automaticInfluence(item);
+  }
+ }
  if(dragging.type==='brush'){const pts=dragging.stroke.points;if(pts.length<1000&&Math.hypot(p.x-pts.at(-1).x,p.y-pts.at(-1).y)>.002)pts.push(p);}
  if(dragging.type==='vertex')dragging.item.points[dragging.vertex]=p;
  if(dragging.type==='object'){
-  const dx=p.x-dragging.last.x,dy=p.y-dragging.last.y,ids=selectedGroup.has(dragging.item.id)?selectedGroup:new Set([dragging.item.id]);items=translateGroup(items,ids,dx,dy);dragging.item=items.find(i=>i.id===selected);dragging.last=p;
+  const dx=p.x-dragging.last.x,dy=p.y-dragging.last.y,ids=selectedGroup.has(dragging.item.id)?selectedGroup:new Set([dragging.item.id]);
+  items=translateGroup(items,ids,dx,dy);dragging.item=items.find(i=>i.id===selected);dragging.last=p;
  }
  renderOverlay();
 }
-function pointerEnd(){if(dragging){dragging=null;persist();renderList();renderOverlay();}}
+function pointerEnd(e){
+ if(e?.pointerId!=null)activePointers.delete(e.pointerId);
+ if(activePointers.size>=2)return;
+ if(dragging){
+  dragging=null;pinchStart=null;persist();renderList();renderOverlay();
+ }else pinchStart=null;
+}
 function keyCanvas(e){
  if(busy||!ensureSource())return;
  if((e.key==='Enter'||e.key===' ')&&isBrushKind(category)&&mode==='landscape'){e.preventDefault();remember();let item=items.find(i=>i.id===selected&&i.kind===category&&i.catalogId===chosen);if(!item&&eraser){message('Сначала нарисуйте покрытие кистью.');return;}if(!item){item={id:id(),kind:category,catalogId:chosen,strokes:[],...(category==='scatter'?{density:60,wind:0}:{})};items.push(item);selected=item.id;}item.strokes.push({size:brushSize,erase:eraser,points:[{...cursor}]});persist();renderList();renderOverlay();return;}
