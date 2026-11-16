@@ -32,16 +32,16 @@
   }
  }
  function remember(record){
-  try{sessionStorage.setItem(RECOVERY_KEY,JSON.stringify(record))}catch{}
+  try{localStorage.setItem(RECOVERY_KEY,JSON.stringify(record))}catch{}
  }
  function forget(jobId){
   try{
-   const old=JSON.parse(sessionStorage.getItem(RECOVERY_KEY)||'null');
-   if(old?.jobId===jobId)sessionStorage.removeItem(RECOVERY_KEY);
+   const old=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'null');
+   if(old?.jobId===jobId)localStorage.removeItem(RECOVERY_KEY);
   }catch{}
  }
  async function recoverLast(){
-  let job;try{job=JSON.parse(sessionStorage.getItem(RECOVERY_KEY)||'null')}catch{return null}
+  let job;try{job=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'null')}catch{return null}
   if(!job?.jobId||!/^[a-f0-9]{48}$/.test(job.jobId)||Date.now()-(job.created||0)>20*60*1000)return null;
   const status=await fetch(PREFIX+'/'+job.jobId,{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
   if(!status)return null;
@@ -62,7 +62,11 @@
   if(!res.ok)return res;
   const job=await res.json().catch(()=>null);
   if(!job?.jobId)return fallbackResponse(502,'Сервер не выдал номер задания.');
-  remember({jobId:job.jobId,key,created:Date.now()});
+  const snap=window.FORMA_ART_BRIDGE?.snapshot?.();
+  remember({jobId:job.jobId,key,created:Date.now(),projectId:snap?.projectId||null,sourceKey:snap?.sourceKey||null});
+  return await waitForJob(job);
+ }
+ async function waitForJob(job){
   const started=Date.now();
   let state=job,failures=0,lastStatus='',lastPosition=-1;
   while(Date.now()-started<WAIT_LIMIT){
@@ -102,5 +106,37 @@
   }
   return fallbackResponse(504,'Превышено время ожидания очереди. Не отправляйте повторную генерацию без проверки задания '+job.jobId+'.','job_wait_timeout');
  }
+ function showRecovery(){
+  recoverLast().then(last=>{
+   if(!last||last.status==='failed'||document.getElementById('formaQueueRecover'))return;
+   const banner=document.createElement('aside');banner.id='formaQueueRecover';banner.className='forma-queue-recover';
+   banner.setAttribute('aria-label','Восстановление последнего рендера');
+   banner.innerHTML='<div class="forma-queue-recover-copy"><strong>Есть незавершённый AI-рендер</strong><span role="status">Проверьте задание без нового платного запроса.</span></div><button type="button" data-queue-restore>Восстановить</button><button type="button" class="forma-queue-recover-close" data-queue-hide aria-label="Скрыть">×</button>';
+   document.body.append(banner);
+   if(last.status==='completed')banner.querySelector('[role=status]').textContent='Готовый кадр ожидает загрузки. Повторная генерация не нужна.';
+   banner.querySelector('[data-queue-hide]').addEventListener('click',()=>banner.remove());
+   banner.querySelector('[data-queue-restore]').addEventListener('click',async()=>{
+    const button=banner.querySelector('[data-queue-restore]'),status=banner.querySelector('[role=status]');
+    button.disabled=true;button.textContent='Проверяем…';
+    try{
+     const response=await waitForJob(last);
+     const result=await response.json().catch(()=>({error:'Некорректный ответ сервера.'}));
+     if(!response.ok||!result.images?.[0])throw Error(result.error||'Результат не найден. Проверьте расход API.');
+     const src='data:'+(result.mimes?.[0]||'image/png')+';base64,'+result.images[0];
+     const bridge=window.FORMA_ART_BRIDGE,snap=bridge?.snapshot?.();
+     const sameProject=!!(snap?.hasSource&&!snap.demo&&snap.projectId===last.projectId&&snap.sourceKey===last.sourceKey);
+     const onSave=sameProject?()=>bridge.saveResult(src,'Восстановленный AI-рендер',snap):undefined;
+     const shown=window.FORMA_RESULT_FOCUS?.show?.({image:src,project:snap?.projectName||'Восстановленный кадр',scene:'Результат после перезагрузки',onSave});
+     if(!shown){
+      const a=document.createElement('a');a.href=src;a.download='FORMA-recovered-render.png';document.body.append(a);a.click();a.remove();
+      status.textContent='Кадр скачан. Его можно добавить в проект вручную.';
+     }else banner.remove();
+    }catch(error){status.textContent=error.message||'Не удалось восстановить кадр.'}
+    finally{button.disabled=false;button.textContent='Восстановить'}
+   });
+  }).catch(()=>{});
+ }
  window.FORMA_RENDER_QUEUE={fetch:queuedFetch,recoverLast};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',showRecovery,{once:true});
+ else setTimeout(showRecovery,0);
 })();
