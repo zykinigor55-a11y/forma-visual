@@ -81,7 +81,7 @@
  }
  function ready(){
   // The only source of truth for initialized projects is the core app.
-  return window.FORMA_APP_READY===true;
+  return window.FORMA_APP_READY===true && window.FORMA_STUDIO_READY===true && !!document.getElementById('formaStudioHome') && document.body.classList.contains('fa-unified-studio');
  }
  function revealStudio(force=false){
   if(!active||closing||previewHold&&!force||!force&&(!minimumPassed||!ready()))return;
@@ -143,6 +143,7 @@
   }));
  }
  document.addEventListener('forma:app-ready',()=>checkReadiness());
+ document.addEventListener('forma:studio-ready',()=>checkReadiness());
  document.addEventListener('DOMContentLoaded',()=>{if(active)lockWorkspace(true)},{once:true});
  recover?.addEventListener('click',()=>revealStudio(true));
  // For navigation restored from browser back-forward cache: rerun the SAME sequence.
