@@ -1,0 +1,41 @@
+/* FORMA / LIGHT STUDIO — direct light editing over the actual source frame */
+#faLightCanvasOverlay{position:absolute;inset:0;z-index:28;isolation:isolate;overflow:hidden;touch-action:none;pointer-events:none}
+#faLightCanvasOverlay[hidden]{display:none!important}
+#faLightCanvasOverlay .fa-light-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;opacity:.92}
+#faLightCanvasOverlay .fa-light-hitplane{position:absolute;inset:0;pointer-events:auto;touch-action:none;cursor:crosshair;background:transparent}
+#faLightCanvasOverlay:not(.fa-light-has-sources) .fa-light-hitplane{pointer-events:none}
+#faLightCanvasOverlay .fa-light-handles{position:absolute;inset:0;pointer-events:none}
+#faLightCanvasOverlay .fa-light-pair{position:absolute;inset:0;pointer-events:none}
+#faLightCanvasOverlay .fa-light-direction{position:absolute;display:block;height:0;border-top:1px dashed rgba(255,235,190,.8);transform-origin:0 50%;pointer-events:none;filter:drop-shadow(0 0 2px #000)}
+#faLightCanvasOverlay button.fa-light-marker,#faLightCanvasOverlay button.fa-light-aim{position:absolute;display:grid!important;place-items:center!important;margin:0!important;transform:translate(-50%,-50%)!important;pointer-events:auto!important;touch-action:none!important;border-radius:50%!important;white-space:nowrap!important;line-height:1!important;outline:none;user-select:none;-webkit-user-select:none}
+#faLightCanvasOverlay button.fa-light-marker{width:34px!important;height:34px!important;padding:0!important;border:1px solid rgba(255,247,229,.84)!important;background:#202326db!important;box-shadow:0 3px 12px #0008,0 0 0 4px #e1bb7b36!important;color:#f9f1df!important;font:700 12px/1 Arial,sans-serif!important;cursor:grab}
+#faLightCanvasOverlay button.fa-light-marker[data-fixture="fixture"]{background:#b89b70e8!important;color:#181818!important;border-color:#fce5bd!important}
+#faLightCanvasOverlay button.fa-light-aim{width:25px!important;height:25px!important;padding:0!important;background:#211c17c9!important;border:1px solid #ead6b5!important;color:#f4d6a9!important;font:500 19px/1 Arial,sans-serif!important;cursor:crosshair}
+#faLightCanvasOverlay .is-selected button.fa-light-marker{box-shadow:0 0 0 5px #d7b98b77,0 4px 18px #000c!important;border:2px solid #fff2c9!important}
+#faLightCanvasOverlay .is-selected button.fa-light-aim{box-shadow:0 0 0 4px #f6d1a04a!important}
+#faLightCanvasOverlay button.fa-light-marker:focus-visible,#faLightCanvasOverlay button.fa-light-aim:focus-visible,#faLightCanvasOverlay button[data-light-preview-toggle]:focus-visible{outline:2px solid #fff!important;outline-offset:4px!important}
+#faLightCanvasOverlay .fa-light-overlay-toolbar{position:absolute;left:11px;top:11px;right:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+#faLightCanvasOverlay .fa-light-overlay-toolbar strong{color:#f8ede1!important;font-size:9px!important;font-weight:650;letter-spacing:.16em;line-height:1.4;text-shadow:0 2px 5px #000d}
+#faLightCanvasOverlay .fa-light-overlay-toolbar strong span{font-size:8px;color:#dfd2bb}
+#faLightCanvasOverlay button[data-light-preview-toggle]{pointer-events:auto!important;background:#191a1dcf!important;color:#fae2c5!important;padding:7px 10px!important;min-height:34px!important;border:1px solid #e3c59c70!important;border-radius:7px!important;font-size:10px!important;white-space:nowrap;cursor:pointer}
+#faLightCanvasOverlay .fa-light-overlay-help{position:absolute;bottom:10px;left:10px;right:10px;text-align:center;margin:0 auto;padding:7px 12px;max-width:max-content;border-radius:6px;background:#101013bf;color:#fff1db!important;font:500 10px/1.35 Arial,sans-serif!important;pointer-events:none}
+#faLightCanvasOverlay:not(.fa-light-has-sources) .fa-light-overlay-help{display:none}
+#faLightCanvasOverlay.fa-light-preview-off .fa-light-preview{opacity:0}
+#faInteriorLightEditor .fa-light-mode{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:9px 0 9px}
+#faInteriorLightEditor button[data-light-mode]{min-width:0;min-height:42px;padding:10px 6px;border:1px solid var(--fs-line,#545861);border-radius:6px;background:transparent;color:var(--fs-muted,#afb5bd);font:500 10px/1.4 Arial,sans-serif;cursor:pointer}
+#faInteriorLightEditor button[data-light-mode].active,#faInteriorLightEditor button[data-light-mode][aria-pressed="true"]{background:var(--fs-raised,#393d43)!important;color:var(--fs-text,#efefef)!important;border-color:var(--fs-accent,#c1a77d)!important}
+#faInteriorLightEditor button.fa-light-on-image{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:35px;padding:9px 10px;margin-bottom:15px;border:1px dashed var(--fs-accent,#c1a77d);border-radius:6px;background:transparent;color:var(--fs-text,#efefef);font-size:11px;cursor:pointer}
+#faInteriorLightEditor button.fa-light-on-image:hover{background:var(--fs-raised,#393d43)}
+#faInteriorLightEditor .fa-light-controls{margin-top:6px}
+#formaStudioWorkspace[data-tool="interior"] #stage:has(#faLightCanvasOverlay:not([hidden])) #splitSlider{pointer-events:none!important}
+@media(max-width:760px){
+ #faLightCanvasOverlay .fa-light-overlay-toolbar{top:7px;left:7px;right:7px;gap:5px}
+ #faLightCanvasOverlay .fa-light-overlay-toolbar strong{font-size:8px!important;letter-spacing:.08em}
+ #faLightCanvasOverlay .fa-light-overlay-toolbar strong span{display:none}
+ #faLightCanvasOverlay button[data-light-preview-toggle]{padding:6px 7px!important;min-height:29px!important;font-size:9px!important}
+ #faLightCanvasOverlay button.fa-light-marker{width:37px!important;height:37px!important}
+ #faLightCanvasOverlay button.fa-light-aim{width:29px!important;height:29px!important}
+ #faLightCanvasOverlay .fa-light-overlay-help{font-size:9px!important;bottom:5px;left:5px;right:5px;padding:6px}
+ #faInteriorLightEditor button[data-light-mode]{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){#faLightCanvasOverlay *{transition:none!important;animation:none!important}}
