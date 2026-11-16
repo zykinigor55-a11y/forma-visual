@@ -67,7 +67,7 @@
  function moveHandles(){
   if(!handles||!stage)return;
   const items=draft||sources(),rect=stage.getBoundingClientRect(),w=rect.width,h=rect.height;
-  handles.querySelectorAll('[data-light-index]').forEach(node=>{
+  handles.querySelectorAll('.fa-light-pair').forEach(node=>{
    const index=Number(node.dataset.lightIndex),source=items[index];if(!source)return;
    const marker=node.querySelector('.fa-light-marker'),aim=node.querySelector('.fa-light-aim'),line=node.querySelector('.fa-light-direction');
    const x=source.x*w/100,y=source.y*h/100,tx=source.targetX*w/100,ty=source.targetY*h/100;
@@ -160,7 +160,8 @@
     item.placement='custom';
   }
   try{drag.host.setPointerCapture(event.pointerId)}catch{}
-  repaint();
+  handles.querySelectorAll('.fa-light-pair').forEach((pair,i)=>pair.classList.toggle('is-selected',i===selected));
+  moveHandles();
  }
  function pointerMove(event){
   if(!drag||event.pointerId!==drag.pointer)return;
