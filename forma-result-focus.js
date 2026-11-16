@@ -3,7 +3,7 @@ import {createReviewQueue} from './forma-result-queue.js';
    Every adjustment is explicit; no new paid generation without pressing Generate. */
 (() => {
  'use strict';
- let screen=null,lastImage='',opened=false,previousFocus=null,pending={},inFlight=false,enhancing=false,reviewSaving=false,reviewTimer=null;
+ let screen=null,lastImage='',opened=false,previousFocus=null,pending={},inFlight=false,enhancing=false,reviewSaving=false,reviewTimer=null,preferredImage=null;
  const reviews=createReviewQueue();
  const settings=[
   ['time','Время суток',[['morning','Утро'],['day','День'],['golden','Золотой час'],['night','Ночь']]],
@@ -196,7 +196,7 @@ import {createReviewQueue} from './forma-result-queue.js';
  function presentNext(){
   if(opened||reviewTimer)return;
   if(window.FORMA_ART_BRIDGE?.snapshot()?.busy||window.FORMA_NODE_ENGINE?.busy){reviewTimer=setTimeout(()=>{reviewTimer=null;presentNext();},150);return;}
-  const entry=reviews.next();if(!entry)return;
+  const entry=(preferredImage?reviews.activate(preferredImage):null)||reviews.next();preferredImage=null;if(!entry)return;
   const {image,project,scene,kind}=entry;mount();lastImage=image;pending={};
   const photo=document.getElementById('formaResultPhoto');let video=screen.querySelector('video');
   photo.hidden=kind==='video';
@@ -219,6 +219,17 @@ import {createReviewQueue} from './forma-result-queue.js';
   document.documentElement.classList.add('forma-result-focused');
   screen.querySelector('[data-result-action="save-gallery"]')?.focus({preventScroll:true});
  }
+ function openForEnhancement(){
+  const snap=window.FORMA_ART_BRIDGE?.snapshot?.();
+  if(!snap?.hasSource||snap.demo||!snap.renderId||!snap.image||snap.busy)return false;
+  if(opened&&reviews.active?.image===snap.image)return true;
+  reviews.add({image:snap.image,project:snap.projectName,scene:'Выбранный рендер · улучшение фактуры'});
+  preferredImage=snap.image;
+  if(opened)close(false);
+  if(reviewTimer){clearTimeout(reviewTimer);reviewTimer=null}
+  presentNext();
+  return true;
+ }
  function show(entry={}){
   if(!entry.image||!(/^(data:image\/|blob:|https?:\/\/|\/api\/)/.test(entry.image)))return false;
   reviews.add(entry);
@@ -227,5 +238,5 @@ import {createReviewQueue} from './forma-result-queue.js';
  }
  document.addEventListener('forma:generated-media',event=>show(event.detail));
 
- window.FORMA_RESULT_FOCUS={show,close,get open(){return opened}};
+ window.FORMA_RESULT_FOCUS={show,close,openForEnhancement,get open(){return opened}};
 })();

@@ -79,6 +79,8 @@ html.forma-intro-pending #forma-intro{display:block}
 <link rel="stylesheet" href="forma-cinema-workspace.css?v=20261116-2">
 <link rel="stylesheet" href="forma-scenario-settings.css?v=20261116-2">
 <link rel="stylesheet" href="forma-enhancement.css?v=20261116-v1">
+<link rel="stylesheet" href="forma-atmosphere-scenes.css?v=20261116-nine-scenes-1">
+<link rel="stylesheet" href="forma-cabinet-theme-v1.css?v=20261116-account-tools-1">
 </head>
 <body>
 <div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Загрузка студии ФОРМА" aria-hidden="false">
@@ -145,7 +147,7 @@ html.forma-intro-pending #forma-intro{display:block}
  <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4"/></symbol>
  <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 3h13l4 4v14H3V3h1Zm3 0v7h10V3M7 21v-8h10v8"/></symbol>
 </svg>
-<header class="mobile-header"><div class="mobile-brand"><img class="forma-brand-mobile-logo" src="assets/brand/forma-fa-mark.svg" alt="Логотип FA" width="43" height="43"><b class="forma-brand-mobile-name">ФОРМА <small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></b></div><div class="mobile-header-actions"><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
+<header class="mobile-header"><div class="mobile-brand"><img class="forma-brand-mobile-logo" src="assets/brand/forma-fa-mark.svg" alt="Логотип FA" width="43" height="43"><b class="forma-brand-mobile-name">ФОРМА <small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></b></div><div class="mobile-header-actions"><button class="mobile-account-btn mobile-tools-btn" type="button" data-open-cabinet="tools" aria-label="Инструменты студии" title="Инструменты"><svg class="ico"><use href="#i-sliders"/></svg></button><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
 <div class="app" id="app">
 <aside class="rail" aria-label="Основная навигация">
  <div class="brand-mark brand-sign" title="ФОРМА — архитектурная визуализация" aria-label="ФОРМА"><span class="brand-roof"></span><span class="brand-letters">FA</span></div>
@@ -160,7 +162,7 @@ html.forma-intro-pending #forma-intro{display:block}
  <div class="rail-bottom"><button class="rail-btn" id="helpBtn" title="Как работает сервис" aria-label="Помощь"><svg class="ico"><use href="#i-info"/></svg></button><span class="rail-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="22" height="22"></span><span class="build-version" title="Новая версия с исправленными фотореференсами и предпросмотром">v3.2</span></div>
 </aside>
 <main class="workspace" id="workspace">
- <div class="topline"><div class="studio-wordmark" aria-label="ФОРМА · AI-студия для архитекторов"><span class="studio-wordmark-icon"><img class="forma-ui-mark" src="assets/brand/forma-fa-mark.svg" alt="" width="28" height="28"></span><span><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span></div><div class="breadcrumbs"><span>ФОРМА</span><span class="crumb-slash">/</span><b id="breadcrumbName">Резиденция 01</b></div><div class="top-actions"><button type="button" class="header-account" data-open-cabinet="account" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span></button><button class="btn btn-outline btn-sm" id="newProjectBtn"><svg class="ico"><use href="#i-plus"/></svg><span>Новый проект</span></button></div></div>
+ <div class="topline"><div class="studio-wordmark" aria-label="ФОРМА · AI-студия для архитекторов"><span class="studio-wordmark-icon"><img class="forma-ui-mark" src="assets/brand/forma-fa-mark.svg" alt="" width="28" height="28"></span><span><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span></div><div class="breadcrumbs"><span>ФОРМА</span><span class="crumb-slash">/</span><b id="breadcrumbName">Резиденция 01</b></div><div class="top-actions"><button type="button" class="header-account header-tools" data-open-cabinet="tools" title="Инструменты"><svg class="ico"><use href="#i-sliders"/></svg><span>Инструменты</span></button><button type="button" class="header-account" data-open-cabinet="account" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span></button><button class="btn btn-outline btn-sm" id="newProjectBtn"><svg class="ico"><use href="#i-plus"/></svg><span>Новый проект</span></button></div></div>
  <div class="page-intro forma-hero" aria-label="ФОРМА — профессиональная архитектурная визуализация">
   <div class="forma-hero-content">
    <p class="eyebrow">ПРОФЕССИОНАЛЬНАЯ СТУДИЯ <span class="forma-hero-rule"></span> АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</p>
@@ -770,8 +772,8 @@ html.forma-intro-pending #forma-intro{display:block}
 <div class="dialog-cover" id="dialogCover" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-head"><div><span class="eyebrow">ФОРМА</span><h2 id="dialogTitle">Заголовок</h2></div><button class="icon-button" id="dialogClose" aria-label="Закрыть"><svg class="ico"><use href="#i-x"/></svg></button></div><div id="dialogBody"></div><div id="dialogActions"></div></div></div>
 <div class="cabinet-cover" id="cabinetCover" hidden>
  <section class="cabinet-sheet" role="dialog" aria-modal="true" aria-labelledby="cabinetTitle" tabindex="-1">
-  <div class="cabinet-head"><div><small class="cabinet-eyebrow">ФОРМА · СЕРВИС</small><h2 id="cabinetTitle">Личный кабинет</h2></div><button type="button" id="cabinetClose" class="cabinet-close" aria-label="Закрыть">×</button></div>
-  <nav class="cabinet-tabs" aria-label="Разделы кабинета"><button type="button" data-cabinet-tab="account" class="active">Личный кабинет</button><button type="button" data-cabinet-tab="gallery">Галерея работ</button><button type="button" data-cabinet-tab="contacts">Контакты</button></nav>
+  <div class="cabinet-head"><div><small class="cabinet-eyebrow">ФОРМА · СЕРВИС</small><h2 id="cabinetTitle">Личный кабинет</h2></div><div class="cabinet-head-actions"><span id="cabinetThemeHost"></span><button type="button" id="cabinetClose" class="cabinet-close" aria-label="Закрыть">×</button></div></div>
+  <nav class="cabinet-tabs" aria-label="Разделы кабинета"><button type="button" data-cabinet-tab="account" class="active">Кабинет</button><button type="button" data-cabinet-tab="tools">Инструменты</button><button type="button" data-cabinet-tab="gallery">Галерея</button><button type="button" data-cabinet-tab="contacts">Контакты</button></nav>
   <div id="cabinetAccount" class="cabinet-view">
    <div class="cabinet-access"><span class="cabinet-dot"></span><span id="cabinetAccessStatus">Проверяем доступ…</span></div>
    <div class="cabinet-stats">
@@ -785,6 +787,10 @@ html.forma-intro-pending #forma-intro{display:block}
    </div>
    <div class="cabinet-actions"><button type="button" id="cabinetRefresh">Обновить данные</button><a href="https://api-market1.shop/" target="_blank" rel="noopener noreferrer">Открыть баланс API Market ↗</a></div>
    <p class="cabinet-disclaimer">Это информационный кабинет тестовой версии. Показанный лимит относится ко всему серверу и может сбрасываться при перезапуске. Здесь не отображается персональный оплаченный баланс.</p>
+  </div>
+  <div id="cabinetTools" class="cabinet-view cabinet-tools" hidden>
+   <div class="cabinet-tools-intro"><span>ФОРМА / ПРОФЕССИОНАЛЬНЫЕ ИНСТРУМЕНТЫ</span><h3>Инструменты студии.</h3><p>Камеры, AI-обработка, сценарии, геометрия, 3D-мир и расширенные настройки. Доступные инструменты работают как раньше; функции, требующие подключения, отмечены отдельно.</p></div>
+   <div id="cabinetToolsDock"></div>
   </div>
   <div id="cabinetGallery" class="cabinet-view cabinet-gallery" hidden>
    <div class="cabinet-gallery-top"><div><span class="cabinet-gallery-label">PORTFOLIO / PRIVATE COLLECTION</span><h3>Галерея работ</h3><p>Рендеры из всех проектов на этом устройстве и ваши сохранённые видеоролики.</p></div>
@@ -836,7 +842,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <script src="dom-render-cinema-premium-v43.js?v=distinct-optics-v44-20261110"></script>
 
 <script src="app.js?v=sun-studio-v15-20261115"></script>
-<script defer src="dom-render-cabinet-v27.js?v=gallery-account-20261110-v56"></script>
+<script defer src="dom-render-cabinet-v27.js?v=20261116-tools-tab-v2"></script>
 <script defer src="dom-render-gallery-v56.js?v=portfolio-20261110-v56"></script>
 <script src="dom-render-cinema-cards-fix-v45.js?v=mobile-atlas-performance-20261110-v52"></script>
 <script src="dom-render-house-preview-v46.js?v=preview-my-project-after-v47-20261110"></script>
@@ -851,16 +857,16 @@ html.forma-intro-pending #forma-intro{display:block}
 <script defer src="forma-home-tools.js?v=20261115-premium-v25"></script>
 
 <script defer src="forma-static-preview.js?v=20261114-vizworkflow-02"></script>
-<script defer src="forma-signature-theme.js?v=20261114-signature-v1"></script>
+<script defer src="forma-signature-theme.js?v=20261116-cabinet-theme-v2"></script>
 <script defer src="forma-mobile-ux.js?v=20261114-mobile-ux-v1"></script>
-<script type="module" src="forma-result-focus.js?v=enhance-v1-20261116"></script>
+<script type="module" src="forma-result-focus.js?v=enhance-home-v2-20261116"></script>
 <script defer src="forma-scene-quick.js?v=sun-studio-v15-20261115"></script>
 <script defer src="forma-scene-logic-v12.js?v=20261115-sun15"></script>
 <script defer src="forma-upload-next-v14.js?v=20261115-sun15"></script>
 <script defer src="forma-sun-studio-v15.js?v=20261115-shadow23"></script>
 <script defer src="forma-sun-ground-shadows-v23.js?v=20261115-shadow23"></script>
-<script type="module" src="forma-landscape-atmosphere.js?v=20261116-4"></script>
-<script type="module" src="forma-studio-shell.js?v=20261116-1"></script>
+<script type="module" src="forma-landscape-atmosphere.js?v=20261116-nine-scenes-3"></script>
+<script type="module" src="forma-studio-shell.js?v=20261116-cabinet-tools-2"></script>
 <script type="module" src="forma-image-workspace.js?v=20261116-2"></script>
 <script defer src="forma-workflow-ux.js?v=20261116-2"></script>
 <script defer src="forma-cinema-workspace.js?v=20261116-2"></script>

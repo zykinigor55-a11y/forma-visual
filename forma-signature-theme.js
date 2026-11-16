@@ -39,6 +39,8 @@
     if(header&&!header.querySelector('[data-forma-theme-switch]'))header.prepend(makeButton('header'));
     const mobile=document.querySelector('.mobile-header-actions');
     if(mobile&&!mobile.querySelector('[data-forma-theme-switch]'))mobile.prepend(makeButton('mobile'));
+    const cabinet=document.querySelector('#cabinetThemeHost');
+    if(cabinet&&!cabinet.querySelector('[data-forma-theme-switch]'))cabinet.append(makeButton('cabinet'));
     const flow=document.querySelector('#faFlowBackdrop .fa-flow-head-actions');
     if(flow&&!flow.querySelector('[data-forma-theme-switch]'))flow.prepend(makeButton('flow'));
     const pro=document.querySelector('.fa-pro-backdrop .fa-pro-head');
