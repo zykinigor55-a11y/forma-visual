@@ -40,7 +40,7 @@ function project(){try{return JSON.parse(localStorage.getItem('domrender_mvp_pro
 function initial(){return {nodes:START.map(n=>({...n,options:{}})),edges:START_EDGES.map(([from,to])=>({from,to})),pan:{x:70,y:35},zoom:.75,count:3,selected:'n3'}}
 let graph,modal=null,world=null,lines=null,nodeLayer=null,drag=null,pending=null,lastWireDrop=0;
 let undoStack=[],redoStack=[],lastGraphJSON='';
-const snapshots=new Map(),videoBlobs=new Map(),videoURLs=new Map();let dbPromise=null;
+const textures=new Map(),snapshots=new Map(),videoBlobs=new Map(),videoURLs=new Map();let dbPromise=null;
 const HISTORY_PREFIX='forma-archviz-node-history-v1-';
 function historyIndex(){try{const arr=JSON.parse(localStorage.getItem(HISTORY_PREFIX+project())||'[]');return Array.isArray(arr)?arr.filter(x=>x&&/^n\d+$/.test(x.node)&&/^[a-z0-9_:-]{1,90}$/i.test(x.key)).slice(0,300):[]}catch{return []}}
 function historyFor(id){return historyIndex().filter(e=>e.node===id).slice(0,5)}
@@ -78,7 +78,7 @@ function mediaKey(id){return project()+'__'+id}
 async function restoreImages(){
  const expectedProject=project(),expectedGraph=graph;
  const current=()=>project()===expectedProject&&graph===expectedGraph;
- snapshots.clear();videoBlobs.clear();for(const url of videoURLs.values())URL.revokeObjectURL(url);videoURLs.clear();
+ snapshots.clear();textures.clear();videoBlobs.clear();for(const url of videoURLs.values())URL.revokeObjectURL(url);videoURLs.clear();
  const db=await mediaDB();if(!db)return;
  await Promise.all(graph.nodes.map(n=>new Promise(resolve=>{
   const tx=db.transaction('images','readonly');
@@ -91,6 +91,7 @@ async function restoreImages(){
   req.onsuccess=()=>{if(current()&&req.result instanceof Blob){videoBlobs.set(n.id,req.result);videoURLs.set(n.id,URL.createObjectURL(req.result))}resolve()};
   req.onerror=()=>resolve();
  })));
+ await Promise.all(graph.nodes.filter(n=>n.type==='materials').map(n=>new Promise(resolve=>{const req=db.transaction('images','readonly').objectStore('images').get(mediaKey(n.id)+'__texture');req.onsuccess=()=>{if(current()&&req.result)textures.set(n.id,req.result);resolve()};req.onerror=()=>resolve()})));
  if(modal&&current())redraw();
 }
 async function pinImage(id){
@@ -118,6 +119,12 @@ async function setSnapshot(id,image){
  await archiveSnapshot(id,image,db);
  redraw();
 }
+async function setTexture(id,image){
+ if(node(id)?.type!=='materials'||!/^data:image\/(png|jpeg|webp);base64,/i.test(image))throw Error('Неверная фактура');
+ const db=await mediaDB();if(!db)throw Error('Хранилище фактур недоступно');
+ await new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.objectStore('images').put(image,mediaKey(id)+'__texture')});
+ textures.set(id,image);invalidateFrom(id);save();
+}
 async function setVideoSnapshot(id,blob){
  if(!node(id)||node(id).type!=='video')throw Error('Узел видео не найден.');
  if(!(blob instanceof Blob)||blob.size<1000||blob.size>180*1024*1024)throw Error('Недопустимый размер MP4.');
@@ -135,12 +142,16 @@ function downloadVideo(id){
  const url=videoURLs.get(id),a=document.createElement('a');a.href=url;a.download='forma-video-'+Date.now()+'.mp4';document.body.append(a);a.click();a.remove();
 }
 async function deleteImage(id){
- snapshots.delete(id);videoBlobs.delete(id);if(videoURLs.has(id)){URL.revokeObjectURL(videoURLs.get(id));videoURLs.delete(id)}
+ snapshots.delete(id);textures.delete(id);videoBlobs.delete(id);if(videoURLs.has(id)){URL.revokeObjectURL(videoURLs.get(id));videoURLs.delete(id)}
  const db=await mediaDB();if(!db)return;
- try{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(mediaKey(id));tx.objectStore('images').delete(mediaKey(id)+'__video')}catch{}
+ try{const tx=db.transaction('images','readwrite');tx.objectStore('images').delete(mediaKey(id));tx.objectStore('images').delete(mediaKey(id)+'__video');tx.objectStore('images').delete(mediaKey(id)+'__texture')}catch{}
+}
+function normalizeOptions(n){
+ const o=n.options||{};const aliases={environment:{suburban:'garden',mountain:'mountains',urban:'city',park:'courtyard',deciduous:'courtyard'},weather:{sunny:'clear',overcast:'cloud',partly:'cloud'},time:{noon:'day',evening:'golden',blue:'golden'},plants:{garden:'decorative',conifers:'forest',natural:'forest',ornamental:'decorative',none:'minimal'},material:{stone:'limestone'}};
+ for(const [key,values] of Object.entries(aliases))if(values[o[key]])o[key]=values[o[key]];n.options=o;return n;
 }
 function read(){
- try{const o=JSON.parse(localStorage.getItem(KEY+'-'+project())||'null');if(o&&Array.isArray(o.nodes)&&Array.isArray(o.edges)&&o.nodes.length<=100&&o.edges.length<=180&&o.nodes.every(n=>TYPES[n.type]&&Number.isFinite(n.x)&&Number.isFinite(n.y))){for(const n of o.nodes)if(n.type==='lighting'&&n.title==='Синий час')n.title='Свет и погода';return o}}catch{}
+ try{const o=JSON.parse(localStorage.getItem(KEY+'-'+project())||'null');if(o&&Array.isArray(o.nodes)&&Array.isArray(o.edges)&&o.nodes.length<=100&&o.edges.length<=180&&o.nodes.every(n=>TYPES[n.type]&&Number.isFinite(n.x)&&Number.isFinite(n.y))){for(const n of o.nodes){normalizeOptions(n);if(n.type==='lighting'&&n.title==='Синий час')n.title='Свет и погода';}return o}}catch{}
  return initial();
 }
 function save(){
@@ -305,7 +316,8 @@ async function importJSON(file){
   const ids=new Set(g.nodes.map(n=>n.id));
   if(ids.size!==g.nodes.length||!g.nodes.every(n=>TYPES[n.type]&&/^n\d+$/.test(n.id)&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Math.abs(n.x)<10000&&Math.abs(n.y)<10000&&String(n.title||'').length<90))throw Error();
   if(!g.edges.every(e=>ids.has(e.from)&&ids.has(e.to)))throw Error();
-  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:{...(typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|lens|quality|lockGeometry|changes|material|cameraMove|target|format)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}),reuse:false,needsRun:true}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
+  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:{...(Array.isArray(n.options?.interiorLights)?{interiorLights:n.options.interiorLights.slice(0,8).filter(x=>x&&typeof x==='object').map(x=>Object.fromEntries(Object.entries(x).filter(([k,v])=>['profile','placement','intensity','temperature','cone'].includes(k)&&['string','number'].includes(typeof v))))}:{}),...(typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|environmentSubtype|lens|quality|lockGeometry|preserveMaterials|changes|material|materialSource|textureName|textureScale|textureRotation|sourceName|cameraMove|target|format)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}),reuse:false,needsRun:true}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
+  graph.nodes.forEach(normalizeOptions);
   for(const e of g.edges)if(canLink(e.from,e.to)){graph.edges=graph.edges.filter(x=>x.to!==e.to);graph.edges.push({from:e.from,to:e.to})}
   pending=null;save();redraw();status('Рабочая схема загружена.');
  }catch{status('Невозможно импортировать эту схему. Нужен экспорт ФОРМА.')}
@@ -480,7 +492,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,openAndAdd,openFor,close,add,link,openStep,graph:()=>graph, getNode:id=>node(id),setOptions:setNodeOptions,markFresh,invalidateFrom, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,openAndAdd,openFor,close,add,link,openStep,graph:()=>graph, getNode:id=>node(id),setOptions:setNodeOptions,markFresh,invalidateFrom, getTexture:id=>textures.get(id)||null,setTexture,getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

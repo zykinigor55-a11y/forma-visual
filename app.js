@@ -605,7 +605,7 @@ function setViewerMode(mode){
  $('splitSlider').hidden=mode!=='slider';
  const hasResult=!!renderURL;
  const hasLocalPreview=maskVisible||!!wandPreviewMask||$('resultTag')?.textContent?.includes('ПРИМЕРКА');
- $('noRender').hidden=hasResult||hasLocalPreview||(mode!=='result'&&mode!=='side')||rendering;
+ $('noRender').hidden=hasResult||!!project?.hasSource||hasLocalPreview||(mode!=='result'&&mode!=='side')||rendering;
  if($('compareHint'))$('compareHint').hidden=hasResult||!!project.demo;
  stage.classList.toggle('is-pending',!hasResult);
 }

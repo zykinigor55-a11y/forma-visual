@@ -11,7 +11,7 @@ const BLOCKED_TYPES=new Set(['image3d']);
 const AVAILABLE_TYPES=new Set(['source','exterior','interior','lighting','materials','geometry','upscale','video','export']);
 const LABELS={running:'ВЫПОЛНЯЕТСЯ',done:'ГОТОВО',error:'ОШИБКА',cancelled:'ОСТАНОВЛЕНО'};
 const LIGHTS={sunny:'Солнечный день',golden:'Золотой час',overcast:'Пасмурно',blue:'Синий час',rain:'После дождя',winter:'Зима',night:'Ночь'};
-const ZONES={main:'Фасад',roof:'Кровля',windows:'Окна',doors:'Двери',base:'Цоколь',terrace:'Терраса',custom:'Другая поверхность'};
+const ZONES={main:'Стены фасада',accent:'Декоративная отделка',base:'Цоколь',roof:'Кровля',windows:'Оконные рамы',doors:'Двери',terrace:'Терраса',steps:'Ступени',custom:'Другой участок'};
 let busy=false,preparing=false,aborter=null,wasCancelled=false,nodeSettingsBound=null,openedRunId=0,lastFailure=null;
 const statuses=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -47,15 +47,15 @@ function checkPlan(g,target,resumeNodes=new Set()){
  if(blocked)throw Error('Нода «'+(blocked.title||blocked.type)+'» пока требует отдельного движка или ручного подтверждения — результат не имитируется.');
  const unknown=path.find(n=>!AVAILABLE_TYPES.has(n.type));
  if(unknown)throw Error('Тип «'+unknown.type+'» пока не исполняется.');
- const invalid=path.find(n=>n.type==='materials'&&!String(n.options?.instruction||'').trim()&&(!n.options?.material||n.options.material==='custom'));
+ const invalid=path.find(n=>n.type==='materials'&&(n.options?.materialSource==='texture'?!getAPI()?.getTexture?.(n.id):!String(n.options?.instruction||'').trim()&&(!n.options?.material||n.options.material==='custom')));
  if(invalid)throw Error('Для ноды «Материалы» напишите конкретную инструкцию по редактированию.');
  const warnings=[];
  for(const n of path){
   if(!['exterior','lighting'].includes(n.type))continue;
   const o=n.options||{};
   if(o.season==='summer'&&o.weather==='snow')throw Error('Нода «'+(n.title||n.type)+'»: снег летом противоречит выбранному сезону. Выберите зиму или другую погоду.');
-  if(o.time==='night'&&o.weather==='sunny')throw Error('Нода «'+(n.title||n.type)+'»: солнечная погода и ночь несовместимы. Исправьте время суток или погоду.');
-  if(['fog','overcast'].includes(o.weather)&&o.time==='golden')warnings.push('«'+(n.title||n.type)+'»: золотой час при плотной облачности может быть незаметен.');
+  if(o.time==='night'&&['sunny','clear'].includes(o.weather))throw Error('Нода «'+(n.title||n.type)+'»: солнечная погода и ночь несовместимы. Исправьте время суток или погоду.');
+  if(['fog','overcast','cloud'].includes(o.weather)&&o.time==='golden')warnings.push('«'+(n.title||n.type)+'»: золотой час при плотной облачности может быть незаметен.');
  }
  const calls=path.filter(n=>AI_TYPES.has(n.type)&&!cacheAllowed(n,resumeNodes)).length;
  const videoCalls=path.filter(n=>n.type==='video'&&!cacheAllowed(n,resumeNodes)).length;
@@ -80,18 +80,25 @@ function decorate(){
  if(run)run.disabled=busy||preparing;
  if(stop)stop.disabled=!busy;
  const retry=$('#faFlowRetryChain');if(retry){retry.hidden=busy||preparing||!lastFailure;retry.disabled=busy||preparing;}
- if(busy||preparing){$$('[data-node-option]', $('#faFlowNodeSettings')||document).forEach(el=>el.disabled=true)}
+ if(busy||preparing){$$('[data-node-option],[data-light-field],[data-fa-material-texture],[data-scenario-add-light],[data-scenario-delete-light]', $('#faFlowNodeSettings')||document).forEach(el=>el.disabled=true)}
 }
 function setState(id,value){statuses.set(id,value);decorate()}
-const ENVIRONMENTS={'keep':'Сохранить исходное','forest':'Хвойный лес','deciduous':'Лиственный лес','park':'Парк с крупными деревьями','lake':'Берег озера / реки','mountain':'Горный ландшафт','suburban':'Загородный участок','urban':'Городская застройка','minimal':'Минимальное окружение'};
-const WEATHER={'keep':'По исходному изображению','sunny':'Ясно и солнечно','partly':'Переменная облачность','overcast':'Пасмурно','rain':'Дождь / мокрые поверхности','fog':'Туман','snow':'Снег'};
+const ENVIRONMENTS={"keep": "Сохранить исходное", "garden": "Сад и газон", "forest": "Хвойный лес", "lake": "У озера", "mountains": "Горы", "city": "Городской парк", "courtyard": "Тихий парк", "nordic": "Северный пейзаж", "coast": "У побережья", "minimal": "Минимализм", "mist": "Туманный лес"};
+const WEATHER={"keep": "По исходнику", "clear": "Ясно", "cloud": "Облачно", "rain": "Дождь", "fog": "Туман", "snow": "Снег"};
 const SEASONS={'keep':'По исходнику','spring':'Весна','summer':'Лето','autumn':'Осень','winter':'Зима'};
-const TIMES={'keep':'По исходнику','morning':'Утро','noon':'День','golden':'Золотой час','blue':'Синий час','evening':'Вечер','night':'Ночь'};
-const PLANTS={'keep':'Сохранить растительность','garden':'Ухоженный сад','conifers':'Хвойные посадки','natural':'Естественная растительность','ornamental':'Декоративные травы и кустарники','none':'Без добавления растений'};
+const TIMES={"keep": "По исходнику", "morning": "Утро", "day": "День", "golden": "Вечер · золотой час", "night": "Ночь"};
+const PLANTS={"keep": "Сохранить растительность", "minimal": "Минимальная", "decorative": "Декоративная", "forest": "Лесная", "mediterranean": "Средиземноморская", "tropical": "Тропическая"};
 const LENSES={'keep':'Сохранить ракурс','24mm':'Широкий 24 мм','35mm':'Архитектурный 35 мм','50mm':'Нормальный 50 мм','85mm':'Телеобъектив 85 мм'};
 const RATIOS={'16:9':'16:9 · Горизонтальный','3:2':'3:2 · Архитектурное фото','4:3':'4:3 · Каталог','1:1':'1:1 · Квадрат','9:16':'9:16 · Вертикальный'};
-const MATERIALS={'custom':'По текстовой инструкции','wood':'Натуральное дерево','brick':'Кирпич','plaster':'Штукатурка','stone':'Натуральный камень','metal':'Металл','concrete':'Бетон','glass':'Стекло'};
+const MATERIALS={"custom": "По текстовой инструкции", "plaster": "Штукатурка", "travertine": "Травертин", "limestone": "Природный камень", "wood": "Дерево", "brick": "Клинкер", "concrete": "Бетон", "metal": "Металл", "ceramic": "Керамогранит", "glass": "Стекло"};
+const LANDSCAPES={"garden":[["formal","Парадный газон","Ровный аккуратный газон, подстриженные группы кустарников, минимальные аккуратные цветники, свободный обзор здания."],["natural","Природный сад","Натуральное разнотравье, злаки, мягкая нерегулярная структура посадок и деликатный ландшафт."],["park","Пейзажный сад","Разновысотные деревья, естественные группы кустарников, спокойный ухоженный зелёный участок."],["conifers","Сад с хвойниками","Композиции из декоративных сосен, можжевельников и невысоких хвойников с естественной фактурой."]],"forest":[["young","Молодые сосны","Молодые стройные сосны с тонкими стволами, сравнительно открытый подлесок, лёгкая прозрачность леса."],["mature","Зрелый сосновый бор","Высокие зрелые сосны с характерной корой, просторный сухой сосновый бор, мох и хвойная подстилка."],["ancient","Вековые сосны","Очень старые мощные сосны с крупными стволами, выразительной рельефной корой, высокими кронами и сложным лесным покровом."],["mixed","Смешанный хвойный лес","Сочетание высоких сосен и елей разного возраста, разнообразный подлесок и природная глубина лесного кадра."]],"lake":[["forest","Лесное озеро","Естественное лесное озеро с тихой водой, природным берегом и деревьями на дальнем плане."],["mountain","Горное озеро","Прозрачное озеро среди горных склонов и каменистых берегов, спокойные реалистичные отражения."],["open","Большое озеро","Просторная открытая водная гладь с далёким горизонтом и небольшими волнами от ветра."],["reeds","Озеро с камышами","Небольшое природное озеро с прибрежными камышами и осокой, неровной естественной кромкой воды."]],"mountains":[["foothills","Лесистые предгорья","Мягкие горные склоны, покрытые естественным лесом, плавная смена планов и глубина кадра."],["alpine","Альпийские луга","Открытые горные луга с низкими травами и редкими камнями, дальние хребты."],["rocky","Скалистые вершины","Выразительные скальные горные массивы, сложная каменная фактура и строгий рельеф."],["valley","Горная долина","Широкая спокойная горная долина с дальними вершинами и природным ландшафтом."]],"city":[["modern","Современный парк","Современный городской парк с ухоженными деревьями, газонами и аккуратной городской растительностью."],["classic","Исторический парк","Зрелые лиственные деревья, классические аллеи и сдержанный исторический характер озеленения."],["square","Тихий сквер","Компактный зелёный сквер с аккуратными аллеями, живыми изгородями и группами деревьев."],["natural","Природный экопарк","Более свободный городской парк с природными посадками и минимально обработанным зелёным ландшафтом."]],"courtyard":[["oldpark","Старый лиственный парк","Высокие взрослые дубы, клёны и липы, широкие кроны, глубокие естественные тени."],["birch","Берёзовая роща","Группа стройных берёз со светлой корой и ажурными кронами, лёгкая лесная атмосфера."],["shady","Тенистый сад","Плотные большие деревья, полутень, хосты, папоротники и низкие теневыносливые растения."],["meadow","Открытая поляна","Небольшая спокойная открытая лужайка с деревьями по периметру, лёгкая и воздушная композиция."]],"nordic":[["pine","Северный сосновый лес","Невысокие суровые северные сосны, скалы, лишайники и сдержанная природная палитра."],["stone","Скалы и мхи","Гранитные выходы и валуны с мхами и лишайниками, редкие низкие растения."],["tundra","Северная тундра","Открытый северный ландшафт с низкими кустарниками, мхами и редкими деревьями."],["boulders","Лес и валуны","Смешанный редкий северный лес, крупные естественные валуны и хвойный подлесок."]],"coast":[["sand","Песчаный берег","Мягкая песчаная береговая линия, светлые дюны, море и естественные приморские травы."],["rock","Скалистый берег","Каменистые уступы и природные скалы у воды, выразительный рельеф побережья."],["pine","Сосны у моря","Приморские сосны с ветвистыми кронами, песчаная почва и дальний горизонт моря."],["dunes","Дюны и злаки","Прибрежные дюны с естественными злаками и сухими травами, ветер и открытый горизонт."]],"minimal":[["gravel","Гравий и злаки","Чистые зоны гравия, тонкие группы декоративных злаков и сдержанное озеленение."],["stone","Камень и мох","Крупные плоские природные камни, мхи и минимальные низкие посадки."],["lawn","Чистый газон","Почти непрерывный минималистичный газон с несколькими аккуратными зелёными акцентами."],["shapes","Формованные кустарники","Редкие геометричные кустарники и строгие лаконичные посадки с понятной композицией."]],"mist":[["pine","Сосны в тумане","Высокие сосны с мягкой лесной дымкой между стволами и естественной многоплановостью."],["mixed","Смешанный лес","Хвойные и лиственные деревья, лёгкие слои тумана в дальних планах."],["ancient","Вековой туманный лес","Крупные возрастные стволы и глубокая лесная перспектива, сдержанная утренняя дымка."],["birch","Светлая роща","Светлые берёзы и мягкая прозрачная дымка, деликатное спокойное освещение."]]};
 const getOpt=(n,key,defaultValue)=>String(n.options?.[key]??defaultValue);
+const LOCAL_LIGHT_PROFILES={downlight:'Встроенный свет',spot:'Акцентный спот','wall-wash':'Свет по стене',linear:'Линейный свет',pendant:'Подвесной свет',floor:'Торшер'};
+const LOCAL_LIGHT_PLACEMENTS={ceiling:'На потолке',left:'Слева в кадре',right:'Справа в кадре',back:'У дальней стены',foreground:'На переднем плане',window:'У окна'};
+function lightSettings(sources=[]){
+ const option=(values,value)=>Object.entries(values).map(([id,label])=>'<option value="'+id+'"'+(id===value?' selected':'')+'>'+label+'</option>').join('');
+ return '<div class="fa-scenario-local-lights">'+sources.slice(0,8).map((light,i)=>'<fieldset data-scenario-light="'+i+'"><legend>Источник '+(i+1)+'</legend><div class="fa-node-two-col"><label>Профиль<select data-light-field="profile">'+option(LOCAL_LIGHT_PROFILES,light.profile)+'</select></label><label>Расположение<select data-light-field="placement">'+option(LOCAL_LIGHT_PLACEMENTS,light.placement||'ceiling')+'</select></label></div><div class="fa-node-two-col"><label>Интенсивность, %<input type="number" min="0" max="200" data-light-field="intensity" value="'+Number(light.intensity??80)+'"></label><label>Температура, K<input type="number" min="2200" max="6500" step="100" data-light-field="temperature" value="'+Number(light.temperature??3000)+'"></label></div><label>Угол луча, °<input type="number" min="10" max="120" data-light-field="cone" value="'+Number(light.cone??60)+'"></label><button type="button" data-scenario-delete-light="'+i+'">Удалить источник</button></fieldset>').join('')+'<button type="button" data-scenario-add-light '+(sources.length>=8?'disabled':'')+'>＋ Добавить источник света</button><p>Визуальные профили для AI: расположение, яркость, цвет и угол луча. Не фотометрический расчёт IES.</p></div>';
+}
 function settingsHTML(n){
  const opts=n.options||{},controls=[];
  const select=(key,label,list,value,info='')=>'<label>'+label+'<select data-node-option="'+key+'">'+
@@ -102,6 +109,8 @@ function settingsHTML(n){
  const scene=()=>{
    controls.push(group('Окружение, погода и свет','Все параметры сцены собраны здесь. Выбранные условия передаются в реальный AI-запрос.'));
    controls.push(select('environment','Окружение',ENVIRONMENTS,getOpt(n,'environment','keep')));
+   const variants=LANDSCAPES[opts.environment]||[];
+   if(variants.length)controls.push(select('environmentSubtype','Вариант ландшафта',Object.fromEntries([['keep','По исходнику'],...variants.map(v=>[v[0],v[1]])]),getOpt(n,'environmentSubtype','keep')));
    controls.push(select('weather','Погода',WEATHER,getOpt(n,'weather','keep')));
    controls.push('<div class="fa-node-two-col">'+select('season','Сезон',SEASONS,getOpt(n,'season','keep'))+select('time','Время суток',TIMES,getOpt(n,'time','keep'))+'</div>');
    controls.push(select('plants','Растительность',PLANTS,getOpt(n,'plants','keep')));
@@ -110,6 +119,7 @@ function settingsHTML(n){
    controls.push('<div class="fa-node-two-col">'+select('lens','Объектив',LENSES,getOpt(n,'lens','keep'))+select('ratio','Формат кадра',RATIOS,getOpt(n,'ratio','16:9'))+'</div>');
    controls.push(select('quality','Качество',{'high':'Высокое','medium':'Стандартное'},getOpt(n,'quality','high')));
    controls.push(check('lockGeometry','Сохранить точную геометрию и ракурс',true));
+   controls.push(check('preserveMaterials','Сохранить существующие материалы',true));
    controls.push(textarea('changes','Дополнительные изменения',opts.changes,'Только явно указанные изменения; остальное оставить как в оригинале',3));
  };
  if(n.type==='exterior'){scene();}
@@ -122,6 +132,8 @@ function settingsHTML(n){
    controls.push(select('room','Тип помещения',{living:'Гостиная',kitchen:'Кухня',bedroom:'Спальня',bathroom:'Ванная',office:'Кабинет',commercial:'Коммерческое помещение',hall:'Прихожая / холл',dining:'Столовая'},getOpt(n,'room','living')));
    controls.push(select('style','Стиль интерьера',{'as-is':'Строго по исходнику','warm-modern':'Тёплый современный','japandi':'Джапанди','minimal':'Минимализм','contemporary':'Современный премиум','classic':'Современная классика','loft':'Лофт'},getOpt(n,'style','as-is')));
    controls.push(select('lighting','Освещение',{'soft-daylight':'Мягкий дневной свет',sunny:'Солнечный день',overcast:'Пасмурный день',evening:'Вечерний свет',studio:'Архитектурная фотосъёмка'},getOpt(n,'lighting','soft-daylight')));
+   controls.push(group('Локальные источники света'));
+   controls.push(lightSettings(opts.interiorLights||[]));
    controls.push(textarea('changes','Отделка, мебель и пожелания',opts.changes,'Например: натуральный дуб, штукатурка, сохранить мебель, добавить скрытую подсветку'));
    controls.push(group('Камера и контроль'));
    controls.push('<div class="fa-node-two-col">'+select('lens','Объектив',LENSES,getOpt(n,'lens','keep'))+select('ratio','Формат',RATIOS,getOpt(n,'ratio','16:9'))+'</div>');
@@ -130,7 +142,15 @@ function settingsHTML(n){
  }
  if(n.type==='materials'){
    controls.push(group('Выбор поверхности и материала'));
-   controls.push('<div class="fa-node-two-col">'+select('zone','Элемент',ZONES,getOpt(n,'zone','main'))+select('material','Новая отделка',MATERIALS,getOpt(n,'material','custom'))+'</div>');
+   controls.push(select('zone','Элемент',ZONES,getOpt(n,'zone','main')));
+   controls.push(select('materialSource','Источник материала',{'catalog':'Каталог','text':'Текстовая инструкция','texture':'Своя фактура'},getOpt(n,'materialSource',opts.material&&opts.material!=='custom'?'catalog':'text')));
+   if((opts.materialSource|| (opts.material&&opts.material!=='custom'?'catalog':'text'))==='catalog')controls.push(select('material','Новая отделка',Object.fromEntries(Object.entries(MATERIALS).filter(([id])=>id!=='custom')),getOpt(n,'material','plaster')));
+   if(opts.materialSource==='texture'){
+    controls.push('<label>Фактура PNG, JPG, WEBP<input type="file" accept="image/png,image/jpeg,image/webp" data-fa-material-texture></label>');
+    const texture=getAPI()?.getTexture?.(n.id);
+    if(texture)controls.push('<figure class="fa-scenario-texture"><img src="'+texture+'" alt="Загруженная фактура"><figcaption>'+esc(opts.textureName||'Своя фактура')+'</figcaption></figure>');
+    controls.push('<div class="fa-node-two-col">'+select('textureScale','Масштаб рисунка',{'50':'50%','100':'100%','150':'150%','200':'200%'},getOpt(n,'textureScale','100'))+select('textureRotation','Поворот рисунка',{'0':'0°','90':'90°','180':'180°','270':'270°'},getOpt(n,'textureRotation','0'))+'</div>');
+   }
    controls.push(textarea('instruction','Точное изменение',opts.instruction,'Например: только цоколь заменить на тёмный графитовый сланец, сохранить швы и всё остальное',4));
    controls.push('<p>Изменение передаётся в AI как локальная текстовая правка указанной зоны. Для точной кистевой маски используйте редактор материалов основного проекта.</p>');
  }
@@ -173,9 +193,28 @@ function showSelection(){
  host.innerHTML=n?settingsHTML(n):'<p>Выберите карточку на холсте и настройте операцию в её окне.</p>';
  const heading=$('#faFlowInspectorTitle');if(heading)heading.textContent=n?n.title||n.type:'Параметры ноды';
  if(nodeSettingsBound===host)return;
- host.addEventListener('change',event=>{
+ host.addEventListener('change',async event=>{
+  if(busy||preparing)return;
+  const lightField=event.target.closest('[data-light-field]');
+  if(lightField){const n=graph()?.nodes.find(n=>n.id===graph()?.selected),lights=(n.options?.interiorLights||[]).map(x=>({...x})),index=Number(lightField.closest('[data-scenario-light]').dataset.scenarioLight),key=lightField.dataset.lightField;
+   if(!lights[index])return;const limits={intensity:[0,200],temperature:[2200,6500],cone:[10,120]};
+   lights[index][key]=limits[key]?Math.min(limits[key][1],Math.max(limits[key][0],Number(lightField.value))):lightField.value;
+   getAPI().setOptions(n.id,{interiorLights:lights});lightField.value=lights[index][key];return;
+  }
+  if(event.target.matches?.('[data-fa-material-texture]')){
+   const file=event.target.files?.[0],id=graph()?.selected;if(!file)return;
+   try{if(file.size>5*1024*1024||!/^image\/(png|jpeg|webp)$/.test(file.type))throw Error('Выберите PNG, JPG или WEBP до 5 МБ.');
+    const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+    const im=new Image();im.src=data;await im.decode();
+    if(busy||preparing||graph()?.selected!==id)throw Error('Выбранный этап изменился. Повторите загрузку.');
+    await getAPI().setTexture(id,data);getAPI().setOptions(id,{textureName:file.name});showSelection();
+   }catch(err){tell(err.message||'Не удалось загрузить фактуру.')}return;
+  }
   const field=event.target.closest('[data-node-option]');if(!field)return;
-  getAPI()?.setOptions?.(graph()?.selected,{[field.dataset.nodeOption]:field.type==='checkbox'?field.checked:field.value});
+  const key=field.dataset.nodeOption;
+  getAPI()?.setOptions?.(graph()?.selected,{[key]:field.type==='checkbox'?field.checked:field.value,...(key==='environment'?{environmentSubtype:'keep'}:{})});
+  if(key==='materialSource'&&field.value==='catalog'&&(!graph().nodes.find(n=>n.id===graph().selected)?.options?.material||graph().nodes.find(n=>n.id===graph().selected)?.options?.material==='custom'))getAPI().setOptions(graph().selected,{material:'plaster'});
+  if(['environment','materialSource'].includes(key))showSelection();
  });
  host.addEventListener('input',event=>{
   const field=event.target.closest('textarea[data-node-option]');
@@ -184,6 +223,12 @@ function showSelection(){
  });
  host.addEventListener('click',e=>{
   if(busy||preparing){tell('Изменения нод недоступны во время выполнения.');return}
+  const addLight=e.target.closest('[data-scenario-add-light]'),removeLight=e.target.closest('[data-scenario-delete-light]');
+  if(addLight||removeLight){const n=graph().nodes.find(n=>n.id===graph().selected),lights=[...(n.options?.interiorLights||[])];
+   if(addLight&&lights.length<8)lights.push({profile:'downlight',placement:'ceiling',intensity:80,temperature:3000,cone:60});
+   if(removeLight)lights.splice(Number(removeLight.dataset.scenarioDeleteLight),1);
+   getAPI().setOptions(n.id,{interiorLights:lights});showSelection();return;
+  }
   const upload=e.target.closest('[data-fa-upload-source]');
   if(upload){window.FORMA_WORKFLOW_UI?.uploadSource?.(graph()?.selected);return}
   const download=e.target.closest('[data-fa-download-snapshot]');
@@ -219,7 +264,7 @@ async function imageAI(source,brief,ctx,options={}){
     image:source,brief,quantity:1,size:({'16:9':'1536x864','3:2':'1536x1024','4:3':'1360x1024','1:1':'1024x1024','9:16':'864x1536'})[brief.output?.ratio]||ctx.size,quality:brief.output?.quality||ctx.quality,
     selectedZone:options.selectedZone||null,zoneId:options.zoneId||null,
     editMode:options.editMode||null,editAction:options.editAction||null,
-    materialInstruction:options.materialInstruction||null
+    materialInstruction:options.materialInstruction||null,material:options.material||null,materialName:options.materialName||null
    })
   });
   const data=await r.json().catch(()=>({}));
@@ -329,11 +374,12 @@ async function makeVideo(source,options){
 function briefFor(ctx,previousMode,n){
  const b=JSON.parse(JSON.stringify(ctx.brief));
  const o=n.options||{};
- b.sceneType=previousMode;
+ b.sceneType=previousMode;b.homeChanges='';
+ if(['exterior','interior','lighting'].includes(n.type)){b.atmosphere=null;b.sunLighting=null;b.lightingPreset=null;}
  if(n.type==='exterior')b.sceneType='exterior';
  if(n.type==='interior'){
   b.sceneType='interior';b.room=o.room||'living';b.style=o.style||'as-is';
-  b.lighting=o.lighting||'soft-daylight';b.furniture='preserve';
+  b.lighting=o.lighting||'soft-daylight';b.furniture='preserve';b.interiorLights=o.interiorLights||[];
   b.surfaces='';b.notes=String(o.changes||'').trim().slice(0,500);
  }
  const envLabel=ENVIRONMENTS[o.environment||'keep'];
@@ -342,19 +388,26 @@ function briefFor(ctx,previousMode,n){
  const timeLabel=TIMES[o.time||'keep'];
  const plantsLabel=PLANTS[o.plants||'keep'];
  if(n.type==='exterior'||n.type==='lighting'){
-   if(o.environment&&o.environment!=='keep')b.environment=envLabel;
+   b.sceneMood=null;
+   for(const key of ['environment','weather','season','time','plants'])if(!o[key]||o[key]==='keep')b[key]=null;
+   b.environmentInstructions='';b.environmentSubtype=null;b.environmentSubtypeInstructions=null;
+   if(o.environment&&o.environment!=='keep'){
+    b.environment=envLabel;
+    const variant=LANDSCAPES[o.environment]?.find(v=>v[0]===o.environmentSubtype);
+    if(variant){b.environmentSubtype=variant[1];b.environmentSubtypeInstructions=variant[2];b.environmentInstructions=variant[2];}
+   }
    if(o.weather&&o.weather!=='keep')b.weather=weatherLabel;
    if(o.season&&o.season!=='keep')b.season=seasonLabel;
    if(o.time&&o.time!=='keep')b.time=timeLabel;
    if(o.plants&&o.plants!=='keep')b.plants=plantsLabel;
-   if(o.environmentInstructions)b.environmentInstructions=String(o.environmentInstructions).trim().slice(0,350);
+   if(o.environmentInstructions)b.environmentInstructions=[b.environmentInstructions,String(o.environmentInstructions).trim()].filter(Boolean).join(' ').slice(0,350);
    // Derive a consistent atmosphere from the same controls rather than contradicting the weather.
    if(!o.time&&!o.weather&&o.mood)b.sceneMood=o.mood;
    if(o.time==='blue')b.sceneMood='blue';
    else if(o.time==='golden')b.sceneMood='golden';
    else if(o.time==='night')b.sceneMood='night';
-   else if(o.weather==='sunny')b.sceneMood='sunny';
-   else if(o.weather==='overcast')b.sceneMood='overcast';
+   else if(['sunny','clear'].includes(o.weather))b.sceneMood='sunny';
+   else if(['overcast','cloud'].includes(o.weather))b.sceneMood='overcast';
    else if(o.weather==='fog')b.sceneMood='fog';
    else if(o.weather==='rain')b.sceneMood='rain';
    else if(o.weather==='snow')b.sceneMood='winter';
@@ -364,8 +417,10 @@ function briefFor(ctx,previousMode,n){
  }
  if(o.lens&&o.lens!=='keep'){const instruction='Architectural camera lens '+o.lens+'. Preserve the perspective and placement of all architectural elements.';b.homeChanges=[b.homeChanges,instruction].filter(Boolean).join(' ').slice(0,600);}
  if(o.changes){b.homeChanges=[b.homeChanges,String(o.changes).trim()].filter(Boolean).join(' ').slice(0,600);}
- if(o.lockGeometry===true||o.lockGeometry===undefined)b.lockGeometry=true;
- if(o.ratio&&RATIOS[o.ratio])b.output={...(b.output||{}),ratio:o.ratio};
+ b.lockGeometry=o.lockGeometry!==false;
+ if(['exterior','lighting'].includes(n.type))b.preserveMaterials=o.preserveMaterials!==false;
+ if(n.type==='materials'){b.textureScale=String(o.textureScale||100)+'%';b.textureRotation=String(o.textureRotation||0)+'°';}
+ if(['exterior','lighting','interior'].includes(n.type))b.output={...(b.output||{}),ratio:RATIOS[o.ratio]?o.ratio:'16:9',quality:['high','medium'].includes(o.quality)?o.quality:'high'};
  if(o.quality&&['high','medium'].includes(o.quality))b.output={...(b.output||{}),quality:o.quality};
  return b;
 }
@@ -428,9 +483,9 @@ async function runTo(target,resume=false){
     const cached=cacheAllowed(n,resumeNodes)?api.getSnapshot?.(n.id):null;
     if(cached){output=cached;tell('Готовый кадр: '+(n.title||n.type)+' · без нового AI-запроса');}
     else{
-     const materialChoice=n.options?.material&&n.options.material!=='custom'?MATERIALS[n.options.material]:'';
-     const instruction=[materialChoice?'Заменить отделку на '+materialChoice+'. Не изменять другие элементы.':'',String(n.options?.instruction||'')].filter(Boolean).join(' ').slice(0,500);
-     const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:instruction}:{};
+     const materialChoice=n.options?.materialSource!=='text'&&n.options?.materialSource!=='texture'&&n.options?.material&&n.options.material!=='custom'?MATERIALS[n.options.material]:'';
+     const instruction=[materialChoice?'Заменить отделку на '+materialChoice+'. Не изменять другие элементы.':'',String(n.options?.instruction||''),n.options?.materialSource==='texture'?'Использовать приложенную фактуру как образец материала, сохранив освещение и геометрию. Масштаб рисунка '+(n.options.textureScale||100)+'%, поворот '+(n.options.textureRotation||0)+'°.':''].filter(Boolean).join(' ').slice(0,500);
+     const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:instruction,material:n.options?.materialSource==='texture'?api.getTexture?.(n.id):null,materialName:n.options?.textureName||materialChoice}:{};
      output=await imageAI(output,brief,ctx,opts);aiCompleted++;lastAI=n.title||n.type;
     }
    }else if(n.type==='video'){
@@ -478,5 +533,5 @@ function onOpen(){
 }
 function onGraphDrawn(){showSelection();decorate()}
 function onClose(){if(busy)stop();nodeSettingsBound=null}
-window.FORMA_NODE_ENGINE={runTo,stop,onOpen,onGraphDrawn,onClose,plan:checkPlan,get busy(){return busy},get preparing(){return preparing}};
+window.FORMA_NODE_ENGINE={catalogs:{environment:ENVIRONMENTS,weather:WEATHER,season:SEASONS,time:TIMES,plants:PLANTS,material:MATERIALS,landscapes:LANDSCAPES},briefFor,settingsHTML,runTo,stop,onOpen,onGraphDrawn,onClose,plan:checkPlan,get busy(){return busy},get preparing(){return preparing}};
 })();

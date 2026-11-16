@@ -1,0 +1,51 @@
+/* The preview is moved out of #animationPanel by the studio shell. Own its layout here. */
+#formaStudioWorkspace[data-tool=animation] :is(#studioView,#studioControls,.anim-preview-shell){min-width:0;max-width:100%;box-sizing:border-box}
+#formaStudioWorkspace[data-tool=animation] #studioView{display:flex;align-items:flex-start}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-shell{padding:16px;width:100%;overflow:hidden;align-self:flex-start}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-screen{position:relative;isolation:isolate;width:100%;aspect-ratio:16/10;min-height:0!important;max-height:65vh;height:auto!important;overflow:hidden;border:1px solid var(--fs-line);border-radius:8px;background:#181b1e}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-screen[data-ratio="9:16"]{aspect-ratio:9/16;width:min(100%,320px);max-height:65vh;margin-inline:auto}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-frame{position:absolute;inset:0;transform-origin:center;will-change:transform}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-frame img{display:block;width:100%;height:100%;object-fit:cover}
+#formaStudioWorkspace[data-tool=animation] :is(.anim-preview-meta,.anim-preview-overlay,.anim-preview-foot,.anim-view-finder,.anim-three-layer){display:none!important}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-play-holder{position:absolute;z-index:5;left:50%;bottom:20px;transform:translateX(-50%);max-width:90%;white-space:nowrap}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-play-holder .anim-play{display:flex;align-items:center;gap:8px;width:auto;min-height:42px;margin:0;padding:10px 17px;border:1px solid #ffffff50;border-radius:7px;background:#1c2025db!important;color:#fff!important;font-size:12px;box-shadow:0 4px 16px #0003}
+#formaStudioWorkspace[data-tool=animation] .anim-play svg{width:16px;height:16px}
+#formaStudioWorkspace[data-tool=animation] .cinema-fullscreen{position:absolute;z-index:5;right:12px;top:12px;width:36px;height:36px;display:grid;place-items:center;border:1px solid #ffffff40;border-radius:6px;background:#1c2025db!important;color:#fff!important;padding:0}
+#formaStudioWorkspace[data-tool=animation] .cinema-progress-track{position:absolute;z-index:6;inset:auto 0 0;height:3px;background:#ffffff20}
+#formaStudioWorkspace[data-tool=animation] #cinemaProgressBar{display:block;width:100%;height:100%;background:var(--fs-accent);transform:scaleX(0);transform-origin:left}
+#formaStudioWorkspace[data-tool=animation] .anim-preview-caption{display:block!important;font-size:11px;line-height:1.65;color:var(--fs-muted);margin:13px 0 0;max-width:65ch}
+#formaStudioWorkspace[data-tool=animation] .cinema-maximized{position:fixed!important;inset:24px!important;width:calc(100vw - 48px)!important;height:calc(100dvh - 48px)!important;max-height:none!important;z-index:9000;aspect-ratio:auto;background:#111}
+#formaStudioWorkspace[data-tool=animation] .fs-cinema-source{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px;min-width:0}
+#formaStudioWorkspace[data-tool=animation] .fs-cinema-source>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+#formaStudioWorkspace[data-tool=animation] .fs-cinema-source small{color:var(--fs-muted);font-size:9px;letter-spacing:.12em}
+#formaStudioWorkspace[data-tool=animation] .fs-cinema-source strong{color:var(--fs-text);font-size:12px;font-weight:500;overflow-wrap:anywhere}
+#formaStudioWorkspace[data-tool=animation] [data-cinema-upload]{display:flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 11px;font-size:11px;flex-shrink:0}
+#formaStudioWorkspace[data-tool=animation] [data-cinema-upload] svg{width:15px;height:15px}
+#formaStudioWorkspace[data-tool=animation] .anim-hero{padding:0 0 15px!important;background:transparent!important;border:0!important;border-radius:0!important;margin-bottom:0!important}
+#formaStudioWorkspace[data-tool=animation] .anim-eyebrow{display:none}
+#formaStudioWorkspace[data-tool=animation] .anim-hero h3{font-size:19px!important;font-weight:500!important;margin:0 0 8px!important}
+#formaStudioWorkspace[data-tool=animation] .anim-hero p{font-size:12px!important;line-height:1.65!important}
+#formaStudioWorkspace[data-tool=animation] .anim-option-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:10px!important}
+#formaStudioWorkspace[data-tool=animation] .anim-option-photo{height:88px!important;aspect-ratio:auto!important;display:grid;place-items:center;background:var(--fs-panel)!important;color:var(--fs-muted);border-bottom:1px solid var(--fs-line)}
+#formaStudioWorkspace[data-tool=animation] .anim-option-photo:before,#formaStudioWorkspace[data-tool=animation] .anim-option-photo:after,#formaStudioWorkspace[data-tool=animation] .anim-option-photo>img,#formaStudioWorkspace[data-tool=animation] .anim-motion-photo-overlay{display:none!important}
+#formaStudioWorkspace[data-tool=animation] .fs-cinema-icon{display:block;width:108px;height:72px;max-width:90%;color:var(--fs-muted)}
+#formaStudioWorkspace[data-tool=animation] .anim-option-card.active .fs-cinema-icon{color:var(--fs-accent-text,var(--fs-accent))}
+#formaStudioWorkspace[data-tool=animation] .anim-option-check{position:absolute;right:6px;top:6px;width:17px;height:17px;border-radius:50%;display:none;background:var(--fs-accent)!important;color:var(--fs-bg)!important;box-shadow:none;font-size:10px}
+#formaStudioWorkspace[data-tool=animation] .anim-option-card.active .anim-option-check{display:grid;place-items:center}
+#formaStudioWorkspace[data-tool=animation] .anim-option-copy{padding:10px!important;gap:5px!important}
+#formaStudioWorkspace[data-tool=animation] .anim-option-copy strong{font-weight:500!important;line-height:1.45!important;overflow-wrap:anywhere}
+#formaStudioWorkspace[data-tool=animation] .anim-option-copy em{font-size:9px!important;font-weight:400!important;line-height:1.5;overflow-wrap:anywhere}
+#formaStudioWorkspace[data-tool=animation] .anim-option-card{box-shadow:none!important;transform:none!important}
+#formaStudioWorkspace[data-tool=animation] .anim-section-count{display:none!important}
+#formaStudioWorkspace[data-tool=animation] .fs-cinema-tabs{gap:4px;margin:8px 0 13px}
+#formaStudioWorkspace[data-tool=animation] .fs-cinema-tabs button{min-width:0;min-height:40px}
+@media(max-width:760px){#formaStudioWorkspace[data-tool=animation] .anim-preview-shell{padding:10px}#formaStudioWorkspace[data-tool=animation] .fs-cinema-source{gap:8px}#formaStudioWorkspace[data-tool=animation] .fs-cinema-source strong{font-size:11px}#formaStudioWorkspace[data-tool=animation] [data-cinema-upload]{font-size:10px;padding:7px 9px}#formaStudioWorkspace[data-tool=animation] .anim-option-photo{height:80px!important}#formaStudioWorkspace[data-tool=animation] .anim-option-copy em{display:block!important}#formaStudioWorkspace[data-tool=animation] .anim-preview-screen{max-height:50vh}}
+@media(prefers-reduced-motion:reduce){#formaStudioWorkspace[data-tool=animation] .anim-preview-frame{will-change:auto}}
+#formaStudioWorkspace[data-tool=animation] :is(.anim-settings-section,.anim-final){background:var(--fs-bg)!important;border:1px solid var(--fs-line)!important;border-radius:9px!important;box-shadow:none!important}
+#formaStudioWorkspace[data-tool=animation] .anim-settings-heading>span{display:none}
+#formaStudioWorkspace[data-tool=animation] :is(.anim-final-eyebrow,#animSummaryDetail,.anim-settings-heading small,.anim-extra-label span){color:var(--fs-muted)!important}
+#formaStudioWorkspace[data-tool=animation] #animSummary{color:var(--fs-text)!important;font-size:12px;font-weight:500;line-height:1.6}
+#formaStudioWorkspace[data-tool=animation] .anim-settings-grid{gap:12px 9px}
+#formaStudioWorkspace[data-tool=animation] .anim-settings-grid select{min-height:40px;font-size:11px}
+#formaStudioWorkspace[data-tool=animation] .anim-extra-label{font-size:11px;line-height:1.5}
+#formaStudioWorkspace[data-tool=animation] #animExtra{box-sizing:border-box;min-height:76px;font-size:11px}

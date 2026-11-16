@@ -1,3 +1,4 @@
+import {interiorLightsPrompt} from './forma-interior-light-contract.js';
 /**
  * ДОМ.РЕНДЕР – minimal local Node 20+ server + OpenAI Images Edit proxy.
  * Keeps API keys on the server, not in the browser. Prototype, not public multi-tenant service.
@@ -301,6 +302,8 @@ export function createPrompt(p){
   const style=styles[b.style]||styles['as-is'];
   const furniture=furnishings[b.furniture]||furnishings.preserve;
   const additional=compact(b.notes,800),surfaces=compact(b.surfaces,500);
+  const fixturePrompt=interiorLightsPrompt(b.interiorLights);
+  if(fixturePrompt)return 'INTERIOR ROOM REQUIREMENTS: Room purpose '+current+'. Preserve original room layout. '+(p.relightOnly===true?'RELIGHT ONLY: preserve all furniture and finishes.':style+' '+furniture+' '+surfaces+' '+additional)+' Base lighting: '+(lighting[b.lighting]||lighting['soft-daylight'])+' '+fixturePrompt;
   return 'INTERIOR ROOM REQUIREMENTS: Room type: '+current+'. '+(p.relightOnly===true?'RELIGHT ONLY: preserve furniture, existing finishes, materials, wall colors and camera exactly; no redesign.':style+' '+furniture+' '+(surfaces?'Finish requests: '+surfaces+'. ':'')+(additional?'Additional user requests: '+additional+'. ':''))+
    ' Base lighting: '+(lighting[b.lighting]||lighting['soft-daylight'])+' '+(sources[sun.indoorSource]||sources.window)+
    ' If selected indoor daylight is available, directional light '+(dir[sun.direction]||'according to the visible window configuration')+

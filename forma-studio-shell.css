@@ -53,3 +53,17 @@ html[data-forma-theme] body.fa-unified-studio #formaStudioWorkspace :is(.materia
 #faFlowAddBlock{display:none}
 @media(max-width:760px){.fa-unified-studio .topline{display:none!important}.fa-unified-studio .mobile-nav :is([data-mobile=parameters],.fa-interior-mobile,.fa-flow-mobile){display:none!important}.fa-unified-studio .mobile-nav{overflow:visible;max-width:100vw}.fa-unified-studio .mobile-nav button{min-width:0;flex:1}#faFlowBackdrop .fa-flow-main{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important}#faFlowBackdrop .fa-flow-sidebar{display:none!important}#faFlowAddBlock{display:inline-flex!important}#faFlowBackdrop .fa-flow-controls{padding:9px!important}}
 #formaStudioWorkspace .material-simple-number{display:none!important}#formaStudioWorkspace .material-simple-step{display:block!important}
+/* Moved legacy panels inherit the active theme instead of their old white cards. */
+#formaStudioWorkspace :is(#faInteriorPanel,#materialsPanel,#projectPanel,#animationPanel,.material-simple-card,.material-simple-step,.fa-interior-fields,.fa-interior-light-studio,.fa-interior-lock,.viewer-empty-note,.project-info,.project-guide,.source-preview,.anim-output-settings,.wan26-panel){background:var(--fs-panel)!important;color:var(--fs-text)!important;border-color:var(--fs-line)!important}
+#formaStudioWorkspace :is(#faInteriorPanel,#materialsPanel,#projectPanel,#animationPanel) :is(label,h2,h3,h4,strong,b,legend,summary){color:var(--fs-text)!important}
+#formaStudioWorkspace :is(#faInteriorPanel,#materialsPanel,#projectPanel,#animationPanel) :is(p,small,.hint,.help){color:var(--fs-muted)!important}
+#formaStudioWorkspace :is(#faInteriorPanel,#materialsPanel,#animationPanel) :is(input,select,textarea){background:var(--fs-bg)!important;color:var(--fs-text)!important;border:1px solid var(--fs-line)!important}
+#formaStudioWorkspace :is(input,textarea)::placeholder{color:var(--fs-muted)!important;opacity:.9}
+#formaStudioWorkspace .fa-studio-view{min-width:0;overflow:hidden}
+#formaStudioWorkspace .fa-studio-controls{min-width:0;overflow-x:hidden}
+#formaStudioWorkspace #faInteriorPanel{padding:20px;border-radius:12px}
+#formaStudioWorkspace #faInteriorPanel .fa-interior-fields{gap:18px}
+#formaStudioWorkspace #animationPanel details.anim-section>summary.anim-section-head,#formaStudioWorkspace #animationPanel details.anim-section[open]>summary.anim-section-head{background:var(--fs-raised)!important;color:var(--fs-text)!important;border-color:var(--fs-line)!important}
+#formaStudioWorkspace #animationPanel :is(.anim-section-title strong,.anim-section-title small,.anim-option-copy em,.anim-option-copy small,.anim-section-chevron){color:var(--fs-muted)!important}
+#formaStudioWorkspace #animationPanel .anim-section-title strong{color:var(--fs-text)!important}
+#formaStudioWorkspace .compare-hint{background:var(--fs-raised)!important;color:var(--fs-muted)!important;border-color:var(--fs-line)!important}

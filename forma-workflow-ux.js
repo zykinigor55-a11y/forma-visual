@@ -32,18 +32,36 @@ async function uploadSource(node){
  }catch(e){api.showStatus(e.message);}finally{uploading=false;}
  },{once:true});input.click();
 }
-function enhanceSettings(){
- const host=$('#faFlowNodeSettings');if(!host)return;
- const env=$('[data-node-option="environment"]',host);if(env&&!$('.fa-workflow-visual-options',host)){
-  const bar=document.createElement('div');bar.className='fa-workflow-visual-options';bar.innerHTML=[['suburban','Сад','env-garden.jpg'],['forest','Лес','env-forest.jpg'],['minimal','Минимализм','env-minimal.jpg'],['lake','Побережье','env-coast.jpg']].map(([v,t,src])=>`<button type="button" data-workflow-env="${v}"><img src="assets/thumbs/${src}" alt=""><span>${t}</span></button>`).join('');env.closest('label').after(bar);
-  bar.addEventListener('click',e=>{const b=e.target.closest('[data-workflow-env]');if(!b)return;env.value=b.dataset.workflowEnv;env.dispatchEvent(new Event('change',{bubbles:true}));});
- }
+const photoGroups={environment:'env',weather:'weather',season:'season',time:'time',plants:'plants',material:'mat'};
+const photoFiles={environment:{mountains:'mountains'},material:{custom:null}};
+const safeText=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function optionPhoto(key,value,n){
+ if(value==='keep'||value==='custom')return null;
+ if(key==='environmentSubtype')return 'assets/thumbs/landscapes/'+n.options.environment+'-'+value+'.webp';
+ return photoGroups[key]?'assets/thumbs/'+photoGroups[key]+'-'+value+'.jpg':null;
 }
-function addVisualChoices(host,key,choices){
- const select=$('[data-node-option="'+key+'"]',host);if(!select||$('[data-visual-for="'+key+'"]',host))return;
- const bar=document.createElement('div');bar.className='fa-workflow-visual-options';bar.dataset.visualFor=key;
- bar.innerHTML=choices.map(([value,title,src])=>`<button type="button" data-visual-value="${value}" aria-pressed="${select.value===value}"><img src="assets/thumbs/${src}" alt=""><span>${title}</span></button>`).join('');select.closest('label').after(bar);
- bar.addEventListener('click',e=>{const b=e.target.closest('[data-visual-value]');if(!b)return;select.value=b.dataset.visualValue;select.dispatchEvent(new Event('change',{bubbles:true}));});
+function enhanceSettings(){
+ const host=$('#faFlowNodeSettings'),n=window.FORMA_NODES?.getNode?.(window.FORMA_NODES?.graph?.()?.selected);if(!host||!n)return;
+ for(const key of [...Object.keys(photoGroups),'environmentSubtype']){
+  const field=$('[data-node-option="'+key+'"]',host);if(!field)continue;field.hidden=true;
+  let view=$('[data-scenario-picker="'+key+'"]',host);
+  if(!view){
+   view=document.createElement('details');view.className='fa-scenario-picker';view.dataset.scenarioPicker=key;
+   view.innerHTML='<summary><span class="fa-scenario-current-photo"></span><span class="fa-scenario-current-copy"></span><span class="fa-scenario-switch">Изменить <span aria-hidden="true">↗</span></span></summary><div class="fa-scenario-catalog" role="group"></div>';
+   field.closest('label').after(view);
+   const catalog=$('.fa-scenario-catalog',view);catalog.setAttribute('aria-label','Выбор: '+field.closest('label').firstChild.textContent);
+   catalog.innerHTML=[...field.options].map(o=>{const photo=optionPhoto(key,o.value,n);return '<button type="button" data-scenario-value="'+safeText(o.value)+'" aria-pressed="false">'+(photo?'<img src="'+photo+'" alt="" loading="lazy">':'<span class="fa-scenario-original" aria-hidden="true">◫</span>')+'<span>'+safeText(o.textContent)+'</span></button>';}).join('');
+   catalog.addEventListener('click',e=>{const choice=e.target.closest('[data-scenario-value]');if(!choice||field.disabled)return;field.value=choice.dataset.scenarioValue;view.open=false;field.dispatchEvent(new Event('change',{bubbles:true}));enhanceSettings();});
+   field.addEventListener('change',enhanceSettings);
+  }
+  const value=field.value,selected=field.options[field.selectedIndex],photo=optionPhoto(key,value,n),signature=value+'|'+String(photo);
+  if(view.dataset.selection!==signature){
+   view.dataset.selection=signature;
+   $('.fa-scenario-current-photo',view).innerHTML=photo?'<img src="'+photo+'" alt="">':'<span class="fa-scenario-original" aria-hidden="true">◫</span>';
+   $('.fa-scenario-current-copy',view).innerHTML='<small>Выбрано</small><strong>'+safeText(selected?.textContent||'По исходнику')+'</strong>';
+   $$('[data-scenario-value]',view).forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.scenarioValue===value)));
+  }
+ }
 }
 function enhance(){
  const flow=$('#faFlowBackdrop');if(!flow)return;
@@ -57,11 +75,11 @@ function enhance(){
  for(const card of $$('.fa-node',flow)){
   const n=window.FORMA_NODES?.getNode?.(card.dataset.node);if(!n)continue;
   const pic=$('.fa-node-picture',card);
-  if(!pic.classList.contains('has-image')&&['exterior','lighting'].includes(n.type))pic.style.backgroundImage='linear-gradient(0deg,#24272bba,#24272b55),url(assets/thumbs/env-'+(n.options?.environment==='forest'?'forest':'garden')+'.jpg)';
+  if(!pic.classList.contains('has-image')&&['exterior','lighting'].includes(n.type)){const env=n.options?.environment,sub=n.options?.environmentSubtype;const image=env&&env!=='keep'?(sub&&sub!=='keep'?'assets/thumbs/landscapes/'+env+'-'+sub+'.webp':optionPhoto('environment',env,n)):null;pic.style.backgroundImage=image?'linear-gradient(0deg,#24272bba,#24272b55),url("'+image+'")':'';}
   const input=$('[data-port-in]',card),output=$('[data-port-out]',card);if(input){input.title='Вход: изображение предыдущего шага';input.setAttribute('aria-label','Вход изображения');}if(output){output.title='Выход: передать результат следующему шагу';output.setAttribute('aria-label',n.type==='video'?'Выход видео':'Выход изображения');}
  }
  enhanceSettings();
- const host=$('#faFlowNodeSettings');if(host){addVisualChoices(host,'plants',[['garden','Сад','plants-decorative.jpg'],['conifers','Хвойные','plants-forest.jpg'],['natural','Естественные','plants-minimal.jpg'],['ornamental','Травы','plants-decorative.jpg']]);addVisualChoices(host,'time',[['noon','День','time-day.jpg'],['golden','Золотой час','time-golden.jpg'],['night','Ночь','time-night.jpg']]);}
+
 }
 function cinemaEnhance(){
  const panel=$('#animationPanel');if(!panel)return;

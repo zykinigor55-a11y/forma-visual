@@ -29,4 +29,44 @@
 .forma-interior-mode #environmentPanel>.scene-setup-header>p{display:none}
 .forma-interior-mode #environmentPanel>.scene-setup-header h3{font-size:21px}
 .forma-interior-mode .rail-nav .fa-interior-nav{background:#dcece4;color:#234137}
-@media(max-width:660px){.fa-interior-fields{grid-template-columns:1fr}.fa-interior-fields label.full{grid-column:auto}.fa-interior-panel{padding:12px}.fa-interior-intro h3{font-size:17px}}
+@media(max-width:660px){.fa-interior-fields{grid-template-columns:1fr}.fa-interior-fields label.full{grid-column:auto}.fa-interior-panel{padding:12px}.fa-interior-intro h3{font-size:17px}}/* Interior workspace: graphite surfaces and dedicated local-light controls. */
+#faSpaceSelector{--fi-bg:#30343a;--fi-raised:#383e45;--fi-line:#515962;--fi-text:#edf0f3;--fi-muted:#bac2ca;--fi-accent:#c1a77d;color:var(--fi-text)}
+#faSpaceSelector .fa-space-switch,#faSpaceSelector .fa-interior-panel{background:var(--fi-bg);border-color:var(--fi-line);color:var(--fi-text)}
+#faSpaceSelector .fa-space-switch button{color:var(--fi-muted)}
+#faSpaceSelector .fa-space-switch button.active{background:var(--fi-raised);border-color:var(--fi-accent);color:var(--fi-text);box-shadow:none}
+#faSpaceSelector .fa-space-switch button small,#faSpaceSelector .fa-interior-intro p,#faSpaceSelector .fa-interior-intro span,#faSpaceSelector #faInteriorStatus{color:var(--fi-muted)}
+#faSpaceSelector .fa-interior-intro h3,#faSpaceSelector .fa-interior-fields label{color:var(--fi-text)}
+#faSpaceSelector .fa-interior-fields select,#faSpaceSelector .fa-interior-fields textarea{background:#272b30;color:var(--fi-text);border-color:var(--fi-line);color-scheme:dark}
+#faSpaceSelector textarea::placeholder{color:#aeb8c2;opacity:1}
+#faSpaceSelector .fa-interior-lock{background:#373b40!important;border-color:var(--fi-line)!important}
+#faSpaceSelector .fa-interior-lock b{color:var(--fi-text)}
+#faSpaceSelector .fa-interior-lock small{color:var(--fi-muted)}
+#faSpaceSelector .fa-interior-lock>span{background:#454b52;color:var(--fi-accent)}
+#faSpaceSelector .fa-room-help{grid-column:1/-1;font-size:11px;font-weight:400;line-height:1.65;color:var(--fi-muted);margin:-2px 0 3px}
+#faSpaceSelector .fa-interior-light-studio{margin-top:20px;padding:18px 0;border-top:1px solid var(--fi-line);border-bottom:1px solid var(--fi-line)}
+#faSpaceSelector .fa-interior-light-studio span{font-size:10px;letter-spacing:.08em;color:var(--fi-accent)}
+#faSpaceSelector .fa-interior-light-studio h4,#faSpaceSelector .fa-light-heading h4{color:var(--fi-text);font-size:15px;font-weight:550;margin:7px 0}
+#faSpaceSelector .fa-interior-light-studio p{font-size:12px;color:var(--fi-muted);line-height:1.6;margin:8px 0 14px}
+#faSpaceSelector #faInteriorLightStudio{display:flex;align-items:center;gap:10px;border:1px solid var(--fi-line);border-radius:8px;background:var(--fi-raised);color:var(--fi-text);padding:11px 13px;font-size:12px;min-height:44px}
+#faSpaceSelector svg{width:24px;height:24px;flex:none}
+#faSpaceSelector .fa-interior-light-editor{padding:18px 0 0}
+#faSpaceSelector [hidden]{display:none!important}
+#faSpaceSelector .fa-light-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#faSpaceSelector .fa-light-heading>span{font-size:11px;color:var(--fi-muted)}
+#faSpaceSelector .fa-light-catalog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0}
+#faSpaceSelector .fa-light-catalog button{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 9px;border:1px solid var(--fi-line);border-radius:8px;background:var(--fi-bg);color:var(--fi-text);text-align:left;min-width:0;min-height:108px;font:inherit;font-size:11px}
+#faSpaceSelector .fa-light-catalog button:hover{background:var(--fi-raised);border-color:var(--fi-accent)}
+#faSpaceSelector .fa-light-catalog button:disabled{opacity:.45;cursor:default}
+#faSpaceSelector .fa-light-catalog svg{color:var(--fi-accent)}
+#faSpaceSelector .fa-light-catalog small{font-size:10px;color:var(--fi-muted)}
+#faSpaceSelector .fa-light-note,#faSpaceSelector .fa-light-empty,#faSpaceSelector .fa-light-apply{font-size:11px;line-height:1.65;color:var(--fi-muted);margin:12px 0}
+#faSpaceSelector .fa-light-source{position:relative;min-width:0;border:1px solid var(--fi-line);border-radius:9px;margin:20px 0 12px;padding:12px}
+#faSpaceSelector .fa-light-source legend{display:flex;align-items:center;gap:8px;padding:0 4px;font-size:12px;color:var(--fi-text);max-width:calc(100% - 72px)}
+#faSpaceSelector .fa-light-remove{position:absolute;right:10px;top:-25px;min-height:32px;border:0;background:var(--fi-bg);color:var(--fi-muted);font-size:10px;text-decoration:underline;text-underline-offset:3px}
+#faSpaceSelector .fa-light-controls{display:grid;grid-template-columns:1fr 1fr;gap:18px 16px}
+#faSpaceSelector .fa-light-controls label{font-size:11px;line-height:1.6;color:var(--fi-muted);min-width:0}
+#faSpaceSelector .fa-light-controls output{display:block;font-size:12px;color:var(--fi-text);font-variant-numeric:tabular-nums}
+#faSpaceSelector .fa-light-controls input{display:block;width:100%;accent-color:var(--fi-accent);min-height:26px;margin:4px 0 0}
+#faSpaceSelector .fa-light-controls select{display:block;width:100%;min-height:36px;margin-top:5px;background:#272b30;color:var(--fi-text);border:1px solid var(--fi-line);border-radius:6px;font-size:11px;padding:6px;color-scheme:dark}
+#faSpaceSelector button:focus-visible,#faSpaceSelector input:focus-visible,#faSpaceSelector select:focus-visible{outline:2px solid var(--fi-accent);outline-offset:3px}
+@media(max-width:660px){#faSpaceSelector .fa-light-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}#faSpaceSelector .fa-light-controls{grid-template-columns:1fr}}

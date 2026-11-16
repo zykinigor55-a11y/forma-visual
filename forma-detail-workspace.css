@@ -1,0 +1,10 @@
+.fs-selection-guide{font-size:12px;line-height:1.6;color:var(--fs-muted)}
+.fs-detail-preview{display:flex;gap:14px;align-items:center;border:1px solid var(--fs-line);border-radius:9px;padding:12px;background:var(--fs-panel)}
+.fs-detail-preview img{display:block;width:120px;max-height:100px;object-fit:contain;background:var(--fs-bg)}
+.fs-detail-preview img:not([src]){display:none}
+.fs-detail-preview span{font-size:11px;line-height:1.5;color:var(--fs-muted)}
+.fs-material-source{padding:0 0 20px;margin:0 0 24px;border-bottom:1px solid var(--fs-line)}
+.fs-material-source h2{font-size:18px;font-weight:500;margin-top:0}
+.fs-material-source p{font-size:12px;line-height:1.7;color:var(--fs-muted)}
+.fs-material-source .fs-file{margin-bottom:9px}
+.fs-material-source-status{min-height:20px}
