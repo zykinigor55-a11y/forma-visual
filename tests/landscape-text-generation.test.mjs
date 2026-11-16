@@ -13,7 +13,7 @@ test('landscape provider payload contains clean images and mask, no screenshot g
  const source=readFileSync(new URL('../forma-landscape-atmosphere.js',import.meta.url),'utf8');
  const code=source.slice(source.indexOf('async function landscapePayload('),source.indexOf('\nasync function providerCopy'));
  const data='data:image/png;base64,clean';const c=()=>({getContext:()=>({fillRect(){},drawImage(){},getImageData:()=>({data:Uint8ClampedArray.of(0,0,0,255)})}),toDataURL:()=>data});
- const context={items:[{kind:'tree',catalogId:'pine-tall',x:.5,y:.8,w:.1,h:.3}],loadImage:async()=>({naturalWidth:1000,naturalHeight:1000}),cropBounds:()=>({x:0,y:0,width:1000,height:1000}),canvas:c,drawSelection(){},selectionHasCoverage:()=>true,isLinearEdge:()=>false,normalizeLandscape:x=>x};
+ const context={items:[{kind:'tree',catalogId:'pine-tall',x:.5,y:.8,w:.1,h:.3}],loadImage:async()=>({naturalWidth:1000,naturalHeight:1000}),cropBounds:()=>({x:0,y:0,width:1000,height:1000}),canvas:c,drawSelection(){},selectionHasCoverage:()=>true,isLinearEdge:()=>false,isBrushKind:k=>k==='fill'||k==='scatter',normalizeLandscape:x=>x,CUSTOM_LANDSCAPE_ID:'custom-image',customAssets:[],customImages:new Map(),makeCustomReferenceBoard:async()=>null};
  vm.runInNewContext(code+';this.payload=landscapePayload;',context);
  const {payload:p}=await context.payload({image:'source'});
  assert.equal(p.material,undefined);assert.equal(p.landscapeEdit.placementGuide,undefined);assert.equal(p.landscapeEdit.speciesBoard,undefined);
