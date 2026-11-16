@@ -1,4 +1,6 @@
 /* Shared, allowlisted art-direction contract. No provider or browser dependencies. */
+import {ATMOSPHERE_SCENARIOS} from './forma-atmosphere-scenes.js';
+import {authoredAtmospherePrompt} from './forma-atmosphere-prompt.js';
 export const PLANTS=Object.freeze([
  {id:'juniper',name:'Можжевельник',description:'Низкий хвойный куст',prompt:'low spreading Juniperus horizontalis Blue Chip, fine natural blue-green needles',color:'#637b68'},
  {id:'willow-nana',name:'Ива Nana',description:'Округлая воздушная крона',prompt:'compact Salix purpurea Nana shrub with fine silvery-green leaves',color:'#9da886'},
@@ -76,7 +78,7 @@ export const LOOKS=Object.freeze([
 ]);
 
 export const ATMOSPHERE_VEGETATION=Object.freeze([
- {id:'match',name:'Как в исходнике',prompt:'First identify the existing visible tree species. Extend ONLY that species at the edges: Scots pine (Pinus sylvestris) with irregular needles if pines are present; silver birch (Betula pendula) with fine white-bark twigs if birches are present; Norway spruce (Picea abies) with hanging needle branches if spruces are present; Norway maple (Acer platanoides) with lobed leaves if maples are present. For another recognizable species use that same species, not this example list. If species cannot be identified or the setting has no trees, retain existing planting and add no trees.'},
+ {id:'match',name:'Как в исходнике',prompt:'First identify the existing visible tree species. Extend ONLY that species at the edges: Scots pine (Pinus sylvestris) with irregular needles if pines are present; silver birch (Betula pendula) with fine white-bark twigs if birches are present; Norway spruce (Picea abies) with hanging needle branches if spruces are present; Norway maple (Acer platanoides) with lobed leaves if maples are present. For another recognizable species use that same species, not this example list. If existing species is unclear, choose a plausible species matching the region and existing vegetation rather than omitting an explicitly requested near foreground tree.'},
  {id:'pine',name:'Сосна обыкновенная',prompt:'Scots pine (Pinus sylvestris): irregular sparse lateral branches, orange-brown bark, fine paired needles, airy asymmetric crown; never a dense conical spruce.'},
  {id:'spruce',name:'Ель обыкновенная',prompt:'Norway spruce (Picea abies): narrow irregular conical crown, downward-hanging lateral boughs, fine individual dark-green needles; never a pine crown.'},
  {id:'birch',name:'Берёза повислая',prompt:'Silver birch (Betula pendula): slender white trunk with dark bark fissures, delicate hanging twigs and small serrated leaves, airy translucent canopy.'},
@@ -129,11 +131,13 @@ export function normalizeAtmosphere(value){
  if(value==null)return null;
  if(!LOOKS.some(x=>x.id===value.preset))invalid('Неизвестная атмосфера');
  if(value.vegetation!=null&&!ATMOSPHERE_VEGETATION.some(x=>x.id===value.vegetation))invalid('Неизвестная порода для атмосферы');
- return {preset:value.preset,vegetation:value.vegetation??'match',foreground:finite(value.foreground,35,0,70),strength:finite(value.strength,65,0,100),contrast:finite(value.contrast,0,-30,30),saturation:finite(value.saturation,0,-30,30),temperature:finite(value.temperature,0,-30,30),dof:finite(value.dof,0,0,100),depth:finite(value.depth,10,0,40),bloom:finite(value.bloom,0,0,30),grain:finite(value.grain,0,0,20),focus:value.focus?point(value.focus):{x:.5,y:.5}};
+ const scene=ATMOSPHERE_SCENARIOS.find(x=>x.id===(value.scenario||'day-soft'));if(!scene)invalid('Неизвестный сценарий атмосферы');
+ return {preset:value.preset??scene.look,scenario:scene.id,vegetation:value.vegetation??'match',foreground:finite(value.foreground,scene.defaults.foreground,0,70),trunks:finite(value.trunks,scene.defaults.trunks,0,100),shrubs:finite(value.shrubs,scene.defaults.shrubs,0,100),grounding:finite(value.grounding,scene.defaults.grounding,0,100),vignette:finite(value.vignette,scene.defaults.vignette,0,30),strength:finite(value.strength,scene.defaults.strength,0,100),contrast:finite(value.contrast,0,-30,30),saturation:finite(value.saturation,0,-30,30),temperature:finite(value.temperature,scene.defaults.temperature,-30,30),dof:finite(value.dof,scene.defaults.dof,0,100),depth:finite(value.depth,scene.defaults.depth,0,40),bloom:finite(value.bloom,scene.defaults.bloom,0,30),grain:finite(value.grain,0,0,20),focus:value.focus?point(value.focus):{x:.5,y:.5}};
 }
 export function sameView(a,b){return !!a&&!!b&&a.projectId===b.projectId&&a.sourceKey===b.sourceKey&&(a.renderId||null)===(b.renderId||null);}
 export function atmospherePrompt(value,{preserveScene=true}={}){
  const a=normalizeAtmosphere(value);if(!a||a.strength===0)return '';
+ return authoredAtmospherePrompt(a,ATMOSPHERE_VEGETATION.find(v=>v.id===a.vegetation),{preserveScene});
  const look=LOOKS.find(x=>x.id===a.preset);
  const focus=a.dof>0?`Selective photographic depth of field at strength ${a.dof}/100. Focus on the actual architectural subject nearest (${pct(a.focus.x)}%, ${pct(a.focus.y)}%) of the FULL image. Keep the primary building and its facade microdetail sharply resolved; apply natural optical defocus only to nearer foreground and far background according to physical distance. No uniform Gaussian blur, tilt-shift miniature effect or blurred building.`:'Deep architectural depth of field, building and landscape optically resolved, no artificial bokeh.';
  const sceneLock=preserveScene?'Preserve existing weather, season, time of day, sun direction and environment':'Use the explicitly requested resulting scene conditions (weather, season, time and sun), never override those selected conditions';
