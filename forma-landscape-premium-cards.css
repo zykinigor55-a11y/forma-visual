@@ -1,0 +1,171 @@
+/* FORMA / LANDSCAPE 02 — neutral architectural product cards.
+   One visual system for all 51 base catalog objects plus seasonal, climbing
+   and lighting tools. Dark mode is graphite, NOT olive green. */
+#formaArtDialog{
+ --art-ink:#26272b;--art-muted:#70747c;--art-line:#d9dadd;
+ background:#f5f5f4;color:var(--art-ink);border-color:#d1d2d4;
+}
+#formaArtDialog .fa-art-head,#formaArtDialog .fa-art-foot{border-color:var(--art-line)}
+#formaArtDialog .fa-art-inspector{min-width:0}
+#formaArtDialog .fa-art-categories{
+ display:flex;flex-wrap:nowrap;gap:7px;max-width:100%;overflow-x:auto;
+ overscroll-behavior-inline:contain;scroll-snap-type:x proximity;
+ padding:3px 0 13px;margin:0 0 13px;scrollbar-width:thin;
+ scrollbar-color:#bdbdc0 transparent;
+}
+#formaArtDialog .fa-art-categories button{
+ flex:0 0 auto;scroll-snap-align:start;min-height:41px;
+ display:flex;align-items:center;gap:7px;padding:10px 11px;
+ background:#ecedef;border:1px solid #dcdddf;border-radius:8px;
+ color:#51545b;font-size:11px;font-weight:590;white-space:nowrap;
+ transition:background .15s,border-color .15s,color .15s;
+}
+#formaArtDialog .fa-art-categories button small{
+ display:inline-grid;place-items:center;height:19px;min-width:19px;
+ padding:0 4px;border-radius:5px;background:#dfe0e3;color:#64676f;
+ font-size:9px;font-weight:680;font-variant-numeric:tabular-nums;
+}
+#formaArtDialog .fa-art-categories button[aria-pressed="true"]{
+ background:#303136;border-color:#303136;color:#f6f5f2;
+}
+#formaArtDialog .fa-art-categories button[aria-pressed="true"] small{
+ background:#c3aa83;color:#202124;
+}
+#formaArtDialog .fa-art-catalog-heading{
+ display:flex;gap:8px;align-items:center;justify-content:space-between;
+ margin:9px 0 11px;color:var(--art-ink);
+}
+#formaArtDialog .fa-art-catalog-heading span{
+ font-size:10px;letter-spacing:.10em;font-weight:730;
+}
+#formaArtDialog .fa-art-catalog-heading small{
+ font-size:10px;color:var(--art-muted);white-space:nowrap;
+}
+#formaArtDialog .fa-art-catalog{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+}
+#formaArtDialog .fa-art-catalog .fa-art-premium-card{
+ position:relative;display:flex;flex-direction:column;align-items:stretch;
+ gap:0;min-width:0;padding:7px 7px 12px;min-height:196px;
+ border:1px solid #d9dadd;border-radius:11px;
+ color:var(--art-ink);background:#fafafa;
+ overflow:hidden;text-align:left;
+ transition:transform .15s,border-color .15s,box-shadow .15s;
+}
+#formaArtDialog .fa-art-premium-card:hover{
+ border-color:#aaa7a1;box-shadow:0 8px 22px rgba(0,0,0,.07);
+ transform:translateY(-1px);
+}
+#formaArtDialog .fa-art-premium-card[aria-pressed="true"]{
+ border-color:#a4875b!important;background:#f9f8f5!important;
+ box-shadow:inset 0 0 0 1px #a4875b,0 10px 24px rgba(0,0,0,.06)!important;
+}
+#formaArtDialog .fa-art-preview-frame{
+ display:flex;position:relative;align-items:center;justify-content:center;
+ width:100%;height:121px;overflow:hidden;border-radius:7px;
+ background:linear-gradient(150deg,#e6e5e1,#c9c9c7);
+ border:1px solid rgba(0,0,0,.045);
+ isolation:isolate;
+}
+#formaArtDialog .fa-art-preview-photo{
+ background:radial-gradient(ellipse at 65% 65%,#e4e5e2,#c5c6c2);
+}
+#formaArtDialog .fa-art-preview-plant{
+ background:linear-gradient(150deg,#dfdfdc,#bdc1bb);
+}
+#formaArtDialog .fa-art-preview-surface{background:#d4d5d2}
+#formaArtDialog .fa-art-preview-frame :is(img,svg){
+ width:100%;height:100%;display:block;object-fit:contain;pointer-events:none;
+}
+#formaArtDialog .fa-art-preview-surface img{object-fit:cover}
+#formaArtDialog .fa-art-preview-frame svg{max-width:100%;overflow:hidden}
+#formaArtDialog .fa-art-preview-special svg{object-fit:cover}
+#formaArtDialog .fa-art-card-copy{
+ display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+ padding:9px 3px 0;min-width:0;flex:1;
+}
+#formaArtDialog .fa-art-card-copy .fa-art-card-method{
+ display:block;margin:0 0 2px;color:#867356!important;
+ font-size:8px;font-weight:760;letter-spacing:.075em;
+}
+#formaArtDialog .fa-art-card-copy>b{
+ display:block;margin:0;color:#303139;font-size:12px;letter-spacing:-.015em;
+ font-weight:660;line-height:1.3;overflow-wrap:anywhere;
+}
+#formaArtDialog .fa-art-card-copy .fa-art-card-desc{
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden;margin:0;color:#777980;font-size:10px;line-height:1.35;
+}
+#formaArtDialog .fa-art-card-corner{
+ position:absolute;top:13px;right:13px;display:grid;place-items:center;
+ width:24px;height:24px;border-radius:50%;
+ background:rgba(33,34,38,.6);color:#f7f5ee;
+ font-size:17px;font-weight:450;pointer-events:none;
+}
+#formaArtDialog .fa-art-premium-card[aria-pressed="true"] .fa-art-card-corner{
+ background:#b7986b;color:#242528;transform:rotate(45deg);
+}
+#formaArtDialog .fa-art-curve-mode{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;
+ padding:4px;margin:12px 0 7px;border-radius:8px;border:1px solid var(--art-line);
+ background:#ebebec;
+}
+#formaArtDialog .fa-art-curve-mode button{
+ min-height:44px;border:0;border-radius:6px;padding:8px 6px;
+ background:transparent;color:var(--art-muted);font-size:11px;font-weight:650;
+}
+#formaArtDialog .fa-art-curve-mode button[aria-pressed="true"]{
+ background:#303136;color:#faf9f6;box-shadow:0 2px 7px rgba(0,0,0,.15);
+}
+#formaArtDialog .fa-art-curve-mode+ .fa-art-help{
+ margin:8px 0 12px;line-height:1.65;
+}
+#formaArtDialog[data-mode="landscape"] #artCanvasInput{
+ touch-action:none;user-select:none;-webkit-user-select:none;
+}
+html[data-forma-theme="dark"] #formaArtDialog{
+ --art-ink:#f1f1f2;--art-muted:#b2b4ba;--art-line:#464850;
+ background:#222327;color:var(--art-ink);border-color:#474950;
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-shell{background:#222327}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-categories button{
+ background:#313238;border-color:#45464d;color:#d1d1d5;
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-categories button small{
+ background:#41434a;color:#c5c5ca;
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-categories button[aria-pressed="true"]{
+ background:#c4aa82;border-color:#c4aa82;color:#24262a;
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-categories button[aria-pressed="true"] small{
+ background:#23252a;color:#f5e4c8;
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-catalog .fa-art-premium-card{
+ background:#2d2f34!important;border-color:#45474e!important;
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-premium-card:hover{
+ border-color:#7d7974!important;box-shadow:0 8px 22px rgba(0,0,0,.17);
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-premium-card[aria-pressed="true"]{
+ background:#333239!important;border-color:#c4aa82!important;
+ box-shadow:inset 0 0 0 1px #c4aa82!important;
+}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-card-copy>b{color:#f0f0f2}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-card-copy .fa-art-card-method{color:#d7bb93!important}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-card-copy .fa-art-card-desc{color:#b0b2b9}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-curve-mode{background:#303238}
+html[data-forma-theme="dark"] #formaArtDialog .fa-art-curve-mode button[aria-pressed="true"]{
+ background:#c4aa82;color:#25262b;
+}
+@media(max-width:800px){
+ #formaArtDialog .fa-art-catalog{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #formaArtDialog .fa-art-catalog .fa-art-premium-card{min-height:176px}
+ #formaArtDialog .fa-art-preview-frame{height:106px}
+ #formaArtDialog .fa-art-categories button{min-height:44px;font-size:11px}
+ #formaArtDialog .fa-art-card-copy>b{font-size:11px}
+}
+@media(max-width:375px){
+ #formaArtDialog .fa-art-preview-frame{height:94px}
+ #formaArtDialog .fa-art-catalog .fa-art-premium-card{min-height:172px;padding:6px}
+ #formaArtDialog .fa-art-card-copy .fa-art-card-desc{font-size:9px}
+}
