@@ -14,7 +14,7 @@ function txt(id,value){const e=$(id);if(e)e.textContent=String(value)}
 function switchView(view){
  shown=['account','tools','gallery','contacts'].includes(view)?view:'account';
  $('cabinetAccount').hidden=shown!=='account';
- $('cabinetTools').hidden=shown!=='tools';
+ if($('cabinetTools'))$('cabinetTools').hidden=shown!=='tools';
  $('cabinetGallery').hidden=shown!=='gallery';
  $('cabinetContacts').hidden=shown!=='contacts';
  txt('cabinetTitle',shown==='account'?'Личный кабинет':shown==='gallery'?'Галерея работ':shown==='tools'?'Инструменты':'Контакты');
