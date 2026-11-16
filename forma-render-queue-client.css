@@ -1,0 +1,9 @@
+/* Recover a completed paid job after an Android browser reload. */
+.forma-queue-recover{position:fixed;z-index:2147483000;top:max(72px,calc(env(safe-area-inset-top) + 72px));right:20px;display:flex;align-items:center;gap:16px;max-width:min(600px,calc(100vw - 32px));padding:14px 17px;border:1px solid var(--fs-accent,#bb9f74);border-radius:12px;background:var(--fs-panel,#292d32);color:var(--fs-text,#f1f2f2);box-shadow:0 14px 38px #0007;font-family:Inter,system-ui,sans-serif}
+.forma-queue-recover-copy{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+.forma-queue-recover-copy strong{font-size:13px;font-weight:650;line-height:1.4}
+.forma-queue-recover-copy span{font-size:11px;line-height:1.5;color:var(--fs-muted,#bbc0c5)}
+.forma-queue-recover button{font:inherit;cursor:pointer;min-height:40px;border:1px solid var(--fs-accent,#bb9f74);background:var(--fs-accent,#bb9f74);color:#22252b;border-radius:8px;padding:10px 12px;font-weight:650;font-size:11px}
+.forma-queue-recover button:disabled{opacity:.5;cursor:wait}
+.forma-queue-recover button.forma-queue-recover-close{display:grid;place-items:center;min-height:36px;width:36px;flex:none;padding:0;background:transparent;border-color:var(--fs-line,#555);color:var(--fs-text,#f1f2f2);font-size:21px}
+@media(max-width:680px){.forma-queue-recover{left:14px;right:14px;top:calc(env(safe-area-inset-top) + 76px);max-width:none;padding:12px;gap:9px;flex-wrap:wrap}.forma-queue-recover-copy{flex-basis:100%;padding-right:38px}.forma-queue-recover button[data-queue-restore]{flex:1}.forma-queue-recover button.forma-queue-recover-close{position:absolute;right:12px;top:12px}}
