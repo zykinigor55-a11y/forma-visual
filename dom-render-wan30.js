@@ -63,6 +63,7 @@
    if(data.status==='completed'){
     stop();download.hidden=false;download.href=data.downloadUrl;result.hidden=false;result.textContent='✓ Генерация завершена. Нажмите «Скачать MP4».';
     button.disabled=false;await refresh();
+    window.FORMA_RESULT_FOCUS?.show?.({image:data.downloadUrl,kind:'video',scene:'Анимация · готовое видео',onSave:()=>window.DOM_RENDER_GALLERY.saveGeneratedVideo(data.downloadUrl,'Анимация · '+jobId)});
    }else if(['failed','cancelled','expired'].includes(data.status)){
     stop();button.disabled=!available?.ready;await refresh();
    }

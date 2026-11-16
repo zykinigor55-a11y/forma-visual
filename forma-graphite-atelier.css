@@ -774,3 +774,15 @@ html[data-forma-theme] #renderProgress .forma-render-active-line:after{
  html[data-forma-theme] #renderProgress .forma-render-trace path{animation:none;stroke-dashoffset:0}
  html[data-forma-theme] #renderProgress .forma-render-active-line:after{animation:none}
 }
+
+/* Shared result review opens above every tool dialog. */
+#formaResultFocus{border:0;margin:0;width:100vw;height:100dvh;max-width:none;max-height:none;box-sizing:border-box;color:#f3ebe1}
+#formaResultFocus::backdrop{background:#08080be8}
+#formaResultFocus [hidden]{display:none!important}
+.forma-result-save{display:flex;align-items:center;gap:10px;padding:14px 22px;flex-wrap:wrap;border-block:1px solid #51473e;background:#242125}
+.forma-result-save strong{font-size:15px}.forma-result-save span{font-size:11px;color:#c2b4a6;flex:1}
+.forma-result-save button{min-height:44px;padding:10px 16px;border:1px solid #73614e;border-radius:9px;background:#cdb08b;color:#1b1815;font:inherit;cursor:pointer}
+.forma-result-save button[data-result-action=later]{background:transparent;color:#f3ebe1}
+.forma-result-save button:disabled{opacity:.55;cursor:default}
+.fa-studio-main-actions{display:flex;gap:10px;flex-wrap:wrap}.fa-studio-gallery-launch{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 20px;border:1px solid #b69c78;border-radius:10px;background:#cdb08b;color:#1b1815;font:inherit;font-weight:650;cursor:pointer}
+@media(max-width:700px){.forma-result-save{padding:10px 12px;gap:8px}.forma-result-save strong{width:100%}.forma-result-save span{flex-basis:100%}.forma-result-save button{flex:1}.fa-studio-main-actions{width:100%}.fa-studio-main-actions>button{flex:1}}

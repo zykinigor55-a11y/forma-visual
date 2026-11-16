@@ -1,6 +1,6 @@
 export function scalePlacement(item,factor){
- const f=Math.max(.1,Math.min(12,Number(factor)||1));
- const w=(item.baseW||item.w)*f,h=(item.baseH||item.h)*f,limit=Math.min(1,3/Math.max(w,h));
+ const f=Math.max(.1,Math.min(50,Number(factor)||1));
+ const w=(item.baseW||item.w)*f,h=(item.baseH||item.h)*f,limit=Math.min(1,50/Math.max(w,h));
  return {...item,w:w*limit,h:h*limit};
 }
 export function linePlacements(a,b,spacing=.05){const distance=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.min(40,Math.round(distance/Math.max(.01,spacing))));return Array.from({length:n+1},(_,i)=>({x:a.x+(b.x-a.x)*i/n,y:a.y+(b.y-a.y)*i/n}));}

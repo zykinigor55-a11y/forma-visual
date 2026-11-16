@@ -37,3 +37,5 @@
 
 /* Isolated photo references: never expand a complete contact sheet on the canvas. */
 .fa-art-option>.fa-art-reference{width:100%;height:105px;display:block;object-fit:contain;background:var(--fs-raised,#e4e7de);border-radius:6px;pointer-events:none}.fa-art-option>.fa-art-reference.surface{object-fit:cover}.fa-art-influence{fill:#d9c29a;fill-opacity:.06!important;stroke-dasharray:7 5;stroke-width:1.5!important}.fa-art-region>image{stroke:none;pointer-events:none}.fa-art-region.selected>.fa-art-influence{stroke:var(--fs-accent,#d6bb8f)}
+
+.fa-art-size select{display:block;width:100%;min-height:44px;margin-top:8px;padding:9px 10px;border:1px solid var(--art-line);border-radius:6px;background:var(--fs-raised,#262929);color:var(--art-ink);font:inherit}.fa-art-size select:focus-visible{outline:2px solid var(--fs-accent,#d6bb8f);outline-offset:2px}

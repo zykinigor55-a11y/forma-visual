@@ -44,7 +44,7 @@
  const saveVideoIndex=items=>localStorage.setItem(VIDEOS_KEY,JSON.stringify(items));
  const sourceProjects=()=>{try{const p=JSON.parse(localStorage.getItem(PROJECTS_KEY)||'{}');return Array.isArray(p.projects)?p.projects:[]}catch{return []}};
  function collect(){
-  const photos=sourceProjects().filter(p=>p&&!p.demo).flatMap(p=>(Array.isArray(p.renders)?p.renders:[]).filter(r=>r?.id).map(r=>({
+  const photos=sourceProjects().filter(p=>p&&!p.demo).flatMap(p=>(Array.isArray(p.renders)?p.renders:[]).filter(r=>r?.id&&r.gallerySaved!==false).map(r=>({
    id:'render:'+p.id+':'+r.id,kind:'image',projectId:p.id,renderId:r.id,
    projectName:safeText(p.name||'Проект'),title:safeText(r.batchLabel||'Рендер '+(r.number||'')),
    createdAt:Number(r.createdAt)||Number(p.modifiedAt)||0
@@ -107,7 +107,7 @@
    const empty=document.createElement('div');empty.className='cabinet-gallery-empty';
    empty.appendChild(icon(filter==='video'?'film':'image'));
    const bold=document.createElement('strong');bold.textContent=filter==='video'?'Пока нет видеороликов':filter==='image'?'Здесь пока нет рендеров':'Ваша коллекция пока пуста';
-   const p=document.createElement('p');p.textContent=filter==='video'?'Добавьте MP4 или WebM через кнопку «Добавить видео».':'Создайте визуализацию в разделе «Рендер», затем она появится здесь автоматически.';
+   const p=document.createElement('p');p.textContent=filter==='video'?'Добавьте MP4 или WebM через кнопку «Добавить видео».':'Создайте визуализацию в разделе «Рендер», и выберите «Сохранить в галерею» в окне готового кадра.';
    empty.append(bold,p);grid.appendChild(empty);
   }else{
    const frag=document.createDocumentFragment();shown.forEach(i=>frag.appendChild(card(i,version)));grid.appendChild(frag)
@@ -247,7 +247,15 @@
    if(b.dataset.cabinetTab!=='gallery'){closeViewer();$('cabinetCover').classList.remove('is-gallery')}
   }));
   window.addEventListener('storage',e=>{if([PROJECTS_KEY,VIDEOS_KEY].includes(e.key)&&!$('cabinetGallery').hidden)activate()});
-  window.DOM_RENDER_GALLERY={activate};
+  window.DOM_RENDER_GALLERY={activate,async saveGeneratedVideo(url,name='AI-видео'){
+   const response=await fetch(url);if(!response.ok)throw Error('Не удалось загрузить готовое видео');const blob=await response.blob();
+   if(blob.size>MAX_VIDEO)throw Error('Видео превышает 160 МБ. Скачайте файл на устройство.');
+   const id=crypto.randomUUID();await dbOp(VIDEO_DB,'videos','put',id,blob);
+   const meta={id,name:safeText(name),projectName:'AI-видео',projectId:'generated',type:blob.type||'video/mp4',createdAt:Date.now(),poster:await thumbForVideo(blob)};
+   try{saveVideoIndex([meta,...getVideoIndex()]);}catch(error){await dbOp(VIDEO_DB,'videos','delete',id);throw error;}
+   activate();return id;
+  }};
+  document.addEventListener('forma:gallery-updated',activate);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

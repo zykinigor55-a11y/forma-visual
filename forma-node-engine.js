@@ -500,6 +500,7 @@ async function runTo(target,resume=false){
    api.markFresh?.(n.id);
    setState(n.id,'done');
   }
+  if(videoCompleted&&videoBlob){const url=URL.createObjectURL(videoBlob);window.FORMA_RESULT_FOCUS?.show?.({image:url,kind:'video',scene:'Видео сценария',onSave:()=>window.DOM_RENDER_GALLERY.saveGeneratedVideo(url,'Видео сценария')});}
   if(aiCompleted)await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Сценарий · '+lastAI,ctx.projectId,ctx.source);
   tell('Готово: '+plan.path.length+' этапов · '+aiCompleted+' изображений · '+videoCompleted+' видео. Результаты сохранены в нодах и проекте.');
  }catch(err){

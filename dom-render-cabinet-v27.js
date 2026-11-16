@@ -72,5 +72,6 @@ function init(){
  $('cabinetCover').addEventListener('click',ev=>{if(ev.target===$('cabinetCover'))close()});
  d.addEventListener('keydown',ev=>{if($('cabinetCover').hidden)return;if(ev.key==='Escape'){ev.preventDefault();close()}});
 }
+window.FORMA_CABINET={open,close};
 if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
