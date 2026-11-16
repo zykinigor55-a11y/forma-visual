@@ -46,11 +46,27 @@ async function execute(action){
   if(action==='crop'){url=await cropImage(own.source,own.crop);label='Кроп исходника · без новых деталей';}
   else if(action==='detail'){
    url=await request({image:await compactImage(await cropImage(own.source,own.crop,1800)),reference:await compactImage(own.source),imageTask:{kind:'detail',crop:own.crop,level:$('#fsDetailLevel').value,notes:$('#fsNotes').value}});label='Детальный кадр · AI-интерпретация';
+  }else if(action==='plan2d'){
+   const planStyle=own.plan2dStyle||'technical';
+   url=await request({image:await compactImage(own.source),imageTask:{kind:'plan2d',planStyle,notes:$('#fsNotes').value}});
+   label='2D-план · '+PLAN_2D_STYLES[planStyle];
+   assertFrameBinding(bridge().snapshot(),expected);
+   own.plan2dResult=url;
+   await bridge().setAsset('plan_2d_result',url,own.projectId);
+   setView(url);
+  }else if(action==='room'){
+   const marker=await markedRoomReference(own.planResult,own.crop);
+   url=await request({image:await compactImage(own.planResult),material:marker,reference:await compactImage(own.source),
+    imageTask:{kind:'room',room:{...own.crop},direction:$('#fsPlanDirection').value,style:$('#fsPlanStyle').value,notes:$('#fsNotes').value}});
+   label='Фото выбранной комнаты';
   }else{
-   const engine=$('#fsPlanEngine').value;if(!engine)throw Error('Выберите модель для генерации');
-   const imageTask={kind:action==='room'?'room':'plan',engine,style:$('#fsPlanStyle').value,presentation:$('#fsPlanPresentation').value,notes:$('#fsNotes').value,...(action==='room'?{room:own.crop,direction:$('#fsPlanDirection').value}:{})};
-   url=await request({image:await compactImage(own.source),reference:action==='room'?await compactImage(own.planResult):null,imageTask});label=action==='room'?'Интерьер по плану':'Объёмный план';
-   if(action!=='room'){assertFrameBinding(bridge().snapshot(),expected);own.planResult=url;own.planApproved=false;own.roomSelected=false;await bridge().setAsset('plan_result',url,own.projectId);setView(url);$('#fsApprovePlan').disabled=false;}
+   const imageTask={kind:'plan',style:$('#fsPlanStyle').value,presentation:$('#fsPlanPresentation').value,notes:$('#fsNotes').value};
+   url=await request({image:await compactImage(own.source),imageTask});
+   label='3D-план · '+PLAN_PRESENTATIONS[imageTask.presentation];
+   assertFrameBinding(bridge().snapshot(),expected);
+   own.planResult=url;own.planApproved=false;own.roomSelected=false;
+   await bridge().setAsset('plan_result',url,own.projectId);
+   setView(url);$('#fsApprovePlan').disabled=false;
   }
   if(version!==token||state!==own)throw Error('Рабочее окно изменилось');
   assertFrameBinding(bridge().snapshot(),expected);await bridge().saveResult(url,label,{...expected,image:own.source});own.binding=bridge().snapshot();addResult(url,label);status('Готово · сохранено в проекте. Исходник доступен для сравнения.');
@@ -77,7 +93,7 @@ async function runSeries(only=null){
  }catch(e){drawSeries();status(e.message+' Уже созданные кадры сохранены. Повторите только неудачный.');}finally{bridge().release();lock(false);}
 }
 async function open({id,view,controls}){
- if(!['frames','plan'].includes(id))return;token++;const mine=token,snapshot=bridge().snapshot();state={kind:id,loading:false,loadId:0,binding:snapshot,planApproved:false,roomSelected:false,source:id==='frames'&&snapshot.hasSource&&!snapshot.demo?snapshot.image:null,viewImage:id==='frames'&&snapshot.hasSource&&!snapshot.demo?snapshot.image:null,crop:{x:.2,y:.2,w:.4,h:.4},frames:[],master:snapshot.image,projectId:snapshot.projectId,sourceKey:snapshot.sourceKey,brief:snapshot.brief,planResult:null};
+ if(!['frames','plan'].includes(id))return;token++;const mine=token,snapshot=bridge().snapshot();state={kind:id,loading:false,loadId:0,binding:snapshot,planApproved:false,roomSelected:false,plan2dResult:null,plan2dStyle:'technical',source:id==='frames'&&snapshot.hasSource&&!snapshot.demo?snapshot.image:null,viewImage:id==='frames'&&snapshot.hasSource&&!snapshot.demo?snapshot.image:null,crop:{x:.2,y:.2,w:.4,h:.4},frames:[],master:snapshot.image,projectId:snapshot.projectId,sourceKey:snapshot.sourceKey,brief:snapshot.brief,planResult:null};
  view.innerHTML=imageView();controls.innerHTML=id==='plan'?`<div class="fs-image-intro"><small>ПЛАН → ИНТЕРЬЕР</small><h2>Планировка в объёме.</h2><p>Сначала подача плана, затем фотография выбранной комнаты.</p></div><label class="fs-file">Загрузить план<input id="fsSource" type="file" accept="image/png,image/jpeg,image/webp"></label>${select('fsPlanPresentation','Подача плана',PLAN_PRESENTATIONS)}${select('fsPlanStyle','Стиль интерьера',PLAN_STYLES)}${select('fsPlanEngine','Модель',{'':'Выберите модель','nano-banana-2.1':'Nano Banana · текущий API','gpt-image-2.6-sunburst':'GPT Image 2.6 Sunburst'})}<p id="fsPlanProvider" class="fa-art-help">Проверяем подключение модели…</p><label class="fs-image-field">Пожелания<textarea id="fsNotes" rows="3" maxlength="600" placeholder="Дубовый пол, тёплая штукатурка…"></textarea></label><button type="button" class="fa-studio-primary" id="fsPlanGenerate">Создать объёмный план</button><hr><h3>Интерьер комнаты</h3><p class="fa-art-help">После проверки плана выделите комнату рамкой на исходном чертеже.</p><button type="button" id="fsApprovePlan" disabled>План проверен · перейти к комнате</button>${select('fsPlanDirection','Смотреть в сторону',{'north':'Верхней стены плана','east':'Правой стены плана','south':'Нижней стены плана','west':'Левой стены плана'})}<button type="button" id="fsRoomGenerate">Создать интерьер комнаты</button><p class="fa-art-help">Это изображения. Проверяйте стены, проёмы и пропорции по чертежу.</p><a class="fs-advanced-link" href="/plan-to-interior.html">Точный редактор стен и 3D →</a>`:
  `<div class="fs-image-intro"><small>КАДРЫ И ДЕТАЛИ</small><h2>Детальный кадр из фотографии.</h2><p>1. Обведите фрагмент. 2. Выберите крупность. 3. Создайте кадр с заново прорисованной фактурой. Камера приближается к выбранной детали с той же стороны; форма и стыки сохраняются.</p></div><label class="fs-file">Загрузить свой кадр<input id="fsSource" type="file" accept="image/png,image/jpeg,image/webp"></label>${select('fsDetailLevel','Крупность',{'close':'Крупный план · архитектура и стыки','macro':'Макро · зерно и поры материала'})}<label class="fs-image-field">Что снять крупно?<textarea id="fsNotes" rows="3" maxlength="600" placeholder="Например: ручка на деревянном фасаде, стык кирпича и шва…"></textarea></label><button type="button" class="fa-studio-primary" id="fsDetail">Создать детальный кадр · AI</button><p class="fa-art-help">Новая чёткая прорисовка видимого участка. Микрофактура синтезируется: это интерпретация, а не точное восстановление скрытых деталей. Для достоверной фактуры загрузите её фото.</p><button type="button" id="fsCrop">Показать кроп исходника · без AI</button><p class="fa-art-help">Кроп сохраняет исходные пиксели и не добавляет деталей.</p><hr><h3>Серия проекта</h3><p class="fa-art-help">Главный кадр задаёт материалы, окружение и подачу серии.</p><button type="button" id="fsAddCrop">Добавить выбранный участок</button><div class="fs-series-presets"><button type="button" data-series-preset="presentation">Подача проекта</button><button type="button" data-series-preset="evening">День и вечер</button><button type="button" data-series-preset="seasons">Сезоны</button></div><label class="fs-file">Добавить другой ракурс<input id="fsViewSource" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="fa-art-help">Для другого ракурса нужен его собственный скриншот. Согласованность окружения приблизительная.</p><div id="fsSeriesList"></div><button type="button" class="fa-studio-primary" id="fsSeriesGenerate">Создать серию</button>`;
  setView(state.source);bindSelection();status(id==='plan'?'Загрузите план и выберите его подачу.':'Обведите участок мышью или задайте рамку в процентах. Ниже показан выбранный фрагмент до AI.');
