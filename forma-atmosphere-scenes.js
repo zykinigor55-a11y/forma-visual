@@ -62,3 +62,73 @@ export const ATMOSPHERE_SCENE_GROUPS=Object.freeze([
  {id:'winter',name:'Зима',description:'2 сценария'},
  {id:'blue',name:'Синий час',description:'2 сценария'}
 ]);
+
+/* Placement is a spatial priority for ADDED near-camera greenery only.
+   Plants already visible in a user's source always retain their actual roots,
+   positions, silhouettes and garden layout. Coordinates are a composition
+   guide in percent of the original uncropped frame, not a 2D overlay. */
+export const ATMOSPHERE_FOREGROUND_PLANS=Object.freeze({
+ 'day-soft':{
+  label:'Ствол слева · куст справа',
+  trunk:'LEFT IMAGE EDGE: natural visible tree trunk along x=2–9% of full image, occupying a slender vertical band from near the bottom frame to the upper third; root below left frame on continuous soil if not visible.',
+  canopy:'Few delicate branches enter from TOP-LEFT, no curtain across sky.',
+  shrubs:'LOWER-RIGHT foreground: one free-growing, see-through shrub cluster centered x=89%, y=93% on visible soil, reaching up no higher than the bottom 18% of the image.',
+  occlusion:'An airy, quiet near-camera layer with wide open view toward building; never obscure the main facade.'
+ },
+ 'day-side':{
+  label:'Ствол справа · куст слева',
+  trunk:'RIGHT IMAGE EDGE: textured mature trunk at x=91–98% from bottom frame through upper-right edge, side-lit bark surface and restrained crown.',
+  canopy:'Small physical leafy boughs entering from TOP-RIGHT, lit on their actual sun-facing side.',
+  shrubs:'LOWER-LEFT: a dimensional asymmetrical shrub mass centered x=12%, y=94% rooted on foreground ground, with individual small stems and leaf gaps.',
+  occlusion:'Use an open diagonal line-of-sight through the centre; cast shadows follow the existing sun direction.'
+ },
+ 'day-backlit':{
+  label:'Тонкий ствол справа · листья сверху',
+  trunk:'RIGHT image periphery x=94–99%: narrow near-lens mature trunk with an appreciable bark-textured visible section, naturally disappearing beyond the lower edge.',
+  canopy:'TOP-RIGHT x=73–98%: a small highly translucent canopy with individual backlit leaves, generous sky openings and thin visible branches.',
+  shrubs:'BOTTOM-LEFT x=6–23%, y=88–99%: a low darker bush shape with open twig structure, grounded on existing foreground terrain.',
+  occlusion:'Preserve a clear central view; luminous physical transmission through foliage rather than fake glow.'
+ },
+ 'autumn-gold':{
+  label:'Янтарная крона слева · куст справа',
+  trunk:'LEFT border x=1–8%: substantial aged deciduous trunk with bark fissures reaching above frame, sunlit only on a plausible side.',
+  canopy:'TOP-LEFT x=3–31%: sparse warm amber leaves with visible thin woody stems, no repeated decorative leaf pattern.',
+  shrubs:'BOTTOM-RIGHT centered x=88%, y=94%: two unequal late-season shrub clusters with russet and evergreen leaves, correctly rooted.',
+  occlusion:'Use orange foliage as a small natural visual accent, not a global golden filter.'
+ },
+ 'autumn-overcast':{
+  label:'Ствол справа · редкий подлесок слева',
+  trunk:'RIGHT border x=94–99%: partially cropped dark-bark trunk with wet-looking age texture only when wetness is physically justified.',
+  canopy:'TOP-RIGHT: thin leaf-sparse branches, irregular late-autumn silhouette with larger clear gaps.',
+  shrubs:'BOTTOM-LEFT x=5–25%, y=91–99%: sparse mixed shrubs with visible woody architecture and late-season leaves, mostly low and open.',
+  occlusion:'A restrained reportage-style foreground; architectural walls retain full exposure.'
+ },
+ 'winter-clear':{
+  label:'Морозный ствол слева · сухие кусты справа',
+  trunk:'LEFT border x=2–8%: strongly readable leafless deciduous trunk, detailed bark relief and slight snow only in physically plausible crevices.',
+  canopy:'TOP-LEFT: fine naked twigs and sparse crystalline ice, no broad green leaves.',
+  shrubs:'LOWER-RIGHT x=80–95%, y=89–99%: low, twiggy winter shrubs emerging from snow with accurate cool shadow contact.',
+  occlusion:'Clean sharp winter air and clear views to the facade; do not block the house with tree crowns.'
+ },
+ 'winter-soft':{
+  label:'Ствол справа · заснеженные кусты слева',
+  trunk:'RIGHT border x=93–99%: a restrained bare trunk with snow-softened bark, continuing below the near camera frame.',
+  canopy:'Only a small network of thin twig silhouettes high on TOP-RIGHT, no out-of-season leaf masses.',
+  shrubs:'BOTTOM-LEFT x=7–24%, y=91–99%: one layered low branchy shrub partly covered by snow, attached to soil/real snowpack with subtle occlusion and soft shadows.',
+  occlusion:'Soft, quiet layered visual depth without dense fog or an artificial white border.'
+ },
+ 'blue-calm':{
+  label:'Ствол слева · лёгкие кусты справа',
+  trunk:'LEFT border x=3–10%: dark foreground trunk, dim but readable texture from blue skylight, not a black sticker.',
+  canopy:'Small leaf groups enter TOP-LEFT as cool silhouettes with plausible still-detectable branch structure.',
+  shrubs:'BOTTOM-RIGHT x=86–98%, y=93–99%: a single quiet near-camera shrub cluster, not lit by nonexistent lamps.',
+  occlusion:'Wide clear center, readable building and restrained luminous existing windows.'
+ },
+ 'blue-cinema':{
+  label:'Массивный ствол справа · кусты слева',
+  trunk:'RIGHT border x=90–99%: bold close-up trunk with clear vertical bark structure and tactile illumination from existing sky/practicals.',
+  canopy:'Asymmetric hanging branches in TOP-RIGHT 72–97%, translucent only where an actual light source passes through.',
+  shrubs:'BOTTOM-LEFT x=2–28%, y=87–99%: two unequal sculptural shrubs with stronger depth occlusion and irregular foliage silhouettes.',
+  occlusion:'Deep but controlled editorial layering and slightly more pronounced natural corner falloff; never black out main facade.'
+ }
+});
