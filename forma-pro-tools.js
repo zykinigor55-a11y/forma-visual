@@ -228,7 +228,7 @@ function actions(e){
  if(a==='checkExport'){download('forma-release-checklist.json',JSON.stringify({date:new Date().toISOString(),items:CHECKS.map((name,i)=>({name,checked:!!state.check[i]}))},null,2));return}
 }
 function open(id='overview'){
- if(inlineHost&&!modal){show(id);inlineHost.closest('#formaProjectPanel')?.scrollIntoView({behavior:'smooth',block:'start'});return}
+ if(inlineHost&&!modal&&!document.body.classList.contains('fa-unified-studio')){show(id);inlineHost.closest('#formaProjectPanel')?.scrollIntoView({behavior:'smooth',block:'start'});return}
  if(modal){show(id);return}
  modal=document.createElement('div');modal.className='fa-pro-backdrop';modal.id='faProBackdrop';
  modal.innerHTML='<div class="fa-pro-shell" role="dialog" aria-modal="true" aria-label="Профессиональные инструменты"><header class="fa-pro-head"><div class="fa-pro-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div><b>ФОРМА <span>/ ИНСТРУМЕНТЫ</span></b><small>ПРОФЕССИОНАЛЬНАЯ АРХИТЕКТУРНАЯ СТУДИЯ</small></div><button id="faProClose" type="button" aria-label="Закрыть">×</button></header><div class="fa-pro-main"><nav class="fa-pro-nav" aria-label="Разделы инструментов"></nav><div id="faProContent" class="fa-pro-content"></div></div><footer class="fa-pro-footer"><span id="faProStatus" role="status">Проекты и настройки могут храниться локально в этом браузере.</span><span>ФОРМА / СТУДИЯ 01</span></footer></div>';
