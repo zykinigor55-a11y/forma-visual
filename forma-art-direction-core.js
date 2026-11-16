@@ -129,9 +129,9 @@ export function landscapePrompt(value){
 }
 export function normalizeAtmosphere(value){
  if(value==null)return null;
- if(!LOOKS.some(x=>x.id===value.preset))invalid('Неизвестная атмосфера');
- if(value.vegetation!=null&&!ATMOSPHERE_VEGETATION.some(x=>x.id===value.vegetation))invalid('Неизвестная порода для атмосферы');
  const scene=ATMOSPHERE_SCENARIOS.find(x=>x.id===(value.scenario||'day-soft'));if(!scene)invalid('Неизвестный сценарий атмосферы');
+ if(!LOOKS.some(x=>x.id===(value.preset??scene.look)))invalid('Неизвестная атмосфера');
+ if(value.vegetation!=null&&!ATMOSPHERE_VEGETATION.some(x=>x.id===value.vegetation))invalid('Неизвестная порода для атмосферы');
  return {preset:value.preset??scene.look,scenario:scene.id,vegetation:value.vegetation??'match',foreground:finite(value.foreground,scene.defaults.foreground,0,70),trunks:finite(value.trunks,scene.defaults.trunks,0,100),shrubs:finite(value.shrubs,scene.defaults.shrubs,0,100),grounding:finite(value.grounding,scene.defaults.grounding,0,100),vignette:finite(value.vignette,scene.defaults.vignette,0,30),strength:finite(value.strength,scene.defaults.strength,0,100),contrast:finite(value.contrast,0,-30,30),saturation:finite(value.saturation,0,-30,30),temperature:finite(value.temperature,scene.defaults.temperature,-30,30),dof:finite(value.dof,scene.defaults.dof,0,100),depth:finite(value.depth,scene.defaults.depth,0,40),bloom:finite(value.bloom,scene.defaults.bloom,0,30),grain:finite(value.grain,0,0,20),focus:value.focus?point(value.focus):{x:.5,y:.5}};
 }
 export function sameView(a,b){return !!a&&!!b&&a.projectId===b.projectId&&a.sourceKey===b.sourceKey&&(a.renderId||null)===(b.renderId||null);}
