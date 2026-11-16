@@ -72,7 +72,11 @@
   const detail=$('#faProjectToolContent'),title=$('#faHomeToolTitle'),short=$('#faHomeToolSub');
   if(title)title.textContent=tool.name;
   if(short)short.textContent=tool.desc;
-  if(id==='nodes'){window.FORMA_NODES?.open?.()}
+  if(['render','interior','materials','animation'].includes(id)){
+   window.FORMA_CABINET?.close?.();
+   window.FORMA_STUDIO?.open?.(id);
+  }
+  else if(id==='nodes'){window.FORMA_CABINET?.close?.();window.FORMA_NODES?.open?.()}
   else if(NODE_TYPES[id]&&detail){
    detail.innerHTML='<div class="fa-home-route-context"><span>ФОРМА / НОДОВАЯ РАБОТА</span><h4>'+tool.name+'</h4><p>'+tool.desc+'</p>'+
     '<p>Добавьте этап к рабочей схеме, соедините с предыдущим изображением, настройте параметры и запускайте. Все полученные результаты сохраняются в нодах.</p>'+
