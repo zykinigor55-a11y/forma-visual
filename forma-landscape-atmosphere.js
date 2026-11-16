@@ -363,7 +363,7 @@ async function landscapePayload(expected){
  const transformed=items.map(item=>isBrushKind(item.kind)?{...item,strokes:item.strokes.map(s=>({...s,size:s.size*Math.min(w,h)/edge,points:s.points.map(position)}))}:['path','edge','garland','climber'].includes(item.kind)?{...item,...(isLinearEdge(item)?{edgeWidth:(item.edgeWidth||.015)*Math.min(w,h)/edge}:{}),points:item.points.map(position)}:{...item,...position(item),w:item.w*w/edge,h:item.h*h/edge});
 
  const context=canvas(Math.min(w,1400),Math.round(Math.min(w,1400)*h/w));context.getContext('2d').drawImage(base,0,0,context.width,context.height);
- const referenced=[...new Set(items.filter(item=>item.catalogId===CUSTOM_LANDSCAPE_ID).map(item=>item.customKey))];
+ const referenced=[...new Set(items.filter(item=>item.catalogId==='custom-image').map(item=>item.customKey))];
  const customBoard=referenced.length?await makeCustomReferenceBoard(referenced.map(key=>({key,name:customAssets.find(a=>a.key===key)?.name||'Свой объект'})),{resolveImage:key=>customImages.get(key)}):null;
  return {crop,selection,frame,payload:{image:clean.toDataURL('image/png'),mask:mask.toDataURL('image/png'),...(customBoard?{material:customBoard}:{}),reference:context.toDataURL('image/jpeg',.93),landscapeEdit:normalizeLandscape({items:transformed}),quality:'high',quantity:1}};
 }
