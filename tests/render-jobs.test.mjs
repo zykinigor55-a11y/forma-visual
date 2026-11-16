@@ -63,3 +63,19 @@ test('completed image data expires after configured retention',async()=>{
  assert.equal(q.result(job.jobId),null);
  assert.equal(q.get(job.jobId),null);
 });
+
+test('oversized pending images are refused before a provider call, with no duplicate billing',async()=>{
+ const blocker=hold(),started=[];
+ const q=createRenderJobQueue({maxWaiting:3,maxQueuedBytes:105,worker:async(p)=>{started.push(p.id);if(p.id===1)await blocker.promise;return {images:['ok']}}});
+ const first=q.enqueue({id:1,image:'x'.repeat(70)});
+ const second=q.enqueue({id:2,image:'y'.repeat(70)},{idempotencyKey:'forma-bounded-queue-001'});
+ assert.equal(q.stats().waiting,1);
+ assert.ok(q.stats().queuedBytes>75);
+ assert.equal(q.enqueue({id:2,image:'y'.repeat(70)},{idempotencyKey:'forma-bounded-queue-001'}).jobId,second.jobId);
+ assert.throws(()=>q.enqueue({id:3,image:'z'.repeat(70)}),{status:429,code:'queue_memory'});
+ assert.equal(q.stats().waiting,1);
+ blocker.resolve();
+ await Promise.all([q.wait(first.jobId),q.wait(second.jobId)]);
+ assert.deepEqual(started,[1,2]);
+ assert.equal(q.stats().queuedBytes,0);
+});
