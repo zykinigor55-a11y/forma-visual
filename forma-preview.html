@@ -9,12 +9,17 @@ try{document.documentElement.dataset.formaTheme=localStorage.getItem('forma-sign
 </script>
 <script>
 /* Always show the greeting on page entry; no sessionStorage bypass on repeat visits. */
+document.documentElement.classList.add('forma-studio-booting');
 document.documentElement.classList.add('forma-intro-pending');
 </script>
 <style>
 /* Critical first-paint guards: fully black before the interface and intro CSS load. */
 html.forma-intro-pending,html.forma-intro-pending body{background:#000000!important}
 html.forma-intro-pending #forma-intro{display:block}
+/* Never paint the old interface while the new workspace is assembling. */
+html.forma-studio-booting #app,
+html.forma-studio-booting .mobile-header,
+html.forma-studio-booting .mobile-nav{visibility:hidden!important}
 #forma-intro:not(.is-logo-visible) .forma-intro-mark,
 #forma-intro:not(.is-name-visible) .forma-intro-name,
 #forma-intro:not(.is-descriptor-visible) .forma-intro-descriptor{
@@ -116,7 +121,7 @@ html.forma-intro-pending #forma-intro{display:block}
   <button id="formaIntroRecover" class="forma-intro-recover" type="button" hidden>Открыть студию</button>
  </div>
 </div>
-<script src="forma-intro-signature.js?v=noir-tone-brand-v19"></script>
+<script src="forma-intro-signature.js?v=studio-ready-gate-20261117"></script>
 
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
@@ -873,7 +878,7 @@ html.forma-intro-pending #forma-intro{display:block}
 <script defer src="forma-sun-studio-v15.js?v=20261115-shadow23"></script>
 <script defer src="forma-sun-ground-shadows-v23.js?v=20261115-shadow23"></script>
 <script type="module" src="forma-landscape-atmosphere.js?v=landscape-premium-v2"></script>
-<script type="module" src="forma-studio-shell.js?v=20261116-cabinet-tools-2"></script>
+<script type="module" src="forma-studio-shell.js?v=single-home-and-boot-v20261117"></script>
 <script type="module" src="forma-image-workspace.js?v=plan-gpt-2d-2k-v1"></script>
 <script defer src="forma-workflow-ux.js?v=20261116-2"></script>
 <script defer src="forma-cinema-workspace.js?v=20261116-2"></script>
