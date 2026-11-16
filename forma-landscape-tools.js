@@ -1,5 +1,5 @@
 export function scalePlacement(item,factor){
- const f=Math.max(.1,Math.min(50,Number(factor)||1));
+ const f=Math.max(.1,Math.min(2,Number(factor)||1));
  const w=(item.baseW||item.w)*f,h=(item.baseH||item.h)*f,limit=Math.min(1,50/Math.max(w,h));
  return {...item,w:w*limit,h:h*limit};
 }
