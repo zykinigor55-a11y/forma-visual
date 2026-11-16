@@ -1889,16 +1889,74 @@ function setSceneQuickOption(group,id){
  window.FORMA_SCENE_QUICK?.refresh?.();
  return true;
 }
+/* Result review / quick scene variants. Each request uses the actual approved
+ * finished image as Image 1, not the uploaded SketchUp source or a new angle.
+ * Changes are atomic: do not mutate persistent scene settings until success. */
+async function generateQuickResultVariant(changes,finishedImage){
+ if(rendering||uploadBusy)throw Error('Другая генерация выполняется. Дождитесь её завершения.');
+ if(!project?.hasSource||project.demo)throw Error('Откройте настоящий готовый рендер своего проекта.');
+ if(!finishedImage)throw Error('Готовый кадр не найден. Выберите его в истории.');
+ const allowed={time:choices.time.map(x=>x[0]),season:choices.season.map(x=>x[0]),weather:choices.weather.map(x=>x[0]),lighting:['natural','soft','dramatic','windows','exterior']};
+ const safe=[];
+ for(const c of Array.isArray(changes)?changes:[]){
+  if(!allowed[c?.group]?.includes(c.id))throw Error('Неподдерживаемая настройка: '+String(c?.group||''));
+  if(!safe.some(x=>x.group===c.group))safe.push({group:c.group,id:c.id,label:typeof c.label==='string'?c.label.slice(0,75):c.id});
+ }
+ if(!safe.length)throw Error('Выберите время дня, сезон, погоду или освещение.');
+ const owner=project,projectId=owner.id,sourceRev=owner.sourceRevision||String(owner.angle||1);
+ if(!aiConnected){
+  await checkAPI(30000);
+  if(!aiConnected)throw Error(apiCheckError||'AI Market недоступен. Проверьте подключение.');
+ }
+ rendering=true;
+ $('generateBtn').disabled=true;
+ const picked=safe.map(c=>c.label).join(' · ');
+ setRenderProgress('Создаём новый вариант','Исходный рендер сохраняется. Изменяем: '+picked);
+ let done=false;
+ try{
+  const image=await urlToDataURL(finishedImage);
+  const nextBrief={...settingsBrief(),materials:{},homeChanges:'',preserveMaterials:true,lockGeometry:true,sceneMood:null,atmosphere:null,sceneReference:false};
+  for(const change of safe){
+   if(change.group==='lighting')nextBrief.lightingPreset=change.id;
+   else nextBrief[change.group]=cLabel(change.group,change.id);
+  }
+  const payload={image,sceneTransformOnly:true,sceneChanges:safe,brief:nextBrief,quantity:1,quality:current().quality||'high',size:imageSizeForRatio(current().ratio)};
+  const response=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{
+   method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+  });
+  const result=await response.json().catch(()=>({error:'Неправильный ответ сервера'}));
+  if(!response.ok||!Array.isArray(result.images)||!result.images[0])throw Error(result.error||'AI не создал новый вариант.');
+  if(project!==owner||project.id!==projectId||(project.sourceRevision||String(project.angle||1))!==sourceRev)throw Error('Проект изменился. Готовый кадр нельзя записать в другой проект.');
+  const id='r'+uuid().slice(0,8),url='data:'+(result.mimes?.[0]||'image/png')+';base64,'+result.images[0];
+  await setMedia(mediaKey('render_'+id,projectId),url);
+  await setMedia(mediaKey('input_'+id,projectId),image).catch(()=>{});
+  if(project!==owner||project.id!==projectId)throw Error('Проект изменился при сохранении.');
+  const originId=owner.activeRender;
+  const cfg=current();
+  for(const change of safe){
+   if(change.group==='lighting')cfg.lightingPreset=change.id;
+   else{cfg[change.group]=change.id;explicitScene()[change.group]=true;}
+  }
+  cfg.sceneMood=null;
+  owner.renders.push({id,number:owner.renders.length+1,createdAt:Date.now(),batchLabel:'Новый вариант · '+picked,derivedFrom:originId,sceneChanges:safe});
+  announceGenerated(url,id,owner);
+  owner.activeRender=id;renderURL=url;
+  save();await loadProject(projectId);setViewerMode('result');
+  done=true;
+  window.DOM_RENDER_PROGRESS?.complete?.();
+  toast('Новый вариант готов. Исходный рендер остался в истории.');
+  return {id,image:url};
+ }catch(error){
+  toast(error.message||'Не удалось изменить изображение');
+  throw error;
+ }finally{
+  rendering=false;stopRenderProgress();
+  $('generateBtn').disabled=false;$('generateText').textContent='Создать визуализацию';
+ }
+}
 window.FORMA_SCENE_BRIDGE={
  setQuickOption:setSceneQuickOption,
- generateVariant(changes){
-  if(!project?.hasSource||!renderURL||rendering)return null;
-  const allowed=['time','season','weather','lighting'];
-  const safe=Array.isArray(changes)?changes.filter(x=>allowed.includes(x?.group)&&
-   typeof x.id==='string'&&x.id.length<40&&typeof x.label==='string'&&x.label.length<80):[];
-  if(!safe.length)return null;
-  return generate({sceneVariant:true,sceneChanges:safe});
- },
+ generateVariant(changes,image){return generateQuickResultVariant(changes,image||renderURL);},
  get(){
   if(!project)return null;
   const s=current();
