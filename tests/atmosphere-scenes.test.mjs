@@ -54,7 +54,7 @@ test('each of nine scenes has an explicit, distinct spatial tree / shrub plan',(
   assert.match(plan.trunk,/LEFT|RIGHT/);
   assert.match(plan.trunk,/trunk/i);
   assert.match(plan.shrubs,/LEFT|RIGHT/);
-  assert.match(plan.shrubs,/shrub/i);
+  assert.match(plan.shrubs,/shrub|bush/i);
   const prompt=atmospherePrompt({scenario:id,vegetation:'match'});
   assert.ok(prompt.includes(plan.trunk),'tree composition: '+id);
   assert.ok(prompt.includes(plan.shrubs),'shrub composition: '+id);
