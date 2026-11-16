@@ -42,3 +42,7 @@ test('Materials refuses a source replacement during processing or an invalid fil
   const h=materialsHarness(options);h.input.files=[file];await h.input.change();assert.equal(h.uploads,0);assert.match(h.status.textContent,message);assert.equal(h.input.disabled,false);
  }
 });
+test('close-up capture targets the selected region in the full source without orbiting',()=>{
+ const p=imageTaskPrompt({kind:'detail',crop:{x:.1,y:.3,w:.2,h:.4},level:'macro',notes:'Ручка на деревянном фасаде'});
+ assert.match(p,/aim.*20%.*50%/i);assert.match(p,/move.*closer.*same viewing direction/i);assert.match(p,/Ручка на деревянном фасаде/);assert.doesNotMatch(p,/Preserve the crop camera/);
+});
