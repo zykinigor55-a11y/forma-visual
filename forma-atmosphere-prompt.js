@@ -19,8 +19,8 @@ SOURCE LOCK: Keep EXACT approved architectural geometry, roof, all openings, wal
 SEASON: ${seasons[s.season]} DAYPART: ${s.daypart}. These are the user's explicit selected changes and can differ from the original image; keep the original geographic setting. ${preserveScene?'Preserve other site and climate cues.':'Respect any explicit scene weather and sun direction where supplied.'}
 LIGHT: ${s.light}
 EXPOSURE: ${s.exposure}
-COMPOSITION: ${s.composition}
-AUTHORED FOREGROUND LAYOUT: ${placement.label}. The percentages below describe approximate normalized composition zones on the uncropped source image, NOT screen-space stickers, and must obey existing architecture and planting.
+COMPOSITION: ${disabled||a.trunks===0&&a.shrubs===0?'Keep original near-camera planting and general composition. Do not add any new trunks, branches or shrubs.':s.composition}
+AUTHORED FOREGROUND LAYOUT: ${disabled?'NO ADDED PLANTS — photographic refinement only.':placement.label+' — approximate zones in percent of the un-cropped source frame, never pasted 2D objects.'} Existing trees and shrubs remain anchored. Architecture and site always override placement suggestions.
 LENS: ${s.optics}
 ${plants}
 AERIAL DEPTH: ${a.depth}/40. Three real depth planes: textured trunks and shrubs close to lens, crisp architectural hero in middle ground, existing background softened by distance without fake fog.
