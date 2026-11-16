@@ -21,3 +21,7 @@
 .fa-art-scene-card [data-look=blue-calm]{filter:sepia(.07) hue-rotate(164deg) saturate(.80) brightness(.73)}
 .fa-art-scene-card [data-look=blue-cinema]{filter:hue-rotate(162deg) saturate(.83) contrast(1.2) brightness(.62)}
 @media(max-width:550px){.fa-art-scene-group:first-child .fa-art-look-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fa-art-scene-card .fa-art-look-image{height:80px}}
+
+/* Distinct near-camera tree/shrub placement is a first-class part of each scenario. */
+.fa-art-scene-card .fa-art-scene-placement{display:block;font-size:9px;line-height:1.35;letter-spacing:.005em;color:var(--fs-accent,#a68b65);border-top:1px solid var(--art-line);padding-top:6px;margin-top:auto;font-weight:630}
+.fa-art-scene-card[aria-pressed="true"] .fa-art-scene-placement{color:var(--art-ink);opacity:.96}
