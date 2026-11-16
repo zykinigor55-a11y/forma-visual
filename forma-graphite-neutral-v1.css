@@ -1,0 +1,41 @@
+/* FORMA GRAPHITE — neutral charcoal, without the earlier green/olive cast.
+   Loaded last; affects dark mode only. Gold brand controls are preserved. */
+html[data-forma-theme="dark"]{
+ color-scheme:dark;
+ --fs-bg:#202124;
+ --fs-panel:#292b30;
+ --fs-raised:#33353b;
+ --fs-line:#44474f;
+ --fs-text:#f0f0f2;
+ --fs-muted:#afb1b7;
+ --fs-ink:#1e1f23;
+ --fs-accent:#c4aa82;
+ --fs-accent-text:#d3b68b;
+ --bg:#202124;--paper:#292b30;--ink:#f0f0f2;--muted:#afb1b7;--muted2:#999ba2;--hair:#44474f;
+ --dark:#1a1b1e;--dark2:#303237;--soft:#33353b;--soft2:#26282d;--chosen:#40372d;
+ --green:#c4aa82;--rail:#202124;
+ --fa-back:#202124;--fa-canvas:#202124;--fa-panel:#292b30;--fa-card:#292b30;
+ --fa-elev:#33353b;--fa-field:#24262b;--fa-ink:#f0f0f2;--fa-muted:#afb1b7;--fa-line:#44474f;--fa-line-strong:#8b775b;
+ --fa-accent:#c4aa82;--fa-accent-text:#d3b68b;--fa-side:#202124;
+ --fa-active:#34363d;--fa-hover:#32343a;--fa-grid:#3f4249;--fa-shadow:0 16px 45px #0005;
+}
+html[data-forma-theme="dark"] body.fa-unified-studio,
+html[data-forma-theme="dark"] body.fa-unified-studio .app,
+html[data-forma-theme="dark"] body.fa-unified-studio #workspace,
+html[data-forma-theme="dark"] body.fa-unified-studio .rail,
+html[data-forma-theme="dark"] body.fa-unified-studio .mobile-nav{
+ background:#202124!important;
+ background-image:none!important;
+}
+html[data-forma-theme="dark"] :is(.fa-studio-task,.fa-studio-workspace,.fa-studio-home-recent,.fa-studio-recent,#cabinetCover .cabinet-sheet){
+ background-color:var(--fs-panel)!important;
+ border-color:var(--fs-line)!important;
+}
+html[data-forma-theme="dark"] :is(#formaResultFocus,#formaArtDialog,#formaStudioWorkspace,#cabinetCover,#faFlowBackdrop){
+ --fs-bg:#202124;--fs-panel:#292b30;--fs-raised:#33353b;--fs-line:#44474f;
+ --fs-text:#f0f0f2;--fs-muted:#afb1b7;--fs-accent:#c4aa82;
+}
+/* Keep gold accents warm but restrained, and don't tint photographic previews. */
+html[data-forma-theme="dark"] :is(.fa-studio-primary,.fa-studio-gallery-launch,.fa-studio-enhance-launch){
+ filter:none!important;
+}
