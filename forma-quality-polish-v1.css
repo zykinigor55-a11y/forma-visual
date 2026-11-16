@@ -1,0 +1,173 @@
+/* FORMA QUALITY PASS 01
+   Accessible touch sizes, readable labels and consistent neutral photography-first
+   composition. Loaded after the existing studio, landscape and theme CSS. */
+:root{
+ --forma-touch:44px;
+ --forma-font-small:12px;
+ --forma-font-label:13px;
+ --forma-focus-ring:#c5a97d;
+}
+html[data-forma-theme="dark"]{
+ --fs-bg:#202124;
+ --fs-panel:#292b30;
+ --fs-raised:#33353b;
+ --fs-line:#494b52;
+ --fs-muted:#bfc0c5;
+ --fa-back:#202124;
+ --fa-panel:#292b30;
+ --fa-card:#292b30;
+ --fa-elev:#33353b;
+ --fa-line:#494b52;
+}
+html[data-forma-theme="light"]{
+ --fs-muted:#62666d;
+ --fa-muted:#62666d;
+}
+.fa-unified-studio :is(button,a,input,select,textarea,[tabindex]):focus-visible,
+#formaArtDialog :is(button,input,textarea,select,[tabindex]):focus-visible,
+#formaStudioWorkspace :is(button,input,textarea,select,[tabindex]):focus-visible{
+ outline:2px solid var(--fs-accent,#c5a97d)!important;
+ outline-offset:3px!important;
+}
+.fa-unified-studio .fa-studio-task{
+ min-height:158px;
+ transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.fa-unified-studio .fa-studio-task:is(:hover,:focus-visible){
+ transform:translateY(-2px);
+ border-color:var(--fs-accent,#c5a97d)!important;
+ box-shadow:0 12px 28px rgba(0,0,0,.12);
+}
+.fa-unified-studio .fa-studio-task :is(small,p),
+.fa-unified-studio .fa-studio-utilities :is(small,p){
+ line-height:1.48;
+}
+#formaArtDialog .fa-art-categories button{
+ min-height:46px;
+ font-size:12px!important;
+ letter-spacing:0;
+ gap:8px;
+ padding:10px 12px;
+}
+#formaArtDialog .fa-art-categories button small{
+ font-size:10px!important;
+ min-width:21px;
+ height:21px;
+}
+#formaArtDialog .fa-art-catalog-heading span{font-size:11px}
+#formaArtDialog .fa-art-catalog-heading small{font-size:11px}
+#formaArtDialog .fa-art-catalog .fa-art-premium-card{
+ min-height:202px;
+ border-radius:12px;
+ padding:8px 8px 13px;
+}
+#formaArtDialog .fa-art-premium-card .fa-art-preview-frame{height:123px}
+#formaArtDialog .fa-art-card-copy{
+ padding:10px 4px 0;
+ gap:5px;
+}
+#formaArtDialog .fa-art-card-copy .fa-art-card-method{
+ font-size:10px!important;
+ letter-spacing:.04em;
+ line-height:1.3;
+}
+#formaArtDialog .fa-art-card-copy>b{
+ font-size:13px!important;
+ line-height:1.34;
+}
+#formaArtDialog .fa-art-card-copy .fa-art-card-desc{
+ font-size:11px!important;
+ line-height:1.45;
+ -webkit-line-clamp:2;
+}
+#formaArtDialog .fa-art-card-corner{width:28px;height:28px}
+#formaArtDialog .fa-art-custom-upload small,
+#formaArtDialog .fa-art-custom-desc,
+#formaArtDialog :is(.fa-art-help,.fa-art-guide){
+ font-size:12px!important;
+ line-height:1.55;
+}
+#formaArtDialog .fa-art-curve-mode button{min-height:46px;font-size:12px!important}
+#formaArtDialog .fa-art-foot :is(button,.fa-art-primary),
+#formaArtDialog .fa-art-view :is(.fa-art-secondary,button[data-art]),
+#formaArtDialog .fa-art-row button{
+ min-height:var(--forma-touch);
+}
+#formaArtDialog :is(input[type="range"]){
+ min-height:36px;
+ width:100%;
+ accent-color:var(--fs-accent,#c5a97d);
+}
+#formaArtDialog .fa-art-stage :is(#artCanvasInput){
+ touch-action:none;
+ -webkit-user-select:none;
+ user-select:none;
+}
+#formaArtDialog .fa-art-point{
+ stroke:#191b20;
+ stroke-width:3;
+ fill:#f5d3a1;
+}
+#formaArtDialog .fa-art-resize-handle{
+ fill:#f8d39d;
+ stroke:#24262b;
+ stroke-width:3;
+ filter:drop-shadow(0 2px 5px #0006);
+}
+#formaArtDialog .fa-art-focus{
+ pointer-events:none;
+}
+#formaStudioWorkspace .fs-plan-2d-option{
+ min-height:140px;
+ border-radius:10px;
+}
+#formaStudioWorkspace .fs-plan-2d-option b{
+ font-size:12px!important;
+ line-height:1.4;
+}
+#formaStudioWorkspace .fs-plan-2d-swatch{height:99px}
+#formaStudioWorkspace .fs-plan-2d-option[aria-pressed="true"]{
+ outline:2px solid var(--fs-accent,#c5a97d);
+ outline-offset:1px;
+}
+#formaStudioWorkspace .fs-plan-part :is(.fa-art-help,p){
+ font-size:12px;
+ line-height:1.58;
+}
+#formaStudioWorkspace .fs-plan-part :is(button,select){
+ min-height:44px;
+}
+.forma-queue-recover button{min-height:44px}
+@media(max-width:760px){
+ .fa-unified-studio .fa-studio-task{
+  min-height:148px;
+  padding:14px;
+ }
+ #formaArtDialog .fa-art-catalog{gap:9px}
+ #formaArtDialog .fa-art-catalog .fa-art-premium-card{
+  min-height:190px;
+  padding:7px 7px 11px;
+ }
+ #formaArtDialog .fa-art-preview-frame,
+ #formaArtDialog .fa-art-premium-card .fa-art-preview-frame{height:104px}
+ #formaArtDialog .fa-art-card-copy>b{font-size:12px!important}
+ #formaArtDialog .fa-art-card-copy .fa-art-card-desc{
+  font-size:11px!important;
+  line-height:1.42;
+ }
+ #formaArtDialog .fa-art-categories button{min-height:48px}
+ #formaStudioWorkspace .fs-plan-2d-option{min-height:132px}
+ #formaStudioWorkspace .fs-plan-2d-swatch{height:78px}
+}
+@media(max-width:390px){
+ #formaArtDialog .fa-art-premium-card .fa-art-preview-frame{height:91px}
+ #formaArtDialog .fa-art-catalog .fa-art-premium-card{min-height:192px}
+ #formaStudioWorkspace .fs-plan-2d-swatch{height:70px}
+}
+@media(prefers-reduced-motion:reduce){
+ .fa-unified-studio .fa-studio-task,
+ #formaArtDialog .fa-art-premium-card,
+ #formaStudioWorkspace .fs-plan-2d-option{
+  transition:none!important;transform:none!important;
+ }
+}
