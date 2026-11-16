@@ -23,7 +23,7 @@ COMPOSITION: ${disabled||a.trunks===0&&a.shrubs===0?'Keep original near-camera p
 AUTHORED FOREGROUND LAYOUT: ${disabled?'NO ADDED PLANTS — photographic refinement only.':placement.label+' — approximate zones in percent of the un-cropped source frame, never pasted 2D objects.'} Existing trees and shrubs remain anchored. Architecture and site always override placement suggestions.
 LENS: ${s.optics}
 ${plants}
-AERIAL DEPTH: ${a.depth}/40. Three real depth planes: textured trunks and shrubs close to lens, crisp architectural hero in middle ground, existing background softened by distance without fake fog.
+${a.depth>0?`AERIAL DEPTH: ${a.depth}/40. Three real depth planes: textured trunks and shrubs close to lens, crisp architectural hero in middle ground, existing background softened by distance without fake fog.`:'AERIAL DEPTH: 0/40. No added aerial haze, no background recoloring or extra blur. Preserve source depth cues and original crisp architectural focus.'}
 LENS VIGNETTE: ${a.vignette}/30. Optical slight corner falloff only, no black gradient frame, no overdarkened facade.
 EXPOSURE CONTROL: overall mood strength ${a.strength}/100; contrast ${a.contrast}/30, saturation ${a.saturation}/30, warmth ${a.temperature}/30; apply globally with local physical light response rather than a flat tint.
 OPTICS: building sharp and detailed; foreground defocus ${a.dof}/100 only where natural camera distance supports it. Physically plausible glow ${a.bloom}/30 on real existing highlights; fine grain ${a.grain}/20. No filter-only change, pasted vegetation, black bars or resized camera. Winter plants cannot have summer green deciduous leaves; blue hour must preserve subject visibility. No exterior shrubs or trees added to an indoor image.`;
