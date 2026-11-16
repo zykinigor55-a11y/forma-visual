@@ -48,7 +48,7 @@ test('worker failure is recoverable as a status without any automatic paid retry
  const q=createRenderJobQueue({worker:async()=>{called++;throw Object.assign(Error('Provider timeout; may be billed'),{status:502,code:'provider_timeout'})}});
  const job=q.enqueue({id:1});await q.wait(job.jobId);
  assert.equal(q.get(job.jobId).status,'failed');
- assert.deepEqual(q.result(job.jobId).body.error,undefined);
+ assert.equal(q.result(job.jobId).body.error,'Provider timeout; may be billed');
  assert.equal(q.result(job.jobId).body.code,'provider_timeout');
  assert.equal(q.result(job.jobId).status,502);
  assert.equal(called,1);
