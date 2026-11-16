@@ -65,7 +65,7 @@ function refreshHome(){
 }
 function init(){
  document.body.classList.add('fa-unified-studio');
- const home=document.createElement('section');home.id='formaStudioHome';home.innerHTML=`<div class="fa-studio-home-heading"><div><small>ФОРМА / РАБОЧАЯ СТУДИЯ</small><h1>Пространство для архитектуры.</h1><p>От первого скриншота до готовой подачи проекта.</p></div><div class="fa-studio-main-actions"><button type="button" class="fa-studio-gallery-launch" data-studio-gallery>▤ Галерея</button><button type="button" class="fa-studio-primary" data-studio-new>＋ Новый проект</button></div></div><div class="fa-studio-enhance-feature"><div class="fa-studio-enhance-icon">${studioIcon('enhance')}</div><div class="fa-studio-enhance-copy"><strong>Улучшить готовый рендер</strong><p>Новая AI-прорисовка того же кадра: листва, кора, газон, кусты и микрофактура материалов — без фильтра резкости.</p></div><button type="button" class="fa-studio-enhance-launch" data-studio-enhance>✦ Улучшить · AI</button></div><div class="fa-studio-task-grid">${tasks.map(([id,name,desc])=>`<button type="button" data-studio-tool="${id}" class="fa-studio-task">${studioIcon(id)}<strong>${name}</strong><small>${desc}</small><span>↗</span></button>`).join('')}</div><div class="fa-studio-section-title"><h2>Последние проекты</h2><button type="button" data-studio-tool="project">Все проекты ↗</button></div><div id="studioRecent"></div><div class="fa-studio-utilities"><button type="button" data-studio-tool="nodes">${studioIcon('nodes')}Сценарии<span>Соберите цепочку обработки</span></button><button type="button" data-studio-tool="settings">${studioIcon('settings')}Настройки<span>Формат и качество</span></button></div>`;
+ const home=document.createElement('section');home.id='formaStudioHome';home.innerHTML=`<div class="fa-studio-home-heading"><div><small>ФОРМА / РАБОЧАЯ СТУДИЯ</small><h1>Пространство для архитектуры.</h1><p>От первого скриншота до готовой подачи проекта.</p></div><div class="fa-studio-main-actions"><button type="button" class="fa-studio-gallery-launch" data-studio-gallery>▤ Галерея</button><button type="button" class="fa-studio-primary" data-studio-new>＋ Новый проект</button></div></div><div class="fa-studio-task-grid">${tasks.map(([id,name,desc])=>`<button type="button" data-studio-tool="${id}" class="fa-studio-task">${studioIcon(id)}<strong>${name}</strong><small>${desc}</small><span>↗</span></button>`).join('')}</div><div class="fa-studio-section-title"><h2>Последние проекты</h2><button type="button" data-studio-tool="project">Все проекты ↗</button></div><div id="studioRecent"></div><div class="fa-studio-utilities"><button type="button" data-studio-tool="nodes">${studioIcon('nodes')}Сценарии<span>Соберите цепочку обработки</span></button><button type="button" data-studio-tool="settings">${studioIcon('settings')}Настройки<span>Формат и качество</span></button></div>`;
  $('.topline')?.after(home);
  // Расширенный каталог находится в отдельной вкладке «Инструменты» кабинета.
  document.addEventListener('click',e=>{
@@ -87,6 +87,10 @@ function init(){
  document.querySelectorAll('[data-nav="variants"] .rail-name,[data-mobile="variants"] span').forEach(e=>e.textContent='Кадры');
  document.querySelectorAll('.fa-flow-rail .rail-name,.fa-flow-mobile span').forEach(e=>e.textContent='Сценарии');
  refreshHome();
+ // The new studio, not only the core render engine, must be ready before intro reveals.
+ window.FORMA_STUDIO_READY=true;
+ document.documentElement.classList.remove('forma-studio-booting');
+ document.dispatchEvent(new Event('forma:studio-ready'));
 }
 window.FORMA_STUDIO={open:openWorkspace,close:closeWorkspace,refresh:refreshSource};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
