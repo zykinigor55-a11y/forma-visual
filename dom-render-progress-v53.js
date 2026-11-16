@@ -38,7 +38,8 @@
  }
  function overlay(){
   const el=$('renderProgress');
-  if(el&&el.parentNode!==document.body)document.body.appendChild(el);
+  const host=document.querySelector('dialog[open]')||document.body;
+  if(el&&el.parentNode!==host)host.appendChild(el);
   return el;
  }
  function syncScene(){

@@ -9,7 +9,7 @@
   {id:'venice2',name:'Sony VENICE 2',tag:'Full Frame · Cinema',sensor:'Full Frame',desc:'Чистые тени и точные цвета',prompt:'Sony VENICE 2 inspired cinema tonal latitude, clean low-noise shadows, true neutral whites, pleasing midtone definition, smooth specular highlights and restrained premium commercial architectural contrast.'},
   {id:'burano',name:'Sony BURANO',tag:'8.6K · Cinema',sensor:'Full Frame',desc:'Естественная резкость и светотень',prompt:'Sony BURANO inspired full-frame digital cinema clarity, credible daylight color and soft filmic transitions, sophisticated highlight handling, highly detailed true-to-source materials without artificial sharpening.'},
   {id:'vraptor',name:'RED V-RAPTOR XL',tag:'8K VV · Cinema',sensor:'VV',desc:'Рекламная детализация фасадов',prompt:'RED V-RAPTOR XL inspired 8K VV cinema resolution, very clean fine architectural edges and detailed surfaces, vivid but controlled tonal separation, high dynamic range without halos or altered materials.'},
-  {id:'komodox',name:'RED KOMODO-X',tag:'6K · Cinema',sensor:'Super 35',desc:'Выразительный контраст и фактуры',prompt:'RED KOMODO-X inspired Super 35 cinema imaging, crisp authentic material microdetail and modern precise contrast, natural color separation and high-quality stable motion, no excessive texture generation.'},
+  {id:'komodox',name:'Canon EOS C400',tag:'Cinema',sensor:'Full Frame',desc:'Естественный цвет и фактуры',prompt:'Canon EOS C400 inspired full-frame cinema imaging, crisp authentic material microdetail and modern precise contrast, natural color separation and high-quality stable motion, no excessive texture generation.'},
   {id:'ursa',name:'Blackmagic URSA Cine 12K',tag:'12K · Cinema',sensor:'Large Format',desc:'Глубина фактур и плавные переходы',prompt:'Blackmagic URSA Cine 12K inspired large-format cinematic image, subtle organic texture, wide tonal latitude, natural colors, excellent resolved detail and believable highlight and shadow separation.'},
   {id:'ronin4d',name:'DJI Ronin 4D 8K',tag:'8K · Stabilized Cinema',sensor:'Cinema',desc:'Плавные пролёты без дрожания',prompt:'DJI Ronin 4D 8K inspired high-detail cinematic capture with very smooth stabilized gimbal motion, level horizon, naturally accurate exposure, rich but neutral material reproduction and minimal unwanted shake.'}
  ];
@@ -43,13 +43,13 @@
   {id:'cool',name:'Cool Editorial',desc:'Прохладная современная подача',prompt:'Cool neutral editorial color balance, refined blue-gray ambience, preserve actual material hues and whites, no excessive cyan cast.'},
   {id:'bw',name:'Monochrome Film',desc:'Архитектура в чёрно-белом кино',prompt:'Black-and-white photographic grading, controlled tonal separation, visible facade materials through texture and luminance, no flattening of detail.'}
  ];
- const defaults={camera:'alexa35',lens:'shift24',motion:'dolly',grade:'neutral',duration:6,ratio:'16:9',fps:24,intensity:'low',promptExtra:''};
+ const defaults={camera:'alexa35',lens:'shift24',motion:'dolly',grade:'neutral',duration:5,ratio:'16:9',fps:24,intensity:'low',promptExtra:''};
  const one=(arr,id)=>arr.find(x=>x.id===id)||arr[0];
  const sanitize=txt=>String(txt||'').replace(/[\x00-\x1f]/g,' ').replace(/\s+/g,' ').trim().slice(0,350);
  function normalize(settings){
   const s={...defaults,...(settings||{})};
   for(const [field,arr] of [['camera',cameras],['lens',lenses],['motion',moves],['grade',grades]])if(!arr.some(x=>x.id===s[field]))s[field]=defaults[field];
-  s.duration=[5,6,8,10].includes(Number(s.duration))?Number(s.duration):6;
+  s.duration=[5,10].includes(Number(s.duration))?Number(s.duration):5;
   s.fps=[24,25,30].includes(Number(s.fps))?Number(s.fps):24;
   s.ratio=['16:9','9:16'].includes(s.ratio)?s.ratio:'16:9';
   s.intensity=['low','moderate'].includes(s.intensity)?s.intensity:'low';

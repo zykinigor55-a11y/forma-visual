@@ -659,7 +659,7 @@ function renderFlowLabels(){
  $('renderSetupSourceNote').textContent=project.demo?
    'Демонстрационный проект. Для собственного рендера загрузите скриншот дома.':
    !project.hasSource?'Для генерации загрузите исходный скриншот дома.':
-   'Обычная генерация · '+(Number(p.quantity)||1)+' кадр(ов). Пакетная визуализация · 4 кадра.';
+   'Обычная генерация · '+(Number(p.quantity)||1)+' кадр(ов). Серии — в разделе «Кадры и детали».';
 }
 function showRenderSetupMode(mode,persist=true){
  mode=mode==='manual'?'manual':'auto';
@@ -963,7 +963,7 @@ function loadCinema1K(){
      document.querySelectorAll('#animationPanel [data-anim-kind] ').forEach(card=>{
       if(card.dataset.animKind===kind && card.dataset.animId===id){
        const img=card.querySelector('.anim-option-photo img');
-       if(img){img.src=url;img.style.filter='none';}
+       if(img&&!img.hasAttribute('data-keep-source')){img.src=url;img.style.filter='none';}
       }
      });
     }
@@ -1010,12 +1010,14 @@ function animationMotionGraphic(id){
 function renderAnimationCards(containerId,field,items,kind,value){
  const holder=$(containerId);
  if(!holder)return;
+ const allowed=cinema1KOrder[kind];items=allowed?allowed.map(id=>items.find(item=>item.id===id)).filter(Boolean):items;
  holder.innerHTML=items.map(item=>{
   const realPhoto=false;
-  const source=animationArt(kind,item.id);
-  const filter='';
+  const source=kind==='grade'?(renderURL||sourceURL||demoPhoto):animationArt(kind,item.id);
+  const filters={neutral:'none',filmic:'contrast(.93) saturate(.9)',contrast:'contrast(1.18) saturate(.94)',warm:'sepia(.18) saturate(.95)',cool:'saturate(.85) hue-rotate(7deg)',bw:'grayscale(1) contrast(1.1)'};
+  const filter=kind==='grade'?` data-keep-source style="filter:${filters[item.id]||'none'}"`:'';
   return `<button type="button" class="anim-option-card ${item.id===value?'active':''}" data-anim-kind="${eHTML(field)}" data-anim-id="${eHTML(item.id)}" aria-pressed="${item.id===value}">
- <span class="anim-option-photo ${realPhoto?'anim-photo-real':''}"><img src="${source}" alt="${eHTML(item.name)} — изображение пресета" loading="lazy" decoding="async"${filter}><span class="anim-option-check" aria-hidden="true">✓</span></span>
+ <span class="anim-option-photo ${realPhoto?'anim-photo-real':''}"><img src="${source}" alt="${eHTML(item.name)} — изображение пресета" loading="lazy" decoding="async"${filter}>${kind==='motion'?animationMotionGraphic(item.id):''}<span class="anim-option-check" aria-hidden="true">✓</span></span>
  <span class="anim-option-copy"><strong>${eHTML(item.name)}</strong><em>${eHTML(item.tag||'')}</em><small>${eHTML(item.desc||'')}</small></span></button>`;
  }).join('');
 }
@@ -1066,6 +1068,7 @@ function renderAnimationPanel(){
  renderAnimationCards('animLenses','lens',lib.lenses,'lens',s.lens);
  renderAnimationCards('animMoves','motion',lib.moves,'motion',s.motion);
  renderAnimationCards('animGrades','grade',lib.grades,'grade',s.grade);
+ document.querySelectorAll('.anim-section-title small').forEach(el=>{el.textContent=el.textContent.replace(/8 визуальных профилей/,'6 визуальных профилей').replace(/10 оптических профилей/,'6 оптических профилей').replace(/8 плавных траекторий/,'6 плавных траекторий');});
  for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRatio','ratio'],['animIntensity','intensity']])$(id).value=String(s[field]);
  if($('animExtra').value!==s.promptExtra)$('animExtra').value=s.promptExtra;
  // The animation preview must show exactly the current project's selected AFTER image.
@@ -1238,13 +1241,13 @@ document.addEventListener('click',event=>{
  current().keepReference=true;
  save();toast('Окружение утверждено для следующих ракурсов и 3D-мира');
 });
-async function uploadSource(file,newAngle=false){if(!file||uploadBusy)return;if(rendering){toast('Сначала завершите генерацию. Загружать новый исходник во время AI-рендера нельзя.');return}uploadBusy=true;setUploadBusy(true);try{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));const im=await pngDataFromFile(file);if(project.demo||(!newAngle&&project.hasSource&&project.renders?.length)){await createProject(file.name.replace(/\.(png|jpe?g|webp)$/i,'').slice(0,48)||'Мой проект');newAngle=false}if(newAngle&&renderURL&&current().keepReference){await setMedia(mediaKey('ref'),renderURL);project.reference='ref'}if(!newAngle){
+async function uploadSource(file,newAngle=false,throwOnError=false){if(!file||uploadBusy)return;if(rendering){toast('Сначала завершите генерацию. Загружать новый исходник во время AI-рендера нельзя.');return}uploadBusy=true;setUploadBusy(true);try{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));const im=await pngDataFromFile(file);if(project.demo||(!newAngle&&project.hasSource&&project.renders?.length)){await createProject(file.name.replace(/\.(png|jpe?g|webp)$/i,'').slice(0,48)||'Мой проект');newAngle=false}if(newAngle&&renderURL&&current().keepReference){await setMedia(mediaKey('ref'),renderURL);project.reference='ref'}if(!newAngle){
   // A new source must never inherit a former render or style-reference from the same project.
   project.renders=[];project.reference=null;project.environmentRender=null;renderURL='';maskVisible=false;
   if(current()){current().keepReference=false;current().editSelectedOnly=false}
-  for(const key of ['ref','batchFront']){await dataStore.del(mediaKey(key)).catch(()=>{});imageCache.delete(mediaKey(key))}
+  for(const key of ['ref','batchFront','studio_plan_source','studio_plan_result','studio_series_draft']){await dataStore.del(mediaKey(key)).catch(()=>{});imageCache.delete(mediaKey(key))}
   project.hasBatchFront=false;project.batchFrontName='';
-}project.angle=(newAngle?(project.angle||1)+1:1);project.activeRender=null;sourceURL=im.data;project.sourceWidth=im.width;project.sourceHeight=im.height;project.demo=false;project.hasSource=true;project.sourceRevision=uuid();current().landscapeDrafts={};await setMedia(mediaKey('source'),im.data);for(const [zone] of zones){await dataStore.del(mediaKey('mask_'+zone));imageCache.delete(mediaKey('mask_'+zone))}await loadProject(project.id);save();toast(newAngle?'Новый ракурс добавлен. Выберите дальнейшее действие.':'Скриншот загружен. Выберите дальнейшее действие.');document.dispatchEvent(new CustomEvent('forma:source-uploaded',{detail:{projectId:project.id,sourceName:String(file.name||'Исходный кадр').slice(0,75),newAngle:!!newAngle}}))}catch(err){toast(err.message||'Не удалось открыть изображение')}finally{uploadBusy=false;setUploadBusy(false)}}
+}project.angle=(newAngle?(project.angle||1)+1:1);project.activeRender=null;sourceURL=im.data;project.sourceWidth=im.width;project.sourceHeight=im.height;project.demo=false;project.hasSource=true;project.sourceRevision=uuid();current().landscapeDrafts={};await setMedia(mediaKey('source'),im.data);for(const [zone] of zones){await dataStore.del(mediaKey('mask_'+zone));imageCache.delete(mediaKey('mask_'+zone))}await loadProject(project.id);save();toast(newAngle?'Новый ракурс добавлен. Выберите дальнейшее действие.':'Скриншот загружен. Выберите дальнейшее действие.');document.dispatchEvent(new CustomEvent('forma:source-uploaded',{detail:{projectId:project.id,sourceName:String(file.name||'Исходный кадр').slice(0,75),newAngle:!!newAngle}}))}catch(err){toast(err.message||'Не удалось открыть изображение');if(throwOnError)throw err;}finally{uploadBusy=false;setUploadBusy(false)}}
 async function uploadOwnMaterial(file){if(!file)return;try{const im=await pngDataFromFile(file,1600);const id='usr_'+uuid();const name=file.name.replace(/\.(png|jpe?g|webp)$/i,'').slice(0,48)||'Мой материал';const m={id,name,width:0,height:0,createdAt:Date.now()};customMaterials.unshift(m);await setMedia('material_'+id,im.data);current().mats[current().zone]=id;current().materialActions={...current().materialActions,[current().zone]:'replace'};materialTab='mine';renderMaterials();renderZones();renderZones();renderFooter();save();toast('Фактура добавлена. Выделите поверхность дома и нажмите «Применить материал».')}catch(err){toast(err.message||'Не удалось загрузить текстуру')}}
 function openDimensions(m){modal('Размеры материала',`<p class="muted">Укажите фактический размер одного фрагмента фактуры. Это поможет сохранить масштаб при AI-редактировании.</p><label>Название материала<input type="text" id="matNewName" maxlength="48" value="${eHTML(m.name)}"></label><div class="modal-pair"><label>Ширина, мм<input type="number" id="matWidth" min="0" max="10000" value="${m.width||''}" placeholder="Например, 1200"></label><label>Высота, мм<input type="number" id="matHeight" min="0" max="10000" value="${m.height||''}" placeholder="Например, 600"></label></div><p class="muted">Размеры можно оставить пустыми.</p>`,[{label:'Сохранить материал',primary:true,click:()=>{m.name=$('matNewName').value.trim()||m.name;m.width=Math.min(10000,Math.max(0,Number($('matWidth').value)||0));m.height=Math.min(10000,Math.max(0,Number($('matHeight').value)||0));renderMaterials();renderZones();renderFooter();save();closeModal()}}])}
 function modal(title,html,actions=[]){$('dialogTitle').textContent=title;$('dialogBody').innerHTML=html;$('dialogActions').innerHTML='';const a=$('dialogActions');a.className='dialog-actions';for(const item of actions){let b=document.createElement('button');b.className='btn '+(item.primary?'btn-dark':'btn-outline');b.textContent=item.label;b.addEventListener('click',item.click);a.appendChild(b)}$('dialogCover').hidden=false}
@@ -1687,7 +1690,8 @@ function bind(){
   updateAnimationSetting(el.dataset.animKind,el.dataset.animId);
  };
 }
-for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRatio','ratio'],['animIntensity','intensity']]){
+document.querySelectorAll('.anim-section-title small').forEach(el=>{el.textContent=el.textContent.replace(/8 визуальных профилей/,'6 визуальных профилей').replace(/10 оптических профилей/,'6 оптических профилей').replace(/8 плавных траекторий/,'6 плавных траекторий');});
+ for(const [id,field] of [['animDuration','duration'],['animFPS','fps'],['animRatio','ratio'],['animIntensity','intensity']]){
  $(id).onchange=e=>updateAnimationSetting(field,e.target.value);
 }
 $('animExtra').oninput=e=>updateAnimationSetting('promptExtra',e.target.value,false);
@@ -1949,11 +1953,11 @@ window.FORMA_RENDER_BRIDGE={
       size:imageSizeForRatio(current().ratio),
       quality:current().quality||'high'};
   },
-  async saveWorkflowResult(image,label,expectedId){
+  async saveWorkflowResult(image,label,expectedId,sourceOverride=null){
     if(!project||!project.hasSource||project.demo)throw Error('Проект для результата недоступен.');
     if(expectedId&&expectedId!==project.id)throw Error('Проект сменился во время работы. Результат остался в истории ноды.');
     if(!/^data:image\/(?:png|jpeg|webp);base64,/i.test(image||''))throw Error('Некорректный формат результата ноды.');
-    const id='r'+uuid().slice(0,8),input=await getMedia(mediaKey('source',project.id));
+    const id='r'+uuid().slice(0,8),input=sourceOverride||await getMedia(mediaKey('source',project.id));
     await setMedia(mediaKey('render_'+id,project.id),image);
     if(input)await setMedia(mediaKey('input_'+id,project.id),input);
     project.renders.push({id,number:project.renders.length+1,createdAt:Date.now(),batchLabel:String(label||'Нодовый результат').slice(0,90)});
@@ -1983,6 +1987,12 @@ window.FORMA_ART_BRIDGE={
   project.renders.push({id,number:project.renders.length+1,createdAt:Date.now(),batchLabel:label});project.activeRender=id;renderURL=image;save();
   await loadProject(pid);setViewerMode('result');toast(label+' · сохранено в галерее');return id;
  },
+ async uploadFile(file){if(uploadBusy||rendering)throw Error('Дождитесь текущей обработки');await uploadSource(file,false,true);return this.snapshot();},
+ async newProject(name='Новый проект'){await createProject(name);return this.snapshot();},
+ async selectProject(id){await loadProject(id);return this.snapshot();},
+ async projectPreview(id){const p=projects.find(p=>p.id===id);if(!p)return null;return getMedia(mediaKey(p.activeRender?'render_'+p.activeRender:'source',id));},
+ async getAsset(key,expectedId){if(expectedId&&project.id!==expectedId)throw Error('Проект изменился');if(!/^[a-z0-9_-]{1,70}$/i.test(key))throw Error('Некорректный ключ');return getMedia(mediaKey('studio_'+key));},
+ async setAsset(key,value,expectedId){if(expectedId&&project.id!==expectedId)throw Error('Проект изменился');if(!/^[a-z0-9_-]{1,70}$/i.test(key))throw Error('Некорректный ключ');await setMedia(mediaKey('studio_'+key),value);},
  upload:()=>$('sourceFile').click(),notify:toast
 };
 

@@ -1,3 +1,4 @@
+import {strokeBounds} from './forma-landscape-tools.js';
 /* Mask convention here: alpha 0 preserves source, alpha 255 replaces it. */
 export function compositePixels(base,edited,mask){
  if(base.length!==edited.length||base.length!==mask.length||base.length%4)throw Error('Размеры изображений и маски не совпадают');
@@ -6,9 +7,11 @@ export function compositePixels(base,edited,mask){
  return out;
 }
 export function itemBounds(item){
- if(item.kind==='path')return {x:Math.min(...item.points.map(p=>p.x)),y:Math.min(...item.points.map(p=>p.y)),right:Math.max(...item.points.map(p=>p.x)),bottom:Math.max(...item.points.map(p=>p.y))};
+ if(item.kind==='fill')return strokeBounds(item.strokes);
+ if(item.kind==='path'||item.kind==='edge')return {x:Math.min(...item.points.map(p=>p.x)),y:Math.min(...item.points.map(p=>p.y)),right:Math.max(...item.points.map(p=>p.x)),bottom:Math.max(...item.points.map(p=>p.y))};
  // Include room for contact shadows, entirely visible in the editor mask.
- return {x:Math.max(0,item.x-item.w*.65),y:Math.max(0,item.y-item.h*1.05),right:Math.min(1,item.x+item.w*.65),bottom:Math.min(1,item.y+item.h*.14)};
+ const shadow=item.influence?.shadow||0,reflection=item.influence?.reflection||0;
+ return {x:Math.max(0,item.x-item.w*.65-shadow),y:Math.max(0,item.y-item.h*1.05),right:Math.min(1,item.x+item.w*.65+shadow),bottom:Math.min(1,item.y+Math.max(item.h*.14,reflection,shadow*.5))};
 }
 export function cropBounds(items,width,height){
  if(!items.length||!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1)throw Error('Нет области для обработки');

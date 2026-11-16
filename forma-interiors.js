@@ -9,7 +9,7 @@ function projectId(){try{const p=JSON.parse(localStorage.getItem('domrender_mvp_
 function state(){return {...defaults(),...(saved[projectId()]||{})}}
 function persist(next){saved[projectId()]={...state(),...next};try{localStorage.setItem(STORAGE,JSON.stringify(saved))}catch{message('Не удалось сохранить настройки интерьера')}}
 function message(s){const e=$('#faInteriorStatus');if(e)e.textContent=s}
-function briefForProject(id){const x={...defaults(),...(saved[id]||{})};if(x.sceneType!=='interior')return {sceneType:'exterior'};return {sceneType:'interior',room:x.room,style:x.style,lighting:x.lighting,furniture:x.furniture,surfaces:x.surfaces.trim().slice(0,500),notes:x.notes.trim().slice(0,800)}}
+function briefForProject(id){const x={...defaults(),...(saved[id]||{})};if(x.sceneType!=='interior')return {sceneType:'exterior'};return {sceneType:'interior',homeChanges:'',environment:null,environmentInstructions:null,environmentSubtype:null,environmentSubtypeInstructions:null,plants:null,season:null,weather:null,time:null,room:x.room,style:x.style,lighting:x.lighting,furniture:x.furniture,surfaces:x.surfaces.trim().slice(0,500),notes:x.notes.trim().slice(0,800)}}
 function view(){
  const select=(id,label,arr)=>`<label>${label}<select id="${id}">${arr.map(([key,name])=>`<option value="${key}">${name}</option>`).join('')}</select></label>`;
  return `<div class="fa-space-switch" role="group" aria-label="Тип архитектурной визуализации"><button type="button" data-fa-space="exterior">Экстерьер <small>Дом и участок</small></button><button type="button" data-fa-space="interior">Интерьер <small>из скетча в фото</small></button></div>
@@ -66,6 +66,6 @@ function init(){
  if(breadcrumb)new MutationObserver(()=>populate()).observe(breadcrumb,{childList:true,characterData:true,subtree:true});
  populate();window.addEventListener('forma:open-interior',open);
 }
-window.FORMA_INTERIORS={briefForProject,open,state};
+window.FORMA_INTERIORS={briefForProject,open,state,setScene(value){persist({sceneType:value==='interior'?'interior':'exterior'});populate();document.dispatchEvent(new CustomEvent('forma:interior-mode-changed'));}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

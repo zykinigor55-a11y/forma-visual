@@ -8,16 +8,19 @@ import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
 import {landscapePrompt,atmospherePrompt,normalizeAtmosphere,materialTextPrompt,materialCropPrompt} from './forma-art-direction-core.js';
+import {imageTaskPrompt,normalizeImageTask,assertSeriesSource} from './forma-image-workflows.js';
 import {createPlanVision,visionStatus} from './plan-vision.mjs';
 import {createWanVideo} from './wan-video.mjs';
 import {createWan3Video} from './wan3-video.mjs';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // Optional simple local .env parser (no external packages). Environment variables win.
 try {const dotenv=await readFile(path.join(ROOT,'.env'),'utf8');for(const line of dotenv.split(/\r?\n/)){const m=line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);if(m&&!process.env[m[1]])process.env[m[1]]=m[2].replace(/^['"]|['"]$/g,'')}} catch {}
-const PORT=Number(process.env.PORT)||3000;
+const previewPort=process.argv.indexOf('--port');
+const PORT=Number(process.env.PORT)||Number(previewPort>=0?process.argv[previewPort+1]:0)||3000;
 const HOST=process.env.HOST||'127.0.0.1';
 const API_KEY=process.env.API_MARKET_KEY||'';
 const MODEL='nano-banana-2.1';
+const PLAN_IMAGE_MODEL=['gpt-image-2.6-sunburst','gpt-image-2.6-flare'].includes(process.env.PLAN_IMAGE_MODEL)?process.env.PLAN_IMAGE_MODEL:null;
 // No shared PIN: the public preview uses server-side usage limits instead.
 const DAILY_CAP=Math.min(200,Math.max(1,Number(process.env.DAILY_GENERATION_LIMIT)||12));
 const PUBLIC_SUPPORT_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.PUBLIC_SUPPORT_EMAIL||'')?process.env.PUBLIC_SUPPORT_EMAIL:'';
@@ -94,10 +97,7 @@ function photographicDirection(p){
  */
 function architecturalReferenceLock(p){
  if(p.brief?.sceneType==='interior')return 'NON-NEGOTIABLE INTERIOR GEOMETRY AND CAMERA LOCK: IMAGE 1 defines actual room wall positions, wall-to-ceiling joints, floor plan, ceiling shape, structural openings, door/window positions, original camera height, framing, perspective, furniture locations and original real-world proportions. Preserve these without moving them, changing apparent room shape, adding openings or fabricating structural changes. If the source is incomplete, do not infer nonexistent walls or windows as certain. Relighting never changes furniture, finishes or camera.';
- const inferredFront=p.batchShot==='front'&&!p.batchFrontProvided;
- const cameraLock=inferredFront
-  ?'EXPLICIT EXCEPTION — APPROXIMATE FRONT CAMERA REQUEST: A new frontal angle is requested without a frontal source reference. Exact camera matching to the oblique input is impossible for this shot alone. Reconstruct visible shapes conservatively; do not invent unseen detail, claim survey-grade accuracy or silently redesign the building. For geometrically exact frontal output, the user must provide an original frontal reference.'
-  :'HARD CAMERA/COMPOSITION LOCK — REFERENCE IMAGE 1 IS AUTHORITATIVE: Match the precise same viewpoint and camera height, horizontal and vertical angle, horizon line, perspective vanishing points, apparent focal length / field of view, subject scale, image crop, framing, object placement, foreground/background relationships and relative proportions as the supplied first image. Do NOT move the camera, simulate a drone shot, orbit, dolly, zoom, rotate, tilt, change vantage, shift viewpoint, change aspect framing or add a new camera perspective. The photographic lens brand and technical settings are stylistic capture guidance ONLY and must NEVER alter the reference composition.';
+ const cameraLock='HARD CAMERA/COMPOSITION LOCK — REFERENCE IMAGE 1 IS AUTHORITATIVE: Match its exact viewpoint, camera height, perspective, field of view, framing, object positions and relative proportions. Do not orbit, dolly, tilt, invent an unseen building side or reveal hidden geometry. A different view requires its own source screenshot. Camera brands and lens descriptions are capture-style guidance only.';
  const geometryLock='NON-NEGOTIABLE ARCHITECTURAL GEOMETRY LOCK: The house in IMAGE 1 is the sole ground truth. Preserve 1:1 the number, exact positions, shapes, relative dimensions and outlines of all floors, walls, roofs (including ridge, slopes, eaves and overhangs), gables, chimneys, window/door openings, frames/mullions, balconies, canopies, terraces, stairs, plinth, railings, structural columns, beams, gutters and every other EXISTING architectural element. Match the roof-to-wall connections, architectural seams, silhouette and built proportions precisely. No changed roof pitch, house footprint, added/removed/moved windows, doors, stories or structural parts; no invented decorative features. For material or color edits, change only the surface finish requested, NOT its physical shape, boundary, scale or construction seams. For scene/season edits, change only weather, daylight, seasonal vegetation, snow and requested lights, never the building geometry or camera.';
  const caution='STRICT REFERENCE-TO-PHOTO EDIT: Generate a photorealistic photograph OF THE SAME EXACT BUILDING IN THE REFERENCE, not a similar or redesigned house. If the source has uncertain or hidden geometry, preserve what is visible and do not hallucinate missing structures. Keep the source site footprint, hardscape paths, existing pool placement and building relation to surroundings; update only the landscape/atmosphere explicitly requested. Photorealism and microdetail must never come at the expense of geometry/camera accuracy.';
  return [cameraLock,geometryLock,caution].join('\n\n');
@@ -125,6 +125,8 @@ function sceneVariationPrompt(p){
  ].join('\n\n');
 }
 export function createPrompt(p){
+ assertSeriesSource(p);
+ if(p.imageTask)return imageTaskPrompt(p.imageTask);
  if(p.editMode==='text')return [architecturalReferenceLock(p),materialTextPrompt(p.materialInstruction,p)].join('\n\n');
  if(p.localCrop)return [architecturalReferenceLock(p),materialCropPrompt(p)].join('\n\n');
  if(p.landscapeEdit){if(!p.mask)throw Object.assign(Error('Для ландшафта нужна маска'),{status:400});return landscapePrompt(p.landscapeEdit);}
@@ -307,7 +309,7 @@ export function createPrompt(p){
  })();
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
  return [p.localCrop?'LOCAL CROP ALIGNMENT: Image 1 is a clean square crop centred on the selected material surface, with neutral padding. Return EXACTLY this same square framing and pixel alignment; do not zoom, crop or expand to the full context reference. The full reference photo is context only, not the output camera. Edit only the transparent mask; preserve all original construction edges and protected windows.':null,architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,sunlightAppearance,continuity,!specific?atmospherePrompt(b.atmosphere,{preserveScene:false}):null].filter(Boolean).join('\n\n')}
-export function renderQuantity(p){return p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.editMode==='text'?1:([1,2,4].includes(Number(p.quantity))?Number(p.quantity):1);}
+export function renderQuantity(p){return p.imageTask||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.editMode==='text'?1:([1,2,4].includes(Number(p.quantity))?Number(p.quantity):1);}
 let generationSeq=0;
 async function proxyRender(req,res){
  const requestId=Date.now().toString(36)+'-'+(++generationSeq).toString(36);
@@ -330,13 +332,18 @@ async function proxyRender(req,res){
   const n=renderQuantity(p);
   if(p.batchShot&&(!['original','front','detailEntry','detailMaterial'].includes(p.batchShot)||n!==1))return json(res,400,{error:'Для пакета допускается один кадр в запросе, ракурс должен быть из списка.'});
   if(dailyCount+n>DAILY_CAP)return json(res,429,{error:`Осталось генераций на сегодня: ${Math.max(0,DAILY_CAP-dailyCount)}.`});
-  const prompt=createPrompt(p);
+  assertSeriesSource(p);
+  const task=p.imageTask?normalizeImageTask(p.imageTask):null;
+  const needsPlan=task&&['plan','room'].includes(task.kind)&&task.engine!=='nano-banana-2.1';
+  if(needsPlan&&(!PLAN_IMAGE_MODEL||task.engine!==PLAN_IMAGE_MODEL))return json(res,503,{error:'Для «План → интерьер» настройте PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render и доступ к этой модели у API Market. Другой моделью запрос не заменяется.'});
+  if(['room','view'].includes(task?.kind)&&!reference)return json(res,400,{error:'Сначала утвердите главный кадр или визуализацию плана.'});
+  const prompt=task?imageTaskPrompt(task):createPrompt(p);
   const images=[];const mimes=[];let warning='';
   for(let i=0;i<n;i++){
    // Count before call: timeout does not prove supplier hasn't charged the request.
    dailyCount++;
    try{
-    const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,prompt: n>1?prompt+`\nCreate variation ${i+1} of ${n} with the same architecture and camera.`:prompt,quality:p.quality});
+    const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,prompt: n>1?prompt+`\nCreate variation ${i+1} of ${n} with the same architecture and camera.`:prompt,quality:p.quality});
     images.push(result.b64);mimes.push(result.mimeType);
    }catch(error){
     if(!images.length)throw error;
@@ -345,7 +352,7 @@ async function proxyRender(req,res){
    }
   }
   console.info('[AI]',requestId,'завершено; кадров:',images.length,'длительность_мс:',Date.now()-started);
-  json(res,200,{images,mimes,model:MODEL,provider:'API Market',warning,requestId});
+  json(res,200,{images,mimes,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,provider:'API Market',warning,requestId});
  }catch(err){
   const status=err.status||502;
   const safeMessage=String(err.message||'Ошибка сервера').slice(0,240);
@@ -361,7 +368,7 @@ const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
 const server=http.createServer(async(req,res)=>{
  if(req.url?.startsWith('/api/wan3/'))return wan3Video.handle(req,res);
  if(req.url?.startsWith('/api/wan/'))return wanVideo.handle(req,res);
- if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
+ if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,planImageReady:!!API_KEY&&!!PLAN_IMAGE_MODEL,planImageModel:PLAN_IMAGE_MODEL,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
  if(req.url==='/api/plan/status'&&req.method==='GET')return json(res,200,visionStatus());
  if(req.url==='/api/plan/recognize')return planVision(req,res);
  if(req.url==='/api/render'&&req.method==='POST')return proxyRender(req,res);

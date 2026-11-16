@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="dom-render-gallery-v56.css?v=portfolio-20261110-v56">
 <link rel="stylesheet" href="dom-render-wan26.css?v=wan26-preview-1">
 <link rel="stylesheet" href="forma-landscape-atmosphere.css?v=20261115-1">
+<link rel="stylesheet" href="forma-studio-shell.css?v=20261116-4">
 </head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -90,7 +91,7 @@
  <p class="compare-hint" id="compareHint" role="status" hidden>Исходник загружен. Сравнение появится после генерации AI-результата.</p>
  <div class="stage" id="stage" data-view-mode="slider" style="--split:36%">
    <img id="afterImg" alt="Демонстрационная фотореалистичная визуализация" src="assets/residence-render-bluehour-fixed.webp?v=stable-20261109" draggable="false">
-   <img id="beforeImg" alt="Упрощённая модель дома в стиле SketchUp: без мебели и деревьев, тот же ракурс" src="assets/residence-model-clean-approved-v36.png?v=approved-clean-v36" onerror="this.onerror=null;this.src='assets/residence-model-user-approved-20261109.png?v=approved-photo-20261109'" draggable="false">
+   <img id="beforeImg" alt="Упрощённая модель дома в стиле SketchUp: без мебели и деревьев, тот же ракурс" src="assets/residence-model-v32.webp?v=approved-clean-v36" onerror="this.onerror=null;this.src='assets/residence-model-user-approved-20261109.png?v=approved-photo-20261109'" draggable="false">
    <canvas id="materialPreview" class="material-preview" aria-hidden="true"></canvas>
    <canvas id="maskOverlay" aria-hidden="true"></canvas>
    <svg id="polyOverlay" viewBox="0 0 1000 563" preserveAspectRatio="none" aria-hidden="true"></svg>
@@ -533,7 +534,7 @@
  <div class="anim-settings-section">
   <div class="anim-settings-heading"><span>05</span><div><strong>Параметры будущего ролика</strong><small>Формат, длительность и ваши пожелания</small></div></div>
   <div class="anim-settings-grid">
-   <label>Длительность<select id="animDuration"><option value="5">5 секунд</option><option value="6" selected>6 секунд</option><option value="8">8 секунд</option><option value="10">10 секунд</option></select></label>
+   <label>Длительность<select id="animDuration"><option value="5" selected>5 секунд</option><option value="10">10 секунд</option></select></label>
    <label>Частота кадров<select id="animFPS"><option value="24">24 fps · кино</option><option value="25">25 fps · видео</option><option value="30">30 fps · плавно</option></select></label>
    <label>Формат<select id="animRatio"><option value="16:9">16:9 · горизонтальный</option><option value="9:16">9:16 · вертикальный</option></select></label>
    <label>Амплитуда движения<select id="animIntensity"><option value="low">Минимальная · точнее</option><option value="moderate">Умеренная</option></select></label>
@@ -688,5 +689,8 @@
 <script src="dom-render-progress-v53.js?v=ai-progress-20261110-v53"></script>
 <script src="dom-render-wan30.js?v=wan30-trial-1"></script>
 <script type="module" src="forma-landscape-atmosphere.js?v=20261115-1"></script>
+<script type="module" src="forma-studio-shell.js?v=20261116-1"></script>
+<script type="module" src="forma-image-workspace.js?v=20261116-1"></script>
+<script defer src="forma-workflow-ux.js?v=20261116-1"></script>
 </body>
 </html>

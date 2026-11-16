@@ -170,7 +170,7 @@ function settingsHTML(n){
 function showSelection(){
  const host=$('#faFlowNodeSettings'),g=graph();if(!host||!g)return;
  const n=g.nodes.find(n=>n.id===g.selected);
- host.innerHTML=n?settingsHTML(n):'<p>Выберите карточку на холсте и настройте операцию. Кнопка «Настроить» больше не открывает другие страницы.</p>';
+ host.innerHTML=n?settingsHTML(n):'<p>Выберите карточку на холсте и настройте операцию в её окне.</p>';
  const heading=$('#faFlowInspectorTitle');if(heading)heading.textContent=n?n.title||n.type:'Параметры ноды';
  if(nodeSettingsBound===host)return;
  host.addEventListener('change',event=>{
@@ -185,7 +185,7 @@ function showSelection(){
  host.addEventListener('click',e=>{
   if(busy||preparing){tell('Изменения нод недоступны во время выполнения.');return}
   const upload=e.target.closest('[data-fa-upload-source]');
-  if(upload){window.FORMA_RENDER_BRIDGE?.openUpload?.();return}
+  if(upload){window.FORMA_WORKFLOW_UI?.uploadSource?.(graph()?.selected);return}
   const download=e.target.closest('[data-fa-download-snapshot]');
   if(download){const image=getAPI()?.getSnapshot?.(download.dataset.faDownloadSnapshot);if(image)downloadImage(image);return}
   const compare=e.target.closest('[data-fa-compare-snapshot]');
@@ -370,6 +370,7 @@ function briefFor(ctx,previousMode,n){
  return b;
 }
 async function runTo(target,resume=false){
+ if(window.FORMA_WORKFLOW_UI?.uploading){tell('Дождитесь загрузки исходника в блок.');return;}
  if(busy||preparing){tell('Другая цепочка уже запущена или проверяется.');return}
  const api=getAPI(),g=graph();if(!api||!g)return;
  preparing=true;decorate();
@@ -377,10 +378,12 @@ async function runTo(target,resume=false){
  try{
   ctx=await window.FORMA_RENDER_BRIDGE?.capture?.();
   if(!ctx)throw Error('Сначала загрузите собственный проект в «ФОРМА».');
+  const ownPlan=checkPlan(g,target);const ownSource=api.getSnapshot?.(ownPlan.path[0].id);if(ownSource)ctx={...ctx,source:ownSource};
   const fingerprint=sourceFingerprint(ctx.source);
-  if(g.sourceFingerprint!==fingerprint){
-   for(const n of g.nodes.filter(n=>n.type==='source'))api.invalidateFrom?.(n.id);
-   g.sourceFingerprint=fingerprint;
+  const sourceId=ownPlan.path[0].id;g.sourceFingerprints||={};
+  if(g.sourceFingerprints[sourceId]!==fingerprint){
+   api.invalidateFrom?.(sourceId);
+   g.sourceFingerprints[sourceId]=fingerprint;
    api.save?.();
    if(resume)throw Error('Исходное изображение изменилось. Запустите цепочку заново — старые кадры не будут повторно использованы.');
   }
@@ -419,7 +422,7 @@ async function runTo(target,resume=false){
    if(wasCancelled||runId!==openedRunId)throw Error('Запуск остановлен.');
    setState(n.id,'running');
    tell('Этап '+(i+1)+'/'+plan.path.length+': '+(n.title||n.type));
-   if(n.type==='source'){output=ctx.source}
+   if(n.type==='source'){output=api.getSnapshot?.(n.id)||ctx.source}
    else if(AI_TYPES.has(n.type)){
     const brief=briefFor({...ctx,brief:currentBrief},mode,n);mode=brief.sceneType;currentBrief=brief;
     const cached=cacheAllowed(n,resumeNodes)?api.getSnapshot?.(n.id):null;
@@ -442,7 +445,7 @@ async function runTo(target,resume=false){
    api.markFresh?.(n.id);
    setState(n.id,'done');
   }
-  if(aiCompleted)await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Ноды · '+lastAI,ctx.projectId);
+  if(aiCompleted)await window.FORMA_RENDER_BRIDGE.saveWorkflowResult(output,'Сценарий · '+lastAI,ctx.projectId,ctx.source);
   tell('Готово: '+plan.path.length+' этапов · '+aiCompleted+' изображений · '+videoCompleted+' видео. Результаты сохранены в нодах и проекте.');
  }catch(err){
   const pending=plan.path.find(n=>statuses.get(n.id)==='running');

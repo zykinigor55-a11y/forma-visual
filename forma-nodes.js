@@ -30,18 +30,14 @@ const ICON_PATHS={
 const iconHTML=id=>'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON_PATHS[id]+'</svg>';
 
 const START=[
- {id:'n1',type:'source',x:65,y:250,title:'Исходный скетч'},
- {id:'n2',type:'exterior',x:355,y:140,title:'Фотография дома'},
- {id:'n3',type:'interior',x:355,y:420,title:'Интерьер · Из скетча в фото'},
- {id:'n4',type:'lighting',x:645,y:85,title:'Свет и погода'},
- {id:'n5',type:'materials',x:645,y:420,title:'Изменить отделку'},
- {id:'n6',type:'upscale',x:935,y:85,title:'Экспорт · 4K'},
- {id:'n7',type:'export',x:935,y:420,title:'Финальный результат'}
+ {id:'n1',type:'source',x:65,y:130,title:'Загрузить исходник'},
+ {id:'n2',type:'exterior',x:355,y:130,title:'Создать визуализацию'},
+ {id:'n3',type:'export',x:645,y:130,title:'Сохранить результат'}
 ];
-const START_EDGES=[['n1','n2'],['n1','n3'],['n2','n4'],['n3','n5'],['n4','n6'],['n6','n7']];
+const START_EDGES=[['n1','n2'],['n2','n3']];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function project(){try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'demo'}catch{return 'demo'}}
-function initial(){return {nodes:START.map(n=>({...n,options:{}})),edges:START_EDGES.map(([from,to])=>({from,to})),pan:{x:70,y:35},zoom:.75,count:7,selected:'n2'}}
+function initial(){return {nodes:START.map(n=>({...n,options:{}})),edges:START_EDGES.map(([from,to])=>({from,to})),pan:{x:70,y:35},zoom:.75,count:3,selected:'n3'}}
 let graph,modal=null,world=null,lines=null,nodeLayer=null,drag=null,pending=null,lastWireDrop=0;
 let undoStack=[],redoStack=[],lastGraphJSON='';
 const snapshots=new Map(),videoBlobs=new Map(),videoURLs=new Map();let dbPromise=null;
@@ -80,20 +76,22 @@ function mediaDB(){
 }
 function mediaKey(id){return project()+'__'+id}
 async function restoreImages(){
+ const expectedProject=project(),expectedGraph=graph;
+ const current=()=>project()===expectedProject&&graph===expectedGraph;
  snapshots.clear();videoBlobs.clear();for(const url of videoURLs.values())URL.revokeObjectURL(url);videoURLs.clear();
  const db=await mediaDB();if(!db)return;
  await Promise.all(graph.nodes.map(n=>new Promise(resolve=>{
   const tx=db.transaction('images','readonly');
   const req=tx.objectStore('images').get(mediaKey(n.id));
-  req.onsuccess=()=>{if(req.result)snapshots.set(n.id,req.result);resolve()};
+  req.onsuccess=()=>{if(current()&&req.result)snapshots.set(n.id,req.result);resolve()};
   req.onerror=()=>resolve();
  })));
  await Promise.all(graph.nodes.filter(n=>n.type==='video').map(n=>new Promise(resolve=>{
   const tx=db.transaction('images','readonly'),req=tx.objectStore('images').get(mediaKey(n.id)+'__video');
-  req.onsuccess=()=>{if(req.result instanceof Blob){videoBlobs.set(n.id,req.result);videoURLs.set(n.id,URL.createObjectURL(req.result))}resolve()};
+  req.onsuccess=()=>{if(current()&&req.result instanceof Blob){videoBlobs.set(n.id,req.result);videoURLs.set(n.id,URL.createObjectURL(req.result))}resolve()};
   req.onerror=()=>resolve();
  })));
- if(modal)redraw();
+ if(modal&&current())redraw();
 }
 async function pinImage(id){
  const target=node(id),ref=$('#afterImg');
@@ -202,14 +200,14 @@ function redraw(){
   card.className='fa-node'+(graph.selected===n.id?' selected':'');
   card.style.left=n.x+'px';card.style.top=n.y+'px';card.dataset.node=n.id;
   card.innerHTML=`<div class="fa-node-top" data-move="${esc(n.id)}"><span class="fa-node-symbol">${iconHTML(n.type)}</span><div><small>${t.kind}</small><b>${esc(n.title||t.title)}</b></div><button type="button" data-fork="${esc(n.id)}" title="Добавить ответвление">+</button></div>
-  <div class="fa-node-picture"><span>${esc(t.text)}</span></div>
+  <div class="fa-node-picture"><span>${esc(t.text)}</span>${n.type==='source'?`<button type="button" data-source-upload="${esc(n.id)}">Загрузить изображение</button>`:''}</div>
   <div class="fa-node-bottom"><button type="button" data-run-node="${esc(n.id)}" title="Запустить ветку до этой ноды">▶ Запуск</button><button type="button" data-open-step="${esc(n.id)}">⚙ Настроить</button><button type="button" data-pin="${esc(n.id)}" title="Закрепить текущий результат в ноде" aria-label="Закрепить текущий кадр">◫</button><button type="button" data-rename="${esc(n.id)}" aria-label="Переименовать ноду">✎</button></div>
   ${t.input?`<button type="button" class="fa-node-port input" data-port-in="${esc(n.id)}" aria-label="Вход"></button>`:''}
   ${t.out?`<button type="button" class="fa-node-port output ${pending===n.id?'pending':''}" data-port-out="${esc(n.id)}" aria-label="Выход"></button>`:''}`;
   nodeLayer.append(card);
   const pic=$('.fa-node-picture',card);
   if(n.type==='source'||['exterior','interior','lighting','materials','geometry','upscale','video','export'].includes(n.type)){
-   const ref=n.type==='source'?$('#beforeImg'):null;
+   const ref=n.type==='source'&&window.FORMA_ART_BRIDGE?.snapshot()?.hasSource?$('#beforeImg'):null;
    const image=snapshots.get(n.id)||(ref&&(ref.currentSrc||ref.src))||'';
    if(image){pic.style.backgroundImage='linear-gradient(0deg,#161215cc,#2119140c),url("'+String(image).replace(/["']/g,'')+'")';pic.classList.add('has-image')}
   }
@@ -221,7 +219,7 @@ function redraw(){
   }
  }
  drawLines();position();
- $('#faFlowCount').textContent=graph.nodes.length+' нод · '+graph.edges.length+' связей';
+ $('#faFlowCount').textContent=graph.nodes.length+' блоков · '+graph.edges.length+' связей';
  window.FORMA_NODE_ENGINE?.onGraphDrawn?.(graph);
 }
 function drawLines(){
@@ -241,7 +239,7 @@ function add(type,from=null){
  const parent=node(from||graph.selected),id='n'+(++graph.count);
  const n={id,type,x:parent?parent.x+265:80,y:parent?parent.y+210:80,title:TYPES[type].title,options:{}};
  graph.nodes.push(n);graph.selected=id;
- if(from&&canLink(from,id))graph.edges.push({from,to:id});
+ const source=from||parent?.id;if(source&&canLink(source,id))graph.edges.push({from:source,to:id});else if(!from&&parent?.type==='export'){const prior=graph.edges.find(e=>e.to===parent.id);if(prior&&canLink(prior.from,id)&&canLink(id,parent.id)){graph.edges=graph.edges.filter(e=>e!==prior);graph.edges.push({from:prior.from,to:id},{from:id,to:parent.id});}}
  save();redraw();status('Нода добавлена. Соединения сохраняются на этом устройстве.');
 }
 function link(a,b){
@@ -261,7 +259,7 @@ function openStep(id){
  graph.selected=id;save();redraw();
  const inspector=$('#faFlowInspector');
  if(inspector){inspector.classList.add('fa-inspector-active');inspector.scrollTop=0;}
- status('Настройте «'+n.title+'» справа и запустите этот этап или целую ветку.');
+ window.FORMA_WORKFLOW_UI?.openSettings?.();status('Настройте «'+n.title+'» в окне блока.');
 }
 // A/B comparison uses the actual saved images attached to graph nodes.
 let comparePanel=null;
@@ -347,7 +345,7 @@ function click(e){
  if(b.id==='faFlowCenter'){graph.pan={x:40,y:40};graph.zoom=.78;save();position();return}
  if(b.id==='faFlowPlus'||b.id==='faFlowMinus'){graph.zoom=Math.max(.3,Math.min(1.5,graph.zoom*(b.id==='faFlowPlus'?1.2:1/1.2)));save();position();return}
  if(a.addNode){add(a.addNode);return}
- if(a.fork){add('exterior',a.fork);return}
+ if(a.fork){graph.selected=a.fork;save();redraw();window.FORMA_WORKFLOW_UI?.showAdd?.(a.fork);return}
  if(a.portOut){if(Date.now()-lastWireDrop<350)return;pending=a.portOut;redraw();status('Выберите вход другой ноды или нажмите Escape.');return}
  if(a.portIn){if(pending)link(pending,a.portIn);else status('Сначала нажмите выход исходной ноды.');return}
  if(a.runNode){window.FORMA_NODE_ENGINE?.runTo?.(a.runNode);return}
@@ -405,7 +403,10 @@ function up(e){
  if(drag){save();redraw()}drag=null;
 }
 function keydown(e){
+ if(document.querySelector('.fa-workflow-settings[open],.fa-workflow-add[open]'))return;
+ if(e.key==='Tab'&&modal){const buttons=[...modal.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')].filter(el=>el.getClientRects().length);const first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}
  const editing=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
+ if(!editing&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();window.FORMA_NODE_ENGINE?.runTo?.(graph.selected);return;}
  if(!editing&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();stepHistory(e.shiftKey?'redo':'undo');return}
  if(!editing&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();stepHistory('redo');return}
  if(e.key==='Escape'){if(pending){pending=null;redraw()}else close()}
@@ -415,14 +416,14 @@ function open(){
  if(modal)return;
  graph=read();lastGraphJSON=JSON.stringify(graph);undoStack=[];redoStack=[];
  modal=document.createElement('div');modal.id='faFlowBackdrop';modal.className='fa-flow-backdrop';
- modal.innerHTML=`<div class="fa-flow-shell" role="dialog" aria-modal="true" aria-label="Нодовый редактор ФОРМА">
- <div class="fa-flow-head"><div class="fa-flow-logo"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div class="fa-flow-name"><b>ФОРМА <span>/ НОДЫ</span></b><small>Профессиональные цепочки визуализации</small></div>
+ modal.innerHTML=`<div class="fa-flow-shell" role="dialog" aria-modal="true" aria-label="Сценарии ФОРМА">
+ <div class="fa-flow-head"><div class="fa-flow-logo"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div class="fa-flow-name"><b>ФОРМА <span>/ СЦЕНАРИИ</span></b><small>Последовательность обработки проекта</small></div>
  <div class="fa-flow-head-actions"><button type="button" id="faFlowMore" class="fa-flow-more" aria-haspopup="menu" aria-expanded="false" title="Дополнительные действия">···</button><button type="button" id="faFlowCompare" title="Сравнение двух результатов">Сравнение A/B</button><button type="button" id="faFlowRunChain" class="fa-flow-run-main" title="Запустить ветку до выделенной ноды">▶ Запустить</button><button type="button" id="faFlowStopChain" class="fa-flow-stop-main" disabled>Стоп</button><button type="button" id="faFlowArrange">Упорядочить</button><button type="button" id="faFlowExport">Экспорт JSON</button><button type="button" id="faFlowImport">Импорт</button><input type="file" id="faFlowFile" accept=".json,application/json" hidden><button type="button" id="faFlowClose" aria-label="Закрыть">×</button></div><div id="faFlowMoreMenu" class="fa-flow-more-menu" role="menu" hidden><button type="button" data-fa-flow-quick="faFlowCompare">Сравнить A/B</button><button type="button" data-fa-flow-quick="faFlowArrange">Упорядочить ноды</button><button type="button" data-fa-flow-quick="faFlowExport">Скачать схему</button><button type="button" data-fa-flow-quick="faFlowImport">Импортировать схему</button><button type="button" data-fa-flow-quick="faFlowStopChain">Остановить генерацию</button></div></div>
- <div class="fa-flow-main"><aside class="fa-flow-sidebar"><h3>Библиотека нод</h3><small>Выберите задачу и добавьте её в цепочку</small><div class="fa-flow-palette-toolbar"><label for="faFlowGroup">Категория</label><select id="faFlowGroup" aria-label="Категория нод"><option value="all">Все инструменты</option><option value="render">Визуализация</option><option value="edit">Обработка</option><option value="output">Результат</option></select></div><div id="faFlowPalette"></div><div class="fa-flow-note"><b>Как работать</b><p>Добавьте операцию и соедините её вход с выходом предыдущей. Один исходник может запускать несколько веток.</p><small>Настройки справа. Результаты хранятся в нодах. Новые AI-этапы оплачиваются отдельно после подтверждения.</small></div></aside>
+ <div class="fa-flow-main"><aside class="fa-flow-sidebar"><h3>Блоки сценария</h3><small>Выберите задачу и добавьте её в цепочку</small><div class="fa-flow-palette-toolbar"><label for="faFlowGroup">Категория</label><select id="faFlowGroup" aria-label="Категория блоков"><option value="all">Все инструменты</option><option value="render">Визуализация</option><option value="edit">Обработка</option><option value="output">Результат</option></select></div><div id="faFlowPalette"></div><div class="fa-flow-note"><b>Как работать</b><p>Добавьте операцию и соедините её вход с выходом предыдущей. Один исходник может запускать несколько веток.</p><small>Нажмите «Настроить» у блока. Готовый кадр передаётся следующему по связи. Новые AI-этапы оплачиваются отдельно после подтверждения.</small></div></aside>
  <section class="fa-flow-center"><div class="fa-flow-controls"><span id="faFlowCount">0 нод</span><div><button type="button" id="faFlowUndo" title="Отменить Ctrl+Z" aria-label="Отменить действие">↶</button><button type="button" id="faFlowRedo" title="Повторить Ctrl+Shift+Z" aria-label="Повторить действие">↷</button><button id="faFlowMinus" type="button">−</button><span id="faFlowZoom">75%</span><button id="faFlowPlus" type="button">+</button><button id="faFlowCenter" type="button">Центр</button></div></div>
  <div id="faFlowViewport" class="fa-flow-viewport" tabindex="0"><div id="faFlowWorld" class="fa-flow-world"><svg id="faFlowLines" width="2600" height="2100" xmlns="http://www.w3.org/2000/svg"></svg><div id="faFlowNodes"></div></div></div>
- <div class="fa-flow-bottom"><span id="faFlowStatus" role="status">Выберите ноду, настройте её справа и запустите ветку.</span><button type="button" id="faFlowDelete">Удалить ноду</button></div></section><aside class="fa-flow-inspector" id="faFlowInspector"><div class="fa-inspector-header"><small>ФОРМА / ПАРАМЕТРЫ</small><h3 id="faFlowInspectorTitle">Выберите этап</h3><p>Параметры, история и готовые результаты остаются на рабочем холсте.</p></div><div id="faFlowNodeSettings" class="fa-flow-node-settings" aria-label="Настройки выбранного этапа"></div></aside></div></div>`;
- document.body.append(modal);document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
+ <div class="fa-flow-bottom"><span id="faFlowStatus" role="status">Загрузите исходник → настройте обработку → запустите сценарий.</span><button type="button" id="faFlowDelete">Удалить ноду</button></div></section><aside class="fa-flow-inspector" id="faFlowInspector"><div class="fa-inspector-header"><small>ФОРМА / ПАРАМЕТРЫ</small><h3 id="faFlowInspectorTitle">Выберите этап</h3><p>Параметры, история и готовые результаты остаются на рабочем холсте.</p></div><div id="faFlowNodeSettings" class="fa-flow-node-settings" aria-label="Настройки выбранного этапа"></div></aside></div></div>`;
+ document.body.append(modal);const app=$('#app');if(app)app.inert=true;document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
  const palette=$('#faFlowPalette');
  for(const [id,t] of Object.entries(TYPES)){
   const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.dataset.group=({source:'render',exterior:'render',interior:'render',lighting:'render',materials:'edit',geometry:'edit',upscale:'edit',video:'output',image3d:'output',export:'output'})[id]||'render';b.innerHTML='<i>'+iconHTML(id)+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';if(id==='image3d'){b.classList.add('fa-flow-not-ready');b.disabled=true;b.title='3D-модель пока недоступна: требуется отдельный API'}palette.append(b);
@@ -435,7 +436,7 @@ function open(){
  viewport.addEventListener('pointerup',up);viewport.addEventListener('pointercancel',up);
  $('#faFlowFile').addEventListener('change',e=>{importJSON(e.target.files?.[0]);e.target.value=''});
  document.addEventListener('keydown',keydown);
- redraw();restoreImages();
+ redraw();restoreImages();$('#faFlowViewport')?.focus({preventScroll:true});
  window.FORMA_NODE_ENGINE?.onOpen?.();
 }
 
@@ -461,7 +462,7 @@ function openAndAdd(type){
  add(type,previous);
  status('Добавлен инструмент «'+TYPES[type].title+'». '+(graph.edges.some(e=>e.from===previous&&e.to===graph.selected)?'Нода автоматически соединена с выбранным этапом.':'Соедините вход новой ноды с совместимым выходом.'));
 }
-function close(){if(!modal)return;comparePanel?.remove();comparePanel=null;window.FORMA_NODE_ENGINE?.onClose?.();save();modal.remove();modal=world=lines=nodeLayer=null;drag=pending=null;document.body.classList.remove('fa-flow-is-open');document.removeEventListener('keydown',keydown)}
+function close(){if(!modal)return;window.FORMA_WORKFLOW_UI?.closeSettings?.();comparePanel?.remove();comparePanel=null;window.FORMA_NODE_ENGINE?.onClose?.();save();modal.remove();modal=world=lines=nodeLayer=null;drag=pending=null;document.body.classList.remove('fa-flow-is-open');const app=$('#app');if(app)app.inert=false;document.removeEventListener('keydown',keydown)}
 function init(){
  const actions=$('.forma-context-actions');
  if(actions){
@@ -471,7 +472,7 @@ function init(){
  const nav=$('.rail-nav');
  if(nav){
   const b=document.createElement('button');b.type='button';b.className='rail-btn fa-flow-rail';
-  b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span class="rail-name">Ноды</span>';b.title='Нодовый редактор';b.setAttribute('aria-label',b.title);
+  b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span class="rail-name">Сценарии</span>';b.title='Сценарии обработки';b.setAttribute('aria-label',b.title);
   b.addEventListener('click',open);nav.append(b);
  }
  const mobile=$('.mobile-nav');
@@ -479,7 +480,7 @@ function init(){
   const b=document.createElement('button');b.type='button';b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span>Ноды</span>';
   b.className='fa-flow-mobile';b.addEventListener('click',open);mobile.append(b);
  }
- window.FORMA_NODES={open,openAndAdd,openFor,close,graph:()=>graph, getNode:id=>node(id),setOptions:setNodeOptions,markFresh,invalidateFrom, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
+ window.FORMA_NODES={open,openAndAdd,openFor,close,add,link,openStep,graph:()=>graph, getNode:id=>node(id),setOptions:setNodeOptions,markFresh,invalidateFrom, getSnapshot:id=>snapshots.get(id)||null,setSnapshot,getVideoURL:id=>videoURLs.get(id)||null,getVideoBlob:id=>videoBlobs.get(id)||null,setVideoSnapshot,downloadVideo,restoreImages,historyFor,recallHistory,save,redraw,showStatus:status,addCompare,showCompare,isOpen:()=>!!modal};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

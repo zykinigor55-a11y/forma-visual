@@ -66,11 +66,11 @@ export async function parseImageReply(reply, opts={}){
 }
 
 /** one edit per paid request; never send additional image prompt-only */
-export async function apiMarketEdit({apiKey,source,material,reference,mask,prompt,quality='high',fetchImpl=fetch,timeoutMs=165000}){
+export async function apiMarketEdit({apiKey,source,material,reference,mask,prompt,quality='high',model=API_MARKET_MODEL,fetchImpl=fetch,timeoutMs=165000}){
   if(!apiKey)throw new Error('Не настроен API_MARKET_KEY.');
   if(!source)throw new Error('Исходный скриншот не задан.');
   const form=new FormData();
-  form.append('model',API_MARKET_MODEL);
+  form.append('model',model);
   form.append('prompt',prompt);
   form.append('quality',quality==='medium'?'medium':'high');
   form.append('response_format','b64_json');

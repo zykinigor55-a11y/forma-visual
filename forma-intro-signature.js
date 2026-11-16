@@ -5,7 +5,8 @@
    The page opens only after both the minimum animation and app initialization. */
 (() => {
  'use strict';
- const TIME={loaderEnd:1350,logo:1750,name:2600,descriptor:3130,minShow:5000,recovery:14000};
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const TIME={loaderEnd:900,logo:0,name:1050,descriptor:1350,minShow:reduced?1500:2600,recovery:14000};
  const root=document.documentElement;
  const screen=document.getElementById('forma-intro');
  if(!screen)return;

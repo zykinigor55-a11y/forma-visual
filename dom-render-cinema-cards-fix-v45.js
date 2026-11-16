@@ -28,10 +28,10 @@
    for(const [id] of g.labels){
     const card=Array.from(el.querySelectorAll('.anim-option-card')).find(x=>x.dataset.animId===id);
     const img=card?.querySelector('.anim-option-photo img');
-    if(img&&assets[g.kind+':'+id]&&img.src!==assets[g.kind+':'+id]){img.src=assets[g.kind+':'+id];img.style.filter='none';}
+    if(img&&!img.hasAttribute('data-keep-source')&&assets[g.kind+':'+id]&&img.src!==assets[g.kind+':'+id]){img.src=assets[g.kind+':'+id];img.style.filter='none';}
    }
   }
-  document.querySelectorAll('#animationPanel details.anim-section').forEach(el=>el.open=true);
+  if(!document.body.classList.contains('fa-unified-studio'))document.querySelectorAll('#animationPanel details.anim-section').forEach(el=>el.open=true);
  }
  function loadAtlas(){
   // Mobile screens display the approved original atlas directly via CSS.

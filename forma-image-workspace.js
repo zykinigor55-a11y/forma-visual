@@ -1,0 +1,99 @@
+import {PLAN_STYLES,PLAN_PRESENTATIONS,normalizeCrop,assertFrameBinding,assertRoomReady} from './forma-image-workflows.js';
+import {canvas,loadImage} from './forma-local-composite.js';
+const $=s=>document.querySelector(s),bridge=()=>window.FORMA_ART_BRIDGE;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let state=null,run=false,token=0;
+async function readImage(file){if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Выберите PNG, JPG или WebP');if(file.size>14*1024*1024)throw Error('Максимальный размер — 14 МБ');const result=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Не удалось прочитать файл'));r.readAsDataURL(file);});await loadImage(result);return result;}
+const select=(id,label,values)=>`<label class="fs-image-field">${label}<select id="${id}">${Object.entries(values).map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></label>`;
+function status(s){if($('#studioImageStatus'))$('#studioImageStatus').textContent=s;}
+async function compactImage(url,max=1800){const i=await loadImage(url),factor=Math.min(1,max/Math.max(i.naturalWidth,i.naturalHeight)),c=canvas(Math.round(i.naturalWidth*factor),Math.round(i.naturalHeight*factor));c.getContext('2d').drawImage(i,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.95);}
+async function cropImage(url,rect,max=3840){const i=await loadImage(url),r=normalizeCrop(rect),w=Math.round(i.naturalWidth*r.w),h=Math.round(i.naturalHeight*r.h),f=Math.min(4,max/Math.max(w,h)),c=canvas(Math.max(1,Math.round(w*f)),Math.max(1,Math.round(h*f)));c.getContext('2d').drawImage(i,i.naturalWidth*r.x,i.naturalHeight*r.y,w,h,0,0,c.width,c.height);return c.toDataURL('image/png');}
+function imageView(){return `<div class="fs-image-stage"><img id="studioImageSource" alt="Исходное изображение"><div id="studioImageSelection" role="img" aria-label="Выбранная область"></div><button type="button" id="studioImageSelect" aria-label="Обведите область на исходном изображении"></button></div><div class="fs-crop-numbers">${['x','y','w','h'].map(k=>`<label>${{x:'Слева',y:'Сверху',w:'Ширина',h:'Высота'}[k]} %<input type="number" min="0" max="100" step="1" data-crop="${k}" value="${{x:20,y:20,w:40,h:40}[k]}"></label>`).join('')}</div><p id="studioImageStatus" class="fs-image-status" role="status" aria-live="polite"></p><div id="studioImageResults" class="fs-image-results"></div>`;}
+function updateSelection(){if(!state)return;const c=state.crop,box=$('#studioImageSelection');if(box)Object.assign(box.style,{left:c.x*100+'%',top:c.y*100+'%',width:c.w*100+'%',height:c.h*100+'%'});document.querySelectorAll('[data-crop]').forEach(i=>i.value=Math.round(c[i.dataset.crop]*100));}
+function setView(url){state.viewImage=url;const im=$('#studioImageSource');im.hidden=!url;if(url)im.src=url;else im.removeAttribute('src');im.parentElement.classList.toggle('is-empty',!url);updateSelection();updateActions();}
+function updateActions(){if(!state||run)return;const button=$('#fsRoomGenerate');if(button)button.disabled=!(state.planResult&&state.planApproved&&state.roomSelected&&state.viewImage===state.source);const approve=$('#fsApprovePlan');if(approve)approve.disabled=!state.planResult;}
+function selectRoom(){if(state?.kind==='plan'){state.roomSelected=state.planApproved&&state.viewImage===state.source;updateActions();}}
+function bindSelection(){const el=$('#studioImageSelect');let start=null;
+ const point=e=>{const r=el.getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};};
+ el.addEventListener('pointerdown',e=>{if(run)return;start=point(e);el.setPointerCapture(e.pointerId);});el.addEventListener('pointermove',e=>{if(!start)return;const p=point(e);state.crop={x:Math.min(p.x,start.x),y:Math.min(p.y,start.y),w:Math.abs(p.x-start.x),h:Math.abs(p.y-start.y)};updateSelection();});el.addEventListener('pointerup',()=>{start=null;try{normalizeCrop(state.crop);selectRoom();status(state.kind==='plan'?'Комната отмечена. Выберите направление взгляда.':'Выбран видимый участок. Ракурс остаётся прежним.');}catch(e){status(e.message);}});
+ document.querySelectorAll('[data-crop]').forEach(i=>i.addEventListener('input',()=>{const key=i.dataset.crop,v=Number(i.value)/100;state.crop[key]=Math.max(key==='w'||key==='h'?.02:0,Math.min(1,v));state.crop.w=Math.min(state.crop.w,1-state.crop.x);state.crop.h=Math.min(state.crop.h,1-state.crop.y);updateSelection();try{normalizeCrop(state.crop);selectRoom();}catch{state.roomSelected=false;updateActions();}}));
+}
+function addResult(url,label){const item=document.createElement('div');item.className='fs-image-result';const img=document.createElement('img');img.src=url;img.alt=label;const name=document.createElement('b');name.textContent=label;const download=document.createElement('a');download.href=url;download.download='FORMA-'+label.replace(/[^a-zа-я0-9]+/gi,'-')+'.png';download.textContent='Скачать';item.append(img,name,download);$('#studioImageResults')?.prepend(item);}
+async function request(payload){const response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,quantity:1,quality:'high'}),signal:AbortSignal.timeout(240000)}),data=await response.json();if(!response.ok||!data.images?.[0])throw Error(data.error||'Изображение не получено');return 'data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];}
+function lock(value){run=value;$('#formaStudioWorkspace')?.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.hasAttribute('data-studio-exit'))el.disabled=value;});if(!value)updateActions();}
+async function execute(action){
+ if(run||!state||state.loading)return;const own=state,version=token;let expected=bridge().snapshot(),acquired=false;
+ try{
+  if(!own.source)throw Error('Загрузите исходное изображение');
+  assertFrameBinding(expected,own.binding);
+  if(action!=='crop'&&(expected.demo||!expected.hasSource))throw Error('Для AI загрузите собственное изображение');
+  if(action==='room')assertRoomReady(own);
+  if(!bridge().acquire())throw Error('Дождитесь текущей обработки');acquired=true;lock(true);status(action==='crop'?'Увеличиваем выбранный участок…':'Создаём изображение. Результат появится здесь.');
+  let url,label;
+  if(action==='crop'){url=await cropImage(own.source,own.crop);label='Приближение · исходный кадр';}
+  else if(action==='detail'){
+   url=await request({image:await compactImage(await cropImage(own.source,own.crop,1800)),reference:await compactImage(own.source),imageTask:{kind:'detail',crop:own.crop,level:$('#fsDetailLevel').value,notes:$('#fsNotes').value}});label='Деталь · AI-интерпретация';
+  }else{
+   const engine=$('#fsPlanEngine').value;if(!engine)throw Error('Выберите модель для генерации');
+   const imageTask={kind:action==='room'?'room':'plan',engine,style:$('#fsPlanStyle').value,presentation:$('#fsPlanPresentation').value,notes:$('#fsNotes').value,...(action==='room'?{room:own.crop,direction:$('#fsPlanDirection').value}:{})};
+   url=await request({image:await compactImage(own.source),reference:action==='room'?await compactImage(own.planResult):null,imageTask});label=action==='room'?'Интерьер по плану':'Объёмный план';
+   if(action!=='room'){assertFrameBinding(bridge().snapshot(),expected);own.planResult=url;own.planApproved=false;own.roomSelected=false;await bridge().setAsset('plan_result',url,own.projectId);setView(url);$('#fsApprovePlan').disabled=false;}
+  }
+  if(version!==token||state!==own)throw Error('Рабочее окно изменилось');
+  assertFrameBinding(bridge().snapshot(),expected);await bridge().saveResult(url,label,{...expected,image:own.source});own.binding=bridge().snapshot();addResult(url,label);status('Готово · сохранено в проекте. Исходник доступен для сравнения.');
+ }catch(e){status(e.name==='TimeoutError'?'Время ожидания истекло. Проверьте историю перед повтором.':e.message);}finally{if(acquired)bridge().release();if(acquired&&state===own)lock(false);}
+}
+function drawSeries(){if(state)bridge().setAsset('series_draft',JSON.stringify({projectId:state.projectId,sourceKey:state.sourceKey,master:state.master,source:state.source,frames:state.frames}),state.projectId).catch(()=>{});const host=$('#fsSeriesList');if(!host)return;host.innerHTML=state.frames.map((f,i)=>`<div class="fs-series-item"><b>${i+1}. ${esc(f.label)}</b><small>${f.done?'Готово':f.error||'Готов к запуску'}</small><button type="button" data-series-run="${i}">${f.done?'Пересоздать':'Создать'}</button><button type="button" data-series-remove="${i}" aria-label="Удалить кадр">×</button></div>`).join('');}
+async function runSeries(only=null){
+ if(run||!state||state.loading)return;const own=state,version=token;
+ if(!own.frames.length)return status('Добавьте кадры в серию.');
+ try{assertFrameBinding(bridge().snapshot(),own.binding);}catch(e){return status(e.message);}
+ if(!bridge().acquire())return status('Дождитесь обработки текущего кадра.');lock(true);
+ try{
+  for(const [i,f] of own.frames.entries()){
+   if(only!==null&&only!==i||only===null&&f.done)continue;
+   const now=bridge().snapshot();if(now.projectId!==own.projectId||now.sourceKey!==own.sourceKey||token!==version)throw Error('Проект или исходник изменился. Серия остановлена.');
+   status(`Кадр ${i+1} из ${own.frames.length}: ${f.label}`);
+   try{
+    const url=f.kind==='crop'?await cropImage(own.source,f.crop):await request({image:await compactImage(f.input||await cropImage(own.source,f.crop)),reference:await compactImage(own.master),brief:own.brief,...(f.kind==='scene'?{sceneVariation:f.variant}:{imageTask:f.kind==='view'?{kind:'view',hasOwnSource:true,notes:''}:{kind:'detail',crop:f.crop,level:f.level||'close',notes:''}})});
+    await bridge().saveResult(url,'Серия · '+f.label,{...now,image:f.input||own.source});own.binding=bridge().snapshot();f.done=true;f.error=null;addResult(url,f.label);
+   }catch(e){f.error=e.message;throw e;}
+   drawSeries();
+  }
+  status('Серия готова. Все успешные кадры сохранены по отдельности.');
+ }catch(e){drawSeries();status(e.message+' Уже созданные кадры сохранены. Повторите только неудачный.');}finally{bridge().release();lock(false);}
+}
+async function open({id,view,controls}){
+ if(!['frames','plan'].includes(id))return;token++;const mine=token,snapshot=bridge().snapshot();state={kind:id,loading:false,loadId:0,binding:snapshot,planApproved:false,roomSelected:false,source:id==='frames'&&snapshot.hasSource&&!snapshot.demo?snapshot.image:null,viewImage:id==='frames'&&snapshot.hasSource&&!snapshot.demo?snapshot.image:null,crop:{x:.2,y:.2,w:.4,h:.4},frames:[],master:snapshot.image,projectId:snapshot.projectId,sourceKey:snapshot.sourceKey,brief:snapshot.brief,planResult:null};
+ view.innerHTML=imageView();controls.innerHTML=id==='plan'?`<div class="fs-image-intro"><small>ПЛАН → ИНТЕРЬЕР</small><h2>Планировка в объёме.</h2><p>Сначала подача плана, затем фотография выбранной комнаты.</p></div><label class="fs-file">Загрузить план<input id="fsSource" type="file" accept="image/png,image/jpeg,image/webp"></label>${select('fsPlanPresentation','Подача плана',PLAN_PRESENTATIONS)}${select('fsPlanStyle','Стиль интерьера',PLAN_STYLES)}${select('fsPlanEngine','Модель',{'':'Выберите модель','nano-banana-2.1':'Nano Banana · текущий API','gpt-image-2.6-sunburst':'GPT Image 2.6 Sunburst'})}<p id="fsPlanProvider" class="fa-art-help">Проверяем подключение модели…</p><label class="fs-image-field">Пожелания<textarea id="fsNotes" rows="3" maxlength="600" placeholder="Дубовый пол, тёплая штукатурка…"></textarea></label><button type="button" class="fa-studio-primary" id="fsPlanGenerate">Создать объёмный план</button><hr><h3>Интерьер комнаты</h3><p class="fa-art-help">После проверки плана выделите комнату рамкой на исходном чертеже.</p><button type="button" id="fsApprovePlan" disabled>План проверен · перейти к комнате</button>${select('fsPlanDirection','Смотреть в сторону',{'north':'Верхней стены плана','east':'Правой стены плана','south':'Нижней стены плана','west':'Левой стены плана'})}<button type="button" id="fsRoomGenerate">Создать интерьер комнаты</button><p class="fa-art-help">Это изображения. Проверяйте стены, проёмы и пропорции по чертежу.</p><a class="fs-advanced-link" href="/plan-to-interior.html">Точный редактор стен и 3D →</a>`:
+ `<div class="fs-image-intro"><small>КАДРЫ И ДЕТАЛИ</small><h2>Ближе к архитектуре.</h2><p>Выберите видимый участок на фотографии. Камера и перспектива сохраняются.</p></div><label class="fs-file">Загрузить свой кадр<input id="fsSource" type="file" accept="image/png,image/jpeg,image/webp"></label>${select('fsDetailLevel','Крупность',{'close':'Крупный план','macro':'Макро материала'})}<label class="fs-image-field">Что показать<textarea id="fsNotes" rows="3" maxlength="600" placeholder="Стык камня и дерева, сохранить геометрию…"></textarea></label><button type="button" class="fa-studio-primary" id="fsCrop">Приблизить исходник · без AI</button><button type="button" id="fsDetail">Улучшить детали через AI</button><p class="fa-art-help">AI может интерпретировать отсутствующие микродетали. Для точной фактуры загрузите её фотографию.</p><hr><h3>Серия проекта</h3><p class="fa-art-help">Главный кадр задаёт материалы, окружение и подачу серии.</p><button type="button" id="fsAddCrop">Добавить выбранный участок</button><div class="fs-series-presets"><button type="button" data-series-preset="presentation">Подача проекта</button><button type="button" data-series-preset="evening">День и вечер</button><button type="button" data-series-preset="seasons">Сезоны</button></div><label class="fs-file">Добавить другой ракурс<input id="fsViewSource" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="fa-art-help">Для другого ракурса нужен его собственный скриншот. Согласованность окружения приблизительная.</p><div id="fsSeriesList"></div><button type="button" class="fa-studio-primary" id="fsSeriesGenerate">Создать серию</button>`;
+ setView(state.source);bindSelection();status(id==='plan'?'Загрузите план и выберите его подачу.':'Обведите видимый участок мышью или задайте рамку в процентах.');
+ const own=state;
+ $('#fsSource').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file||run)return;const load=++own.loadId,projectBefore=bridge().snapshot();own.loading=true;try{
+  const source=await readImage(file);if(mine!==token||state!==own||load!==own.loadId)return;if(bridge().snapshot().projectId!==projectBefore.projectId||bridge().snapshot().sourceKey!==projectBefore.sourceKey)throw Error('Проект изменился во время чтения файла');
+  await bridge().uploadFile(file);if(mine!==token||state!==own||load!==own.loadId)return;const snap=bridge().snapshot();Object.assign(own,{binding:snap,source,master:source,projectId:snap.projectId,sourceKey:snap.sourceKey,brief:snap.brief,planResult:null,planApproved:false,roomSelected:false,frames:[]});setView(source);if(id==='plan'){await bridge().setAsset('plan_source',source,snap.projectId);await bridge().setAsset('plan_result','',snap.projectId);}drawSeries();status('Изображение загружено.');
+ }catch(err){if(mine===token&&state===own)status(err.message);}finally{if(mine===token&&state===own&&load===own.loadId){own.loading=false;updateActions();}}});
+
+ if(id==='frames'){
+  const draft=await bridge().getAsset('series_draft');if(mine!==token||state!==own||own.loadId)return;if(draft){try{const saved=JSON.parse(draft);if(saved.projectId===state.projectId&&saved.sourceKey===state.sourceKey){state.frames=saved.frames||[];state.master=saved.master||state.master;state.source=saved.source||state.source;setView(state.source);drawSeries();}}catch{}}
+  $('#fsCrop').onclick=()=>execute('crop');$('#fsDetail').onclick=()=>execute('detail');$('#fsAddCrop').onclick=()=>{try{normalizeCrop(state.crop);state.frames.push({kind:'detail',crop:{...state.crop},level:$('#fsDetailLevel').value,label:$('#fsDetailLevel').value==='macro'?'Макро':'Крупный план'});drawSeries();}catch(e){status(e.message);}};
+  $('#fsViewSource').addEventListener('change',async e=>{try{const f=e.target.files?.[0];if(!f)return;const binding={...state.binding},own=state;const input=await readImage(f);if(mine!==token||state!==own)return;assertFrameBinding(bridge().snapshot(),binding);own.frames.push({kind:'view',input,label:f.name.replace(/\.[^.]+$/,'')});drawSeries();}catch(err){status(err.message);}});$('#fsSeriesGenerate').onclick=()=>runSeries();
+  controls.querySelectorAll('[data-series-preset]').forEach(b=>b.onclick=()=>{
+   const preset=b.dataset.seriesPreset;
+   const original={kind:'crop',crop:{x:0,y:0,w:1,h:1},label:'Общий кадр'};
+   if(preset==='presentation')state.frames.push(original,{kind:'detail',crop:{...state.crop},label:'Крупный план',level:'close'},{kind:'detail',crop:{...state.crop},label:'Макро',level:'macro'});
+   else if(preset==='evening')state.frames.push(original,{kind:'scene',input:state.master,variant:'evening',label:'Вечер'});
+   else state.frames.push(original,{kind:'scene',input:state.master,variant:'autumn_sunny',label:'Золотая осень'},{kind:'scene',input:state.master,variant:'winter_overcast',label:'Зимний день'});
+   drawSeries();status('Серия добавлена. Участки деталей можно выбрать перед добавлением кадра.');
+  });
+  $('#fsSeriesList').onclick=e=>{const run=e.target.closest('[data-series-run]'),remove=e.target.closest('[data-series-remove]');if(run)runSeries(Number(run.dataset.seriesRun));if(remove){state.frames.splice(Number(remove.dataset.seriesRemove),1);drawSeries();}};
+ }else{
+  $('#fsPlanGenerate').onclick=()=>execute('plan');$('#fsRoomGenerate').onclick=()=>execute('room');$('#fsApprovePlan').onclick=()=>{if(!state.planResult)return;state.planApproved=true;state.roomSelected=false;setView(state.source);status('Обведите комнату на исходном плане, затем выберите направление взгляда.');};
+  const [saved,result,provider]=await Promise.all([bridge().getAsset('plan_source'),bridge().getAsset('plan_result'),fetch('/api/status').then(r=>r.json()).catch(()=>({}))]);if(mine!==token||state!==own||own.loadId)return;
+  if(saved&&snapshot.hasSource&&!snapshot.demo){state.source=saved;setView(saved);}if(result&&snapshot.hasSource&&!snapshot.demo){state.planResult=result;$('#fsApprovePlan').disabled=false;addResult(result,'Объёмный план');}
+  $('#fsPlanProvider').textContent=provider.planImageReady?'GPT Image 2.6 настроена. Доступность подтверждается при запросе.':'GPT Image 2.6 не настроена на сервере. Можно явно выбрать Nano Banana для этой задачи.';
+  const gpt=$('#fsPlanEngine option[value="gpt-image-2.6-sunburst"]');gpt.disabled=!provider.planImageReady;if(provider.planImageReady){gpt.value=provider.planImageModel;gpt.textContent=provider.planImageModel==='gpt-image-2.6-flare'?'GPT Image 2.6 Flare':'GPT Image 2.6 Sunburst';$('#fsPlanEngine').value=provider.planImageModel;}
+ }
+}
+document.addEventListener('forma:workspace-open',e=>{open(e.detail).catch(err=>status(err.message));});
+document.addEventListener('forma:workspace-close',()=>{if(!run){token++;state=null;}});

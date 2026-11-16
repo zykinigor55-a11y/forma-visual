@@ -121,6 +121,7 @@
   if(action==='materials'){tab('materials');return}
  }
  function handleUploaded(event){
+  if(document.body.classList.contains('fa-unified-studio')){refreshBar();return;}
   const detail=event.detail||{},info=get();
   if(!info?.hasSource)return;
   lastProjectId=detail.projectId||lastProjectId;

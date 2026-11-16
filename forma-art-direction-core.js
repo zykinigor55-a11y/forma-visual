@@ -25,6 +25,47 @@ export const LIGHTS=Object.freeze([
  {id:'lantern',name:'Садовый фонарь',description:'Лаконичный высокий фонарь',prompt:'slender modern black garden lantern, clear rectangular glass enclosure',color:'#30383a'},
  {id:'recessed',name:'Встроенный',description:'Светильник в мощении',prompt:'small flush recessed in-ground luminaire with metal trim',color:'#8a8b83'}
 ]);
+export const TREES=Object.freeze([
+ {id:'pine-tall',name:'Сосна высокая',description:'Открытый ствол · крона наверху',prompt:'very tall mature Scots pine, long bare orange-brown trunk with no low branches, airy irregular crown high at top',color:'#718360',atlas:2,cell:0},
+ {id:'spruce-tall',name:'Ель высокая',description:'Высокая узкая хвойная крона',prompt:'very tall mature Norway spruce with elegant narrow conical crown and detailed dark-green needles',color:'#52634f',atlas:2,cell:1},
+ {id:'birch',name:'Берёза высокая',description:'Белый ствол · воздушная крона',prompt:'tall mature silver birch, clearly exposed white bark trunk and airy high leaf crown',color:'#a6b393',atlas:2,cell:2},
+ {id:'birch-young',name:'Берёза молодая',description:'Лёгкая посадка',prompt:'young slender silver birch sapling with white bark and delicate green leaves',color:'#a6b393',atlas:2,cell:3},
+ {id:'pine',name:'Сосна раскидистая',description:'Живописная зрелая крона',prompt:'mature spreading Scots pine with irregular branches and fine needles',color:'#738368',cell:8},
+ {id:'pine-branch',name:'Сосна ветвистая',description:'Широкая живописная крона',prompt:'mature branching Scots pine with expressive irregular lateral limbs and airy wide crown',color:'#718360',atlas:3,cell:0},
+ {id:'poplar',name:'Тополь пирамидальный',description:'Высокий узкий силуэт',prompt:'tall narrow columnar Lombardy poplar with detailed foliage',color:'#718360',atlas:3,cell:1},
+ {id:'oak',name:'Дуб',description:'Мощный ствол · широкая крона',prompt:'mature broad oak with thick trunk, irregular spreading branches and realistic foliage',color:'#718360',atlas:3,cell:2},
+ {id:'poplar-spread',name:'Тополь раскидистый',description:'Высокая свободная крона',prompt:'mature black poplar with high loose crown and exposed trunk',color:'#718360',atlas:3,cell:3},
+ {id:'maple',name:'Клён',description:'Широкая лиственная крона',prompt:'mature broad-canopy maple with natural detailed foliage',color:'#71835e',cell:11}
+]);
+export const FILLS=Object.freeze([
+ {id:'gravel',name:'Гравий серый',description:'Мелкая природная отсыпка',prompt:'natural grey fine gravel ground cover, realistic small stones',color:'#93938a'},
+ {id:'white-gravel',name:'Светлая галька',description:'Светлая округлая фракция',prompt:'warm pale rounded river pebbles ground cover',color:'#d0cbbd'},
+ {id:'bark',name:'Кора и мульча',description:'Тёмная натуральная кора',prompt:'dark natural chipped pine bark mulch ground cover',color:'#6b5441'},
+ {id:'grass',name:'Газон',description:'Живой ровный газон',prompt:'healthy natural trimmed lawn with individual fine grass blades and subtle color variation',color:'#708552'},
+ {id:'groundcover',name:'Почвопокровные',description:'Низкий зелёный ковёр',prompt:'low dense natural green groundcover plants, tiny leaves and organic non-repeating growth',color:'#607b48'}
+]);
+export const OBJECTS=Object.freeze([
+ {id:'granite-rock',name:'Валуны гранитные',description:'Природная группа камней',prompt:'irregular group of large natural dark granite boulders, embedded in the ground',color:'#888987',cell:12},
+ {id:'limestone-rock',name:'Валун светлый',description:'Природный известняк',prompt:'rounded large pale limestone boulder with mineral pores',color:'#b9b19f',cell:13},
+ {id:'concrete-pot',name:'Кашпо бетонное',description:'С небольшой ветвистой сосной',planted:'pine-branch',prompt:'minimal matte natural concrete cylindrical garden planter with a planted small branching Scots pine, visible soil, natural root contact and realistic container thickness',color:'#aaa99d',atlas:3,cell:8},
+ {id:'stone-pot',name:'Кашпо каменное',description:'С лиственным деревом',planted:'birch-young',prompt:'minimal carved warm natural stone garden planter with a planted small multi-stem leafy silver birch tree, natural soil and trunk contact',color:'#b5a58e',atlas:3,cell:9},
+ {id:'metal-pot',name:'Кашпо металлическое',description:'Матовый графит · туя',planted:'thuja',prompt:'minimal cubic matte charcoal powder-coated metal garden planter with a planted slender thuja conifer, visible soil and natural plant-container proportions',color:'#45494a',atlas:3,cell:10}
+]);
+export const EDGES=Object.freeze([
+ {id:'steel-edge',name:'Металлический бордюр',description:'Тонкий край по контуру',prompt:'thin dark metal landscape edging along marked boundary, following terrain',color:'#555b5b'},
+ {id:'stone-edge',name:'Каменный бордюр',description:'Натуральный камень',prompt:'low natural stone curb edging along marked boundary',color:'#a69d8c'},
+ {id:'concrete-edge',name:'Бетонный бордюр',description:'Чёткая геометрия',prompt:'minimal smooth concrete curb along marked boundary',color:'#a6a79e'},
+ {id:'steps',name:'Ступени',description:'В отмеченной области',prompt:'landscape stone steps strictly inside the marked ground polygon, plausible levels and contact shadows, preserve building architecture',color:'#a69f8f'},
+ {id:'retaining',name:'Подпорная стенка',description:'Низкая каменная стенка',prompt:'low natural stone retaining landscape wall strictly within marked polygon, correct terrain contact, no changes to building architecture',color:'#89877b'}
+]);
+export const EXTRA_LIGHTS=Object.freeze([
+ {id:'pole',name:'Высокая опора',description:'Лаконичный уличный свет',prompt:'tall slender matte-black modern streetlight pole',color:'#343a3b',atlas:2,cell:5},
+ {id:'wallwash',name:'Садовая подсветка',description:'Широкий свет на поверхность',prompt:'small black outdoor landscape wall-washer luminaire',color:'#343a3b',atlas:2,cell:9},
+ {id:'step',name:'Подсветка ступеней',description:'Горизонтальный тёплый свет',prompt:'minimal recessed horizontal exterior step light with warm downward illumination',color:'#343a3b',atlas:2,cell:10},
+ {id:'sphere',name:'Шар матовый',description:'Опаловый · мягкий рассеянный свет',prompt:'matte frosted opal-white garden sphere resting on ground, no glossy glass, evenly diffused soft warm glow only in night conditions',color:'#deddd3',atlas:2,cell:12},
+ {id:'sphere-pole',name:'Шар на стойке',description:'Матовый опал · тонкая стойка',prompt:'matte frosted opal-white sphere garden light on slim matte-black pole, soft diffused warm glow only at night, no glossy transparent glass',color:'#deddd3',atlas:2,cell:13},
+ {id:'lantern-low',name:'Фонарь низкий',description:'Матовый чёрный корпус',prompt:'low minimal matte-black rectangular glass outdoor garden lantern',color:'#343a3b',atlas:2,cell:15}
+]);
 export const LOOKS=Object.freeze([
  {id:'natural',name:'Чистая фотография',description:'Нейтральный цвет · живая фактура',prompt:'neutral full-frame architectural photography, true material colors, natural tonal separation, restrained optical microcontrast',temperature:0,saturation:0,contrast:0},
  {id:'editorial',name:'Архитектурный журнал',description:'Мягкие света · спокойная палитра',prompt:'refined architectural editorial photograph, muted organic palette, soft highlight roll-off, lifted readable shadows and elegant restrained contrast',temperature:3,saturation:-10,contrast:-5},
@@ -36,33 +77,38 @@ export const LOOKS=Object.freeze([
 const invalid=message=>{throw Object.assign(new Error(message),{status:400});};
 const finite=(value,fallback,min,max)=>{if(value==null)return fallback;const n=Number(value);if(!Number.isFinite(n))invalid('Параметр должен быть числом');return Math.min(max,Math.max(min,n));};
 const point=p=>{if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<0||p.x>1||p.y<0||p.y>1)invalid('Точка должна находиться внутри изображения');return {x:p.x,y:p.y};};
-export const catalogFor=kind=>kind==='plant'?PLANTS:kind==='path'?PAVINGS:kind==='light'?LIGHTS:[];
+export const catalogFor=kind=>({plant:PLANTS,tree:TREES,path:PAVINGS,fill:FILLS,object:OBJECTS,edge:EDGES,light:[...LIGHTS,...EXTRA_LIGHTS]})[kind]||[];
 export function normalizeLandscape(value){
  if(!value||!Array.isArray(value.items)||!value.items.length||value.items.length>80)invalid('Добавьте от 1 до 80 объектов ландшафта');
- return {items:value.items.map((raw,i)=>{
+ return {speciesBoard:value.speciesBoard===true,items:value.items.map((raw,i)=>{
   if(!catalogFor(raw?.kind).some(v=>v.id===raw.catalogId))invalid('Неизвестный объект ландшафта');
   const item={id:typeof raw.id==='string'?raw.id.slice(0,48):String(i),kind:raw.kind,catalogId:raw.catalogId};
-  if(raw.kind==='path'){
+  if(raw.kind==='fill'){
+   if(!Array.isArray(raw.strokes)||!raw.strokes.length||raw.strokes.length>200)invalid('Нарисуйте область кистью');
+   let total=0;item.strokes=raw.strokes.map(st=>{if(!Array.isArray(st.points)||!st.points.length||(total+=st.points.length)>12000)invalid('Слишком сложная кистевая область');return {size:finite(st.size,.03,.003,.3),erase:st.erase===true,points:st.points.map(point)};});
+  }else if(raw.kind==='path'||raw.kind==='edge'){
    if(!Array.isArray(raw.points)||raw.points.length<3||raw.points.length>32)invalid('Для дорожки нужно от 3 до 32 точек');
-   item.points=raw.points.map(point);
+   item.points=raw.points.map(point);item.rotation=finite(raw.rotation,0,-180,180);item.tileScale=finite(raw.tileScale,100,10,300);
    const area=Math.abs(item.points.reduce((s,p,j)=>{const q=item.points[(j+1)%item.points.length];return s+p.x*q.y-q.x*p.y},0))/2;
    if(area<.00001)invalid('Контур дорожки слишком мал или пересекается');
-  }else{Object.assign(item,point(raw));item.w=finite(raw.w,.1,.001,1);item.h=finite(raw.h,.18,.001,1);}
+  }else{Object.assign(item,point(raw));if(raw.influence)item.influence={shadow:finite(raw.influence.shadow,0,0,.4),reflection:finite(raw.influence.reflection,0,0,.7)};item.rotation=finite(raw.rotation,0,-180,180);item.w=finite(raw.w,.1,.001,1);item.h=finite(raw.h,.18,.001,1);}
   return item;
  })};
 }
 const pct=n=>+(n*100).toFixed(2);
 export function landscapePrompt(value){
- const {items}=normalizeLandscape(value);
+ const {items,speciesBoard}=normalizeLandscape(value);
  const instructions=items.map((item,i)=>{
   const entry=catalogFor(item.kind).find(x=>x.id===item.catalogId);
-  const shape=item.kind==='path'?'ground polygon vertices in crop percentages '+item.points.map(p=>`(${pct(p.x)}, ${pct(p.y)})`).join(', '):`bottom-centre at (${pct(item.x)}%, ${pct(item.y)}%), width ${pct(item.w)}%, height ${pct(item.h)}% of crop`;
+  const shape=item.kind==='fill'?'painted ground area with brush strokes '+JSON.stringify(item.strokes):['path','edge'].includes(item.kind)?'ground polygon vertices, paving rotation '+(item.rotation||0)+' degrees, repeat scale '+(item.tileScale||100)+' percent, crop percentages '+item.points.map(p=>`(${pct(p.x)}, ${pct(p.y)})`).join(', '):`bottom-centre at (${pct(item.x)}%, ${pct(item.y)}%), width ${pct(item.w)}%, height ${pct(item.h)}% of crop`;
   return `${i+1}. ${entry.prompt}; ${shape}.`;
  }).join('\n');
  return 'LOCAL LANDSCAPE EDIT ONLY. Image 1 is a clean crop of the current photograph, the transparent PNG mask is the only editable region. The crop is centred in a square canvas; return the exact same square framing and object alignment. Keep any neutral padding opaque and unchanged. Do not expand to the full reference photo or crop/zoom the image. Coordinates below are relative to this square canvas, origin top-left. '+
   'Preserve architecture, house geometry, facade materials, camera, light direction, existing terrain and every object outside the mask. No text, diagrams, selection outlines or UI. Replace the indicated region with real photographed objects, do not paint an icon or a sticker. Respect existing occlusion; do not cover foreground walls with plants. '+
+  'All supplied plant cutouts are species/shape references only. Reconstruct real volumetric photographed foliage, NEVER paste a flat cutout or icon into the output. The editable influence region includes user-authorized cast shadows and reflections; make them consistent with existing light and water only, do not invent water. '+
   'Match current season, weather and time exactly. In daytime fixtures remain unlit or very subtle; never turn daytime into night. At night warm 2700–3000K light has physically plausible falloff within the selected region. '+
-  'Paving follows ground perspective and has believable joints and thickness. Preserve the drawn path boundary. Resolve individual foliage, natural size variation, root contact and restrained contact shadows. The second image if present is the full scene for context only.\n'+instructions;
+  (speciesBoard?'Image 2 is a botanical and fixture reference board, never the scene; Image 3 is the clean full scene for context only. ':'Image 2 if present is the clean full scene for context only. ')+
+  'Paving follows ground perspective and has believable joints and thickness. Preserve the drawn path boundary. Resolve individual foliage, natural size variation, root contact and restrained contact shadows. The clean cropped Image 1 remains the exact output camera.\n'+instructions;
 }
 export function normalizeAtmosphere(value){
  if(value==null)return null;

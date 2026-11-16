@@ -33,3 +33,7 @@ const sent=await loadImage(prepared.image);assert.ok(sent.width<=1536&&sent.heig
 const applied=await prepared.compose(edit.toDataURL('image/png'));assert.equal((await loadImage(applied)).width,960);
 const empty=createCanvas(960,640);empty.getContext('2d').fillRect(0,0,960,640);await assert.rejects(()=>prepareMaterialEdit(base.toDataURL('image/png'),empty.toDataURL('image/png')),/выделение/);
 console.log('Material crop preparation passed: square bounded payload, native result composition, empty masks rejected.');
+const {drawStrokes}=await import('../forma-landscape-tools.js');
+const brush=createCanvas(200,200),br=brush.getContext('2d');br.strokeStyle='#fff';drawStrokes(br,[{size:.2,points:[{x:.2,y:.5},{x:.8,y:.5}]},{size:.1,erase:true,points:[{x:.5,y:.4},{x:.5,y:.6}]}],200,200);
+assert.ok(br.getImageData(50,100,1,1).data[3]>250);assert.equal(br.getImageData(100,100,1,1).data[3],0);assert.equal(br.getImageData(10,10,1,1).data[3],0);
+console.log('Landscape brush and eraser: painted coverage, erased center and protected exterior verified.');
