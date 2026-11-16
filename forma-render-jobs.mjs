@@ -86,7 +86,7 @@ export function createRenderJobQueue({
   prune();const j=jobs.get(id);
   if(!j)return null;
   if(j.status==='completed')return {status:200,body:{...j.result,requestId:id}};
-  if(j.status==='failed')return {status:j.error.status,body:{...j.error,requestId:id}};
+  if(j.status==='failed')return {status:j.error.status,body:{error:j.error.message,code:j.error.code,requestId:id}};
   return {status:202,body:view(j)};
  }
  function wait(id){
