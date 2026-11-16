@@ -127,10 +127,23 @@ function renderOverlay(){
   const color=(specialById(item.catalogId)||catalogFor(item.kind).find(x=>x.id===item.catalogId))?.color||'#91a390',b=itemBounds(item),active=selected===item.id;
   const entry=specialById(item.catalogId)||catalogFor(item.kind).find(x=>x.id===item.catalogId);
   let shape;
-  if(item.kind==='fill'){
-   const c=canvas(650,Math.round(650*(img?.naturalHeight||1)/(img?.naturalWidth||1))),ctx=c.getContext('2d');ctx.strokeStyle=color;drawStrokes(ctx,item.strokes,c.width,c.height);
-   const photo=cachedAsset(assetLayers(entry)[0].url);if(photo){const tile=canvas(110,110);tile.getContext('2d').drawImage(photo,0,0,110,110);ctx.globalCompositeOperation='source-in';ctx.fillStyle=ctx.createPattern(tile,'repeat');ctx.fillRect(0,0,c.width,c.height);}
+  if(isBrushKind(item.kind)){
+   const c=canvas(650,Math.round(650*(img?.naturalHeight||1)/(img?.naturalWidth||1))),ctx=c.getContext('2d');
+   ctx.strokeStyle=color;drawStrokes(ctx,item.strokes,c.width,c.height);
+   if(item.kind==='fill'){
+    const photo=cachedAsset(assetLayers(entry)[0].url);
+    if(photo){const tile=canvas(110,110);tile.getContext('2d').drawImage(photo,0,0,110,110);ctx.globalCompositeOperation='source-in';ctx.fillStyle=ctx.createPattern(tile,'repeat');ctx.fillRect(0,0,c.width,c.height);}
+   }
    shape=`<image href="${c.toDataURL()}" x="0" y="0" width="1000" height="1000" opacity=".45"/>`;
+  }else if(isCurveKind(item.kind)){
+   const curve=curvePath(item.points,item.tension??.7),stroke=item.kind==='garland'?'#dfc394':color;
+   shape=`<path d="${curve}" fill="none" stroke="#20252a" stroke-width="${item.kind==='garland'?3:9}" stroke-linecap="round" stroke-linejoin="round"/><path d="${curve}" fill="none" stroke="${stroke}" stroke-opacity=".9" stroke-width="${item.kind==='garland'?1.3:5}" stroke-linecap="round"/>`;
+   if(item.kind==='garland'){
+    const total=item.points.slice(1).reduce((v,p,j)=>v+Math.hypot(p.x-item.points[j].x,p.y-item.points[j].y),0);
+    const n=Math.min(75,Math.max(2,Math.floor(total/(item.bulbSpacing||.035))));
+    shape+=Array.from({length:n+1},(_,k)=>{const p=pointOnPolyline(item.points,k/n);return `<circle cx="${p.x*1000}" cy="${p.y*1000}" r="3.4" fill="#f6d49a" stroke="#806c55" stroke-width=".8"/>`}).join('');
+   }
+   if(active&&!cleanPreview)shape+=item.points.map(p=>`<circle class="fa-art-point" cx="${p.x*1000}" cy="${p.y*1000}" r="8"/>`).join('');
   }else if(['path','edge'].includes(item.kind)){
    const vertices=item.points.map(p=>p.x*1000+','+p.y*1000).join(' '),pattern='artPattern'+i;
    if(isLinearEdge(item))shape=`<polyline points="${vertices}" fill="none" stroke="${color}" stroke-width="${(item.edgeWidth||.015)*1000}" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${vertices}" fill="none" stroke="#e0d9c5" stroke-opacity=".65" stroke-width="1.5"/>`;
@@ -142,19 +155,23 @@ function renderOverlay(){
     shape=src?`<image href="${src}" x="${(item.x-item.w/2)*1000}" y="${(item.y-item.h)*1000}" width="${item.w*1000}" height="${item.h*1000}" preserveAspectRatio="none"/>`:
      `<rect x="${(item.x-item.w/2)*1000}" y="${(item.y-item.h)*1000}" width="${item.w*1000}" height="${item.h*1000}" fill="none" stroke="#d5a579" stroke-dasharray="7 4"/>`;
    }else shape=placementMarkup(entry,{x:(item.x-item.w/2)*1000,y:(item.y-item.h)*1000,w:item.w*1000,h:item.h*1000,detail:true});
-   if(active&&!cleanPreview)shape+=`<path class="fa-art-anchor" d="M${item.x*1000-9} ${item.y*1000}h18m-9-9v18"/>`;
+   if(active&&!cleanPreview){
+    shape+=`<path class="fa-art-anchor" d="M${item.x*1000-9} ${item.y*1000}h18m-9-9v18"/>`;
+    const hx=(item.x+item.w/2)*1000,hy=(item.y-item.h)*1000;
+    shape+=`<rect class="fa-art-resize-box" x="${(item.x-item.w/2)*1000}" y="${hy}" width="${item.w*1000}" height="${item.h*1000}" fill="none" stroke="#efc17f" stroke-width="1.8" stroke-dasharray="7 5"/><circle class="fa-art-resize-handle" cx="${hx}" cy="${hy}" r="11"/>`;
+   }
   }
   return `<g class="fa-art-region ${active?'selected':''}" style="--region:${color}">${shape}${cleanPreview?'':`<text x="${b.x*1000+9}" y="${b.y*1000+29}">${i+1}</text>`}</g>`;
  }).join('')+(points.length?`<polyline class="fa-art-pending" points="${points.map(p=>p.x*1000+','+p.y*1000).join(' ')}"/>`+points.map(p=>`<circle class="fa-art-point" cx="${p.x*1000}" cy="${p.y*1000}" r="6"/>`).join(''):'');
  if(cursorVisible)overlay.innerHTML+=`<g class="fa-art-focus" transform="translate(${cursor.x*1000} ${cursor.y*1000})"><circle r="11"/><path d="M-22 0h12M10 0h12M0-22v12M0 10v12"/></g>`;
- const finish=dialog.querySelector('[data-art="finish-path"]');if(finish){const linear=isLinearEdge({kind:category,catalogId:chosen});finish.disabled=points.length<(linear?2:3);finish.textContent=linear?'Готово · линия бордюра':'Замкнуть область';}
+ const finish=dialog.querySelector('[data-art="finish-path"]');if(finish){const linear=isCurveKind(category)||isLinearEdge({kind:category,catalogId:chosen});finish.disabled=points.length<(linear?2:3);finish.textContent=isCurveKind(category)?'Закрепить кривую':linear?'Готово · линия бордюра':'Замкнуть область';}
  const undo=dialog.querySelector('[data-art="undo"]');if(undo)undo.disabled=!history.length&&!points.length;
 }
 function place(e){
  if(busy||!ensureSource())return;const r=$('artStage').getBoundingClientRect();const p={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
  cursor=p;cursorVisible=true;
  if(mode==='atmosphere'){if(focusMode){atmosphere.focus={...p};persist();renderOverlay();focusMode=false;dialog.querySelector('[data-art="focus"]').setAttribute('aria-pressed','false');message('Точка фокуса сохранена. Дом остаётся главным резким объектом.');}return;}
- if(category==='path'||category==='edge'){if(points.length>=32){message('Максимум 32 точки. Замкните контур.');return;}points=appendPathPoint(points,p);message('Контур: '+points.length+' точек. Обведите границы выбранного элемента и нажмите «Замкнуть область».');renderOverlay();return;}
+ if(category==='path'||category==='edge'||isCurveKind(category)){const max=isCurveKind(category)?100:32;if(points.length>=max){message('Максимум '+max+' точек.');return;}points=appendPathPoint(points,p);message(isCurveKind(category)?'Точка '+points.length+'. Продолжите линию, затем нажмите «Закрепить кривую».':'Контур: '+points.length+' точек. Завершите область.');renderOverlay();return;}
  if(items.length>=80){message('На одном кадре можно разместить до 80 объектов.');return;}
  const custom=chosen===CUSTOM_LANDSCAPE_ID?customAssets.find(a=>a.key===selectedCustomKey):null;
  if(chosen===CUSTOM_LANDSCAPE_ID&&(!custom||!customImages.has(custom.key))){message('Своё изображение не найдено в проекте. Загрузите его ещё раз.');return;}
