@@ -8,6 +8,7 @@ import {createHash,randomBytes} from 'node:crypto';
 export function createRenderJobQueue({
  worker,
  maxWaiting=4,
+ maxQueuedBytes=48*1024*1024,
  ttlMs=10*60*1000,
  maxFinished=5,
  now=()=>Date.now()
@@ -66,7 +67,9 @@ export function createRenderJobQueue({
   prune();
   const key=typeof idempotencyKey==='string'&&/^[\w.-]{16,128}$/.test(idempotencyKey)?idempotencyKey:null;
   if(idempotencyKey&&!key)throw Object.assign(Error('Неверный ключ защиты повторного запроса'),{status:400,code:'invalid_idempotency'});
-  const hash=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+  const serialized=JSON.stringify(payload);
+ const bytes=Buffer.byteLength(serialized,'utf8');
+ const hash=createHash('sha256').update(serialized).digest('hex');
   if(key&&keys.has(key)){
    const old=jobs.get(keys.get(key));
    if(old){
@@ -76,8 +79,9 @@ export function createRenderJobQueue({
    keys.delete(key);
   }
   if(running&&waiting.length>=maxWaiting)throw Object.assign(Error('Очередь заполнена. Повторите позже — генерация не началась и не оплачивалась.'),{status:429,code:'queue_full'});
+  if(running&&waiting.reduce((sum,j)=>sum+j.bytes,0)+bytes>maxQueuedBytes)throw Object.assign(Error('Недостаточно памяти для ещё одного задания в очереди. Генерация не запускалась и не оплачивалась.'),{status:429,code:'queue_memory'});
   const id=randomBytes(24).toString('hex');
-  const job={id,hash,key,createdAt:now(),startedAt:0,finishedAt:0,status:'queued',payload,result:null,error:null,resolve:null};
+  const job={id,hash,key,bytes,createdAt:now(),startedAt:0,finishedAt:0,status:'queued',payload,result:null,error:null,resolve:null};
   jobs.set(id,job);if(key)keys.set(key,id);waiting.push(job);pump();
   return view(job);
  }
@@ -95,6 +99,6 @@ export function createRenderJobQueue({
   if(j.status==='completed'||j.status==='failed')return Promise.resolve(j);
   return new Promise(resolve=>{const previous=j.resolve;j.resolve=job=>{previous?.(job);resolve(job)}});
  }
- function stats(){prune();return {running:running?1:0,waiting:waiting.length,maxWaiting,oldestWaitSeconds:waiting.length?Math.round((now()-waiting[0].createdAt)/1000):0};}
+ function stats(){prune();return {running:running?1:0,waiting:waiting.length,maxWaiting,queuedBytes:waiting.reduce((sum,j)=>sum+j.bytes,0),maxQueuedBytes,oldestWaitSeconds:waiting.length?Math.round((now()-waiting[0].createdAt)/1000):0};}
  return {enqueue,get,result,wait,stats};
 }
