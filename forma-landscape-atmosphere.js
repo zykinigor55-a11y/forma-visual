@@ -3,11 +3,12 @@ import {scalePlacement,clampLegacyPlacement,automaticInfluence,linePlacements,dr
 import {PLANTS,PAVINGS,LIGHTS,LOOKS,ATMOSPHERE_VEGETATION,isLinearEdge,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js?v=composition-v2';
 import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_SCENE_GROUPS,ATMOSPHERE_FOREGROUND_PLANS} from './forma-atmosphere-scenes.js?v=composition-v2';
 import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming,prepareMaterialEdit} from './forma-local-composite.js';
+import {CUSTOM_LANDSCAPE_ID,CUSTOM_ASSET_LIMIT,customAssetKey,decodeLandscapeFile,makeCustomReferenceBoard} from './forma-landscape-custom-assets.js';
 const $=id=>document.getElementById(id),bridge=()=>window.FORMA_ART_BRIDGE;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=(kind)=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4">'+(kind==='landscape'?'<path d="M3 21h18M6 21v-6m12 6v-9M6 5c-5 2-5 10 0 10s5-8 0-10Zm12-3-5 10h10Z"/>':'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/>')+'</svg>';
 let dragging=null,brushSize=.04,eraser=false,placingMode='single',cleanPreview=false,linePoints=[],selectedGroup=new Set();
-const assetCache=new Map();
+const assetCache=new Map(),customImages=new Map();
 function cachedAsset(url){
  if(!assetCache.has(url)){assetCache.set(url,null);loadImage(url).then(picture=>{assetCache.set(url,picture);if(dialog?.open)renderOverlay();}).catch(()=>{assetCache.delete(url);});}
  return assetCache.get(url);
@@ -17,11 +18,11 @@ function sprite(entry,kind){
  return `<img class="fa-art-reference ${['fill','path'].includes(kind)?'surface':''}" src="${assetLayers(entry)[0].url}" alt="" draggable="false">`;
 }
 
-let dialog,mode='landscape',category='plant',catalogCategory='plant',chosen='juniper',items=[],points=[],selected=null,history=[],snap=null,img=null,busy=false,focusMode=false,lastFocus=null,atmosphere=null,cursor={x:.5,y:.5},cursorVisible=false;
+let dialog,mode='landscape',category='plant',catalogCategory='plant',chosen='juniper',selectedCustomKey=null,customAssets=[],items=[],points=[],selected=null,history=[],snap=null,img=null,busy=false,focusMode=false,lastFocus=null,atmosphere=null,cursor={x:.5,y:.5},cursorVisible=false;
 const id=()=>globalThis.crypto.randomUUID();
 function message(text){$('artStatus').textContent=text;}
 function remember(){history.push(JSON.stringify(items));if(history.length>50)history.shift();}
-function persist(){if(mode==='landscape')bridge().draft('landscape',{sourceKey:snap.sourceKey,renderId:snap.renderId,items});else bridge().draft('atmosphere',atmosphere);}
+function persist(){if(mode==='landscape')bridge().draft('landscape',{sourceKey:snap.sourceKey,renderId:snap.renderId,items,customAssets});else bridge().draft('atmosphere',atmosphere);}
 function sameSource(){const now=bridge()?.snapshot();return sameView(now,snap);}
 function ensureSource(){if(sameSource())return true;message('Проект или исходное изображение изменились. Закройте и откройте раздел снова.');return false;}
 function makeDialog(){
@@ -42,6 +43,7 @@ function makeDialog(){
  $('artCanvasInput').addEventListener('pointercancel',pointerEnd);
  $('artCanvasInput').addEventListener('keydown',keyCanvas);
  dialog.addEventListener('input',change);
+ dialog.addEventListener('change',e=>{if(e.target.id==='artCustomFile'){const file=e.target.files?.[0];e.target.value='';if(file)void uploadCustomImage(file);}});
 }
 async function open(which){
  if(!bridge()||busy)return;const next=bridge().snapshot();if(!next)return;
@@ -49,6 +51,12 @@ async function open(which){
  if(!dialog)makeDialog();
  items=Array.isArray(snap.landscape?.items)&&snap.landscape.sourceKey===snap.sourceKey&&(snap.landscape.renderId||null)===(snap.renderId||null)?structuredClone(snap.landscape.items):[];
  items=items.map(item=>['path','edge','fill'].includes(item.kind)?item:{...clampLegacyPlacement(item),influence:automaticInfluence(clampLegacyPlacement(item)),influenceManual:false});
+ customAssets=mode==='landscape'&&snap.landscape?.sourceKey===snap.sourceKey&&(snap.landscape.renderId||null)===(snap.renderId||null)&&Array.isArray(snap.landscape.customAssets)?snap.landscape.customAssets.slice(0,CUSTOM_ASSET_LIMIT).filter(a=>/^landscape_[a-f0-9]{32}$/.test(a?.key)):[];
+ customImages.clear();selectedCustomKey=null;
+ if(mode==='landscape'&&customAssets.length)await Promise.all(customAssets.map(async entry=>{
+  try{const value=await bridge().getAsset(entry.key,snap.projectId);if(value?.startsWith('data:image/'))customImages.set(entry.key,value);}
+  catch(error){console.warn('[FORMA landscape] custom asset unavailable:',entry.key,error?.message);}
+ }));
  atmosphere=normalizeAtmosphere(snap.atmosphere)||normalizeAtmosphere({scenario:'day-soft',preset:'editorial',vegetation:'match'});
  $('artCanvasInput').setAttribute('aria-label',mode==='landscape'?'Размещение объектов: стрелки — переместить курсор, Enter — поставить точку':'Фокус: включите выбор фокуса, стрелки — переместить, Enter — подтвердить');
  $('artTitle').textContent=mode==='landscape'?'Ландшафт':'Атмосфера';
@@ -59,9 +67,26 @@ async function open(which){
  dialog.dataset.mode=mode;dialog.showModal();
  try{img=await loadImage(snap.image);$('artDimensions').textContent=img.naturalWidth+' × '+img.naturalHeight;drawPhoto();renderInspector();renderOverlay();}catch(e){message(e.message);$('artGenerate').disabled=true;}
 }
+async function uploadCustomImage(file){
+ if(busy||mode!=='landscape'||!ensureSource())return;
+ if(customAssets.length>=CUSTOM_ASSET_LIMIT){message('В одном проекте можно загрузить до 12 своих изображений.');return;}
+ const targetProject=snap.projectId;
+ message('Открываем изображение и сохраняем его в проект…');
+ try{
+  const prepared=await decodeLandscapeFile(file);
+  if(!sameSource())throw Error('Проект изменился во время загрузки.');
+  const key=customAssetKey(id());
+  await bridge().setAsset(key,prepared.image,targetProject);
+  customAssets.push({key,name:prepared.name,width:prepared.width,height:prepared.height});
+  customImages.set(key,prepared.image);
+  selectedCustomKey=key;chosen=CUSTOM_LANDSCAPE_ID;catalogCategory='object';category='object';placingMode='single';selected=null;points=[];
+  persist();renderInspector();renderOverlay();
+  message('«'+prepared.name+'» добавлено. Нажмите на фото в точку основания, затем перемещайте или меняйте размер.'+(prepared.lowResolution?' Исходный файл небольшой: качество генерации может быть ограничено.':''));
+ }catch(error){message(error?.message||'Не удалось загрузить своё изображение.');}
+}
 function renderInspector(){
  if(mode==='landscape'){
-  $('artInspector').innerHTML=`<div class="fa-art-tabs" role="group" aria-label="Каталог ландшафта">${LANDSCAPE_GROUPS.map(g=>`<button type="button" data-art="category" data-value="${g.id}" aria-pressed="${catalogCategory===g.id}">${g.name}</button>`).join('')}</div><div class="fa-art-catalog">${catalogGroup(catalogCategory).map(e=>`<button type="button" class="fa-art-option" data-art="catalog" data-value="${e.id}" aria-pressed="${chosen===e.id}">${sprite(e,category)}<span><b>${e.name}</b><small>${e.description}</small></span></button>`).join('')}</div><div id="artPlacementTools"></div><section id="artSelection"></section><details class="fa-art-guide"><summary>Как работать с кадром</summary><p>Растение или светильник: нажмите в точку основания.  Газон и отсыпки рисуются кистью, мощение и бордюры — контуром. Порода, форма кроны, размер и координаты передаются AI текстом. Картинка на холсте — только схема размещения. Свет и контакт с поверхностью подбираются по исходному кадру.</p><p>Выбрать и удалить объект можно в списке. На клавиатуре стрелки перемещают выбранный объект, Delete удаляет, Enter добавляет объект в центр кадра.</p></details><h3 class="fa-art-list-title">На кадре <span id="artCount"></span></h3><div id="artItemList" class="fa-art-items"></div><button type="button" class="fa-art-text" data-art="upload">Загрузить свой кадр</button>`;
+  $('artInspector').innerHTML=`<div class="fa-art-custom-upload"><input type="file" id="artCustomFile" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden aria-label="Выберите своё изображение для ландшафта"><button type="button" class="fa-art-custom-trigger" data-art="custom-upload">＋ Загрузить своё изображение</button><small>PNG с прозрачностью, JPG, WebP · до 10 МБ · размещение на кадре</small></div><div class="fa-art-tabs" role="group" aria-label="Каталог ландшафта">${LANDSCAPE_GROUPS.map(g=>`<button type="button" data-art="category" data-value="${g.id}" aria-pressed="${catalogCategory===g.id}">${g.name}</button>`).join('')}</div><div class="fa-art-catalog">${catalogGroup(catalogCategory).map(e=>`<button type="button" class="fa-art-option" data-art="catalog" data-value="${e.id}" aria-pressed="${chosen===e.id}">${sprite(e,category)}<span><b>${e.name}</b><small>${e.description}</small></span></button>`).join('')}${catalogCategory==='object'?customAssets.map(a=>`<button type="button" class="fa-art-option fa-art-custom-option" data-art="choose-custom" data-value="${a.key}" aria-pressed="${chosen===CUSTOM_LANDSCAPE_ID&&selectedCustomKey===a.key}"><img class="fa-art-reference" src="${customImages.get(a.key)||''}" alt="" draggable="false"><span><b>${esc(a.name)}</b><small>Моё изображение · ${a.width}×${a.height}${customImages.has(a.key)?'':' · файл не найден'}</small></span></button>`).join(''):''}</div><div id="artPlacementTools"></div><section id="artSelection"></section><details class="fa-art-guide"><summary>Как работать с кадром</summary><p>Растение или светильник: нажмите в точку основания.  Газон и отсыпки рисуются кистью, мощение и бордюры — контуром. Порода, форма кроны, размер и координаты передаются AI текстом. Свои изображения передаются AI визуальным референсом. Картинка на холсте — только схема размещения. Свет и контакт с поверхностью подбираются по исходному кадру.</p><p>Выбрать и удалить объект можно в списке. На клавиатуре стрелки перемещают выбранный объект, Delete удаляет, Enter добавляет объект в центр кадра.</p></details><h3 class="fa-art-list-title">На кадре <span id="artCount"></span></h3><div id="artItemList" class="fa-art-items"></div><button type="button" class="fa-art-text" data-art="upload">Загрузить свой кадр</button>`;
   const tools=$('artPlacementTools');tools.innerHTML=category==='fill'?`<label class="fa-art-size">Размер кисти<input type="range" data-brush-size min="1" max="20" value="${brushSize*100}"></label><button type="button" class="fa-art-secondary" data-art="eraser" aria-pressed="${eraser}">${eraser?'Ластик включён':'Ластик'}</button>`:['plant','tree','light'].includes(category)?`<div class="fa-art-row"><button type="button" class="fa-art-secondary" data-art="place-single" aria-pressed="${placingMode==='single'}">По одному</button><button type="button" class="fa-art-secondary" data-art="place-line" aria-pressed="${placingMode==='line'}">Вдоль линии</button></div><label class="fa-art-size">Расстояние в ряду<input type="range" id="artSpacing" min="2" max="20" value="7"></label>`:'';
   renderList();
  }else{
