@@ -180,13 +180,13 @@ function place(e){
 function eventPoint(e){const r=$('artStage').getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};}
 function pointerStart(e){
  if(busy||!ensureSource())return;if(mode!=='landscape'){place(e);return;}const p=eventPoint(e);$('artCanvasInput').setPointerCapture(e.pointerId);
- if(category==='fill'){
-  remember();let item=items.find(i=>i.id===selected&&i.kind==='fill'&&i.catalogId===chosen);if(!item&&eraser){message('Сначала нарисуйте покрытие кистью.');return;}if(!item){item={id:id(),kind:'fill',catalogId:chosen,strokes:[]};items.push(item);selected=item.id;}
+ if(isBrushKind(category)){
+  remember();let item=items.find(i=>i.id===selected&&i.kind===category&&i.catalogId===chosen);if(!item&&eraser){message('Сначала нарисуйте покрытие кистью.');return;}if(!item){item={id:id(),kind:category,catalogId:chosen,strokes:[],...(category==='scatter'?{density:60,wind:0}:{})};items.push(item);selected=item.id;}
   const stroke={size:brushSize,erase:eraser,points:[p]};item.strokes.push(stroke);dragging={type:'brush',stroke};renderList();renderOverlay();return;
  }
  const current=items.find(i=>i.id===selected);
  if(current?.points){const r=$('artStage').getBoundingClientRect(),vertex=current.points.findIndex(v=>Math.hypot((v.x-p.x)*r.width,(v.y-p.y)*r.height)<14);if(vertex>=0){remember();dragging={type:'vertex',item:current,vertex};return;}}
- const hit=[...items].reverse().find(i=>!['fill','path','edge'].includes(i.kind)&&p.x>=i.x-i.w/2&&p.x<=i.x+i.w/2&&p.y>=i.y-i.h&&p.y<=i.y);
+ const hit=[...items].reverse().find(i=>!['fill','scatter','path','edge','garland','climber'].includes(i.kind)&&p.x>=i.x-i.w/2&&p.x<=i.x+i.w/2&&p.y>=i.y-i.h&&p.y<=i.y);
  if(hit&&!e.altKey){remember();selected=hit.id;dragging={type:'object',item:hit,last:p};renderList();renderOverlay();return;}
  if(placingMode==='line'&&['plant','tree','light'].includes(category)){
   linePoints.push(p);if(linePoints.length===1){message('Теперь отметьте конец ряда.');return;}
@@ -208,7 +208,7 @@ function pointerMove(e){
 function pointerEnd(){if(dragging){dragging=null;persist();renderList();renderOverlay();}}
 function keyCanvas(e){
  if(busy||!ensureSource())return;
- if((e.key==='Enter'||e.key===' ')&&category==='fill'&&mode==='landscape'){e.preventDefault();remember();let item=items.find(i=>i.id===selected&&i.kind==='fill'&&i.catalogId===chosen);if(!item&&eraser){message('Сначала нарисуйте покрытие кистью.');return;}if(!item){item={id:id(),kind:'fill',catalogId:chosen,strokes:[]};items.push(item);selected=item.id;}item.strokes.push({size:brushSize,erase:eraser,points:[{...cursor}]});persist();renderList();renderOverlay();return;}
+ if((e.key==='Enter'||e.key===' ')&&isBrushKind(category)&&mode==='landscape'){e.preventDefault();remember();let item=items.find(i=>i.id===selected&&i.kind===category&&i.catalogId===chosen);if(!item&&eraser){message('Сначала нарисуйте покрытие кистью.');return;}if(!item){item={id:id(),kind:category,catalogId:chosen,strokes:[],...(category==='scatter'?{density:60,wind:0}:{})};items.push(item);selected=item.id;}item.strokes.push({size:brushSize,erase:eraser,points:[{...cursor}]});persist();renderList();renderOverlay();return;}
  if(e.key==='Enter'||e.key===' '){e.preventDefault();const r=$('artStage').getBoundingClientRect();place({clientX:r.left+r.width*cursor.x,clientY:r.top+r.height*cursor.y});return;}
  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)&&(!selected||category==='path'||mode==='atmosphere')){
   e.preventDefault();const step=e.shiftKey?.025:.005;
@@ -225,6 +225,13 @@ function keyCanvas(e){
 function change(e){
  if(busy||!ensureSource())return;
  if(e.target.hasAttribute('data-custom-description')){const item=items.find(x=>x.id===selected);if(item?.catalogId===CUSTOM_LANDSCAPE_ID){item.customDescription=e.target.value.slice(0,240);persist();}return;}
+ if(e.target.dataset.special){
+  const item=items.find(x=>x.id===selected);if(!item)return;
+  const field=e.target.dataset.special;
+  if(!['tension','density','sag','bulbSpacing','brightness','wind'].includes(field))return;
+  const divisor=field==='tension'||field==='sag'?100:field==='bulbSpacing'?1000:1;
+  remember();item[field]=Number(e.target.value)/divisor;persist();renderOverlay();return;
+ }
  if(e.target.dataset.size){const item=items.find(x=>x.id===selected);if(item){remember();item.baseW||=item.w;item.baseH||=item.h;Object.assign(item,scalePlacement(item,Number(e.target.value)/100));item.influence=automaticInfluence(item);persist();renderOverlay();}}
  if(e.target.hasAttribute('data-brush-size'))brushSize=Number(e.target.value)/100;
  if(e.target.dataset.paving){const item=items.find(x=>x.id===selected);if(item){remember();item[e.target.dataset.paving]=Number(e.target.value)/(e.target.dataset.paving==='edgeWidth'?1000:1);persist();renderOverlay();}}
@@ -238,7 +245,7 @@ function act(action,button){
  if(action==='upload'){dialog.close();bridge().upload();return;}
  if(!ensureSource())return;
  if(action==='category'){linePoints=[];catalogCategory=button.dataset.value;category=LANDSCAPE_GROUPS.find(g=>g.id===catalogCategory).kind;eraser=false;selected=null;selectedCustomKey=null;chosen=catalogGroup(catalogCategory)[0].id;points=[];renderInspector();renderOverlay();message(category==='fill'?'Выберите образец и рисуйте покрытие кистью. Ластик уточняет только выбранную область.':category==='edge'?'Бордюр: отметьте линию двумя или более точками. Ступени и стенка: обведите область.':category==='path'?'Выберите покрытие, обведите площадку и нажмите «Замкнуть область».':'Выберите один объект и нажмите в точку его основания.');}
- if(action==='catalog'){chosen=button.dataset.value;selectedCustomKey=null;points=[];eraser=false;renderInspector();renderOverlay();}
+ if(action==='catalog'){chosen=button.dataset.value;const special=specialById(chosen);category=special?.kind||LANDSCAPE_GROUPS.find(g=>g.id===catalogCategory)?.kind||category;selectedCustomKey=null;points=[];eraser=false;renderInspector();renderOverlay();}
  if(action==='choose-custom'){selectedCustomKey=button.dataset.value;chosen=CUSTOM_LANDSCAPE_ID;category='object';catalogCategory='object';points=[];renderInspector();renderOverlay();message('Нажмите на кадре в точку основания своего изображения. Перетаскивайте его и меняйте размер до 200%.');}
  if(action==='clean'){cleanPreview=!cleanPreview;button.setAttribute('aria-pressed',String(cleanPreview));renderOverlay();}
  if(action==='eraser'){eraser=!eraser;renderInspector();}
@@ -250,7 +257,25 @@ function act(action,button){
  if(action==='undo'){if(points.length)points.pop();else if(history.length){items=JSON.parse(history.pop());selected=null;persist();}renderList();renderOverlay();}
  if(action==='cancel-path'){points=[];renderOverlay();message('Контур отменён.');}
  if(action==='finish-path'){
-  try{if(items.length>=80)throw Error('Максимум 80 объектов.');const item={id:id(),kind:category==='edge'?'edge':'path',catalogId:chosen,points:structuredClone(points)};normalizeLandscape({items:[item]});remember();items.push(item);selected=item.id;points=[];persist();renderList();renderOverlay();message('Область добавлена. AI применит выбранный образец внутри контура.');}catch(e){message(e.message);}
+  try{
+   if(items.length>=80)throw Error('Максимум 80 объектов.');
+   const item={id:id(),kind:isCurveKind(category)?category:category==='edge'?'edge':'path',catalogId:chosen,points:structuredClone(points),
+    ...(isCurveKind(category)?{tension:.7,density:50,...(category==='garland'?{bulbSpacing:.035,sag:.15,brightness:60}:{})}:{})};
+   normalizeLandscape({items:[item]});remember();items.push(item);selected=item.id;points=[];
+   persist();renderList();renderOverlay();message(isCurveKind(category)?'Линия закреплена. Перемещайте точки и регулируйте изгиб и шаг ламп.':'Область добавлена.');
+  }catch(error){message(error.message);}
+ }
+ if(action==='add-vertex'||action==='remove-vertex'){
+  const item=items.find(x=>x.id===selected);if(!item||!isCurveKind(item.kind))return;
+  if(action==='remove-vertex'&&item.points.length<=2){message('Для кривой необходимо минимум две точки.');return;}
+  remember();
+  if(action==='remove-vertex')item.points.splice(Math.max(1,item.points.length-2),1);
+  else{
+   let index=0,len=-1;
+   for(let i=0;i<item.points.length-1;i++){const a=item.points[i],b=item.points[i+1],dist=Math.hypot(a.x-b.x,a.y-b.y);if(dist>len){len=dist;index=i;}}
+   const a=item.points[index],b=item.points[index+1];item.points.splice(index+1,0,{x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  }
+  persist();renderList();renderOverlay();
  }
  if(action==='scenario'){const scene=ATMOSPHERE_SCENARIOS.find(x=>x.id===button.dataset.value);if(!scene)return;atmosphere={...atmosphere,scenario:scene.id,preset:scene.look,...scene.defaults};persist();renderInspector();drawPhoto();renderOverlay();message('Выбран сценарий «'+scene.name+'»: '+ATMOSPHERE_FOREGROUND_PLANS[scene.id].label+'. Свет, сезон и растения появятся после AI-генерации.');}
  if(action==='focus'){focusMode=!focusMode;cursor={...atmosphere.focus};cursorVisible=true;button.setAttribute('aria-pressed',String(focusMode));message('Нажмите на дом в кадре, чтобы указать фокус.');$('artCanvasInput').focus();}
