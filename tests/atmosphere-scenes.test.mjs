@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_SCENE_GROUPS,ATMOSPHERE_FOREGROUND_PLANS} from '../forma-atmosphere-scenes.js';
 import {normalizeAtmosphere,atmospherePrompt} from '../forma-art-direction-core.js';
-import {scalePlacement} from '../forma-landscape-tools.js';
+import {scalePlacement,clampLegacyPlacement} from '../forma-landscape-tools.js';
 
 test('nine atmospheric directions: 3 day, 2 autumn, 2 winter, 2 blue hour',()=>{
  assert.equal(ATMOSPHERE_SCENARIOS.length,9);
@@ -72,4 +72,15 @@ test('existing planting is preserved and vegetation sliders can disable new obje
  const noPlant=atmospherePrompt({scenario:'day-side',vegetation:'none'});
  assert.match(noPlant,/Do not add any new plants/);
  assert.doesNotMatch(noPlant,/TRUNK AMOUNT/);
+});
+
+test('legacy landscape plants previously enlarged to 5000% are reduced to 200% in editor',()=>{
+ const tooLarge={kind:'tree',catalogId:'birch',x:.15,y:.8,baseW:.1,baseH:.5,w:5,h:25};
+ const fixed=clampLegacyPlacement(tooLarge);
+ assert.equal(fixed.x,.15);assert.equal(fixed.y,.8);
+ assert.equal(fixed.w,.2);assert.equal(fixed.h,1);
+ const original={kind:'tree',catalogId:'birch',x:.15,y:.8,baseW:.1,baseH:.5,w:.15,h:.75};
+ assert.deepEqual(clampLegacyPlacement(original),original);
+ const drawn={kind:'fill',catalogId:'grass',strokes:[]};
+ assert.strictEqual(clampLegacyPlacement(drawn),drawn);
 });
