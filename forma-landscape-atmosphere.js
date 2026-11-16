@@ -110,7 +110,7 @@ function renderOverlay(){
    else shape=`<defs><pattern id="${pattern}" patternUnits="userSpaceOnUse" width="${120*(item.tileScale||100)/100}" height="${120*(item.tileScale||100)/100}" patternTransform="rotate(${item.rotation||0})"><image href="${assetLayers(entry)[0].url}" width="${120*(item.tileScale||100)/100}" height="${120*(item.tileScale||100)/100}" preserveAspectRatio="none"/></pattern></defs><polygon points="${vertices}" style="fill:url(#${pattern});fill-opacity:.8"/>`;
    if(active&&!cleanPreview)shape+=item.points.map(p=>`<circle class="fa-art-point" cx="${p.x*1000}" cy="${p.y*1000}" r="7"/>`).join('');
   }else{
-   shape=placementMarkup(entry,{x:(item.x-item.w/2)*1000,y:(item.y-item.h)*1000,w:item.w*1000,h:item.h*1000});
+   shape=placementMarkup(entry,{x:(item.x-item.w/2)*1000,y:(item.y-item.h)*1000,w:item.w*1000,h:item.h*1000,detail:true});
    if(active&&!cleanPreview)shape+=`<path class="fa-art-anchor" d="M${item.x*1000-9} ${item.y*1000}h18m-9-9v18"/>`;
   }
   return `<g class="fa-art-region ${active?'selected':''}" style="--region:${color}">${shape}${cleanPreview?'':`<text x="${b.x*1000+9}" y="${b.y*1000+29}">${i+1}</text>`}</g>`;
