@@ -3,6 +3,17 @@ export function scalePlacement(item,factor){
  const w=(item.baseW||item.w)*f,h=(item.baseH||item.h)*f,limit=Math.min(1,50/Math.max(w,h));
  return {...item,w:w*limit,h:h*limit};
 }
+/* Older drafts may carry 5000% placements from the previous slider.
+   On reopening a project, bring ONLY those oversized catalog objects back
+   into the new 20–200% range without changing the user-set root coordinates. */
+export function clampLegacyPlacement(item){
+ if(!item||['fill','path','edge'].includes(item.kind))return item;
+ const baseW=Number(item.baseW),baseH=Number(item.baseH),w=Number(item.w),h=Number(item.h);
+ if(![baseW,baseH,w,h].every(v=>Number.isFinite(v)&&v>0))return item;
+ const factor=Math.max(w/baseW,h/baseH);
+ if(factor>=.2&&factor<=2)return item;
+ return scalePlacement(item,Math.min(2,Math.max(.2,factor)));
+}
 export function linePlacements(a,b,spacing=.05){const distance=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.min(40,Math.round(distance/Math.max(.01,spacing))));return Array.from({length:n+1},(_,i)=>({x:a.x+(b.x-a.x)*i/n,y:a.y+(b.y-a.y)*i/n}));}
 export function strokeBounds(strokes){const points=strokes.flatMap(s=>s.points.map(p=>({x:p.x,y:p.y,r:s.size/2})));if(!points.length)return {x:0,y:0,right:0,bottom:0};return {x:Math.max(0,Math.min(...points.map(p=>p.x-p.r))),y:Math.max(0,Math.min(...points.map(p=>p.y-p.r))),right:Math.min(1,Math.max(...points.map(p=>p.x+p.r))),bottom:Math.min(1,Math.max(...points.map(p=>p.y+p.r)))};}
 export function drawStrokes(ctx,strokes,w,h){ctx.lineCap='round';ctx.lineJoin='round';for(const s of strokes){ctx.globalCompositeOperation=s.erase?'destination-out':'source-over';ctx.lineWidth=s.size*Math.min(w,h);ctx.beginPath();s.points.forEach((p,i)=>i?ctx.lineTo(p.x*w,p.y*h):ctx.moveTo(p.x*w,p.y*h));if(s.points.length===1)ctx.lineTo(s.points[0].x*w+.01,s.points[0].y*h);ctx.stroke();}ctx.globalCompositeOperation='source-over';}
