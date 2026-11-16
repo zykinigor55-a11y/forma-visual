@@ -1,11 +1,11 @@
-import {LANDSCAPE_GROUPS,catalogGroup,assetLayers,placementMarkup} from './forma-landscape-catalog.js';
+import {LANDSCAPE_GROUPS,catalogGroup,assetLayers,placementMarkup} from './forma-landscape-catalog.js?v=landscape-premium-v2';
 import {scalePlacement,clampLegacyPlacement,automaticInfluence,linePlacements,drawStrokes,translateGroup,selectionHasCoverage} from './forma-landscape-tools.js?v=composition-v2';
 import {PLANTS,PAVINGS,LIGHTS,LOOKS,ATMOSPHERE_VEGETATION,isLinearEdge,catalogFor,normalizeLandscape,normalizeAtmosphere,sameView,appendPathPoint} from './forma-art-direction-core.js?v=landscape-custom-image-v1';
 import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_SCENE_GROUPS,ATMOSPHERE_FOREGROUND_PLANS} from './forma-atmosphere-scenes.js?v=composition-v2';
 import {canvas,loadImage,composeMasked,itemBounds,cropBounds,assertFraming,prepareMaterialEdit} from './forma-local-composite.js';
 import {CUSTOM_LANDSCAPE_ID,CUSTOM_ASSET_LIMIT,customAssetKey,decodeLandscapeFile,makeCustomReferenceBoard} from './forma-landscape-custom-assets.js';
 import {specialById,isCurveKind,isBrushKind,curvePath,pointOnPolyline,drapedGarlandPoints} from './forma-landscape-special-tools.js?v=landscape-premium-v2';
-import {specialCardArt,landscapeMethod} from './forma-landscape-card-art.js';
+import {specialCardArt,landscapeMethod} from './forma-landscape-card-art.js?v=landscape-premium-v2';
 const $=id=>document.getElementById(id),bridge=()=>window.FORMA_ART_BRIDGE;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=(kind)=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4">'+(kind==='landscape'?'<path d="M3 21h18M6 21v-6m12 6v-9M6 5c-5 2-5 10 0 10s5-8 0-10Zm12-3-5 10h10Z"/>':'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/>')+'</svg>';
