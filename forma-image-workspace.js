@@ -32,11 +32,32 @@ async function markedRoomReference(image,rect){
  ctx.strokeStyle='#efae3d';ctx.strokeRect(x,y,w,h);ctx.restore();
  return c.toDataURL('image/png');
 }
-async function request(payload){const response=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,quantity:1,quality:'high'}),signal:AbortSignal.timeout(240000)}),data=await response.json();if(!response.ok||!data.images?.[0])throw Error(data.error||'Изображение не получено');return 'data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];}
+async function request(payload){
+ const response=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({...payload,quantity:1,quality:'high'}),
+  signal:AbortSignal.timeout(240000)
+ });
+ const data=await response.json();
+ if(!response.ok||!data.images?.[0])throw Error(data.error||'Изображение не получено');
+ const result='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
+ if(['plan','plan2d','room'].includes(payload.imageTask?.kind)){
+  // Check the true returned pixels. No fake 2K by CSS or client-side upscaling.
+  try{
+   const photo=await loadImage(result);
+   const w=photo.naturalWidth,h=photo.naturalHeight;
+   if(Math.max(w,h)<1900&&state){
+    state.resolutionNotice='Внимание: API Market вернул '+w+' × '+h+' вместо запрошенного 2K. Изображение не увеличивалось искусственно.';
+   }
+  }catch{if(state)state.resolutionNotice='Не удалось проверить реальные пиксели результата.';}
+ }
+ return result;
+}
 function lock(value){run=value;$('#formaStudioWorkspace')?.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.hasAttribute('data-studio-exit'))el.disabled=value;});if(!value)updateActions();}
 async function execute(action){
  if(run||!state||state.loading)return;const own=state,version=token;let expected=bridge().snapshot(),acquired=false;
  try{
+  own.resolutionNotice='';
   if(!own.source)throw Error('Загрузите исходное изображение');
   assertFrameBinding(expected,own.binding);
   if(action!=='crop'&&(expected.demo||!expected.hasSource))throw Error('Для AI загрузите собственное изображение');
@@ -69,7 +90,7 @@ async function execute(action){
    setView(url);$('#fsApprovePlan').disabled=false;
   }
   if(version!==token||state!==own)throw Error('Рабочее окно изменилось');
-  assertFrameBinding(bridge().snapshot(),expected);await bridge().saveResult(url,label,{...expected,image:own.source});own.binding=bridge().snapshot();addResult(url,label);status('Готово · сохранено в проекте. Исходник доступен для сравнения.');
+  assertFrameBinding(bridge().snapshot(),expected);await bridge().saveResult(url,label,{...expected,image:own.source});own.binding=bridge().snapshot();addResult(url,label);status('Готово · сохранено в проекте. Исходник доступен для сравнения.'+(own.resolutionNotice?' '+own.resolutionNotice:''));
  }catch(e){status(e.name==='TimeoutError'?'Время ожидания истекло. Проверьте историю перед повтором.':e.message);}finally{if(acquired)bridge().release();if(acquired&&state===own)lock(false);}
 }
 function drawSeries(){if(state)bridge().setAsset('series_draft',JSON.stringify({projectId:state.projectId,sourceKey:state.sourceKey,master:state.master,source:state.source,frames:state.frames}),state.projectId).catch(()=>{});const host=$('#fsSeriesList');if(!host)return;host.innerHTML=state.frames.map((f,i)=>`<div class="fs-series-item"><b>${i+1}. ${esc(f.label)}</b><small>${f.done?'Готово':f.error||'Готов к запуску'}</small><button type="button" data-series-run="${i}">${f.done?'Пересоздать':'Создать'}</button><button type="button" data-series-remove="${i}" aria-label="Удалить кадр">×</button></div>`).join('');}
