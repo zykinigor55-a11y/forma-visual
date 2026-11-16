@@ -70,7 +70,7 @@ test('editor supports node dragging, 200% resizing both on desktop and two-finge
  assert.match(c,/scalePlacement\(item,factor\)/);
  assert.match(c,/data-art="add-vertex"/);
  assert.match(c,/data-art="remove-vertex"/);
- assert.match(c,/curvePath\(item\.points/);
+ assert.match(c,/curvePath\(/);assert.match(c,/drapedGarlandPoints/);
  assert.match(c,/makeCustomReferenceBoard/);
  assert.match(html,/forma-landscape-effects-v1\.css/);
  assert.match(html,/ivy-garland-pinch-v1/);
