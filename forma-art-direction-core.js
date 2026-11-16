@@ -1,6 +1,6 @@
 /* Shared, allowlisted art-direction contract. No provider or browser dependencies. */
-import {ATMOSPHERE_SCENARIOS} from './forma-atmosphere-scenes.js';
-import {authoredAtmospherePrompt} from './forma-atmosphere-prompt.js';
+import {ATMOSPHERE_SCENARIOS} from './forma-atmosphere-scenes.js?v=composition-v2';
+import {authoredAtmospherePrompt} from './forma-atmosphere-prompt.js?v=composition-v2';
 export const PLANTS=Object.freeze([
  {id:'juniper',name:'Можжевельник',description:'Низкий хвойный куст',prompt:'low spreading Juniperus horizontalis Blue Chip, fine natural blue-green needles',color:'#637b68'},
  {id:'willow-nana',name:'Ива Nana',description:'Округлая воздушная крона',prompt:'compact Salix purpurea Nana shrub with fine silvery-green leaves',color:'#9da886'},
@@ -139,18 +139,6 @@ export function sameView(a,b){return !!a&&!!b&&a.projectId===b.projectId&&a.sour
 export function atmospherePrompt(value,{preserveScene=true}={}){
  const a=normalizeAtmosphere(value);if(!a||a.strength===0)return '';
  return authoredAtmospherePrompt(a,ATMOSPHERE_VEGETATION.find(v=>v.id===a.vegetation),{preserveScene});
- const look=LOOKS.find(x=>x.id===a.preset);
- const focus=a.dof>0?`Selective photographic depth of field at strength ${a.dof}/100. Focus on the actual architectural subject nearest (${pct(a.focus.x)}%, ${pct(a.focus.y)}%) of the FULL image. Keep the primary building and its facade microdetail sharply resolved; apply natural optical defocus only to nearer foreground and far background according to physical distance. No uniform Gaussian blur, tilt-shift miniature effect or blurred building.`:'Deep architectural depth of field, building and landscape optically resolved, no artificial bokeh.';
- const sceneLock=preserveScene?'Preserve existing weather, season, time of day, sun direction and environment':'Use the explicitly requested resulting scene conditions (weather, season, time and sun), never override those selected conditions';
- const vegetation=a.vegetation==='none'||a.foreground===0?'Do not add any trees, branches or plants; use only existing planting for spatial separation.':
-  `EDGE VEGETATION — TEXT-DESCRIBED BOTANICAL DIRECTION: ${ATMOSPHERE_VEGETATION.find(x=>x.id===a.vegetation).prompt} Add only a few natural partial branches or one partially frame-clipped tree at the left and right image edges where clear space permits, at ${a.foreground}/70 framing density scaled by overall intensity. Match the existing planting character, season, species scale, lighting and ground plane. Keep the central view, facade, windows, doors, entrance and roof silhouette unobstructed; reduce or omit additions if space is insufficient. Frame edges may naturally clip branches; do not move the camera, existing trees or the house to make room. Do not introduce a new forest, uniform hedges, tropical vegetation, new lawns or a redesigned garden. Add no vegetation in an interior image; never place exterior trees inside rooms, on roofs or terraces. Existing bare winter branches stay bare; conifers retain needles.`;
- const depth=a.depth>0?`AERIAL PERSPECTIVE ${a.depth}/40: foreground has crisp local contrast, middle distance retains material detail, far background progressively loses a little contrast and saturation with distance. Use subtle volumetric air only where physically plausible for the existing weather; no uniform white veil, dense new fog, god rays in overcast light or haze over the building.`:'No added aerial haze; create foreground, middle distance and background separation using lighting and existing spatial occlusion only.';
- return `PHOTOGRAPHIC ATMOSPHERE / ART DIRECTION (${a.strength}/100 intensity): ${look.prompt}.
-SCENE MOOD: ${look.scene} This is a coherent relighting and depth treatment, not merely a global tint. Scale all changes by the overall intensity.
-SCENE LOCK: ${sceneLock}. Keep the same sun direction and physically consistent shadows; vary sky fill, light softness and contrast only within these conditions. Do not change weather, season, geographic setting or day into night. At night use existing artificial light and ambient sky; no invented sunlight. Preserve all architecture, material identity, existing landscaping positions, hardscape layout, viewpoint, framing and image dimensions.
-${vegetation}
-SPATIAL COMPOSITION: Build foreground, middle distance and background layers: near edge foliage, sharp primary architecture, then existing distant planting. Keep the site's recognizable landmarks. ${depth}
-Additional tonal contrast ${a.contrast}, saturation ${a.saturation}, warm/cool balance ${a.temperature} on a -30 to +30 scale; keep facade material hues credible. ${focus} Optical highlight bloom ${a.bloom}/30, limited to existing brightest light sources. Fine film grain ${a.grain}/20, no loss of material detail. Preserve full resolution and natural texture; no oversharpening, HDR halos, plastic surfaces or cinematic black bars.`;
 }
 export function gradePixel(r,g,b,value){
  const a=normalizeAtmosphere(value);if(!a)return [r,g,b];const look=LOOKS.find(x=>x.id===a.preset),s=a.strength/100;
