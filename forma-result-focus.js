@@ -52,7 +52,8 @@ import {createReviewQueue} from './forma-result-queue.js';
     '<footer class="forma-result-footer">Изменения не запускают AI автоматически · Новый вариант — отдельный запрос</footer>',
    '</section>'
   ].join('');
-  screen.addEventListener('click',event=>{
+  screen.addEventListener('click',async event=>{
+   if(inFlight)return;
    const chip=event.target.closest('[data-quick-group][data-quick-value]');
    if(chip){pick(chip);return}
    const btn=event.target.closest('[data-result-action]');
@@ -87,18 +88,38 @@ import {createReviewQueue} from './forma-result-queue.js';
    if(type==='make'){
     if(inFlight||!Object.keys(pending).length)return;
     const changes=Object.entries(pending).map(([group,id])=>({group,id,label:labels(group,id)}));
-    const result=window.FORMA_SCENE_BRIDGE?.generateVariant?.(changes);
-    if(!result)return;
+    const bridge=window.FORMA_SCENE_BRIDGE;
+    const status=screen.querySelector('#formaResultPending');
+    if(typeof bridge?.generateVariant!=='function'){
+     if(status)status.textContent='Модуль генерации не загрузился. Обновите страницу.';
+     return;
+    }
+    const source=reviews.active;
+    if(!source?.image){if(status)status.textContent='Не найден готовый кадр для изменения.';return}
     inFlight=true;
-    close(false);
-    Promise.resolve(result).finally(()=>{inFlight=false}).catch(()=>{});
+    btn.disabled=true;btn.textContent='Создаём AI-вариант…';
+    screen.querySelectorAll('.forma-next-chip').forEach(el=>el.disabled=true);
+    if(status)status.textContent='Создаём новый вариант из выбранного готового кадра. Исходник сохраняется.';
+    try{
+     const result=await bridge.generateVariant(changes,source.image);
+     if(!result?.image)throw Error('Не удалось получить новый готовый вариант.');
+     pending={};
+     inFlight=false;
+     close(false);
+    }catch(error){
+     if(status)status.textContent='Ошибка: '+(error?.message||'Не удалось создать вариант. Можно повторить без потери исходника.');
+     btn.textContent='Повторить создание варианта';
+    }finally{
+     inFlight=false;btn.disabled=false;
+     screen.querySelectorAll('.forma-next-chip').forEach(el=>el.disabled=false);
+    }
     return
    }
    if(type==='close')close(true);
   });
-  screen.addEventListener('cancel',event=>{event.preventDefault();if(!reviewSaving&&!enhancing)close(true);});
+  screen.addEventListener('cancel',event=>{event.preventDefault();if(!reviewSaving&&!enhancing&&!inFlight)close(true);});
   screen.addEventListener('keydown',event=>{
-   if(event.key==='Escape'){event.preventDefault();if(!reviewSaving&&!enhancing)close(true);return}
+   if(event.key==='Escape'){event.preventDefault();if(!reviewSaving&&!enhancing&&!inFlight)close(true);return}
    if(event.key==='Tab'){
     const focus=Array.from(screen.querySelectorAll('button:not([disabled])'));
     const first=focus[0],last=focus[focus.length-1];
@@ -163,8 +184,9 @@ import {createReviewQueue} from './forma-result-queue.js';
   }
  }
  function pick(button){
+  if(inFlight||enhancing)return;
   const group=button.dataset.quickGroup,id=button.dataset.quickValue;
-  if(!window.FORMA_SCENE_BRIDGE?.setQuickOption?.(group,id))return;
+  if(!settings.some(s=>s[0]===group&&s[2].some(v=>v[0]===id)))return;
   pending[group]=id;
   screen.querySelectorAll('[data-quick-group="'+group+'"]').forEach(el=>{
    const on=el.dataset.quickValue===id;
@@ -177,7 +199,7 @@ import {createReviewQueue} from './forma-result-queue.js';
  }
  function close(scrollToResult=true){
   if(!screen||!opened)return;
-  if(reviewSaving||enhancing)return;
+  if(reviewSaving||enhancing||inFlight)return;
   if(reviews.active?.decision===null)reviews.decide('later');
   opened=false;screen.close();screen.hidden=true;
   screen.querySelector('video')?.pause();
@@ -209,7 +231,7 @@ import {createReviewQueue} from './forma-result-queue.js';
   screen.querySelector('[data-result-action="enhance"]').disabled=false;
   screen.querySelector('[data-result-action="enhance"]').textContent='✦ Улучшить · AI';
   enhanceStatus('Отдельный платный AI-запрос · оригинал не изменится.');
-  screen.querySelectorAll('.forma-next-chip').forEach(chip=>{chip.classList.remove('is-active');chip.setAttribute('aria-pressed','false')});
+  screen.querySelectorAll('.forma-next-chip').forEach(chip=>{chip.classList.remove('is-active');chip.setAttribute('aria-pressed','false');chip.disabled=false;});
   document.getElementById('formaResultPending').textContent='Выберите параметры нового варианта';
   document.getElementById('formaGalleryDecision').textContent=reviews.pending>1?'Готово кадров к просмотру: '+reviews.pending:'Кадр доступен в истории проекта.';
   const save=screen.querySelector('[data-result-action="save-gallery"]');save.disabled=!entry.onSave;save.textContent='Сохранить в галерею';

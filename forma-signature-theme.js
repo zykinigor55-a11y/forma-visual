@@ -20,7 +20,7 @@
     root.dataset.formaTheme=mode;
     root.style.colorScheme=mode;
     const meta=document.querySelector('meta[name="theme-color"]');
-    if(meta)meta.content=mode==='dark'?'#101013':'#f4f0e9';
+    if(meta)meta.content=mode==='dark'?'#202124':'#f4f0e9';
     if(persist)try{localStorage.setItem(KEY,mode)}catch{}
     updateButtons();
     document.dispatchEvent(new CustomEvent('forma:themechange',{detail:{theme:mode}}));
