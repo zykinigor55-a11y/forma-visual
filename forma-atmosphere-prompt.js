@@ -1,4 +1,4 @@
-import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_FOREGROUND_PLANS} from './forma-atmosphere-scenes.js';
+import {ATMOSPHERE_SCENARIOS,ATMOSPHERE_FOREGROUND_PLANS} from './forma-atmosphere-scenes.js?v=composition-v2';
 export function authoredAtmospherePrompt(a,vegetation,{preserveScene=true}={}){
  const s=ATMOSPHERE_SCENARIOS.find(v=>v.id===a.scenario)||ATMOSPHERE_SCENARIOS[0];
  const placement=ATMOSPHERE_FOREGROUND_PLANS[s.id];
