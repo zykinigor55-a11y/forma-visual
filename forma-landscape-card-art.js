@@ -6,13 +6,14 @@ const leaf=(x,y,rotate=0,fill='#547657',scale=1)=>`<path d="M0 0 Q-12 -12 -8 -21
 export function specialCardArt(entry){
  const color=tag(entry.color||'#637766');
  const id=String(entry.id||'');
+ const gradient='scene-'+id,halo='halo-'+id;
  const isGarland=entry.kind==='garland',isClimber=entry.kind==='climber';
  const leafColor=id==='virginia-creeper'?'#b87854':id==='climbing-rose'?'#738b62':id==='clematis'?'#758f71':color;
  const bg=isGarland?'#21252a':isClimber?'#d9d2c5':entry.group==='snow'?'#bdcbd1':entry.group==='leaves'?'#a5a590':'#8d9992';
  const base=`<svg class="fa-landscape-card-vector" viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
- <defs><linearGradient id="scene" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg}"/><stop offset="1" stop-color="${isGarland?'#111519':isClimber?'#b5ad9d':'#65746e'}"/></linearGradient>
- <radialGradient id="halo"><stop stop-color="#ffe6a9" stop-opacity=".75"/><stop offset=".3" stop-color="#edbd67" stop-opacity=".17"/><stop offset="1" stop-color="#ffc66f" stop-opacity="0"/></radialGradient></defs>
- <rect width="240" height="150" fill="url(#scene)"/>
+ <defs><linearGradient id="${gradient}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg}"/><stop offset="1" stop-color="${isGarland?'#111519':isClimber?'#b5ad9d':'#65746e'}"/></linearGradient>
+ <radialGradient id="${halo}"><stop stop-color="#ffe6a9" stop-opacity=".75"/><stop offset=".3" stop-color="#edbd67" stop-opacity=".17"/><stop offset="1" stop-color="#ffc66f" stop-opacity="0"/></radialGradient></defs>
+ <rect width="240" height="150" fill="url(#${gradient})"/>
  <path d="M0 117 Q65 108 124 118 T240 113 L240 150 H0Z" fill="${isGarland?'#1a2024':isClimber?'#c4beb0':'#a9ada7'}" opacity=".52"/>
  `;
  let artwork='';
@@ -22,7 +23,7 @@ export function specialCardArt(entry){
   artwork+=lights.map(([x,y],i)=>{
    const cold=id==='garland-cool'||id==='garland-icicle',bulb=cold?'#e0ecf8':'#f6cea0';
    const icicle=id==='garland-icicle',retro=id==='garland-festoon';
-   return `<circle cx="${x}" cy="${y+(i%2?2:0)}" r="${retro?17:10}" fill="url(#halo)"/>
+   return `<circle cx="${x}" cy="${y+(i%2?2:0)}" r="${retro?17:10}" fill="url(#${halo})"/>
    ${icicle?`<path d="M${x} ${y}v${17+i%3*4}" stroke="#718c98" stroke-width="1"/>`:''}
    <ellipse cx="${x}" cy="${y+(icicle?14:retro?5:1)}" rx="${retro?4.1:2.5}" ry="${retro?5.5:3}" fill="${bulb}" stroke="#fff9" stroke-width=".7"/>`;
   }).join('');
