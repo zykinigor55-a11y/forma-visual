@@ -52,3 +52,20 @@ export function pointOnPolyline(points,ratio){
  for(let i=0;i<ds.length;i++){if(left<=ds[i]){const t=ds[i]?left/ds[i]:0;return {x:coords[i].x+(coords[i+1].x-coords[i].x)*t,y:coords[i].y+(coords[i+1].y-coords[i].y)*t};}left-=ds[i];}
  return coords[coords.length-1];
 }
+
+/* Produce a hanging physical cable preview while keeping all editable
+   user-set anchor vertices unchanged. The fraction is of each span length. */
+export function drapedGarlandPoints(points,sag=0){
+ if(!Array.isArray(points)||points.length<2)return points||[];
+ const depth=Math.max(0,Math.min(.6,Number(sag)||0));
+ if(depth===0)return points;
+ const output=[];
+ for(let i=0;i<points.length-1;i++){
+  const a=points[i],b=points[i+1],length=Math.hypot(b.x-a.x,b.y-a.y);
+  for(let k=0;k<8;k++){
+   const t=k/8,offset=depth*length*Math.sin(Math.PI*t)*.7;
+   output.push({x:a.x+(b.x-a.x)*t,y:Math.max(0,Math.min(1,a.y+(b.y-a.y)*t+offset))});
+  }
+ }
+ output.push(points.at(-1));return output;
+}
