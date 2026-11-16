@@ -127,7 +127,7 @@ async function open({id,view,controls}){
  const own=state;
  $('#fsSource').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file||run)return;const load=++own.loadId,projectBefore=bridge().snapshot();own.loading=true;try{
   const source=await readImage(file);if(mine!==token||state!==own||load!==own.loadId)return;if(bridge().snapshot().projectId!==projectBefore.projectId||bridge().snapshot().sourceKey!==projectBefore.sourceKey)throw Error('Проект изменился во время чтения файла');
-  await bridge().uploadFile(file);if(mine!==token||state!==own||load!==own.loadId)return;const snap=bridge().snapshot();Object.assign(own,{binding:snap,source,master:source,projectId:snap.projectId,sourceKey:snap.sourceKey,brief:snap.brief,planResult:null,planApproved:false,roomSelected:false,frames:[]});setView(source);if(id==='plan'){await bridge().setAsset('plan_source',source,snap.projectId);await bridge().setAsset('plan_result','',snap.projectId);}drawSeries();status('Изображение загружено.');
+  await bridge().uploadFile(file);if(mine!==token||state!==own||load!==own.loadId)return;const snap=bridge().snapshot();Object.assign(own,{binding:snap,source,master:source,projectId:snap.projectId,sourceKey:snap.sourceKey,brief:snap.brief,planResult:null,plan2dResult:null,planApproved:false,roomSelected:false,frames:[]});setView(source);if(id==='plan'){await bridge().setAsset('plan_source',source,snap.projectId);await bridge().setAsset('plan_result','',snap.projectId);await bridge().setAsset('plan_2d_result','',snap.projectId);}drawSeries();status('Изображение загружено.');
  }catch(err){if(mine===token&&state===own)status(err.message);}finally{if(mine===token&&state===own&&load===own.loadId){own.loading=false;updateActions();}}});
 
  if(id==='frames'){
@@ -144,11 +144,31 @@ async function open({id,view,controls}){
   });
   $('#fsSeriesList').onclick=e=>{const run=e.target.closest('[data-series-run]'),remove=e.target.closest('[data-series-remove]');if(run)runSeries(Number(run.dataset.seriesRun));if(remove){state.frames.splice(Number(remove.dataset.seriesRemove),1);drawSeries();}};
  }else{
-  $('#fsPlanGenerate').onclick=()=>execute('plan');$('#fsRoomGenerate').onclick=()=>execute('room');$('#fsApprovePlan').onclick=()=>{if(!state.planResult)return;state.planApproved=true;state.roomSelected=false;setView(state.source);status('Обведите комнату на исходном плане, затем выберите направление взгляда.');};
-  const [saved,result,provider]=await Promise.all([bridge().getAsset('plan_source'),bridge().getAsset('plan_result'),fetch('/api/status').then(r=>r.json()).catch(()=>({}))]);if(mine!==token||state!==own||own.loadId)return;
-  if(saved&&snapshot.hasSource&&!snapshot.demo){state.source=saved;setView(saved);}if(result&&snapshot.hasSource&&!snapshot.demo){state.planResult=result;$('#fsApprovePlan').disabled=false;addResult(result,'Объёмный план');}
-  $('#fsPlanProvider').textContent=provider.planImageReady?'GPT Image 2.6 настроена. Доступность подтверждается при запросе.':'GPT Image 2.6 не настроена на сервере. Можно явно выбрать Nano Banana для этой задачи.';
-  const gpt=$('#fsPlanEngine option[value="gpt-image-2.6-sunburst"]');gpt.disabled=!provider.planImageReady;if(provider.planImageReady){gpt.value=provider.planImageModel;gpt.textContent=provider.planImageModel==='gpt-image-2.6-flare'?'GPT Image 2.6 Flare':'GPT Image 2.6 Sunburst';$('#fsPlanEngine').value=provider.planImageModel;}
+  $('#fsPlanGenerate').onclick=()=>execute('plan');
+  $('#fsPlan2DGenerate').onclick=()=>execute('plan2d');
+  $('#fsRoomGenerate').onclick=()=>execute('room');
+  $('#fsPlan2DShowOriginal').onclick=()=>{if(state.source){state.roomSelected=false;setView(state.source);status('Исходный 2D-план.');}};
+  $('#fsPlan2DShowVariant').onclick=()=>{if(state.plan2dResult){state.roomSelected=false;setView(state.plan2dResult);status('Оформленный 2D-план.');}};
+  controls.querySelectorAll('[data-plan-2d-style]').forEach(btn=>btn.onclick=()=>{
+   state.plan2dStyle=btn.dataset.plan2dStyle;
+   controls.querySelectorAll('[data-plan-2d-style]').forEach(card=>card.setAttribute('aria-pressed',String(card===btn)));
+   status('Стиль: '+PLAN_2D_STYLES[state.plan2dStyle]+'. Для получения изображения нажмите «Создать 2D-план».');
+  });
+  $('#fsApprovePlan').onclick=()=>{
+   if(!state.planResult)return;
+   state.planApproved=true;state.roomSelected=false;setView(state.planResult);
+   status('План утверждён. Обведите одну комнату рамкой на готовом 3D-плане. Затем выберите направление камеры.');
+  };
+  const [saved,result,styled2d,provider]=await Promise.all([
+   bridge().getAsset('plan_source'),bridge().getAsset('plan_result'),bridge().getAsset('plan_2d_result'),
+   fetch('/api/status').then(r=>r.json()).catch(()=>({}))
+  ]);
+  if(mine!==token||state!==own||own.loadId)return;
+  if(saved&&snapshot.hasSource&&!snapshot.demo){state.source=saved;setView(saved);}
+  if(styled2d&&snapshot.hasSource&&!snapshot.demo){state.plan2dResult=styled2d;addResult(styled2d,'Мой 2D-план');}
+  if(result&&snapshot.hasSource&&!snapshot.demo){state.planResult=result;$('#fsApprovePlan').disabled=false;addResult(result,'3D-план');}
+  $('#fsPlanProvider').textContent=provider.planImageReady?'Генерация планов: GPT Image 2.6. Настройка найдена; доступ модели проверяется при первом запросе.':'Для создания 2D/3D-планов и интерьеров требуется GPT Image 2.6. Серверная модель пока не настроена.';
+  updateActions();
  }
 }
 document.addEventListener('forma:workspace-open',e=>{open(e.detail).catch(err=>status(err.message));});
