@@ -8,9 +8,9 @@ test('influence mask includes reflection below the placed object',()=>{const b=i
 test('tree and garden lighting catalog has tall tree variants and more outdoor fixtures',()=>{assert.ok(catalogFor('tree').some(v=>v.id==='pine-tall'));assert.ok(catalogFor('tree').some(v=>v.id==='birch'));assert.ok(catalogFor('light').length>=10);});
 test('moving a group retains relative positions at the image boundary',()=>{assert.equal(typeof t.translateGroup,'function');const list=[{id:'a',kind:'plant',x:.8,y:.7,w:.1,h:.2},{id:'b',kind:'plant',x:.9,y:.7,w:.1,h:.2}];const result=t.translateGroup(list,new Set(['a','b']),.3,0);assert.ok(result[1].x<=1);assert.ok(Math.abs(result[1].x-result[0].x-.1)<1e-9);});
 test('planted planters contain a named plant in their generation prompt',()=>{const pot=catalogFor('object').find(v=>v.id==='concrete-pot');assert.match(pot.prompt,/planted.*pine/i);assert.ok(pot.planted);});
-test('large foreground trees keep proportions above the old ninety percent ceiling',()=>{const a={kind:'tree',catalogId:'spruce-tall',x:.5,y:.9,w:.2,h:.48};const b=t.scalePlacement(a,6);assert.ok(b.h>2);assert.ok(Math.abs(b.w/b.h-a.w/a.h)<1e-12);assert.equal(normalizeLandscape({items:[b]}).items[0].h,b.h);const influence=t.automaticInfluence(b);assert.equal(influence.shadow,.4);assert.equal(influence.reflection,.7);});
-test('5000 percent scaling survives normalization without shrinking or changing proportions',()=>{
+test('landscape trees preserve proportions and root anchor while respecting new 200 percent limit',()=>{const a={kind:'tree',catalogId:'spruce-tall',x:.5,y:.9,w:.2,h:.48};const b=t.scalePlacement(a,6);assert.equal(b.h,.96);assert.equal(b.w,.4);assert.equal(b.y,.9);assert.ok(Math.abs(b.w/b.h-a.w/a.h)<1e-12);assert.equal(normalizeLandscape({items:[b]}).items[0].h,b.h);const influence=t.automaticInfluence(b);assert.equal(influence.shadow,.4);assert.equal(influence.reflection,.7);});
+test('obsolete 5000 percent slider requests clamp to 200 percent without shifting the plant',()=>{
  const a={kind:'tree',catalogId:'pine-tall',x:.9,y:.95,w:.1,h:.2};
- const b=t.scalePlacement(a,50);assert.equal(b.h,10);assert.equal(b.w,5);assert.equal(b.y,a.y);
- const n=normalizeLandscape({items:[b]}).items[0];assert.equal(n.h,10);assert.equal(n.w,5);
+ const b=t.scalePlacement(a,50);assert.equal(b.h,.4);assert.equal(b.w,.2);assert.equal(b.y,a.y);
+ const n=normalizeLandscape({items:[b]}).items[0];assert.equal(n.h,.4);assert.equal(n.w,.2);
 });
