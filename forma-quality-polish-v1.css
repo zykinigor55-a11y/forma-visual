@@ -67,7 +67,7 @@ html[data-forma-theme="light"]{
  gap:5px;
 }
 #formaArtDialog .fa-art-card-copy .fa-art-card-method{
- font-size:10px!important;
+ font-size:11px!important;
  letter-spacing:.04em;
  line-height:1.3;
 }
@@ -76,7 +76,7 @@ html[data-forma-theme="light"]{
  line-height:1.34;
 }
 #formaArtDialog .fa-art-card-copy .fa-art-card-desc{
- font-size:11px!important;
+ font-size:12px!important;
  line-height:1.45;
  -webkit-line-clamp:2;
 }
@@ -152,7 +152,7 @@ html[data-forma-theme="light"]{
  #formaArtDialog .fa-art-premium-card .fa-art-preview-frame{height:104px}
  #formaArtDialog .fa-art-card-copy>b{font-size:12px!important}
  #formaArtDialog .fa-art-card-copy .fa-art-card-desc{
-  font-size:11px!important;
+  font-size:12px!important;
   line-height:1.42;
  }
  #formaArtDialog .fa-art-categories button{min-height:48px}
