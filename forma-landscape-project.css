@@ -709,3 +709,46 @@
  box-shadow:inset 0 1px 0 #fff2d333,0 0 0 1px #bfa16f44!important;
  color:#fff4df!important;
 }
+
+/* FORMA LANDSCAPE · ATMOSPHERE STUDIO
+   Three explicit environmental controls, no geometry changes */
+#faLandscapeMasterplan .lp-properties section.lp-atmosphere{
+ border:1px solid #b79a705c!important;
+ border-radius:15px!important;
+ margin:12px 0 18px!important;
+ padding:16px!important;
+ background:linear-gradient(145deg,#31322e,#222625)!important;
+ box-shadow:inset 0 1px 0 #ffffff13,0 12px 26px #0003!important;
+}
+#faLandscapeMasterplan .lp-properties .lp-atmosphere>strong{
+ display:flex;align-items:center;gap:8px;
+ color:#eac99c!important;font-size:12px!important;
+ letter-spacing:.115em!important;
+}
+#faLandscapeMasterplan .lp-atmo-fields{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:11px;margin-top:13px;
+}
+#faLandscapeMasterplan .lp-atmo-fields label{
+ display:flex;flex-direction:column;gap:6px!important;
+ min-width:0!important;font-size:11px!important;color:#cfbc9f!important;
+}
+#faLandscapeMasterplan .lp-atmo-fields select{
+ width:100%!important;min-width:0;min-height:42px!important;padding:8px 9px!important;
+ border:1px solid #776a59!important;border-radius:9px!important;
+ color:#f4ead9!important;background:#252828!important;
+ font-size:12px!important;box-shadow:inset 0 1px 0 #ffffff0d!important;
+}
+#faLandscapeMasterplan .lp-atmo-fields select:focus-visible{
+ outline:2px solid #d7b589!important;outline-offset:2px!important
+}
+#faLandscapeMasterplan .lp-atmosphere>small{
+ display:block;margin-top:11px;color:#aeb7af!important;
+ font-size:10px!important;line-height:1.55!important
+}
+@media(max-width:760px){
+ #faLandscapeMasterplan .lp-properties .lp-atmosphere{padding:15px!important}
+ #faLandscapeMasterplan .lp-atmo-fields{grid-template-columns:1fr;gap:9px}
+ #faLandscapeMasterplan .lp-atmo-fields label{font-size:12px!important}
+ #faLandscapeMasterplan .lp-atmo-fields select{min-height:45px!important;font-size:14px!important}
+}
