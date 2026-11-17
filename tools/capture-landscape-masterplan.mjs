@@ -47,6 +47,7 @@
  await desktop.screenshot({path:`${folder}/forma-landscape-project-desktop.png`,fullPage:false});
  await desktop.locator('[data-category="boulders"]').first().click();
  await desktop.waitForFunction(()=>[...document.querySelectorAll('.lp-assets img')].length===4&&[...document.querySelectorAll('.lp-assets img')].every(img=>img.complete&&img.naturalWidth>=1080),{timeout:20000});
+ await desktop.waitForFunction(()=>document.querySelector('[data-asset="granite-boulder"] img')?.currentSrc.includes('/landscape-card-photo/granite-boulder.jpg?'),null,{timeout:20000});
  await desktop.waitForTimeout(200);
  await desktop.screenshot({path:`${folder}/forma-landscape-boulders.png`,fullPage:false});
  const mobile=await browser.newPage({viewport:{width:430,height:932},deviceScaleFactor:1,isMobile:true,hasTouch:true});
@@ -56,7 +57,7 @@
  await mobile.waitForTimeout(350);
  await mobile.screenshot({path:`${folder}/forma-landscape-premium-cards-mobile.png`,fullPage:false});
  const checks={
-  desktopPremium:await desktop.locator('.lp-assets img').first().evaluate(img=>img.currentSrc.includes('landscape-premium')),
+  desktopPremium:await desktop.locator('.lp-assets img').first().evaluate(img=>img.currentSrc.includes('/landscape-card-photo/granite-boulder.jpg?')),
   mobileCardWidth:await mobile.locator('.lp-assets button').first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),
   mobileImagesOk:await mobile.locator('.lp-assets img').first().evaluate(img=>img.naturalWidth>=1000)
  };
