@@ -3,6 +3,13 @@ import {PLAN_STYLES,PLAN_PRESENTATIONS,PLAN_2D_STYLES,normalizeCrop,assertFrameB
 import {canvas,loadImage} from './forma-local-composite.js';
 const $=s=>document.querySelector(s),bridge=()=>window.FORMA_ART_BRIDGE;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PLAN_CONCEPT_INFO={
+ technical:{num:'01',desc:'Линии, размеры и чертёжная иерархия'},
+ warm:{num:'02',desc:'Реальные материалы и мягкие физические тени'},
+ zoning:{num:'03',desc:'Функции помещений и пути движения'},
+ graphite:{num:'04',desc:'Бумага, фактуры и графика портфолио'},
+ watercolor:{num:'05',desc:'Ручная тушь и акварельная фактура'}
+};
 let state=null,run=false,token=0;
 async function readImage(file){if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Выберите PNG, JPG или WebP');if(file.size>14*1024*1024)throw Error('Максимальный размер — 14 МБ');const result=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Не удалось прочитать файл'));r.readAsDataURL(file);});await loadImage(result);return result;}
 const select=(id,label,values)=>`<label class="fs-image-field">${label}<select id="${id}">${Object.entries(values).map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></label>`;
@@ -118,10 +125,10 @@ async function open({id,view,controls}){
  view.innerHTML=imageView();controls.innerHTML=id==='plan'?`<div class="fs-image-intro"><small>ПЛАН → 2D / 3D / ФОТО</small><h2>Планировка в объёме.</h2><p>Пять видов 2D-подачи, объёмная визуализация плана и фотография любой выбранной комнаты.</p></div>
  <label class="fs-file">Загрузить исходный план<input id="fsSource" type="file" accept="image/png,image/jpeg,image/webp"></label>
  <section class="fs-plan-part fs-plan-2d-section">
-  <span class="fs-plan-step">01 / СТИЛИ 2D-ПЛАНА</span><h3>Пять вариантов подачи</h3>
-  <p class="fa-art-help">Выбери оформление. Перегородки, размеры и положение помещений должны остаться прежними.</p>
+  <span class="fs-plan-step">01 / КОНЦЕПЦИИ 2D-ПЛАНА</span><h3>Один план. Пять принципиально разных подач.</h3>
+  <p class="fa-art-help">Сравните пять концепций на одной и той же планировке. Стены, окна, двери и мебель остаются в исходных координатах, меняется графический язык.</p>
   <div class="fs-plan-2d-options" role="group" aria-label="Стилистика 2D-плана">
-   ${Object.entries(PLAN_2D_STYLES).map(([key,name])=>`<button type="button" class="fs-plan-2d-option" data-plan-2d-style="${key}" aria-pressed="${key==='technical'}"><span class="fs-plan-2d-swatch" data-style="${key}" aria-hidden="true"><i></i><i></i><i></i></span><b>${name}</b></button>`).join('')}
+   ${Object.entries(PLAN_2D_STYLES).map(([key,name])=>`<button type="button" class="fs-plan-2d-option" data-plan-2d-style="${key}" aria-pressed="${key==='technical'}"><span class="fs-plan-concept-preview"><img src="/assets/plan-presentations/${key}.svg?v=plan-concepts-v1" loading="lazy" decoding="async" alt="Пример подачи того же плана: ${name}"></span><span class="fs-plan-concept-copy"><em>${PLAN_CONCEPT_INFO[key].num} / ПОДАЧА</em><b>${name}</b><small>${PLAN_CONCEPT_INFO[key].desc}</small></span></button>`).join('')}
   </div>
   <button type="button" class="fa-studio-primary" id="fsPlan2DGenerate">✦ Создать 2D-план в этом стиле</button>
   <div class="fs-plan-view-switch"><button type="button" id="fsPlan2DShowOriginal">Исходный 2D</button><button type="button" id="fsPlan2DShowVariant" disabled>Оформленный 2D</button></div>
@@ -173,7 +180,7 @@ async function open({id,view,controls}){
   controls.querySelectorAll('[data-plan-2d-style]').forEach(btn=>btn.onclick=()=>{
    state.plan2dStyle=btn.dataset.plan2dStyle;
    controls.querySelectorAll('[data-plan-2d-style]').forEach(card=>card.setAttribute('aria-pressed',String(card===btn)));
-   status('Стиль: '+PLAN_2D_STYLES[state.plan2dStyle]+'. Для получения изображения нажмите «Создать 2D-план».');
+   status('Концепция: '+PLAN_2D_STYLES[state.plan2dStyle]+'. Стены и мебель сохраняются. Нажмите «Создать 2D-план».');
   });
   $('#fsApprovePlan').onclick=()=>{
    if(!state.planResult)return;
