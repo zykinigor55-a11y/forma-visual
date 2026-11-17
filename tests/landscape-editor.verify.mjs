@@ -37,11 +37,24 @@ try{
   await page.waitForFunction(()=>{const img=document.querySelector('[data-asset="formal"] img');return !!img&&img.complete&&img.naturalWidth===1080&&img.getAttribute('src')?.includes('formal.');},null,{timeout:30000});
   const photo=await page.locator('[data-asset="formal"] img').evaluate(img=>({src:img.currentSrc,width:img.naturalWidth,height:img.naturalHeight}));
   console.log('Lawn preview URL:',photo.src);
-  const diagnostics=await page.evaluate(async()=>{const r=await fetch('/assets/landscape-photo/formal.jpg',{method:'HEAD'});const x=await import('./forma-landscape-project-graphics.js?v=photo-jpg-alpha-v5');return {head:r.status,mime:r.headers.get('content-type'),photoCount:x.photographicAssetCount(),source:x.photographicIconURL({id:'formal'})};});
+  const diagnostics=await page.evaluate(async()=>{const r=await fetch('/assets/landscape-photo/formal.jpg',{method:'HEAD'});const x=await import('./forma-landscape-project-graphics.js?v=photo-light-pond-v6');return {head:r.status,mime:r.headers.get('content-type'),photoCount:x.photographicAssetCount(),source:x.photographicIconURL({id:'formal'})};});
   console.log('Photo asset diagnostics:',JSON.stringify(diagnostics));
   assert.ok(photo.src.includes('/assets/landscape-photo/formal.jpg?'),photo.src);
   assert.equal(photo.width,1080);assert.equal(photo.height,1080);
   await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}-lawns.png`,fullPage:true});
+  // Premium photo previews must display actual photo JPG while the measured plan
+  // continues using top-down PNG. Run on desktop and on touch Android emulation.
+  await page.locator('[data-category="lights"]').click();
+  await page.waitForFunction(()=>{const i=document.querySelector('[data-asset="bollard"] img');return !!i&&i.complete&&i.naturalWidth===1080&&i.currentSrc.includes('/landscape-card-photo/bollard.jpg?');},null,{timeout:30000});
+  assert.equal(await page.locator('[data-asset="bollard"]').getAttribute('data-photo-ready'),'true');
+  await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}-premium-light.png`,fullPage:true});
+  await page.locator('[data-category="ponds"]').click();
+  await page.waitForFunction(()=>{const i=document.querySelector('[data-asset="natural"] img');return !!i&&i.complete&&i.naturalWidth===1080&&i.currentSrc.includes('/landscape-card-photo/natural.jpg?');},null,{timeout:30000});
+  await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}-premium-pond.png`,fullPage:true});
+  await page.locator('[data-category="boulders"]').click();
+  await page.waitForFunction(()=>{const i=document.querySelector('[data-asset="granite-boulder"] img');return !!i&&i.complete&&i.naturalWidth===1080&&i.currentSrc.includes('/landscape-card-photo/granite-boulder.jpg?');},null,{timeout:30000});
+  assert.equal((await model()).objects.length,1,'Changing photo categories must not delete existing placements');
+
   // Never make a paid call in CI: replace the queue client with a local fake.
   await page.evaluate(()=>{window.FORMA_RENDER_QUEUE={fetch:async(_url,options)=>{await new Promise(r=>setTimeout(r,500));const input=JSON.parse(options.body).image;return new Response(JSON.stringify({
     images:[input.split(',')[1]],mimes:['image/png']
