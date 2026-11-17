@@ -1,0 +1,33 @@
+name: FORMA - ONE LIVE GPT Image 2.6 masterplan render
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-live-gpt26-once.yml'
+permissions:
+  contents: read
+concurrency:
+  group: forma-live-gpt26-once
+  cancel-in-progress: false
+jobs:
+  one-authorized-render:
+    if: github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser driver
+        run: npm install --no-save playwright@1.56.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: ONE user-authorized GPT Image 2.6 request via LIVE FORMA
+        run: node tools/forma-live-landscape-gpt26-once.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-LIVE-GPT26-actual-masterplan-or-error
+          path: artifacts/forma-live-masterplan-gpt26
+          if-no-files-found: warn
