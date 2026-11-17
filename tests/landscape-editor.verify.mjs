@@ -62,7 +62,11 @@ try{
   const [a,b]=doc.objects[0].points;assert.ok(Math.abs((b.x-a.x)-(b.y-a.y))<1e-6);
   await page.locator('button[data-delete]').first().click();assert.equal((await model()).objects.length,0);
   await page.locator('[data-quick-category="trees"]').click();await page.locator('[data-asset="pine"]').click();
-  await tap(6,28);assert.equal(await page.locator('[data-tool="select"]').getAttribute('class'),'active');
+  await tap(6,28);
+   // Trees stay in continuous placement mode; select move mode explicitly.
+   assert.equal(await page.locator('[data-tool="select"]').getAttribute('class'),'');
+   await page.locator('[data-tool="select"]').click();
+   assert.equal(await page.locator('[data-tool="select"]').getAttribute('class'),'active');
   // Mouse drag exercises the same pointer handlers as touch drag; tap placement above uses actual touch on mobile.
   const start=await pos(6,28),end=await pos(9,31);
   await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(end.x,end.y,{steps:6});await page.mouse.up();
