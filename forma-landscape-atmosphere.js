@@ -62,9 +62,9 @@ async function open(which){
  }));
  atmosphere=normalizeAtmosphere(snap.atmosphere)||normalizeAtmosphere({scenario:'day-soft',preset:'editorial',vegetation:'match'});
  $('artCanvasInput').setAttribute('aria-label',mode==='landscape'?'Размещение объектов: стрелки — переместить курсор, Enter — поставить точку':'Фокус: включите выбор фокуса, стрелки — переместить, Enter — подтвердить');
- $('artTitle').textContent=mode==='landscape'?'Ландшафт в кадре':'Атмосфера';
+ $('artTitle').textContent=mode==='landscape'?'Благоустройство':'Атмосфера';
  $('artSubtitle').textContent=mode==='landscape'?'Посадки, дорожки и свет — в выбранных местах кадра.':'Настроение, свет, зелень по краям и глубина. Дом и ракурс сохраняются.';
- $('artGenerate').textContent=mode==='landscape'?'Создать ландшафт':'Применить атмосферу';
+ $('artGenerate').textContent=mode==='landscape'?'Применить благоустройство':'Применить атмосферу';
  $('artFootnote').textContent=mode==='landscape'?'Обрабатываются только подсвеченные участки. Остальной кадр сохраняется в исходном разрешении.':'Настройки сохраняются для следующих рендеров. Применение к текущему кадру запускает AI.';
  message(snap.demo?'Демонстрационный кадр. Загрузите свой проект для AI-обработки.':mode==='landscape'?'Выберите объект и нажмите на изображение. Для дорожки отметьте контур.':'Цветопроба локальная. Оптическая глубина и свет появятся после AI-обработки.');
  dialog.dataset.mode=mode;dialog.showModal();
@@ -382,7 +382,7 @@ async function generate(){
   let image='data:'+(result.mimes?.[0]||'image/png')+';base64,'+result.images[0];
   if(!local){const output=await loadImage(image),original=await loadImage(expected.image);assertFraming(output.naturalWidth,output.naturalHeight,original.naturalWidth,original.naturalHeight);}
   if(local)image=await composeMasked(expected.image,image,local.selection,local.crop,local.frame);
-  const label=mode==='landscape'?'Ландшафт · локальная правка':'Атмосфера · '+(ATMOSPHERE_SCENARIOS.find(x=>x.id===atmosphere.scenario)?.name||'Сценарий');
+  const label=mode==='landscape'?'Благоустройство · локальная правка':'Атмосфера · '+(ATMOSPHERE_SCENARIOS.find(x=>x.id===atmosphere.scenario)?.name||'Сценарий');
   await bridge().saveResult(image,label,expected);snap=bridge().snapshot();completed=true;dialog.close();
   message('Готово. Новый вариант сохранён в галерее. Исходник остаётся доступен.');
  }catch(e){message(e.name==='TimeoutError'?'Время ожидания истекло. Запрос мог продолжиться у провайдера; проверьте историю перед повтором.':e.message||'Не удалось обработать кадр');}
@@ -394,10 +394,10 @@ async function composeMaterial(base,result,providerMask){
 }
 function init(){
  if(!bridge())return;
- const nav=document.querySelector('.rail-nav');for(const [key,name] of [['landscape','Ландшафт в кадре'],['atmosphere','Атмосфера']]){
+ const nav=document.querySelector('.rail-nav');for(const [key,name] of [['landscape','Благоустройство'],['atmosphere','Атмосфера']]){
   if(nav&&!nav.querySelector(`[data-art-open="${key}"]`)){const b=document.createElement('button');b.type='button';b.className='rail-btn';b.dataset.artOpen=key;b.setAttribute('aria-label',name);b.title=name;b.innerHTML=icon(key)+'<span class="rail-name">'+name+'</span>';const anchor=nav.querySelector('[data-nav="animation"]');anchor?nav.insertBefore(b,anchor):nav.append(b);}
  }
- const viewer=document.querySelector('.viewer-card');if(viewer&&!$('formaArtLaunchers')){const box=document.createElement('div');box.id='formaArtLaunchers';box.className='fa-art-launchers';box.innerHTML=`<button type="button" data-art-open="landscape">${icon('landscape')}<span><b>Ландшафт в кадре</b><small>Растения и дорожки на готовом фото</small></span><span aria-hidden="true">↗</span></button><button type="button" data-art-open="atmosphere">${icon('atmosphere')}<span><b>Атмосфера</b><small>Цвет · оптика · характер кадра</small></span><span aria-hidden="true">↗</span></button>`;const anchor=viewer.querySelector('.viewer-toolbar');anchor?anchor.insertAdjacentElement('afterend',box):viewer.prepend(box);}
+ const viewer=document.querySelector('.viewer-card');if(viewer&&!$('formaArtLaunchers')){const box=document.createElement('div');box.id='formaArtLaunchers';box.className='fa-art-launchers';box.innerHTML=`<button type="button" data-art-open="landscape">${icon('landscape')}<span><b>Благоустройство</b><small>Растения · покрытия · свет в кадре</small></span><span aria-hidden="true">↗</span></button><button type="button" data-art-open="atmosphere">${icon('atmosphere')}<span><b>Атмосфера</b><small>Цвет · оптика · характер кадра</small></span><span aria-hidden="true">↗</span></button>`;const anchor=viewer.querySelector('.viewer-toolbar');anchor?anchor.insertAdjacentElement('afterend',box):viewer.prepend(box);}
  document.addEventListener('click',e=>{const b=e.target.closest('[data-art-open]');if(b)open(b.dataset.artOpen);});
 }
 window.FORMA_ART_DIRECTION={openLandscape:()=>open('landscape'),openAtmosphere:()=>open('atmosphere'),composeMaterial,prepareMaterial:prepareMaterialEdit};
