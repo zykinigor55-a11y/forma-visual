@@ -1,0 +1,43 @@
+name: FORMA - recover ALREADY COMPLETED GPT 2.6 render (GET only)
+on:
+  push:
+    branches: [forma-live-gpt26-result-recovery-20261117]
+    paths: ['.github/workflows/forma-get-completed-masterplan.yml']
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Download completed image without generating again
+        shell: bash
+        run: |
+          mkdir -p artifacts/forma-gpt26-completed
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const id='552d230c39933ffbf688a2c8f8d4314b7f8f8fb70757c695';
+          const api='https://dom-render-nanobanana.onrender.com/api/render/jobs/'+id;
+          const status=await fetch(api,{signal:AbortSignal.timeout(22000)});
+          if(!status.ok)throw Error('Job status HTTP '+status.status);
+          const job=await status.json();
+          console.log('Previously paid job status:',job.status,'finishedAt:',job.finishedAt);
+          if(job.status!=='completed'||!job.hasResult)throw Error('Previously paid render no longer available; NEVER retry paid generation');
+          const res=await fetch(api+'/result',{signal:AbortSignal.timeout(65000)});
+          if(!res.ok)throw Error('Completed job GET HTTP '+res.status);
+          const payload=await res.json();
+          const data=payload.images?.[0],mime=payload.mimes?.[0]||'';
+          if(!data||!/^image\/(webp|png|jpeg)$/.test(mime)||!['gpt-image-2.6-sunburst','gpt-image-2.6-flare'].includes(payload.model))throw Error('Provider result unavailable or unexpected');
+          const ext=mime==='image/webp'?'webp':mime==='image/png'?'png':'jpg';
+          const buf=Buffer.from(data,'base64');
+          if(buf.length<30000||buf.length>18*1024*1024)throw Error('Unexpected image size');
+          fs.writeFileSync('artifacts/forma-gpt26-completed/actual-forma-gpt26-masterplan.'+ext,buf);
+          fs.writeFileSync('artifacts/forma-gpt26-completed/provider-receipt.json',JSON.stringify({jobId:job.jobId,createdAt:job.createdAt,finishedAt:job.finishedAt,model:payload.model,provider:payload.provider,mime,imageBytes:buf.length,source:'GET completed already-paid /api/render/jobs/id/result; zero additional paid generation calls'},null,2));
+          console.log('RECOVERED ACTUAL IMAGE',ext,buf.length,'bytes, model',payload.model);
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-ACTUAL-GPT26-RENDER-20261117
+          path: artifacts/forma-gpt26-completed/
+          if-no-files-found: warn
