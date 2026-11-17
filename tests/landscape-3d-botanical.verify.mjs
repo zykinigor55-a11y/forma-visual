@@ -56,5 +56,13 @@ try{
  await mobile.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:60000});
  await mobile.waitForTimeout(300);
  await mobile.screenshot({path:'artifacts/landscape-editor/3d-botanical-mobile.png'});
+ assert.equal(await mobile.locator('[data-mobile-panel="scene"]').isVisible(),true);
+ await mobile.locator('[data-mobile-panel="scene"]').click();
+ assert.equal(await mobile.locator('#left').isVisible(),false,'Landscape tools must not cover mobile preview');
+ assert.equal(await mobile.locator('#right').isVisible(),false,'House panel must not cover mobile preview');
+ assert.equal(await mobile.locator('#hint').isVisible(),false,'Instruction banner must not cover mobile trees');
+ await mobile.screenshot({path:'artifacts/landscape-editor/3d-botanical-mobile-scene.png'});
+ await mobile.locator('[data-mobile-panel="tools"]').click();
+ assert.equal(await mobile.locator('#left').isVisible(),true,'Tools remain accessible after full-screen inspection');
  assert.deepEqual(errors,[],'No mobile WebGL crash in botanical scene');
 }finally{await browser.close()}
