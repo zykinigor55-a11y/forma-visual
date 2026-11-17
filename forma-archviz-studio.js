@@ -45,7 +45,7 @@
   const rail=$('.rail'),nav=$('.rail-nav');
   if(rail && nav && !$('.forma-rail-brand')){
    const brand=node('div','forma-rail-brand',
-    '<span class="forma-brand-symbol" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg" alt="" width="30" height="30"></span><span class="forma-brand-copy"><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span>');
+    '<span class="forma-brand-symbol" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="30" height="30"></span><span class="forma-brand-copy"><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span>');
    rail.insertBefore(brand,nav);
    nav.prepend(node('div','forma-nav-section','РАБОЧАЯ СТУДИЯ'));
    const btn=(label,icon,action)=>{
@@ -56,7 +56,7 @@
    btn('Проверка',icons.layers,'qa');
    btn('Галерея',icons.image,'gallery');
    const railLast=$('.rail-monogram');
-   if(railLast && !railLast.querySelector('img'))railLast.innerHTML='<img src="assets/brand/forma-fa-mark.svg" alt="" width="22" height="22">';
+   if(railLast && !railLast.querySelector('img'))railLast.innerHTML='<img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="22" height="22">';
    const version=$('.build-version');if(version)version.textContent='СТУДИЯ · 01';
   }
  }
