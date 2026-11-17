@@ -135,3 +135,26 @@ export function coordinateSummary(doc){
  const d=normalizeProject(doc),r=report(d);
  return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},buildings:d.buildings.map(b=>({...b,photo:undefined})),objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths},verified:d.verified};
 }
+
+// Project each path segment onto parcel directions. Clamp length, never its axes,
+// so a segment reaching the plan border keeps its exact intended angle.
+export function snapPathPoint(previous, target, mode, site){
+ if(mode==='free')return {...target};
+ const boundary=site.boundary;
+ const edge=boundary?.length>1?{x:boundary[1].x-boundary[0].x,y:boundary[1].y-boundary[0].y}:{x:1,y:0};
+ const base=Math.atan2(edge.y,edge.x),dx=target.x-previous.x,dy=target.y-previous.y;
+ const step=mode==='diagonal'?Math.PI/4:Math.PI/2;
+ const angle=base+Math.round((Math.atan2(dy,dx)-base)/step)*step;
+ const ux=Math.cos(angle),uy=Math.sin(angle);
+ let length=Math.max(0,dx*ux+dy*uy);
+ for(const [v,u,max] of [[previous.x,ux,site.width],[previous.y,uy,site.height]]){
+  if(Math.abs(u)>1e-10)length=Math.min(length,Math.max(0,((u>0?max:0)-v)/u));
+ }
+ return {x:previous.x+length*ux,y:previous.y+length*uy};
+}
+export function translatePoints(points,dx,dy,site){
+ const xs=points.map(p=>p.x),ys=points.map(p=>p.y);
+ dx=Math.max(-Math.min(...xs),Math.min(site.width-Math.max(...xs),dx));
+ dy=Math.max(-Math.min(...ys),Math.min(site.height-Math.max(...ys),dy));
+ return points.map(p=>({x:p.x+dx,y:p.y+dy}));
+}
