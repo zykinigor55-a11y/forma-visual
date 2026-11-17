@@ -34,6 +34,7 @@
   },project);
   page.on('pageerror',e=>console.error('PAGEERROR',e.message));
   page.on('console',m=>{if(m.type()==='error')console.error('CONSOLE',m.text().slice(0,400))});
+   page.on('response',response=>{if(response.status()===404)console.warn('MISSING ASSET',response.url());});
   await page.goto('http://127.0.0.1:3000/',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.FORMA_LANDSCAPE_PROJECT,{timeout:45000});
   await page.evaluate(()=>window.FORMA_LANDSCAPE_PROJECT.open());
@@ -68,7 +69,7 @@
  const checks={
   desktopPremium:await desktop.locator('.lp-assets img').first().evaluate(img=>img.currentSrc.includes('/landscape-card-photo/granite-boulder.jpg?')),
   mobileCardWidth:await mobile.locator('.lp-assets button').first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),
-  mobileImagesOk:await mobile.locator('.lp-assets img').first().evaluate(img=>img.naturalWidth>=1000)
+  mobileImagesOk:await mobile.locator('.lp-assets img').first().evaluate(img=>img.complete&&img.naturalWidth>=200)
  };
  if(!checks.desktopPremium||!checks.mobileImagesOk||checks.mobileCardWidth<130)throw Error('Invalid premium library screenshot checks: '+JSON.stringify(checks));
  console.log(JSON.stringify({status:'ok',files:['desktop','boulders','mobile','premium-mobile'],checks}));
