@@ -39,3 +39,12 @@
  #faInteriorLightEditor button[data-light-mode]{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){#faLightCanvasOverlay *{transition:none!important;animation:none!important}}
+
+/* Four pre-built lighting scenes, replacing only editable light settings. */
+#faInteriorLightEditor .fa-light-presets{padding:14px 0 18px;border-bottom:1px solid var(--fs-line,#565a60);margin:4px 0 16px}
+#faInteriorLightEditor .fa-light-presets>span{font-size:9px;letter-spacing:.15em;color:var(--fs-muted,#b7b9bc);font-weight:650}
+#faInteriorLightEditor .fa-light-presets>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+#faInteriorLightEditor .fa-light-presets button{border:1px solid var(--fs-line,#595b60);border-radius:7px;background:var(--fs-raised,#34363a);color:var(--fs-text,#eff0f2);font-size:11px;line-height:1.35;min-height:44px;padding:10px 8px;cursor:pointer}
+#faInteriorLightEditor .fa-light-presets button:hover{border-color:var(--fs-accent,#c1a77d)}
+#formaResultFocus .forma-result-actions:has([data-result-action="furniture"]:not([hidden])){grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:760px){#formaResultFocus .forma-result-actions:has([data-result-action="furniture"]:not([hidden])){grid-template-columns:repeat(2,minmax(0,1fr))}}
