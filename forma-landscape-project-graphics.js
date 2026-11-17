@@ -1,0 +1,117 @@
+/* FORMA Landscape Plan top-down vector previews. Every asset is orthographic,
+   scale independent, same exact geometry in plan and 1080×1080 library export.
+   These are deterministic previews; AI presentation is a separate layer. */
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const seeded=s=>{let x=0;for(const c of s)x=Math.imul(x^c.charCodeAt(0),16777619);return ()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return ((x>>>0)%100000)/100000}};
+const mix=(hex,change)=>{const n=parseInt(hex.slice(1),16),v=[n>>16&255,n>>8&255,n&255].map(c=>Math.max(0,Math.min(255,Math.round(c+change))));return '#'+v.map(c=>c.toString(16).padStart(2,'0')).join('')};
+const f=n=>Number(n).toFixed(2);
+const defs=()=>'<defs><radialGradient id="leaf"><stop stop-color="#e6edbe"/><stop offset=".45" stop-color="#9eae65"/><stop offset="1" stop-color="#45634b"/></radialGradient><radialGradient id="light"><stop stop-color="#fff7da" stop-opacity=".85"/><stop offset=".13" stop-color="#ffdc9c" stop-opacity=".5"/><stop offset="1" stop-color="#ffcb73" stop-opacity="0"/></radialGradient><radialGradient id="water"><stop stop-color="#6b9991"/><stop offset=".7" stop-color="#2c6167"/><stop offset="1" stop-color="#183c45"/></radialGradient><filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter><linearGradient id="rock" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f3e7d4"/><stop offset=".4" stop-color="#9c998f"/><stop offset="1" stop-color="#4b514c"/></linearGradient></defs>';
+const circle=(x,y,r,fill,extra='')=>'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="'+fill+'" '+extra+'/>';
+function foliage(entry){
+ const rand=seeded(entry.id);const shrub=entry.group==='shrubs';const pine=['pine','conifer'].includes(entry.shape)||entry.id.includes('juniper')||entry.id.includes('thuja');
+ const blossom=['hydrangea','spirea','lavender','flower'].some(w=>entry.id.includes(w)||entry.shape===w);
+ const isBirch=entry.shape==='birch',isWillow=entry.shape==='willow';
+ let out=circle(83,86,62,'#111b17','opacity=".22" filter="url(#shadow)"');
+ const rings=shrub?3:4,radius=shrub?60:68;
+ for(let k=rings;k>=0;k--){
+  const rr=radius-(rings-k)*7;
+  const count=(shrub?100:150)+(rings-k)*12;
+  for(let i=0;i<count;i++){
+   const a=rand()*Math.PI*2,d=Math.sqrt(rand())*rr;
+   const x=80+Math.cos(a)*d,y=78+Math.sin(a)*d;
+   const size=(pine?2.2:3.4)+rand()*(pine?5.2:6.2);
+   const shade=mix(entry.color,(rand()-.5)*72+(k===rings?-18:16));
+   if(pine){
+    const len=size*(1.6+rand()),angle=rand()*360;
+    out+='<path d="M'+f(x)+' '+f(y)+'l'+f(Math.cos(angle*Math.PI/180)*len)+' '+f(Math.sin(angle*Math.PI/180)*len)+'" stroke="'+shade+'" stroke-width="'+f(.5+rand()*1.5)+'" stroke-linecap="round" opacity=".94"/>';
+   }else{
+    const rot=rand()*180;
+    out+='<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="'+f(size*.7)+'" ry="'+f(size*(isWillow?2.2:1.2))+'" fill="'+shade+'" stroke="'+mix(shade,-22)+'" stroke-width=".3" transform="rotate('+f(rot)+' '+f(x)+' '+f(y)+')" opacity=".95"/>';
+   }
+  }
+ }
+ if(!shrub){
+  for(let i=0;i<14;i++){const a=rand()*6.28,l=10+rand()*43;
+   out+='<path d="M80 78Q'+f(80+Math.cos(a)*l*.35)+' '+f(78+Math.sin(a)*l*.35)+' '+f(80+Math.cos(a)*l)+' '+f(78+Math.sin(a)*l)+'" fill="none" stroke="'+(isBirch?'#d2cfc3':'#4b3827')+'" stroke-width="'+f(1+rand()*1.4)+'" opacity=".65"/>';
+  }
+ }
+ if(entry.id==='barberry'||entry.id==='rowan')for(let i=0;i<50;i++){const a=rand()*6.28,d=rand()*54;out+=circle(80+Math.cos(a)*d,78+Math.sin(a)*d,1.5+rand()*2.4,entry.id==='rowan'?'#b94924':'#9e3839','opacity=".95"')}
+ if(blossom||entry.id==='apple'||entry.id==='sakura'){for(let i=0;i<(entry.id==='lavender'?92:125);i++){const a=rand()*6.28,d=Math.sqrt(rand())*50;const col=entry.id==='lavender'?'#b7a5ec':entry.id==='sakura'?'#fae1eb':entry.id==='spirea'?'#edb7c7':entry.id==='hydrangea'?'#f4f0dc':'#f2bcd0';out+=circle(80+Math.cos(a)*d,78+Math.sin(a)*d,1.5+rand()*2.4,col,'opacity=".88"')}}
+ out+=circle(80,78,2,isBirch?'#f2ede0':'#58452f','opacity=".82"');
+ return out;
+}
+function stone(entry){const rand=seeded(entry.id);let result=circle(83,86,61,'#080c0c','opacity=".26" filter="url(#shadow)"');
+ const n=14,pts=Array.from({length:n},(_,i)=>{let a=i*2*Math.PI/n,r=45+rand()*23;return [80+Math.cos(a)*r,80+Math.sin(a)*r]});
+ result+='<polygon points="'+pts.map(([x,y])=>f(x)+','+f(y)).join(' ')+'" fill="'+entry.color+'" stroke="'+mix(entry.color,-38)+'" stroke-width="2.5"/>';
+ for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n],mx=70+rand()*23,my=66+rand()*32;result+='<polygon points="'+f(a[0])+','+f(a[1])+' '+f(b[0])+','+f(b[1])+' '+f(mx)+','+f(my)+'" fill="'+mix(entry.color,(rand()-.65)*95)+'" stroke="'+mix(entry.color,-28)+'" stroke-width=".45"/>'}
+ for(let i=0;i<230;i++){let a=rand()*6.283,d=Math.sqrt(rand())*49,x=80+Math.cos(a)*d,y=78+Math.sin(a)*d;result+=circle(x,y,.25+rand()*.8,rand()>.5?'#f0e6d1':'#262c2a','opacity=".28"')}
+ return result;
+}
+function floorSample(entry){
+ const rand=seeded(entry.id);let out='<rect x="7" y="7" width="146" height="146" rx="14" fill="'+entry.color+'"/>';
+ const type=entry.texture;
+ if(entry.group==='pavers'){
+  if(type==='herringbone'){
+   for(let y=0;y<10;y++)for(let x=0;x<11;x++){let px=x*18-9,py=y*18-9;out+='<rect x="'+px+'" y="'+py+'" width="17" height="9" fill="'+mix(entry.color,(rand()-.5)*36)+'" stroke="#e7dac8" stroke-opacity=".40" stroke-width="1" transform="rotate('+(x%2===0?45:-45)+' '+(px+8)+' '+(py+5)+')"/>'}
+  }else if(type==='radial'){
+   for(let ring=1;ring<7;ring++)for(let j=0;j<12+ring*6;j++){let count=12+ring*6,a=j/count*6.283,r=ring*15;out+='<path d="M80 80L'+f(80+Math.cos(a)*r)+' '+f(80+Math.sin(a)*r)+'" stroke="'+mix(entry.color,-22)+'" stroke-width=".5" opacity=".6"/>'}
+   for(let r=15;r<99;r+=15)out+='<circle cx="80" cy="80" r="'+r+'" fill="none" stroke="#e7e2db" stroke-opacity=".55" stroke-width="1"/>';
+  }else{
+   const step=type==='slabs'?43:type==='slate'?32:type==='grid'?26:19;
+   for(let y=-4;y<164;y+=step)for(let x=-4;x<164;x+=step){
+    let off=type==='setts'?Math.round(rand()*4):0,xx=x+(Math.floor(y/step)%2?step/2:0);
+    out+='<rect x="'+f(xx+1+off)+'" y="'+f(y+1)+'" width="'+f(step-3-off)+'" height="'+f(step-3)+'" rx="'+(type==='setts'?2:0)+'" fill="'+mix(entry.color,(rand()-.5)*37)+'" stroke="'+mix(entry.color,-21)+'" stroke-width=".7"/>';
+    if(type==='grid')out+='<rect x="'+f(xx+8)+'" y="'+f(y+7)+'" width="'+f(step-15)+'" height="'+f(step-14)+'" fill="#628749" rx="3"/>';
+   }
+  }
+ }else if(entry.group==='lawns'){
+  for(let i=0;i<1700;i++){const x=9+rand()*142,y=9+rand()*142,l=1+rand()*5;
+   out+='<path d="M'+f(x)+' '+f(y)+'l'+f((rand()-.5)*2)+' -'+f(l)+'" stroke="'+(rand()>.48?mix(entry.color,-36):mix(entry.color,30))+'" stroke-width=".7" opacity=".8"/>';
+   if(type==='meadow'&&rand()>.94)out+=circle(x,y,1.2,rand()>.4?'#ece7c9':'#bdacd6');
+  }
+ }else if(entry.group==='ponds'){
+  out='<rect x="7" y="7" width="146" height="146" rx="15" fill="url(#water)"/>';
+  for(let i=0;i<60;i++){let x=10+rand()*140,y=10+rand()*140;out+='<path d="M'+f(x)+' '+f(y)+'q6 -1 13 0" stroke="#c7e0d7" stroke-width=".7" opacity="'+f(.07+rand()*.18)+'" fill="none"/>'}
+  if(type==='bio'||type==='natural')for(let i=0;i<10;i++){let x=12+rand()*136,y=12+rand()*136;out+='<path d="M'+f(x)+' '+f(y)+'l4 -5 5 3-1 6-7 3Z" fill="#769c63" stroke="#3f6448" stroke-width=".6"/>'}
+  if(type==='formal')out+='<rect x="9" y="9" width="142" height="142" rx="2" fill="none" stroke="#aaa9a3" stroke-width="6"/>';
+ }else if(entry.group==='fills'){
+  for(let i=0;i<550;i++){
+   const x=9+rand()*142,y=9+rand()*142,r=(type==='bark'?1.5:1)+rand()*4;
+   if(type==='bark')out+='<path d="M'+f(x-r)+' '+f(y)+'l'+f(r*1.3)+' -'+f(r*.6)+' '+f(r*1.2)+' '+f(r*.7)+' -'+f(r*.8)+' '+f(r*.6)+'Z" fill="'+mix(entry.color,(rand()-.5)*68)+'" stroke="#523b2c" stroke-width=".4"/>';
+   else out+='<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="'+f(r)+'" ry="'+f(r*(.6+rand()*.8))+'" fill="'+mix(entry.color,(rand()-.5)*65)+'" stroke="'+mix(entry.color,-27)+'" stroke-width=".5"/>';
+  }
+ }
+ return '<g clip-path="url(#tileclip)">'+out+'</g>';
+}
+function light(entry){
+ const rand=seeded(entry.id);let out=circle(80,80,67,'url(#light)');const t=entry.texture;
+ if(t==='linear'){out+='<rect x="33" y="71" width="94" height="18" rx="4" fill="#34383a" stroke="#e1d5b9" stroke-width="2"/><rect x="39" y="77" width="82" height="6" rx="2" fill="#fff1c6"/>'}
+ else if(t==='deck'){out+='<rect x="58" y="58" width="44" height="44" rx="7" fill="#262d31" stroke="#b7a99b" stroke-width="2"/>'+circle(80,80,12,'#f6deb1');}
+ else if(t==='spot'){out+='<path d="M80 80L24 43Q9 80 24 117Z" fill="url(#light)" opacity=".7"/>'+circle(80,80,20,'#25292b')+circle(80,80,11,'#d7c298');}
+ else if(t==='post'){out+='<rect x="62" y="62" width="36" height="36" rx="7" fill="#292f33" stroke="#d0c09b" stroke-width="2"/>'+circle(80,80,10,'#eed6a8');}
+ else out+=circle(80,80,t==='bollard'?23:18,'#252b2d','stroke="#d4c398" stroke-width="2"')+circle(80,80,t==='ground'?10:7,'#ffe7bd');
+ for(let i=0;i<12;i++){const a=i*Math.PI/6,r=t==='linear'?53:40;out+='<path d="M'+f(80+Math.cos(a)*r)+' '+f(80+Math.sin(a)*r)+'l'+f(Math.cos(a)*13)+' '+f(Math.sin(a)*13)+'" stroke="#f5d9a3" stroke-opacity=".27" stroke-width="1.2"/>'}
+ return out;
+}
+export function assetGraphic(entry){
+ if(!entry)return '';
+ if(entry.group==='trees'||entry.group==='shrubs')return foliage(entry);
+ if(entry.group==='boulders')return stone(entry);
+ if(entry.group==='lights')return light(entry);
+ return floorSample(entry);
+}
+export function assetSVG(entry,{size=1080,transparent=false}={}){
+ const content=assetGraphic(entry);
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 160 160" role="img" aria-label="'+esc(entry.name)+'"><defs><clipPath id="tileclip"><rect x="7" y="7" width="146" height="146" rx="14"/></clipPath></defs>'+defs()+(transparent?'':'<rect x="0" y="0" width="160" height="160" fill="#222426"/>')+content+'</svg>';
+}
+export const iconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
+export function roofingSVG(house){
+ const w=house.width,h=house.height,r=house.roofColor||'#3d4245',roof=house.roof;
+ const halfW=w/2,halfH=h/2,edge=1;
+ let body='<rect x="'+(-halfW)+'" y="'+(-halfH)+'" width="'+w+'" height="'+h+'" rx=".08" fill="'+r+'" stroke="#e3dacf" stroke-width=".12"/>';
+ if(roof==='gable')body+='<path d="M'+(-halfW)+' 0H'+halfW+'" stroke="#c0b4a6" stroke-width=".12"/><path d="M'+(-halfW)+' '+(-halfH)+'L'+(-halfW)+' 0L'+halfW+' 0L'+halfW+' '+(-halfH)+'Z" fill="#ffffff" fill-opacity=".09"/><path d="M'+(-halfW)+' 0V'+halfH+'H'+halfW+'V0" fill="#080909" fill-opacity=".14"/>';
+ if(roof==='hip')body+='<path d="M'+(-halfW)+' '+(-halfH)+'L'+(-halfW+.23*w)+' 0L'+(-halfW)+' '+halfH+'M'+halfW+' '+(-halfH)+'L'+(halfW-.23*w)+' 0L'+halfW+' '+halfH+'M'+(-halfW+.23*w)+' 0H'+(halfW-.23*w)+'" stroke="#e0d9cb" stroke-width=".12" fill="none"/>';
+ if(roof==='flat')body+='<rect x="'+(-halfW+edge*.3)+'" y="'+(-halfH+edge*.3)+'" width="'+(w-edge*.6)+'" height="'+(h-edge*.6)+'" fill="none" stroke="#b7afa4" stroke-width=".12"/>';
+ body+='<path d="M'+(-halfW*.32)+' '+halfH+'V'+(halfH+1.15)+'H'+(halfW*.3)+'V'+halfH+'" fill="#bb9d72" stroke="#826943" stroke-width=".1"/>';
+ return body;
+}
