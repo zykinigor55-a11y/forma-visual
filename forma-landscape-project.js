@@ -169,13 +169,17 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
  }
  function title(){return (doc.title||'landscape').replace(/[^0-9a-zа-яё_-]/gi,'_').slice(0,48)}
  async function rasterize(labels){
-  const raw=drawSvg().replace('id="lpSvg"','id="exportedPlan"').replace('width="1400" height="1400"','width="2048" height="2048"');
-  const svg=labels?raw:raw.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g,'');
+  const w=doc.site.width,h=doc.site.height;
+  const width=w>=h?2048:Math.max(1,Math.round(2048*w/h));
+  const height=h>=w?2048:Math.max(1,Math.round(2048*h/w));
+  // An AI revision always starts from the measured vector geometry, never a previous AI variation.
+  const previous=preview;if(!labels)preview=null;
+  let raw;try{raw=drawSvg()}finally{preview=previous}
+  const svg=(labels?raw:raw.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g,'')).replace('id="lpSvg"','id="exportedPlan"').replace('width="1400" height="1400"','width="'+width+'" height="'+height+'"');
   const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
   try{const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(Error('SVG не открылся'));im.src=url});
-   const w=doc.site.width,h=doc.site.height,c=document.createElement('canvas');
-   c.width=w>=h?2048:Math.round(2048*w/h);c.height=h>=w?2048:Math.round(2048*h/w);
-   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+   const c=document.createElement('canvas');c.width=width;c.height=height;
+   c.getContext('2d').drawImage(img,0,0,width,height);
    return c.toDataURL('image/png');
   }finally{URL.revokeObjectURL(url)}
  }
