@@ -41,7 +41,7 @@ function texture(THREE,key,base){
   }
   for(let i=0;i<520;i++){const p=random()*512,q=random()*512;line(p,q,p+(horizontal?14:0.7),q+(horizontal?1:27),'rgba(5,8,5,.075)',random()*1.8)}
  }else if(n==='standing'){
-  for(let i=2;i<512;i+=68){line(i,0,i,512,'#10191E',4);line(i+4,0,i+4,512,'rgba(192,204,208,.20)',2)}
+  for(let i=2;i<512;i+=68){line(i,0,i,512,'#344147',5);line(i+5,0,i+5,512,'rgba(216,228,225,.32)',2)}
  }else if(n==='tile'){
   for(let y=0;y<512;y+=26){line(0,y,512,y,'rgba(10,12,15,.5)',2);
    for(let x=(Math.floor(y/26)%2)*22;x<512;x+=44){line(x,y,x,y+26,'rgba(7,12,17,.18)',1.5)}
@@ -122,6 +122,17 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
  if(gable){
   roofPlane(g,T,run,depth,-half/2,bodyHeight+rise/2+.07,angle,roofMaterial);
   roofPlane(g,T,run,depth,half/2,bodyHeight+rise/2+.07,-angle,roofMaterial);
+  if(roofFinish==='standing'){
+   // True standing-seam ribs run down the slope; they catch light separately
+   // from the painted roof texture and retain the same measured roof planes.
+   const rib=mat(T,'#4F5B5C',.43,.62);
+   for(let z=-depth/2+.27;z<depth/2;z+=.58){
+    for(const side of [-1,1]){
+     const bar=box(g,T,run,.018,.028,side*half/2,bodyHeight+rise/2+.087,z,rib);
+     bar.rotation.z=side<0?angle:-angle;
+    }
+   }
+  }
   for(const x of [-half,half])edgeBeam(g,T,[x,bodyHeight+.08,-depth/2],[0,bodyHeight+rise+.08,-depth/2],.065,dark);
   edgeBeam(g,T,[0,bodyHeight+rise+.08,-depth/2],[0,bodyHeight+rise+.08,depth/2],.10,dark);
   for(const x of [-half,half]){
@@ -169,7 +180,9 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const roofTex=texture(THREE,roofKey,roofTint).clone();
  wallTex.needsUpdate=true;roofTex.needsUpdate=true;
  const wallMaterial=mat(THREE,'#FFFFFF',.86,.02,wallTex);
- const roofMaterial=mat(THREE,b.roofColor||'#F1F1F1',preset.roofFinish==='standing'?.36:.69,.42,roofTex);
+ const roofColor=new THREE.Color(b.roofColor||'#394348');
+ roofColor.lerp(new THREE.Color('#FAFAFA'),.69);
+ const roofMaterial=mat(THREE,roofColor,preset.roofFinish==='standing'?.36:.69,.42,roofTex);
  wallTex.repeat.set(Math.max(1,w/3.6),Math.max(1,bodyHeight/2.2));
  roofTex.repeat.set(Math.max(1,w/2.8),Math.max(1,d/3.4));
  // Exact footprint is represented by the house body. Decorative overhang is not
