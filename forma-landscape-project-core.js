@@ -58,10 +58,10 @@ export const CATALOG=Object.freeze([
  ['linear','Линейный в мощении','#ffcf8f','linear']
  ].map(([id,name,color,texture])=>({id,group:'lights',name,color,diameter:.25,texture})),
  ...[
- ['formal','Партерный газон','#79a24e','formal'],
- ['universal','Универсальный газон','#779853','universal'],
- ['shade','Теневыносливый газон','#4c7950','shade'],
- ['meadow','Луговой газон','#769b4b','meadow']
+ ['formal','Коротко стриженный · партерный газон','#79a24e','formal'],
+ ['universal','Универсальный газон · классический','#779853','universal'],
+ ['shade','Теневыносливый газон · плотный','#4c7950','shade'],
+ ['meadow','Луговой газон · разнотравье','#769b4b','meadow']
  ].map(([id,name,color,texture])=>({id,group:'lawns',name,color,texture})),
  ...[
  ['natural','Природный пруд','#406d66','natural'],
