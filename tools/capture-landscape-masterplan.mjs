@@ -50,6 +50,15 @@
  await desktop.waitForFunction(()=>document.querySelector('[data-asset="granite-boulder"] img')?.currentSrc.includes('/landscape-card-photo/granite-boulder.jpg?'),null,{timeout:20000});
  await desktop.waitForTimeout(200);
  await desktop.screenshot({path:`${folder}/forma-landscape-boulders.png`,fullPage:false});
+ await desktop.locator('[data-category="lights"]').click();
+ await desktop.waitForFunction(()=>document.querySelector('[data-asset="bollard"] img')?.currentSrc.includes('/landscape-card-photo/bollard.jpg?'),null,{timeout:20000});
+ await desktop.screenshot({path:`${folder}/forma-landscape-lights.png`,fullPage:false});
+ await desktop.locator('[data-category="ponds"]').click();
+ await desktop.waitForFunction(()=>document.querySelector('[data-asset="natural"] img')?.currentSrc.includes('/landscape-card-photo/natural.jpg?'),null,{timeout:20000});
+ await desktop.screenshot({path:`${folder}/forma-landscape-ponds.png`,fullPage:false});
+ await desktop.locator('[data-category="boulders"]').click();
+ await desktop.waitForFunction(()=>document.querySelector('[data-asset="granite-boulder"] img')?.currentSrc.includes('/landscape-card-photo/granite-boulder.jpg?'),null,{timeout:20000});
+
  const mobile=await browser.newPage({viewport:{width:430,height:932},deviceScaleFactor:1,isMobile:true,hasTouch:true});
  await setup(mobile);
  await mobile.screenshot({path:`${folder}/forma-landscape-project-mobile.png`,fullPage:false});
