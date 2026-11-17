@@ -6,9 +6,9 @@
 const $=(q,root=document)=>root.querySelector(q);
 const $$=(q,root=document)=>[...root.querySelectorAll(q)];
 const getAPI=()=>window.FORMA_NODES;
-const AI_TYPES=new Set(['exterior','interior','lighting','materials']);
+const AI_TYPES=new Set(['exterior','orbit','interior','lighting','materials']);
 const BLOCKED_TYPES=new Set(['image3d']);
-const AVAILABLE_TYPES=new Set(['source','exterior','interior','lighting','materials','geometry','upscale','video','export']);
+const AVAILABLE_TYPES=new Set(['source','exterior','orbit','interior','lighting','materials','geometry','upscale','video','export']);
 const LABELS={running:'ВЫПОЛНЯЕТСЯ',done:'ГОТОВО',error:'ОШИБКА',cancelled:'ОСТАНОВЛЕНО'};
 const LIGHTS={sunny:'Солнечный день',golden:'Золотой час',overcast:'Пасмурно',blue:'Синий час',rain:'После дождя',winter:'Зима',night:'Ночь'};
 const ZONES={main:'Стены фасада',accent:'Декоративная отделка',base:'Цоколь',roof:'Кровля',windows:'Оконные рамы',doors:'Двери',terrace:'Терраса',steps:'Ступени',custom:'Другой участок'};
@@ -48,6 +48,7 @@ function checkPlan(g,target,resumeNodes=new Set()){
  const unknown=path.find(n=>!AVAILABLE_TYPES.has(n.type));
  if(unknown)throw Error('Тип «'+unknown.type+'» пока не исполняется.');
  const invalid=path.find(n=>n.type==='materials'&&(n.options?.materialSource==='texture'?!getAPI()?.getTexture?.(n.id):!String(n.options?.instruction||'').trim()&&(!n.options?.material||n.options.material==='custom')));
+ if(path.some(n=>n.type==='orbit'&&n.options?.orbitMode==='cad'&&!getAPI()?.getTexture?.(n.id)))throw Error('Для ноды «Другой ракурс» загрузите CAD-скриншот нового вида.');
  if(invalid)throw Error('Для ноды «Материалы» напишите конкретную инструкцию по редактированию.');
  const warnings=[];
  for(const n of path){
@@ -123,6 +124,17 @@ function settingsHTML(n){
    controls.push(textarea('changes','Дополнительные изменения',opts.changes,'Только явно указанные изменения; остальное оставить как в оригинале',3));
  };
  if(n.type==='exterior'){scene();}
+ if(n.type==='orbit'){
+  controls.push(group('Камера вокруг дома','Тот же дом, участок и освещение. Только точка съёмки другая.'));
+  controls.push('<div class="fa-node-two-col">'+select('orbitDirection','Направление',{left:'↶ Влево',right:'Вправо ↷'},getOpt(n,'orbitDirection','right'))+select('orbitDegrees','Поворот',{'30':'30°','45':'45°','90':'90°'},getOpt(n,'orbitDegrees','30'))+'</div>');
+  controls.push(select('orbitMode','Источник геометрии',{inferred:'AI-поворот · приблизительно',cad:'Свой CAD-скриншот нового вида'},getOpt(n,'orbitMode','inferred')));
+  if(getOpt(n,'orbitMode','inferred')==='cad'){
+   controls.push('<label>Скриншот нового ракурса PNG/JPG/WEBP<input type="file" data-fa-orbit-cad accept="image/png,image/jpeg,image/webp"></label>');
+   const cad=getAPI()?.getTexture?.(n.id);
+   controls.push(cad?'<p>CAD-ракурс загружен. Он задаст геометрию и камеру.</p>':'<p>До запуска загрузите отдельный новый вид здания.</p>');
+  }
+  controls.push('<p>Рендер предыдущей ноды задаёт расположение растений, дорожек, материалов и света. Без CAD невидимые стороны приблизительные.</p>');
+ }
  if(n.type==='lighting'){
    scene();
    controls.push('<p>Этап меняет атмосферу предыдущего кадра. Материалы и архитектуру следует сохранять.</p>');
@@ -201,7 +213,16 @@ function showSelection(){
    lights[index][key]=limits[key]?Math.min(limits[key][1],Math.max(limits[key][0],Number(lightField.value))):lightField.value;
    getAPI().setOptions(n.id,{interiorLights:lights});lightField.value=lights[index][key];return;
   }
-  if(event.target.matches?.('[data-fa-material-texture]')){
+  if(event.target.matches?.('[data-fa-orbit-cad]')){
+    const file=event.target.files?.[0],id=graph()?.selected;if(!file)return;
+    try{
+     if(file.size>14*1024*1024||file.size<100||!/^image\/(png|jpeg|webp)$/.test(file.type))throw Error('Нужен PNG/JPG/WEBP до 14 МБ.');
+     const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+     if(graph()?.selected!==id||busy||preparing)throw Error('Выбранный этап изменился.');
+     await getAPI().setTexture(id,data);getAPI().setOptions(id,{orbitMode:'cad'});showSelection();tell('Скриншот нового вида загружен для этой ноды.');
+    }catch(e){tell(e.message||'Скриншот не загружен.')}return;
+   }
+   if(event.target.matches?.('[data-fa-material-texture]')){
    const file=event.target.files?.[0],id=graph()?.selected;if(!file)return;
    try{if(file.size>5*1024*1024||!/^image\/(png|jpeg|webp)$/.test(file.type))throw Error('Выберите PNG, JPG или WEBP до 5 МБ.');
     const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
@@ -214,7 +235,7 @@ function showSelection(){
   const key=field.dataset.nodeOption;
   getAPI()?.setOptions?.(graph()?.selected,{[key]:field.type==='checkbox'?field.checked:field.value,...(key==='environment'?{environmentSubtype:'keep'}:{})});
   if(key==='materialSource'&&field.value==='catalog'&&(!graph().nodes.find(n=>n.id===graph().selected)?.options?.material||graph().nodes.find(n=>n.id===graph().selected)?.options?.material==='custom'))getAPI().setOptions(graph().selected,{material:'plaster'});
-  if(['environment','materialSource'].includes(key))showSelection();
+  if(['environment','materialSource','orbitMode'].includes(key))showSelection();
  });
  host.addEventListener('input',event=>{
   const field=event.target.closest('textarea[data-node-option]');
@@ -264,7 +285,8 @@ async function imageAI(source,brief,ctx,options={}){
     image:source,brief,quantity:1,size:({'16:9':'1536x864','3:2':'1536x1024','4:3':'1360x1024','1:1':'1024x1024','9:16':'864x1536'})[brief.output?.ratio]||ctx.size,quality:brief.output?.quality||ctx.quality,
     selectedZone:options.selectedZone||null,zoneId:options.zoneId||null,
     editMode:options.editMode||null,editAction:options.editAction||null,
-    materialInstruction:options.materialInstruction||null,material:options.material||null,materialName:options.materialName||null
+    materialInstruction:options.materialInstruction||null,material:options.material||null,materialName:options.materialName||null,
+     cameraOrbit:options.cameraOrbit||null,reference:options.reference||null
    })
   });
   const data=await r.json().catch(()=>({}));
@@ -377,6 +399,7 @@ function briefFor(ctx,previousMode,n){
  b.sceneType=previousMode;b.homeChanges='';
  if(['exterior','interior','lighting'].includes(n.type)){b.atmosphere=null;b.sunLighting=null;b.lightingPreset=null;}
  if(n.type==='exterior')b.sceneType='exterior';
+ if(n.type==='orbit'){b.sceneType='exterior';b.homeChanges='';b.lockGeometry=true;b.preserveMaterials=true;b.sceneMood=null;b.atmosphere=null;}
  if(n.type==='interior'){
   b.sceneType='interior';b.room=o.room||'living';b.style=o.style||'as-is';
   b.lighting=o.lighting||'soft-daylight';b.furniture='preserve';b.interiorLights=o.interiorLights||[];
@@ -485,7 +508,7 @@ async function runTo(target,resume=false){
     else{
      const materialChoice=n.options?.materialSource!=='text'&&n.options?.materialSource!=='texture'&&n.options?.material&&n.options.material!=='custom'?MATERIALS[n.options.material]:'';
      const instruction=[materialChoice?'Заменить отделку на '+materialChoice+'. Не изменять другие элементы.':'',String(n.options?.instruction||''),n.options?.materialSource==='texture'?'Использовать приложенную фактуру как образец материала, сохранив освещение и геометрию. Масштаб рисунка '+(n.options.textureScale||100)+'%, поворот '+(n.options.textureRotation||0)+'°.':''].filter(Boolean).join(' ').slice(0,500);
-     const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:instruction,material:n.options?.materialSource==='texture'?api.getTexture?.(n.id):null,materialName:n.options?.textureName||materialChoice}:{};
+     const opts=n.type==='materials'?{selectedZone:ZONES[n.options?.zone]||ZONES.custom,zoneId:n.options?.zone||'custom',editMode:'text',editAction:'material',materialInstruction:instruction,material:n.options?.materialSource==='texture'?api.getTexture?.(n.id):null,materialName:n.options?.textureName||materialChoice}:n.type==='orbit'?{cameraOrbit:{direction:n.options?.orbitDirection||'right',degrees:Number(n.options?.orbitDegrees||30),sourceMode:n.options?.orbitMode==='cad'?'cad':'inferred'},reference:n.options?.orbitMode==='cad'?api.getTexture?.(n.id):null}:{};
      output=await imageAI(output,brief,ctx,opts);aiCompleted++;lastAI=n.title||n.type;
     }
    }else if(n.type==='video'){
