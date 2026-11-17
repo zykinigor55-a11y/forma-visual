@@ -111,8 +111,13 @@ let premiumExtension='webp';
 export const PHOTO_ASSETS=Object.freeze({
  birch:'birch.png',oak:'oak.png',pine:'pine.png',
  dogwood:'dogwood.png',juniper:'juniper.png',
- formal:'formal.jpg','granite-chips':'granite-chips.jpg',
- 'pine-bark':'pine-bark.jpg','concrete-pavers':'concrete-pavers.jpg'
+ formal:'formal.jpg',universal:'universal.jpg',shade:'shade.jpg',meadow:'meadow.jpg',
+ 'granite-chips':'granite-chips.jpg','marble-chips':'marble-chips.jpg',
+ 'river-pebble':'river-pebble.jpg','slate-chips':'slate-chips.jpg',
+ 'pine-bark':'pine-bark.jpg',
+ 'concrete-pavers':'concrete-pavers.jpg','granite-setts':'granite-setts.jpg',
+ 'clinker-herringbone':'clinker-herringbone.jpg','slate-pavers':'slate-pavers.jpg',
+ 'radial-setts':'radial-setts.jpg','grass-grid':'grass-grid.jpg'
 });
 const availablePhotos=new Set();
 const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-v1';
