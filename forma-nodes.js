@@ -5,6 +5,7 @@ const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelecto
 const TYPES={
  source:{title:'Исходник',icon:'▧',kind:'Источник',out:'image',action:'project',text:'Скетч или CAD-скриншот'},
  exterior:{title:'Экстерьер',icon:'⌂',kind:'Рендер',input:'image',out:'image',action:'environment',text:'Дом и участок'},
+ orbit:{title:'Другой ракурс',icon:'↻',kind:'Камера',input:'image',out:'image',action:'orbit',text:'Тот же участок · новая перспектива'},
  interior:{title:'Из скетча в фото',icon:'▣',kind:'Интерьер',input:'image',out:'image',action:'interior',text:'Из скетча в фото'},
  lighting:{title:'Свет / сезоны',icon:'☼',kind:'Сцена',input:'image',out:'image',action:'environment',text:'Дневной, пасмурный, вечер'},
  materials:{title:'Материалы',icon:'▤',kind:'Правки',input:'image',out:'image',action:'materials',text:'Маски и локальные изменения'},
@@ -18,6 +19,7 @@ const TYPES={
 const ICON_PATHS={
  source:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h5M8 15h8"/>',
  exterior:'<path d="m3 11 9-7 9 7v10H3V11Z"/><path d="M3 11h18M9 21v-7h6v7"/>',
+ orbit:'<path d="M19 13a7 7 0 1 1-3-7M16 2v5h5"/><path d="M9 14l3-3 3 3"/>',
  interior:'<path d="M4 21V4h16v17M4 9h16M8 21v-6h8v6"/>',
  lighting:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
  materials:'<path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/>',
@@ -91,7 +93,7 @@ async function restoreImages(){
   req.onsuccess=()=>{if(current()&&req.result instanceof Blob){videoBlobs.set(n.id,req.result);videoURLs.set(n.id,URL.createObjectURL(req.result))}resolve()};
   req.onerror=()=>resolve();
  })));
- await Promise.all(graph.nodes.filter(n=>n.type==='materials').map(n=>new Promise(resolve=>{const req=db.transaction('images','readonly').objectStore('images').get(mediaKey(n.id)+'__texture');req.onsuccess=()=>{if(current()&&req.result)textures.set(n.id,req.result);resolve()};req.onerror=()=>resolve()})));
+ await Promise.all(graph.nodes.filter(n=>['materials','orbit'].includes(n.type)).map(n=>new Promise(resolve=>{const req=db.transaction('images','readonly').objectStore('images').get(mediaKey(n.id)+'__texture');req.onsuccess=()=>{if(current()&&req.result)textures.set(n.id,req.result);resolve()};req.onerror=()=>resolve()})));
  if(modal&&current())redraw();
 }
 async function pinImage(id){
@@ -120,7 +122,7 @@ async function setSnapshot(id,image){
  redraw();
 }
 async function setTexture(id,image){
- if(node(id)?.type!=='materials'||!/^data:image\/(png|jpeg|webp);base64,/i.test(image))throw Error('Неверная фактура');
+ if(!['materials','orbit'].includes(node(id)?.type)||!/^data:image\/(png|jpeg|webp);base64,/i.test(image))throw Error('Неверная фактура или CAD-ракурс');
  const db=await mediaDB();if(!db)throw Error('Хранилище фактур недоступно');
  await new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.objectStore('images').put(image,mediaKey(id)+'__texture')});
  textures.set(id,image);invalidateFrom(id);save();
@@ -217,7 +219,7 @@ function redraw(){
   ${t.out?`<button type="button" class="fa-node-port output ${pending===n.id?'pending':''}" data-port-out="${esc(n.id)}" aria-label="Выход"></button>`:''}`;
   nodeLayer.append(card);
   const pic=$('.fa-node-picture',card);
-  if(n.type==='source'||['exterior','interior','lighting','materials','geometry','upscale','video','export'].includes(n.type)){
+  if(n.type==='source'||['exterior','orbit','interior','lighting','materials','geometry','upscale','video','export'].includes(n.type)){
    const ref=n.type==='source'&&window.FORMA_ART_BRIDGE?.snapshot()?.hasSource?$('#beforeImg'):null;
    const image=snapshots.get(n.id)||(ref&&(ref.currentSrc||ref.src))||'';
    if(image){pic.style.backgroundImage='linear-gradient(0deg,#161215cc,#2119140c),url("'+String(image).replace(/["']/g,'')+'")';pic.classList.add('has-image')}
@@ -323,7 +325,7 @@ async function importJSON(file){
   const ids=new Set(g.nodes.map(n=>n.id));
   if(ids.size!==g.nodes.length||!g.nodes.every(n=>TYPES[n.type]&&/^n\d+$/.test(n.id)&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Math.abs(n.x)<10000&&Math.abs(n.y)<10000&&String(n.title||'').length<90))throw Error();
   if(!g.edges.every(e=>ids.has(e.from)&&ids.has(e.to)))throw Error();
-  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:{...(Array.isArray(n.options?.interiorLights)?{interiorLights:n.options.interiorLights.slice(0,8).filter(x=>x&&typeof x==='object').map(x=>Object.fromEntries(Object.entries(x).filter(([k,v])=>['profile','placement','intensity','temperature','cone'].includes(k)&&['string','number'].includes(typeof v))))}:{}),...(typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|environmentSubtype|lens|quality|lockGeometry|preserveMaterials|changes|material|materialSource|textureName|textureScale|textureRotation|sourceName|cameraMove|target|format)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}),reuse:false,needsRun:true}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
+  graph={nodes:g.nodes.map(n=>({id:n.id,type:n.type,title:String(n.title||TYPES[n.type].title),x:n.x,y:n.y,options:{...(Array.isArray(n.options?.interiorLights)?{interiorLights:n.options.interiorLights.slice(0,8).filter(x=>x&&typeof x==='object').map(x=>Object.fromEntries(Object.entries(x).filter(([k,v])=>['profile','placement','intensity','temperature','cone'].includes(k)&&['string','number'].includes(typeof v))))}:{}),...(typeof n.options==='object'&&n.options&&!Array.isArray(n.options)?Object.fromEntries(Object.entries(n.options).filter(([k,v])=>/^(mood|room|style|lighting|zone|instruction|prompt|duration|ratio|overlay|environment|weather|season|time|plants|environmentInstructions|environmentSubtype|lens|quality|lockGeometry|preserveMaterials|changes|material|materialSource|textureName|textureScale|textureRotation|sourceName|cameraMove|target|format|orbitDirection|orbitDegrees|orbitMode)$/.test(k)&&['boolean','string'].includes(typeof v)).map(([k,v])=>[k,typeof v==='string'?v.slice(0,500):v])):{}),reuse:false,needsRun:true}})),edges:[],selected:g.nodes[0]?.id||null,pan:{x:60,y:50},zoom:.85,count:Math.max(0,...g.nodes.map(n=>Number(n.id.slice(1))))};
   graph.nodes.forEach(normalizeOptions);
   for(const e of g.edges)if(canLink(e.from,e.to)){graph.edges=graph.edges.filter(x=>x.to!==e.to);graph.edges.push({from:e.from,to:e.to})}
   pending=null;save();redraw();status('Рабочая схема загружена.');
