@@ -4,6 +4,8 @@ on:
     branches: [dom-render-nanobanana]
     paths:
       - 'forma-landscape-project*'
+      - 'forma-landscape-3d*'
+      - 'tests/landscape-3d-browser.verify.mjs'
       - 'tests/landscape-editor.verify.mjs'
       - 'tests/landscape-workflow.verify.mjs'
       - 'forma-landscape-brush.js'
@@ -27,6 +29,7 @@ jobs:
           node server.mjs > /tmp/forma-server.log 2>&1 &
           node tests/landscape-editor.verify.mjs
           node tests/landscape-workflow.verify.mjs
+          node tests/landscape-3d-browser.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
