@@ -217,6 +217,28 @@ function initialize(){
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
 function terrainAt(x,z){return heightAt(heightmap,GRID,doc.site.width,doc.site.height,x,z)}
+let cachedGroundTexture=null;
+function groundPhotoTexture(){
+ if(cachedGroundTexture)return cachedGroundTexture;
+ const c=document.createElement('canvas');c.width=c.height=512;
+ const ctx=c.getContext('2d'),img=ctx.createImageData(512,512);
+ let seed=72519;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return(seed>>>0)/4294967296};
+ for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+  const i=(y*512+x)*4,rough=Math.sin(x*.076)*3+Math.cos(y*.091)*4;
+  const v=Math.max(135,Math.min(242,185+rough+(random()-.5)*39));
+  img.data[i]=v;img.data[i+1]=v;img.data[i+2]=v;img.data[i+3]=255;
+ }
+ ctx.putImageData(img,0,0);
+ for(let i=0;i<12000;i++){
+  const x=random()*512,y=random()*512,thin=.3+random()*.65;
+  ctx.strokeStyle=random()<.55?'rgba(52,69,47,.16)':'rgba(245,251,224,.28)';
+  ctx.lineWidth=thin;ctx.beginPath();ctx.moveTo(x,y);
+  ctx.lineTo(x+(random()-.5)*2,y-2-random()*7);ctx.stroke();
+ }
+ const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=8;
+ cachedGroundTexture=texture;return texture;
+}
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
 function mark(group,key){group.userData.key=key;pickables.push(group);return group}
@@ -224,10 +246,13 @@ function rebuild(){
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
  pickables=[];
  const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
- geo.setAttribute('position',new THREE.BufferAttribute(terrainTriangles(doc.site,heightmap,GRID),3));
- geo.computeVertexNormals();
- const groundMat=material(doc.atmosphere.season==='winter'?'#cbd2ca':doc.atmosphere.season==='autumn'?'#8b9062':'#738d65');
- groundMat.side=THREE.DoubleSide;
+ const vertices=terrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
+ for(let i=0;i<vertices.length;i+=3){const j=i/3*2;uvs[j]=vertices[i]/w+.5;uvs[j+1]=vertices[i+2]/h+.5}
+ geo.setAttribute('position',new THREE.BufferAttribute(vertices,3));
+ geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));geo.computeVertexNormals();
+ const grass=groundPhotoTexture();grass.repeat.set(w/3.2,h/3.2);
+ const groundMat=material(doc.atmosphere.season==='winter'?'#CBD1C9':doc.atmosphere.season==='autumn'?'#B3B38C':'#9BAE88');
+ groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=false;terrainMesh.userData.ground=true;root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
