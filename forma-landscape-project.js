@@ -397,7 +397,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   const height=h>=w?2048:Math.max(1,Math.round(2048*h/w));
   // An AI revision always starts from the measured vector geometry, never a previous AI variation.
   const previous=preview,previousPhoto=photoVisible;if(!labels){preview=null;photoVisible=false;}
-  let raw;try{raw=drawSvg()}finally{preview=previous;photoVisible=previousPhoto}
+  let raw;try{raw=drawSvg(true)}finally{preview=previous;photoVisible=previousPhoto}
   const svg=await inlineSVGAssets((labels?raw:raw.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g,'')).replace('id="lpSvg"','id="exportedPlan"').replace('width="1400" height="1400"','width="'+width+'" height="'+height+'"'));
   const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
   try{const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(Error('SVG не открылся'));im.src=url});
@@ -516,7 +516,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   if(b.dataset.renderDownload!==undefined){if(preview){const a=document.createElement('a');a.href=preview;a.download=title()+'-visualization.'+(preview.startsWith('data:image/webp')?'webp':'png');document.body.append(a);a.click();a.remove();}return}
   if(b.dataset.ai!==undefined){runAI('plan');return}
   if(b.dataset.roof!==undefined){runAI('roof');return}
-  if(b.dataset.svg!==undefined){inlineSVGAssets(drawSvg()).then(svg=>{download(title()+'-genplan.svg',svg,'image/svg+xml');say('Сохранён самостоятельный SVG генплана с встроенными изображениями.');}).catch(err=>say('SVG: '+err.message));return}
+  if(b.dataset.svg!==undefined){inlineSVGAssets(drawSvg(true)).then(svg=>{download(title()+'-genplan.svg',svg,'image/svg+xml');say('Сохранён самостоятельный SVG генплана с встроенными изображениями.');}).catch(err=>say('SVG: '+err.message));return}
   if(b.dataset.png!==undefined){rasterize(true).then(src=>{const a=document.createElement('a');a.href=src;a.download=title()+'-2k.png';a.click()}).catch(err=>say('PNG: '+err.message));return}
   if(b.dataset.json!==undefined){download(title()+'-model.json',JSON.stringify(doc,null,2),'application/json');return}
   if(b.dataset.csv!==undefined){exportCSV();return}
@@ -581,6 +581,28 @@ import {brushPolygon} from './forma-landscape-brush.js';
    change(e);
   });
   modal.addEventListener('input',e=>{if(e.target.id==='lpBrushSize'){$('#lpBrushLabel',modal).textContent=Number(e.target.value).toFixed(2)+' м';}if(e.target.id==='lpWidth')drawMap()});
+  const canvasRegion=$('#lpMap',modal);
+  // Zooming is a VIEW-only transformation: all model coordinates, exports and AI
+  // references continue to use full measured dimensions.
+  canvasRegion?.addEventListener('wheel',e=>{
+   if(!e.target.closest('#lpSvg'))return;
+   e.preventDefault();
+   const centre=position(e);
+   zoomTo(viewScale*(e.deltaY<0?1.19:1/1.19),centre);
+  },{passive:false});
+  const touchDistance=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  canvasRegion?.addEventListener('touchstart',e=>{
+   if(mode!=='select'||e.touches.length!==2)return;
+   pinch={distance:Math.max(1,touchDistance(e.touches)),scale:viewScale};
+   brush=null;drag=null;
+  },{passive:true});
+  canvasRegion?.addEventListener('touchmove',e=>{
+   if(mode!=='select'||!pinch||e.touches.length!==2)return;
+   e.preventDefault();
+   const midpoint={clientX:(e.touches[0].clientX+e.touches[1].clientX)/2,clientY:(e.touches[0].clientY+e.touches[1].clientY)/2};
+   zoomTo(pinch.scale*touchDistance(e.touches)/pinch.distance,position(midpoint));
+  },{passive:false});
+  canvasRegion?.addEventListener('touchend',e=>{if(e.touches.length<2)pinch=null},{passive:true});
   modal.addEventListener('contextmenu',e=>{if(e.target.closest('#lpSvg')&&mode!=='select'){e.preventDefault();endDrawing();}});
   modal.addEventListener('dblclick',e=>{if(e.target.closest('#lpSvg')&&points.length>=(['path','strip'].includes(mode)?2:3)){e.preventDefault();finish();}});
   modal.addEventListener('cancel',e=>{e.preventDefault();if(!busy)close()});
