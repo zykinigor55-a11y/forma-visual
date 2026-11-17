@@ -128,7 +128,7 @@ export const lineLength=pts=>pts.slice(1).reduce((s,p,i)=>s+segmentLength(pts[i]
 export const polygonArea=pts=>pts.length<3?0:Math.abs(pts.reduce((s,p,i)=>s+p.x*pts[(i+1)%pts.length].y-pts[(i+1)%pts.length].x*p.y,0))/2;
 export const areaFor=(doc,item)=>{
  const group=byId(item.catalogId)?.group;
- if(group==='pavers'||(group==='fills'&&item.geometry==='strip'))return lineLength(item.points)*item.width;
+ if(group==='pavers'||(['fills','lawns'].includes(group)&&item.geometry==='strip'))return lineLength(item.points)*item.width;
  if(!['fills','lawns','ponds'].includes(group))return 0;
  const raw=Math.max(0,polygonArea(item.points)-(item.holes||[]).reduce((sum,shape)=>sum+polygonArea(shape),0));
  if(item.autoFill&&group==='lawns'){
