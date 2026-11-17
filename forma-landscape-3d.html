@@ -85,9 +85,15 @@ header .header-right button{padding:6px;font-size:10px}
  <hr><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
  <hr><div class="pair"><div><label>Участок, ширина м</label><input id="plotW" type="number" min="5" max="500" step=".5"></div><div><label>Длина, м</label><input id="plotH" type="number" min="5" max="500" step=".5"></div></div>
  <button class="action" id="resizePlot">Применить размеры</button>
+  <hr><h3>ЧЕРТЁЖ УЧАСТКА · ПОДЛОЖКА</h3>
+  <label for="sourceDrawing">Загрузить план (PNG / JPG / WEBP)</label><input id="sourceDrawing" type="file" accept="image/png,image/jpeg,image/webp">
+  <label for="underlayOpacity">Прозрачность подложки</label><input id="underlayOpacity" type="range" min="0" max="1" value=".5" step=".05">
+  <button class="action" id="removeDrawing">Убрать подложку</button>
+  <p class="muted">Чертёж — только визуальная подложка. Геометрия и размеры задаются отдельно.</p>
  <hr><button class="action" id="screenshot">↓ Снимок текущего 3D-ракурса</button>
   <button class="action primary" id="renderAi">✦ Фотореалистичный AI-рендер</button>
- <button class="action" id="exportJSON">Экспорт модели JSON</button>
+ <div class="pair"><div><label for="pdfPaper">Альбом PDF</label><select id="pdfPaper"><option value="A4">A4</option><option value="A3">A3</option></select></div><div><label>&nbsp;</label><button class="action" id="export3dPdf">↓ Скачать PDF</button></div></div>
+  <button class="action" id="exportJSON">Экспорт модели JSON</button>
  <p class="muted">Геометрия создаётся в 3D. GPT Image / Nano Banana подключаются после подготовки сцены и выбора камеры.</p>
 </div>
 <div id="hint">Мышь: вращение · колесо: масштаб · правая кнопка: движение камеры. Выберите инструмент слева и нажмите на участок.</div>
@@ -108,8 +114,8 @@ import {heightAt, inParcel, terrainTriangles, roofTriangles} from './forma-lands
 const $=s=>document.querySelector(s);
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
-const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid;
-let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor;
+const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid;
+let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0;const GRID=48;
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
@@ -157,7 +163,9 @@ function initialize(){
  scene.add(new THREE.HemisphereLight(0xffffff,0x52604e,2));
  const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
- drawTools();rebuild();resize();addEvents();setView('3d');animate();status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
+ drawTools();rebuild();resize();addEvents();setView('3d');animate();
+ const previousDrawing=localStorage.getItem(UNDERLAY);
+ if(previousDrawing)setUnderlay(previousDrawing,false);status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
@@ -174,6 +182,14 @@ function rebuild(){
  const groundMat=material(doc.atmosphere.season==='winter'?'#cbd2ca':doc.atmosphere.season==='autumn'?'#8b9062':'#738d65');
  groundMat.side=THREE.DoubleSide;
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=false;terrainMesh.userData.ground=true;root.add(terrainMesh);
+ if(underlayTexture?.image){
+  const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
+  for(let i=0;i<verts.length;i+=3){uv.push(verts[i]/w+.5,1-(verts[i+2]/h+.5));verts[i+1]+=.032}
+  drawingGeo.setAttribute('position',new THREE.BufferAttribute(verts,3));
+  drawingGeo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));drawingGeo.computeVertexNormals();
+  const drawing=new THREE.Mesh(drawingGeo,new THREE.MeshBasicMaterial({map:underlayTexture,transparent:true,opacity:Number($('#underlayOpacity')?.value||.5),side:THREE.DoubleSide,depthWrite:false}));
+  drawing.renderOrder=1;root.add(drawing);
+ }
  const outlinePoints=(doc.site.boundary?.length>=3?doc.site.boundary:[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}])
   .map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.14,v.z)});
  outlinePoints.push(outlinePoints[0].clone());
@@ -353,6 +369,44 @@ function place(world){
  }else extra.push({id:id(),type:state.placing,x:point.x,y:point.y,rotation:0});
  save();rebuild();
 }
+function setUnderlay(url,persist=true){
+ if(underlayTexture)underlayTexture.dispose();
+ const tex=new THREE.TextureLoader().load(url,()=>{rebuild();status('Чертёж наложен на 3D-участок. Координаты остаются в метрах.')},undefined,()=>status('Не удалось загрузить чертёж.'));
+ tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);
+ underlayTexture=tex;
+ if(persist){try{localStorage.setItem(UNDERLAY,url)}catch{status('Чертёж слишком большой для локального сохранения. Уменьшите изображение.')}}
+}
+async function importUnderlay(file){
+ if(!file)return;
+ if(!/^image\/(png|jpeg|webp)$/.test(file.type)){status('Загрузите PNG, JPG или WEBP.');return}
+ const source=URL.createObjectURL(file);
+ try{
+  const picture=new Image();picture.src=source;
+  await picture.decode();
+  const scale=Math.min(1,1600/Math.max(picture.width,picture.height));
+  const cv=document.createElement('canvas');cv.width=Math.round(picture.width*scale);cv.height=Math.round(picture.height*scale);
+  cv.getContext('2d',{alpha:false}).drawImage(picture,0,0,cv.width,cv.height);
+  setUnderlay(cv.toDataURL('image/jpeg',.78));
+ }catch(e){status('Не удалось открыть чертёж: '+e.message)}
+ finally{URL.revokeObjectURL(source)}
+}
+async function export3dPdf(){
+ const button=$('#export3dPdf');button.disabled=true;status('Подготавливаем измеряемый генплан и PDF-ведомости…');
+ try{
+  const ratio=Math.max(.5,canvas.clientWidth/Math.max(1,canvas.clientHeight)),half=Math.max(doc.site.width,doc.site.height)*.55;
+  const top=new THREE.OrthographicCamera(-half*ratio,half*ratio,half,-half,.1,700);
+  top.position.set(0,200,.001);top.up.set(0,0,-1);top.lookAt(0,0,0);
+  const draft=root.getObjectByName('preview-contour');if(draft)draft.visible=false;
+  renderer.render(scene,top);const plan=renderer.domElement.toDataURL('image/png');
+  if(draft)draft.visible=true;renderer.render(scene,camera);
+  const {buildLandscapeAlbum}=await import('./forma-landscape-pdf.js');
+  const blob=await buildLandscapeAlbum(doc,plan,null,{format:$('#pdfPaper').value});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='FORMA-landscape-3d-album.pdf';
+  link.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
+  status('PDF-альбом готов: точный план участка и ведомости из 2D/3D модели.');
+ }catch(e){status('PDF: '+(e?.message||'Ошибка создания альбома'))}
+ finally{button.disabled=false}
+}
 async function renderAi(){
  const btn=$('#renderAi');
  if(btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
@@ -426,6 +480,10 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
+ $('#export3dPdf').onclick=export3dPdf;
+ $('#sourceDrawing').onchange=e=>importUnderlay(e.target.files?.[0]);
+ $('#underlayOpacity').onchange=()=>{if(underlayTexture)rebuild()};
+ $('#removeDrawing').onclick=()=>{localStorage.removeItem(UNDERLAY);underlayTexture?.dispose();underlayTexture=null;rebuild();status('Чертёж убран. Геометрия проекта не изменена.');};
  $('#finishContour').onclick=finishContour;
  $('#cancelContour').onclick=()=>{pointMode=[];refreshDraft();status('Черновой контур отменён.');};
  $('#exportJSON').onclick=()=>{const data=JSON.stringify({schema:'FORMA-landscape-3d-v1',project:doc,extra,terrain:{grid:GRID,values:heightmap}},null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='FORMA-landscape-3d.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
