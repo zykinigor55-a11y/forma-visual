@@ -58,9 +58,9 @@ test('GPT 2.6 prompt for masterplan is strictly orthographic and never lets AI m
  const d=coordinateSummary(freshProject());
  const prompt=masterplanPrompt({...d,style:'modern'});
  assert.match(prompt,/TRUE ORTHOGRAPHIC 90-DEGREE/);
- assert.match(prompt,/pixel-aligned positions/);
- assert.match(prompt,/never wall sconces/);
- assert.match(prompt,/presentation art only/i);
+ assert.match(prompt,/HARD GEOMETRY LOCK/);
+ assert.match(prompt,/no wall sconces/i);
+ assert.match(prompt,/image-to-image MATERIAL AND LIGHTING REFINEMENT/);
  assert.match(prompt,/30.00m by 40.00m/);
  assert.throws(()=>masterplanPrompt({site:{width:0,height:3}}));
  const roof=topDownRoofPrompt({width:6,height:4,roof:'gable'});
@@ -85,7 +85,39 @@ test('front-end and server are wired to the dedicated GPT 2.6 landscape workflow
  assert.match(server,/needsLandscape\?LANDSCAPE_IMAGE_MODEL/);
  assert.doesNotMatch(server,/needsLandscape\?MODEL/);
  const {createPrompt,renderQuantity}=await import('../server.mjs');
- assert.match(createPrompt({landscapeMasterplan:coordinateSummary(freshProject())}),/MASTERPLAN PRESENTATION/);
+ assert.match(createPrompt({landscapeMasterplan:coordinateSummary(freshProject())}),/MASTERPLAN REALISM 3\.0/);
  assert.match(createPrompt({roofTopView:{width:6,height:4,roof:'gable'}}),/ORTHOGRAPHIC NADIR/);
  assert.equal(renderQuantity({landscapeMasterplan:coordinateSummary(freshProject()),quantity:4}),1);
+});
+
+test('Landscape tool UX: stop-path, two styles, edit drawn path material/width, visible lawns and lights, render theatre',()=>{
+ const editor=fs.readFileSync(new URL('../forma-landscape-project.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../forma-landscape-project.css',import.meta.url),'utf8');
+ assert.match(editor,/data-path-shape="free"/);
+ assert.match(editor,/data-path-shape="orthogonal"/);
+ assert.match(editor,/function endDrawing\(/);
+ assert.match(editor,/data-quick-category="lawns"/);
+ assert.match(editor,/data-quick-category="lights"/);
+ assert.match(editor,/object.catalogId/);
+ assert.match(editor,/object.width/);
+ assert.match(editor,/function pathPoint\(/);
+ assert.match(editor,/lpRenderOverlay/);
+ assert.match(editor,/forma:render-job-status/);
+ assert.match(editor,/lpRenderOutputImage/);
+ assert.match(editor,/id="lpPhotoToggle"/);
+ assert.match(css,/lp-render-overlay/);
+ assert.match(css,/lp-category-shortcuts/);
+});
+
+test('Realism prompt contains exact species and material schedule with coordinates',()=>{
+ const input=coordinateSummary({...freshProject(),objects:[
+  {id:'pine-test',catalogId:'pine',type:'trees',x:4,y:6,diameter:7,rotation:0},
+  {id:'path-test',catalogId:'granite-setts',type:'pavers',width:1.2,points:[{x:1,y:1},{x:1,y:8}]}
+ ]});
+ const p=masterplanPrompt(input);
+ assert.match(p,/Pinus sylvestris X=4\.00m Y=6\.00m crown=7\.00m/);
+ assert.match(p,/Колотая гранитная брусчатка actual paver joints/);
+ assert.match(p,/EXACT path width 1\.20m/);
+ assert.match(p,/BOTANICAL PHOTOREALISM/);
+ assert.match(p,/GLOBAL ILLUMINATION/);
 });
