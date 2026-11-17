@@ -466,7 +466,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
    if(b.dataset.areaMaterial){chosen=b.dataset.areaMaterial;category=itemCatalog().group;if(category==='lawns'){autoFillLawn();return}setMode('area');return}
   if(b.dataset.areaTool){areaTool=b.dataset.areaTool;points=[];brush=null;draw();revealCanvas();say(areaTool==='eraser'?'Ластик: проведите по газону, отсыпке или пруду.':areaTool==='brush'?'Проведите пальцем или мышью, без точек.':'Поставьте точки контура и нажмите «Завершить».');return}
   if(b.dataset.surfaceMode){setMode(b.dataset.surfaceMode==='strip'?'strip':'area');return}
-  if(b.dataset.category){category=b.dataset.category;chosen=CATALOG.find(x=>x.group===category).id;if(category==='lawns'){autoFillLawn();return}drawPalette();return}
+  if(b.dataset.category){const wasStrip=mode==='strip';category=b.dataset.category;chosen=CATALOG.find(x=>x.group===category).id;if(category==='lawns'){autoFillLawn();return}setMode(category==='pavers'?'path':category==='fills'&&wasStrip?'strip':['fills','ponds'].includes(category)?'area':'place');return}
   if(b.dataset.asset){const wasStrip=mode==='strip';chosen=b.dataset.asset;const g=itemCatalog().group;if(g==='lawns'){autoFillLawn();return}setMode(g==='pavers'?'path':g==='fills'&&wasStrip?'strip':['fills','ponds'].includes(g)?'area':'place');return}
   if(b.dataset.eraser!==undefined){mode='area';areaTool='eraser';points=[];brush=null;draw();revealCanvas();say('Ластик: проведите пальцем по части газона, отсыпки или пруда.');return}
    if(b.dataset.tool){setMode(b.dataset.tool);return}
