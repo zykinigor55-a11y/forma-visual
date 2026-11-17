@@ -192,7 +192,7 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
  }
  function title(){return (doc.title||'landscape').replace(/[^0-9a-zа-яё_-]/gi,'_').slice(0,48)}
  async function inlineSVGAssets(svg){
-  const paths=[...new Set([...svg.matchAll(/href="(\\/assets\\/landscape-(?:premium|photo)\\/[a-z0-9-]+\\.(?:png|jpe?g|webp)\\?[^"]*)"/gi)].map(m=>m[1]))];
+  const paths=[...new Set([...svg.matchAll(new RegExp('href="(/assets/landscape-(?:premium|photo)/[a-z0-9-]+[.](?:png|jpe?g|webp)[?][^"]*)"','gi'))].map(m=>m[1]))];
   if(!paths.length)return svg;
   const converted=await Promise.all(paths.map(async url=>{
    try{const r=await fetch(url,{cache:'force-cache'});if(!r.ok)return [url,null];const b=await r.blob();
