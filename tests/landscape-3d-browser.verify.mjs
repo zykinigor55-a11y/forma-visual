@@ -69,8 +69,12 @@ try{
  });
  assert.ok(brushData?.points?.length>=3,'Lawn brush saved continuous metric ribbon '+JSON.stringify(brushData));
  const previous=await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape'));
+ const orbitBefore=await page.locator('#viewport').evaluate(c=>c.toDataURL('image/png'));
  await page.mouse.move(bx,by);await page.mouse.down({button:'right'});
  await page.mouse.move(bx+80,by-35,{steps:8});await page.mouse.up({button:'right'});
+ await page.waitForTimeout(160);
+ const orbitAfter=await page.locator('#viewport').evaluate(c=>c.toDataURL('image/png'));
+ assert.notEqual(orbitAfter,orbitBefore,'Right mouse drag must actually rotate the 3D scene');
  assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),previous,'Right-drag camera orbit never edits lawn');
  await page.screenshot({path:'artifacts/landscape-editor/3d-lawn-brush.png'});
  await page.locator('[data-tool="surface"]').click();
