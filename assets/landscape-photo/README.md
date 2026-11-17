@@ -30,4 +30,25 @@
 
 Фотографические изображения созданы генеративной моделью; это визуальные материалы, а не научно подтверждённые ботанические фотографии. Названия, формы и виды растений нужно утверждать визуально до публикации.
 
-**Статус:** код поддержки файлов готов. Файлы из отдельного ZIP-архива нужно разместить в репозитории для их появления на публичном сайте. Нельзя считать каталог полностью заменённым, пока все 46 карточек не получили отдельные новые изображения.
+**Статус на 17.11.2026:** В `assets/landscape-photo/` установлены 15 JPG фотоматериалов и 17 индивидуальных прозрачных PNG для деревьев и кустарников. **PNG взяты из существующей программно сформированной библиотеки `assets/landscape-premium/` и не являются новыми фотореалистичными исходниками.** Референсные PNG из внешнего ZIP в репозитории не найдены. Полное обновление 46 карточек и качество фотореализма всё ещё требуют отдельной проверки.\n
+## Установленный пакет 17 ботанических PNG
+
+- `spruce.png` — перенесён без перекодирования из `assets/landscape-premium/spruce.png`.
+- `birch.png` — перенесён без перекодирования из `assets/landscape-premium/birch.png`.
+- `oak.png` — перенесён без перекодирования из `assets/landscape-premium/oak.png`.
+- `maple.png` — перенесён без перекодирования из `assets/landscape-premium/maple.png`.
+- `linden.png` — перенесён без перекодирования из `assets/landscape-premium/linden.png`.
+- `willow.png` — перенесён без перекодирования из `assets/landscape-premium/willow.png`.
+- `rowan.png` — перенесён без перекодирования из `assets/landscape-premium/rowan.png`.
+- `apple.png` — перенесён без перекодирования из `assets/landscape-premium/apple.png`.
+- `sakura.png` — перенесён без перекодирования из `assets/landscape-premium/sakura.png`.
+- `juniper.png` — перенесён без перекодирования из `assets/landscape-premium/juniper.png`.
+- `hydrangea.png` — перенесён без перекодирования из `assets/landscape-premium/hydrangea.png`.
+- `spirea.png` — перенесён без перекодирования из `assets/landscape-premium/spirea.png`.
+- `barberry.png` — перенесён без перекодирования из `assets/landscape-premium/barberry.png`.
+- `dogwood.png` — перенесён без перекодирования из `assets/landscape-premium/dogwood.png`.
+- `thuja-globe.png` — перенесён без перекодирования из `assets/landscape-premium/thuja-globe.png`.
+- `lavender.png` — перенесён без перекодирования из `assets/landscape-premium/lavender.png`.
+- `boxwood.png` — перенесён без перекодирования из `assets/landscape-premium/boxwood.png`.
+
+Сосна (`pine`) остаётся с действующим премиальным изображением и не входит в этот пакет из 17. Изображения в формате PNG 1080×1080 с прозрачностью по углам согласно существующей проверке генератора.

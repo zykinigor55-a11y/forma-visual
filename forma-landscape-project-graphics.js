@@ -106,11 +106,10 @@ export function assetSVG(entry,{size=1080,transparent=false}={}){
 }
 let premiumEnabled=false;
 let premiumExtension='webp';
-// Real authored 1080px replacements. Use only a species-matched photograph;
-// never show a generic shrub as a different botanical species.
+// Staged 1080 top-view PNGs are individual synthetic previews, not photographs.
+// JPG surface cards are photographic; never mislabel botanical previews as photos.
 export const PHOTO_ASSETS=Object.freeze({
- birch:'birch.png',oak:'oak.png',pine:'pine.png',
- dogwood:'dogwood.png',juniper:'juniper.png',
+ spruce:'spruce.png',birch:'birch.png',oak:'oak.png',maple:'maple.png',linden:'linden.png',willow:'willow.png',rowan:'rowan.png',apple:'apple.png',sakura:'sakura.png',juniper:'juniper.png',hydrangea:'hydrangea.png',spirea:'spirea.png',barberry:'barberry.png',dogwood:'dogwood.png','thuja-globe':'thuja-globe.png',lavender:'lavender.png',boxwood:'boxwood.png',pine:'pine.png',
  formal:'formal.jpg',universal:'universal.jpg',shade:'shade.jpg',meadow:'meadow.jpg',
  'granite-chips':'granite-chips.jpg','marble-chips':'marble-chips.jpg',
  'river-pebble':'river-pebble.jpg','slate-chips':'slate-chips.jpg',
@@ -124,21 +123,21 @@ const CARD_PHOTO_IDS=new Set(['bollard','ground','spot','low-post','deck-light',
 const availableCardPhotos=new Set();
 export const cardPhotoCount=()=>availableCardPhotos.size;
 export const cardPhotoURL=(entry)=>availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
-export const hasPhotographicCard=(entry)=>Boolean(entry&&(availableCardPhotos.has(entry.id)||availablePhotos.has(entry.id)));
+export const hasPhotographicCard=(entry)=>Boolean(entry&&(availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
 
-const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-v1';
-export const photographicAssetCount=()=>availablePhotos.size;
+const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-17-staged-v1';
+export const photographicAssetCount=()=>[...availablePhotos].filter(id=>PHOTO_ASSETS[id]?.endsWith('.jpg')).length;
 export const photographicIconURL=(entry)=>PHOTO_ASSETS[entry.id]?photoUrl(entry):null;
 export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
 export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.'+premiumExtension+'?v=1080-png-realgrass-v2';
 export const iconURL=(entry)=>availablePhotos.has(entry.id)?photoUrl(entry):(premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry));
-export const isPhotographic=(entry)=>Boolean(entry&&availablePhotos.has(entry.id));
+export const isPhotographic=(entry)=>Boolean(entry&&availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'));
 export async function enablePremiumAssets(){
  // Only enable a new photo after verifying that exact species/material exists.
  // A missing 1080 file must never break plant placement, previews or AI exports.
  await Promise.all(Object.entries(PHOTO_ASSETS).map(async([id,ext])=>{
   try{
-   const url='/assets/landscape-photo/'+ext+'?v=photo-1080-v1';
+   const url='/assets/landscape-photo/'+ext+'?v=photo-1080-17-staged-v1';
    const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
    const mime=(r.headers.get('Content-Type')||'').toLowerCase();
    if(r.ok&&(mime.startsWith('image/png')||mime.startsWith('image/jpeg')||!mime)){
