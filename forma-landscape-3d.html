@@ -108,7 +108,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 #tools{grid-template-columns:repeat(4,minmax(0,1fr))}
 #tools button{font-size:10px;padding:9px 3px}#tools button .glyph{font-size:16px}
 #library .choice{min-height:42px}
-#hint{left:9px;top:8px;right:9px;font-size:10px;padding:7px 9px}
+#hint{display:none}
 #status{bottom:calc(min(29dvh,250px) + 69px);font-size:10px;padding:7px 10px;max-width:calc(100% - 20px)}
 #right .buttons{grid-template-columns:repeat(3,1fr)}#right .pair{grid-template-columns:1fr 1fr}
 .house-style-list{grid-template-columns:repeat(2,minmax(0,1fr))}.house-style-list img,.house-style-list .house-fallback{height:105px}
@@ -131,7 +131,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <canvas id="viewport"></canvas>
 <div id="mobileWorkspaceTabs" aria-label="Мобильные панели">
  <button type="button" data-mobile-panel="tools" class="active">Инструменты</button>
- <button type="button" data-mobile-panel="details">Дома и параметры</button>
+ <button type="button" data-mobile-panel="details">Дома / параметры</button>
  <button type="button" data-mobile-panel="scene" aria-label="Скрыть панели и показать всю 3D-сцену">Сцена</button>
 </div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
