@@ -1,0 +1,132 @@
+/* FORMA Landscape Project — real-world geometry is authoritative.
+   Units are metres. AI is never trusted for measurements or object coordinates.
+ */
+export const GROUPS=Object.freeze([
+ {id:'shrubs',name:'Кустарники',qty:8,symbol:'◈'},
+ {id:'trees',name:'Деревья',qty:10,symbol:'♧'},
+ {id:'pavers',name:'Брусчатка',qty:6,symbol:'▤'},
+ {id:'fills',name:'Отсыпки',qty:5,symbol:'░'},
+ {id:'lights',name:'Светильники',qty:6,symbol:'☼'},
+ {id:'lawns',name:'Газоны',qty:4,symbol:'≋'},
+ {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
+ {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
+]);
+export const CATALOG=Object.freeze([
+ ...[
+ ['juniper','Можжевельник горизонтальный','#647d6b',1.8,'Juniperus horizontalis'],
+ ['hydrangea','Гортензия метельчатая','#96a773',1.6,'Hydrangea paniculata'],
+ ['spirea','Спирея японская','#9caa6e',1.2,'Spiraea japonica'],
+ ['barberry','Барбарис Тунберга','#874a4a',1.4,'Berberis thunbergii'],
+ ['dogwood','Дёрен белый','#869f6d',2.0,'Cornus alba'],
+ ['thuja-globe','Туя шаровидная','#3f6c55',1.4,'Thuja occidentalis globosa'],
+ ['lavender','Лаванда узколистная','#8b88af',0.8,'Lavandula angustifolia'],
+ ['boxwood','Самшит вечнозелёный','#587346',1.0,'Buxus sempervirens']
+ ].map(([id,name,color,diameter,latin])=>({id,group:'shrubs',name,color,diameter,latin,shape:'shrub'})),
+ ...[
+ ['pine','Сосна обыкновенная','#6a8160',7,'Pinus sylvestris','pine'],
+ ['spruce','Ель обыкновенная','#4b695a',5,'Picea abies','conifer'],
+ ['birch','Берёза повислая','#b2c49b',6,'Betula pendula','birch'],
+ ['oak','Дуб черешчатый','#64854d',10,'Quercus robur','broadleaf'],
+ ['maple','Клён остролистный','#829b49',8,'Acer platanoides','broadleaf'],
+ ['linden','Липа мелколистная','#93ae62',8,'Tilia cordata','broadleaf'],
+ ['willow','Ива плакучая','#91a45e',9,'Salix babylonica','willow'],
+ ['rowan','Рябина обыкновенная','#7a9c51',5,'Sorbus aucuparia','berries'],
+ ['apple','Яблоня декоративная','#aa9a78',5,'Malus ornamental','flower'],
+ ['sakura','Сакура','#d4a8bf',5,'Prunus serrulata','flower']
+ ].map(([id,name,color,diameter,latin,shape])=>({id,group:'trees',name,color,diameter,latin,shape})),
+ ...[
+ ['concrete-pavers','Крупноформатная плита','#b1ada2','slabs'],
+ ['granite-setts','Колотая гранитная брусчатка','#8d8b85','setts'],
+ ['clinker-herringbone','Клинкер · ёлочка','#a5745f','herringbone'],
+ ['slate-pavers','Сланец натуральный','#575957','slate'],
+ ['radial-setts','Брусчатка радиальная','#a59f93','radial'],
+ ['grass-grid','Газонная решётка','#889582','grid']
+ ].map(([id,name,color,texture])=>({id,group:'pavers',name,color,texture})),
+ ...[
+ ['marble-chips','Мраморная крошка','#dad4c3','marble'],
+ ['granite-chips','Гранитная крошка','#8c8d8b','granite'],
+ ['river-pebble','Речная галька','#b1a288','pebble'],
+ ['slate-chips','Сланцевая отсыпка','#4d5358','slate'],
+ ['pine-bark','Кора сосновая','#7b563d','bark']
+ ].map(([id,name,color,texture])=>({id,group:'fills',name,color,texture})),
+ ...[
+ ['bollard','Боллард дорожный','#e3bd80','bollard'],
+ ['ground','Встроенный в покрытие','#f2d4a2','ground'],
+ ['spot','Грунтовый прожектор','#ead0a3','spot'],
+ ['low-post','Низкий садовый столбик','#e6c395','post'],
+ ['deck-light','Встраиваемый террасный','#e5c390','deck'],
+ ['linear','Линейный в мощении','#ffcf8f','linear']
+ ].map(([id,name,color,texture])=>({id,group:'lights',name,color,diameter:.25,texture})),
+ ...[
+ ['formal','Партерный газон','#79a24e','formal'],
+ ['universal','Универсальный газон','#779853','universal'],
+ ['shade','Теневыносливый газон','#4c7950','shade'],
+ ['meadow','Луговой газон','#769b4b','meadow']
+ ].map(([id,name,color,texture])=>({id,group:'lawns',name,color,texture})),
+ ...[
+ ['natural','Природный пруд','#406d66','natural'],
+ ['formal-pond','Декоративный пруд','#3a6774','formal'],
+ ['bio-pond','Биопруд с растениями','#4e7b6d','bio']
+ ].map(([id,name,color,texture])=>({id,group:'ponds',name,color,texture})),
+ ...[
+ ['granite-boulder','Гранитный валун','#7b7c7b','granite',1.5],
+ ['limestone-boulder','Известняковый валун','#c0b59d','limestone',1.6],
+ ['slate-boulder','Слоистый сланец','#51595c','slate',1.7],
+ ['sandstone-boulder','Песчаник тёплый','#ad9170','sandstone',1.8]
+ ].map(([id,name,color,texture,diameter])=>({id,group:'boulders',name,color,texture,diameter,shape:'rock'}))
+]);
+export const byId=id=>CATALOG.find(x=>x.id===id)||null;
+const finite=(x,min,max,fallback)=>Number.isFinite(Number(x))?Math.max(min,Math.min(max,Number(x))):fallback;
+const round=(x,d=3)=>Math.round(x*10**d)/10**d;
+const point=p=>({x:finite(p?.x,-5000,5000,0),y:finite(p?.y,-5000,5000,0)});
+const maxObjects=500;
+export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural'});
+export function normalizeProject(raw){
+ const obj=raw&&typeof raw==='object'?raw:{},base=freshProject(),site=obj.site||{},house=obj.house||{};
+ const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
+ const boundary=Array.isArray(site.boundary)&&site.boundary.length>=3&&site.boundary.length<=80?site.boundary.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)})):null;
+ const r={version:1,title:String(obj.title||base.title).slice(0,75),site:{width,height,orientation:finite(site.orientation,-360,360,0),boundary},
+ house:{x:finite(house.x,0,width,width/2),y:finite(house.y,0,height,height*.4),width:finite(house.width,2,60,12),height:finite(house.height,2,60,8),rotation:finite(house.rotation,-360,360,0),type:['house','bath','garage','gazebo','outbuilding'].includes(house.type)?house.type:'house',
+ roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:typeof house.photo==='string'&&house.photo.length<450000?house.photo:null},
+ objects:[],underlay:typeof obj.underlay==='string'&&obj.underlay.length<450000?obj.underlay:null,
+ underlayOpacity:finite(obj.underlayOpacity,0,1,.25),north:finite(obj.north,0,360,0),
+ verified:obj.verified===true,style:['natural','modern','architectural'].includes(obj.style)?obj.style:'natural'};
+ for(const item of (Array.isArray(obj.objects)?obj.objects:[]).slice(0,maxObjects)){
+  const entry=byId(item.catalogId);if(!entry)continue;
+  const id=/^[a-z0-9-]{1,48}$/i.test(item.id||'')?item.id:'o-'+Math.random().toString(36).slice(2,10);
+  if(['pavers','fills','lawns','ponds'].includes(entry.group)){
+   const points=(Array.isArray(item.points)?item.points:[]).slice(0,120).map(point);
+   if(points.length<(['pavers'].includes(entry.group)?2:3))continue;
+   r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2)});
+  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),rotation:finite(item.rotation,-360,360,0)});
+ }
+ return r;
+}
+export const segmentLength=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y);
+export const lineLength=pts=>pts.slice(1).reduce((s,p,i)=>s+segmentLength(pts[i],p),0);
+export const polygonArea=pts=>pts.length<3?0:Math.abs(pts.reduce((s,p,i)=>s+p.x*pts[(i+1)%pts.length].y-pts[(i+1)%pts.length].x*p.y,0))/2;
+export const areaFor=(doc,item)=>{const group=byId(item.catalogId)?.group;if(group==='pavers')return lineLength(item.points)*item.width;if(['fills','lawns','ponds'].includes(group))return polygonArea(item.points);return 0};
+export const perimeter=pts=>pts.length<2?0:lineLength(pts)+segmentLength(pts.at(-1),pts[0]);
+export const rectBoundary=(width,height)=>[{x:0,y:0},{x:width,y:0},{x:width,y:height},{x:0,y:height}];
+export function report(doc){
+ const d=normalizeProject(doc),boundary=d.site.boundary||rectBoundary(d.site.width,d.site.height);
+ const counts={},areas={},lengths={};
+ for(const item of d.objects){
+  const entry=byId(item.catalogId);counts[item.catalogId]=(counts[item.catalogId]||0)+1;
+  if(['pavers','fills','lawns','ponds'].includes(entry.group))areas[item.catalogId]=round((areas[item.catalogId]||0)+areaFor(d,item),2);
+  if(entry.group==='pavers')lengths[item.catalogId]=round((lengths[item.catalogId]||0)+lineLength(item.points),2);
+ }
+ return {siteArea:round(polygonArea(boundary),2),sitePerimeter:round(perimeter(boundary),2),
+  buildingArea:round(d.house.width*d.house.height,2),counts,areas,lengths,
+  sourcesVerified:d.verified,uncertainty:'Длины и площади вычислены по заданной геометрии; площади дорожек с пересечениями могут быть завышены до объединения контуров.'};
+}
+export const isInside=(p,polygon)=>{
+ let inside=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+  const a=polygon[i],b=polygon[j];
+  if(((a.y>p.y)!==(b.y>p.y))&&(p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x))inside=!inside;
+ }return inside;
+};
+export function coordinateSummary(doc){
+ const d=normalizeProject(doc),r=report(d);
+ return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths},verified:d.verified};
+}
