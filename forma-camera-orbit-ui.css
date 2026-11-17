@@ -1,0 +1,42 @@
+/* FORMA CAMERA ORBIT: same visual language as Result Studio */
+#formaCameraOrbitDialog{position:fixed;inset:0;box-sizing:border-box;width:min(1100px,calc(100vw - 28px));height:min(720px,calc(100dvh - 28px));max-height:calc(100dvh - 24px);margin:auto;padding:0;border:1px solid #584a40;border-radius:15px;background:#202124;color:#f2efe9;overflow:hidden}
+#formaCameraOrbitDialog::backdrop{background:#09090ced;backdrop-filter:blur(11px)}
+#formaCameraOrbitDialog .fa-orbit-sheet{height:100%;display:flex;flex-direction:column;min-height:0}
+#formaCameraOrbitDialog header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-bottom:1px solid #4a4540;flex:none}
+#formaCameraOrbitDialog header span{letter-spacing:.15em;color:#d7b88f;font:600 10px/1.3 Arial,sans-serif}
+#formaCameraOrbitDialog header button{width:38px;height:38px;border:1px solid #615448;border-radius:8px;background:#303033;color:#f1e9da;font-size:22px;cursor:pointer}
+#formaCameraOrbitDialog .fa-orbit-content{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,1fr);flex:1;min-height:0;overflow:auto}
+#formaCameraOrbitDialog .fa-orbit-before{padding:24px;background:#151619;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;min-width:0;min-height:0}
+#formaCameraOrbitDialog .fa-orbit-before img{display:block;width:100%;height:auto;max-height:70%;object-fit:contain;border:1px solid #48413b;border-radius:9px}
+#formaCameraOrbitDialog .fa-orbit-before small{text-align:center;color:#a6a4a3;font-size:11px;line-height:1.5}
+#formaCameraOrbitDialog .fa-orbit-editor{padding:26px 27px;overflow:auto;min-height:0}
+#formaCameraOrbitDialog h2{font-size:clamp(20px,2vw,28px);font-weight:550;letter-spacing:-.045em;line-height:1.17;margin:0 0 11px;color:#f5f2ec}
+#formaCameraOrbitDialog p{font-size:12px;line-height:1.62;color:#b8b1a9;margin:0 0 15px}
+#formaCameraOrbitDialog fieldset{padding:0;margin:18px 0;border:0;min-width:0}
+#formaCameraOrbitDialog legend{font-size:11px;font-weight:650;margin-bottom:10px;color:#e4dfd6}
+#formaCameraOrbitDialog .fa-orbit-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#formaCameraOrbitDialog .fa-orbit-degrees{grid-template-columns:repeat(3,minmax(0,1fr))}
+#formaCameraOrbitDialog .fa-orbit-options label{padding:11px 10px;min-height:43px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border:1px solid #59534e;border-radius:8px;background:#2b2c30;color:#e8e4df;font-size:12px}
+#formaCameraOrbitDialog .fa-orbit-options label:has(input:checked){border-color:#d8b58b;background:#3c342d}
+#formaCameraOrbitDialog .fa-orbit-options input{accent-color:#cfad7f}
+#formaCameraOrbitDialog .fa-orbit-cad{padding:16px;border:1px solid #4d4a48;border-radius:9px;margin:18px 0 14px;background:#25272b}
+#formaCameraOrbitDialog .fa-orbit-cad b{display:block;font-size:12px;font-weight:600;color:#eee5d9;margin-bottom:8px}
+#formaCameraOrbitDialog .fa-orbit-cad p{font-size:11px;margin-bottom:10px}
+#formaCameraOrbitDialog .fa-orbit-file{display:inline-flex;align-items:center;justify-content:center;padding:11px 12px;border:1px solid #ba9e7c;border-radius:7px;cursor:pointer;background:#343331;color:#f1e6d5;font-size:11px}
+#formaCameraOrbitDialog .fa-orbit-file input{position:absolute;opacity:0;width:1px;height:1px}
+#formaCameraOrbitDialog [data-orbit-clear]{border:0;background:transparent;color:#c1b1a1;text-decoration:underline;font-size:10px;cursor:pointer}
+#formaCameraOrbitDialog [data-orbit-clear][hidden]{display:none}
+#formaCameraOrbitDialog #formaOrbitFileName{display:block;font-size:10px;color:#b8aaa0;margin-top:9px;overflow-wrap:anywhere}
+#formaCameraOrbitDialog #formaOrbitStatus{font-size:11px;color:#b9b5ac;min-height:30px}
+#formaCameraOrbitDialog [data-orbit-run]{width:100%;min-height:48px;background:#d4b58c;color:#211a15;border:1px solid #d4b58c;border-radius:9px;font-size:12px;font-weight:750;cursor:pointer}
+#formaCameraOrbitDialog [data-orbit-run]:disabled{opacity:.62;cursor:wait}
+#formaCameraOrbitDialog button:focus-visible,#formaCameraOrbitDialog input:focus-visible{outline:2px solid #edd2a9;outline-offset:2px}
+@media(max-width:760px){
+ #formaCameraOrbitDialog{width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0}
+ #formaCameraOrbitDialog .fa-orbit-content{display:flex;flex-direction:column}
+ #formaCameraOrbitDialog header{padding:10px 16px}
+ #formaCameraOrbitDialog .fa-orbit-before{padding:12px;flex:none;max-height:32dvh}
+ #formaCameraOrbitDialog .fa-orbit-before img{max-height:22dvh;width:auto;max-width:100%}
+ #formaCameraOrbitDialog .fa-orbit-before small{font-size:10px}
+ #formaCameraOrbitDialog .fa-orbit-editor{padding:19px 17px 28px;overflow:visible}
+}
