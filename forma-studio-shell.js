@@ -36,7 +36,16 @@ export async function openWorkspace(id){
   return;
  }
  if(id==='world'){active=null;window.location.assign('forma-world.html');return;}
- if(id==='landscape-project'){active=null;window.FORMA_LANDSCAPE_PROJECT?.open?.();return;}
+ if(id==='landscape-project'){
+  active=null;
+  // The category must open the top-down masterplan, not scenario-flow.
+  try{
+   if(!window.FORMA_LANDSCAPE_PROJECT?.open)await import('./forma-landscape-project.js?v=pond-brush-zoom-photo-v3-20261117');
+   if(!window.FORMA_LANDSCAPE_PROJECT?.open)throw Error('Модуль генплана не загрузился');
+   await window.FORMA_LANDSCAPE_PROJECT.open();
+  }catch(error){window.FORMA_ART_BRIDGE?.notify?.('Не удалось открыть «Ландшафтный проект»: '+error.message);}
+  return;
+ }
  if(id==='landscape'||id==='atmosphere'){active=null;window.FORMA_ART_DIRECTION?.[id==='landscape'?'openLandscape':'openAtmosphere']();return;}
  if(id==='nodes'){active=null;window.FORMA_NODES?.open();return;}
  const task=tasks.find(t=>t[0]===id);mountDialog(id,task?.[1]||({project:'Проект',settings:'Настройки'}[id]||id));
