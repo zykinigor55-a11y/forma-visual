@@ -2,6 +2,7 @@
  * True branch geometry + instanced leaf meshes; no image billboards, no flat
  * cutouts. Everything uses metres and can be orbited, walked through and
  * rendered with real directional shadows. Deterministic per-object seed. */
+import {naturalCrown,branchTipDrop,botanicalLeafScale} from './forma-landscape-3d-botany.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
@@ -141,7 +142,9 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  const crown=clamp(diameter/2,.1,15);
  // Photographic scale: many small shadowed 3D clusters instead of a handful
  // of enormous faceted spheres visible from the ground.
- const density=shrub?Math.round(680*quality):Math.round((id==='pine'?1320:id==='spruce'?1560:1680)*quality);
+ // Smaller, more numerous clumps for dense species; visible open branching
+ // for pines and birches. Volumes supplement real leaf sprays, not replace them.
+ const density=shrub?Math.round(510*quality):Math.round((id==='pine'?620:id==='birch'?820:id==='spruce'?1240:1030)*quality);
  const count=clamp(density,shrub?200:420,2200),geo=new T.SphereGeometry(1,8,5);
  const verts=geo.getAttribute('position');
  // Break each lobe into botanical irregularity, never a smooth perfect ball.
@@ -152,10 +155,10 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  }geo.computeVertexNormals();
  const m=new T.MeshStandardMaterial({color:'#ffffff',roughness:.96,metalness:0,flatShading:false});
  const inst=new T.InstancedMesh(geo,m,count),d=new T.Object3D(),base=new T.Color(foliageProfile(id,season).color);
- const nominal=shrub?Math.max(.045,Math.min(.15,crown*.135)):Math.max(.085,Math.min(.31,crown*.115));
+ const nominal=shrub?Math.max(.035,Math.min(.115,crown*.098)):Math.max(.055,Math.min(.22,crown*.077));
  for(let i=0;i<count;i++){
   const p=points[Math.floor(r()*points.length)];
-  const size=nominal*(.48+r()*.85)*(id==='pine'?.81:1);
+  const size=nominal*(.48+r()*.85)*(id==='pine'?.72:id==='birch'?.79:1);
   d.position.set(
    clamp(p.x+(r()-.5)*size*.75,-crown,crown),
    p.y+(r()-.5)*size*.50,
@@ -256,16 +259,13 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  for(let i=0;i<tiers;i++){
   const t=(i+.5)/tiers,y=start+crownH*t,angle=i*2.399+r()*.6;
   let radial;
-  if(kind==='spruce')radial=radius*(1-.83*t)*(.81+r()*.19);
-  else if(kind==='pine')radial=radius*(.44+.56*Math.sin(t*Math.PI))*(.75+r()*.32);
-  else if(kind==='willow')radial=radius*(.75+.24*r())*(.58+.42*Math.sin(t*Math.PI));
-  else radial=radius*Math.pow(Math.sin(t*Math.PI),.52)*(.66+r()*.30);
+  radial=radius*naturalCrown(id,t)*(.76+r()*.26);
   const arms=kind==='spruce'?7:kind==='pine'?4:5;
   for(let k=0;k<arms;k++){
    const direction=angle+k*2*Math.PI/arms+r()*.30;
    const length=radial*(.66+r()*.31);
    const branchRise=conifer?(kind==='pine'?.12:-.11):.2+r()*.25;
-   const outerY=clamp(y+crownH*branchRise*(r()-.25),.12,height*.99);
+   const outerY=clamp(y+crownH*branchRise*(r()-.25)-branchTipDrop(id,height,t)*.35,.12,height*.99);
    const tip=[Math.cos(direction)*length,outerY,Math.sin(direction)*length];
    const stemY=y-(conifer?.04:.02)*height;
    branches.push([[0,stemY,0],tip,trunkRadius*(conifer?.23:.40)*(1-t*.55)]);
@@ -277,6 +277,18 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
     const z=mid[2]+Math.sin(direction+Math.PI/2)*flare;
     const yy=mid[1]+(kind==='willow'?-.20-height*.07*r():height*.03*r());
     if(!conifer)branches.push([mid,[x,yy,z],trunkRadius*.10*(1-t*.5)]);
+    if(id==='willow'){
+     // Three connected hanging twig segments create real cascades visible in
+     // perspective and Walk. They are geometry, not billboard strips.
+     const fall=branchTipDrop(id,height,t),end=[x*1.02,Math.max(.18,yy-fall),z*1.02];
+     const bow=[x*1.09,Math.max(.2,yy-fall*.46),z*1.09];
+     branches.push([[x,yy,z],bow,trunkRadius*.046],[bow,end,trunkRadius*.027]);
+     centers.push({x:bow[0],y:bow[1],z:bow[2]},{x:end[0],y:end[1],z:end[2]});
+    }else if(id==='birch'){
+     const droop=branchTipDrop(id,height,t);
+     const end=[x*1.10,Math.max(.12,yy-droop),z*1.10];
+     branches.push([[x,yy,z],end,trunkRadius*.038]);centers.push({x:end[0],y:end[1],z:end[2]});
+    }
     centers.push({x,y:yy,z});
    }
   }
@@ -287,7 +299,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
   const d=kind==='spruce'?.16:kind==='pine'?.38:.44;
   const tx=(r()-.5)*radius*d, tz=(r()-.5)*radius*d;
   const leafY=clamp(p.y+(r()-.5)*crownH*(kind==='willow'?.21:.13),start*.8,height);
-  const size=conifer?(.14+r()*.15):(.14+r()*.20);
+  const scale=botanicalLeafScale(id,height,diameter),size=(conifer?(.11+r()*.12):(.11+r()*.16))*scale;
   leafPoints.push({x:clamp(p.x+tx,-radius,radius),y:leafY,z:clamp(p.z+tz,-radius,radius),s:size});
  }
  // Birch has a visible pale trunk; Scots pine a taller open red-brown bole.
@@ -302,8 +314,8 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  const conifer=c.kind==='conifer-shrub',branches=[],points=[];
  for(let j=0;j<c.branches;j++){
   const az=j*2.399+r()*.28,dist=radius*(.36+r()*.60);
-  const spread=id==='juniper'?.43:id==='lavender'?.58:.78;
-  const pt=[Math.cos(az)*dist, heightActual*(.35+r()*.55)*spread,Math.sin(az)*dist];
+  const spread=id==='juniper'?.24:id==='lavender'?.68:id==='hydrangea'?.90:.78;
+  const pt=[Math.cos(az)*dist, heightActual*(.32+r()*.62)*spread,Math.sin(az)*dist];
   branches.push([[0,.06,0],pt,.019+r()*.032]);
   for(let k=0;k<17;k++){
    const f=.42+r()*.58,y=pt[1]*f+(r()-.5)*heightActual*.25;
