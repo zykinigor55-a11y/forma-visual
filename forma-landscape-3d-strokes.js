@@ -22,7 +22,7 @@ export function plantScatterPositions(a,b,spacing=1.2){
 /** Swept planar paint area with rounded ends, preserving exact metric width.
  * Works with any direction in the X/Y site plane and with duplicate points.
  * A single continuous mesh avoids seams from overlapping rectangular stamps. */
-export function strokeRibbon(points,width,roundSteps=12){
+export function strokeRibbon(points,width,roundSteps=18){
  const input=(Array.isArray(points)?points:[]).filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y));
  if(!input.length)return [];
  const path=[{x:input[0].x,y:input[0].y}];
