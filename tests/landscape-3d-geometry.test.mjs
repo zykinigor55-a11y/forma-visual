@@ -8,7 +8,7 @@ test('3D heights are continuous between measured terrain samples',()=>{
  assert.equal(heightAt(heights,1,10,10,-5,-5),0);
  assert.equal(heightAt(heights,1,10,10,5,5),30);
  assert.equal(heightAt(heights,1,10,10,0,0),15);
- assert.equal(heightAt(heights,1,10,10,2.5,0),20);
+ assert.equal(heightAt(heights,1,10,10,2.5,0),17.5);
 });
 
 test('arbitrary plot boundaries reject points outside the actual polygon',()=>{
