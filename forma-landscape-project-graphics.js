@@ -134,7 +134,8 @@ export async function enablePremiumAssets(){
   try{
    const url='/assets/landscape-photo/'+ext+'?v=photo-1080-v1';
    const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
-   if(r.ok&&(/image\\/(png|jpeg)/i.test(r.headers.get('Content-Type')||'')||r.headers.get('Content-Type')===null)){
+   const mime=(r.headers.get('Content-Type')||'').toLowerCase();
+   if(r.ok&&(mime.startsWith('image/png')||mime.startsWith('image/jpeg')||!mime)){
     availablePhotos.add(id);
    }else availablePhotos.delete(id);
   }catch{availablePhotos.delete(id);}
