@@ -86,6 +86,47 @@ function addLeaves(g,T,items,color,needle,season,seed){
  mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
  mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;g.add(mesh);
 }
+/* Many separate soft irregular 3D foliage masses build real canopy volume;
+ * they are neither camera billboards nor a single sphere per plant. Fine
+ * leaf geometry remains a second layer on top for convincing close-ups. */
+function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
+ if(!points.length||foliageProfile(id,season).leafless)return;
+ const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
+ const r=rng(seed^0x8fc1a0),conifer=['pine','spruce','juniper','thuja-globe'].includes(id);
+ const crown=clamp(diameter/2,.1,15);
+ const density=shrub?Math.round(220*quality):Math.round((id==='pine'?440:id==='spruce'?620:720)*quality);
+ const count=clamp(density,shrub?80:150,1000),geo=new T.IcosahedronGeometry(1,1);
+ const verts=geo.getAttribute('position');
+ // Break each lobe into botanical irregularity, never a smooth perfect ball.
+ for(let i=0;i<verts.count;i++){
+  const x=verts.getX(i),y=verts.getY(i),z=verts.getZ(i);
+  const n=1+.13*Math.sin(x*8+z*13)+.08*Math.cos(y*15+x*11);
+  verts.setXYZ(i,x*n,y*n,z*n);
+ }geo.computeVertexNormals();
+ const m=new T.MeshStandardMaterial({color:'#ffffff',roughness:.96,metalness:0,flatShading:false});
+ const inst=new T.InstancedMesh(geo,m,count),d=new T.Object3D(),base=new T.Color(foliageProfile(id,season).color);
+ const nominal=shrub?Math.max(.065,crown*.27):Math.max(.17,Math.min(.72,crown*.22));
+ for(let i=0;i<count;i++){
+  const p=points[Math.floor(r()*points.length)];
+  const size=nominal*(.56+r()*.66)*(id==='pine'?.78:1);
+  d.position.set(
+   clamp(p.x+(r()-.5)*size*.75,-crown,crown),
+   p.y+(r()-.5)*size*.50,
+   clamp(p.z+(r()-.5)*size*.75,-crown,crown)
+  );
+  d.rotation.set(r()*6.28,r()*6.28,r()*6.28);
+  d.scale.set(size*(.8+r()*.55),size*(.65+r()*.55),size*(.8+r()*.55));
+  if(id==='willow')d.scale.y*=1.35;
+  if(id==='spruce')d.scale.y*=.80;
+  d.updateMatrix();inst.setMatrixAt(i,d.matrix);
+  const shade=.72+r()*.56,leaf=base.clone().multiplyScalar(shade);
+  if(season==='autumn'&&!conifer&&r()<.28)leaf.lerp(new T.Color('#bf6c39'),r()*.48);
+  inst.setColorAt(i,leaf);
+ }
+ inst.instanceMatrix.needsUpdate=true;if(inst.instanceColor)inst.instanceColor.needsUpdate=true;
+ inst.castShadow=true;inst.receiveShadow=true;inst.frustumCulled=false;
+ g.add(inst);
+}
 function flowerClusters(g,T,positions,id,seed,season){
  if(!positions.length)return;
  const bloom=(id==='hydrangea'&&season!=='winter')||(id==='spirea'&&season==='spring')||
@@ -150,7 +191,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  // Birch has a visible pale trunk; Scots pine a taller open red-brown bole.
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
  addBranch(g,T,branches,c.bark);
- if(!leafless)addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));
+ if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));}
  flowerClusters(g,T,leafPoints,id,Math.floor(r()*4294967295),season);
 }
 function generateShrub(T,g,id,height,diameter,season,r,quality){
@@ -175,7 +216,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    z:clamp(p.z+(r()-.5)*radius*.19,-radius,radius),s:p.s*(.8+r()*.3)});
  }
  addBranch(g,T,branches,c.bark);
- if(!foliageProfile(id,season).leafless)addLeaves(g,T,points,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));
+ if(!foliageProfile(id,season).leafless){addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,points,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));}
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
 }
 export function createVegetation(T,instance,{season='summer',quality=1}={}){
