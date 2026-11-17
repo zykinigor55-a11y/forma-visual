@@ -27,6 +27,21 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:12px 0}#library{paddi
 #draftActions[hidden]{display:none}
 #draftActions button{font-size:11px;padding:10px 7px}
 #draftActions small{grid-column:1/-1;color:#b8c7be;font-size:10px;line-height:1.5}
+#right{width:312px}
+.house-preset-section{margin:10px 0;padding:12px 0;border-top:1px solid #39433f;border-bottom:1px solid #39433f}
+.house-preset-heading{display:flex;gap:6px;justify-content:space-between;align-items:center}
+.house-preset-heading h3{margin:0;font-size:10px;letter-spacing:.11em;color:#e1d2bb}
+.house-preset-heading button{font-size:10px;padding:5px 9px}
+#houseEditing{display:block;color:#c7b69b;margin:8px 0}
+.house-style-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.house-style-list button{padding:0;overflow:hidden;display:flex;flex-direction:column;text-align:left;background:#1c2423;border:1px solid #4a5750;min-height:130px}
+.house-style-list button.active{border:2px solid #c8a676;box-shadow:0 0 0 1px #c8a67640}
+.house-style-list img,.house-style-list .house-fallback{width:100%;height:94px;display:block;object-fit:cover;background:linear-gradient(145deg,#a9afa8,#54625e)}
+.house-style-list .house-label{font-size:10px;font-weight:750;display:block;padding:6px 8px 1px;color:#EEE8DC}
+.house-style-list .house-hint{font-size:9px;display:block;padding:0 8px 7px;line-height:1.25;color:#9EAAA1}
+.house-style-list button:focus-visible{outline:2px solid #ECC59A;outline-offset:2px}
+@media(max-width:850px){#right{width:42%}.house-style-list{grid-template-columns:1fr}.house-style-list img,.house-style-list .house-fallback{height:85px}}
+
 h3{font-size:13px;margin:4px 0 10px;font-weight:700}p,.muted{font-size:12px;color:#b8c7be;line-height:1.55}
 label{display:block;color:#c3d0c8;font-size:11px;margin:10px 0 5px}
 input[type="number"],input[type="text"],select,input[type="range"]{width:100%}
@@ -79,6 +94,9 @@ header .header-right button{padding:6px;font-size:10px}
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
  </div>
+ <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 8 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
+  <div id="houseStyles" class="house-style-list" aria-label="Архитектурные стили домов"></div>
+  <p class="muted">Настоящие 3D-объёмы с фасадными материалами. Габариты участка и здания не меняются при выборе стиля.</p></section>
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
@@ -117,7 +135,7 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0;const GRID=48;const houseThumbs=new Map();
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='';const GRID=48;const houseThumbs=new Map();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -258,7 +276,7 @@ function drawExtra(o){
 }
 function drawTools(){
  $('#tools').innerHTML=toolList.map(a=>'<button data-tool="'+a[0]+'" title="'+a[1]+'"><span class="glyph">'+a[2]+'</span>'+a[1]+'</button>').join('');
- document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>chooseTool(b.dataset.tool));chooseTool('select');
+ document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>chooseTool(b.dataset.tool));chooseTool('select');renderHouseLibrary();
 }
 function chooseTool(t){
  state.tool=t;state.placing=null;pointMode=[];refreshDraft();
@@ -269,11 +287,58 @@ function chooseTool(t){
  $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{state.placing=b.dataset.item;$('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.')});
  if(t==='select')status('Выбирайте объекты щелчком, перетаскивайте мышью, редактируйте размеры справа.');
 }
+function activeHouseTarget(){
+ const ref=state.selected?selectable(state.selected):null;
+ return ref&&(ref.type==='building'||ref.type==='house')?ref.obj:doc.house;
+}
+function renderHouseLibrary(){
+ const target=$('#houseStyles');if(!target||!doc)return;
+ const current=activeHouseTarget(),style=housePreset(current.archStyle).id;
+ $('#houseEditing').textContent=current===doc.house?'Редактируется: главный дом':'Редактируется: выбранная постройка';
+ target.innerHTML=HOUSE_PRESETS.map(p=>'<button type="button" data-house-preset="'+p.id+'" class="'+(p.id===style?'active':'')+'" aria-pressed="'+String(p.id===style)+'">'+
+  (houseThumbs.has(p.id)?'<img src="'+houseThumbs.get(p.id)+'" alt="3D-превью '+p.name+'" draggable="false">':'<span class="house-fallback" style="background:linear-gradient(145deg,'+p.accent+',#273330)"></span>')+
+  '<span class="house-label">'+p.name+'</span><span class="house-hint">'+p.subtitle+'</span></button>').join('');
+ target.querySelectorAll('[data-house-preset]').forEach(button=>button.onclick=()=>{
+  const preset=housePreset(button.dataset.housePreset),house=activeHouseTarget();
+  if(house.archStyle===preset.id)return;
+  push();house.archStyle=preset.id;house.roof=preset.roof;
+  house.roofRise=preset.id==='aframe'?Math.max(3.2,Math.min(6,(house.width||8)*.64)):Math.min(2.1,(house.width||8)*.22);
+  state.housePreset=preset.id;save();rebuild();renderHouseLibrary();
+  status('Архитектура: '+preset.name+'. Фундамент, габариты и координаты сохранены.');
+ });
+}
+function makeHouseThumbnails(){
+ let rendererThumb=null;
+ try{
+  const tempCanvas=document.createElement('canvas');
+  rendererThumb=new THREE.WebGLRenderer({canvas:tempCanvas,alpha:false,antialias:true,preserveDrawingBuffer:true});
+  rendererThumb.setSize(240,150,false);rendererThumb.setPixelRatio(1);rendererThumb.shadowMap.enabled=true;
+  rendererThumb.outputColorSpace=THREE.SRGBColorSpace;
+  const previewScene=new THREE.Scene();previewScene.background=new THREE.Color('#CAD0C8');
+  previewScene.add(new THREE.HemisphereLight(0xffffff,0x728075,2.5));
+  const light=new THREE.DirectionalLight(0xfff0d9,3.2);light.position.set(-10,18,14);
+  light.castShadow=true;light.shadow.mapSize.set(512,512);previewScene.add(light);
+  const base=new THREE.Mesh(new THREE.PlaneGeometry(21,17),new THREE.MeshStandardMaterial({color:'#9EAA92',roughness:1}));
+  base.rotation.x=-Math.PI/2;base.receiveShadow=true;previewScene.add(base);
+  const cam=new THREE.OrthographicCamera(-9.5,9.5,5.9,-5.9,.1,100);cam.position.set(13,11,16);cam.lookAt(0,2.1,0);
+  for(const p of HOUSE_PRESETS){
+   const model=createArchitecturalBuilding(THREE,{width:10,height:7,archStyle:p.id,roof:p.roof,roofColor:'#E2E4E3',roofRise:p.id==='aframe'?6:1.65});
+   previewScene.add(model);rendererThumb.render(previewScene,cam);
+   houseThumbs.set(p.id,tempCanvas.toDataURL('image/jpeg',.86));previewScene.remove(model);
+   model.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
+   model.userData?.textures?.forEach(t=>t.dispose());
+  }
+  renderHouseLibrary();
+ }catch(error){console.warn('3D house cards unavailable:',error?.message);}
+ finally{rendererThumb?.dispose()}
+}
 function selectable(key){const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
 function renderProps(){
+ const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
+ if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
  const el=$('#properties'),ref=state.selected?selectable(state.selected):null;if(!ref?.obj){el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const o=ref.obj, fields=[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
- if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height]);
+ if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
  else if('diameter'in o)fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
  el.innerHTML='<p style="margin:0 0 8px">'+state.selected+'</p>'+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1" value="'+Number(f[2]||0)+'">').join('')+'<button class="action primary" id="applyProps">Применить</button><button class="action" id="deleteObject">Удалить объект</button>';
  $('#applyProps').onclick=()=>{push();for(const n of el.querySelectorAll('[data-prop]')){const val=Number(n.value);if(Number.isFinite(val)){o[n.dataset.prop]=val}}save();rebuild()};
@@ -466,6 +531,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
+ $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Примените любой из восьми стилей.')};
  $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
  $('#export3dPdf').onclick=export3dPdf;
  $('#sourceDrawing').onchange=e=>importUnderlay(e.target.files?.[0]);
