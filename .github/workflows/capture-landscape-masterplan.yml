@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/capture-landscape-masterplan.yml'
       - 'forma-landscape-project.js'
+      - 'tools/capture-landscape-masterplan.mjs'
       - 'forma-landscape-project.css'
       - 'forma-landscape-project-graphics.js'
       - 'assets/landscape-premium/**'
