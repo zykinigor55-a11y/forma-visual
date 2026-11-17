@@ -457,3 +457,79 @@
 
 /* Active category photography must not be skipped by content-visibility:auto. */
 #faLandscapeMasterplan .lp-assets button img{content-visibility:visible!important;}
+
+/* 2026-11-17: Fixed-size site canvas across mobile drawing modes.
+   A growing paving/pond/brush palette must NEVER take space away from the
+   measured top-view workspace. On phones, the drawing stays ABOVE its palette,
+   while both remain inside the scrollable editor page. */
+@media(max-width:760px){
+ #faLandscapeMasterplan .lp-layout{
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  scroll-padding-top:8px;
+ }
+ #faLandscapeMasterplan .lp-work{
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  height:auto;
+  min-height:0;
+  overflow:visible;
+ }
+ #faLandscapeMasterplan .lp-work .lp-tools{order:0}
+ #faLandscapeMasterplan .lp-work .lp-category-shortcuts{order:1}
+ #faLandscapeMasterplan .lp-work .lp-canvas{
+  order:2;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:100%;
+  height:clamp(340px,47dvh,540px);
+  min-height:340px;
+  max-height:none;
+  padding:7px;
+  overflow:hidden;
+ }
+ #faLandscapeMasterplan .lp-work #lpMap{
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+ }
+ #faLandscapeMasterplan .lp-work #lpSvg{
+  display:block;
+  height:100%;
+  width:100%;
+  max-height:100%;
+  max-width:100%;
+ }
+ #faLandscapeMasterplan .lp-work .lp-path-controls{
+  order:3;
+  flex:0 0 auto;
+  width:100%;
+  min-height:0;
+  height:auto;
+  max-height:none;
+  overflow:visible;
+  padding:10px 8px;
+  border-top:1px solid #45413b;
+  box-shadow:0 -2px 10px #1112;
+ }
+ #faLandscapeMasterplan .lp-work .lp-area-controls{flex:0 0 100%}
+ #faLandscapeMasterplan .lp-work .lp-material-choices,
+ #faLandscapeMasterplan .lp-work .lp-area-materials{
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  touch-action:pan-x;
+ }
+ #faLandscapeMasterplan .lp-work .lp-work-foot{order:4}
+}
+@media(max-width:760px) and (max-height:650px){
+ #faLandscapeMasterplan .lp-work .lp-canvas{
+  height:320px;
+  min-height:320px;
+ }
+}
