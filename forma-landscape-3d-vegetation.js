@@ -246,6 +246,20 @@ function addFoliageSprays(g,T,points,id,season,seed,quality){
  mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
  mesh.castShadow=true;mesh.frustumCulled=false;g.add(mesh);
 }
+/* Real petalled flowers instead of tiny stone-shaped spheres.
+ * Pairs of concave triangles form each petal; repeated as instanced clusters. */
+function flowerPetalGeometry(T){
+ const pos=[],petals=5;
+ for(let i=0;i<petals;i++){
+  const a=i*Math.PI*2/petals,c=Math.cos(a),s=Math.sin(a),
+   sideX=-s,sideZ=c;
+  const root=[0,0,0],tip=[c*.74,.19,s*.74],
+   left=[c*.35+sideX*.32,.08,s*.35+sideZ*.32],
+   right=[c*.35-sideX*.32,.08,s*.35-sideZ*.32],middle=[c*.42,.18,s*.42];
+  pos.push(...root,...left,...middle,...root,...middle,...right,...left,...tip,...middle,...right,...middle,...tip);
+ }
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.computeVertexNormals();return g;
+}
 function flowerClusters(g,T,positions,id,seed,season){
  if(!positions.length)return;
  const bloom=(id==='hydrangea'&&season!=='winter')||(id==='spirea'&&season==='spring')||
@@ -253,14 +267,17 @@ function flowerClusters(g,T,positions,id,seed,season){
   (id==='apple'&&season==='spring');
  if(!bloom)return;
  const r=rng(seed^0x77cc11),color=VEGETATION_SPECIES[id]?.flower||(id==='sakura'?'#efd1de':'#f0d9cc');
- const count=Math.min(165,Math.round(positions.length*.13));
- const geo=new T.IcosahedronGeometry(1,0),mat=new T.MeshStandardMaterial({color,roughness:.92,flatShading:true});
- const mesh=new T.InstancedMesh(geo,mat,count),d=new T.Object3D();
+ const count=Math.min(id==='lavender'?260:240,Math.round(positions.length*.31));
+ const mat=new T.MeshStandardMaterial({color,roughness:.91,side:T.DoubleSide});
+ const mesh=new T.InstancedMesh(flowerPetalGeometry(T),mat,count),d=new T.Object3D();
  for(let i=0;i<count;i++){
-  const p=positions[Math.floor(r()*positions.length)];d.position.set(p.x,p.y+.035,p.z);
-  const size=(id==='hydrangea'?.085:.038)*(0.5+r());d.scale.set(size*1.2,size,size*1.2);
-  d.rotation.set(r()*3,r()*3,r()*3);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
- }mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=true;g.add(mesh);
+  const p=positions[Math.floor(r()*positions.length)];
+  d.position.set(p.x,p.y+.035,p.z);
+  d.rotation.set(r()*3,r()*6.28,r()*6.28);
+  const size=(id==='hydrangea'?.065:id==='lavender'?.026:.04)*(.7+r()*.52);
+  d.scale.set(size,size,size);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
+ }
+ mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=true;g.add(mesh);
 }
 /* Tapered curved branch: 3 connected real cylinders, never a rigid stick
  * connecting the trunk to a floating blob. Each span touches the next. */
@@ -340,29 +357,49 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);}
  flowerClusters(g,T,leafPoints,id,Math.floor(r()*4294967295),season);
 }
+/* Branch-connected shrub clusters. Groundcover lies low and spreads
+ * horizontally; hydrangea and dogwood stand upright; lavender uses thin
+ * flowering spikes. Foliage endpoints belong to real tapered twig geometry. */
 function generateShrub(T,g,id,height,diameter,season,r,quality){
- const c=VEGETATION_SPECIES[id],radius=diameter/2;
- const heightActual=clamp(height,.3,3.5);
- const conifer=c.kind==='conifer-shrub',branches=[],points=[];
- for(let j=0;j<c.branches;j++){
-  const az=j*2.399+r()*.28,dist=radius*(.36+r()*.60);
-  const spread=id==='juniper'?.24:id==='lavender'?.68:id==='hydrangea'?.90:.78;
-  const pt=[Math.cos(az)*dist, heightActual*(.32+r()*.62)*spread,Math.sin(az)*dist];
-  branches.push([[0,.06,0],pt,.019+r()*.032]);
-  for(let k=0;k<17;k++){
-   const f=.42+r()*.58,y=pt[1]*f+(r()-.5)*heightActual*.25;
-   points.push({x:pt[0]*f+(r()-.5)*radius*.34,y:Math.max(.05,y),z:pt[2]*f+(r()-.5)*radius*.34,s:conifer?.09+r()*.13:.11+r()*.16});
+ const c=VEGETATION_SPECIES[id],radius=diameter/2,actual=clamp(height,.3,3.5);
+ const evergreen=c.kind==='conifer-shrub',branches=[],points=[],isCreeper=id==='juniper',isSpike=id==='lavender';
+ const stems=isCreeper?24:isSpike?38:id==='hydrangea'?30:c.branches;
+ for(let j=0;j<stems;j++){
+  const az=j*2.399+r()*.19,dist=radius*(.52+r()*.43),
+   horizontal=isCreeper?1:isSpike?.72:id==='thuja-globe'?.8:1;
+  const tipHeight=isCreeper?actual*(.17+r()*.23):
+   isSpike?actual*(.50+r()*.45):
+   id==='boxwood'||id==='thuja-globe'?actual*(.51+r()*.47):
+   actual*(.38+r()*.54);
+  const pt=[Math.cos(az)*dist*horizontal,tipHeight,Math.sin(az)*dist*horizontal],
+   radiusStem=isSpike?.007:isCreeper?.012:.016+r()*.016;
+  curveBranch(branches,[0,.045,0],pt,radiusStem,actual*(isCreeper?-.01:.065));
+  for(let k=0;k<15;k++){
+   const f=.22+r()*.77,
+    mid=[pt[0]*f,.045+(pt[1]-.045)*f,pt[2]*f],length=radius*(isCreeper?.19:isSpike?.08:.16);
+   const direction=az+(r()-.5)*2.3,tip=[
+    clamp(mid[0]+Math.cos(direction)*length*(.25+r()*.85),-radius,radius),
+    clamp(mid[1]+actual*(isSpike?.035:.08)*(r()-.33),.04,actual),
+    clamp(mid[2]+Math.sin(direction)*length*(.25+r()*.85),-radius,radius)
+   ];
+   branches.push([mid,tip,Math.max(.0025,radiusStem*.32)]);
+   points.push({x:tip[0],y:tip[1],z:tip[2],s:evergreen?.09+r()*.10:.095+r()*.12});
   }
  }
- const count=clamp(Math.round(c.density*quality),130,1300);
- while(points.length<count){
+ const total=clamp(Math.round(c.density*quality),140,1300);
+ while(points.length<total){
   const p=points[Math.floor(r()*points.length)];
-  points.push({x:clamp(p.x+(r()-.5)*radius*.19,-radius,radius),
-   y:clamp(p.y+(r()-.5)*heightActual*.13,.08,heightActual),
-   z:clamp(p.z+(r()-.5)*radius*.19,-radius,radius),s:p.s*(.8+r()*.3)});
+  // Small jitter only around already-connected twig tips.
+  points.push({x:clamp(p.x+(r()-.5)*.045,-radius,radius),
+   y:clamp(p.y+(r()-.5)*.045,.05,actual),
+   z:clamp(p.z+(r()-.5)*.045,-radius,radius),s:p.s*(.88+r()*.22)});
  }
  addBranch(g,T,branches,c.bark,id);
- if(!foliageProfile(id,season).leafless){addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,points,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);}
+ if(!foliageProfile(id,season).leafless){
+  addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);
+  addLeaves(g,T,points,foliageProfile(id,season).color,evergreen,season,Math.floor(r()*4294967295));
+  addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);
+ }
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
 }
 export function createVegetation(T,instance,{season='summer',quality=1}={}){
