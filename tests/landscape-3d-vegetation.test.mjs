@@ -38,5 +38,5 @@ test('all specimen meshes are measured and do not use flat PNG tree billboards',
  assert.match(html,/createVegetation\(THREE,o/);
  assert.match(html,/createRock\(THREE,o/);
  assert.match(html,/createGardenLight\(THREE,o/);
- assert.match(html,/plant:CATALOG\.filter\(x=>\['trees','shrubs'\]/);
+ assert.match(html,/plant:\[\.\.\.CATALOG\.filter\(x=>x\.group==='trees'\)/);
 });
