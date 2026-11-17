@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FORMA · Ландшафт 3D</title>
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e8ebe8;background:#111716;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;overflow:hidden}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+#shell{display:grid;grid-template-rows:60px minmax(0,1fr);height:100dvh}
+header{display:flex;align-items:center;gap:18px;padding:0 22px;background:#1b2422;border-bottom:1px solid #35433e}
+.brand{font-weight:850;letter-spacing:.2em;font-size:19px}.brand small{font-size:9px;letter-spacing:.12em;font-weight:550;display:block;color:#aebdb6}
+header .name{background:transparent;border:0;color:#e9eae7;font-weight:600;font-size:13px;min-width:80px;max-width:240px}
+.header-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button,.btn{background:#27322f;color:#e0e9e4;border:1px solid #465951;border-radius:9px;padding:9px 12px}
+button:hover,.btn:hover{background:#384840}.primary{background:#d9dfca;color:#17251e;border-color:#d9dfca;font-weight:700}
+header a{color:#c3cec7;text-decoration:none;font-size:12px}
+main{position:relative;min-height:0}#viewport{width:100%;height:100%;display:block;touch-action:none}
+.panel{position:absolute;top:15px;bottom:18px;background:rgba(23,31,29,.95);backdrop-filter:blur(24px);border:1px solid #415249;border-radius:15px;overflow:auto;scrollbar-width:thin}
+#left{left:15px;width:260px;display:flex;flex-direction:column}#right{right:15px;width:245px;padding:16px}
+.heading{padding:15px 16px 6px;font-size:11px;font-weight:750;color:#b8c5bd;letter-spacing:.12em}
+#tools{padding:7px;display:grid;grid-template-columns:1fr 1fr;gap:6px}#tools button{padding:10px 6px;font-size:11px;text-align:center;border:1px solid #3b4d44;background:#27332e}
+#tools button.active{background:#d5dfca;color:#1a281f;border-color:#d5dfca;font-weight:700}#tools button .glyph{display:block;font-size:20px;margin-bottom:5px}
+hr{border:0;border-top:1px solid #36473d;width:100%;margin:12px 0}#library{padding:9px 13px 16px;overflow:auto}
+#library .choice{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 12px;margin:5px 0;text-align:left}
+#library .choice.active{border-color:#d6e0c7;color:#d6e0c7}
+h3{font-size:13px;margin:4px 0 10px;font-weight:700}p,.muted{font-size:12px;color:#b8c7be;line-height:1.55}
+label{display:block;color:#c3d0c8;font-size:11px;margin:10px 0 5px}
+input[type="number"],input[type="text"],select,input[type="range"]{width:100%}
+input[type="number"],input[type="text"],select{padding:8px;border:1px solid #53645b;border-radius:8px;background:#26352e;color:#f0f2ed}
+#right .buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}#right .buttons button{font-size:12px;padding:9px 2px}
+#right .buttons button.active{color:#1e2e23;background:#d9dfca;border-color:#d9dfca}
+#right .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}#right .action{width:100%;margin-top:7px}
+#status{position:absolute;left:50%;bottom:23px;transform:translateX(-50%);background:#1b2725df;border:1px solid #52665a;border-radius:100px;padding:11px 19px;color:#e1eade;font-size:12px;max-width:calc(100% - 60px);text-align:center;pointer-events:none}
+#hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
+#loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
+#loadError strong{font-size:19px}
+.mobiletoggle{display:none}
+@media(max-width:850px){
+header{padding:0 10px;gap:8px}.brand{font-size:13px}.brand small{font-size:7px}.name{display:none}header a{font-size:10px}
+header .header-right button{padding:6px;font-size:10px}
+.panel{bottom:15px;top:auto;height:42%;border-radius:14px}#left{left:8px;width:54%;}#right{right:8px;width:42%;padding:9px}
+#tools{grid-template-columns:repeat(3,1fr)}#tools button{font-size:9px;padding:6px 3px}#tools button .glyph{font-size:14px}
+#hint{left:10px;top:10px;right:10px;font-size:10px}#status{bottom:44%;font-size:10px;padding:6px 10px}
+#right .buttons{grid-template-columns:repeat(3,1fr)}#right .pair{grid-template-columns:1fr 1fr}
+}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="shell">
+<header>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div>
+ <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
+ <div class="header-right">
+  <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
+  <button id="save" class="primary">Сохранить 3D</button>
+  <a href="forma-preview.html?tool=landscape-project">← К плану</a>
+ </div>
+</header>
+<main>
+<canvas id="viewport"></canvas>
+<div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div></div>
+<div id="right" class="panel">
+ <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
+  <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
+ </div>
+ <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
+ <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
+ <hr><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
+ <hr><div class="pair"><div><label>Участок, ширина м</label><input id="plotW" type="number" min="5" max="500" step=".5"></div><div><label>Длина, м</label><input id="plotH" type="number" min="5" max="500" step=".5"></div></div>
+ <button class="action" id="resizePlot">Применить размеры</button>
+ <hr><button class="action" id="screenshot">Снимок 3D для AI</button>
+ <button class="action" id="exportJSON">Экспорт модели JSON</button>
+ <p class="muted">Геометрия создаётся в 3D. GPT Image / Nano Banana подключаются после подготовки сцены и выбора камеры.</p>
+</div>
+<div id="hint">Мышь: вращение · колесо: масштаб · правая кнопка: движение камеры. Выберите инструмент слева и нажмите на участок.</div>
+<div id="status">3D-модель загружается…</div>
+<div id="loadError"><div><strong>Не удалось загрузить 3D-движок</strong><p>Для редактора требуется WebGL и доступ к библиотеке Three.js. Проверьте подключение к сети и обновите страницу.</p></div></div>
+</main>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject} from './forma-landscape-project-core.js';
+const $=s=>document.querySelector(s);
+const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
+const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
+const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid;
+let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor;
+let pickables=[],pointMode=[],walkYaw=0;const GRID=48;
+const toolList=[
+ ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
+ ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
+ ['landscape','Элементы','⬡'],['small','Малые формы','⌘'],['furniture','Уличная мебель','▧'],
+ ['transport','Транспорт','▱'],['light','Освещение','☼']
+];
+const choices={
+ site:[['rect','Прямоугольный участок'],['outline','Свободный контур (точки)']],
+ surface:[['concrete-pavers','Дорожка · плиты'],['lawn-universal','Газон'],['granite-screenings','Отсыпка']],
+ terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['smooth','Выровнять грунт']],
+ build:[['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
+ fence:[['fence','Ограждение · линия']],
+ plant:[['pine','Сосна'],['spruce','Ель'],['birch','Берёза'],['oak','Дуб'],['maple','Клён'],['hydrangea','Гортензия'],['juniper','Можжевельник']],
+ water:[['pond-small','Водоём (контур)']],
+ landscape:[['granite-boulder','Валун']],
+ small:[['pergola','Пергола'],['gazebo','Беседка']],
+ furniture:[['bench','Скамья'],['table','Стол']],
+ transport:[['car','Автомобиль']],
+ light:[['bollard','Боллард'],['pole','Садовый светильник']]
+};
+const fallback={pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
+const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
+const id=()=>('o-'+Math.random().toString(36).slice(2,10));
+function status(t){$('#status').textContent=t}
+function save(){
+ doc.title=$('#projectName').value.trim()||'Ландшафтный проект';
+ try{localStorage.setItem(KEY,JSON.stringify(normalizeProject(doc)));localStorage.setItem(EXTRA,JSON.stringify(extra));localStorage.setItem(TERRAIN,JSON.stringify(heightmap));status('Проект сохранён. 2D и 3D используют общие координаты.')}
+ catch(e){status('Сохранение не удалось: '+e.message)}
+}
+function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
+function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild()}
+function initialize(){
+ try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
+ try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
+ try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
+ if(heightmap.length!==(GRID+1)*(GRID+1))heightmap=Array((GRID+1)*(GRID+1)).fill(0);
+ $('#projectName').value=doc.title;$('#plotW').value=doc.site.width;$('#plotH').value=doc.site.height;
+ $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
+ scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
+ camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
+ controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=3;controls.maxDistance=220;
+ scene.add(new THREE.HemisphereLight(0xffffff,0x52604e,2));
+ const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
+ root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
+ drawTools();rebuild();resize();addEvents();setView('3d');animate();status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
+}
+function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
+function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
+function terrainAt(x,z){const ix=Math.max(0,Math.min(GRID,Math.round((x/doc.site.width+.5)*GRID))),iy=Math.max(0,Math.min(GRID,Math.round((z/doc.site.height+.5)*GRID)));return heightmap[iy*(GRID+1)+ix]||0}
+function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
+function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
+function mark(group,key){group.userData.key=key;pickables.push(group);return group}
+function rebuild(){
+ while(root.children.length){const o=root.children[0];root.remove(o);o.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
+ pickables=[];
+ const w=doc.site.width,h=doc.site.height,geo=new THREE.PlaneGeometry(w,h,GRID,GRID);geo.rotateX(-Math.PI/2);
+ const verts=geo.attributes.position;
+ for(let i=0;i<=GRID;i++)for(let j=0;j<=GRID;j++){const index=i*(GRID+1)+j;verts.setY(index,heightmap[index]||0)}
+ geo.computeVertexNormals();terrainMesh=mesh(geo,material('#738d65'));terrainMesh.castShadow=false;terrainMesh.userData.ground=true;root.add(terrainMesh);
+ const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.03,h)),new THREE.LineBasicMaterial({color:'#e1e8d2'}));outline.position.y=.08;root.add(outline);
+ const grid=new THREE.GridHelper(Math.max(w,h)*1.1,Math.max(10,Math.round(Math.max(w,h))),0x839b7f,0x94aa89);grid.position.y=.05;grid.material.transparent=true;grid.material.opacity=.24;root.add(grid);
+ buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
+ for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
+ for(const o of extra)drawExtra(o);
+ updateSun();renderProps();renderer.render(scene,camera);
+}
+function buildingGroup(b){
+ const g=new THREE.Group(),w=b.width||5,d=b.height||5,roof=b.roof||'gable';
+ const body=mesh(new THREE.BoxGeometry(w,3.4,d),material(b.type==='garage'?'#b1b6af':'#d9d6c8'));
+ body.position.y=1.8;g.add(body);
+ const roofMat=material(b.roofColor||'#343b3d',.7);
+ if(roof==='flat'){const r=mesh(new THREE.BoxGeometry(w+.35,.22,d+.35),roofMat);r.position.y=3.56;g.add(r)}
+ else{
+  const top=roof==='hip'?new THREE.ConeGeometry(Math.max(w,d)*.78,1.5,4):new THREE.CylinderGeometry(0,Math.max(w,d)*.69,1.6,4,1);
+  const r=mesh(top,roofMat);r.position.y=4.15;r.rotation.y=Math.PI/4;g.add(r);
+ }
+ const door=mesh(new THREE.BoxGeometry(Math.min(1.2,w*.2),2,.11),material('#4a5354'));door.position.set(w*.22,1.05,d/2+.08);g.add(door);
+ for(const x of [-.26,.18]){const win=mesh(new THREE.BoxGeometry(Math.min(1.3,w*.2),1.1,.08),material('#40545a',.2,.2));win.position.set(w*x,2.03,d/2+.095);g.add(win)}
+ return g;
+}
+function buildBuilding(b,key){const g=buildingGroup(b),p=pos(b.x,b.y);g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=-(b.rotation||0)*Math.PI/180;mark(g,key);root.add(g)}
+function addCylinderBetween(g,a,b,r=.06,color='#8d9080'){
+ const v1=new THREE.Vector3(...a),v2=new THREE.Vector3(...b);const delta=v2.clone().sub(v1);
+ const beam=mesh(new THREE.CylinderGeometry(r,r,delta.length(),8),material(color));beam.position.copy(v1.add(v2).multiplyScalar(.5));beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());g.add(beam);
+}
+function drawObject(o,entry,key){
+ const g=new THREE.Group(),group=entry.group,p=pos(o.x,o.y),radius=(o.diameter||entry.diameter||2)/2;
+ if(group==='trees'||group==='shrubs'){
+  const ht=o.height||TREE_HEIGHT_M[o.catalogId]||Math.max(.8,radius*2);
+  if(group==='trees'){const trunk=mesh(new THREE.CylinderGeometry(.12,.18,ht*.36,9),material('#77624d'));trunk.position.y=ht*.18;g.add(trunk)}
+  const leafColor=doc.atmosphere.season==='autumn'&&group==='trees'?'#bc8750':doc.atmosphere.season==='winter'&&o.catalogId!=='pine'&&o.catalogId!=='spruce'?'#8b8b7e':entry.color||'#65845e';
+  const conifer=['pine','spruce','thuja-globe'].includes(o.catalogId);
+  if(conifer){for(let layer=0;layer<3;layer++){const cone=mesh(new THREE.ConeGeometry(radius*(1-layer*.23),ht*.47,9),material(leafColor));cone.position.y=ht*(.46+layer*.17);g.add(cone)}}
+  else{for(let j=0;j<5;j++){const ball=mesh(new THREE.IcosahedronGeometry(radius*(j? .52:.78),1),material(leafColor));ball.position.set(Math.sin(j*2.4)*radius*.43,group==='shrubs'?radius*.56:ht*(.66+j*.04),Math.cos(j*2.4)*radius*.35);g.add(ball)}}
+ }else if(group==='boulders'){const b=mesh(new THREE.DodecahedronGeometry(radius,0),material('#90958d'));b.scale.y=.55;g.add(b)}
+ else if(group==='lights'){const stand=mesh(new THREE.CylinderGeometry(.06,.075,Math.max(.6,o.height||1),10),material('#363d3a',.25,.2));stand.position.y=(o.height||1)/2;g.add(stand);const lamp=mesh(new THREE.SphereGeometry(.18,10,8),new THREE.MeshBasicMaterial({color:'#f4d5a0'}));lamp.position.y=(o.height||1);g.add(lamp)}
+ const groundH=terrainAt(p.x,p.z);g.position.set(p.x,groundH,p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+ mark(g,key);root.add(g);
+}
+function polygon(points,y,color,water=false){
+ const shape=new THREE.Shape();points.forEach((pt,i)=>{const p=pos(pt.x,pt.y),xx=p.x,zz=-p.z;i?shape.lineTo(xx,zz):shape.moveTo(xx,zz)});shape.closePath();
+ const geo=new THREE.ShapeGeometry(shape),m=water?new THREE.MeshPhysicalMaterial({color:'#377f91',roughness:.12,metalness:.32,transparent:true,opacity:.88,clearcoat:.8}):material(color);
+ const o=mesh(geo,m);o.rotation.x=-Math.PI/2;o.position.y=y;o.castShadow=false;return o;
+}
+function drawArea(o,entry,key){
+ const g=new THREE.Group();const pts=o.points;const isPath=entry.group==='pavers'||(entry.group==='fills'&&o.geometry==='strip');
+ if(isPath){
+  for(let i=1;i<pts.length;i++){const a=pos(pts[i-1].x,pts[i-1].y),b=pos(pts[i].x,pts[i].y);const delta=b.clone().sub(a),l=delta.length();
+   const board=mesh(new THREE.BoxGeometry(o.width||1.2,.065,l),material(entry.color||'#a8a99f'));board.position.copy(a.add(b).multiplyScalar(.5));board.position.y=.08;board.rotation.y=Math.atan2(delta.x,delta.z);g.add(board)}
+ }else if(pts.length>=3)g.add(polygon(pts,.06,entry.color||'#6d9874',entry.group==='ponds'));
+ mark(g,key);root.add(g);
+}
+function drawExtra(o){
+ const g=new THREE.Group(),p=pos(o.x||0,o.y||0);
+ if(o.type==='fence'&&o.points?.length>=2){
+ for(let i=1;i<o.points.length;i++){let a=pos(o.points[i-1].x,o.points[i-1].y),b=pos(o.points[i].x,o.points[i].y);let steps=Math.max(1,Math.ceil(a.distanceTo(b)/2));for(let k=0;k<=steps;k++){const at=a.clone().lerp(b,k/steps);const post=mesh(new THREE.BoxGeometry(.12,1.6,.12),material('#454945'));post.position.set(at.x,.8,at.z);g.add(post)}addCylinderBetween(g,[a.x,1.25,a.z],[b.x,1.25,b.z],.045,'#777e77');addCylinderBetween(g,[a.x,.55,a.z],[b.x,.55,b.z],.045,'#777e77')}
+ }else{
+  if(o.type==='pergola'||o.type==='gazebo'){for(const x of [-1.4,1.4])for(const z of [-1.4,1.4]){const post=mesh(new THREE.BoxGeometry(.14,2.7,.14),material('#8a7155'));post.position.set(x,1.35,z);g.add(post)}const canopy=mesh(new THREE.BoxGeometry(3.2,.2,3.2),material('#987b61'));canopy.position.y=2.8;g.add(canopy)}
+  else if(o.type==='bench'){const base=mesh(new THREE.BoxGeometry(1.9,.15,.65),material('#a08a70'));base.position.y=.55;g.add(base);const back=mesh(new THREE.BoxGeometry(1.9,.9,.14),material('#a08a70'));back.position.set(0,1,-.32);g.add(back)}
+  else if(o.type==='table'){const tabletop=mesh(new THREE.CylinderGeometry(.9,.9,.12,16),material('#ac947b'));tabletop.position.y=.82;g.add(tabletop);const stem=mesh(new THREE.CylinderGeometry(.14,.14,.82,10),material('#827360'));stem.position.y=.4;g.add(stem)}
+  else if(o.type==='car'){const car=mesh(new THREE.BoxGeometry(1.8,1.2,4.2),material('#c1c8ca',.25,.2));car.position.y=.68;g.add(car);const roof=mesh(new THREE.BoxGeometry(1.45,.55,2.1),material('#53656d',.3,.3));roof.position.y=1.52;g.add(roof)}
+ }
+ g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;mark(g,'extra:'+o.id);root.add(g);
+}
+function drawTools(){
+ $('#tools').innerHTML=toolList.map(a=>'<button data-tool="'+a[0]+'" title="'+a[1]+'"><span class="glyph">'+a[2]+'</span>'+a[1]+'</button>').join('');
+ document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>chooseTool(b.dataset.tool));chooseTool('select');
+}
+function chooseTool(t){
+ state.tool=t;state.placing=null;pointMode=[];
+ document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
+ const arr=choices[t]||[];
+ $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':arr.map(c=>'<button class="choice" data-item="'+c[0]+'">'+c[1]+' <span>＋</span></button>').join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+(t==='terrain'?'<label>Радиус кисти, м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label>Сила рельефа</label><input id="brushStrength" type="range" min=".1" max="2" step=".1" value=".5">':'');
+ $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{state.placing=b.dataset.item;$('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.')});
+ if(t==='select')status('Выбирайте объекты щелчком, перетаскивайте мышью, редактируйте размеры справа.');
+}
+function selectable(key){const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
+function renderProps(){
+ const el=$('#properties'),ref=state.selected?selectable(state.selected):null;if(!ref?.obj){el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
+ const o=ref.obj, fields=[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
+ if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height]);
+ else if('diameter'in o)fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
+ el.innerHTML='<p style="margin:0 0 8px">'+state.selected+'</p>'+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1" value="'+Number(f[2]||0)+'">').join('')+'<button class="action primary" id="applyProps">Применить</button><button class="action" id="deleteObject">Удалить объект</button>';
+ $('#applyProps').onclick=()=>{push();for(const n of el.querySelectorAll('[data-prop]')){const val=Number(n.value);if(Number.isFinite(val)){o[n.dataset.prop]=val}}save();rebuild()};
+ $('#deleteObject').onclick=()=>{push();if(ref.type==='object')doc.objects=doc.objects.filter(x=>x!==o);else if(ref.type==='building')doc.buildings=doc.buildings.filter(x=>x!==o);else if(ref.type==='extra')extra=extra.filter(x=>x!==o);else{status('Главный дом удалять нельзя. Измените его размеры.');return}state.selected=null;save();rebuild()};
+}
+function updateSun(){
+ const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
+ const cfg={day:[-25,65,22,3],morning:[-56,21,12,1.75],evening:[55,14,17,1.3],night:[-30,8,15,.15]}[val]||[-25,65,22,3];
+ sun.position.set(cfg[0],cfg[1],cfg[2]);sun.intensity=cfg[3];sun.color.set(val==='evening'?'#ffb87b':'#fff2db');
+ scene.background=new THREE.Color(val==='night'?'#25343c':val==='evening'?'#a4a597':'#b8c7c4');
+ scene.fog.color.copy(scene.background);
+}
+function setView(view){
+ state.view=view;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ const W=doc.site.width,H=doc.site.height;
+ controls.enabled=view!=='walk';
+ if(view==='2d'){const size=Math.max(W,H)*.75;camera=new THREE.OrthographicCamera(-size,size,size/Math.max(1,canvas.clientWidth/canvas.clientHeight),-size/Math.max(1,canvas.clientWidth/canvas.clientHeight),.1,600);camera.position.set(0,125,.01);camera.up.set(0,0,-1);camera.lookAt(0,0,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=false}
+ else if(view==='walk'){camera=new THREE.PerspectiveCamera(70,1,.1,600);camera.position.set(0,1.7,Math.min(H/2-1,8));camera.lookAt(0,1.7,0);controls.object=camera}
+ else{camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(W*.9,Math.max(24,H*.8),H*1.1);camera.up.set(0,1,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=true}
+ resize();status(view==='walk'?'Walk: используйте клавиши W A S D, мышь для осмотра.':'Режим '+view.toUpperCase()+' активен.');
+}
+function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
+function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
+function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
+function modifyTerrain(world){
+ const rad=Number($('#brushRadius')?.value||3),strength=Number($('#brushStrength')?.value||.5),mode=state.placing||'raise';
+ for(let i=0;i<=GRID;i++)for(let j=0;j<=GRID;j++){
+  const x=(j/GRID-.5)*doc.site.width,z=(i/GRID-.5)*doc.site.height,dist=Math.hypot(x-world.x,z-world.z);
+  if(dist<rad){const k=i*(GRID+1)+j,v=heightmap[k]||0,f=(1-dist/rad)*strength;
+   heightmap[k]=Math.max(-8,Math.min(12,mode==='raise'?v+f:mode==='lower'?v-f:v*(1-Math.min(.7,f))))}
+ }rebuild();
+}
+function place(world){
+ const point=fromWorld(world),tool=state.tool,entry=catalog(state.placing),type=entry?.group;
+ if(tool==='terrain'){if(!state.placing)state.placing='raise';push();modifyTerrain(world);save();return}
+ if(!state.placing){status('Сначала выберите элемент из библиотеки.');return}
+ if(tool==='site'&&state.placing==='outline'){
+  pointMode.push(point);status('Контур: точек '+pointMode.length+'. Enter — завершить.');return;
+ }
+ if(tool==='surface'||tool==='water'||tool==='fence'){
+  pointMode.push(point);const req=tool==='fence'?2:tool==='surface'&&type==='pavers'?2:3;
+  if(pointMode.length<req){status('Точка '+pointMode.length+' из '+req+' поставлена.');return}
+  push();
+  if(tool==='fence')extra.push({id:id(),type:'fence',points:pointMode.slice(),x:point.x,y:point.y,rotation:0});
+  else doc.objects.push({id:id(),catalogId:state.placing,type:type||'ponds',points:pointMode.slice(),width:1.5});
+  pointMode=[];save();rebuild();return;
+ }
+ push();
+ if(tool==='build'){doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:6,height:5,rotation:0,roof:'gable',roofColor:'#454543'})}
+ else if(tool==='plant'||tool==='landscape'||tool==='light'){
+  const good=catalog(state.placing);if(!good){status('Объект недоступен в каталоге');return}
+  doc.objects.push({id:id(),catalogId:state.placing,type:good.group,x:point.x,y:point.y,diameter:good.diameter||1.6,height:good.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):good.group==='lights'?1.2:.95,rotation:0})
+ }else extra.push({id:id(),type:state.placing,x:point.x,y:point.y,rotation:0});
+ save();rebuild();
+}
+function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
+function addEvents(){
+ const down=e=>{state.down={x:e.clientX,y:e.clientY};const key=hitObj(e);if(state.tool==='select'&&key){state.selected=key;state.drag=true;push();renderProps();controls.enabled=false}};
+ const move=e=>{if(!state.drag||!state.selected||!state.down)return;const p=hitGround(e),ref=selectable(state.selected);if(!p||!ref?.obj||!('x'in ref.obj))return;const pt=fromWorld(p);ref.obj.x=pt.x;ref.obj.y=pt.y;rebuild()};
+ const up=e=>{
+  const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
+  if(state.drag){state.drag=false;controls.enabled=state.view!=='walk';save();rebuild();state.down=null;return}
+  if(movement<5){if(state.tool==='select'){state.selected=hitObj(e);renderProps();}else{const p=hitGround(e);if(p)place(p)}}state.down=null
+ };
+ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',()=>{state.drag=false;controls.enabled=true});
+ document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+ $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
+ $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;save();rebuild()};
+ $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
+ $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
+ $('#screenshot').onclick=saveScreenshot;
+ $('#exportJSON').onclick=()=>{const data=JSON.stringify({schema:'FORMA-landscape-3d-v1',project:doc,extra,terrain:{grid:GRID,values:heightmap}},null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='FORMA-landscape-3d.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+ window.addEventListener('keydown',e=>{
+  if(/input|select|textarea/i.test(e.target.tagName))return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();restore(e.shiftKey?redo:undo,e.shiftKey?undo:redo)}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();restore(redo,undo)}
+  if(e.key==='Enter'&&state.tool==='site'&&state.placing==='outline'&&pointMode.length>=3){push();doc.site.boundary=pointMode.slice();pointMode=[];save();rebuild();status('Контур участка сохранён')}
+  if(state.view==='walk'){let amount=e.shiftKey?1.4:.5;const forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();const side=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();if(e.key.toLowerCase()==='w')camera.position.addScaledVector(forward,amount);if(e.key.toLowerCase()==='s')camera.position.addScaledVector(forward,-amount);if(e.key.toLowerCase()==='a')camera.position.addScaledVector(side,-amount);if(e.key.toLowerCase()==='d')camera.position.addScaledVector(side,amount)}
+ });
+ window.addEventListener('resize',resize);canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();status('WebGL отключился. Перезагрузите страницу.')});
+}
+function resize(){const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
+function animate(){requestAnimationFrame(animate);if(controls?.enabled)controls.update();if(renderer&&scene&&camera)renderer.render(scene,camera)}
+try{initialize()}catch(err){console.error(err);$('#loadError').style.display='flex';$('#status').textContent=err.message}
+</script>
+</body>
+</html>
