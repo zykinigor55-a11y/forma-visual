@@ -57,9 +57,54 @@ function makeLeafGeometry(T,needle=false){
  }
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pts,3));g.computeVertexNormals();return g;
 }
-function addBranch(g,T,segments,color){
+/* Species-specific bark micro-material instead of a single flat brown cylinder.
+ * Geometry stays native 3D, and no third-party photo is baked into the editor. */
+const barkTextureCache=new Map();
+export function barkPalette(id){
+ if(id==='birch')return {base:'#D3D3C8',dark:'#444D4B',light:'#F0EFE6',cross:true};
+ if(id==='pine')return {base:'#96613F',dark:'#563C30',light:'#C08B61',cross:false};
+ if(id==='spruce')return {base:'#62534A',dark:'#302E2B',light:'#96826A',cross:false};
+ if(id==='willow')return {base:'#857A65',dark:'#585B4B',light:'#B2AB92',cross:false};
+ if(['oak','apple','rowan'].includes(id))return {base:'#6C5C4E',dark:'#37352F',light:'#90806D',cross:false};
+ return {base:'#83715D',dark:'#4D4339',light:'#A9997C',cross:false};
+}
+function barkTexture(T,id){
+ if(barkTextureCache.has(id))return barkTextureCache.get(id);
+ const c=document.createElement('canvas');c.width=256;c.height=512;
+ const ctx=c.getContext('2d'),palette=barkPalette(id),random=rng(hash('bark|'+id));
+ ctx.fillStyle=palette.base;ctx.fillRect(0,0,256,512);
+ if(palette.cross){
+  for(let i=0;i<230;i++){
+   const x=random()*256,y=random()*512,len=3+random()*33;
+   ctx.fillStyle=random()>.74?palette.light:palette.dark;ctx.globalAlpha=.18+random()*.55;
+   ctx.fillRect(x,y,len,.6+random()*3.2);
+  }
+ }else{
+  // Crack trajectories are irregular and follow the grain of real wood.
+  for(let i=0;i<180;i++){
+   const x=random()*256,y=random()*512,dy=9+random()*116;
+   ctx.strokeStyle=random()>.64?palette.light:palette.dark;
+   ctx.globalAlpha=.11+random()*.35;ctx.lineWidth=.4+random()*2;
+   ctx.beginPath();ctx.moveTo(x,y);
+   ctx.bezierCurveTo(x+(random()-.5)*13,y+dy*.30,x+(random()-.5)*15,y+dy*.72,x+(random()-.5)*11,y+dy);
+   ctx.stroke();
+  }
+ }
+ ctx.globalAlpha=1;
+ for(let i=0;i<4000;i++){
+  const x=random()*256,y=random()*512,v=random();
+  ctx.fillStyle=v<.5?'rgba(255,246,214,.055)':'rgba(17,16,15,.065)';
+  ctx.fillRect(x,y,1+random()*2,1+random()*4);
+ }
+ const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;
+ texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.set(1,2);
+ texture.anisotropy=4;barkTextureCache.set(id,texture);return texture;
+}
+function addBranch(g,T,segments,color,id){
  if(!segments.length)return;
- const base=new T.CylinderGeometry(1,1,1,6,1),m=new T.MeshStandardMaterial({color,roughness:1,metalness:0,flatShading:true});
+ const tex=barkTexture(T,id);
+ const base=new T.CylinderGeometry(.70,1,1,9,2),
+ m=new T.MeshStandardMaterial({color:'#ffffff',map:tex,bumpMap:tex,bumpScale:.016,roughness:.97,metalness:0});
  const branches=new T.InstancedMesh(base,m,segments.length),dummy=new T.Object3D(),up=new T.Vector3(0,1,0),a=new T.Vector3(),b=new T.Vector3();
  segments.forEach((v,i)=>{
   a.set(...v[0]);b.set(...v[1]);const delta=b.clone().sub(a),len=delta.length();
@@ -244,7 +289,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  }
  // Birch has a visible pale trunk; Scots pine a taller open red-brown bole.
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
- addBranch(g,T,branches,c.bark);
+ addBranch(g,T,branches,c.bark,id);
  if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);}
  flowerClusters(g,T,leafPoints,id,Math.floor(r()*4294967295),season);
 }
@@ -269,7 +314,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    y:clamp(p.y+(r()-.5)*heightActual*.13,.08,heightActual),
    z:clamp(p.z+(r()-.5)*radius*.19,-radius,radius),s:p.s*(.8+r()*.3)});
  }
- addBranch(g,T,branches,c.bark);
+ addBranch(g,T,branches,c.bark,id);
  if(!foliageProfile(id,season).leafless){addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,points,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);}
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
 }
