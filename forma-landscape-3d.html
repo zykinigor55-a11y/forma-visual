@@ -227,6 +227,8 @@ function initialize(){
  scene.add(new THREE.HemisphereLight(0xffffff,0x52604e,2));
  const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(window.innerWidth<720?1024:2048,window.innerWidth<720?1024:2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
+ brushCursor=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xE7D0A5,transparent:true,opacity:.78,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
+ brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());restoreHouseGlbs().catch(e=>console.warn('Stored GLB restore:',e));
  const previousDrawing=localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
@@ -654,6 +656,20 @@ async function renderAi(){
 }
 function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
 
+function updateBrushCursor(event){
+ if(!brushCursor)return;
+ const active=['terrain','surface','plant'].includes(state.tool)&&state.view!=='walk'&&
+ (state.tool==='terrain'||brushEnabled())&&
+ !!state.placing&&!(event.pointerType==='mouse'&&(event.buttons&2));
+ const ground=active?hitGround(event):null;
+ if(!ground){brushCursor.visible=false;return}
+ const radius=state.tool==='terrain'?Math.max(.5,Number($('#brushRadius')?.value||3)):
+ state.tool==='plant'?Math.max(.3,(Number(catalog(state.placing)?.diameter)||1.5)/2):
+ Math.max(.25,brushDiameter()/2);
+ brushCursor.scale.set(radius,radius,1);
+ brushCursor.position.set(ground.x,terrainAt(ground.x,ground.z)+.15,ground.z);
+ brushCursor.visible=inParcel(fromWorld(ground),doc.site);
+}
 function brushEnabled(tool=state.tool){
  return ['surface','plant'].includes(tool)&&$('#useLandscapeBrush')?.checked===true;
 }
@@ -726,6 +742,7 @@ function addEvents(){
  }
 };
 const move=e=>{
+ updateBrushCursor(e);
  if(state.view==='walk'){
   const locked=document.pointerLockElement===canvas,mobile=e.pointerType==='touch'&&state.down;
   if(locked||mobile){
@@ -738,7 +755,7 @@ const move=e=>{
  }
  if(state.painting){
   if(e.pointerId!==state.activePointer)return;
-  if(e.pointerType==='mouse'&&(e.buttons&1)===0)return;
+  if(e.pointerType==='mouse'&&((e.buttons&1)===0||(e.buttons&2)!==0))return;
   if(brushStroke){advanceBrush(hitGround(e));return}
   const p=hitGround(e);if(p)modifyTerrain(p);return;
  }
@@ -771,6 +788,7 @@ const up=e=>{
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
  canvas.addEventListener('pointercancel',()=>{if(state.painting&&brushStroke)finishBrush();state.drag=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk'});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+ canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
  // as orbit. Right-drag and wheel remain available even during an active brush.
  controls.mouseButtons.LEFT=null;
