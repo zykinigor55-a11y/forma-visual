@@ -34,6 +34,29 @@
   ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(0,0,rx,0,Math.PI*2);ctx.fill();
   ctx.restore();
  }
+ // Render a genuine extended luminous BAR, not one point-source radial halo.
+ // The gradient is rectangular: length stays fixed and the emission feathers across width.
+ function band(ctx,cx,cy,length,width,angle,color,intensity,solid=false){
+  const l=Math.max(12,length),b=Math.max(3,width),a=clamp(intensity,0,1.6);
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
+  const grad=ctx.createLinearGradient(0,-b,0,b);
+  grad.addColorStop(0,rgba(color,0));
+  grad.addColorStop(.18,rgba(color,.08*a));
+  grad.addColorStop(.43,rgba(color,.23*a));
+  grad.addColorStop(.5,rgba(color,.27*a));
+  grad.addColorStop(.57,rgba(color,.23*a));
+  grad.addColorStop(.82,rgba(color,.08*a));
+  grad.addColorStop(1,rgba(color,0));
+  ctx.fillStyle=grad;
+  // Rounded rectangle avoids an artificial hard rectangular end at either side.
+  ctx.beginPath();ctx.roundRect(-l/2,-b,l,b*2,Math.min(b,l*.08));ctx.fill();
+  if(solid){
+   ctx.shadowColor=rgba(color,.36*a);ctx.shadowBlur=Math.max(5,b*.6);
+   ctx.fillStyle=rgba(color,.72*a);
+   ctx.beginPath();ctx.roundRect(-l*.49,-1.3,l*.98,2.6,1.3);ctx.fill();
+  }
+  ctx.restore();
+ }
  // Camera-relative visualization: different fixtures have genuinely different
  // spatial light distributions. This preview is not a photometric IES solver.
  function drawSource(ctx,source,w,h){
@@ -50,29 +73,21 @@
   const length=clamp(source.length??2.4,.4,6)/6*minDim*.96;
   const type=source.profile||'downlight';
   if(type==='linear'){
-   // Linear fixture: a wide luminous STRIP and an elongated rectangular wash;
-   // NO point-light arc, conical wedge, radial target spot or circular hotspot.
-   const fixtureWidth=length,soft=clamp(9+(source.cone-10)*.14,10,30);
-   ctx.save();ctx.translate(x,y);ctx.rotate(perp);
-   const strip=ctx.createLinearGradient(0,-soft*2,0,soft*2);
-   strip.addColorStop(0,rgba(color,0));strip.addColorStop(.33,rgba(color,.16*strength));
-   strip.addColorStop(.5,rgba(color,.4*strength));strip.addColorStop(.67,rgba(color,.16*strength));
-   strip.addColorStop(1,rgba(color,0));
-   ctx.fillStyle=strip;ctx.fillRect(-fixtureWidth*.55,-soft*2,fixtureWidth*1.1,soft*4);
-   ctx.shadowColor=rgba(color,.52*strength);ctx.shadowBlur=soft;
-   ctx.fillStyle=rgba(color,.48*strength);ctx.fillRect(-fixtureWidth*.5,-2.2,fixtureWidth,4.4);
-   ctx.restore();
-   // Distributed field at the target: elliptical with very high aspect ratio,
-   // representing multiple tiny emitters along the physical bar.
-   glowEllipse(ctx,tx,ty,Math.max(length*.76,42),clamp(10+distance*.12,18,55),color,.18*strength,perp);
+   // The physical LED rail is aligned along the long axis (perpendicular to aiming).
+   // Illuminate a parallel extended band at the intended surface, never an ellipse/cone.
+   const extent=clamp(length,35,Math.min(w,h)*.96);
+   const feather=clamp(14+distance*.18,18,Math.min(w,h)*.28);
+   band(ctx,tx,ty,extent*1.1,feather,perp,color,.90*strength);
+   band(ctx,x,y,extent,clamp(feather*.35,7,19),perp,color,.72*strength,source.mode==='fixture');
    return;
   }
   if(type==='wall-wash'){
-   // Continuous vertical wall illumination: broad feathered sheet on a plane.
-   // It is not a circular floor spot or a cone emitted from a single point.
-   const washLength=Math.max(length*.95,clamp(distance*1.15,75,Math.max(w,h)*.66));
-   glowEllipse(ctx,tx,ty,washLength*.55,clamp(distance*.24,18,70),color,.21*strength,perp);
-   glowEllipse(ctx,tx,ty,washLength*.32,clamp(distance*.12,8,29),color,.095*strength,perp);
+   // A wall washer illuminates a CONTINUOUS vertical plane: broad rectangular
+   // luminance at the wall, with a soft longitudinal and transverse falloff.
+   const extent=clamp(Math.max(length*.92,distance*1.2),65,Math.min(w,h)*1.05);
+   const feather=clamp(distance*.24,22,Math.min(w,h)*.38);
+   band(ctx,tx,ty,extent,feather,perp,color,.86*strength);
+   band(ctx,tx,ty,extent*.91,feather*.44,perp,color,.32*strength);
    return;
   }
   if(type==='pendant'){
@@ -155,7 +170,8 @@
    const group=document.createElement('div');group.className='fa-light-pair'+(index===selected?' is-selected':'');
    group.dataset.lightIndex=String(index);
    const line=document.createElement('span');line.className='fa-light-direction';
-   const marker=makeButton('fa-light-marker','Источник '+(index+1)+'. Перемещайте стрелками или перетаскиванием.',String(index+1),index,'source');
+   const marker=makeButton('fa-light-marker','Источник '+(index+1)+' · '+({linear:'линейный свет',spot:'акцентный спот','wall-wash':'заливка стены',downlight:'встроенный свет',pendant:'подвес',floor:'торшер'}[source.profile]||'светильник')+'. Перемещайте стрелками или перетаскиванием.',String(index+1),index,'source');
+   marker.dataset.profile=source.profile;
    marker.title=source.mode==='fixture'?'Видимый светильник':'Невидимый источник света';
    marker.dataset.fixture=source.mode;
    const aim=makeButton('fa-light-aim','Направление луча '+(index+1)+'. Перемещайте стрелками или перетаскиванием.','+',index,'aim');
