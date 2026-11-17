@@ -1,0 +1,43 @@
+/* FORMA — one-object furniture replacement on a completed interior frame. */
+#formaFurnitureEditor{position:fixed;inset:0;margin:auto;padding:0;box-sizing:border-box;width:min(1200px,calc(100vw - 24px));height:min(850px,calc(100dvh - 24px));max-height:calc(100dvh - 20px);border:1px solid #51483f;border-radius:16px;background:#202124;color:#f2ede7;overflow:hidden}
+#formaFurnitureEditor::backdrop{background:#09090bed;backdrop-filter:blur(12px)}
+#formaFurnitureEditor .fa-furn-shell{display:flex;flex-direction:column;height:100%;min-height:0}
+#formaFurnitureEditor header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid #4a4844;flex:none}
+#formaFurnitureEditor header small{display:block;font-size:9px;font-weight:650;letter-spacing:.15em;color:#c9aa82;margin-bottom:5px}
+#formaFurnitureEditor header h2{margin:0;color:#f7f1e9;font-size:22px;font-weight:560;letter-spacing:-.035em}
+#formaFurnitureEditor header button{width:40px;height:40px;border:1px solid #61554c;border-radius:8px;background:#303034;color:#eee7db;font-size:22px;cursor:pointer}
+#formaFurnitureEditor .fa-furn-main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,340px);gap:0;overflow:auto;min-height:0;flex:1}
+#formaFurnitureEditor .fa-furn-work{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:0;padding:18px;background:#111315}
+#formaFurnitureEditor .fa-furn-work>p{max-width:650px;font-size:11px;line-height:1.65;color:#b9b3ab;margin:14px 0 0;text-align:center}
+#faFurnitureImageStage{position:relative;width:100%;max-width:100%;max-height:63dvh;min-height:170px;background:#181a1e;touch-action:none;cursor:crosshair;overflow:hidden;border:1px solid #50443b;border-radius:7px;user-select:none;-webkit-user-select:none}
+#faFurnitureImageStage img{width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
+#faFurnitureImageStage #faFurnitureSelection{position:absolute;box-sizing:border-box;border:2px solid #f1cca0;box-shadow:0 0 0 9999px #00000035,inset 0 0 0 1px #17120d;cursor:move;touch-action:none}
+#faFurnitureImageStage #faFurnitureSelection[hidden]{display:none!important}
+#faFurnitureImageStage .fa-furn-corner{position:absolute;right:-9px;bottom:-9px;width:28px;height:28px;background:#d4b188;border:1px solid #fff0d8;border-radius:6px;color:#1b1613;font:700 17px/28px Arial,sans-serif;text-align:center;cursor:nwse-resize;touch-action:none}
+#formaFurnitureEditor .fa-furn-controls{min-width:0;overflow:auto;padding:23px 20px 26px;background:#26272a;border-left:1px solid #4c4742}
+#formaFurnitureEditor .fa-furn-controls>label{display:block;color:#e8dfd4;font-size:11px;line-height:1.5;margin-bottom:18px;font-weight:600}
+#formaFurnitureEditor .fa-furn-controls select,#formaFurnitureEditor .fa-furn-controls textarea{display:block;width:100%;box-sizing:border-box;padding:10px;border-radius:7px;margin-top:8px;border:1px solid #5f5750;background:#1e2024;color:#f5f1eb;font:500 12px/1.45 Arial,sans-serif;resize:vertical}
+#formaFurnitureEditor .fa-furn-controls input[type=range]{display:block;width:100%;accent-color:#d2ad7e;margin-top:12px}
+#formaFurnitureEditor .fa-furn-controls output{float:right;color:#e5c298;font-size:12px}
+#formaFurnitureEditor .fa-furn-upload{padding:14px 12px;border:1px solid #554d45;border-radius:9px;margin:10px 0 18px;background:#292a2d}
+#formaFurnitureEditor .fa-furn-upload strong{font-size:12px;display:block;margin:0 0 10px;color:#ece3da}
+#formaFurnitureEditor .fa-furn-upload label{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 12px;box-sizing:border-box;background:#383431;color:#eddbc8;border:1px solid #b39b7e;border-radius:7px;cursor:pointer;font-size:11px}
+#formaFurnitureEditor .fa-furn-upload label input{position:absolute;opacity:0;width:1px;height:1px}
+#formaFurnitureEditor .fa-furn-upload span{display:block;font-size:10px;line-height:1.45;color:#bab1a9;margin:9px 0;overflow-wrap:anywhere}
+#formaFurnitureEditor .fa-furn-upload img{width:auto;max-width:100%;max-height:100px;object-fit:contain;border-radius:6px}
+#formaFurnitureEditor .fa-furn-upload img[hidden]{display:none!important}
+#formaFurnitureEditor #faFurnitureStatus{font-size:11px;line-height:1.65;color:#c0b7ae;min-height:48px;margin:16px 0}
+#formaFurnitureEditor [data-furn-run]{width:100%;min-height:48px;border:1px solid #dfb889;border-radius:9px;background:#d7b387;color:#251b14;font-size:12px;font-weight:750;cursor:pointer}
+#formaFurnitureEditor [data-furn-run]:disabled{opacity:.47;cursor:default}
+#formaFurnitureEditor button:focus-visible,#faFurnitureImageStage:focus-visible,#formaFurnitureEditor input:focus-visible,#formaFurnitureEditor select:focus-visible{outline:2px solid #eed3aa;outline-offset:3px}
+#formaResultFocus .forma-result-actions button[hidden]{display:none!important}
+@media(max-width:760px){
+ #formaFurnitureEditor{width:100vw;height:100dvh;max-height:100dvh;border:0;border-radius:0}
+ #formaFurnitureEditor header{padding:12px 16px}
+ #formaFurnitureEditor header h2{font-size:19px}
+ #formaFurnitureEditor .fa-furn-main{display:block;overflow:auto}
+ #formaFurnitureEditor .fa-furn-work{padding:12px;min-height:0}
+ #faFurnitureImageStage{min-height:130px;max-height:38dvh}
+ #formaFurnitureEditor .fa-furn-work>p{font-size:10px;margin:8px 0}
+ #formaFurnitureEditor .fa-furn-controls{padding:16px 18px 30px;border:0;border-top:1px solid #4c4742}
+}
