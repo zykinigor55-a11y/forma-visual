@@ -97,9 +97,9 @@ export async function buildLandscapeAlbum(project,planImage,aiImage=null){
  }
  const surfaces=Object.entries(summary.areas).map(([id,a])=>[byId(id)?.name,fmt(a)+' м²',summary.lengths[id]==null?'—':fmt(summary.lengths[id])+' м']);
  for(const group of chunks(surfaces,19)){
-  const p=push('Покрытия и водоёмы','Площади рассчитаны по исходным полигонам');
+  const p=push('Покрытия и водоёмы','Чистые площади без двойного учёта наложений');
   table(p.c,[['Материал',295],['Площадь',115],['Длина',105]],group);
-  text(p.c,'Площади на пересечениях дорожек предварительные.',38,716,10,muted);
+  text(p.c,summary.areaPrecision==='polygon'?'Пересечения учтены; скругления дорожек приближённые.':'Сложные пересечения: численный расчёт площади.',38,716,10,muted);
   warning(p.c,d.verified);canvases.push(p.cv);
  }
  const lamps=d.objects.filter(x=>byId(x.catalogId)?.group==='lights');
