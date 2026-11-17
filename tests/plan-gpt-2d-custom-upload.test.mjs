@@ -11,9 +11,9 @@ test('five selected 2D styles share exact original plan geometry lock',()=>{
  const prompts=new Set();
  for(const planStyle of Object.keys(PLAN_2D_STYLES)){
   const p=imageTaskPrompt({kind:'plan2d',planStyle,notes:''});
-  assert.match(p,/Strict orthographic TOP-DOWN layout/);
-  assert.match(p,/Do not rotate the plan, move walls/);
-  assert.match(p,/NOT A 3D CONVERSION/);
+  assert.match(p,/STRICT ORTHOGRAPHIC NADIR 2D PLAN/);
+  assert.match(p,/Do not rotate, crop differently, tilt, change scale/);
+  assert.match(p,/No geometry additions, no new balconies/);
   prompts.add(p);
  }
  assert.equal(prompts.size,5);
@@ -81,5 +81,5 @@ test('plan UI has no model picker, draws room reference on approved 3D, and vali
  assert.match(ui,/photo\.naturalWidth/);
  assert.match(ui,/вместо запрошенного 2K/);
  assert.match(html,/forma-plan-2d-styles\.css/);
- assert.match(html,/forma-image-workspace\.js\?v=plan-gpt-2d-2k-v1/);
+ assert.match(html,/forma-image-workspace\.js\?v=five-plan-concepts-v3-20261117/);
 });
