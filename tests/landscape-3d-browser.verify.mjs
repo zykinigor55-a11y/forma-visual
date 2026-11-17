@@ -2,6 +2,20 @@ import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
 import {chromium} from 'playwright';
 
+// Minimal self-contained GLB fixture: one measurable 3D mesh, no remote assets.
+function tinyHouseGlb(){
+ const positions=Buffer.alloc(36),coords=[-1,0,0,1,0,0,0,2,0];
+ coords.forEach((x,i)=>positions.writeFloatLE(x,i*4));
+ const asset={asset:{version:'2.0'},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0}],meshes:[{primitives:[{attributes:{POSITION:0}}]}],
+  buffers:[{byteLength:positions.length}],bufferViews:[{buffer:0,byteOffset:0,byteLength:positions.length,target:34962}],
+  accessors:[{bufferView:0,componentType:5126,count:3,type:'VEC3',min:[-1,0,0],max:[1,2,0]}]};
+ const text=Buffer.from(JSON.stringify(asset));const jsonLen=Math.ceil(text.length/4)*4,binLen=Math.ceil(positions.length/4)*4;
+ const out=Buffer.alloc(12+8+jsonLen+8+binLen);out.writeUInt32LE(0x46546C67,0);out.writeUInt32LE(2,4);out.writeUInt32LE(out.length,8);
+ out.writeUInt32LE(jsonLen,12);out.writeUInt32LE(0x4E4F534A,16);out.fill(0x20,20,20+jsonLen);text.copy(out,20);
+ const offset=20+jsonLen;out.writeUInt32LE(binLen,offset);out.writeUInt32LE(0x004E4942,offset+4);positions.copy(out,offset+8);
+ return out;
+}
+
 const browser=await chromium.launch({headless:true});
 const errors=[];
 const base='http://127.0.0.1:3000';
@@ -31,6 +45,9 @@ try{
  assert.equal(modernHouse.archStyle,'modern');
  await page.screenshot({path:'artifacts/landscape-editor/3d-modern-house.png'});
  await page.locator('[data-house-preset="barn"]').click();
+ await page.locator('#focusHouse').click();
+ await page.screenshot({path:'artifacts/landscape-editor/3d-house-close-up.png'});
+ await page.locator('#fit3dScene').click();
 
  await page.locator('#weather').selectOption('fog');
  assert.equal(await page.locator('#weather').inputValue(),'fog');
@@ -79,7 +96,24 @@ try{
  await mobile.goto(base+'/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:30000});
  await mobile.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:45000});
  assert.ok(await mobile.locator('#viewport').evaluate(el=>el.width>250),'mobile 3D canvas mounted');
+ assert.equal(await mobile.locator('#mobileWorkspaceTabs').isVisible(),true);
+ assert.equal(await mobile.locator('#left').isVisible(),true);
+ assert.equal(await mobile.locator('#right').isVisible(),false);
+ await mobile.locator('[data-mobile-panel="details"]').click();
+ assert.equal(await mobile.locator('#right').isVisible(),true);
+ assert.equal(await mobile.locator('#left').isVisible(),false);
  await mobile.screenshot({path:'artifacts/landscape-editor/3d-mobile.png'});
+ // Verify GLB import / restoration only after the visual screenshots.
+ await page.locator('#selectMainHouse').click();
+ await page.locator('#customHouseGlb').setInputFiles({name:'test-house.glb',mimeType:'model/gltf-binary',buffer:tinyHouseGlb()});
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')||'{}')?.house?.modelKey==='main',null,{timeout:30000});
+ const imported=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')).house);
+ assert.equal(imported.width,12);assert.equal(imported.height,8);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('#houseEditing')?.textContent.includes('GLB'),null,{timeout:30000});
+ await page.locator('#clearCustomHouse').click();
+ const cleared=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')).house);
+ assert.equal(cleared.modelKey,null);
  assert.deepEqual(errors,[],'3D editor has no JavaScript crashes');
  console.log('3D desktop/mobile smoke passed: WebGL, atmosphere, contour, 2D/3D/Walk, shared model.');
 }finally{await browser.close()}
