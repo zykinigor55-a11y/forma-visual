@@ -9,7 +9,11 @@ export const HOUSE_PRESETS=Object.freeze([
  {id:'modern',name:'Современный',subtitle:'Штукатурка · панорамное стекло',wall:'plaster',roof:'flat',roofFinish:'flat',accent:'#D5CEBF'},
  {id:'japandi',name:'Japandi',subtitle:'Штукатурка · тёплый кедр',wall:'cedar',roof:'flat',roofFinish:'flat',accent:'#BDA78B'},
  {id:'classic',name:'Классический',subtitle:'Светлый фасад · вальмовая кровля',wall:'stone',roof:'hip',roofFinish:'tile',accent:'#D5D0C7'},
- {id:'aframe',name:'A-frame',subtitle:'Высокий треугольный силуэт',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#69533F'}
+ {id:'aframe',name:'A-frame',subtitle:'Высокий треугольный силуэт',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#69533F'},
+ {id:'chalet',name:'Альпийское шале',subtitle:'Широкая кровля · деревянная терраса',wall:'walnut',roof:'gable',roofFinish:'tile',accent:'#957157'},
+ {id:'cottage',name:'Английский коттедж',subtitle:'Фахверк · крутая кровля',wall:'stone',roof:'gable',roofFinish:'tile',accent:'#B1A193'},
+ {id:'mediterranean',name:'Средиземноморский',subtitle:'Терракота · светлый камень',wall:'plaster',roof:'hip',roofFinish:'tile',accent:'#B98764'},
+ {id:'hightech',name:'Хай-тек',subtitle:'Консоль · бетон · витраж',wall:'plaster',roof:'flat',roofFinish:'flat',accent:'#A9B6B1'}
 ]);
 const presetById=id=>HOUSE_PRESETS.find(p=>p.id===id);
 export const housePreset=id=>presetById(id)||HOUSE_PRESETS[0];
@@ -111,7 +115,8 @@ function edgeBeam(g,T,a,b,thickness,material){
  item.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),d.normalize());return item;
 }
 function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
- const roof=b.roof||housePreset(b.archStyle).roof,overhang=Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
+ const roof=b.roof||housePreset(b.archStyle).roof,overhang=b.archStyle==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
+ b.archStyle==='cottage'?Math.min(.75,Math.min(w,d)*.09):Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
  const dark=mat(T,'#22282B',.75,.38),gable=roof==='gable',hip=roof==='hip';
  const rise=b.archStyle==='aframe'?Math.max(4.2,Math.min(8,Number(b.roofRise)||0,w*.74)):Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
  if(roof==='flat'){
@@ -171,7 +176,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const w=Math.max(2,Number(b.width)||8),d=Math.max(2,Number(b.height)||7);
  const g=new THREE.Group();g.name='architecture-'+style;
  const isGarage=b.type==='garage',isGazebo=b.type==='gazebo',isBath=b.type==='bath';
- const bodyHeight=style==='aframe'?.65:(isGarage?2.9:isGazebo?2.9:['barn','classic','timber','brick'].includes(style)?4.3:3.5);
+ const bodyHeight=style==='aframe'?.65:(isGarage?2.9:isGazebo?2.9:['barn','classic','timber','brick','chalet','cottage','mediterranean'].includes(style)?4.3:3.5);
  const shades={
   darkwood:['#53504C','#293237'],lightwood:['#D7C7B0','#323D40'],
   walnut:['#8A624D','#242D32'],brick:['#B38C7A','#303A3C'],
@@ -258,6 +263,63 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   }
  }
  roofGeometry(g,THREE,b,w,d,0,bodyHeight,roofMaterial,preset.roofFinish);
+ addPresetVolumes(g,THREE,{style,w,d,bodyHeight});
  g.userData.archStyle=style;g.userData.footprint={width:w,height:d};g.userData.textures=[wallTex,roofTex];
  return g;
+}
+
+/* The four new presets carry distinct built silhouettes rather than recolouring
+   one rectangular mass. Measured footprint (w × d) remains authoritative. */
+function addPresetVolumes(g,T,{style,w,d,bodyHeight:y}){
+ const m=(color,roughness=.78)=>new T.MeshStandardMaterial({color,roughness,metalness:.05});
+ const wood=m('#6B4D39'),dark=m('#272F31'),stucco=m('#E5DCD0'),glass=m('#304A55',.19),steel=m('#606E70',.4);
+ if(style==='chalet'){
+  // Deep terrace on the south elevation and visible handrail / roof supports.
+  box(g,T,Math.min(w*.82,w-1),.18,.92,0,2.61,d/2+.45,wood);
+  for(let x=-w*.36;x<=w*.36;x+=Math.max(.34,w*.11))
+   box(g,T,.065,.88,.065,x,3.07,d/2+.86,dark);
+  box(g,T,w*.76,.08,.11,0,3.53,d/2+.86,wood);
+  for(const x of [-w*.38,w*.38])
+   box(g,T,.15,2.38,.15,x,1.33,d/2+.84,wood);
+  // Horizontal timber slats make the building credible at near-ground eye level.
+  for(let i=0;i<9;i++)box(g,T,w-.28,.016,.035,0,.95+i*.31,d/2+.09,m('#42352D'));
+ }
+ if(style==='cottage'){
+  const beam=m('#514439'),z=d/2+.10;
+  // Half-timber structural rhythm, diagonal braces and deep eave brackets.
+  for(const x of [-w*.44,-w*.22,0,w*.22,w*.44])
+   box(g,T,.105,Math.max(2.6,y-.65),.10,x,y/2+.3,z,beam);
+  for(const yy of [1.28,2.83,y-.20])box(g,T,w-.12,.11,.09,0,yy,z,beam);
+  for(const x of [-w*.32,w*.32]){
+   edgeBeam(g,T,[x-.33,1.30,z+.04],[x+.31,2.77,z+.04],.095,beam);
+  }
+  for(const x of [-w*.40,w*.40])box(g,T,.20,.24,.42,x,y+.07,d/2+.13,beam);
+ }
+ if(style==='mediterranean'){
+  const n=3;
+  // Shaded entrance colonnade with distinct projecting terracotta cornice.
+  box(g,T,w*.72,.19,1.08,0,2.88,d/2+.60,stucco);
+  for(let i=0;i<n;i++){
+   const x=(i-(n-1)/2)*w*.30;
+   const column=new T.Mesh(new T.CylinderGeometry(.105,.14,2.18,14),stucco);
+   column.position.set(x,1.80,d/2+1.07);column.castShadow=true;g.add(column);
+   box(g,T,.35,.15,.34,x,2.92,d/2+1.07,stucco);
+   box(g,T,.33,.13,.32,x,.69,d/2+1.07,stucco);
+  }
+  const terracotta=m('#B76E4B');for(const x of [-w*.43,w*.43])
+   box(g,T,.12,.22,d+.35,x,y+.02,0,terracotta);
+ }
+ if(style==='hightech'){
+  // Clearly cantilevered horizontal plate, external aluminum mullions and
+  // dark glazed ribbon: visually different from flat-roof modern preset.
+  box(g,T,w*.83,.25,d*.88,-w*.07,y+.17,0,stucco);
+  box(g,T,w*.69,.19,.71,-w*.08,y*.79,d/2+.37,stucco);
+  box(g,T,w*.68,1.10,.055,-w*.10,2.56,d/2+.16,glass);
+  for(let i=0;i<5;i++){
+   const x=-w*.44+i*w*.17;
+   box(g,T,.045,1.17,.075,x,2.58,d/2+.19,steel);
+  }
+  for(const x of [-w*.40,w*.40])
+   box(g,T,.10,y*.62,.16,x,y*.37,d/2+.16,dark);
+ }
 }
