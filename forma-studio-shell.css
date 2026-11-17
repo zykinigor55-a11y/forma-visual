@@ -81,3 +81,30 @@ html[data-forma-theme] body.fa-unified-studio #formaStudioWorkspace :is(.materia
  #faFlowBackdrop .fa-flow-viewport{min-height:140px;flex:1}
  #faFlowBackdrop .fa-flow-bottom{flex:none}
 }
+
+/* UX FIX: Scenarios and appended tools must remain clickable in shorter
+   desktop viewports; no overlap with the footer Help button. */
+@media(min-width:761px){
+ .fa-unified-studio .rail{overflow:hidden!important;min-height:0!important}
+ .fa-unified-studio .rail-nav{
+  margin-top:clamp(10px,2vh,24px)!important;
+  flex:1 1 auto!important;min-height:0!important;max-height:100%!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  scrollbar-width:thin;scrollbar-color:#83796855 transparent;
+  gap:3px!important;padding-bottom:9px!important;
+ }
+ .fa-unified-studio .rail-nav>.rail-btn{
+  min-height:50px!important;height:50px!important;flex:0 0 50px!important;
+  width:59px!important;
+ }
+ .fa-unified-studio .rail-bottom{
+  flex:0 0 auto!important;margin-top:8px!important;gap:9px!important;
+  padding-top:8px!important;border-top:1px solid #82755f30;
+  position:relative;z-index:1;
+ }
+}
+@media(min-height:850px) and (min-width:761px){
+ .fa-unified-studio .rail-nav>.rail-btn{
+  min-height:56px!important;height:56px!important;flex-basis:56px!important;
+ }
+}
