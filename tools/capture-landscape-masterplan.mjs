@@ -38,7 +38,7 @@
   await page.waitForFunction(()=>!!window.FORMA_LANDSCAPE_PROJECT,{timeout:45000});
   await page.evaluate(()=>window.FORMA_LANDSCAPE_PROJECT.open());
   await page.waitForSelector('#faLandscapeMasterplan[open]',{timeout:20000});
-  await page.waitForFunction(()=>document.querySelector('.lp-assets img')?.src.includes('/assets/landscape-photo/'),{timeout:15000});
+  await page.waitForFunction(()=>{const img=document.querySelector('.lp-assets img');return !!img&&img.complete&&img.naturalWidth>0;},{timeout:15000});
   await page.waitForFunction(()=>[...document.querySelectorAll('.lp-assets img')].every(x=>x.complete&&x.naturalWidth>0),{timeout:12000});
   await page.waitForTimeout(450);
  }
