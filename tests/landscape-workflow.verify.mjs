@@ -26,6 +26,7 @@ try{
   // Path material must be available before the first point.
   await page.locator('[data-tool="path"]').click();
   await page.locator('[data-path-material="granite-setts"]').click();
+  await page.screenshot({path:'artifacts/landscape-editor/'+(mobile?'mobile':'desktop')+'-paver-picker.png',fullPage:false});
   await page.locator('[data-path-shape="free"]').click();
   await tap(4,10);await tap(13,11);
   await page.locator('#lpFinish').click();
@@ -45,6 +46,7 @@ try{
   await page.locator('[data-quick-category="lawns"]').click();
   await page.locator('[data-area-material="formal"]').click();
   await page.locator('[data-area-tool="brush"]').click();
+  await page.screenshot({path:'artifacts/landscape-editor/'+(mobile?'mobile':'desktop')+'-brush-picker.png',fullPage:false});
   assert.equal(await page.locator('[data-area-tool="brush"]').getAttribute('aria-pressed'),'true');
   const start=await pos(9,25),end=await pos(13,30);
   await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(end.x,end.y,{steps:10});await page.mouse.up();
@@ -53,6 +55,7 @@ try{
   // Polygonal lasso works for pond and survives other tool changes.
   await page.locator('[data-area-tool="polygon"]').click();
   await page.locator('[data-area-material="bio-pond"]').click();
+  await page.screenshot({path:'artifacts/landscape-editor/'+(mobile?'mobile':'desktop')+'-pond-picker.png',fullPage:false});
   await tap(18,24);await tap(23,24);await tap(23,29);await tap(18,29);
   await page.locator('#lpFinish').click();
   model=await doc();assert.equal(model.objects.length,4);
