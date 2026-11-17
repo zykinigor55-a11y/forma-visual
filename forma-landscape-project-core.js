@@ -109,7 +109,7 @@ export function normalizeProject(raw){
   const id=/^[a-z0-9-]{1,48}$/i.test(item.id||'')?item.id:'o-'+Math.random().toString(36).slice(2,10);
   if(['pavers','fills','lawns','ponds'].includes(entry.group)){
    const points=(Array.isArray(item.points)?item.points:[]).slice(0,120).map(point);
-   const strip=entry.group==='fills'&&item.geometry==='strip';
+   const strip=['fills','lawns'].includes(entry.group)&&item.geometry==='strip';
    const paintedPond=entry.group==='ponds'&&item.geometry==='paint';
    if(points.length<(entry.group==='pavers'||strip?2:3))continue;
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
