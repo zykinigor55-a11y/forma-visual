@@ -110,7 +110,7 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor;
-let pickables=[],pointMode=[],walkYaw=0;const GRID=48;
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0;const GRID=48;
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -292,9 +292,11 @@ function setView(view){
  const W=doc.site.width,H=doc.site.height;
  controls.enabled=view!=='walk';
  if(view==='2d'){const size=Math.max(W,H)*.75;camera=new THREE.OrthographicCamera(-size,size,size/Math.max(1,canvas.clientWidth/canvas.clientHeight),-size/Math.max(1,canvas.clientWidth/canvas.clientHeight),.1,600);camera.position.set(0,125,.01);camera.up.set(0,0,-1);camera.lookAt(0,0,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=false}
- else if(view==='walk'){camera=new THREE.PerspectiveCamera(70,1,.1,600);camera.position.set(0,1.7,Math.min(H/2-1,8));camera.lookAt(0,1.7,0);controls.object=camera}
+ else if(view==='walk'){camera=new THREE.PerspectiveCamera(70,1,.1,600);
+  const z=Math.max(-H/2+1,Math.min(H/2-1,8));camera.position.set(0,terrainAt(0,z)+1.7,z);
+  walkYaw=0;walkPitch=0;camera.rotation.order='YXZ';camera.rotation.set(0,0,0);controls.object=camera}
  else{camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(W*.9,Math.max(24,H*.8),H*1.1);camera.up.set(0,1,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=true}
- resize();status(view==='walk'?'Walk: используйте клавиши W A S D, мышь для осмотра.':'Режим '+view.toUpperCase()+' активен.');
+ resize();status(view==='walk'?'Walk: W A S D — движение · щёлкните для осмотра мышью · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
 }
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
@@ -370,19 +372,53 @@ async function renderAi(){
 }
 function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
 function addEvents(){
- const down=e=>{state.down={x:e.clientX,y:e.clientY};
+ const down=e=>{
+ state.down={x:e.clientX,y:e.clientY};
+ if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
  if(state.tool==='terrain'&&state.placing){state.painting=true;push();const p=hitGround(e);if(p)modifyTerrain(p);status('Кисть рельефа: ведите указатель для изменения высоты');return}
- const key=hitObj(e);if(state.tool==='select'&&key){state.selected=key;state.drag=true;push();renderProps();controls.enabled=false}};
- const move=e=>{
+ const key=hitObj(e);
+ if(state.tool==='select'&&key){
+  state.selected=key;state.drag=true;push();
+  const obj=selectable(key)?.obj,anchor=hitGround(e);
+  state.dragAnchor=anchor?fromWorld(anchor):null;
+  state.dragPoints=Array.isArray(obj?.points)?obj.points.map(p=>({...p})):null;
+  renderProps();controls.enabled=false;
+ }
+};
+const move=e=>{
+ if(state.view==='walk'){
+  const locked=document.pointerLockElement===canvas,mobile=e.pointerType==='touch'&&state.down;
+  if(locked||mobile){
+   const dx=locked?e.movementX:e.clientX-state.down.x,dy=locked?e.movementY:e.clientY-state.down.y;
+   walkYaw-=dx*.0035;walkPitch=Math.max(-1.25,Math.min(1.25,walkPitch-dy*.0035));
+   camera.rotation.set(walkPitch,walkYaw,0,'YXZ');
+   if(mobile)state.down={x:e.clientX,y:e.clientY};
+  }
+  return;
+ }
  if(state.painting){const p=hitGround(e);if(p)modifyTerrain(p);return}
- if(!state.drag||!state.selected||!state.down)return;const p=hitGround(e),ref=selectable(state.selected);if(!p||!ref?.obj||!('x'in ref.obj))return;const pt=fromWorld(p);ref.obj.x=pt.x;ref.obj.y=pt.y;rebuild()};
- const up=e=>{
-  if(state.painting){state.painting=false;state.down=null;save();rebuild();return}
-  const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
-  if(state.drag){state.drag=false;controls.enabled=state.view!=='walk';save();rebuild();state.down=null;return}
-  if(movement<5){if(state.tool==='select'){state.selected=hitObj(e);renderProps();}else{const p=hitGround(e);if(p)place(p)}}state.down=null
- };
- canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',()=>{state.drag=false;state.painting=false;controls.enabled=true});
+ if(!state.drag||!state.selected||!state.down)return;
+ const p=hitGround(e),ref=selectable(state.selected);if(!p||!ref?.obj)return;
+ const pt=fromWorld(p);
+ if(state.dragPoints&&state.dragAnchor){
+  const dx=pt.x-state.dragAnchor.x,dy=pt.y-state.dragAnchor.y;
+  const shifted=state.dragPoints.map(q=>({x:q.x+dx,y:q.y+dy}));
+  if(!shifted.every(q=>inParcel(q,doc.site)))return;
+  ref.obj.points=shifted;
+ }else if('x'in ref.obj){
+  if(!inParcel(pt,doc.site))return;ref.obj.x=pt.x;ref.obj.y=pt.y;
+ }
+ rebuild();
+};
+const up=e=>{
+ if(state.view==='walk'){state.down=null;return}
+ if(state.painting){state.painting=false;state.down=null;save();rebuild();return}
+ const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
+ if(state.drag){state.drag=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';save();rebuild();state.down=null;return}
+ if(movement<5){if(state.tool==='select'){state.selected=hitObj(e);renderProps()}else{const p=hitGround(e);if(p)place(p)}}
+ state.down=null;
+};
+canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',()=>{state.drag=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk'});
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
  $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;save();rebuild()};
@@ -399,7 +435,17 @@ function addEvents(){
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();restore(redo,undo)}
   if(e.key==='Enter'&&pointMode.length){e.preventDefault();finishContour()}
   if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
-  if(state.view==='walk'){let amount=e.shiftKey?1.4:.5;const forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();const side=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();if(e.key.toLowerCase()==='w')camera.position.addScaledVector(forward,amount);if(e.key.toLowerCase()==='s')camera.position.addScaledVector(forward,-amount);if(e.key.toLowerCase()==='a')camera.position.addScaledVector(side,-amount);if(e.key.toLowerCase()==='d')camera.position.addScaledVector(side,amount)}
+  if(state.view==='walk'){
+   const amount=e.shiftKey?1.4:.5,forward=new THREE.Vector3(),old=camera.position.clone();
+   camera.getWorldDirection(forward);forward.y=0;forward.normalize();
+   const side=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize(),key=e.key.toLowerCase();
+   if(['w','arrowup'].includes(key))camera.position.addScaledVector(forward,amount);
+   if(['s','arrowdown'].includes(key))camera.position.addScaledVector(forward,-amount);
+   if(['a','arrowleft'].includes(key))camera.position.addScaledVector(side,-amount);
+   if(['d','arrowright'].includes(key))camera.position.addScaledVector(side,amount);
+   if(!inParcel(fromWorld(camera.position),doc.site))camera.position.copy(old);
+   camera.position.y=terrainAt(camera.position.x,camera.position.z)+1.7;
+  }
  });
  window.addEventListener('resize',resize);canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();status('WebGL отключился. Перезагрузите страницу.')});
 }
