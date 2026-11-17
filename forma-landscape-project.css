@@ -454,3 +454,6 @@
  #faLandscapeMasterplan .lp-assets button span{font-size:11.5px}
  #faLandscapeMasterplan .lp-assets .lp-asset-detail{font-size:7.7px}
 }
+
+/* Active category photography must not be skipped by content-visibility:auto. */
+#faLandscapeMasterplan .lp-assets button img{content-visibility:visible!important;}
