@@ -74,6 +74,7 @@ try{
   model=await doc();assert.equal(model.objects.length,4);
   assert.ok(model.objects.some(o=>o.catalogId==='bio-pond'));
   assert.ok((await page.locator('#lpSvg').evaluate(node=>node.outerHTML)).includes('lpPondClip-'),'pond photo must be clipped to polygon');
+  await page.screenshot({path:'artifacts/landscape-editor/'+(mobile?'mobile':'desktop')+'-dark-photo-pond-on-plan.png',fullPage:false});
   // Polygon lasso remains available as an optional precision tool.
   await page.locator('[data-area-tool="polygon"]').click();
   await page.screenshot({path:'artifacts/landscape-editor/'+(mobile?'mobile':'desktop')+'-pond-picker.png',fullPage:false});
