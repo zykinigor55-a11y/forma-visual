@@ -653,12 +653,26 @@ function setView(view){
  else if(view==='walk'){camera=new THREE.PerspectiveCamera(70,1,.1,600);
   const z=Math.max(-H/2+1,Math.min(H/2-1,8));camera.position.set(0,terrainAt(0,z)+1.7,z);
   walkYaw=0;walkPitch=0;camera.rotation.order='YXZ';camera.rotation.set(0,0,0);controls.object=camera}
- else{camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(W*.9,Math.max(24,H*.8),H*1.1);camera.up.set(0,1,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=true}
+ else{
+  // A phone is portrait: horizontal FOV is far narrower than desktop. Frame
+  // the parcel and mature tree crowns, not just an eye-level house close-up.
+  const ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));
+  const portrait=Math.min(2.25,Math.max(1,.92/ratio));
+  const crowns=doc.objects.filter(o=>catalog(o.catalogId)?.group==='trees');
+  const tallest=Math.max(7,...crowns.map(o=>Number(o.height)||0));
+  const aimY=Math.max(2.5,Math.min(6,tallest*.29));
+  camera=new THREE.PerspectiveCamera(50,1,.1,700);
+  camera.position.set(W*.9*portrait,Math.max(24,H*.8)*portrait+aimY,H*1.1*portrait);
+  camera.up.set(0,1,0);controls.object=camera;
+  controls.target.set(0,aimY,0);controls.enableRotate=true;
+ }
  resize();status(view==='walk'?'Walk: W A S D — движение · щёлкните для осмотра мышью · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
 }
 function focusHouseCamera(){
  if(state.view!=='3d')setView('3d');
- const b=activeHouseTarget(),p=pos(b.x,b.y),range=Math.max(b.width,b.height,7)*1.35;
+ const b=activeHouseTarget(),p=pos(b.x,b.y);
+ const ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));
+ const range=Math.max(b.width,b.height,7)*1.35*Math.min(2.15,Math.max(1,.90/ratio));
  controls.target.set(p.x,1.6,p.z);
  camera.position.set(p.x+range*.83,Math.max(9,range*.86),p.z+range*1.15);
  camera.lookAt(controls.target);controls.update();
