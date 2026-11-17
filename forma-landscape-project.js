@@ -37,8 +37,8 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
    if(entry.group==='pavers'){
     shapes+=`<path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="#4f4a41" stroke-width="${item.width+.1}" stroke-linecap="round" stroke-linejoin="round" opacity="${alpha}"/><path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="${entry.color}" stroke-width="${item.width}" stroke-linecap="round" stroke-linejoin="round" opacity="${alpha}"/>`;
    }else if(['fills','lawns','ponds'].includes(entry.group)){
-    shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}" fill="${entry.color}" fill-opacity="${preview?.18:.85}" stroke="${active?'#dfaa58':'#5b7558'}" stroke-width="${active?.16:.065}"/>`;
-    if(!preview){shapes+=`<defs><pattern id="tile-${item.id}" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="2.4" height="2.4"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}" fill="url(#tile-${item.id})" opacity=".46"/>`;}
+    shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}" fill="${entry.color}" fill-opacity="${preview&&photoVisible?.18:.85}" stroke="${active?'#dfaa58':'#5b7558'}" stroke-width="${active?.16:.065}"/>`;
+    if(!(preview&&photoVisible)){shapes+=`<defs><pattern id="tile-${item.id}" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="2.4" height="2.4"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}" fill="url(#tile-${item.id})" opacity=".46"/>`;}
    }else{
     const d=entry.group==='lights'?Math.max(.75,item.diameter):item.diameter;
     shapes+=`<g data-object="${item.id}" transform="rotate(${item.rotation} ${item.x} ${item.y})"><image href="${iconURL(entry)}" x="${item.x-d/2}" y="${item.y-d/2}" width="${d}" height="${d}"/></g>`;
@@ -196,7 +196,7 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
   if(!paths.length)return svg;
   const converted=await Promise.all(paths.map(async url=>{
    try{const r=await fetch(url,{cache:'force-cache'});if(!r.ok)return [url,null];const b=await r.blob();
-    if(b.size>2_200_000||b.type!=='image/webp')return [url,null];
+    if(b.size>10_000_000||!['image/webp','image/png','image/jpeg'].includes(b.type))return [url,null];
     const data=await new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(f.result);f.onerror=reject;f.readAsDataURL(b)});
     return [url,data];
    }catch{return [url,null]}
