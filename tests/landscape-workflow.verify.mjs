@@ -2,8 +2,14 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile,mkdir,copyFile} from 'node:fs/promises';
 import {brushPolygon} from '../forma-landscape-brush.js';
+import {masterplanPrompt} from '../forma-landscape-project-prompts.js';
 assert.ok(brushPolygon([{x:8,y:8},{x:10,y:11}],2,{width:30,height:40}).length>=4);
 assert.equal(brushPolygon([{x:6,y:7}],1,{width:30,height:40}).length,20);
+const emptyPrompt=masterplanPrompt({site:{width:30,height:40},house:{x:15,y:15,width:12,height:8,roof:'gable',type:'house'},objects:[],buildings:[]});
+assert.match(emptyPrompt,/EMPTY-PARCEL LOCK/);
+assert.match(emptyPrompt,/Do not add grass, trees, shrubs, garden beds/);
+const populatedPrompt=masterplanPrompt({site:{width:30,height:40},house:{x:15,y:15,width:12,height:8,roof:'gable',type:'house'},objects:[{catalogId:'birch',x:5,y:6,diameter:6}],buildings:[]});
+assert.match(populatedPrompt,/categories ABSENT from the project/);
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 await mkdir('artifacts/landscape-editor',{recursive:true});
 try{
