@@ -135,7 +135,14 @@ import {brushPolygon} from './forma-landscape-brush.js';
   root.innerHTML=html;
  }
  function draw(){if(!modal)return;drawMap();drawInspector();drawPalette()}
- function setMode(v){mode=v;points=[];selected=null;brush=null;if(v==='path'&&!['pavers'].includes(itemCatalog()?.group)){category='pavers';chosen='concrete-pavers'}if(v==='area'&&!['lawns','fills','ponds'].includes(itemCatalog()?.group)){category='lawns';chosen='universal'}draw();if(v==='path')say('Выберите тип брусчатки, ширину и режим: параллельно границе, диагонали 45° или свободная форма. Двойное касание завершает дорожку.');}
+ // A mobile user often chooses a species/material in the library below
+ // the map; return to the SAME fixed drawing viewport for placement.
+ function revealCanvas(){
+  if(!modal||!window.matchMedia('(max-width:760px)').matches)return;
+  const layout=$('.lp-layout',modal);
+  if(layout)layout.scrollTop=0;
+ }
+ function setMode(v){mode=v;points=[];selected=null;brush=null;if(v==='path'&&!['pavers'].includes(itemCatalog()?.group)){category='pavers';chosen='concrete-pavers'}if(v==='area'&&!['lawns','fills','ponds'].includes(itemCatalog()?.group)){category='lawns';chosen='universal'}draw();revealCanvas();if(v==='path')say('Выберите тип брусчатки, ширину и режим: параллельно границе, диагонали 45° или свободная форма. Двойное касание завершает дорожку.');}
  function endDrawing(){points=[];mode='select';draw();say('Рисование прервано. Уже созданные объекты не изменены.');}
  function pathPoint(p){
   if(mode!=='path'||pathShape==='free'||!points.length)return p;
@@ -338,13 +345,13 @@ import {brushPolygon} from './forma-landscape-brush.js';
  }
  function click(e){
   const b=e.target.closest('button');if(!b||busy)return;
-  if(b.dataset.pathMaterial){chosen=b.dataset.pathMaterial;category='pavers';mode='path';points=[];draw();say('Выбрано мощение: '+itemCatalog().name);return}
-  if(b.dataset.areaMaterial){chosen=b.dataset.areaMaterial;category=itemCatalog().group;mode='area';points=[];brush=null;draw();say('Область: '+itemCatalog().name+' — выберите кисть или лассо.');return}
-  if(b.dataset.areaTool){areaTool=b.dataset.areaTool;points=[];brush=null;draw();say(areaTool==='brush'?'Проведите пальцем или мышью по нужной области.':'Поставьте точки контура и нажмите «Завершить».');return}
+  if(b.dataset.pathMaterial){chosen=b.dataset.pathMaterial;category='pavers';mode='path';points=[];draw();revealCanvas();say('Выбрано мощение: '+itemCatalog().name);return}
+  if(b.dataset.areaMaterial){chosen=b.dataset.areaMaterial;category=itemCatalog().group;mode='area';points=[];brush=null;draw();revealCanvas();say('Область: '+itemCatalog().name+' — выберите кисть или лассо.');return}
+  if(b.dataset.areaTool){areaTool=b.dataset.areaTool;points=[];brush=null;draw();revealCanvas();say(areaTool==='brush'?'Проведите пальцем или мышью по нужной области.':'Поставьте точки контура и нажмите «Завершить».');return}
   if(b.dataset.category){category=b.dataset.category;chosen=CATALOG.find(x=>x.group===category).id;drawPalette();return}
   if(b.dataset.asset){chosen=b.dataset.asset;const g=itemCatalog().group;setMode(g==='pavers'?'path':['fills','lawns','ponds'].includes(g)?'area':'place');return}
   if(b.dataset.tool){setMode(b.dataset.tool);return}
-  if(b.dataset.pathShape){pathShape=b.dataset.pathShape;points=[];drawMap();drawPalette();say(pathShape==='free'?'Свободная форма: ставьте точки в любом направлении.':pathShape==='diagonal'?'Диагонали: точная привязка под 45° к первой стороне участка.':'Параллельно: точная привязка к первой стороне участка и перпендикулярам.');return}
+  if(b.dataset.pathShape){pathShape=b.dataset.pathShape;points=[];drawMap();drawPalette();revealCanvas();say(pathShape==='free'?'Свободная форма: ставьте точки в любом направлении.':pathShape==='diagonal'?'Диагонали: точная привязка под 45° к первой стороне участка.':'Параллельно: точная привязка к первой стороне участка и перпендикулярам.');return}
   if(b.dataset.quickCategory){category=b.dataset.quickCategory;chosen=CATALOG.find(x=>x.group===category)?.id||chosen;setMode(category==='pavers'?'path':['lawns','fills','ponds'].includes(category)?'area':'place');return}
   if(b.id==='lpPhotoToggle'){if(preview){if(previewModel!==JSON.stringify(doc)){photoVisible=false;drawMap();say('План изменён. Создайте новый фотореалистичный генплан, чтобы увидеть обновлённое размещение.');return}}photoVisible=!photoVisible;drawMap();return}
   if(b.id==='lpFinish'){finish();return}
