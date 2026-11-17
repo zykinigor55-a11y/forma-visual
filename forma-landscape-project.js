@@ -506,7 +506,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
    const removable=doc.objects.filter(x=>x.type!=='pavers').length+doc.buildings.length;
    if(!removable){say('Участок уже очищен: остались только дом и дорожки.');return}
    if(!confirm('Очистить участок? Будут удалены все растения, газоны, отсыпки, водоёмы, камни, освещение и дополнительные постройки. Дом, дорожки, границы и размеры участка сохранятся. Можно отменить кнопкой ↶.'))return;
-   checkpoint();doc.objects=doc.objects.filter(x=>x.type==='pavers');doc.buildings=[];roofArts.clear();selected=null;points=[];brush=null;drag=null;mode='select';photoVisible=false;preview=null;previewModel=null;category='pavers';chosen='concrete-pavers';placementCount=0;save();draw();say('Участок очищен. Дом и дорожки сохранены. ↶ вернёт удалённые объекты.');return;
+   checkpoint();doc.objects=doc.objects.filter(x=>x.type==='pavers');doc.buildings=[];selected=null;points=[];brush=null;drag=null;mode='select';photoVisible=false;category='pavers';chosen='concrete-pavers';placementCount=0;save();draw();say('Участок очищен. Дом и дорожки сохранены. ↶ вернёт удалённые объекты.');return;
   }
   if(b.dataset.areaTool){areaTool=b.dataset.areaTool;points=[];brush=null;draw();revealCanvas();say(areaTool==='eraser'?'Ластик: проведите по газону, отсыпке или пруду.':areaTool==='brush'?'Проведите пальцем или мышью, без точек.':'Поставьте точки контура и нажмите «Завершить».');return}
   if(b.dataset.surfaceMode){setMode(b.dataset.surfaceMode==='strip'?'strip':'area');return}
