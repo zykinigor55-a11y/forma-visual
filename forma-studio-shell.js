@@ -40,7 +40,7 @@ export async function openWorkspace(id){
   active=null;
   // The category must open the top-down masterplan, not scenario-flow.
   try{
-   if(!window.FORMA_LANDSCAPE_PROJECT?.open)await import('./forma-landscape-project.js?v=pond-brush-zoom-photo-v3-20261117');
+   if(!window.FORMA_LANDSCAPE_PROJECT?.open)await import('./forma-landscape-project.js?v=category-water-clear-premium-v4-20261117');
    if(!window.FORMA_LANDSCAPE_PROJECT?.open)throw Error('Модуль генплана не загрузился');
    await window.FORMA_LANDSCAPE_PROJECT.open();
   }catch(error){window.FORMA_ART_BRIDGE?.notify?.('Не удалось открыть «Ландшафтный проект»: '+error.message);}
