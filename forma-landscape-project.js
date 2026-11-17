@@ -206,25 +206,73 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
    return c.toDataURL('image/png');
   }finally{URL.revokeObjectURL(url)}
  }
+ function elapsed(ms){const n=Math.floor(ms/1000);return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
+ function stopRenderClock(){
+  if(progressTicker){clearInterval(progressTicker);progressTicker=null;}
+  if(progressListener){document.removeEventListener('forma:render-job-status',progressListener);progressListener=null;}
+ }
+ function renderStage(stage,title,detail){
+  const el=$('#lpRenderOverlay',modal);if(!el)return;
+  el.hidden=false;el.dataset.stage=stage;
+  $('#lpRenderTitle',el).textContent=title;
+  $('#lpRenderDesc',el).textContent=detail;
+  const phase=['prepare','queued'].includes(stage)?'prepare':stage==='running'?'running':'save';
+  $$('[data-render-step]',el).forEach(node=>node.classList.toggle('is-active',node.dataset.renderStep===phase));
+  $('#lpRenderOrbit',el).hidden=['success','error'].includes(stage);
+  const img=$('#lpRenderOutputImage',el);img.hidden=!(stage==='success'&&preview);
+  if(stage==='success'&&preview)img.src=preview;
+  $('#lpRenderActions',el).hidden=!['success','error'].includes(stage);
+  $('[data-render-download]',el).hidden=stage!=='success'||!preview;
+  $('[data-render-close]',el).textContent=stage==='error'?'Вернуться в редактор':'Вернуться к плану';
+ }
+ function showRender(){
+  generationStarted=Date.now();
+  renderStage('prepare','Подготовка проекта','Подготавливаем геометрию, растения и материалы.');
+  $('#lpRenderQueue',modal).textContent='Подготовка исходного изображения';
+  stopRenderClock();
+  progressTicker=setInterval(()=>{const el=$('#lpRenderElapsed',modal);if(el)el.textContent='Прошло '+elapsed(Date.now()-generationStarted)},1000);
+  progressListener=e=>{
+   if(!busy||!modal)return;
+   const d=e.detail||{},s=d.status,el=$('#lpRenderQueue',modal);
+   if(s==='queued'){renderStage('queued','Рендер в очереди','Сервер сам запустит обработку. Повторно нажимать не нужно.');el.textContent='Позиция в очереди: '+Math.max(1,d.position||1);}
+   if(s==='running'){renderStage('running','Создаём ландшафтную фотографию','Растительность, камень, мощение, вода и солнечное освещение.');el.textContent='Фотореалистичная обработка на сервере';}
+   if(s==='completed'){renderStage('save','Сохраняем результат','Файл получен; переносим изображение в проект.');el.textContent='Сохранение готового изображения';}
+   if(s==='recovering'){renderStage('running','Восстанавливаем результат','Возвращаем уже отправленную работу без повторной оплаты.');el.textContent='Восстановление соединения';}
+  };
+  document.addEventListener('forma:render-job-status',progressListener);
+ }
  async function runAI(kind){
   if(busy)return;
-  if(!confirm('Запустить один платный запрос GPT Image 2.6? Точные размеры останутся в исходной модели.'))return;
-  busy=true;$('#lpAi',modal).disabled=true;say('Подготавливаем изображение для GPT Image 2.6...');
+  if(!confirm('Создать один фотореалистичный рендер? Это платная операция; геометрия участка останется неизменной.'))return;
+  busy=true;$('#lpAi',modal).disabled=true;showRender();
+  say('Генерация начата. Этапы отображаются на отдельном экране.');
   try{
    const target=selected?.startsWith('building:')?doc.buildings.find(b=>b.id===selected.slice(9)):doc.house;
    const payload=kind==='roof'
     ?{image:target?.photo||null,roofTopView:{width:target?.width,height:target?.height,roof:target?.roof},quality:'high',quantity:1}
     :{image:await rasterize(false),reference:doc.house.photo||null,landscapeMasterplan:coordinateSummary(doc),quality:'high',quantity:1};
    if(!payload.image)throw Error('Загрузите фотографию строения.');
-   const r=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(240000)});
-   const result=await r.json().catch(()=>({}));
-   if(!r.ok||!result.images?.[0])throw Error(result.error||'GPT Image не выдал изображение.');
-   const img='data:'+(result.mimes?.[0]||'image/png')+';base64,'+result.images[0];
-   if(kind==='roof'){if(target===doc.house){roofArt=img;await storage('roof',img).catch(()=>{});}else{roofArts.set(target.id,img);await storage('roof-'+target.id,img).catch(()=>{});}say('Кровля сгенерирована: размеры и положение строения не изменены.')}
-   else{preview=img;await storage('preview',img).catch(()=>{});say('Фотореалистичная подача создана. Измерения остались в векторной модели.')}
-   drawMap();
-  }catch(err){say(err?.name==='TimeoutError'?'Истекло время ожидания. Запрос мог быть оплачен. Не повторяйте сразу.':err.message)}
-  finally{busy=false;$('#lpAi',modal).disabled=false}
+   renderStage('running','Создаём фотореалистичный ландшафт','Используем измеряемый план и фототекстуры материалов.');
+   $('#lpRenderQueue',modal).textContent='Передано на сервер';
+   // Shared FIFO queue preserves its job ID and prevents duplicate paid requests.
+   const response=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok||!data.images?.[0])throw Error(data.error||'Сервер не выдал изображение. Проверьте восстановление задания перед повтором.');
+   const result='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
+   renderStage('save','Сохраняем визуализацию','Получаем готовый файл и привязываем его к проекту.');
+   if(kind==='roof'){
+    if(target===doc.house){roofArt=result;await storage('roof',result).catch(()=>{});}
+    else{roofArts.set(target.id,result);await storage('roof-'+target.id,result).catch(()=>{});}
+   }else{preview=result;await storage('preview',result).catch(()=>{});}
+   drawMap();say('Готово. Размеры остались в геометрической модели.');
+   stopRenderClock();
+   renderStage('success','Визуализация готова','Готовый кадр можно скачать или посмотреть на плане.');$('#lpRenderQueue',modal).textContent='Результат получен';
+  }catch(err){
+   stopRenderClock();
+   const message=err?.name==='TimeoutError'?'Сервер не ответил вовремя. Запрос мог быть оплачен — не запускайте повторно.':err?.message||'Ошибка создания визуализации.';
+   say(message);renderStage('error','Не удалось получить результат',message);
+   $('#lpRenderQueue',modal).textContent='Возможен восстановимый результат в очереди';
+  }finally{busy=false;$('#lpAi',modal).disabled=false;}
  }
  function exportCSV(){
   const r=report(doc),rows=[['Категория','Объект','Количество, шт','Площадь, м²','Длина, м']];
@@ -251,6 +299,8 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
   }
   if(b.dataset.addBuilding!==undefined){if(doc.buildings.length>=24){say('Лимит — 24 дополнительных строения.');return}checkpoint();const type=b.dataset.addBuilding,aux={id:'b-'+uid().slice(2),type,x:doc.site.width*.76,y:doc.site.height*.7,width:type==='garage'?7:type==='bath'?6:4,height:type==='garage'?6:4,rotation:0,roof:'gable',roofColor:'#454543',photo:null};doc.buildings.push(aux);selected='building:'+aux.id;save();draw();say('Строение добавлено. Укажите его точное положение, размеры и поворот.');return}
   if(b.dataset.deleteBuilding!==undefined&&selected?.startsWith('building:')){const id=selected.slice(9);checkpoint();doc.buildings=doc.buildings.filter(x=>x.id!==id);roofArts.delete(id);selected=null;save();draw();return}
+  if(b.dataset.renderClose!==undefined){if(!busy){$('#lpRenderOverlay',modal).hidden=true;}return}
+  if(b.dataset.renderDownload!==undefined){if(preview){const a=document.createElement('a');a.href=preview;a.download=title()+'-visualization.'+(preview.startsWith('data:image/webp')?'webp':'png');document.body.append(a);a.click();a.remove();}return}
   if(b.dataset.ai!==undefined){runAI('plan');return}
   if(b.dataset.roof!==undefined){runAI('roof');return}
   if(b.dataset.svg!==undefined){inlineSVGAssets(drawSvg()).then(svg=>{download(title()+'-genplan.svg',svg,'image/svg+xml');say('Сохранён самостоятельный SVG генплана с встроенными изображениями.');}).catch(err=>say('SVG: '+err.message));return}
@@ -290,6 +340,6 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
  }
  function close(){
   if(busy){say('Сначала завершите AI-запрос.');return}
-  if(!modal)return;save();modal.close();modal.remove();modal=null;document.removeEventListener('keydown',onKey);lastFocus?.focus?.({preventScroll:true});
+  if(!modal)return;stopRenderClock();save();modal.close();modal.remove();modal=null;document.removeEventListener('keydown',onKey);lastFocus?.focus?.({preventScroll:true});
  }
  window.FORMA_LANDSCAPE_PROJECT={open,close,getProject:()=>normalizeProject(doc),getReport:()=>report(doc)};
