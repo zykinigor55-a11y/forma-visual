@@ -1,7 +1,7 @@
 import {interiorLightsPrompt} from './forma-interior-light-contract.js';
 import {cameraOrbitPrompt} from './forma-camera-orbit.js';
 import {furnitureEditPrompt} from './forma-furniture-edit.js';
-import {masterplanPrompt,topDownRoofPrompt} from './forma-landscape-project-prompts.js';
+import {masterplanPrompt,perspectiveLandscapePrompt,topDownRoofPrompt} from './forma-landscape-project-prompts.js';
 /**
  * ДОМ.РЕНДЕР – minimal local Node 20+ server + OpenAI Images Edit proxy.
  * Keeps API keys on the server, not in the browser. Prototype, not public multi-tenant service.
@@ -136,7 +136,7 @@ export function createPrompt(p){
  if(p.enhanceOnly===true)return createEnhancementPrompt(p);
  if(p.cameraOrbit)return cameraOrbitPrompt(p.cameraOrbit,{referenceProvided:!!p.reference});
  if(p.furnitureEdit)return furnitureEditPrompt(p.furnitureEdit,{maskProvided:!!p.mask,referenceProvided:!!p.material});
- if(p.landscapeMasterplan)return masterplanPrompt(p.landscapeMasterplan);
+ if(p.landscapeMasterplan)return p.landscapeMasterplan.cameraMode==='3d-perspective'?perspectiveLandscapePrompt(p.landscapeMasterplan):masterplanPrompt(p.landscapeMasterplan);
  if(p.roofTopView)return topDownRoofPrompt(p.roofTopView);
  if(p.imageTask)return imageTaskPrompt(p.imageTask);
  if(p.editMode==='text')return [architecturalReferenceLock(p),materialTextPrompt(p.materialInstruction,p)].join('\n\n');
