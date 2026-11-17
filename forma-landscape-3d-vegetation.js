@@ -2,7 +2,7 @@
  * True branch geometry + instanced leaf meshes; no image billboards, no flat
  * cutouts. Everything uses metres and can be orbited, walked through and
  * rendered with real directional shadows. Deterministic per-object seed. */
-import {naturalCrown,branchTipDrop,botanicalLeafScale} from './forma-landscape-3d-botany.js';
+import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline} from './forma-landscape-3d-botany.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
@@ -36,27 +36,28 @@ export function foliageProfile(id,season='summer'){
  }
  return {color,leafless,kind:cfg.kind};
 }
-function makeLeafGeometry(T,needle=false){
+function makeLeafGeometry(T,needle=false,id='oak'){
  if(needle){
-  // A tuft is a physical multi-blade mesh crossing three directions, not a PNG.
-  const pts=[],norm=[];
+  // Physically narrow needle triangles: evergreen clusters stay green in winter.
+  const pts=[];
   for(let axis=0;axis<3;axis++){
    const theta=axis*Math.PI/3;
    for(let k=0;k<5;k++){
     const v=(k-2)*.21,dx=Math.cos(theta)*v,dz=Math.sin(theta)*v;
-    pts.push(-.085,0,-.065,dx,.68,dz,.085,0,.065);
+    pts.push(-.045,0,-.035,dx,.68,dz,.045,0,.035);
    }
   }
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pts,3));g.computeVertexNormals();return g;
+  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pts,3));
+  geo.computeVertexNormals();return geo;
  }
- // Distinct curved ovate / narrow leaf outline with actual 3D thickness.
- const xy=[[-.44,0],[-.28,.17],[-.08,.3],[.22,.25],[.51,.04],[.23,-.24],[-.1,-.3],[-.28,-.15]];
- const pts=[];
- for(let i=1;i<xy.length-1;i++){
-  pts.push(xy[0][0],xy[0][1],0, xy[i][0],xy[i][1],Math.sin(i/xy.length*Math.PI)*.07,
-   xy[i+1][0],xy[i+1][1],Math.sin((i+1)/xy.length*Math.PI)*.07);
+ const outline=leafOutline(id,20),pts=[];
+ // Species-correct contour with a slight fold down the midrib.
+ for(let i=0;i<outline.length;i++){
+  const a=outline[i],b=outline[(i+1)%outline.length],za=.055*(1-a[0]*a[0]),zb=.055*(1-b[0]*b[0]);
+  pts.push(0,0,.07,a[0],a[1],za,b[0],b[1],zb);
  }
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pts,3));g.computeVertexNormals();return g;
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pts,3));
+ geo.computeVertexNormals();return geo;
 }
 /* Species-specific bark micro-material instead of a single flat brown cylinder.
  * Geometry stays native 3D, and no third-party photo is baked into the editor. */
@@ -113,9 +114,9 @@ function addBranch(g,T,segments,color,id){
   dummy.scale.set(v[2],len,v[2]);dummy.updateMatrix();branches.setMatrixAt(i,dummy.matrix);
  });branches.instanceMatrix.needsUpdate=true;branches.castShadow=true;branches.receiveShadow=true;g.add(branches);
 }
-function addLeaves(g,T,items,color,needle,season,seed){
+function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  if(!items.length)return;
- const mesh=new T.InstancedMesh(makeLeafGeometry(T,needle),new T.MeshStandardMaterial({
+ const mesh=new T.InstancedMesh(makeLeafGeometry(T,needle,id),new T.MeshStandardMaterial({
   color:'#ffffff',roughness:.91,metalness:0,side:T.DoubleSide,
   depthWrite:true
  }),items.length);
@@ -354,7 +355,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  // Birch has a visible pale trunk; Scots pine a taller open red-brown bole.
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
  addBranch(g,T,branches,c.bark,id);
- if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);}
+ if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295),id);addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);}
  flowerClusters(g,T,leafPoints,id,Math.floor(r()*4294967295),season);
 }
 /* Branch-connected shrub clusters. Groundcover lies low and spreads
@@ -397,7 +398,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  addBranch(g,T,branches,c.bark,id);
  if(!foliageProfile(id,season).leafless){
   addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);
-  addLeaves(g,T,points,foliageProfile(id,season).color,evergreen,season,Math.floor(r()*4294967295));
+  addLeaves(g,T,points,foliageProfile(id,season).color,evergreen,season,Math.floor(r()*4294967295),id);
   addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);
  }
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
