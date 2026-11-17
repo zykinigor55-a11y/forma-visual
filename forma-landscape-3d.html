@@ -165,7 +165,7 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map();
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -527,13 +527,17 @@ function focusHouseCamera(){
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
+function scheduleBrushRebuild(){
+ if(brushRefreshFrame)return;
+ brushRefreshFrame=requestAnimationFrame(()=>{brushRefreshFrame=0;rebuild()});
+}
 function modifyTerrain(world){
  const rad=Number($('#brushRadius')?.value||3),strength=Number($('#brushStrength')?.value||.5),mode=state.placing||'raise';
  for(let i=0;i<=GRID;i++)for(let j=0;j<=GRID;j++){
   const x=(j/GRID-.5)*doc.site.width,z=(i/GRID-.5)*doc.site.height,dist=Math.hypot(x-world.x,z-world.z);
   if(dist<rad&&inParcel({x:x+doc.site.width/2,y:z+doc.site.height/2},doc.site)){const k=i*(GRID+1)+j,v=heightmap[k]||0,f=(1-dist/rad)*strength;
    heightmap[k]=Math.max(-8,Math.min(12,mode==='raise'?v+f:mode==='lower'?v-f:v*(1-Math.min(.7,f))))}
- }rebuild();
+ }scheduleBrushRebuild();
 }
 function refreshDraft(){
  if(!root)return;
@@ -667,7 +671,7 @@ function advanceBrush(world){
   const sampled=strokeSample(stroke.last,point,step);
   let changed=false;
   for(const p of sampled){if(inParcel(p,doc.site)&&appendBrushPoint(stroke.points,p,step*.5)){changed=true;stroke.last=p}}
-  if(changed){stroke.object.points=stroke.points.length<2?[stroke.points[0],{x:stroke.points[0].x+.025,y:stroke.points[0].y}]:stroke.points.slice();rebuild();}
+  if(changed){stroke.object.points=stroke.points.length<2?[stroke.points[0],{x:stroke.points[0].x+.025,y:stroke.points[0].y}]:stroke.points.slice();scheduleBrushRebuild();}
  }else{
   const spacing=Math.max(.5,(Number(stroke.entry?.diameter)||1.5)*.75);
   const items=plantScatterPositions(stroke.lastPlant,point,spacing);
@@ -679,7 +683,7 @@ function advanceBrush(world){
     diameter:stroke.entry.diameter||1.6,height:stroke.entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):.95,rotation:0});
    stroke.lastPlant=p;placed++;
   }
-  if(placed)rebuild();
+  if(placed)scheduleBrushRebuild();
  }
 }
 function finishBrush(){
@@ -688,6 +692,7 @@ function finishBrush(){
   const p=brushStroke.points[0];brushStroke.object.points=[p,{x:Math.min(doc.site.width,p.x+.05),y:p.y}];
  }
  brushStroke=null;state.painting=false;controls.enabled=state.view!=='walk';
+ if(brushRefreshFrame){cancelAnimationFrame(brushRefreshFrame);brushRefreshFrame=0}
  save();rebuild();status('Озеленение кистью сохранено. ПКМ вращает камеру, ЛКМ редактирует участок.');
 }
 function addEvents(){
