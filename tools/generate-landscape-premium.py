@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """FORMA Landscape · detailed deterministic 1080x1080 overhead raster assets.
-Offline preview library; not claimed to be AI photographic renders.
+Offline preview library: CC0 real-photo lawn crops, synthetic botanical PNGs.
 All plants/boulders/lights have transparent edges, ground tiles are seamless-ish
 square photographic-style textures. Geometry stays controlled by the CAD editor.
 """
@@ -65,12 +65,12 @@ def plant(name,kind):
  im=Image.alpha_composite(im,shady.filter(ImageFilter.GaussianBlur(15)))
  d=ImageDraw.Draw(im,"RGBA")
  # A naturally irregular perimeter built from intersecting leaf canopies.
- for i in range(470):
+ for i in range(2250):
   a=r.uniform(0,2*math.pi);rr=radius*math.sqrt(r.random())
   shape=.88+.10*math.sin(a*6)+.08*math.sin(a*11+2)
   x=cx+math.cos(a)*rr*shape;y=cy+math.sin(a)*rr*shape
-  r0=r.uniform(22,71) if kind=="trees" else r.uniform(17,51)
-  col=tint(c,r.uniform(-57,-8))
+  r0=r.uniform(7,25) if kind=="trees" else r.uniform(5,21)
+  col=tint(c,r.uniform(-63,5))
   d.ellipse((x-r0,y-r0*.77,x+r0,y+r0*.77),fill=(*col,255))
  # Visible woody branching, from central trunk outward. Not vertical trees.
  woody=(57,48,34,155) if name!="birch" else (217,209,184,180)
@@ -79,13 +79,13 @@ def plant(name,kind):
   x=cx+math.cos(a)*rr;y=cy+math.sin(a)*rr
   d.line((cx+r.uniform(-12,12),cy+r.uniform(-12,12),x,y),fill=woody,width=r.randint(1,4))
  # Individual leaves, needles, shadows, highlights and crown parallax.
- total=17000 if kind=="trees" else 12000
+ total=48000 if kind=="trees" else 33000
  for i in range(total):
   a=r.uniform(0,math.tau);distance=radius*math.sqrt(r.random())
   silhouette=.87+.12*math.sin(a*6+1.2)+.07*math.sin(a*11+3.1)
   if distance>radius*silhouette:continue
   x=cx+math.cos(a)*distance;y=cy+math.sin(a)*distance
-  shade= r.uniform(-55,65)+ (1-distance/radius)*35
+  shade= r.uniform(-53,65)+ (1-distance/radius)*39
   shade+= (cy-y)*.035 + (cx-x)*.025
   rgb=tint(c,shade)
   if name in ("pine","spruce","juniper"):
@@ -318,6 +318,36 @@ def fixture(name):
   d.ellipse((489,489,591,591),fill=(255,224,174,252))
  return im
 
+def photo_lawn(name):
+ """Real CC0 photographed lawn texture from ambientCG Grass001, close enough
+ to see individual blades. Sources attributed in assets/landscape/SOURCES.md.
+ Botanical images elsewhere remain synthetic pending real photographic masters.
+ """
+ from PIL import ImageEnhance, ImageOps
+ source=Path("assets/landscape/items")/("groundcover.webp" if name=="meadow" else "grass.webp")
+ if not source.exists():
+  return ground(name,"lawns")
+ im=Image.open(source).convert("RGB")
+ im=ImageOps.fit(im,(SIZE,SIZE),method=Image.Resampling.LANCZOS,centering=(.51,.47))
+ filters={
+  "formal":(.93,1.13,.98,1.19),
+  "universal":(1.07,1.08,1.08,1.13),
+  "shade":(.75,1.08,.94,1.13),
+  "meadow":(1.04,1.03,1.03,1.17),
+ }
+ brightness,contrast,saturation,sharpness=filters[name]
+ im=ImageEnhance.Brightness(im).enhance(brightness)
+ im=ImageEnhance.Contrast(im).enhance(contrast)
+ im=ImageEnhance.Color(im).enhance(saturation)
+ im=ImageEnhance.Sharpness(im).enhance(sharpness)
+ im=im.filter(ImageFilter.UnsharpMask(radius=1.15,percent=115,threshold=3))
+ if name=="formal":
+  overlay=Image.new("RGBA",im.size,(0,0,0,0));draw=ImageDraw.Draw(overlay,"RGBA")
+  for y in range(0,SIZE,255):
+   draw.rectangle((0,y,SIZE,y+127),fill=(12,36,7,15))
+  im=Image.alpha_composite(im.convert("RGBA"),overlay)
+ return im.convert("RGBA")
+
 def run():
  from PIL import ImageOps
  produced=[]
@@ -326,10 +356,11 @@ def run():
    if group in ("trees","shrubs"):img=plant(name,group)
    elif group=="boulders":img=stone(name)
    elif group=="lights":img=fixture(name)
+   elif group=="lawns":img=photo_lawn(name)
    else:img=ground(name,group)
    # Unpremultiply and preserve source alpha where appropriate.
    if img.size!=(SIZE,SIZE):img=img.resize((SIZE,SIZE),Image.Resampling.LANCZOS)
-   out=ROOT/(name+".webp");img.save(out,"WEBP",quality=88,method=5,exact=True)
+   out=ROOT/(name+".png");img.save(out,"PNG",compress_level=7,optimize=True)
    produced.append((name,group,str(out),out.stat().st_size))
    print(f"{group}/{name}: {out.stat().st_size//1024} KiB",flush=True)
  # Preview: 46 accurately named outputs, contact-sheet for human QA.
