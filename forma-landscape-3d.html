@@ -323,18 +323,18 @@ function drawObject(o,entry,key){
  g.position.set(p.x,groundH,p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
  mark(g,key);root.add(g);
 }
-function polygon(points,y,color,water=false){
+function polygon(points,y,color,water=false,materialId='universal'){
  const shape=new THREE.Shape();points.forEach((pt,i)=>{const p=pos(pt.x,pt.y);i?shape.lineTo(p.x,-p.z):shape.moveTo(p.x,-p.z)});shape.closePath();
  const geo=new THREE.ShapeGeometry(shape);geo.rotateX(-Math.PI/2);
  const verts=geo.attributes.position;
  const waterLevel=water?Math.min(...points.map(p=>{const v=pos(p.x,p.y);return terrainAt(v.x,v.z)}))+.09:0;
  for(let i=0;i<verts.count;i++){const x=verts.getX(i),z=verts.getZ(i);verts.setY(i,water?waterLevel:terrainAt(x,z)+y)}
  geo.computeVertexNormals();
- const m=water?new THREE.MeshPhysicalMaterial({color:'#377f91',roughness:.12,metalness:.25,transparent:true,opacity:.92,clearcoat:.8,side:THREE.DoubleSide}):surfaceMaterial(THREE,state._areaMaterial||'universal',color);
+ const m=water?new THREE.MeshPhysicalMaterial({color:'#377f91',roughness:.12,metalness:.25,transparent:true,opacity:.92,clearcoat:.8,side:THREE.DoubleSide}):surfaceMaterial(THREE,materialId,color);
  m.side=THREE.DoubleSide;const o=mesh(geo,m);o.castShadow=false;return o;
 }
 function drawArea(o,entry,key){
- const g=new THREE.Group();const pts=o.points;state._areaMaterial=o.catalogId;const isPath=entry.group==='pavers'||(['fills','lawns'].includes(entry.group)&&o.geometry==='strip');
+ const g=new THREE.Group();const pts=o.points;const isPath=entry.group==='pavers'||(['fills','lawns'].includes(entry.group)&&o.geometry==='strip');
  if(isPath){
   for(let i=1;i<pts.length;i++){const a=pos(pts[i-1].x,pts[i-1].y),b=pos(pts[i].x,pts[i].y);
    a.y=terrainAt(a.x,a.z)+.09;b.y=terrainAt(b.x,b.z)+.09;
@@ -349,7 +349,7 @@ function drawArea(o,entry,key){
     cap.rotation.x=-Math.PI/2;cap.position.set(b.x,b.y+.003,b.z);cap.receiveShadow=true;g.add(cap);
     if(i===1){const start=cap.clone();start.position.set(a.x,a.y+.003,a.z);g.add(start)}
    }}
- }else if(pts.length>=3)g.add(polygon(pts,.055,entry.color||'#6d9874',entry.group==='ponds'));
+ }else if(pts.length>=3)g.add(polygon(pts,.055,entry.color||'#6d9874',entry.group==='ponds',o.catalogId));
  mark(g,key);root.add(g);
 }
 function drawExtra(o){
