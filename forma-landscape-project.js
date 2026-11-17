@@ -1,4 +1,4 @@
-import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=pond-paint-zoom-v2';
+import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=area-union-v3-20261117';
 import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=photographic-cards-20261117';
 import {brushPolygon} from './forma-landscape-brush.js';
 
@@ -545,7 +545,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   if(b.dataset.csv!==undefined){exportCSV();return}
   if(b.dataset.pdf!==undefined){
    say('Собираем PDF-альбом с измеряемым генпланом, растениями и светильниками.');
-   Promise.all([import('./forma-landscape-pdf.js'),rasterize(true)]).then(async([module,plan])=>{
+   Promise.all([import('./forma-landscape-pdf.js?v=net-area-v2-20261117'),rasterize(true)]).then(async([module,plan])=>{
     const validPhoto=preview&&previewModel===JSON.stringify(doc)?preview:null;
     const blob=await module.buildLandscapeAlbum(doc,plan,validPhoto);
     const url=URL.createObjectURL(blob),a=document.createElement('a');
