@@ -60,7 +60,6 @@ import {brushPolygon} from './forma-landscape-brush.js';
     const lawn=entry.group==='lawns',tile=lawn?3.8:2.4;
     shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="${entry.color}" fill-opacity="${lawn?.34:.83}" stroke="${active?'#dfaa58':'#5b7558'}" stroke-width="${active?.16:.065}"/>`;
     shapes+=`<defs><pattern id="tile-${item.id}" width="${tile}" height="${tile}" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="${tile}" height="${tile}" preserveAspectRatio="xMidYMid slice"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="url(#tile-${item.id})" opacity="${lawn?.98:.90}"/>`;
-   }
    }else{
     const d=entry.group==='lights'?Math.max(.75,item.diameter):item.diameter;
     shapes+=`<g data-object="${item.id}" transform="rotate(${item.rotation} ${item.x} ${item.y})"><image href="${iconURL(entry)}" x="${item.x-d/2}" y="${item.y-d/2}" width="${d}" height="${d}"/></g>`;
