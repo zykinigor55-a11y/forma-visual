@@ -1,3 +1,4 @@
+import {visibleSurfaceAreas} from './forma-landscape-area.js?v=overlap-union-v1';
 /* FORMA Landscape Project — real-world geometry is authoritative.
    Units are metres. AI is never trusted for measurements or object coordinates.
  */
@@ -133,15 +134,26 @@ export const perimeter=pts=>pts.length<2?0:lineLength(pts)+segmentLength(pts.at(
 export const rectBoundary=(width,height)=>[{x:0,y:0},{x:width,y:0},{x:width,y:height},{x:0,y:height}];
 export function report(doc){
  const d=normalizeProject(doc),boundary=d.site.boundary||rectBoundary(d.site.width,d.site.height);
- const counts={},areas={},lengths={};
+ const counts={},lengths={};
  for(const item of d.objects){
-  const entry=byId(item.catalogId);counts[item.catalogId]=(counts[item.catalogId]||0)+1;
-  if(['pavers','fills','lawns','ponds'].includes(entry.group))areas[item.catalogId]=round((areas[item.catalogId]||0)+areaFor(d,item),2);
-  if(entry.group==='pavers'||(entry.group==='fills'&&item.geometry==='strip'))lengths[item.catalogId]=round((lengths[item.catalogId]||0)+lineLength(item.points),2);
+  const entry=byId(item.catalogId);if(!entry)continue;
+  counts[item.catalogId]=(counts[item.catalogId]||0)+1;
+  if(entry.group==='pavers'||(entry.group==='fills'&&item.geometry==='strip'))
+   lengths[item.catalogId]=round((lengths[item.catalogId]||0)+lineLength(item.points),2);
  }
+ // Authoritative material quantities are based on the actual visible union,
+ // clipped to the site and masked by other surfaces and building footprints.
+ // This prevents the historical 14 m² sum for 11 m² of overlapping ponds.
+ const visible=visibleSurfaceAreas(d);
+ const areas=Object.fromEntries(Object.entries(visible.areas).map(([id,m2])=>[id,round(m2,2)]));
+ const approximate=visible.precision!=='polygon';
  return {siteArea:round(polygonArea(boundary),2),sitePerimeter:round(perimeter(boundary),2),
-  buildingArea:round(d.house.width*d.house.height,2),auxBuildingArea:round(d.buildings.reduce((v,b)=>v+b.width*b.height,0),2),counts,areas,lengths,
-  sourcesVerified:d.verified,uncertainty:'Площади рассчитаны по заданным контурам. Ластик вычитает площади приблизительно; пересечения и автоматическая заливка газона рассчитываются оценочно до точного объединения контуров.'};
+  buildingArea:round(d.house.width*d.house.height,2),auxBuildingArea:round(d.buildings.reduce((v,b)=>v+b.width*b.height,0),2),
+  counts,areas,lengths,areaPrecision:visible.precision,
+  sourcesVerified:d.verified,
+  uncertainty:approximate
+   ? 'Большой или сложный генплан: площадь пересекающихся поверхностей вычислена численным интегрированием. '+visible.reason
+   : 'Площади покрытий и воды вычислены без двойного учёта пересечений по измеряемой геометрии. Скругления дорожек аппроксимированы многогранниками. Требуется проверка исходных размеров участка.'};
 }
 export const isInside=(p,polygon)=>{
  let inside=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
@@ -151,7 +163,7 @@ export const isInside=(p,polygon)=>{
 };
 export function coordinateSummary(doc){
  const d=normalizeProject(doc),r=report(d);
- return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},buildings:d.buildings.map(b=>({...b,photo:undefined})),objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths},verified:d.verified};
+ return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},buildings:d.buildings.map(b=>({...b,photo:undefined})),objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths,areaPrecision:r.areaPrecision},verified:d.verified};
 }
 
 // Project each path segment onto parcel directions. Clamp length, never its axes,
