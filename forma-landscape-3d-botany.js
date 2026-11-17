@@ -37,3 +37,13 @@ export function botanicalLeafScale(id,height,diameter){
  if(id==='lavender'||id==='juniper')return .52;
  return Math.min(1,Math.max(.55,.78+.15*ratio));
 }
+
+/* A measured scene may contain hundreds of individual plants. Keep silhouette
+   quality high near the camera while bounding instancing costs on mobile. */
+export function vegetationQuality(viewWidth,plantCount=1,view='3d'){
+ const width=Math.max(200,Number(viewWidth)||1200),count=Math.max(0,Number(plantCount)||0);
+ const device=width<=650?.46:width<=1024?.70:1;
+ const crowd=count<=12?1:count<=35?.82:count<=80?.67:.51;
+ const overhead=view==='2d'?.82:1;
+ return Math.max(.22,Math.min(1,device*crowd*overhead));
+}
