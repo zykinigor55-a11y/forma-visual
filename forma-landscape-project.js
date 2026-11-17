@@ -254,7 +254,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   html+=`<section><strong>ВЕДОМОСТЬ</strong><div class="lp-totals"><span>Площадь участка <b>${num(r.siteArea)} м²</b></span><span>Пятно дома <b>${num(r.buildingArea)} м²</b></span><span>Прочие строения <b>${num(r.auxBuildingArea)} м²</b></span></div><table><tbody>${Object.entries(r.counts).map(([id,n])=>{const a=byId(id);return `<tr><td>${esc(a?.name)}</td><td>${r.areas[id]!=null?num(r.areas[id])+' м²':n+' шт.'}</td></tr>`}).join('')}</tbody></table><small>Площадь дорожек в пересечениях приближённая, до объединения покрытий.</small></section>`;
   root.innerHTML=html;
  }
- function draw(){if(!modal)return;drawMap();drawInspector();drawPalette()}
+ function draw(){if(!modal)return;if(preview&&previewModel!==JSON.stringify(doc))photoVisible=false;drawMap();drawInspector();drawPalette()}
  // A mobile user often chooses a species/material in the library below
  // the map; return to the SAME fixed drawing viewport for placement.
  function revealCanvas(){
