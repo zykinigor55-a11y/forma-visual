@@ -325,3 +325,19 @@
 @media (prefers-reduced-motion:reduce){
  #faLandscapeMasterplan .lp-render-preview:after{animation:none!important}
 }
+
+/* Photographic texture cards use real edge-to-edge macro views.
+   Tree/shrub PNGs retain their alpha channel and full silhouette. */
+#faLandscapeMasterplan .lp-assets button[data-photo-type="lawns"] img,
+#faLandscapeMasterplan .lp-assets button[data-photo-type="fills"] img,
+#faLandscapeMasterplan .lp-assets button[data-photo-type="pavers"] img{
+ object-fit:cover;background:#d5d2c9;
+}
+#faLandscapeMasterplan .lp-assets button[data-photo-type="trees"] img,
+#faLandscapeMasterplan .lp-assets button[data-photo-type="shrubs"] img{
+ object-fit:contain;background:#e8e7e1;
+}
+#faLandscapeMasterplan .lp-assets button[data-photo-ready="true"] img{
+ box-shadow:0 0 0 1px rgba(224,201,168,.35),0 10px 19px rgba(0,0,0,.14);
+}
+#faLandscapeMasterplan .lp-assets button[data-photo-ready="true"] .lp-asset-detail{color:#d9c3a6}
