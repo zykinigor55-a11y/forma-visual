@@ -2,7 +2,12 @@ name: FORMA — landscape project screenshots
 on:
   push:
     branches: [dom-render-nanobanana]
-    paths: ['.github/workflows/capture-landscape-masterplan.yml']
+    paths:
+      - '.github/workflows/capture-landscape-masterplan.yml'
+      - 'forma-landscape-project.js'
+      - 'forma-landscape-project.css'
+      - 'forma-landscape-project-graphics.js'
+      - 'assets/landscape-premium/**'
   workflow_dispatch:
 jobs:
   screenshots:
