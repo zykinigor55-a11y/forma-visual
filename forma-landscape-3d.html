@@ -71,7 +71,8 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 .camera-focus{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:7px 0 10px}
 .camera-focus button{font-size:11px;padding:8px 6px;color:#E6D6BE;border-color:#83745C}
 #right .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}#right .action{width:100%;margin-top:7px}
-#status{position:absolute;left:50%;bottom:23px;transform:translateX(-50%);background:#1b2725df;border:1px solid #52665a;border-radius:100px;padding:11px 19px;color:#e1eade;font-size:12px;max-width:calc(100% - 60px);text-align:center;pointer-events:none}
+#status{position:absolute;left:50%;bottom:23px;transform:translateX(-50%);transition:opacity .35s ease;background:#1b2725df;border:1px solid #52665a;border-radius:100px;padding:11px 19px;color:#e1eade;font-size:12px;max-width:calc(100% - 60px);text-align:center;pointer-events:none}
+#status.status-hidden{opacity:0;pointer-events:none}
 #hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
 #loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
 #loadError strong{font-size:19px}
@@ -91,10 +92,15 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 @media(max-width:850px){
 header{padding:0 10px;gap:8px;height:60px}.brand{font-size:13px}.brand small{font-size:7px}.name{display:none}header a{font-size:10px}
 header .header-right button{padding:6px;font-size:10px}
-#mobileWorkspaceTabs{position:absolute;display:grid;grid-template-columns:1fr 1fr;gap:5px;bottom:calc(min(40dvh,340px) + 11px);left:8px;right:8px;z-index:4;padding:5px;border-radius:12px;background:#182322ed;border:1px solid #4a5b51}
+#mobileWorkspaceTabs{position:absolute;display:grid;grid-template-columns:1fr 1fr .7fr;gap:5px;bottom:calc(min(29dvh,250px) + 11px);left:8px;right:8px;z-index:4;padding:5px;border-radius:12px;background:#182322ed;border:1px solid #4a5b51}
 #mobileWorkspaceTabs button{padding:10px;font-size:12px}
 #mobileWorkspaceTabs button.active{background:#D6D9C9;color:#203027;font-weight:800}
-.panel{bottom:8px;top:auto;height:min(40dvh,340px);border-radius:14px}
+body[data-mobile-panel="scene"] #mobileWorkspaceTabs{bottom:9px;left:auto;right:8px;width:min(355px,calc(100% - 16px))}
+body[data-mobile-panel="scene"] #status{bottom:67px}
+body[data-mobile-panel="scene"] #left,body[data-mobile-panel="scene"] #right{display:none}
+#mobileWorkspaceTabs button[data-mobile-panel="scene"]{background:#324439;color:#dfecd9}
+#mobileWorkspaceTabs button[data-mobile-panel="scene"].active{background:#d9dfca;color:#1c2d22}
+.panel{bottom:8px;top:auto;height:min(29dvh,250px);border-radius:14px}
 #left,#right{left:8px;right:8px;width:calc(100% - 16px);display:none}
 body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{display:flex}
 #left{flex-direction:column}
@@ -103,7 +109,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 #tools button{font-size:10px;padding:9px 3px}#tools button .glyph{font-size:16px}
 #library .choice{min-height:42px}
 #hint{left:9px;top:8px;right:9px;font-size:10px;padding:7px 9px}
-#status{bottom:calc(min(40dvh,340px) + 70px);font-size:10px;padding:7px 10px;max-width:calc(100% - 20px)}
+#status{bottom:calc(min(29dvh,250px) + 69px);font-size:10px;padding:7px 10px;max-width:calc(100% - 20px)}
 #right .buttons{grid-template-columns:repeat(3,1fr)}#right .pair{grid-template-columns:1fr 1fr}
 .house-style-list{grid-template-columns:repeat(2,minmax(0,1fr))}.house-style-list img,.house-style-list .house-fallback{height:105px}
 }
@@ -126,6 +132,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <div id="mobileWorkspaceTabs" aria-label="Мобильные панели">
  <button type="button" data-mobile-panel="tools" class="active">Инструменты</button>
  <button type="button" data-mobile-panel="details">Дома и параметры</button>
+ <button type="button" data-mobile-panel="scene" aria-label="Скрыть панели и показать всю 3D-сцену">Сцена</button>
 </div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
@@ -208,7 +215,17 @@ const choices={
 const fallback={pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
 const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
 const id=()=>('o-'+Math.random().toString(36).slice(2,10));
-function status(t){$('#status').textContent=t}
+let statusTimer=null;
+function status(t){
+ const el=$('#status');el.textContent=t;el.classList.remove('status-hidden');
+ if(statusTimer)clearTimeout(statusTimer);
+ statusTimer=setTimeout(()=>el.classList.add('status-hidden'),/ошиб|не удалось|вне участка/i.test(t)?6800:3600);
+}
+function activateMobilePanel(name){
+ document.body.dataset.mobilePanel=name;
+ document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.classList.toggle('active',button.dataset.mobilePanel===name));
+ requestAnimationFrame(resize);
+}
 function save(){
  doc.title=$('#projectName').value.trim()||'Ландшафтный проект';
  try{localStorage.setItem(KEY,JSON.stringify(normalizeProject(doc)));localStorage.setItem(EXTRA,JSON.stringify(extra));localStorage.setItem(TERRAIN,JSON.stringify(heightmap));status('Проект сохранён. 2D и 3D используют общие координаты.')}
@@ -217,12 +234,8 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function initialize(){
- document.body.dataset.mobilePanel='tools';
- document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>{
-  document.body.dataset.mobilePanel=button.dataset.mobilePanel;
-  document.querySelectorAll('[data-mobile-panel]').forEach(other=>other.classList.toggle('active',other===button));
-  requestAnimationFrame(resize);
- }));
+ activateMobilePanel('tools');
+ document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>activateMobilePanel(button.dataset.mobilePanel)));
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
