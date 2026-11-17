@@ -76,7 +76,10 @@ def paste_photo(bg,source,frac=.70,yoffset=.04):
   bbox=(max(0,bbox[0]-pad),max(0,bbox[1]-pad),min(object_image.width,bbox[2]+pad),min(object_image.height,bbox[3]+pad))
   object_image=object_image.crop(bbox)
  maxw,maxh=int(SIZE*frac),int(SIZE*.88)
- object_image.thumbnail((maxw,maxh),Image.Resampling.LANCZOS)
+ # Thumbnail never upscales; original product cutouts are only ~320px.
+ # Resample deliberately so the fixture fills a premium 1080px preview.
+ scale=min(maxw/max(1,object_image.width),maxh/max(1,object_image.height))
+ object_image=object_image.resize((max(1,round(object_image.width*scale)),max(1,round(object_image.height*scale))),Image.Resampling.LANCZOS)
  x=(SIZE-object_image.width)//2
  y=max(30,(SIZE-object_image.height)//2+int(SIZE*yoffset))
  shadow=Image.new("RGBA",(SIZE,SIZE),(0,0,0,0))
