@@ -77,11 +77,12 @@ try{
  assert.notEqual(orbitAfter,orbitBefore,'Right mouse drag must actually rotate the 3D scene');
  assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),previous,'Right-drag camera orbit never edits lawn');
  await page.screenshot({path:'artifacts/landscape-editor/3d-lawn-brush.png'});
- await page.locator('#fit3dScene').click(); // restore known camera framing after right-drag orbit
+ await page.locator('[data-view="2d"]').click(); // deterministic metric nadir after orbit test
+ await page.waitForTimeout(150);
  await page.locator('[data-tool="surface"]').click();
  await page.locator('[data-item="concrete-pavers"]').click();
  const canvas=page.locator('#viewport'),box=await canvas.boundingBox();
- for(const [x,y] of [[.41,.62],[.47,.65],[.52,.7]]){
+ for(const [x,y] of [[.48,.47],[.52,.51],[.50,.57]]){
   await page.mouse.click(box.x+box.width*x,box.y+box.height*y);
  }
  assert.ok(await page.locator('#status').textContent().then(t=>t.includes('Точек контура:')),'Contour remains open after 3 vertices');
