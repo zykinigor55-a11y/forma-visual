@@ -1,3 +1,4 @@
+import {prepareTreeAtlas,treeCanopyPNG,treeCanopyCount} from './forma-landscape-tree-atlas.js?v=generated-256px-v1';
 /* FORMA Landscape Plan top-down vector previews. Every asset is orthographic,
    scale independent, same exact geometry in plan and 1080×1080 library export.
    These are deterministic previews; AI presentation is a separate layer. */
@@ -125,17 +126,18 @@ const CARD_PHOTO_IDS=new Set(['bollard','ground','spot','low-post','deck-light',
 const PHOTO_PLANT_CARD_IDS=new Set(['birch','oak','maple','juniper','hydrangea','barberry','lavender','pine']);
 const availableCardPhotos=new Set();
 export const cardPhotoCount=()=>availableCardPhotos.size;
-export const cardPhotoURL=(entry)=>PHOTO_PLANT_CARD_IDS.has(entry.id)?'/assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
-export const hasPhotographicCard=(entry)=>Boolean(entry&&(PHOTO_PLANT_CARD_IDS.has(entry.id)||availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
+export const cardPhotoURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):PHOTO_PLANT_CARD_IDS.has(entry.id)?'/assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
+export const hasPhotographicCard=(entry)=>Boolean(entry&&((entry.group==='trees'&&treeCanopyPNG(entry.id))||PHOTO_PLANT_CARD_IDS.has(entry.id)||availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
 
 const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-18-staged-v2';
 export const photographicAssetCount=()=>[...availablePhotos].filter(id=>PHOTO_ASSETS[id]?.endsWith('.jpg')).length;
 export const photographicIconURL=(entry)=>PHOTO_ASSETS[entry.id]?photoUrl(entry):null;
 export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
 export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.'+premiumExtension+'?v=1080-png-realgrass-v2';
-export const iconURL=(entry)=>availablePhotos.has(entry.id)?photoUrl(entry):(premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry));
+export const iconURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):availablePhotos.has(entry.id)?photoUrl(entry):(premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry));
 export const isPhotographic=(entry)=>Boolean(entry&&availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'));
 export async function enablePremiumAssets(){
+ try{await prepareTreeAtlas()}catch{}
  // Only enable a new photo after verifying that exact species/material exists.
  // A missing 1080 file must never break plant placement, previews or AI exports.
  await Promise.all(Object.entries(PHOTO_ASSETS).map(async([id,ext])=>{
