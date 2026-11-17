@@ -346,10 +346,8 @@
   if(document.body.dataset.formaStudioReady)return;
   document.body.dataset.formaStudioReady='1';
   setupBrand();setupContext();setupQA();setupEvents();
-  const mobile=document.querySelector('.mobile-header-actions');
-  if(mobile&&!mobile.querySelector('[data-studio-action="commands"]')){const quick=node('button','forma-mobile-tools-quick','Инструменты');quick.type='button';quick.dataset.studioAction='commands';mobile.prepend(quick)}
-  const top=document.querySelector('.top-actions');
-  if(top&&!top.querySelector('[data-studio-action="commands"]')){const quick=node('button','forma-desktop-tools-quick','⌕ Инструменты');quick.type='button';quick.dataset.studioAction='commands';top.prepend(quick)}
+  // The search/Tools quick buttons were intentionally removed from both headers.
+  // Ctrl+K and the cabinet Tools tab remain available without crowding the theme switch.
 
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
