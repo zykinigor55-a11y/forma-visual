@@ -1,5 +1,5 @@
 import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints} from './forma-landscape-project-core.js';
-import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic} from './forma-landscape-project-graphics.js?v=photo-jpg-alpha-v4';
+import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic} from './forma-landscape-project-graphics.js?v=photo-jpg-alpha-v5';
 
  const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),num=(v,d=2)=>Number(v).toFixed(d);
