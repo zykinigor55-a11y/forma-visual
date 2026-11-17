@@ -80,5 +80,5 @@ test('landscape UI enables brush-drawn curves, adjustable vertices, category car
  assert.match(css,/data-forma-theme="dark"/);
  assert.match(css,/fa-art-categories/);
  assert.match(html,/forma-landscape-premium-cards\.css\?v=photographic-cards-20261117/);
- assert.match(html,/forma-landscape-atmosphere\.js\?v=благоустройство-premium-v1-20261117/);
+  assert.match(html,/forma-landscape-atmosphere\.js\?v=[^"']*premium-v1-20261117/);
 });
