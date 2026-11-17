@@ -152,6 +152,12 @@ import {brushPolygon} from './forma-landscape-brush.js';
  }
  function startPointer(e){
   if(busy||e.button!==0)return;const p=position(e);if(!p)return;
+  if(mode==='area'&&areaTool==='brush'){
+   if(!['lawns','fills','ponds'].includes(itemCatalog()?.group))return;
+   brush={pointer:e.pointerId,points:[p],diameter:clamp(Number($('#lpBrushSize',modal)?.value)||1.5,.5,12)};
+   try{$('#lpSvg',modal).setPointerCapture(e.pointerId)}catch{}
+   drawMapBrush();e.preventDefault();return;
+  }
   if(['path','area','boundary'].includes(mode)){const q=pathPoint(p);if(points.length&&Math.hypot(q.x-points.at(-1).x,q.y-points.at(-1).y)<.03)return;points.push(q);drawMap();drawPalette();return}
   if(mode==='place'){addObject(p);return}
   const node=e.target.closest('[data-object]'),house=e.target.closest('[data-house]'),aux=e.target.closest('[data-building]');
@@ -162,6 +168,12 @@ import {brushPolygon} from './forma-landscape-brush.js';
   try{$('#lpSvg',modal).setPointerCapture(e.pointerId)}catch{}drawInspector();
  }
  function movePointer(e){
+  if(brush&&brush.pointer===e.pointerId){
+   const p=position(e);if(!p)return;const q=brush.points.at(-1);
+   if(Math.hypot(q.x-p.x,q.y-p.y)>=Math.max(.1,brush.diameter*.08))brush.points.push(p);
+   if(brush.points.length>105)brush.points=brush.points.filter((_,i)=>i%2===0);
+   drawMapBrush();e.preventDefault();return;
+  }
   if(!drag||drag.pointer!==e.pointerId)return;const p=position(e);if(!p)return;const dx=p.x-drag.start.x,dy=p.y-drag.start.y;
   const obj=drag.id==='house'?doc.house:drag.id.startsWith('building:')?doc.buildings.find(b=>b.id===drag.id.slice(9)):doc.objects.find(x=>x.id===drag.id);if(!obj)return;
   if(obj.points){
@@ -172,7 +184,23 @@ import {brushPolygon} from './forma-landscape-brush.js';
   const replacement=drawSvg(),markup=replacement.slice(replacement.indexOf('>')+1,replacement.lastIndexOf('</svg>'));
   svg.innerHTML=markup;
  }
- function endPointer(e){if(!drag||drag.pointer!==e.pointerId)return;drag=null;save();draw()}
+ function drawMapBrush(){
+  const svg=$('#lpSvg',modal);if(!svg)return;
+  const markup=drawSvg();svg.innerHTML=markup.slice(markup.indexOf('>')+1,markup.lastIndexOf('</svg>'));
+ }
+ function endPointer(e){
+  if(brush&&brush.pointer===e.pointerId){
+   const stroke=brush;brush=null;
+   if(e.type==='pointercancel'){drawMap();return;}
+   const polygon=brushPolygon(stroke.points,stroke.diameter,doc.site);
+   if(polygon.length>=3&&['lawns','fills','ponds'].includes(itemCatalog()?.group)){
+    checkpoint();const item=itemCatalog();const obj={id:uid(),catalogId:item.id,type:item.group,points:polygon,width:1.2};
+    doc.objects.push(obj);selected=obj.id;save();say('Область кистью сохранена. Следующая кисть добавит новую область, не удаляя дорожки.');
+   }
+   draw();return;
+  }
+  if(!drag||drag.pointer!==e.pointerId)return;drag=null;save();draw()
+ }
  function change(e){
   const field=e.target.dataset.field,vertex=e.target.dataset.vertex,boundary=e.target.dataset.boundary;if(field===undefined&&vertex===undefined&&boundary===undefined)return;
   checkpoint();const v=e.target.type==='checkbox'?e.target.checked:e.target.tagName==='SELECT'?e.target.value:Number(e.target.value);
@@ -309,6 +337,9 @@ import {brushPolygon} from './forma-landscape-brush.js';
  }
  function click(e){
   const b=e.target.closest('button');if(!b||busy)return;
+  if(b.dataset.pathMaterial){chosen=b.dataset.pathMaterial;category='pavers';mode='path';points=[];draw();say('Выбрано мощение: '+itemCatalog().name);return}
+  if(b.dataset.areaMaterial){chosen=b.dataset.areaMaterial;category=itemCatalog().group;mode='area';points=[];brush=null;draw();say('Область: '+itemCatalog().name+' — выберите кисть или лассо.');return}
+  if(b.dataset.areaTool){areaTool=b.dataset.areaTool;points=[];brush=null;draw();say(areaTool==='brush'?'Проведите пальцем или мышью по нужной области.':'Поставьте точки контура и нажмите «Завершить».');return}
   if(b.dataset.category){category=b.dataset.category;chosen=CATALOG.find(x=>x.group===category).id;drawPalette();return}
   if(b.dataset.asset){chosen=b.dataset.asset;const g=itemCatalog().group;setMode(g==='pavers'?'path':['fills','lawns','ponds'].includes(g)?'area':'place');return}
   if(b.dataset.tool){setMode(b.dataset.tool);return}
@@ -381,8 +412,10 @@ import {brushPolygon} from './forma-landscape-brush.js';
   modal.addEventListener('change',e=>{
    if(e.target.matches('#lpUnderlay,#lpHousePhoto,#lpAuxPhoto')){uploadPhoto(e.target.files?.[0],e.target.id==='lpHousePhoto'?'house':e.target.id==='lpAuxPhoto'?'aux':'underlay').catch(err=>say(err.message));return}
    if(e.target.id==='lpSnap'){snap=e.target.checked;return}
+    if(e.target.id==='lpBrushSize'){$('#lpBrushLabel',modal).textContent=Number(e.target.value).toFixed(2)+' м';return}
    change(e);
   });
+  modal.addEventListener('input',e=>{if(e.target.id==='lpBrushSize'){$('#lpBrushLabel',modal).textContent=Number(e.target.value).toFixed(2)+' м';}});
   modal.addEventListener('contextmenu',e=>{if(e.target.closest('#lpSvg')&&mode!=='select'){e.preventDefault();endDrawing();}});
   modal.addEventListener('dblclick',e=>{if(e.target.closest('#lpSvg')&&points.length>=(mode==='path'?2:3)){e.preventDefault();finish();}});
   modal.addEventListener('cancel',e=>{e.preventDefault();if(!busy)close()});
