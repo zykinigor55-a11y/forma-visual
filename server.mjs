@@ -1,6 +1,7 @@
 import {interiorLightsPrompt} from './forma-interior-light-contract.js';
 import {cameraOrbitPrompt} from './forma-camera-orbit.js';
 import {furnitureEditPrompt} from './forma-furniture-edit.js';
+import {masterplanPrompt,topDownRoofPrompt} from './forma-landscape-project-prompts.js';
 /**
  * ДОМ.РЕНДЕР – minimal local Node 20+ server + OpenAI Images Edit proxy.
  * Keeps API keys on the server, not in the browser. Prototype, not public multi-tenant service.
@@ -26,6 +27,8 @@ const HOST=process.env.HOST||'127.0.0.1';
 const API_KEY=process.env.API_MARKET_KEY||'';
 const MODEL='nano-banana-2.1';
 const PLAN_IMAGE_MODEL=['gpt-image-2.6-sunburst','gpt-image-2.6-flare'].includes(process.env.PLAN_IMAGE_MODEL)?process.env.PLAN_IMAGE_MODEL:null;
+// FORMA Landscape Project uses GPT Image 2.6, without a Nano Banana fallback.
+const LANDSCAPE_IMAGE_MODEL=['gpt-image-2.6-sunburst','gpt-image-2.6-flare'].includes(process.env.LANDSCAPE_IMAGE_MODEL)?process.env.LANDSCAPE_IMAGE_MODEL:'gpt-image-2.6-sunburst';
 // No shared PIN: the public preview uses server-side usage limits instead.
 const DAILY_CAP=Math.min(200,Math.max(1,Number(process.env.DAILY_GENERATION_LIMIT)||12));
 const PUBLIC_SUPPORT_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.PUBLIC_SUPPORT_EMAIL||'')?process.env.PUBLIC_SUPPORT_EMAIL:'';
@@ -133,6 +136,8 @@ export function createPrompt(p){
  if(p.enhanceOnly===true)return createEnhancementPrompt(p);
  if(p.cameraOrbit)return cameraOrbitPrompt(p.cameraOrbit,{referenceProvided:!!p.reference});
  if(p.furnitureEdit)return furnitureEditPrompt(p.furnitureEdit,{maskProvided:!!p.mask,referenceProvided:!!p.material});
+ if(p.landscapeMasterplan)return masterplanPrompt(p.landscapeMasterplan);
+ if(p.roofTopView)return topDownRoofPrompt(p.roofTopView);
  if(p.imageTask)return imageTaskPrompt(p.imageTask);
  if(p.editMode==='text')return [architecturalReferenceLock(p),materialTextPrompt(p.materialInstruction,p)].join('\n\n');
  if(p.localCrop)return [architecturalReferenceLock(p),materialCropPrompt(p)].join('\n\n');
@@ -318,7 +323,7 @@ export function createPrompt(p){
  })();
  const homeEdit=homeChanges&&!specific?`USER-REQUESTED CHANGES BEFORE FIRST RENDER: "${homeChanges}". Apply these explicit edits to the specified architectural components only; e.g. "dark roof" means recolor existing roof cladding without changing roof shape, and "black frames" means recolor existing frames without changing the openings. Preserve every unmentioned material, roof and window geometry, facade proportions, camera and site. Do NOT force preservation of the original colors specifically requested to be changed. A text-only request needs semantic target identification; verify visually, mask-less edits are approximate.`:null;
  return [p.localCrop?'LOCAL CROP ALIGNMENT: Image 1 is a clean square crop centred on the selected material surface, with neutral padding. Return EXACTLY this same square framing and pixel alignment; do not zoom, crop or expand to the full context reference. The full reference photo is context only, not the output camera. Edit only the transparent mask; preserve all original construction edges and protected windows.':null,architecturalReferenceLock(p),essential,photographicDirection(p),geometry,batchModelLock,materialPolicy,moodInstruction,batchInstruction,relightInstruction,editExistingScene,lightingRule,interiorRules,edit,homeEdit,extraRequest,physics,context,sunHint,sunlightAppearance,continuity,!specific?atmospherePrompt(b.atmosphere,{preserveScene:false}):null].filter(Boolean).join('\n\n')}
-export function renderQuantity(p){return p.imageTask||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.enhanceOnly===true||p.editMode==='text'?1:([1,2,4].includes(Number(p.quantity))?Number(p.quantity):1);}
+export function renderQuantity(p){return p.landscapeMasterplan||p.roofTopView||p.imageTask||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.enhanceOnly===true||p.editMode==='text'?1:([1,2,4].includes(Number(p.quantity))?Number(p.quantity):1);}
 function renderError(error,requestId){
  const status=Number.isInteger(error?.status)&&error.status>=400&&error.status<=599?error.status:502;
  const message=String(error?.message||'Ошибка сервера').slice(0,240);
@@ -334,6 +339,7 @@ async function performRender(p,requestId){
  if(p.enhanceOnly===true&&(p.mask||p.material||p.reference||p.imageTask||p.landscapeEdit||p.localCrop||p.atmosphereOnly||p.cameraOrbit))fail('Улучшение фотографии не совмещается с другими изменениями.',400);
  if(p.cameraOrbit&&(p.mask||p.material||p.localCrop||p.atmosphereOnly||p.landscapeEdit||p.imageTask||p.sceneVariation||p.furnitureEdit))fail('Новый ракурс создаётся отдельным запросом.',400);
  if(p.furnitureEdit&&(!p.mask||p.cameraOrbit||p.imageTask||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.sceneVariation||p.enhanceOnly||p.editMode||p.reference))fail('Замена мебели требует локальную PNG-маску и отдельный запрос.',400);
+ if((p.landscapeMasterplan||p.roofTopView)&&(p.cameraOrbit||p.furnitureEdit||p.imageTask||p.mask||p.material||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.sceneVariation||p.enhanceOnly||p.editMode||p.batchShot||p.landscapeMasterplan&&p.roofTopView))fail('Фотореалистичный генплан и кровля создаются отдельными запросами без масок и смены ракурса.',400);
  const primary=imageBlob(p.image,'image'),mask=imageBlob(p.mask,'mask'),material=imageBlob(p.material,'material'),reference=imageBlob(p.reference,'reference');
  if(mask&&mask.type!=='image/png')fail('Маска должна быть PNG',400);
  const n=renderQuantity(p);
@@ -343,6 +349,7 @@ async function performRender(p,requestId){
  assertSeriesSource(p);
  const task=p.imageTask?normalizeImageTask(p.imageTask):null;
  const needsPlan=task&&['plan','plan2d','room'].includes(task.kind);
+ const needsLandscape=!!(p.landscapeMasterplan||p.roofTopView);
  if(needsPlan&&!PLAN_IMAGE_MODEL)fail('Модель GPT Image 2.6 для планов не настроена на сервере. Укажите PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render. Nano Banana для этого раздела не используется.',503,'plan_model_missing');
  if(['room','view'].includes(task?.kind)&&!reference)fail('Сначала утвердите главный кадр или визуализацию плана.',400);
  const prompt=task?imageTaskPrompt(task):createPrompt(p);
@@ -352,7 +359,7 @@ async function performRender(p,requestId){
   // Count BEFORE the external request: even a timeout may be billed by the provider.
   dailyCount++;
   try{
-   const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,prompt:n>1?prompt+'\\nCreate variation '+(i+1)+' of '+n+' with the same architecture and camera.':prompt,quality:p.quality});
+   const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:needsLandscape?LANDSCAPE_IMAGE_MODEL:needsPlan?PLAN_IMAGE_MODEL:MODEL,prompt:n>1?prompt+'\\nCreate variation '+(i+1)+' of '+n+' with the same architecture and camera.':prompt,quality:p.quality});
    images.push(result.b64);mimes.push(result.mimeType);
   }catch(error){
    if(!images.length)throw error;
@@ -360,7 +367,7 @@ async function performRender(p,requestId){
   }
  }
  console.info('[AI]',requestId,'готово',images.length,'кадров; длительность_мс:',Date.now()-started);
- return {images,mimes,model:needsPlan?PLAN_IMAGE_MODEL:MODEL,provider:'API Market',warning};
+ return {images,mimes,model:needsLandscape?LANDSCAPE_IMAGE_MODEL:needsPlan?PLAN_IMAGE_MODEL:MODEL,provider:'API Market',warning};
 }
 const renderJobs=createRenderJobQueue({
  worker:async(p,requestId)=>{
