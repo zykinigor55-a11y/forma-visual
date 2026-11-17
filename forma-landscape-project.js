@@ -117,16 +117,16 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   if(busy||e.button!==0)return;const p=position(e);if(!p)return;
   if(['path','area','boundary'].includes(mode)){points.push(p);drawMap();drawPalette();return}
   if(mode==='place'){addObject(p);return}
-  const node=e.target.closest('[data-object]'),house=e.target.closest('[data-house]');
-  selected=node?.dataset.object||(house?'house':null);
+  const node=e.target.closest('[data-object]'),house=e.target.closest('[data-house]'),aux=e.target.closest('[data-building]');
+  selected=node?.dataset.object||(aux?'building:'+aux.dataset.building:house?'house':null);
   if(!selected){draw();return}
-  const obj=doc.objects.find(x=>x.id===selected)||doc.house,control=e.target.closest('[data-vertex]');
+  const obj=selected==='house'?doc.house:selected.startsWith('building:')?doc.buildings.find(b=>b.id===selected.slice(9)):doc.objects.find(x=>x.id===selected),control=e.target.closest('[data-vertex]');
   checkpoint();drag={pointer:e.pointerId,id:selected,index:control?Number(control.dataset.vertex):null,start:p,original:JSON.parse(JSON.stringify(obj))};
   try{$('#lpSvg',modal).setPointerCapture(e.pointerId)}catch{}drawInspector();
  }
  function movePointer(e){
   if(!drag||drag.pointer!==e.pointerId)return;const p=position(e);if(!p)return;const dx=p.x-drag.start.x,dy=p.y-drag.start.y;
-  const obj=drag.id==='house'?doc.house:doc.objects.find(x=>x.id===drag.id);if(!obj)return;
+  const obj=drag.id==='house'?doc.house:drag.id.startsWith('building:')?doc.buildings.find(b=>b.id===drag.id.slice(9)):doc.objects.find(x=>x.id===drag.id);if(!obj)return;
   if(obj.points){
    if(drag.index!==null){const a=drag.original.points[drag.index];obj.points[drag.index]={x:clamp(a.x+dx,0,doc.site.width),y:clamp(a.y+dy,0,doc.site.height)}}
    else obj.points=drag.original.points.map(a=>({x:clamp(a.x+dx,0,doc.site.width),y:clamp(a.y+dy,0,doc.site.height)}));
@@ -144,7 +144,8 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   else if(field==='north')doc.north=clamp(v,-360,360);
   else if(field.startsWith('site.')){doc.site[field.slice(5)]=clamp(v,5,500);doc.verified=false;}
   else if(field.startsWith('house.')){const k=field.slice(6);doc.house[k]=['type','roof'].includes(k)?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArt=null;}
-  else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);obj[k]=k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
+  else if(field.startsWith('aux.')){const b=doc.buildings.find(x=>x.id===selected.slice(9));if(b){const k=field.slice(4);b[k]=k==='roof'?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArts.delete(b.id)}}
+   else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);obj[k]=k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
   doc=normalizeProject(doc);save();draw();
  }
  async function uploadPhoto(file,kind){
@@ -154,7 +155,7 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   const scale=Math.min(1,1250/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
   c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);
   c.getContext('2d').drawImage(img,0,0,c.width,c.height);const encoded=c.toDataURL('image/jpeg',.76);
-  checkpoint();if(kind==='house'){doc.house.photo=encoded;roofArt=null;}else{doc.underlay=encoded;doc.verified=false;}
+  checkpoint();if(kind==='house'){doc.house.photo=encoded;roofArt=null;}else if(kind==='aux'){const b=doc.buildings.find(x=>x.id===selected?.slice(9));if(!b)throw Error('Выберите дополнительное строение.');b.photo=encoded;roofArts.delete(b.id);}else{doc.underlay=encoded;doc.verified=false;}
   save();draw();say(kind==='house'?'Фото строения сохранено для генерации кровли строго сверху.':'Набросок добавлен как подложка. Масштаб задаётся численно.');
  }
  const openMedia=()=>new Promise((resolve,reject)=>{const r=indexedDB.open('forma-landscape-masterplan-assets',1);r.onupgradeneeded=()=>r.result.createObjectStore('media');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
@@ -180,15 +181,16 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   if(!confirm('Запустить один платный запрос GPT Image 2.6? Точные размеры останутся в исходной модели.'))return;
   busy=true;$('#lpAi',modal).disabled=true;say('Подготавливаем изображение для GPT Image 2.6...');
   try{
+   const target=selected?.startsWith('building:')?doc.buildings.find(b=>b.id===selected.slice(9)):doc.house;
    const payload=kind==='roof'
-    ?{image:doc.house.photo,roofTopView:{width:doc.house.width,height:doc.house.height},quality:'high',quantity:1}
+    ?{image:target?.photo||null,roofTopView:{width:target?.width,height:target?.height,roof:target?.roof},quality:'high',quantity:1}
     :{image:await rasterize(false),reference:doc.house.photo||null,landscapeMasterplan:coordinateSummary(doc),quality:'high',quantity:1};
    if(!payload.image)throw Error('Загрузите фотографию строения.');
    const r=await (window.FORMA_RENDER_QUEUE?.fetch||fetch)('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(240000)});
    const result=await r.json().catch(()=>({}));
    if(!r.ok||!result.images?.[0])throw Error(result.error||'GPT Image не выдал изображение.');
    const img='data:'+(result.mimes?.[0]||'image/png')+';base64,'+result.images[0];
-   if(kind==='roof'){roofArt=img;await storage('roof',img).catch(()=>{});say('Кровля сгенерирована: размеры и положение дома не изменены.')}
+   if(kind==='roof'){if(target===doc.house){roofArt=img;await storage('roof',img).catch(()=>{});}else{roofArts.set(target.id,img);await storage('roof-'+target.id,img).catch(()=>{});}say('Кровля сгенерирована: размеры и положение строения не изменены.')}
    else{preview=img;await storage('preview',img).catch(()=>{});say('Фотореалистичная подача создана. Измерения остались в векторной модели.')}
    drawMap();
   }catch(err){say(err?.name==='TimeoutError'?'Истекло время ожидания. Запрос мог быть оплачен. Не повторяйте сразу.':err.message)}
@@ -234,18 +236,18 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
  async function open(){
   if(modal?.open)return;
   lastFocus=document.activeElement;pid=activeProject();try{doc=normalizeProject(JSON.parse(localStorage.getItem(siteKey())||'null'))}catch{doc=freshProject()}
-  mode='select';chosen='pine';category='trees';selected=null;points=[];undo=[];redo=[];preview=null;roofArt=null;
+  mode='select';chosen='pine';category='trees';selected=null;points=[];undo=[];redo=[];preview=null;roofArt=null;roofArts=new Map();
   modal=document.createElement('dialog');modal.id='faLandscapeMasterplan';modal.className='fa-landscape-masterplan';
   modal.innerHTML=`<div class="lp-shell"><header class="lp-head"><div class="lp-brand"><b>FORMA</b><span>ЛАНДШАФТНЫЙ ПРОЕКТ · ВИД СВЕРХУ</span></div><div><span id="lpSourceState"></span><button type="button" data-close aria-label="Закрыть">×</button></div></header><div class="lp-layout"><aside class="lp-sidebar"><div class="lp-sidebar-head"><b>БИБЛИОТЕКА</b><small>46 объектов · 8 категорий</small></div><div id="lpPalette"></div><button type="button" data-icon class="lp-export-icon">Экспорт иконки · SVG 1080</button></aside><section class="lp-work"><div class="lp-tools"><button type="button" data-tool="select">↖ Выбор</button><button type="button" data-tool="boundary">⬡ Граница</button><button type="button" data-tool="path">⌁ Дорожка</button><button type="button" data-tool="area">▧ Область</button><button type="button" data-undo>↶</button><button type="button" data-redo>↷</button></div><div class="lp-path-controls"><span id="lpToolName">Выбор</span><label>Ширина дорожки <input id="lpWidth" type="number" min=".4" max="10" step=".05" value="1.2"> м</label><label><input id="lpSnap" type="checkbox" checked> Шаг 5 см</label><button id="lpFinish" type="button" disabled>Завершить</button><button id="lpCancel" type="button" disabled>Отмена</button></div><div class="lp-canvas"><div id="lpMap"></div></div><footer class="lp-work-foot"><span id="lpStatus" role="status">План строится в метрах. Дорожки рисуются точками, не кистью.</span><button type="button" data-concept>＋ Эскиз посадок</button></footer></section><aside class="lp-properties"><div id="lpInspector"></div><section class="lp-outputs"><label>Набросок / схема<input id="lpUnderlay" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="lpAi" data-ai>GPT Image 2.6 · Фото-генплан</button><small>Генерация меняет только презентацию. Размеры и координаты остаются в 2D-модели.</small><div><button type="button" data-svg>SVG</button><button type="button" data-png>PNG 2K</button><button type="button" data-csv>Ведомость CSV</button><button type="button" data-json>Модель JSON</button></div></section></aside></div></div>`;
   document.body.append(modal);modal.addEventListener('click',click);
   modal.addEventListener('change',e=>{
-   if(e.target.matches('#lpUnderlay,#lpHousePhoto')){uploadPhoto(e.target.files?.[0],e.target.id==='lpHousePhoto'?'house':'underlay').catch(err=>say(err.message));return}
+   if(e.target.matches('#lpUnderlay,#lpHousePhoto,#lpAuxPhoto')){uploadPhoto(e.target.files?.[0],e.target.id==='lpHousePhoto'?'house':e.target.id==='lpAuxPhoto'?'aux':'underlay').catch(err=>say(err.message));return}
    if(e.target.id==='lpSnap'){snap=e.target.checked;return}
    change(e);
   });
   modal.addEventListener('cancel',e=>{e.preventDefault();if(!busy)close()});
   document.addEventListener('keydown',onKey);modal.showModal();draw();
-  try{[preview,roofArt]=await Promise.all([storage('preview').catch(()=>null),storage('roof').catch(()=>null)]);if(modal?.open)drawMap()}catch{}
+  try{[preview,roofArt]=await Promise.all([storage('preview').catch(()=>null),storage('roof').catch(()=>null)]);await Promise.all(doc.buildings.map(async b=>{const img=await storage('roof-'+b.id).catch(()=>null);if(img)roofArts.set(b.id,img)}));if(modal?.open)drawMap()}catch{}
  }
  function close(){
   if(busy){say('Сначала завершите AI-запрос.');return}
