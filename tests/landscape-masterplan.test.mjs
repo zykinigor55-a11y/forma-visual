@@ -87,5 +87,5 @@ test('front-end and server are wired to the dedicated GPT 2.6 landscape workflow
  const {createPrompt,renderQuantity}=await import('../server.mjs');
  assert.match(createPrompt({landscapeMasterplan:coordinateSummary(freshProject())}),/MASTERPLAN PRESENTATION/);
  assert.match(createPrompt({roofTopView:{width:6,height:4,roof:'gable'}}),/ORTHOGRAPHIC NADIR/);
- assert.equal(renderQuantity({landscapeMasterplan:d,quantity:4}),1);
+ assert.equal(renderQuantity({landscapeMasterplan:coordinateSummary(freshProject()),quantity:4}),1);
 });
