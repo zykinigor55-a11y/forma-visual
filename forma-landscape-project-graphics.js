@@ -106,12 +106,34 @@ export function assetSVG(entry,{size=1080,transparent=false}={}){
 }
 let premiumEnabled=false;
 let premiumExtension='webp';
+// Real authored 1080px replacements. Use only a species-matched photograph;
+// never show a generic shrub as a different botanical species.
+export const PHOTO_ASSETS=Object.freeze({
+ birch:'birch.png',oak:'oak.png',pine:'pine.png',
+ dogwood:'dogwood.png',juniper:'juniper.png',
+ formal:'formal.jpg','granite-chips':'granite-chips.jpg',
+ 'pine-bark':'pine-bark.jpg','concrete-pavers':'concrete-pavers.jpg'
+});
+const availablePhotos=new Set();
+const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-v1';
+export const photographicAssetCount=()=>availablePhotos.size;
+export const photographicIconURL=(entry)=>PHOTO_ASSETS[entry.id]?photoUrl(entry):null;
 export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
 export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.'+premiumExtension+'?v=1080-png-realgrass-v2';
-export const iconURL=(entry)=>premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry);
+export const iconURL=(entry)=>availablePhotos.has(entry.id)?photoUrl(entry):(premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry));
+export const isPhotographic=(entry)=>Boolean(entry&&availablePhotos.has(entry.id));
 export async function enablePremiumAssets(){
- // PNG files are preferred, but keep real existing WebP art visible while CI
- // is generating the full new set rather than replacing them with flat SVGs.
+ // Only enable a new photo after verifying that exact species/material exists.
+ // A missing 1080 file must never break plant placement, previews or AI exports.
+ await Promise.all(Object.entries(PHOTO_ASSETS).map(async([id,ext])=>{
+  try{
+   const url='/assets/landscape-photo/'+ext+'?v=photo-1080-v1';
+   const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
+   if(r.ok&&(/image\\/(png|jpeg)/i.test(r.headers.get('Content-Type')||'')||r.headers.get('Content-Type')===null)){
+    availablePhotos.add(id);
+   }else availablePhotos.delete(id);
+  }catch{availablePhotos.delete(id);}
+ }));
  for(const extension of ['png','webp']){
   try{
    const url='/assets/landscape-premium/pine.'+extension+'?v=1080-png-realgrass-v2';
@@ -119,7 +141,7 @@ export async function enablePremiumAssets(){
    if(r.ok){premiumExtension=extension;premiumEnabled=true;return true;}
   }catch{}
  }
- premiumEnabled=false;return false;
+ premiumEnabled=false;return availablePhotos.size>0;
 }
 export function roofingSVG(house){
  // Vector fallback is dimensioned, truly nadir. AI photograph is applied only as a surface texture.
