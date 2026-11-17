@@ -45,7 +45,16 @@ import {brushPolygon} from './forma-landscape-brush.js';
    if(entry.group==='pavers'){
     const patternId='lpPaver-'+item.id;
     shapes+=`<defs><pattern id="${patternId}" patternUnits="userSpaceOnUse" width="1.2" height="1.2"><image href="${iconURL(entry)}" x="0" y="0" width="1.2" height="1.2" preserveAspectRatio="xMidYMid slice"/></pattern></defs><path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="#4f4a41" stroke-width="${item.width+.1}" stroke-linecap="round" stroke-linejoin="round"/><path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="url(#${patternId})" stroke-width="${item.width}" stroke-linecap="round" stroke-linejoin="round" opacity="${alpha}"/>`;
-   }else if(['fills','lawns','ponds'].includes(entry.group)){
+   }else if(entry.group==='ponds'){
+    // Reuse the exact selected pond photo, including dark water and water lilies,
+    // clipped to the user's measured polygon (never a rectangular overlay).
+    const xs=item.points.map(p=>p.x),ys=item.points.map(p=>p.y);
+    const left=Math.min(...xs),top=Math.min(...ys),pw=Math.max(.1,Math.max(...xs)-left),ph=Math.max(.1,Math.max(...ys)-top);
+    const clipId='lpPondClip-'+item.id;
+    shapes+=`<defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><polygon points="${poly(item.points)}"/></clipPath></defs>`;
+    shapes+=`<g clip-path="url(#${clipId})"${maskAttr}><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#071f1a"/><image href="${cardPhotoURL(entry)}" x="${left}" y="${top}" width="${pw}" height="${ph}" preserveAspectRatio="xMidYMid slice"/><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#041913" opacity=".14" pointer-events="none"/></g>`;
+    shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}" fill="transparent" stroke="${active?'#e5be86':'#346f69'}" stroke-width="${active?.19:.08}" pointer-events="visiblePainted"/>`;
+   }else if(['fills','lawns'].includes(entry.group)){
     shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="${entry.color}" fill-opacity="${preview&&photoVisible?.18:.85}" stroke="${active?'#dfaa58':'#5b7558'}" stroke-width="${active?.16:.065}"/>`;
     if(!(preview&&photoVisible)){shapes+=`<defs><pattern id="tile-${item.id}" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="2.4" height="2.4"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="url(#tile-${item.id})" opacity=".46"/>`;}
    }else{
