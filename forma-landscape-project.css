@@ -808,3 +808,8 @@
 .lp-outputs .lp-pdf-size select{width:auto;min-width:64px;padding:7px 10px;border:1px solid rgba(146,149,150,.35);border-radius:9px;background:transparent;color:inherit;font:inherit}
 .lp-outputs .lp-pdf-size select option{color:#202326;background:#fff}
 @media(max-width:600px){.lp-outputs .lp-pdf-size{width:100%;justify-content:flex-start;margin:8px 0 4px}}
+
+/* 3D editor: a separate true WebGL landscape workspace, preserves the existing 2D tool. */
+#faLandscapeMasterplan .lp-launch-3d{display:inline-flex;align-items:center;justify-content:center;margin:0 12px;padding:9px 14px;border:1px solid #cdd9c3;border-radius:9px;background:#dbe5d4;color:#1b3027;font-size:11px;font-weight:800;letter-spacing:.06em;text-decoration:none;white-space:nowrap;box-shadow:0 2px 12px #0001}
+#faLandscapeMasterplan .lp-launch-3d:hover{background:#f2f8eb;color:#15271d}
+@media(max-width:700px){#faLandscapeMasterplan .lp-launch-3d{font-size:10px;padding:7px 9px;margin:0 5px}}
