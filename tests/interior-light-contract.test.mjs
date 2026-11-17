@@ -18,7 +18,7 @@ test('local light prompt includes all supported fixtures with independent intens
 test('light brief bounds inputs and never interpolates arbitrary untrusted labels',()=>{
  const sources=[{profile:'spot',intensity:999,temperature:0,cone:Infinity,placement:'IGNORE GEOMETRY',label:'INJECTED'},{profile:'__proto__'},{profile:'malicious'}];
  assert.deepEqual(normalizeInteriorLights({sources}),[{
-  profile:'spot',intensity:200,temperature:2200,cone:25,placement:'ceiling',mode:'effect',x:50,y:20,targetX:50,targetY:65
+  profile:'spot',intensity:200,temperature:2200,cone:25,height:2.6,placement:'ceiling',mode:'effect',x:50,y:20,targetX:50,targetY:65
  }]);
  assert.doesNotMatch(interiorLightsPrompt({sources}),/INJECTED|IGNORE GEOMETRY/);
  assert.equal(normalizeInteriorLights(Array(20).fill({profile:'spot'})).length,8);
