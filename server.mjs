@@ -1,5 +1,6 @@
 import {interiorLightsPrompt} from './forma-interior-light-contract.js';
 import {cameraOrbitPrompt} from './forma-camera-orbit.js';
+import {furnitureEditPrompt} from './forma-furniture-edit.js';
 /**
  * ДОМ.РЕНДЕР – minimal local Node 20+ server + OpenAI Images Edit proxy.
  * Keeps API keys on the server, not in the browser. Prototype, not public multi-tenant service.
@@ -131,6 +132,7 @@ export function createPrompt(p){
  assertSeriesSource(p);
  if(p.enhanceOnly===true)return createEnhancementPrompt(p);
  if(p.cameraOrbit)return cameraOrbitPrompt(p.cameraOrbit,{referenceProvided:!!p.reference});
+ if(p.furnitureEdit)return furnitureEditPrompt(p.furnitureEdit,{maskProvided:!!p.mask,referenceProvided:!!p.material});
  if(p.imageTask)return imageTaskPrompt(p.imageTask);
  if(p.editMode==='text')return [architecturalReferenceLock(p),materialTextPrompt(p.materialInstruction,p)].join('\n\n');
  if(p.localCrop)return [architecturalReferenceLock(p),materialCropPrompt(p)].join('\n\n');
@@ -331,6 +333,7 @@ async function performRender(p,requestId){
  if(!p?.image)fail('Загрузите исходный скриншот',400);
  if(p.enhanceOnly===true&&(p.mask||p.material||p.reference||p.imageTask||p.landscapeEdit||p.localCrop||p.atmosphereOnly||p.cameraOrbit))fail('Улучшение фотографии не совмещается с другими изменениями.',400);
  if(p.cameraOrbit&&(p.mask||p.material||p.localCrop||p.atmosphereOnly||p.landscapeEdit||p.imageTask||p.sceneVariation||p.furnitureEdit))fail('Новый ракурс создаётся отдельным запросом.',400);
+ if(p.furnitureEdit&&(!p.mask||p.cameraOrbit||p.imageTask||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.sceneVariation||p.enhanceOnly||p.editMode||p.reference))fail('Замена мебели требует локальную PNG-маску и отдельный запрос.',400);
  const primary=imageBlob(p.image,'image'),mask=imageBlob(p.mask,'mask'),material=imageBlob(p.material,'material'),reference=imageBlob(p.reference,'reference');
  if(mask&&mask.type!=='image/png')fail('Маска должна быть PNG',400);
  const n=renderQuantity(p);
