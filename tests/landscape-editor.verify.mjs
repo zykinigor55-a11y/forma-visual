@@ -11,6 +11,43 @@ try{
   await page.waitForFunction(()=>window.FORMA_LANDSCAPE_PROJECT);
   await page.evaluate(()=>window.FORMA_LANDSCAPE_PROJECT.open());
   await page.locator('#lpSvg').waitFor();
+  if(mobile){
+    // Regression: the road/pond material panels must not collapse the drawing
+    // into a few pixels when switching modes on an Android-sized viewport.
+    const canvasMetrics=()=>page.evaluate(()=>{
+      const layout=document.querySelector('#faLandscapeMasterplan .lp-layout');
+      const canvas=document.querySelector('#faLandscapeMasterplan .lp-canvas');
+      const svg=document.querySelector('#lpSvg');
+      const a=canvas.getBoundingClientRect(),b=layout.getBoundingClientRect(),v=svg.getBoundingClientRect();
+      return {height:a.height,width:a.width,top:a.top-b.top+layout.scrollTop,
+              svgHeight:v.height,canvasOrder:getComputedStyle(canvas).order,
+              panelsOrder:getComputedStyle(document.querySelector('.lp-path-controls')).order};
+    });
+    const initial=await canvasMetrics();
+    assert.ok(initial.height>=320, 'Map must be at least 320px high on mobile');
+    assert.ok(initial.svgHeight>=320,'Actual SVG must not collapse on mobile');
+    assert.equal(initial.canvasOrder,'2','Map must precede expandable tool palettes');
+    assert.equal(initial.panelsOrder,'3','Expandable palettes must follow the fixed map');
+    for(const step of [
+      ['[data-tool="path"]','path'],
+      ['[data-quick-category="ponds"]','pond'],
+      ['[data-area-tool="brush"]','brush'],
+      ['[data-area-tool="polygon"]','lasso'],
+      ['[data-quick-category="lawns"]','lawn'],
+      ['[data-quick-category="pavers"]','paving']
+    ]){
+      await page.locator(step[0]).click();
+      const after=await canvasMetrics();
+      assert.ok(Math.abs(after.height-initial.height)<2,step[1]+': canvas changed height');
+      assert.ok(Math.abs(after.top-initial.top)<2,step[1]+': canvas was pushed down by controls');
+      assert.ok(after.svgHeight>=320,step[1]+': map content collapsed');
+    }
+    await page.evaluate(()=>document.querySelector('#faLandscapeMasterplan .lp-layout').scrollTop=0);
+    await page.screenshot({path:'artifacts/landscape-editor/mobile-fixed-map-pavers.png',fullPage:false});
+    await page.locator('[data-quick-category="ponds"]').click();
+    await page.evaluate(()=>document.querySelector('#faLandscapeMasterplan .lp-layout').scrollTop=0);
+    await page.screenshot({path:'artifacts/landscape-editor/mobile-fixed-map-ponds.png',fullPage:false});
+  }
   const pos=async(x,y)=>page.evaluate(({x,y})=>{const s=document.querySelector('#lpSvg'),p=s.createSVGPoint();p.x=x;p.y=y;const q=p.matrixTransform(s.getScreenCTM());return {x:q.x,y:q.y}},{x,y});
   const tap=async(x,y)=>{const p=await pos(x,y);if(mobile)await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y)};
   const model=()=>page.evaluate(()=>JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('forma-landscape-masterplan-v1-')))));
