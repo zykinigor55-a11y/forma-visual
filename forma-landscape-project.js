@@ -52,7 +52,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
     const left=Math.min(...xs),top=Math.min(...ys),pw=Math.max(.1,Math.max(...xs)-left),ph=Math.max(.1,Math.max(...ys)-top);
     const clipId='lpPondClip-'+item.id;
     shapes+=`<defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><polygon points="${poly(item.points)}"/></clipPath></defs>`;
-    shapes+=`<g clip-path="url(#${clipId})"${maskAttr}><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#071f1a"/><image href="${cardPhotoURL(entry)}" x="${left}" y="${top}" width="${pw}" height="${ph}" preserveAspectRatio="xMidYMid slice"/><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#041913" opacity=".14" pointer-events="none"/></g>`;
+    shapes+=`<g clip-path="url(#${clipId})"${maskAttr}><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#071f1a"/><image href="${cardPhotoURL(entry)}" x="${left}" y="${top}" width="${pw}" height="${ph}" preserveAspectRatio="xMidYMid slice"/><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#03120f" opacity="${entry.id==='formal-pond'?.15:entry.id==='bio-pond'?.27:.50}" pointer-events="none"/></g>`;
     shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}" fill="transparent" stroke="${active?'#e5be86':'#346f69'}" stroke-width="${active?.19:.08}" pointer-events="visiblePainted"/>`;
    }else if(['fills','lawns'].includes(entry.group)){
     // Full-plot lawn uses a close photographic turf crop, rather than the
@@ -409,7 +409,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   if(b.dataset.eraser!==undefined){mode='area';areaTool='eraser';points=[];brush=null;draw();revealCanvas();say('Ластик: проведите пальцем по части газона, отсыпки или пруда.');return}
    if(b.dataset.tool){setMode(b.dataset.tool);return}
   if(b.dataset.pathShape){pathShape=b.dataset.pathShape;points=[];drawMap();drawPalette();revealCanvas();say(pathShape==='free'?'Свободная форма: ставьте точки в любом направлении.':pathShape==='diagonal'?'Диагонали: точная привязка под 45° к первой стороне участка.':'Параллельно: точная привязка к первой стороне участка и перпендикулярам.');return}
-  if(b.dataset.quickCategory){category=b.dataset.quickCategory;chosen=CATALOG.find(x=>x.group===category)?.id||chosen;if(category==='lawns'){autoFillLawn();return}setMode(category==='pavers'?'path':['fills','ponds'].includes(category)?'area':'place');return}
+  if(b.dataset.quickCategory){category=b.dataset.quickCategory;chosen=category==='ponds'?'formal-pond':CATALOG.find(x=>x.group===category)?.id||chosen;if(category==='lawns'){autoFillLawn();return}setMode(category==='pavers'?'path':['fills','ponds'].includes(category)?'area':'place');return}
   if(b.id==='lpPhotoToggle'){if(preview){if(previewModel!==JSON.stringify(doc)){photoVisible=false;drawMap();say('План изменён. Создайте новый фотореалистичный генплан, чтобы увидеть обновлённое размещение.');return}}photoVisible=!photoVisible;drawMap();return}
   if(b.id==='lpFinish'){finish();return}
   if(b.id==='lpCancel'){endDrawing();return}
