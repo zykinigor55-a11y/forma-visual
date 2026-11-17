@@ -213,8 +213,8 @@ import {brushPolygon} from './forma-landscape-brush.js';
   const a=box(polygon);
   const touched=doc.objects.filter(obj=>{
    if(!['lawns','fills','ponds'].includes(obj.type)||!obj.points?.length)return false;
-   const b=box(obj.points);
-   return a.maxX>=b.minX&&a.minX<=b.maxX&&a.maxY>=b.minY&&a.minY<=b.maxY;
+   const b=box(obj.points),pad=obj.type==='fills'&&obj.geometry==='strip'?obj.width/2:0;
+   return a.maxX>=b.minX-pad&&a.minX<=b.maxX+pad&&a.maxY>=b.minY-pad&&a.minY<=b.maxY+pad;
   });
   if(!touched.length){say('В этой области нечего стирать.');return;}
   checkpoint();
@@ -462,7 +462,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   if(b.dataset.areaTool){areaTool=b.dataset.areaTool;points=[];brush=null;draw();revealCanvas();say(areaTool==='eraser'?'Ластик: проведите по газону, отсыпке или пруду.':areaTool==='brush'?'Проведите пальцем или мышью, без точек.':'Поставьте точки контура и нажмите «Завершить».');return}
   if(b.dataset.surfaceMode){setMode(b.dataset.surfaceMode==='strip'?'strip':'area');return}
   if(b.dataset.category){category=b.dataset.category;chosen=CATALOG.find(x=>x.group===category).id;if(category==='lawns'){autoFillLawn();return}drawPalette();return}
-  if(b.dataset.asset){chosen=b.dataset.asset;const g=itemCatalog().group;if(g==='lawns'){autoFillLawn();return}setMode(g==='pavers'?'path':['fills','ponds'].includes(g)?'area':'place');return}
+  if(b.dataset.asset){const wasStrip=mode==='strip';chosen=b.dataset.asset;const g=itemCatalog().group;if(g==='lawns'){autoFillLawn();return}setMode(g==='pavers'?'path':g==='fills'&&wasStrip?'strip':['fills','ponds'].includes(g)?'area':'place');return}
   if(b.dataset.eraser!==undefined){mode='area';areaTool='eraser';points=[];brush=null;draw();revealCanvas();say('Ластик: проведите пальцем по части газона, отсыпки или пруда.');return}
    if(b.dataset.tool){setMode(b.dataset.tool);return}
   if(b.dataset.pathShape){pathShape=b.dataset.pathShape;points=[];drawMap();drawPalette();revealCanvas();say(pathShape==='free'?'Свободная форма: ставьте точки в любом направлении.':pathShape==='diagonal'?'Диагонали: точная привязка под 45° к первой стороне участка.':'Параллельно: точная привязка к первой стороне участка и перпендикулярам.');return}
