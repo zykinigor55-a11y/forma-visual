@@ -23,6 +23,10 @@ main{position:relative;min-height:0}#viewport{width:100%;height:100%;display:blo
 hr{border:0;border-top:1px solid #36473d;width:100%;margin:12px 0}#library{padding:9px 13px 16px;overflow:auto}
 #library .choice{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 12px;margin:5px 0;text-align:left}
 #library .choice.active{border-color:#d6e0c7;color:#d6e0c7}
+#draftActions{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;padding:10px;border-top:1px solid #485449}
+#draftActions[hidden]{display:none}
+#draftActions button{font-size:11px;padding:10px 7px}
+#draftActions small{grid-column:1/-1;color:#b8c7be;font-size:10px;line-height:1.5}
 h3{font-size:13px;margin:4px 0 10px;font-weight:700}p,.muted{font-size:12px;color:#b8c7be;line-height:1.55}
 label{display:block;color:#c3d0c8;font-size:11px;margin:10px 0 5px}
 input[type="number"],input[type="text"],select,input[type="range"]{width:100%}
@@ -59,7 +63,7 @@ header .header-right button{padding:6px;font-size:10px}
 </header>
 <main>
 <canvas id="viewport"></canvas>
-<div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div></div>
+<div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
@@ -159,7 +163,7 @@ function rebuild(){
  buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
- updateSun();renderProps();renderer.render(scene,camera);
+ refreshDraft();updateSun();renderProps();renderer.render(scene,camera);
 }
 function buildingGroup(b){
  const g=new THREE.Group(),w=b.width||5,d=b.height||5,roof=b.roof||'gable';
@@ -236,7 +240,8 @@ function drawTools(){
  document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>chooseTool(b.dataset.tool));chooseTool('select');
 }
 function chooseTool(t){
- state.tool=t;state.placing=null;pointMode=[];
+ state.tool=t;state.placing=null;pointMode=[];refreshDraft();
+ const draft=$('#draftActions');if(draft)draft.hidden=!['site','surface','water','fence'].includes(t);
  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
  const arr=choices[t]||[];
  $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':arr.map(c=>'<button class="choice" data-item="'+c[0]+'">'+c[1]+' <span>＋</span></button>').join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+(t==='terrain'?'<label>Радиус кисти, м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label>Сила рельефа</label><input id="brushStrength" type="range" min=".1" max="2" step=".1" value=".5">':'');
@@ -280,21 +285,41 @@ function modifyTerrain(world){
    heightmap[k]=Math.max(-8,Math.min(12,mode==='raise'?v+f:mode==='lower'?v-f:v*(1-Math.min(.7,f))))}
  }rebuild();
 }
+function refreshDraft(){
+ if(!root)return;
+ const last=root.getObjectByName('preview-contour');
+ if(last){root.remove(last);last.geometry.dispose();last.material.dispose()}
+ if(!pointMode.length)return;
+ const pts=pointMode.map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.3,v.z)});
+ const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xffd49c,depthTest:false}));
+ line.name='preview-contour';line.renderOrder=10;root.add(line);
+}
+function finishContour(){
+ const tool=state.tool,type=catalog(state.placing)?.group;
+ const min=tool==='fence'||(tool==='surface'&&type==='pavers')?2:3;
+ if(pointMode.length<min){status('Для контура необходимо минимум '+min+' точки.');return}
+ if(tool==='site'&&state.placing==='outline'){
+  push();doc.site.boundary=pointMode.map(p=>({...p}));doc.verified=false;
+ }else if(tool==='fence'){
+  push();extra.push({id:id(),type:'fence',points:pointMode.map(p=>({...p})),x:pointMode[0].x,y:pointMode[0].y,rotation:0});
+ }else if(tool==='water'||tool==='surface'){
+  if(!catalog(state.placing)){status('Выберите покрытие или водоём.');return}
+  push();doc.objects.push({id:id(),catalogId:state.placing,type:type||'ponds',points:pointMode.map(p=>({...p})),width:1.5});
+ }else{status('Выберите инструмент рисования.');return}
+ pointMode=[];save();rebuild();status('Контур сохранён. Остальные объекты не затронуты.');
+}
 function place(world){
  const point=fromWorld(world),tool=state.tool,entry=catalog(state.placing),type=entry?.group;
  if(tool==='terrain'){if(!state.placing)state.placing='raise';push();modifyTerrain(world);save();return}
  if(!state.placing){status('Сначала выберите элемент из библиотеки.');return}
  if(tool==='site'&&state.placing==='outline'){
-  pointMode.push(point);status('Контур: точек '+pointMode.length+'. Enter — завершить.');return;
+  pointMode.push(point);refreshDraft();status('Граница: '+pointMode.length+' точек. Enter или кнопка завершения.');return;
  }
  if(!inParcel(point,doc.site)){status('Точка вне границ участка. Размещение запрещено.');return}
  if(tool==='surface'||tool==='water'||tool==='fence'){
-  pointMode.push(point);const req=tool==='fence'?2:tool==='surface'&&type==='pavers'?2:3;
-  if(pointMode.length<req){status('Точка '+pointMode.length+' из '+req+' поставлена.');return}
-  push();
-  if(tool==='fence')extra.push({id:id(),type:'fence',points:pointMode.slice(),x:point.x,y:point.y,rotation:0});
-  else doc.objects.push({id:id(),catalogId:state.placing,type:type||'ponds',points:pointMode.slice(),width:1.5});
-  pointMode=[];save();rebuild();return;
+  const last=pointMode.at(-1);if(last&&Math.hypot(point.x-last.x,point.y-last.y)<.05)return;
+  pointMode.push(point);refreshDraft();status('Точек контура: '+pointMode.length+'. Нажмите «Завершить контур» после последней.');
+
  }
  push();
  if(tool==='build'){doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:6,height:5,rotation:0,roof:'gable',roofColor:'#454543'})}
@@ -325,12 +350,15 @@ function addEvents(){
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#screenshot').onclick=saveScreenshot;
+ $('#finishContour').onclick=finishContour;
+ $('#cancelContour').onclick=()=>{pointMode=[];refreshDraft();status('Черновой контур отменён.');};
  $('#exportJSON').onclick=()=>{const data=JSON.stringify({schema:'FORMA-landscape-3d-v1',project:doc,extra,terrain:{grid:GRID,values:heightmap}},null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='FORMA-landscape-3d.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
  window.addEventListener('keydown',e=>{
   if(/input|select|textarea/i.test(e.target.tagName))return;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();restore(e.shiftKey?redo:undo,e.shiftKey?undo:redo)}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();restore(redo,undo)}
-  if(e.key==='Enter'&&state.tool==='site'&&state.placing==='outline'&&pointMode.length>=3){push();doc.site.boundary=pointMode.slice();pointMode=[];save();rebuild();status('Контур участка сохранён')}
+  if(e.key==='Enter'&&pointMode.length){e.preventDefault();finishContour()}
+  if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
   if(state.view==='walk'){let amount=e.shiftKey?1.4:.5;const forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();const side=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();if(e.key.toLowerCase()==='w')camera.position.addScaledVector(forward,amount);if(e.key.toLowerCase()==='s')camera.position.addScaledVector(forward,-amount);if(e.key.toLowerCase()==='a')camera.position.addScaledVector(side,-amount);if(e.key.toLowerCase()==='d')camera.position.addScaledVector(side,amount)}
  });
  window.addEventListener('resize',resize);canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();status('WebGL отключился. Перезагрузите страницу.')});
