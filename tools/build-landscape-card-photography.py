@@ -62,11 +62,15 @@ def glow(bg,x,y,rad,alpha=160):
 
 def paste_photo(bg,source,frac=.70,yoffset=.04):
  object_image=Image.open(source).convert("RGBA")
- # Transparent product photo, not a fake overhead render.
- # Remove nearly transparent halos from cutout borders before scaling.
- # Without this threshold product silhouettes occupy <15% of the picture.
+ # Many source WebPs contain black opaque backdrop that misleads alpha crops.
+ # Recover a soft product alpha from its actual pixel values, then scale tightly.
+ rgba=np.asarray(object_image).copy()
+ brightest=rgba[:,:,:3].max(axis=2).astype(np.float32)
+ edge_alpha=np.uint8(np.clip((brightest-6)*40,0,255))
+ rgba[:,:,3]=np.minimum(rgba[:,:,3],edge_alpha)
+ object_image=Image.fromarray(rgba,"RGBA")
  mask=object_image.getchannel("A")
- bbox=mask.point(lambda a:255 if a>38 else 0).getbbox()
+ bbox=mask.point(lambda a:255 if a>48 else 0).getbbox()
  if bbox:
   pad=14
   bbox=(max(0,bbox[0]-pad),max(0,bbox[1]-pad),min(object_image.width,bbox[2]+pad),min(object_image.height,bbox[3]+pad))
