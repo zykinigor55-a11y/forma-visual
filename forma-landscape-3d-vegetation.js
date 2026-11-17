@@ -139,8 +139,10 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),conifer=['pine','spruce','juniper','thuja-globe'].includes(id);
  const crown=clamp(diameter/2,.1,15);
- const density=shrub?Math.round(220*quality):Math.round((id==='pine'?440:id==='spruce'?620:720)*quality);
- const count=clamp(density,shrub?80:150,1000),geo=new T.SphereGeometry(1,9,6);
+ // Photographic scale: many small shadowed 3D clusters instead of a handful
+ // of enormous faceted spheres visible from the ground.
+ const density=shrub?Math.round(680*quality):Math.round((id==='pine'?1320:id==='spruce'?1560:1680)*quality);
+ const count=clamp(density,shrub?200:420,2200),geo=new T.SphereGeometry(1,8,5);
  const verts=geo.getAttribute('position');
  // Break each lobe into botanical irregularity, never a smooth perfect ball.
  for(let i=0;i<verts.count;i++){
@@ -150,10 +152,10 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  }geo.computeVertexNormals();
  const m=new T.MeshStandardMaterial({color:'#ffffff',roughness:.96,metalness:0,flatShading:false});
  const inst=new T.InstancedMesh(geo,m,count),d=new T.Object3D(),base=new T.Color(foliageProfile(id,season).color);
- const nominal=shrub?Math.max(.065,crown*.27):Math.max(.17,Math.min(.72,crown*.22));
+ const nominal=shrub?Math.max(.045,Math.min(.15,crown*.135)):Math.max(.085,Math.min(.31,crown*.115));
  for(let i=0;i<count;i++){
   const p=points[Math.floor(r()*points.length)];
-  const size=nominal*(.56+r()*.66)*(id==='pine'?.78:1);
+  const size=nominal*(.48+r()*.85)*(id==='pine'?.81:1);
   d.position.set(
    clamp(p.x+(r()-.5)*size*.75,-crown,crown),
    p.y+(r()-.5)*size*.50,
@@ -164,7 +166,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
   if(id==='willow')d.scale.y*=1.35;
   if(id==='spruce')d.scale.y*=.80;
   d.updateMatrix();inst.setMatrixAt(i,d.matrix);
-  const shade=.72+r()*.56,leaf=base.clone().multiplyScalar(shade);
+  const shade=.76+r()*.37,leaf=base.clone().multiplyScalar(shade);
   if(season==='autumn'&&!conifer&&r()<.28)leaf.lerp(new T.Color('#bf6c39'),r()*.48);
   inst.setColorAt(i,leaf);
  }
@@ -211,7 +213,8 @@ function createSprayTexture(T,needles){
 function addFoliageSprays(g,T,points,id,season,seed,quality){
  if(!points.length||foliageProfile(id,season).leafless)return;
  const type=foliageProfile(id,season),r=rng(seed),shrub=type.kind.includes('shrub');
- const needle=['pine','spruce','juniper','thuja-globe'].includes(id),count=clamp(Math.round(points.length*quality*(shrub?.85:1.2)),90,1900);
+ const needle=['pine','spruce','juniper','thuja-globe'].includes(id),
+ count=clamp(Math.round(points.length*quality*(shrub?1.10:1.95)),shrub?180:520,3400);
  const material=new T.MeshStandardMaterial({map:createSprayTexture(T,needle),alphaTest:.18,side:T.DoubleSide,roughness:.92,metalness:0});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),d=new T.Object3D(),tone=new T.Color(type.color);
  for(let i=0;i<count;i++){
@@ -219,7 +222,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality){
   const offset=shrub?.17:.40;
   d.position.set(p.x+(r()-.5)*offset,p.y+(r()-.5)*offset,p.z+(r()-.5)*offset);
   d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
-  const w=(shrub?.25:.61)*(.67+r()*.82);d.scale.set(w,w,1);
+  const w=(shrub?.21:.40)*(.65+r()*.85);d.scale.set(w,w,1);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   mesh.setColorAt(i,tone.clone().multiplyScalar(.83+r()*.35));
  }
