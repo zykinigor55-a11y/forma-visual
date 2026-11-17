@@ -80,15 +80,15 @@ const finite=(x,min,max,fallback)=>Number.isFinite(Number(x))?Math.max(min,Math.
 const round=(x,d=3)=>Math.round(x*10**d)/10**d;
 const point=p=>({x:finite(p?.x,-5000,5000,0),y:finite(p?.y,-5000,5000,0)});
 const maxObjects=500;
-export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural'});
+export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural'});
 export function normalizeProject(raw){
  const obj=raw&&typeof raw==='object'?raw:{},base=freshProject(),site=obj.site||{},house=obj.house||{};
  const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
  const boundary=Array.isArray(site.boundary)&&site.boundary.length>=3&&site.boundary.length<=80?site.boundary.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)})):null;
  const r={version:1,title:String(obj.title||base.title).slice(0,75),site:{width,height,orientation:finite(site.orientation,-360,360,0),boundary},
  house:{x:finite(house.x,0,width,width/2),y:finite(house.y,0,height,height*.4),width:finite(house.width,2,60,12),height:finite(house.height,2,60,8),rotation:finite(house.rotation,-360,360,0),type:['house','bath','garage','gazebo','outbuilding'].includes(house.type)?house.type:'house',
- roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:typeof house.photo==='string'&&house.photo.length<450000?house.photo:null},
- objects:[],underlay:typeof obj.underlay==='string'&&obj.underlay.length<450000?obj.underlay:null,
+ roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:typeof house.photo==='string'&&house.photo.length<1200000?house.photo:null},
+ objects:[],buildings:[],underlay:typeof obj.underlay==='string'&&obj.underlay.length<1200000?obj.underlay:null,
  underlayOpacity:finite(obj.underlayOpacity,0,1,.25),north:finite(obj.north,0,360,0),
  verified:obj.verified===true,style:['natural','modern','architectural'].includes(obj.style)?obj.style:'natural'};
  for(const item of (Array.isArray(obj.objects)?obj.objects:[]).slice(0,maxObjects)){
@@ -99,6 +99,10 @@ export function normalizeProject(raw){
    if(points.length<(['pavers'].includes(entry.group)?2:3))continue;
    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2)});
   }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),rotation:finite(item.rotation,-360,360,0)});
+ }
+ for(const b of (Array.isArray(obj.buildings)?obj.buildings:[]).slice(0,24)){
+  if(!b||typeof b!=='object')continue;
+  r.buildings.push({id:/^[a-z0-9-]{1,48}$/i.test(b.id||'')?b.id:'b-'+Math.random().toString(36).slice(2,10),x:finite(b.x,0,width,width*.7),y:finite(b.y,0,height,height*.7),width:finite(b.width,2,60,6),height:finite(b.height,2,60,4),rotation:finite(b.rotation,-360,360,0),type:['bath','garage','gazebo','outbuilding','house'].includes(b.type)?b.type:'bath',roof:['gable','hip','flat'].includes(b.roof)?b.roof:'gable',roofColor:/^#[a-f0-9]{6}$/i.test(b.roofColor||'')?b.roofColor:'#454543',photo:typeof b.photo==='string'&&b.photo.length<1200000?b.photo:null});
  }
  return r;
 }
@@ -117,7 +121,7 @@ export function report(doc){
   if(entry.group==='pavers')lengths[item.catalogId]=round((lengths[item.catalogId]||0)+lineLength(item.points),2);
  }
  return {siteArea:round(polygonArea(boundary),2),sitePerimeter:round(perimeter(boundary),2),
-  buildingArea:round(d.house.width*d.house.height,2),counts,areas,lengths,
+  buildingArea:round(d.house.width*d.house.height,2),auxBuildingArea:round(d.buildings.reduce((v,b)=>v+b.width*b.height,0),2),counts,areas,lengths,
   sourcesVerified:d.verified,uncertainty:'Длины и площади вычислены по заданной геометрии; площади дорожек с пересечениями могут быть завышены до объединения контуров.'};
 }
 export const isInside=(p,polygon)=>{
@@ -128,5 +132,5 @@ export const isInside=(p,polygon)=>{
 };
 export function coordinateSummary(doc){
  const d=normalizeProject(doc),r=report(d);
- return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths},verified:d.verified};
+ return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},buildings:d.buildings.map(b=>({...b,photo:undefined})),objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths},verified:d.verified};
 }
