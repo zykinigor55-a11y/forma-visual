@@ -401,7 +401,7 @@ function chooseTool(t){
   const asset=catalog(c[0]),photo=['plant','landscape','light'].includes(t);
   const uri=t==='plant'?'/assets/landscape-photo/'+c[0]+'.png':
     t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':'';
-  const diameter=asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+(TREE_HEIGHT_M[c[0]]?' · высота '+Number(TREE_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
+  const diameter=asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
   const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':'';
   return header+'<button class="choice'+(photo?' has-preview':'')+'" data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="" loading="lazy" decoding="async">':'')+
