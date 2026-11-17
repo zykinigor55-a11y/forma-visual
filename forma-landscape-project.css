@@ -385,3 +385,72 @@
 
 /* Professional PDF album: quiet, prominent export next to plan downloads. */
 #faLandscapeMasterplan .lp-outputs>div .lp-export-album{grid-column:1/-1;background:#d3b68f!important;color:#25211d!important;font-weight:700;border-color:#e2c59d!important;letter-spacing:.035em}
+
+/* 2026-11 | FORMA PREMIERE / photographic landscape-library styling */
+#faLandscapeMasterplan .lp-groups{
+ scrollbar-width:thin;
+ scrollbar-color:#8a755b transparent;
+}
+#faLandscapeMasterplan .lp-assets{
+ gap:11px;
+ padding:11px 12px 22px;
+}
+#faLandscapeMasterplan .lp-assets button{
+ padding:7px 7px 12px;
+ border:1px solid #494848;
+ border-radius:13px;
+ background:linear-gradient(180deg,#2a2b2d 0%,#222426 100%);
+ box-shadow:0 2px 12px rgba(5,6,7,.11);
+ overflow:hidden;
+ min-width:0;
+}
+#faLandscapeMasterplan .lp-assets button.active{
+ background:linear-gradient(180deg,#36302a 0%,#292725 100%);
+ border-color:#d4b48b;
+ box-shadow:0 0 0 1px rgba(211,178,132,.45),0 6px 21px rgba(0,0,0,.21);
+}
+#faLandscapeMasterplan .lp-assets button img{
+ border-radius:9px;
+ background:#e8e7e0;
+ width:100%;
+ aspect-ratio:1/1;
+ object-position:center;
+}
+#faLandscapeMasterplan .lp-assets button[data-photo-type="lights"][data-photo-ready="true"] img,
+#faLandscapeMasterplan .lp-assets button[data-photo-type="ponds"][data-photo-ready="true"] img,
+#faLandscapeMasterplan .lp-assets button[data-photo-type="boulders"][data-photo-ready="true"] img{
+ object-fit:cover;
+ background:#242726;
+ box-shadow:inset 0 0 0 1px #d7bd9350;
+}
+#faLandscapeMasterplan .lp-assets button[data-photo-ready="true"]::after{
+ content:"";
+ position:absolute;
+ inset:7px 7px auto;
+ height:40%;
+ border-radius:9px 9px 0 0;
+ background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);
+ pointer-events:none;
+}
+#faLandscapeMasterplan .lp-assets button span{
+ margin-top:9px;
+ color:#efeee9;
+ font-weight:520;
+ font-size:11.3px;
+ line-height:1.35;
+ min-height:29px;
+ text-wrap:balance;
+}
+#faLandscapeMasterplan .lp-assets .lp-asset-detail{
+ margin-top:5px;
+ color:#b4a494;
+ font-size:8px;
+ letter-spacing:.08em;
+ font-weight:650;
+}
+@media(max-width:760px){
+ #faLandscapeMasterplan .lp-assets{gap:10px;padding:10px 11px 18px}
+ #faLandscapeMasterplan .lp-assets button{padding:6px 6px 10px;min-height:0}
+ #faLandscapeMasterplan .lp-assets button span{font-size:11.5px}
+ #faLandscapeMasterplan .lp-assets .lp-asset-detail{font-size:7.7px}
+}
