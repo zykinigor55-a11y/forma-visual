@@ -197,49 +197,95 @@ def ground(name,kind):
  return im
 
 def stone(name):
- r=rnd(name);color=PALETTE[name]
- im=Image.new("RGBA",(SIZE,SIZE),(0,0,0,0))
- shadow=Image.new("RGBA",(SIZE,SIZE));sd=ImageDraw.Draw(shadow,"RGBA")
- a=[]
- for i in range(37):
-  theta=math.tau*i/37
-  radius=390*(.75+.20*math.sin(theta*5+1)+.10*math.sin(theta*13)+r.uniform(-.08,.08))
-  a.append((540+math.cos(theta)*radius,531+math.sin(theta)*radius))
- sd.polygon([(x+25,y+31) for x,y in a],fill=(17,18,19,140))
- im=Image.alpha_composite(im,shadow.filter(ImageFilter.GaussianBlur(24)))
- d=ImageDraw.Draw(im,"RGBA")
- d.polygon(a,fill=(*color,255),outline=(*tint(color,-35),255),width=8)
- # Stone planes, crack paths and speckled mineral microstructure.
- for i in range(80):
-  idx=r.randint(0,len(a)-1);p=a[idx];mid=(r.randint(390,675),r.randint(385,660))
-  shade=r.uniform(-60,55)
-  q=a[(idx+r.randint(1,6))%len(a)]
-  d.polygon((p,mid,q),fill=(*tint(color,shade),r.randint(95,210)))
- for i in range(135):
-  x=r.randint(215,860);y=r.randint(205,850)
-  pts=[(x,y)];ang=r.uniform(0,math.tau)
-  for j in range(r.randint(2,5)):
-   ang+=r.uniform(-.65,.65);dd=r.uniform(3,29)
-   xx=pts[-1][0]+math.cos(ang)*dd;yy=pts[-1][1]+math.sin(ang)*dd
-   pts.append((xx,yy))
-  d.line(pts,fill=(*tint(color,-57),r.randint(40,160)),width=r.choice([1,2,3]))
- # apply polygon alpha mask to remove stray features, keeping blurred shadow outside
- mask=Image.new("L",(SIZE,SIZE));ImageDraw.Draw(mask).polygon(a,fill=255)
- mineral=Image.new("RGBA",(SIZE,SIZE));pmin=ImageDraw.Draw(mineral,"RGBA")
- for i in range(18000):
-  x=r.randint(125,940);y=r.randint(130,940)
-  if mask.getpixel((x,y))==0:continue
-  rad=r.uniform(.4,4.5)
-  shade=r.uniform(-100,110)
-  pmin.ellipse((x-rad,y-rad,x+rad,y+rad),fill=(*tint(color,shade),r.randint(40,165)))
- mineral.putalpha(Image.fromarray(np.minimum(np.asarray(mineral.getchannel('A')),np.asarray(mask)).astype(np.uint8)))
- im=Image.alpha_composite(im,mineral)
+ # Weathered 3D-looking natural rock from a nadir camera. No angular star polygons.
+ rng=rnd(name);palette=np.asarray(PALETTE[name],dtype=np.float32)
+ seed=int(hashlib.sha256((name+"-rock").encode()).hexdigest()[:12],16)
+ random_np=np.random.default_rng(seed)
+ center=(540,528)
+ # A softly irregular, organic silhouette rather than sharp flat triangles.
+ pts=[]
+ phi=rng.random()*math.tau
+ for i in range(240):
+  a=i*math.tau/240
+  distort=1.0+.075*math.sin(3*a+phi)+.052*math.sin(5*a+1.3*phi)+.025*math.sin(9*a-phi)
+  if name=="slate-boulder":distort+=.025*math.sin(13*a+1)
+  rr=378*distort
+  pts.append((round(center[0]+rr*math.cos(a)),round(center[1]+rr*.87*math.sin(a))))
+ mask=Image.new("L",(SIZE,SIZE));ImageDraw.Draw(mask).polygon(pts,fill=255)
+ # Strong diffuse contact shadow is physically independent of the object surface.
+ shadowalpha=mask.filter(ImageFilter.GaussianBlur(26))
+ shadow=Image.new("RGBA",(SIZE,SIZE),(0,0,0,0))
+ shadowcanvas=Image.new("RGBA",(SIZE,SIZE),(0,0,0,0))
+ shadowcanvas.putalpha(shadowalpha.point(lambda v:int(v*.31)))
+ shadow.paste(shadowcanvas,(19,27))
+ def fbm(scale):
+  sh=max(4,round(SIZE/scale))
+  raw=random_np.random((sh,sh),dtype=np.float32)
+  coarse=Image.fromarray(np.uint8(raw*255),'L').resize((SIZE,SIZE),Image.Resampling.BICUBIC)
+  return np.asarray(coarse,dtype=np.float32)/255-.5
+ height=fbm(330)*.57+fbm(180)*.29+fbm(84)*.15+fbm(35)*.06
+ detail=fbm(13)*.7+fbm(4)*.35
+ gx=np.gradient(height,axis=1);gy=np.gradient(height,axis=0)
+ # Relative lighting from upper-left: surface gradient creates convincing
+ # cracked, bulging, mineral-rich topography without stylized flat facets.
+ light=-gx*260-gy*320
+ yy,xx=np.ogrid[:SIZE,:SIZE]
+ rx=(xx-center[0])/375;ry=(yy-center[1])/333
+ bulge=np.clip(1-.55*(rx*rx+ry*ry),.48,1)
+ edge=(np.asarray(mask.filter(ImageFilter.GaussianBlur(16)),dtype=np.float32)/255)
+ tone=(height*105+detail*42+light+22*(.5-rx)+20*(.4-ry))
+ if name=="limestone-boulder":
+  tone=tone*.81+21
  if name=="slate-boulder":
-  d=ImageDraw.Draw(im,"RGBA")
-  for i in range(13):
-   yy=220+i*45+r.uniform(-15,15)
-   d.line((170,yy,400,yy+r.uniform(-10,25),660,yy+r.uniform(-20,22),870,yy+30),fill=(21,28,32,95),width=r.randint(3,10),joint="curve")
- return im
+  tone=tone*.84-6
+  band=np.sin(yy*.032+height*20)*7+np.sin((yy+xx*.17)*.105)*2
+  tone=tone+band
+ if name=="sandstone-boulder":
+  band=np.sin(yy*.022+xx*.009+height*13)*16+np.sin(yy*.07+height*6)*8
+  tone=tone+band
+ color=palette[None,None,:]+tone[...,None]
+ color*=bulge[...,None]
+ color=np.uint8(np.clip(color,0,255))
+ rock=Image.fromarray(color,'RGB').convert('RGBA')
+ rock.putalpha(mask.filter(ImageFilter.GaussianBlur(1.2)))
+ # Crevices and mineral inclusions, all clipped to the irregular perimeter.
+ layer=Image.new("RGBA",(SIZE,SIZE));d=ImageDraw.Draw(layer,"RGBA")
+ if name=="limestone-boulder":
+  for i in range(3400):
+   x=rng.randint(175,910);y=rng.randint(160,890)
+   if mask.getpixel((x,y))<100:continue
+   rad=rng.uniform(1,9)
+   d.ellipse((x-rad,y-rad,x+rad,y+rad*.7),fill=(62,57,45,rng.randint(25,100)))
+   d.arc((x-rad-1,y-rad-2,x+rad+1,y+rad*.7),180,295,fill=(255,248,217,65),width=2)
+ elif name=="granite-boulder":
+  for i in range(19000):
+   x=rng.randint(165,915);y=rng.randint(160,890)
+   if mask.getpixel((x,y))<100:continue
+   rad=rng.uniform(.5,4.3)
+   v=rng.choice([28,64,103,175,210])
+   d.ellipse((x-rad,y-rad,x+rad,y+rad),fill=(v,v-4 if v>4 else 0,v-10 if v>10 else 0,rng.randint(75,180)))
+ elif name=="sandstone-boulder":
+  for i in range(260):
+   x=rng.randint(190,830);y=rng.randint(190,825);dy=rng.randint(5,55)
+   d.arc((x-150,y-dy,x+140,y+dy),start=5,end=145,fill=(100,57,32,rng.randint(20,70)),width=rng.randint(1,5))
+ else:
+  for i in range(170):
+   y=rng.randint(180,880);x=rng.randint(175,880)
+   dx=rng.randint(60,200)
+   d.line((x,y,x+dx*.35,y+rng.randint(-14,14),x+dx,y+rng.randint(-9,23)),fill=(12,18,22,rng.randint(25,100)),width=rng.randint(1,5),joint="curve")
+ # A few natural cracks, never rays escaping the silhouette.
+ for i in range(85):
+  x=rng.randint(180,860);y=rng.randint(180,865)
+  p=[(x,y)]
+  ang=rng.uniform(0,math.tau)
+  for j in range(rng.randint(2,6)):
+   ang+=rng.uniform(-.34,.34);dist=rng.uniform(12,37)
+   p.append((round(p[-1][0]+math.cos(ang)*dist),round(p[-1][1]+math.sin(ang)*dist)))
+  d.line(p,fill=(27,28,26,rng.randint(28,88)),width=rng.choice([1,2,3]),joint="curve")
+ alpha=np.asarray(layer.getchannel("A"),dtype=np.uint8)
+ ma=np.asarray(mask,dtype=np.uint8)
+ layer.putalpha(Image.fromarray(np.minimum(alpha,ma),"L"))
+ return Image.alpha_composite(Image.alpha_composite(shadow,rock),layer)
 
 def fixture(name):
  im=Image.new("RGBA",(SIZE,SIZE));c=PALETTE[name];r=rnd(name)
