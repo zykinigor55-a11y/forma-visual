@@ -3,7 +3,7 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 let uploading=false;let dialog=null,marker=null,settingsHost=null,lastFocus=null,uploadNode=null;
-const names={source:'Исходное изображение',exterior:'Экстерьер',interior:'Интерьер',lighting:'Свет и сезон',materials:'Материалы',geometry:'Сравнение с исходником',upscale:'Увеличить до 4K',video:'Анимация',export:'Сохранить файл'};
+const names={source:'Исходное изображение',exterior:'Экстерьер',orbit:'Другой ракурс · тот же участок',interior:'Интерьер',lighting:'Свет и сезон',materials:'Материалы',geometry:'Сравнение с исходником',upscale:'Увеличить до 4K',video:'Анимация',export:'Сохранить файл'};
 function openSettings(){
  if(dialog)return;const host=$('#faFlowInspector');if(!host)return;
  settingsHost=host;lastFocus=document.activeElement;marker=document.createComment('node-settings');host.before(marker);
