@@ -92,21 +92,21 @@ export async function buildLandscapeAlbum(project,planImage,aiImage=null){
   const p=push('Дендроплан','Координаты центров и диаметры крон (в метрах)');
   const rows=group.map(o=>[trees.indexOf(o)+1,byId(o.catalogId)?.name,fmt(o.x)+' / '+fmt(o.y),fmt(o.diameter)]);
   table(p.c,[['№',38],['Растение',230],['X / Y',139],['Крона',95]],rows);
-  text(p.c,'Всего растений: '+trees.length+' шт.',38,735,11,ink,true);
+  text(p.c,'Всего растений: '+trees.length+' шт.',38,716,11,ink,true);
   warning(p.c,d.verified);canvases.push(p.cv);
  }
  const surfaces=Object.entries(summary.areas).map(([id,a])=>[byId(id)?.name,fmt(a)+' м²',summary.lengths[id]==null?'—':fmt(summary.lengths[id])+' м']);
  for(const group of chunks(surfaces,19)){
   const p=push('Покрытия и водоёмы','Площади рассчитаны по исходным полигонам');
   table(p.c,[['Материал',295],['Площадь',115],['Длина',105]],group);
-  text(p.c,'Площади на пересечениях дорожек предварительные.',38,736,10,muted);
+  text(p.c,'Площади на пересечениях дорожек предварительные.',38,716,10,muted);
   warning(p.c,d.verified);canvases.push(p.cv);
  }
  const lamps=d.objects.filter(x=>byId(x.catalogId)?.group==='lights');
  if(lamps.length)for(const group of chunks(lamps,19)){
   const p=push('План освещения','Все размещённые светильники, типы и координаты');
   table(p.c,[['№',38],['Светильник',235],['X / Y',139],['Шт.',90]],group.map(o=>[lamps.indexOf(o)+1,byId(o.catalogId)?.name,fmt(o.x)+' / '+fmt(o.y),1]));
-  text(p.c,'Всего светильников: '+lamps.length+' шт.',38,735,11,ink,true);
+  text(p.c,'Всего светильников: '+lamps.length+' шт.',38,716,11,ink,true);
   warning(p.c,d.verified);canvases.push(p.cv);
  }
  if(aiImage){
