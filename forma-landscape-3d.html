@@ -48,6 +48,8 @@ input[type="number"],input[type="text"],select,input[type="range"]{width:100%}
 input[type="number"],input[type="text"],select{padding:8px;border:1px solid #53645b;border-radius:8px;background:#26352e;color:#f0f2ed}
 #right .buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}#right .buttons button{font-size:12px;padding:9px 2px}
 #right .buttons button.active{color:#1e2e23;background:#d9dfca;border-color:#d9dfca}
+.camera-focus{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:7px 0 10px}
+.camera-focus button{font-size:11px;padding:8px 6px;color:#E6D6BE;border-color:#83745C}
 #right .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}#right .action{width:100%;margin-top:7px}
 #status{position:absolute;left:50%;bottom:23px;transform:translateX(-50%);background:#1b2725df;border:1px solid #52665a;border-radius:100px;padding:11px 19px;color:#e1eade;font-size:12px;max-width:calc(100% - 60px);text-align:center;pointer-events:none}
 #hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
@@ -109,7 +111,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <div id="right" class="panel">
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
- </div>
+ </div><div class="camera-focus"><button type="button" id="focusHouse">⌂ К дому</button><button type="button" id="fit3dScene">▢ Весь участок</button></div>
  <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 8 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
   <div id="houseStyles" class="house-style-list" aria-label="Архитектурные стили домов"></div>
   <label for="customHouseGlb">Своя точная модель дома · GLB до 35 МБ</label>
@@ -462,6 +464,14 @@ function setView(view){
  else{camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(W*.9,Math.max(24,H*.8),H*1.1);camera.up.set(0,1,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=true}
  resize();status(view==='walk'?'Walk: W A S D — движение · щёлкните для осмотра мышью · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
 }
+function focusHouseCamera(){
+ if(state.view!=='3d')setView('3d');
+ const b=activeHouseTarget(),p=pos(b.x,b.y),range=Math.max(b.width,b.height,7)*1.35;
+ controls.target.set(p.x,1.6,p.z);
+ camera.position.set(p.x+range*.83,Math.max(9,range*.86),p.z+range*1.15);
+ camera.lookAt(controls.target);controls.update();
+ status('Камера приближена к выбранному дому. Размеры проекта не изменились.');
+}
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
@@ -628,6 +638,8 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Примените любой из восьми стилей.')};
+ $('#focusHouse').onclick=focusHouseCamera;
+ $('#fit3dScene').onclick=()=>setView('3d');
  $('#customHouseGlb').onchange=e=>importHouseGlb(e.target.files?.[0]);
  $('#clearCustomHouse').onclick=()=>{const h=activeHouseTarget();if(!h.modelKey)return status('Вы уже используете встроенный 3D-стиль.');push();h.modelKey=null;save();rebuild();renderHouseLibrary();status('Возврат к 3D-стилю. Исходный GLB остаётся в локальном хранилище.')};
  $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
