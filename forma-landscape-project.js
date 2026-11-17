@@ -37,7 +37,8 @@ import {brushPolygon} from './forma-landscape-brush.js';
     continue;
    }
    if(entry.group==='pavers'){
-    shapes+=`<path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="#4f4a41" stroke-width="${item.width+.1}" stroke-linecap="round" stroke-linejoin="round" opacity="${alpha}"/><path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="${entry.color}" stroke-width="${item.width}" stroke-linecap="round" stroke-linejoin="round" opacity="${alpha}"/>`;
+    const patternId='lpPaver-'+item.id;
+    shapes+=`<defs><pattern id="${patternId}" patternUnits="userSpaceOnUse" width="1.2" height="1.2"><image href="${iconURL(entry)}" x="0" y="0" width="1.2" height="1.2" preserveAspectRatio="xMidYMid slice"/></pattern></defs><path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="#4f4a41" stroke-width="${item.width+.1}" stroke-linecap="round" stroke-linejoin="round"/><path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="url(#${patternId})" stroke-width="${item.width}" stroke-linecap="round" stroke-linejoin="round" opacity="${alpha}"/>`;
    }else if(['fills','lawns','ponds'].includes(entry.group)){
     shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}" fill="${entry.color}" fill-opacity="${preview&&photoVisible?.18:.85}" stroke="${active?'#dfaa58':'#5b7558'}" stroke-width="${active?.16:.065}"/>`;
     if(!(preview&&photoVisible)){shapes+=`<defs><pattern id="tile-${item.id}" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="2.4" height="2.4"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}" fill="url(#tile-${item.id})" opacity=".46"/>`;}
