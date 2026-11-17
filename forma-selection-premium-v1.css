@@ -1,0 +1,193 @@
+/* FORMA / PREMIUM SELECTION 01 — enlarged photographic and icon menus.
+   Consistent 2-column selection on phone and desktop; actual functionality and
+   asset paths are unchanged. No layout shift, reduced motion supported. */
+.forma-direction-grid{
+ display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:clamp(12px,1.4vw,22px)!important;
+}
+.forma-direction-card,
+.forma-direction-card.is-main{
+ min-width:0!important;
+ border:1px solid #5a554b!important;
+ border-radius:17px!important;
+ background:linear-gradient(160deg,#222526,#141718)!important;
+ box-shadow:0 18px 50px #0004,inset 0 1px #fff0000c!important;
+ overflow:hidden!important;
+ transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease!important;
+}
+.forma-direction-card:where(:hover,:focus-visible){
+ border-color:#c5a67b!important;
+ box-shadow:0 24px 60px #0006,0 0 0 1px #b5986e45!important;
+}
+.forma-direction-photo,
+.forma-direction-card.is-main .forma-direction-photo{
+ aspect-ratio:1.53!important;
+ min-height:150px!important;
+ overflow:hidden;
+ background:#171c1b;
+}
+.forma-direction-photo img{
+ filter:saturate(.75) contrast(1.05) brightness(.91)!important;
+ object-position:center!important;
+ transition:transform .7s cubic-bezier(.15,.7,.2,1),filter .5s!important;
+}
+.forma-direction-card:where(:hover,:focus-visible) .forma-direction-photo img{
+ filter:saturate(.94) contrast(1.05) brightness(.96)!important;
+ transform:scale(1.025)!important;
+}
+.forma-direction-photo:after{
+ background:linear-gradient(0deg,#111615bf,transparent 46%)!important;
+}
+.forma-direction-card-info,
+.forma-direction-card.is-main .forma-direction-card-info{
+ padding:clamp(16px,1.7vw,25px)!important;
+ min-height:126px!important;
+ background:linear-gradient(125deg,#262827,#1c2020)!important;
+}
+.forma-direction-card-info small{
+ color:#d7b891!important;
+ font-size:10px!important;
+ letter-spacing:.11em!important;
+}
+.forma-direction-card-info strong,
+.forma-direction-card.is-main .forma-direction-card-info strong{
+ color:#f7f1e6!important;
+ font-size:clamp(17px,1.5vw,24px)!important;
+ font-weight:580!important;
+ line-height:1.2!important;
+ letter-spacing:-.035em!important;
+}
+.forma-direction-card-info em,
+.forma-direction-card.is-main .forma-direction-card-info em{
+ font-size:12px!important;
+ line-height:1.52!important;
+ color:#c7cac3!important;
+}
+.forma-direction-image-label{
+ font-size:10px!important;
+ letter-spacing:.12em!important;
+}
+/* Studio's 9-tool chooser: 2 broad, polished functional cards per row */
+.fa-studio-task-grid{
+ display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:clamp(12px,1.35vw,20px)!important;
+}
+.fa-studio-task-grid .fa-studio-task{
+ position:relative;
+ gap:9px!important;
+ min-height:164px!important;
+ padding:clamp(20px,2vw,28px)!important;
+ border:1px solid #77695470!important;
+ border-radius:17px!important;
+ background:linear-gradient(150deg,#303332 0%,#252827 53%,#1b1e1f 100%)!important;
+ box-shadow:0 9px 30px #0003,inset 0 1px #ffffff13!important;
+ transition:border-color .24s,transform .24s,box-shadow .24s,background .24s!important;
+ overflow:hidden;
+}
+.fa-studio-task-grid .fa-studio-task:after{
+ position:absolute!important;
+ top:auto!important;bottom:19px!important;right:20px!important;
+ width:7px!important;height:7px!important;
+ border-color:#ceb18a!important;
+ opacity:.9;
+}
+.fa-studio-task-grid .fa-studio-task:before{
+ top:auto!important;bottom:23px!important;right:20px!important;
+ border-color:#ceb18a!important;
+ opacity:.9;
+}
+.fa-studio-task-grid .fa-studio-task:where(:hover,:focus-visible){
+ border-color:#d2b48d!important;
+ box-shadow:0 20px 40px #0005,0 0 0 1px #c4a77d45!important;
+ transform:translateY(-2px);
+}
+.fa-studio-task-grid .fa-studio-task svg{
+ width:39px!important;
+ height:39px!important;
+ padding:8px;
+ box-sizing:content-box;
+ border:1px solid #bda58255;
+ border-radius:12px;
+ background:linear-gradient(145deg,#60524155,#221e1855);
+ color:#e7caa4!important;
+ stroke-width:1.45px;
+ margin:0 0 9px!important;
+}
+.fa-studio-task-grid .fa-studio-task strong{
+ color:#f5eee2!important;
+ font-size:clamp(16px,1.2vw,21px)!important;
+ font-weight:620!important;
+ line-height:1.25!important;
+ letter-spacing:-.024em!important;
+}
+.fa-studio-task-grid .fa-studio-task small{
+ color:#c4c6c0!important;
+ font-size:12px!important;
+ line-height:1.45!important;
+ max-width:95%;
+}
+/* Mobile: exactly two LARGE tiles across; no switch to tiny rows */
+@media(max-width:760px){
+ .forma-direction-grid,.fa-studio-task-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+ }
+ .forma-direction-card,.forma-direction-card.is-main{
+  border-radius:14px!important;
+ }
+ .forma-direction-photo,.forma-direction-card.is-main .forma-direction-photo{
+  min-height:0!important;
+  aspect-ratio:1.16!important;
+ }
+ .forma-direction-card-info,.forma-direction-card.is-main .forma-direction-card-info{
+  padding:14px 13px 17px!important;
+  min-height:132px!important;
+  gap:7px!important;
+ }
+ .forma-direction-card-info small{font-size:9px!important;letter-spacing:.045em!important}
+ .forma-direction-card-info strong,
+ .forma-direction-card.is-main .forma-direction-card-info strong{
+  font-size:clamp(14px,3.7vw,18px)!important;
+  line-height:1.22!important;
+ }
+ .forma-direction-card-info em,.forma-direction-card.is-main .forma-direction-card-info em{
+  font-size:10px!important;
+  line-height:1.38!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:3!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+ }
+ .fa-studio-task-grid .fa-studio-task{
+  min-height:190px!important;
+  padding:18px 14px!important;
+  border-radius:15px!important;
+ }
+ .fa-studio-task-grid .fa-studio-task svg{
+  width:34px!important;height:34px!important;
+  padding:8px!important;
+  margin-bottom:10px!important;
+ }
+ .fa-studio-task-grid .fa-studio-task strong{font-size:clamp(15px,3.8vw,18px)!important}
+ .fa-studio-task-grid .fa-studio-task small{font-size:11px!important;line-height:1.35!important}
+}
+@media(max-width:370px){
+ .forma-direction-grid,.fa-studio-task-grid{gap:8px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .forma-direction-card-info,.forma-direction-card.is-main .forma-direction-card-info{padding:12px 10px 15px!important}
+ .fa-studio-task-grid .fa-studio-task{min-height:194px!important;padding:15px 11px!important}
+ .fa-studio-task-grid .fa-studio-task strong{font-size:14px!important}
+ .fa-studio-task-grid .fa-studio-task small{font-size:10.5px!important}
+}
+html[data-forma-theme=light] .fa-studio-task-grid .fa-studio-task{
+ background:linear-gradient(145deg,#fbfaf7,#ebe9e3)!important;
+ border-color:#c7b59c!important;
+ box-shadow:0 8px 22px #4d3d2319!important;
+}
+html[data-forma-theme=light] .fa-studio-task-grid .fa-studio-task strong{color:#2b2925!important}
+html[data-forma-theme=light] .fa-studio-task-grid .fa-studio-task small{color:#656059!important}
+html[data-forma-theme=light] .fa-studio-task-grid .fa-studio-task svg{color:#776041!important;background:#dac6a628!important}
+@media(prefers-reduced-motion:reduce){
+ .forma-direction-card,.forma-direction-photo img,.fa-studio-task-grid .fa-studio-task{transition:none!important;transform:none!important}
+}
