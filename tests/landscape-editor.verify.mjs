@@ -30,6 +30,27 @@ try{
   await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}.png`,fullPage:true});
   await page.keyboard.press('Delete');assert.equal((await model()).objects.length,0);
   await page.keyboard.press('Control+z');assert.equal((await model()).objects.length,1);
+  // The overlay must remain hidden until the user starts a render.
+  assert.equal(await page.locator('#lpRenderOverlay').isVisible(),false);
+  await page.locator('[data-category="lawns"]').click();
+  await page.locator('[data-asset="formal"] img').waitFor({state:'visible'});
+  const photo=await page.locator('[data-asset="formal"] img').evaluate(img=>({src:img.currentSrc,width:img.naturalWidth,height:img.naturalHeight}));
+  assert.match(photo.src,/formal\\.png\\?/);
+  assert.equal(photo.width,1080);assert.equal(photo.height,1080);
+  // Never make a paid call in CI: replace the queue client with a local fake.
+  await page.evaluate(()=>{window.FORMA_RENDER_QUEUE={fetch:async()=>{await new Promise(r=>setTimeout(r,500));return new Response(JSON.stringify({
+    images:['iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII='],
+    mimes:['image/png']
+  }),{status:200,headers:{'Content-Type':'application/json'}});}}});
+  page.on('dialog',dialog=>dialog.accept());
+  await page.locator('#lpAi').click();
+  await page.locator('#lpRenderOverlay').waitFor({state:'visible'});
+  await page.waitForFunction(()=>['success','error'].includes(document.querySelector('#lpRenderOverlay')?.dataset.stage),{timeout:30000});
+  assert.equal(await page.locator('#lpRenderOverlay').getAttribute('data-stage'),'success');
+  assert.equal(await page.locator('#lpRenderOutputImage').isVisible(),true);
+  await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}-render-popup.png`,fullPage:true});
+  await page.locator('[data-render-close]').click();
+  assert.equal(await page.locator('#lpRenderOverlay').isVisible(),false);
   assert.deepEqual(errors,[]);console.log(mobile?'Mobile PASS':'Desktop PASS');await page.close();
  }
 }finally{await browser.close()}
