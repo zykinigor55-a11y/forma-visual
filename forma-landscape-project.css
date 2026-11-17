@@ -382,3 +382,6 @@
  #faLandscapeMasterplan .lp-area-modes{width:100%}
  #faLandscapeMasterplan .lp-area-modes label{margin-left:0}
 }
+
+/* Professional PDF album: quiet, prominent export next to plan downloads. */
+#faLandscapeMasterplan .lp-outputs>div .lp-export-album{grid-column:1/-1;background:#d3b68f!important;color:#25211d!important;font-weight:700;border-color:#e2c59d!important;letter-spacing:.035em}
