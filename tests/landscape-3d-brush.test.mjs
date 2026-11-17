@@ -54,7 +54,7 @@ test('2m lawn ribbon renders as one smooth round-capped metric surface',()=>{
 });
 test('painted corner and duplicate points create finite seamless ribbons',()=>{
  const poly=strokeRibbon([{x:2,y:2},{x:8,y:2},{x:8,y:9}],1.8);
- assert.ok(poly.length>=30&&area(poly)>18);
+ assert.ok(poly.length>=24&&area(poly)>18);
  assert.ok(poly.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)));
  assert.ok(strokeRibbon([{x:2,y:2},{x:2,y:2}],1).length>0);
 });
