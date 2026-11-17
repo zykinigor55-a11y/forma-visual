@@ -47,3 +47,28 @@ export function vegetationQuality(viewWidth,plantCount=1,view='3d'){
  const overhead=view==='2d'?.82:1;
  return Math.max(.22,Math.min(1,device*crowd*overhead));
 }
+
+/* Parametric species leaf silhouettes. Returned outline points are normalized
+ * in the leaf plane; the 3D mesh built from them is lightly curved and double
+ * sided, never a camera-facing tree billboard. */
+export function leafOutline(id,steps=20){
+ const n=Math.max(12,Math.min(32,Math.round(steps))),points=[];
+ for(let i=0;i<n;i++){
+  const a=2*Math.PI*i/n,cs=Math.cos(a),sn=Math.sin(a);
+  let width=.44,length=.70,serration=1;
+  if(id==='willow'){width=.16;length=1.18}
+  else if(id==='birch'){width=.38;length=.69;serration=1+.075*Math.cos(a*14)}
+  else if(id==='oak'){width=.51;length=.77;serration=.82+.20*Math.cos(a*6)}
+  else if(id==='maple'){width=.68;length=.86;serration=.73+.27*Math.cos(a*5)}
+  else if(id==='linden'){width=.65;length=.75;serration=1-.17*Math.exp(-Math.pow((a-Math.PI/2)/.30,2))}
+  else if(id==='rowan'){width=.28;length=.72;serration=1+.045*Math.cos(a*12)}
+  else if(id==='apple'){width=.46;length=.70}
+  else if(id==='sakura'){width=.47;length=.78;serration=1+.05*Math.cos(a*12)}
+  else if(id==='hydrangea'){width=.59;length=.73;serration=1+.04*Math.cos(a*14)}
+  else if(id==='boxwood'||id==='thuja-globe'){width=.33;length=.42}
+  else if(id==='lavender'){width=.11;length=.60}
+  if(id==='maple'&&sn<-.50)serration*=.80;
+  points.push([cs*width*serration,sn*length*serration]);
+ }
+ return points;
+}
