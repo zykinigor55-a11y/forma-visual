@@ -31,9 +31,9 @@ test('3D editor maps left-drag to brush and right-drag to orbit',()=>{
  assert.match(s,/function beginBrush\(/);
  assert.match(s,/function advanceBrush\(/);
  assert.match(s,/function finishBrush\(/);
- assert.match(s,/controls\\.mouseButtons\\.LEFT=null/);
- assert.match(s,/e\\.pointerId!==state\\.activePointer/);
- assert.match(s,/strokeRibbon\\(pts,o\\.width\\|\\|1\\.2\\)/);
+ assert.match(s,/controls\.mouseButtons\.LEFT=null/);
+ assert.match(s,/e\.pointerId!==state\.activePointer/);
+ assert.match(s,/strokeRibbon\(pts,o\.width\|\|1\.2\)/);
  assert.match(s,/geometry:'strip'/);
 });
 test('2D/3D project normalizer persists lawn ribbon geometry',async()=>{
