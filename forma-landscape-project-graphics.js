@@ -105,14 +105,20 @@ export function assetSVG(entry,{size=1080,transparent=false}={}){
  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 160 160" role="img" aria-label="'+esc(entry.name)+'"><defs><clipPath id="tileclip"><rect x="7" y="7" width="146" height="146" rx="14"/></clipPath></defs>'+defs()+(transparent?'':'<rect x="0" y="0" width="160" height="160" fill="#222426"/>')+content+'</svg>';
 }
 let premiumEnabled=false;
+let premiumExtension='webp';
 export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
-export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.webp?v=1080-premium-20261117';
+export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.'+premiumExtension+'?v=1080-png-realgrass-v2';
 export const iconURL=(entry)=>premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry);
 export async function enablePremiumAssets(){
- try{
-  const r=await fetch(premiumIconURL({id:'pine'}),{method:'HEAD',cache:'no-cache'});
-  if(r.ok){premiumEnabled=true;return true}
- }catch{}
+ // PNG files are preferred, but keep real existing WebP art visible while CI
+ // is generating the full new set rather than replacing them with flat SVGs.
+ for(const extension of ['png','webp']){
+  try{
+   const url='/assets/landscape-premium/pine.'+extension+'?v=1080-png-realgrass-v2';
+   const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
+   if(r.ok){premiumExtension=extension;premiumEnabled=true;return true;}
+  }catch{}
+ }
  premiumEnabled=false;return false;
 }
 export function roofingSVG(house){
