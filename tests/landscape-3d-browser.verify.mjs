@@ -77,6 +77,15 @@ try{
  assert.notEqual(orbitAfter,orbitBefore,'Right mouse drag must actually rotate the 3D scene');
  assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),previous,'Right-drag camera orbit never edits lawn');
  await page.screenshot({path:'artifacts/landscape-editor/3d-lawn-brush.png'});
+ // Relief brush must sculpt without changing camera during left-drag, then save heights.
+ await page.locator('[data-tool="terrain"]').click();
+ await page.locator('[data-item="raise"]').click();
+ await page.mouse.move(bx,by);await page.mouse.down({button:'left'});
+ for(let i=1;i<=5;i++)await page.mouse.move(bx+i*6,by-i*2,{steps:2});
+ await page.mouse.up({button:'left'});
+ const relief=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-terrain-v1-landscape')||'[]'));
+ assert.ok(relief.some(v=>v>.01),'continuous relief brush persists measurable positive elevations');
+
  await page.locator('[data-view="2d"]').click(); // deterministic metric nadir after orbit test
  await page.waitForTimeout(150);
  await page.locator('[data-tool="surface"]').click();
