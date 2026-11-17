@@ -23,6 +23,12 @@ main{position:relative;min-height:0}#viewport{width:100%;height:100%;display:blo
 hr{border:0;border-top:1px solid #36473d;width:100%;margin:12px 0}#library{padding:9px 13px 16px;overflow:auto}
 #library .choice{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 12px;margin:5px 0;text-align:left}
 #library .choice.active{border-color:#d6e0c7;color:#d6e0c7}
+.real-flora-upload{margin:10px 9px 16px;padding:12px;border:1px solid #6b6c54;background:#23302b;border-radius:11px}
+.real-flora-upload strong{font-size:10px;letter-spacing:.12em;color:#e5d6b8}
+.real-flora-upload p{font-size:11px;color:#becac0;line-height:1.5;margin:9px 0}
+.real-flora-upload input{width:100%;font-size:10px;max-width:100%}
+.real-flora-upload button{width:100%;margin:9px 0;font-size:11px}
+.real-flora-upload small{display:block;font-size:10px;color:#d0d9cf}
 #library .choice.has-preview{display:flex;align-items:center;gap:10px;text-align:left;min-height:65px;padding:7px 9px}
 #library .choice.has-preview img{width:50px;height:50px;object-fit:contain;border-radius:7px;background:#343e37;flex-shrink:0}
 #library .choice.has-preview span{display:block;flex:1;line-height:1.3;font-weight:600}
@@ -167,15 +173,16 @@ import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummar
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
+import {makeRealVegetation} from './forma-landscape-3d-models.js';
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 const $=s=>document.querySelector(s);
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
-const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid;
+const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map();
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();let plantSpeciesStored=new Set();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -216,6 +223,7 @@ function initialize(){
  }));
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
+ try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
  if(heightmap.length!==(GRID+1)*(GRID+1))heightmap=Array((GRID+1)*(GRID+1)).fill(0);
  $('#projectName').value=doc.title;$('#plotW').value=doc.site.width;$('#plotH').value=doc.site.height;
@@ -231,7 +239,9 @@ function initialize(){
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
  brushCursor=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xE7D0A5,transparent:true,opacity:.78,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
  brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
- state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());restoreHouseGlbs().catch(e=>console.warn('Stored GLB restore:',e));
+ state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());
+ restoreHouseGlbs().catch(e=>console.warn('Stored house GLB restore:',e));
+ restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
  const previousDrawing=localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
@@ -308,7 +318,8 @@ function drawObject(o,entry,key){
   // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
   // accurate crown diameter and height, all 18 species from shared catalog.
   const quality=window.innerWidth<=700?.48:window.innerWidth<=1100?.7:1;
-  g=createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
+  const source=importedPlantModels.get(o.catalogId);
+  g=source?makeRealVegetation(THREE,source,o):createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
  }else if(group==='boulders')g=createRock(THREE,o);
  else if(group==='lights'){
   const time=doc.atmosphere.time,weather=doc.atmosphere.weather;
@@ -389,8 +400,19 @@ function chooseTool(t){
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'
  }).join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+
- (t==='terrain'?'<label>Радиус кисти, м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label>Сила рельефа</label><input id="brushStrength" type="range" min=".1" max="2" step=".1" value=".5">':'');
- $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{state.placing=b.dataset.item;$('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.')});
+ (t==='terrain'?'<label>Радиус кисти, м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label>Сила рельефа</label><input id="brushStrength" type="range" min=".1" max="2" step=".1" value=".5">':'')+
+ (t==='plant'?'<div class="real-flora-upload"><strong>ПРОФЕССИОНАЛЬНАЯ 3D-МОДЕЛЬ</strong><p>Выберите вид растения выше, затем загрузите детализированную GLB-модель этого вида. Она заменит процедурные экземпляры, но сохранит их размеры и расположение.</p><input id="vegetationGlb" type="file" accept=".glb,model/gltf-binary"><button id="removePlantGlb" type="button">Вернуть встроенную 3D-модель</button><small id="floraModelStatus">Выберите дерево или кустарник.</small></div>':'');
+ $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{
+  state.placing=b.dataset.item;
+  $('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));
+  if(t==='plant')refreshPlantAssetStatus();
+  status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.');
+ });
+ if(t==='plant'){
+  $('#vegetationGlb').onchange=e=>importPlantGlb(e.target.files?.[0]);
+  $('#removePlantGlb').onclick=removePlantGlb;
+  refreshPlantAssetStatus();
+ }
  if(t==='surface'||t==='plant'){
   const panel=document.createElement('div');panel.className='brush-panel';
   panel.innerHTML='<label><input id="useLandscapeBrush" type="checkbox" checked>Рисовать кистью непрерывно</label>'+
@@ -460,6 +482,59 @@ async function restoreHouseGlbs(){
   }catch(error){console.warn('GLB unavailable',b.modelKey,error?.message)}
  }
  if(list.length){rebuild();renderHouseLibrary();}
+}
+function refreshPlantAssetStatus(){
+ const el=$('#floraModelStatus');if(!el)return;
+ const species=state.placing,name=catalog(species)?.name;
+ if(!VEGETATION_SPECIES[species]){
+  el.textContent='Сначала выберите конкретный вид растения.';return;
+ }
+ const loaded=importedPlantModels.has(species),stored=plantSpeciesStored.has(species);
+ el.textContent=(name||species)+': '+(loaded?'профессиональная GLB активна':stored?'GLB восстанавливается из браузера':'встроенная процедурная 3D-модель');
+}
+async function importPlantGlb(file){
+ const input=$('#vegetationGlb'),species=state.placing;
+ if(!file)return;
+ if(!VEGETATION_SPECIES[species]){status('Сначала выберите вид дерева или кустарника из каталога.');input.value='';return}
+ if(!file.name.toLowerCase().endsWith('.glb')||file.size>35*1024*1024){
+  status('Нужен файл GLB размером до 35 МБ.');input.value='';return;
+ }
+ input.disabled=true;status('Проверяем реалистичную 3D-модель: '+species+'…');
+ try{
+  const bytes=await file.arrayBuffer(),glb=await new GLTFLoader().parseAsync(bytes,'');
+  if(!glb?.scene)throw Error('Нет 3D-сцены.');
+  let meshes=0;glb.scene.traverse(n=>{if(n.isMesh){meshes++;if(!n.geometry?.attributes?.position)throw Error('Повреждённая геометрия GLB.')}});
+  if(!meshes)throw Error('Модель не содержит 3D-сетки.');
+  // Validate geometry and metre conversion before committing to the library.
+  const prototype={catalogId:species,height:TREE_HEIGHT_M[species]||2,diameter:catalog(species)?.diameter||1.5};
+  const fitted=makeRealVegetation(THREE,glb.scene,prototype);
+  fitted.traverse(n=>{if(n.isMesh){n.geometry?.dispose();if(n.material){(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m?.dispose())}}});
+  await storeGlb('plant:'+species,bytes);
+  importedPlantModels.set(species,glb.scene);plantSpeciesStored.add(species);
+  localStorage.setItem(FLORA,JSON.stringify([...plantSpeciesStored]));
+  rebuild();refreshPlantAssetStatus();
+  status('Готово: '+species+' · '+meshes+' отдельных 3D-мешей. Все посадки этого вида используют GLB без изменения координат.');
+ }catch(e){status('Ошибка GLB-растения: '+(e?.message||e))}
+ finally{input.disabled=false;input.value=''}
+}
+function removePlantGlb(){
+ const species=state.placing;
+ if(!VEGETATION_SPECIES[species])return status('Сначала выберите вид растения.');
+ importedPlantModels.delete(species);plantSpeciesStored.delete(species);
+ localStorage.setItem(FLORA,JSON.stringify([...plantSpeciesStored]));
+ rebuild();refreshPlantAssetStatus();status('Для '+catalog(species).name+' восстановлена встроенная 3D-модель.');
+}
+async function restorePlantGlbs(){
+ let changed=false;
+ for(const species of plantSpeciesStored){
+  try{
+   const bytes=await readGlb('plant:'+species);
+   if(!bytes)continue;
+   const glb=await new GLTFLoader().parseAsync(bytes,'');
+   if(glb?.scene){importedPlantModels.set(species,glb.scene);changed=true}
+  }catch(e){console.warn('Professional 3D flora unavailable for',species,e?.message)}
+ }
+ if(changed){rebuild();refreshPlantAssetStatus()}
 }
 function renderHouseLibrary(){
  const target=$('#houseStyles');if(!target||!doc)return;
