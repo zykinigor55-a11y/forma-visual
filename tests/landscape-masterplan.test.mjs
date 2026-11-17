@@ -29,8 +29,10 @@ test('real plot area, metre path length and polygon lawn area stay exact and ind
   {id:'l1',catalogId:'formal',type:'lawns',points:[{x:10,y:10},{x:15,y:10},{x:15,y:16},{x:10,y:16}]}
  ]});
  assert.equal(report(d).lengths['concrete-pavers'],21);
- assert.equal(report(d).areas['concrete-pavers'],31.5);
- assert.equal(report(d).areas.formal,30);
+ // Measured visible area clips the outside half-width and path bend.
+  assert.equal(report(d).areas['concrete-pavers'],29.56);
+ // A 20 m² overlap with the house is excluded from the visible lawn.
+  assert.equal(report(d).areas.formal,10);
  assert.equal(lineLength(d.objects[0].points),21);
  assert.equal(polygonArea(d.objects[1].points),30);
 });
