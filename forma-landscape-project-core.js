@@ -97,10 +97,11 @@ export function normalizeProject(raw){
   const id=/^[a-z0-9-]{1,48}$/i.test(item.id||'')?item.id:'o-'+Math.random().toString(36).slice(2,10);
   if(['pavers','fills','lawns','ponds'].includes(entry.group)){
    const points=(Array.isArray(item.points)?item.points:[]).slice(0,120).map(point);
-   if(points.length<(['pavers'].includes(entry.group)?2:3))continue;
+   const strip=entry.group==='fills'&&item.geometry==='strip';
+   if(points.length<(entry.group==='pavers'||strip?2:3))continue;
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
-    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
+    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(strip?{geometry:'strip'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
   }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),rotation:finite(item.rotation,-360,360,0)});
  }
  for(const b of (Array.isArray(obj.buildings)?obj.buildings:[]).slice(0,24)){
@@ -114,14 +115,14 @@ export const lineLength=pts=>pts.slice(1).reduce((s,p,i)=>s+segmentLength(pts[i]
 export const polygonArea=pts=>pts.length<3?0:Math.abs(pts.reduce((s,p,i)=>s+p.x*pts[(i+1)%pts.length].y-pts[(i+1)%pts.length].x*p.y,0))/2;
 export const areaFor=(doc,item)=>{
  const group=byId(item.catalogId)?.group;
- if(group==='pavers')return lineLength(item.points)*item.width;
+ if(group==='pavers'||(group==='fills'&&item.geometry==='strip'))return lineLength(item.points)*item.width;
  if(!['fills','lawns','ponds'].includes(group))return 0;
  const raw=Math.max(0,polygonArea(item.points)-(item.holes||[]).reduce((sum,shape)=>sum+polygonArea(shape),0));
  if(item.autoFill&&group==='lawns'){
   // Background lawn appears only where the site has no explicit covering
   // or building. Gross areas can overlap, so these quantities remain estimates.
   const other=(doc.objects||[]).filter(x=>x.id!==item.id&&['pavers','fills','lawns','ponds'].includes(byId(x.catalogId)?.group))
-   .reduce((n,x)=>n+Math.max(0,x.type==='pavers'?lineLength(x.points)*x.width:polygonArea(x.points)-(x.holes||[]).reduce((h,v)=>h+polygonArea(v),0)),0);
+   .reduce((n,x)=>n+Math.max(0,(x.type==='pavers'||(x.type==='fills'&&x.geometry==='strip'))?lineLength(x.points)*x.width:polygonArea(x.points)-(x.holes||[]).reduce((h,v)=>h+polygonArea(v),0)),0);
   const building=(doc.house?.width||0)*(doc.house?.height||0)+(doc.buildings||[]).reduce((n,b)=>n+b.width*b.height,0);
   return Math.max(0,raw-other-building);
  }
@@ -135,7 +136,7 @@ export function report(doc){
  for(const item of d.objects){
   const entry=byId(item.catalogId);counts[item.catalogId]=(counts[item.catalogId]||0)+1;
   if(['pavers','fills','lawns','ponds'].includes(entry.group))areas[item.catalogId]=round((areas[item.catalogId]||0)+areaFor(d,item),2);
-  if(entry.group==='pavers')lengths[item.catalogId]=round((lengths[item.catalogId]||0)+lineLength(item.points),2);
+  if(entry.group==='pavers'||(entry.group==='fills'&&item.geometry==='strip'))lengths[item.catalogId]=round((lengths[item.catalogId]||0)+lineLength(item.points),2);
  }
  return {siteArea:round(polygonArea(boundary),2),sitePerimeter:round(perimeter(boundary),2),
   buildingArea:round(d.house.width*d.house.height,2),auxBuildingArea:round(d.buildings.reduce((v,b)=>v+b.width*b.height,0),2),counts,areas,lengths,
