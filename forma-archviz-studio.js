@@ -45,7 +45,7 @@
   const rail=$('.rail'),nav=$('.rail-nav');
   if(rail && nav && !$('.forma-rail-brand')){
    const brand=node('div','forma-rail-brand',
-    '<span class="forma-brand-symbol" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="30" height="30"></span><span class="forma-brand-copy"><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ВИЗУАЛИЗАЦИЯ</small></span>');
+    '<span class="forma-brand-symbol" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="30" height="30"></span><span class="forma-brand-copy"><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></span>');
    rail.insertBefore(brand,nav);
    nav.prepend(node('div','forma-nav-section','РАБОЧАЯ СТУДИЯ'));
    const btn=(label,icon,action)=>{
