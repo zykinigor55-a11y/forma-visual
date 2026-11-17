@@ -46,7 +46,8 @@ test('roof facets preserve measured building footprint and distinguish gable and
 test('3D editor uses shared model with explicit contour finish instead of auto-closing after 2 points',()=>{
  const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
  assert.match(html,/terrainTriangles\(doc.site,heightmap,GRID\)/);
- assert.match(html,/roofTriangles\(w,d,roof,3.6,rise\)/);
+ assert.match(html,/createArchitecturalBuilding\(THREE,b,/);
+ assert.match(html,/HOUSE_PRESETS,housePreset,createArchitecturalBuilding/);
  assert.match(html,/function finishContour\(/);
  assert.match(html,/id="finishContour"/);
  assert.match(html,/pointMode.push\(point\);refreshDraft\(\)/);
@@ -74,4 +75,19 @@ test('perspective AI prompt keeps original camera and object coordinates without
  assert.match(prompt,/NO landscape|There are NO landscape objects|NO landscape objects/i);
  const server=readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
  assert.match(server,/landscapeMasterplan.cameraMode==='3d-perspective'\?perspectiveLandscapePrompt/);
+});
+
+test('eight independently selectable house presets preserve measured footprints and roof contracts',async()=>{
+ const {HOUSE_PRESETS,housePreset,housePresetIds}=await import('../forma-landscape-3d-buildings.js');
+ const {normalizeProject,freshProject}=await import('../forma-landscape-project-core.js');
+ assert.equal(HOUSE_PRESETS.length,8);
+ assert.equal(new Set(housePresetIds).size,8);
+ assert.ok(HOUSE_PRESETS.every(x=>x.name&&x.wall&&['gable','hip','flat'].includes(x.roof)));
+ const d=freshProject();d.house.archStyle='brick';d.house.roof='hip';d.house.roofRise=2.3;
+ d.buildings=[{id:'b-1',type:'house',x:4,y:4,width:7,height:5,rotation:0,roof:'flat',roofRise:1.6,archStyle:'japandi'}];
+ const n=normalizeProject(d);
+ assert.equal(n.house.width,d.house.width);assert.equal(n.house.height,d.house.height);
+ assert.equal(n.house.archStyle,'brick');assert.equal(n.house.roofRise,2.3);
+ assert.equal(n.buildings[0].archStyle,'japandi');assert.equal(n.buildings[0].roof,'flat');
+ assert.equal(housePreset('invalid').id,'barn');
 });
