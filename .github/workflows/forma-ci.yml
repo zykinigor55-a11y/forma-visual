@@ -18,3 +18,6 @@ jobs:
       - run: node --check forma-render-jobs.mjs
       - run: node --check forma-render-queue-client.js
       - run: node --check app.js
+      - run: node --check forma-landscape-project.js
+      - run: node --check forma-landscape-project-core.js
+      - run: node --check forma-landscape-project-prompts.js
