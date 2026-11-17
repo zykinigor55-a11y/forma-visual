@@ -120,6 +120,12 @@ export const PHOTO_ASSETS=Object.freeze({
  'radial-setts':'radial-setts.jpg','grass-grid':'grass-grid.jpg'
 });
 const availablePhotos=new Set();
+const CARD_PHOTO_IDS=new Set(['bollard','ground','spot','low-post','deck-light','linear','natural','formal-pond','bio-pond','granite-boulder','limestone-boulder','slate-boulder','sandstone-boulder']);
+const availableCardPhotos=new Set();
+export const cardPhotoCount=()=>availableCardPhotos.size;
+export const cardPhotoURL=(entry)=>availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
+export const hasPhotographicCard=(entry)=>Boolean(entry&&(availableCardPhotos.has(entry.id)||availablePhotos.has(entry.id)));
+
 const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-v1';
 export const photographicAssetCount=()=>availablePhotos.size;
 export const photographicIconURL=(entry)=>PHOTO_ASSETS[entry.id]?photoUrl(entry):null;
@@ -139,6 +145,16 @@ export async function enablePremiumAssets(){
     availablePhotos.add(id);
    }else availablePhotos.delete(id);
   }catch{availablePhotos.delete(id);}
+ }));
+ // Photo illustrations for the picker are independent of exact top-down map geometry.
+ // For lamps, ponds and boulders a garden photograph belongs on the card only.
+ await Promise.all([...CARD_PHOTO_IDS].map(async id=>{
+   try{
+     const url='/assets/landscape-card-photo/'+id+'.jpg?v=forma-premium-card-v1';
+     const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
+     if(r.ok&&(r.headers.get('Content-Type')||'').toLowerCase().startsWith('image/jpeg'))availableCardPhotos.add(id);
+     else availableCardPhotos.delete(id);
+   }catch{availableCardPhotos.delete(id);}
  }));
  for(const extension of ['png','webp']){
   try{
