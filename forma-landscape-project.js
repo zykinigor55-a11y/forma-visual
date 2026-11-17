@@ -5,7 +5,7 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),num=(v,d=2)=>Number(v).toFixed(d);
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const uid=()=>'o-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
- let modal=null,doc=freshProject(),pid='',mode='select',category='trees',chosen='pine',points=[],selected=null,drag=null,undo=[],redo=[],busy=false,preview=null,roofArt=null,snap=true;
+ let modal=null,doc=freshProject(),pid='',mode='select',category='trees',chosen='pine',points=[],selected=null,drag=null,undo=[],redo=[],busy=false,preview=null,roofArt=null,roofArts=new Map(),snap=true;
  let lastFocus=null;
  const siteKey=()=>`forma-landscape-masterplan-v1-${pid}`;
  const activeProject=()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}};
@@ -44,6 +44,12 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   if(roofArt)shapes+=`<image href="${roofArt}" x="${-w2}" y="${-h2}" width="${house.width}" height="${house.height}" preserveAspectRatio="none"/>`;
   else shapes+=roofingSVG(house);
   shapes+='</g>';
+   for(const b of doc.buildings){
+    const bw=b.width/2,bh=b.height/2,art=roofArts.get(b.id);
+    shapes+=`<g data-building='${b.id}' transform='translate(${b.x} ${b.y}) rotate(${b.rotation})'><rect x='${-bw-.1}' y='${-bh-.1}' width='${b.width+.2}' height='${b.height+.2}' fill='#252a2b' stroke='${selected==='building:'+b.id?'#eaae5b':'#f4ebdc'}' stroke-width='${selected==='building:'+b.id?.17:.10}'/>`;
+    shapes+=art?`<image href='${art}' x='${-bw}' y='${-bh}' width='${b.width}' height='${b.height}' preserveAspectRatio='none'/>`:roofingSVG(b);
+    shapes+=`</g><text x='${b.x}' y='${b.y}' font-size='${fs*.56}' fill='#fff5df' stroke='#1e2421' stroke-width='.1' paint-order='stroke' text-anchor='middle'>${({house:'ДОМ',bath:'БАНЯ',garage:'ГАРАЖ',gazebo:'БЕСЕДКА',outbuilding:'ПОСТРОЙКА'})[b.type]}</text>`;
+   }
   shapes+=`<text x="${house.x}" y="${house.y}" font-size="${fs*.65}" fill="#fff7dc" stroke="#201b18" stroke-width=".1" paint-order="stroke" text-anchor="middle" font-weight="700">${({house:'ДОМ',bath:'БАНЯ',garage:'ГАРАЖ',gazebo:'БЕСЕДКА',outbuilding:'ПОСТРОЙКА'})[house.type]}</text>`;
   shapes+=`<g fill="#3e5544" font-size="${fs*.7}" font-family="Arial,sans-serif"><text x="${w*.5}" y="${h*.02+fs*.8}" text-anchor="middle">${num(w)} м</text><text x="${fs*.6}" y="${h*.5}" text-anchor="middle" transform="rotate(-90 ${fs*.6} ${h*.5})">${num(h)} м</text></g>`;
   shapes+=`<g transform="translate(${w*.92} ${h*.1}) rotate(${doc.north})"><path d="M0 -1L-.22 .6L0 .3L.22 .6Z" fill="#263a2a"/><text y="-1.3" text-anchor="middle" font-size="${fs*.7}" fill="#263a2a">С</text></g>`;
@@ -78,7 +84,12 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   const h=doc.house,r=report(doc);
   let html=`<h3>Параметры</h3><section><strong>УЧАСТОК · МЕТРЫ</strong><div class="lp-two">${field('site.width','Ширина, м',doc.site.width,5,500)}${field('site.height','Длина, м',doc.site.height,5,500)}</div>${field('north','Север · поворот °',doc.north,-360,360,1)}<label class="lp-check"><input type="checkbox" data-field="verified" ${doc.verified?'checked':''}> Размеры проверены</label><small>Снимок без измерений не считается точной геометрией. Масштаб не меняет размеры объектов.</small></section>`;
   html+=`<section><strong>СТРОЕНИЕ · ВИД СВЕРХУ</strong><label>Тип<select data-field="house.type">${[['house','Дом'],['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозпостройка']].map(([v,t])=>`<option value="${v}" ${h.type===v?'selected':''}>${t}</option>`).join('')}</select></label><div class="lp-two">${field('house.width','Ширина м',h.width,2,60)}${field('house.height','Длина м',h.height,2,60)}</div><div class="lp-two">${field('house.x','X центра м',h.x,0,500)}${field('house.y','Y центра м',h.y,0,500)}</div>${field('house.rotation','Поворот °',h.rotation,-360,360,1)}<label>Кровля<select data-field="house.roof"><option value="gable" ${h.roof==='gable'?'selected':''}>Двускатная</option><option value="hip" ${h.roof==='hip'?'selected':''}>Вальмовая</option><option value="flat" ${h.roof==='flat'?'selected':''}>Плоская</option></select></label><label>Фото строения<input type="file" id="lpHousePhoto" accept="image/png,image/jpeg,image/webp"></label><button type="button" data-generate="roof" ${!h.photo?'disabled':''}>GPT Image 2.6 · кровля сверху</button><small>Фото ${h.photo?'загружено':'не загружено'}. Генерация не изменяет размеры дома.</small></section>`;
-  if(selected&&selected!=='house'){
+  html+=`<section><strong>ДОПОЛНИТЕЛЬНЫЕ СТРОЕНИЯ</strong><div class='lp-two'><button type='button' data-add-building='bath'>＋ Баня</button><button type='button' data-add-building='garage'>＋ Гараж</button><button type='button' data-add-building='gazebo'>＋ Беседка</button><button type='button' data-add-building='outbuilding'>＋ Хозблок</button></div><small>${doc.buildings.length} дополнительных строений с отдельной геометрией</small></section>`;
+   if(selected?.startsWith('building:')){
+    const b=doc.buildings.find(x=>x.id===selected.slice(9));
+    if(b)html+=`<section class='lp-selected'><strong>${esc(({bath:'Баня',garage:'Гараж',gazebo:'Беседка',outbuilding:'Хозпостройка',house:'Дом'})[b.type])}</strong><div class='lp-two'>${field('aux.width','Ширина м',b.width,2,60)}${field('aux.height','Длина м',b.height,2,60)}</div><div class='lp-two'>${field('aux.x','X центр м',b.x,0,500)}${field('aux.y','Y центр м',b.y,0,500)}</div>${field('aux.rotation','Поворот °',b.rotation,-360,360,1)}<label>Кровля<select data-field='aux.roof'><option value='gable' ${b.roof==='gable'?'selected':''}>Двускатная</option><option value='hip' ${b.roof==='hip'?'selected':''}>Вальмовая</option><option value='flat' ${b.roof==='flat'?'selected':''}>Плоская</option></select></label><label>Фото этого строения<input type='file' id='lpAuxPhoto' accept='image/png,image/jpeg,image/webp'></label><button type='button' data-roof ${b.photo?'':'disabled'}>AI · кровля сверху</button><button type='button' data-delete-building>Удалить строение</button></section>`;
+   }
+   if(selected&&selected!=='house'&&!selected.startsWith('building:')){
    const obj=doc.objects.find(x=>x.id===selected),entry=byId(obj?.catalogId);
    if(obj&&entry){html+=`<section class="lp-selected"><strong>${esc(entry.name)}</strong>`;
     if(obj.points){html+=entry.group==='pavers'?field('object.width','Ширина дорожки м',obj.width,.4,10):'';
@@ -87,7 +98,7 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
     html+='<button type="button" data-delete>Удалить выбранное</button></section>';
    }
   }
-  html+=`<section><strong>ВЕДОМОСТЬ</strong><div class="lp-totals"><span>Площадь участка <b>${num(r.siteArea)} м²</b></span><span>Пятно дома <b>${num(r.buildingArea)} м²</b></span></div><table><tbody>${Object.entries(r.counts).map(([id,n])=>{const a=byId(id);return `<tr><td>${esc(a?.name)}</td><td>${r.areas[id]!=null?num(r.areas[id])+' м²':n+' шт.'}</td></tr>`}).join('')}</tbody></table><small>Площадь дорожек в пересечениях приближённая, до объединения покрытий.</small></section>`;
+  html+=`<section><strong>ВЕДОМОСТЬ</strong><div class="lp-totals"><span>Площадь участка <b>${num(r.siteArea)} м²</b></span><span>Пятно дома <b>${num(r.buildingArea)} м²</b></span><span>Прочие строения <b>${num(r.auxBuildingArea)} м²</b></span></div><table><tbody>${Object.entries(r.counts).map(([id,n])=>{const a=byId(id);return `<tr><td>${esc(a?.name)}</td><td>${r.areas[id]!=null?num(r.areas[id])+' м²':n+' шт.'}</td></tr>`}).join('')}</tbody></table><small>Площадь дорожек в пересечениях приближённая, до объединения покрытий.</small></section>`;
   root.innerHTML=html;
  }
  function draw(){if(!modal)return;drawMap();drawInspector();drawPalette()}
