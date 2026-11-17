@@ -174,7 +174,7 @@ import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummar
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
-import {SHRUB_HEIGHT_M} from './forma-landscape-3d-botany.js';
+import {SHRUB_HEIGHT_M,vegetationQuality} from './forma-landscape-3d-botany.js';
 import {makeRealVegetation} from './forma-landscape-3d-models.js';
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
@@ -325,7 +325,7 @@ function drawObject(o,entry,key){
  if(group==='trees'||group==='shrubs'){
   // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
   // accurate crown diameter and height, all 18 species from shared catalog.
-  const quality=window.innerWidth<=700?.48:window.innerWidth<=1100?.7:1;
+  const quality=vegetationQuality(window.innerWidth,doc.objects.filter(p=>['trees','shrubs'].includes(p.type)).length,state.view);
   const source=importedPlantModels.get(o.catalogId);
   g=source?makeRealVegetation(THREE,source,o):createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
  }else if(group==='boulders')g=createRock(THREE,o);
