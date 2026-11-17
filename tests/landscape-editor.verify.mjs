@@ -13,7 +13,7 @@ try{
   await page.locator('#lpSvg').waitFor();
   const pos=async(x,y)=>page.evaluate(({x,y})=>{const s=document.querySelector('#lpSvg'),p=s.createSVGPoint();p.x=x;p.y=y;const q=p.matrixTransform(s.getScreenCTM());return {x:q.x,y:q.y}},{x,y});
   const tap=async(x,y)=>{const p=await pos(x,y);if(mobile)await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y)};
-  const model=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')));
+  const model=()=>page.evaluate(()=>JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('forma-landscape-masterplan-v1-')))));
   await page.locator('[data-tool="path"]').click();
   await page.locator('[data-path-shape="diagonal"]').click();
   assert.equal(await page.locator('[data-path-shape="diagonal"]').getAttribute('aria-pressed'),'true');
