@@ -125,7 +125,7 @@ export const cardPhotoCount=()=>availableCardPhotos.size;
 export const cardPhotoURL=(entry)=>availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
 export const hasPhotographicCard=(entry)=>Boolean(entry&&(availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
 
-const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-17-staged-v1';
+const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-18-staged-v2';
 export const photographicAssetCount=()=>[...availablePhotos].filter(id=>PHOTO_ASSETS[id]?.endsWith('.jpg')).length;
 export const photographicIconURL=(entry)=>PHOTO_ASSETS[entry.id]?photoUrl(entry):null;
 export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
@@ -137,7 +137,7 @@ export async function enablePremiumAssets(){
  // A missing 1080 file must never break plant placement, previews or AI exports.
  await Promise.all(Object.entries(PHOTO_ASSETS).map(async([id,ext])=>{
   try{
-   const url='/assets/landscape-photo/'+ext+'?v=photo-1080-17-staged-v1';
+   const url='/assets/landscape-photo/'+ext+'?v=photo-1080-18-staged-v2';
    const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
    const mime=(r.headers.get('Content-Type')||'').toLowerCase();
    if(r.ok&&(mime.startsWith('image/png')||mime.startsWith('image/jpeg')||!mime)){
