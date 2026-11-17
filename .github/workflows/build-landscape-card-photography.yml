@@ -1,0 +1,54 @@
+name: FORMA — premium pond light boulder photo previews
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/build-landscape-card-photography.py'
+      - '.github/workflows/build-landscape-card-photography.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline photo compositing dependencies
+        run: python -m pip install --quiet pillow numpy
+      - name: Build 13 photographic previews at 1080
+        run: python tools/build-landscape-card-photography.py
+      - name: Verify all 13 photographs
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          ids=('bollard','ground','spot','low-post','deck-light','linear','natural','formal-pond','bio-pond','granite-boulder','limestone-boulder','slate-boulder','sandstone-boulder')
+          for id in ids:
+              f=Path('assets/landscape-card-photo')/(id+'.jpg')
+              im=Image.open(f)
+              assert im.format=='JPEG' and im.size==(1080,1080),(id,im.size)
+          print('13/13 premium 1080 cards pass')
+          PY
+      - name: Commit photo previews
+        run: |
+          git config user.name 'FORMA Visual Assets Bot'
+          git config user.email 'forma-design-bot@users.noreply.github.com'
+          git add assets/landscape-card-photo/*.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m "assets(FORMA): 13 premium photographed lights ponds and rocks"
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            git push origin HEAD:dom-render-nanobanana
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-premium-light-pond-rocks
+          path: assets/landscape-card-photo/*.jpg
+          if-no-files-found: warn
