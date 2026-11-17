@@ -90,7 +90,8 @@ try{
   await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}-premium-pond.png`,fullPage:true});
   await page.locator('[data-category="boulders"]').click();
   await page.waitForFunction(()=>{const i=document.querySelector('[data-asset="granite-boulder"] img');return !!i&&i.complete&&i.naturalWidth===1080&&i.currentSrc.includes('/landscape-card-photo/granite-boulder.jpg?');},null,{timeout:30000});
-  assert.equal((await model()).objects.length,1,'Changing photo categories must not delete existing placements');
+  assert.equal((await model()).objects.length,2,'Choosing lawn should add precisely one complete coverage while preserving existing placements');
+   assert.equal((await model()).objects.filter(o=>o.type==='lawns'&&o.autoFill===true).length,1);
 
   // Never make a paid call in CI: replace the queue client with a local fake.
   await page.evaluate(()=>{window.FORMA_RENDER_QUEUE={fetch:async(_url,options)=>{await new Promise(r=>setTimeout(r,500));const input=JSON.parse(options.body).image;return new Response(JSON.stringify({
