@@ -47,6 +47,9 @@ try{
     await page.locator('[data-quick-category="ponds"]').click();
     await page.evaluate(()=>document.querySelector('#faLandscapeMasterplan .lp-layout').scrollTop=0);
     await page.screenshot({path:'artifacts/landscape-editor/mobile-fixed-map-ponds.png',fullPage:false});
+    // Restore empty test fixture after the intentional instant lawn auto-fill.
+    await page.locator('[data-undo]').click();
+    assert.equal((await page.evaluate(()=>window.FORMA_LANDSCAPE_PROJECT.getProject())).objects.length,0);
   }
   const pos=async(x,y)=>page.evaluate(({x,y})=>{const s=document.querySelector('#lpSvg'),p=s.createSVGPoint();p.x=x;p.y=y;const q=p.matrixTransform(s.getScreenCTM());return {x:q.x,y:q.y}},{x,y});
   const tap=async(x,y)=>{const p=await pos(x,y);if(mobile)await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y)};
