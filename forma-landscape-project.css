@@ -802,3 +802,9 @@
  #faLandscapeMasterplan .lp-atmo-quick-fields{grid-template-columns:1fr}
  #faLandscapeMasterplan .lp-atmo-quick-fields select{font-size:13px;min-height:42px}
 }
+
+/* PDF paper format stays compact in the export row, including narrow phones. */
+.lp-outputs .lp-pdf-size{display:inline-flex;align-items:center;gap:7px;margin:4px 2px;font:600 12px/1.4 inherit;color:inherit}
+.lp-outputs .lp-pdf-size select{width:auto;min-width:64px;padding:7px 10px;border:1px solid rgba(146,149,150,.35);border-radius:9px;background:transparent;color:inherit;font:inherit}
+.lp-outputs .lp-pdf-size select option{color:#202326;background:#fff}
+@media(max-width:600px){.lp-outputs .lp-pdf-size{width:100%;justify-content:flex-start;margin:8px 0 4px}}
