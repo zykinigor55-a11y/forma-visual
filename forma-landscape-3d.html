@@ -225,7 +225,7 @@ function initialize(){
  camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=3;controls.maxDistance=220;
  scene.add(new THREE.HemisphereLight(0xffffff,0x52604e,2));
- const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
+ const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(window.innerWidth<720?1024:2048,window.innerWidth<720?1024:2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());restoreHouseGlbs().catch(e=>console.warn('Stored GLB restore:',e));
  const previousDrawing=localStorage.getItem(UNDERLAY);
@@ -817,7 +817,15 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  window.addEventListener('resize',resize);canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();status('WebGL отключился. Перезагрузите страницу.')});
 }
 function resize(){const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
-function animate(){requestAnimationFrame(animate);if(controls?.enabled)controls.update();if(renderer&&scene&&camera)renderer.render(scene,camera)}
+let lastRenderMs=0;
+function animate(now=0){
+ requestAnimationFrame(animate);
+ const interval=window.innerWidth<=720?1000/30:1000/50;
+ if(now-lastRenderMs<interval)return;
+ lastRenderMs=now;
+ if(controls?.enabled)controls.update();
+ if(renderer&&scene&&camera)renderer.render(scene,camera);
+}
 try{initialize()}catch(err){console.error(err);$('#loadError').style.display='flex';$('#status').textContent=err.message}
 </script>
 </body>
