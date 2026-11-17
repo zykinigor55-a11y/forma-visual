@@ -168,6 +168,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {Sky} from 'three/addons/objects/Sky.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js';
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
@@ -182,7 +183,7 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();let plantSpeciesStored=new Set();
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();let plantSpeciesStored=new Set();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -232,6 +233,12 @@ function initialize(){
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
+ atmosphereSky=new Sky();atmosphereSky.name='forma-physical-sky';atmosphereSky.scale.setScalar(1750);
+ atmosphereSky.material.uniforms.turbidity.value=3.5;
+ atmosphereSky.material.uniforms.rayleigh.value=2.5;
+ atmosphereSky.material.uniforms.mieCoefficient.value=.004;
+ atmosphereSky.material.uniforms.mieDirectionalG.value=.82;
+ atmosphereSky.material.depthWrite=false;atmosphereSky.frustumCulled=false;scene.add(atmosphereSky);
  camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=3;controls.maxDistance=220;
  const skyFill=new THREE.HemisphereLight(0xdceafa,0x334b3c,1.75);skyFill.name='forma-sky-fill';scene.add(skyFill);
@@ -594,6 +601,14 @@ function updateSun(){
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  const cfg={day:[-25,65,22,3],morning:[-56,21,12,1.75],evening:[55,14,17,1.3],night:[-30,8,15,.15]}[val]||[-25,65,22,3];
  sun.position.set(cfg[0],cfg[1],cfg[2]);
+ if(atmosphereSky){
+  atmosphereSky.visible=val!=='night'&&state.view!=='2d';
+  const uniforms=atmosphereSky.material.uniforms;
+  uniforms.sunPosition.value.copy(sun.position).normalize();
+  uniforms.turbidity.value=['overcast','rain','fog','snow'].includes(doc.atmosphere.weather)?9.2:val==='evening'?5.8:3.4;
+  uniforms.rayleigh.value=['overcast','fog','rain','snow'].includes(doc.atmosphere.weather)?.75:val==='evening'?2.0:2.7;
+  uniforms.mieCoefficient.value=doc.atmosphere.weather==='fog'?.022:.005;
+ }
  const weather=doc.atmosphere.weather||'sunny',factor={sunny:1,overcast:.42,'after-rain':.7,rain:.28,fog:.25,snow:.5}[weather]||1;
  sun.intensity=(val==='night'?.025:cfg[3]*factor);
  sun.color.set(val==='evening'?'#ffb87b':val==='morning'?'#ffe1be':'#fff2db');
@@ -614,7 +629,7 @@ function updateSun(){
  scene.fog.far=weatherFog?Math.max(110,extent*3.0):wetFog?Math.max(145,extent*3.7):Math.max(230,extent*5);
 }
 function setView(view){
- state.view=view;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&doc.atmosphere.time!=='night';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  const W=doc.site.width,H=doc.site.height;
  controls.enabled=view!=='walk';
  if(view==='2d'){const size=Math.max(W,H)*.75;camera=new THREE.OrthographicCamera(-size,size,size/Math.max(1,canvas.clientWidth/canvas.clientHeight),-size/Math.max(1,canvas.clientWidth/canvas.clientHeight),.1,600);camera.position.set(0,125,.01);camera.up.set(0,0,-1);camera.lookAt(0,0,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=false}
