@@ -95,8 +95,10 @@ function doorGroup(T,width=1.04,height=2.16,modern=false){
  return g;
 }
 function roofPlane(g,T,slopeLength,depth,x,y,angle,roofMat){
- const roof=add(g,T,new T.PlaneGeometry(slopeLength,depth),roofMat,x,y,0);
- roof.rotation.set(-Math.PI/2,0,0);roof.rotateZ(angle);
+ const geo=new T.PlaneGeometry(slopeLength,depth);
+ geo.rotateX(-Math.PI/2);
+ const roof=add(g,T,geo,roofMat,x,y,0);
+ roof.rotation.z=angle;
  roof.material.side=T.DoubleSide;
  return roof;
 }
@@ -163,8 +165,9 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   stone:['#DDD7CF','#383E43']
  };
  const [walls,roofTint]=shades[preset.wall]||shades.darkwood;
- const wallTex=texture(THREE,preset.wall,walls),roofKey=preset.roofFinish==='tile'?'tile':'standing';
- const roofTex=texture(THREE,roofKey,roofTint);
+ const wallTex=texture(THREE,preset.wall,walls).clone(),roofKey=preset.roofFinish==='tile'?'tile':'standing';
+ const roofTex=texture(THREE,roofKey,roofTint).clone();
+ wallTex.needsUpdate=true;roofTex.needsUpdate=true;
  const wallMaterial=mat(THREE,'#FFFFFF',.86,.02,wallTex);
  const roofMaterial=mat(THREE,b.roofColor||'#F1F1F1',preset.roofFinish==='standing'?.36:.69,.42,roofTex);
  wallTex.repeat.set(Math.max(1,w/3.6),Math.max(1,bodyHeight/2.2));
