@@ -23,6 +23,87 @@
   return {x:clamp((event.clientX-rect.left)/Math.max(rect.width,1)*100,2,98),
           y:clamp((event.clientY-rect.top)/Math.max(rect.height,1)*100,2,98)};
  }
+ function glowEllipse(ctx,cx,cy,rx,ry,color,alpha,angle=0){
+  if(rx<=0||ry<=0||alpha<=0)return;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);ctx.scale(1,ry/rx);
+  const gradient=ctx.createRadialGradient(0,0,1,0,0,rx);
+  gradient.addColorStop(0,rgba(color,alpha));
+  gradient.addColorStop(.35,rgba(color,alpha*.64));
+  gradient.addColorStop(.7,rgba(color,alpha*.19));
+  gradient.addColorStop(1,rgba(color,0));
+  ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(0,0,rx,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+ }
+ // Camera-relative visualization: different fixtures have genuinely different
+ // spatial light distributions. This preview is not a photometric IES solver.
+ function drawSource(ctx,source,w,h){
+  const x=source.x*w/100,y=source.y*h/100,tx=source.targetX*w/100,ty=source.targetY*h/100;
+  const dx=tx-x,dy=ty-y,distance=Math.max(12,Math.hypot(dx,dy));
+  const angle=Math.atan2(dy,dx),perp=angle+Math.PI/2;
+  const half=clamp(source.cone*Math.PI/360,.08,1.04);
+  const strength=clamp(source.intensity/100,0,2);
+  const color=lightColor(source.temperature);
+  const radius=clamp(distance*1.55,55,Math.max(w,h)*.92);
+  const minDim=Math.min(w,h);
+  const length=clamp(source.length||30,8,70)/100*minDim;
+  const type=source.profile||'downlight';
+  if(type==='linear'){
+   // Linear fixture: a wide luminous STRIP and an elongated rectangular wash;
+   // NO point-light arc, conical wedge, radial target spot or circular hotspot.
+   const fixtureWidth=length,soft=clamp(9+(source.cone-10)*.14,10,30);
+   ctx.save();ctx.translate(x,y);ctx.rotate(perp);
+   const strip=ctx.createLinearGradient(0,-soft*2,0,soft*2);
+   strip.addColorStop(0,rgba(color,0));strip.addColorStop(.33,rgba(color,.16*strength));
+   strip.addColorStop(.5,rgba(color,.4*strength));strip.addColorStop(.67,rgba(color,.16*strength));
+   strip.addColorStop(1,rgba(color,0));
+   ctx.fillStyle=strip;ctx.fillRect(-fixtureWidth*.55,-soft*2,fixtureWidth*1.1,soft*4);
+   ctx.shadowColor=rgba(color,.52*strength);ctx.shadowBlur=soft;
+   ctx.fillStyle=rgba(color,.48*strength);ctx.fillRect(-fixtureWidth*.5,-2.2,fixtureWidth,4.4);
+   ctx.restore();
+   // Distributed field at the target: elliptical with very high aspect ratio,
+   // representing multiple tiny emitters along the physical bar.
+   glowEllipse(ctx,tx,ty,Math.max(length*.76,42),clamp(10+distance*.12,18,55),color,.18*strength,perp);
+   return;
+  }
+  if(type==='wall-wash'){
+   // Continuous vertical wall illumination: broad feathered sheet on a plane.
+   // It is not a circular floor spot or a cone emitted from a single point.
+   const washLength=Math.max(length*.95,clamp(distance*1.15,75,Math.max(w,h)*.66));
+   glowEllipse(ctx,tx,ty,washLength*.55,clamp(distance*.24,18,70),color,.21*strength,perp);
+   glowEllipse(ctx,tx,ty,washLength*.32,clamp(distance*.12,8,29),color,.095*strength,perp);
+   return;
+  }
+  if(type==='pendant'){
+   // Pendant: diffuse downward pool, bright near fitting, broad at table/floor.
+   glowEllipse(ctx,x,y,clamp(20+distance*.16,30,80),clamp(20+distance*.12,26,65),color,.10*strength);
+   glowEllipse(ctx,tx,ty,clamp(24+distance*.35,38,130),clamp(18+distance*.18,25,78),color,.22*strength,perp);
+   return;
+  }
+  if(type==='floor'){
+   // Floor lamp: asymmetrical local ambient wall + floor bounce, not a spotlight cone.
+   glowEllipse(ctx,x,y,clamp(distance*.55,48,170),clamp(distance*.42,42,130),color,.15*strength);
+   glowEllipse(ctx,tx,ty,clamp(distance*.42,34,140),clamp(distance*.29,22,95),color,.14*strength,angle);
+   return;
+  }
+  // Only downlights and spotlights are directional beam emitters.
+  const actualHalf=type==='spot'?Math.min(half,.59):half;
+  ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+  const beam=ctx.createRadialGradient(0,0,2,0,0,radius);
+  const alpha=type==='spot'?.21:.14;
+  beam.addColorStop(0,rgba(color,alpha*strength));
+  beam.addColorStop(.4,rgba(color,alpha*.58*strength));
+  beam.addColorStop(1,rgba(color,0));
+  ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,radius,-actualHalf,actualHalf,false);ctx.closePath();
+  ctx.fillStyle=beam;ctx.fill();ctx.restore();
+  const spread=clamp(12+Math.tan(actualHalf)*distance*.27,16,Math.max(w,h)*.38);
+  if(type==='spot'){
+   // Narrow concentrated photometric pool and subtle feathered edge.
+   glowEllipse(ctx,tx,ty,spread,spread*.58,color,.34*strength,perp);
+  }else{
+   // Recessed ceiling downlight: wider and softer downward illumination.
+   glowEllipse(ctx,tx,ty,spread*1.25,spread*.82,color,.18*strength,perp);
+  }
+ }
  function draw(){
   frame=0;
   if(!canvas||!stage||!overlay||overlay.hidden)return;
@@ -37,32 +118,10 @@
   if(!previewOn)return;
   for(const source of draft||sources()){
    if(source.intensity<=0)continue;
-   const x=source.x*w/100,y=source.y*h/100;
-   const tx=source.targetX*w/100,ty=source.targetY*h/100;
-   const dx=tx-x,dy=ty-y,distance=Math.max(35,Math.hypot(dx,dy));
-   const angle=Math.atan2(dy,dx),half=clamp(source.cone*Math.PI/360,.1,1.04);
-   const strength=clamp(source.intensity/100,0,2);
-   const color=lightColor(source.temperature);
-   const radius=clamp(distance*1.65,55,Math.max(w,h)*.83);
-   ctx.save();ctx.translate(x,y);ctx.rotate(angle);
-   const grad=ctx.createRadialGradient(0,0,4,0,0,radius);
-   grad.addColorStop(0,rgba(color,.23*strength));
-   grad.addColorStop(.34,rgba(color,.145*strength));
-   grad.addColorStop(1,rgba(color,0));
-   ctx.beginPath();ctx.moveTo(0,0);
-   ctx.arc(0,0,radius,-half,half,false);ctx.closePath();
-   ctx.fillStyle=grad;ctx.fill();
-   ctx.restore();
-   ctx.save();ctx.translate(tx,ty);
-   const spread=clamp(18+Math.tan(half)*distance*.40,25,Math.max(w,h)*.33);
-   ctx.scale(1,.52);
-   const floor=ctx.createRadialGradient(0,0,1,0,0,spread);
-   floor.addColorStop(0,rgba(color,.22*strength));
-   floor.addColorStop(.45,rgba(color,.09*strength));
-   floor.addColorStop(1,rgba(color,0));
-   ctx.beginPath();ctx.arc(0,0,spread,0,Math.PI*2);ctx.fillStyle=floor;ctx.fill();ctx.restore();
+   drawSource(ctx,source,w,h);
   }
  }
+
  function paint(){if(!frame)frame=requestAnimationFrame(draw)}
  function moveHandles(){
   if(!handles||!stage)return;
