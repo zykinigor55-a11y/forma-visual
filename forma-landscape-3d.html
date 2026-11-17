@@ -96,17 +96,17 @@ const toolList=[
 ];
 const choices={
  site:[['rect','Прямоугольный участок'],['outline','Свободный контур (точки)']],
- surface:[['concrete-pavers','Дорожка · плиты'],['lawn-universal','Газон'],['granite-screenings','Отсыпка']],
+ surface:[['concrete-pavers','Дорожка · плиты'],['universal','Газон'],['granite-chips','Отсыпка']],
  terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['smooth','Выровнять грунт']],
  build:[['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
  plant:[['pine','Сосна'],['spruce','Ель'],['birch','Берёза'],['oak','Дуб'],['maple','Клён'],['hydrangea','Гортензия'],['juniper','Можжевельник']],
- water:[['pond-small','Водоём (контур)']],
+ water:[['formal-pond','Водоём (контур)']],
  landscape:[['granite-boulder','Валун']],
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол']],
  transport:[['car','Автомобиль']],
- light:[['bollard','Боллард'],['pole','Садовый светильник']]
+ light:[['bollard','Боллард'],['low-post','Садовый светильник']]
 };
 const fallback={pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
 const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
@@ -212,7 +212,7 @@ function drawExtra(o){
   else if(o.type==='table'){const tabletop=mesh(new THREE.CylinderGeometry(.9,.9,.12,16),material('#ac947b'));tabletop.position.y=.82;g.add(tabletop);const stem=mesh(new THREE.CylinderGeometry(.14,.14,.82,10),material('#827360'));stem.position.y=.4;g.add(stem)}
   else if(o.type==='car'){const car=mesh(new THREE.BoxGeometry(1.8,1.2,4.2),material('#c1c8ca',.25,.2));car.position.y=.68;g.add(car);const roof=mesh(new THREE.BoxGeometry(1.45,.55,2.1),material('#53656d',.3,.3));roof.position.y=1.52;g.add(roof)}
  }
- g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;mark(g,'extra:'+o.id);root.add(g);
+ if(o.type!=='fence'){g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;}mark(g,'extra:'+o.id);root.add(g);
 }
 function drawTools(){
  $('#tools').innerHTML=toolList.map(a=>'<button data-tool="'+a[0]+'" title="'+a[1]+'"><span class="glyph">'+a[2]+'</span>'+a[1]+'</button>').join('');
