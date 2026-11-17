@@ -1,4 +1,4 @@
-import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js';
+import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=pond-auto-grass-eraser-v9';
 import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=photo-light-pond-v6';
 import {brushPolygon} from './forma-landscape-brush.js';
 
