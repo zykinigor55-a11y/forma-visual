@@ -223,7 +223,7 @@ function polygon(points,y,color,water=false){
  const shape=new THREE.Shape();points.forEach((pt,i)=>{const p=pos(pt.x,pt.y);i?shape.lineTo(p.x,-p.z):shape.moveTo(p.x,-p.z)});shape.closePath();
  const geo=new THREE.ShapeGeometry(shape);geo.rotateX(-Math.PI/2);
  const verts=geo.attributes.position;
- const waterLevel=water?Math.min(...points.map(p=>{const v=pos(p.x,p.y);return terrainAt(v.x,v.z)})+.09:0;
+ const waterLevel=water?Math.min(...points.map(p=>{const v=pos(p.x,p.y);return terrainAt(v.x,v.z)}))+.09:0;
  for(let i=0;i<verts.count;i++){const x=verts.getX(i),z=verts.getZ(i);verts.setY(i,water?waterLevel:terrainAt(x,z)+y)}
  geo.computeVertexNormals();
  const m=water?new THREE.MeshPhysicalMaterial({color:'#377f91',roughness:.12,metalness:.25,transparent:true,opacity:.92,clearcoat:.8,side:THREE.DoubleSide}):material(color);
