@@ -104,14 +104,64 @@ export function assetSVG(entry,{size=1080,transparent=false}={}){
  const content=assetGraphic(entry);
  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 160 160" role="img" aria-label="'+esc(entry.name)+'"><defs><clipPath id="tileclip"><rect x="7" y="7" width="146" height="146" rx="14"/></clipPath></defs>'+defs()+(transparent?'':'<rect x="0" y="0" width="160" height="160" fill="#222426"/>')+content+'</svg>';
 }
-export const iconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
+let premiumEnabled=false;
+export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
+export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.webp?v=1080-premium-20261117';
+export const iconURL=(entry)=>premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry);
+export async function enablePremiumAssets(){
+ try{
+  const r=await fetch(premiumIconURL({id:'pine'}),{method:'HEAD',cache:'no-cache'});
+  if(r.ok){premiumEnabled=true;return true}
+ }catch{}
+ premiumEnabled=false;return false;
+}
 export function roofingSVG(house){
- const w=house.width,h=house.height,r=house.roofColor||'#3d4245',roof=house.roof;
- const halfW=w/2,halfH=h/2,edge=1;
- let body='<rect x="'+(-halfW)+'" y="'+(-halfH)+'" width="'+w+'" height="'+h+'" rx=".08" fill="'+r+'" stroke="#e3dacf" stroke-width=".12"/>';
- if(roof==='gable')body+='<path d="M'+(-halfW)+' 0H'+halfW+'" stroke="#c0b4a6" stroke-width=".12"/><path d="M'+(-halfW)+' '+(-halfH)+'L'+(-halfW)+' 0L'+halfW+' 0L'+halfW+' '+(-halfH)+'Z" fill="#ffffff" fill-opacity=".09"/><path d="M'+(-halfW)+' 0V'+halfH+'H'+halfW+'V0" fill="#080909" fill-opacity=".14"/>';
- if(roof==='hip')body+='<path d="M'+(-halfW)+' '+(-halfH)+'L'+(-halfW+.23*w)+' 0L'+(-halfW)+' '+halfH+'M'+halfW+' '+(-halfH)+'L'+(halfW-.23*w)+' 0L'+halfW+' '+halfH+'M'+(-halfW+.23*w)+' 0H'+(halfW-.23*w)+'" stroke="#e0d9cb" stroke-width=".12" fill="none"/>';
- if(roof==='flat')body+='<rect x="'+(-halfW+edge*.3)+'" y="'+(-halfH+edge*.3)+'" width="'+(w-edge*.6)+'" height="'+(h-edge*.6)+'" fill="none" stroke="#b7afa4" stroke-width=".12"/>';
- body+='<path d="M'+(-halfW*.32)+' '+halfH+'V'+(halfH+1.15)+'H'+(halfW*.3)+'V'+halfH+'" fill="#bb9d72" stroke="#826943" stroke-width=".1"/>';
- return body;
+ // Vector fallback is dimensioned, truly nadir. AI photograph is applied only as a surface texture.
+ const w=Math.max(2,Number(house.width)||12),h=Math.max(2,Number(house.height)||8),
+  hw=w/2,hh=h/2,roof=house.roof||'gable',r=/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#3e4142',
+  ridge=Number(house.ridge)||0;
+ const hex=n=>Math.max(0,Math.min(255,n|0)).toString(16).padStart(2,'0');
+ const tone=(x)=>'#'+[1,3,5].map(i=>hex(parseInt(r.slice(i,i+2),16)+x)).join('');
+ const id=('rf-'+String(house.id||house.type||'house')+'-'+w+'-'+h+'-'+r.slice(1)).replace(/[^a-z0-9-]/gi,'');
+ let body='<defs><linearGradient id="'+id+'-up" x1="0" y1="0" x2=".1" y2="1"><stop stop-color="'+tone(42)+'"/><stop offset="1" stop-color="'+tone(-3)+'"/></linearGradient><linearGradient id="'+id+'-down" x1="0" y1="0" x2=".1" y2="1"><stop stop-color="'+tone(8)+'"/><stop offset="1" stop-color="'+tone(-43)+'"/></linearGradient><clipPath id="'+id+'-clip"><rect x="'+(-hw)+'" y="'+(-hh)+'" width="'+w+'" height="'+h+'"/></clipPath></defs>';
+ body+='<rect x="'+(-hw-.09)+'" y="'+(-hh-.09)+'" width="'+(w+.18)+'" height="'+(h+.18)+'" rx=".035" fill="'+tone(-43)+'" stroke="'+tone(15)+'" stroke-width=".10"/>';
+ body+='<g clip-path="url(#'+id+'-clip)">';
+ if(roof==='gable'){
+  body+='<rect x="'+(-hw)+'" y="'+(-hh)+'" width="'+w+'" height="'+hh+'" fill="url(#'+id+'-up)"/>';
+  body+='<rect x="'+(-hw)+'" y="0" width="'+w+'" height="'+hh+'" fill="url(#'+id+'-down)"/>';
+ }else if(roof==='hip'){
+  const k=Math.max(0,hw-hh);
+  body+='<polygon points="'+(-hw)+','+(-hh)+' '+hw+','+(-hh)+' '+k+',0 '+(-k)+',0" fill="url(#'+id+'-up)"/>';
+  body+='<polygon points="'+(-hw)+','+hh+' '+hw+','+hh+' '+k+',0 '+(-k)+',0" fill="url(#'+id+'-down)"/>';
+  body+='<polygon points="'+(-hw)+','+(-hh)+' '+(-k)+',0 '+(-hw)+','+hh+'" fill="'+tone(-12)+'"/>';
+  body+='<polygon points="'+hw+','+(-hh)+' '+k+',0 '+hw+','+hh+'" fill="'+tone(10)+'"/>';
+ }else{
+  body+='<rect x="'+(-hw)+'" y="'+(-hh)+'" width="'+w+'" height="'+h+'" fill="'+tone(3)+'"/>';
+  body+='<rect x="'+(-hw+.12)+'" y="'+(-hh+.12)+'" width="'+(w-.24)+'" height="'+(h-.24)+'" fill="none" stroke="'+tone(27)+'" stroke-width=".08"/>';
+ }
+ // Dark overlapping tile bands and micro seams — no new dormers, vents or imagined chimneys.
+ const band=roof==='flat'?.7:.25,tiles=.63;
+ for(let y=-hh+band;y<hh;y+=band){
+  body+='<path d="M'+(-hw)+' '+y.toFixed(3)+' H'+hw+'" fill="none" stroke="'+tone(y<0?27:-67)+'" stroke-opacity="'+(roof==='flat'?.26:.33)+'" stroke-width=".055"/>';
+  if(roof!=='flat'){
+   const shift=((Math.round((y+hh)/band)%2)*tiles/2);
+   for(let x=-hw+shift;x<hw;x+=tiles){
+    body+='<path d="M'+x.toFixed(3)+' '+(y-band*.75).toFixed(3)+'v'+(band*.65).toFixed(3)+'" fill="none" stroke="'+tone(-40)+'" stroke-opacity=".35" stroke-width=".024"/>';
+   }
+  }
+ }
+ for(let x=-hw+.18;x<hw;x+=1.26){
+  body+='<path d="M'+x.toFixed(2)+' '+(-hh)+'v'+h+'" stroke="'+tone(21)+'" stroke-opacity=".17" stroke-width=".035"/>';
+ }
+ body+='</g>';
+ if(roof==='gable'){
+  body+='<path d="M'+(-hw)+' 0 H'+hw+'" stroke="'+tone(80)+'" stroke-width=".10"/><path d="M'+(-hw)+' .08 H'+hw+'" stroke="'+tone(-77)+'" stroke-width=".075"/>';
+ }else if(roof==='hip'){
+  const k=Math.max(0,hw-hh);
+  body+='<path d="M'+(-hw)+' '+(-hh)+'L'+(-k)+' 0L'+(-hw)+' '+hh+'M'+hw+' '+(-hh)+'L'+k+' 0L'+hw+' '+hh+'M'+(-k)+' 0H'+k+'" fill="none" stroke="'+tone(68)+'" stroke-width=".10"/>';
+ }
+ // Continuous gutters, visible overhang and an unobtrusive drip-shadow.
+ body+='<rect x="'+(-hw+.045)+'" y="'+(-hh+.045)+'" width="'+(w-.09)+'" height="'+(h-.09)+'" fill="none" stroke="'+tone(72)+'" stroke-opacity=".65" stroke-width=".045"/>';
+ body+='<rect x="'+(-hw)+'" y="'+(-hh)+'" width="'+w+'" height="'+h+'" fill="none" stroke="'+tone(-75)+'" stroke-width=".08"/>';
+ return '<g transform="rotate('+ridge+')">'+body+'</g>';
 }
