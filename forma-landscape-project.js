@@ -1,5 +1,5 @@
 import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary} from './forma-landscape-project-core.js';
-import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js';
+import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL} from './forma-landscape-project-graphics.js';
 
  const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),num=(v,d=2)=>Number(v).toFixed(d);
@@ -73,7 +73,8 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
  function drawPalette(){
   const target=$('#lpPalette',modal);if(!target)return;
   target.innerHTML='<div class="lp-groups">'+GROUPS.map(g=>`<button class="${category===g.id?'active':''}" data-category="${g.id}"><strong>${g.symbol}</strong>${g.name}<small>${g.qty}</small></button>`).join('')+'</div><div class="lp-assets">'+CATALOG.filter(x=>x.group===category).map(x=>`<button class="${chosen===x.id?'active':''}" data-asset="${x.id}"><img src="${iconURL(x)}" alt="${esc(x.name)} · строго сверху" loading="lazy"><span>${esc(x.name)}</span></button>`).join('')+'</div>';
-  $$('.lp-tools button[data-tool]',modal).forEach(b=>b.classList.toggle('active',b.dataset.tool===mode));
+  $('.lp-assets img',target).forEach(img=>{img.addEventListener('error',()=>{const entry=byId(img.closest('[data-asset]')?.dataset.asset);if(entry&&!img.dataset.fallback){img.dataset.fallback='true';img.src=fallbackIconURL(entry);}})});
+  $('.lp-tools button[data-tool]',modal).forEach(b=>b.classList.toggle('active',b.dataset.tool===mode));
   $('#lpFinish',modal).disabled=points.length<(mode==='path'?2:3);
   $('#lpCancel',modal).disabled=!points.length;
   const t=$('#lpToolName',modal);if(t)t.textContent=({select:'Выбор и перемещение',place:'Размещение объекта',path:'Дорожка · точки оси',area:'Замкнутый контур',boundary:'Границы участка'})[mode]||mode;
@@ -168,6 +169,19 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
  function title(){return (doc.title||'landscape').replace(/[^0-9a-zа-яё_-]/gi,'_').slice(0,48)}
+ async function inlineSVGAssets(svg){
+  const paths=[...new Set([...svg.matchAll(/href="(\/assets\/landscape-premium\/[a-z0-9-]+\.webp\?[^\"]*)"/gi)].map(m=>m[1]))];
+  if(!paths.length)return svg;
+  const converted=await Promise.all(paths.map(async url=>{
+   try{const r=await fetch(url,{cache:'force-cache'});if(!r.ok)return [url,null];const b=await r.blob();
+    if(b.size>2_200_000||b.type!=='image/webp')return [url,null];
+    const data=await new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(f.result);f.onerror=reject;f.readAsDataURL(b)});
+    return [url,data];
+   }catch{return [url,null]}
+  }));
+  for(const [from,to]of converted){if(to)svg=svg.replaceAll('href="'+from+'"','href="'+to+'"');}
+  return svg;
+ }
  async function rasterize(labels){
   const w=doc.site.width,h=doc.site.height;
   const width=w>=h?2048:Math.max(1,Math.round(2048*w/h));
@@ -175,7 +189,7 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   // An AI revision always starts from the measured vector geometry, never a previous AI variation.
   const previous=preview;if(!labels)preview=null;
   let raw;try{raw=drawSvg()}finally{preview=previous}
-  const svg=(labels?raw:raw.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g,'')).replace('id="lpSvg"','id="exportedPlan"').replace('width="1400" height="1400"','width="'+width+'" height="'+height+'"');
+  const svg=await inlineSVGAssets((labels?raw:raw.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g,'')).replace('id="lpSvg"','id="exportedPlan"').replace('width="1400" height="1400"','width="'+width+'" height="'+height+'"'));
   const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
   try{const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(Error('SVG не открылся'));im.src=url});
    const c=document.createElement('canvas');c.width=width;c.height=height;
@@ -228,7 +242,7 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   if(b.dataset.deleteBuilding!==undefined&&selected?.startsWith('building:')){const id=selected.slice(9);checkpoint();doc.buildings=doc.buildings.filter(x=>x.id!==id);roofArts.delete(id);selected=null;save();draw();return}
   if(b.dataset.ai!==undefined){runAI('plan');return}
   if(b.dataset.roof!==undefined){runAI('roof');return}
-  if(b.dataset.svg!==undefined){download(title()+'-genplan.svg',drawSvg(),'image/svg+xml');say('Сохранён SVG генплана.');return}
+  if(b.dataset.svg!==undefined){inlineSVGAssets(drawSvg()).then(svg=>{download(title()+'-genplan.svg',svg,'image/svg+xml');say('Сохранён самостоятельный SVG генплана с встроенными изображениями.');}).catch(err=>say('SVG: '+err.message));return}
   if(b.dataset.png!==undefined){rasterize(true).then(src=>{const a=document.createElement('a');a.href=src;a.download=title()+'-2k.png';a.click()}).catch(err=>say('PNG: '+err.message));return}
   if(b.dataset.json!==undefined){download(title()+'-model.json',JSON.stringify(doc,null,2),'application/json');return}
   if(b.dataset.csv!==undefined){exportCSV();return}
@@ -257,6 +271,7 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
   });
   modal.addEventListener('cancel',e=>{e.preventDefault();if(!busy)close()});
   document.addEventListener('keydown',onKey);modal.showModal();draw();
+  enablePremiumAssets().then(ok=>{if(modal?.open){draw();if(ok)say('Библиотека: 46 детализированных изображений 1080×1080 строго сверху.');}}).catch(()=>{});
   try{[preview,roofArt]=await Promise.all([storage('preview').catch(()=>null),storage('roof').catch(()=>null)]);await Promise.all(doc.buildings.map(async b=>{const img=await storage('roof-'+b.id).catch(()=>null);if(img)roofArts.set(b.id,img)}));if(modal?.open)drawMap()}catch{}
  }
  function close(){
