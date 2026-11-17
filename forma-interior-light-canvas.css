@@ -73,3 +73,36 @@
 @media(max-width:760px){
  #faLightCanvasOverlay button.fa-light-marker[data-profile="linear"]{min-width:52px!important}
 }
+
+/* FORMA / FIXTURE SIGNATURE — truthful six-pattern catalog guide */
+#faSpaceSelector .fa-light-catalog button[data-light-add]{min-height:138px;position:relative;overflow:hidden;gap:6px!important}
+#faSpaceSelector .fa-light-catalog button[data-light-add]::after{
+ content:"";order:4;display:block;flex:0 0 29px;align-self:stretch;pointer-events:none;
+ border-radius:6px;border:1px solid #c9b99722;background-color:#151918;
+ box-shadow:inset 0 1px 1px #e6d9bb12;transition:opacity .2s ease;
+}
+#faSpaceSelector .fa-light-catalog button[data-light-add="downlight"]::after{
+ background:radial-gradient(ellipse 44% 95% at 50% 60%,#fce2aaab 0%,#eec88a65 37%,#ac946a19 77%,transparent 100%),#191d1c;
+}
+#faSpaceSelector .fa-light-catalog button[data-light-add="spot"]::after{
+ background:radial-gradient(ellipse 17% 61% at 49% 55%,#fff6d1d9 0%,#ffe8ad81 28%,transparent 85%),radial-gradient(ellipse 36% 100% at 49% 53%,#e1b97038,transparent),#191d1c;
+}
+#faSpaceSelector .fa-light-catalog button[data-light-add="wall-wash"]::after{
+ background:linear-gradient(90deg,transparent 2%,#fff0c317 12%,#ffe7a496 35%,#ffe5a4ad 62%,#ffefca27 87%,transparent 100%),#191d1c;
+}
+#faSpaceSelector .fa-light-catalog button[data-light-add="linear"]::after{
+ background:linear-gradient(180deg,transparent 13%,#fae4b220 27%,#f9e6ba68 41%,#fff4dacd 49%,#e7cc936d 58%,transparent 87%),#191d1c;
+}
+#faSpaceSelector .fa-light-catalog button[data-light-add="pendant"]::after{
+ background:radial-gradient(ellipse 85% 110% at 50% 60%,#f8dba17f,#cba46e29 65%,transparent 100%),#191d1c;
+}
+#faSpaceSelector .fa-light-catalog button[data-light-add="floor"]::after{
+ background:radial-gradient(ellipse 90% 100% at 15% 50%,#ffdaa496 0%,#e4bd7855 42%,transparent 96%),#191d1c;
+}
+#faSpaceSelector .fa-light-catalog button[data-light-add]:focus-visible{
+ outline:2px solid #e7c18b;outline-offset:3px
+}
+@media(max-width:720px){
+ #faSpaceSelector .fa-light-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #faSpaceSelector .fa-light-catalog button[data-light-add]{min-height:134px}
+}
