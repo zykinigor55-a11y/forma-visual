@@ -352,8 +352,12 @@ function updateSun(){
  sun.intensity=cfg[3]*factor;sun.color.set(val==='evening'?'#ffb87b':'#fff2db');
  scene.background=new THREE.Color(val==='night'?'#25343c':val==='evening'?'#a4a597':'#b8c7c4');
  scene.fog.color.copy(scene.background);
- const haze=(doc.atmosphere.weather==='fog')?25:(['rain','snow'].includes(doc.atmosphere.weather)?85:180);
- scene.fog.near=haze*.35;scene.fog.far=haze;
+ const extent=Math.max(doc.site.width,doc.site.height);
+ const weatherFog=doc.atmosphere.weather==='fog',wetFog=['rain','snow'].includes(doc.atmosphere.weather);
+ // Terrain and buildings MUST remain visible in every weather preset.
+ // Scale fog distance to the plot and orbit camera, not a fixed 25 metres.
+ scene.fog.near=weatherFog?Math.max(22,extent*.70):wetFog?Math.max(65,extent*1.5):Math.max(120,extent*2.2);
+ scene.fog.far=weatherFog?Math.max(110,extent*3.0):wetFog?Math.max(145,extent*3.7):Math.max(230,extent*5);
 }
 function setView(view){
  state.view=view;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
