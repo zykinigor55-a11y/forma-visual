@@ -13,6 +13,25 @@ try{
  assert.equal(await page.locator('#loadError').isVisible(),false);
  assert.ok(await page.locator('#viewport').evaluate(el=>el.width>300&&el.height>200),'WebGL canvas initialized');
  assert.equal(await page.locator('#weather').inputValue(),'sunny');
+ // These are genuine WebGL-rendered house thumbnails, not flat pictograms.
+ assert.equal(await page.locator('[data-house-preset]').count(),8);
+ await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===8,null,{timeout:30000});
+ await mkdir('artifacts/landscape-editor',{recursive:true});
+ await page.locator('#selectMainHouse').click();
+ await page.locator('[data-house-preset="brick"]').click();
+ const houseAfterBrick=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')).house);
+ assert.equal(houseAfterBrick.archStyle,'brick');
+ assert.equal(houseAfterBrick.roof,'hip');
+ assert.equal(houseAfterBrick.width,12);
+ assert.equal(houseAfterBrick.height,8);
+ await page.screenshot({path:'artifacts/landscape-editor/3d-brick-house.png'});
+ await page.locator('[data-house-preset="modern"]').click();
+ const modernHouse=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')).house);
+ assert.equal(modernHouse.roof,'flat');
+ assert.equal(modernHouse.archStyle,'modern');
+ await page.screenshot({path:'artifacts/landscape-editor/3d-modern-house.png'});
+ await page.locator('[data-house-preset="barn"]').click();
+
  await page.locator('#weather').selectOption('fog');
  assert.equal(await page.locator('#weather').inputValue(),'fog');
  await page.locator('[data-tool="surface"]').click();
@@ -35,8 +54,26 @@ try{
  await page.locator('[data-view="walk"]').click();
  assert.ok((await page.locator('#status').textContent()).includes('Walk'));
  await page.locator('[data-view="3d"]').click();
- await mkdir('artifacts/landscape-editor',{recursive:true});
+ await page.locator('#weather').selectOption('sunny');
+ // Never accept an empty solid-colour viewport as a working 3D scene.
+ const sample=await page.locator('#viewport').evaluate(canvas=>{
+  const c=document.createElement('canvas');c.width=48;c.height=32;
+  const ctx=c.getContext('2d');ctx.drawImage(canvas,0,0,c.width,c.height);
+  const pixels=ctx.getImageData(0,0,c.width,c.height).data,colors=new Set();
+  for(let i=0;i<pixels.length;i+=4)colors.add((pixels[i]>>3)+'/'+(pixels[i+1]>>3)+'/'+(pixels[i+2]>>3));
+  return colors.size;
+ });
+ assert.ok(sample>16,'3D viewport must contain visible textured ground and house (colors='+sample+')');
  await page.screenshot({path:'artifacts/landscape-editor/3d-desktop.png'});
+ await page.locator('#weather').selectOption('fog');
+ const fogSample=await page.locator('#viewport').evaluate(canvas=>{
+  const c=document.createElement('canvas');c.width=48;c.height=32;const ctx=c.getContext('2d');
+  ctx.drawImage(canvas,0,0,c.width,c.height);const p=ctx.getImageData(0,0,c.width,c.height).data,colors=new Set();
+  for(let i=0;i<p.length;i+=4)colors.add((p[i]>>3)+'/'+(p[i+1]>>3)+'/'+(p[i+2]>>3));
+  return colors.size;
+ });
+ assert.ok(fogSample>12,'Fog must not hide the entire plot (colors='+fogSample+')');
+ await page.screenshot({path:'artifacts/landscape-editor/3d-fog-visible.png'});
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true,isMobile:true});
  mobile.on('pageerror',error=>errors.push('mobile '+String(error)));
  await mobile.goto(base+'/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:30000});
