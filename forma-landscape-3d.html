@@ -188,7 +188,7 @@ function save(){
  catch(e){status('Сохранение не удалось: '+e.message)}
 }
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
-function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild()}
+function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function initialize(){
  document.body.dataset.mobilePanel='tools';
  document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>{
