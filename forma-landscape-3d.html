@@ -110,13 +110,14 @@ header .header-right button{padding:6px;font-size:10px}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js';
-import {heightAt, inParcel, terrainTriangles, roofTriangles} from './forma-landscape-3d-geometry.js';
+import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
+import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 const $=s=>document.querySelector(s);
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0;const GRID=48;
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0;const GRID=48;const houseThumbs=new Map();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -127,7 +128,7 @@ const choices={
  site:[['rect','Прямоугольный участок'],['outline','Свободный контур (точки)']],
  surface:[['concrete-pavers','Дорожка · плиты'],['universal','Газон'],['granite-chips','Отсыпка']],
  terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['smooth','Выровнять грунт']],
- build:[['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
+ build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
  plant:[['pine','Сосна'],['spruce','Ель'],['birch','Берёза'],['oak','Дуб'],['maple','Клён'],['hydrangea','Гортензия'],['juniper','Можжевельник']],
  water:[['formal-pond','Водоём (контур)']],
@@ -163,7 +164,7 @@ function initialize(){
  scene.add(new THREE.HemisphereLight(0xffffff,0x52604e,2));
  const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
- drawTools();rebuild();resize();addEvents();setView('3d');animate();
+ state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());
  const previousDrawing=localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
@@ -174,7 +175,7 @@ function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMa
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
 function mark(group,key){group.userData.key=key;pickables.push(group);return group}
 function rebuild(){
- while(root.children.length){const o=root.children[0];root.remove(o);o.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
+ while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
  pickables=[];
  const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
  geo.setAttribute('position',new THREE.BufferAttribute(terrainTriangles(doc.site,heightmap,GRID),3));
@@ -200,21 +201,7 @@ function rebuild(){
  refreshDraft();updateSun();renderProps();renderer.render(scene,camera);
 }
 function buildingGroup(b){
- const g=new THREE.Group(),w=b.width||5,d=b.height||5,roof=b.roof||'gable';
- const body=mesh(new THREE.BoxGeometry(w,3.4,d),material(b.type==='garage'?'#b1b6af':'#d9d6c8'));
- body.position.y=1.8;g.add(body);
- const roofMat=material(b.roofColor||'#343b3d',.7);
- if(roof==='flat'){const r=mesh(new THREE.BoxGeometry(w+.35,.22,d+.35),roofMat);r.position.y=3.56;g.add(r)}
- else{
-  // Correct geometric roof: two flat slopes on a gable; four planes on a hip.
-  const roofGeo=new THREE.BufferGeometry();
-  const rise=Math.max(.45,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.20));
-  roofGeo.setAttribute('position',new THREE.BufferAttribute(roofTriangles(w,d,roof,3.6,rise),3));
-  roofGeo.computeVertexNormals();roofMat.side=THREE.DoubleSide;g.add(mesh(roofGeo,roofMat));
- }
- const door=mesh(new THREE.BoxGeometry(Math.min(1.2,w*.2),2,.11),material('#4a5354'));door.position.set(w*.22,1.05,d/2+.08);g.add(door);
- for(const x of [-.26,.18]){const win=mesh(new THREE.BoxGeometry(Math.min(1.3,w*.2),1.1,.08),material('#40545a',.2,.2));win.position.set(w*x,2.03,d/2+.095);g.add(win)}
- return g;
+ return createArchitecturalBuilding(THREE,b,{night:doc.atmosphere.time==='night'});
 }
 function buildBuilding(b,key){const g=buildingGroup(b),p=pos(b.x,b.y);g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=-(b.rotation||0)*Math.PI/180;mark(g,key);root.add(g)}
 function addCylinderBetween(g,a,b,r=.06,color='#8d9080'){
@@ -362,7 +349,7 @@ function place(world){
 
  }
  push();
- if(tool==='build'){doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:6,height:5,rotation:0,roof:'gable',roofColor:'#454543'})}
+ if(tool==='build'){const preset=housePreset(state.housePreset||doc.house.archStyle);doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:Math.min(8,doc.site.width*.35),height:Math.min(7,doc.site.height*.35),rotation:0,roof:preset.roof,roofColor:'#454543',archStyle:preset.id,roofRise:1.4})}
  else if(tool==='plant'||tool==='landscape'||tool==='light'){
   const good=catalog(state.placing);if(!good){status('Объект недоступен в каталоге');return}
   doc.objects.push({id:id(),catalogId:state.placing,type:good.group,x:point.x,y:point.y,diameter:good.diameter||1.6,height:good.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):good.group==='lights'?1.2:.95,rotation:0})
