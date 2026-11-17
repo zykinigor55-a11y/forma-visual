@@ -63,9 +63,15 @@ def glow(bg,x,y,rad,alpha=160):
 def paste_photo(bg,source,frac=.70,yoffset=.04):
  object_image=Image.open(source).convert("RGBA")
  # Transparent product photo, not a fake overhead render.
- bbox=object_image.getbbox()
- if bbox:object_image=object_image.crop(bbox)
- maxw,maxh=int(SIZE*frac),int(SIZE*.80)
+ # Remove nearly transparent halos from cutout borders before scaling.
+ # Without this threshold product silhouettes occupy <15% of the picture.
+ mask=object_image.getchannel("A")
+ bbox=mask.point(lambda a:255 if a>38 else 0).getbbox()
+ if bbox:
+  pad=14
+  bbox=(max(0,bbox[0]-pad),max(0,bbox[1]-pad),min(object_image.width,bbox[2]+pad),min(object_image.height,bbox[3]+pad))
+  object_image=object_image.crop(bbox)
+ maxw,maxh=int(SIZE*frac),int(SIZE*.88)
  object_image.thumbnail((maxw,maxh),Image.Resampling.LANCZOS)
  x=(SIZE-object_image.width)//2
  y=max(30,(SIZE-object_image.height)//2+int(SIZE*yoffset))
