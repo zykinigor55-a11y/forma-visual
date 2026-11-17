@@ -1,5 +1,5 @@
 import './forma-materials-upload.js';
-import {PLAN_STYLES,PLAN_PRESENTATIONS,PLAN_2D_STYLES,normalizeCrop,assertFrameBinding,assertRoomReady} from './forma-image-workflows.js?v=plan-gpt-2d-v1';
+import {PLAN_STYLES,PLAN_PRESENTATIONS,PLAN_2D_STYLES,normalizeCrop,assertFrameBinding,assertRoomReady} from './forma-image-workflows.js?v=five-concept-presentations-v2';
 import {canvas,loadImage} from './forma-local-composite.js';
 const $=s=>document.querySelector(s),bridge=()=>window.FORMA_ART_BRIDGE;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
