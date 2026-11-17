@@ -95,7 +95,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  const r=rng(seed^0x8fc1a0),conifer=['pine','spruce','juniper','thuja-globe'].includes(id);
  const crown=clamp(diameter/2,.1,15);
  const density=shrub?Math.round(220*quality):Math.round((id==='pine'?440:id==='spruce'?620:720)*quality);
- const count=clamp(density,shrub?80:150,1000),geo=new T.IcosahedronGeometry(1,1);
+ const count=clamp(density,shrub?80:150,1000),geo=new T.SphereGeometry(1,9,6);
  const verts=geo.getAttribute('position');
  // Break each lobe into botanical irregularity, never a smooth perfect ball.
  for(let i=0;i<verts.count;i++){
