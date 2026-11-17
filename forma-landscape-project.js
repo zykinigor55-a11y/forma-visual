@@ -73,8 +73,8 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
  function drawPalette(){
   const target=$('#lpPalette',modal);if(!target)return;
   target.innerHTML='<div class="lp-groups">'+GROUPS.map(g=>`<button class="${category===g.id?'active':''}" data-category="${g.id}"><strong>${g.symbol}</strong>${g.name}<small>${g.qty}</small></button>`).join('')+'</div><div class="lp-assets">'+CATALOG.filter(x=>x.group===category).map(x=>`<button class="${chosen===x.id?'active':''}" data-asset="${x.id}"><img src="${iconURL(x)}" alt="${esc(x.name)} · строго сверху" loading="lazy"><span>${esc(x.name)}</span></button>`).join('')+'</div>';
-  $('.lp-assets img',target).forEach(img=>{img.addEventListener('error',()=>{const entry=byId(img.closest('[data-asset]')?.dataset.asset);if(entry&&!img.dataset.fallback){img.dataset.fallback='true';img.src=fallbackIconURL(entry);}})});
-  $('.lp-tools button[data-tool]',modal).forEach(b=>b.classList.toggle('active',b.dataset.tool===mode));
+  $$('.lp-assets img',target).forEach(img=>{img.addEventListener('error',()=>{const entry=byId(img.closest('[data-asset]')?.dataset.asset);if(entry&&!img.dataset.fallback){img.dataset.fallback='true';img.src=fallbackIconURL(entry);}})});
+  $$('.lp-tools button[data-tool]',modal).forEach(b=>b.classList.toggle('active',b.dataset.tool===mode));
   $('#lpFinish',modal).disabled=points.length<(mode==='path'?2:3);
   $('#lpCancel',modal).disabled=!points.length;
   const t=$('#lpToolName',modal);if(t)t.textContent=({select:'Выбор и перемещение',place:'Размещение объекта',path:'Дорожка · точки оси',area:'Замкнутый контур',boundary:'Границы участка'})[mode]||mode;
