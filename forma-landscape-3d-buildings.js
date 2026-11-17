@@ -110,7 +110,7 @@ function edgeBeam(g,T,a,b,thickness,material){
 function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
  const roof=b.roof||housePreset(b.archStyle).roof,overhang=Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
  const dark=mat(T,'#22282B',.75,.38),gable=roof==='gable',hip=roof==='hip';
- const rise=Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*(b.archStyle==='aframe'?.74:.22)));
+ const rise=b.archStyle==='aframe'?Math.max(4.2,Math.min(8,Number(b.roofRise)||0,w*.74)):Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
  if(roof==='flat'){
   box(g,T,w+overhang*2,.19,d+overhang*2,0,bodyHeight+.16,0,roofMaterial);
   const lip=mat(T,'#32393A',.8,.15);
@@ -157,7 +157,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const w=Math.max(2,Number(b.width)||8),d=Math.max(2,Number(b.height)||7);
  const g=new THREE.Group();g.name='architecture-'+style;
  const isGarage=b.type==='garage',isGazebo=b.type==='gazebo',isBath=b.type==='bath';
- const bodyHeight=style==='aframe'?3.25:(isGarage?2.9:isGazebo?2.9:['barn','classic','timber','brick'].includes(style)?4.3:3.5);
+ const bodyHeight=style==='aframe'?.65:(isGarage?2.9:isGazebo?2.9:['barn','classic','timber','brick'].includes(style)?4.3:3.5);
  const shades={
   darkwood:['#53504C','#293237'],lightwood:['#D7C7B0','#323D40'],
   walnut:['#8A624D','#242D32'],brick:['#B38C7A','#303A3C'],
@@ -180,6 +180,23 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   for(const x of [-w/2+.2,w/2-.2])for(const z of [-d/2+.2,d/2-.2]){
    box(g,THREE,.2,bodyHeight-.4,.2,x,bodyHeight/2+.2,z,mat(THREE,'#80664E',.79));
   }
+ }else if(style==='aframe'){
+  // The A-frame has a real triangular end wall and low roof eaves; it does not
+  // retain the rectangular walls of an ordinary house.
+  const rise=Math.max(4.2,Math.min(8,Number(b.roofRise)||0,w*.74));
+  const glass=new THREE.MeshPhysicalMaterial({color:night?'#5D6C67':'#1D4048',metalness:.2,roughness:.1,clearcoat:.9,side:THREE.DoubleSide});
+  const triangle=[-w*.42,.60,d/2+.03,w*.42,.60,d/2+.03,0,.60+rise*.81,d/2+.03];
+  const front=new THREE.BufferGeometry();front.setAttribute('position',new THREE.Float32BufferAttribute(triangle,3));front.computeVertexNormals();add(g,THREE,front,glass);
+  const dark=mat(THREE,'#1A2224',.5,.35);
+  edgeBeam(g,THREE,[-w*.42,.60,d/2+.11],[0,.60+rise*.81,d/2+.11],.08,dark);
+  edgeBeam(g,THREE,[0,.60+rise*.81,d/2+.11],[w*.42,.60,d/2+.11],.08,dark);
+  box(g,THREE,.075,rise*.65,.10,0,.60+rise*.34,d/2+.13,dark);
+  box(g,THREE,w*.8,.07,.12,0,1.95,d/2+.12,dark);
+  const door=doorGroup(THREE,1.1,2.0,true);door.position.set(w*.12,1.58,d/2+.20);g.add(door);
+  // Rear facade intentionally solid; no inferred balcony or skylights.
+  const rear=new THREE.BufferGeometry();
+  rear.setAttribute('position',new THREE.Float32BufferAttribute([-w*.42,.60,-d/2-.03,0,.60+rise*.81,-d/2-.03,w*.42,.60,-d/2-.03],3));
+  rear.computeVertexNormals();const facing=add(g,THREE,rear,wallMaterial);facing.material.side=THREE.DoubleSide;
  }else{
   box(g,THREE,w,bodyHeight-.48,d,0,.48+(bodyHeight-.48)/2,0,wallMaterial);
   const darkTrim=mat(THREE,'#262B2D',.52,.34);
@@ -212,12 +229,19 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
    }
   }
   // Crisp, projecting corner trim gives real highlights and depth.
+  if(style==='timber'){
+   const seam=mat(THREE,'#3B2D29',.87,.02);
+   for(let y=.72;y<bodyHeight-.12;y+=.32){
+    box(g,THREE,w,.017,.025,0,y,d/2+.018,seam);
+    box(g,THREE,w,.017,.025,0,y,-d/2-.018,seam);
+   }
+  }
   if(['barn','scandi','modern','classic'].includes(style)){
    for(const x of [-w/2,w/2])for(const z of [-d/2,d/2])
     box(g,THREE,.065,bodyHeight-.46,.065,x,bodyHeight/2+.2,z,darkTrim);
   }
  }
  roofGeometry(g,THREE,b,w,d,0,bodyHeight,roofMaterial,preset.roofFinish);
- g.userData.archStyle=style;g.userData.footprint={width:w,height:d};
+ g.userData.archStyle=style;g.userData.footprint={width:w,height:d};g.userData.textures=[wallTex,roofTex];
  return g;
 }
