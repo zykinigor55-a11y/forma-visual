@@ -125,3 +125,165 @@
  #faLandscapeMasterplan .lp-assets button{min-height:150px}
  #faLandscapeMasterplan .lp-assets button span{font-size:11px}
 }
+
+
+/* ── Landscape precision tools + dedicated cinematic render experience ── */
+#faLandscapeMasterplan [hidden]{display:none!important}
+#faLandscapeMasterplan .lp-category-shortcuts{
+  display:flex;align-items:center;gap:8px;overflow:auto;flex:none;padding:10px 14px;
+  background:#1d2022;border-bottom:1px solid #3e4140;scrollbar-width:thin;
+}
+#faLandscapeMasterplan .lp-category-shortcuts button{
+  flex:none;border:1px solid #53554f;background:#303331;color:#e6ded0;
+  border-radius:10px;white-space:nowrap;font:600 11px/1.2 system-ui,sans-serif;
+  padding:10px 12px;min-height:40px;transition:border-color .15s,background .15s;
+}
+#faLandscapeMasterplan .lp-category-shortcuts button:hover{
+  background:#41443d;border-color:#baab8b;
+}
+#faLandscapeMasterplan .lp-path-mode{
+  display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+  padding:6px;border:1px solid #595044;border-radius:9px;
+  background:#2a2a28;
+}
+#faLandscapeMasterplan #lpSelectedMaterial{font-size:10px;color:#e6ccaa;font-weight:700;max-width:155px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#faLandscapeMasterplan .lp-path-mode button{
+  background:#343635;border:1px solid #605950;color:#e4dccc;
+  border-radius:7px;font-size:10px;padding:9px 11px;min-height:36px;
+}
+#faLandscapeMasterplan .lp-path-mode button.active{
+  background:#c2a17c;border-color:#d8b68e;color:#221e1a;font-weight:700
+}
+#faLandscapeMasterplan #lpCancel:not(:disabled){border-color:#ae7c75;color:#f0b5ae}
+#faLandscapeMasterplan .lp-render-overlay{
+  position:absolute;inset:0;z-index:100000;overflow:auto;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(12px,3vw,40px);background:#0b0d0ff8;color:#f3f0e9;
+}
+#faLandscapeMasterplan .lp-render-panel{
+  width:min(1060px,100%);height:min(770px,100%);
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(300px,.95fr);
+  grid-template-rows:72px minmax(0,1fr);
+  border:1px solid #56504b;border-radius:20px;overflow:hidden;
+  background:linear-gradient(143deg,#272a2d,#141719 75%);
+  box-shadow:0 26px 110px #000b;
+}
+#faLandscapeMasterplan .lp-render-header{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,3vw,34px);border-bottom:1px solid #424347;
+  background:#1b1d20;
+}
+#faLandscapeMasterplan .lp-render-brand{
+  font:700 21px/1 system-ui,sans-serif;letter-spacing:.22em;color:#f9f7f3;
+}
+#faLandscapeMasterplan .lp-render-brand span{
+  margin-left:15px;vertical-align:middle;font:600 10px/1.5 system-ui,sans-serif;
+  letter-spacing:.12em;color:#bca78d;
+}
+#faLandscapeMasterplan .lp-render-live{
+  font:600 10px/1.5 system-ui,sans-serif;letter-spacing:.12em;color:#b3c4bd;
+  display:flex;align-items:center;gap:11px;
+}
+#faLandscapeMasterplan .lp-render-dot{
+  width:7px;height:7px;border-radius:50%;background:#bcd6b4;
+  box-shadow:0 0 16px #98bd88;animation:lpPulse 2.1s ease-in-out infinite;
+}
+#faLandscapeMasterplan .lp-render-preview{
+  display:grid;place-items:center;min-height:0;overflow:hidden;
+  position:relative;background:
+  radial-gradient(circle at 48% 43%,#354442 0%,#1b2225 30%,#121719 69%),
+  #15191b;border-right:1px solid #383d3e;
+}
+#faLandscapeMasterplan .lp-render-preview:before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.11;
+  background:linear-gradient(transparent 98%,#d8d9c6 99%),linear-gradient(90deg,transparent 98%,#d8d9c6 99%);
+  background-size:38px 38px;
+}
+#faLandscapeMasterplan #lpRenderOrbit{
+  width:min(54%,360px);aspect-ratio:1;position:relative;
+  filter:drop-shadow(0 9px 38px #c2ba9570);
+}
+#faLandscapeMasterplan #lpRenderOrbit>span{
+  display:block;position:absolute;border:1px solid #c0b9a364;border-radius:50%;
+  animation:lpOrbit 7s linear infinite;
+}
+#faLandscapeMasterplan #lpRenderOrbit>span:nth-child(1){inset:4%;border-style:dashed;animation-duration:9s}
+#faLandscapeMasterplan #lpRenderOrbit>span:nth-child(2){inset:17%;border-color:#c9ae86a8;animation-duration:14s;animation-direction:reverse}
+#faLandscapeMasterplan #lpRenderOrbit>span:nth-child(3){inset:30%;border-color:#f6ead5b9;animation-duration:7s}
+#faLandscapeMasterplan #lpRenderOrbit i{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font:400 clamp(65px,9vw,130px)/1 Georgia,serif;
+  color:#e3d2b7;text-shadow:0 0 34px #d4ad8970;
+  animation:lpPulse 2.9s ease-in-out infinite;
+}
+#faLandscapeMasterplan #lpRenderOutputImage{
+  display:block;width:100%;height:100%;object-fit:contain;position:relative;z-index:1;
+}
+#faLandscapeMasterplan .lp-render-content{
+  display:flex;flex-direction:column;justify-content:center;padding:clamp(21px,4vw,48px);
+  min-width:0;overflow-y:auto;
+}
+#faLandscapeMasterplan .lp-render-eyebrow{
+  color:#d7b893;font-size:10px;font-weight:650;letter-spacing:.17em;margin-bottom:21px;
+}
+#faLandscapeMasterplan #lpRenderTitle{
+  color:#f4f1e9;font-size:clamp(24px,3vw,38px);line-height:1.12;letter-spacing:-.035em;
+  font-weight:540;margin:0 0 14px;
+}
+#faLandscapeMasterplan #lpRenderDesc{color:#c8c5bc;line-height:1.62;font-size:13px;margin:0 0 30px;min-height:36px}
+#faLandscapeMasterplan .lp-render-timeline{display:flex;flex-direction:column;gap:7px}
+#faLandscapeMasterplan .lp-render-timeline>div{
+  display:flex;align-items:flex-start;gap:16px;border:1px solid #403f3d;
+  border-radius:11px;padding:15px 16px;opacity:.51;transition:opacity .3s,background .3s,border-color .3s;
+}
+#faLandscapeMasterplan .lp-render-timeline>div.is-active{opacity:1;background:#383630;border-color:#aa967d}
+#faLandscapeMasterplan .lp-render-timeline b{font:600 12px/1.5 system-ui,sans-serif;color:#d4b58d}
+#faLandscapeMasterplan .lp-render-timeline span{font:600 12px/1.5 system-ui,sans-serif;color:#f2ebdf}
+#faLandscapeMasterplan .lp-render-timeline small{display:block;margin-top:4px;font-size:10px;font-weight:400;color:#b8b7b1}
+#faLandscapeMasterplan .lp-render-bottom{
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin-top:26px;border-top:1px solid #474540;padding-top:15px;
+  color:#d6c9b6;font-size:10px;line-height:1.5;
+}
+#faLandscapeMasterplan .lp-render-note{font-size:10px;line-height:1.5;color:#999d9c;margin:15px 0 0}
+#faLandscapeMasterplan .lp-render-result-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+#faLandscapeMasterplan .lp-render-result-actions button{
+  flex:1 1 auto;border:1px solid #b89c77;background:#bca27f;color:#1b1c1c;
+  padding:13px;border-radius:9px;font-size:11px;font-weight:700;
+}
+#faLandscapeMasterplan .lp-render-result-actions button:last-child{background:transparent;color:#e4d6bf}
+#faLandscapeMasterplan .lp-render-overlay[data-stage="error"] .lp-render-orbit{display:none}
+@keyframes lpOrbit{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes lpPulse{50%{opacity:.48;filter:brightness(.78)}}
+@media(max-width:900px){
+ #faLandscapeMasterplan .lp-render-panel{grid-template-columns:minmax(0,.8fr) minmax(0,1fr)}
+}
+@media(max-width:760px){
+ #faLandscapeMasterplan .lp-category-shortcuts{gap:6px;padding:8px;min-height:51px}
+ #faLandscapeMasterplan .lp-category-shortcuts button{min-height:34px;font-size:10px;padding:8px 11px}
+ #faLandscapeMasterplan .lp-path-controls{align-items:stretch}
+ #faLandscapeMasterplan .lp-path-mode{width:100%;justify-content:space-between}
+ #faLandscapeMasterplan .lp-path-mode #lpSelectedMaterial{flex:1;font-size:9px}
+ #faLandscapeMasterplan .lp-path-mode button{font-size:9px;min-height:32px;padding:7px}
+ #faLandscapeMasterplan .lp-render-overlay{padding:0;align-items:stretch}
+ #faLandscapeMasterplan .lp-render-panel{
+  height:100%;max-height:none;border-radius:0;border:0;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:55px minmax(190px,30dvh) minmax(0,1fr);
+ }
+ #faLandscapeMasterplan .lp-render-header{grid-column:1;grid-row:1;padding:0 18px}
+ #faLandscapeMasterplan .lp-render-brand{font-size:16px}
+ #faLandscapeMasterplan .lp-render-brand span{font-size:8px;margin-left:5px}
+ #faLandscapeMasterplan .lp-render-live{font-size:8px}
+ #faLandscapeMasterplan .lp-render-preview{grid-row:2;border-right:0;border-bottom:1px solid #424340}
+ #faLandscapeMasterplan .lp-render-content{grid-row:3;padding:24px 22px;justify-content:flex-start}
+ #faLandscapeMasterplan #lpRenderTitle{font-size:26px;margin-bottom:9px}
+ #faLandscapeMasterplan #lpRenderDesc{font-size:12px;margin-bottom:17px;min-height:0}
+ #faLandscapeMasterplan .lp-render-timeline{gap:5px}
+ #faLandscapeMasterplan .lp-render-timeline>div{padding:10px 12px;gap:11px}
+ #faLandscapeMasterplan .lp-render-bottom{margin-top:12px;padding-top:12px}
+ #faLandscapeMasterplan .lp-render-eyebrow{margin-bottom:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ #faLandscapeMasterplan .lp-render-overlay *,#faLandscapeMasterplan .lp-assets button{animation:none!important;transition:none!important}
+}
