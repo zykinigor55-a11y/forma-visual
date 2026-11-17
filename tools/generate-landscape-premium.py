@@ -318,6 +318,32 @@ def fixture(name):
   d.ellipse((489,489,591,591),fill=(255,224,174,252))
  return im
 
+def photo_material(name):
+ """Photographic CC0 scanned surfaces from ambientCG / Poly Haven.
+ Attribution and exact source links are listed in assets/landscape/SOURCES.md.
+ Preserve native source grain. Never invent a tiled stone pattern.
+ """
+ from PIL import ImageEnhance, ImageOps
+ original={
+  "concrete-pavers":"concrete",
+  "granite-setts":"granite",
+  "clinker-herringbone":"clinker",
+  "slate-pavers":"slate",
+  "marble-chips":"white-gravel",
+  "granite-chips":"gravel",
+  "river-pebble":"white-gravel",
+  "pine-bark":"bark",
+ }
+ file=Path("assets/landscape/items")/(original[name]+".webp")
+ if not file.exists():return ground(name,"fills" if name.endswith("chips") or name=="pine-bark" else "pavers")
+ im=Image.open(file).convert("RGB")
+ im=ImageOps.fit(im,(SIZE,SIZE),method=Image.Resampling.LANCZOS)
+ if name=="granite-chips":im=ImageEnhance.Contrast(im).enhance(1.14)
+ if name=="river-pebble":im=ImageEnhance.Color(im).enhance(.88)
+ if name=="marble-chips":im=ImageEnhance.Brightness(im).enhance(1.10)
+ im=im.filter(ImageFilter.UnsharpMask(radius=1.3,percent=92,threshold=3))
+ return im.convert("RGBA")
+
 def photo_lawn(name):
  """Real CC0 photographed lawn texture from ambientCG Grass001, close enough
  to see individual blades. Sources attributed in assets/landscape/SOURCES.md.
@@ -357,6 +383,7 @@ def run():
    elif group=="boulders":img=stone(name)
    elif group=="lights":img=fixture(name)
    elif group=="lawns":img=photo_lawn(name)
+   elif name in {"concrete-pavers","granite-setts","clinker-herringbone","slate-pavers","marble-chips","granite-chips","river-pebble","pine-bark"}:img=photo_material(name)
    else:img=ground(name,group)
    # Unpremultiply and preserve source alpha where appropriate.
    if img.size!=(SIZE,SIZE):img=img.resize((SIZE,SIZE),Image.Resampling.LANCZOS)
