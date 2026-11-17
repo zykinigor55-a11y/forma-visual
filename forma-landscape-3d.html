@@ -438,11 +438,14 @@ function chooseTool(t){
   const panel=document.createElement('div');panel.className='brush-panel';
   panel.innerHTML='<label><input id="useLandscapeBrush" type="checkbox" checked>Рисовать кистью непрерывно</label>'+
     '<label for="landscapeBrushRadius">Диаметр кисти: <output id="brushDiameter">2.0 м</output></label>'+
-    '<input id="landscapeBrushRadius" type="range" min=".5" max="8" step=".5" value="2">'+
+    '<input id="landscapeBrushRadius" type="range" min=".5" max="10" step=".5" value="2">'+
+    (t==='plant'?'<label for="plantBrushDensity">Плотность посадки: <output id="plantDensityValue">1.0×</output></label><input id="plantBrushDensity" type="range" min=".5" max="2" step=".25" value="1"><label><input type="checkbox" id="erasePlantBrush">Ластик растений (не затрагивает покрытия)</label>':'')+
     '<div class="hint">'+(t==='plant'?'Плавно ведите курсором для посадки растений с правильным расстоянием.':'Газон и отсыпка наносятся непрерывной полосой. Для отдельных зон выключите кисть и рисуйте полигон.')+'<br>ЛКМ — кисть; ПКМ — вращение; колесо — масштаб.</div>';
   $('#library').appendChild(panel);
   const slider=panel.querySelector('#landscapeBrushRadius');
   slider.oninput=()=>{panel.querySelector('#brushDiameter').textContent=Number(slider.value).toFixed(1)+' м';};
+  const density=panel.querySelector('#plantBrushDensity');
+  if(density)density.oninput=()=>panel.querySelector('#plantDensityValue').textContent=Number(density.value).toFixed(2)+'×';
  }
 
  if(t==='select')status('Выбирайте объекты щелчком, перетаскивайте мышью, редактируйте размеры справа.');
@@ -785,7 +788,7 @@ function updateBrushCursor(event){
  const ground=active?hitGround(event):null;
  if(!ground){brushCursor.visible=false;return}
  const radius=state.tool==='terrain'?Math.max(.5,Number($('#brushRadius')?.value||3)):
- state.tool==='plant'?Math.max(.3,(Number(catalog(state.placing)?.diameter)||1.5)/2):
+ state.tool==='plant'?Math.max(.25,brushDiameter()/2):
  Math.max(.25,brushDiameter()/2);
  brushCursor.scale.set(radius,radius,1);
  brushCursor.position.set(ground.x,terrainAt(ground.x,ground.z)+.15,ground.z);
@@ -801,10 +804,13 @@ function beginBrush(world){
  if(state.tool==='surface'&&!['lawns','fills'].includes(entry?.group))return false;
  if(state.tool==='plant'&&!['trees','shrubs'].includes(entry?.group))return false;
  push();const first=fromWorld(world);
- brushStroke={mode:state.tool,entry,points:[first],last:first,lastPlant:first,object:null};
+ brushStroke={mode:state.tool,entry,points:[first],last:first,lastPlant:first,object:null,
+  erase:state.tool==='plant'&&$('#erasePlantBrush')?.checked===true};
  if(state.tool==='surface'){
   const o={id:id(),catalogId:state.placing,type:entry.group,geometry:'strip',width:brushDiameter(),points:[first,{x:first.x+.025,y:first.y}]};
   doc.objects.push(o);brushStroke.object=o;
+ }else if(brushStroke.erase){
+  erasePlantsAt(first,brushDiameter()/2);
  }else{
   const diameter=Number(entry.diameter)||1.6;
   doc.objects.push({id:id(),catalogId:state.placing,type:entry.group,x:first.x,y:first.y,
@@ -813,18 +819,34 @@ function beginBrush(world){
  state.painting=true;canvas.setPointerCapture?.(state.activePointer);
  rebuild();return true;
 }
+function erasePlantsAt(point,radius){
+ const before=doc.objects.length;
+ doc.objects=doc.objects.filter(o=>{
+  const group=catalog(o.catalogId)?.group;
+  return !['trees','shrubs'].includes(group)||!Number.isFinite(Number(o.x))||
+    Math.hypot(o.x-point.x,o.y-point.y)>radius;
+ });
+ return before-doc.objects.length;
+}
 function advanceBrush(world){
  if(!state.painting||!brushStroke||!world)return;
  const point=fromWorld(world);if(!inParcel(point,doc.site))return;
  const stroke=brushStroke;
- if(stroke.mode==='surface'){
+ if(stroke.erase){
+  const points=strokeSample(stroke.last,point,Math.max(.2,brushDiameter()*.18));
+  let removed=0;
+  for(const p of points)if(inParcel(p,doc.site))removed+=erasePlantsAt(p,brushDiameter()/2);
+  stroke.last=point;
+  if(removed)scheduleBrushRebuild();
+ }else if(stroke.mode==='surface'){
   const step=Math.max(.16,brushDiameter()*.20);
   const sampled=strokeSample(stroke.last,point,step);
   let changed=false;
   for(const p of sampled){if(inParcel(p,doc.site)&&appendBrushPoint(stroke.points,p,step*.5)){changed=true;stroke.last=p}}
   if(changed){stroke.object.points=stroke.points.length<2?[stroke.points[0],{x:stroke.points[0].x+.025,y:stroke.points[0].y}]:stroke.points.slice();scheduleBrushRebuild();}
  }else{
-  const spacing=Math.max(.5,(Number(stroke.entry?.diameter)||1.5)*.75);
+  const density=Math.max(.5,Number($('#plantBrushDensity')?.value||1));
+  const spacing=Math.max(.38,(Number(stroke.entry?.diameter)||1.5)*.75/density);
   const items=plantScatterPositions(stroke.lastPlant,point,spacing);
   let placed=0;
   for(const p of items){
@@ -844,7 +866,7 @@ function finishBrush(){
  }
  brushStroke=null;state.painting=false;controls.enabled=state.view!=='walk';
  if(brushRefreshFrame){cancelAnimationFrame(brushRefreshFrame);brushRefreshFrame=0}
- save();rebuild();status('Озеленение кистью сохранено. ПКМ вращает камеру, ЛКМ редактирует участок.');
+ save();rebuild();status('Кисть завершена. Посадки и высоты сохранены, ПКМ вращает сцену.');
 }
 function addEvents(){
  const down=e=>{
