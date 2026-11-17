@@ -217,6 +217,8 @@ import {assetSVG,iconURL,roofingSVG} from './forma-landscape-project-graphics.js
    for(const [id,x,y] of samples){const entry=byId(id);doc.objects.push({id:uid(),catalogId:id,type:entry.group,x:x*doc.site.width,y:y*doc.site.height,diameter:entry.diameter,rotation:0})}
    save();draw();say('Редактируемый эскиз посадок готов. Проверьте отступы и размеры взрослых крон.');return;
   }
+  if(b.dataset.addBuilding!==undefined){if(doc.buildings.length>=24){say('Лимит — 24 дополнительных строения.');return}checkpoint();const type=b.dataset.addBuilding,aux={id:'b-'+uid().slice(2),type,x:doc.site.width*.76,y:doc.site.height*.7,width:type==='garage'?7:type==='bath'?6:4,height:type==='garage'?6:4,rotation:0,roof:'gable',roofColor:'#454543',photo:null};doc.buildings.push(aux);selected='building:'+aux.id;save();draw();say('Строение добавлено. Укажите его точное положение, размеры и поворот.');return}
+  if(b.dataset.deleteBuilding!==undefined&&selected?.startsWith('building:')){const id=selected.slice(9);checkpoint();doc.buildings=doc.buildings.filter(x=>x.id!==id);roofArts.delete(id);selected=null;save();draw();return}
   if(b.dataset.ai!==undefined){runAI('plan');return}
   if(b.dataset.roof!==undefined){runAI('roof');return}
   if(b.dataset.svg!==undefined){download(title()+'-genplan.svg',drawSvg(),'image/svg+xml');say('Сохранён SVG генплана.');return}
