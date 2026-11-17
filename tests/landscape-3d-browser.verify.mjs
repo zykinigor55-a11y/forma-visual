@@ -28,8 +28,8 @@ try{
  assert.ok(await page.locator('#viewport').evaluate(el=>el.width>300&&el.height>200),'WebGL canvas initialized');
  assert.equal(await page.locator('#weather').inputValue(),'sunny');
  // These are genuine WebGL-rendered house thumbnails, not flat pictograms.
- assert.equal(await page.locator('[data-house-preset]').count(),8);
- await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===8,null,{timeout:30000});
+ assert.equal(await page.locator('[data-house-preset]').count(),12);
+ await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===12,null,{timeout:30000});
  await mkdir('artifacts/landscape-editor',{recursive:true});
  await page.locator('#selectMainHouse').click();
  await page.locator('[data-house-preset="brick"]').click();
@@ -53,6 +53,27 @@ try{
  assert.equal(await page.locator('#weather').inputValue(),'fog');
  await page.locator('[data-tool="surface"]').click();
  assert.equal(await page.locator('#draftActions').isVisible(),true);
+ // Brush / camera separation: left drag paints a continuous metric lawn,
+ // right drag rotates the WebGL camera without modifying the editable plan.
+ await page.locator('[data-tool="surface"]').click();
+ await page.locator('[data-item="universal"]').click();
+ assert.equal(await page.locator('#useLandscapeBrush').isChecked(),true);
+ const brushBox=await page.locator('#viewport').boundingBox();
+ const bx=brushBox.x+brushBox.width*.57,by=brushBox.y+brushBox.height*.72;
+ await page.mouse.move(bx,by);await page.mouse.down({button:'left'});
+ for(let i=1;i<=9;i++)await page.mouse.move(bx+i*9,by-i*2,{steps:2});
+ await page.mouse.up({button:'left'});
+ const brushData=await page.evaluate(()=>{
+  const d=JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')||'{}');
+  return d.objects?.find(x=>x.catalogId==='universal'&&x.geometry==='strip');
+ });
+ assert.ok(brushData?.points?.length>=3,'Lawn brush saved continuous metric ribbon '+JSON.stringify(brushData));
+ const previous=await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape'));
+ await page.mouse.move(bx,by);await page.mouse.down({button:'right'});
+ await page.mouse.move(bx+80,by-35,{steps:8});await page.mouse.up({button:'right'});
+ assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),previous,'Right-drag camera orbit never edits lawn');
+ await page.screenshot({path:'artifacts/landscape-editor/3d-lawn-brush.png'});
+ await page.locator('[data-tool="surface"]').click();
  await page.locator('[data-item="concrete-pavers"]').click();
  const canvas=page.locator('#viewport'),box=await canvas.boundingBox();
  for(const [x,y] of [[.41,.62],[.47,.65],[.52,.7]]){
