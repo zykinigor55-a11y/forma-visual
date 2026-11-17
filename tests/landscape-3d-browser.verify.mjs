@@ -77,11 +77,16 @@ try{
  assert.notEqual(orbitAfter,orbitBefore,'Right mouse drag must actually rotate the 3D scene');
  assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),previous,'Right-drag camera orbit never edits lawn');
  await page.screenshot({path:'artifacts/landscape-editor/3d-lawn-brush.png'});
- // Relief brush must sculpt without changing camera during left-drag, then save heights.
+ // Relief brush: reset to measured nadir after camera rotation, so test clicks
+ // are guaranteed to hit the parcel rather than the background beyond it.
+ await page.locator('[data-view="2d"]').click();
+ await page.waitForTimeout(180);
  await page.locator('[data-tool="terrain"]').click();
  await page.locator('[data-item="raise"]').click();
- await page.mouse.move(bx,by);await page.mouse.down({button:'left'});
- for(let i=1;i<=5;i++)await page.mouse.move(bx+i*6,by-i*2,{steps:2});
+ const terrainBox=await page.locator('#viewport').boundingBox();
+ const tx=terrainBox.x+terrainBox.width*.51,ty=terrainBox.y+terrainBox.height*.51;
+ await page.mouse.move(tx,ty);await page.mouse.down({button:'left'});
+ for(let i=1;i<=5;i++)await page.mouse.move(tx+i*6,ty-i*2,{steps:2});
  await page.mouse.up({button:'left'});
  const relief=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-terrain-v1-landscape')||'[]'));
  assert.ok(relief.some(v=>v>.01),'continuous relief brush persists measurable positive elevations');
