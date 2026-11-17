@@ -55,8 +55,12 @@ import {brushPolygon} from './forma-landscape-brush.js';
     shapes+=`<g clip-path="url(#${clipId})"${maskAttr}><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#071f1a"/><image href="${cardPhotoURL(entry)}" x="${left}" y="${top}" width="${pw}" height="${ph}" preserveAspectRatio="xMidYMid slice"/><rect x="${left}" y="${top}" width="${pw}" height="${ph}" fill="#041913" opacity=".14" pointer-events="none"/></g>`;
     shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}" fill="transparent" stroke="${active?'#e5be86':'#346f69'}" stroke-width="${active?.19:.08}" pointer-events="visiblePainted"/>`;
    }else if(['fills','lawns'].includes(entry.group)){
-    shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="${entry.color}" fill-opacity="${preview&&photoVisible?.18:.85}" stroke="${active?'#dfaa58':'#5b7558'}" stroke-width="${active?.16:.065}"/>`;
-    if(!(preview&&photoVisible)){shapes+=`<defs><pattern id="tile-${item.id}" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="2.4" height="2.4"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="url(#tile-${item.id})" opacity=".46"/>`;}
+    // Full-plot lawn uses a close photographic turf crop, rather than the
+    // old flat-green brush texture. Preserve precise contour and eraser holes.
+    const lawn=entry.group==='lawns',tile=lawn?3.8:2.4;
+    shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="${entry.color}" fill-opacity="${lawn?.34:.83}" stroke="${active?'#dfaa58':'#5b7558'}" stroke-width="${active?.16:.065}"/>`;
+    shapes+=`<defs><pattern id="tile-${item.id}" width="${tile}" height="${tile}" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="${tile}" height="${tile}" preserveAspectRatio="xMidYMid slice"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="url(#tile-${item.id})" opacity="${lawn?.98:.90}"/>`;
+   }
    }else{
     const d=entry.group==='lights'?Math.max(.75,item.diameter):item.diameter;
     shapes+=`<g data-object="${item.id}" transform="rotate(${item.rotation} ${item.x} ${item.y})"><image href="${iconURL(entry)}" x="${item.x-d/2}" y="${item.y-d/2}" width="${d}" height="${d}"/></g>`;
