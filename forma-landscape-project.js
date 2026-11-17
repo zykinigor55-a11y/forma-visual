@@ -5,7 +5,7 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),num=(v,d=2)=>Number(v).toFixed(d);
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const uid=()=>'o-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
- let modal=null,doc=freshProject(),pid='',mode='select',category='trees',chosen='pine',points=[],selected=null,drag=null,undo=[],redo=[],busy=false,preview=null,roofArt=null,roofArts=new Map(),snap=true;
+ let modal=null,doc=freshProject(),pid='',mode='select',category='trees',chosen='pine',points=[],selected=null,drag=null,undo=[],redo=[],busy=false,preview=null,roofArt=null,roofArts=new Map(),snap=true,pathShape='orthogonal',generationStarted=0,progressTicker=null,progressListener=null;
  let lastFocus=null;
  const siteKey=()=>`forma-landscape-masterplan-v1-${pid}`;
  const activeProject=()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}};
@@ -76,8 +76,11 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
   $$('.lp-assets img',target).forEach(img=>{img.addEventListener('error',()=>{const entry=byId(img.closest('[data-asset]')?.dataset.asset);if(entry&&!img.dataset.fallback){img.dataset.fallback='true';img.src=fallbackIconURL(entry);}})});
   $$('.lp-tools button[data-tool]',modal).forEach(b=>b.classList.toggle('active',b.dataset.tool===mode));
   $('#lpFinish',modal).disabled=points.length<(mode==='path'?2:3);
-  $('#lpCancel',modal).disabled=!points.length;
-  const t=$('#lpToolName',modal);if(t)t.textContent=({select:'Выбор и перемещение',place:'Размещение объекта',path:'Дорожка · точки оси',area:'Замкнутый контур',boundary:'Границы участка'})[mode]||mode;
+  $('#lpCancel',modal).disabled=!points.length&&mode==='select';
+  const t=$('#lpToolName',modal);if(t)t.textContent=({select:'Выбор и перемещение',place:'Размещение объекта',path:'Дорожка · '+(pathShape==='free'?'свободная линия':'строго под 90°'),area:'Замкнутый контур',boundary:'Границы участка'})[mode]||mode;
+  const pathPanel=$('#lpPathControls',modal);if(pathPanel)pathPanel.hidden=mode!=='path';
+  $('[data-path-shape]',modal).forEach(b=>{b.classList.toggle('active',b.dataset.pathShape===pathShape);b.setAttribute('aria-pressed',String(b.dataset.pathShape===pathShape));});
+  const selection=$('#lpSelectedMaterial',modal);if(selection){selection.textContent=byId(chosen)?.name||'Выберите брусчатку';}
  }
  function field(name,label,value,min,max,step=.05){return `<label>${label}<input data-field="${name}" type="number" value="${value}" min="${min}" max="${max}" step="${step}"></label>`}
  function drawInspector(){
@@ -94,7 +97,7 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
    if(selected&&selected!=='house'&&!selected.startsWith('building:')){
    const obj=doc.objects.find(x=>x.id===selected),entry=byId(obj?.catalogId);
    if(obj&&entry){html+=`<section class="lp-selected"><strong>${esc(entry.name)}</strong>`;
-    if(obj.points){html+=entry.group==='pavers'?field('object.width','Ширина дорожки м',obj.width,.4,10):'';
+    if(obj.points){html+=entry.group==='pavers'?'<label>Тип брусчатки<select data-field="object.catalogId">'+CATALOG.filter(x=>x.group==='pavers').map(x=>'<option value="'+x.id+'" '+(x.id===obj.catalogId?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>'+field('object.width','Ширина дорожки · м',obj.width,.4,10):'';
      html+=`<p>${entry.group==='pavers'?'Длина '+num(lineLength(obj.points))+' м, площадь приблиз. '+num(areaFor(doc,obj))+' м²':'Площадь '+num(polygonArea(obj.points))+' м²'}</p><div class="lp-vertices">${obj.points.map((p,i)=>`<div><span>${i+1}</span><input data-vertex="${i}" data-axis="x" type="number" step=".05" value="${p.x}"><input data-vertex="${i}" data-axis="y" type="number" step=".05" value="${p.y}"></div>`).join('')}</div>`;
     }else{html+=`<div class="lp-two">${field('object.x','X м',obj.x,0,500)}${field('object.y','Y м',obj.y,0,500)}</div>${field('object.diameter','Диаметр кроны/объекта м',obj.diameter,.1,30)}${field('object.rotation','Поворот °',obj.rotation,-360,360,1)}`;}
     html+='<button type="button" data-delete>Удалить выбранное</button></section>';
@@ -104,7 +107,13 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
   root.innerHTML=html;
  }
  function draw(){if(!modal)return;drawMap();drawInspector();drawPalette()}
- function setMode(v){mode=v;points=[];selected=null;draw()}
+ function setMode(v){mode=v;points=[];selected=null;if(v==='path'&&!['pavers'].includes(itemCatalog()?.group)){category='pavers';chosen='concrete-pavers'}if(v==='area'&&!['lawns','fills','ponds'].includes(itemCatalog()?.group)){category='lawns';chosen='universal'}draw();if(v==='path')say('Выберите тип брусчатки, ширину и режим: ортогональный или свободный. Двойное касание завершает дорожку.');}
+ function endDrawing(){points=[];mode='select';draw();say('Рисование прервано. Уже созданные объекты не изменены.');}
+ function pathPoint(p){
+  if(mode!=='path'||pathShape==='free'||!points.length)return p;
+  const prev=points.at(-1),dx=Math.abs(p.x-prev.x),dy=Math.abs(p.y-prev.y);
+  return dx>dy?{x:p.x,y:prev.y}:{x:prev.x,y:p.y};
+ }
  function addObject(p){const entry=itemCatalog();if(!entry)return;checkpoint();const obj={id:uid(),catalogId:entry.id,type:entry.group,x:p.x,y:p.y,diameter:entry.diameter||1,rotation:0};doc.objects.push(obj);selected=obj.id;save();draw()}
  function finish(){
   if(mode==='boundary'){if(points.length<3)return;checkpoint();doc.site.boundary=points.map(p=>({...p}));doc.verified=false;say('Контур задан. Проверьте координаты и габариты.');}
@@ -117,7 +126,7 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
  }
  function startPointer(e){
   if(busy||e.button!==0)return;const p=position(e);if(!p)return;
-  if(['path','area','boundary'].includes(mode)){points.push(p);drawMap();drawPalette();return}
+  if(['path','area','boundary'].includes(mode)){const q=pathPoint(p);if(points.length&&Math.hypot(q.x-points.at(-1).x,q.y-points.at(-1).y)<.03)return;points.push(q);drawMap();drawPalette();return}
   if(mode==='place'){addObject(p);return}
   const node=e.target.closest('[data-object]'),house=e.target.closest('[data-house]'),aux=e.target.closest('[data-building]');
   selected=node?.dataset.object||(aux?'building:'+aux.dataset.building:house?'house':null);
@@ -148,7 +157,7 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
   else if(field.startsWith('site.')){doc.site[field.slice(5)]=clamp(v,5,500);doc.verified=false;}
   else if(field.startsWith('house.')){const k=field.slice(6);doc.house[k]=['type','roof'].includes(k)?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArt=null;}
   else if(field.startsWith('aux.')){const b=doc.buildings.find(x=>x.id===selected.slice(9));if(b){const k=field.slice(4);b[k]=k==='roof'?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArts.delete(b.id)}}
-   else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);obj[k]=k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
+   else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);obj[k]=k==='catalogId'?(byId(v)?.group===obj.type?v:obj.catalogId):k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
   doc=normalizeProject(doc);save();draw();
  }
  async function uploadPhoto(file,kind){
@@ -227,8 +236,10 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
   if(b.dataset.category){category=b.dataset.category;chosen=CATALOG.find(x=>x.group===category).id;drawPalette();return}
   if(b.dataset.asset){chosen=b.dataset.asset;const g=itemCatalog().group;setMode(g==='pavers'?'path':['fills','lawns','ponds'].includes(g)?'area':'place');return}
   if(b.dataset.tool){setMode(b.dataset.tool);return}
+  if(b.dataset.pathShape){pathShape=b.dataset.pathShape;drawPalette();say(pathShape==='free'?'Свободная дорожка: точки ставятся без привязки к параллелям.':'Ортогональная дорожка: сегменты под 90° к границам чертежа.');return}
+  if(b.dataset.quickCategory){category=b.dataset.quickCategory;chosen=CATALOG.find(x=>x.group===category)?.id||chosen;setMode(category==='pavers'?'path':['lawns','fills','ponds'].includes(category)?'area':'place');return}
   if(b.id==='lpFinish'){finish();return}
-  if(b.id==='lpCancel'){points=[];drawMap();drawPalette();return}
+  if(b.id==='lpCancel'){endDrawing();return}
   if(b.dataset.undo!==undefined){reverse('undo');return}
   if(b.dataset.redo!==undefined){reverse('redo');return}
   if(b.dataset.delete!==undefined&&selected&&selected!=='house'){checkpoint();doc.objects=doc.objects.filter(x=>x.id!==selected);selected=null;save();draw();return}
@@ -252,15 +263,16 @@ import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumI
  }
  function onKey(e){
   if(!modal?.open)return;
-  if(e.key==='Escape'){if(points.length){e.preventDefault();points=[];drawMap();drawPalette()}else close();return}
+  if(e.key==='Escape'){if(mode!=='select'){e.preventDefault();endDrawing()}else close();return}
   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
   if(e.key==='Enter'&&points.length){e.preventDefault();finish()}
+  if(e.key==='Backspace'&&points.length){e.preventDefault();points.pop();drawMap();drawPalette()}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();reverse(e.shiftKey?'redo':'undo')}
  }
  async function open(){
   if(modal?.open)return;
   lastFocus=document.activeElement;pid=activeProject();try{doc=normalizeProject(JSON.parse(localStorage.getItem(siteKey())||'null'))}catch{doc=freshProject()}
-  mode='select';chosen='pine';category='trees';selected=null;points=[];undo=[];redo=[];preview=null;roofArt=null;roofArts=new Map();
+  mode='select';chosen='pine';category='trees';selected=null;points=[];undo=[];redo=[];preview=null;roofArt=null;roofArts=new Map();pathShape='orthogonal';
   modal=document.createElement('dialog');modal.id='faLandscapeMasterplan';modal.className='fa-landscape-masterplan';
   modal.innerHTML=`<div class="lp-shell"><header class="lp-head"><div class="lp-brand"><b>FORMA</b><span>ЛАНДШАФТНЫЙ ПРОЕКТ · ВИД СВЕРХУ</span></div><div><span id="lpSourceState"></span><button type="button" data-close aria-label="Закрыть">×</button></div></header><div class="lp-layout"><aside class="lp-sidebar"><div class="lp-sidebar-head"><b>БИБЛИОТЕКА</b><small>46 объектов · 8 категорий</small></div><div id="lpPalette"></div><button type="button" data-icon class="lp-export-icon">Экспорт · SVG 1080</button><button type="button" data-icon-png class="lp-export-icon">Экспорт · PNG 1080</button></aside><section class="lp-work"><div class="lp-tools"><button type="button" data-tool="select">↖ Выбор</button><button type="button" data-tool="boundary">⬡ Граница</button><button type="button" data-tool="path">⌁ Дорожка</button><button type="button" data-tool="area">▧ Область</button><button type="button" data-undo>↶</button><button type="button" data-redo>↷</button></div><div class="lp-path-controls"><span id="lpToolName">Выбор</span><label>Ширина дорожки <input id="lpWidth" type="number" min=".4" max="10" step=".05" value="1.2"> м</label><label><input id="lpSnap" type="checkbox" checked> Шаг 5 см</label><button id="lpFinish" type="button" disabled>Завершить</button><button id="lpCancel" type="button" disabled>Отмена</button></div><div class="lp-canvas"><div id="lpMap"></div></div><footer class="lp-work-foot"><span id="lpStatus" role="status">План строится в метрах. Дорожки рисуются точками, не кистью.</span><button type="button" data-concept>＋ Эскиз посадок</button></footer></section><aside class="lp-properties"><div id="lpInspector"></div><section class="lp-outputs"><label>Набросок / схема<input id="lpUnderlay" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="lpAi" data-ai>GPT Image 2.6 · Фото-генплан</button><small>Генерация меняет только презентацию. Размеры и координаты остаются в 2D-модели.</small><div><button type="button" data-svg>SVG</button><button type="button" data-png>PNG 2K</button><button type="button" data-csv>Ведомость CSV</button><button type="button" data-json>Модель JSON</button></div></section></aside></div></div>`;
   document.body.append(modal);modal.addEventListener('click',click);
