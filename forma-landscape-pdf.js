@@ -1,4 +1,4 @@
-/* Self-contained A4 landscape project album. Measurements come ONLY from the 2D model.
+/* Self-contained A4/A3 landscape project album. Measurements come ONLY from the 2D model.
  * Rasterized Cyrillic text ensures reliable browser PDF rendering without a remote font.
  */
 import {normalizeProject,report,byId} from './forma-landscape-project-core.js';
@@ -23,7 +23,7 @@ function page(name,description,n){
 }
 function warning(c,verified,y=752){
  c.fillStyle=pale;c.fillRect(38,y-17,519,29);
- text(c,verified?'Размеры подтверждены пользователем.':'Размеры не подтверждены — предварительный альбом.',47,y,10,verified?ink:'#9a6743',true);
+ text(c,verified?'Размеры подтверждены пользователем.':'Предварительные размеры · масштаб не подтверждён',47,y,10,verified?ink:'#9a6743',true);
 }
 async function picture(c,url,x,y,w,h){
  if(!url)return;
@@ -53,7 +53,9 @@ function jpeg(c){
  for(let i=0;i<str.length;i++)out[i]=str.charCodeAt(i);
  return out;
 }
-function assemble(canvases){
+export const landscapePaperSize=(format='A4')=>format==='A3'?{width:842,height:1191}:{width:595,height:842};
+function assemble(canvases,format='A4'){
+ const {width:pageW,height:pageH}=landscapePaperSize(format);
  const encode=new TextEncoder(),parts=[],offset=[0];let length=0;
  const add=b=>{parts.push(b);length+=b.byteLength};
  const put=s=>add(encode.encode(s));
@@ -64,9 +66,9 @@ function assemble(canvases){
  canvases.forEach((canvas,i)=>{
   const im=jpeg(canvas),imageId=3+3*i,contentId=4+3*i,pageId=5+3*i;
   obj(imageId,()=>{put('<< /Type /XObject /Subtype /Image /Width '+(WIDTH*SCALE)+' /Height '+(HEIGHT*SCALE)+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+im.length+' >>\nstream\n');add(im);put('\nendstream')});
-  const draw='q '+WIDTH+' 0 0 '+HEIGHT+' 0 0 cm /I'+i+' Do Q\n';
+  const draw='q '+pageW+' 0 0 '+pageH+' 0 0 cm /I'+i+' Do Q\n';
   obj(contentId,()=>put('<< /Length '+encode.encode(draw).length+' >>\nstream\n'+draw+'endstream'));
-  obj(pageId,()=>put('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+WIDTH+' '+HEIGHT+'] /Resources << /XObject << /I'+i+' '+imageId+' 0 R >> >> /Contents '+contentId+' 0 R >>'));
+  obj(pageId,()=>put('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW+' '+pageH+'] /Resources << /XObject << /I'+i+' '+imageId+' 0 R >> >> /Contents '+contentId+' 0 R >>'));
  });
  const xref=length,count=3+canvases.length*3;
  put('xref\n0 '+count+'\n0000000000 65535 f \n');
@@ -74,8 +76,8 @@ function assemble(canvases){
  put('trailer\n<< /Size '+count+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
  return new Blob(parts,{type:'application/pdf'});
 }
-const chunks=(arr,n=19)=>arr.length?Array.from({length:Math.ceil(arr.length/n)},(_,i)=>arr.slice(i*n,(i+1)*n)):[[]];
-export async function buildLandscapeAlbum(project,planImage,aiImage=null){
+const chunks=(arr,n=19)=>arr.length?Array.from({length:Math.ceil(arr.length/n)},(_,i)=>arr.slice(i*n,(i+1)*n)):[];
+export async function buildLandscapeAlbum(project,planImage,aiImage=null,{format='A4'}={}){
  const d=normalizeProject(project),summary=report(d),canvases=[],push=(name,sub)=>page(name,sub,canvases.length+1);
  const cover=push('Ландшафтный проект','Комплект генплана и спецификаций');
  text(cover.c,d.title,38,177,24,ink,true);
@@ -94,6 +96,20 @@ export async function buildLandscapeAlbum(project,planImage,aiImage=null){
   table(p.c,[['№',38],['Растение',230],['X / Y',139],['Крона',95]],rows);
   text(p.c,'Всего растений: '+trees.length+' шт.',38,716,11,ink,true);
   warning(p.c,d.verified);canvases.push(p.cv);
+ }
+ if(trees.length){
+  const species=new Map();
+  for(const o of trees){
+   const entry=byId(o.catalogId);if(!entry)continue;
+   const row=species.get(entry.id)||{name:entry.name,latin:entry.latin||'—',count:0,diameter:entry.diameter||0};
+   row.count++;species.set(entry.id,row);
+  }
+  for(const group of chunks([...species.values()],19)){
+   const p=push('Ведомость растений','Породы, ботанические наименования и количество');
+   table(p.c,[['Название',160],['Латинское наименование',190],['Кол-во',60],['Крона, м',85]],
+    group.map(o=>[o.name,o.latin,o.count,fmt(o.diameter)]));
+   warning(p.c,d.verified);canvases.push(p.cv);
+  }
  }
  const surfaces=Object.entries(summary.areas).map(([id,a])=>[byId(id)?.name,fmt(a)+' м²',summary.lengths[id]==null?'—':fmt(summary.lengths[id])+' м']);
  for(const group of chunks(surfaces,19)){
@@ -114,5 +130,5 @@ export async function buildLandscapeAlbum(project,planImage,aiImage=null){
   await picture(p.c,aiImage,38,139,519,562);
   warning(p.c,d.verified);canvases.push(p.cv);
  }
- return assemble(canvases);
+ return assemble(canvases,format);
 }
