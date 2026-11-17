@@ -37,6 +37,8 @@ try{
   await page.waitForFunction(()=>{const img=document.querySelector('[data-asset="formal"] img');return !!img&&img.complete&&img.naturalWidth===1080&&img.getAttribute('src')?.includes('formal.');},null,{timeout:30000});
   const photo=await page.locator('[data-asset="formal"] img').evaluate(img=>({src:img.currentSrc,width:img.naturalWidth,height:img.naturalHeight}));
   console.log('Lawn preview URL:',photo.src);
+  const diagnostics=await page.evaluate(async()=>{const r=await fetch('/assets/landscape-photo/formal.jpg',{method:'HEAD'});const x=await import('./forma-landscape-project-graphics.js?v=photo-jpg-alpha-v4');return {head:r.status,mime:r.headers.get('content-type'),photoCount:x.photographicAssetCount(),source:x.photographicIconURL({id:'formal'})};});
+  console.log('Photo asset diagnostics:',JSON.stringify(diagnostics));
   assert.ok(photo.src.includes('/assets/landscape-photo/formal.jpg?'),photo.src);
   assert.equal(photo.width,1080);assert.equal(photo.height,1080);
   await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}-lawns.png`,fullPage:true});
