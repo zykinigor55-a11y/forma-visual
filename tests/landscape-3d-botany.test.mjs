@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {SHRUB_HEIGHT_M,naturalCrown,branchTipDrop,botanicalLeafScale,vegetationQuality} from '../forma-landscape-3d-botany.js';
+import {SHRUB_HEIGHT_M,naturalCrown,branchTipDrop,botanicalLeafScale,vegetationQuality,leafOutline} from '../forma-landscape-3d-botany.js';
 import {VEGETATION_SPECIES,foliageProfile} from '../forma-landscape-3d-vegetation.js';
 import {CATALOG} from '../forma-landscape-project-core.js';
 
@@ -46,4 +46,18 @@ test('3D viewport creates true volumetric leaves and weeping branches without 2D
  assert.match(source,/new T\.InstancedMesh/);
  assert.match(page,/vegetationQuality\(window\.innerWidth/);
  assert.match(page,/SHRUB_HEIGHT_M\[state\.placing\]/);
+});
+
+test('each major species has its own anatomically distinct small-leaf silhouette',()=>{
+ const contour=id=>leafOutline(id,20);
+ const ids=['oak','maple','birch','willow','linden','rowan','hydrangea','lavender'];
+ for(const id of ids)assert.equal(contour(id).length,20);
+ const width=id=>Math.max(...contour(id).map(p=>p[0]))-Math.min(...contour(id).map(p=>p[0]));
+ const height=id=>Math.max(...contour(id).map(p=>p[1]))-Math.min(...contour(id).map(p=>p[1]));
+ assert.ok(width('willow')/height('willow')<.2,'Willow has a narrow lanceolate leaf');
+ assert.ok(width('maple')/height('maple')>.6,'Maple has a broad lobed leaf');
+ assert.notDeepEqual(contour('maple'),contour('oak'));
+ assert.notDeepEqual(contour('birch'),contour('linden'));
+ const code=readFileSync(new URL('../forma-landscape-3d-vegetation.js',import.meta.url),'utf8');
+ assert.match(code,/makeLeafGeometry\(T,needle,id\)/);
 });
