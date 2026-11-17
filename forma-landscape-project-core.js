@@ -12,6 +12,12 @@ export const GROUPS=Object.freeze([
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
  {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
 ]);
+export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7});
+export const SCENE_OPTIONS=Object.freeze({
+ time:[['morning','Утро'],['day','День'],['evening','Вечер'],['night','Ночь']],
+ season:[['spring','Весна'],['summer','Лето'],['autumn','Осень'],['winter','Зима']],
+ weather:[['sunny','Солнечно'],['overcast','Пасмурно'],['after-rain','После дождя'],['rain','Дождь'],['fog','Туман'],['snow','Снег']]
+});
 export const CATALOG=Object.freeze([
  ...[
  ['juniper','Можжевельник горизонтальный','#647d6b',1.8,'Juniperus horizontalis'],
@@ -82,7 +88,7 @@ const round=(x,d=3)=>Math.round(x*10**d)/10**d;
 const point=p=>({x:finite(p?.x,-5000,5000,0),y:finite(p?.y,-5000,5000,0)});
 const maxObjects=500;
 const safePhoto=x=>typeof x==='string'&&x.length<1200000&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x)?x:null;
-export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural'});
+export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural',atmosphere:{time:'day',season:'summer',weather:'sunny'}});
 export function normalizeProject(raw){
  const obj=raw&&typeof raw==='object'?raw:{},base=freshProject(),site=obj.site||{},house=obj.house||{};
  const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
@@ -92,7 +98,12 @@ export function normalizeProject(raw){
  roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:safePhoto(house.photo)},
  objects:[],buildings:[],underlay:safePhoto(obj.underlay),
  underlayOpacity:finite(obj.underlayOpacity,0,1,.25),north:finite(obj.north,0,360,0),
- verified:obj.verified===true,style:['natural','modern','architectural'].includes(obj.style)?obj.style:'natural'};
+ verified:obj.verified===true,style:['natural','modern','architectural'].includes(obj.style)?obj.style:'natural',
+ atmosphere:{
+  time:SCENE_OPTIONS.time.some(x=>x[0]===obj.atmosphere?.time)?obj.atmosphere.time:'day',
+  season:SCENE_OPTIONS.season.some(x=>x[0]===obj.atmosphere?.season)?obj.atmosphere.season:'summer',
+  weather:SCENE_OPTIONS.weather.some(x=>x[0]===obj.atmosphere?.weather)?obj.atmosphere.weather:'sunny'
+ }};
  for(const item of (Array.isArray(obj.objects)?obj.objects:[]).slice(0,maxObjects)){
   const entry=byId(item.catalogId);if(!entry)continue;
   const id=/^[a-z0-9-]{1,48}$/i.test(item.id||'')?item.id:'o-'+Math.random().toString(36).slice(2,10);
@@ -104,7 +115,7 @@ export function normalizeProject(raw){
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
     r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
-  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),rotation:finite(item.rotation,-360,360,0)});
+  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),height:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0)});
  }
  for(const b of (Array.isArray(obj.buildings)?obj.buildings:[]).slice(0,24)){
   if(!b||typeof b!=='object')continue;
@@ -163,7 +174,7 @@ export const isInside=(p,polygon)=>{
 };
 export function coordinateSummary(doc){
  const d=normalizeProject(doc),r=report(d);
- return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},buildings:d.buildings.map(b=>({...b,photo:undefined})),objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths,areaPrecision:r.areaPrecision},verified:d.verified};
+ return {version:1,units:'m',site:d.site,house:{...d.house,photo:undefined},buildings:d.buildings.map(b=>({...b,photo:undefined})),objects:d.objects.map(item=>({catalogId:item.catalogId,...item})),measured:{siteArea:r.siteArea,buildingArea:r.buildingArea,counts:r.counts,areas:r.areas,lengths:r.lengths,areaPrecision:r.areaPrecision},verified:d.verified,atmosphere:d.atmosphere};
 }
 
 // Project each path segment onto parcel directions. Clamp length, never its axes,
