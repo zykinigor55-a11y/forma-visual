@@ -45,7 +45,9 @@
   const color=lightColor(source.temperature);
   const radius=clamp(distance*1.55,55,Math.max(w,h)*.92);
   const minDim=Math.min(w,h);
-  const length=clamp(source.length||30,8,70)/100*minDim;
+  // Fixture span is stored in metres (0.4–6m), shared with the AI prompt;
+  // project to screen only for illustration because image scale is unknown.
+  const length=clamp(source.length??2.4,.4,6)/6*minDim*.96;
   const type=source.profile||'downlight';
   if(type==='linear'){
    // Linear fixture: a wide luminous STRIP and an elongated rectangular wash;
