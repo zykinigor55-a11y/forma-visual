@@ -1,6 +1,17 @@
 (() => {
 'use strict';
 const KEY='forma-archviz-flow-v1';
+const WIRES_KEY='forma-archviz-flow-show-links-v1';
+let showWires=true;
+try{showWires=localStorage.getItem(WIRES_KEY)!=='false'}catch{}
+function setWiresVisible(next){
+ showWires=Boolean(next);
+ try{localStorage.setItem(WIRES_KEY,String(showWires))}catch{}
+ const button=$('#faFlowShowLinks');
+ if(button){button.setAttribute('aria-pressed',String(showWires));button.textContent=showWires?'◌ Связи: вкл.':'◌ Связи: выкл.';button.title=showWires?'Скрыть линии между нодами':'Показать линии между нодами';}
+ drawLines();
+ status(showWires?'Связи показаны. Соединения сценария сохранены.':'Линии скрыты только на холсте. Соединения и генерация работают как прежде.');
+}
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const TYPES={
  source:{title:'Исходник',icon:'▧',kind:'Источник',out:'image',action:'project',text:'Скетч или CAD-скриншот'},
@@ -238,6 +249,7 @@ function redraw(){
 function drawLines(){
  if(!lines)return;
  lines.replaceChildren();
+ if(!showWires)return;
  for(const e of graph.edges){
   const a=node(e.from),b=node(e.to);if(!a||!b)continue;
   const x=a.x+230,y=a.y+80,xx=b.x,yy=b.y+80,ctrl=Math.max(70,Math.abs(xx-x)*.47);
@@ -351,6 +363,7 @@ function click(e){
    !!(a.addNode||a.fork||a.portOut||a.portIn||a.pin||a.rename);
   if(mutation){status('Во время AI-запроса схема заблокирована. Остановите или завершите цепочку.');return}
  }
+ if(b.id==='faFlowShowLinks'){setWiresVisible(!showWires);return}
  if(b.id==='faFlowMore'){const menu=$('#faFlowMoreMenu');menu.hidden=!menu.hidden;b.setAttribute('aria-expanded',String(!menu.hidden));return}
  if(a.faFlowQuick){const action=$('#'+a.faFlowQuick);$('#faFlowMoreMenu').hidden=true;$('#faFlowMore').setAttribute('aria-expanded','false');if(action&&!action.disabled)action.click();return}
  if(b.id==='faFlowClose'){close();return}
@@ -442,10 +455,12 @@ function open(){
  <div class="fa-flow-head"><div class="fa-flow-logo"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div class="fa-flow-name"><b>ФОРМА <span>/ СЦЕНАРИИ</span></b><small>Последовательность обработки проекта</small></div>
  <div class="fa-flow-head-actions"><button type="button" id="faFlowMore" class="fa-flow-more" aria-haspopup="menu" aria-expanded="false" title="Дополнительные действия">···</button><button type="button" id="faFlowCompare" title="Сравнение двух результатов">Сравнение A/B</button><button type="button" id="faFlowRunChain" class="fa-flow-run-main" title="Запустить ветку до выделенной ноды">▶ Запустить</button><button type="button" id="faFlowStopChain" class="fa-flow-stop-main" disabled>Стоп</button><button type="button" id="faFlowArrange">Упорядочить</button><button type="button" id="faFlowExport">Экспорт JSON</button><button type="button" id="faFlowImport">Импорт</button><input type="file" id="faFlowFile" accept=".json,application/json" hidden><button type="button" id="faFlowClose" aria-label="Закрыть">×</button></div><div id="faFlowMoreMenu" class="fa-flow-more-menu" role="menu" hidden><button type="button" data-fa-flow-quick="faFlowCompare">Сравнить A/B</button><button type="button" data-fa-flow-quick="faFlowArrange">Упорядочить ноды</button><button type="button" data-fa-flow-quick="faFlowExport">Скачать схему</button><button type="button" data-fa-flow-quick="faFlowImport">Импортировать схему</button><button type="button" data-fa-flow-quick="faFlowStopChain">Остановить генерацию</button></div></div>
  <div class="fa-flow-main"><aside class="fa-flow-sidebar"><h3>Блоки сценария</h3><small>Выберите задачу и добавьте её в цепочку</small><div class="fa-flow-palette-toolbar"><label for="faFlowGroup">Категория</label><select id="faFlowGroup" aria-label="Категория блоков"><option value="all">Все инструменты</option><option value="render">Визуализация</option><option value="edit">Обработка</option><option value="output">Результат</option></select></div><div id="faFlowPalette"></div><div class="fa-flow-note"><b>Как работать</b><p>Добавьте операцию и соедините её вход с выходом предыдущей. Один исходник может запускать несколько веток.</p><small>Нажмите «Настроить» у блока. Готовый кадр передаётся следующему по связи. Новые AI-этапы оплачиваются отдельно после подтверждения.</small></div></aside>
- <section class="fa-flow-center"><div class="fa-flow-controls"><span id="faFlowCount">0 нод</span><div><button type="button" id="faFlowAddBlock">＋ Добавить блок</button><button type="button" id="faFlowUndo" title="Отменить Ctrl+Z" aria-label="Отменить действие">↶</button><button type="button" id="faFlowRedo" title="Повторить Ctrl+Shift+Z" aria-label="Повторить действие">↷</button><button id="faFlowMinus" type="button">−</button><span id="faFlowZoom">75%</span><button id="faFlowPlus" type="button">+</button><button id="faFlowCenter" type="button">Центр</button></div></div>
+ <section class="fa-flow-center"><div class="fa-flow-controls"><span id="faFlowCount">0 нод</span><div><button type="button" id="faFlowAddBlock">＋ Добавить блок</button><button type="button" id="faFlowShowLinks" class="fa-flow-wires-toggle" aria-pressed="true" title="Показать или скрыть линии связи между нодами">◌ Связи: вкл.</button><button type="button" id="faFlowUndo" title="Отменить Ctrl+Z" aria-label="Отменить действие">↶</button><button type="button" id="faFlowRedo" title="Повторить Ctrl+Shift+Z" aria-label="Повторить действие">↷</button><button id="faFlowMinus" type="button">−</button><span id="faFlowZoom">75%</span><button id="faFlowPlus" type="button">+</button><button id="faFlowCenter" type="button">Центр</button></div></div>
  <div id="faFlowViewport" class="fa-flow-viewport" tabindex="0"><div id="faFlowWorld" class="fa-flow-world"><svg id="faFlowLines" width="2600" height="2100" xmlns="http://www.w3.org/2000/svg"></svg><div id="faFlowNodes"></div></div></div>
  <div class="fa-flow-bottom"><span id="faFlowStatus" role="status">Загрузите исходник → настройте обработку → запустите сценарий.</span><button type="button" id="faFlowDelete">Удалить ноду</button></div></section><aside class="fa-flow-inspector" id="faFlowInspector"><div class="fa-inspector-header"><small>ФОРМА / ПАРАМЕТРЫ</small><h3 id="faFlowInspectorTitle">Выберите этап</h3><p>Параметры, история и готовые результаты остаются на рабочем холсте.</p></div><div id="faFlowNodeSettings" class="fa-flow-node-settings" aria-label="Настройки выбранного этапа"></div></aside></div></div>`;
- document.body.append(modal);const app=$('#app');if(app)app.inert=true;document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
+ document.body.append(modal);
+ const wiresButton=$('#faFlowShowLinks');if(wiresButton){wiresButton.setAttribute('aria-pressed',String(showWires));wiresButton.textContent=showWires?'◌ Связи: вкл.':'◌ Связи: выкл.';}
+ const app=$('#app');if(app)app.inert=true;document.body.classList.add('fa-flow-is-open');world=$('#faFlowWorld');lines=$('#faFlowLines');nodeLayer=$('#faFlowNodes');
  const palette=$('#faFlowPalette');
  for(const [id,t] of Object.entries(TYPES)){
   const b=document.createElement('button');b.type='button';b.dataset.addNode=id;b.dataset.group=({source:'render',exterior:'render',interior:'render',lighting:'render',materials:'edit',geometry:'edit',upscale:'edit',video:'output',image3d:'output',export:'output'})[id]||'render';b.innerHTML='<i>'+iconHTML(id)+'</i><span><b>'+esc(t.title)+'</b><small>'+esc(t.kind)+'</small></span><strong>+</strong>';if(id==='image3d'){b.classList.add('fa-flow-not-ready');b.disabled=true;b.title='3D-модель пока недоступна: требуется отдельный API'}palette.append(b);
