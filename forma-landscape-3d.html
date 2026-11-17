@@ -159,6 +159,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js';
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
+import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance} from './forma-landscape-3d-strokes.js';
 const $=s=>document.querySelector(s);
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
@@ -178,13 +179,13 @@ const choices={
  terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['smooth','Выровнять грунт']],
  build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
- plant:[['pine','Сосна'],['spruce','Ель'],['birch','Берёза'],['oak','Дуб'],['maple','Клён'],['hydrangea','Гортензия'],['juniper','Можжевельник']],
+ plant:CATALOG.filter(x=>['trees','shrubs'].includes(x.group)).map(x=>[x.id,x.name]),
  water:[['formal-pond','Водоём (контур)']],
- landscape:[['granite-boulder','Валун']],
+ landscape:CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name]),
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол']],
  transport:[['car','Автомобиль']],
- light:[['bollard','Боллард'],['low-post','Садовый светильник']]
+ light:CATALOG.filter(x=>x.group==='lights').map(x=>[x.id,x.name])
 };
 const fallback={pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
 const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
@@ -301,17 +302,18 @@ function addCylinderBetween(g,a,b,r=.06,color='#8d9080'){
  const beam=mesh(new THREE.CylinderGeometry(r,r,delta.length(),8),material(color));beam.position.copy(v1.add(v2).multiplyScalar(.5));beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());g.add(beam);
 }
 function drawObject(o,entry,key){
- const g=new THREE.Group(),group=entry.group,p=pos(o.x,o.y),radius=(o.diameter||entry.diameter||2)/2;
+ const p=pos(o.x,o.y),group=entry.group;
+ let g;
  if(group==='trees'||group==='shrubs'){
-  const ht=o.height||TREE_HEIGHT_M[o.catalogId]||Math.max(.8,radius*2);
-  if(group==='trees'){const trunk=mesh(new THREE.CylinderGeometry(.12,.18,ht*.36,9),material('#77624d'));trunk.position.y=ht*.18;g.add(trunk)}
-  const leafColor=doc.atmosphere.season==='autumn'&&group==='trees'?'#bc8750':doc.atmosphere.season==='winter'&&o.catalogId!=='pine'&&o.catalogId!=='spruce'?'#8b8b7e':entry.color||'#65845e';
-  const conifer=['pine','spruce','thuja-globe'].includes(o.catalogId);
-  if(conifer){for(let layer=0;layer<3;layer++){const cone=mesh(new THREE.ConeGeometry(radius*(1-layer*.23),ht*.47,9),material(leafColor));cone.position.y=ht*(.46+layer*.17);g.add(cone)}}
-  else{for(let j=0;j<5;j++){const ball=mesh(new THREE.IcosahedronGeometry(radius*(j? .52:.78),1),material(leafColor));ball.position.set(Math.sin(j*2.4)*radius*.43,group==='shrubs'?radius*.56:ht*(.66+j*.04),Math.cos(j*2.4)*radius*.35);g.add(ball)}}
- }else if(group==='boulders'){const b=mesh(new THREE.DodecahedronGeometry(radius,0),material('#90958d'));b.scale.y=.55;g.add(b)}
- else if(group==='lights'){const stand=mesh(new THREE.CylinderGeometry(.06,.075,Math.max(.6,o.height||1),10),material('#363d3a',.25,.2));stand.position.y=(o.height||1)/2;g.add(stand);const lamp=mesh(new THREE.SphereGeometry(.18,10,8),new THREE.MeshBasicMaterial({color:'#f4d5a0'}));lamp.position.y=(o.height||1);g.add(lamp)}
- const groundH=terrainAt(p.x,p.z);g.position.set(p.x,groundH,p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+  // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
+  // accurate crown diameter and height, all 18 species from shared catalog.
+  const quality=window.innerWidth<=700?.48:window.innerWidth<=1100?.7:1;
+  g=createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
+ }else if(group==='boulders')g=createRock(THREE,o);
+ else if(group==='lights')g=createGardenLight(THREE,o,{night:doc.atmosphere.time==='night'});
+ else return;
+ const groundH=terrainAt(p.x,p.z);
+ g.position.set(p.x,groundH,p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
  mark(g,key);root.add(g);
 }
 function polygon(points,y,color,water=false){
