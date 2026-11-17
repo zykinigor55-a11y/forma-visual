@@ -101,6 +101,11 @@ function init(){
  window.FORMA_STUDIO_READY=true;
  document.documentElement.classList.remove('forma-studio-booting');
  document.dispatchEvent(new Event('forma:studio-ready'));
+ // Explicit, safe deep link to the measured landscape masterplan (never the
+ // image-based Благоустройство tool). Useful on mobile and for QA.
+ try{if(new URLSearchParams(window.location.search).get('tool')==='landscape-project'){
+  window.setTimeout(()=>openWorkspace('landscape-project'),80);
+ }}catch{}
 }
 window.FORMA_STUDIO={open:openWorkspace,close:closeWorkspace,refresh:refreshSource};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
