@@ -220,7 +220,7 @@ function initialize(){
  $('#projectName').value=doc.title;$('#plotW').value=doc.site.width;$('#plotH').value=doc.site.height;
  $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;$('#weather').value=doc.atmosphere.weather||'sunny';
  renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
- renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
  camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=3;controls.maxDistance=220;
@@ -247,6 +247,7 @@ function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMa
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
 function mark(group,key){group.userData.key=key;pickables.push(group);return group}
 function rebuild(){
+ if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
  pickables=[];
  const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
@@ -504,6 +505,7 @@ function renderProps(){
 }
 function updateSun(){
  const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
+ if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  const cfg={day:[-25,65,22,3],morning:[-56,21,12,1.75],evening:[55,14,17,1.3],night:[-30,8,15,.15]}[val]||[-25,65,22,3];
  sun.position.set(cfg[0],cfg[1],cfg[2]);
  const weather=doc.atmosphere.weather||'sunny',factor={sunny:1,overcast:.42,'after-rain':.7,rain:.28,fog:.25,snow:.5}[weather]||1;
