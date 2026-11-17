@@ -2034,7 +2034,7 @@ window.FORMA_RENDER_BRIDGE={
 function announceGenerated(image,id,owner=project){
  const render=owner?.renders?.find(r=>r.id===id);if(!render)return;
  render.gallerySaved=false;
- window.FORMA_RESULT_FOCUS?.show?.({image,project:owner.name,scene:render.batchLabel||'Архитектурная визуализация',onSave:async()=>{
+ window.FORMA_RESULT_FOCUS?.show?.({image,project:owner.name,scene:render.batchLabel||'Архитектурная визуализация',isInterior:window.FORMA_INTERIORS?.state?.().sceneType==='interior'||/^Сценарий · (Интерьер|Из скетча в фото)|^Интерьер/.test(render.batchLabel||''),onSave:async()=>{
   const before=render.gallerySaved;render.gallerySaved=true;
   try{save();const check=JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}');if(!check.projects?.find(p=>p.id===owner.id)?.renders?.find(r=>r.id===id)?.gallerySaved)throw Error('Не удалось сохранить выбор. Проверьте свободную память браузера.');}
   catch(error){render.gallerySaved=before;throw error;}
