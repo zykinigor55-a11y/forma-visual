@@ -156,7 +156,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
    if(mode==='path'&&entry.group!=='pavers'||mode==='area'&&!['lawns','fills','ponds'].includes(entry.group)){say('Выберите правильный материал для этого инструмента.');return}
    checkpoint();const obj={id:uid(),catalogId:entry.id,type:entry.group,points:points.map(p=>({...p})),width:clamp(Number($('#lpWidth',modal)?.value)||1.2,.4,10)};
    doc.objects.push(obj);selected=obj.id;say('Объект создан с измеряемой геометрией.');}
-  points=[];mode='select';save();draw();
+  points=[];mode='select';save();draw();revealCanvas();
  }
  function startPointer(e){
   if(busy||e.button!==0)return;const p=position(e);if(!p)return;
