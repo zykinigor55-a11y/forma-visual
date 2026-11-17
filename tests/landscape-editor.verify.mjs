@@ -35,7 +35,7 @@ try{
   await page.locator('[data-category="lawns"]').click();
   await page.locator('[data-asset="formal"] img').waitFor({state:'visible'});
   const photo=await page.locator('[data-asset="formal"] img').evaluate(img=>({src:img.currentSrc,width:img.naturalWidth,height:img.naturalHeight}));
-  assert.match(photo.src,/formal\\.png\\?/);
+  assert.ok(photo.src.includes('/formal.png?'),photo.src);
   assert.equal(photo.width,1080);assert.equal(photo.height,1080);
   // Never make a paid call in CI: replace the queue client with a local fake.
   await page.evaluate(()=>{window.FORMA_RENDER_QUEUE={fetch:async()=>{await new Promise(r=>setTimeout(r,500));return new Response(JSON.stringify({
