@@ -1,5 +1,5 @@
 import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints} from './forma-landscape-project-core.js';
-import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic} from './forma-landscape-project-graphics.js?v=photo-jpg-alpha-v5';
+import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=photo-jpg-alpha-v5';
 import {brushPolygon} from './forma-landscape-brush.js';
 
  const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -93,8 +93,8 @@ import {brushPolygon} from './forma-landscape-brush.js';
  }
  function drawPalette(){
   const target=$('#lpPalette',modal);if(!target)return;
-  target.innerHTML='<div class="lp-groups">'+GROUPS.map(g=>`<button class="${category===g.id?'active':''}" data-category="${g.id}"><strong>${g.symbol}</strong>${g.name}<small>${g.qty}</small></button>`).join('')+'</div><div class="lp-assets">'+CATALOG.filter(x=>x.group===category).map(x=>`<button class="${chosen===x.id?'active':''}" data-asset="${x.id}" data-photo-type="${x.group}" data-photo-ready="${isPhotographic(x)?'true':'false'}"><img src="${iconURL(x)}" alt="${esc(x.name)} · ${x.group==='lawns'?'крупная фотографическая фактура газона':'вид сверху'}" loading="lazy" decoding="async"><span>${esc(x.name)}</span><small class="lp-asset-detail">${x.group==='lawns'?'МАКРО · ФАКТУРА ТРАВЫ':x.group==='trees'||x.group==='shrubs'?'КРОНА · ВИД СВЕРХУ':'МАТЕРИАЛ · 1080 × 1080'}</small></button>`).join('')+'</div>';
-  $$('.lp-assets img',target).forEach(img=>{img.addEventListener('error',()=>{const entry=byId(img.closest('[data-asset]')?.dataset.asset);if(entry&&!img.dataset.fallback){img.dataset.fallback='true';img.src=fallbackIconURL(entry);}})});
+  target.innerHTML='<div class="lp-groups">'+GROUPS.map(g=>`<button class="${category===g.id?'active':''}" data-category="${g.id}"><strong>${g.symbol}</strong>${g.name}<small>${g.qty}</small></button>`).join('')+'</div><div class="lp-assets">'+CATALOG.filter(x=>x.group===category).map(x=>`<button class="${chosen===x.id?'active':''}" data-asset="${x.id}" data-photo-type="${x.group}" data-photo-ready="${hasPhotographicCard(x)?'true':'false'}"><img src="${cardPhotoURL(x)}" alt="${esc(x.name)} · ${x.group==='lawns'?'макросъёмка травы':x.group==='lights'?'фото светильника':x.group==='ponds'?'фото водоёма':x.group==='boulders'?'фото камня':'вид сверху'}" loading="lazy" decoding="async"><span>${esc(x.name)}</span><small class="lp-asset-detail">${x.group==='lawns'?'МАКРО · ФАКТУРА ТРАВЫ':x.group==='trees'||x.group==='shrubs'?'КРОНА · ВИД СВЕРХУ':x.group==='lights'?'ФОТО · САДОВЫЙ СВЕТ':x.group==='ponds'?'ФОТО · ВОДНАЯ ПОВЕРХНОСТЬ':x.group==='boulders'?'ФОТО · КАМЕНЬ':'ФОТО · МАТЕРИАЛ'}</small></button>`).join('')+'</div>';
+  $$('.lp-assets img',target).forEach(img=>{img.addEventListener('error',()=>{const entry=byId(img.closest('[data-asset]')?.dataset.asset);if(entry&&!img.dataset.fallback){img.dataset.fallback='true';img.src=iconURL(entry);}else if(entry&&img.dataset.fallback==='true'&&!img.dataset.svgFallback){img.dataset.svgFallback='true';img.src=fallbackIconURL(entry);}})});
   $$('.lp-tools button[data-tool]',modal).forEach(b=>b.classList.toggle('active',b.dataset.tool===mode));
   $('#lpFinish',modal).disabled=points.length<(mode==='path'?2:3);
   $('#lpCancel',modal).disabled=!points.length&&mode==='select';
@@ -108,7 +108,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   modal.querySelectorAll('[data-area-tool]').forEach(b=>{b.classList.toggle('active',b.dataset.areaTool===areaTool);b.setAttribute('aria-pressed',String(b.dataset.areaTool===areaTool));});
   const brushSize=$('#lpBrushSize',modal);if(brushSize)brushSize.disabled=areaTool!=='brush';
   const areaMaterials=$('#lpAreaMaterials',modal);
-  if(areaMaterials)areaMaterials.innerHTML=['lawns','fills','ponds'].map(g=>'<div class="lp-area-group"><strong>'+({lawns:'Газоны',fills:'Отсыпки',ponds:'Водоёмы'})[g]+'</strong>'+CATALOG.filter(x=>x.group===g).map(x=>'<button type="button" data-area-material="'+x.id+'" class="'+(chosen===x.id?'active':'')+'"><img src="'+iconURL(x)+'" alt=""><span>'+esc(x.name)+'</span></button>').join('')+'</div>').join('');
+  if(areaMaterials)areaMaterials.innerHTML=['lawns','fills','ponds'].map(g=>'<div class="lp-area-group"><strong>'+({lawns:'Газоны',fills:'Отсыпки',ponds:'Водоёмы'})[g]+'</strong>'+CATALOG.filter(x=>x.group===g).map(x=>'<button type="button" data-area-material="'+x.id+'" class="'+(chosen===x.id?'active':'')+'"><img src="'+cardPhotoURL(x)+'" alt=""><span>'+esc(x.name)+'</span></button>').join('')+'</div>').join('');
  }
  function field(name,label,value,min,max,step=.05){return `<label>${label}<input data-field="${name}" type="number" value="${value}" min="${min}" max="${max}" step="${step}"></label>`}
  function drawInspector(){
@@ -433,7 +433,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   modal.addEventListener('dblclick',e=>{if(e.target.closest('#lpSvg')&&points.length>=(mode==='path'?2:3)){e.preventDefault();finish();}});
   modal.addEventListener('cancel',e=>{e.preventDefault();if(!busy)close()});
   document.addEventListener('keydown',onKey);modal.showModal();draw();
-  enablePremiumAssets().then(ok=>{if(modal?.open){draw();if(ok)say('Библиотека готова: '+photographicAssetCount()+' новых фотографических карточек, остальные — прежние 1080×1080.');}}).catch(()=>{});
+  enablePremiumAssets().then(ok=>{if(modal?.open){draw();if(ok)say('Библиотека готова: '+(photographicAssetCount()+cardPhotoCount())+' фотографических превью, остальные — прежние 1080×1080.');}}).catch(()=>{});
   try{[preview,roofArt,previewModel]=await Promise.all([storage('preview').catch(()=>null),storage('roof').catch(()=>null),storage('preview-model').catch(()=>null)]);if(previewModel!==JSON.stringify(doc))photoVisible=false;await Promise.all(doc.buildings.map(async b=>{const img=await storage('roof-'+b.id).catch(()=>null);if(img)roofArts.set(b.id,img)}));if(modal?.open)drawMap()}catch{}
  }
  function close(){
