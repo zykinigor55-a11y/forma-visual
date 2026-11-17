@@ -1,4 +1,4 @@
-import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=area-union-v3-20261117';
+import {GROUPS,CATALOG,TREE_HEIGHT_M,SCENE_OPTIONS,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=area-union-v3-20261117';
 import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=photographic-cards-20261117';
 import {brushPolygon} from './forma-landscape-brush.js';
 
@@ -37,10 +37,33 @@ import {brushPolygon} from './forma-landscape-brush.js';
   zoomTo(Math.max(2.5,viewScale),c);
   say('Приближено к выбранному объекту · '+Math.round(viewScale*100)+'%. Размеры участка не изменены.');
  }
+
+ function sunSettings(){
+  const a=doc.atmosphere||{},t={morning:[105,26],day:[182,62],evening:[258,20],night:[0,0]}[a.time]||[182,62],w={sunny:1,overcast:.17,'after-rain':.64,rain:.08,fog:.035,snow:.14};
+  return {az:t[0],el:t[1],strength:(w[a.weather]??1)*(t[1]>0?1:0),season:a.season||'summer',time:a.time||'day',weather:a.weather||'sunny'};
+ }
+ function treeShadow(item,entry,d){
+  const sun=sunSettings();if(!sun.el||sun.strength<.01)return '';
+  const height=clamp(Number(item.height)||(TREE_HEIGHT_M[entry.id]||12),.15,40);
+  const distance=height/Math.tan(sun.el*Math.PI/180),a=(sun.az+(doc.north||0))*Math.PI/180;
+  const dx=-Math.sin(a)*distance,dy=Math.cos(a)*distance;
+  return '<image href="'+iconURL(entry)+'" x="'+(item.x-d/2+dx)+'" y="'+(item.y-d/2+dy)+'" width="'+d+'" height="'+d+'" filter="url(#lpTreeCastShadow)" opacity="'+(.48*sun.strength).toFixed(3)+'" pointer-events="none"/>'
+   +'<ellipse cx="'+item.x+'" cy="'+item.y+'" rx="'+(d*.22)+'" ry="'+(d*.17)+'" fill="#122216" opacity="'+(.085*sun.strength).toFixed(3)+'" pointer-events="none"/>';
+ }
+ function foliageTone(entry){
+  const v=sunSettings(),evergreen=['pine','spruce'].includes(entry.id);
+  if(v.season==='winter')return evergreen?'saturate(.78) brightness(.95)':'saturate(.18) brightness(1.20) opacity(.70)';
+  if(v.season==='autumn')return evergreen?'saturate(.95)':'sepia(.62) saturate(1.4) hue-rotate(-15deg)';
+  return v.season==='spring'?'saturate(1.1) brightness(1.04)':'none';
+ }
+ function atmosphereOverlay(){
+  const v=sunSettings(),t={morning:['#f6dab1',.065],day:['#fff',0],evening:['#eca75e',.12],night:['#102c48',.44]}[v.time],s={spring:['#d4ecc7',.025],summer:['#fff',0],autumn:['#ce995c',.065],winter:['#d8eefa',.13]}[v.season],w={sunny:['#fff',0],overcast:['#91a8b7',.09],'after-rain':['#9cbab2',.08],rain:['#64809b',.21],fog:['#e1e2df',.22],snow:['#e1e9f4',.18]}[v.weather];
+  return [t,s,w].filter(x=>x&&x[1]>.005).map(([color,opacity])=>'<rect width="'+doc.site.width+'" height="'+doc.site.height+'" fill="'+color+'" opacity="'+opacity+'" pointer-events="none"/>').join('');
+ }
  function drawSvg(full=false){
   const w=doc.site.width,h=doc.site.height,max=Math.max(w,h),fs=Math.max(.4,Math.min(w,h)*.027),bound=doc.site.boundary||rectBoundary(w,h);
   const grid=max>140?5:max>80?2:1;
-  let shapes=`<defs><pattern id="lpGrid" width="${grid}" height="${grid}" patternUnits="userSpaceOnUse"><path d="M${grid} 0H0V${grid}" fill="none" stroke="#71836b" stroke-width="${Math.max(.025,grid*.015)}" stroke-opacity=".3"/></pattern></defs><rect width="${w}" height="${h}" fill="#e9e9df"/>`;
+  let shapes=`<defs><filter id="lpTreeCastShadow" x="-200%" y="-200%" width="500%" height="500%"><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .85 0"/><feGaussianBlur stdDeviation=".12"/></filter></defs><defs><pattern id="lpGrid" width="${grid}" height="${grid}" patternUnits="userSpaceOnUse"><path d="M${grid} 0H0V${grid}" fill="none" stroke="#71836b" stroke-width="${Math.max(.025,grid*.015)}" stroke-opacity=".3"/></pattern></defs><rect width="${w}" height="${h}" fill="#e9e9df"/>`;
   if(doc.underlay&&!preview)shapes+=`<image href="${doc.underlay}" width="${w}" height="${h}" opacity="${doc.underlayOpacity}" preserveAspectRatio="none"/>`;
   shapes+=`<rect width="${w}" height="${h}" fill="url(#lpGrid)"/>`;
   if(preview&&photoVisible)shapes+=`<image href="${preview}" width="${w}" height="${h}" preserveAspectRatio="none"/>`;
@@ -88,7 +111,8 @@ import {brushPolygon} from './forma-landscape-brush.js';
     shapes+=`<defs><pattern id="tile-${item.id}" width="${tile}" height="${tile}" patternUnits="userSpaceOnUse"><image href="${iconURL(entry)}" width="${tile}" height="${tile}" preserveAspectRatio="xMidYMid slice"/></pattern></defs><polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="url(#tile-${item.id})" opacity="${lawn?.98:.90}"/>`;
    }else{
     const d=entry.group==='lights'?Math.max(.75,item.diameter):item.diameter;
-    shapes+=`<g data-object="${item.id}" transform="rotate(${item.rotation} ${item.x} ${item.y})"><image href="${iconURL(entry)}" x="${item.x-d/2}" y="${item.y-d/2}" width="${d}" height="${d}"/></g>`;
+    if(entry.group==='trees')shapes+=treeShadow(item,entry,d);
+    shapes+=`<g data-object="${item.id}" transform="rotate(${item.rotation} ${item.x} ${item.y})"><image href="${iconURL(entry)}" x="${item.x-d/2}" y="${item.y-d/2}" width="${d}" height="${d}" ${entry.group==='trees'?'style="filter:'+foliageTone(entry)+'"':''}/></g>`;
     if(active)shapes+=`<circle cx="${item.x}" cy="${item.y}" r="${d/2+.15}" fill="none" stroke="#c68f48" stroke-width=".14" stroke-dasharray=".28 .2" pointer-events="none"/>`;
    }
    if(active&&item.points&&item.geometry!=='paint')for(const [i,p] of item.points.entries())shapes+=`<circle data-vertex="${i}" data-object="${item.id}" cx="${p.x}" cy="${p.y}" r="${Math.min(.3,max*.01)}" fill="#fff7e2" stroke="#b47b37" stroke-width=".08"/>`;
@@ -135,6 +159,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
     shapes+='<path d="'+dline(points)+'" fill="none" stroke="#c47c32" stroke-width="'+(mode==='path'?width:.12)+'" stroke-dasharray=".25 .15" pointer-events="none"/>';
    for(const p of points)shapes+='<circle cx="'+p.x+'" cy="'+p.y+'" r=".18" fill="#fff0c5" stroke="#a46e35" stroke-width=".06" pointer-events="none"/>';
   }
+  shapes+=atmosphereOverlay();
   return `<svg id="lpSvg" xmlns="http://www.w3.org/2000/svg" width="1400" height="1400" viewBox="${full?"0 0 "+w+" "+h:Object.values(cameraBox()).join(" ")}" preserveAspectRatio="xMidYMid meet">${shapes}</svg>`;
  }
  function position(e){
@@ -206,7 +231,9 @@ import {brushPolygon} from './forma-landscape-brush.js';
  function drawInspector(){
   const root=$('#lpInspector',modal);if(!root)return;
   const h=doc.house,r=report(doc);
-  let html=`<h3>Параметры</h3><section><strong>УЧАСТОК · МЕТРЫ</strong><div class="lp-two">${field('site.width','Ширина, м',doc.site.width,5,500)}${field('site.height','Длина, м',doc.site.height,5,500)}</div>${field('north','Север · поворот °',doc.north,-360,360,1)}<label class="lp-check"><input type="checkbox" data-field="verified" ${doc.verified?'checked':''}> Размеры проверены</label><small>Снимок без измерений не считается точной геометрией. Масштаб не меняет размеры объектов.</small></section>`;
+  const atmo=doc.atmosphere||{time:'day',season:'summer',weather:'sunny'};
+  const sceneSelect=(key,label)=>'<label>'+label+'<select data-atmo="'+key+'">'+SCENE_OPTIONS[key].map(([v,n])=>'<option value="'+v+'" '+(atmo[key]===v?'selected':'')+'>'+n+'</option>').join('')+'</select></label>';
+  let html=`<h3>Параметры</h3><section class="lp-atmosphere"><strong>☀ АТМОСФЕРА СЦЕНЫ</strong><div class="lp-atmo-fields">${sceneSelect('time','Время дня')}${sceneSelect('season','Сезон')}${sceneSelect('weather','Погода')}</div><small>Влияет на свет, тени и GPT Image. Геометрия участка не меняется.</small></section><section><strong>УЧАСТОК · МЕТРЫ</strong><div class="lp-two">${field('site.width','Ширина, м',doc.site.width,5,500)}${field('site.height','Длина, м',doc.site.height,5,500)}</div>${field('north','Север · поворот °',doc.north,-360,360,1)}<label class="lp-check"><input type="checkbox" data-field="verified" ${doc.verified?'checked':''}> Размеры проверены</label><small>Снимок без измерений не считается точной геометрией. Масштаб не меняет размеры объектов.</small></section>`;
   if(doc.site.boundary)html+=`<section><strong>УГЛЫ ГРАНИЦЫ · КООРДИНАТЫ В МЕТРАХ</strong><p>Введите точные координаты каждого угла участка.</p><div class='lp-vertices'>${doc.site.boundary.map((p,i)=>`<div><span>${i+1}</span><input type='number' aria-label='X угла ${i+1}' data-boundary='${i}' data-axis='x' step='.05' value='${p.x}'><input type='number' aria-label='Y угла ${i+1}' data-boundary='${i}' data-axis='y' step='.05' value='${p.y}'></div>`).join('')}</div></section>`;
   html+=`<section><strong>СТРОЕНИЕ · ВИД СВЕРХУ</strong><label>Тип<select data-field="house.type">${[['house','Дом'],['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозпостройка']].map(([v,t])=>`<option value="${v}" ${h.type===v?'selected':''}>${t}</option>`).join('')}</select></label><div class="lp-two">${field('house.width','Ширина м',h.width,2,60)}${field('house.height','Длина м',h.height,2,60)}</div><div class="lp-two">${field('house.x','X центра м',h.x,0,500)}${field('house.y','Y центра м',h.y,0,500)}</div>${field('house.rotation','Поворот °',h.rotation,-360,360,1)}<label>Кровля<select data-field="house.roof"><option value="gable" ${h.roof==='gable'?'selected':''}>Двускатная</option><option value="hip" ${h.roof==='hip'?'selected':''}>Вальмовая</option><option value="flat" ${h.roof==='flat'?'selected':''}>Плоская</option></select></label><label>Фото строения<input type="file" id="lpHousePhoto" accept="image/png,image/jpeg,image/webp"></label><button type="button" data-generate="roof" ${!h.photo?'disabled':''}>GPT Image 2.6 · кровля сверху</button><small>Фото ${h.photo?'загружено':'не загружено'}. Генерация не изменяет размеры дома.</small></section>`;
   html+=`<section><strong>ДОПОЛНИТЕЛЬНЫЕ СТРОЕНИЯ</strong><div class='lp-two'><button type='button' data-add-building='bath'>＋ Баня</button><button type='button' data-add-building='garage'>＋ Гараж</button><button type='button' data-add-building='gazebo'>＋ Беседка</button><button type='button' data-add-building='outbuilding'>＋ Хозблок</button></div><small>${doc.buildings.length} дополнительных строений с отдельной геометрией</small></section>`;
@@ -219,7 +246,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
    if(obj&&entry){html+=`<section class="lp-selected"><strong>${esc(entry.name)}</strong>`;
     if(obj.points){html+=entry.group==='pavers'?'<label>Тип брусчатки<select data-field="object.catalogId">'+CATALOG.filter(x=>x.group==='pavers').map(x=>'<option value="'+x.id+'" '+(x.id===obj.catalogId?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>'+field('object.width','Ширина дорожки · м',obj.width,.4,10):'';
      html+=`<p>${entry.group==='pavers'?'Длина '+num(lineLength(obj.points))+' м, площадь приблиз. '+num(areaFor(doc,obj))+' м²':'Площадь '+num(polygonArea(obj.points))+' м²'}</p><div class="lp-vertices">${obj.points.map((p,i)=>`<div><span>${i+1}</span><input data-vertex="${i}" data-axis="x" type="number" step=".05" value="${p.x}"><input data-vertex="${i}" data-axis="y" type="number" step=".05" value="${p.y}"></div>`).join('')}</div>`;
-    }else{html+=`<div class="lp-two">${field('object.x','X м',obj.x,0,500)}${field('object.y','Y м',obj.y,0,500)}</div>${field('object.diameter','Диаметр кроны/объекта м',obj.diameter,.1,30)}${field('object.rotation','Поворот °',obj.rotation,-360,360,1)}`;}
+    }else{html+=`<div class="lp-two">${field('object.x','X м',obj.x,0,500)}${field('object.y','Y м',obj.y,0,500)}</div>${field('object.diameter','Диаметр кроны/объекта м',obj.diameter,.1,30)}${entry.group==='trees'?field('object.height','Высота дерева · м',obj.height,.5,40,.5):''}${field('object.rotation','Поворот °',obj.rotation,-360,360,1)}`;}
     html+='<button type="button" data-delete>Удалить выбранное</button></section>';
    }
   }
@@ -286,7 +313,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   if(mode!=='path'||pathShape==='free'||!points.length)return p;
   return snapPathPoint(points.at(-1),p,pathShape,doc.site);
  }
- function addObject(p){const entry=itemCatalog();if(!entry)return;checkpoint();const obj={id:uid(),catalogId:entry.id,type:entry.group,x:p.x,y:p.y,diameter:entry.diameter||1,rotation:0};doc.objects.push(obj);selected=obj.id;placementCount++;save();draw();say('Добавлено: '+placementCount+' · '+entry.name+'. Нажимайте снова для следующих экземпляров. Для изменения положения выберите «Переместить».');}
+ function addObject(p){const entry=itemCatalog();if(!entry)return;checkpoint();const obj={id:uid(),catalogId:entry.id,type:entry.group,x:p.x,y:p.y,diameter:entry.diameter||1,height:entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9,rotation:0};doc.objects.push(obj);selected=obj.id;placementCount++;save();draw();say('Добавлено: '+placementCount+' · '+entry.name+'. Нажимайте снова для следующих экземпляров. Для изменения положения выберите «Переместить».');}
  function finish(){
   if(mode==='boundary'){if(points.length<3)return;checkpoint();doc.site.boundary=points.map(p=>({...p}));doc.verified=false;say('Контур задан. Проверьте координаты и габариты.');}
   else if(['path','strip','area'].includes(mode)){
@@ -365,7 +392,15 @@ import {brushPolygon} from './forma-landscape-brush.js';
   if(!drag||drag.pointer!==e.pointerId)return;drag=null;save();draw()
  }
  function change(e){
-  const field=e.target.dataset.field,vertex=e.target.dataset.vertex,boundary=e.target.dataset.boundary;if(field===undefined&&vertex===undefined&&boundary===undefined)return;
+  const key=e.target.dataset.atmo;
+   if(key!==undefined){
+    if(!SCENE_OPTIONS[key]?.some(x=>x[0]===e.target.value))return;
+    checkpoint();doc.atmosphere[key]=e.target.value;
+    if(key==='weather'&&e.target.value==='snow')doc.atmosphere.season='winter';
+    if(key==='season'&&e.target.value!=='winter'&&doc.atmosphere.weather==='snow')doc.atmosphere.weather='overcast';
+    save();draw();say('Атмосфера обновлена — свет и высотные тени пересчитаны.');return;
+   }
+   const field=e.target.dataset.field,vertex=e.target.dataset.vertex,boundary=e.target.dataset.boundary;if(field===undefined&&vertex===undefined&&boundary===undefined)return;
   checkpoint();const v=e.target.type==='checkbox'?e.target.checked:e.target.tagName==='SELECT'?e.target.value:Number(e.target.value);
   if(boundary!==undefined){if(doc.site.boundary?.[+boundary]){const axis=e.target.dataset.axis;doc.site.boundary[+boundary][axis]=clamp(v,0,axis==='x'?doc.site.width:doc.site.height);doc.verified=false;}}
   else if(vertex!==undefined){const obj=doc.objects.find(x=>x.id===selected);if(obj?.points?.[+vertex])obj.points[+vertex][e.target.dataset.axis]=clamp(v,0,e.target.dataset.axis==='x'?doc.site.width:doc.site.height);}
@@ -374,7 +409,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   else if(field.startsWith('site.')){doc.site[field.slice(5)]=clamp(v,5,500);doc.verified=false;}
   else if(field.startsWith('house.')){const k=field.slice(6);doc.house[k]=['type','roof'].includes(k)?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArt=null;}
   else if(field.startsWith('aux.')){const b=doc.buildings.find(x=>x.id===selected.slice(9));if(b){const k=field.slice(4);b[k]=k==='roof'?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArts.delete(b.id)}}
-   else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);obj[k]=k==='catalogId'?(byId(v)?.group===obj.type?v:obj.catalogId):k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
+   else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);obj[k]=k==='catalogId'?(byId(v)?.group===obj.type?v:obj.catalogId):k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):k==='height'?clamp(v,.15,40):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
   doc=normalizeProject(doc);syncAutoLawn();save();draw();
  }
  async function uploadPhoto(file,kind){
