@@ -33,7 +33,8 @@ test('all specimen meshes are measured and do not use flat PNG tree billboards',
  assert.match(src,/new T\.CylinderGeometry/);
  assert.match(src,/new T\.BufferGeometry/);
  assert.match(src,/new T\.MeshStandardMaterial/);
- assert.doesNotMatch(src,/SpriteMaterial|TextureLoader|\.png|PlaneGeometry/);
+ assert.doesNotMatch(src,/SpriteMaterial|TextureLoader|\.png/);
+ assert.match(src,/new T\.InstancedMesh\(new T\.PlaneGeometry/);
  const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
  assert.match(html,/createVegetation\(THREE,o/);
  assert.match(html,/createRock\(THREE,o/);
