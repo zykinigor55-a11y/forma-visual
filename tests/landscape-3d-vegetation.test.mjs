@@ -41,3 +41,21 @@ test('all specimen meshes are measured and do not use flat PNG tree billboards',
  assert.match(html,/createGardenLight\(THREE,o/);
  assert.match(html,/plant:\[\.\.\.CATALOG\.filter\(x=>x\.group==='trees'\)/);
 });
+
+test('botanical realism v2 has no spherical crown clumps or disconnected foliage clouds',()=>{
+ const src=readFileSync(new URL('../forma-landscape-3d-vegetation.js',import.meta.url),'utf8');
+ assert.doesNotMatch(src,/new T\.SphereGeometry\(/,'No green spheres can stand in for leaves');
+ assert.match(src,/function curveBranch\(/,'Tapered organic branches exist');
+ assert.match(src,/function foliageSprigGeometry\(/,'Leaf clusters use individual 3D blades');
+ assert.match(src,/const offset=Math\.min\(\.08,diameter\*\.012\)/,'Crown points stay near the physical branch tips');
+ assert.match(src,/const offset=shrub\?\.04:\.075/,'Sprays stay attached to shrub twigs');
+ assert.match(src,/function flowerPetalGeometry\(/,'Flowers are petals rather than coloured stones');
+});
+
+test('mobile scene mode gives canvas more room without losing tools or editability',()=>{
+ const src=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
+ assert.match(src,/data-mobile-panel="scene"/);
+ assert.match(src,/height:min\(29dvh,250px\)/);
+ assert.match(src,/function activateMobilePanel\(name\)/);
+ assert.match(src,/\.status-hidden/);
+});
