@@ -41,7 +41,10 @@ function texture(THREE,key,base){
   }
   for(let i=0;i<520;i++){const p=random()*512,q=random()*512;line(p,q,p+(horizontal?14:0.7),q+(horizontal?1:27),'rgba(5,8,5,.075)',random()*1.8)}
  }else if(n==='standing'){
-  for(let i=2;i<512;i+=68){line(i,0,i,512,'#344147',5);line(i+5,0,i+5,512,'rgba(216,228,225,.32)',2)}
+  // Physical 3D ribs define the seam direction. Avoid a cross-hatched
+  // painted texture that would produce an unrealistic roofing grid.
+  for(let i=0;i<1150;i++){const x=random()*512,y=random()*512;
+   line(x,y,x+random()*3,y+random()*8,'rgba(214,219,214,.065)',.55)}
  }else if(n==='tile'){
   for(let y=0;y<512;y+=26){line(0,y,512,y,'rgba(10,12,15,.5)',2);
    for(let x=(Math.floor(y/26)%2)*22;x<512;x+=44){line(x,y,x,y+26,'rgba(7,12,17,.18)',1.5)}
