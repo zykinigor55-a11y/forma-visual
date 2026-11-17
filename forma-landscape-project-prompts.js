@@ -27,10 +27,11 @@ export function masterplanPrompt(input){
 }
 export function topDownRoofPrompt(info){
  const width=Number(info?.width),height=Number(info?.height);
+ const roofType=({gable:'gable roof, central ridge and two slopes',hip:'hipped roof with four inclined sides and geometrically correct ridges',flat:'flat roof with parapet or accurate eaves'})[info?.roof]||'roof type inferred conservatively from supplied photo';
  if(!Number.isFinite(width)||!Number.isFinite(height)||width<2||height<2||width>60||height>60)throw Object.assign(Error('Для кровли необходимы проверенные размеры здания.'),{status:400});
  return [
   'HIGH-END HYPERREAL ORTHOGRAPHIC NADIR 90-DEGREE ROOF TEXTURE OF THE SAME BUILDING IN IMAGE 1. No perspective or oblique views, no visible facade walls, only top of the building. Match roof material, actual color, eaves, gutter design, roof slope count and ridge direction using the uploaded photograph. Building footprint '+width.toFixed(2)+'m by '+height.toFixed(2)+'m (real coordinates controlled by the landscape editor).',
   'Image 2 if supplied is a building ROOF PLAN and overrides guesses for precise roof geometry; the source photo only defines roof surface appearance. Never invent dormers, skylights, chimneys or extra volumes not supported by the source materials.',
-  'Generate a hyper-detailed realistic roof isolated against a UNIFORM dark charcoal background, at centre, with wide margins. No garden, no surrounding trees, no labels, dimensions or text. The architectural vector editor will handle scale, rotation and placement. This is a presentation texture, not a substitute for verified roof measurements.'
+  'Generate a FULL-BLEED top-down roof texture that fills the image canvas edge-to-edge within the rectangular roof outline, no margins or surrounding background. Requested roof layout: '+roofType+'. No garden, surrounding trees, facades, labels, dimensions or text. The geometric editor controls final scale, building placement and rotation. This is presentation art, NOT a substitute for verified roof measurements.'
  ].join('\n\n');
 }
