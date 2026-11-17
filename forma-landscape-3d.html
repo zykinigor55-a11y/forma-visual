@@ -701,7 +701,7 @@ function addEvents(){
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
- if(state.tool==='terrain'&&state.placing){state.painting=true;controls.enabled=false;push();canvas.setPointerCapture?.(e.pointerId);const p=hitGround(e);if(p)modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
+ if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;controls.enabled=false;push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
  const key=hitObj(e);
  if(state.tool==='select'&&key){
   state.selected=key;state.drag=true;push();
