@@ -1,4 +1,4 @@
-import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=pond-auto-grass-eraser-v9';
+import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=strip-area-v1';
 import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=photographic-cards-20261117';
 import {brushPolygon} from './forma-landscape-brush.js';
 
@@ -99,8 +99,13 @@ import {brushPolygon} from './forma-landscape-brush.js';
   }
   if(points.length){
    const width=clamp(Number($('#lpWidth',modal)?.value)||1.2,.4,10);
-   if(mode==='area'&&areaTool==='polygon'&&points.length>=3)
+   if(mode==='area'&&areaTool==='polygon'&&points.length>=3){
+    const entry=itemCatalog(),tile=entry?.group==='ponds'?5:2.4;
+    const texture=entry?.group==='ponds'?cardPhotoURL(entry):entry?iconURL(entry):null;
+    if(texture)shapes+='<defs><pattern id="lpDraftArea" patternUnits="userSpaceOnUse" width="'+tile+'" height="'+tile+'"><image href="'+texture+'" width="'+tile+'" height="'+tile+'" preserveAspectRatio="xMidYMid slice"/></pattern></defs>';
     shapes+='<polygon points="'+poly(points)+'" fill="'+selectedColor()+'" fill-opacity=".57" stroke="#f5c47c" stroke-width=".14" stroke-dasharray=".30 .16" pointer-events="none"/>';
+    if(texture)shapes+='<polygon points="'+poly(points)+'" fill="url(#lpDraftArea)" opacity=".78" pointer-events="none"/>';
+   }
    if(mode==='strip'&&points.length>=2){
     const tile=2.4;
     shapes+='<defs><pattern id="lpDraftStrip" patternUnits="userSpaceOnUse" width="'+tile+'" height="'+tile+'"><image href="'+iconURL(itemCatalog())+'" width="'+tile+'" height="'+tile+'" preserveAspectRatio="xMidYMid slice"/></pattern></defs>';
@@ -352,7 +357,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
  }
  function title(){return (doc.title||'landscape').replace(/[^0-9a-zа-яё_-]/gi,'_').slice(0,48)}
  async function inlineSVGAssets(svg){
-  const paths=[...new Set([...svg.matchAll(new RegExp('href="(/assets/landscape-(?:premium|photo)/[a-z0-9-]+[.](?:png|jpe?g|webp)[?][^"]*)"','gi'))].map(m=>m[1]))];
+  const paths=[...new Set([...svg.matchAll(new RegExp('href="(/assets/(?:landscape-(?:premium|photo|card-photo)|landscape/items)/[a-z0-9-]+[.](?:png|jpe?g|webp)[?][^"]*)"','gi'))].map(m=>m[1]))];
   if(!paths.length)return svg;
   const converted=await Promise.all(paths.map(async url=>{
    try{const r=await fetch(url,{cache:'force-cache'});if(!r.ok)return [url,null];const b=await r.blob();
