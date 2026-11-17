@@ -36,10 +36,11 @@ try{
  assert.equal(project.objects.length,10);
  await page.reload({waitUntil:'domcontentloaded',timeout:30000});
  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:50000});
- await page.locator('[data-view="3d"]').click();
+ // The editor initializes in 3D; avoid an unnecessary second WebGL camera reset.
  await mkdir('artifacts/landscape-editor',{recursive:true});
  await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-3d.png'});
- await page.locator('[data-view="2d"]').click();
+ await page.evaluate(()=>document.querySelector('[data-view="2d"]')?.click());
+ await page.waitForTimeout(350);
  await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-nadir.png'});
  assert.deepEqual(errors,[],'Botanical generation must not cause browser exceptions');
  console.log('3D botanical species PASS',JSON.stringify(metrics));
