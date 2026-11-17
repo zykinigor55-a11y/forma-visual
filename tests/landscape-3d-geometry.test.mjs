@@ -77,11 +77,11 @@ test('perspective AI prompt keeps original camera and object coordinates without
  assert.match(server,/landscapeMasterplan.cameraMode==='3d-perspective'\?perspectiveLandscapePrompt/);
 });
 
-test('eight independently selectable house presets preserve measured footprints and roof contracts',async()=>{
+test('twelve independently selectable house presets preserve measured footprints and roof contracts',async()=>{
  const {HOUSE_PRESETS,housePreset,housePresetIds}=await import('../forma-landscape-3d-buildings.js');
  const {normalizeProject,freshProject}=await import('../forma-landscape-project-core.js');
- assert.equal(HOUSE_PRESETS.length,8);
- assert.equal(new Set(housePresetIds).size,8);
+ assert.equal(HOUSE_PRESETS.length,12);
+ assert.equal(new Set(housePresetIds).size,12);
  assert.ok(HOUSE_PRESETS.every(x=>x.name&&x.wall&&['gable','hip','flat'].includes(x.roof)));
  const d=freshProject();d.house.archStyle='brick';d.house.roof='hip';d.house.roofRise=2.3;
  d.buildings=[{id:'b-1',type:'house',x:4,y:4,width:7,height:5,rotation:0,roof:'flat',roofRise:1.6,archStyle:'japandi'}];
