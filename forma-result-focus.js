@@ -46,6 +46,7 @@ import {createReviewQueue} from './forma-result-queue.js';
     '</section>',
     '<div class="forma-result-actions">',
      '<button type="button" data-result-action="compare">◧ Сравнить</button>',
+     '<button type="button" data-result-action="furniture" hidden>▣ Заменить мебель</button>',
      '<button type="button" data-result-action="download">↓ Скачать</button>',
      '<button type="button" data-result-action="variants">▤ История</button>',
      '<button type="button" data-result-action="scene">☼ Все настройки сцены</button></div>',
@@ -60,6 +61,11 @@ import {createReviewQueue} from './forma-result-queue.js';
    if(!btn)return;
    const type=btn.dataset.resultAction;
    if(type==='enhance'){enhanceCurrent();return}
+   if(type==='furniture'){
+    if(window.FORMA_FURNITURE_EDITOR?.open?.(reviews.active,()=>close(false)))return;
+    const info=screen.querySelector('#formaResultPending');if(info)info.textContent='Редактор мебели не загрузился. Обновите страницу.';
+    return;
+   }
    if(enhancing)return;
    if(type==='save-gallery'){
     if(reviewSaving)return;reviewSaving=true;btn.disabled=true;
@@ -227,6 +233,7 @@ import {createReviewQueue} from './forma-result-queue.js';
   document.getElementById('formaResultScene').textContent=String(scene||'Готовый кадр').slice(0,140);
   screen.querySelector('.forma-result-next').hidden=kind==='video';
   screen.querySelector('#formaEnhancePanel').hidden=kind==='video';
+  screen.querySelector('[data-result-action="furniture"]').hidden=kind==='video'||!entry.isInterior;
   screen.querySelector('[data-result-action="enhance"]').disabled=false;
   screen.querySelector('[data-result-action="enhance"]').textContent='✦ Улучшить · AI';
   enhanceStatus('Отдельный платный AI-запрос · оригинал не изменится.');
