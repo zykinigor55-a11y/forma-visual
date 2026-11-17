@@ -47,6 +47,6 @@ test('dark appearance uses neutral graphite RGB values, not olive/green, light r
  assert.match(graphite,/html\[data-forma-theme="dark"\]/);
  assert.doesNotMatch(graphite,/html\[data-forma-theme="light"\]/);
  assert.match(html,/forma-graphite-neutral-v1\.css/);
- assert.match(html,/app\.js\?v=interior-result-furniture-20261117/);
+ assert.match(html,/app\.js\?v=forma-help-brand-v3-20261117/);
  assert.match(html,/forma-result-focus\.js\?v=after-render-orbit-furniture-20261117/);
 });
