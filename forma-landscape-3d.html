@@ -168,7 +168,7 @@ import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometr
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
-import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance} from './forma-landscape-3d-strokes.js';
+import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 const $=s=>document.querySelector(s);
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -322,8 +322,12 @@ function polygon(points,y,color,water=false,materialId='universal'){
  m.side=THREE.DoubleSide;const o=mesh(geo,m);o.castShadow=false;return o;
 }
 function drawArea(o,entry,key){
- const g=new THREE.Group();const pts=o.points;const isPath=entry.group==='pavers'||(['fills','lawns'].includes(entry.group)&&o.geometry==='strip');
- if(isPath){
+ const g=new THREE.Group();const pts=o.points;const isPaint=['fills','lawns'].includes(entry.group)&&o.geometry==='strip';
+ const isPath=entry.group==='pavers';
+ if(isPaint&&pts.length>=2){
+  const swept=strokeRibbon(pts,o.width||1.2);
+  if(swept.length>=3)g.add(polygon(swept,.062,entry.color||'#78965d',false,o.catalogId));
+ }else if(isPath){
   for(let i=1;i<pts.length;i++){const a=pos(pts[i-1].x,pts[i-1].y),b=pos(pts[i].x,pts[i].y);
    a.y=terrainAt(a.x,a.z)+.09;b.y=terrainAt(b.x,b.z)+.09;
    const delta=b.clone().sub(a),l=delta.length();if(l<.001)continue;
@@ -667,7 +671,7 @@ function beginBrush(world){
   doc.objects.push({id:id(),catalogId:state.placing,type:entry.group,x:first.x,y:first.y,
    diameter,height:entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):.95,rotation:0});
  }
- state.painting=true;controls.enabled=false;canvas.setPointerCapture?.(state.activePointer);
+ state.painting=true;canvas.setPointerCapture?.(state.activePointer);
  rebuild();return true;
 }
 function advanceBrush(world){
@@ -709,14 +713,14 @@ function addEvents(){
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
- if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;controls.enabled=false;push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
+ if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
  const key=hitObj(e);
  if(state.tool==='select'&&key){
   state.selected=key;state.drag=true;push();
   const obj=selectable(key)?.obj,anchor=hitGround(e);
   state.dragAnchor=anchor?fromWorld(anchor):null;
   state.dragPoints=Array.isArray(obj?.points)?obj.points.map(p=>({...p})):null;
-  renderProps();controls.enabled=false;
+  renderProps();
  }
 };
 const move=e=>{
@@ -731,8 +735,10 @@ const move=e=>{
   return;
  }
  if(state.painting){
+  if(e.pointerId!==state.activePointer)return;
+  if(e.pointerType==='mouse'&&(e.buttons&1)===0)return;
   if(brushStroke){advanceBrush(hitGround(e));return}
-  const p=hitGround(e);if(p)modifyTerrain(p);return
+  const p=hitGround(e);if(p)modifyTerrain(p);return;
  }
  if(!state.drag||!state.selected||!state.down)return;
  const p=hitGround(e),ref=selectable(state.selected);if(!p||!ref?.obj)return;
@@ -749,6 +755,7 @@ const move=e=>{
 };
 const up=e=>{
  if(state.view==='walk'){state.down=null;return}
+ if(state.painting&&e.pointerId!==state.activePointer)return;
  if(state.painting){
   if(brushStroke)finishBrush();
   else{state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();}
@@ -762,7 +769,11 @@ const up=e=>{
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
  canvas.addEventListener('pointercancel',()=>{if(state.painting&&brushStroke)finishBrush();state.drag=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk'});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
- controls.mouseButtons.RIGHT=THREE.MOUSE.ROTATE; // Camera always rotates with right mouse drag.
+ // OrbitControls stays active while painting: it MUST NOT interpret left-drag
+ // as orbit. Right-drag and wheel remain available even during an active brush.
+ controls.mouseButtons.LEFT=null;
+ controls.mouseButtons.RIGHT=THREE.MOUSE.ROTATE;
+ controls.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;
 
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
