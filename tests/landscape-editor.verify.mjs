@@ -38,10 +38,10 @@ try{
   const photo=await page.locator('[data-asset="formal"] img').evaluate(img=>({src:img.currentSrc,width:img.naturalWidth,height:img.naturalHeight}));
   assert.ok(photo.src.includes('/formal.png?'),photo.src);
   assert.equal(photo.width,1080);assert.equal(photo.height,1080);
+  await page.screenshot({path:`artifacts/landscape-editor/${mobile?'mobile':'desktop'}-lawns.png`,fullPage:true});
   // Never make a paid call in CI: replace the queue client with a local fake.
-  await page.evaluate(()=>{window.FORMA_RENDER_QUEUE={fetch:async()=>{await new Promise(r=>setTimeout(r,500));return new Response(JSON.stringify({
-    images:['iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII='],
-    mimes:['image/png']
+  await page.evaluate(()=>{window.FORMA_RENDER_QUEUE={fetch:async(_url,options)=>{await new Promise(r=>setTimeout(r,500));const input=JSON.parse(options.body).image;return new Response(JSON.stringify({
+    images:[input.split(',')[1]],mimes:['image/png']
   }),{status:200,headers:{'Content-Type':'application/json'}});}}});
   page.on('dialog',dialog=>dialog.accept());
   await page.locator('#lpAi').click();
