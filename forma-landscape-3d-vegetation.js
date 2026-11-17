@@ -127,6 +127,60 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  inst.castShadow=true;inst.receiveShadow=true;inst.frustumCulled=false;
  g.add(inst);
 }
+/* Botanical leaf atlas: thin leaflets and conifer needles on real angled
+ * 3D foliage quads, not flat whole-tree billboards. */
+const sprayTextureCache=new Map();
+function createSprayTexture(T,needles){
+ const id=needles?'needles':'leaves';
+ if(sprayTextureCache.has(id))return sprayTextureCache.get(id);
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d'),random=rng(hash(id));
+ const stem=(a,b,c,d,w=1.1)=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.strokeStyle='rgba(186,194,169,.70)';ctx.lineWidth=w;ctx.stroke()};
+ for(let j=0;j<9;j++){
+  const angle=j*Math.PI*2/9+(random()-.5)*.36;
+  const length=50+random()*57;
+  const endX=128+Math.cos(angle)*length,endY=128+Math.sin(angle)*length*.80;
+  stem(128,128,endX,endY);
+  for(let k=1;k<=6;k++){
+   const t=k/7,x=128+(endX-128)*t,y=128+(endY-128)*t;
+   for(const side of [-1,1]){
+    const nx=-Math.sin(angle)*side,ny=Math.cos(angle)*side;
+    const dx=nx*(12+random()*8),dy=ny*(12+random()*8);
+    if(needles){for(let n=0;n<3;n++)stem(x+n*1.7,y,x+dx*(.70+n*.14),y+dy*(.70+n*.14),.8)}
+    else{
+     ctx.save();ctx.translate(x+dx*.7,y+dy*.7);ctx.rotate(Math.atan2(dy,dx));
+     ctx.fillStyle='rgba(232,239,217,.94)';
+     ctx.beginPath();ctx.moveTo(-10,0);ctx.quadraticCurveTo(0,-6,12,0);
+     ctx.quadraticCurveTo(0,6,-10,0);ctx.fill();
+     ctx.strokeStyle='rgba(89,111,88,.28)';ctx.lineWidth=.8;
+     ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();
+     ctx.restore();
+    }
+   }
+  }
+ }
+ const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
+ texture.minFilter=T.LinearMipmapLinearFilter;texture.magFilter=T.LinearFilter;
+ sprayTextureCache.set(id,texture);return texture;
+}
+function addFoliageSprays(g,T,points,id,season,seed,quality){
+ if(!points.length||foliageProfile(id,season).leafless)return;
+ const type=foliageProfile(id,season),r=rng(seed),shrub=type.kind.includes('shrub');
+ const needle=['pine','spruce','juniper','thuja-globe'].includes(id),count=clamp(Math.round(points.length*quality*(shrub?.85:1.2)),90,1900);
+ const material=new T.MeshStandardMaterial({map:createSprayTexture(T,needle),alphaTest:.18,side:T.DoubleSide,roughness:.92,metalness:0});
+ const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),d=new T.Object3D(),tone=new T.Color(type.color);
+ for(let i=0;i<count;i++){
+  const p=points[Math.floor(r()*points.length)];
+  const offset=shrub?.17:.40;
+  d.position.set(p.x+(r()-.5)*offset,p.y+(r()-.5)*offset,p.z+(r()-.5)*offset);
+  d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
+  const w=(shrub?.25:.61)*(.67+r()*.82);d.scale.set(w,w,1);
+  d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
+  mesh.setColorAt(i,tone.clone().multiplyScalar(.83+r()*.35));
+ }
+ mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+ mesh.castShadow=true;mesh.frustumCulled=false;g.add(mesh);
+}
 function flowerClusters(g,T,positions,id,seed,season){
  if(!positions.length)return;
  const bloom=(id==='hydrangea'&&season!=='winter')||(id==='spirea'&&season==='spring')||
@@ -191,7 +245,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  // Birch has a visible pale trunk; Scots pine a taller open red-brown bole.
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
  addBranch(g,T,branches,c.bark);
- if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));}
+ if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);}
  flowerClusters(g,T,leafPoints,id,Math.floor(r()*4294967295),season);
 }
 function generateShrub(T,g,id,height,diameter,season,r,quality){
@@ -216,7 +270,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    z:clamp(p.z+(r()-.5)*radius*.19,-radius,radius),s:p.s*(.8+r()*.3)});
  }
  addBranch(g,T,branches,c.bark);
- if(!foliageProfile(id,season).leafless){addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,points,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));}
+ if(!foliageProfile(id,season).leafless){addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,points,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295));addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);}
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
 }
 export function createVegetation(T,instance,{season='summer',quality=1}={}){
