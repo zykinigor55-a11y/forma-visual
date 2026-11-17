@@ -112,7 +112,10 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  </div>
  <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 8 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
   <div id="houseStyles" class="house-style-list" aria-label="Архитектурные стили домов"></div>
-  <p class="muted">Настоящие 3D-объёмы с фасадными материалами. Габариты участка и здания не меняются при выборе стиля.</p></section>
+  <label for="customHouseGlb">Своя точная модель дома · GLB до 35 МБ</label>
+  <input type="file" id="customHouseGlb" accept=".glb,model/gltf-binary">
+  <button type="button" class="action" id="clearCustomHouse">Вернуться к выбранному стилю</button>
+  <p class="muted">GLB сохраняется локально в этом браузере. Масштаб пропорционально вписывается в выбранные размеры дома без растяжения.</p></section>
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
@@ -143,6 +146,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js';
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
@@ -151,7 +155,7 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='';const GRID=48;const houseThumbs=new Map();
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='';const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -204,7 +208,7 @@ function initialize(){
  scene.add(new THREE.HemisphereLight(0xffffff,0x52604e,2));
  const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
- state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());
+ state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());restoreHouseGlbs().catch(e=>console.warn('Stored GLB restore:',e));
  const previousDrawing=localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
@@ -241,7 +245,20 @@ function rebuild(){
  refreshDraft();updateSun();renderProps();renderer.render(scene,camera);
 }
 function buildingGroup(b){
- return createArchitecturalBuilding(THREE,b,{night:doc.atmosphere.time==='night'});
+ const model=b.modelKey&&importedHouseModels.get(b.modelKey);
+ if(!model)return createArchitecturalBuilding(THREE,b,{night:doc.atmosphere.time==='night'});
+ // Clone geometry/material, so subsequent edits can safely dispose rebuilt
+ // scene resources without destroying the locally stored source asset.
+ const content=model.clone(true);
+ content.traverse(n=>{if(n.isMesh){n.geometry=n.geometry?.clone();n.material=Array.isArray(n.material)?n.material.map(m=>m.clone()):n.material?.clone();n.castShadow=true;n.receiveShadow=true}});
+ const bounds=new THREE.Box3().setFromObject(content),size=new THREE.Vector3(),center=new THREE.Vector3();
+ bounds.getSize(size);bounds.getCenter(center);
+ const ratio=Math.min((Number(b.width)||8)*.96/Math.max(.01,size.x),(Number(b.height)||7)*.96/Math.max(.01,size.z));
+ const scale=Math.min(100,Math.max(.001,ratio)),group=new THREE.Group();
+ content.scale.multiplyScalar(scale);
+ content.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+ group.add(content);group.userData.archStyle='custom-glb';group.userData.footprint={width:b.width,height:b.height};
+ return group;
 }
 function buildBuilding(b,key){const g=buildingGroup(b),p=pos(b.x,b.y);g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=-(b.rotation||0)*Math.PI/180;mark(g,key);root.add(g)}
 function addCylinderBetween(g,a,b,r=.06,color='#8d9080'){
@@ -313,17 +330,70 @@ function activeHouseTarget(){
  const ref=state.selected?selectable(state.selected):null;
  return ref&&(ref.type==='building'||ref.type==='house')?ref.obj:doc.house;
 }
+function houseModelStore(){
+ return new Promise((resolve,reject)=>{
+  const request=indexedDB.open('FORMA_LANDSCAPE_MODELS_V1',1);
+  request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('models'))request.result.createObjectStore('models')};
+  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+ });
+}
+async function storeGlb(key,bytes){
+ const db=await houseModelStore();try{
+  await new Promise((resolve,reject)=>{const tx=db.transaction('models','readwrite');tx.objectStore('models').put(bytes,pid+':'+key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});
+ }finally{db.close()}
+}
+async function readGlb(key){
+ const db=await houseModelStore();
+ try{return await new Promise((resolve,reject)=>{
+  const req=db.transaction('models','readonly').objectStore('models').get(pid+':'+key);
+  req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);
+ })}finally{db.close()}
+}
+async function parseGlb(key,bytes){
+ const result=await new GLTFLoader().parseAsync(bytes,'');
+ if(!result.scene)throw Error('Модель не содержит 3D-сцены.');
+ const count={meshes:0};
+ result.scene.traverse(n=>{if(n.isMesh){count.meshes++;if(!n.geometry?.attributes?.position)throw Error('В GLB обнаружена некорректная геометрия.')}});
+ if(count.meshes<1)throw Error('Нет пригодных 3D-объектов в GLB.');
+ importedHouseModels.set(key,result.scene);
+ return count.meshes;
+}
+async function importHouseGlb(file){
+ if(!file)return;
+ if(!file.name.toLowerCase().endsWith('.glb')){status('Выберите двоичную модель .GLB');return}
+ if(file.size>35*1024*1024){status('GLB превышает 35 МБ. Уменьшите модель.');return}
+ const target=activeHouseTarget(),key=target===doc.house?'main':target.id,was=$('#customHouseGlb');
+ was.disabled=true;status('Проверяем 3D-файл и его материалы…');
+ try{
+  const bytes=await file.arrayBuffer();
+  const meshes=await parseGlb(key,bytes);
+  await storeGlb(key,bytes);
+  push();target.modelKey=key;save();rebuild();renderHouseLibrary();
+  status('Загружен реальный GLB: '+meshes+' 3D-элементов. Пропорции сохранены, габариты участка прежние.');
+ }catch(error){status('Не удалось загрузить GLB: '+String(error?.message||error).slice(0,180))}
+ finally{was.disabled=false;was.value=''}
+}
+async function restoreHouseGlbs(){
+ const list=[doc.house,...doc.buildings].filter(b=>b.modelKey);
+ for(const b of list){
+  try{
+   const bytes=await readGlb(b.modelKey);
+   if(bytes)await parseGlb(b.modelKey,bytes);
+  }catch(error){console.warn('GLB unavailable',b.modelKey,error?.message)}
+ }
+ if(list.length){rebuild();renderHouseLibrary();}
+}
 function renderHouseLibrary(){
  const target=$('#houseStyles');if(!target||!doc)return;
  const current=activeHouseTarget(),style=housePreset(current.archStyle).id;
- $('#houseEditing').textContent=current===doc.house?'Редактируется: главный дом':'Редактируется: выбранная постройка';
+ $('#houseEditing').textContent=(current===doc.house?'Редактируется: главный дом':'Редактируется: выбранная постройка')+(current.modelKey?' · собственная GLB-модель':'');
  target.innerHTML=HOUSE_PRESETS.map(p=>'<button type="button" data-house-preset="'+p.id+'" class="'+(p.id===style?'active':'')+'" aria-pressed="'+String(p.id===style)+'">'+
   (houseThumbs.has(p.id)?'<img src="'+houseThumbs.get(p.id)+'" alt="3D-превью '+p.name+'" draggable="false">':'<span class="house-fallback" style="background:linear-gradient(145deg,'+p.accent+',#273330)"></span>')+
   '<span class="house-label">'+p.name+'</span><span class="house-hint">'+p.subtitle+'</span></button>').join('');
  target.querySelectorAll('[data-house-preset]').forEach(button=>button.onclick=()=>{
   const preset=housePreset(button.dataset.housePreset),house=activeHouseTarget();
-  if(house.archStyle===preset.id)return;
-  push();house.archStyle=preset.id;house.roof=preset.roof;
+  if(house.archStyle===preset.id&&!house.modelKey)return;
+  push();house.archStyle=preset.id;house.modelKey=null;house.roof=preset.roof;
   house.roofRise=preset.id==='aframe'?Math.max(3.2,Math.min(6,(house.width||8)*.64)):Math.min(2.1,(house.width||8)*.22);
   state.housePreset=preset.id;save();rebuild();renderHouseLibrary();
   status('Архитектура: '+preset.name+'. Фундамент, габариты и координаты сохранены.');
@@ -558,6 +628,8 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Примените любой из восьми стилей.')};
+ $('#customHouseGlb').onchange=e=>importHouseGlb(e.target.files?.[0]);
+ $('#clearCustomHouse').onclick=()=>{const h=activeHouseTarget();if(!h.modelKey)return status('Вы уже используете встроенный 3D-стиль.');push();h.modelKey=null;save();rebuild();renderHouseLibrary();status('Возврат к 3D-стилю. Исходный GLB остаётся в локальном хранилище.')};
  $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
  $('#export3dPdf').onclick=export3dPdf;
  $('#sourceDrawing').onchange=e=>importUnderlay(e.target.files?.[0]);
