@@ -318,7 +318,7 @@ function place(world){
  if(!inParcel(point,doc.site)){status('Точка вне границ участка. Размещение запрещено.');return}
  if(tool==='surface'||tool==='water'||tool==='fence'){
   const last=pointMode.at(-1);if(last&&Math.hypot(point.x-last.x,point.y-last.y)<.05)return;
-  pointMode.push(point);refreshDraft();status('Точек контура: '+pointMode.length+'. Нажмите «Завершить контур» после последней.');
+  pointMode.push(point);refreshDraft();status('Точек контура: '+pointMode.length+'. Нажмите «Завершить контур» после последней.');return;
 
  }
  push();
