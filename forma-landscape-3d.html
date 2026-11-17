@@ -198,16 +198,25 @@ function drawObject(o,entry,key){
  mark(g,key);root.add(g);
 }
 function polygon(points,y,color,water=false){
- const shape=new THREE.Shape();points.forEach((pt,i)=>{const p=pos(pt.x,pt.y),xx=p.x,zz=-p.z;i?shape.lineTo(xx,zz):shape.moveTo(xx,zz)});shape.closePath();
- const geo=new THREE.ShapeGeometry(shape),m=water?new THREE.MeshPhysicalMaterial({color:'#377f91',roughness:.12,metalness:.32,transparent:true,opacity:.88,clearcoat:.8}):material(color);
- const o=mesh(geo,m);o.rotation.x=-Math.PI/2;o.position.y=y;o.castShadow=false;return o;
+ const shape=new THREE.Shape();points.forEach((pt,i)=>{const p=pos(pt.x,pt.y);i?shape.lineTo(p.x,-p.z):shape.moveTo(p.x,-p.z)});shape.closePath();
+ const geo=new THREE.ShapeGeometry(shape);geo.rotateX(-Math.PI/2);
+ const verts=geo.attributes.position;
+ const waterLevel=water?Math.min(...points.map(p=>{const v=pos(p.x,p.y);return terrainAt(v.x,v.z)})+.09:0;
+ for(let i=0;i<verts.count;i++){const x=verts.getX(i),z=verts.getZ(i);verts.setY(i,water?waterLevel:terrainAt(x,z)+y)}
+ geo.computeVertexNormals();
+ const m=water?new THREE.MeshPhysicalMaterial({color:'#377f91',roughness:.12,metalness:.25,transparent:true,opacity:.92,clearcoat:.8,side:THREE.DoubleSide}):material(color);
+ m.side=THREE.DoubleSide;const o=mesh(geo,m);o.castShadow=false;return o;
 }
 function drawArea(o,entry,key){
  const g=new THREE.Group();const pts=o.points;const isPath=entry.group==='pavers'||(entry.group==='fills'&&o.geometry==='strip');
  if(isPath){
-  for(let i=1;i<pts.length;i++){const a=pos(pts[i-1].x,pts[i-1].y),b=pos(pts[i].x,pts[i].y);const delta=b.clone().sub(a),l=delta.length();
-   const board=mesh(new THREE.BoxGeometry(o.width||1.2,.065,l),material(entry.color||'#a8a99f'));board.position.copy(a.add(b).multiplyScalar(.5));board.position.y=.08;board.rotation.y=Math.atan2(delta.x,delta.z);g.add(board)}
- }else if(pts.length>=3)g.add(polygon(pts,.06,entry.color||'#6d9874',entry.group==='ponds'));
+  for(let i=1;i<pts.length;i++){const a=pos(pts[i-1].x,pts[i-1].y),b=pos(pts[i].x,pts[i].y);
+   a.y=terrainAt(a.x,a.z)+.09;b.y=terrainAt(b.x,b.z)+.09;
+   const delta=b.clone().sub(a),l=delta.length();if(l<.001)continue;
+   const board=mesh(new THREE.BoxGeometry(o.width||1.2,.065,l),material(entry.color||'#a8a99f'));
+   board.position.copy(a.add(b).multiplyScalar(.5));
+   board.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),delta.normalize());g.add(board)}
+ }else if(pts.length>=3)g.add(polygon(pts,.055,entry.color||'#6d9874',entry.group==='ponds'));
  mark(g,key);root.add(g);
 }
 function drawExtra(o){
@@ -267,7 +276,7 @@ function modifyTerrain(world){
  const rad=Number($('#brushRadius')?.value||3),strength=Number($('#brushStrength')?.value||.5),mode=state.placing||'raise';
  for(let i=0;i<=GRID;i++)for(let j=0;j<=GRID;j++){
   const x=(j/GRID-.5)*doc.site.width,z=(i/GRID-.5)*doc.site.height,dist=Math.hypot(x-world.x,z-world.z);
-  if(dist<rad){const k=i*(GRID+1)+j,v=heightmap[k]||0,f=(1-dist/rad)*strength;
+  if(dist<rad&&inParcel({x:x+doc.site.width/2,y:z+doc.site.height/2},doc.site)){const k=i*(GRID+1)+j,v=heightmap[k]||0,f=(1-dist/rad)*strength;
    heightmap[k]=Math.max(-8,Math.min(12,mode==='raise'?v+f:mode==='lower'?v-f:v*(1-Math.min(.7,f))))}
  }rebuild();
 }
@@ -278,6 +287,7 @@ function place(world){
  if(tool==='site'&&state.placing==='outline'){
   pointMode.push(point);status('Контур: точек '+pointMode.length+'. Enter — завершить.');return;
  }
+ if(!inParcel(point,doc.site)){status('Точка вне границ участка. Размещение запрещено.');return}
  if(tool==='surface'||tool==='water'||tool==='fence'){
   pointMode.push(point);const req=tool==='fence'?2:tool==='surface'&&type==='pavers'?2:3;
   if(pointMode.length<req){status('Точка '+pointMode.length+' из '+req+' поставлена.');return}
