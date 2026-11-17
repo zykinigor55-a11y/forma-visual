@@ -90,6 +90,21 @@ try{
  await page.mouse.up({button:'left'});
  const relief=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-terrain-v1-landscape')||'[]'));
  assert.ok(relief.some(v=>v>.01),'continuous relief brush persists measurable positive elevations');
+ // In terrain mode, RMB must orbit without adding/subtracting any relief samples.
+ await page.locator('[data-view="3d"]').click();
+ await page.waitForTimeout(180);
+ const terrainBeforeRight=await page.evaluate(()=>localStorage.getItem('forma-landscape-3d-terrain-v1-landscape'));
+ const beforeTurn=await page.locator('#viewport').evaluate(c=>c.toDataURL('image/png'));
+ const b=await page.locator('#viewport').boundingBox();
+ await page.mouse.move(b.x+b.width*.58,b.y+b.height*.58);
+ await page.mouse.down({button:'right'});
+ await page.mouse.move(b.x+b.width*.68,b.y+b.height*.52,{steps:10});
+ await page.mouse.up({button:'right'});await page.waitForTimeout(220);
+ const afterTurn=await page.locator('#viewport').evaluate(c=>c.toDataURL('image/png'));
+ assert.notEqual(afterTurn,beforeTurn,'Camera must rotate with RMB while relief tool remains selected');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-3d-terrain-v1-landscape')),terrainBeforeRight,
+  'Right-drag must not sculpt or destroy the painted terrain');
+
 
  await page.locator('[data-view="2d"]').click(); // deterministic metric nadir after orbit test
  await page.waitForTimeout(150);
