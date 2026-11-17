@@ -170,6 +170,26 @@ try{
  await page.locator('#clearCustomHouse').click();
  const cleared=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')).house);
  assert.equal(cleared.modelKey,null);
+ // Photoreal 3D flora override uses the same real GLB loader, but
+ // must not mutate plant coordinates or the measured project footprint.
+ await page.locator('[data-tool="plant"]').click();
+ await page.locator('[data-item="pine"]').click();
+ assert.ok((await page.locator('#floraModelStatus').textContent()).includes('встроенная'));
+ await page.locator('#vegetationGlb').setInputFiles({name:'test-pine.glb',mimeType:'model/gltf-binary',buffer:tinyHouseGlb()});
+ await page.waitForFunction(()=>document.querySelector('#floraModelStatus')?.textContent.includes('GLB активна'),null,{timeout:30000});
+ const projectBeforeFloraReload=await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape'));
+ const floraIndex=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-flora-v1-landscape')||'[]'));
+ assert.ok(floraIndex.includes('pine'),'Species override persisted in local metadata');
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:45000});
+ await page.locator('[data-tool="plant"]').click();
+ await page.locator('[data-item="pine"]').click();
+ await page.waitForFunction(()=>document.querySelector('#floraModelStatus')?.textContent.includes('GLB активна'),null,{timeout:30000});
+ assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),projectBeforeFloraReload,
+  'Importing photographic flora may not edit the existing measured project');
+ await page.locator('#removePlantGlb').click();
+ assert.ok((await page.locator('#floraModelStatus').textContent()).includes('встроенная'));
+
  assert.deepEqual(errors,[],'3D editor has no JavaScript crashes');
  console.log('3D desktop/mobile smoke passed: WebGL, atmosphere, contour, 2D/3D/Walk, shared model.');
 }finally{await browser.close()}
