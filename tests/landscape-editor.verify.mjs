@@ -34,6 +34,7 @@ try{
   assert.equal(await page.locator('#lpRenderOverlay').isVisible(),false);
   await page.locator('[data-category="lawns"]').click();
   await page.locator('[data-asset="formal"] img').waitFor({state:'visible'});
+  await page.waitForFunction(()=>{const img=document.querySelector('[data-asset="formal"] img');return !!img&&img.complete&&img.naturalWidth===1080&&img.getAttribute('src')?.includes('formal.png?');},null,{timeout:30000});
   const photo=await page.locator('[data-asset="formal"] img').evaluate(img=>({src:img.currentSrc,width:img.naturalWidth,height:img.naturalHeight}));
   assert.ok(photo.src.includes('/formal.png?'),photo.src);
   assert.equal(photo.width,1080);assert.equal(photo.height,1080);
