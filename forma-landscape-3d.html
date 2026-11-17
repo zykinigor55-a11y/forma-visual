@@ -378,10 +378,10 @@ function chooseTool(t){
   const asset=catalog(c[0]),photo=['plant','landscape','light'].includes(t);
   const uri=t==='plant'?'/assets/landscape-photo/'+c[0]+'.png':
     t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':'';
-  const diameter=asset?.diameter?Number(asset.diameter).toFixed(1)+' м':'';
+  const diameter=asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+(TREE_HEIGHT_M[c[0]]?' · высота '+Number(TREE_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
   return '<button class="choice'+(photo?' has-preview':'')+'" data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="" loading="lazy" decoding="async">':'')+
-   '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">Диаметр '+diameter+'</small>':'')+
+   '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'
  }).join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+
  (t==='terrain'?'<label>Радиус кисти, м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label>Сила рельефа</label><input id="brushStrength" type="range" min=".1" max="2" step=".1" value=".5">':'');
