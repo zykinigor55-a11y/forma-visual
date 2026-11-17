@@ -64,14 +64,26 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #renderAi:disabled{opacity:.4;cursor:wait}
 @media(max-width:650px){.ai-result-actions{align-items:flex-start;flex-direction:column}}
 
+#mobileWorkspaceTabs{display:none}
 .mobiletoggle{display:none}
 @media(max-width:850px){
-header{padding:0 10px;gap:8px}.brand{font-size:13px}.brand small{font-size:7px}.name{display:none}header a{font-size:10px}
+header{padding:0 10px;gap:8px;height:60px}.brand{font-size:13px}.brand small{font-size:7px}.name{display:none}header a{font-size:10px}
 header .header-right button{padding:6px;font-size:10px}
-.panel{bottom:15px;top:auto;height:42%;border-radius:14px}#left{left:8px;width:54%;}#right{right:8px;width:42%;padding:9px}
-#tools{grid-template-columns:repeat(3,1fr)}#tools button{font-size:9px;padding:6px 3px}#tools button .glyph{font-size:14px}
-#hint{left:10px;top:10px;right:10px;font-size:10px}#status{bottom:44%;font-size:10px;padding:6px 10px}
+#mobileWorkspaceTabs{position:absolute;display:grid;grid-template-columns:1fr 1fr;gap:5px;bottom:calc(min(40dvh,340px) + 11px);left:8px;right:8px;z-index:4;padding:5px;border-radius:12px;background:#182322ed;border:1px solid #4a5b51}
+#mobileWorkspaceTabs button{padding:10px;font-size:12px}
+#mobileWorkspaceTabs button.active{background:#D6D9C9;color:#203027;font-weight:800}
+.panel{bottom:8px;top:auto;height:min(40dvh,340px);border-radius:14px}
+#left,#right{left:8px;right:8px;width:calc(100% - 16px);display:none}
+body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{display:flex}
+#left{flex-direction:column}
+#right{flex-direction:column;padding:12px;overflow-y:auto}
+#tools{grid-template-columns:repeat(4,minmax(0,1fr))}
+#tools button{font-size:10px;padding:9px 3px}#tools button .glyph{font-size:16px}
+#library .choice{min-height:42px}
+#hint{left:9px;top:8px;right:9px;font-size:10px;padding:7px 9px}
+#status{bottom:calc(min(40dvh,340px) + 70px);font-size:10px;padding:7px 10px;max-width:calc(100% - 20px)}
 #right .buttons{grid-template-columns:repeat(3,1fr)}#right .pair{grid-template-columns:1fr 1fr}
+.house-style-list{grid-template-columns:repeat(2,minmax(0,1fr))}.house-style-list img,.house-style-list .house-fallback{height:105px}
 }
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
@@ -89,6 +101,10 @@ header .header-right button{padding:6px;font-size:10px}
 </header>
 <main>
 <canvas id="viewport"></canvas>
+<div id="mobileWorkspaceTabs" aria-label="Мобильные панели">
+ <button type="button" data-mobile-panel="tools" class="active">Инструменты</button>
+ <button type="button" data-mobile-panel="details">Дома и параметры</button>
+</div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
@@ -168,6 +184,12 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild()}
 function initialize(){
+ document.body.dataset.mobilePanel='tools';
+ document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>{
+  document.body.dataset.mobilePanel=button.dataset.mobilePanel;
+  document.querySelectorAll('[data-mobile-panel]').forEach(other=>other.classList.toggle('active',other===button));
+  requestAnimationFrame(resize);
+ }));
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
