@@ -69,11 +69,10 @@ import {createReviewQueue} from './forma-result-queue.js';
    if(type==='download'){download();return}
    if(type==='compare'){close(true);document.querySelector('[data-view-mode="slider"]')?.click();return}
    if(type==='angle'){
-    close(false);
-    const button=document.getElementById('newAngleBtn');
-    if(button&&!button.disabled)button.click();
-    else document.getElementById('sourceFile')?.click();
-    return
+    if(window.FORMA_CAMERA_ORBIT?.open?.(reviews.active,()=>close(false)))return;
+    const el=screen.querySelector('#formaResultPending');
+    if(el)el.textContent='Модуль нового ракурса не загружен. Обновите страницу.';
+    return;
    }
    if(type==='variants'){
     close(false);document.querySelector('[data-tab="variants"]')?.click();
