@@ -119,7 +119,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
  </div><div class="camera-focus"><button type="button" id="focusHouse">⌂ К дому</button><button type="button" id="fit3dScene">▢ Весь участок</button></div>
- <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 8 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
+ <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 12 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
   <div id="houseStyles" class="house-style-list" aria-label="Архитектурные стили домов"></div>
   <label for="customHouseGlb">Своя точная модель дома · GLB до 35 МБ</label>
   <input type="file" id="customHouseGlb" accept=".glb,model/gltf-binary">
@@ -757,7 +757,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
- $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Примените любой из восьми стилей.')};
+ $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Выберите любой из двенадцати 3D-стилей.')};
  $('#focusHouse').onclick=focusHouseCamera;
  $('#fit3dScene').onclick=()=>setView('3d');
  $('#customHouseGlb').onchange=e=>importHouseGlb(e.target.files?.[0]);
