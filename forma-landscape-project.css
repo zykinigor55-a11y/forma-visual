@@ -702,3 +702,10 @@
 @media(prefers-reduced-motion:reduce){
  #faLandscapeMasterplan .lp-groups button{transition:none!important}
 }
+
+#faLandscapeMasterplan .lp-category-shortcuts .lp-quick-category.active,
+#faLandscapeMasterplan .lp-category-shortcuts .lp-quick-category[aria-pressed="true"]{
+ border-color:#d8b68a!important;background:linear-gradient(145deg,#564737,#2c2d2a)!important;
+ box-shadow:inset 0 1px 0 #fff2d333,0 0 0 1px #bfa16f44!important;
+ color:#fff4df!important;
+}
