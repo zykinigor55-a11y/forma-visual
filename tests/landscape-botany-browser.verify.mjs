@@ -23,8 +23,10 @@ try{
  });
  assert.ok(metrics.every(m=>m.meshes>=2&&m.instanced>=2),'Every species must be real instanced 3D branches and foliage: '+JSON.stringify(metrics));
  assert.ok(metrics.every(m=>m.height>0&&m.diameter>0));
- const project=await page.evaluate(()=>{
-  const key='forma-landscape-masterplan-v1-landscape',p=JSON.parse(localStorage.getItem(key));
+ const project=await page.evaluate(async()=>{
+  const key='forma-landscape-masterplan-v1-landscape',stored=JSON.parse(localStorage.getItem(key)||'null');
+  const {freshProject}=await import('./forma-landscape-project-core.js');
+  const p=stored||freshProject();
   p.site={width:58,height:50,orientation:0,boundary:null};p.house={...p.house,x:29,y:11,width:10,height:7};
   const items=[['pine',7,35,14,7],['spruce',16,35,12,5],['birch',26,35,16,6],['oak',36,35,17,8],['willow',47,35,11,8],
    ['juniper',9,21,.55,1.8],['hydrangea',19,21,1.55,1.6],['spirea',29,21,.85,1.2],['barberry',39,21,1.15,1.4],['lavender',49,21,.55,.8]];
