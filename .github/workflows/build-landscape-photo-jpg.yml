@@ -1,0 +1,51 @@
+name: FORMA — landscape photo JPG surfaces
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/prepare-landscape-surface-jpg.py'
+      - '.github/workflows/build-landscape-photo-jpg.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
+      - name: Prepare fifteen 1080×1080 JPG paving, fills and lawns
+        run: python tools/prepare-landscape-surface-jpg.py
+      - name: Verify surface cards and plant alpha
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          ids=['concrete-pavers','granite-setts','clinker-herringbone','slate-pavers','radial-setts','grass-grid','marble-chips','granite-chips','river-pebble','slate-chips','pine-bark','formal','universal','shade','meadow']
+          for id in ids:
+              f=Path('assets/landscape-photo')/(id+'.jpg')
+              im=Image.open(f)
+              assert im.format=='JPEG' and im.size==(1080,1080),(str(f),im.format,im.size)
+          for f in Path('assets/landscape-photo').glob('*.png'):
+              im=Image.open(f)
+              assert im.mode=='RGBA' and im.size==(1080,1080) and im.getpixel((0,0))[3]==0,(f,im.mode,im.size)
+          print('Verified 15 JPG surfaces and any installed transparent botanical PNGs')
+          PY
+      - name: Commit only new JPG materials
+        run: |
+          git config user.name 'FORMA Design Bot'
+          git config user.email 'forma-design-bot@users.noreply.github.com'
+          git add assets/landscape-photo/*.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m "assets(landscape): publish 15 1080 JPG material and lawn cards"
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            git push origin HEAD:dom-render-nanobanana
+          fi
