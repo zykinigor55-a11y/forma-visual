@@ -1,0 +1,30 @@
+name: FORMA — landscape project screenshots
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths: ['.github/workflows/capture-landscape-masterplan.yml']
+  workflow_dispatch:
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: Start actual FORMA server
+        run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs > /tmp/forma-server.log 2>&1 &
+          for i in $(seq 1 35); do if curl -fsS http://127.0.0.1:3000/ >/dev/null; then break; fi; sleep 1; done
+          curl --fail http://127.0.0.1:3000/ >/dev/null
+      - name: Capture actual landscape editor
+        run: node tools/capture-landscape-masterplan.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-landscape-real-ui-screenshots
+          path: artifacts/landscape-screens/*.png
+          if-no-files-found: warn
