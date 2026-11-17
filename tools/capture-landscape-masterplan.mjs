@@ -38,7 +38,9 @@
   await page.waitForFunction(()=>!!window.FORMA_LANDSCAPE_PROJECT,{timeout:45000});
   await page.evaluate(()=>window.FORMA_LANDSCAPE_PROJECT.open());
   await page.waitForSelector('#faLandscapeMasterplan[open]',{timeout:20000});
-  await page.waitForTimeout(1200);
+  await page.waitForFunction(()=>document.querySelector('.lp-assets img')?.src.includes('/assets/landscape-premium/'),{timeout:15000});
+  await page.waitForFunction(()=>[...document.querySelectorAll('.lp-assets img')].every(x=>x.complete&&x.naturalWidth>0),{timeout:12000});
+  await page.waitForTimeout(450);
  }
  const desktop=await browser.newPage({viewport:{width:1680,height:1040},deviceScaleFactor:1});
  await setup(desktop);
@@ -48,5 +50,14 @@
  const mobile=await browser.newPage({viewport:{width:430,height:932},deviceScaleFactor:1,isMobile:true,hasTouch:true});
  await setup(mobile);
  await mobile.screenshot({path:`${folder}/forma-landscape-project-mobile.png`,fullPage:false});
- console.log(JSON.stringify({status:'ok',files:['desktop','boulders','mobile']}));
+ await mobile.locator('.lp-sidebar').scrollIntoViewIfNeeded();
+ await mobile.waitForTimeout(350);
+ await mobile.screenshot({path:`${folder}/forma-landscape-premium-cards-mobile.png`,fullPage:false});
+ const checks={
+  desktopPremium:await desktop.locator('.lp-assets img').first().evaluate(img=>img.currentSrc.includes('landscape-premium')),
+  mobileCardWidth:await mobile.locator('.lp-assets button').first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),
+  mobileImagesOk:await mobile.locator('.lp-assets img').first().evaluate(img=>img.naturalWidth>=1000)
+ };
+ if(!checks.desktopPremium||!checks.mobileImagesOk||checks.mobileCardWidth<130)throw Error('Invalid premium library screenshot checks: '+JSON.stringify(checks));
+ console.log(JSON.stringify({status:'ok',files:['desktop','boulders','mobile','premium-mobile'],checks}));
  await browser.close();
