@@ -104,7 +104,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   const pathMaterials=$('#lpPathMaterials',modal);
   if(pathMaterials)pathMaterials.innerHTML=CATALOG.filter(x=>x.group==='pavers').map(x=>'<button type="button" data-path-material="'+x.id+'" class="'+(chosen===x.id?'active':'')+'"><img src="'+iconURL(x)+'" alt=""><span>'+esc(x.name)+'</span></button>').join('');
   const areaControls=$('#lpAreaControls',modal);if(areaControls)areaControls.hidden=mode!=='area';
-  $('[data-area-tool]',modal).forEach(b=>{b.classList.toggle('active',b.dataset.areaTool===areaTool);b.setAttribute('aria-pressed',String(b.dataset.areaTool===areaTool));});
+  modal.querySelectorAll('[data-area-tool]').forEach(b=>{b.classList.toggle('active',b.dataset.areaTool===areaTool);b.setAttribute('aria-pressed',String(b.dataset.areaTool===areaTool));});
   const brushSize=$('#lpBrushSize',modal);if(brushSize)brushSize.disabled=areaTool!=='brush';
   const areaMaterials=$('#lpAreaMaterials',modal);
   if(areaMaterials)areaMaterials.innerHTML=['lawns','fills','ponds'].map(g=>'<div class="lp-area-group"><strong>'+({lawns:'Газоны',fills:'Отсыпки',ponds:'Водоёмы'})[g]+'</strong>'+CATALOG.filter(x=>x.group===g).map(x=>'<button type="button" data-area-material="'+x.id+'" class="'+(chosen===x.id?'active':'')+'"><img src="'+iconURL(x)+'" alt=""><span>'+esc(x.name)+'</span></button>').join('')+'</div>').join('');
