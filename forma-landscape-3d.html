@@ -29,6 +29,7 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:12px 0}#library{paddi
 #library .choice.has-preview .asset-size{color:#c4b198;font-weight:500;font-size:10px;margin-top:4px}
 #library .choice.has-preview .asset-add{flex:0 0 auto;font-size:17px;color:#ceb997}
 #library .choice.has-preview.active{background:#3e4639;border-color:#c9ad80}
+#library .asset-group-heading{margin:15px 12px 7px;color:#dbc5a0;font-size:10px;letter-spacing:.13em;font-weight:750;border-bottom:1px solid #4e5c54;padding-bottom:8px}
 .brush-panel{margin:8px 12px 14px;padding:12px;border:1px solid #586b58;border-radius:11px;background:#202e2a}
 .brush-panel label{display:flex;align-items:center;gap:8px;margin:5px 0 9px;font-size:12px}
 .brush-panel label input[type="checkbox"]{width:18px;height:18px;accent-color:#d8c3a0}
@@ -186,7 +187,7 @@ const choices={
  terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['smooth','Выровнять грунт']],
  build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
- plant:CATALOG.filter(x=>['trees','shrubs'].includes(x.group)).map(x=>[x.id,x.name]),
+ plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
  water:[['formal-pond','Водоём (контур)']],
  landscape:CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name]),
  small:[['pergola','Пергола'],['gazebo','Беседка']],
@@ -374,12 +375,13 @@ function chooseTool(t){
  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
- $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':arr.map(c=>{
+ $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':arr.map((c,ci)=>{
   const asset=catalog(c[0]),photo=['plant','landscape','light'].includes(t);
   const uri=t==='plant'?'/assets/landscape-photo/'+c[0]+'.png':
     t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':'';
   const diameter=asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+(TREE_HEIGHT_M[c[0]]?' · высота '+Number(TREE_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
-  return '<button class="choice'+(photo?' has-preview':'')+'" data-item="'+c[0]+'">'+
+  const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':'';
+  return header+'<button class="choice'+(photo?' has-preview':'')+'" data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="" loading="lazy" decoding="async">':'')+
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'
