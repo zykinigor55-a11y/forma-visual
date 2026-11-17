@@ -38,6 +38,17 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
 #loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
 #loadError strong{font-size:19px}
+#aiResult{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
+#aiResult[hidden]{display:none}
+.ai-result-card{width:min(100%,1000px);max-height:94%;display:flex;flex-direction:column;gap:10px;padding:16px;background:#222629;border:1px solid #615746;border-radius:15px;box-shadow:0 20px 90px #0009}
+.ai-result-head,.ai-result-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}
+.ai-result-head strong{color:#d9c1a0;letter-spacing:.12em}
+.ai-result-card img{max-width:100%;min-height:0;object-fit:contain;border-radius:7px}
+.ai-result-actions a{background:#a88c64;color:#15191b;border-radius:8px;padding:10px 14px;text-decoration:none;font-weight:750}
+.ai-result-actions span{font-size:11px;color:#b0afa7}
+#renderAi:disabled{opacity:.4;cursor:wait}
+@media(max-width:650px){.ai-result-actions{align-items:flex-start;flex-direction:column}}
+
 .mobiletoggle{display:none}
 @media(max-width:850px){
 header{padding:0 10px;gap:8px}.brand{font-size:13px}.brand small{font-size:7px}.name{display:none}header a{font-size:10px}
@@ -70,15 +81,22 @@ header .header-right button{padding:6px;font-size:10px}
  </div>
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
+  <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
  <hr><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
  <hr><div class="pair"><div><label>Участок, ширина м</label><input id="plotW" type="number" min="5" max="500" step=".5"></div><div><label>Длина, м</label><input id="plotH" type="number" min="5" max="500" step=".5"></div></div>
  <button class="action" id="resizePlot">Применить размеры</button>
- <hr><button class="action" id="screenshot">Снимок 3D для AI</button>
+ <hr><button class="action" id="screenshot">↓ Снимок текущего 3D-ракурса</button>
+  <button class="action primary" id="renderAi">✦ Фотореалистичный AI-рендер</button>
  <button class="action" id="exportJSON">Экспорт модели JSON</button>
  <p class="muted">Геометрия создаётся в 3D. GPT Image / Nano Banana подключаются после подготовки сцены и выбора камеры.</p>
 </div>
 <div id="hint">Мышь: вращение · колесо: масштаб · правая кнопка: движение камеры. Выберите инструмент слева и нажмите на участок.</div>
 <div id="status">3D-модель загружается…</div>
+<div id="aiResult" hidden role="dialog" aria-label="Фотореалистичный AI-результат">
+ <div class="ai-result-card"><div class="ai-result-head"><strong>FORMA · РЕЗУЛЬТАТ</strong><button type="button" id="closeAiResult">× Закрыть</button></div>
+ <img id="aiResultImage" alt="Фотореалистичный рендер текущего 3D-ракурса">
+ <div class="ai-result-actions"><a id="downloadAiResult" download="FORMA-landscape-3d-ai.png">↓ Скачать изображение</a><span>Изображение справочное. Размеры — только из модели.</span></div>
+ </div></div>
 <div id="loadError"><div><strong>Не удалось загрузить 3D-движок</strong><p>Для редактора требуется WebGL и доступ к библиотеке Three.js. Проверьте подключение к сети и обновите страницу.</p></div></div>
 </main>
 </div>
@@ -130,7 +148,7 @@ function initialize(){
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
  if(heightmap.length!==(GRID+1)*(GRID+1))heightmap=Array((GRID+1)*(GRID+1)).fill(0);
  $('#projectName').value=doc.title;$('#plotW').value=doc.site.width;$('#plotH').value=doc.site.height;
- $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;
+ $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;$('#weather').value=doc.atmosphere.weather||'sunny';
  renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
@@ -261,9 +279,13 @@ function renderProps(){
 function updateSun(){
  const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
  const cfg={day:[-25,65,22,3],morning:[-56,21,12,1.75],evening:[55,14,17,1.3],night:[-30,8,15,.15]}[val]||[-25,65,22,3];
- sun.position.set(cfg[0],cfg[1],cfg[2]);sun.intensity=cfg[3];sun.color.set(val==='evening'?'#ffb87b':'#fff2db');
+ sun.position.set(cfg[0],cfg[1],cfg[2]);
+ const weather=doc.atmosphere.weather||'sunny',factor={sunny:1,overcast:.42,'after-rain':.7,rain:.28,fog:.25,snow:.5}[weather]||1;
+ sun.intensity=cfg[3]*factor;sun.color.set(val==='evening'?'#ffb87b':'#fff2db');
  scene.background=new THREE.Color(val==='night'?'#25343c':val==='evening'?'#a4a597':'#b8c7c4');
  scene.fog.color.copy(scene.background);
+ const haze=(doc.atmosphere.weather==='fog')?25:(['rain','snow'].includes(doc.atmosphere.weather)?85:180);
+ scene.fog.near=haze*.35;scene.fog.far=haze;
 }
 function setView(view){
  state.view=view;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
@@ -329,6 +351,23 @@ function place(world){
  }else extra.push({id:id(),type:state.placing,x:point.x,y:point.y,rotation:0});
  save();rebuild();
 }
+async function renderAi(){
+ const btn=$('#renderAi');
+ if(btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
+ btn.disabled=true;status('AI-рендер: отправляем точную 3D-сцену и координаты на сервер…');
+ try{
+  renderer.render(scene,camera);
+  const image=renderer.domElement.toDataURL('image/png');
+  const sceneInfo={...coordinateSummary(doc),cameraMode:'3d-perspective',cameraView:state.view,cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z}};
+  const response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,landscapeMasterplan:sceneInfo,quality:'high',quantity:1})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.images?.[0])throw Error(data.error||'Сервер не вернул изображение. Повторный платный запрос не запускался.');
+  const url='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
+  $('#aiResultImage').src=url;$('#downloadAiResult').href=url;$('#aiResult').hidden=false;
+  status('AI-изображение получено. Сохраняйте его отдельно; исходная 3D-геометрия не изменена.');
+ }catch(error){status('Ошибка AI: '+(error?.message||'Неизвестная ошибка'));}
+ finally{btn.disabled=false}
+}
 function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
 function addEvents(){
  const down=e=>{state.down={x:e.clientX,y:e.clientY};
@@ -348,8 +387,9 @@ function addEvents(){
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
  $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;save();rebuild()};
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
+ $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
- $('#screenshot').onclick=saveScreenshot;
+ $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
  $('#finishContour').onclick=finishContour;
  $('#cancelContour').onclick=()=>{pointMode=[];refreshDraft();status('Черновой контур отменён.');};
  $('#exportJSON').onclick=()=>{const data=JSON.stringify({schema:'FORMA-landscape-3d-v1',project:doc,extra,terrain:{grid:GRID,values:heightmap}},null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='FORMA-landscape-3d.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
