@@ -59,7 +59,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
     if(entry.group==='pavers'||(entry.group==='fills'&&item.geometry==='strip'))shapes+=`<path data-object="${item.id}" d="${dline(item.points)}" fill="none" stroke="${active?'#ffd697':'transparent'}" stroke-width="${item.width}" stroke-opacity="${active?.8:0}" stroke-linecap="round" stroke-linejoin="round" pointer-events="stroke"/>`;
     else if(['fills','lawns','ponds'].includes(entry.group))shapes+=`<polygon data-object="${item.id}" points="${poly(item.points)}"${maskAttr} fill="${active?'#ffe3b7':'transparent'}" fill-opacity="${active?.17:0}" stroke="${active?'#f7d097':'transparent'}" stroke-width=".12" pointer-events="all"/>`;
     else shapes+=`<circle data-object="${item.id}" cx="${item.x}" cy="${item.y}" r="${Math.max(.3,item.diameter/2)}" fill="${active?'#ffe2b5':'transparent'}" fill-opacity="${active?.11:0}" stroke="${active?'#e5c08e':'transparent'}" stroke-width=".09" pointer-events="all"/>`;
-    if(active&&item.points)for(const [i,p]of item.points.entries())shapes+=`<circle data-vertex="${i}" data-object="${item.id}" cx="${p.x}" cy="${p.y}" r="${Math.min(.3,max*.01)}" fill="#fff7e2" stroke="#a87633" stroke-width=".08"/>`;
+    if(active&&item.points&&item.geometry!=='paint')for(const [i,p]of item.points.entries())shapes+=`<circle data-vertex="${i}" data-object="${item.id}" cx="${p.x}" cy="${p.y}" r="${Math.min(.3,max*.01)}" fill="#fff7e2" stroke="#a87633" stroke-width=".08"/>`;
     continue;
    }
    if(entry.group==='pavers'){
@@ -91,7 +91,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
     shapes+=`<g data-object="${item.id}" transform="rotate(${item.rotation} ${item.x} ${item.y})"><image href="${iconURL(entry)}" x="${item.x-d/2}" y="${item.y-d/2}" width="${d}" height="${d}"/></g>`;
     if(active)shapes+=`<circle cx="${item.x}" cy="${item.y}" r="${d/2+.15}" fill="none" stroke="#c68f48" stroke-width=".14" stroke-dasharray=".28 .2" pointer-events="none"/>`;
    }
-   if(active&&item.points)for(const [i,p] of item.points.entries())shapes+=`<circle data-vertex="${i}" data-object="${item.id}" cx="${p.x}" cy="${p.y}" r="${Math.min(.3,max*.01)}" fill="#fff7e2" stroke="#b47b37" stroke-width=".08"/>`;
+   if(active&&item.points&&item.geometry!=='paint')for(const [i,p] of item.points.entries())shapes+=`<circle data-vertex="${i}" data-object="${item.id}" cx="${p.x}" cy="${p.y}" r="${Math.min(.3,max*.01)}" fill="#fff7e2" stroke="#b47b37" stroke-width=".08"/>`;
   }
   const house=doc.house,w2=house.width/2,h2=house.height/2;
   if(!preview||!photoVisible){
@@ -115,7 +115,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   }
   if(mode==='area'&&['brush','eraser'].includes(areaTool)&&brush?.points.length){
    const draft=brushPolygon(brush.points,brush.diameter,doc.site);
-   if(draft.length>=3)shapes+='<polygon points="'+poly(draft)+'" fill="'+selectedColor()+'" fill-opacity=".42" stroke="#f0bf86" stroke-width=".13" pointer-events="none"/>';
+   if(draft.length>=3)shapes+='<polygon points="'+poly(draft)+'" fill="'+(areaTool==='brush'&&itemCatalog()?.group==='ponds'?'#16494a':selectedColor())+'" fill-opacity="'+(areaTool==='brush'&&itemCatalog()?.group==='ponds'?'.88':'.42')+'" stroke="'+(areaTool==='brush'&&itemCatalog()?.group==='ponds'?'#396a68':'#f0bf86')+'" stroke-width=".05" pointer-events="none"/>';
   }
   if(points.length){
    const width=clamp(Number($('#lpWidth',modal)?.value)||1.2,.4,10);
@@ -340,7 +340,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
    const polygon=closed&&polygonArea(envelope)>stroke.diameter*stroke.diameter?envelope:brushPolygon(stroke.points,stroke.diameter,doc.site);
    if(areaTool==='eraser'&&polygon.length>=3){eraseAreaStroke(stroke,polygon);draw();return}
     if(polygon.length>=3&&['lawns','fills','ponds'].includes(itemCatalog()?.group)){
-    checkpoint();const item=itemCatalog();const obj={id:uid(),catalogId:item.id,type:item.group,points:polygon,width:1.2};
+    checkpoint();const item=itemCatalog();const obj={id:uid(),catalogId:item.id,type:item.group,points:polygon,width:1.2,...(item.group==='ponds'?{geometry:'paint'}:{})};
     doc.objects.push(obj);selected=item.group==='ponds'?null:obj.id;save();say(item.group==='ponds'?'Вода залита по кисти без контрольных точек. Следующий мазок добавит воду.':'Область кистью сохранена. Следующая кисть добавит новую область, не удаляя дорожки.');
    }
    draw();return;
