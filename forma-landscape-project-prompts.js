@@ -74,3 +74,38 @@ export function topDownRoofPrompt(info){
   'Generate a FULL-BLEED top-down roof texture that fills the image canvas edge-to-edge within the rectangular roof outline, no margins or surrounding background. Requested roof layout: '+roofType+'. No garden, surrounding trees, facades, labels, dimensions or text. The geometric editor controls final scale, building placement and rotation. This is presentation art, NOT a substitute for verified roof measurements.'
  ].join('\n\n');
 }
+
+/* 3D camera output has a different contract from the orthographic masterplan.
+   AI changes materials and photo realism, NEVER the editable geometry or camera. */
+export function perspectiveLandscapePrompt(input){
+ if(!input||typeof input!=='object')throw Object.assign(Error('Не передан 3D-проект ландшафта.'),{status:400});
+ const w=Number(input.site?.width),h=Number(input.site?.height);
+ if(!Number.isFinite(w)||!Number.isFinite(h)||w<5||h<5||w>500||h>500)throw Object.assign(Error('Нужны точные размеры участка.'),{status:400});
+ const entries=(Array.isArray(input.objects)?input.objects:[]).slice(0,500),groups=new Set();
+ const plantSchedule=[];
+ for(const o of entries){const cat=byId(o.catalogId);if(!cat)continue;groups.add(cat.group);
+  plantSchedule.push(cat.name+' ('+cat.group+') at X='+Number(o.x||0).toFixed(2)+'m Y='+Number(o.y||0).toFixed(2)+'m'+
+   (o.diameter?' crown/diameter='+Number(o.diameter).toFixed(2)+'m':'')+
+   (o.height?' physical height='+Number(o.height).toFixed(2)+'m':'')+
+   (o.width?' path strip width='+Number(o.width).toFixed(2)+'m':''));
+ }
+ const missing=['trees','shrubs','pavers','lawns','fills','ponds','boulders','lights'].filter(x=>!groups.has(x));
+ const buildings=[input.house,...(Array.isArray(input.buildings)?input.buildings:[])].filter(Boolean)
+   .map(b=>(b.type||'house')+' footprint '+Number(b.width).toFixed(2)+'m × '+Number(b.height).toFixed(2)+'m, roof '+(b.roof||'as rendered')+', centre X='+Number(b.x).toFixed(2)+' Y='+Number(b.y).toFixed(2));
+ const a=input.atmosphere||{};
+ const weather={sunny:'clear natural sunlight',overcast:'soft diffuse sky',rain:'light rain and damp existing surfaces',fog:'low-contrast natural mist','after-rain':'realistic drying damp surfaces',snow:'snow ONLY on existing ground and structures'}[a.weather]||'clear natural sunlight';
+ const season={spring:'spring foliage',summer:'summer foliage',autumn:'species-accurate autumn foliage with evergreen conifers remaining green',winter:'leafless deciduous trees, evergreen conifers remain green'}[a.season]||'summer foliage';
+ const time={day:'natural daylight',morning:'low eastern morning sunlight',evening:'warm low evening sunlight',night:'night sky and only already-placed lamps'}[a.time]||'natural daylight';
+ const view=input.cameraView==='walk'?'HUMAN EYE LEVEL WALK CAMERA':input.cameraView==='2d'?'EXACT OVERHEAD CAMERA':'THREE-QUARTER / AERIAL PERSPECTIVE CAMERA';
+ return [
+  'FORMA 3D LANDSCAPE TO PHOTOGRAPHIC IMAGE: IMAGE 1 IS THE AUTHORITATIVE EXISTING WEBGL SCENE. This is an IMAGE-TO-IMAGE materials, lighting and botanical refinement, not a redesign, and not a fresh landscape proposal.',
+  'IMMUTABLE CAMERA CONTRACT: KEEP EXACTLY THE INPUT CAMERA POSITION, HEIGHT, VIEW DIRECTION, FOCAL LENGTH, HORIZON, OCCLUSION, FRAMING, CROPPING AND PERSPECTIVE. Current view: '+view+'. Do not force overhead view, do not turn a perspective image into a map or change the lens. Camera direction and projected pixel positions are frozen.',
+  'ABSOLUTE GEOMETRY LOCK: all measured objects, buildings, roof slopes, ridge orientation, paths, corners, polygon edges, garden areas, pond banks, terrain hills, surface heights, fences, tree centres, tree heights, tree crown diameters, placements and distances are fixed to the input pixels. Do not add, move, stretch, copy, remove, redesign, rotate or replace any object. No imagined architectural features, chimneys, roof windows or furniture. Preserve the exact amount of empty space. Never introduce unseen structures.',
+  'PROPERTY SIZE '+w.toFixed(2)+'m by '+h.toFixed(2)+'m. MAIN HOUSE AND OTHER STRUCTURES: '+buildings.join('; ')+'.',
+  'CATALOG AND INSTANCE COUNT: '+entries.length+' source landscape objects. '+(plantSchedule.length?plantSchedule.join('; '):'None placed')+'. Distinguish the exact botanical species: needles, branches, leaves, natural bark, varied crown silhouettes and physically realistic tree heights. A pine must not be replaced with a shrub or generic tree. Preserve individual species, count and their pixel positions.',
+  'EMPTY CATEGORIES FORBIDDEN: '+missing.join(', ')+'. '+(entries.length===0?'There are NO landscape objects: leave the parcel EMPTY with only the existing building and ground. No invented lawn, vegetation, roads, stones, borders, lights or other landscaping.':'Do not insert any new landscaping objects of any kind.'),
+  'ATMOSPHERE: '+time+'; '+season+'; '+weather+'. One physically consistent sunlight direction; matching contact shadows and soft bounce light. Surfaces: real-scale grass blades, paver joints, mineral gravel and natural mulch fibres, nuanced wet or dry surfaces only when weather requires it. Water has depth, subtle natural reflection and exact shoreline.',
+  'PREMIUM PHOTOGRAPHIC QUALITY: fine architectural photography, authentic natural microtexture, physically plausible materials and realistic foliage. Avoid cartoon, toy, low-poly, video-game, procedural synthetic appearance, oversaturated fantasy colours, glossy fake water, noisy textures and painted leaves. Render high clarity 2K. No text, watermarks, legends, dimensions or UI.',
+  'Never use the generated image for dimension extraction or model geometry updates. The source 3D model remains the sole measurable source.'
+ ].join('\n\n');
+}
