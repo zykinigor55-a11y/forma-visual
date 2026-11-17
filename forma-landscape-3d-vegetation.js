@@ -142,7 +142,7 @@ function addLeaves(g,T,items,color,needle,season,seed){
 function foliageSprigGeometry(T,needle){
  const vertices=[];
  const tri=(a,b,c)=>vertices.push(...a,...b,...c);
- const arms=needle?8:5,leaves=needle?5:3;
+ const arms=needle?5:4,leaves=needle?3:2;
  for(let arm=0;arm<arms;arm++){
   const a=arm*Math.PI*2/arms,ca=Math.cos(a),sa=Math.sin(a);
   for(let j=0;j<leaves;j++){
@@ -168,7 +168,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  const source=foliageProfile(id,season),number=clamp(
-  Math.round(points.length*quality*(needle?1.50:1.95)),shrub?160:350,shrub?1200:2600
+  Math.round(points.length*quality*(needle?1.12:1.35)),shrub?130:270,shrub?800:1700
  );
  const geometry=foliageSprigGeometry(T,needle);
  const material=new T.MeshStandardMaterial({color:'#ffffff',roughness:.86,metalness:0,side:T.DoubleSide});
@@ -231,7 +231,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality){
  if(!points.length||foliageProfile(id,season).leafless)return;
  const type=foliageProfile(id,season),r=rng(seed),shrub=type.kind.includes('shrub');
  const needle=['pine','spruce','juniper','thuja-globe'].includes(id),
- count=clamp(Math.round(points.length*quality*(shrub?1.55:2.50)),shrub?210:520,3800);
+ count=clamp(Math.round(points.length*quality*(shrub?1.25:1.75)),shrub?180:330,2400);
  const material=new T.MeshStandardMaterial({map:createSprayTexture(T,needle),alphaTest:.30,side:T.DoubleSide,roughness:.92,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),d=new T.Object3D(),tone=new T.Color(type.color);
  for(let i=0;i<count;i++){
@@ -244,7 +244,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality){
   mesh.setColorAt(i,tone.clone().multiplyScalar(.83+r()*.35));
  }
  mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
- mesh.castShadow=true;mesh.frustumCulled=false;g.add(mesh);
+ mesh.castShadow=false;mesh.frustumCulled=false;g.add(mesh);
 }
 /* Real petalled flowers instead of tiny stone-shaped spheres.
  * Pairs of concave triangles form each petal; repeated as instanced clusters. */
