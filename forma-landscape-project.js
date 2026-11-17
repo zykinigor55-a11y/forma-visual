@@ -163,6 +163,10 @@ import {brushPolygon} from './forma-landscape-brush.js';
   const layout=$('.lp-layout',modal);
   if(layout)layout.scrollTop=0;
  }
+ function syncAutoLawn(){
+  const background=doc.objects.find(o=>o.autoFill&&o.type==='lawns');
+  if(background)background.points=(doc.site.boundary||rectBoundary(doc.site.width,doc.site.height)).map(p=>({...p}));
+ }
  function autoFillLawn(){
   const entry=itemCatalog();if(entry?.group!=='lawns')return;
   const previous=doc.objects.find(o=>o.autoFill&&o.type==='lawns');
@@ -207,7 +211,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
    if(mode==='path'&&entry.group!=='pavers'||mode==='area'&&!['lawns','fills','ponds'].includes(entry.group)){say('Выберите правильный материал для этого инструмента.');return}
    checkpoint();const obj={id:uid(),catalogId:entry.id,type:entry.group,points:points.map(p=>({...p})),width:clamp(Number($('#lpWidth',modal)?.value)||1.2,.4,10)};
    doc.objects.push(obj);selected=obj.id;say('Объект создан с измеряемой геометрией.');}
-  points=[];mode='select';save();draw();revealCanvas();
+  points=[];mode='select';syncAutoLawn();save();draw();revealCanvas();
  }
  function startPointer(e){
   if(busy||e.button!==0)return;const p=position(e);if(!p)return;
@@ -272,7 +276,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   else if(field.startsWith('house.')){const k=field.slice(6);doc.house[k]=['type','roof'].includes(k)?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArt=null;}
   else if(field.startsWith('aux.')){const b=doc.buildings.find(x=>x.id===selected.slice(9));if(b){const k=field.slice(4);b[k]=k==='roof'?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArts.delete(b.id)}}
    else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);obj[k]=k==='catalogId'?(byId(v)?.group===obj.type?v:obj.catalogId):k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
-  doc=normalizeProject(doc);save();draw();
+  doc=normalizeProject(doc);syncAutoLawn();save();draw();
  }
  async function uploadPhoto(file,kind){
   if(!file||file.size>14*1024*1024||!/^image\/(png|jpeg|webp)$/.test(file.type))throw Error('Нужен PNG/JPG/WebP до 14 МБ.');
