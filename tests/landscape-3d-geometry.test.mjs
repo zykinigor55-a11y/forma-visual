@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
 import {heightAt,inParcel,clipToCell,terrainTriangles,roofTriangles} from '../forma-landscape-3d-geometry.js';
 
 test('3D heights are continuous between measured terrain samples',()=>{
@@ -51,4 +52,25 @@ test('3D editor uses shared model with explicit contour finish instead of auto-c
  assert.match(html,/pointMode.push\(point\);refreshDraft\(\)/);
  assert.match(html,/inParcel\(point,doc.site\)/);
  assert.match(html,/KEY='forma-landscape-masterplan-v1-'/);
+});
+
+test('3D HTML embedded module parses as JavaScript without a browser',()=>{
+ const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
+ const source=html.match(/<script type="module">([\\s\\S]*?)<\\/script>/)?.[1];
+ assert.ok(source,'3D editor module must exist');
+ const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:source,encoding:'utf8'});
+ assert.equal(parsed.status,0,parsed.stderr);
+});
+
+test('perspective AI prompt keeps original camera and object coordinates without changing render queue',async()=>{
+ const {perspectiveLandscapePrompt}=await import('../forma-landscape-project-prompts.js');
+ const {freshProject,coordinateSummary}=await import('../forma-landscape-project-core.js');
+ const source={...coordinateSummary(freshProject()),cameraMode:'3d-perspective',cameraView:'3d'};
+ const prompt=perspectiveLandscapePrompt(source);
+ assert.match(prompt,/IMMUTABLE CAMERA CONTRACT/);
+ assert.match(prompt,/ABSOLUTE GEOMETRY LOCK/);
+ assert.match(prompt,/Do not force overhead view/);
+ assert.match(prompt,/NO landscape|There are NO landscape objects|NO landscape objects/i);
+ const server=readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ assert.match(server,/landscapeMasterplan.cameraMode==='3d-perspective'\?perspectiveLandscapePrompt/);
 });
