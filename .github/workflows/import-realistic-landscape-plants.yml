@@ -1,0 +1,79 @@
+name: FORMA — install 17 new plant photo cards
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'assets/landscape-import/forma_visual_17_realistic_plants.zip'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-realistic-plant-import
+  cancel-in-progress: false
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet Pillow
+      - name: Validate and install new 1080 PNG botanical assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import zipfile, io, hashlib
+          zip_path=Path('assets/landscape-import/forma_visual_17_realistic_plants.zip')
+          assert zip_path.is_file(), 'Upload the ZIP file to the landscape-import folder before running'
+          ids=('spruce','birch','oak','maple','linden','willow','rowan','apple','sakura','juniper','hydrangea','spirea','barberry','dogwood','thuja-globe','lavender','boxwood')
+          wanted={f'assets/landscape-photo/{i}.png' for i in ids}
+          with zipfile.ZipFile(zip_path) as z:
+              got={n for n in z.namelist() if not n.endswith('/')}
+              assert got==wanted, f'Expected exactly 17 matching images; missing {wanted-got}; unexpected {got-wanted}'
+              seen=set()
+              for name in sorted(wanted):
+                  raw=z.read(name)
+                  assert len(raw)<25_000_000, (name,'unreasonable PNG file size')
+                  image=Image.open(io.BytesIO(raw))
+                  image.load()
+                  assert image.format=='PNG' and image.mode=='RGBA' and image.size==(1080,1080), (name,image.format,image.mode,image.size)
+                  assert image.getpixel((0,0))[3]<10 and image.getpixel((1079,1079))[3]<10, (name,'no transparent corners')
+                  sha=hashlib.sha256(raw).hexdigest()
+                  assert sha not in seen,(name,'duplicate photo data')
+                  seen.add(sha)
+                  dest=Path(name);dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(raw)
+          js=Path('forma-landscape-project-graphics.js')
+          source=js.read_text(encoding='utf-8')
+          assert 'photo-1080-17-staged-v1' in source or 'photo-1080-realistic-17-v1' in source
+          js.write_text(source.replace('photo-1080-17-staged-v1','photo-1080-realistic-17-v1'),encoding='utf-8')
+          entry=Path('forma-landscape-project.js')
+          if entry.exists():
+              text=entry.read_text(encoding='utf-8')
+              entry.write_text(text.replace('photo-light-pond-v6','photo-realistic-plants-v1'),encoding='utf-8')
+          print('Installed and verified all 17 new plant PNG cards')
+          PY
+      - name: Commit and publish verified plant cards
+        run: |
+          git config user.name "FORMA Visual Assets Bot"
+          git config user.email "forma-design-bot@users.noreply.github.com"
+          git add assets/landscape-photo/*.png forma-landscape-project-graphics.js forma-landscape-project.js
+          if git diff --cached --quiet; then
+            echo "All realistic cards already installed"
+            exit 0
+          fi
+          git commit -m "assets(landscape): replace 17 old procedural cards with realistic botanical PNGs"
+          for n in 1 2 3 4 5; do
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            if git push origin HEAD:dom-render-nanobanana; then exit 0; fi
+            sleep $((n * 2))
+          done
+          echo "Failed to publish card package after retries" >&2
+          exit 1
