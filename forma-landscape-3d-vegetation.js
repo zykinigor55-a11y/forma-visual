@@ -196,7 +196,7 @@ export function createRock(T,instance){
  for(let i=0;i<p.count;i++){
   const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
   const shape=1+.09*Math.sin(x*21+z*17)+.11*Math.cos(z*13-y*19)+.07*(r()-.5);
-  p.setXYZ(i,x*shape,Math.abs(y)*shape*.66,z*shape);
+  p.setXYZ(i,x*shape,Math.max(.025,y*shape*.63+radius*.43),z*shape);
   const c=base.clone().multiplyScalar(.78+r()*.45);colors.push(c.r,c.g,c.b);
  }
  geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.computeVertexNormals();
