@@ -98,10 +98,11 @@ export function normalizeProject(raw){
   if(['pavers','fills','lawns','ponds'].includes(entry.group)){
    const points=(Array.isArray(item.points)?item.points:[]).slice(0,120).map(point);
    const strip=entry.group==='fills'&&item.geometry==='strip';
+   const paintedPond=entry.group==='ponds'&&item.geometry==='paint';
    if(points.length<(entry.group==='pavers'||strip?2:3))continue;
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
-    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(strip?{geometry:'strip'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
+    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
   }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),rotation:finite(item.rotation,-360,360,0)});
  }
  for(const b of (Array.isArray(obj.buildings)?obj.buildings:[]).slice(0,24)){
