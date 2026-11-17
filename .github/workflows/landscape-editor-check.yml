@@ -5,6 +5,7 @@ on:
     paths:
       - 'forma-landscape-project*'
       - 'forma-landscape-3d*'
+      - 'tests/landscape-3d-botanical.verify.mjs'
       - 'tests/landscape-3d-browser.verify.mjs'
       - 'tests/landscape-editor.verify.mjs'
       - 'tests/landscape-workflow.verify.mjs'
@@ -30,6 +31,7 @@ jobs:
           node tests/landscape-editor.verify.mjs
           node tests/landscape-workflow.verify.mjs
           node tests/landscape-3d-browser.verify.mjs
+          node tests/landscape-3d-botanical.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
