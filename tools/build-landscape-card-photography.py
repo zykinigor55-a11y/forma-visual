@@ -21,6 +21,9 @@ UNSPLASH={
  "formal-pond":"https://images.unsplash.com/photo-1532091884468-f48ecffa63a3?auto=format&fit=crop&fm=jpg&q=88&w=1600",
  "bio-pond":"https://images.unsplash.com/photo-1716821666167-503e70143f55?auto=format&fit=crop&fm=jpg&q=88&w=1600",
 }
+# Free-to-use Unsplash garden setting, licensed for image composition.
+GARDEN_SCENE_URL="https://images.unsplash.com/photo-1753481834359-07fc2bc6e68f?auto=format&fit=crop&fm=jpg&q=88&w=1600"
+_garden_photo=None
 LIGHTS={
  "bollard":"bollard.webp","ground":"recessed.webp","spot":"spot.webp",
  "low-post":"lantern-low.webp","deck-light":"step.webp","linear":"wallwash.webp"
@@ -42,14 +45,25 @@ def save(im,name):
  print(name,"JPEG",out.stat().st_size//1024,"KiB",flush=True)
 
 def photo_bg(material="grass", dark=False):
+ global _garden_photo
  source=ORIG/(material+".webp")
  if not source.exists():source=ORIG/"grass.webp"
  im=fit(Image.open(source))
- im=ImageEnhance.Contrast(im).enhance(.96)
- im=ImageEnhance.Color(im).enhance(.72 if dark else .88)
- im=ImageEnhance.Brightness(im).enhance(.28 if dark else .60)
- # Depth of field behind lamp cutouts.
- return im.filter(ImageFilter.GaussianBlur(2.1 if dark else 1.1)).convert("RGBA")
+ if dark and material=="grass":
+  try:
+   if _garden_photo is None:
+    req=Request(GARDEN_SCENE_URL,headers={"User-Agent":"FORMA-AssetBuilder/1.0"})
+    with urlopen(req,timeout=22) as resp:
+     raw=resp.read(10_000_000)
+    _garden_photo=fit(Image.open(BytesIO(raw)))
+   # Authentic garden backdrop: premium card photo, not a measured plan texture.
+   im=Image.blend(im,_garden_photo,.79)
+  except Exception as exc:
+   print("Garden backdrop unavailable, using fallback grass:",str(exc)[:100],flush=True)
+ im=ImageEnhance.Contrast(im).enhance(1.04)
+ im=ImageEnhance.Color(im).enhance(.78 if dark else .88)
+ im=ImageEnhance.Brightness(im).enhance(.36 if dark else .60)
+ return im.filter(ImageFilter.GaussianBlur(4.0 if dark else 1.1)).convert("RGBA")
 
 def glow(bg,x,y,rad,alpha=160):
  layer=Image.new("RGBA",(SIZE,SIZE),(0,0,0,0))
