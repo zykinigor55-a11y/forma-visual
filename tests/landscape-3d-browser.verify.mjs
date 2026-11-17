@@ -77,6 +77,7 @@ try{
  assert.notEqual(orbitAfter,orbitBefore,'Right mouse drag must actually rotate the 3D scene');
  assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),previous,'Right-drag camera orbit never edits lawn');
  await page.screenshot({path:'artifacts/landscape-editor/3d-lawn-brush.png'});
+ await page.locator('#fit3dScene').click(); // restore known camera framing after right-drag orbit
  await page.locator('[data-tool="surface"]').click();
  await page.locator('[data-item="concrete-pavers"]').click();
  const canvas=page.locator('#viewport'),box=await canvas.boundingBox();
