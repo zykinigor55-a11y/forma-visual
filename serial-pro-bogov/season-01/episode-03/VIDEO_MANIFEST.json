@@ -1,0 +1,33 @@
+{
+  "series": "Сериал про богов",
+  "season": 1,
+  "episode": 3,
+  "title": "До сотворения — Бог абсолютной тишины",
+  "status": "video_rendered_locally_not_uploaded_to_github",
+  "master": {
+    "name": "DO_SOTVORENIYA_EP03_NUL_LAYERED_FULLHD.mp4",
+    "bytes": 29575148,
+    "sha256": "84a06b016d9d6c31ee9fc876727c24c305de3766c2e18dd17454ba020eaab784",
+    "width": 1080,
+    "height": 1920,
+    "fps": 24,
+    "duration_seconds": 111.5,
+    "video_codec": "H.264",
+    "audio_codec": "AAC"
+  },
+  "mobile": {
+    "name": "DO_SOTVORENIYA_EP03_NUL_LAYERED_720x1280.mp4",
+    "bytes": 14686376,
+    "sha256": "f532a0de5c3dada574b36c1b8075dae0f23abd6015528e07ba09a896ae76c213"
+  },
+  "project": {
+    "name": "DO_SOTVORENIYA_EP03_LAYERED_PROJECT.zip",
+    "bytes": 35989610,
+    "sha256": "647b8da25918a16b2c345be990b47b439ae6f0374fd41fe499a353164d736e9a"
+  },
+  "deliverables": "Video assets are local conversation artifacts until a GitHub release upload is completed",
+  "next_episode": {
+    "number": 4,
+    "status": "not_started"
+  }
+}
