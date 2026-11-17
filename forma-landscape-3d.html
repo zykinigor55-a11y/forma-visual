@@ -151,6 +151,10 @@ function rebuild(){
  geo.computeVertexNormals();terrainMesh=mesh(geo,material('#738d65'));terrainMesh.castShadow=false;terrainMesh.userData.ground=true;root.add(terrainMesh);
  const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.03,h)),new THREE.LineBasicMaterial({color:'#e1e8d2'}));outline.position.y=.08;root.add(outline);
  const grid=new THREE.GridHelper(Math.max(w,h)*1.1,Math.max(10,Math.round(Math.max(w,h))),0x839b7f,0x94aa89);grid.position.y=.05;grid.material.transparent=true;grid.material.opacity=.24;root.add(grid);
+ if(Array.isArray(doc.site.boundary)&&doc.site.boundary.length>=3){
+  const boundaryPoints=doc.site.boundary.map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,.2,v.z)});boundaryPoints.push(boundaryPoints[0].clone());
+  root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(boundaryPoints),new THREE.LineBasicMaterial({color:'#fff8cf',linewidth:3})));
+ }
  buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
@@ -288,14 +292,19 @@ function place(world){
 }
 function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
 function addEvents(){
- const down=e=>{state.down={x:e.clientX,y:e.clientY};const key=hitObj(e);if(state.tool==='select'&&key){state.selected=key;state.drag=true;push();renderProps();controls.enabled=false}};
- const move=e=>{if(!state.drag||!state.selected||!state.down)return;const p=hitGround(e),ref=selectable(state.selected);if(!p||!ref?.obj||!('x'in ref.obj))return;const pt=fromWorld(p);ref.obj.x=pt.x;ref.obj.y=pt.y;rebuild()};
+ const down=e=>{state.down={x:e.clientX,y:e.clientY};
+ if(state.tool==='terrain'&&state.placing){state.painting=true;push();const p=hitGround(e);if(p)modifyTerrain(p);status('Кисть рельефа: ведите указатель для изменения высоты');return}
+ const key=hitObj(e);if(state.tool==='select'&&key){state.selected=key;state.drag=true;push();renderProps();controls.enabled=false}};
+ const move=e=>{
+ if(state.painting){const p=hitGround(e);if(p)modifyTerrain(p);return}
+ if(!state.drag||!state.selected||!state.down)return;const p=hitGround(e),ref=selectable(state.selected);if(!p||!ref?.obj||!('x'in ref.obj))return;const pt=fromWorld(p);ref.obj.x=pt.x;ref.obj.y=pt.y;rebuild()};
  const up=e=>{
+  if(state.painting){state.painting=false;state.down=null;save();rebuild();return}
   const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
   if(state.drag){state.drag=false;controls.enabled=state.view!=='walk';save();rebuild();state.down=null;return}
   if(movement<5){if(state.tool==='select'){state.selected=hitObj(e);renderProps();}else{const p=hitGround(e);if(p)place(p)}}state.down=null
  };
- canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',()=>{state.drag=false;controls.enabled=true});
+ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',()=>{state.drag=false;state.painting=false;controls.enabled=true});
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
  $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;save();rebuild()};
