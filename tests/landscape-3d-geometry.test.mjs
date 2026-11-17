@@ -56,7 +56,8 @@ test('3D editor uses shared model with explicit contour finish instead of auto-c
 
 test('3D HTML embedded module parses as JavaScript without a browser',()=>{
  const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
- const source=html.match(/<script type="module">([\\s\\S]*?)<\\/script>/)?.[1];
+ const start=html.indexOf('<script type="module">'),end=html.indexOf('</script>',start);
+ const source=start>=0&&end>start?html.slice(start+'<script type="module">'.length,end):null;
  assert.ok(source,'3D editor module must exist');
  const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:source,encoding:'utf8'});
  assert.equal(parsed.status,0,parsed.stderr);
