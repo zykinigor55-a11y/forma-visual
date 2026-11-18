@@ -295,7 +295,9 @@ function initialize(){
  restoreHouseGlbs().catch(e=>console.warn('Stored house GLB restore:',e));
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
  const previousDrawing=localStorage.getItem(UNDERLAY);
- if(previousDrawing)setUnderlay(previousDrawing,false);status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
+ if(previousDrawing)setUnderlay(previousDrawing,false);
+ window.FORMA_3D_READY=true;
+ status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
@@ -474,6 +476,17 @@ function drawExtra(o){
   const source=bundledModelSources.get(o.type);
   if(source){
    const p=pos(o.x||0,o.y||0),g=makeRealProp(THREE,source,{width});
+   g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+   mark(g,'extra:'+o.id);root.add(g);return;
+  }
+  if(realModelById(o.type)){
+   // Show the precise insertion footprint immediately, not an invisible
+   // asset. This transparent bronze wire proxy disappears once the real
+   // 1K PBR GLB has finished downloading and parsing on the client.
+   const p=pos(o.x||0,o.y||0),g=new THREE.Group();
+   const footprint=new THREE.Mesh(new THREE.BoxGeometry(width,Math.min(1,width*.45),width),
+    new THREE.MeshBasicMaterial({color:'#dbc19a',wireframe:true,transparent:true,opacity:.60,depthWrite:false}));
+   footprint.position.y=Math.min(1,width*.45)/2;g.add(footprint);
    g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
    mark(g,'extra:'+o.id);root.add(g);return;
   }
@@ -1161,7 +1174,20 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
    renderGate.invalidate();
   }
  });
- window.addEventListener('resize',resize);canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();status('WebGL отключился. Перезагрузите страницу.')});
+ window.addEventListener('resize',resize);
+ canvas.addEventListener('webglcontextlost',e=>{
+  e.preventDefault();window.FORMA_3D_READY=false;
+  $('#loadError').style.display='flex';
+  $('#loadError strong').textContent='Видеокарта временно отключила WebGL';
+  status('WebGL отключился. Система попробует восстановить 3D-сцену. Проект сохранён локально.');
+ });
+ canvas.addEventListener('webglcontextrestored',()=>{
+  try{
+   renderGate.reset();rebuild();resize();$('#loadError').style.display='none';
+   window.FORMA_3D_READY=true;
+   status('WebGL восстановлен. 3D-модели и измерения сохранены.');
+  }catch(e){console.error('WebGL recovery',e);status('Не удалось восстановить WebGL — используйте кнопку перезапуска.')}
+ });
 }
 function resize(){renderGate.invalidate();const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
 let lastRenderMs=0,lastRenderCost=0;
@@ -1196,7 +1222,7 @@ function animate(now=0){
   }
  }
 }
-try{initialize()}catch(err){console.error(err);$('#loadError').style.display='flex';$('#status').textContent=err.message}
+try{initialize()}catch(err){console.error(err);window.FORMA_3D_READY=false;$('#loadError').style.display='flex';$('#loadError p').textContent=err.message;$('#status').textContent='Ошибка запуска 3D. Проект не удалён.'}
 </script>
 </body>
 </html>
