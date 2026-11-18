@@ -322,8 +322,11 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
  const needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  // Sparse mobile scenes stay lightweight; quality desktop scenes use enough
  // independent terminal sprays to hold a readable crown at parcel scale.
- const minimum=quality<.3?(shrub?220:620):quality<.45?(shrub?390:1250):(shrub?670:2250);
- const count=clamp(Math.round(points.length*(1.25+quality*1.55)),minimum,shrub?2150:4200);
+ // Crowded auto-preview intentionally caps alpha cards. Actual premium
+ // geometry and surveyed crown dimensions are unaffected.
+ const minimum=quality<.35?(shrub?145:420):quality<.45?(shrub?320:980):(shrub?670:2250);
+ const maximum=quality<.35?(shrub?450:860):quality<.45?(shrub?900:2200):(shrub?2150:4200);
+ const count=clamp(Math.round(points.length*(1.25+quality*1.55)),minimum,maximum);
  const texture=createSprayTexture(T,needle,id);
  const material=new T.MeshStandardMaterial({map:texture,alphaTest:.26,side:T.DoubleSide,roughness:.94,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
