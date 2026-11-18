@@ -283,16 +283,16 @@ import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
-import {applyTerrainBrush} from './forma-landscape-3d-terrain-brush.js';
+import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
-import {walkStep,walkMovementKey,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
+import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
 const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
-const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
+const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let solarSettings=solarPreset('day');
 const heldWalkKeys=new Set();
 let lastWalkFrame=0;
@@ -1044,6 +1044,12 @@ function syncCameraHeight(){
   $('#cameraHeightValue').textContent=height.toFixed(1)+' м';
  }
 }
+function walkStructureObstacles(){
+ return [doc.house,...doc.buildings].filter(b=>b&&Number(b.width)>0&&Number(b.height)>0).map(b=>{
+  const point=pos(b.x,b.y);
+  return {x:point.x,z:point.z,width:Number(b.width),depth:Number(b.height),rotation:Number(b.rotation)||0};
+ });
+}
 function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
@@ -1054,7 +1060,10 @@ function setView(view){
  controls.enabled=view!=='walk';
  if(view==='2d'){const size=Math.max(W,H)*.75;camera=new THREE.OrthographicCamera(-size,size,size/Math.max(1,canvas.clientWidth/canvas.clientHeight),-size/Math.max(1,canvas.clientWidth/canvas.clientHeight),.1,600);camera.position.set(0,125,.01);camera.up.set(0,0,-1);camera.lookAt(0,0,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=false}
  else if(view==='walk'){camera=new THREE.PerspectiveCamera(70,1,.1,600);
-  const z=Math.max(-H/2+1,Math.min(H/2-1,8));camera.position.set(0,terrainAt(0,z)+WALK_EYE_HEIGHT,z);
+  const obstacles=walkStructureObstacles(),candidateZ=Math.max(-H/2+1,Math.min(H/2-1,8));
+  const candidates=[[0,candidateZ],[-W*.34,H*.34],[W*.34,H*.34],[-W*.34,-H*.34],[W*.34,-H*.34],[0,-H*.40]];
+  const free=candidates.find(([x,z])=>inParcel({x:x+W/2,y:z+H/2},doc.site)&&walkCanOccupy(x,z,obstacles))||candidates[0];
+  camera.position.set(free[0],terrainAt(free[0],free[1])+WALK_EYE_HEIGHT,free[1]);
   walkYaw=0;walkPitch=0;camera.rotation.order='YXZ';camera.rotation.set(0,0,0);controls.object=camera}
  else{
   // A phone is portrait: horizontal FOV is far narrower than desktop. Frame
@@ -1362,7 +1371,7 @@ function beginBrush(world){
   doc.objects.push({id:id(),catalogId:state.placing,type:entry.group,x:first.x,y:first.y,
    diameter,height:entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):(SHRUB_HEIGHT_M[state.placing]||.95),variant:Number($('#plantVariant')?.value||1),rotation:0});
  }
- state.painting=true;controls.enabled=false;canvas.setPointerCapture?.(state.activePointer);
+ state.painting=true;controls.enabled=state.view!=='walk';canvas.setPointerCapture?.(state.activePointer);
  if(state.tool==='plant')rebuild();
  renderGate.invalidate();return true;
 }
@@ -1438,10 +1447,10 @@ function addEvents(){
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
- if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
+ if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
  const key=hitObj(e);
  if(state.tool==='select'&&key){
-  state.selected=key;state.drag=true;push();
+  state.selected=key;state.drag=true;state.draggingMoved=false;
   const obj=selectable(key)?.obj,anchor=hitGround(e);
   state.dragAnchor=anchor?fromWorld(anchor):null;
   state.dragPoints=Array.isArray(obj?.points)?obj.points.map(p=>({...p})):null;
@@ -1464,11 +1473,21 @@ const move=e=>{
   if(e.pointerId!==state.activePointer)return;
   if(e.pointerType==='mouse'&&((e.buttons&1)===0||(e.buttons&2)!==0))return;
   if(brushStroke){advanceBrush(hitGround(e));return}
-  const p=hitGround(e);if(p)modifyTerrain(p);return;
+  const p=hitGround(e);
+   if(p){
+    const spacing=Math.max(.25,Math.min(.85,Number($('#brushRadius')?.value||3)*.18));
+    const samples=terrainStrokeLast?terrainStrokeSamples(terrainStrokeLast,p,spacing):[p];
+    for(const sample of samples){modifyTerrain(sample);terrainStrokeLast={x:sample.x,z:sample.z}}
+   }
+   return;
  }
  if(!state.drag||!state.selected||!state.down)return;
  const p=hitGround(e),ref=selectable(state.selected);if(!p||!ref?.obj)return;
- const pt=fromWorld(p);
+ if(!state.draggingMoved){
+   if(Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y)<5)return;
+   state.draggingMoved=true;push();
+  }
+  const pt=fromWorld(p);
  if(state.dragPoints&&state.dragAnchor){
   const dx=pt.x-state.dragAnchor.x,dy=pt.y-state.dragAnchor.y;
   const shifted=state.dragPoints.map(q=>({x:q.x+dx,y:q.y+dy}));
@@ -1499,16 +1518,20 @@ const up=e=>{
    const p=hitGround(e);if(p){const pt=fromWorld(p);if(inParcel(pt,doc.site)&&appendBrushPoint(brushStroke.points,pt,.025))brushStroke.object.points=brushStroke.points.slice()}
   }
   if(brushStroke)finishBrush();
-  else{state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();}
+  else{
+    const end=hitGround(e),radius=Number($('#brushRadius')?.value||3),threshold=Math.max(.18,Math.min(.85,radius*.18)*.45);
+    if(end&&terrainStrokeLast&&Math.hypot(end.x-terrainStrokeLast.x,end.z-terrainStrokeLast.z)>=threshold)modifyTerrain(end);
+    terrainStrokeLast=null;state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();
+   }
   state.down=null;return
  }
  const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
- if(state.drag){state.drag=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';save();rebuild();state.down=null;return}
+ if(state.drag){const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';if(moved){save();rebuild()}state.down=null;return}
  if(movement<5){if(state.tool==='select'){state.selected=hitObj(e);renderProps()}else{const p=hitGround(e);if(p)place(p)}}
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',()=>{if(state.painting&&brushStroke)finishBrush();state.drag=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk'});
+ canvas.addEventListener('pointercancel',()=>{if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk'});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -1538,7 +1561,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
- $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Выберите любой из двенадцати 3D-стилей.')};
+ $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Выберите любой из 18 архитектурных 3D-стилей.')};
  $('#focusHouse').onclick=focusHouseCamera;
  $('#focusSelected').onclick=focusSelectedPlant;
  $('#fit3dScene').onclick=()=>setView('3d');
@@ -1613,6 +1636,7 @@ function animate(now=0){
    x:camera.position.x,z:camera.position.z,yaw:walkYaw,keys:heldWalkKeys,
    dt:frameSeconds,sprint:heldWalkKeys.has('shift'),
    ground:terrainAt,eyeHeight:WALK_EYE_HEIGHT,
+   obstacles:walkStructureObstacles(),
    contains:(x,z)=>inParcel({x:x+doc.site.width/2,y:z+doc.site.height/2},doc.site)
   });
   walked=step.moved;
