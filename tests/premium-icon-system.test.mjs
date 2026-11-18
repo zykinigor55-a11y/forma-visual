@@ -21,7 +21,7 @@ test('all 13 native 3D tools get the exact glossy-graphite tile silhouette',()=>
   const svg=premiumIcon(id);
   assert.match(svg,/<svg class="lp-3d-icon forma-premium-icon"/);
   assert.match(svg,/viewBox="0 0 48 48"/);
-  assert.match(svg,/linearGradient id="lpiFill"/);
+  assert.match(svg,/linearGradient id="forma-icon-gradient-\d+"/);
   assert.match(svg,/<rect x="2.5" y="2.5" width="43" height="43"/);
   assert.match(svg,/<path|<ellipse|<circle/);
   assert.match(svg,/<path d=|<ellipse|<circle/,'SVG must contain an actual vector silhouette: '+id);
@@ -32,10 +32,11 @@ test('all 13 native 3D tools get the exact glossy-graphite tile silhouette',()=>
 
 test('original 8 landscape category illustrations are retained in all workspaces',()=>{
  for(const id of ['trees','shrubs','pavers','fills','lights','lawns','ponds','boulders'])
-  assert.match(premiumIcon(id),/url\(#lpiFill\)|stroke="#/);
- assert.equal(premiumIcon('plant'),premiumIcon('trees'));
- assert.equal(premiumIcon('surface'),premiumIcon('pavers'));
- assert.equal(premiumIcon('water'),premiumIcon('ponds'));
+  assert.match(premiumIcon(id),/url\(#forma-icon-gradient-\d+\)|stroke="#/);
+ const normalize=svg=>svg.replace(/forma-icon-gradient-\d+/g,'GRADIENT');
+ assert.equal(normalize(premiumIcon('plant')),normalize(premiumIcon('trees')));
+ assert.equal(normalize(premiumIcon('surface')),normalize(premiumIcon('pavers')));
+ assert.equal(normalize(premiumIcon('water')),normalize(premiumIcon('ponds')));
 });
 
 test('main website 17 cards, rail, mobile navigation and studio tool headers use dimensional icons',()=>{
@@ -46,6 +47,7 @@ test('main website 17 cards, rail, mobile navigation and studio tool headers use
  assert.match(site,/\.rail-nav \[data-nav\]/);
  assert.match(site,/\.mobile-nav \[data-mobile\]/);
  assert.match(site,/\.fa-home-tool\[data-tool-id\]/);
+ assert.match(site,/\.tool-btn\[data-tool\]/);
  for(const id of ['upscale','render','interior','materials','animation','nodes','camera','preview','geometry','cad','image3d','world','presentation','gallery','models','account','release']){
   const svg=premiumIcon(id);
   assert.match(svg,/forma-premium-icon/);
@@ -53,4 +55,27 @@ test('main website 17 cards, rail, mobile navigation and studio tool headers use
  }
  assert.match(css,/\.fa-home-panel \.fa-home-tool-icon/);
  assert.match(css,/\.rail-nav \.rail-btn svg\.forma-premium-icon/);
+});
+
+test('premium icon gradients are individually namespaced even when repeated in one toolbar',()=>{
+ const icons=['trees','trees','surface','plant','brush','eraser','polygon','wand'].map(premiumIcon);
+ const ids=icons.map(svg=>svg.match(/linearGradient id="([^"]+)"/)?.[1]);
+ assert.equal(new Set(ids).size,icons.length,'No duplicate gradients in multi-icon UI');
+ icons.forEach((svg,i)=>{
+  assert.ok(ids[i], 'Icon '+i+' needs a visible material gradient');
+  assert.match(svg,new RegExp('url\\\\(#'+ids[i]+'\\\\)'));
+  assert.doesNotMatch(svg,/url\\(#lpiFill\\)/,'No shared mutable SVG IDs may leak');
+ });
+});
+test('3D action bar has no legacy emoji and the material editor uses the same bronze pictograms',()=>{
+ const html=read('forma-landscape-3d.html');
+ assert.match(html,/data-quick-tool="plant" type="button" aria-pressed="false">Озеленение/);
+ assert.match(html,/data-quick-tool="terrain" type="button" aria-pressed="false">Рельеф/);
+ assert.match(html,/\['focusHouse','build'\]/);
+ for(const id of ['brush','eraser','polygon','wand']){
+  const svg=premiumIcon(id);
+  assert.match(svg,/forma-premium-icon/);
+ }
+ const css=read('forma-premium-icons.css');
+ assert.match(css,/\.tool-btn svg\.forma-premium-icon/);
 });
