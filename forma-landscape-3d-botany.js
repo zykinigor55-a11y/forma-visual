@@ -8,7 +8,8 @@ export const SHRUB_HEIGHT_M=Object.freeze({
 export function naturalCrown(id,t){
  const f=Math.max(0,Math.min(1,Number(t)||0));
  switch(id){
-  case 'pine':return (.24+.79*Math.sin(Math.PI*(f*.78+.09)))*(.88-.17*f);
+  // Scots pine: open lower trunk and broad middle crown, but tapered living leader.
+  case 'pine':return (.20+.91*Math.sin(Math.PI*(f*.80+.06)))*(.98-.25*f)*Math.pow(1-f,.42);
   case 'spruce':return Math.pow(1-f,.90)*.97+.055;
   case 'birch':return .13+.85*Math.pow(Math.sin(Math.PI*f),.8);
   case 'oak':return .25+.82*Math.pow(Math.sin(Math.PI*f),.32);
