@@ -67,7 +67,7 @@ export function makeCloudLayer(T){
     gl_FragColor=vec4(cloudColor,alpha);
    }`
  });
- const cloud=new T.Mesh(new T.SphereGeometry(720,48,24),m);
+ const cloud=new T.Mesh(new T.SphereGeometry(420,48,24),m);
  cloud.name='forma-atmosphere-clouds';cloud.renderOrder=-5;cloud.frustumCulled=false;
  return cloud;
 }
