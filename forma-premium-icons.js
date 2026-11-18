@@ -1,5 +1,5 @@
 /* FORMA VISUAL shared dimensional icon language — extracted from Landscape Project. */
-export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","erase":"eraser","frames":"gallery","cad":"plan","furniture":"furniture"});
+export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","erase":"eraser","frames":"gallery","cad":"plan","furniture":"furniture","models40":"world"});
 let nextGradientId=0;
 export function premiumIcon(id){
   id=PREMIUM_ICON_ALIASES[id]||id;
