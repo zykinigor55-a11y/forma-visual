@@ -16,6 +16,10 @@ ASSETS = {
     "spruce": "fir_sapling",
     "fern": "fern_02",
     "granite-boulder": "boulder_01",
+    "outdoor-dining": "outdoor_table_chair_set_01",
+    "picnic-table": "wooden_picnic_table",
+    "wild-shrub": "shrub_01",
+    "periwinkle": "periwinkle_plant",
 }
 OUT = pathlib.Path("assets/landscape-models")
 MAX_FILE = 42 * 1024 * 1024
