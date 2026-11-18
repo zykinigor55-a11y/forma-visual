@@ -197,7 +197,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  wallMaterial.bumpMap=wallTex;
  wallMaterial.bumpScale=preset.wall==='brick'?.018:preset.wall==='stone'?.012:preset.wall==='plaster'?.004:.008;
  const roofColor=new THREE.Color(b.roofColor||'#394348');
- roofColor.lerp(new THREE.Color('#FAFAFA'),.69);
+ roofColor.lerp(new THREE.Color('#FAFAFA'),.12); // Keep user-selected dark roof appearance.
  const roofMaterial=mat(THREE,roofColor,preset.roofFinish==='standing'?.36:.69,.42,roofTex);
  roofMaterial.bumpMap=roofTex;roofMaterial.bumpScale=preset.roofFinish==='tile'?.012:.003;
  wallTex.repeat.set(Math.max(1,w/3.6),Math.max(1,bodyHeight/2.2));
@@ -272,6 +272,24 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   }
  }
  roofGeometry(g,THREE,b,w,d,0,bodyHeight,roofMaterial,preset.roofFinish);
+ if(isBath){
+  // Sauna-specific porch and metal flue; these remain attached to the bath,
+  // not additional user-authored project objects.
+  const deckMat=mat(THREE,'#80654A',.80,.02,texture(THREE,'walnut','#80654A'));
+  const railMat=mat(THREE,'#494D4B',.56,.22);
+  const front=d/2+.46,porchW=Math.min(2.8,w*.52);
+  box(g,THREE,porchW,.16,.92,0,.31,front,deckMat);
+  for(const side of [-1,1]){
+   box(g,THREE,.065,.72,.065,side*porchW*.48,.74,front+.40,railMat);
+   box(g,THREE,.06,.07,.90,side*porchW*.48,1.09,front,railMat);
+  }
+  const rise=(b.roof||preset.roof)==='flat'?.18:Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
+  const flue=mat(THREE,'#454D4C',.39,.68);
+  const chimney=add(g,THREE,new THREE.CylinderGeometry(.115,.115,Math.max(.7,rise*.75),14),flue,w*.25,bodyHeight+rise*.75,0);
+  chimney.castShadow=true;
+  const cap=add(g,THREE,new THREE.CylinderGeometry(.18,.18,.04,14),railMat,w*.25,bodyHeight+rise*1.12+.31,0);
+  cap.castShadow=true;
+ }
  addPresetVolumes(g,THREE,{style,w,d,bodyHeight});
  g.userData.archStyle=style;g.userData.footprint={width:w,height:d};g.userData.textures=[wallTex,roofTex];
  return g;
