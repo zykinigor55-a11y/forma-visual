@@ -50,3 +50,21 @@ test('repeated strokes cannot exceed safe terrain vertical bounds',()=>{
  for(let n=0;n<50;n++)terrain=brush(terrain,{mode:'lower',strength:2,softness:0,radius:9});
  assert.ok(Math.min(...terrain)>=-8);
 });
+
+
+test('metre-based sculpt sampling is independent of pointermove event frequency',async()=>{
+ const {terrainStrokeSamples}=await import('../forma-landscape-3d-terrain-brush.js');
+ const samples=(events)=>{
+  let last={x:0,z:0};const result=[];
+  for(const x of events){
+   const next=terrainStrokeSamples(last,{x,z:0},.5);
+   result.push(...next.map(v=>Number(v.x.toFixed(6))));
+   if(next.length)last=next.at(-1);
+  }
+  return result;
+ };
+ assert.deepEqual(samples([3]),samples(Array.from({length:60},(_,i)=>(i+1)*.05)));
+ assert.deepEqual(samples([3]),[.5,1,1.5,2,2.5,3]);
+ assert.deepEqual(terrainStrokeSamples({x:1,z:1},{x:1.1,z:1.1},.5),[]);
+ assert.deepEqual(terrainStrokeSamples(null,{x:2,z:1},.5),[]);
+});
