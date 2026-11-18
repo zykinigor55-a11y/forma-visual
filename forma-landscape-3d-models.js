@@ -11,10 +11,16 @@ export function vegetationFit({width,height,depth},instance){
  return {scaleXZ:crown/Math.max(srcW,srcD),scaleY:plantHeight/srcH,
          physicalHeight:plantHeight,crownDiameter:crown};
 }
+const boundsCache=new WeakMap();
 export function makeRealVegetation(T,source,instance,{shareGeometry=false}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
- const clone=source.clone(true),bounds=new T.Box3().setFromObject(clone);
- if(bounds.isEmpty())throw Error('3D model has no measurable geometry.');
+ let bounds=boundsCache.get(source);
+ if(!bounds){
+  bounds=new T.Box3().setFromObject(source);
+  if(bounds.isEmpty())throw Error('3D model has no measurable geometry.');
+  boundsCache.set(source,bounds.clone());
+ }
+ const clone=source.clone(true);
  const size=new T.Vector3(),centre=new T.Vector3();bounds.getSize(size);bounds.getCenter(centre);
  if(!Number.isFinite(size.y)||size.y<1e-5||Math.max(size.x,size.z)<1e-5)throw Error('GLB has zero height or crown width.');
  const fit=vegetationFit({width:size.x,height:size.y,depth:size.z},instance);
