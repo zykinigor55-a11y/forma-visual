@@ -11,7 +11,8 @@ try{
  await page.goto(base+'/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:90000});
  assert.equal(await page.locator('[data-house-preset]').count(),18);
- await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===18,null,{timeout:90000});
+ await page.locator('#houseStyles').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===18,null,{timeout:120000});
  const thumbs=await page.locator('#houseStyles img').evaluateAll(images=>images.map(i=>i.src));
  assert.equal(new Set(thumbs).size,18,'Each house family must render a distinct THREE.js thumbnail');
  await mkdir('artifacts/landscape-editor',{recursive:true});
