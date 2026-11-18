@@ -26,6 +26,18 @@ test('public model selector uses approachable quality names and defaults to phot
  assert.doesNotMatch(page,/<option[^>]+>GPT Image 2\.6/);
 });
 
+test('photographic reference capture upgrades render quality and restores interactive preview',()=>{
+ assert.match(page,/function captureHighQuality3dReference\(\)/);
+ assert.match(page,/const previousRatio=renderer\.getPixelRatio\(\)/);
+ assert.match(page,/const previousShadows=renderer\.shadowMap\.enabled/);
+ assert.match(page,/renderer\.shadowMap\.enabled=true/);
+ assert.match(page,/renderer\.shadowMap\.needsUpdate=true/);
+ assert.match(page,/renderer\.setPixelRatio\(photoRatio\)/);
+ assert.match(page,/const image=captureHighQuality3dReference\(\)/);
+ assert.match(page,/finally\{[\s\S]{0,150}renderer\.setPixelRatio\(previousRatio\)/);
+ assert.match(page,/renderer\.shadowMap\.enabled=previousShadows/);
+});
+
 test('3D scene sends extra GLB asset identities, sun and camera measurements to AI',()=>{
  assert.match(page,/extra3dObjects:extra\.slice\(0,250\)/);
  assert.match(page,/cameraFovDegrees:camera\.isPerspectiveCamera\?camera\.fov/);
