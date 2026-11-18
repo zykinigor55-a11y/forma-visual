@@ -107,3 +107,15 @@ export function bundledPlantIsTrueScale(id,height,diameter){
  const h=Number(height),d=Number(diameter);
  return Number.isFinite(h)&&Number.isFinite(d)&&h>=.25&&h<=5.5&&d>=.2&&d<=4.2;
 }
+
+/* Canopy depth in measured coordinates, independent of camera and random seed.
+ * Outer/sunlit terminal leaves are brighter; interior and low foliage receive
+ * restrained ambient occlusion. Avoid uniformly green, spherical crowns. */
+export function foliageDepthTone(id,heightFraction,radiusFraction){
+ const h=Math.max(0,Math.min(1,Number(heightFraction)||0));
+ const r=Math.max(0,Math.min(1,Number(radiusFraction)||0));
+ const evergreen=['pine','spruce','juniper','thuja-globe','boxwood'].includes(id);
+ const interior=.75+.19*r;
+ const sky=.06*h;
+ return Math.min(1.08,Math.max(.72,interior+sky+(evergreen?-.025:.035)));
+}
