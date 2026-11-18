@@ -1,5 +1,5 @@
 /* FORMA VISUAL shared dimensional icon language — extracted from Landscape Project. */
-export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","small":"furniture","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","frames":"gallery","cad":"plan","furniture":"furniture"});
+export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","frames":"gallery","cad":"plan","furniture":"furniture"});
 export function premiumIcon(id){
   id=PREMIUM_ICON_ALIASES[id]||id;
   const paths={
@@ -18,6 +18,7 @@ export function premiumIcon(id){
    "terrain":"<path d=\"M5 37l12-17 8 7 9-19 10 29z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.8\"/><path d=\"M8 41h33\" stroke=\"#fff1d0\" stroke-width=\"2\"/>",
    "build":"<path d=\"M6 22l18-14 18 14-18 10zM10 25v15l14 6V32l14-7v15l-14 6\" fill=\"url(#lpiFill)\" stroke=\"#e9d3b1\" stroke-width=\"1.6\"/><path d=\"M16 30v13M31 30v12\" stroke=\"#fff0ca\" stroke-width=\"2\"/>",
    "fence":"<path d=\"M8 14l5-3v30l-5 2zM24 9l5-3v30l-5 2zM39 13l5-2v29l-5 2z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.6\"/><path d=\"M10 22l30-4M10 34l30-4\" stroke=\"#fff2d2\" stroke-width=\"2.3\"/>",
+   "small":"<path d=\"M8 27l16-14 17 14-17 9zM12 28v13M36 28v13M24 36v9M8 42h33\" fill=\"url(#lpiFill)\" stroke=\"#eed7b3\" stroke-width=\"1.5\"/><path d=\"M12 23l12-10 12 10\" fill=\"none\" stroke=\"#fff1cf\" stroke-width=\"2\"/>",
    "furniture":"<path d=\"M9 19h30v10H9zM12 29v12M36 29v12M11 18V9h25v9\" fill=\"url(#lpiFill)\" stroke=\"#ecd5b1\" stroke-width=\"1.6\"/>",
    "transport":"<path d=\"M7 22l7-11h21l7 11 2 12H5z\" fill=\"url(#lpiFill)\" stroke=\"#ecd6b4\" stroke-width=\"1.6\"/><path d=\"M14 22h28\" stroke=\"#fff0cd\"/><circle cx=\"14\" cy=\"34\" r=\"3\" fill=\"#383832\" stroke=\"#e8ceaa\"/><circle cx=\"36\" cy=\"34\" r=\"3\" fill=\"#383832\" stroke=\"#e8ceaa\"/>",
    "interior":"<path d=\"M9 8h30v32H9z\" fill=\"url(#lpiFill)\" stroke=\"#ecd5b3\"/><path d=\"M9 25h30M22 8v17M15 39V30h18v9\" fill=\"none\" stroke=\"#fff1d1\" stroke-width=\"2\"/>",
