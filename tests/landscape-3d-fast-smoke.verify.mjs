@@ -17,7 +17,7 @@ try{
  assert.equal(await page.locator('#loadError').isVisible(),false);
  assert.equal(await page.locator('#sceneQuickTools').isVisible(),true);
  await page.locator('[data-quick-tool="plant"]').click({timeout:20000});
- assert.equal(await page.locator('#library [data-item]').count(),18);
+ assert.equal(await page.locator('#library [data-item]').count(),26);
  await page.locator('#catalogSearch').fill('берёза');
  assert.equal(await page.locator('[data-item="birch"]').isVisible(),true);
  assert.equal(await page.locator('[data-item="pine"]').isVisible(),false);
@@ -40,8 +40,8 @@ try{
 
  // Licensed 40-object collection is a real editing tool, not a static mock.
  await page.locator('[data-tool="models40"]').click({timeout:20000});
- assert.equal(await page.locator('#library [data-item]').count(),40);
- assert.equal(await page.locator('[data-catalog-filter]').count(),9,'6 material/object categories, all, favorites and recent');
+ assert.equal(await page.locator('#library [data-item]').count(),24);
+ assert.equal(await page.locator('[data-catalog-filter]').count(),8,'5 non-botanical categories, all, favorites and recent');
  await page.locator('[data-favorite-id="rock-grey"]').click();
  assert.equal(await page.locator('[data-favorite-id="rock-grey"]').getAttribute('aria-pressed'),'true');
  await page.locator('[data-catalog-filter="favorites"]').click();
@@ -86,11 +86,13 @@ try{
  for(const path of ['rock-grey.glb','fire-pit.glb','planter-large.glb','gallinera-chair.glb','street-lamp-two.glb','thumbs/rock-grey.webp','thumbs/street-lamp-two.webp'])await head(path);
  await page.locator('[data-tool="select"]').click();
  await page.locator('[data-tool="landscape"]').click();
- assert.equal(await page.locator('#library [data-item]').count(),7);
+ assert.equal(await page.locator('#library [data-item]').count(),4,'Landscape rocks only; native plants are in Озеленение');
+ assert.equal(await page.locator('[data-item="granite-boulder"]').count(),1);
+ await page.locator('[data-quick-tool="plant"]').click();
  for(const item of ['fern','wild-shrub','periwinkle'])assert.equal(await page.locator('[data-item="'+item+'"]').count(),1);
  await page.locator('[data-item="fern"]').click();
  await clickSite(.58,.31);
- assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').some(x=>x.type==='fern')),'fern position persisted as 3D object');
+ assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')||'{}').objects?.some(x=>x.catalogId==='fern')),'native fern persists as measured 3D plant');
  await page.locator('[data-tool="furniture"]').click();
  await page.locator('[data-item="outdoor-dining"]').click();
  await clickSite(.62,.55);
@@ -134,5 +136,5 @@ try{
  await page.locator('[data-view="3d"]').click();
  assert.equal(await page.locator('#walkInstructions').isVisible(),false,'walk stops when switching views');
  assert.deepEqual(errors,[],'Editor must not have JavaScript errors');
- console.log('PASS: 40 licensed PBR GLBs, editable measured placement, 6 searchable groups, all 15 surfaces, soft terrain brush');
+ console.log('PASS: 24 non-botanical licensed PBR GLBs, 26 native species, editable measured placement, all 15 surfaces, soft terrain brush');
 }finally{await browser.close()}
