@@ -440,8 +440,18 @@ function initialize(){
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
  // Android: defer a second WebGL context until the house/details panel is used.
  if(window.innerWidth<=720){
-  document.querySelector('[data-mobile-panel="details"]')
-   ?.addEventListener('click',()=>makeHouseThumbnails(),{once:true});
+  // House cards live far below the mobile settings panel. Do not create
+  // a second WebGL context just because the user opens the details panel.
+  const target=$('#houseStyles');
+  if(target&&'IntersectionObserver' in window){
+   const observer=new IntersectionObserver(entries=>{
+    if(entries.some(entry=>entry.isIntersecting)){
+     observer.disconnect();
+     setTimeout(()=>makeHouseThumbnails(),350);
+    }
+   },{root:$('#right'),rootMargin:'90px 0px',threshold:0});
+   observer.observe(target);
+  }
  }else requestAnimationFrame(()=>makeHouseThumbnails());
  restoreHouseGlbs().catch(e=>console.warn('Stored house GLB restore:',e));
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
@@ -963,7 +973,12 @@ async function makeHouseThumbnails(){
    houseThumbs.set(p.id,tempCanvas.toDataURL('image/jpeg',.86));previewScene.remove(model);
    model.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
    model.userData?.textures?.forEach(t=>t.dispose());
-   if(index%3===2){renderHouseLibrary();await new Promise(done=>requestAnimationFrame(done))}
+   if(index%3===2){
+    renderHouseLibrary();
+    // Give camera, settings and touch events a full frame before the next
+    // batch of geometry/textures. On mobile the preview GPU budget is lower.
+    await new Promise(done=>setTimeout(done,window.innerWidth<=720?180:35));
+   }
   }
   renderHouseLibrary();
  }catch(error){console.warn('3D house cards unavailable:',error?.message);}
@@ -1722,7 +1737,9 @@ function animate(now=0){
  // back to a software renderer, yield the main thread rather than starving
  // taps and tool selection with an unbroken loop of costly draw calls.
  const preferred=window.innerWidth<=720?1000/30:1000/50;
- const interval=Math.max(preferred,Math.min(110,lastRenderCost*2.0));
+ // Never starve clicks if software WebGL needs hundreds of milliseconds
+ // for one physically shaded frame (high-detail vegetation and water).
+ const interval=Math.max(preferred,Math.min(900,lastRenderCost*3.7));
  if(now-lastRenderMs<interval)return;
  lastRenderMs=now;
  const frameSeconds=lastWalkFrame?Math.min(.1,(now-lastWalkFrame)/1000):0;
@@ -1746,8 +1763,11 @@ function animate(now=0){
  }
  // Orbit controls own 2D/3D; walk mode is a separate ground-locked camera.
  const cameraMoved=walked||Boolean(controls?.enabled&&controls.update());
- // Cap atmospheric motion to ~6fps, even on fast desktop or mobile hardware.
- if(state.view!=='2d'&&now-lastAtmosphereAnimationAt>165&&
+ // Atmosphere never forces expensive continuous drawing on slow GPUs.
+ // On stronger hardware both waves and clouds keep their gentle motion.
+ const atmosphericCadence=Math.max(280,Math.min(2400,lastRenderCost*7.5));
+ const canAnimateAtmosphere=!document.hidden&&lastRenderCost<140;
+ if(canAnimateAtmosphere&&state.view!=='2d'&&now-lastAtmosphereAnimationAt>atmosphericCadence&&
     ((cloudLayer?.visible&&sceneAtmosphere.clouds>1)||(waterSurfaces.length&&sceneAtmosphere.ripples>0))){
   lastAtmosphereAnimationAt=now;
   if(cloudLayer?.visible)cloudLayer.material.uniforms.time.value=now*.001;
