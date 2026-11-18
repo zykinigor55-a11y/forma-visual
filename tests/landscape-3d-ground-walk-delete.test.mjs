@@ -73,3 +73,26 @@ test('Delete and Backspace reuse one undoable selection-removal path; walk uses 
  assert.match(html,/id="cameraEyeLevel"/);
  assert.match(html,/id="walkInstructions"/);
 });
+
+
+test('Walk cannot clip through rotated house footprints and slides beside walls',async()=>{
+ const {walkCanOccupy}=await import('../forma-landscape-3d-walk.js');
+ const house={x:0,z:0,width:6,depth:4,rotation:0};
+ assert.equal(walkCanOccupy(0,0,[house]),false);
+ assert.equal(walkCanOccupy(4,0,[house]),true);
+ assert.equal(walkCanOccupy(0,3,[house]),true);
+ assert.equal(walkCanOccupy(0,2,[{...house,rotation:90}]),false);
+ const wall=[{x:0,z:-.65,width:1,depth:1}];
+ const p=walkStep({x:-.9,z:0,yaw:0,keys:['w','d'],dt:.1,obstacles:wall});
+ assert.ok(p.z<0,'movement should continue along the unobstructed wall axis');
+ assert.equal(p.x,-.9,'movement cannot penetrate expanded building footprint');
+ const blocked=walkStep({x:0,z:0,yaw:0,keys:['w'],dt:.1,obstacles:[{x:0,z:-1,width:1,depth:1}]});
+ assert.equal(blocked.moved,false);
+ assert.match(html,/obstacles:walkStructureObstacles\(\)/);
+ assert.match(html,/walkCanOccupy\(x,z,obstacles\)/);
+});
+test('3D editor selection does not produce phantom undo entries; terrain strokes use metre spacing',()=>{
+ assert.match(html,/terrainStrokeSamples\(terrainStrokeLast,p,spacing\)/);
+ assert.match(html,/state\.draggingMoved=true;push\(\)/);
+ assert.match(html,/if\(moved\)\{save\(\);rebuild\(\)\}/);
+});
