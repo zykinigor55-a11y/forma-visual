@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {buildABCReferenceScene} from './fixtures/forma-abc-reference-scene.mjs';
 const expected=buildABCReferenceScene('day');
@@ -25,12 +25,19 @@ try{
  const before=await snapshot();
  assert.equal(before.house.width,12);assert.equal(before.house.height,9);
  assert.equal(before.objects.length,11,'QA uses only 11 existing plant, surface, pond and fixture instances');
+ const capture=async(path)=>{
+  // Exact WebGL backbuffer; does not wait for Chromium's costly compositor.
+  const url=await page.locator('#viewport').evaluate(canvas=>canvas.toDataURL('image/png'));
+  const bytes=Buffer.from(url.slice(url.indexOf(',')+1),'base64');
+  await writeFile(path,bytes);
+  return bytes;
+ };
  const captures=[];
  for(const mode of ['day','evening','night']){
   await page.locator('#time').selectOption(mode);
   await page.waitForTimeout(280);
   const out=file+'-'+mode+'.png';
-  const png=await page.locator(canvasId).screenshot({path:out,timeout:45000});
+  const png=await capture(out);
   assert.ok(png.byteLength>5000,'non-empty '+mode+' screenshot');
   captures.push(png);
   const project=await snapshot();
@@ -47,7 +54,7 @@ try{
  }
  const settings=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-atmosphere-v1-landscape')));
  assert.deepEqual(settings,{globalFill:165,clouds:70,haze:65,nightGlow:95,ripples:45});
- await page.locator(canvasId).screenshot({path:file+'-custom-night.png',timeout:45000});
+ await capture(file+'-custom-night.png');
  await page.locator('[data-view="2d"]').click();
  assert.equal(await page.locator('[data-view="2d"]').evaluate(n=>n.classList.contains('active')),true);
  await page.locator('[data-view="3d"]').click();
