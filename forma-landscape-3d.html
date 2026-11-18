@@ -1115,6 +1115,31 @@ document.addEventListener('forma:render-job-status',event=>{
  const state=event.detail||{};
  setAiProgress(state.status||'running',state.message||'Создаём фотографическое изображение…');
 });
+/** Capture the currently approved camera in a temporary photo-quality
+ * mode. Do not send an auto-reduced no-shadow preview to the image provider.
+ * Restore the interactive renderer even if capture fails.
+ */
+function captureHighQuality3dReference(){
+ const previousRatio=renderer.getPixelRatio();
+ const previousShadows=renderer.shadowMap.enabled;
+ const logicalWidth=Math.max(1,canvas.clientWidth),logicalHeight=Math.max(1,canvas.clientHeight);
+ const highestDim=Math.max(logicalWidth,logicalHeight);
+ const photoRatio=Math.max(.75,Math.min(2,Math.max(1.5,window.devicePixelRatio||1),2800/highestDim));
+ try{
+  renderer.setPixelRatio(photoRatio);
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.needsUpdate=true;
+  renderer.render(scene,camera);
+  return renderer.domElement.toDataURL('image/png');
+ }finally{
+  renderer.setPixelRatio(previousRatio);
+  renderer.shadowMap.enabled=previousShadows;
+  renderer.shadowMap.needsUpdate=true;
+  renderGate.invalidate();
+  renderer.render(scene,camera);
+ }
+}
+
 async function renderAi(){
  const btn=$('#renderAi');
  const model=$('#aiRenderModel').value;
@@ -1124,8 +1149,8 @@ async function renderAi(){
  setAiProgress('queued','Готовим фотореалистичный рендер текущего ракурса…');
  status('AI-рендер: подготовка исходной 3D-сцены и запрос в очередь…');
  try{
-  renderer.render(scene,camera);
-  const image=renderer.domElement.toDataURL('image/png');
+  setAiProgress('running','Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
+  const image=captureHighQuality3dReference();
   const sunlight=scene.getObjectByName('sun')?.position;
   const sceneInfo={...coordinateSummary(doc),cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
