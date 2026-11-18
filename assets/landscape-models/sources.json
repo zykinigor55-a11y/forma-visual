@@ -24,6 +24,22 @@
     "sha256": "7e4a4ff2f8b53f946968d824d5bc799ccbcc1bf30c766a8513e9e1d38486ce73"
   },
   {
+    "catalogId": "wild-shrub",
+    "file": "assets/landscape-models/wild-shrub.glb",
+    "source": "https://polyhaven.com/a/shrub_01",
+    "license": "CC0-1.0",
+    "bytes": 6876484,
+    "sha256": "3a2507fe2f561bb02cc714884af454b90831fd276232ca34be18c1d78b54cf26"
+  },
+  {
+    "catalogId": "periwinkle",
+    "file": "assets/landscape-models/periwinkle.glb",
+    "source": "https://polyhaven.com/a/periwinkle_plant",
+    "license": "CC0-1.0",
+    "bytes": 2918844,
+    "sha256": "d03395b76134f554a9e987a973096e4de4628bcac9fb29179564219fa8d49e18"
+  },
+  {
     "catalogId": "granite-boulder",
     "file": "assets/landscape-models/granite-boulder.glb",
     "source": "https://polyhaven.com/a/boulder_01",
@@ -48,19 +64,259 @@
     "sha256": "a838027c3700c6681b98a6d90fedfbb127ef3f2432190269d92832b53a1c9dd2"
   },
   {
-    "catalogId": "wild-shrub",
-    "file": "assets/landscape-models/wild-shrub.glb",
-    "source": "https://polyhaven.com/a/shrub_01",
+    "catalogId": "shrub-02",
+    "file": "assets/landscape-models/shrub-02.glb",
+    "source": "https://polyhaven.com/a/shrub_02",
     "license": "CC0-1.0",
-    "bytes": 6876484,
-    "sha256": "3a2507fe2f561bb02cc714884af454b90831fd276232ca34be18c1d78b54cf26"
+    "bytes": 1963264,
+    "sha256": "fffb8218d61d11a22da2cba0e6ca8baf2bada017c29d3f7d6744e6f5a675b8f2"
   },
   {
-    "catalogId": "periwinkle",
-    "file": "assets/landscape-models/periwinkle.glb",
-    "source": "https://polyhaven.com/a/periwinkle_plant",
+    "catalogId": "shrub-03",
+    "file": "assets/landscape-models/shrub-03.glb",
+    "source": "https://polyhaven.com/a/shrub_03",
     "license": "CC0-1.0",
-    "bytes": 2918844,
-    "sha256": "d03395b76134f554a9e987a973096e4de4628bcac9fb29179564219fa8d49e18"
+    "bytes": 1625884,
+    "sha256": "4e6bac2ce333022c2e8a37ebf4968ba86bc104a6c970964f78659a84bb02ff2a"
+  },
+  {
+    "catalogId": "shrub-04",
+    "file": "assets/landscape-models/shrub-04.glb",
+    "source": "https://polyhaven.com/a/shrub_04",
+    "license": "CC0-1.0",
+    "bytes": 1906472,
+    "sha256": "e9f579d2284baf468148a2511e0896800d6990a5da57ecb208c55ae26bb7c28e"
+  },
+  {
+    "catalogId": "nettle",
+    "file": "assets/landscape-models/nettle.glb",
+    "source": "https://polyhaven.com/a/nettle_plant",
+    "license": "CC0-1.0",
+    "bytes": 2473364,
+    "sha256": "3475fadccaaf4f894be63590ea39393646fe36c778c6b9d988806baf2f6a3b1a"
+  },
+  {
+    "catalogId": "dandelion",
+    "file": "assets/landscape-models/dandelion.glb",
+    "source": "https://polyhaven.com/a/dandelion_01",
+    "license": "CC0-1.0",
+    "bytes": 3096384,
+    "sha256": "4355cea955c38ec06ede21a691f9c1fddd24ad7e84588d023caf9c53e0108d00"
+  },
+  {
+    "catalogId": "empodium",
+    "file": "assets/landscape-models/empodium.glb",
+    "source": "https://polyhaven.com/a/flower_empodium",
+    "license": "CC0-1.0",
+    "bytes": 894656,
+    "sha256": "4df391fdb02250b2744f89ed415c391b9ec3a05e785fee5b1ebfc6ddc63d354b"
+  },
+  {
+    "catalogId": "gazania",
+    "file": "assets/landscape-models/gazania.glb",
+    "source": "https://polyhaven.com/a/flower_gazania",
+    "license": "CC0-1.0",
+    "bytes": 2840956,
+    "sha256": "8330fdeca4dde3dba1d1bc75eec910a979e8075ff255042b9b31af49b47dd073"
+  },
+  {
+    "catalogId": "ursinia",
+    "file": "assets/landscape-models/ursinia.glb",
+    "source": "https://polyhaven.com/a/flower_ursinia",
+    "license": "CC0-1.0",
+    "bytes": 2091616,
+    "sha256": "0ea154bfcf57fe6cfc9bb27392d22c2c34f6b5666da81ce5520b192d95b0cc31"
+  },
+  {
+    "catalogId": "weed-plant",
+    "file": "assets/landscape-models/weed-plant.glb",
+    "source": "https://polyhaven.com/a/weed_plant_02",
+    "license": "CC0-1.0",
+    "bytes": 2044784,
+    "sha256": "c934cb456f288a68ec4162947d5efe40d6595bff8eb1ac5b5c7159216da98ba1"
+  },
+  {
+    "catalogId": "calathea",
+    "file": "assets/landscape-models/calathea.glb",
+    "source": "https://polyhaven.com/a/calathea_orbifolia_01",
+    "license": "CC0-1.0",
+    "bytes": 1872464,
+    "sha256": "c24dbba3abad22b6a94ec36417e33ee4dfe04eae2cf4ae7e06fd84a2c6b5894c"
+  },
+  {
+    "catalogId": "anthurium",
+    "file": "assets/landscape-models/anthurium.glb",
+    "source": "https://polyhaven.com/a/anthurium_botany_01",
+    "license": "CC0-1.0",
+    "bytes": 3236016,
+    "sha256": "38a1b8f080d68868069546231584665b278f1585bb3d7eee546508b5e16ee6fb"
+  },
+  {
+    "catalogId": "rock-grey",
+    "file": "assets/landscape-models/rock-grey.glb",
+    "source": "https://polyhaven.com/a/rock_07",
+    "license": "CC0-1.0",
+    "bytes": 2183004,
+    "sha256": "d2707013e91bef7d19cf64afcf207ee818eb02e23793e094a11fe899ec0d6bd3"
+  },
+  {
+    "catalogId": "rock-rough",
+    "file": "assets/landscape-models/rock-rough.glb",
+    "source": "https://polyhaven.com/a/rock_09",
+    "license": "CC0-1.0",
+    "bytes": 1963436,
+    "sha256": "2c42ae93c8a72a0c240dcfd39cfa0498b0968ae1fa13c5ce35b0acd73462c1e6"
+  },
+  {
+    "catalogId": "rock-moss",
+    "file": "assets/landscape-models/rock-moss.glb",
+    "source": "https://polyhaven.com/a/rock_moss_set_01",
+    "license": "CC0-1.0",
+    "bytes": 1933008,
+    "sha256": "451599a92e375059fda4c11fc9265e35dde547df6dbc65a6f0572b4d72ae9e88"
+  },
+  {
+    "catalogId": "tree-stump",
+    "file": "assets/landscape-models/tree-stump.glb",
+    "source": "https://polyhaven.com/a/tree_stump_01",
+    "license": "CC0-1.0",
+    "bytes": 3938668,
+    "sha256": "d8f3225dc15ab7dc0594ea126814d528f1ee8c80dc37d4fce35c34da79756494"
+  },
+  {
+    "catalogId": "garden-bench",
+    "file": "assets/landscape-models/garden-bench.glb",
+    "source": "https://polyhaven.com/a/painted_wooden_bench",
+    "license": "CC0-1.0",
+    "bytes": 1988600,
+    "sha256": "01366dba8fbdea38c2945ba6eaf91486f268785d6e849913d1df579651df05ef"
+  },
+  {
+    "catalogId": "street-bench",
+    "file": "assets/landscape-models/street-bench.glb",
+    "source": "https://polyhaven.com/a/modular_street_seating",
+    "license": "CC0-1.0",
+    "bytes": 7606140,
+    "sha256": "1e00e6dbfad1ca3cdd50af60443b47bcaa82a780b8b3264f82e326a528eeec14"
+  },
+  {
+    "catalogId": "round-garden-table",
+    "file": "assets/landscape-models/round-garden-table.glb",
+    "source": "https://polyhaven.com/a/round_wooden_table_01",
+    "license": "CC0-1.0",
+    "bytes": 548808,
+    "sha256": "800012b8131e9aa8659445d4b8dcb893675471fc08b3dfaa7f75c88c32f7efda"
+  },
+  {
+    "catalogId": "garden-stool",
+    "file": "assets/landscape-models/garden-stool.glb",
+    "source": "https://polyhaven.com/a/folding_wooden_stool",
+    "license": "CC0-1.0",
+    "bytes": 2266904,
+    "sha256": "c60a9385493c29f52b0883feacb118696d2f32de9850aaee9bbf77b72b1e666e"
+  },
+  {
+    "catalogId": "gallinera-table",
+    "file": "assets/landscape-models/gallinera-table.glb",
+    "source": "https://polyhaven.com/a/gallinera_table",
+    "license": "CC0-1.0",
+    "bytes": 1836512,
+    "sha256": "34877f7bf2f1f4c8fe756ba87a8acc01c96d9652d01114ede4f1abeb40f518ce"
+  },
+  {
+    "catalogId": "gallinera-chair",
+    "file": "assets/landscape-models/gallinera-chair.glb",
+    "source": "https://polyhaven.com/a/gallinera_chair",
+    "license": "CC0-1.0",
+    "bytes": 2357732,
+    "sha256": "0e35e77708ef3be75dbac1bf86f9251732e9021dcaf2f0718ab742284ba9b5c7"
+  },
+  {
+    "catalogId": "fire-pit",
+    "file": "assets/landscape-models/fire-pit.glb",
+    "source": "https://polyhaven.com/a/stone_fire_pit",
+    "license": "CC0-1.0",
+    "bytes": 2534936,
+    "sha256": "61d31db60ecd2d5bda294e4efa67db1ef860fad3af6b97559162e6b961933912"
+  },
+  {
+    "catalogId": "planter-small",
+    "file": "assets/landscape-models/planter-small.glb",
+    "source": "https://polyhaven.com/a/planter_box_01",
+    "license": "CC0-1.0",
+    "bytes": 2338416,
+    "sha256": "6eade8591c9c3ae42bec148e260880cc429c42a88a5e3cf01f66fbe8f7da1868"
+  },
+  {
+    "catalogId": "planter-medium",
+    "file": "assets/landscape-models/planter-medium.glb",
+    "source": "https://polyhaven.com/a/planter_box_02",
+    "license": "CC0-1.0",
+    "bytes": 2467356,
+    "sha256": "4fd23191fbaab5aac591db981689cef682bd1c89d0dd65141564a54d237542df"
+  },
+  {
+    "catalogId": "planter-large",
+    "file": "assets/landscape-models/planter-large.glb",
+    "source": "https://polyhaven.com/a/planter_box_03",
+    "license": "CC0-1.0",
+    "bytes": 2557372,
+    "sha256": "836d8ed173c312eff9e9f3f2926a2484e74ea9471396a39529da02954e5845fa"
+  },
+  {
+    "catalogId": "sprinkler",
+    "file": "assets/landscape-models/sprinkler.glb",
+    "source": "https://polyhaven.com/a/garden_sprinkler_01",
+    "license": "CC0-1.0",
+    "bytes": 2913328,
+    "sha256": "adfbad2ae247a46a01b958e56b87992ae44fc96efbd2ad5720f55d9b7fae5680"
+  },
+  {
+    "catalogId": "watering-can",
+    "file": "assets/landscape-models/watering-can.glb",
+    "source": "https://polyhaven.com/a/watering_can_metal_01",
+    "license": "CC0-1.0",
+    "bytes": 2610016,
+    "sha256": "0f0d6de529e87ce73fc750f309002ffc504d96ee4950de7abe584079ece89505"
+  },
+  {
+    "catalogId": "garden-hose",
+    "file": "assets/landscape-models/garden-hose.glb",
+    "source": "https://polyhaven.com/a/garden_hose_wall_mounted_01",
+    "license": "CC0-1.0",
+    "bytes": 2583268,
+    "sha256": "90c5bf27c4cea1ad388c785804f253ff0d2b9ffcbc9483776002ea00f8fa9478"
+  },
+  {
+    "catalogId": "wicker-basket",
+    "file": "assets/landscape-models/wicker-basket.glb",
+    "source": "https://polyhaven.com/a/wicker_basket_01",
+    "license": "CC0-1.0",
+    "bytes": 2729144,
+    "sha256": "15fbeb2939bd186d35dd300ee0e763a346928d0d437ff77edce4154df317735b"
+  },
+  {
+    "catalogId": "compost-bags",
+    "file": "assets/landscape-models/compost-bags.glb",
+    "source": "https://polyhaven.com/a/compost_bags",
+    "license": "CC0-1.0",
+    "bytes": 2596636,
+    "sha256": "a99e3f968c9407ffde1cf4d4ca52f7eba89d33a9992b88a86e91844806c8dfdd"
+  },
+  {
+    "catalogId": "street-lamp-one",
+    "file": "assets/landscape-models/street-lamp-one.glb",
+    "source": "https://polyhaven.com/a/street_lamp_01",
+    "license": "CC0-1.0",
+    "bytes": 2471576,
+    "sha256": "72e98a03b083a384d843d0126565a2b35bf7fc964fb9822222b83b8c3b50b2db"
+  },
+  {
+    "catalogId": "street-lamp-two",
+    "file": "assets/landscape-models/street-lamp-two.glb",
+    "source": "https://polyhaven.com/a/street_lamp_02",
+    "license": "CC0-1.0",
+    "bytes": 2171484,
+    "sha256": "5a14f895be76eb964e0157d2ee229faf7060e0c7fe27cc420468b4200a20bc37"
   }
 ]
