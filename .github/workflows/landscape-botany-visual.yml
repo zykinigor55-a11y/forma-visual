@@ -4,6 +4,8 @@ on:
     branches: [dom-render-nanobanana]
     paths:
       - 'forma-landscape-3d-vegetation.js'
+      - 'forma-landscape-3d-reference-canopies.js'
+      - 'tests/landscape-botanical-overhaul-reference.test.mjs'
       - 'forma-landscape-3d-botany.js'
       - 'forma-landscape-3d-foliage-lod.js'
       - 'forma-landscape-3d-plant-materials.js'
