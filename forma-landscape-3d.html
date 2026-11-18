@@ -252,7 +252,9 @@ import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-
 import {duplicateLandscapeObject,rotatedLandscapeObject} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
-import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
+import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
+import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
+import {iconURL} from './forma-landscape-project-graphics.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
@@ -266,7 +268,9 @@ let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,ter
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let solarSettings=solarPreset('day');
 let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
-const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();let plantSpeciesStored=new Set();
+const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
+const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
+let plantSpeciesStored=new Set();
 function readBuildInfo(){
  const el=$('#buildInfo');if(!el)return;
  fetch('/api/build',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Сервер без диагностики релиза');return r.json()}).then(data=>{
@@ -602,6 +606,28 @@ function drawTools(){
  $('#tools').innerHTML=toolList.map(a=>'<button data-tool="'+a[0]+'" title="'+a[1]+'"><span class="glyph">'+premiumIcon(a[0])+'</span>'+a[1]+'</button>').join('');
  document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>chooseTool(b.dataset.tool));chooseTool('select');renderHouseLibrary();
 }
+function refreshGardenLightCatalogPreviews(){
+ if(state.tool!=='light')return;
+ const show=()=>{
+  if(state.tool!=='light')return;
+  for(const [id,data] of gardenLightPreviewCache){
+   const image=$('#library [data-item="'+id+'"] img');
+   if(image){image.src=data;image.alt='Реальная 3D-модель: '+(catalog(id)?.name||id)}
+  }
+ };
+ if(gardenLightPreviewCache.size===choices.light.length){show();return}
+ if(gardenLightPreviewBusy)return;
+ gardenLightPreviewBusy=true;
+ // Render all catalog thumbnails through ONE temporary context, then release
+ // it. Every preview is the exact mesh placed on the site, not a stock photo.
+ setTimeout(()=>{
+  try{
+   const images=photographGardenLightPreviews(THREE,choices.light.map(([id])=>id));
+   for(const [id,image] of Object.entries(images))gardenLightPreviewCache.set(id,image);
+  }catch(e){console.warn('3D luminaire previews:',e?.message||e)}
+  finally{gardenLightPreviewBusy=false;show()}
+ },20);
+}
 function chooseTool(t){
  state.tool=t;state.placing=null;pointMode=[];refreshDraft();
  const draft=$('#draftActions');if(draft)draft.hidden=!['site','surface','water','fence'].includes(t);
@@ -609,14 +635,14 @@ function chooseTool(t){
  document.querySelectorAll('[data-quick-tool]').forEach(b=>{const active=b.dataset.quickTool===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
- $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 18</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">40 настоящих GLB-моделей с PBR-текстурами · лицензия CC0. Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
+ $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 18</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">40 настоящих GLB-моделей с PBR-текстурами · лицензия CC0. Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
   const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&['landscape','furniture','models40'].includes(t),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
   const uri=modelPreview?'/assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?'/assets/landscape-photo/'+c[0]+'.png':
-    t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
-  const diameter=t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
-  const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':t==='models40'&&(ci===0||real?.group!==realModelById(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+REAL_3D_CATEGORIES[real.group]+' · '+REAL_3D_OBJECTS.filter(x=>x.group===real.group).length+' МОДЕЛЕЙ</div>':'';
+    t==='light'?iconURL(asset):t==='landscape'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
+  const diameter=t==='light'&&asset?'Высота '+Number(asset.height).toFixed(2)+' м · корпус '+Number(asset.diameter).toFixed(2)+' м':t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
+  const header=t==='light'&&ci===0?'<div class="asset-group-heading">САДОВОЕ ОСВЕЩЕНИЕ · 11 РАЗНЫХ 3D-МОДЕЛЕЙ</div>':t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':t==='models40'&&(ci===0||real?.group!==realModelById(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+REAL_3D_CATEGORIES[real.group]+' · '+REAL_3D_OBJECTS.filter(x=>x.group===real.group).length+' МОДЕЛЕЙ</div>':'';
   return header+(t==='models40'?'<div class="model-row">':'')+'<button class="choice'+(photo?' has-preview':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
-   (photo?'<img src="'+uri+'" alt="" loading="lazy" decoding="async">':'')+
+   (photo?'<img src="'+uri+'" alt="'+(t==='light'?'Точная модель: '+c[1]:'')+'" loading="lazy" decoding="async">':'')+
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'+(t==='models40'?'<button type="button" class="model-favorite" data-favorite-id="'+c[0]+'" aria-label="Добавить '+c[1]+' в избранное" aria-pressed="'+readModelList(MODEL_FAVORITES_KEY).includes(c[0])+'">'+(readModelList(MODEL_FAVORITES_KEY).includes(c[0])?'★':'☆')+'</button></div>':'')
  }).join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+
@@ -629,12 +655,18 @@ function chooseTool(t){
  $('#library').querySelectorAll('[data-catalog-filter]').forEach(button=>button.onclick=()=>{category=button.dataset.catalogFilter;$('#library').querySelectorAll('[data-catalog-filter]').forEach(el=>el.classList.toggle('active',el===button));filterCatalog()});
  $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{
   state.placing=b.dataset.item;
+  if(t==='light'){
+   const choice=catalog(b.dataset.item);
+   const lightStatus=$('#lightPickerStatus');
+   if(lightStatus&&choice)lightStatus.textContent='Выбран: '+choice.name+' · высота '+Number(choice.height).toFixed(2)+' м. На участок будет поставлена именно эта модель.';
+  }
   if(t==='models40')saveModelList(MODEL_RECENT_KEY,[b.dataset.item,...readModelList(MODEL_RECENT_KEY).filter(id=>id!==b.dataset.item)].slice(0,12));
   $('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));
   if(t==='plant')refreshPlantAssetStatus();
   if(t==='surface')syncSurfacePaintMode();
   status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.');
  });
+ if(t==='light')refreshGardenLightCatalogPreviews();
  if(t==='plant'){
   $('#vegetationGlb').onchange=e=>importPlantGlb(e.target.files?.[0]);
   $('#removePlantGlb').onclick=removePlantGlb;
@@ -1062,7 +1094,7 @@ function place(world){
  if(tool==='build'){const preset=housePreset(state.housePreset||doc.house.archStyle);doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:Math.min(8,doc.site.width*.35),height:Math.min(7,doc.site.height*.35),rotation:0,roof:preset.roof,roofColor:'#454543',archStyle:preset.id,roofRise:1.4})}
  else if(tool==='plant'||tool==='landscape'||tool==='light'){
   const good=catalog(state.placing);if(!good){status('Объект недоступен в каталоге');return}
-  doc.objects.push({id:id(),catalogId:state.placing,type:good.group,x:point.x,y:point.y,diameter:good.diameter||1.6,height:good.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):good.group==='shrubs'?(SHRUB_HEIGHT_M[state.placing]||.95):good.group==='lights'?1.2:.95,variant:tool==='plant'?Number($('#plantVariant')?.value||1):1,rotation:0})
+  doc.objects.push({id:id(),catalogId:state.placing,type:good.group,x:point.x,y:point.y,diameter:good.diameter||1.6,height:good.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):good.group==='shrubs'?(SHRUB_HEIGHT_M[state.placing]||.95):good.group==='lights'?(gardenLightingSpec[state.placing]?.height||good.height||.9):.95,variant:tool==='plant'?Number($('#plantVariant')?.value||1):1,rotation:0})
  }else extra.push({id:id(),type:state.placing,x:point.x,y:point.y,rotation:0});
  save();rebuild();
 }
