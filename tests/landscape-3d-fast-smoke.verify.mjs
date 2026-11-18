@@ -94,6 +94,25 @@ try{
  await clickSite(.43,.34);
  assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')||'{}').objects?.some(x=>x.catalogId==='pine')),'tree coordinates persisted in real metre project');
  for(const name of ['pine.glb','fern.glb','outdoor-dining.glb','periwinkle.glb','picnic-table.glb','thumbs/outdoor-dining.webp'])await head(name);
+ // Each of the eleven selectable luminaires has its own 3D body and height.
+ await page.locator('[data-tool="light"]').click();
+ assert.equal(await page.locator('#library [data-item]').count(),11,'Ten common lights plus opal globe');
+ for(const light of ['globe','mushroom','garden-lantern','spike-spot','square-bollard']){
+  assert.equal(await page.locator('[data-item="'+light+'"]').count(),1,light+' available by exact catalog ID');
+ }
+ await page.waitForFunction(()=>document.querySelector('[data-item="globe"] img')?.src?.startsWith('data:image/png'),null,{timeout:30000});
+ assert.notEqual(await page.locator('[data-item="globe"] img').getAttribute('src'),
+  await page.locator('[data-item="garden-lantern"] img').getAttribute('src'),'Different fittings have distinct real mesh previews');
+ await page.locator('[data-item="globe"]').click();
+ assert.match(await page.locator('#lightPickerStatus').textContent(),/Светильник-шар/);
+ await clickSite(.45,.47);
+ let fittings=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')||'{}').objects||[]);
+ const sphere=fittings.find(x=>x.catalogId==='globe');
+ assert.ok(sphere&&sphere.type==='lights'&&sphere.height===.68&&sphere.diameter===.48,'Actual placed globe has correct source ID and physical dimensions');
+ await page.locator('[data-item="garden-lantern"]').click();
+ await clickSite(.57,.51);
+ fittings=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')||'{}').objects||[]);
+ assert.ok(fittings.some(x=>x.catalogId==='garden-lantern'&&x.height===2.35),'Tall lantern does not fall back to generic 1.2m bollard');
  await mkdir('artifacts/landscape-editor',{recursive:true});
  await page.screenshot({path:'artifacts/landscape-editor/3d-fast-asset-catalog.png'});
  assert.deepEqual(errors,[],'Editor must not have JavaScript errors');
