@@ -85,13 +85,42 @@ function floorSample(entry){
  return '<g clip-path="url(#tileclip)">'+out+'</g>';
 }
 function light(entry){
- const rand=seeded(entry.id);let out=circle(80,80,67,'url(#light)');const t=entry.texture;
- if(t==='linear'){out+='<rect x="33" y="71" width="94" height="18" rx="4" fill="#34383a" stroke="#e1d5b9" stroke-width="2"/><rect x="39" y="77" width="82" height="6" rx="2" fill="#fff1c6"/>'}
- else if(t==='deck'){out+='<rect x="58" y="58" width="44" height="44" rx="7" fill="#262d31" stroke="#b7a99b" stroke-width="2"/>'+circle(80,80,12,'#f6deb1');}
- else if(t==='spot'){out+='<path d="M80 80L24 43Q9 80 24 117Z" fill="url(#light)" opacity=".7"/>'+circle(80,80,20,'#25292b')+circle(80,80,11,'#d7c298');}
- else if(t==='post'){out+='<rect x="62" y="62" width="36" height="36" rx="7" fill="#292f33" stroke="#d0c09b" stroke-width="2"/>'+circle(80,80,10,'#eed6a8');}
- else out+=circle(80,80,t==='bollard'?23:18,'#252b2d','stroke="#d4c398" stroke-width="2"')+circle(80,80,t==='ground'?10:7,'#ffe7bd');
- for(let i=0;i<12;i++){const a=i*Math.PI/6,r=t==='linear'?53:40;out+='<path d="M'+f(80+Math.cos(a)*r)+' '+f(80+Math.sin(a)*r)+'l'+f(Math.cos(a)*13)+' '+f(Math.sin(a)*13)+'" stroke="#f5d9a3" stroke-opacity=".27" stroke-width="1.2"/>'}
+ // Accurate nadir silhouettes for the 2D plan; 3D picker thumbnails are
+ // photographed from the exact mesh by the WebGL renderer.
+ const t=entry.id;
+ let out=circle(80,80,67,'url(#light)');
+ const cap=(r,color='#343a3c')=>circle(80,80,r,color,'stroke="#bbaa90" stroke-width="2"');
+ const inner=(r)=>circle(80,80,r,'#fae7c4');
+ if(t==='linear'){
+  out+='<rect x="26" y="70" width="108" height="20" rx="4" fill="#252e31" stroke="#afa58d" stroke-width="2"/><rect x="34" y="77" width="92" height="6" rx="3" fill="#ffe8b2"/>';
+ }else if(t==='deck-light'){
+  out+='<rect x="57" y="57" width="46" height="46" rx="2" fill="#252a2e" stroke="#bdb3a2" stroke-width="3"/><rect x="65" y="65" width="30" height="30" fill="#f4e6cb"/>';
+ }else if(t==='ground'){
+  out+=cap(26)+inner(17);
+  for(let i=-2;i<=2;i++)out+='<path d="M'+(80+i*5)+' 64v32" stroke="#343a3d" stroke-width="2"/>';
+  for(const [x,y] of [[80,57],[80,103],[57,80],[103,80]])out+=circle(x,y,1.5,'#b7bab6');
+ }else if(t==='spot'||t==='spike-spot'){
+  out+='<path d="M80 80L20 36Q7 80 20 124Z" fill="#f4dbad" opacity=".23"/>';
+  out+=cap(t==='spike-spot'?13:20)+inner(t==='spike-spot'?8:13);
+  out+='<path d="M68 80h-17" stroke="#a5aaad" stroke-width="5"/>';
+ }else if(t==='mushroom'){
+  out+=cap(35,'#384144')+circle(80,80,26,'#666c6c')+circle(80,80,13,'#2b3539');
+ }else if(t==='square-bollard'){
+  out+='<rect x="54" y="54" width="52" height="52" rx="3" fill="#303b42" stroke="#aaa48a" stroke-width="3"/>';
+  out+='<rect x="60" y="60" width="40" height="8" fill="#f5dfa9"/><rect x="60" y="92" width="40" height="8" fill="#f5dfa9"/>';
+ }else if(t==='low-post'){
+  out+='<rect x="62" y="62" width="36" height="36" rx="2" fill="#273136" stroke="#a9a99a" stroke-width="3"/>';
+  out+='<path d="M67 68h26" stroke="#f6dcaa" stroke-width="6"/>';
+ }else if(t==='garden-lantern'){
+  out+='<path d="M80 37l43 43-43 43-43-43Z" fill="#2b3438" stroke="#aaa58b" stroke-width="3"/>';
+  out+='<path d="M80 52v56M52 80h56" stroke="#e5cfa5" stroke-width="3"/>';
+  out+=circle(80,80,7,'#f8e3b8');
+ }else if(t==='globe'){
+  out+=circle(80,80,33,'#ded8c9','stroke="#bcae92" stroke-width="2"');
+  out+=circle(69,67,12,'#faf2e2')+circle(80,80,24,'none','stroke="#f1e1c2" stroke-opacity=".65" stroke-width="3"');
+ }else{
+  out+=cap(24)+inner(17)+circle(80,80,7,'#e6c490');
+ }
  return out;
 }
 export function assetGraphic(entry){
@@ -126,8 +155,8 @@ const CARD_PHOTO_IDS=new Set(['bollard','ground','spot','low-post','deck-light',
 const PHOTO_PLANT_CARD_IDS=new Set(['birch','oak','maple','juniper','hydrangea','barberry','lavender','pine']);
 const availableCardPhotos=new Set();
 export const cardPhotoCount=()=>availableCardPhotos.size;
-export const cardPhotoURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):PHOTO_PLANT_CARD_IDS.has(entry.id)?'/assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
-export const hasPhotographicCard=(entry)=>Boolean(entry&&((entry.group==='trees'&&treeCanopyPNG(entry.id))||PHOTO_PLANT_CARD_IDS.has(entry.id)||availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
+export const cardPhotoURL=(entry)=>entry?.group==='lights'?iconURL(entry):entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):PHOTO_PLANT_CARD_IDS.has(entry.id)?'/assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
+export const hasPhotographicCard=(entry)=>entry?.group==='lights'?false:Boolean(entry&&((entry.group==='trees'&&treeCanopyPNG(entry.id))||PHOTO_PLANT_CARD_IDS.has(entry.id)||availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
 
 const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-18-staged-v2';
 export const photographicAssetCount=()=>[...availablePhotos].filter(id=>PHOTO_ASSETS[id]?.endsWith('.jpg')).length;
