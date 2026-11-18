@@ -192,7 +192,7 @@ import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummar
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
-import {SHRUB_HEIGHT_M,vegetationQuality} from './forma-landscape-3d-botany.js';
+import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
@@ -445,7 +445,7 @@ function loadBundledLandscapeModel(catalogId){
 }
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
- if(modelPath(o.catalogId)&&!(autoReduced&&currentPlantCount>9&&group==='trees'))loadBundledLandscapeModel(o.catalogId);
+ if(modelPath(o.catalogId)&&bundledPlantIsTrueScale(o.catalogId,o.height,o.diameter)&&!(autoReduced&&currentPlantCount>9&&group==='trees'))loadBundledLandscapeModel(o.catalogId);
  let g;
  if(group==='trees'||group==='shrubs'){
   // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
@@ -453,7 +453,7 @@ function drawObject(o,entry,key){
   const quality=currentPlantQuality;
   const imported=importedPlantModels.get(o.catalogId);
   const performanceFallback=(renderQuality==='speed'||autoReduced)&&currentPlantCount>9;
-  const source=imported||(!performanceFallback?bundledModelSources.get(o.catalogId):null);
+  const source=imported||(!performanceFallback&&bundledPlantIsTrueScale(o.catalogId,o.height,o.diameter)?bundledModelSources.get(o.catalogId):null);
   g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!imported}):createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
  }else if(group==='boulders'){
   const source=bundledModelSources.get(o.catalogId);
