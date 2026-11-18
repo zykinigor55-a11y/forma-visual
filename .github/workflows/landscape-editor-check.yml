@@ -14,6 +14,9 @@ on:
       - 'forma-landscape-pdf.js'
       - '.github/workflows/landscape-editor-check.yml'
   workflow_dispatch:
+concurrency:
+  group: forma-editor-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
