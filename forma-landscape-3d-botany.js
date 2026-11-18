@@ -97,3 +97,13 @@ export function coniferNeedleProfile(id){
   default:return Object.freeze({arms:13,length:.82,spread:1,needlesPerSide:3,thickness:.85});
  }
 }
+
+/* Poly Haven pine_sapling_small / fir_sapling are juvenile specimens. They
+ * cannot represent 14m mature trees by extreme non-uniform scaling: branching
+ * age and canopy architecture stay juvenile. Use our metrically authored
+ * adult procedural tree unless the user explicitly imported a mature GLB. */
+export function bundledPlantIsTrueScale(id,height,diameter){
+ if(id!=='pine'&&id!=='spruce')return true;
+ const h=Number(height),d=Number(diameter);
+ return Number.isFinite(h)&&Number.isFinite(d)&&h>=.25&&h<=5.5&&d>=.2&&d<=4.2;
+}
