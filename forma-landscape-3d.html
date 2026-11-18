@@ -187,6 +187,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {SHRUB_HEIGHT_M,vegetationQuality} from './forma-landscape-3d-botany.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
+import {REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
@@ -203,7 +204,7 @@ const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
  ['landscape','Элементы','⬡'],['small','Малые формы','⌘'],['furniture','Уличная мебель','▧'],
- ['transport','Транспорт','▱'],['light','Освещение','☼']
+ ['transport','Транспорт','▱'],['light','Освещение','☼'],['models40','3D-каталог · 40','◆']
 ];
 const choices={
  site:[['rect','Прямоугольный участок'],['outline','Свободный контур (точки)']],
@@ -217,7 +218,8 @@ const choices={
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол'],['outdoor-dining','Уличный стол и 2 стула'],['picnic-table','Пикниковый стол со скамьями']],
  transport:[['car','Автомобиль']],
- light:CATALOG.filter(x=>x.group==='lights').map(x=>[x.id,x.name])
+ light:CATALOG.filter(x=>x.group==='lights').map(x=>[x.id,x.name]),
+ models40:[...REAL_3D_OBJECTS].sort((a,b)=>Object.keys(REAL_3D_CATEGORIES).indexOf(a.group)-Object.keys(REAL_3D_CATEGORIES).indexOf(b.group)).map(x=>[x.id,x.name])
 };
 const fallback={pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
 const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
@@ -431,7 +433,7 @@ function drawArea(o,entry,key){
  mark(g,key);root.add(g);
 }
 function drawExtra(o){
- const width=PROP_WIDTH_M[o.type];
+ const width=Number(o.width)||realModelById(o.type)?.width||PROP_WIDTH_M[o.type];
  if(width){
   loadBundledLandscapeModel(o.type);
   const source=bundledModelSources.get(o.type);
@@ -465,10 +467,10 @@ function chooseTool(t){
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
  $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 18</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':'')+arr.map((c,ci)=>{
-  const asset=catalog(c[0]),modelPreview=Boolean(modelPath(c[0]))&&['landscape','furniture'].includes(t),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
+  const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&['landscape','furniture','models40'].includes(t),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
   const uri=modelPreview?'/assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?'/assets/landscape-photo/'+c[0]+'.png':
     t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
-  const diameter=asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
+  const diameter=t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
   const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':'';
   return header+'<button class="choice'+(photo?' has-preview':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="" loading="lazy" decoding="async">':'')+
@@ -667,6 +669,7 @@ function renderProps(){
  const o=ref.obj, fields=[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
  else if('diameter'in o)fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
+ else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
  el.innerHTML='<p style="margin:0 0 8px">'+state.selected+'</p>'+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1" value="'+Number(f[2]||0)+'">').join('')+'<button class="action primary" id="applyProps">Применить</button><button class="action" id="deleteObject">Удалить объект</button>';
  $('#applyProps').onclick=()=>{push();for(const n of el.querySelectorAll('[data-prop]')){const val=Number(n.value);if(Number.isFinite(val)){o[n.dataset.prop]=val}}save();rebuild()};
  $('#deleteObject').onclick=()=>{push();if(ref.type==='object')doc.objects=doc.objects.filter(x=>x!==o);else if(ref.type==='building')doc.buildings=doc.buildings.filter(x=>x!==o);else if(ref.type==='extra')extra=extra.filter(x=>x!==o);else{status('Главный дом удалять нельзя. Измените его размеры.');return}state.selected=null;save();rebuild()};
@@ -801,6 +804,12 @@ function place(world){
   const last=pointMode.at(-1);if(last&&Math.hypot(point.x-last.x,point.y-last.y)<.05)return;
   pointMode.push(point);refreshDraft();status('Точек контура: '+pointMode.length+'. Нажмите «Завершить контур» после последней.');return;
 
+ }
+ if(tool==='models40'){
+  const model=realModelById(state.placing);
+  if(!model){status('Модель отсутствует в библиотеке.');return}
+  push();extra.push({id:id(),type:model.id,x:point.x,y:point.y,width:model.width,rotation:0});
+  save();rebuild();status('CC0-модель «'+model.name+'» добавлена. При первой установке 3D-файл загружается с сервера.');return;
  }
  if(tool==='landscape'&&modelPath(state.placing)&&!catalog(state.placing)){
   push();extra.push({id:id(),type:state.placing,x:point.x,y:point.y,rotation:0});
