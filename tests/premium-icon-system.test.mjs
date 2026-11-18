@@ -79,3 +79,19 @@ test('3D action bar has no legacy emoji and the material editor uses the same br
  const css=read('forma-premium-icons.css');
  assert.match(css,/\.tool-btn svg\.forma-premium-icon/);
 });
+
+test('professional-tool palette and launchers use the common icons, not legacy monochrome glyphs',()=>{
+ const pro=read('forma-pro-tools.js');
+ const css=read('forma-premium-icons.css');
+ assert.match(pro,/import\('\.\/forma-premium-icons\.js'\)/);
+ assert.match(pro,/class="fa-pro-icon"/);
+ assert.match(pro,/proIcon\(id,icon\)/);
+ assert.match(pro,/proIcon\('settings'/);
+ assert.match(css,/\.fa-pro-nav i\.fa-pro-icon/);
+ const ids=['project','camera','preview','geometry','cad','models','upscale','image3d','presentation','account','release'];
+ for(const id of ids){
+  const svg=premiumIcon(id);
+  assert.match(svg,/forma-premium-icon/,id);
+  assert.match(svg,/<path|<ellipse|<circle/,id);
+ }
+});
