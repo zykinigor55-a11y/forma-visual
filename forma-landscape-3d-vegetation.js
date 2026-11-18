@@ -413,6 +413,35 @@ export function createVegetation(T,instance,{season='summer',quality=1}={}){
  g.userData.species=id;g.userData.physicalHeight=height;g.userData.crownDiameter=diameter;
  return g;
 }
+const rockTextureCache=new Map();
+function rockMineralTexture(T,id){
+ if(rockTextureCache.has(id))return rockTextureCache.get(id);
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+ const ctx=canvas.getContext('2d'),r=rng(hash('mineral|'+id));
+ const colors={
+  'granite-boulder':['#bec2bf','#7b827e','#d8d5ca'],
+  'limestone-boulder':['#d3ccb8','#a29a83','#e8e4d4'],
+  'slate-boulder':['#858d8b','#454f51','#b4b9b4'],
+  'sandstone-boulder':['#d3b68e','#947654','#f0d4aa']
+ }[id]||['#bdc2bd','#818a84','#e1dfd8'];
+ ctx.fillStyle=colors[0];ctx.fillRect(0,0,256,256);
+ for(let i=0;i<10000;i++){
+  ctx.globalAlpha=.035+r()*.27;ctx.fillStyle=r()>.56?colors[1]:colors[2];
+  const x=r()*256,y=r()*256,sz=.5+r()*3.6;
+  ctx.fillRect(x,y,sz,sz*(id==='slate-boulder'?.42:1.0));
+ }
+ if(id==='slate-boulder'||id==='sandstone-boulder'){
+  for(let i=0;i<43;i++){
+   ctx.beginPath();const y=r()*256;
+   ctx.moveTo(0,y);ctx.bezierCurveTo(80,y-3+r()*6,175,y-4+r()*8,256,y-4+r()*8);
+   ctx.strokeStyle=colors[1];ctx.lineWidth=.4+r()*1.2;ctx.globalAlpha=.1+r()*.18;ctx.stroke();
+  }
+ }
+ ctx.globalAlpha=1;
+ const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;
+ tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.anisotropy=4;
+ rockTextureCache.set(id,tex);return tex;
+}
 export function createRock(T,instance){
  const radius=clamp(Number(instance.diameter)||1.3,.25,6)/2,id=instance.catalogId;
  const r=rng(hash(instance.id||id)),g=new T.Group();
@@ -425,7 +454,7 @@ export function createRock(T,instance){
   const c=base.clone().multiplyScalar(.78+r()*.45);colors.push(c.r,c.g,c.b);
  }
  geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.computeVertexNormals();
- const mesh=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:false}));
+ const mesh=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,map:rockMineralTexture(T,id),bumpMap:rockMineralTexture(T,id),bumpScale:.024,roughness:.97,metalness:0,flatShading:false}));
  mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);return g;
 }
 export function createGardenLight(T,instance,{night=false}={}){
