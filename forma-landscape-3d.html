@@ -251,6 +251,10 @@ function initialize(){
  $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;$('#weather').value=doc.atmosphere.weather||'sunny';
  renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
+ // Dense planting must remain responsive even in software WebGL (Playwright,
+ // old laptops and mid-range phones). The user can override this in settings.
+ const initialPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length;
+ if(initialPlantCount>12){autoReduced=true;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,.85));renderer.shadowMap.enabled=false;}
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
  atmosphereSky=new Sky();atmosphereSky.name='forma-physical-sky';atmosphereSky.scale.setScalar(1750);
@@ -364,7 +368,7 @@ function loadBundledLandscapeModel(catalogId){
 }
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
- if(modelPath(o.catalogId))loadBundledLandscapeModel(o.catalogId);
+ if(modelPath(o.catalogId)&&!(autoReduced&&currentPlantCount>9&&group==='trees'))loadBundledLandscapeModel(o.catalogId);
  let g;
  if(group==='trees'||group==='shrubs'){
   // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
