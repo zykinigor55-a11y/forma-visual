@@ -51,7 +51,14 @@ export function terrainTriangles(site,values,grid=48){
   const left=-width/2+ix*dx,bottom=-height/2+iz*dz;
   const cell=clipToCell(outline,left,bottom,left+dx,bottom+dz);
   if(cell.length<3)continue;
-  for(let j=1;j<cell.length-1;j++){append(cell[0]);append(cell[j]);append(cell[j+1]);}
+  for(let j=1;j<cell.length-1;j++){
+   const a=cell[0],b=cell[j],c=cell[j+1];
+   // In X/Y-up/Z space an XZ-CCW triangle faces DOWN. Terrain must
+   // have +Y normals for directional light, grounded shadows and PBR grass.
+   const signed=(b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x);
+   if(Math.abs(signed)<1e-10)continue;
+   append(a);append(signed>0?c:b);append(signed>0?b:c);
+  }
  }
  return new Float32Array(result);
 }
