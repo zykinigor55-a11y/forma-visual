@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {HOUSE_PRESETS,housePreset,housePresetIds} from '../forma-landscape-3d-buildings.js';
+import {freshProject,normalizeProject,coordinateSummary} from '../forma-landscape-project-core.js';
 import {NEW_HOUSE_STYLES,facadeOpeningSchedule,wallPatches,buildingHeights,validateMeasuredBuilding} from '../forma-landscape-3d-architecture-geometry.js';
 const code=readFileSync(new URL('../forma-landscape-3d-buildings.js',import.meta.url),'utf8');
 const ui=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
@@ -74,4 +75,29 @@ test('garage, greenhouse and carport construction type are mutually distinct',()
  assert.match(ui,/АРХИТЕКТУРА · 18 ТИПОВ ДОМОВ/);
  assert.match(ui,/data-house-preset/);
  assert.match(ui,/roof=targetType==='greenhouse'\?'gable'/);
+});
+
+test('all eighteen styles and both new constructions survive saving, reloading and AI scene summary',()=>{
+ for(const style of housePresetIds){
+  const p=freshProject();
+  p.house.archStyle=style;
+  p.house.roof=housePreset(style).roof;
+  p.house.width=11.5;p.house.height=7.25;
+  p.buildings=[
+   {id:'greenhouse-1',type:'greenhouse',x:10,y:12,width:5.8,height:4.6,roof:'gable',roofRise:1.5,archStyle:style},
+   {id:'carport-1',type:'carport',x:18,y:12,width:5.8,height:5.2,roof:'flat',roofRise:.4,archStyle:style}
+  ];
+  const saved=JSON.parse(JSON.stringify(normalizeProject(p)));
+  const next=normalizeProject(saved);
+  assert.equal(next.house.archStyle,style);
+  assert.equal(next.house.width,11.5);
+  assert.equal(next.house.height,7.25);
+  assert.equal(next.house.roof,housePreset(style).roof);
+  assert.deepEqual(next.buildings.map(b=>b.type),['greenhouse','carport']);
+  assert.deepEqual(next.buildings.map(b=>b.archStyle),[style,style]);
+  const ai=coordinateSummary(next);
+  assert.equal(ai.house.archStyle,style);
+  assert.equal(ai.buildings[0].type,'greenhouse');
+  assert.equal(ai.buildings[1].type,'carport');
+ }
 });
