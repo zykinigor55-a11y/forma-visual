@@ -55,6 +55,18 @@ try{
  await clickSite(.59,.39);
  await glbResponse;
  assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').some(x=>x.type==='rock-grey'&&x.width===1.4)),'Measured 3D rock persisted with its source identity and exact footprint');
+ // Selecting a photorealistic mesh should expose duplicate and rotate actions.
+ await page.locator('[data-tool="select"]').click();
+ await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('PBR-модель загружена'),null,{timeout:30000});
+ await clickSite(.59,.39);
+ await page.locator('#duplicateObject').click({timeout:12000});
+ let rocks=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').filter(x=>x.type==='rock-grey'));
+ assert.equal(rocks.length,2,'Duplicate adds another saved GLB instance');
+ assert.notEqual(rocks[0].x,rocks[1].x,'Duplicate must move to a distinct surveyed position');
+ await page.locator('#rotateRight').click();
+ rocks=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').filter(x=>x.type==='rock-grey'));
+ assert.equal(rocks[1].rotation,15,'Rotate button updates selected GLB without replacing its source');
+
  for(const path of ['rock-grey.glb','fire-pit.glb','planter-large.glb','gallinera-chair.glb','street-lamp-two.glb','thumbs/rock-grey.webp','thumbs/street-lamp-two.webp'])await head(path);
  await page.locator('[data-tool="select"]').click();
  await page.locator('[data-tool="landscape"]').click();
