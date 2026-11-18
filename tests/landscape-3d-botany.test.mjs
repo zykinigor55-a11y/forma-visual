@@ -18,6 +18,8 @@ test('pine, spruce, willow, oak and birch have genuinely different crowns',()=>{
  const sample=[.12,.3,.5,.7,.94];
  for(const kind of ['pine','spruce','birch','oak','willow'])assert.ok(sample.every(t=>Number.isFinite(naturalCrown(kind,t))));
  assert.ok(naturalCrown('spruce',.12)>naturalCrown('spruce',.94),'spruce narrows upward');
+ assert.ok(naturalCrown('pine',.50)>naturalCrown('pine',.94)*1.7,'Scots pine crown tapers toward leader rather than forming a mushroom');
+ assert.ok(naturalCrown('pine',.50)>naturalCrown('pine',.12),'Scots pine opens above the lower branches');
  assert.ok(naturalCrown('oak',.12)<naturalCrown('oak',.5),'oak crown widens in its upper body');
  assert.ok(naturalCrown('willow',.12)>naturalCrown('birch',.12),'weeping willow canopy spreads lower');
  assert.ok(branchTipDrop('willow',12,.3)>branchTipDrop('birch',12,.3)*3,'willow branches hang far lower');
