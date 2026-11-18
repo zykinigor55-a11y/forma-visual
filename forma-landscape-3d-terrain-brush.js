@@ -48,3 +48,21 @@ export function applyTerrainBrush({heights,grid,width,length,world,mode='raise',
  }
  return end;
 }
+
+/**
+ * Evenly space terrain stamps in world metres, independent of pointer event rate.
+ * The caller holds on to the last emitted point across browser pointermove events.
+ * Short jitter is ignored; a fast mouse swipe still fills the entire stroke.
+ */
+export function terrainStrokeSamples(from,to,spacing=.5){
+ if(!from||!to||![from.x,from.z,to.x,to.z].every(Number.isFinite))return [];
+ const step=clamp(Number(spacing)||.5,.1,3);
+ const dx=to.x-from.x,dz=to.z-from.z,distance=Math.hypot(dx,dz);
+ if(distance<step)return [];
+ const count=Math.min(160,Math.floor(distance/step)),points=[];
+ for(let i=1;i<=count;i++){
+  const t=i*step/distance;
+  points.push({x:from.x+dx*t,z:from.z+dz*t});
+ }
+ return points;
+}
