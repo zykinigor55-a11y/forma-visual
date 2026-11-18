@@ -1,0 +1,28 @@
+{
+  "series": "Сериал про богов",
+  "episode": 4,
+  "title": "Мать вероятностей",
+  "status": "video_completed_locally_not_in_github",
+  "duration_seconds": 134.4,
+  "voice_decoded_seconds": 131.688,
+  "fps": 24,
+  "outputs": [
+    {
+      "name": "DO_SOTVORENIYA_EP04_MOTHER_PHONE_720p.mp4",
+      "width": 720,
+      "height": 1280,
+      "bytes": 26594251,
+      "sha256": "997cfb824e6a2fce4347c6d619b5eb5160316e4e5accb133330a3f8e8e8e2c71"
+    },
+    {
+      "name": "DO_SOTVORENIYA_EP04_MOTHER_FULLHD.mp4",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 33105792,
+      "sha256": "4959c40490d538379b05b1da8c88b70933805b254e3e77a60af1720e2888927d"
+    }
+  ],
+  "project_archive": "DO_SOTVORENIYA_EP04_EDIT_PROJECT.zip",
+  "render_source": "576x1024",
+  "original_images": "941x1672"
+}
