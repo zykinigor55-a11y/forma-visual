@@ -24,6 +24,8 @@ test('architectural rainfall and foundation details do not alter measured house 
  assert.equal(HOUSE_PRESETS.length,18);
  assert.match(architecture,/function addFacadeFinish\(/);
  assert.match(architecture,/new T\.CylinderGeometry\(\.046,\.046,Math\.max\(\.35,gutterY-\.64\),10\)/);
- assert.match(architecture,/if\(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe'\)addFacadeFinish/);
+ assert.match(architecture,/if\(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe'\)\{/);
+ assert.match(architecture,/addFacadeFinish\(g,THREE,/);
+ assert.match(architecture,/addEntranceDetails\(g,THREE,/);
  assert.match(architecture,/g\.userData\.footprint=\{width:w,height:d\}/);
 });
