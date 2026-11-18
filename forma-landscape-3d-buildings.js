@@ -273,8 +273,10 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const b=building||{},preset=housePreset(b.archStyle),style=b.archStyle||preset.id;
  const w=Math.max(2,Number(b.width)||8),d=Math.max(2,Number(b.height)||7);
  const g=new THREE.Group();g.name='architecture-'+style;
- const isGarage=b.type==='garage',isGazebo=b.type==='gazebo',isBath=b.type==='bath';
- const bodyHeight=style==='aframe'?.65:(isGarage?2.9:isGazebo?2.9:['barn','classic','timber','brick','chalet','cottage','mediterranean'].includes(style)?4.3:3.5);
+ const isGarage=b.type==='garage',isGazebo=b.type==='gazebo',isBath=b.type==='bath',
+  isCarport=b.type==='carport',isGreenhouse=b.type==='greenhouse';
+ const dimensions=buildingHeights({archStyle:style,type:b.type,width:w,roofRise:b.roofRise});
+ const bodyHeight=dimensions.eave;
  const shades={
   darkwood:['#53504C','#293237'],lightwood:['#D7C7B0','#323D40'],
   walnut:['#8A624D','#242D32'],brick:['#B38C7A','#303A3C'],
@@ -292,7 +294,8 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  wallMaterial.bumpScale=preset.wall==='brick'?.018:preset.wall==='stone'?.012:preset.wall==='plaster'?.004:.008;
  const roofColor=new THREE.Color(b.roofColor||'#394348');
  roofColor.lerp(new THREE.Color('#FAFAFA'),.12); // Keep user-selected dark roof appearance.
- const roofMaterial=mat(THREE,roofColor,preset.roofFinish==='standing'?.36:.69,.42,roofTex);
+ const roofMaterial=mat(THREE,roofColor,preset.roofFinish==='standing'?.36:.69,
+  preset.roofFinish==='standing'?.76:preset.roofFinish==='tile'?.05:.14,roofTex);
  roofMaterial.bumpMap=roofTex;roofMaterial.bumpScale=preset.roofFinish==='tile'?.012:.003;
  wallTex.repeat.set(Math.max(1,w/3.6),Math.max(1,bodyHeight/2.2));
  roofTex.repeat.set(Math.max(1,w/2.8),Math.max(1,d/3.4));
@@ -321,52 +324,77 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   const rear=new THREE.BufferGeometry();
   rear.setAttribute('position',new THREE.Float32BufferAttribute([-w*.42,.60,-d/2-.03,0,.60+rise*.81,-d/2-.03,w*.42,.60,-d/2-.03],3));
   rear.computeVertexNormals();const facing=add(g,THREE,rear,wallMaterial);facing.material.side=THREE.DoubleSide;
+ }else if(isCarport){
+  // Fully open vehicular canopy: four true supports, no fake garage walls.
+  const steel=mat(THREE,'#394349',.48,.78);
+  const inset=Math.min(.34,Math.min(w,d)*.08);
+  for(const x of [-w/2+inset,w/2-inset])for(const z of [-d/2+inset,d/2-inset])
+   box(g,THREE,.17,bodyHeight-.35,.17,x,bodyHeight/2+.18,z,steel);
+  for(const z of [-d/2+inset,d/2-inset])
+   box(g,THREE,w-inset*2,.15,.18,0,bodyHeight-.11,z,steel);
+ }else if(isGreenhouse){
+  // No opaque wall slabs: actual glazing and aluminum glazing bars.
+  const aluminum=mat(THREE,'#778887',.34,.72);
+  const glass=new THREE.MeshPhysicalMaterial({color:'#C0D5CF',metalness:0,roughness:.10,
+   transmission:.62,thickness:.009,ior:1.50,transparent:true,opacity:.58,side:THREE.DoubleSide});
+  for(const x of [-w/2+.09,w/2-.09])for(const z of [-d/2+.09,d/2-.09])
+   box(g,THREE,.065,bodyHeight-.51,.065,x,bodyHeight/2+.24,z,aluminum);
+  for(const side of [-1,1]){
+   const z=side*(d/2-.04);
+   box(g,THREE,w-.15,bodyHeight-.62,.012,0,bodyHeight/2+.18,z,glass);
+   for(let x=-w/2+.18;x<w/2-.15;x+=Math.max(.65,w/5))
+    box(g,THREE,.048,bodyHeight-.51,.048,x,bodyHeight/2+.24,z,aluminum);
+  }
+  for(const side of [-1,1]){
+   const x=side*(w/2-.04);
+   box(g,THREE,.012,bodyHeight-.62,d-.15,x,bodyHeight/2+.18,0,glass);
+   for(let z=-d/2+.15;z<d/2-.14;z+=Math.max(.7,d/5))
+    box(g,THREE,.048,bodyHeight-.51,.048,x,bodyHeight/2+.24,z,aluminum);
+  }
+  const entrance=doorGroup(THREE,Math.min(1.05,w*.28),2.03,true);
+  entrance.position.set(0,1.56,d/2+.095);g.add(entrance);
  }else{
-  box(g,THREE,w,bodyHeight-.48,d,0,.48+(bodyHeight-.48)/2,0,wallMaterial);
+  const facadePlan=addMeasuredFacades(g,THREE,{width:w,depth:d,height:bodyHeight,style,
+   type:b.type,material:wallMaterial,night});
+  g.userData.facadeSchedule=facadePlan;
   const darkTrim=mat(THREE,'#262B2D',.52,.34);
-  box(g,THREE,w,.10,d,0,.53,0,darkTrim);
-  box(g,THREE,w,.13,d,0,bodyHeight-.045,0,darkTrim);
-  const glassStyle=['modern','japandi','barn'].includes(style),winWidth=glassStyle?Math.min(2.15,w*.24):Math.min(1.22,w*.2);
-  const winHeight=glassStyle?Math.min(2.5,bodyHeight-.9):Math.min(1.45,bodyHeight-1.5);
-  const low=glassStyle?.7:1.3,centreY=low+winHeight/2;
-  if(isGarage){
-   const garage=mat(THREE,'#242B2F',.7,.32);
-   box(g,THREE,Math.min(w*.70,4.5),2.2,.14,0,1.55,d/2+.07,garage);
-   for(let y=.6;y<2.65;y+=.4)box(g,THREE,Math.min(w*.70,4.5),.026,.15,0,y,d/2+.16,mat(THREE,'#5C6667',.5,.28));
-  }else{
-   const door=doorGroup(THREE,Math.min(1.15,w*.18),2.12,glassStyle);
-   door.position.set(w*.28,1.64,d/2+.10);g.add(door);
-   const count=w>=7?2:1;
-   for(let i=0;i<count;i++){
-    const x=count===1?-w*.24:-w*.30+i*w*.27;
-    const item=windowGroup(THREE,winWidth,winHeight,night,glassStyle);
-    item.position.set(x,centreY,d/2+.12);g.add(item);
+  // Thin projecting base and eave band cast physically grounded shadows.
+  box(g,THREE,w,.07,d,0,.52,0,darkTrim);
+  box(g,THREE,w,.09,d,0,bodyHeight-.045,0,darkTrim);
+  if(style==='logcabin'){
+   // Laftet corner notches: staggered exposed dovetail-like short end logs,
+   // never cylindrical oversized full-round logs or fake continuous circles.
+   const seam=mat(THREE,'#59432F',.79,.02),timber=mat(THREE,'#927253',.76,.01);
+   for(let yy=.62;yy<bodyHeight-.14;yy+=.29){
+    for(const x of [-w/2-.12,w/2+.12])
+     box(g,THREE,.39,.22,.29,x,yy,d/2-.09,timber);
+    for(const z of [-d/2-.12,d/2+.12])
+     box(g,THREE,.29,.22,.39,w/2-.08,yy,z,timber);
    }
-   const rear=windowGroup(THREE,Math.min(winWidth*1.12,w*.28),winHeight,night,glassStyle);
-   rear.rotation.y=Math.PI;rear.position.set(-w*.10,centreY,-d/2-.12);g.add(rear);
-   if(d>4){
-    for(const direction of [-1,1]){
-     const item=windowGroup(THREE,Math.min(1.4,d*.24),Math.min(1.42,winHeight),night,false);
-     item.rotation.y=direction*Math.PI/2;
-     item.position.set(direction*(w/2+.12),Math.max(1.5,centreY),-d*.08);g.add(item);
+   // Existing doors/windows remain real apertures: only wood runs on solids.
+   for(const [face,span,z,angle] of [['front',w,d/2,0],['rear',w,-d/2,Math.PI]]){
+    const solid=facadePlan[face],trim=new THREE.Group();trim.position.z=z;trim.rotation.y=angle;g.add(trim);
+    for(let yy=.72;yy<bodyHeight-.16;yy+=.29){
+     const occupied=solid.filter(o=>yy>o.bottom-.045&&yy<o.bottom+o.height+.045)
+      .map(o=>[o.x-o.width/2-.045,o.x+o.width/2+.045]).sort((a,b)=>a[0]-b[0]);
+     let at=-span/2+.13;
+     for(const [lo,hi] of [...occupied,[span/2-.13,span/2-.13]]){
+      if(lo>at+.12)box(trim,THREE,lo-at,.016,.032,(at+lo)/2,yy,.126,seam);
+      at=Math.max(at,hi);
+     }
     }
    }
   }
-  // Crisp, projecting corner trim gives real highlights and depth.
-  if(style==='timber'){
-   const seam=mat(THREE,'#3B2D29',.87,.02);
-   for(let y=.72;y<bodyHeight-.12;y+=.32){
-    box(g,THREE,w,.017,.025,0,y,d/2+.018,seam);
-    box(g,THREE,w,.017,.025,0,y,-d/2-.018,seam);
-   }
-  }
-  if(['barn','scandi','modern','classic'].includes(style)){
+  if(['barn','scandi','modern','classic','modular','panoramic','duplex','tiny'].includes(style))
    for(const x of [-w/2,w/2])for(const z of [-d/2,d/2])
-    box(g,THREE,.065,bodyHeight-.46,.065,x,bodyHeight/2+.2,z,darkTrim);
-  }
+    box(g,THREE,.059,bodyHeight-.45,.059,x,bodyHeight/2+.22,z,darkTrim);
  }
- roofGeometry(g,THREE,b,w,d,0,bodyHeight,roofMaterial,preset.roofFinish);
- if(!isGazebo&&style!=='aframe')addFacadeFinish(g,THREE,{width:w,depth:d,height:bodyHeight,roof:b.roof||preset.roof,style});
+ const greenhouseRoof=isGreenhouse?new THREE.MeshPhysicalMaterial({
+  color:'#BDD3CB',metalness:0,roughness:.12,transparent:true,opacity:.64,transmission:.52,
+  ior:1.49,thickness:.012,side:THREE.DoubleSide
+ }):roofMaterial;
+ roofGeometry(g,THREE,b,w,d,0,bodyHeight,greenhouseRoof,preset.roofFinish);
+ if(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe')addFacadeFinish(g,THREE,{width:w,depth:d,height:bodyHeight,roof:b.roof||preset.roof,style});
  if(isBath){
   // Sauna-specific porch and metal flue; these remain attached to the bath,
   // not additional user-authored project objects.
@@ -386,7 +414,8 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   const cap=add(g,THREE,new THREE.CylinderGeometry(.18,.18,.04,14),railMat,w*.25,flueCenter+flueHeight*.5+.025,0);
   cap.castShadow=true;
  }
- addPresetVolumes(g,THREE,{style,w,d,bodyHeight});
+ if(!isGarage&&!isGazebo&&!isCarport&&!isGreenhouse)
+  addPresetVolumes(g,THREE,{style,w,d,bodyHeight});
  g.userData.archStyle=style;g.userData.footprint={width:w,height:d};g.userData.textures=[wallTex,roofTex];
  return g;
 }
