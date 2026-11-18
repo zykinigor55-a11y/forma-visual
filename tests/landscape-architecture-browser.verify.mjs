@@ -49,10 +49,15 @@ try{
  await page.locator('[data-item="greenhouse"]').click();
  await click(.35,.35);
  await page.locator('[data-item="carport"]').click();
- await click(.66,.66);
- const doc=await saved();
+ let doc=await saved();
+ for(const [x,y] of [[.57,.52],[.50,.52],[.62,.42]]){
+  await click(x,y);
+  doc=await saved();
+  if(doc.buildings.some(b=>b.type==='carport'&&b.roof==='flat'&&b.width>2))break;
+ }
+ console.log('Measured placed buildings',JSON.stringify(doc.buildings.map(b=>({type:b.type,roof:b.roof,style:b.archStyle,width:b.width,height:b.height}))));
  assert.ok(doc.buildings.some(b=>b.type==='greenhouse'&&b.roof==='gable'&&b.width>2));
- assert.ok(doc.buildings.some(b=>b.type==='carport'&&b.roof==='flat'&&b.width>2));
+ assert.ok(doc.buildings.some(b=>b.type==='carport'&&b.roof==='flat'&&b.width>2),'carport must be placeable from 2D plan inside surveyed parcel');
  await page.locator('[data-view="3d"]').click();
  await page.screenshot({path:'artifacts/landscape-editor/architecture-greenhouse-carport.png'});
  assert.deepEqual(errors,[],'no JavaScript crashes in architecture presets');
