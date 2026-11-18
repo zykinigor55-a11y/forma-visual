@@ -10,6 +10,9 @@ on:
       - 'forma-landscape-3d-architecture-geometry.js'
       - 'tests/landscape-architecture-browser.verify.mjs'
       - 'tests/landscape-3d-fast-smoke.verify.mjs'
+      - 'tests/landscape-3d-abc-reference.verify.mjs'
+      - 'tests/fixtures/forma-abc-reference-scene.mjs'
+      - 'forma-landscape-3d-atmosphere.js'
       - '.github/workflows/forma-3d-quick-smoke.yml'
   workflow_dispatch:
 permissions:
@@ -35,6 +38,7 @@ jobs:
           node server.mjs > /tmp/forma-smoke-server.log 2>&1 &
           node tests/landscape-3d-fast-smoke.verify.mjs
           node tests/landscape-architecture-browser.verify.mjs
+          node tests/landscape-3d-abc-reference.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
