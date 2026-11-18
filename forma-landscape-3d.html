@@ -434,7 +434,12 @@ function initialize(){
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
  brushCursor=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xE7D0A5,transparent:true,opacity:.78,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
  brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
- state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();requestAnimationFrame(()=>makeHouseThumbnails());
+ state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
+ // Android: defer a second WebGL context until the house/details panel is used.
+ if(window.innerWidth<=720){
+  document.querySelector('[data-mobile-panel="details"]')
+   ?.addEventListener('click',()=>makeHouseThumbnails(),{once:true});
+ }else requestAnimationFrame(()=>makeHouseThumbnails());
  restoreHouseGlbs().catch(e=>console.warn('Stored house GLB restore:',e));
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
  const previousDrawing=localStorage.getItem(UNDERLAY);
@@ -931,7 +936,10 @@ function renderHouseLibrary(){
   status('Архитектура: '+preset.name+'. Фундамент, габариты и координаты сохранены.');
  });
 }
-function makeHouseThumbnails(){
+let houseThumbBuildRunning=false;
+async function makeHouseThumbnails(){
+ if(houseThumbBuildRunning||houseThumbs.size===HOUSE_PRESETS.length)return;
+ houseThumbBuildRunning=true;
  let rendererThumb=null;
  try{
   const tempCanvas=document.createElement('canvas');
@@ -945,16 +953,17 @@ function makeHouseThumbnails(){
   const base=new THREE.Mesh(new THREE.PlaneGeometry(21,17),new THREE.MeshStandardMaterial({color:'#9EAA92',roughness:1}));
   base.rotation.x=-Math.PI/2;base.receiveShadow=true;previewScene.add(base);
   const cam=new THREE.OrthographicCamera(-9.5,9.5,5.9,-5.9,.1,100);cam.position.set(13,11,16);cam.lookAt(0,2.1,0);
-  for(const p of HOUSE_PRESETS){
+  for(const [index,p] of HOUSE_PRESETS.entries()){
    const model=createArchitecturalBuilding(THREE,{width:10,height:7,archStyle:p.id,roof:p.roof,roofColor:'#E2E4E3',roofRise:p.id==='aframe'?6:1.65});
    previewScene.add(model);rendererThumb.render(previewScene,cam);
    houseThumbs.set(p.id,tempCanvas.toDataURL('image/jpeg',.86));previewScene.remove(model);
    model.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
    model.userData?.textures?.forEach(t=>t.dispose());
+   if(index%3===2){renderHouseLibrary();await new Promise(done=>requestAnimationFrame(done))}
   }
   renderHouseLibrary();
  }catch(error){console.warn('3D house cards unavailable:',error?.message);}
- finally{rendererThumb?.dispose()}
+ finally{rendererThumb?.dispose();houseThumbBuildRunning=false}
 }
 function selectable(key){const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
 function deleteSelectedObject(){
