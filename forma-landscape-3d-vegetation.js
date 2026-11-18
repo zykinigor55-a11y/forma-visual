@@ -4,6 +4,8 @@ import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
  * cutouts. Everything uses metres and can be orbited, walked through and
  * rendered with real directional shadows. Deterministic per-object seed. */
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
+import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
+import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
@@ -62,7 +64,7 @@ function makeLeafGeometry(T,needle=false,id='oak'){
 }
 /* Species-specific bark micro-material instead of a single flat brown cylinder.
  * Geometry stays native 3D, and no third-party photo is baked into the editor. */
-const barkTextureCache=new Map();
+const barkTextureCache=new Map(),barkBumpCache=new Map();
 export function barkPalette(id){
  if(id==='birch')return {base:'#D3D3C8',dark:'#444D4B',light:'#F0EFE6',cross:true};
  if(id==='pine')return {base:'#96613F',dark:'#563C30',light:'#C08B61',cross:false};
@@ -77,6 +79,16 @@ function barkTexture(T,id){
  const ctx=c.getContext('2d'),palette=barkPalette(id),random=rng(hash('bark|'+id));
  ctx.fillStyle=palette.base;ctx.fillRect(0,0,256,512);
  if(palette.cross){
+  // Betula pendula: irregular dark lenticels and peeling bark fissures,
+  // not uniform decorative horizontal ruler lines.
+  for(let patch=0;patch<105;patch++){
+   const x=random()*256,y=random()*512,l=4+random()*24;
+   ctx.save();ctx.translate(x,y);ctx.rotate((random()-.5)*.23);
+   ctx.globalAlpha=.2+random()*.65;
+   ctx.fillStyle=random()>.22?palette.dark:palette.light;
+   ctx.beginPath();ctx.ellipse(0,0,l/2,1+random()*2.4,0,0,Math.PI*2);ctx.fill();
+   ctx.restore();
+  }
   for(let i=0;i<230;i++){
    const x=random()*256,y=random()*512,len=3+random()*33;
    ctx.fillStyle=random()>.74?palette.light:palette.dark;ctx.globalAlpha=.18+random()*.55;
@@ -106,33 +118,42 @@ function barkTexture(T,id){
 function addBranch(g,T,segments,color,id){
  if(!segments.length)return;
  const tex=barkTexture(T,id);
- const base=new T.CylinderGeometry(.70,1,1,9,2),
- m=new T.MeshStandardMaterial({color:'#ffffff',map:tex,bumpMap:tex,bumpScale:.016,roughness:.97,metalness:0});
+ let relief=barkBumpCache.get(id);
+ if(!relief){
+  relief=new T.CanvasTexture(barkReliefCanvas(tex.image,id));
+  relief.wrapS=relief.wrapT=T.RepeatWrapping;relief.repeat.set(1,2);
+  relief.anisotropy=4;barkBumpCache.set(id,relief);
+ }
+ const base=new T.CylinderGeometry(.70,1,1,10,3),profile=botanicalPhotoProfile(id);
+ const m=new T.MeshStandardMaterial({color:'#ffffff',map:tex,bumpMap:relief,
+  bumpScale:profile.barkBump,roughness:.93,metalness:0});
  const branches=new T.InstancedMesh(base,m,segments.length),dummy=new T.Object3D(),up=new T.Vector3(0,1,0),a=new T.Vector3(),b=new T.Vector3();
  segments.forEach((v,i)=>{
   a.set(...v[0]);b.set(...v[1]);const delta=b.clone().sub(a),len=delta.length();
   dummy.position.copy(a).addScaledVector(delta,.5);dummy.quaternion.setFromUnitVectors(up,delta.normalize());
   dummy.scale.set(v[2],len,v[2]);dummy.updateMatrix();branches.setMatrixAt(i,dummy.matrix);
- });branches.instanceMatrix.needsUpdate=true;branches.castShadow=true;branches.receiveShadow=true;g.add(branches);
+ });branches.instanceMatrix.needsUpdate=true;branches.castShadow=true;branches.receiveShadow=true;
+ branches.userData.botanicalLayer='branches';g.add(branches);
 }
 function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  if(!items.length)return;
- const mesh=new T.InstancedMesh(makeLeafGeometry(T,needle,id),new T.MeshStandardMaterial({
-  color:'#ffffff',roughness:.91,metalness:0,side:T.DoubleSide,
-  depthWrite:true
- }),items.length);
- const dummy=new T.Object3D(),c=new T.Color(color),random=rng(seed);
+ const mesh=new T.InstancedMesh(makeLeafGeometry(T,needle,id),foliageMaterial(T,id),items.length);
+ const palette=normalizeFoliagePalette(id,season);
+ const dark=new T.Color(palette.shade),sunlit=new T.Color(palette.sunlit);
+ const fall=palette.fall?.map(hex=>new T.Color(hex));
+ const dummy=new T.Object3D(),random=rng(seed);
  for(let i=0;i<items.length;i++){
   const p=items[i];dummy.position.set(p.x,p.y,p.z);
   dummy.rotation.set(random()*Math.PI*2,random()*Math.PI*2,random()*Math.PI*2);
   const scale=p.s;dummy.scale.set(scale,scale*(needle?1:.72),scale);dummy.updateMatrix();
   mesh.setMatrixAt(i,dummy.matrix);
-  const tone=.78+random()*.38,c2=c.clone().multiplyScalar(tone);
-  if(season==='autumn'&&!needle&&random()<.22)c2.lerp(new T.Color('#c76d32'),random()*.58);
+  const exposure=.13+random()*.80,c2=dark.clone().lerp(sunlit,exposure);
+  if(fall&&!needle)c2.lerp(fall[Math.floor(random()*fall.length)],.62+random()*.33);
   mesh.setColorAt(i,c2);
  }
  mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
- mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;g.add(mesh);
+ mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;
+ mesh.userData.botanicalLayer='micro';g.add(mesh);
 }
 /* Many separate soft irregular 3D foliage masses build real canopy volume;
  * they are neither camera billboards nor a single sphere per plant. Fine
@@ -141,17 +162,19 @@ function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  * attached to a physically modelled terminal twig and consists of several
  * independent curved leaf/needle blades. Its origin is the branch endpoint.
  * This fixes hovering green blobs and makes canopy porous in perspective. */
-function foliageSprigGeometry(T,needle){
+function foliageSprigGeometry(T,needle,id='oak'){
  const vertices=[];
  const tri=(a,b,c)=>vertices.push(...a,...b,...c);
- const arms=needle?5:4,leaves=needle?3:2;
+ const fine=id==='birch'||id==='spirea'||id==='rowan',
+  broad=id==='oak'||id==='hydrangea';
+ const arms=needle?5:fine?6:4,leaves=needle?3:broad?3:2;
  for(let arm=0;arm<arms;arm++){
   const a=arm*Math.PI*2/arms,ca=Math.cos(a),sa=Math.sin(a);
   for(let j=0;j<leaves;j++){
    const k=(j+.75)/leaves,side=j%2?-1:1;
    const base=[ca*k*.23, k*.21, sa*k*.23];
    const tip=[ca*(.22+k*.42), (.18+k*.31)+(needle?.035:.065),sa*(.22+k*.42)];
-   const normal=[-sa,0,ca],w=(needle?.012:.07)*(.55+.5*k),mid=[
+   const normal=[-sa,0,ca],w=(needle?.012:fine?.030:broad?.086:.062)*(.55+.5*k),mid=[
     (base[0]+tip[0])*.5+(normal[0]*side*w*.65),
     (base[1]+tip[1])*.5+.025,
     (base[2]+tip[2])*.5+(normal[2]*side*w*.65)
@@ -172,8 +195,8 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  const source=foliageProfile(id,season),number=clamp(
   Math.round(points.length*quality*(needle?2.05:2.15)),shrub?170:520,shrub?1100:2450
  );
- const geometry=foliageSprigGeometry(T,needle);
- const material=new T.MeshStandardMaterial({color:'#ffffff',roughness:.86,metalness:0,side:T.DoubleSide});
+ const geometry=foliageSprigGeometry(T,needle,id);
+ const material=foliageMaterial(T,id,{physical:false});
  const mesh=new T.InstancedMesh(geometry,material,number),d=new T.Object3D(),base=new T.Color(source.color);
  for(let i=0;i<number;i++){
   const p=points[Math.floor(r()*points.length)];
@@ -192,7 +215,8 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  }
  mesh.instanceMatrix.needsUpdate=true;
  if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
- mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;g.add(mesh);
+ mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;
+ mesh.userData.botanicalLayer='volume';g.add(mesh);
 }
 /* Botanical leaf atlas: thin leaflets and conifer needles on real angled
  * 3D foliage quads, not flat whole-tree billboards. */
@@ -279,7 +303,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
   tuft.instanceMatrix.needsUpdate=true;
   if(tuft.instanceColor)tuft.instanceColor.needsUpdate=true;
   tuft.castShadow=quality>=.30&&quality<.43;
-  tuft.frustumCulled=false;g.add(tuft);
+  tuft.frustumCulled=false;tuft.userData.botanicalLayer='sprays';g.add(tuft);
  }
 }
 /* Real petalled flowers instead of tiny stone-shaped spheres.
@@ -313,7 +337,8 @@ function flowerClusters(g,T,positions,id,seed,season){
   const size=(id==='hydrangea'?.065:id==='lavender'?.026:.04)*(.7+r()*.52);
   d.scale.set(size,size,size);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
  }
- mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=true;g.add(mesh);
+ mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=true;
+ mesh.userData.botanicalLayer='micro';g.add(mesh);
 }
 /* Tapered curved branch: 3 connected real cylinders, never a rigid stick
  * connecting the trunk to a floating blob. Each span touches the next. */
@@ -350,7 +375,8 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
    const tip=[Math.cos(direction)*length,outerY,Math.sin(direction)*length];
    const stemY=y-(conifer?.04:.02)*height;
    curveBranch(branches,[0,stemY,0],tip,trunkRadius*(conifer?.25:.37)*(1-t*.55),height*(conifer?-.012:.028));
-   const twigCount=kind==='pine'?6:kind==='spruce'?8:9;
+   const twigCount=kind==='pine'?6:kind==='spruce'?8:
+   id==='birch'?13:id==='oak'?12:9;
    for(let j=0;j<twigCount;j++){
     const f=(j+.2+r()*.45)/twigCount,flare=(r()-.5)*length*.4;
     const mid=[tip[0]*f,stemY+(outerY-stemY)*f,tip[2]*f];
@@ -428,12 +454,14 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
   const az=j*2.399+r()*.34,dist=radius*(.43+r()*.53),
    horizontal=isCreeper?1:isSpike?.72:id==='thuja-globe'?.8:1;
   const tipHeight=isCreeper?actual*(.17+r()*.23):
+   id==='spirea'?actual*(.32+r()*.43):
    isSpike?actual*(.50+r()*.45):
    id==='boxwood'||id==='thuja-globe'?actual*(.51+r()*.47):
    actual*(.38+r()*.54);
   const pt=[Math.cos(az)*dist*horizontal,tipHeight,Math.sin(az)*dist*horizontal],
    radiusStem=isSpike?.007:isCreeper?.012:.016+r()*.016;
-  curveBranch(branches,[0,.045,0],pt,radiusStem,actual*(isCreeper?-.01:.065));
+  curveBranch(branches,[0,.045,0],pt,radiusStem,
+   actual*(isCreeper?-.01:id==='spirea'?.16:.065));
   for(let k=0;k<15;k++){
    const f=.22+r()*.77,
     mid=[pt[0]*f,.045+(pt[1]-.045)*f,pt[2]*f],length=radius*(isCreeper?.19:isSpike?.08:.16);
@@ -443,7 +471,8 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
     clamp(mid[2]+Math.sin(direction)*length*(.25+r()*.85),-radius,radius)
    ];
    branches.push([mid,tip,Math.max(.0025,radiusStem*.32)]);
-   points.push({x:tip[0],y:tip[1],z:tip[2],s:evergreen?.09+r()*.10:.095+r()*.12});
+   points.push({x:tip[0],y:tip[1],z:tip[2],s:
+    id==='spirea'?.045+r()*.065:evergreen?.09+r()*.10:.095+r()*.12});
    // Secondary terminal shoots add low and side foliage without detaching
    // leaves from branches. They stay inside the measured crown footprint.
    if(k%3===0&&!isSpike){
@@ -475,7 +504,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  }
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
 }
-export function createVegetation(T,instance,{season='summer',quality=1}={}){
+export function createVegetation(T,instance,{season='summer',quality=1,mode='standard'}={}){
  const id=instance.catalogId,cfg=VEGETATION_SPECIES[id];
  if(!cfg)throw Error('Unknown botanical species: '+id);
  const diameter=clamp(Number(instance.diameter)||1,.2,30),height=clamp(Number(instance.height)||1,.25,40);
@@ -483,6 +512,7 @@ export function createVegetation(T,instance,{season='summer',quality=1}={}){
  if(cfg.kind==='shrub'||cfg.kind==='conifer-shrub')generateShrub(T,g,id,height,diameter,season,r,quality);
  else generateTree(T,g,id,height,diameter,season,r,quality);
  g.userData.species=id;g.userData.physicalHeight=height;g.userData.crownDiameter=diameter;g.userData.variant=variant;
+ enableBotanicalLod(g,mode);
  return g;
 }
 const rockTextureCache=new Map();
