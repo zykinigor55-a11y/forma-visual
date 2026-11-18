@@ -1,3 +1,4 @@
+import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
 /* FORMA VISUAL / Species-aware real 3D vegetation.
  * True branch geometry + instanced leaf meshes; no image billboards, no flat
  * cutouts. Everything uses metres and can be orbited, walked through and
@@ -529,23 +530,5 @@ export function createRock(T,instance){
  mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);return g;
 }
 export function createGardenLight(T,instance,{night=false}={}){
- const g=new T.Group(),id=instance.catalogId,h=clamp(Number(instance.height)||.9,.18,2.3);
- const mat=color=>new T.MeshStandardMaterial({color,metalness:.55,roughness:.43});
- const metal=mat('#343b39'),glass=new T.MeshPhysicalMaterial({color:'#e4d7b8',roughness:.18,
-  transparent:true,opacity:.88,emissive:night?'#d3a56a':'#5e5343',emissiveIntensity:night?1.5:.09});
- const cylinder=(a,b,y,r,material)=>{
-  const ob=new T.Mesh(new T.CylinderGeometry(a,b,y,12),material);
-  ob.castShadow=true;ob.position.y=r;g.add(ob);
- };
- if(['ground','spot','deck-light'].includes(id)){
-  cylinder(.15,.15,.075,.045,metal);cylinder(.11,.11,.03,.095,glass);
- }else if(id==='linear'){
-  const ob=new T.Mesh(new T.BoxGeometry(.14,.065,.95),metal);ob.position.y=.045;g.add(ob);
-  const strip=new T.Mesh(new T.BoxGeometry(.06,.02,.82),glass);strip.position.y=.085;g.add(strip);
- }else{
-  cylinder(.065,.10,h,h/2,metal);
-  cylinder(id==='bollard'?.15:.14,.13,.23,h+.06,glass);
-  cylinder(.17,.16,.06,h+.2,metal);
- }
- return g;
+ return createProfessionalGardenLight(T,instance,{night});
 }
