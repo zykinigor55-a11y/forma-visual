@@ -87,8 +87,10 @@ function surface(g,T,w,h,x,y,z,material,rotation=0){
 function windowGroup(T,width,height,night=false,panoramic=false){
  const g=new T.Group();
  const frame=mat(T,'#181E20',.52,.5),recess=mat(T,'#121A1C',.91,.02),glass=new T.MeshPhysicalMaterial({
-  color:night?'#9EAB9B':'#24404C',metalness:.18,roughness:.14,transparent:true,opacity:.94,
-  clearcoat:.85,clearcoatRoughness:.08,side:T.FrontSide,depthWrite:true,emissive:night?'#E3B77C':'#102630',emissiveIntensity:night?.38:.07
+  // Photographic architectural glazing reflects its environment rather than glowing cyan.
+  color:night?'#AAB9B1':'#6C888B',metalness:0,roughness:.19,transparent:true,opacity:.88,
+  ior:1.46,clearcoat:.48,clearcoatRoughness:.16,side:T.FrontSide,depthWrite:true,
+  emissive:night?'#E6BD8D':'#000000',emissiveIntensity:night?.23:0
  });
  const w=Math.max(.45,width),h=Math.max(.6,height),edge=.084;
  // Dark recessed opening masks the solid procedural wall behind the pane.
@@ -101,6 +103,10 @@ function windowGroup(T,width,height,night=false,panoramic=false){
  for(let i=1;i<=mullion;i++)box(g,T,.036,h,.12,(i/(mullion+1)-.5)*w,0,.105,frame);
  box(g,T,w,.033,.12,0,.012,.105,frame);
  box(g,T,w+.26,.065,.26,0,-h/2-.14,.045,mat(T,'#414747',.68,.26));
+ // Thin inner seals provide believable depth without covering the true opening.
+ const seal=mat(T,'#121718',.91,.05);
+ box(g,T,w-.12,.016,.025,0,-h/2+.043,.125,seal);
+ box(g,T,w-.12,.016,.025,0,h/2-.043,.125,seal);
  return g;
 }
 function doorGroup(T,width=1.04,height=2.16,modern=false){
@@ -160,6 +166,13 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     facade:name,width:opening.width,height:opening.height,bottom:opening.bottom
    };
    facade.add(part);
+   if(opening.kind==='window'){
+    // Sill and lintel stop at the sides of this exact aperture.
+    const modern=['modern','hightech','panoramic','modular','barn'].includes(style);
+    const trim=mat(T,modern?'#414A4D':'#A8A49A',modern?.51:.90,modern?.3:.025);
+    box(facade,T,opening.width+.18,.046,.27,opening.x,opening.bottom-.05,.13,trim);
+    box(facade,T,opening.width+.17,.035,.20,opening.x,opening.bottom+opening.height+.047,.075,trim);
+   }
    // Dark interior return on the opening's inner edge; no solid wall beneath.
    for(const edge of [-1,1])box(facade,T,.055,opening.height,.13,
     opening.x+edge*(opening.width/2+.023),opening.bottom+opening.height/2,-.022,interior);
@@ -184,7 +197,7 @@ function edgeBeam(g,T,a,b,thickness,material){
 function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
  const roof=b.roof||housePreset(b.archStyle).roof,overhang=b.archStyle==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
  b.archStyle==='cottage'?Math.min(.75,Math.min(w,d)*.09):Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
- const dark=mat(T,'#22282B',.75,.38),gable=roof==='gable',hip=roof==='hip';
+ const dark=mat(T,'#22282B',.75,.38),soffit=mat(T,'#555A59',.82,.06),gable=roof==='gable',hip=roof==='hip';
  const rise=b.archStyle==='aframe'?Math.max(4.2,Math.min(8,Number(b.roofRise)||0,w*.74)):Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
  if(roof==='flat'){
   box(g,T,w+overhang*2,.19,d+overhang*2,0,bodyHeight+.16,0,roofMaterial);
@@ -208,7 +221,12 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
     }
    }
   }
-  for(const x of [-half,half])edgeBeam(g,T,[x,bodyHeight+.08,-depth/2],[0,bodyHeight+rise+.08,-depth/2],.065,dark);
+  for(const x of [-half,half]){
+   edgeBeam(g,T,[x,bodyHeight+.08,-depth/2],[0,bodyHeight+rise+.08,-depth/2],.065,dark);
+   edgeBeam(g,T,[x,bodyHeight+.08,depth/2],[0,bodyHeight+rise+.08,depth/2],.065,dark);
+   // The eave reads as a real layered roof, not a single zero-thickness plane.
+   box(g,T,.22,.055,depth,x>0?half-.11:-half+.11,bodyHeight-.006,0,soffit);
+  }
   edgeBeam(g,T,[0,bodyHeight+rise+.08,-depth/2],[0,bodyHeight+rise+.08,depth/2],.10,dark);
   for(const x of [-half,half]){
    const gutter=add(g,T,new T.CylinderGeometry(.057,.057,depth,10),dark,x,bodyHeight+.07,0);
@@ -236,6 +254,29 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
    mesh.material.side=T.DoubleSide;
   }
   edgeBeam(g,T,[0,top,-startZ],[0,top,startZ],.10,dark);
+  for(const x of [-half,half])box(g,T,.13,.075,depth,x,bodyHeight+.038,0,dark);
+  for(const z of [-depth/2,depth/2])box(g,T,w+overhang*2,.075,.13,0,bodyHeight+.038,z,dark);
+ }
+}
+/** Existing house doors receive measured entry steps, without changing
+ * the house footprint, opening widths, or adding catalogue models. */
+export function entranceDetailPlan(style,frontOpenings,width,depth){
+ const supported=['barn','modern','brick','logcabin','scandi','japandi','classic'];
+ if(!supported.includes(style)||!Array.isArray(frontOpenings))return [];
+ const w=Math.max(2,Number(width)||2),d=Math.max(2,Number(depth)||2);
+ return frontOpenings.filter(o=>o.kind==='door').map(o=>({
+  x:o.x,front:d/2,stepWidth:Math.max(.9,Math.min(w*.37,o.width+.56)),
+  finish:['barn','logcabin','scandi'].includes(style)?'timber':'masonry'
+ }));
+}
+function addEntranceDetails(g,T,{style,width,depth,frontOpenings}){
+ const plans=entranceDetailPlan(style,frontOpenings,width,depth);
+ const timber=mat(T,'#876C50',.85,.02),masonry=mat(T,'#999991',.94,.015),joint=mat(T,'#414644',.80,.04);
+ for(const step of plans){
+  const finish=step.finish==='timber'?timber:masonry;
+  box(g,T,step.stepWidth,.12,.42,step.x,.43,step.front+.23,finish);
+  box(g,T,step.stepWidth+.28,.11,.54,step.x,.175,step.front+.68,finish);
+  box(g,T,step.stepWidth-.16,.022,.014,step.x,.105,step.front+.955,joint);
  }
 }
 /* Independent metal rainwater system and layered plinth details. These
@@ -402,7 +443,10 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  }):roofMaterial;
  const roofBuilding=isGreenhouse?{...b,roof:'gable'}:isCarport?{...b,roof:'flat'}:b;
  roofGeometry(g,THREE,roofBuilding,w,d,0,bodyHeight,greenhouseRoof,preset.roofFinish);
- if(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe')addFacadeFinish(g,THREE,{width:w,depth:d,height:bodyHeight,roof:b.roof||preset.roof,style});
+ if(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe'){
+  addFacadeFinish(g,THREE,{width:w,depth:d,height:bodyHeight,roof:b.roof||preset.roof,style});
+  addEntranceDetails(g,THREE,{style,width:w,depth:d,frontOpenings:g.userData.facadeSchedule?.front||[]});
+ }
  if(isBath){
   // Sauna-specific porch and metal flue; these remain attached to the bath,
   // not additional user-authored project objects.
