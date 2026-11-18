@@ -1,28 +1,36 @@
 {
   "series": "Сериал про богов",
+  "season": 1,
   "episode": 4,
   "title": "Мать вероятностей",
-  "status": "video_completed_locally_not_in_github",
-  "duration_seconds": 134.4,
-  "voice_decoded_seconds": 131.688,
-  "fps": 24,
-  "outputs": [
-    {
-      "name": "DO_SOTVORENIYA_EP04_MOTHER_PHONE_720p.mp4",
-      "width": 720,
-      "height": 1280,
-      "bytes": 26594251,
-      "sha256": "997cfb824e6a2fce4347c6d619b5eb5160316e4e5accb133330a3f8e8e8e2c71"
-    },
-    {
-      "name": "DO_SOTVORENIYA_EP04_MOTHER_FULLHD.mp4",
-      "width": 1080,
-      "height": 1920,
-      "bytes": 33105792,
-      "sha256": "4959c40490d538379b05b1da8c88b70933805b254e3e77a60af1720e2888927d"
-    }
-  ],
-  "project_archive": "DO_SOTVORENIYA_EP04_EDIT_PROJECT.zip",
-  "render_source": "576x1024",
-  "original_images": "941x1672"
+  "approved_cut": "V4 — Живой свет",
+  "status": "render_complete_local_video_not_uploaded_to_github",
+  "master": {
+    "filename": "DO_SOTVORENIYA_EP04_V4_LIVING_LIGHT_1080x1920.mp4",
+    "size_bytes": 70417044,
+    "sha256": "208acc14e26cca51ba3ef1b8855189681f6a5bea2592b00e81482b2e30ac5ea1",
+    "duration_seconds": 134.357,
+    "width": 1080,
+    "height": 1920,
+    "fps": 24,
+    "video_codec": "H.264",
+    "audio_codec": "AAC",
+    "note": "Rendered from source 941x1672 PNG, no intermediate 576p; not native 1080p detail"
+  },
+  "mobile": {
+    "filename": "DO_SOTVORENIYA_EP04_V4_PHONE_720x1280.mp4",
+    "size_bytes": 16542578,
+    "sha256": "190b5c64f20dfed4b6c1add5319d6cfed50dd8fe2ac174cc25487cd733bdd2c2",
+    "duration_seconds": 134.357,
+    "width": 720,
+    "height": 1280
+  },
+  "source_project": {
+    "filename": "DO_SOTVORENIYA_EP04_V4_EDIT_PROJECT.zip",
+    "size_bytes": 55875299,
+    "sha256": "eaffb03e1182bc73b5e84748829c8ac70f21c1106d88cc985cd6dab0581113c9",
+    "content": "10 original PNG, depth and glow masks, render_v4.py, finishing script, voice+music"
+  },
+  "expected_release_tag": "serial-pro-bogov-ep04-v4",
+  "note": "The GitHub connector can save text through contents/git data API, but cannot import local binary MP4/ZIP or create/upload GitHub Releases assets. These three binary files are not yet present in GitHub; do not describe them as uploaded."
 }
