@@ -49,3 +49,36 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false}={}){
  group.userData.crownDiameter=fit.crownDiameter;
  return group;
 }
+
+/* Furniture and groundcover must NOT be independently stretched vertically.
+ * A single metric scale preserves the designer's authored proportions.
+ * Source buffers are shared; each instance gets its own material and shadows.
+ */
+export function makeRealProp(T,source,{width=2.5}={}){
+ if(!source?.isObject3D)throw Error('A valid glTF scene is required.');
+ let bounds=boundsCache.get(source);
+ if(!bounds){bounds=new T.Box3().setFromObject(source);if(bounds.isEmpty())throw Error('GLB has no geometry.');boundsCache.set(source,bounds.clone())}
+ const size=new T.Vector3(),center=new T.Vector3();bounds.getSize(size);bounds.getCenter(center);
+ const breadth=Math.max(size.x,size.z);
+ if(!Number.isFinite(breadth)||breadth<.00001||size.y<.00001)throw Error('Non-measurable GLB.');
+ const uniform=Math.max(.01,Math.min(100,Number(width)||2.5))/breadth;
+ const clone=source.clone(true);
+ clone.traverse(node=>{
+  if(!node.isMesh)return;
+  node.userData.bundledSharedGeometry=true;
+  node.material=Array.isArray(node.material)?node.material.map(m=>m.clone()):node.material?.clone();
+  node.castShadow=true;node.receiveShadow=true;
+  for(const material of Array.isArray(node.material)?node.material:[node.material]){
+   if(!material)continue;
+   if(material.transparent&&material.opacity===1)material.alphaTest=Math.max(.2,material.alphaTest||0);
+   material.side=T.DoubleSide;
+  }
+ });
+ clone.scale.setScalar(uniform);
+ clone.position.set(-center.x*uniform,-bounds.min.y*uniform,-center.z*uniform);
+ const group=new T.Group();group.add(clone);
+ group.userData.realGlb=true;group.userData.bundledModel=true;
+ group.userData.physicalHeight=size.y*uniform;
+ group.userData.physicalWidth=breadth*uniform;
+ return group;
+}
