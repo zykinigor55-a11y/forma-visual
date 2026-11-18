@@ -9,6 +9,7 @@ import {masterplanPrompt,perspectiveLandscapePrompt,topDownRoofPrompt} from './f
 import http from 'node:http';
 import path from 'node:path';
 import {readFile, stat} from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
 import {createRenderJobQueue} from './forma-render-jobs.mjs';
@@ -407,7 +408,19 @@ function getRenderJob(req,res){
  const result=renderJobs.result(jobId);
  return json(res,result?.status||404,result?.body||{error:'Результат задания не найден или срок хранения истёк.',code:'job_not_found'});
 }
-async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/forma-preview.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();const content=await readFile(file);res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
+async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return json(res,400,{error:'Неправильный адрес'})}if(pathname==='/')pathname='/forma-preview.html';if(pathname.startsWith('/.'))return json(res,403,{error:'Нет доступа'});const file=path.resolve(ROOT,'.'+pathname);if(!(file===ROOT||file.startsWith(ROOT+path.sep))||path.basename(file).startsWith('.'))return json(res,403,{error:'Нет доступа'});const ext=path.extname(file).toLowerCase();if(!MIME[ext]||ext==='.json')return json(res,404,{error:'Не найдено'});try{const s=await stat(file);if(!s.isFile())throw Error();
+ if(ext==='.glb'){
+  // Large GLB assets stream from disk instead of copying 20-30MB files into
+  // the Node.js heap. HEAD is useful for deployment and asset smoke checks.
+  res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':s.size,'X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=300','Referrer-Policy':'no-referrer'});
+  if(req.method==='HEAD'){res.end();return}
+  const stream=createReadStream(file);
+  stream.on('error',error=>res.destroy(error));
+  stream.pipe(res);return;
+ }
+ const content=await readFile(file);
+ res.writeHead(200,{'Content-Type':MIME[ext],'Content-Length':content.length,'X-Content-Type-Options':'nosniff','Cache-Control':['.html','.js','.css'].includes(ext)?'no-store':'public, max-age=300','Referrer-Policy':'no-referrer'});
+ res.end(content)}catch{json(res,404,{error:'Не найдено'})}}
 const planVision=createPlanVision({json,readJSON,sameOrigin});
 const wanVideo=createWanVideo({json,readJSON,sameOrigin,imageBlob});
 const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
