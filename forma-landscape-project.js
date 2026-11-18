@@ -1,6 +1,7 @@
 import {GROUPS,CATALOG,TREE_HEIGHT_M,SCENE_OPTIONS,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=area-union-v3-20261117';
 import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=tree-atlas-generated-png-v8-20261117';
 import {brushPolygon} from './forma-landscape-brush.js';
+import {premiumIcon as categoryIcon} from './forma-premium-icons.js';
 
  const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),num=(v,d=2)=>Number(v).toFixed(d);
@@ -186,20 +187,7 @@ import {brushPolygon} from './forma-landscape-brush.js';
   const s=$('#lpSourceState',modal);if(s)s.textContent=`${num(doc.site.width)} × ${num(doc.site.height)} м · ${doc.verified?'Размеры подтверждены':'Требуется сверка размеров'}`;
  }
 
- function categoryIcon(id){
-  const paths={
-   trees:'<path d="M24 33v8M15 39h18" stroke="#b98e5f" stroke-width="3" fill="none"/><path d="M16 30c-8 0-8-10-2-13-2-7 5-12 11-9 6-3 12 3 10 9 8 5 3 14-5 13z" fill="url(#lpiFill)" stroke="#e9d2ad" stroke-width="1.5"/><path d="M15 23c7-3 13-9 17-8" fill="none" stroke="#fff4cf" stroke-width="1.5" opacity=".65"/>',
-   shrubs:'<ellipse cx="19" cy="29" rx="13" ry="10" fill="url(#lpiFill)" stroke="#e5c7a0"/><ellipse cx="31" cy="26" rx="11" ry="11" fill="url(#lpiFill)" stroke="#e5c7a0"/><path d="M10 33q12-12 27-7" stroke="#fff1c9" stroke-width="1.5" opacity=".6" fill="none"/><circle cx="16" cy="25" r="2" fill="#f2d8b2"/><circle cx="31" cy="21" r="2" fill="#f2d8b2"/>',
-   pavers:'<path d="M8 17l13-7 13 6-13 7zM23 25l14-7 4 11-15 8zM8 22l13 7v10L8 32zM11 36l11-6 12 6-12 6z" fill="url(#lpiFill)" stroke="#e4d0ae" stroke-width="1.5"/><path d="M21 23v5M23 35l-1 7" stroke="#fff3ce" opacity=".65"/>',
-   fills:'<ellipse cx="15" cy="25" rx="6" ry="4" fill="url(#lpiFill)" stroke="#ead4ae"/><ellipse cx="30" cy="18" rx="7" ry="5" fill="url(#lpiFill)" stroke="#ead4ae"/><ellipse cx="32" cy="32" rx="8" ry="5" fill="url(#lpiFill)" stroke="#ead4ae"/><ellipse cx="19" cy="36" rx="5" ry="3" fill="url(#lpiFill)" stroke="#ead4ae"/><path d="M14 23l4 1M29 16l3 1M29 30l4 1" stroke="#fff0cd" opacity=".8"/>',
-   lights:'<path d="M19 17h10l-1 6H20zM22 24h5v14h-5zM18 39h13" fill="url(#lpiFill)" stroke="#ead5b5" stroke-width="1.7"/><path d="M15 27l-4 5M33 27l4 5M24 13V8M13 17l-4-2M35 17l4-2" stroke="#f7dda3" stroke-width="2" stroke-linecap="round"/><path d="M22 18h4" stroke="#fff7da" stroke-width="2"/>',
-   lawns:'<path d="M8 38q6-13 9-22M19 39q2-18 4-28M23 39q8-18 15-26M24 38q3-12-5-21M30 38q5-12 10-13" stroke="#e5cba2" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M8 38h33" stroke="#ae926b" stroke-width="3" stroke-linecap="round"/>',
-   ponds:'<path d="M10 23c4-10 10-9 15-7 8-3 16 4 12 10 6 8-1 14-11 12-11 3-20-3-16-15z" fill="url(#lpiFill)" stroke="#e9d3ae" stroke-width="1.7"/><path d="M15 25c4-3 8 3 14 0M17 31c5-2 9 2 14-1" stroke="#fff1d1" opacity=".85" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
-   boulders:'<path d="M9 31l6-12 12-7 10 9 3 12-14 6-15-2z" fill="url(#lpiFill)" stroke="#e6d0af" stroke-width="1.6"/><path d="M15 19l8 13-12 5M23 32l17 1M23 32l4-20" stroke="#f4e1be" opacity=".55" stroke-width="1.4" fill="none"/>'
-  };
-  return '<svg class="lp-3d-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><linearGradient id="lpiFill" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#f7e4bc"/><stop offset=".45" stop-color="#c6a379"/><stop offset="1" stop-color="#70533d"/></linearGradient></defs><rect x="2.5" y="2.5" width="43" height="43" rx="11" fill="#383630" stroke="#8b7760" stroke-width="1.1"/><path d="M8 7h29" stroke="#fff1d1" stroke-opacity=".19" stroke-width="1.4"/>'+(paths[id]||paths.shrubs)+'</svg>';
- }
-
+ 
  /* QA: querySelectorAll is required for every forEach UI iteration. */
  function drawPalette(){
   const target=$('#lpPalette',modal);if(!target)return;
