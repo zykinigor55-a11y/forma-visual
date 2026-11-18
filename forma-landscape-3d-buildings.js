@@ -341,9 +341,16 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
    box(g,THREE,.065,bodyHeight-.51,.065,x,bodyHeight/2+.24,z,aluminum);
   for(const side of [-1,1]){
    const z=side*(d/2-.04);
-   box(g,THREE,w-.15,bodyHeight-.62,.012,0,bodyHeight/2+.18,z,glass);
+   if(side===1){
+    // Transparent wall still has a REAL empty door aperture. There is no
+    // unbroken pane of glass behind a fake opaque entrance.
+    const width=Math.min(1.05,w*.28),opening={x:0,width,bottom:.48,height:2.03};
+    for(const patch of wallPatches(w,.48,bodyHeight-.14,[opening]))
+     box(g,THREE,patch.width,patch.height,.012,patch.x,patch.y,z,glass);
+   }else box(g,THREE,w-.15,bodyHeight-.62,.012,0,bodyHeight/2+.18,z,glass);
    for(let x=-w/2+.18;x<w/2-.15;x+=Math.max(.65,w/5))
-    box(g,THREE,.048,bodyHeight-.51,.048,x,bodyHeight/2+.24,z,aluminum);
+    if(!(side===1&&Math.abs(x)<.61))
+     box(g,THREE,.048,bodyHeight-.51,.048,x,bodyHeight/2+.24,z,aluminum);
   }
   for(const side of [-1,1]){
    const x=side*(w/2-.04);
@@ -393,7 +400,8 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   color:'#BDD3CB',metalness:0,roughness:.12,transparent:true,opacity:.64,transmission:.52,
   ior:1.49,thickness:.012,side:THREE.DoubleSide
  }):roofMaterial;
- roofGeometry(g,THREE,b,w,d,0,bodyHeight,greenhouseRoof,preset.roofFinish);
+ const roofBuilding=isGreenhouse?{...b,roof:'gable'}:isCarport?{...b,roof:'flat'}:b;
+ roofGeometry(g,THREE,roofBuilding,w,d,0,bodyHeight,greenhouseRoof,preset.roofFinish);
  if(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe')addFacadeFinish(g,THREE,{width:w,depth:d,height:bodyHeight,roof:b.roof||preset.roof,style});
  if(isBath){
   // Sauna-specific porch and metal flue; these remain attached to the bath,
