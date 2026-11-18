@@ -9,8 +9,14 @@ export function naturalCrown(id,t){
  const f=Math.max(0,Math.min(1,Number(t)||0));
  switch(id){
   // Scots pine: open lower trunk and broad middle crown, but tapered living leader.
-  case 'pine':return (.20+.91*Math.sin(Math.PI*(f*.80+.06)))*(.98-.25*f)*Math.pow(1-f,.42);
-  case 'spruce':return Math.pow(1-f,.90)*.97+.055;
+  case 'pine':{
+   // Mature Scots pine: broad stepped crown above a clear bole, tapered top.
+   const wave=Math.max(0,Math.sin(Math.PI*(.055+.94*f)));
+   return .13+.92*Math.pow(wave,.38)*(1-.07*f);
+  }
+  case 'spruce':
+   // Norway spruce: lower tiers spread near the measured crown radius.
+   return .09+.95*Math.pow(1-f,.67);
   case 'birch':return .13+.85*Math.pow(Math.sin(Math.PI*f),.8);
   case 'oak':return .25+.82*Math.pow(Math.sin(Math.PI*f),.32);
   case 'maple':return .15+.90*Math.pow(Math.sin(Math.PI*f),.50);
