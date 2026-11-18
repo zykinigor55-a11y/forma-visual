@@ -49,7 +49,7 @@ try{
  await page.locator('#time').selectOption('day');
  // Every landscape category is reachable without scrolling past the tool grid.
  await page.locator('[data-quick-tool="plant"]').click();
- assert.equal(await page.locator('[data-item]').count(),18,'All ten trees and eight shrubs in the searchable plant library');
+ assert.equal(await page.locator('[data-item]').count(),26,'All 12 trees and 14 shrubs in the searchable native plant library');
  assert.equal(await page.locator('[data-item="pine"]').isVisible(),true);
  await page.locator('#catalogSearch').fill('берёза');
  assert.equal(await page.locator('[data-item="birch"]').isVisible(),true);
