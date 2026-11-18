@@ -621,7 +621,7 @@ function polygon(points,y,color,water=false,materialId='universal'){
  const m=water?new THREE.MeshPhysicalMaterial({
   color:'#467F8C',roughness:.17,metalness:.08,transparent:true,opacity:.95,
   clearcoat:.62,clearcoatRoughness:.13,side:THREE.DoubleSide,
-  bumpMap:waterRippleTexture,bumpScale:sceneAtmosphere.ripples*.00055
+  bumpMap:waterRippleTexture,bumpScale:sceneAtmosphere.ripples*.00023
  }):surfaceMaterial(THREE,materialId,color);
  m.side=THREE.DoubleSide;const o=mesh(geo,m);o.castShadow=false;
  if(water){o.userData.formaWater=true;o.receiveShadow=false;waterSurfaces.push(o)}
@@ -1056,7 +1056,7 @@ function applyAtmosphereControls(){
   haze:$('#aerialHaze').value,nightGlow:$('#nightGlow').value,ripples:$('#waterRipples').value
  });
  syncAtmosphereControls();saveAtmosphereControls();updateSun();
- for(const surface of waterSurfaces)if(surface.material)surface.material.bumpScale=sceneAtmosphere.ripples*.00055;
+ for(const surface of waterSurfaces)if(surface.material)surface.material.bumpScale=sceneAtmosphere.ripples*.00023;
  renderGate.invalidate();
 }
 function updateSun(){
@@ -1652,7 +1652,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#atmosphereReset').onclick=()=>{
   sceneAtmosphere=normalizeSceneAtmosphere(ATMOSPHERE_DEFAULTS);
   syncAtmosphereControls();saveAtmosphereControls();updateSun();
-  for(const surface of waterSurfaces)if(surface.material)surface.material.bumpScale=sceneAtmosphere.ripples*.00055;
+  for(const surface of waterSurfaces)if(surface.material)surface.material.bumpScale=sceneAtmosphere.ripples*.00023;
   renderGate.invalidate();
  };
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
