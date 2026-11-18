@@ -3,7 +3,7 @@
    editable, as opposed to substituting a flat sprite or an AI image. */
 export const SHRUB_HEIGHT_M=Object.freeze({
  juniper:.55,hydrangea:1.55,spirea:.85,barberry:1.15,
- dogwood:2.25,'thuja-globe':1.45,lavender:.55,boxwood:.95
+ dogwood:2.25,'thuja-globe':1.45,lavender:.55,boxwood:.95,ninebark:1.90,hosta:.55,'ornamental-grass':1.10
 });
 export function naturalCrown(id,t){
  const f=Math.max(0,Math.min(1,Number(t)||0));
@@ -35,7 +35,9 @@ export function botanicalLeafScale(id,height,diameter){
  if(id==='willow'||id==='birch'||id==='rowan')return .54;
  if(id==='oak')return .89;
  if(id==='maple')return .80;
- if(id==='lavender'||id==='juniper')return .52;
+ if(id==='lavender'||id==='juniper'||id==='ornamental-grass')return .52;
+ if(id==='hosta')return 1.08;
+ if(id==='ninebark')return .75;
  return Math.min(1,Math.max(.55,.78+.15*ratio));
 }
 
@@ -66,6 +68,9 @@ export function leafOutline(id,steps=20){
   else if(id==='apple'){width=.46;length=.70}
   else if(id==='sakura'){width=.47;length=.78;serration=1+.05*Math.cos(a*12)}
   else if(id==='hydrangea'){width=.59;length=.73;serration=1+.04*Math.cos(a*14)}
+  else if(id==='ninebark'){width=.55;length=.76;serration=.79+.24*Math.cos(a*5)}
+  else if(id==='hosta'){width=.77;length=1.05;serration=1+.018*Math.cos(a*8)}
+  else if(id==='ornamental-grass'){width=.065;length=1.45}
   else if(id==='boxwood'||id==='thuja-globe'){width=.33;length=.42}
   else if(id==='lavender'){width=.11;length=.60}
   if(id==='maple'&&sn<-.50)serration*=.80;
@@ -79,9 +84,9 @@ export function leafOutline(id,steps=20){
  * changes a measured crown diameter, especially for juvenile plants. */
 export function foliageSprayWidth(id,diameter){
  const crown=Math.max(.2,Math.min(30,Number(diameter)||1));
- const shrub=['juniper','hydrangea','spirea','barberry','dogwood','thuja-globe','lavender','boxwood'].includes(id);
+ const shrub=['juniper','hydrangea','spirea','barberry','dogwood','thuja-globe','lavender','boxwood','ninebark','hosta','ornamental-grass'].includes(id);
  const base=shrub?Math.min(.34,crown*.19):Math.min(.82,crown*.135);
- const species=id==='spruce'?.74:id==='pine'?.81:id==='birch'?.83:id==='willow'?.80:id==='lavender'?.42:1;
+ const species=id==='spruce'?.74:id==='pine'?.81:id==='birch'?.83:id==='willow'?.80:id==='lavender'?.42:id==='ornamental-grass'?.20:id==='hosta'?1.12:1;
  return Math.max(shrub?.075:.12,base*species);
 }
 
