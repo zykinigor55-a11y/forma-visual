@@ -427,6 +427,14 @@ const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
 const server=http.createServer(async(req,res)=>{
  if(req.url?.startsWith('/api/wan3/'))return wan3Video.handle(req,res);
  if(req.url?.startsWith('/api/wan/'))return wanVideo.handle(req,res);
+ // Public non-secret release identity, so designers can distinguish
+ // a stale Render deploy from the latest GitHub editor without guessing.
+ if(req.url==='/api/build'&&req.method==='GET'){
+  return json(res,200,{service:'FORMA Visual',branch:process.env.RENDER_GIT_BRANCH||null,
+   commit:process.env.RENDER_GIT_COMMIT||null,
+   deployed:process.env.RENDER==='true',
+   repo:process.env.RENDER_GIT_REPO_SLUG||null});
+ }
  if(req.url==='/api/status'&&req.method==='GET'){const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;dailyCount=0;}return json(res,200,{ready:!!API_KEY,planImageReady:!!API_KEY&&!!PLAN_IMAGE_MODEL,planImageModel:PLAN_IMAGE_MODEL,provider:'API Market',model:API_KEY?MODEL:null,authRequired:false,authorized:true,dailyRemaining:Math.max(0,DAILY_CAP-dailyCount),dailyLimit:DAILY_CAP,renderQueue:renderJobs.stats(),quotaScope:'shared_server',tariffName:null,balanceRub:null,balanceAvailable:false,supportEmail:PUBLIC_SUPPORT_EMAIL});}
  if(req.url==='/api/plan/status'&&req.method==='GET')return json(res,200,visionStatus());
  if(req.url==='/api/plan/recognize')return planVision(req,res);
