@@ -4,8 +4,8 @@ import {readFileSync} from 'node:fs';
 import {gardenLightingSpec,gardenLightingState} from '../forma-landscape-3d-lighting.js';
 import {barkPalette,foliageProfile,VEGETATION_SPECIES} from '../forma-landscape-3d-vegetation.js';
 
-test('all six real catalogue lights have an emission model but none glow under midday sun',()=>{
- const ids=['bollard','ground','spot','low-post','deck-light','linear'];
+test('all eleven real catalogue lights have distinct emissions but none glow under midday sun',()=>{
+ const ids=['bollard','ground','spot','low-post','deck-light','linear','mushroom','square-bollard','garden-lantern','spike-spot','globe'];
  assert.deepEqual(Object.keys(gardenLightingSpec).sort(),ids.sort());
  for(const id of ids){
   const day=gardenLightingState(id,{time:'day'});
@@ -25,7 +25,11 @@ test('dusk lighting is weaker than night and spotlights have a different physica
  const uplight=gardenLightingState('spot',{time:'night'});
  assert.ok(dusk.actualIntensity<night.actualIntensity);
  assert.equal(uplight.kind,'uplight');assert.ok(uplight.beam>0);
- assert.equal(gardenLightingState('low-post',{time:'night',height:1.6}).mountHeight,1.6);
+ const adjustable=gardenLightingState('low-post',{time:'night',height:1.6});
+ assert.equal(adjustable.height,1.6);
+ assert.ok(adjustable.mountHeight>1&&adjustable.mountHeight<1.6);
+ assert.equal(gardenLightingState('mushroom',{time:'night'}).kind,'downlight');
+ assert.equal(gardenLightingState('spike-spot',{time:'night'}).kind,'uplight');
 });
 
 test('all 18 vegetation species have deterministic seasonal PBR bark palettes',()=>{
