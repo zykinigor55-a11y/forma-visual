@@ -4,8 +4,8 @@ import {housePresetIds} from './forma-landscape-3d-buildings.js';
    Units are metres. AI is never trusted for measurements or object coordinates.
  */
 export const GROUPS=Object.freeze([
- {id:'shrubs',name:'Кустарники',qty:11,symbol:'◈'},
- {id:'trees',name:'Деревья',qty:10,symbol:'♧'},
+ {id:'shrubs',name:'Кустарники и почвопокровные',qty:14,symbol:'◈'},
+ {id:'trees',name:'Деревья',qty:12,symbol:'♧'},
  {id:'pavers',name:'Брусчатка',qty:6,symbol:'▤'},
  {id:'fills',name:'Отсыпки',qty:5,symbol:'░'},
  {id:'lights',name:'Светильники',qty:11,symbol:'☼'},
@@ -13,7 +13,7 @@ export const GROUPS=Object.freeze([
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
  {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
 ]);
-export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7});
+export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18});
 export const SCENE_OPTIONS=Object.freeze({
  time:[['morning','Утро'],['day','День'],['evening','Вечер'],['night','Ночь']],
  season:[['spring','Весна'],['summer','Лето'],['autumn','Осень'],['winter','Зима']],
@@ -31,7 +31,10 @@ export const CATALOG=Object.freeze([
  ['boxwood','Самшит вечнозелёный','#587346',1.0,'Buxus sempervirens'],
  ['ninebark','Пузыреплодник калинолистный','#8a6b58',2.1,'Physocarpus opulifolius'],
  ['hosta','Хоста декоративная','#658e63',1.2,'Hosta plantaginea'],
- ['ornamental-grass','Декоративный злак · мискантус','#9b9e68',1.5,'Miscanthus sinensis']
+ ['ornamental-grass','Декоративный злак · мискантус','#9b9e68',1.5,'Miscanthus sinensis'],
+ ['fern','Папоротник лесной · собственная 3D-модель','#608568',1.2,'Dryopteris filix-mas'],
+ ['periwinkle','Барвинок стелющийся · собственная 3D-модель','#6f997a',1.0,'Vinca minor'],
+ ['wild-shrub','Кустарник природный · собственная 3D-модель','#779763',1.8,'Native mixed woodland shrub']
  ].map(([id,name,color,diameter,latin])=>({id,group:'shrubs',name,color,diameter,latin,shape:'shrub'})),
  ...[
  ['pine','Сосна обыкновенная','#6a8160',7,'Pinus sylvestris','pine'],
@@ -43,7 +46,9 @@ export const CATALOG=Object.freeze([
  ['willow','Ива плакучая','#91a45e',9,'Salix babylonica','willow'],
  ['rowan','Рябина обыкновенная','#7a9c51',5,'Sorbus aucuparia','berries'],
  ['apple','Яблоня декоративная','#aa9a78',5,'Malus ornamental','flower'],
- ['sakura','Сакура','#d4a8bf',5,'Prunus serrulata','flower']
+ ['sakura','Сакура','#d4a8bf',5,'Prunus serrulata','flower'],
+ ['ash','Ясень обыкновенный','#678e50',8,'Fraxinus excelsior','pinnate'],
+ ['aspen','Осина европейская','#a4be76',6,'Populus tremula','aspen']
  ].map(([id,name,color,diameter,latin,shape])=>({id,group:'trees',name,color,diameter,latin,shape})),
  ...[
  ['concrete-pavers','Крупноформатная плита','#b1ada2','slabs'],
