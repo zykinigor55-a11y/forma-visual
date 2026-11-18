@@ -37,6 +37,26 @@ try{
  await page.locator('[data-view="2d"]').click();
  const canvas=await page.locator('#viewport').boundingBox();
  const clickSite=async(x=.58,y=.48)=>page.mouse.click(canvas.x+canvas.width*x,canvas.y+canvas.height*y);
+
+ // Licensed 40-object collection is a real editing tool, not a static mock.
+ await page.locator('[data-tool="models40"]').click({timeout:20000});
+ assert.equal(await page.locator('#library [data-item]').count(),40);
+ assert.equal(await page.locator('[data-catalog-filter]').count(),7,'6 functional material/object categories + all');
+ await page.locator('[data-catalog-filter="nature"]').click();
+ assert.equal(await page.locator('[data-item="rock-grey"]').isVisible(),true);
+ assert.equal(await page.locator('[data-item="street-lamp-one"]').isVisible(),false);
+ await page.locator('[data-catalog-filter="all"]').click();
+ await page.locator('#catalogSearch').fill('Костровая');
+ assert.equal(await page.locator('[data-item="fire-pit"]').isVisible(),true);
+ assert.equal(await page.locator('[data-item="pine"]').isVisible(),false);
+ await page.locator('#catalogSearch').fill('');
+ await page.locator('[data-item="rock-grey"]').click();
+ const glbResponse=page.waitForResponse(r=>r.url().includes('/assets/landscape-models/rock-grey.glb')&&r.status()===200,{timeout:35000});
+ await clickSite(.59,.39);
+ await glbResponse;
+ assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').some(x=>x.type==='rock-grey'&&x.width===1.4)),'Measured 3D rock persisted with its source identity and exact footprint');
+ for(const path of ['rock-grey.glb','fire-pit.glb','planter-large.glb','gallinera-chair.glb','street-lamp-two.glb','thumbs/rock-grey.webp','thumbs/street-lamp-two.webp'])await head(path);
+ await page.locator('[data-tool="select"]').click();
  await page.locator('[data-tool="landscape"]').click();
  assert.equal(await page.locator('#library [data-item]').count(),7);
  for(const item of ['fern','wild-shrub','periwinkle'])assert.equal(await page.locator('[data-item="'+item+'"]').count(),1);
@@ -55,5 +75,5 @@ try{
  await mkdir('artifacts/landscape-editor',{recursive:true});
  await page.screenshot({path:'artifacts/landscape-editor/3d-fast-asset-catalog.png'});
  assert.deepEqual(errors,[],'Editor must not have JavaScript errors');
- console.log('PASS: searchable catalogs, all 15 surfaces, terrain shape, saved 3D assets, licensed self-hosted GLBs');
+ console.log('PASS: 40 licensed PBR GLBs, editable measured placement, 6 searchable groups, all 15 surfaces, soft terrain brush');
 }finally{await browser.close()}
