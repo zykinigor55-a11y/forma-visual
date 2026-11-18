@@ -15,11 +15,43 @@ ASSETS = {
     "pine": "pine_sapling_small",
     "spruce": "fir_sapling",
     "fern": "fern_02",
+    "wild-shrub": "shrub_01",
+    "periwinkle": "periwinkle_plant",
     "granite-boulder": "boulder_01",
     "outdoor-dining": "outdoor_table_chair_set_01",
     "picnic-table": "wooden_picnic_table",
-    "wild-shrub": "shrub_01",
-    "periwinkle": "periwinkle_plant",
+    "shrub-02": "shrub_02",
+    "shrub-03": "shrub_03",
+    "shrub-04": "shrub_04",
+    "nettle": "nettle_plant",
+    "dandelion": "dandelion_01",
+    "empodium": "flower_empodium",
+    "gazania": "flower_gazania",
+    "ursinia": "flower_ursinia",
+    "weed-plant": "weed_plant_02",
+    "calathea": "calathea_orbifolia_01",
+    "anthurium": "anthurium_botany_01",
+    "rock-grey": "rock_07",
+    "rock-rough": "rock_09",
+    "rock-moss": "rock_moss_set_01",
+    "tree-stump": "tree_stump_01",
+    "garden-bench": "painted_wooden_bench",
+    "street-bench": "modular_street_seating",
+    "round-garden-table": "round_wooden_table_01",
+    "garden-stool": "folding_wooden_stool",
+    "gallinera-table": "gallinera_table",
+    "gallinera-chair": "gallinera_chair",
+    "fire-pit": "stone_fire_pit",
+    "planter-small": "planter_box_01",
+    "planter-medium": "planter_box_02",
+    "planter-large": "planter_box_03",
+    "sprinkler": "garden_sprinkler_01",
+    "watering-can": "watering_can_metal_01",
+    "garden-hose": "garden_hose_wall_mounted_01",
+    "wicker-basket": "wicker_basket_01",
+    "compost-bags": "compost_bags",
+    "street-lamp-one": "street_lamp_01",
+    "street-lamp-two": "street_lamp_02",
 }
 OUT = pathlib.Path("assets/landscape-models")
 MAX_FILE = 42 * 1024 * 1024
@@ -93,15 +125,20 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     installed = []
     for target, source_id in ASSETS.items():
-        descriptor = json.loads(get("https://api.polyhaven.com/files/" + source_id, 350_000))
-        one_k = descriptor["gltf"]["1k"]["gltf"]
-        content = verified_file(one_k)
-        gltf = json.loads(content)
-        result = embed_gltf(gltf, one_k["include"])
-        if len(result) > MAX_FILE:
-            raise ValueError("Output GLB exceeds 42MB for " + target)
         out = OUT / (target + ".glb")
-        out.write_bytes(result)
+        if out.is_file() and 20 < out.stat().st_size < MAX_FILE and out.read_bytes()[:4] == b"glTF":
+            # Reuse already downloaded licensed assets. Rebuilding every huge
+            # model on each run wastes bandwidth and risks unnecessary retries.
+            result = out.read_bytes()
+        else:
+            descriptor = json.loads(get("https://api.polyhaven.com/files/" + source_id, 350_000))
+            one_k = descriptor["gltf"]["1k"]["gltf"]
+            content = verified_file(one_k)
+            gltf = json.loads(content)
+            result = embed_gltf(gltf, one_k["include"])
+            if len(result) > MAX_FILE:
+                raise ValueError("Output GLB exceeds 42MB for " + target)
+            out.write_bytes(result)
         if out.read_bytes()[:4] != b"glTF":
             raise ValueError("Invalid GLB output")
         # Official Poly Haven preview is a licensed representation of this
