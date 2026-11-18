@@ -36,8 +36,11 @@ export function applyTerrainBrush({heights,grid,width,length,world,mode='raise',
    else if(mode==='lower')next=v-amplitude*factor*deltaGain;
    else if(mode==='flatten')next=v+(level-v)*blend;
    else if(mode==='smooth'){
-    const average=(sample(i-1,j)+sample(i+1,j)+sample(i,j-1)+sample(i,j+1)+v*2)/6;
-    next=v+(average-v)*blend;
+    // Smooth diagonally too, avoiding staircase artefacts in gentle slopes.
+    const average=(4*v+
+      2*(sample(i-1,j)+sample(i+1,j)+sample(i,j-1)+sample(i,j+1))+
+      sample(i-1,j-1)+sample(i-1,j+1)+sample(i+1,j-1)+sample(i+1,j+1))/16;
+    next=v+(average-v)*clamp(amplitude*factor*.65,0,.58);
    }else if(mode==='roughen'){
     const noise=(Math.sin(x*7.13+z*3.47)*Math.cos(x*3.61-z*6.71)
       +.35*Math.sin(x*13.7-z*11.29))/.95;
