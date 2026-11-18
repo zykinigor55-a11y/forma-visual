@@ -45,6 +45,11 @@ export function speciesGrowthProfile(id){
 }
 const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
 export function referenceCanopy(id){return REFERENCE_CANOPIES[id]||null;}
+export function constrainCrownRadius(x,z,radius){
+ const r=Math.max(.01,Number(radius)||1),d=Math.hypot(x,z);
+ const f=d>r?r/d:1;
+ return [x*f,z*f];
+}
 export function referenceBranchTips(id,{start,end,stage=.5,crownRadius=3,plantHeight=10,seed=0}={}){
  const profile=speciesGrowthProfile(id);if(!profile)return [];
  const a=start||[0,0,0],b=end||[1,3,0],t=clamp(Number(stage)||0,0,1);
@@ -60,11 +65,13 @@ export function referenceBranchTips(id,{start,end,stage=.5,crownRadius=3,plantHe
   const base=[a[0]+(b[0]-a[0])*frac,a[1]+(b[1]-a[1])*frac,a[2]+(b[2]-a[2])*frac];
   const wobble=Math.sin((i+1)*2.4+(Number(seed)||0)*.013+t*1.7);
   const side=(i%2===0?1:-1)*(profile.crownAsymmetry+.07*wobble)*Math.max(.12,horizontal);
+  const [tx,tz]=constrainCrownRadius(base[0]+tangent[0]*side,
+   base[2]+tangent[1]*side,crownRadius);
   const tip=[
-   clamp(base[0]+tangent[0]*side,-crownRadius,crownRadius),
+   tx,
    clamp(base[1]+plantHeight*(profile.branchAngle*.055-profile.droop*(.32+.28*t))*(.55+.15*i),
     id==='spirea'?.03:.12,plantHeight*.995),
-   clamp(base[2]+tangent[1]*side,-crownRadius,crownRadius)
+   tz
   ];
   shoots.push({base,tip,thicknessFactor:(.23-.025*i)*(1-.22*t)});
  }
