@@ -65,5 +65,5 @@ test('editor plugs botanical LOD into camera movement and high-resolution AI cap
  assert.match(vegetation,/mesh\.userData\.botanicalLayer='micro'/);
  assert.match(vegetation,/tuft\.userData\.botanicalLayer='sprays'/);
  assert.match(vegetation,/id==='spirea'\?actual\*/);
- assert.match(vegetation,/id==='birch'\?13:id==='oak'\?12/);
+ assert.match(vegetation,/id==='birch'\?13:id==='oak'\|\|id==='ash'\?12/);
 });
