@@ -156,8 +156,36 @@ export function perspectiveLandscapePrompt(input){
  // invented objects merely because they are stored outside doc.objects.
  for(const o of extra3d)if(o.group==='plants')groups.add('trees');
  const missing=['trees','shrubs','pavers','lawns','fills','ponds','boulders','lights'].filter(x=>!groups.has(x));
+ const architectureTypes={
+  barn:'true timber-and-standing-seam barn house with exactly the given roof shape',
+  scandi:'Scandinavian wood-and-metal house with source-matching clapboard direction',
+  timber:'glued timber home with rectilinear solid timber facade proportions',
+  brick:'brick house with actual mortar joints and the selected roof slopes',
+  modern:'modern rendered facade with exact source glazing divisions',
+  japandi:'restrained cedar and plaster Japanese-Scandinavian architecture',
+  classic:'classic pale masonry house and correct hip roof',
+  aframe:'genuine A-frame triangular load-bearing silhouette reaching low towards terrain',
+  chalet:'Alpine chalet with measured projecting gable eaves and ground-founded porch',
+  cottage:'steep-roof half-timber cottage with actual beams over masonry panels',
+  mediterranean:'plaster-and-terracotta Mediterranean house with actual porch posts',
+  hightech:'precise modern flat roof, aluminium mullions and cantilevered slab',
+  modular:'prefabricated timber-clad modular house with measured modular panel joints',
+  logcabin:'authentic sawn flat-sided LAFTET cabin with visible interlocking chamfered timber log corners; NOT round logs or cylindrical walls',
+  bungalow:'genuine single-storey low hipped bungalow and roof-supported veranda',
+  duplex:'genuine two-storey home with separate first/second level window heights and two entrance doors if visibly built',
+  panoramic:'single-storey panoramic glazed facade within exact structural portal frames',
+  tiny:'compact single-storey tiny home with entrance porch, realistic small-scale door and window proportions'
+ };
+ const buildingNames={house:'residential house',bath:'Russian sauna/bathhouse',garage:'enclosed garage',
+  carport:'roofed open-sided vehicle shelter with posts but NO enclosed garage walls',
+  greenhouse:'transparent glazed horticultural greenhouse with pitched roof and real entrance',
+  gazebo:'open-sided gazebo',outbuilding:'ancillary service building'};
+ const number=v=>Number.isFinite(Number(v))?Number(v).toFixed(2):'unspecified';
  const buildings=[input.house,...(Array.isArray(input.buildings)?input.buildings:[])].filter(Boolean)
-   .map(b=>(b.type||'house')+' footprint '+Number(b.width).toFixed(2)+'m × '+Number(b.height).toFixed(2)+'m, roof '+(b.roof||'as rendered')+', centre X='+Number(b.x).toFixed(2)+' Y='+Number(b.y).toFixed(2));
+   .map(b=>(buildingNames[b.type]||'residential house')+' / '+(architectureTypes[b.archStyle]||'source-matching architectural style')+
+    ', authoritative outer ground footprint '+number(b.width)+'m W × '+number(b.height)+'m D'+
+    ', roof TYPE '+(b.roof||'as rendered')+', roof rise '+number(b.roofRise)+'m'+
+    ', centre X='+number(b.x)+'m Y='+number(b.y)+'m, yaw '+number(b.rotation||0)+'°');
  const a=input.atmosphere||{};
  const weather={sunny:'clear natural sunlight',overcast:'soft diffuse sky',rain:'light rain and damp existing surfaces',fog:'low-contrast natural mist','after-rain':'realistic drying damp surfaces',snow:'snow ONLY on existing ground and structures'}[a.weather]||'clear natural sunlight';
  const season={spring:'spring foliage',summer:'summer foliage',autumn:'species-accurate autumn foliage with evergreen conifers remaining green',winter:'leafless deciduous trees, evergreen conifers remain green'}[a.season]||'summer foliage';
@@ -167,7 +195,8 @@ export function perspectiveLandscapePrompt(input){
   'FORMA 3D LANDSCAPE TO PHOTOGRAPHIC IMAGE: IMAGE 1 IS THE AUTHORITATIVE EXISTING WEBGL SCENE. This is an IMAGE-TO-IMAGE materials, lighting and botanical refinement, not a redesign, and not a fresh landscape proposal.',
   'IMMUTABLE CAMERA CONTRACT: KEEP EXACTLY THE INPUT CAMERA POSITION, HEIGHT, VIEW DIRECTION, FOCAL LENGTH, HORIZON, OCCLUSION, FRAMING, CROPPING AND PERSPECTIVE. Current view: '+view+'. Do not force overhead view, do not turn a perspective image into a map or change the lens. Camera direction and projected pixel positions are frozen.',
   'ABSOLUTE GEOMETRY LOCK: all measured objects, buildings, roof slopes, ridge orientation, paths, corners, polygon edges, garden areas, pond banks, terrain hills, surface heights, fences, tree centres, tree heights, tree crown diameters, placements and distances are fixed to the input pixels. Do not add, move, stretch, copy, remove, redesign, rotate or replace any object. No imagined architectural features, chimneys, roof windows or furniture. Preserve the exact amount of empty space. Never introduce unseen structures.',
-  'PROPERTY SIZE '+w.toFixed(2)+'m by '+h.toFixed(2)+'m. MAIN HOUSE AND OTHER STRUCTURES: '+buildings.join('; ')+'.',
+  'PROPERTY SIZE '+w.toFixed(2)+'m by '+h.toFixed(2)+'m. MAIN HOUSE AND OTHER STRUCTURES (EACH IS AUTHORITATIVE, NOT AN EXAMPLE): '+buildings.join('; ')+'.',
+  'ARCHITECTURAL CONSTRUCTION TRUTH: The 3D-built walls contain actual window and door openings; do not fill a window with opaque facade, place a fake painted-on window on solid masonry, overlap window frames, repeat a front door, rotate a ridge, erase eave gutters, add extra stories or increase window count. Open carports remain OPEN on all four sides and glazed greenhouses remain true transparent horticultural structures. Treat LAFTET as flat-faced sawn/hewn timber with authentic angular corner joinery and visible crown courses, not rounded logs. A panoramic house has the actual frame-spanned glazing, not invented floor-to-ceiling glass elsewhere. Exact physical footprint, eave/ridge heights and facade opening positions of source IMAGE 1 are invariant.',
   'EXACT INSTALLED LANDSCAPE MATERIAL SCHEDULE: '+(selectedPhotoMaterials(entries)||'No catalog landscape materials were placed: do not invent turf, mulch, paths, trees or shrubs.')+'. Follow the named surface/plant specifications ONLY where the corresponding object exists in the supplied camera image. Do not replace one material with another and do not fill deliberately bare soil with grass.',
   'CATALOG AND INSTANCE COUNT: '+entries.length+' measured landscape-plan objects PLUS '+extra3d.length+' placed three-dimensional assets. '+(plantSchedule.length?plantSchedule.join('; '):'No plan objects')+'. Distinguish the exact botanical species: needles, branches, leaves, natural bark, varied crown silhouettes and physically realistic tree heights. A pine must not be replaced with a shrub or generic tree. Preserve individual species, count and their pixel positions.',
   'EXACT LUMINAIRE IDENTITIES: Every existing placed garden lamp must retain its chosen catalog housing type, 3D silhouette, mounting height, front/back orientation and emitted light distribution. Preserve circular recessed lights as circular ground fixtures; classical lanterns as tall four-pane lanterns; mushroom fixtures as shaded downward lights; the opal globe as a true glowing sphere. Do not substitute a bollard for a globe, add random bollards around paths or ponds, or increase the lamp count. In daytime lamps are unlit physical housings; at night their warm lighting must originate from the physically present diffuser or lens. No fake floating beams, luminous ground spots or light sources without a visible installed fixture.',
