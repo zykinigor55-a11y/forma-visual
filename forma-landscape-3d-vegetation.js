@@ -228,24 +228,37 @@ function createSprayTexture(T,needles){
  texture.minFilter=T.LinearMipmapLinearFilter;texture.magFilter=T.LinearFilter;
  sprayTextureCache.set(id,texture);return texture;
 }
+/* Three-dimensional crossed foliage sprays. Each textured tuft is attached to
+ * a modelled twig endpoint, not distributed in an imaginary sphere. Two
+ * intersecting planes keep leaf volume visible from a moving camera. */
 function addFoliageSprays(g,T,points,id,season,seed,quality){
  if(!points.length||foliageProfile(id,season).leafless)return;
  const type=foliageProfile(id,season),r=rng(seed),shrub=type.kind.includes('shrub');
- const needle=['pine','spruce','juniper','thuja-globe'].includes(id),
- count=clamp(Math.round(points.length*quality*(shrub?1.25:1.75)),shrub?180:330,2400);
- const material=new T.MeshStandardMaterial({map:createSprayTexture(T,needle),alphaTest:.30,side:T.DoubleSide,roughness:.92,metalness:0,depthWrite:true});
- const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),d=new T.Object3D(),tone=new T.Color(type.color);
+ const needle=['pine','spruce','juniper','thuja-globe'].includes(id);
+ const count=clamp(Math.round(points.length*(1.05+quality*1.25)),shrub?470:1450,shrub?1800:3650);
+ const texture=createSprayTexture(T,needle);
+ const material=new T.MeshStandardMaterial({map:texture,alphaTest:.26,side:T.DoubleSide,roughness:.94,metalness:0,depthWrite:true});
+ const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
+  cross=new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count);
+ const d=new T.Object3D(),tone=new T.Color(type.color);
+ // Wide sprays supply the distant silhouette. Close-up mesh leaves and bark
+ // supply microgeometry; no large geometric leaf balls are recreated.
  for(let i=0;i<count;i++){
-  const p=points[Math.floor(r()*points.length)];
-  const offset=shrub?.04:.075;
+  const p=points[Math.floor(r()*points.length)],offset=shrub?.05:.09;
   d.position.set(p.x+(r()-.5)*offset,p.y+(r()-.5)*offset,p.z+(r()-.5)*offset);
   d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
-  const w=(shrub?.23:.44)*(.65+r()*.85);d.scale.set(w,w,1);
-  d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
-  mesh.setColorAt(i,tone.clone().multiplyScalar(.83+r()*.35));
+  const w=(shrub?.40:1.12)*(.72+r()*.70);
+  d.scale.set(w,w,1);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
+  const colour=tone.clone().multiplyScalar(.81+r()*.33);mesh.setColorAt(i,colour);
+  d.rotateY(Math.PI/2);d.updateMatrix();cross.setMatrixAt(i,d.matrix);
+  cross.setColorAt(i,colour);
  }
- mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
- mesh.castShadow=quality>=.30&&quality<.43;mesh.frustumCulled=false;g.add(mesh);
+ for(const tuft of [mesh,cross]){
+  tuft.instanceMatrix.needsUpdate=true;
+  if(tuft.instanceColor)tuft.instanceColor.needsUpdate=true;
+  tuft.castShadow=quality>=.30&&quality<.43;
+  tuft.frustumCulled=false;g.add(tuft);
+ }
 }
 /* Real petalled flowers instead of tiny stone-shaped spheres.
  * Pairs of concave triangles form each petal; repeated as instanced clusters. */
