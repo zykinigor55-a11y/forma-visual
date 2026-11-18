@@ -39,12 +39,17 @@ try{
      for(const mat of materials)mat?.dispose?.();
     }});
    }
-   const shrub=id==='spirea',height=shrub?.85:id==='birch'?16:15,diameter=shrub?1.3:id==='birch'?6.8:9.4;
+   const dimensions={
+    birch:[16,6.8],oak:[15,9.4],spirea:[.85,1.3],pine:[14,7],spruce:[12,5],
+    ash:[16,8],aspen:[18,6],fern:[.85,1.2],periwinkle:[.24,1.1],
+    'wild-shrub':[1.7,1.9]
+   };
+   const [height,diameter]=dimensions[id]||[12,7];
    const model=createVegetation(T,{id:'reference-'+id,catalogId:id,height,diameter,variant:2},
     {season,quality:1,mode:'premium'});
    model.userData.botanicalMode='premium';setFoliageTier(model,'near');
    scene.add(model);current=model;
-   camera.position.set(height*.60,height*.67,height*1.32);
+   camera.position.set(Math.max(.45,height*.60),Math.max(.70,height*.67),Math.max(1.8,height*1.32));
    camera.lookAt(0,height*.52,0);
    sun.shadow.camera.updateProjectionMatrix();
    renderer.render(scene,camera);
@@ -63,18 +68,23 @@ try{
  });
  await mkdir('artifacts/landscape-editor',{recursive:true});
  const observations=[];
- for(const [id,season] of [['birch','summer'],['oak','summer'],['spirea','summer'],
-   ['birch','autumn'],['oak','autumn'],['spirea','autumn']]){
+ for(const [id,season] of [
+  ['birch','summer'],['oak','summer'],['spirea','summer'],
+  ['birch','autumn'],['oak','autumn'],['spirea','autumn'],
+  ['pine','summer'],['spruce','summer'],['ash','summer'],['aspen','summer'],
+  ['fern','summer'],['periwinkle','summer'],['wild-shrub','summer'],
+  ['ash','autumn'],['aspen','autumn']
+ ]){
   const facts=await page.evaluate(({id,season})=>window.__renderBotanyRef(id,season),{id,season});
   assert.ok(facts.visibleLayers.includes('micro')&&facts.visibleLayers.includes('volume'),
    id+' must use genuine 3D instanced leaf and twig geometry near camera');
   assert.ok(!facts.visibleLayers.includes('sprays'),id+' close-up may NOT use flat alpha paper cards');
-  assert.equal(facts.height,id==='spirea'?.85:id==='birch'?16:15);
+  assert.equal(facts.height,{birch:16,oak:15,spirea:.85,pine:14,spruce:12,ash:16,aspen:18,fern:.85,periwinkle:.24,'wild-shrub':1.7}[id]);
   assert.ok(facts.layerCounts.branches>=1);
   await page.locator('#botanyReferenceCanvas').screenshot({
    path:'artifacts/landscape-editor/botany-reference-'+id+'-'+season+'.png',timeout:30000});
   observations.push({id,season,layers:facts.layerCounts});
  }
- assert.deepEqual(errors,[],'no WebGL/Three.js runtime errors with six high-resolution reference views');
+ assert.deepEqual(errors,[],'no WebGL/Three.js runtime errors with fifteen high-resolution reference views');
  console.log('Premium reference botanical QA PASS:',JSON.stringify(observations));
 }finally{await browser.close()}
