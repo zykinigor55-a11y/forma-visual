@@ -42,6 +42,14 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
 .brush-panel input[type="range"]{width:100%;accent-color:#b79a71}
 .brush-panel .hint{color:#a8b4aa;line-height:1.5;font-size:10px}
 .brush-panel output{color:#e5d1b4;font-variant-numeric:tabular-nums}
+.paint-mode-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:11px}
+.paint-mode-tabs button{font-size:12px;padding:10px 6px;min-height:43px;background:#2c3530;border:1px solid #617065;color:#cad6c9;border-radius:8px}
+.paint-mode-tabs button.active{background:#574c3a;color:#ffe7bd;border-color:#bf9e6d;box-shadow:inset 0 0 0 1px #bf9e6d40}
+.paint-mode-tabs button:disabled{opacity:.44}
+.brush-panel label.visually-hidden-checkbox{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important}
+.brush-panel .brush-erase{border-top:1px solid #526355;padding-top:10px;line-height:1.4}
+.brush-panel .brush-erase:has(input:checked){color:#f0cfac}
+.brush-panel .brush-erase:has(input:disabled){opacity:.45}
 #viewport.tool-brush{cursor:crosshair}
 #draftActions{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;padding:10px;border-top:1px solid #485449}
 #draftActions[hidden]{display:none}
@@ -547,6 +555,7 @@ function chooseTool(t){
   state.placing=b.dataset.item;
   $('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));
   if(t==='plant')refreshPlantAssetStatus();
+  if(t==='surface')syncSurfacePaintMode();
   status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.');
  });
  if(t==='plant'){
@@ -556,20 +565,48 @@ function chooseTool(t){
  }
  if(t==='surface'||t==='plant'){
   const panel=document.createElement('div');panel.className='brush-panel';
-  panel.innerHTML='<label><input id="useLandscapeBrush" type="checkbox" checked>Рисовать кистью непрерывно</label>'+
+  panel.innerHTML=(t==='surface'?'<div class="paint-mode-tabs" role="group" aria-label="Режим нанесения покрытия"><button type="button" data-paint-mode="brush" class="active" aria-pressed="true">◉ Кисть</button><button type="button" data-paint-mode="polygon" aria-pressed="false">◇ Контур</button></div>':'')+
+    '<label class="'+(t==='surface'?'visually-hidden-checkbox':'')+'"><input id="useLandscapeBrush" type="checkbox" checked>Рисовать кистью непрерывно</label>'+
     '<label for="landscapeBrushRadius">Диаметр кисти: <output id="brushDiameter">2.0 м</output></label>'+
     '<input id="landscapeBrushRadius" type="range" min=".5" max="10" step=".5" value="2">'+
     (t==='surface'?'<label class="brush-erase"><input type="checkbox" id="eraseSurfaceBrush"> Стереть покрытие выбранного типа (дом, растения и дорожки не затрагиваются)</label>':'')+
     (t==='plant'?'<label for="plantBrushDensity">Плотность посадки: <output id="plantDensityValue">1.0×</output></label><input id="plantBrushDensity" type="range" min=".5" max="2" step=".25" value="1"><label for="plantVariant">Вариант формы кроны</label><select id="plantVariant"><option value="1">01 · естественный</option><option value="2">02 · раскидистый</option><option value="3">03 · асимметричный</option></select><label><input type="checkbox" id="erasePlantBrush">Ластик растений (не затрагивает покрытия)</label>':'')+
-    '<div class="hint">'+(t==='plant'?'Плавно ведите курсором для посадки растений с правильным расстоянием.':'Газон и отсыпка наносятся непрерывной полосой. Для отдельных зон выключите кисть и рисуйте полигон.')+'<br>ЛКМ — кисть; ПКМ — вращение; колесо — масштаб.</div>';
+    '<div class="hint">'+(t==='plant'?'Плавно ведите курсором для посадки растений с правильным расстоянием.':'<span id="surfaceModeHint">Газон и отсыпка наносятся непрерывно по траектории кисти.</span>')+'<br>ЛКМ / палец — рисование; ПКМ — вращение; колесо — масштаб.</div>';
   $('#library').appendChild(panel);
   const slider=panel.querySelector('#landscapeBrushRadius');
   slider.oninput=()=>{panel.querySelector('#brushDiameter').textContent=Number(slider.value).toFixed(1)+' м';};
   const density=panel.querySelector('#plantBrushDensity');
   if(density)density.oninput=()=>panel.querySelector('#plantDensityValue').textContent=Number(density.value).toFixed(2)+'×';
+  if(t==='surface'){
+   panel.querySelectorAll('[data-paint-mode]').forEach(button=>button.onclick=()=>{
+    state.surfacePaintMode=button.dataset.paintMode;syncSurfacePaintMode();
+   });
+   syncSurfacePaintMode();
+  }
  }
 
  if(t==='select')status('Выбирайте объекты щелчком, перетаскивайте мышью, редактируйте размеры справа.');
+}
+function syncSurfacePaintMode(){
+ if(state.tool!=='surface')return;
+ const group=catalog(state.placing)?.group;
+ const supports=!group||['lawns','fills'].includes(group);
+ const mode=supports?(state.surfacePaintMode||'brush'):'polygon';
+ const checkbox=$('#useLandscapeBrush');if(checkbox)checkbox.checked=mode==='brush';
+ const erase=$('#eraseSurfaceBrush');
+ if(erase){
+  erase.disabled=mode!=='brush';
+  if(mode!=='brush')erase.checked=false;
+ }
+ document.querySelectorAll('[data-paint-mode]').forEach(button=>{
+  const active=button.dataset.paintMode===mode;
+  button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+  button.disabled=button.dataset.paintMode==='brush'&&!supports;
+ });
+ const actions=$('#draftActions');if(actions)actions.hidden=mode==='brush';
+ const info=$('#surfaceModeHint');
+ if(info)info.textContent=supports?(mode==='brush'?'Зажмите ЛКМ или ведите пальцем по земле — газон и отсыпка рисуются непрерывно.':'Расставьте вершины полигона и нажмите «Завершить контур».'):
+  'Брусчатка размещается точной линией/контуром, без кисти.';
 }
 function activeHouseTarget(){
  const ref=state.selected?selectable(state.selected):null;
