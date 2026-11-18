@@ -183,6 +183,7 @@ import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-lan
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {SHRUB_HEIGHT_M,vegetationQuality} from './forma-landscape-3d-botany.js';
 import {makeRealVegetation} from './forma-landscape-3d-models.js';
+import {modelPath} from './forma-landscape-3d-premium.js';
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
@@ -191,7 +192,8 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();let plantSpeciesStored=new Set();
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
+const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();let plantSpeciesStored=new Set();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -283,7 +285,7 @@ function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.recei
 function mark(group,key){group.userData.key=key;pickables.push(group);return group}
 function rebuild(){
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
- while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
+ while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
  pickables=[];shadowedGardenLights=0;
  const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
  const vertices=terrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
@@ -332,16 +334,42 @@ function addCylinderBetween(g,a,b,r=.06,color='#8d9080'){
  const v1=new THREE.Vector3(...a),v2=new THREE.Vector3(...b);const delta=v2.clone().sub(v1);
  const beam=mesh(new THREE.CylinderGeometry(r,r,delta.length(),8),material(color));beam.position.copy(v1.add(v2).multiplyScalar(.5));beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());g.add(beam);
 }
+/* Bundled Poly Haven CC0 models are served from our own Render instance.
+ * They load on demand, cache for the scene, and keep all project measurements.
+ * There is no external service dependency and failed files never block tools. */
+function loadBundledLandscapeModel(catalogId){
+ const path=modelPath(catalogId);
+ if(!path||bundledModelSources.has(catalogId)||bundledModelLoading.has(catalogId)||bundledModelFailures.has(catalogId))return;
+ if(importedPlantModels.has(catalogId))return; // User's imported species has priority.
+ bundledModelLoading.add(catalogId);
+ new GLTFLoader().loadAsync(path).then(result=>{
+  if(!result?.scene)throw Error('GLB has no scene');
+  let meshes=0;
+  result.scene.traverse(n=>{if(n.isMesh&&n.geometry?.attributes?.position)meshes++});
+  if(!meshes)throw Error('GLB has no mesh geometry');
+  bundledModelSources.set(catalogId,result.scene);
+  if(root&&renderer&&doc)rebuild();
+  refreshPlantAssetStatus();
+  status('CC0 PBR-модель загружена: '+(catalog(catalogId)?.name||catalogId)+' · '+meshes+' 3D-объектов');
+ }).catch(error=>{
+  bundledModelFailures.add(catalogId);
+  console.warn('Bundled landscape GLB unavailable; procedural fallback preserved:',catalogId,error?.message);
+ }).finally(()=>bundledModelLoading.delete(catalogId));
+}
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
+ if(modelPath(o.catalogId))loadBundledLandscapeModel(o.catalogId);
  let g;
  if(group==='trees'||group==='shrubs'){
   // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
   // accurate crown diameter and height, all 18 species from shared catalog.
   const quality=vegetationQuality(window.innerWidth,doc.objects.filter(p=>['trees','shrubs'].includes(p.type)).length,state.view);
-  const source=importedPlantModels.get(o.catalogId);
-  g=source?makeRealVegetation(THREE,source,o):createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
- }else if(group==='boulders')g=createRock(THREE,o);
+  const imported=importedPlantModels.get(o.catalogId),source=imported||bundledModelSources.get(o.catalogId);
+  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!imported}):createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
+ }else if(group==='boulders'){
+  const source=bundledModelSources.get(o.catalogId);
+  g=source?makeRealVegetation(THREE,source,{...o,height:Math.max(.35,Number(o.diameter||1.5)*.62)},{shareGeometry:true}):createRock(THREE,o);
+ }
  else if(group==='lights'){
   const time=doc.atmosphere.time,weather=doc.atmosphere.weather;
   g=createGardenLight(THREE,o,{night:['evening','night'].includes(time)});
@@ -513,8 +541,8 @@ function refreshPlantAssetStatus(){
  if(!VEGETATION_SPECIES[species]){
   el.textContent='Сначала выберите конкретный вид растения.';return;
  }
- const loaded=importedPlantModels.has(species),stored=plantSpeciesStored.has(species);
- el.textContent=(name||species)+': '+(loaded?'профессиональная GLB активна':stored?'GLB восстанавливается из браузера':'встроенная процедурная 3D-модель');
+ const loaded=importedPlantModels.has(species),bundled=bundledModelSources.has(species),stored=plantSpeciesStored.has(species);
+ el.textContent=(name||species)+': '+(loaded?'ваша GLB активна':stored?'GLB восстанавливается из браузера':bundled?'профессиональная CC0 PBR GLB активна':modelPath(species)?'CC0 PBR GLB загрузится при посадке':'встроенная процедурная 3D-модель');
 }
 async function importPlantGlb(file){
  const input=$('#vegetationGlb'),species=state.placing;
