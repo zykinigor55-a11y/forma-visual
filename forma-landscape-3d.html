@@ -974,10 +974,22 @@ const move=e=>{
   const shifted=state.dragPoints.map(q=>({x:q.x+dx,y:q.y+dy}));
   if(!shifted.every(q=>inParcel(q,doc.site)))return;
   ref.obj.points=shifted;
+  scheduleBrushRebuild(); // Vector geometry needs a new mesh, at most once per frame.
  }else if('x'in ref.obj){
-  if(!inParcel(pt,doc.site))return;ref.obj.x=pt.x;ref.obj.y=pt.y;
+  if(!inParcel(pt,doc.site))return;
+  ref.obj.x=pt.x;ref.obj.y=pt.y;
+  // Move the already-instantiated PBR mesh. Rebuilding every large GLB on
+  // each pointermove previously made dragging trees and houses appear frozen.
+  const node=pickables.find(g=>g.userData.key===state.selected);
+  if(node){
+   const position=pos(pt.x,pt.y);
+   node.position.set(position.x,terrainAt(position.x,position.z),position.z);
+   if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
+  }else scheduleBrushRebuild();
  }
- rebuild();
+ const xField=$('#properties [data-prop="x"]'),yField=$('#properties [data-prop="y"]');
+ if(xField&&document.activeElement!==xField)xField.value=Number(ref.obj.x).toFixed(2);
+ if(yField&&document.activeElement!==yField)yField.value=Number(ref.obj.y).toFixed(2);
 };
 const up=e=>{
  if(state.view==='walk'){state.down=null;return}
