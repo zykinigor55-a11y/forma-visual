@@ -183,10 +183,10 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <button class="action" id="removeDrawing">Убрать подложку</button>
   <p class="muted">Чертёж — только визуальная подложка. Геометрия и размеры задаются отдельно.</p>
  <hr><button class="action" id="screenshot">↓ Снимок текущего 3D-ракурса</button>
-  <label for="aiRenderModel">Фотомодель для 3D-рендера</label>
+  <label for="aiRenderModel">Качество фоторендера</label>
  <select id="aiRenderModel" aria-label="Выбрать нейросеть 3D-рендера">
-  <option value="gpt-image-2.6">GPT Image 2.6 · точность архитектуры</option>
-  <option value="nano-banana-2.1">Nano Banana 2.1 · альтернатива для сравнения</option>
+  <option value="nano-banana-2.1">Высокое качество · фотореализм</option>
+  <option value="gpt-image-2.6">Сбалансированное качество · точность деталей</option>
  </select>
  <button class="action primary" id="renderAi">✦ Фотореалистичный AI-рендер</button>
  <div class="pair"><div><label for="pdfPaper">Альбом PDF</label><select id="pdfPaper"><option value="A4">A4</option><option value="A3">A3</option></select></div><div><label>&nbsp;</label><button class="action" id="export3dPdf">↓ Скачать PDF</button></div></div>
@@ -1078,7 +1078,7 @@ document.addEventListener('forma:render-job-status',event=>{
 async function renderAi(){
  const btn=$('#renderAi');
  const model=$('#aiRenderModel').value;
- if(aiRenderActive||btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Nano Banana 2.1':'GPT Image 2.6')+'? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
+ if(aiRenderActive||btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Высокое качество':'Сбалансированное качество')+'? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
  aiRenderActive=true;btn.disabled=true;
  $('#aiResult').hidden=true;$('#aiProgress').hidden=false;
  setAiProgress('queued','Готовим фотореалистичный рендер текущего ракурса…');
