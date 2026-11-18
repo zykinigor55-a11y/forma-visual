@@ -16,6 +16,9 @@ on:
       - 'tests/landscape-botany-browser.verify.mjs'
       - '.github/workflows/landscape-botany-visual.yml'
   workflow_dispatch:
+concurrency:
+  group: forma-botany-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
