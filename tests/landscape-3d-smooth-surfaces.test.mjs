@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {smoothPaintPath,erasePaintedStrips,surfaceStrokeTouchesCircle} from '../forma-landscape-3d-surface-brush.js';
+import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips,surfaceStrokeTouchesCircle} from '../forma-landscape-3d-surface-brush.js';
 import {normalizeProject,freshProject} from '../forma-landscape-project-core.js';
 import {readFileSync} from 'node:fs';
 
@@ -70,4 +70,22 @@ test('actual 3D editor uses smooth surface geometry, local preview and disables 
  assert.match(s,/controls\.enabled=false;canvas\.setPointerCapture/);
  assert.match(s,/id="eraseSurfaceBrush"/);
  assert.match(s,/if\(state\.painting\)return;/);
+});
+
+test('long 1800-point gravel curves retain both endpoints and important bends within 512 saved points',()=>{
+ const path=Array.from({length:1800},(_,i)=>({x:i*.02,y:10+Math.sin(i/33)*2}));
+ const short=simplifyPaintStroke(path,512);
+ assert.ok(short.length<=512,short.length);
+ assert.deepEqual(short[0],path[0]);
+ assert.deepEqual(short.at(-1),path.at(-1));
+ assert.ok(short.some(p=>p.y>11.9),'important peak preserved');
+ assert.ok(short.some(p=>p.y<8.1),'important trough preserved');
+ const doc=freshProject();doc.objects.push({...lawn('long'),catalogId:'pine-bark',type:'fills',width:3.2,points:short});
+ const saved=normalizeProject(doc);
+ assert.equal(saved.objects[0].points.length,short.length);
+ assert.equal(saved.objects[0].points.at(-1).x,path.at(-1).x);
+});
+test('brush completion stores simplified outlines rather than quietly truncating last metres',()=>{
+ const src=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
+ assert.match(src,/brushStroke\.object\.points=simplifyPaintStroke\(pts,512\)/);
 });
