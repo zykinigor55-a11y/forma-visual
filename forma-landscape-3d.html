@@ -257,7 +257,7 @@ function initialize(){
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
  // Dense planting must remain responsive even in software WebGL (Playwright,
  // old laptops and mid-range phones). The user can override this in settings.
- const initialPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length;
+ const initialPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
  if(initialPlantCount>12){autoReduced=true;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,.85));renderer.shadowMap.enabled=false;}
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
@@ -296,7 +296,7 @@ function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMa
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
 function mark(group,key){group.userData.key=key;pickables.push(group);return group}
 function rebuild(){
- currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length;
+ currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
  currentPlantQuality=vegetationQuality(window.innerWidth,currentPlantCount,state.view)*(renderQuality==='speed'||autoReduced ? .60 : 1);
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
@@ -356,6 +356,7 @@ function loadBundledLandscapeModel(catalogId){
  if(!path||bundledModelSources.has(catalogId)||bundledModelLoading.has(catalogId)||bundledModelFailures.has(catalogId))return;
  if(importedPlantModels.has(catalogId))return; // User's imported species has priority.
  bundledModelLoading.add(catalogId);
+ if(realModelById(catalogId))status('Загружаем реальную PBR-модель: '+realModelById(catalogId).name+'…');
  new GLTFLoader().loadAsync(path).then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
   let meshes=0;
@@ -364,10 +365,11 @@ function loadBundledLandscapeModel(catalogId){
   bundledModelSources.set(catalogId,result.scene);
   if(root&&renderer&&doc)rebuild();
   refreshPlantAssetStatus();
-  status('CC0 PBR-модель загружена: '+(catalog(catalogId)?.name||catalogId)+' · '+meshes+' 3D-объектов');
+  status('CC0 PBR-модель загружена: '+(realModelById(catalogId)?.name||catalog(catalogId)?.name||catalogId)+' · '+meshes+' 3D-мешей');
  }).catch(error=>{
   bundledModelFailures.add(catalogId);
-  console.warn('Bundled landscape GLB unavailable; procedural fallback preserved:',catalogId,error?.message);
+  status('Не удалось загрузить 3D-модель «'+(realModelById(catalogId)?.name||catalogId)+'». Проверьте публикацию GLB на сервере.');
+  console.warn('Licensed landscape GLB unavailable:',catalogId,error?.message);
  }).finally(()=>bundledModelLoading.delete(catalogId));
 }
 function drawObject(o,entry,key){
