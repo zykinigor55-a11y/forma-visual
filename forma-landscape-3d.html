@@ -369,6 +369,13 @@ function rebuild(){
  const grass=groundPhotoTexture();grass.repeat.set(w/3.2,h/3.2);
  const groundMat=material(doc.atmosphere.season==='winter'?'#c8d0cc':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
+ // Photograph-derived diffuse sky bounce keeps the 3D lawn visible even
+ // when software WebGL produces overly dark shadow reception at oblique
+ // camera angles. Direct light and real object shadows remain in the PBR layer.
+ // Night has almost no ambient bounce; daylight never renders as black soil.
+ groundMat.emissive=new THREE.Color('#ffffff');
+ groundMat.emissiveMap=grass;
+ groundMat.emissiveIntensity=doc.atmosphere.time==='night'?.045:doc.atmosphere.time==='evening'?.26:doc.atmosphere.time==='morning'?.43:.60;
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=false;terrainMesh.userData.ground=true;root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
