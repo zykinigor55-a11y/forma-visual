@@ -59,3 +59,17 @@ test('editor integrates selection ring, quick rotation and duplication controls'
  for(const id of ['rotateLeft','rotateRight','duplicateObject'])assert.ok(page.includes('id="'+id+'"'),id);
  assert.match(page,/Array\.isArray\(n\.material\)\?n\.material:\[n\.material\]/,'PBR materials must be released across all GLB meshes');
 });
+
+
+test('editing measured geometry rejects negative size, blank values and positions outside the plot',async()=>{
+ const {validatedLandscapeProps}=await import('../forma-landscape-3d-editing.js');
+ const original={x:5,y:5,width:6,height:8,rotation:5};
+ const config={plot:{width:30,height:20},kind:'house',contains:p=>p.x>=0&&p.y>=0&&p.x+p.y<=30};
+ const updated=validatedLandscapeProps(original,{x:'7',y:'6',width:'8',height:'10',rotation:'365'},config);
+ assert.equal(updated.width,8);assert.equal(updated.height,10);assert.equal(updated.rotation,5);
+ assert.equal(original.width,6,'edited copy must not mutate saved original before commit');
+ for(const patch of [{width:'-1'},{height:''},{x:'31'},{y:'-2'},{rotation:'NaN'},{roofRise:'-4'},{x:'24',y:'10'}]){
+  assert.equal(validatedLandscapeProps(original,patch,config),null,JSON.stringify(patch));
+ }
+ assert.equal(validatedLandscapeProps({x:2,y:2,width:1.4},{width:'35'},{plot:{width:30,height:20},kind:'extra',model:true}),null);
+});
