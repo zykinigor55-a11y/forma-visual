@@ -6,6 +6,9 @@ on:
       - 'forma-landscape-3d.html'
       - 'forma-landscape-3d-premium.js'
       - 'forma-landscape-3d-models.js'
+      - 'forma-landscape-3d-buildings.js'
+      - 'forma-landscape-3d-architecture-geometry.js'
+      - 'tests/landscape-architecture-browser.verify.mjs'
       - 'tests/landscape-3d-fast-smoke.verify.mjs'
       - '.github/workflows/forma-3d-quick-smoke.yml'
   workflow_dispatch:
@@ -31,6 +34,7 @@ jobs:
         run: |
           node server.mjs > /tmp/forma-smoke-server.log 2>&1 &
           node tests/landscape-3d-fast-smoke.verify.mjs
+          node tests/landscape-architecture-browser.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
