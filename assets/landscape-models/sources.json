@@ -30,5 +30,37 @@
     "license": "CC0-1.0",
     "bytes": 5770992,
     "sha256": "794d886289c2e2ba4b6df0f2dff596ad1cb2a35fda8684a22a7b399f6b7a384e"
+  },
+  {
+    "catalogId": "outdoor-dining",
+    "file": "assets/landscape-models/outdoor-dining.glb",
+    "source": "https://polyhaven.com/a/outdoor_table_chair_set_01",
+    "license": "CC0-1.0",
+    "bytes": 1239832,
+    "sha256": "593b19dc6aaa9b1f9f49b7f763f10269a3ee5b86aa0eec5db78188946c2026bf"
+  },
+  {
+    "catalogId": "picnic-table",
+    "file": "assets/landscape-models/picnic-table.glb",
+    "source": "https://polyhaven.com/a/wooden_picnic_table",
+    "license": "CC0-1.0",
+    "bytes": 4306472,
+    "sha256": "a838027c3700c6681b98a6d90fedfbb127ef3f2432190269d92832b53a1c9dd2"
+  },
+  {
+    "catalogId": "wild-shrub",
+    "file": "assets/landscape-models/wild-shrub.glb",
+    "source": "https://polyhaven.com/a/shrub_01",
+    "license": "CC0-1.0",
+    "bytes": 6876484,
+    "sha256": "3a2507fe2f561bb02cc714884af454b90831fd276232ca34be18c1d78b54cf26"
+  },
+  {
+    "catalogId": "periwinkle",
+    "file": "assets/landscape-models/periwinkle.glb",
+    "source": "https://polyhaven.com/a/periwinkle_plant",
+    "license": "CC0-1.0",
+    "bytes": 2918844,
+    "sha256": "d03395b76134f554a9e987a973096e4de4628bcac9fb29179564219fa8d49e18"
   }
 ]
