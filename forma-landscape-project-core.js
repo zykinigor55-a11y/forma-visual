@@ -4,7 +4,7 @@ import {housePresetIds} from './forma-landscape-3d-buildings.js';
    Units are metres. AI is never trusted for measurements or object coordinates.
  */
 export const GROUPS=Object.freeze([
- {id:'shrubs',name:'Кустарники',qty:8,symbol:'◈'},
+ {id:'shrubs',name:'Кустарники',qty:11,symbol:'◈'},
  {id:'trees',name:'Деревья',qty:10,symbol:'♧'},
  {id:'pavers',name:'Брусчатка',qty:6,symbol:'▤'},
  {id:'fills',name:'Отсыпки',qty:5,symbol:'░'},
@@ -28,7 +28,10 @@ export const CATALOG=Object.freeze([
  ['dogwood','Дёрен белый','#869f6d',2.0,'Cornus alba'],
  ['thuja-globe','Туя шаровидная','#3f6c55',1.4,'Thuja occidentalis globosa'],
  ['lavender','Лаванда узколистная','#8b88af',0.8,'Lavandula angustifolia'],
- ['boxwood','Самшит вечнозелёный','#587346',1.0,'Buxus sempervirens']
+ ['boxwood','Самшит вечнозелёный','#587346',1.0,'Buxus sempervirens'],
+ ['ninebark','Пузыреплодник калинолистный','#8a6b58',2.1,'Physocarpus opulifolius'],
+ ['hosta','Хоста декоративная','#658e63',1.2,'Hosta plantaginea'],
+ ['ornamental-grass','Декоративный злак · мискантус','#9b9e68',1.5,'Miscanthus sinensis']
  ].map(([id,name,color,diameter,latin])=>({id,group:'shrubs',name,color,diameter,latin,shape:'shrub'})),
  ...[
  ['pine','Сосна обыкновенная','#6a8160',7,'Pinus sylvestris','pine'],
