@@ -16,6 +16,11 @@ try{
  assert.equal(new Set(thumbs).size,18,'Each house family must render a distinct THREE.js thumbnail');
  await mkdir('artifacts/landscape-editor',{recursive:true});
  await page.locator('#houseStyles').screenshot({path:'artifacts/landscape-editor/architecture-18-models.png',timeout:60000});
+ for(const name of ['modular','logcabin','bungalow','duplex','panoramic','tiny']){
+  await page.locator('[data-house-preset="'+name+'"]').scrollIntoViewIfNeeded();
+  await page.locator('[data-house-preset="'+name+'"]').screenshot({
+   path:'artifacts/landscape-editor/architecture-preset-'+name+'.png',timeout:30000});
+ }
  await page.locator('#selectMainHouse').click();
  for(const [type,roof] of [['modular','flat'],['logcabin','gable'],['bungalow','hip'],['duplex','hip'],['panoramic','flat'],['tiny','gable']]){
   await page.locator('[data-house-preset="'+type+'"]').click();
@@ -27,6 +32,9 @@ try{
  // Check architecture with true survey dimensions, not forced predefined sizes.
  const current=await saved();
  assert.ok(current.house.width>0&&current.house.height>0);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:90000});
+ assert.equal((await saved()).house.archStyle,'tiny','latest house style survives full reload');
  await page.locator('[data-house-preset="logcabin"]').click();
  await page.locator('[data-view="3d"]').click();
  await page.locator('#focusHouse').click();
