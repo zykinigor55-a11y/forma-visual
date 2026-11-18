@@ -184,7 +184,7 @@ import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometr
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {SHRUB_HEIGHT_M,vegetationQuality} from './forma-landscape-3d-botany.js';
-import {makeRealVegetation} from './forma-landscape-3d-models.js';
+import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
@@ -212,14 +212,15 @@ const choices={
  fence:[['fence','Ограждение · линия']],
  plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
  water:[['formal-pond','Водоём (контур)']],
- landscape:CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name]),
+ landscape:[...CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name]),['fern','Папоротник · природный'],['wild-shrub','Полевой кустарник'],['periwinkle','Барвинок · почвопокровный']],
  small:[['pergola','Пергола'],['gazebo','Беседка']],
- furniture:[['bench','Скамья'],['table','Стол']],
+ furniture:[['bench','Скамья'],['table','Стол'],['outdoor-dining','Уличный стол и 2 стула'],['picnic-table','Пикниковый стол со скамьями']],
  transport:[['car','Автомобиль']],
  light:CATALOG.filter(x=>x.group==='lights').map(x=>[x.id,x.name])
 };
 const fallback={pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
 const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
+const PROP_WIDTH_M=Object.freeze({fern:.95,'wild-shrub':1.7,periwinkle:.8,'outdoor-dining':3.0,'picnic-table':2.7});
 const id=()=>('o-'+Math.random().toString(36).slice(2,10));
 let statusTimer=null;
 function status(t){
@@ -429,13 +430,24 @@ function drawArea(o,entry,key){
  mark(g,key);root.add(g);
 }
 function drawExtra(o){
+ const width=PROP_WIDTH_M[o.type];
+ if(width){
+  loadBundledLandscapeModel(o.type);
+  const source=bundledModelSources.get(o.type);
+  if(source){
+   const p=pos(o.x||0,o.y||0),g=makeRealProp(THREE,source,{width});
+   g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+   mark(g,'extra:'+o.id);root.add(g);return;
+  }
+ }
  const g=new THREE.Group(),p=pos(o.x||0,o.y||0);
  if(o.type==='fence'&&o.points?.length>=2){
  for(let i=1;i<o.points.length;i++){let a=pos(o.points[i-1].x,o.points[i-1].y),b=pos(o.points[i].x,o.points[i].y);let steps=Math.max(1,Math.ceil(a.distanceTo(b)/2));for(let k=0;k<=steps;k++){const at=a.clone().lerp(b,k/steps);const post=mesh(new THREE.BoxGeometry(.12,1.6,.12),material('#454945'));post.position.set(at.x,.8,at.z);g.add(post)}addCylinderBetween(g,[a.x,1.25,a.z],[b.x,1.25,b.z],.045,'#777e77');addCylinderBetween(g,[a.x,.55,a.z],[b.x,.55,b.z],.045,'#777e77')}
  }else{
   if(o.type==='pergola'||o.type==='gazebo'){for(const x of [-1.4,1.4])for(const z of [-1.4,1.4]){const post=mesh(new THREE.BoxGeometry(.14,2.7,.14),material('#8a7155'));post.position.set(x,1.35,z);g.add(post)}const canopy=mesh(new THREE.BoxGeometry(3.2,.2,3.2),material('#987b61'));canopy.position.y=2.8;g.add(canopy)}
   else if(o.type==='bench'){const base=mesh(new THREE.BoxGeometry(1.9,.15,.65),material('#a08a70'));base.position.y=.55;g.add(base);const back=mesh(new THREE.BoxGeometry(1.9,.9,.14),material('#a08a70'));back.position.set(0,1,-.32);g.add(back)}
-  else if(o.type==='table'){const tabletop=mesh(new THREE.CylinderGeometry(.9,.9,.12,16),material('#ac947b'));tabletop.position.y=.82;g.add(tabletop);const stem=mesh(new THREE.CylinderGeometry(.14,.14,.82,10),material('#827360'));stem.position.y=.4;g.add(stem)}
+  else if(['fern','wild-shrub','periwinkle'].includes(o.type)){const d=PROP_WIDTH_M[o.type]||1,h=o.type==='wild-shrub'?1.4:o.type==='fern'?.9:.35;g.add(createVegetation(THREE,{catalogId:o.type==='fern'?'spirea':'boxwood',id:o.id,diameter:d,height:h},{quality:.25}));}
+  else if(o.type==='table'||o.type==='outdoor-dining'||o.type==='picnic-table'){const tabletop=mesh(new THREE.CylinderGeometry(.9,.9,.12,16),material('#ac947b'));tabletop.position.y=.82;g.add(tabletop);const stem=mesh(new THREE.CylinderGeometry(.14,.14,.82,10),material('#827360'));stem.position.y=.4;g.add(stem)}
   else if(o.type==='car'){const car=mesh(new THREE.BoxGeometry(1.8,1.2,4.2),material('#c1c8ca',.25,.2));car.position.y=.68;g.add(car);const roof=mesh(new THREE.BoxGeometry(1.45,.55,2.1),material('#53656d',.3,.3));roof.position.y=1.52;g.add(roof)}
  }
  if(o.type!=='fence'){g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;}mark(g,'extra:'+o.id);root.add(g);
@@ -452,11 +464,11 @@ function chooseTool(t){
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
  $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 18</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':'')+arr.map((c,ci)=>{
-  const asset=catalog(c[0]),photo=['plant','landscape','light','surface'].includes(t);
+  const asset=catalog(c[0]),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset));
   const uri=t==='plant'?'/assets/landscape-photo/'+c[0]+'.png':
     t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
   const diameter=asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
-  const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':'';
+  const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':'';
   return header+'<button class="choice'+(photo?' has-preview':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="" loading="lazy" decoding="async">':'')+
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
@@ -788,6 +800,10 @@ function place(world){
   const last=pointMode.at(-1);if(last&&Math.hypot(point.x-last.x,point.y-last.y)<.05)return;
   pointMode.push(point);refreshDraft();status('Точек контура: '+pointMode.length+'. Нажмите «Завершить контур» после последней.');return;
 
+ }
+ if(tool==='landscape'&&modelPath(state.placing)&&!catalog(state.placing)){
+  push();extra.push({id:id(),type:state.placing,x:point.x,y:point.y,rotation:0});
+  save();rebuild();status('3D-растение добавлено. Перемещайте его инструментом «Управление».');return;
  }
  push();
  if(tool==='build'){const preset=housePreset(state.housePreset||doc.house.archStyle);doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:Math.min(8,doc.site.width*.35),height:Math.min(7,doc.site.height*.35),rotation:0,roof:preset.roof,roofColor:'#454543',archStyle:preset.id,roofRise:1.4})}
