@@ -9,8 +9,8 @@ import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
 import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity,constrainCrownRadius,specimenCrownVariation} from './forma-landscape-3d-reference-canopies.js';
 import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js';
 export const VEGETATION_SPECIES=Object.freeze({
- pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
- spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
+ pine:{kind:'pine',density:1750,branches:13,crownStart:.40,leaf:'#507254',bark:'#91674b'},
+ spruce:{kind:'spruce',density:2450,branches:17,crownStart:.10,leaf:'#294d3e',bark:'#55433a'},
  birch:{kind:'deciduous',density:2700,branches:12,crownStart:.42,leaf:'#8eb56f',bark:'#d8d8c9'},
  oak:{kind:'deciduous',density:2550,branches:14,crownStart:.31,leaf:'#547b40',bark:'#665442'},
  maple:{kind:'deciduous',density:1300,branches:13,crownStart:.37,leaf:'#70994f',bark:'#62503e'},
@@ -180,11 +180,11 @@ function foliageSprigGeometry(T,needle,id='oak'){
  const push=(a,b,c)=>vertices.push(...a,...b,...c);
  const conifer=needle,profile=conifer?coniferNeedleProfile(id):null;
  const isSmall=['birch','rowan','ash','aspen','spirea','barberry'].includes(id);
- const pairs=conifer?(id==='spruce'?13:9):isSmall?7:5;
+ const pairs=conifer?(id==='spruce'?18:id==='pine'?15:12):isSmall?7:5;
  const contour=leafOutline(id,10);
- const leafWidth=conifer?(id==='pine'?.018:.015):id==='birch'?.091:
+ const leafWidth=conifer?(id==='pine'?.013:.009):id==='birch'?.091:
   id==='spirea'?.066:id==='oak'?.135:id==='hydrangea'?.16:isSmall?.09:.12;
- const leafLength=conifer?(id==='pine'?.28:.17):id==='birch'?.115:
+ const leafLength=conifer?(id==='pine'?.13:.082):id==='birch'?.115:
   id==='spirea'?.205:id==='oak'?.20:isSmall?.22:.265;
  const along=(u,v)=>[u[0]+v[0],u[1]+v[1],u[2]+v[2]];
  for(let i=0;i<pairs;i++)for(const side of [-1,1]){
@@ -222,7 +222,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  const source=foliageProfile(id,season),number=clamp(
-  Math.round(points.length*quality*(needle?2.05:2.45)),shrub?170:520,shrub?1650:5400
+  Math.round(points.length*quality*(needle?2.5:2.45)),shrub?170:680,shrub?1650:6000
  );
  const geometry=foliageSprigGeometry(T,needle,id);
  const material=foliageMaterial(T,id,{physical:false});
@@ -238,7 +238,10 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
   const crown=Math.max(.45,Math.min(2.4,diameter/4));
   const growth=speciesGrowthProfile(id);
-  const scale=(needle?.235:.25)*crown*(.70+r()*.54)*(growth?.leafClusterScale||1);
+  // Terminal needle shoots are longer, but individual needles stay narrow.
+  // Preserve the measured crown envelope by limiting sprig radius.
+  const mass=needle?(id==='spruce'?.66:id==='pine'?.72:.55):.25;
+  const scale=mass*crown*(.70+r()*.54)*(growth?.leafClusterScale||1);
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
@@ -481,7 +484,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
    }
   }
  }
- const max=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)),180,3800);
+ const max=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)),180,4600);
  for(let i=0;i<max;i++){
   const p=centers[Math.floor(r()*centers.length)];
   // Distribution follows reachable branch endpoints, not a random crown cloud.
