@@ -1,0 +1,74 @@
+/* FORMA ICON ATELIER · site-wide dimensional bronze/graphite icon language
+ * Reference: the illustrated category icons in "Ландшафтный проект".
+ * This stylesheet changes appearance only; editor control behavior is intact.
+ */
+:root{--fa-icon-bronze:#c7aa83;--fa-icon-line:#71634f;--fa-icon-ink:#f4ead8}
+.forma-premium-icon,.lp-3d-icon{display:block;flex:none;overflow:visible;filter:drop-shadow(0 4px 3px rgba(0,0,0,.27))}
+.fa-nav-premium{display:grid;place-items:center;width:36px;height:36px;flex:none}
+.fa-nav-premium>.forma-premium-icon{width:100%;height:100%}
+/* Always legible in both graphite and light site modes. */
+.rail-nav .rail-btn:has(.fa-nav-premium){
+ width:55px!important;height:55px!important;min-height:55px!important;
+ border-radius:13px!important;display:grid!important;place-items:center!important;
+ border:1px solid transparent!important;transition:background .18s,border-color .18s,transform .18s!important
+}
+.rail-nav .rail-btn:has(.fa-nav-premium):hover{
+ border-color:#a58a67!important;background:linear-gradient(145deg,#3e3c35,#292d2b)!important
+}
+.rail-nav .rail-btn:has(.fa-nav-premium).active{
+ background:linear-gradient(145deg,#534838,#302e2a)!important;
+ border-color:#c9a77a!important;box-shadow:inset 0 1px 0 #fff3dc2c,0 3px 13px #0003!important
+}
+.rail-nav .rail-btn .fa-nav-premium svg{height:36px;width:36px;max-width:none}
+.mobile-nav button:has(.fa-nav-premium) .fa-nav-premium{
+ width:30px;height:30px;margin:0 auto 2px
+}
+.mobile-nav button:has(.fa-nav-premium) .fa-nav-premium svg{width:100%;height:100%}
+/* The 17 utility-tool cards inherit the landscape icon geometry and palette. */
+.fa-home-tool-icon{
+ width:58px!important;height:58px!important;flex:0 0 58px!important;
+ background:transparent!important;border:0!important;border-radius:12px!important;
+ display:grid!important;place-items:center!important;color:var(--fa-icon-bronze)!important;
+ box-shadow:none!important
+}
+.fa-home-tool-icon>.forma-premium-icon{
+ width:54px!important;height:54px!important;max-width:none!important;
+ filter:drop-shadow(0 5px 4px rgba(0,0,0,.24))
+}
+.fa-home-tool:has(.forma-premium-icon){
+ min-height:108px!important;gap:11px!important;border-radius:13px!important
+}
+.fa-home-tool:has(.forma-premium-icon).selected{
+ border-color:#b79669!important;box-shadow:0 0 0 1px #c8ab8455!important
+}
+/* Studio workflow header, active-source gate and larger action icons. */
+.fa-studio-work-brand>svg.forma-premium-icon{
+ width:47px!important;height:47px!important;filter:drop-shadow(0 5px 4px #0006)
+}
+.fa-studio-source-gate>span>svg.forma-premium-icon{
+ width:60px!important;height:60px!important;max-width:100%
+}
+.fa-studio-work-head button svg.forma-premium-icon,
+.fa-studio-workspace button svg.forma-premium-icon{
+ width:27px;height:27px;vertical-align:middle;margin-right:5px;
+ filter:drop-shadow(0 2px 2px #0005)
+}
+.fa-studio-workspace .fa-studio-source-state svg.forma-premium-icon{
+ width:26px;height:26px
+}
+/* Functional micro-controls retain precise recognizable glyphs, unified metals. */
+.tool-btn svg.ico,.icon-button svg.ico,.viewer-actions svg.ico{
+ color:#bb996f!important;filter:drop-shadow(0 1px 1px #0002)
+}
+.tool-btn:focus-visible,.icon-button:focus-visible,.rail-btn:focus-visible{
+ outline:2px solid #c8a879!important;outline-offset:2px
+}
+@media(max-width:850px){
+ .fa-home-tool-icon{width:48px!important;height:48px!important;flex-basis:48px!important}
+ .fa-home-tool-icon>.forma-premium-icon{width:47px!important;height:47px!important}
+ .fa-home-tool:has(.forma-premium-icon){min-height:92px!important}
+ .fa-studio-work-brand>svg.forma-premium-icon{width:37px!important;height:37px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .rail-nav .rail-btn:has(.fa-nav-premium){transition:none!important}
+}
