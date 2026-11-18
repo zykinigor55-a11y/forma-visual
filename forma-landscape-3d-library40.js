@@ -329,5 +329,11 @@ export const REAL_3D_OBJECTS=Object.freeze([
     "license": "CC0-1.0"
   }
 ].map(Object.freeze));
+/* Original licensed GLBs stay in GitHub for rollback and already-saved project
+ * compatibility. The botanical section is hidden from the *new* 3D picker:
+ * new plant placements use our species-specific native 3D models instead.
+ * Furniture, stones, lighting, garden tools remain genuine CC0 GLB files. */
+export const REAL_3D_NON_BOTANICAL=Object.freeze(REAL_3D_OBJECTS.filter(o=>o.group!=='plants'));
+export const archivedPlantModelById=id=>REAL_3D_OBJECTS.find(o=>o.id===id&&o.group==='plants')||null;
 export const realModelById=id=>REAL_3D_OBJECTS.find(o=>o.id===id)||null;
-export const REAL_3D_TOTAL=REAL_3D_OBJECTS.length;
+export const REAL_3D_TOTAL=REAL_3D_NON_BOTANICAL.length;
