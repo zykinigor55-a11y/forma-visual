@@ -175,6 +175,37 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
   edgeBeam(g,T,[0,top,-startZ],[0,top,startZ],.10,dark);
  }
 }
+/* Independent metal rainwater system and layered plinth details. These
+ * decorative parts never modify measured house/sauna footprint or parcel size. */
+function addFacadeFinish(g,T,{width,depth,height,roof,style}){
+ const w=width,d=depth,y=height;
+ const metal=mat(T,'#394548',.46,.62),stone=mat(T,'#565B59',.93,.05);
+ // A low exposed masonry plinth stops large walls reading as floating boxes.
+ for(const z of [-1,1])box(g,T,w,.18,.06,0,.49,z*(d*.5+.034),stone);
+ for(const x of [-1,1])box(g,T,.06,.18,d,x*(w*.5+.034),.49,0,stone);
+ // Pitched roof: downpipes align with the actual roof eaves. Flat roofs
+ // use corner scuppers instead of an invented pitched gutter.
+ const isFlat=roof==='flat';
+ const gutterY=isFlat?y+.18:y+.10;
+ for(const side of [-1,1]){
+  const x=side*(w*.5-.18),z=d*.5+.095;
+  const down=new T.Mesh(new T.CylinderGeometry(.046,.046,Math.max(.35,gutterY-.64),10),metal);
+  down.position.set(x,(gutterY+.64)*.5,z);
+  down.castShadow=true;down.receiveShadow=true;g.add(down);
+  const shoe=new T.Mesh(new T.CylinderGeometry(.050,.050,.20,10),metal);
+  shoe.rotation.x=Math.PI/2;shoe.position.set(x,.66,z+.10);shoe.castShadow=true;g.add(shoe);
+  const collar=box(g,T,.14,.085,.13,x,gutterY,z,metal);
+  collar.castShadow=true;
+ }
+ if(isFlat){
+  // Parapet scuppers, aligned with roof edge rather than dangling in air.
+  for(const x of [-w*.32,w*.32])box(g,T,.18,.10,.18,x,y+.32,d*.5+.10,metal);
+ }else if(style!=='aframe'){
+  const edgeColor=mat(T,'#454D50',.52,.46);
+  // Continuous eave/fascia edge gives readable roof thickness at eye level.
+  for(const z of [-1,1])box(g,T,w+.16,.075,.11,0,gutterY,z*(d*.5+.025),edgeColor);
+ }
+}
 export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const b=building||{},preset=housePreset(b.archStyle),style=b.archStyle||preset.id;
  const w=Math.max(2,Number(b.width)||8),d=Math.max(2,Number(b.height)||7);
@@ -272,6 +303,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   }
  }
  roofGeometry(g,THREE,b,w,d,0,bodyHeight,roofMaterial,preset.roofFinish);
+ if(!isGazebo&&style!=='aframe')addFacadeFinish(g,THREE,{width:w,depth:d,height:bodyHeight,roof:b.roof||preset.roof,style});
  if(isBath){
   // Sauna-specific porch and metal flue; these remain attached to the bath,
   // not additional user-authored project objects.
