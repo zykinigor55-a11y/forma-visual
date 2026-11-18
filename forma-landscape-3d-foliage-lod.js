@@ -50,7 +50,9 @@ export function setFoliageTier(group,tier){
   node.visible=layer==='branches'||
    (layer==='micro'&&next==='near')||
    (layer==='volume'&&(next==='near'||next==='middle'))||
-   (layer==='sprays'&&next==='far');
+   (layer==='sprays'&&(next==='far'||
+    (next==='middle'&&!group.userData.botanicalHasVolume)||
+    (next==='near'&&!group.userData.botanicalHasVolume&&!group.userData.botanicalHasMicro)));
   const original=node.userData.botanicalOriginalCount;
   if(node.isInstancedMesh&&Number.isInteger(original)){
    const factor=next==='near'?1:next==='middle'?.73:.47;
@@ -63,7 +65,10 @@ export function setFoliageTier(group,tier){
 export function enableBotanicalLod(group,mode='standard'){
  group.userData.botanicalLod=true;
  group.userData.botanicalMode=normalizeBotanicalQuality(mode);
+ group.userData.botanicalHasVolume=false;group.userData.botanicalHasMicro=false;
  group.traverse(node=>{
+  if(node.userData?.botanicalLayer==='volume')group.userData.botanicalHasVolume=true;
+  if(node.userData?.botanicalLayer==='micro')group.userData.botanicalHasMicro=true;
   if(node.isInstancedMesh&&node.userData.botanicalLayer)
    node.userData.botanicalOriginalCount=node.count;
  });
