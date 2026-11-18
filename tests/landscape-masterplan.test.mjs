@@ -5,10 +5,10 @@ import {GROUPS,CATALOG,byId,freshProject,normalizeProject,report,polygonArea,lin
 import {assetSVG,iconURL,roofingSVG} from '../forma-landscape-project-graphics.js';
 import {masterplanPrompt,topDownRoofPrompt} from '../forma-landscape-project-prompts.js';
 
-test('56 exact and distinct overhead landscaping entries; 11 real garden lights and no wall sconces',()=>{
+test('59 exact and distinct overhead landscaping entries; 11 real garden lights and no wall sconces',()=>{
  const counts={shrubs:14,trees:12,pavers:6,fills:5,lights:11,lawns:4,ponds:3,boulders:4};
- assert.equal(CATALOG.length,56);
- assert.equal(new Set(CATALOG.map(x=>x.id)).size,56);
+ assert.equal(CATALOG.length,59);
+ assert.equal(new Set(CATALOG.map(x=>x.id)).size,59);
  for(const [id,count] of Object.entries(counts))assert.equal(CATALOG.filter(x=>x.group===id).length,count);
  assert.deepEqual(Object.fromEntries(GROUPS.map(g=>[g.id,g.qty])),counts);
  assert.ok(!CATALOG.filter(x=>x.group==='lights').some(x=>/wall|sconce|бра|настенн/i.test(x.id+' '+x.name)));
