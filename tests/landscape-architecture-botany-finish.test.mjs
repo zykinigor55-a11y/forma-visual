@@ -5,8 +5,8 @@ import {HOUSE_PRESETS} from '../forma-landscape-3d-buildings.js';
 import {foliageDepthTone,foliageSprayWidth} from '../forma-landscape-3d-botany.js';
 
 test('all architecture presets retain unique names, readable materials, roof types',()=>{
- assert.equal(HOUSE_PRESETS.length,12);
- assert.equal(new Set(HOUSE_PRESETS.map(p=>p.id)).size,12);
+ assert.equal(HOUSE_PRESETS.length,18);
+ assert.equal(new Set(HOUSE_PRESETS.map(p=>p.id)).size,18);
  for(const preset of HOUSE_PRESETS){
   assert.ok(preset.name&&preset.wall&&preset.roof&&preset.roofFinish);
   assert.ok(['flat','gable','hip'].includes(preset.roof),preset.id);
