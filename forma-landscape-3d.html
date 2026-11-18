@@ -35,6 +35,12 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
 #library .choice.has-preview .asset-size{color:#c4b198;font-weight:500;font-size:10px;margin-top:4px}
 #library .choice.has-preview .asset-add{flex:0 0 auto;font-size:17px;color:#ceb997}
 #library .choice.has-preview.active{background:#3e4639;border-color:#c9ad80}
+#library .choice.light-choice{display:grid;grid-template-columns:62px minmax(0,1fr) 13px;gap:8px;align-items:center;min-height:86px;padding:9px 7px}
+#library .choice.light-choice img{width:62px;height:62px;background:#c8cac4;object-fit:contain;border-radius:9px}
+#library .choice.light-choice span{display:block;min-width:0;max-width:100%;font-size:11px;line-height:1.28;font-weight:700;overflow-wrap:break-word}
+#library .choice.light-choice .asset-size{display:block;font-size:10px;font-weight:500;line-height:1.35;margin-top:7px;color:#d8c4a4}
+#library .choice.light-choice .asset-add{position:static;justify-self:end;align-self:center;font-size:15px}
+#library:has(#lightPickerStatus) #catalogSearch{z-index:10;box-shadow:0 6px 0 7px #1b2723;background:#26332e}
 #library .asset-group-heading{margin:15px 12px 7px;color:#dbc5a0;font-size:10px;letter-spacing:.13em;font-weight:750;border-bottom:1px solid #4e5c54;padding-bottom:8px}
 .brush-panel{margin:8px 12px 14px;padding:12px;border:1px solid #586b58;border-radius:11px;background:#202e2a}
 .brush-panel label{display:flex;align-items:center;gap:8px;margin:5px 0 9px;font-size:12px}
@@ -641,7 +647,7 @@ function chooseTool(t){
     t==='light'?iconURL(asset):t==='landscape'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
   const diameter=t==='light'&&asset?'Высота '+Number(asset.height).toFixed(2)+' м · корпус '+Number(asset.diameter).toFixed(2)+' м':t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
   const header=t==='light'&&ci===0?'<div class="asset-group-heading">САДОВОЕ ОСВЕЩЕНИЕ · 11 РАЗНЫХ 3D-МОДЕЛЕЙ</div>':t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':t==='models40'&&(ci===0||real?.group!==realModelById(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+REAL_3D_CATEGORIES[real.group]+' · '+REAL_3D_OBJECTS.filter(x=>x.group===real.group).length+' МОДЕЛЕЙ</div>':'';
-  return header+(t==='models40'?'<div class="model-row">':'')+'<button class="choice'+(photo?' has-preview':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
+  return header+(t==='models40'?'<div class="model-row">':'')+'<button class="choice'+(photo?' has-preview':'')+(t==='light'?' light-choice':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="'+(t==='light'?'Точная модель: '+c[1]:'')+'" loading="lazy" decoding="async">':'')+
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'+(t==='models40'?'<button type="button" class="model-favorite" data-favorite-id="'+c[0]+'" aria-label="Добавить '+c[1]+' в избранное" aria-pressed="'+readModelList(MODEL_FAVORITES_KEY).includes(c[0])+'">'+(readModelList(MODEL_FAVORITES_KEY).includes(c[0])?'★':'☆')+'</button></div>':'')
