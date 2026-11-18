@@ -11,6 +11,19 @@ export function vegetationFit({width,height,depth},instance){
  return {scaleXZ:crown/Math.max(srcW,srcD),scaleY:plantHeight/srcH,
          physicalHeight:plantHeight,crownDiameter:crown};
 }
+/** Respect source-authored PBR material settings. Double-sided stone and
+ * furniture faces cost extra fill-rate and produce unrealistic shading.
+ * Thin botanical leaf cards may need double-sided lighting, but only when
+ * their source material explicitly marks them as double-sided.
+ */
+export function prepareRealMaterial(material){
+ if(!material)return material;
+ if(material.transparent&&material.opacity===1&&material.alphaTest>0){
+  material.depthWrite=true;
+ }
+ // Keep glTF side, roughness, metalness, normal maps, alpha mode and cutoff.
+ return material;
+}
 const boundsCache=new WeakMap();
 export function makeRealVegetation(T,source,instance,{shareGeometry=false}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
@@ -33,8 +46,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false}={}){
   node.castShadow=true;node.receiveShadow=true;
   if(node.material){
    for(const material of Array.isArray(node.material)?node.material:[node.material]){
-    if(material?.transparent&&material.opacity===1)material.alphaTest=Math.max(.2,material.alphaTest||0);
-    material.side=T.DoubleSide;
+    prepareRealMaterial(material);
    }
   }
  });
@@ -70,8 +82,7 @@ export function makeRealProp(T,source,{width=2.5}={}){
   node.castShadow=true;node.receiveShadow=true;
   for(const material of Array.isArray(node.material)?node.material:[node.material]){
    if(!material)continue;
-   if(material.transparent&&material.opacity===1)material.alphaTest=Math.max(.2,material.alphaTest||0);
-   material.side=T.DoubleSide;
+   prepareRealMaterial(material);
   }
  });
  clone.scale.setScalar(uniform);
