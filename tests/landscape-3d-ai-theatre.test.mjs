@@ -49,3 +49,24 @@ test('photographic landscape instruction forbids invented objects while demandin
  assert.match(prompt,/PLUS 1 placed three-dimensional assets/);
  assert.match(prompt,/do not add any new landscaping objects/);
 });
+
+test('scene photograph names only selected lawn and fill types with real physical textures',()=>{
+ const base=coordinateSummary(freshProject());
+ const scene={...base,cameraMode:'3d-perspective',cameraView:'3d',objects:[
+  {id:'lawn-1',catalogId:'formal',type:'lawns',points:[{x:2,y:3},{x:9,y:3},{x:9,y:9}],width:2},
+  {id:'mulch-1',catalogId:'pine-bark',type:'fills',points:[{x:11,y:11},{x:15,y:11},{x:15,y:16}],width:1},
+  {id:'pine-1',catalogId:'pine',type:'trees',x:8,y:18,diameter:6,height:13}
+ ]};
+ const prompt=perspectiveLandscapePrompt(scene);
+ for(const token of ['PHOTOGRAPHIC CAMERA CAPTURE PROFILE','Nikon Z8','NIKKOR Z 24–70mm f/2.8 S','f/8–f/11','ISO 64–100','EXACT INSTALLED LANDSCAPE MATERIAL SCHEDULE','FORMAL SHORT-CUT PARTERRE TURF','SHREDDED PINE BARK MULCH','Pinus sylvestris'])assert.ok(prompt.includes(token),token);
+ assert.ok(!prompt.includes('GRANITE CHIPPINGS'),'no invented granite fill');
+ assert.ok(!prompt.includes('MEADOW MIXED GRASSES'),'no invented meadow lawn');
+ assert.ok(!prompt.includes('RIVER PEBBLES'),'no invented pebbles');
+ assert.match(prompt,/instances=1/);
+});
+test('empty scene does not instruct the model to plant decorative grass or shrubs',()=>{
+ const p=perspectiveLandscapePrompt({...coordinateSummary(freshProject()),cameraMode:'3d-perspective'});
+ assert.match(p,/No catalog landscape materials were placed/);
+ assert.match(p,/do not invent turf, mulch, paths, trees or shrubs/);
+ assert.ok(!p.includes('SHREDDED PINE BARK MULCH'));
+});
