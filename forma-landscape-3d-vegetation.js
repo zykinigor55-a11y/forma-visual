@@ -214,7 +214,20 @@ function createSprayTexture(T,needles,id){
     const nx=-Math.sin(angle)*side,ny=Math.cos(angle)*side;
     const speciesWidth=id==='willow'?.55:id==='birch'?.74:id==='oak'?1.2:id==='maple'?1.1:id==='lavender'?.40:1;
     const dx=nx*(14+random()*10)*speciesWidth*(profile?.spread||1),dy=ny*(14+random()*10)*speciesWidth*(profile?.spread||1);
-    if(needles){for(let n=0;n<profile.needlesPerSide;n++)stem(x+n*1.3,y,x+dx*(.72+n*.10),y+dy*(.72+n*.10),profile.thickness)}
+    if(needles){
+     // One-pixel needle strokes disappear under mipmapping at overview zoom.
+     // Individually tapered, filled needle bundles retain alpha coverage
+     // at distance while keeping the fine species-specific outline.
+     for(let n=0;n<profile.needlesPerSide;n++){
+      const spread=(n-(profile.needlesPerSide-1)/2)*2.0;
+      const tx=x+dx*(.72+n*.08),ty=y+dy*(.72+n*.08);
+      const thick=Math.max(1.6,profile.thickness*(id==='pine'?2.6:2.3));
+      ctx.beginPath();ctx.moveTo(x+spread, y+spread*.3);
+      ctx.quadraticCurveTo((x+tx)/2+thick*1.4,(y+ty)/2-thick,tx,ty);
+      ctx.quadraticCurveTo((x+tx)/2-thick*1.4,(y+ty)/2+thick,x+spread,y+spread*.3);
+      ctx.fillStyle='rgba(232,239,217,.93)';ctx.fill();
+     }
+    }
     else{
      ctx.save();ctx.translate(x+dx*.7,y+dy*.7);ctx.rotate(Math.atan2(dy,dx));
      ctx.fillStyle='rgba(232,239,217,.94)';
@@ -239,8 +252,10 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
  if(!points.length||foliageProfile(id,season).leafless)return;
  const type=foliageProfile(id,season),r=rng(seed),shrub=type.kind.includes('shrub');
  const needle=['pine','spruce','juniper','thuja-globe'].includes(id);
- const minimum=quality<.3?(shrub?220:620):quality<.45?(shrub?360:1100):(shrub?470:1450);
- const count=clamp(Math.round(points.length*(1.05+quality*1.25)),minimum,shrub?1800:3650);
+ // Sparse mobile scenes stay lightweight; quality desktop scenes use enough
+ // independent terminal sprays to hold a readable crown at parcel scale.
+ const minimum=quality<.3?(shrub?220:620):quality<.45?(shrub?390:1250):(shrub?670:2250);
+ const count=clamp(Math.round(points.length*(1.25+quality*1.55)),minimum,shrub?2150:4200);
  const texture=createSprayTexture(T,needle,id);
  const material=new T.MeshStandardMaterial({map:texture,alphaTest:.26,side:T.DoubleSide,roughness:.94,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
