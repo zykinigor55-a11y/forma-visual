@@ -439,19 +439,18 @@ function initialize(){
  brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
  // Android: defer a second WebGL context until the house/details panel is used.
- if(window.innerWidth<=720){
-  // House cards live far below the mobile settings panel. Do not create
-  // a second WebGL context just because the user opens the details panel.
-  const target=$('#houseStyles');
-  if(target&&'IntersectionObserver' in window){
-   const observer=new IntersectionObserver(entries=>{
-    if(entries.some(entry=>entry.isIntersecting)){
-     observer.disconnect();
-     setTimeout(()=>makeHouseThumbnails(),350);
-    }
-   },{root:$('#right'),rootMargin:'90px 0px',threshold:0});
-   observer.observe(target);
-  }
+ // 18 offscreen WebGL preview renders create a costly second GPU context.
+ // They are not needed until the architectural catalog is actually in view.
+ // Lazy previews keep both desktop and phone camera/brush gestures responsive.
+ const houseCatalog=$('#houseStyles');
+ if(houseCatalog&&'IntersectionObserver' in window){
+  const observer=new IntersectionObserver(entries=>{
+   if(entries.some(entry=>entry.isIntersecting)){
+    observer.disconnect();
+    setTimeout(()=>makeHouseThumbnails(),350);
+   }
+  },{root:$('#right'),rootMargin:'100px 0px',threshold:0});
+  observer.observe(houseCatalog);
  }else requestAnimationFrame(()=>makeHouseThumbnails());
  restoreHouseGlbs().catch(e=>console.warn('Stored house GLB restore:',e));
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
