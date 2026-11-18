@@ -16,6 +16,15 @@ function upgradeToolbar(selector,attribute){
  });
 }
 export function applyPremiumSiteIcons(){
+ // Keep the same premium visual vocabulary in both navigation and the
+ // interactive material-mask tools without changing their click handlers.
+ const editorTools={brush:'brush',erase:'eraser',polygon:'polygon',wand:'wand'};
+ document.querySelectorAll('.tool-btn[data-tool]').forEach(button=>{
+  const key=editorTools[button.dataset.tool];
+  if(!key||button.querySelector('svg.forma-premium-icon'))return;
+  const old=button.querySelector('svg.ico');
+  if(old)old.outerHTML=premiumIcon(key);
+ });
  upgradeToolbar('.rail-nav [data-nav]','data-nav');
  upgradeToolbar('.mobile-nav [data-mobile]','data-mobile');
  document.querySelectorAll('.fa-home-tool[data-tool-id]').forEach(button=>{
