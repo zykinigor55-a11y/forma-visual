@@ -395,7 +395,16 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  const c=VEGETATION_SPECIES[id],kind=c.kind,evergreen=isEvergreen(id),radius=diameter/2;
  const conifer=kind==='spruce'||kind==='pine',trunkRadius=clamp(height*(kind==='pine'?.025:.022),.065,.46);
  const trunkEnd=kind==='spruce'?height*.88:kind==='pine'?height*.88:height*.75;
- const branches=[[[0,0,0],[0,trunkEnd,0],trunkRadius]];
+ // The living trunk narrows progressively toward its leader instead of being
+ // one uniform pipe. Seven connected real bark segments remain inexpensive.
+ const branches=[];
+ for(let n=0;n<7;n++){
+  const lo=n/7,hi=(n+1)/7,stemRadius=trunkRadius*(1-.65*lo);
+  const sway=trunkRadius*(kind==='pine'?.24:.12);
+  const start=[sway*Math.sin(lo*2.4)*lo,trunkEnd*lo,sway*Math.cos(lo*1.6)*lo];
+  const end=[sway*Math.sin(hi*2.4)*hi,trunkEnd*hi,sway*Math.cos(hi*1.6)*hi];
+  branches.push([start,end,stemRadius]);
+ }
  const reference=referenceCanopy(id),growth=speciesGrowthProfile(id);
  const leafPoints=[],tiers=reference?Math.round(c.branches*reference.tierMultiplier):c.branches,leafless=foliageProfile(id,season).leafless;
  const specimenSeed=Math.floor(r()*100000);
@@ -546,11 +555,10 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    if(k%3===0&&!isSpike){
     const lateral=direction+Math.PI*.5*(r()>.5?1:-1);
     const sideLength=radius*(isCreeper?.065:.085)*(.65+r()*.35);
-    const end=[
-     clamp(tip[0]+Math.cos(lateral)*sideLength,-radius,radius),
-     clamp(tip[1]+actual*(r()-.55)*.035,.04,actual),
-     clamp(tip[2]+Math.sin(lateral)*sideLength,-radius,radius)
-    ];
+    const [sideX,sideZ]=constrainCrownRadius(
+      tip[0]+Math.cos(lateral)*sideLength,
+      tip[2]+Math.sin(lateral)*sideLength,radius);
+     const end=[sideX,clamp(tip[1]+actual*(r()-.55)*.035,.04,actual),sideZ];
     branches.push([tip,end,Math.max(.0025,radiusStem*.20)]);
     points.push({x:end[0],y:end[1],z:end[2],s:evergreen?.085:.12});
    }
@@ -560,9 +568,10 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  while(points.length<total){
   const p=points[Math.floor(r()*points.length)];
   // Small jitter only around already-connected twig tips.
-  points.push({x:clamp(p.x+(r()-.5)*.045,-radius,radius),
-   y:clamp(p.y+(r()-.5)*.045,.05,actual),
-   z:clamp(p.z+(r()-.5)*.045,-radius,radius),s:p.s*(.88+r()*.22)});
+  const [leafX,leafZ]=constrainCrownRadius(
+   p.x+(r()-.5)*.045,p.z+(r()-.5)*.045,radius);
+  points.push({x:leafX,y:clamp(p.y+(r()-.5)*.045,.05,actual),
+   z:leafZ,s:p.s*(.88+r()*.22)});
  }
  addBranch(g,T,branches,c.bark,id);
  if(!foliageProfile(id,season).leafless){
