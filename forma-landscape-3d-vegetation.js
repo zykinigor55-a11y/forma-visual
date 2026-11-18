@@ -11,8 +11,8 @@ import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-und
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
- birch:{kind:'deciduous',density:1100,branches:12,crownStart:.42,leaf:'#8eb56f',bark:'#d8d8c9'},
- oak:{kind:'deciduous',density:1450,branches:14,crownStart:.31,leaf:'#547b40',bark:'#665442'},
+ birch:{kind:'deciduous',density:2700,branches:12,crownStart:.42,leaf:'#8eb56f',bark:'#d8d8c9'},
+ oak:{kind:'deciduous',density:2550,branches:14,crownStart:.31,leaf:'#547b40',bark:'#665442'},
  maple:{kind:'deciduous',density:1300,branches:13,crownStart:.37,leaf:'#70994f',bark:'#62503e'},
  linden:{kind:'deciduous',density:1180,branches:11,crownStart:.34,leaf:'#83a95b',bark:'#645641'},
  willow:{kind:'willow',density:1500,branches:15,crownStart:.33,leaf:'#94aa67',bark:'#70644c'},
@@ -23,7 +23,7 @@ export const VEGETATION_SPECIES=Object.freeze({
  aspen:{kind:'deciduous',density:1550,branches:13,crownStart:.43,leaf:'#90ae68',bark:'#c9d2b3'},
  juniper:{kind:'conifer-shrub',density:650,branches:20,crownStart:.04,leaf:'#587a65',bark:'#675d4c'},
  hydrangea:{kind:'shrub',density:520,branches:24,crownStart:.1,leaf:'#76935d',flower:'#e6d9b1',bark:'#6f6650'},
- spirea:{kind:'shrub',density:450,branches:24,crownStart:.04,leaf:'#94a86c',flower:'#ece4ca',bark:'#736958'},
+ spirea:{kind:'shrub',density:940,branches:24,crownStart:.04,leaf:'#94a86c',flower:'#ece4ca',bark:'#736958'},
  barberry:{kind:'shrub',density:500,branches:28,crownStart:.04,leaf:'#804448',bark:'#675046'},
  dogwood:{kind:'shrub',density:520,branches:25,crownStart:.06,leaf:'#7b9d68',bark:'#a35748'},
  'thuja-globe':{kind:'conifer-shrub',density:830,branches:25,crownStart:.05,leaf:'#396c57',bark:'#5d624f'},
@@ -222,7 +222,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  const source=foliageProfile(id,season),number=clamp(
-  Math.round(points.length*quality*(needle?2.05:2.15)),shrub?170:520,shrub?1100:2450
+  Math.round(points.length*quality*(needle?2.05:2.45)),shrub?170:520,shrub?1650:5400
  );
  const geometry=foliageSprigGeometry(T,needle,id);
  const material=foliageMaterial(T,id,{physical:false});
@@ -469,7 +469,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
    }
   }
  }
- const max=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)),180,2800);
+ const max=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)),180,3800);
  for(let i=0;i<max;i++){
   const p=centers[Math.floor(r()*centers.length)];
   // Distribution follows reachable branch endpoints, not a random crown cloud.
@@ -552,7 +552,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    }
   }
  }
- const total=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)),140,1600);
+ const total=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)),140,1900);
  while(points.length<total){
   const p=points[Math.floor(r()*points.length)];
   // Small jitter only around already-connected twig tips.
