@@ -17,12 +17,37 @@ export const nativeUnderstoryIds=Object.freeze(Object.keys(NATIVE_UNDERSTORY));
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function hash(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function random(seed){let n=seed>>>0;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
+/** Fern frond: real pinnate geometry with opposing tapered leaflets.
+ * Replaces oversized solid leaf paddles, without changing species catalog.
+ * Each frond is one mesh instance attached to a grounded curved stalk. */
+function fernPinnaeGeometry(T){
+ const verts=[];
+ const tri=(a,b,c)=>verts.push(...a,...b,...c);
+ for(let n=0;n<19;n++){
+  const t=(n+.65)/20,baseY=t-.12;
+  const spread=.32*Math.pow(Math.max(0,Math.sin(Math.PI*t)),.83);
+  for(const side of [-1,1]){
+   const turn=side*spread,curve=.14*Math.sin(Math.PI*t);
+   const origin=[0,baseY,curve*.52];
+   const inner=[turn*.38,baseY+.025,curve+.02];
+   const tip=[turn,baseY+.072,curve+.065*Math.sin(n*.9)];
+   const back=[turn*.57,baseY+.11,curve+.02];
+   // Two faceted segments give a real tapered pinna with no alpha card.
+   tri(origin,inner,back);tri(inner,tip,back);
+  }
+ }
+ const geo=new T.BufferGeometry();
+ geo.setAttribute('position',new T.Float32BufferAttribute(verts,3));
+ geo.computeVertexNormals();
+ return geo;
+}
 function curvedLeaf(T,form){
  // 8 genuine triangles in 3D with a slight midrib fold and a tapered tip.
  // The leaf does not rotate to face the camera (no billboard).
  const points=[],uv=[],indices=[];
  // Natural fern pinnae and woodland leaflets are narrow, not plastic paddles.
  const narrow=form==='grass'?.068:form==='fronds'?.115:form==='creeping'?.39:form==='basal'?.74:.255;
+ if(form==='fronds')return fernPinnaeGeometry(T);
  const segments=form==='grass'?8:6;
  for(let j=0;j<=segments;j++){
   const t=j/segments,w=narrow*Math.pow(Math.sin(Math.PI*t),form==='basal'?.60:.76);
@@ -68,7 +93,8 @@ function buildLeaves(T,items,id,form,season,quality){
   if(!list.length)return;
   const mesh=new T.InstancedMesh(geometry,material.clone(),list.length),d=new T.Object3D();
   list.forEach((p,i)=>{
-   d.position.set(p.x,p.y,p.z);d.rotation.set(p.pitch,p.yaw,p.roll);
+   d.position.set(form==='fronds'?p.x*.82:p.x,form==='fronds'?p.y-p.size*.40:p.y,form==='fronds'?p.z*.82:p.z);
+    d.rotation.set(p.pitch,p.yaw,p.roll);
    d.scale.set(p.size*relative,p.size*relative*(form==='grass'?2.6:1),p.size*relative);
    d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
    const color=palette.clone().lerp(sun,.15+randomHue()*.8);
@@ -109,7 +135,8 @@ export function createNativeUnderstory(T,instance,{season='summer',quality=1,mod
    const p=[cs*horiz,Math.max(.025,vertical),sn*horiz];
    stems.push([last,p,Math.max(.002,stemRadius*(1-.66*t))]);last=p;
    if(winter)continue;
-   const leavesPerStep=form==='fronds'?3:form==='grass'?1:form==='basal'?2:form==='creeping'?2:3;
+   if(form==='fronds'&&k<steps)continue; // One pinnate frond per curved stem, not nine repeated paddles.
+    const leavesPerStep=form==='fronds'?1:form==='grass'?1:form==='basal'?2:form==='creeping'?2:3;
    for(let l=0;l<leavesPerStep;l++){
     const side=l%2?-1:1;
     const spread=form==='fronds'?reach*.21*Math.sin(t*Math.PI):
@@ -117,12 +144,12 @@ export function createNativeUnderstory(T,instance,{season='summer',quality=1,mod
     const tx=-sn*spread*side,tz=cs*spread*side;
     const scale=form==='grass'?.18+height*.15:
      form==='basal'?.19+diameter*.14:
-     form==='fronds'?.065+diameter*.052:
+     form==='fronds'?height*(.55+r()*.13):
      form==='creeping'?.055+diameter*.06:
      .032+diameter*.025;
     leaves.push({x:clamp(p[0]+tx,-radius,radius),y:clamp(p[1]+.013,.025,height),
      z:clamp(p[2]+tz,-radius,radius),yaw:az+side*(.35+r()*.32),
-     pitch:form==='fronds'?-0.26+r()*.38:r()*.3-.25,roll:side*(.24+r()*.3),
+     pitch:form==='fronds'?-0.26+r()*.38:r()*.3-.25,roll:form==='fronds'?.48+r()*.34:side*(.24+r()*.3),
      size:scale*(.68+r()*.47)});
    }
   }
