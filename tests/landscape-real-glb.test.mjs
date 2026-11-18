@@ -3,14 +3,16 @@ import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
 import {modelPath,PREMIUM_LANDSCAPE_MODELS,PREMIUM_RESERVED_MODELS} from '../forma-landscape-3d-premium.js';
 import {vegetationFit} from '../forma-landscape-3d-models.js';
-import {REAL_3D_OBJECTS,REAL_3D_TOTAL,realModelById} from '../forma-landscape-3d-library40.js';
+import {REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_TOTAL,realModelById} from '../forma-landscape-3d-library40.js';
 
 test('premium 3D flora is supplied from verified self-hosted CC0 GLB paths',()=>{
  assert.equal(modelPath('pine'),'assets/landscape-models/pine.glb');
  assert.equal(modelPath('spruce'),'assets/landscape-models/spruce.glb');
  assert.equal(modelPath('granite-boulder'),'assets/landscape-models/granite-boulder.glb');
  assert.equal(modelPath('fern'),'assets/landscape-models/fern.glb');
- assert.equal(REAL_3D_TOTAL,40);
+ assert.equal(REAL_3D_TOTAL,24);
+ assert.equal(REAL_3D_NON_BOTANICAL.length,24);
+ assert.ok(REAL_3D_NON_BOTANICAL.every(x=>x.group!=='plants'));
  assert.equal(new Set(REAL_3D_OBJECTS.map(o=>o.source)).size,40);
  assert.equal(Object.keys(PREMIUM_LANDSCAPE_MODELS).length,40);
  for(const o of REAL_3D_OBJECTS){assert.equal(modelPath(o.id),'assets/landscape-models/'+o.id+'.glb');assert.ok(o.width>0);assert.equal(o.license,'CC0-1.0')}
@@ -22,11 +24,11 @@ test('premium 3D flora is supplied from verified self-hosted CC0 GLB paths',()=>
 test('real GLBs are autoloaded in the editable scene and defer to user GLB imports',()=>{
  const page=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
  const models=readFileSync(new URL('../forma-landscape-3d-models.js',import.meta.url),'utf8');
- assert.match(page,/loadBundledLandscapeModel\(o.catalogId\)/);
+ assert.doesNotMatch(page,/loadBundledLandscapeModel\(o.catalogId\)/);
  assert.match(page,/new GLTFLoader\(\).loadAsync\(path\)/);
  assert.match(page,/const imported=importedPlantModels\.get\(o\.catalogId\)/);
  assert.match(page,/const source=imported\|\|/);
- assert.match(page,/bundledModelSources\.get\(o\.catalogId\)/);
+ assert.match(page,/const source=imported\|\|null/);
  assert.match(page,/if\(n.geometry&&!n.userData\?\.bundledSharedGeometry\)/);
  assert.match(models,/node.userData.bundledSharedGeometry=true/);
  assert.match(page,/makeRealVegetation\(THREE,source/);
