@@ -84,7 +84,23 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
 #loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
 #loadError strong{font-size:19px}.model-health{padding:11px 12px;margin:11px 0 13px;border:1px solid #6a634f;border-radius:11px;background:linear-gradient(135deg,#31362f,#242c2a)}.model-health strong{font-size:12px;color:#ebcfa5;letter-spacing:.04em}.model-health small{display:block;margin-top:5px;color:#bac7bc;line-height:1.55;font-size:10px}.model-health button{margin-top:7px;background:#514735;color:#f8e1bc;border:1px solid #a18a64;border-radius:7px;padding:7px 10px;font-size:11px}.model-health button:focus-visible{outline:2px solid #edd0a2}.build-info{font-size:10px;padding:6px 8px;margin:6px 0 10px;border-radius:7px;color:#adbcad;line-height:1.45}.build-info.stale{border:1px solid #a78851;background:#493b29;color:#ffe3ae}
-#aiResult{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
+#aiResult,#aiProgress{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
+#aiProgress{z-index:7;backdrop-filter:blur(10px)}
+#aiProgress[hidden]{display:none}
+.ai-progress-card{width:min(94vw,680px);padding:25px;border-radius:17px;background:#222729;border:1px solid #89765b;box-shadow:0 18px 80px #000b;display:flex;flex-direction:column;gap:13px}
+.ai-progress-eyebrow{color:#d9c1a0;letter-spacing:.12em;font-size:11px;font-weight:800}
+.ai-progress-card h3{font-size:21px;margin:0;color:#f3ede5}
+.ai-progress-card p{color:#bdc5bd;font-size:13px;margin:0;line-height:1.6}
+.ai-progress-track{height:9px;overflow:hidden;border-radius:99px;background:#354039;border:1px solid #60665b;position:relative}
+.ai-progress-track:after{content:'';position:absolute;inset:0 auto 0 -40%;width:40%;background:linear-gradient(90deg,transparent,#c6a77c,#eddbbc,transparent);animation:forma-render-progress 1.7s ease-in-out infinite}
+@keyframes forma-render-progress{to{left:105%}}
+@media(prefers-reduced-motion:reduce){.ai-progress-track:after{animation-duration:4s}}
+.ai-progress-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ai-progress-actions button{border:1px solid #5c6b60;background:#35413a;color:#e9e8e2;border-radius:8px;padding:9px 13px;cursor:pointer}
+.ai-progress-actions small{color:#b8c1bb;font-size:11px}
+#aiProgress[data-stage="failed"] .ai-progress-track:after{animation:none;left:0;width:100%;background:#9f5750}
+#aiProgress[data-stage="completed"] .ai-progress-track:after{animation:none;left:0;width:100%;background:#a6bf9a}
+#aiProgressDetail{min-height:20px}
 #aiResult[hidden]{display:none}
 .ai-result-card{width:min(100%,1000px);max-height:94%;display:flex;flex-direction:column;gap:10px;padding:16px;background:#222629;border:1px solid #615746;border-radius:15px;box-shadow:0 20px 90px #0009}
 .ai-result-head,.ai-result-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}
@@ -174,6 +190,16 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </div>
 <div id="hint">ЛКМ — кисть или выбор объекта · ПКМ — вращение камеры · колесо — масштаб. Рельеф и озеленение сохраняются в метрах.</div>
 <div id="status">3D-модель загружается…</div>
+<div id="aiProgress" hidden role="dialog" aria-modal="true" aria-labelledby="aiProgressTitle" data-stage="queued">
+ <div class="ai-progress-card">
+  <span class="ai-progress-eyebrow">FORMA · ФОТОРЕАЛИСТИЧНЫЙ РЕНДЕР</span>
+  <h3 id="aiProgressTitle">Создаём фотографию из 3D-сцены</h3>
+  <p id="aiProgressDetail" role="status" aria-live="polite">Подготавливаем точный ракурс и материалы…</p>
+  <div class="ai-progress-track" role="progressbar" aria-label="Рендер выполняется. Точный процент не предоставляется моделью"></div>
+  <p>Фотореалистичные материалы, естественное солнце, ботанически достоверные деревья и кустарники. Геометрия участка и положение камеры сохраняются.</p>
+  <div class="ai-progress-actions"><small>Полоса показывает работу процесса, а не выдуманный процент выполнения.</small><button id="aiProgressHide" type="button">Скрыть окно</button></div>
+ </div>
+</div>
 <div id="aiResult" hidden role="dialog" aria-label="Фотореалистичный AI-результат">
  <div class="ai-result-card"><div class="ai-result-head"><strong>FORMA · РЕЗУЛЬТАТ</strong><button type="button" id="closeAiResult">× Закрыть</button></div>
  <img id="aiResultImage" alt="Фотореалистичный рендер текущего 3D-ракурса">
@@ -182,6 +208,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <div id="loadError" role="alert"><div><strong>Не удалось загрузить 3D-движок</strong><p>Для редактора требуется WebGL и доступ к библиотеке Three.js. Проверьте подключение к сети и обновите страницу.</p><button type="button" id="reload3d" class="action primary" onclick="location.reload()">Перезапустить 3D-редактор</button></div></div>
 </main>
 </div>
+<script defer src="./forma-render-queue-client.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import {premiumIcon} from './forma-premium-icons.js';
@@ -1032,22 +1059,42 @@ async function export3dPdf(){
  }catch(e){status('PDF: '+(e?.message||'Ошибка создания альбома'))}
  finally{button.disabled=false}
 }
+let aiRenderActive=false;
+function setAiProgress(stage,message){
+ const modal=$('#aiProgress');
+ modal.dataset.stage=stage;
+ $('#aiProgressDetail').textContent=message;
+}
+document.addEventListener('forma:render-job-status',event=>{
+ if(!aiRenderActive)return;
+ const state=event.detail||{};
+ setAiProgress(state.status||'running',state.message||'Создаём фотографическое изображение…');
+});
 async function renderAi(){
  const btn=$('#renderAi');
- if(btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
- btn.disabled=true;status('AI-рендер: отправляем точную 3D-сцену и координаты на сервер…');
+ if(aiRenderActive||btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
+ aiRenderActive=true;btn.disabled=true;
+ $('#aiResult').hidden=true;$('#aiProgress').hidden=false;
+ setAiProgress('queued','Готовим фотореалистичный рендер текущего ракурса…');
+ status('AI-рендер: подготовка исходной 3D-сцены и запрос в очередь…');
  try{
   renderer.render(scene,camera);
   const image=renderer.domElement.toDataURL('image/png');
   const sceneInfo={...coordinateSummary(doc),cameraMode:'3d-perspective',cameraView:state.view,cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z}};
-  const response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,landscapeMasterplan:sceneInfo,quality:'high',quantity:1})});
+  const payload=JSON.stringify({image,landscapeMasterplan:sceneInfo,quality:'high',quantity:1});
+  const transport=window.FORMA_RENDER_QUEUE?.fetch||fetch;
+  const response=await transport('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:payload});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.images?.[0])throw Error(data.error||'Сервер не вернул изображение. Повторный платный запрос не запускался.');
   const url='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
-  $('#aiResultImage').src=url;$('#downloadAiResult').href=url;$('#aiResult').hidden=false;
+  setAiProgress('completed','Фотографический рендер готов.');
+  $('#aiResultImage').src=url;$('#downloadAiResult').href=url;
+  $('#aiProgress').hidden=true;$('#aiResult').hidden=false;
   status('AI-изображение получено. Сохраняйте его отдельно; исходная 3D-геометрия не изменена.');
- }catch(error){status('Ошибка AI: '+(error?.message||'Неизвестная ошибка'));}
- finally{btn.disabled=false}
+ }catch(error){
+  const message='Ошибка AI: '+(error?.message||'Неизвестная ошибка');
+  setAiProgress('failed',message);$('#aiProgress').hidden=false;status(message);
+ }finally{aiRenderActive=false;btn.disabled=false}
 }
 function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
 
@@ -1267,7 +1314,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#fit3dScene').onclick=()=>setView('3d');
  $('#customHouseGlb').onchange=e=>importHouseGlb(e.target.files?.[0]);
  $('#clearCustomHouse').onclick=()=>{const h=activeHouseTarget();if(!h.modelKey)return status('Вы уже используете встроенный 3D-стиль.');push();h.modelKey=null;save();rebuild();renderHouseLibrary();status('Возврат к 3D-стилю. Исходный GLB остаётся в локальном хранилище.')};
- $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
+ $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#aiProgressHide').onclick=()=>{$('#aiProgress').hidden=true};$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
  $('#export3dPdf').onclick=export3dPdf;
  $('#sourceDrawing').onchange=e=>importUnderlay(e.target.files?.[0]);
  $('#underlayOpacity').onchange=()=>{if(underlayTexture)rebuild()};
