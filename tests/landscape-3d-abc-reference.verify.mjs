@@ -39,18 +39,19 @@ try{
  }
  assert.notDeepEqual(captures[0],captures[1],'day and evening must differ on GPU');
  assert.notDeepEqual(captures[1],captures[2],'evening and night must differ on GPU');
- await page.locator('#globalFill').fill('165');
- await page.locator('#cloudCover').fill('70');
- await page.locator('#aerialHaze').fill('65');
- await page.locator('#nightGlow').fill('95');
- await page.locator('#waterRipples').fill('45');
+ for(const [id,value] of [['globalFill',165],['cloudCover',70],
+    ['aerialHaze',65],['nightGlow',95],['waterRipples',45]]){
+  await page.locator('#'+id).evaluate((node,v)=>{
+   node.value=String(v);node.dispatchEvent(new Event('input',{bubbles:true}));
+  },value);
+ }
  const settings=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-atmosphere-v1-landscape')));
  assert.deepEqual(settings,{globalFill:165,clouds:70,haze:65,nightGlow:95,ripples:45});
  await page.locator(canvasId).screenshot({path:file+'-custom-night.png',timeout:45000});
  await page.locator('[data-view="2d"]').click();
- assert.equal(await page.locator('[data-view="2d"]').getAttribute('class'),'active');
+ assert.equal(await page.locator('[data-view="2d"]').evaluate(n=>n.classList.contains('active')),true);
  await page.locator('[data-view="3d"]').click();
- assert.equal(await page.locator('[data-view="3d"]').getAttribute('class'),'active');
+ assert.equal(await page.locator('[data-view="3d"]').evaluate(n=>n.classList.contains('active')),true);
  assert.deepEqual(pageErrors,[],'No unhandled scene errors');
  console.log('PASS FORMA A/B/C: reference scene day/evening/night; measured geometry stable; adjustable cloud/sky/haze/night/ripples; screenshots saved');
 } finally {await browser.close()}
