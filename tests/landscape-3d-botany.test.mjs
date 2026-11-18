@@ -5,13 +5,13 @@ import {SHRUB_HEIGHT_M,naturalCrown,branchTipDrop,botanicalLeafScale,vegetationQ
 import {VEGETATION_SPECIES,foliageProfile} from '../forma-landscape-3d-vegetation.js';
 import {CATALOG} from '../forma-landscape-project-core.js';
 
-test('all eight shrub varieties have realistic, independent adult heights in metres',()=>{
+test('all fourteen shrub and groundcover varieties have realistic, independent adult heights in metres',()=>{
  const shrubs=CATALOG.filter(x=>x.group==='shrubs');
- assert.equal(shrubs.length,8);
+ assert.equal(shrubs.length,14);
  assert.deepEqual(new Set(Object.keys(SHRUB_HEIGHT_M)),new Set(shrubs.map(x=>x.id)));
  assert.ok(SHRUB_HEIGHT_M.juniper<SHRUB_HEIGHT_M.dogwood);
  assert.ok(SHRUB_HEIGHT_M.lavender<SHRUB_HEIGHT_M.hydrangea);
- assert.ok(Object.values(SHRUB_HEIGHT_M).every(n=>n>=.35&&n<=3));
+ assert.ok(Object.values(SHRUB_HEIGHT_M).every(n=>n>=.20&&n<=3));
 });
 
 test('pine, spruce, willow, oak and birch have genuinely different crowns',()=>{
@@ -30,7 +30,7 @@ test('botanical leaves preserve species scale and real winter silhouette',()=>{
  assert.ok(botanicalLeafScale('birch',14,6)<botanicalLeafScale('oak',14,6));
  assert.equal(foliageProfile('willow','winter').leafless,true);
  assert.equal(foliageProfile('pine','winter').leafless,false);
- assert.equal(Object.keys(VEGETATION_SPECIES).length,18);
+ assert.equal(Object.keys(VEGETATION_SPECIES).length,26);
 });
 
 test('adaptive vegetation detail protects mobile, high-density scenes',()=>{
