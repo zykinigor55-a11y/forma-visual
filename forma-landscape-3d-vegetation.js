@@ -616,6 +616,17 @@ export function createVegetation(T,instance,{season='summer',quality=1,mode='sta
  if(cfg.kind==='shrub'||cfg.kind==='conifer-shrub')generateShrub(T,g,id,height,diameter,season,r,quality);
  else generateTree(T,g,id,height,diameter,season,r,quality);
  g.userData.species=id;g.userData.physicalHeight=height;g.userData.crownDiameter=diameter;g.userData.variant=variant;
+ // Large editable plots can contain hundreds of trees. Each instanced branch/
+ // foliage mesh is wholly enclosed in this conservative species envelope.
+ // Cull entire off-camera trees rather than drawing every offscreen needle.
+ const foliageBounds=new T.Sphere(new T.Vector3(0,height*.5,0),
+  Math.hypot(diameter*.5,height*.5)+Math.max(.65,diameter*.16));
+ g.traverse(node=>{
+  if(node.isInstancedMesh&&node.userData.botanicalLayer){
+   node.boundingSphere=foliageBounds.clone();
+   node.frustumCulled=true;
+  }
+ });
  enableBotanicalLod(g,mode);
  return g;
 }
