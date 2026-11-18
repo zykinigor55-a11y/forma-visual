@@ -1,5 +1,5 @@
 /* FORMA VISUAL shared dimensional icon language — extracted from Landscape Project. */
-export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","frames":"gallery","cad":"plan","furniture":"furniture"});
+export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","erase":"eraser","frames":"gallery","cad":"plan","furniture":"furniture"});
 let nextGradientId=0;
 export function premiumIcon(id){
   id=PREMIUM_ICON_ALIASES[id]||id;
@@ -14,6 +14,9 @@ export function premiumIcon(id){
    boulders:'<path d="M9 31l6-12 12-7 10 9 3 12-14 6-15-2z" fill="url(#lpiFill)" stroke="#e6d0af" stroke-width="1.6"/><path d="M15 19l8 13-12 5M23 32l17 1M23 32l4-20" stroke="#f4e1be" opacity=".55" stroke-width="1.4" fill="none"/>'
   };
   const extras={
+   "brush":'<path d="M31 9l7 6-14 19-9 1-2-9z" fill="url(#lpiFill)" stroke="#f1d8ad" stroke-width="1.6"/><path d="M13 30q-7 2-5 11 10 0 11-9" fill="url(#lpiFill)" stroke="#fff0cf" stroke-width="1.5"/><path d="M29 11l7 6" stroke="#fff2d3" stroke-width="2"/>',
+   "polygon":'<path d="M12 13l25 8-8 20-21-9z" fill="url(#lpiFill)" stroke="#efd8b5" stroke-width="1.5"/><circle cx="12" cy="13" r="3" fill="#fff1cf"/><circle cx="37" cy="21" r="3" fill="#fff1cf"/><circle cx="29" cy="41" r="3" fill="#fff1cf"/><circle cx="8" cy="32" r="3" fill="#fff1cf"/>',
+   "wand":'<path d="M12 39l23-24" stroke="#fff3d2" stroke-width="4" stroke-linecap="round"/><path d="M34 6v7M34 20v6M23 16h7M38 16h7M13 9l3 3M39 36l-3-3" stroke="#f1d7ad" stroke-width="2.2"/><path d="M34 12l2 4-2 4-2-4z" fill="url(#lpiFill)" stroke="#fff0cc"/>',
    "eraser":"<path d=\"M12 29l16-18 14 12-16 18H17z\" fill=\"url(#lpiFill)\" stroke=\"#f1ddb6\" stroke-width=\"1.8\"/><path d=\"M20 20l15 13M17 41h26\" fill=\"none\" stroke=\"#fff2d3\" stroke-width=\"2\"/>",
    "delete":"<path d=\"M14 17h21l-2 23H16zM11 14h27M19 11h11\" fill=\"url(#lpiFill)\" stroke=\"#efd7b1\" stroke-width=\"1.7\"/><path d=\"M22 22v12M28 22v12\" stroke=\"#fff2d2\" stroke-width=\"2\"/>",
    "select":"<path d=\"M12 8l20 27-11-6-6 12z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.8\"/>",
