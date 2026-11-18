@@ -6,7 +6,7 @@ import {CATALOG,TREE_HEIGHT_M} from '../forma-landscape-project-core.js';
 
 test('3D vegetation implements exactly each 2D catalog species',()=>{
  const catalog=CATALOG.filter(c=>['trees','shrubs'].includes(c.group));
- assert.equal(catalog.length,18);
+ assert.equal(catalog.length,26);
  assert.deepEqual(new Set(vegetationSpeciesIds),new Set(catalog.map(c=>c.id)));
  assert.ok(catalog.every(c=>VEGETATION_SPECIES[c.id].density>=300));
 });
