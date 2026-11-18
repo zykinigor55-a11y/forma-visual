@@ -205,6 +205,21 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
+ <section class="solar-controls" aria-label="Небо и атмосфера">
+  <h3>☁ НЕБО · АТМОСФЕРА · РАССЕЯННЫЙ СВЕТ</h3>
+  <label for="globalFill">Заполняющий свет неба <output id="globalFillValue">110%</output></label>
+  <input id="globalFill" type="range" min="30" max="180" value="110" step="5">
+  <label for="cloudCover">Облачность <output id="cloudCoverValue">35%</output></label>
+  <input id="cloudCover" type="range" min="0" max="100" value="35" step="5">
+  <label for="aerialHaze">Воздушная перспектива <output id="aerialHazeValue">30%</output></label>
+  <input id="aerialHaze" type="range" min="0" max="100" value="30" step="5">
+  <label for="nightGlow">Свечение ночного неба <output id="nightGlowValue">75%</output></label>
+  <input id="nightGlow" type="range" min="0" max="100" value="75" step="5">
+  <label for="waterRipples">Рябь воды <output id="waterRipplesValue">30%</output></label>
+  <input id="waterRipples" type="range" min="0" max="100" value="30" step="5">
+  <button type="button" id="atmosphereReset">↺ Атмосфера по умолчанию</button>
+  <small>Заполняющий свет (быстрая имитация глобального GI), мягкие облака и воздушная перспектива; рябь не меняет геометрию воды. Настройки сохраняются для проекта.</small>
+ </section>
  <section class="solar-controls" aria-label="Физическое солнце">
   <h3>☀ ФИЗИЧЕСКОЕ СОЛНЦЕ · 3D</h3>
   <label for="sunAzimuth">Направление (азимут) <output id="sunAzimuthValue" for="sunAzimuth">311°</output></label>
@@ -284,16 +299,18 @@ import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
+import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
 const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
-const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid;
+const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
-let solarSettings=solarPreset('day');
+let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),cloudLayer=null,waterRippleTexture=null;
+const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
 let lastWalkFrame=0;
 let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;
@@ -388,6 +405,8 @@ function initialize(){
   solarSettings=stored?.time===doc.atmosphere.time?normalizeSolarSettings(stored.settings,doc.atmosphere.time):solarPreset(doc.atmosphere.time);
  }catch{solarSettings=solarPreset(doc.atmosphere.time)}
  syncSolarControls();
+ try{sceneAtmosphere=normalizeSceneAtmosphere(JSON.parse(localStorage.getItem(ATMO)||'null'))}catch{sceneAtmosphere=normalizeSceneAtmosphere()}
+ syncAtmosphereControls();
  renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap; // This filter respects adjustable shadow radius.
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
@@ -404,9 +423,13 @@ function initialize(){
  atmosphereSky.material.uniforms.mieCoefficient.value=.004;
  atmosphereSky.material.uniforms.mieDirectionalG.value=.82;
  atmosphereSky.material.depthWrite=false;atmosphereSky.frustumCulled=false;scene.add(atmosphereSky);
+ cloudLayer=makeCloudLayer(THREE);scene.add(cloudLayer);
+ waterRippleTexture=makeWaterRippleTexture(THREE,document);
  camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.005;controls.minDistance=.8;controls.maxDistance=220;
  const skyFill=new THREE.HemisphereLight(0xdceafa,0x334b3c,1.75);skyFill.name='forma-sky-fill';scene.add(skyFill);
+ const bounced=new THREE.DirectionalLight(0xc6d8e3,.38);
+ bounced.name='forma-bounced-fill';bounced.position.set(22,28,-29);bounced.castShadow=false;scene.add(bounced);
  const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(window.innerWidth<720?1024:2048,window.innerWidth<720?1024:2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;sun.shadow.normalBias=.022;sun.shadow.radius=2.6;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
  brushCursor=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xE7D0A5,transparent:true,opacity:.78,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
@@ -461,6 +484,7 @@ function mark(group,key){
  return group;
 }
 function rebuild(){
+ waterSurfaces.length=0;
  renderGate.invalidate();
  shadowBudgetDirty=true;
  currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
@@ -586,8 +610,14 @@ function polygon(points,y,color,water=false,materialId='universal'){
  const waterLevel=water?Math.min(...points.map(p=>{const v=pos(p.x,p.y);return terrainAt(v.x,v.z)}))+.09:0;
  for(let i=0;i<verts.count;i++){const x=verts.getX(i),z=verts.getZ(i);verts.setY(i,water?waterLevel:terrainAt(x,z)+y)}
  geo.computeVertexNormals();
- const m=water?new THREE.MeshPhysicalMaterial({color:'#377f91',roughness:.12,metalness:.25,transparent:true,opacity:.92,clearcoat:.8,side:THREE.DoubleSide}):surfaceMaterial(THREE,materialId,color);
- m.side=THREE.DoubleSide;const o=mesh(geo,m);o.castShadow=false;return o;
+ const m=water?new THREE.MeshPhysicalMaterial({
+  color:'#467F8C',roughness:.17,metalness:.08,transparent:true,opacity:.95,
+  clearcoat:.62,clearcoatRoughness:.13,side:THREE.DoubleSide,
+  bumpMap:waterRippleTexture,bumpScale:sceneAtmosphere.ripples*.00055
+ }):surfaceMaterial(THREE,materialId,color);
+ m.side=THREE.DoubleSide;const o=mesh(geo,m);o.castShadow=false;
+ if(water){o.userData.formaWater=true;o.receiveShadow=false;waterSurfaces.push(o)}
+ return o;
 }
 function drawArea(o,entry,key){
  const g=new THREE.Group();const pts=o.geometry==='strip'?smoothPaintPath(o.points):o.points;const isPaint=['fills','lawns'].includes(entry.group)&&o.geometry==='strip';
@@ -995,6 +1025,27 @@ function saveSolarSettings(){
  try{localStorage.setItem(SOLAR,JSON.stringify({time:doc.atmosphere.time,settings:solarSettings}))}
  catch(error){status('Не удалось сохранить положение солнца: '+error.message)}
 }
+function syncAtmosphereControls(){
+ const values={globalFill:sceneAtmosphere.globalFill,cloudCover:sceneAtmosphere.clouds,
+  aerialHaze:sceneAtmosphere.haze,nightGlow:sceneAtmosphere.nightGlow,waterRipples:sceneAtmosphere.ripples};
+ for(const [id,value] of Object.entries(values)){
+  const node=$('#'+id),label=$('#'+id+'Value');
+  if(node)node.value=String(value);if(label)label.textContent=value+'%';
+ }
+}
+function saveAtmosphereControls(){
+ try{localStorage.setItem(ATMO,JSON.stringify(sceneAtmosphere))}
+ catch(error){status('Не удалось сохранить атмосферу: '+error.message)}
+}
+function applyAtmosphereControls(){
+ sceneAtmosphere=normalizeSceneAtmosphere({
+  globalFill:$('#globalFill').value,clouds:$('#cloudCover').value,
+  haze:$('#aerialHaze').value,nightGlow:$('#nightGlow').value,ripples:$('#waterRipples').value
+ });
+ syncAtmosphereControls();saveAtmosphereControls();updateSun();
+ for(const surface of waterSurfaces)if(surface.material)surface.material.bumpScale=sceneAtmosphere.ripples*.00055;
+ renderGate.invalidate();
+}
 function updateSun(){
  renderGate.invalidate();
  const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
@@ -1016,19 +1067,33 @@ function updateSun(){
  sun.color.set(val==='evening'?'#ffb87b':val==='morning'?'#ffe1be':'#fff2db');
  const sky=scene.getObjectByName('forma-sky-fill');
  if(sky){
-  sky.intensity=val==='night'?.27:val==='evening'?.92:val==='morning'?1.35:weather==='overcast'?1.18:1.70;
+  sky.intensity=atmosphereLighting({
+   time:val,weather,siteSize:Math.max(doc.site.width,doc.site.height),settings:sceneAtmosphere
+  }).skyFillIntensity;
   sky.color.set(val==='night'?'#71899e':val==='evening'?'#ffe2c2':'#e6eef6');
   sky.groundColor.set(val==='night'?'#17212a':'#5b6954');
  }
- renderer.toneMappingExposure=val==='night'?1.2:val==='evening'?1.0:val==='morning'?1.02:1.12;
- scene.background=new THREE.Color(val==='night'?'#25343c':val==='evening'?'#a4a597':'#b8c7c4');
- scene.fog.color.copy(scene.background);
+ const atmosphere=atmosphereLighting({
+  time:val,weather,siteSize:Math.max(doc.site.width,doc.site.height),settings:sceneAtmosphere
+ });
+ const bounced=scene.getObjectByName('forma-bounced-fill');
+ if(bounced){bounced.intensity=atmosphere.bouncedFillIntensity;
+  bounced.color.set(val==='night'?'#9bb8d6':val==='evening'?'#f0d8b8':'#c6d8e3')}
+ if(cloudLayer){
+  cloudLayer.visible=state.view!=='2d'&&atmosphere.clouds>.01;
+  cloudLayer.material.uniforms.coverage.value=atmosphere.clouds;
+  cloudLayer.material.uniforms.opacity.value=val==='night'?.49:.60;
+  cloudLayer.material.uniforms.cloudColor.value.set(val==='night'?'#7899BC':val==='evening'?'#f3e1cb':'#f5f6f1');
+ }
+ renderer.toneMappingExposure=atmosphere.exposure;
+ scene.background=new THREE.Color(atmosphere.background);
+ scene.fog.color.set(atmosphere.fogColor);
  const extent=Math.max(doc.site.width,doc.site.height);
  const weatherFog=doc.atmosphere.weather==='fog',wetFog=['rain','snow'].includes(doc.atmosphere.weather);
  // Terrain and buildings MUST remain visible in every weather preset.
  // Scale fog distance to the plot and orbit camera, not a fixed 25 metres.
- scene.fog.near=weatherFog?Math.max(22,extent*.70):wetFog?Math.max(65,extent*1.5):Math.max(120,extent*2.2);
- scene.fog.far=weatherFog?Math.max(110,extent*3.0):wetFog?Math.max(145,extent*3.7):Math.max(230,extent*5);
+ scene.fog.near=atmosphere.fogNear;
+ scene.fog.far=atmosphere.fogFar;
 }
 function setOrbitCameraHeight(height){
  if(state.view!=='3d'||!camera?.isPerspectiveCamera)return;
@@ -1060,7 +1125,7 @@ function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
  heldWalkKeys.clear();lastWalkFrame=0;
- state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&doc.atmosphere.time!=='night';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&doc.atmosphere.time!=='night';if(cloudLayer)cloudLayer.visible=view!=='2d'&&sceneAtmosphere.clouds>0;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';
  const W=doc.site.width,H=doc.site.height;
  controls.enabled=view!=='walk';
@@ -1564,6 +1629,14 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   $('#'+id).addEventListener('change',onSolarInput);
  }
  $('#sunReset').onclick=()=>{solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();updateSun();renderer.render(scene,camera);status('Солнце возвращено к пресету '+$('#time').selectedOptions[0]?.textContent+'.')};
+ for(const id of ['globalFill','cloudCover','aerialHaze','nightGlow','waterRipples'])
+  $('#'+id).addEventListener('input',applyAtmosphereControls);
+ $('#atmosphereReset').onclick=()=>{
+  sceneAtmosphere=normalizeSceneAtmosphere(ATMOSPHERE_DEFAULTS);
+  syncAtmosphereControls();saveAtmosphereControls();updateSun();
+  for(const surface of waterSurfaces)if(surface.material)surface.material.bumpScale=sceneAtmosphere.ripples*.00055;
+  renderGate.invalidate();
+ };
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
@@ -1655,6 +1728,14 @@ function animate(now=0){
  }
  // Orbit controls own 2D/3D; walk mode is a separate ground-locked camera.
  const cameraMoved=walked||Boolean(controls?.enabled&&controls.update());
+ // Cap atmospheric motion to ~6fps, even on fast desktop or mobile hardware.
+ if(state.view!=='2d'&&now-lastAtmosphereAnimationAt>165&&
+    ((cloudLayer?.visible&&sceneAtmosphere.clouds>1)||(waterSurfaces.length&&sceneAtmosphere.ripples>0))){
+  lastAtmosphereAnimationAt=now;
+  if(cloudLayer?.visible)cloudLayer.material.uniforms.time.value=now*.001;
+  if(waterSurfaces.length)animateWaterRipple(waterRippleTexture,now,sceneAtmosphere.ripples);
+  renderGate.invalidate();
+ }
  const activeWalk=state.view==='walk'&&walked;
  // Pixel-space selection, not a fixed world distance. Hysteresis avoids
  // foliage popping during strolls; update at most ~4 times per second.
