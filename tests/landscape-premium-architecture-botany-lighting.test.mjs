@@ -50,7 +50,9 @@ test('conifers retain adult branch-connected needle geometry with bounded instan
   }
  }
  assert.match(understorySource,/form==='fronds'\?\.115/);
- assert.match(understorySource,/form==='fronds'\?\.065\+diameter\*\.052/);
+ assert.match(understorySource,/form==='fronds'\?height\*\(\.55\+r\(\)\*\.13\)/);
+ assert.match(understorySource,/function fernPinnaeGeometry\(T\)/);
+ assert.match(understorySource,/if\(form==='fronds'&&k<steps\)continue/);
 });
 
 test('more sky light does not blow out day materials and night scene is visible',()=>{
