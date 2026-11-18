@@ -1,0 +1,48 @@
+name: FORMA — download licensed photorealistic landscape GLBs
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/install-real-landscape-models.py'
+      - '.github/workflows/install-real-landscape-models.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-import-real-3d-glbs
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download official Poly Haven 1K PBR assets and bundle self-contained GLBs
+        run: python tools/install-real-landscape-models.py
+      - name: Validate GLB headers, dimensions and loader integration
+        run: node --test tests/landscape-real-glb.test.mjs
+      - name: Publish CC0 files to the site branch
+        run: |
+          git config user.name "FORMA Visual Assets Bot"
+          git config user.email "forma-design-bot@users.noreply.github.com"
+          git add assets/landscape-models/*.glb assets/landscape-models/sources.json
+          if git diff --cached --quiet; then echo "Licensed PBR assets already published"; exit 0; fi
+          git commit -m "assets(3d): install Poly Haven CC0 photoreal PBR plants and boulders"
+          for i in 1 2 3 4 5; do
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            if git push origin HEAD:dom-render-nanobanana; then exit 0; fi
+            sleep $((i * 2))
+          done
+          echo "Unable to publish model binaries to branch" >&2
+          exit 1
