@@ -1,0 +1,34 @@
+{
+  "series": "Сериал про богов",
+  "episode": 5,
+  "title": "Наблюдатель извне",
+  "status": "rendered_locally_binary_video_not_uploaded",
+  "duration_seconds": 190,
+  "decoded_voice_duration_seconds": 187.464,
+  "fps": 24,
+  "files": [
+    {
+      "name": "DO_SOTVORENIYA_EP05_OBSERVER_MASTER_900x1600.mp4",
+      "bytes": 60577662,
+      "sha256": "f6567efe16bc312940c533e3966fff624303fbc41712e490ba95fe1c0541d331",
+      "dimensions": "900x1600"
+    },
+    {
+      "name": "DO_SOTVORENIYA_EP05_OBSERVER_PHONE_720x1280.mp4",
+      "bytes": 52046837,
+      "sha256": "637d075cbe2ccf4640247950e8b49f27c121c9a7e9e4fc3592cf03006b5ffaf2",
+      "dimensions": "720x1280"
+    },
+    {
+      "name": "DO_SOTVORENIYA_EP05_OBSERVER_LIGHT_540x960.mp4",
+      "bytes": 17682870,
+      "sha256": "8b21dd45eed098d896eb5b5e8310d4283ee866bc1d2b4405737a54ddc1b17bd0",
+      "dimensions": "540x960"
+    },
+    {
+      "name": "DO_SOTVORENIYA_EP05_EDIT_PROJECT.zip",
+      "bytes": 32081202,
+      "dimensions": "original 10 PNG, voice, music, render scripts, timelines"
+    }
+  ]
+}
