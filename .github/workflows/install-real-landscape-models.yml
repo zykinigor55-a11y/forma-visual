@@ -35,7 +35,7 @@ jobs:
         run: |
           git config user.name "FORMA Visual Assets Bot"
           git config user.email "forma-design-bot@users.noreply.github.com"
-          git add assets/landscape-models/*.glb assets/landscape-models/sources.json
+          git add assets/landscape-models/
           if git diff --cached --quiet; then echo "Licensed PBR assets already published"; exit 0; fi
           git commit -m "assets(3d): install Poly Haven CC0 photoreal PBR plants and boulders"
           for i in 1 2 3 4 5; do
