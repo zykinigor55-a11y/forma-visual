@@ -15,7 +15,7 @@ try{
   localStorage.removeItem('forma-landscape-3d-atmosphere-v1-landscape');
  },{doc:expected});
  await page.goto('http://127.0.0.1:3000/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:30000});
- await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:90000});
+ await page.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:90000});
  assert.equal(await page.locator('#loadError').isVisible(),false,'3D engine starts in the QA fixture');
  assert.equal(await page.locator('[data-house-preset]').count(),18,'No new house styles were added');
  for(const id of ['globalFill','cloudCover','aerialHaze','nightGlow','waterRipples'])
