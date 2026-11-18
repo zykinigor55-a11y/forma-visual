@@ -471,7 +471,7 @@ function drawArea(o,entry,key){
  const isPath=entry.group==='pavers';
  if(isPaint&&pts.length>=2){
   const swept=strokeRibbon(pts,o.width||1.2);
-  if(swept.length>=3)g.add(polygon(swept,.062,entry.color||'#78965d',false,o.catalogId));
+  if(swept.length>=3)g.add(polygon(swept,entry.group==='fills'?.078:.052,entry.color||'#78965d',false,o.catalogId));
  }else if(isPath){
   for(let i=1;i<pts.length;i++){const a=pos(pts[i-1].x,pts[i-1].y),b=pos(pts[i].x,pts[i].y);
    a.y=terrainAt(a.x,a.z)+.09;b.y=terrainAt(b.x,b.z)+.09;
@@ -486,7 +486,7 @@ function drawArea(o,entry,key){
     cap.rotation.x=-Math.PI/2;cap.position.set(b.x,b.y+.003,b.z);cap.receiveShadow=true;g.add(cap);
     if(i===1){const start=cap.clone();start.position.set(a.x,a.y+.003,a.z);g.add(start)}
    }}
- }else if(pts.length>=3)g.add(polygon(pts,.055,entry.color||'#6d9874',entry.group==='ponds',o.catalogId));
+ }else if(pts.length>=3)g.add(polygon(pts,entry.group==='fills'?.078:entry.group==='lawns'?.052:.055,entry.color||'#6d9874',entry.group==='ponds',o.catalogId));
  mark(g,key);root.add(g);
 }
 function drawExtra(o){
