@@ -439,7 +439,7 @@ function chooseTool(t){
   panel.innerHTML='<label><input id="useLandscapeBrush" type="checkbox" checked>Рисовать кистью непрерывно</label>'+
     '<label for="landscapeBrushRadius">Диаметр кисти: <output id="brushDiameter">2.0 м</output></label>'+
     '<input id="landscapeBrushRadius" type="range" min=".5" max="10" step=".5" value="2">'+
-    (t==='plant'?'<label for="plantBrushDensity">Плотность посадки: <output id="plantDensityValue">1.0×</output></label><input id="plantBrushDensity" type="range" min=".5" max="2" step=".25" value="1"><label><input type="checkbox" id="erasePlantBrush">Ластик растений (не затрагивает покрытия)</label>':'')+
+    (t==='plant'?'<label for="plantBrushDensity">Плотность посадки: <output id="plantDensityValue">1.0×</output></label><input id="plantBrushDensity" type="range" min=".5" max="2" step=".25" value="1"><label for="plantVariant">Вариант формы кроны</label><select id="plantVariant"><option value="1">01 · естественный</option><option value="2">02 · раскидистый</option><option value="3">03 · асимметричный</option></select><label><input type="checkbox" id="erasePlantBrush">Ластик растений (не затрагивает покрытия)</label>':'')+
     '<div class="hint">'+(t==='plant'?'Плавно ведите курсором для посадки растений с правильным расстоянием.':'Газон и отсыпка наносятся непрерывной полосой. Для отдельных зон выключите кисть и рисуйте полигон.')+'<br>ЛКМ — кисть; ПКМ — вращение; колесо — масштаб.</div>';
   $('#library').appendChild(panel);
   const slider=panel.querySelector('#landscapeBrushRadius');
@@ -733,7 +733,7 @@ function place(world){
  if(tool==='build'){const preset=housePreset(state.housePreset||doc.house.archStyle);doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:Math.min(8,doc.site.width*.35),height:Math.min(7,doc.site.height*.35),rotation:0,roof:preset.roof,roofColor:'#454543',archStyle:preset.id,roofRise:1.4})}
  else if(tool==='plant'||tool==='landscape'||tool==='light'){
   const good=catalog(state.placing);if(!good){status('Объект недоступен в каталоге');return}
-  doc.objects.push({id:id(),catalogId:state.placing,type:good.group,x:point.x,y:point.y,diameter:good.diameter||1.6,height:good.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):good.group==='shrubs'?(SHRUB_HEIGHT_M[state.placing]||.95):good.group==='lights'?1.2:.95,rotation:0})
+  doc.objects.push({id:id(),catalogId:state.placing,type:good.group,x:point.x,y:point.y,diameter:good.diameter||1.6,height:good.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):good.group==='shrubs'?(SHRUB_HEIGHT_M[state.placing]||.95):good.group==='lights'?1.2:.95,variant:tool==='plant'?Number($('#plantVariant')?.value||1):1,rotation:0})
  }else extra.push({id:id(),type:state.placing,x:point.x,y:point.y,rotation:0});
  save();rebuild();
 }
@@ -828,7 +828,7 @@ function beginBrush(world){
  }else{
   const diameter=Number(entry.diameter)||1.6;
   doc.objects.push({id:id(),catalogId:state.placing,type:entry.group,x:first.x,y:first.y,
-   diameter,height:entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):(SHRUB_HEIGHT_M[state.placing]||.95),rotation:0});
+   diameter,height:entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):(SHRUB_HEIGHT_M[state.placing]||.95),variant:Number($('#plantVariant')?.value||1),rotation:0});
  }
  state.painting=true;canvas.setPointerCapture?.(state.activePointer);
  rebuild();return true;
@@ -867,7 +867,7 @@ function advanceBrush(world){
    if(doc.objects.length>=500)break;
    if(!inParcel(p,doc.site))continue;
    doc.objects.push({id:id(),catalogId:state.placing,type:stroke.entry.group,x:p.x,y:p.y,
-    diameter:stroke.entry.diameter||1.6,height:stroke.entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):(SHRUB_HEIGHT_M[state.placing]||.95),rotation:0});
+    diameter:stroke.entry.diameter||1.6,height:stroke.entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):(SHRUB_HEIGHT_M[state.placing]||.95),variant:Number($('#plantVariant')?.value||1),rotation:0});
    stroke.lastPlant=p;placed++;
   }
   if(placed)scheduleBrushRebuild();
