@@ -104,6 +104,22 @@ def main():
         out.write_bytes(result)
         if out.read_bytes()[:4] != b"glTF":
             raise ValueError("Invalid GLB output")
+        # Official Poly Haven preview is a licensed representation of this
+        # exact model. Keep it on our server, never hotlink at runtime.
+        thumb_path = OUT / "thumbs" / (target + ".webp")
+        if not thumb_path.is_file():
+            try:
+                info = json.loads(get("https://api.polyhaven.com/info/" + source_id, 120_000))
+                thumb_url = str(info.get("thumbnail_url", ""))
+                if urllib.parse.urlparse(thumb_url).hostname != "cdn.polyhaven.com":
+                    raise ValueError("Unexpected thumbnail host")
+                raw = get(thumb_url, 2_000_000)
+                if raw[:4] != b"RIFF" or raw[8:12] != b"WEBP":
+                    raise ValueError("Thumbnail is not WEBP")
+                thumb_path.parent.mkdir(parents=True, exist_ok=True)
+                thumb_path.write_bytes(raw)
+            except Exception as exc:
+                print("Thumbnail unavailable for", target, str(exc))
         print(f"{target}: {source_id}, {len(result)/1e6:.2f} MB")
         installed.append({"catalogId": target, "file": str(out), "source": "https://polyhaven.com/a/" + source_id,
                           "license": "CC0-1.0", "bytes": len(result), "sha256": hashlib.sha256(result).hexdigest()})
