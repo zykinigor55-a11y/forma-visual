@@ -36,3 +36,32 @@ export function duplicateLandscapeObject(object,{newId,plot,contains,offset}={})
  }
  return null;
 }
+
+/** Validate editable measured data before touching the saved model or Undo.
+ * Reject impossible geometry instead of silently coercing NaN, empty inputs,
+ * negative footprint dimensions or out-of-parcel coordinates to zero. */
+export function validatedLandscapeProps(object,fields,{plot,contains,kind='object',model=false}={}){
+ if(!object||!fields||typeof fields!=='object')return null;
+ const next={...object},isBuilding=kind==='house'||kind==='building';
+ const bounds={width:Number(plot?.width)||0,height:Number(plot?.height)||0};
+ for(const [field,raw] of Object.entries(fields)){
+  if(raw===''||raw===null||raw===undefined)return null;
+  const value=Number(raw);if(!Number.isFinite(value))return null;
+  if(field==='rotation'){next.rotation=normalizedRotation(value);continue}
+  if(field==='x'||field==='y'){
+   if(value<0||value>bounds[field==='x'?'width':'height'])return null;
+  }else if(field==='width'){
+   if(value<(model?.1:.6)||value>(model?30:bounds.width))return null;
+  }else if(field==='height'){
+   if(value<(isBuilding?.6:.1)||value>(isBuilding?bounds.height:200))return null;
+  }else if(field==='diameter'){
+   if(value<.1||value>200)return null;
+  }else if(field==='roofRise'){
+   if(!isBuilding||value<.05||value>12)return null;
+  }else return null;
+  next[field]=value;
+ }
+ if(Number.isFinite(Number(next.x))&&Number.isFinite(Number(next.y))&&
+    typeof contains==='function'&&!contains({x:next.x,y:next.y}))return null;
+ return next;
+}
