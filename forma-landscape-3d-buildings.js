@@ -434,25 +434,34 @@ function addPresetVolumes(g,T,{style,w,d,bodyHeight:y}){
  const m=(color,roughness=.78)=>new T.MeshStandardMaterial({color,roughness,metalness:.05});
  const wood=m('#6B4D39'),dark=m('#272F31'),stucco=m('#E5DCD0'),glass=m('#304A55',.19),steel=m('#606E70',.4);
  if(style==='chalet'){
-  // Deep terrace on the south elevation and visible handrail / roof supports.
-  box(g,T,Math.min(w*.82,w-1),.18,.92,0,2.61,d/2+.45,wood);
-  for(let x=-w*.36;x<=w*.36;x+=Math.max(.34,w*.11))
-   box(g,T,.065,.88,.065,x,3.07,d/2+.86,dark);
-  box(g,T,w*.76,.08,.11,0,3.53,d/2+.86,wood);
-  for(const x of [-w*.38,w*.38])
-   box(g,T,.15,2.38,.15,x,1.33,d/2+.84,wood);
-  // Horizontal timber slats make the building credible at near-ground eye level.
-  for(let i=0;i<9;i++)box(g,T,w-.28,.016,.035,0,.95+i*.31,d/2+.09,m('#42352D'));
+  // A real ground-supported porch: old mock placed its floor 2.6 metres
+  // above ground, leaving a physically floating deck and false railing.
+  const span=Math.max(2,Math.min(w*.82,w-.6)),z=d/2+.48;
+  box(g,T,span,.15,1.05,0,.52,z,wood);
+  box(g,T,span*.45,.10,.36,0,.30,d/2+1.20,wood);
+  for(const x of [-span*.45,span*.45]){
+   box(g,T,.15,2.83,.15,x,2.03,z+.36,wood);
+   box(g,T,.11,.26,.11,x,.71,z+.36,dark);
+  }
+  box(g,T,span+.14,.13,1.35,0,3.54,z+.17,dark);
+  const rail=m('#72543C');
+  for(let x=-span*.40;x<=span*.40;x+=Math.max(.35,span*.17)){
+   if(Math.abs(x)<.75)continue; // opening and steps stay clear
+   box(g,T,.065,.83,.065,x,1.08,z+.46,rail);
+  }
+  for(const x of [-span*.38,span*.38])
+   box(g,T,.12,.08,1.0,x,1.52,z,rail);
  }
  if(style==='cottage'){
-  const beam=m('#514439'),z=d/2+.10;
-  // Half-timber structural rhythm, diagonal braces and deep eave brackets.
-  for(const x of [-w*.44,-w*.22,0,w*.22,w*.44])
-   box(g,T,.105,Math.max(2.6,y-.65),.10,x,y/2+.3,z,beam);
-  for(const yy of [1.28,2.83,y-.20])box(g,T,w-.12,.11,.09,0,yy,z,beam);
-  for(const x of [-w*.32,w*.32]){
-   edgeBeam(g,T,[x-.33,1.30,z+.04],[x+.31,2.77,z+.04],.095,beam);
-  }
+  const beam=m('#514439'),z=d/2+.115;
+  // Joinery occupies solid piers and upper facade, never crosses the real
+  // window and entrance apertures cut into the underlying walls.
+  for(const x of [-w*.45,w*.45])
+   box(g,T,.105,y-.56,.10,x,y/2+.22,z,beam);
+  for(const yy of [3.04,y-.18])
+   if(yy<y-.05)box(g,T,w-.12,.105,.09,0,yy,z,beam);
+  for(const x of [-w*.32,w*.32])
+   edgeBeam(g,T,[x-.27,3.12,z+.04],[x+.25,Math.max(3.35,y-.28),z+.04],.078,beam);
   for(const x of [-w*.40,w*.40])box(g,T,.20,.24,.42,x,y+.07,d/2+.13,beam);
  }
  if(style==='mediterranean'){
@@ -474,7 +483,8 @@ function addPresetVolumes(g,T,{style,w,d,bodyHeight:y}){
   // dark glazed ribbon: visually different from flat-roof modern preset.
   box(g,T,w*.83,.25,d*.88,-w*.07,y+.17,0,stucco);
   box(g,T,w*.69,.19,.71,-w*.08,y*.79,d/2+.37,stucco);
-  box(g,T,w*.68,1.10,.055,-w*.10,2.56,d/2+.16,glass);
+  // The ribbon windows are now genuine apertures in addMeasuredFacades,
+  // not a glass rectangle pasted on a continuous concrete wall.
   for(let i=0;i<5;i++){
    const x=-w*.44+i*w*.17;
    box(g,T,.045,1.17,.075,x,2.58,d/2+.19,steel);
