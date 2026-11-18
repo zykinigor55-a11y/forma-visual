@@ -3,7 +3,7 @@
  * No third-party textures or images need to be shipped to the client. */
 export const BOTANICAL_PHOTO_PROFILES=Object.freeze({
  birch:Object.freeze({latin:'Betula pendula',crown:'airy pendant small-leaf sprays',leafLengthCm:4.5,leafWidthCm:3.4,
-  leafRoughness:.68,barkBump:.022,twigFrequency:1.35,shade:'#476d39',sunlit:'#b3cf65',fall:['#ad8735','#d7b44d','#827d32']}),
+  leafRoughness:.68,barkBump:.022,twigFrequency:1.35,shade:'#36572c',sunlit:'#87ab5b',fall:['#ad8735','#d7b44d','#827d32']}),
  oak:Object.freeze({latin:'Quercus robur',crown:'deep lobed foliage on articulated lateral shoots',leafLengthCm:9,leafWidthCm:5.5,
   leafRoughness:.78,barkBump:.045,twigFrequency:1.5,shade:'#294c27',sunlit:'#7e9950',fall:['#8a6638','#bd8d45','#61502d']}),
  spirea:Object.freeze({latin:'Spiraea japonica',crown:'arching stems, fine small leaflets; non-spherical',leafLengthCm:3,leafWidthCm:1.8,
