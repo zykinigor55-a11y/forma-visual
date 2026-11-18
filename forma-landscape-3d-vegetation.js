@@ -6,6 +6,7 @@ import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
 import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
+import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
@@ -17,6 +18,8 @@ export const VEGETATION_SPECIES=Object.freeze({
  rowan:{kind:'deciduous',density:920,branches:11,crownStart:.47,leaf:'#6b9850',bark:'#696153'},
  apple:{kind:'deciduous',density:1000,branches:11,crownStart:.33,leaf:'#789650',bark:'#715342'},
  sakura:{kind:'deciduous',density:1200,branches:12,crownStart:.36,leaf:'#82a25e',bark:'#79584a'},
+ ash:{kind:'deciduous',density:1400,branches:15,crownStart:.39,leaf:'#64864d',bark:'#807365'},
+ aspen:{kind:'deciduous',density:1550,branches:13,crownStart:.43,leaf:'#90ae68',bark:'#c9d2b3'},
  juniper:{kind:'conifer-shrub',density:650,branches:20,crownStart:.04,leaf:'#587a65',bark:'#675d4c'},
  hydrangea:{kind:'shrub',density:520,branches:24,crownStart:.1,leaf:'#76935d',flower:'#e6d9b1',bark:'#6f6650'},
  spirea:{kind:'shrub',density:450,branches:24,crownStart:.04,leaf:'#94a86c',flower:'#ece4ca',bark:'#736958'},
@@ -27,7 +30,10 @@ export const VEGETATION_SPECIES=Object.freeze({
  boxwood:{kind:'shrub',density:680,branches:26,crownStart:.02,leaf:'#506f42',bark:'#68614d'},
  ninebark:{kind:'shrub',density:590,branches:28,crownStart:.06,leaf:'#86674e',bark:'#816050'},
  hosta:{kind:'shrub',density:440,branches:18,crownStart:.02,leaf:'#64865b',bark:'#69795a'},
- 'ornamental-grass':{kind:'shrub',density:620,branches:44,crownStart:.02,leaf:'#989b67',bark:'#968c62'}
+ 'ornamental-grass':{kind:'shrub',density:620,branches:44,crownStart:.02,leaf:'#989b67',bark:'#968c62'},
+ fern:{kind:'shrub',density:440,branches:22,crownStart:.01,leaf:'#5a8861',bark:'#6e7656'},
+ periwinkle:{kind:'shrub',density:490,branches:25,crownStart:.01,leaf:'#5e8f6a',bark:'#67644e'},
+ 'wild-shrub':{kind:'shrub',density:690,branches:36,crownStart:.05,leaf:'#71965f',bark:'#705b47'}
 });
 export const vegetationSpeciesIds=Object.freeze(Object.keys(VEGETATION_SPECIES));
 export const isEvergreen=id=>['pine','spruce','juniper','thuja-globe','boxwood'].includes(id);
@@ -38,7 +44,7 @@ export function foliageProfile(id,season='summer'){
  const cfg=VEGETATION_SPECIES[id]||VEGETATION_SPECIES.oak;
  let color=cfg.leaf,leafless=season==='winter'&&!isEvergreen(id);
  if(season==='autumn'&&!isEvergreen(id)){
-  color=({birch:'#cba84f',oak:'#987548',maple:'#c26d40',linden:'#bca548',willow:'#c5ad66',rowan:'#a97744',apple:'#bd9554',sakura:'#ba8c50'})[id]||color;
+  color=({birch:'#cba84f',oak:'#987548',maple:'#c26d40',linden:'#bca548',willow:'#c5ad66',rowan:'#a97744',apple:'#bd9554',sakura:'#ba8c50',ash:'#b4a056',aspen:'#d6ae54',ninebark:'#a8704e','wild-shrub':'#b48c55',fern:'#a18d5f',hosta:'#b09c66'})[id]||color;
  }
  return {color,leafless,kind:cfg.kind};
 }
@@ -387,7 +393,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
    const stemY=y-(conifer?.04:.02)*height;
    curveBranch(branches,[0,stemY,0],tip,trunkRadius*(conifer?.25:.37)*(1-t*.55),height*(conifer?-.012:.028));
    const twigCount=kind==='pine'?6:kind==='spruce'?8:
-   id==='birch'?13:id==='oak'?12:9;
+   id==='birch'?13:id==='oak'||id==='ash'?12:id==='aspen'?14:9;
    for(let j=0;j<twigCount;j++){
     const f=(j+.2+r()*.45)/twigCount,flare=(r()-.5)*length*.4;
     const mid=[tip[0]*f,stemY+(outerY-stemY)*f,tip[2]*f];
@@ -520,6 +526,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
 }
 export function createVegetation(T,instance,{season='summer',quality=1,mode='standard'}={}){
  const id=instance.catalogId,cfg=VEGETATION_SPECIES[id];
+ if(NATIVE_UNDERSTORY[id])return createNativeUnderstory(T,instance,{season,quality,mode});
  if(!cfg)throw Error('Unknown botanical species: '+id);
  const diameter=clamp(Number(instance.diameter)||1,.2,30),height=clamp(Number(instance.height)||1,.25,40);
  const variant=clamp(Math.round(Number(instance.variant)||1),1,3),seed=hash((instance.id||id)+'|'+id+'|crown-'+variant),r=rng(seed),g=new T.Group();
