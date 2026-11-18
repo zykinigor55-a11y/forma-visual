@@ -407,10 +407,10 @@ export function createVegetation(T,instance,{season='summer',quality=1}={}){
  const id=instance.catalogId,cfg=VEGETATION_SPECIES[id];
  if(!cfg)throw Error('Unknown botanical species: '+id);
  const diameter=clamp(Number(instance.diameter)||1,.2,30),height=clamp(Number(instance.height)||1,.25,40);
- const seed=hash((instance.id||id)+'|'+id),r=rng(seed),g=new T.Group();
+ const variant=clamp(Math.round(Number(instance.variant)||1),1,3),seed=hash((instance.id||id)+'|'+id+'|crown-'+variant),r=rng(seed),g=new T.Group();
  if(cfg.kind==='shrub'||cfg.kind==='conifer-shrub')generateShrub(T,g,id,height,diameter,season,r,quality);
  else generateTree(T,g,id,height,diameter,season,r,quality);
- g.userData.species=id;g.userData.physicalHeight=height;g.userData.crownDiameter=diameter;
+ g.userData.species=id;g.userData.physicalHeight=height;g.userData.crownDiameter=diameter;g.userData.variant=variant;
  return g;
 }
 const rockTextureCache=new Map();
