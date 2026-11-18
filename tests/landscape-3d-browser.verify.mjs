@@ -23,7 +23,7 @@ try{
  const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
  page.on('pageerror',error=>errors.push(String(error)));
  await page.goto(base+'/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:30000});
- await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:45000});
+ await page.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:45000});
  assert.equal(await page.locator('#loadError').isVisible(),false);
  assert.ok(await page.locator('#viewport').evaluate(el=>el.width>300&&el.height>200),'WebGL canvas initialized');
  assert.equal(await page.locator('#weather').inputValue(),'sunny');
@@ -213,7 +213,7 @@ try{
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true,isMobile:true});
  mobile.on('pageerror',error=>errors.push('mobile '+String(error)));
  await mobile.goto(base+'/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:30000});
- await mobile.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:45000});
+ await mobile.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:45000});
  assert.ok(await mobile.locator('#viewport').evaluate(el=>el.width>250),'mobile 3D canvas mounted');
  assert.equal(await mobile.locator('#mobileWorkspaceTabs').isVisible(),true);
  assert.equal(await mobile.locator('#left').isVisible(),true);
@@ -244,7 +244,7 @@ try{
  const floraIndex=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-flora-v1-landscape')||'[]'));
  assert.ok(floraIndex.includes('pine'),'Species override persisted in local metadata');
  await page.reload({waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:45000});
+ await page.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:45000});
  await page.locator('[data-tool="plant"]').click();
  await page.locator('[data-item="pine"]').click();
  await page.waitForFunction(()=>document.querySelector('#floraModelStatus')?.textContent.includes('GLB активна'),null,{timeout:30000});
