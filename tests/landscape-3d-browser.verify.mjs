@@ -97,6 +97,28 @@ try{
  assert.notEqual(orbitAfter,orbitBefore,'Right mouse drag must actually rotate the 3D scene');
  assert.equal(await page.evaluate(()=>localStorage.getItem('forma-landscape-masterplan-v1-landscape')),previous,'Right-drag camera orbit never edits lawn');
  await page.screenshot({path:'artifacts/landscape-editor/3d-lawn-brush.png'});
+ // A second photorealistic surface is painted independently in the same real 3D
+ // scene. Erasing gravel must not remove lawns, measured paving or buildings.
+ await page.locator('[data-view="2d"]').click();
+ await page.locator('[data-item="pine-bark"]').click();
+ const fillBox=await page.locator('#viewport').boundingBox();
+ const fx=fillBox.x+fillBox.width*.55,fy=fillBox.y+fillBox.height*.59;
+ await page.mouse.move(fx,fy);await page.mouse.down({button:'left'});
+ for(let i=1;i<=9;i++)await page.mouse.move(fx+i*9,fy+i*2,{steps:2});
+ await page.mouse.up({button:'left'});
+ const siteBeforeErase=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')));
+ const barkBefore=siteBeforeErase.objects.filter(x=>x.catalogId==='pine-bark'&&x.geometry==='strip');
+ assert.equal(barkBefore.length,1,'Bark gravel was painted with one smooth physical-width strip');
+ assert.ok(barkBefore[0].points.length>=3,'No cracks between brush stamps');
+ assert.ok(siteBeforeErase.objects.some(x=>x.id===brushData.id),'Grass remains after applying gravel');
+ await page.locator('#eraseSurfaceBrush').check();
+ await page.mouse.move(fx+45,fy+10);await page.mouse.down({button:'left'});
+ await page.mouse.move(fx+51,fy+10,{steps:4});await page.mouse.up({button:'left'});
+ const siteAfterErase=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-masterplan-v1-landscape')));
+ assert.deepEqual(siteAfterErase.house,siteBeforeErase.house,'Surface eraser preserves the actual house');
+ assert.deepEqual(siteAfterErase.objects.filter(x=>x.catalogId==='universal'),siteBeforeErase.objects.filter(x=>x.catalogId==='universal'),'Lawn is not erased by bark-gravel eraser');
+ assert.ok(siteAfterErase.objects.filter(x=>x.catalogId==='pine-bark').length<=2,'Gravel eraser only changes the touched strip');
+ await page.screenshot({path:'artifacts/landscape-editor/3d-gravel-brush-and-eraser.png'});
  // Relief brush: reset to measured nadir after camera rotation, so test clicks
  // are guaranteed to hit the parcel rather than the background beyond it.
  await page.locator('[data-view="2d"]').click();
