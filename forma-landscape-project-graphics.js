@@ -155,8 +155,8 @@ const CARD_PHOTO_IDS=new Set(['bollard','ground','spot','low-post','deck-light',
 const PHOTO_PLANT_CARD_IDS=new Set(['birch','oak','maple','juniper','hydrangea','barberry','lavender','pine']);
 const availableCardPhotos=new Set();
 export const cardPhotoCount=()=>availableCardPhotos.size;
-export const cardPhotoURL=(entry)=>entry?.group==='lights'?iconURL(entry):entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):PHOTO_PLANT_CARD_IDS.has(entry.id)?'/assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
-export const hasPhotographicCard=(entry)=>entry?.group==='lights'?false:Boolean(entry&&((entry.group==='trees'&&treeCanopyPNG(entry.id))||PHOTO_PLANT_CARD_IDS.has(entry.id)||availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
+export const cardPhotoURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):PHOTO_PLANT_CARD_IDS.has(entry?.id)?'/assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry?.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
+export const hasPhotographicCard=(entry)=>Boolean(entry&&((entry.group==='trees'&&treeCanopyPNG(entry.id))||PHOTO_PLANT_CARD_IDS.has(entry.id)||availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
 
 const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-18-staged-v2';
 export const photographicAssetCount=()=>[...availablePhotos].filter(id=>PHOTO_ASSETS[id]?.endsWith('.jpg')).length;
