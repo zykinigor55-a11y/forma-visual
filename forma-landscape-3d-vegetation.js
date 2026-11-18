@@ -2,7 +2,7 @@
  * True branch geometry + instanced leaf meshes; no image billboards, no flat
  * cutouts. Everything uses metres and can be orbited, walked through and
  * rendered with real directional shadows. Deterministic per-object seed. */
-import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth} from './forma-landscape-3d-botany.js';
+import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile} from './forma-landscape-3d-botany.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
@@ -199,11 +199,12 @@ function createSprayTexture(T,needles,id){
  const textureId=(needles?'needles-':'leaves-')+id;
  if(sprayTextureCache.has(textureId))return sprayTextureCache.get(textureId);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
- const ctx=canvas.getContext('2d'),random=rng(hash(textureId));
+ const ctx=canvas.getContext('2d'),random=rng(hash(textureId)),profile=needles?coniferNeedleProfile(id):null;
  const stem=(a,b,c,d,w=1.1)=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.strokeStyle='rgba(186,194,169,.70)';ctx.lineWidth=w;ctx.stroke()};
- for(let j=0;j<13;j++){
-  const angle=j*Math.PI*2/13+(random()-.5)*.32;
-  const length=54+random()*59;
+ const arms=profile?.arms||13;
+ for(let j=0;j<arms;j++){
+  const angle=j*Math.PI*2/arms+(random()-.5)*.32;
+  const length=(54+random()*59)*(profile?.length||1);
   const endX=128+Math.cos(angle)*length,endY=128+Math.sin(angle)*length*.80;
   stem(128,128,endX,endY);
   for(let k=1;k<=8;k++){
@@ -211,8 +212,8 @@ function createSprayTexture(T,needles,id){
    for(const side of [-1,1]){
     const nx=-Math.sin(angle)*side,ny=Math.cos(angle)*side;
     const speciesWidth=id==='willow'?.55:id==='birch'?.74:id==='oak'?1.2:id==='maple'?1.1:id==='lavender'?.40:1;
-    const dx=nx*(14+random()*10)*speciesWidth,dy=ny*(14+random()*10)*speciesWidth;
-    if(needles){for(let n=0;n<3;n++)stem(x+n*1.7,y,x+dx*(.70+n*.14),y+dy*(.70+n*.14),.8)}
+    const dx=nx*(14+random()*10)*speciesWidth*(profile?.spread||1),dy=ny*(14+random()*10)*speciesWidth*(profile?.spread||1);
+    if(needles){for(let n=0;n<profile.needlesPerSide;n++)stem(x+n*1.3,y,x+dx*(.72+n*.10),y+dy*(.72+n*.10),profile.thickness)}
     else{
      ctx.save();ctx.translate(x+dx*.7,y+dy*.7);ctx.rotate(Math.atan2(dy,dx));
      ctx.fillStyle='rgba(232,239,217,.94)';
