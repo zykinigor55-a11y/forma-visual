@@ -1131,6 +1131,7 @@ async function renderAi(){
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
+   solarAngles:{azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,strength:solarSettings.strength,softness:solarSettings.softness},
    extra3dObjects:extra.slice(0,250).map(o=>({type:o.type,x:o.x,y:o.y,width:o.width,rotation:o.rotation,
     catalogName:realModelById(o.type)?.name||o.type,group:realModelById(o.type)?.group||'structures'}))};
   const payload=JSON.stringify({image,landscapeMasterplan:sceneInfo,landscapeModel:model,quality:'high',quantity:1});
