@@ -1,0 +1,39 @@
+name: FORMA — targeted 3D catalog and PBR smoke test
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-3d.html'
+      - 'forma-landscape-3d-premium.js'
+      - 'forma-landscape-3d-models.js'
+      - 'tests/landscape-3d-fast-smoke.verify.mjs'
+      - '.github/workflows/forma-3d-quick-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-3d-quick-smoke
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: Load 3D app and validate catalogs and native models
+        run: |
+          node server.mjs > /tmp/forma-smoke-server.log 2>&1 &
+          node tests/landscape-3d-fast-smoke.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-3d-catalog-smoke
+          path: artifacts/landscape-editor
+          if-no-files-found: ignore
