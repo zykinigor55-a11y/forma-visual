@@ -75,7 +75,7 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #status.status-hidden{opacity:0;pointer-events:none}
 #hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
 #loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
-#loadError strong{font-size:19px}.model-health{padding:11px 12px;margin:11px 0 13px;border:1px solid #6a634f;border-radius:11px;background:linear-gradient(135deg,#31362f,#242c2a)}.model-health strong{font-size:12px;color:#ebcfa5;letter-spacing:.04em}.model-health small{display:block;margin-top:5px;color:#bac7bc;line-height:1.55;font-size:10px}.model-health button{margin-top:7px;background:#514735;color:#f8e1bc;border:1px solid #a18a64;border-radius:7px;padding:7px 10px;font-size:11px}.model-health button:focus-visible{outline:2px solid #edd0a2}
+#loadError strong{font-size:19px}.model-health{padding:11px 12px;margin:11px 0 13px;border:1px solid #6a634f;border-radius:11px;background:linear-gradient(135deg,#31362f,#242c2a)}.model-health strong{font-size:12px;color:#ebcfa5;letter-spacing:.04em}.model-health small{display:block;margin-top:5px;color:#bac7bc;line-height:1.55;font-size:10px}.model-health button{margin-top:7px;background:#514735;color:#f8e1bc;border:1px solid #a18a64;border-radius:7px;padding:7px 10px;font-size:11px}.model-health button:focus-visible{outline:2px solid #edd0a2}.build-info{font-size:10px;padding:6px 8px;margin:6px 0 10px;border-radius:7px;color:#adbcad;line-height:1.45}.build-info.stale{border:1px solid #a78851;background:#493b29;color:#ffe3ae}
 #aiResult{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
 #aiResult[hidden]{display:none}
 .ai-result-card{width:min(100%,1000px);max-height:94%;display:flex;flex-direction:column;gap:10px;padding:16px;background:#222629;border:1px solid #615746;border-radius:15px;box-shadow:0 20px 90px #0009}
@@ -150,7 +150,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
- <hr><div id="modelHealth" class="model-health" role="status" aria-live="polite"><strong>3D-модели</strong><small>Проверяем загруженные объекты…</small></div><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
+ <hr><div id="modelHealth" class="model-health" role="status" aria-live="polite"><strong>3D-модели</strong><small>Проверяем загруженные объекты…</small></div><div id="buildInfo" class="build-info" role="status" aria-live="polite">Сборка: проверяем версию сервера…</div><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
  <hr><div class="pair"><div><label>Участок, ширина м</label><input id="plotW" type="number" min="5" max="500" step=".5"></div><div><label>Длина, м</label><input id="plotH" type="number" min="5" max="500" step=".5"></div></div>
  <button class="action" id="resizePlot">Применить размеры</button>
   <hr><h3>ЧЕРТЁЖ УЧАСТКА · ПОДЛОЖКА</h3>
@@ -203,6 +203,17 @@ let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,ter
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();let plantSpeciesStored=new Set();
+function readBuildInfo(){
+ const el=$('#buildInfo');if(!el)return;
+ fetch('/api/build',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Сервер без диагностики релиза');return r.json()}).then(data=>{
+  if(!data.deployed){el.textContent='Локальная сборка · диагностика 3D доступна';return}
+  const branch=String(data.branch||'неизвестно'),commit=String(data.commit||'').slice(0,12);
+  const valid=branch==='dom-render-nanobanana';
+  el.classList.toggle('stale',!valid);
+  el.textContent=valid?'Render · '+branch+' · '+(commit||'версия не указана'):
+   'ВНИМАНИЕ: Render запущен из ветки «'+branch+'», а редактор обновляется в dom-render-nanobanana. Проверьте источник сервиса.';
+ }).catch(()=>{el.textContent='Версию Render определить не удалось. Проверьте публикацию.'});
+}
 function updateModelHealth(){
  const el=$('#modelHealth');if(!el||!doc)return;
  const ids=[...new Set([...extra.map(o=>o.type),...doc.objects.map(o=>o.catalogId)].filter(x=>modelPath(x)))];
@@ -296,7 +307,7 @@ function initialize(){
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
  const previousDrawing=localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);
- window.FORMA_3D_READY=true;
+ window.FORMA_3D_READY=true;readBuildInfo();
  status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
