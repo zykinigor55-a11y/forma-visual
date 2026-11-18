@@ -18,6 +18,14 @@ test('3D render opens progress window and uses the existing paid-request queue',
  assert.match(page,/\$\('#aiProgress'\)\.hidden=true;\$\('#aiResult'\)\.hidden=false/);
 });
 
+test('public model selector uses approachable quality names and defaults to photographic mode',()=>{
+ const first=page.indexOf('<option value="nano-banana-2.1">Высокое качество · фотореализм</option>');
+ const second=page.indexOf('<option value="gpt-image-2.6">Сбалансированное качество · точность деталей</option>');
+ assert.ok(first>0&&second>first,'high quality uses Nano Banana by default');
+ assert.match(page,/Качество фоторендера/);
+ assert.doesNotMatch(page,/<option[^>]+>GPT Image 2\.6/);
+});
+
 test('3D scene sends extra GLB asset identities, sun and camera measurements to AI',()=>{
  assert.match(page,/extra3dObjects:extra\.slice\(0,250\)/);
  assert.match(page,/cameraFovDegrees:camera\.isPerspectiveCamera\?camera\.fov/);
