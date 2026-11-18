@@ -245,7 +245,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality){
   mesh.setColorAt(i,tone.clone().multiplyScalar(.83+r()*.35));
  }
  mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
- mesh.castShadow=false;mesh.frustumCulled=false;g.add(mesh);
+ mesh.castShadow=quality>=.30&&quality<.43;mesh.frustumCulled=false;g.add(mesh);
 }
 /* Real petalled flowers instead of tiny stone-shaped spheres.
  * Pairs of concave triangles form each petal; repeated as instanced clusters. */
@@ -355,7 +355,11 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  // Birch has a visible pale trunk; Scots pine a taller open red-brown bole.
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
  addBranch(g,T,branches,c.bark,id);
- if(!leafless){addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295),id);addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);}
+ if(!leafless){
+  if(quality>=.64)addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);
+  if(quality>=.43)addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295),id);
+  addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);
+ }
  flowerClusters(g,T,leafPoints,id,Math.floor(r()*4294967295),season);
 }
 /* Branch-connected shrub clusters. Groundcover lies low and spreads
@@ -397,8 +401,8 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  }
  addBranch(g,T,branches,c.bark,id);
  if(!foliageProfile(id,season).leafless){
-  addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);
-  addLeaves(g,T,points,foliageProfile(id,season).color,evergreen,season,Math.floor(r()*4294967295),id);
+  if(quality>=.64)addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);
+  if(quality>=.43)addLeaves(g,T,points,foliageProfile(id,season).color,evergreen,season,Math.floor(r()*4294967295),id);
   addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);
  }
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
