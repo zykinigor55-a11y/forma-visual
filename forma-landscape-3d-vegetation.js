@@ -183,8 +183,8 @@ function foliageSprigGeometry(T,needle,id='oak'){
  const contour=leafOutline(id,10);
  const leafWidth=conifer?(id==='pine'?.018:.015):id==='birch'?.091:
   id==='spirea'?.066:id==='oak'?.135:id==='hydrangea'?.16:isSmall?.09:.12;
- const leafLength=conifer?(id==='pine'?.28:.17):id==='birch'?.21:
-  id==='spirea'?.175:id==='oak'?.30:isSmall?.22:.265;
+ const leafLength=conifer?(id==='pine'?.28:.17):id==='birch'?.115:
+  id==='spirea'?.205:id==='oak'?.20:isSmall?.22:.265;
  const along=(u,v)=>[u[0]+v[0],u[1]+v[1],u[2]+v[2]];
  for(let i=0;i<pairs;i++)for(const side of [-1,1]){
   const t=(i+.7)/(pairs+1),inward=1-.25*t;
@@ -497,7 +497,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    id==='boxwood'||id==='thuja-globe'?actual*(.51+r()*.47):
    actual*(.38+r()*.54);
   const pt=[Math.cos(az)*dist*horizontal,tipHeight,Math.sin(az)*dist*horizontal],
-   radiusStem=isSpike?.007:isCreeper?.012:.016+r()*.016;
+   radiusStem=id==='spirea'?.0045+r()*.0035:id==='hosta'?.0035:isSpike?.007:isCreeper?.012:.016+r()*.016;
   curveBranch(branches,[0,.045,0],pt,radiusStem,
    actual*(isCreeper?-.01:id==='spirea'?.16:.065));
   for(let k=0;k<15;k++){
