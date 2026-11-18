@@ -48,3 +48,28 @@
  }
  .fa-home-panel .fa-home-tool-icon{flex-basis:45px!important}
 }
+
+/* Toolbars inside material editing use the same icon source at compact scale. */
+.tool-btn svg.forma-premium-icon{
+ width:30px!important;height:30px!important;min-width:30px;
+ display:inline-block;vertical-align:middle;overflow:visible;
+ margin-right:4px;
+}
+.tool-btn.active svg.forma-premium-icon,
+.tool-btn:hover svg.forma-premium-icon{
+ filter:drop-shadow(0 3px 5px rgba(174,129,65,.30));
+}
+/* Premium icons never intercept interaction or prevent accessible focus. */
+svg.forma-premium-icon{pointer-events:none}
+.rail-nav .rail-btn:focus-visible,
+.mobile-nav button:focus-visible,
+.fa-home-panel .fa-home-tool:focus-visible,
+.tool-btn:focus-visible{
+ outline:2px solid #e8c594!important;
+ outline-offset:2px!important;
+}
+/* Make mobile icons legible without enlarging their tap targets. */
+@media(max-width:560px){
+ .tool-btn svg.forma-premium-icon{width:25px!important;height:25px!important;min-width:25px}
+ .mobile-nav button svg.forma-premium-icon{width:30px!important;height:30px!important}
+}
