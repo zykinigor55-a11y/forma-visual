@@ -51,9 +51,9 @@ export function validatedLandscapeProps(object,fields,{plot,contains,kind='objec
   if(field==='x'||field==='y'){
    if(value<0||value>bounds[field==='x'?'width':'height'])return null;
   }else if(field==='width'){
-   if(value<(model?.1:.6)||value>(model?30:bounds.width))return null;
+   if(value<(model ? .1 : .6)||value>(model?30:bounds.width))return null;
   }else if(field==='height'){
-   if(value<(isBuilding?.6:.1)||value>(isBuilding?bounds.height:200))return null;
+   if(value<(isBuilding ? .6 : .1)||value>(isBuilding?bounds.height:200))return null;
   }else if(field==='diameter'){
    if(value<.1||value>200)return null;
   }else if(field==='roofRise'){
