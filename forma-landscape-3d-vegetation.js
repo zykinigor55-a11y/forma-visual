@@ -204,6 +204,18 @@ function foliageSprigGeometry(T,needle,id='oak'){
   const transverse=[-direction[2],.06,direction[0]];
   const len=leafLength*inward,width=leafWidth*(.68+.28*Math.sin(Math.PI*t));
   const centre=along(base,[direction[0]*len*.48,direction[1]*len*.48,direction[2]*len*.48]);
+  if(conifer){
+   // Genuine folded 3D needles: four triangles instead of a broadleaf
+   // fan. Preserves dense, connected pine/spruce crowns with ~3x less GPU work.
+   const start=along(base,[direction[0]*len*.05,direction[1]*len*.05,direction[2]*len*.05]);
+   const middle=along(base,[direction[0]*len*.54,direction[1]*len*.54+.011,direction[2]*len*.54]);
+   const tip=along(base,[direction[0]*len,direction[1]*len+.007,direction[2]*len]);
+   const left=along(middle,[transverse[0]*width,transverse[1]*width,transverse[2]*width]);
+   const right=along(middle,[-transverse[0]*width,-transverse[1]*width,-transverse[2]*width]);
+   push(start,left,middle);push(middle,left,tip);
+   push(start,middle,right);push(middle,tip,right);
+   continue;
+  }
   let outline=[];
   for(const [u,v] of contour){
    // 2D leaf contour is only a parametric template; transformed leaves have
