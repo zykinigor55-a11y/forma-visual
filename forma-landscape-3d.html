@@ -484,8 +484,8 @@ function mark(group,key){
  return group;
 }
 function rebuild(){
- waterSurfaces.length=0;
  renderGate.invalidate();
+ waterSurfaces.length=0;
  shadowBudgetDirty=true;
  currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
  const adaptive=vegetationQuality(window.innerWidth,currentPlantCount,state.view);
