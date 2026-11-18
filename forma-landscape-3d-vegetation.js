@@ -195,11 +195,11 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
 /* Botanical leaf atlas: thin leaflets and conifer needles on real angled
  * 3D foliage quads, not flat whole-tree billboards. */
 const sprayTextureCache=new Map();
-function createSprayTexture(T,needles){
- const id=needles?'needles':'leaves';
- if(sprayTextureCache.has(id))return sprayTextureCache.get(id);
+function createSprayTexture(T,needles,id){
+ const textureId=(needles?'needles-':'leaves-')+id;
+ if(sprayTextureCache.has(textureId))return sprayTextureCache.get(textureId);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
- const ctx=canvas.getContext('2d'),random=rng(hash(id));
+ const ctx=canvas.getContext('2d'),random=rng(hash(textureId));
  const stem=(a,b,c,d,w=1.1)=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.strokeStyle='rgba(186,194,169,.70)';ctx.lineWidth=w;ctx.stroke()};
  for(let j=0;j<13;j++){
   const angle=j*Math.PI*2/13+(random()-.5)*.32;
@@ -210,13 +210,15 @@ function createSprayTexture(T,needles){
    const t=k/9,x=128+(endX-128)*t,y=128+(endY-128)*t;
    for(const side of [-1,1]){
     const nx=-Math.sin(angle)*side,ny=Math.cos(angle)*side;
-    const dx=nx*(14+random()*10),dy=ny*(14+random()*10);
+    const speciesWidth=id==='willow'?.55:id==='birch'?.74:id==='oak'?1.2:id==='maple'?1.1:id==='lavender'?.40:1;
+    const dx=nx*(14+random()*10)*speciesWidth,dy=ny*(14+random()*10)*speciesWidth;
     if(needles){for(let n=0;n<3;n++)stem(x+n*1.7,y,x+dx*(.70+n*.14),y+dy*(.70+n*.14),.8)}
     else{
      ctx.save();ctx.translate(x+dx*.7,y+dy*.7);ctx.rotate(Math.atan2(dy,dx));
      ctx.fillStyle='rgba(232,239,217,.94)';
-     ctx.beginPath();ctx.moveTo(-14,0);ctx.quadraticCurveTo(0,-9,16,0);
-     ctx.quadraticCurveTo(0,9,-14,0);ctx.fill();
+     const narrow=id==='willow'?.35:id==='birch'?.68:id==='rowan'?.62:id==='oak'?1.1:1;
+     ctx.beginPath();ctx.moveTo(-14,0);ctx.quadraticCurveTo(0,-9*narrow,16,0);
+     ctx.quadraticCurveTo(0,9*narrow,-14,0);ctx.fill();
      ctx.strokeStyle='rgba(89,111,88,.28)';ctx.lineWidth=.8;
      ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(14,0);ctx.stroke();
      ctx.restore();
@@ -226,7 +228,7 @@ function createSprayTexture(T,needles){
  }
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
  texture.minFilter=T.LinearMipmapLinearFilter;texture.magFilter=T.LinearFilter;
- sprayTextureCache.set(id,texture);return texture;
+ sprayTextureCache.set(textureId,texture);return texture;
 }
 /* Three-dimensional crossed foliage sprays. Each textured tuft is attached to
  * a modelled twig endpoint, not distributed in an imaginary sphere. Two
@@ -237,7 +239,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter){
  const needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  const minimum=quality<.3?(shrub?220:620):quality<.45?(shrub?360:1100):(shrub?470:1450);
  const count=clamp(Math.round(points.length*(1.05+quality*1.25)),minimum,shrub?1800:3650);
- const texture=createSprayTexture(T,needle);
+ const texture=createSprayTexture(T,needle,id);
  const material=new T.MeshStandardMaterial({map:texture,alphaTest:.26,side:T.DoubleSide,roughness:.94,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
   cross=new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count);
