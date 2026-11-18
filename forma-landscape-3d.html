@@ -196,7 +196,12 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <input type="file" id="customHouseGlb" accept=".glb,model/gltf-binary">
   <button type="button" class="action" id="clearCustomHouse">Вернуться к выбранному стилю</button>
   <p class="muted">GLB сохраняется локально в этом браузере. Масштаб пропорционально вписывается в выбранные размеры дома без растяжения.</p></section>
- <label for="quality3d">Качество 3D-сцены</label><select id="quality3d"><option value="auto">Автоматически · адаптивно</option><option value="high">Максимум · PBR и тени</option><option value="speed">Плавная работа · облегчённое</option></select>
+ <label for="quality3d">Качество 3D-сцены</label><select id="quality3d">
+ <option value="speed">Быстрый · лёгкие модели</option>
+ <option value="auto" selected>Стандарт · реалистичная 3D-сцена</option>
+ <option value="high">Премиум / фотореализм · детальная ботаника и PBR</option>
+ </select>
+ <p class="muted" id="botanicalLodStatus">Кроны обновляются по расстоянию до камеры. Вблизи — настоящая 3D-листва, вдали — облегчённые кластеры.</p>
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
@@ -264,6 +269,7 @@ import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometr
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
+import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
@@ -290,7 +296,8 @@ let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushS
 let solarSettings=solarPreset('day');
 const heldWalkKeys=new Set();
 let lastWalkFrame=0;
-let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
+let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;
+const botanicalGroups=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
 const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
 let plantSpeciesStored=new Set();
@@ -457,10 +464,12 @@ function rebuild(){
  renderGate.invalidate();
  shadowBudgetDirty=true;
  currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
- currentPlantQuality=vegetationQuality(window.innerWidth,currentPlantCount,state.view)*(renderQuality==='speed'||autoReduced ? .60 : 1);
+ const adaptive=vegetationQuality(window.innerWidth,currentPlantCount,state.view);
+ currentPlantQuality=renderQuality==='high'?Math.max(currentPlantCount<=14?.72:.47,adaptive):
+  adaptive*(renderQuality==='speed'||autoReduced ? .60 : 1);
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();for(const mat of (Array.isArray(n.material)?n.material:[n.material]))mat?.dispose?.()})}
- pickables=[];shadowedGardenLights=0;
+ pickables=[];botanicalGroups.length=0;lastBotanicalLodAt=0;shadowedGardenLights=0;
  const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
  const vertices=terrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
  for(let i=0;i<vertices.length;i+=3){const j=i/3*2;uvs[j]=vertices[i]/w+.5;uvs[j+1]=vertices[i+2]/h+.5}
@@ -546,7 +555,9 @@ function drawObject(o,entry,key){
   const imported=importedPlantModels.get(o.catalogId);
   const performanceFallback=(renderQuality==='speed'||autoReduced)&&currentPlantCount>9;
   const source=imported||(!performanceFallback&&bundledPlantIsTrueScale(o.catalogId,o.height,o.diameter)?bundledModelSources.get(o.catalogId):null);
-  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!imported}):createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
+  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!imported}):
+   createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
+    mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
  }else if(group==='boulders'){
   const source=bundledModelSources.get(o.catalogId);
   g=source?makeRealVegetation(THREE,source,{...o,height:Math.max(.35,Number(o.diameter||1.5)*.62)},{shareGeometry:true}):createRock(THREE,o);
@@ -563,6 +574,7 @@ function drawObject(o,entry,key){
  const groundH=terrainAt(p.x,p.z);
  g.position.set(p.x,groundH,p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
  mark(g,key);root.add(g);
+ if(g.userData?.botanicalLod)botanicalGroups.push(g);
 }
 function polygon(points,y,color,water=false,materialId='universal'){
  const shape=new THREE.Shape();points.forEach((pt,i)=>{const p=pos(pt.x,pt.y);i?shape.lineTo(p.x,-p.z):shape.moveTo(p.x,-p.z)});shape.closePath();
@@ -1234,16 +1246,20 @@ document.addEventListener('forma:render-job-status',event=>{
 function captureHighQuality3dReference(){
  const previousRatio=renderer.getPixelRatio();
  const previousShadows=renderer.shadowMap.enabled;
+ const prevBotanicalTiers=botanicalGroups.map(g=>[g,g.userData.botanicalCurrentLod]);
  const logicalWidth=Math.max(1,canvas.clientWidth),logicalHeight=Math.max(1,canvas.clientHeight);
  const highestDim=Math.max(logicalWidth,logicalHeight);
  const photoRatio=Math.max(.75,Math.min(2,Math.max(1.5,window.devicePixelRatio||1),2800/highestDim));
  try{
   renderer.setPixelRatio(photoRatio);
   renderer.shadowMap.enabled=true;
+  root.updateMatrixWorld(true);camera.updateMatrixWorld();
+  for(const group of botanicalGroups)updateBotanicalLod(group,camera,canvas.clientHeight,'premium');
   renderer.shadowMap.needsUpdate=true;
   renderer.render(scene,camera);
   return renderer.domElement.toDataURL('image/png');
  }finally{
+  for(const [group,tier] of prevBotanicalTiers)setFoliageTier(group,tier);
   renderer.setPixelRatio(previousRatio);
   renderer.shadowMap.enabled=previousShadows;
   renderer.shadowMap.needsUpdate=true;
@@ -1596,6 +1612,17 @@ function animate(now=0){
  // Orbit controls own 2D/3D; walk mode is a separate ground-locked camera.
  const cameraMoved=walked||Boolean(controls?.enabled&&controls.update());
  const activeWalk=state.view==='walk'&&walked;
+ // Pixel-space selection, not a fixed world distance. Hysteresis avoids
+ // foliage popping during strolls; update at most ~4 times per second.
+ if(botanicalGroups.length&&camera&&(cameraMoved||now-lastBotanicalLodAt>420)&&
+   now-lastBotanicalLodAt>245){
+  lastBotanicalLodAt=now;root.updateMatrixWorld(true);camera.updateMatrixWorld();
+  for(const model of botanicalGroups){
+   const previous=model.userData.botanicalCurrentLod;
+   const current=updateBotanicalLod(model,camera,canvas.clientHeight);
+   if(current!==previous){renderGate.invalidate();shadowBudgetDirty=true}
+  }
+ }
  if(root&&camera&&(shadowBudgetDirty||((cameraMoved||activeWalk)&&now-lastShadowBudgetAt>350))){
   const changed=applyRealModelShadowBudget(root,camera,{mobile:window.innerWidth<=720,maxCasters:5});
   lastShadowBudgetAt=now;shadowBudgetDirty=false;
