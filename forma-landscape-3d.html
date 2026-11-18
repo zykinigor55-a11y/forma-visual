@@ -881,7 +881,7 @@ function focusHouseCamera(){
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
-let surfacePreviewFrame=0;
+let surfacePreviewFrame=0,surfacePreviewLast=0,brushRebuildLast=0;
 function refreshActiveSurface(){
  const obj=brushStroke?.object;if(!obj||!root)return;
  const key='object:'+obj.id;
@@ -897,11 +897,22 @@ function refreshActiveSurface(){
 }
 function scheduleSurfacePreview(){
  if(surfacePreviewFrame)return;
- surfacePreviewFrame=requestAnimationFrame(()=>{surfacePreviewFrame=0;refreshActiveSurface()});
+ // Editing a curved lawn must not triangulate 500+ vertices on every pixel.
+ const refresh=now=>{
+  if(now-surfacePreviewLast<65){surfacePreviewFrame=requestAnimationFrame(refresh);return}
+  surfacePreviewFrame=0;surfacePreviewLast=now;refreshActiveSurface();
+ };
+ surfacePreviewFrame=requestAnimationFrame(refresh);
 }
 function scheduleBrushRebuild(){
  if(brushRefreshFrame)return;
- brushRefreshFrame=requestAnimationFrame(()=>{brushRefreshFrame=0;rebuild()});
+ // Background 3D trees/GLBs redraw at most 10 times/second while erasing or
+ // sculpting; the painted surface above still receives immediate mesh updates.
+ const refresh=now=>{
+  if(now-brushRebuildLast<100){brushRefreshFrame=requestAnimationFrame(refresh);return}
+  brushRefreshFrame=0;brushRebuildLast=now;rebuild();
+ };
+ brushRefreshFrame=requestAnimationFrame(refresh);
 }
 function modifyTerrain(world){
  heightmap=applyTerrainBrush({heights:heightmap,grid:GRID,width:doc.site.width,length:doc.site.height,world,
