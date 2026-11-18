@@ -23,6 +23,18 @@ try{
  });
  assert.ok(metrics.every(m=>m.meshes>=2&&m.instanced>=2),'Every species must be real instanced 3D branches and foliage: '+JSON.stringify(metrics));
  assert.ok(metrics.every(m=>m.height>0&&m.diameter>0));
+ const groundNormals=await page.evaluate(async()=>{
+  const {terrainTriangles}=await import('./forma-landscape-3d-geometry.js');
+  const tris=terrainTriangles({width:58,height:50},new Array(49*49).fill(0),48);
+  let up=0,down=0;
+  for(let i=0;i<tris.length;i+=9){
+   const a=tris.slice(i,i+3),b=tris.slice(i+3,i+6),c=tris.slice(i+6,i+9);
+   const ny=(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]);
+   if(ny>0)up++;else down++;
+  }
+  return {up,down};
+ });
+ assert.ok(groundNormals.up>0&&groundNormals.down===0,'3D terrain normals must face the light: '+JSON.stringify(groundNormals));
  const project=await page.evaluate(async()=>{
   const key='forma-landscape-masterplan-v1-landscape',stored=JSON.parse(localStorage.getItem(key)||'null');
   const {freshProject}=await import('./forma-landscape-project-core.js');
