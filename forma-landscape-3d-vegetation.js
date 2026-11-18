@@ -197,7 +197,10 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  );
  const geometry=foliageSprigGeometry(T,needle,id);
  const material=foliageMaterial(T,id,{physical:false});
- const mesh=new T.InstancedMesh(geometry,material,number),d=new T.Object3D(),base=new T.Color(source.color);
+ const palette=normalizeFoliagePalette(id,season);
+ const shadeColor=new T.Color(palette.shade),sunColor=new T.Color(palette.sunlit);
+ const fallColors=palette.fall?.map(hex=>new T.Color(hex));
+ const mesh=new T.InstancedMesh(geometry,material,number),d=new T.Object3D();
  for(let i=0;i<number;i++){
   const p=points[Math.floor(r()*points.length)];
   // The maximum 3cm placement offset remains within terminal twig thickness;
@@ -209,8 +212,8 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
-  const color=base.clone().multiplyScalar((.84+r()*.25)*shade);
-  if(season==='autumn'&&!needle&&r()<.25)color.lerp(new T.Color('#c98644'),r()*.42);
+  const color=shadeColor.clone().lerp(sunColor,.15+r()*.78).multiplyScalar(shade);
+  if(fallColors&&!needle)color.lerp(fallColors[Math.floor(r()*fallColors.length)],.57+r()*.36);
   mesh.setColorAt(i,color);
  }
  mesh.instanceMatrix.needsUpdate=true;
@@ -285,7 +288,9 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
  const material=new T.MeshStandardMaterial({map:texture,alphaTest:.26,side:T.DoubleSide,roughness:.94,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
   cross=new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count);
- const d=new T.Object3D(),tone=new T.Color(type.color);
+ const d=new T.Object3D(),palette=normalizeFoliagePalette(id,season),
+  shadeColor=new T.Color(palette.shade),sunColor=new T.Color(palette.sunlit),
+  fallColors=palette.fall?.map(hex=>new T.Color(hex));
  // Wide sprays supply the distant silhouette. Close-up mesh leaves and bark
  // supply microgeometry; no large geometric leaf balls are recreated.
  for(let i=0;i<count;i++){
@@ -295,14 +300,16 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
   const w=foliageSprayWidth(id,diameter)*(.72+r()*.70);
   d.scale.set(w,w,1);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
-  const colour=tone.clone().multiplyScalar((.87+r()*.22)*shade);mesh.setColorAt(i,colour);
+  const colour=shadeColor.clone().lerp(sunColor,.10+r()*.79).multiplyScalar(shade);
+  if(fallColors&&!needle)colour.lerp(fallColors[Math.floor(r()*fallColors.length)],.58+r()*.32);
+  mesh.setColorAt(i,colour);
   d.rotateY(Math.PI/2);d.updateMatrix();cross.setMatrixAt(i,d.matrix);
   cross.setColorAt(i,colour);
  }
  for(const tuft of [mesh,cross]){
   tuft.instanceMatrix.needsUpdate=true;
   if(tuft.instanceColor)tuft.instanceColor.needsUpdate=true;
-  tuft.castShadow=quality>=.30&&quality<.43;
+  tuft.castShadow=quality>=.30;
   tuft.frustumCulled=false;tuft.userData.botanicalLayer='sprays';g.add(tuft);
  }
 }
