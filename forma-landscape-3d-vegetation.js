@@ -371,6 +371,24 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
     }
     centers.push({x,y:yy,z});
    }
+   if(conifer){
+    // Real lateral shoots start on the outer half of the parent branch.
+    // Without these, most silhouette foliage is concentrated at a few isolated
+    // twig tips and mature conifers resemble bare trunks at parcel distance.
+    const shoots=kind==='spruce'?4:3;
+    for(let n=0;n<shoots;n++){
+     const fraction=.54+(n+r()*.42)/shoots*.42;
+     const base=[tip[0]*fraction,stemY+(outerY-stemY)*fraction,tip[2]*fraction];
+     const sideways=(n%2===0?1:-1)*(.10+r()*.15)*length;
+     const end=[
+      clamp(base[0]-Math.sin(direction)*sideways,-radius,radius),
+      clamp(base[1]+(kind==='spruce'?-.065:.035)*height*(.3+r()*.3),.08,height),
+      clamp(base[2]+Math.cos(direction)*sideways,-radius,radius)
+     ];
+     curveBranch(branches,base,end,Math.max(.003,trunkRadius*.024*(1-t*.50)),0);
+     centers.push({x:end[0],y:end[1],z:end[2]});
+    }
+   }
   }
  }
  const max=clamp(Math.round(c.density*quality),180,2500);
@@ -425,6 +443,19 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    ];
    branches.push([mid,tip,Math.max(.0025,radiusStem*.32)]);
    points.push({x:tip[0],y:tip[1],z:tip[2],s:evergreen?.09+r()*.10:.095+r()*.12});
+   // Secondary terminal shoots add low and side foliage without detaching
+   // leaves from branches. They stay inside the measured crown footprint.
+   if(k%3===0&&!isSpike){
+    const lateral=direction+Math.PI*.5*(r()>.5?1:-1);
+    const sideLength=radius*(isCreeper?.065:.085)*(.65+r()*.35);
+    const end=[
+     clamp(tip[0]+Math.cos(lateral)*sideLength,-radius,radius),
+     clamp(tip[1]+actual*(r()-.55)*.035,.04,actual),
+     clamp(tip[2]+Math.sin(lateral)*sideLength,-radius,radius)
+    ];
+    branches.push([tip,end,Math.max(.0025,radiusStem*.20)]);
+    points.push({x:end[0],y:end[1],z:end[2],s:evergreen?.085:.12});
+   }
   }
  }
  const total=clamp(Math.round(c.density*quality),140,1300);
