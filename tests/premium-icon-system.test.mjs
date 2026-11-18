@@ -63,8 +63,8 @@ test('premium icon gradients are individually namespaced even when repeated in o
  assert.equal(new Set(ids).size,icons.length,'No duplicate gradients in multi-icon UI');
  icons.forEach((svg,i)=>{
   assert.ok(ids[i], 'Icon '+i+' needs a visible material gradient');
-  assert.match(svg,new RegExp('url\\\\(#'+ids[i]+'\\\\)'));
-  assert.doesNotMatch(svg,/url\\(#lpiFill\\)/,'No shared mutable SVG IDs may leak');
+  assert.ok(svg.includes('url(#'+ids[i]+')'),'Icon '+i+' must reference only its local material gradient');
+  assert.ok(!svg.includes('url(#lpiFill)'),'No shared mutable SVG IDs may leak');
  });
 });
 test('3D action bar has no legacy emoji and the material editor uses the same bronze pictograms',()=>{
