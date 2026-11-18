@@ -5,6 +5,9 @@ on:
     paths:
       - 'forma-landscape-3d-vegetation.js'
       - 'forma-landscape-3d-botany.js'
+      - 'forma-landscape-3d-foliage-lod.js'
+      - 'forma-landscape-3d-plant-materials.js'
+      - 'tests/landscape-botany-reference.verify.mjs'
       - 'forma-landscape-3d-geometry.js'
       - 'forma-landscape-3d.html'
       - 'tests/landscape-botany-browser.verify.mjs'
@@ -15,7 +18,7 @@ permissions:
 jobs:
   visual:
     runs-on: ubuntu-24.04
-    timeout-minutes: 7
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,8 +31,11 @@ jobs:
           node server.mjs > /tmp/forma-botany-server.log 2>&1 &
           sleep 2
           node tests/landscape-botany-browser.verify.mjs
+          node tests/landscape-botany-reference.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: forma-botanical-visual-qa
-          path: artifacts/landscape-editor/botanical-ten-species-*.png
+          path: |
+            artifacts/landscape-editor/botanical-ten-species-*.png
+            artifacts/landscape-editor/botany-reference-*.png
