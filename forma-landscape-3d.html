@@ -69,7 +69,7 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #right .buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}#right .buttons button{font-size:12px;padding:9px 2px}
 #right .buttons button.active{color:#1e2e23;background:#d9dfca;border-color:#d9dfca}
 .camera-focus{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0 10px}
-.camera-focus button{font-size:10px;padding:8px 3px;color:#E6D6BE;border-color:#83745C}
+.camera-focus button{font-size:10px;padding:8px 3px;color:#E6D6BE;border-color:#83745C}.object-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 4px}.object-actions button{padding:10px 5px;border:1px solid #84735a;color:#f1d6aa;background:#34362f;border-radius:9px;min-height:40px}.object-actions button:hover{background:#514839}.object-actions button:focus-visible{outline:2px solid #ebc88b;outline-offset:2px}
 #right .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}#right .action{width:100%;margin-top:7px}
 #status{position:absolute;left:50%;bottom:23px;transform:translateX(-50%);transition:opacity .35s ease;background:#1b2725df;border:1px solid #52665a;border-radius:100px;padding:11px 19px;color:#e1eade;font-size:12px;max-width:calc(100% - 60px);text-align:center;pointer-events:none}
 #status.status-hidden{opacity:0;pointer-events:none}
@@ -186,6 +186,7 @@ import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-lan
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {SHRUB_HEIGHT_M,vegetationQuality} from './forma-landscape-3d-botany.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
+import {duplicateLandscapeObject,rotatedLandscapeObject} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
@@ -294,12 +295,27 @@ function groundPhotoTexture(){
 }
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
-function mark(group,key){group.userData.key=key;pickables.push(group);return group}
+function mark(group,key){
+ group.userData.key=key;pickables.push(group);
+ // A lightweight bronze ground ring makes the active object immediately
+ // identifiable. The ring is not a raycast target and follows drag/rotation.
+ if(state.selected===key){
+  const o=selectable(key)?.obj;
+  const width=Math.max(.5,Math.min(20,Number(o?.width||o?.diameter||realModelById(o?.type)?.width||1.5)));
+  const radius=width*.64;
+  const ring=new THREE.Mesh(new THREE.RingGeometry(radius*.96,radius,64),
+   new THREE.MeshBasicMaterial({color:'#ecc28b',side:THREE.DoubleSide,transparent:true,opacity:.92,depthWrite:false,depthTest:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=.11;ring.renderOrder=45;
+  ring.castShadow=false;ring.receiveShadow=false;ring.raycast=()=>{};
+  group.add(ring);
+ }
+ return group;
+}
 function rebuild(){
  currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
  currentPlantQuality=vegetationQuality(window.innerWidth,currentPlantCount,state.view)*(renderQuality==='speed'||autoReduced ? .60 : 1);
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
- while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
+ while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();for(const mat of (Array.isArray(n.material)?n.material:[n.material]))mat?.dispose?.()})}
  pickables=[];shadowedGardenLights=0;
  const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
  const vertices=terrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
@@ -664,6 +680,25 @@ function makeHouseThumbnails(){
  finally{rendererThumb?.dispose()}
 }
 function selectable(key){const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
+function duplicateSelected(){
+ const ref=state.selected?selectable(state.selected):null;
+ if(!ref?.obj)return status('Сначала выберите объект для копирования.');
+ const copy=duplicateLandscapeObject(ref.obj,{newId:id(),plot:doc.site,contains:p=>inParcel(p,doc.site)});
+ if(!copy)return status('Рядом недостаточно свободного места внутри границ участка для копии.');
+ push();
+ if(ref.type==='object'){doc.objects.push(copy);state.selected='object:'+copy.id;}
+ else if(ref.type==='extra'){extra.push(copy);state.selected='extra:'+copy.id;}
+ else if(ref.type==='house'||ref.type==='building'){doc.buildings.push({...copy,type:ref.obj.type||'house'});state.selected='building:'+copy.id;}
+ else return status('Этот тип элемента нельзя дублировать.');
+ save();rebuild();status('Создана отдельная копия объекта. Перетаскивайте, поворачивайте или меняйте размер.');
+}
+function rotateSelected(degrees){
+ const ref=state.selected?selectable(state.selected):null;
+ if(!ref?.obj)return;
+ const result=rotatedLandscapeObject(ref.obj,degrees);
+ if(!result)return;
+ push();ref.obj.rotation=result.rotation;save();rebuild();
+}
 function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
  if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
@@ -674,8 +709,11 @@ function renderProps(){
  else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
- el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+'<button class="action primary" id="applyProps">Применить</button><button class="action" id="deleteObject">Удалить объект</button>';
+ el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject">Удалить объект</button><p class="hint">Быстрые клавиши: Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Координаты сохраняются в метрах.</p>';
  $('#applyProps').onclick=()=>{push();for(const n of el.querySelectorAll('[data-prop]')){let val=Number(n.value);if(Number.isFinite(val)){if(real&&n.dataset.prop==='width')val=Math.max(.1,Math.min(30,val));o[n.dataset.prop]=val}}save();rebuild()};
+ $('#rotateLeft').onclick=()=>rotateSelected(-15);
+ $('#rotateRight').onclick=()=>rotateSelected(15);
+ $('#duplicateObject').onclick=duplicateSelected;
  $('#deleteObject').onclick=()=>{push();if(ref.type==='object')doc.objects=doc.objects.filter(x=>x!==o);else if(ref.type==='building')doc.buildings=doc.buildings.filter(x=>x!==o);else if(ref.type==='extra')extra=extra.filter(x=>x!==o);else{status('Главный дом удалять нельзя. Измените его размеры.');return}state.selected=null;save();rebuild()};
 }
 function updateSun(){
@@ -1083,6 +1121,11 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   if(/input|select|textarea/i.test(e.target.tagName))return;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();restore(e.shiftKey?redo:undo,e.shiftKey?undo:redo)}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();restore(redo,undo)}
+  if(state.view!=='walk'&&state.selected&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+   const key=e.key.toLowerCase();
+   if(key==='d'&&!e.repeat){e.preventDefault();duplicateSelected();return}
+   if(key==='q'||key==='e'){e.preventDefault();rotateSelected((key==='q'?-1:1)*(e.shiftKey?5:15));return}
+  }
   if(e.key==='Enter'&&pointMode.length){e.preventDefault();finishContour()}
   if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
   if(state.view==='walk'){
