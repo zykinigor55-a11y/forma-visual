@@ -235,7 +235,8 @@ function addFoliageSprays(g,T,points,id,season,seed,quality){
  if(!points.length||foliageProfile(id,season).leafless)return;
  const type=foliageProfile(id,season),r=rng(seed),shrub=type.kind.includes('shrub');
  const needle=['pine','spruce','juniper','thuja-globe'].includes(id);
- const count=clamp(Math.round(points.length*(1.05+quality*1.25)),shrub?470:1450,shrub?1800:3650);
+ const minimum=quality<.3?(shrub?220:620):quality<.45?(shrub?360:1100):(shrub?470:1450);
+ const count=clamp(Math.round(points.length*(1.05+quality*1.25)),minimum,shrub?1800:3650);
  const texture=createSprayTexture(T,needle);
  const material=new T.MeshStandardMaterial({map:texture,alphaTest:.26,side:T.DoubleSide,roughness:.94,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
