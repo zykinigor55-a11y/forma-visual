@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const code=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
 
 test('real PBR catalogue remains tied to source URLs and the metric scene',()=>{
- assert.match(code,/import \{REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById\}/);
+ assert.match(code,/import \{REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById\}/);
  assert.match(code,/id="modelHealth"/);
  assert.ok(code.includes("loaded+'/'+ids.length"));
  assert.match(code,/retry3dModels/);
