@@ -43,7 +43,7 @@ export function botanicalLeafScale(id,height,diameter){
 export function vegetationQuality(viewWidth,plantCount=1,view='3d'){
  const width=Math.max(200,Number(viewWidth)||1200),count=Math.max(0,Number(plantCount)||0);
  const device=width<=650?.46:width<=1024?.70:1;
- const crowd=count<=5?1:count<=12?.73:count<=35?.59:count<=80?.43:.31;
+ const crowd=count<=3?1:count<=6?.78:count<=12?.50:count<=35?.36:count<=80?.26:.20;
  const overhead=view==='2d'?.82:1;
  return Math.max(.22,Math.min(1,device*crowd*overhead));
 }
