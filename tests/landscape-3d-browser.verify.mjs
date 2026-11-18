@@ -27,6 +27,21 @@ try{
  assert.equal(await page.locator('#loadError').isVisible(),false);
  assert.ok(await page.locator('#viewport').evaluate(el=>el.width>300&&el.height>200),'WebGL canvas initialized');
  assert.equal(await page.locator('#weather').inputValue(),'sunny');
+ // Every landscape category is reachable without scrolling past the tool grid.
+ await page.locator('[data-quick-tool="plant"]').click();
+ assert.equal(await page.locator('[data-item]').count(),18,'All ten trees and eight shrubs in the searchable plant library');
+ assert.equal(await page.locator('[data-item="pine"]').isVisible(),true);
+ await page.locator('#catalogSearch').fill('берёза');
+ assert.equal(await page.locator('[data-item="birch"]').isVisible(),true);
+ assert.equal(await page.locator('[data-item="pine"]').isVisible(),false);
+ await page.locator('#catalogSearch').fill('');
+ await page.locator('[data-catalog-filter="shrubs"]').click();
+ assert.equal(await page.locator('[data-item="juniper"]').isVisible(),true);
+ assert.equal(await page.locator('[data-item="birch"]').isVisible(),false);
+ await page.locator('[data-quick-tool="terrain"]').click();
+ assert.equal(await page.locator('#brushSoftness').isVisible(),true);
+ assert.equal(await page.locator('#brushShape').isVisible(),true);
+ await page.locator('[data-quick-tool="select"]').click();
  // These are genuine WebGL-rendered house thumbnails, not flat pictograms.
  assert.equal(await page.locator('[data-house-preset]').count(),12);
  await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===12,null,{timeout:30000});
