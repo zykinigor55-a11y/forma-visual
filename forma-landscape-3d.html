@@ -193,6 +193,7 @@ import {REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
+import {smoothPaintPath,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush} from './forma-landscape-3d-terrain-brush.js';
 const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
@@ -458,7 +459,7 @@ function polygon(points,y,color,water=false,materialId='universal'){
  m.side=THREE.DoubleSide;const o=mesh(geo,m);o.castShadow=false;return o;
 }
 function drawArea(o,entry,key){
- const g=new THREE.Group();const pts=o.points;const isPaint=['fills','lawns'].includes(entry.group)&&o.geometry==='strip';
+ const g=new THREE.Group();const pts=o.geometry==='strip'?smoothPaintPath(o.points):o.points;const isPaint=['fills','lawns'].includes(entry.group)&&o.geometry==='strip';
  const isPath=entry.group==='pavers';
  if(isPaint&&pts.length>=2){
   const swept=strokeRibbon(pts,o.width||1.2);
@@ -558,6 +559,7 @@ function chooseTool(t){
   panel.innerHTML='<label><input id="useLandscapeBrush" type="checkbox" checked>Рисовать кистью непрерывно</label>'+
     '<label for="landscapeBrushRadius">Диаметр кисти: <output id="brushDiameter">2.0 м</output></label>'+
     '<input id="landscapeBrushRadius" type="range" min=".5" max="10" step=".5" value="2">'+
+    (t==='surface'?'<label class="brush-erase"><input type="checkbox" id="eraseSurfaceBrush"> Стереть покрытие выбранного типа (дом, растения и дорожки не затрагиваются)</label>':'')+
     (t==='plant'?'<label for="plantBrushDensity">Плотность посадки: <output id="plantDensityValue">1.0×</output></label><input id="plantBrushDensity" type="range" min=".5" max="2" step=".25" value="1"><label for="plantVariant">Вариант формы кроны</label><select id="plantVariant"><option value="1">01 · естественный</option><option value="2">02 · раскидистый</option><option value="3">03 · асимметричный</option></select><label><input type="checkbox" id="erasePlantBrush">Ластик растений (не затрагивает покрытия)</label>':'')+
     '<div class="hint">'+(t==='plant'?'Плавно ведите курсором для посадки растений с правильным расстоянием.':'Газон и отсыпка наносятся непрерывной полосой. Для отдельных зон выключите кисть и рисуйте полигон.')+'<br>ЛКМ — кисть; ПКМ — вращение; колесо — масштаб.</div>';
   $('#library').appendChild(panel);
@@ -842,6 +844,24 @@ function focusHouseCamera(){
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
+let surfacePreviewFrame=0;
+function refreshActiveSurface(){
+ const obj=brushStroke?.object;if(!obj||!root)return;
+ const key='object:'+obj.id;
+ const old=pickables.find(x=>x.userData.key===key);
+ if(old){
+  root.remove(old);pickables=pickables.filter(x=>x!==old);
+  old.traverse(n=>{
+   n.geometry?.dispose?.();
+   for(const mat of (Array.isArray(n.material)?n.material:[n.material]))mat?.dispose?.();
+  });
+ }
+ drawArea(obj,brushStroke.entry,key);renderGate.invalidate();
+}
+function scheduleSurfacePreview(){
+ if(surfacePreviewFrame)return;
+ surfacePreviewFrame=requestAnimationFrame(()=>{surfacePreviewFrame=0;refreshActiveSurface()});
+}
 function scheduleBrushRebuild(){
  if(brushRefreshFrame)return;
  brushRefreshFrame=requestAnimationFrame(()=>{brushRefreshFrame=0;rebuild()});
@@ -991,10 +1011,17 @@ function beginBrush(world){
  if(state.tool==='plant'&&!['trees','shrubs'].includes(entry?.group))return false;
  push();const first=fromWorld(world);
  brushStroke={mode:state.tool,entry,points:[first],last:first,lastPlant:first,object:null,
-  erase:state.tool==='plant'&&$('#erasePlantBrush')?.checked===true};
+  erase:state.tool==='plant'&&$('#erasePlantBrush')?.checked===true,
+  eraseSurface:state.tool==='surface'&&$('#eraseSurfaceBrush')?.checked===true};
  if(state.tool==='surface'){
-  const o={id:id(),catalogId:state.placing,type:entry.group,geometry:'strip',width:brushDiameter(),points:[first,{x:first.x+.025,y:first.y}]};
-  doc.objects.push(o);brushStroke.object=o;
+  if(brushStroke.eraseSurface){
+   const result=erasePaintedStrips(doc.objects,{point:first,radius:brushDiameter()/2,group:entry.group,makeId:id});
+   if(result.changed){doc.objects=result.objects;scheduleBrushRebuild()}
+  }else{
+   const o={id:id(),catalogId:state.placing,type:entry.group,geometry:'strip',width:brushDiameter(),points:[first,{x:first.x+.025,y:first.y}]};
+   doc.objects.push(o);brushStroke.object=o;
+   drawArea(o,entry,'object:'+o.id); // Update just this mesh, never rebuild every PBR tree while painting.
+  }
  }else if(brushStroke.erase){
   erasePlantsAt(first,brushDiameter()/2);
  }else{
@@ -1002,8 +1029,9 @@ function beginBrush(world){
   doc.objects.push({id:id(),catalogId:state.placing,type:entry.group,x:first.x,y:first.y,
    diameter,height:entry.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):(SHRUB_HEIGHT_M[state.placing]||.95),variant:Number($('#plantVariant')?.value||1),rotation:0});
  }
- state.painting=true;canvas.setPointerCapture?.(state.activePointer);
- rebuild();return true;
+ state.painting=true;controls.enabled=false;canvas.setPointerCapture?.(state.activePointer);
+ if(state.tool==='plant')rebuild();
+ renderGate.invalidate();return true;
 }
 function erasePlantsAt(point,radius){
  const before=doc.objects.length;
@@ -1018,7 +1046,16 @@ function advanceBrush(world){
  if(!state.painting||!brushStroke||!world)return;
  const point=fromWorld(world);if(!inParcel(point,doc.site))return;
  const stroke=brushStroke;
- if(stroke.erase){
+ if(stroke.eraseSurface){
+  const points=strokeSample(stroke.last,point,Math.max(.12,brushDiameter()*.12));
+  points.push(point);let changed=false;
+  for(const p of points){
+   if(!inParcel(p,doc.site))continue;
+   const result=erasePaintedStrips(doc.objects,{point:p,radius:brushDiameter()/2,group:stroke.entry.group,makeId:id});
+   if(result.changed){doc.objects=result.objects;changed=true}
+  }
+  stroke.last=point;if(changed)scheduleBrushRebuild();
+ }else if(stroke.erase){
   const points=strokeSample(stroke.last,point,Math.max(.2,brushDiameter()*.18));
   let removed=0;
   for(const p of points)if(inParcel(p,doc.site))removed+=erasePlantsAt(p,brushDiameter()/2);
@@ -1029,7 +1066,7 @@ function advanceBrush(world){
   const sampled=strokeSample(stroke.last,point,step);
   let changed=false;
   for(const p of sampled){if(inParcel(p,doc.site)&&appendBrushPoint(stroke.points,p,step*.5)){changed=true;stroke.last=p}}
-  if(changed){stroke.object.points=stroke.points.length<2?[stroke.points[0],{x:stroke.points[0].x+.025,y:stroke.points[0].y}]:stroke.points.slice();scheduleBrushRebuild();}
+  if(changed){stroke.object.points=stroke.points.length<2?[stroke.points[0],{x:stroke.points[0].x+.025,y:stroke.points[0].y}]:stroke.points.slice();scheduleSurfacePreview();}
  }else{
   const density=Math.max(.5,Number($('#plantBrushDensity')?.value||1));
   const spacing=Math.max(.38,(Number(stroke.entry?.diameter)||1.5)*.75/density);
@@ -1047,15 +1084,18 @@ function advanceBrush(world){
 }
 function finishBrush(){
  if(!state.painting)return;
- if(brushStroke?.mode==='surface'&&brushStroke.points.length===1){
+ if(brushStroke?.mode==='surface'&&brushStroke.object&&brushStroke.points.length===1){
   const p=brushStroke.points[0];brushStroke.object.points=[p,{x:Math.min(doc.site.width,p.x+.05),y:p.y}];
  }
+ const wasSurface=brushStroke?.mode==='surface',wasEraser=brushStroke?.eraseSurface;
  brushStroke=null;state.painting=false;controls.enabled=state.view!=='walk';
  if(brushRefreshFrame){cancelAnimationFrame(brushRefreshFrame);brushRefreshFrame=0}
- save();rebuild();status('Кисть завершена. Посадки и высоты сохранены, ПКМ вращает сцену.');
+ if(surfacePreviewFrame){cancelAnimationFrame(surfacePreviewFrame);surfacePreviewFrame=0}
+ save();rebuild();status(wasSurface?(wasEraser?'Ластик покрытия: изменения сохранены. Дом, дорожки и растения не затронуты.':'Газон / отсыпка нанесены плавной кистью и сохранены в метрах.'):'Посадка завершена. Размеры растений сохранены.');
 }
 function addEvents(){
  const down=e=>{
+ if(state.painting)return;
  if(e.pointerType==='mouse'&&e.button!==0)return; // Right drag is reserved for camera orbit.
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
@@ -1117,6 +1157,9 @@ const up=e=>{
  if(state.view==='walk'){state.down=null;return}
  if(state.painting&&e.pointerId!==state.activePointer)return;
  if(state.painting){
+  if(brushStroke?.mode==='surface'&&!brushStroke.eraseSurface){
+   const p=hitGround(e);if(p){const pt=fromWorld(p);if(inParcel(pt,doc.site)&&appendBrushPoint(brushStroke.points,pt,.025))brushStroke.object.points=brushStroke.points.slice()}
+  }
   if(brushStroke)finishBrush();
   else{state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();}
   state.down=null;return
