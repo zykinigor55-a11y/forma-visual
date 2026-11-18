@@ -30,6 +30,7 @@ test('sun sliders are safe, bounded and persist separately from measured site di
  assert.match(html,/sun\.position\.set\(solarPosition\.x,solarPosition\.y,solarPosition\.z\)/);
  assert.match(html,/uniforms\.sunPosition\.value\.copy\(sun\.position\)\.normalize\(\)/);
  assert.match(html,/sun\.shadow\.radius=solarSettings\.softness/);
+ assert.match(html,/renderer\.shadowMap\.type=THREE\.PCFShadowMap/);
  assert.match(html,/localStorage\.setItem\(SOLAR/);
  assert.match(html,/sunPosition:sunlight\?/);
  assert.match(html,/solarAngles:\{azimuth:solarSettings\.azimuth,elevation:solarSettings\.elevation/);
