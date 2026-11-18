@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {REFERENCE_CANOPIES,referenceBranchTips,referenceCanopy,referenceFoliageDensity} from '../forma-landscape-3d-reference-canopies.js';
+import {REFERENCE_CANOPIES,ADDITIONAL_GROWTH_TRAITS,speciesGrowthProfile,referenceBranchTips,referenceCanopy,referenceFoliageDensity} from '../forma-landscape-3d-reference-canopies.js';
 import {normalizeProject,freshProject} from '../forma-landscape-project-core.js';
 import {BOTANICAL_QUALITY,enableBotanicalLod,setFoliageTier,pickBotanicalLod} from '../forma-landscape-3d-foliage-lod.js';
 const source=readFileSync(new URL('../forma-landscape-3d-vegetation.js',import.meta.url),'utf8');
@@ -63,4 +63,25 @@ test('LOD uses three distinct layers; middle retains a small branch silhouette a
  assert.deepEqual(m.map(x=>x.visible),[true,false,false,true]);
  assert.ok(m[3].count>m[2].count,'distant spray budget replaces expensive 3D volume');
  assert.equal(pickBotanicalLod({pixelHeight:110,mode:'premium',previous:'near'}),'near');
+});
+
+test('each additional catalogue tree and shrub has a distinct authored growth profile',async()=>{
+ const {VEGETATION_SPECIES}=await import('../forma-landscape-3d-vegetation.js');
+ const nativeIds=Object.keys(VEGETATION_SPECIES);
+ const referenced=Object.keys(REFERENCE_CANOPIES);
+ const additional=Object.keys(ADDITIONAL_GROWTH_TRAITS);
+ for(const id of additional){
+  assert.ok(nativeIds.includes(id),'growth profile must be existing catalog species '+id);
+  const p=speciesGrowthProfile(id);
+  assert.ok(p.shootsPerBranch>=2&&p.shootsPerBranch<=5);
+  assert.ok(p.layeredFoliage>=.8&&p.layeredFoliage<=1.5);
+  assert.ok(p.leafClusterScale>=.45&&p.leafClusterScale<=1.1);
+ }
+ for(const id of referenced)assert.ok(nativeIds.includes(id));
+ assert.ok(nativeIds.every(id=>id==='pine'||id==='spruce'||speciesGrowthProfile(id)),'all native deciduous and shrubs use species-specific growth');
+ for(const id of ['maple','willow','linden','rowan','apple','sakura','ash','aspen','hydrangea','barberry','juniper','boxwood']){
+  const p=referenceBranchTips(id,{start:[0,.15,0],end:[.5,.8,0],plantHeight:1,crownRadius:1.5,seed:3});
+  assert.ok(p.length>=2,id+' must have genuine secondary twigs');
+  assert.ok(p.every(o=>o.tip.every(Number.isFinite)&&o.base.every(Number.isFinite)));
+ }
 });
