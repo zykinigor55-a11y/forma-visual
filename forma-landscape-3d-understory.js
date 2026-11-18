@@ -158,6 +158,16 @@ export function createNativeUnderstory(T,instance,{season='summer',quality=1,mod
  group.add(buildLeaves(T,leaves,id,spec.form,season,quality));
  group.userData.species=id;group.userData.physicalHeight=height;
  group.userData.crownDiameter=diameter;group.userData.variant=instance.variant||1;
- group.userData.nativeUnderstory=true;enableBotanicalLod(group,mode);
+ group.userData.nativeUnderstory=true;
+ // Cull small fern/hosta/grass meshes when the whole surveyed patch is out
+ // of view; never cull individual leaves during a camera orbit.
+ const bounds=new T.Sphere(new T.Vector3(0,height*.5,0),
+  Math.hypot(diameter*.5,height*.5)+.35);
+ group.traverse(node=>{
+  if(node.isInstancedMesh&&node.userData.botanicalLayer){
+   node.boundingSphere=bounds.clone();node.frustumCulled=true;
+  }
+ });
+ enableBotanicalLod(group,mode);
  return group;
 }
