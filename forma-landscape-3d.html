@@ -1008,14 +1008,22 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  window.addEventListener('resize',resize);canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();status('WebGL отключился. Перезагрузите страницу.')});
 }
 function resize(){const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
-let lastRenderMs=0;
+let lastRenderMs=0,lastRenderCost=0;
 function animate(now=0){
  requestAnimationFrame(animate);
- const interval=window.innerWidth<=720?1000/30:1000/50;
+ // On hardware-accelerated browsers retain 50fps/30fps. When WebGL falls
+ // back to a software renderer, yield the main thread rather than starving
+ // taps and tool selection with an unbroken loop of costly draw calls.
+ const preferred=window.innerWidth<=720?1000/30:1000/50;
+ const interval=Math.max(preferred,Math.min(110,lastRenderCost*2.0));
  if(now-lastRenderMs<interval)return;
  lastRenderMs=now;
  if(controls?.enabled)controls.update();
- if(renderer&&scene&&camera)renderer.render(scene,camera);
+ if(renderer&&scene&&camera){
+  const start=performance.now();
+  renderer.render(scene,camera);
+  lastRenderCost=performance.now()-start;
+ }
 }
 try{initialize()}catch(err){console.error(err);$('#loadError').style.display='flex';$('#status').textContent=err.message}
 </script>
