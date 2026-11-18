@@ -152,10 +152,17 @@ function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  const dark=new T.Color(palette.shade),sunlit=new T.Color(palette.sunlit);
  const fall=palette.fall?.map(hex=>new T.Color(hex));
  const dummy=new T.Object3D(),random=rng(seed);
+ const profile=botanicalPhotoProfile(id);
+ // Instance geometry is expressed in real metres; broadleaf outlines are
+ // clamped by species leaf-width reference, not an arbitrary shrub-size slider.
+ const widest=Math.max(.08,...leafOutline(id,16).map(([x])=>Math.abs(x)));
+ const physicalScale=!needle&&Number.isFinite(profile.leafWidthCm)
+  ? profile.leafWidthCm/100/(2*widest):null;
  for(let i=0;i<items.length;i++){
   const p=items[i];dummy.position.set(p.x,p.y,p.z);
   dummy.rotation.set(random()*Math.PI*2,random()*Math.PI*2,random()*Math.PI*2);
-  const scale=p.s;dummy.scale.set(scale,scale*(needle?1:.72),scale);dummy.updateMatrix();
+  const scale=physicalScale?Math.min(p.s,physicalScale*(.82+random()*.36)):p.s;
+  dummy.scale.set(scale,scale*(needle?1:.72),scale);dummy.updateMatrix();
   mesh.setMatrixAt(i,dummy.matrix);
   const exposure=.13+random()*.80,c2=dark.clone().lerp(sunlit,exposure);
   if(fall&&!needle)c2.lerp(fall[Math.floor(random()*fall.length)],.62+random()*.33);
