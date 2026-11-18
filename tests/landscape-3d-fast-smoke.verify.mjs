@@ -76,6 +76,12 @@ try{
  await page.locator('#rotateRight').click();
  rocks=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').filter(x=>x.type==='rock-grey'));
  assert.equal(rocks[1].rotation,15,'Rotate button updates selected GLB without replacing its source');
+ await page.keyboard.press('Delete');
+ rocks=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').filter(x=>x.type==='rock-grey'));
+ assert.equal(rocks.length,1,'Delete key removes the selected 3D object');
+ await page.keyboard.press('Control+z');
+ rocks=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').filter(x=>x.type==='rock-grey'));
+ assert.equal(rocks.length,2,'Undo restores object removed by Delete');
 
  for(const path of ['rock-grey.glb','fire-pit.glb','planter-large.glb','gallinera-chair.glb','street-lamp-two.glb','thumbs/rock-grey.webp','thumbs/street-lamp-two.webp'])await head(path);
  await page.locator('[data-tool="select"]').click();
@@ -118,6 +124,15 @@ try{
  await page.locator('[data-view="3d"]').click();
  await page.locator('#fit3dScene').click();
  await page.screenshot({path:'artifacts/landscape-editor/3d-outdoor-luminaires-perspective.png'});
+ await page.locator('#cameraEyeLevel').click();
+ assert.equal(await page.locator('#cameraHeightValue').textContent(),'1.7 м','camera can reach natural eye level');
+ await page.locator('[data-view="walk"]').click();
+ assert.equal(await page.locator('#walkInstructions').isVisible(),true,'walk mode has readable WASD instructions');
+ await page.keyboard.down('w');
+ await page.waitForTimeout(400);
+ await page.keyboard.up('w');
+ await page.locator('[data-view="3d"]').click();
+ assert.equal(await page.locator('#walkInstructions').isVisible(),false,'walk stops when switching views');
  assert.deepEqual(errors,[],'Editor must not have JavaScript errors');
  console.log('PASS: 40 licensed PBR GLBs, editable measured placement, 6 searchable groups, all 15 surfaces, soft terrain brush');
 }finally{await browser.close()}
