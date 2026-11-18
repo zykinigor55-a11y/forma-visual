@@ -60,14 +60,14 @@ test('split brush strokes survive saving between 2D and 3D',()=>{
  assert.ok(normalized.objects.every(x=>x.geometry==='strip'&&x.width===2));
  assert.ok(normalized.objects.every(x=>x.points.length>=2));
 });
-test('actual 3D editor uses smooth surface geometry, local preview and disables camera while painting',()=>{
+test('actual 3D editor uses smooth surface geometry, local preview and keeps right-mouse orbit while painting',()=>{
  const s=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
  assert.match(s,/smoothPaintPath\(o\.points\)/);
  assert.match(s,/function refreshActiveSurface\(\)/);
  assert.match(s,/drawArea\(o,entry,'object:'\+o\.id\)/);
  assert.match(s,/scheduleSurfacePreview\(\)/);
  assert.match(s,/erasePaintedStrips\(doc\.objects/);
- assert.match(s,/controls\.enabled=false;canvas\.setPointerCapture/);
+ assert.match(s,/controls\.enabled=state\.view!=='walk';canvas\.setPointerCapture/);
  assert.match(s,/id="eraseSurfaceBrush"/);
  assert.match(s,/if\(state\.painting\)return;/);
 });
