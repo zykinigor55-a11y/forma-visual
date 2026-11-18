@@ -193,7 +193,7 @@ import {REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './
 import {addRealGardenEmission,gardenLightingState} from './forma-landscape-3d-lighting.js';
 import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
-import {smoothPaintPath,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
+import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush} from './forma-landscape-3d-terrain-brush.js';
 const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
@@ -1084,8 +1084,13 @@ function advanceBrush(world){
 }
 function finishBrush(){
  if(!state.painting)return;
- if(brushStroke?.mode==='surface'&&brushStroke.object&&brushStroke.points.length===1){
-  const p=brushStroke.points[0];brushStroke.object.points=[p,{x:Math.min(doc.site.width,p.x+.05),y:p.y}];
+ if(brushStroke?.mode==='surface'&&brushStroke.object){
+  const pts=brushStroke.points;
+  // A single tap is a round circular dab; long curves retain their exact
+  // endpoints and bends when serialized back to the shared 2D/3D masterplan.
+  if(pts.length===1){
+   const p=pts[0];brushStroke.object.points=[p,{x:Math.min(doc.site.width,p.x+.025),y:p.y}];
+  }else brushStroke.object.points=simplifyPaintStroke(pts,512);
  }
  const wasSurface=brushStroke?.mode==='surface',wasEraser=brushStroke?.eraseSurface;
  brushStroke=null;state.painting=false;controls.enabled=state.view!=='walk';
