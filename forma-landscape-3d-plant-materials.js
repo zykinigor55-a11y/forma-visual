@@ -13,7 +13,16 @@ export const BOTANICAL_PHOTO_PROFILES=Object.freeze({
  spruce:Object.freeze({latin:'Picea abies',crown:'full tapered tiered conifer, fine dark needles',leafRoughness:.77,barkBump:.038,
   twigFrequency:1.25,shade:'#213c31',sunlit:'#4a6c4b'}),
  hydrangea:Object.freeze({latin:'Hydrangea paniculata',crown:'broad leaves on staggered branching stems',leafLengthCm:11,leafWidthCm:7,
-  leafRoughness:.73,barkBump:.014,twigFrequency:1.35,shade:'#567448',sunlit:'#a5b57c'})
+  leafRoughness:.73,barkBump:.014,twigFrequency:1.35,shade:'#567448',sunlit:'#a5b57c'}),
+ ninebark:Object.freeze({latin:'Physocarpus opulifolius',crown:'irregular multi-stem reddish lobed shrub',leafLengthCm:6,leafWidthCm:5,
+  leafRoughness:.73,barkBump:.023,twigFrequency:1.35,shade:'#553d33',sunlit:'#ac7654',
+  fall:['#b5834b','#8c7142','#6d4d35']}),
+ hosta:Object.freeze({latin:'Hosta plantaginea',crown:'basal broad-heart leaves and short petioles',leafLengthCm:22,leafWidthCm:13,
+  leafRoughness:.62,barkBump:.009,twigFrequency:1.1,shade:'#3f6553',sunlit:'#a8c1a0',
+  fall:['#acaa7c','#b2a579','#849376']}),
+ 'ornamental-grass':Object.freeze({latin:'Miscanthus sinensis',crown:'fine upright arching leaf blades from a dense basal tussock',leafLengthCm:85,leafWidthCm:.7,
+  leafRoughness:.78,barkBump:.004,twigFrequency:1.6,shade:'#607151',sunlit:'#b5b78a',
+  fall:['#bca67b','#b4a76f','#98855c']})
 });
 export function botanicalPhotoProfile(id){
  return BOTANICAL_PHOTO_PROFILES[id]||{
