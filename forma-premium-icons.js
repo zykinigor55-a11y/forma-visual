@@ -1,0 +1,41 @@
+/* FORMA VISUAL shared dimensional icon language — extracted from Landscape Project. */
+export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","small":"furniture","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","frames":"gallery","cad":"plan","furniture":"furniture"});
+export function premiumIcon(id){
+  id=PREMIUM_ICON_ALIASES[id]||id;
+  const paths={
+   trees:'<path d="M24 33v8M15 39h18" stroke="#b98e5f" stroke-width="3" fill="none"/><path d="M16 30c-8 0-8-10-2-13-2-7 5-12 11-9 6-3 12 3 10 9 8 5 3 14-5 13z" fill="url(#lpiFill)" stroke="#e9d2ad" stroke-width="1.5"/><path d="M15 23c7-3 13-9 17-8" fill="none" stroke="#fff4cf" stroke-width="1.5" opacity=".65"/>',
+   shrubs:'<ellipse cx="19" cy="29" rx="13" ry="10" fill="url(#lpiFill)" stroke="#e5c7a0"/><ellipse cx="31" cy="26" rx="11" ry="11" fill="url(#lpiFill)" stroke="#e5c7a0"/><path d="M10 33q12-12 27-7" stroke="#fff1c9" stroke-width="1.5" opacity=".6" fill="none"/><circle cx="16" cy="25" r="2" fill="#f2d8b2"/><circle cx="31" cy="21" r="2" fill="#f2d8b2"/>',
+   pavers:'<path d="M8 17l13-7 13 6-13 7zM23 25l14-7 4 11-15 8zM8 22l13 7v10L8 32zM11 36l11-6 12 6-12 6z" fill="url(#lpiFill)" stroke="#e4d0ae" stroke-width="1.5"/><path d="M21 23v5M23 35l-1 7" stroke="#fff3ce" opacity=".65"/>',
+   fills:'<ellipse cx="15" cy="25" rx="6" ry="4" fill="url(#lpiFill)" stroke="#ead4ae"/><ellipse cx="30" cy="18" rx="7" ry="5" fill="url(#lpiFill)" stroke="#ead4ae"/><ellipse cx="32" cy="32" rx="8" ry="5" fill="url(#lpiFill)" stroke="#ead4ae"/><ellipse cx="19" cy="36" rx="5" ry="3" fill="url(#lpiFill)" stroke="#ead4ae"/><path d="M14 23l4 1M29 16l3 1M29 30l4 1" stroke="#fff0cd" opacity=".8"/>',
+   lights:'<path d="M19 17h10l-1 6H20zM22 24h5v14h-5zM18 39h13" fill="url(#lpiFill)" stroke="#ead5b5" stroke-width="1.7"/><path d="M15 27l-4 5M33 27l4 5M24 13V8M13 17l-4-2M35 17l4-2" stroke="#f7dda3" stroke-width="2" stroke-linecap="round"/><path d="M22 18h4" stroke="#fff7da" stroke-width="2"/>',
+   lawns:'<path d="M8 38q6-13 9-22M19 39q2-18 4-28M23 39q8-18 15-26M24 38q3-12-5-21M30 38q5-12 10-13" stroke="#e5cba2" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M8 38h33" stroke="#ae926b" stroke-width="3" stroke-linecap="round"/>',
+   ponds:'<path d="M10 23c4-10 10-9 15-7 8-3 16 4 12 10 6 8-1 14-11 12-11 3-20-3-16-15z" fill="url(#lpiFill)" stroke="#e9d3ae" stroke-width="1.7"/><path d="M15 25c4-3 8 3 14 0M17 31c5-2 9 2 14-1" stroke="#fff1d1" opacity=".85" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+   boulders:'<path d="M9 31l6-12 12-7 10 9 3 12-14 6-15-2z" fill="url(#lpiFill)" stroke="#e6d0af" stroke-width="1.6"/><path d="M15 19l8 13-12 5M23 32l17 1M23 32l4-20" stroke="#f4e1be" opacity=".55" stroke-width="1.4" fill="none"/>'
+  };
+  const extras={
+   "select":"<path d=\"M12 8l20 27-11-6-6 12z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.8\"/>",
+   "site":"<path d=\"M9 13l16-6 14 11-16 8zM9 13v22l14 7V26l16-8v18l-16 6\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.6\"/>",
+   "terrain":"<path d=\"M5 37l12-17 8 7 9-19 10 29z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.8\"/><path d=\"M8 41h33\" stroke=\"#fff1d0\" stroke-width=\"2\"/>",
+   "build":"<path d=\"M6 22l18-14 18 14-18 10zM10 25v15l14 6V32l14-7v15l-14 6\" fill=\"url(#lpiFill)\" stroke=\"#e9d3b1\" stroke-width=\"1.6\"/><path d=\"M16 30v13M31 30v12\" stroke=\"#fff0ca\" stroke-width=\"2\"/>",
+   "fence":"<path d=\"M8 14l5-3v30l-5 2zM24 9l5-3v30l-5 2zM39 13l5-2v29l-5 2z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.6\"/><path d=\"M10 22l30-4M10 34l30-4\" stroke=\"#fff2d2\" stroke-width=\"2.3\"/>",
+   "furniture":"<path d=\"M9 19h30v10H9zM12 29v12M36 29v12M11 18V9h25v9\" fill=\"url(#lpiFill)\" stroke=\"#ecd5b1\" stroke-width=\"1.6\"/>",
+   "transport":"<path d=\"M7 22l7-11h21l7 11 2 12H5z\" fill=\"url(#lpiFill)\" stroke=\"#ecd6b4\" stroke-width=\"1.6\"/><path d=\"M14 22h28\" stroke=\"#fff0cd\"/><circle cx=\"14\" cy=\"34\" r=\"3\" fill=\"#383832\" stroke=\"#e8ceaa\"/><circle cx=\"36\" cy=\"34\" r=\"3\" fill=\"#383832\" stroke=\"#e8ceaa\"/>",
+   "interior":"<path d=\"M9 8h30v32H9z\" fill=\"url(#lpiFill)\" stroke=\"#ecd5b3\"/><path d=\"M9 25h30M22 8v17M15 39V30h18v9\" fill=\"none\" stroke=\"#fff1d1\" stroke-width=\"2\"/>",
+   "materials":"<path d=\"M7 19l17-11 17 11-17 10zM7 27l17 9 17-9M7 34l17 9 17-9\" fill=\"url(#lpiFill)\" stroke=\"#f1ddb9\" stroke-width=\"1.6\"/>",
+   "animation":"<rect x=\"7\" y=\"10\" width=\"30\" height=\"30\" rx=\"3\" fill=\"url(#lpiFill)\" stroke=\"#edd4b0\"/><path d=\"M20 18l11 7-11 7z\" fill=\"#fff1cd\"/><path d=\"M37 18l6-5v24l-6-5z\" fill=\"url(#lpiFill)\" stroke=\"#edd4b0\"/>",
+   "camera":"<path d=\"M7 18h8l5-7h12l4 7h5v23H7z\" fill=\"url(#lpiFill)\" stroke=\"#edd4b0\"/><circle cx=\"24\" cy=\"29\" r=\"9\" fill=\"#333834\" stroke=\"#fff2d3\" stroke-width=\"2\"/><circle cx=\"24\" cy=\"29\" r=\"4\" fill=\"#c6a379\"/>",
+   "nodes":"<rect x=\"7\" y=\"9\" width=\"14\" height=\"13\" rx=\"2\" fill=\"url(#lpiFill)\" stroke=\"#edd4b0\"/><rect x=\"28\" y=\"27\" width=\"14\" height=\"13\" rx=\"2\" fill=\"url(#lpiFill)\" stroke=\"#edd4b0\"/><path d=\"M21 15h8v18M14 22v11h14\" fill=\"none\" stroke=\"#fff1cd\" stroke-width=\"2\"/>",
+   "project":"<path d=\"M7 15h14l5 5h15v21H7zM7 15V9h18l5 6\" fill=\"url(#lpiFill)\" stroke=\"#edd6b2\" stroke-width=\"1.6\"/>",
+   "settings":"<path d=\"M9 14h31M9 25h31M9 36h31\" stroke=\"#eed7b6\" stroke-width=\"2.6\"/><circle cx=\"21\" cy=\"14\" r=\"5\" fill=\"url(#lpiFill)\" stroke=\"#fff1d2\"/><circle cx=\"32\" cy=\"25\" r=\"5\" fill=\"url(#lpiFill)\" stroke=\"#fff1d2\"/><circle cx=\"16\" cy=\"36\" r=\"5\" fill=\"url(#lpiFill)\" stroke=\"#fff1d2\"/>",
+   "gallery":"<rect x=\"8\" y=\"12\" width=\"30\" height=\"28\" rx=\"2\" fill=\"url(#lpiFill)\" stroke=\"#edd6b4\"/><path d=\"M12 8h30v29M9 36l10-9 6 5 6-11 6 15\" fill=\"none\" stroke=\"#fff0cd\" stroke-width=\"2\"/>",
+   "world":"<path d=\"M24 7l17 10v19L24 45 7 36V17zM7 17l17 9 17-9M24 26v19\" fill=\"url(#lpiFill)\" stroke=\"#eed6b1\" stroke-width=\"1.6\"/>",
+   "upscale":"<path d=\"M9 24V9h15M39 24v15H24M11 38l27-27M28 11h10v10\" stroke=\"#f7e3bf\" stroke-width=\"2.6\" fill=\"none\"/>",
+   "plan":"<path d=\"M9 9h30v30H9z\" fill=\"url(#lpiFill)\" stroke=\"#ecd5b1\"/><path d=\"M9 25h15V9M24 25v14M24 32h15\" fill=\"none\" stroke=\"#fff0d0\" stroke-width=\"2\"/>",
+   "atmosphere":"<circle cx=\"24\" cy=\"24\" r=\"9\" fill=\"url(#lpiFill)\" stroke=\"#fff0d0\" stroke-width=\"1.6\"/><path d=\"M24 7v7M24 34v7M7 24h7M34 24h7M12 12l5 5M31 31l5 5\" stroke=\"#fff0c9\" stroke-width=\"2\"/>",
+   "presentation":"<rect x=\"9\" y=\"8\" width=\"30\" height=\"32\" rx=\"2\" fill=\"url(#lpiFill)\" stroke=\"#ecd4b1\"/><path d=\"M15 17h18M15 23h18M15 30h14M15 36h16\" stroke=\"#fff1d0\" stroke-width=\"2\"/>",
+   "release":"<rect x=\"9\" y=\"10\" width=\"30\" height=\"28\" rx=\"3\" fill=\"url(#lpiFill)\" stroke=\"#ecd4b1\"/><path d=\"M15 24l7 7 12-15\" fill=\"none\" stroke=\"#fff2ce\" stroke-width=\"3\"/>",
+   "account":"<circle cx=\"24\" cy=\"17\" r=\"8\" fill=\"url(#lpiFill)\" stroke=\"#ecd4b1\"/><path d=\"M10 42q0-15 14-15t14 15\" fill=\"url(#lpiFill)\" stroke=\"#ecd4b1\"/>",
+   "geometry":"<path d=\"M9 9h17v17H9zM22 22h17v17H22z\" fill=\"url(#lpiFill)\" stroke=\"#ecd4b1\"/><path d=\"M11 36l25-25\" fill=\"none\" stroke=\"#fff1d0\" stroke-width=\"2\"/>"
+  };
+  return '<svg class="lp-3d-icon forma-premium-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><linearGradient id="lpiFill" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#f7e4bc"/><stop offset=".45" stop-color="#c6a379"/><stop offset="1" stop-color="#70533d"/></linearGradient></defs><rect x="2.5" y="2.5" width="43" height="43" rx="11" fill="#383630" stroke="#8b7760" stroke-width="1.1"/><path d="M8 7h29" stroke="#fff1d1" stroke-opacity=".19" stroke-width="1.4"/>'+(paths[id]||extras[id]||paths.shrubs)+'</svg>';
+ }
