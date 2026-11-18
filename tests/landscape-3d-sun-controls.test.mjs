@@ -32,4 +32,5 @@ test('sun sliders are safe, bounded and persist separately from measured site di
  assert.match(html,/sun\.shadow\.radius=solarSettings\.softness/);
  assert.match(html,/localStorage\.setItem\(SOLAR/);
  assert.match(html,/sunPosition:sunlight\?/);
+ assert.match(html,/solarAngles:\{azimuth:solarSettings\.azimuth,elevation:solarSettings\.elevation/);
 });
