@@ -19,10 +19,10 @@ test('round, soft terrain brush raises center but does not alter outer vertices'
  assert.ok(at(result,5,6)<at(result,5,5));
 });
 test('square brush includes corner cells beyond the circular radius, with soft edges',()=>{
- const square=brush(empty(),{radius:3,shape:'square',softness:0});
- const circle=brush(empty(),{radius:3,shape:'circle',softness:0});
- assert.ok(at(square,6,6)>0);
- assert.equal(at(circle,6,6),0);
+ const square=brush(empty(),{radius:5,shape:'square',softness:0});
+ const circle=brush(empty(),{radius:5,shape:'circle',softness:0});
+ assert.ok(at(square,7,7)>0);
+ assert.equal(at(circle,7,7),0);
  assert.equal(terrainBrushFalloff(0,0,3,75),1);
  assert.equal(terrainBrushFalloff(3,0,3,75),0);
 });
