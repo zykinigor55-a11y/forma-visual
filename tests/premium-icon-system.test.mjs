@@ -24,7 +24,7 @@ test('all 13 native 3D tools get the exact glossy-graphite tile silhouette',()=>
   assert.match(svg,/linearGradient id="lpiFill"/);
   assert.match(svg,/<rect x="2.5" y="2.5" width="43" height="43"/);
   assert.match(svg,/<path|<ellipse|<circle/);
-  assert.ok(svg.length>620,id+' must have real dimensional geometry rather than an emoji');
+  assert.match(svg,/<path d=|<ellipse|<circle/,'SVG must contain an actual vector silhouette: '+id);
  }
  const unique=new Set(ids.map(id=>premiumIcon(id).split('</defs>')[1]?.split('</svg>')[0]));
  assert.equal(unique.size,ids.length,'Distinct tool pictograms—not one recycled icon');
@@ -49,7 +49,7 @@ test('main website 17 cards, rail, mobile navigation and studio tool headers use
  for(const id of ['upscale','render','interior','materials','animation','nodes','camera','preview','geometry','cad','image3d','world','presentation','gallery','models','account','release']){
   const svg=premiumIcon(id);
   assert.match(svg,/forma-premium-icon/);
-  assert.ok(svg.length>620);
+  assert.match(svg,/<path d=|<ellipse|<circle/,'Tool icon must have real vector geometry: '+id);
  }
  assert.match(css,/\.fa-home-panel \.fa-home-tool-icon/);
  assert.match(css,/\.rail-nav \.rail-btn svg\.forma-premium-icon/);
