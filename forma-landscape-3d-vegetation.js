@@ -2,7 +2,7 @@
  * True branch geometry + instanced leaf meshes; no image billboards, no flat
  * cutouts. Everything uses metres and can be orbited, walked through and
  * rendered with real directional shadows. Deterministic per-object seed. */
-import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline} from './forma-landscape-3d-botany.js';
+import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth} from './forma-landscape-3d-botany.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:1100,branches:15,crownStart:.12,leaf:'#294d3e',bark:'#55433a'},
@@ -231,7 +231,7 @@ function createSprayTexture(T,needles){
 /* Three-dimensional crossed foliage sprays. Each textured tuft is attached to
  * a modelled twig endpoint, not distributed in an imaginary sphere. Two
  * intersecting planes keep leaf volume visible from a moving camera. */
-function addFoliageSprays(g,T,points,id,season,seed,quality){
+function addFoliageSprays(g,T,points,id,season,seed,quality,diameter){
  if(!points.length||foliageProfile(id,season).leafless)return;
  const type=foliageProfile(id,season),r=rng(seed),shrub=type.kind.includes('shrub');
  const needle=['pine','spruce','juniper','thuja-globe'].includes(id);
@@ -248,7 +248,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality){
   const p=points[Math.floor(r()*points.length)],offset=shrub?.05:.09;
   d.position.set(p.x+(r()-.5)*offset,p.y+(r()-.5)*offset,p.z+(r()-.5)*offset);
   d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
-  const w=(shrub?.40:1.12)*(.72+r()*.70);
+  const w=foliageSprayWidth(id,diameter)*(.72+r()*.70);
   d.scale.set(w,w,1);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const colour=tone.clone().multiplyScalar(.81+r()*.33);mesh.setColorAt(i,colour);
   d.rotateY(Math.PI/2);d.updateMatrix();cross.setMatrixAt(i,d.matrix);
@@ -372,7 +372,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  if(!leafless){
   if(quality>=.36)addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);
   if(quality>=.43)addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295),id);
-  addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);
+  addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality,diameter);
  }
  flowerClusters(g,T,leafPoints,id,Math.floor(r()*4294967295),season);
 }
@@ -417,7 +417,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  if(!foliageProfile(id,season).leafless){
   if(quality>=.36)addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);
   if(quality>=.43)addLeaves(g,T,points,foliageProfile(id,season).color,evergreen,season,Math.floor(r()*4294967295),id);
-  addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);
+  addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality,diameter);
  }
  flowerClusters(g,T,points,id,Math.floor(r()*4294967295),season);
 }
