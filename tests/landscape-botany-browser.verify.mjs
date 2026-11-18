@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 
 const browser=await chromium.launch({headless:true});
@@ -52,14 +52,24 @@ try{
  await page.waitForTimeout(280); // allow the invalidated WebGL frame to present
  // The editor initializes in 3D; avoid an unnecessary second WebGL camera reset.
  await mkdir('artifacts/landscape-editor',{recursive:true});
- const perspectivePng=await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-3d.png'});
+ // Capture the already rendered, preserved WebGL backbuffer directly.
+ // Playwright's composited page screenshot can block for minutes in SwiftShader.
+ const captureWebGL=async(name)=>{
+  const dataUrl=await page.locator('#viewport').evaluate(canvas=>canvas.toDataURL('image/png'));
+  const png=Buffer.from(dataUrl.slice(dataUrl.indexOf(',')+1),'base64');
+  assert.ok(png.byteLength>5000,'WebGL frame must not be empty');
+  await writeFile('artifacts/landscape-editor/'+name,png);
+  return png;
+ };
+ const perspectivePng=await captureWebGL('botanical-ten-species-3d.png');
  const lawnLuminance=await page.evaluate(async(src)=>{
   const image=new Image();
   await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=src});
   const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
   const context=canvas.getContext('2d',{willReadFrequently:true});
   context.drawImage(image,0,0);
-  const locations=[[780,740],[700,760],[865,740]];
+  const locations=[[.38,.77],[.49,.80],[.60,.77]]
+    .map(([x,y])=>[Math.round(x*image.width),Math.round(y*image.height)]);
   return locations.map(([x,y])=>{
    const p=context.getImageData(x,y,1,1).data;
    return Math.round((p[0]+p[1]+p[2])/3);
@@ -68,7 +78,7 @@ try{
  assert.ok(lawnLuminance.every(value=>value>=38),'Daytime 3D lawn must not render near black: '+JSON.stringify(lawnLuminance));
  await page.evaluate(()=>document.querySelector('[data-view="2d"]')?.click());
  await page.waitForTimeout(350);
- await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-nadir.png'});
+ await captureWebGL('botanical-ten-species-nadir.png');
  assert.deepEqual(errors,[],'Botanical generation must not cause browser exceptions');
  console.log('3D botanical species PASS',JSON.stringify(metrics));
 }finally{await browser.close()}
