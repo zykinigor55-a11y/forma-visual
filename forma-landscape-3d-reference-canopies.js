@@ -71,7 +71,7 @@ export function referenceBranchTips(id,{start,end,stage=.5,crownRadius=3,plantHe
  return shoots;
 }
 export function referenceFoliageDensity(id,quality=1){
- const p=referenceCanopy(id);
+ const p=speciesGrowthProfile(id);
  const q=clamp(Number(quality)||.2,.15,1);
  return p?Math.max(.25,Math.min(1.5,p.layeredFoliage*(.65+.35*q))):1;
 }
