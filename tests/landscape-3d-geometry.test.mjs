@@ -35,6 +35,25 @@ test('terrain polygons clip to parcel without drawing arbitrary full rectangle',
  assert.ok(poly.length>=4);
 });
 
+test('terrain triangle winding faces the sun on rectangular and arbitrary parcels',()=>{
+ const shapes=[
+  {width:10,height:10},
+  {width:10,height:10,boundary:[{x:0,y:0},{x:10,y:0},{x:10,y:10},{x:0,y:10}]},
+  {width:10,height:10,boundary:[{x:0,y:10},{x:10,y:10},{x:10,y:0},{x:0,y:0}]},
+  {width:10,height:10,boundary:[{x:0,y:0},{x:10,y:0},{x:0,y:10}]}
+ ];
+ for(const site of shapes){
+  const tris=terrainTriangles(site,new Array(25).fill(0),4);
+  assert.ok(tris.length>0,'terrain exists');
+  for(let i=0;i<tris.length;i+=9){
+   const ax=tris[i],az=tris[i+2],bx=tris[i+3],bz=tris[i+5],cx=tris[i+6],cz=tris[i+8];
+   // Y component of (B-A)x(C-A): must point up rather than below the soil.
+   const ny=(bz-az)*(cx-ax)-(bx-ax)*(cz-az);
+   assert.ok(ny>0,'ground lighting normal must face +Y, received '+ny);
+  }
+ }
+});
+
 test('roof facets preserve measured building footprint and distinguish gable and hip',()=>{
  const g=roofTriangles(12,8,'gable'),h=roofTriangles(12,8,'hip');
  assert.ok(g.length>0&&h.length>0&&g.length%9===0&&h.length%9===0);
