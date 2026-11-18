@@ -17,6 +17,6 @@ test('leaf sprays scale with surveyed crown diameter without gigantic billboard 
 test('tree and shrub renderer use measured diameter for real 3D terminal foliage',()=>{
  const src=readFileSync(new URL('../forma-landscape-3d-vegetation.js',import.meta.url),'utf8');
  assert.match(src,/const w=foliageSprayWidth\(id,diameter\)/);
- assert.match(src,/addFoliageSprays\(g,T,leafPoints,id,season,Math\.floor\(r\(\)\*4294967295\),quality,diameter\)/);
- assert.match(src,/addFoliageSprays\(g,T,points,id,season,Math\.floor\(r\(\)\*4294967295\),quality,diameter\)/);
+ assert.match(src,/addFoliageSprays\(g,T,leafPoints,id,season,Math\.floor\(r\(\)\*4294967295\),quality,diameter,height\)/);
+ assert.match(src,/addFoliageSprays\(g,T,points,id,season,Math\.floor\(r\(\)\*4294967295\),quality,diameter,height\)/);
 });
