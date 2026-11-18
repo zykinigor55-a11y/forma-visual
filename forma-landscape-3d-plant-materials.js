@@ -62,8 +62,12 @@ export function foliageMaterial(T,id,{physical=true}={}){
   color:'#ffffff',metalness:0,roughness:p.leafRoughness,
   side:T.DoubleSide,depthWrite:true,
   // Real waxy leaves have a restrained outer coat; avoid shiny plastic.
-  ...(physical?{clearcoat:.065,clearcoatRoughness:.82}:{}),
-  emissive:'#23321b',emissiveIntensity:.015
+  ...(physical?{clearcoat:.052,clearcoatRoughness:.84,
+   sheen:.095,sheenRoughness:.91,sheenColor:'#819475',
+   iridescence:0,transmission:0}:{}),
+  // Leaves are not electric green. Sunlit foliage comes from the real
+  // directional sun and broad sky light, not a fake self-illumination.
+  emissive:'#182412',emissiveIntensity:.005
  });
 }
 export function barkReliefCanvas(colorCanvas,id){
