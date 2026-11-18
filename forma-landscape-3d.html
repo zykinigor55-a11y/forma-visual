@@ -995,14 +995,37 @@ function updateSun(){
  scene.fog.near=weatherFog?Math.max(22,extent*.70):wetFog?Math.max(65,extent*1.5):Math.max(120,extent*2.2);
  scene.fog.far=weatherFog?Math.max(110,extent*3.0):wetFog?Math.max(145,extent*3.7):Math.max(230,extent*5);
 }
+function setOrbitCameraHeight(height){
+ if(state.view!=='3d'||!camera?.isPerspectiveCamera)return;
+ const h=Math.max(.8,Math.min(80,Number(height)||1.7));
+ const targetGround=terrainAt(controls.target.x,controls.target.z);
+ const cameraGround=terrainAt(camera.position.x,camera.position.z);
+ // Only move the eye vertically: never scale the 3D scene or fly through it.
+ camera.position.y=cameraGround+h;
+ controls.target.y=targetGround+Math.min(4,Math.max(.65,h*.28));
+ camera.lookAt(controls.target);controls.update();
+ $('#cameraHeight').value=String(h);
+ $('#cameraHeightValue').textContent=h.toFixed(1)+' м';
+ renderGate.invalidate();
+}
+function syncCameraHeight(){
+ if(state.view==='3d'&&camera?.isPerspectiveCamera){
+  const height=Math.max(.8,Math.min(80,camera.position.y-terrainAt(camera.position.x,camera.position.z)));
+  $('#cameraHeight').value=String(height);
+  $('#cameraHeightValue').textContent=height.toFixed(1)+' м';
+ }
+}
 function setView(view){
  renderGate.invalidate();
+ if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
+ heldWalkKeys.clear();lastWalkFrame=0;
  state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&doc.atmosphere.time!=='night';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';
  const W=doc.site.width,H=doc.site.height;
  controls.enabled=view!=='walk';
  if(view==='2d'){const size=Math.max(W,H)*.75;camera=new THREE.OrthographicCamera(-size,size,size/Math.max(1,canvas.clientWidth/canvas.clientHeight),-size/Math.max(1,canvas.clientWidth/canvas.clientHeight),.1,600);camera.position.set(0,125,.01);camera.up.set(0,0,-1);camera.lookAt(0,0,0);controls.object=camera;controls.target.set(0,0,0);controls.enableRotate=false}
  else if(view==='walk'){camera=new THREE.PerspectiveCamera(70,1,.1,600);
-  const z=Math.max(-H/2+1,Math.min(H/2-1,8));camera.position.set(0,terrainAt(0,z)+1.7,z);
+  const z=Math.max(-H/2+1,Math.min(H/2-1,8));camera.position.set(0,terrainAt(0,z)+WALK_EYE_HEIGHT,z);
   walkYaw=0;walkPitch=0;camera.rotation.order='YXZ';camera.rotation.set(0,0,0);controls.object=camera}
  else{
   // A phone is portrait: horizontal FOV is far narrower than desktop. Frame
@@ -1017,7 +1040,8 @@ function setView(view){
   camera.up.set(0,1,0);controls.object=camera;
   controls.target.set(0,aimY,0);controls.enableRotate=true;
  }
- resize();status(view==='walk'?'Walk: W A S D — движение · щёлкните для осмотра мышью · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
+ resize();if(view==='3d')syncCameraHeight();
+ status(view==='walk'?'Walk: W A S D — непрерывная прогулка по земле · мышь — осмотр · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
 }
 function focusSelectedPlant(){
  const ref=state.selected?selectable(state.selected):null;
@@ -1476,6 +1500,8 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#focusHouse').onclick=focusHouseCamera;
  $('#focusSelected').onclick=focusSelectedPlant;
  $('#fit3dScene').onclick=()=>setView('3d');
+ $('#cameraHeight').oninput=()=>setOrbitCameraHeight($('#cameraHeight').value);
+ $('#cameraEyeLevel').onclick=()=>{if(state.view!=='3d')setView('3d');setOrbitCameraHeight(WALK_EYE_HEIGHT);status('Камера опущена к уровню глаз: 1,7 м над рельефом.')};
  $('#customHouseGlb').onchange=e=>importHouseGlb(e.target.files?.[0]);
  $('#clearCustomHouse').onclick=()=>{const h=activeHouseTarget();if(!h.modelKey)return status('Вы уже используете встроенный 3D-стиль.');push();h.modelKey=null;save();rebuild();renderHouseLibrary();status('Возврат к 3D-стилю. Исходный GLB остаётся в локальном хранилище.')};
  $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#aiProgressHide').onclick=()=>{$('#aiProgress').hidden=true};$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
