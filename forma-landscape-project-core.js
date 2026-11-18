@@ -7,7 +7,7 @@ export const GROUPS=Object.freeze([
  {id:'trees',name:'Деревья',qty:10,symbol:'♧'},
  {id:'pavers',name:'Брусчатка',qty:6,symbol:'▤'},
  {id:'fills',name:'Отсыпки',qty:5,symbol:'░'},
- {id:'lights',name:'Светильники',qty:6,symbol:'☼'},
+ {id:'lights',name:'Светильники',qty:11,symbol:'☼'},
  {id:'lawns',name:'Газоны',qty:4,symbol:'≋'},
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
  {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
@@ -57,13 +57,18 @@ export const CATALOG=Object.freeze([
  ['pine-bark','Кора сосновая','#7b563d','bark']
  ].map(([id,name,color,texture])=>({id,group:'fills',name,color,texture})),
  ...[
- ['bollard','Боллард дорожный','#e3bd80','bollard'],
- ['ground','Встроенный в покрытие','#f2d4a2','ground'],
- ['spot','Грунтовый прожектор','#ead0a3','spot'],
- ['low-post','Низкий садовый столбик','#e6c395','post'],
- ['deck-light','Встраиваемый террасный','#e5c390','deck'],
- ['linear','Линейный в мощении','#ffcf8f','linear']
- ].map(([id,name,color,texture])=>({id,group:'lights',name,color,diameter:.25,texture})),
+ ['bollard','Боллард цилиндрический · LED','#d9c3a0','bollard',.30,.85],
+ ['ground','Встраиваемый круглый · IP67','#f2d4a2','ground',.28,.12],
+ ['spot','Прожектор поворотный · грунтовый','#ead0a3','spot',.30,.24],
+ ['low-post','Столбик с боковой подсветкой','#e6c395','post',.23,1.20],
+ ['deck-light','Террасный квадратный · IP67','#e5c390','deck',.22,.10],
+ ['linear','Линейный в мощении · LED','#ffcf8f','linear',.14,.08],
+ ['mushroom','Грибовидный · мягкий свет вниз','#e6cdaa','mushroom',.48,.68],
+ ['square-bollard','Столбик квадратный · LED','#d8c29f','square-bollard',.23,.82],
+ ['garden-lantern','Фонарь парковый · классический','#f0d4a0','garden-lantern',.43,2.35],
+ ['spike-spot','Прожектор на колышке · акцент','#e9cda3','spike-spot',.20,.36],
+ ['globe','Светильник-шар · опаловый','#f0d9b3','globe',.48,.68]
+ ].map(([id,name,color,texture,diameter,height])=>({id,group:'lights',name,color,diameter,height,texture})),
  ...[
  ['formal','Коротко стриженный · партерный газон','#79a24e','formal'],
  ['universal','Универсальный газон · классический','#779853','universal'],
