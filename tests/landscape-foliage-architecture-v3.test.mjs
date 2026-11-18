@@ -21,9 +21,9 @@ test('shrub terminal foliage grows only from actual side branch geometry',()=>{
  assert.match(flora,/clamp\(tip\[1\]\+actual\*\(r\(\)-\.55\)\*\.035,\.04,actual\)/);
 });
 test('architectural rainfall and foundation details do not alter measured house footprint',()=>{
- assert.equal(HOUSE_PRESETS.length,12);
+ assert.equal(HOUSE_PRESETS.length,18);
  assert.match(architecture,/function addFacadeFinish\(/);
  assert.match(architecture,/new T\.CylinderGeometry\(\.046,\.046,Math\.max\(\.35,gutterY-\.64\),10\)/);
- assert.match(architecture,/if\(!isGazebo&&style!=='aframe'\)addFacadeFinish/);
+ assert.match(architecture,/if\(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe'\)addFacadeFinish/);
  assert.match(architecture,/g\.userData\.footprint=\{width:w,height:d\}/);
 });
