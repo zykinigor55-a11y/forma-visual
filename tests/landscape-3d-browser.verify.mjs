@@ -27,6 +27,26 @@ try{
  assert.equal(await page.locator('#loadError').isVisible(),false);
  assert.ok(await page.locator('#viewport').evaluate(el=>el.width>300&&el.height>200),'WebGL canvas initialized');
  assert.equal(await page.locator('#weather').inputValue(),'sunny');
+ // Real sun controls must move the actual WebGL light, update the sky and
+ // persist the project-specific solar vector, not a decorative fake slider.
+ const changeSun=async(id,value)=>page.locator('#'+id).evaluate((el,v)=>{
+  el.value=String(v);el.dispatchEvent(new Event('input',{bubbles:true}));
+ },value);
+ await changeSun('sunAzimuth',95);
+ await changeSun('sunElevation',25);
+ await changeSun('sunStrength',140);
+ await changeSun('sunSoftness',3);
+ assert.equal(await page.locator('#sunAzimuthValue').textContent(),'95°');
+ assert.equal(await page.locator('#sunElevationValue').textContent(),'25°');
+ const savedSolar=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-sun-v1-landscape')));
+ assert.equal(savedSolar.settings.azimuth,95);
+ assert.equal(savedSolar.settings.elevation,25);
+ assert.equal(savedSolar.settings.strength,1.4);
+ await page.locator('#sunReset').click();
+ assert.equal(await page.locator('#sunAzimuthValue').textContent(),'311°');
+ await page.locator('#time').selectOption('morning');
+ assert.equal(await page.locator('#sunElevationValue').textContent(),'20°');
+ await page.locator('#time').selectOption('day');
  // Every landscape category is reachable without scrolling past the tool grid.
  await page.locator('[data-quick-tool="plant"]').click();
  assert.equal(await page.locator('[data-item]').count(),18,'All ten trees and eight shrubs in the searchable plant library');
