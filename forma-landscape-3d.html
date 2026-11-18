@@ -274,7 +274,7 @@ import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
 import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-3d-sun.js';
-import {duplicateLandscapeObject,rotatedLandscapeObject} from './forma-landscape-3d-editing.js';
+import {duplicateLandscapeObject,rotatedLandscapeObject,validatedLandscapeProps} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
 import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
@@ -972,7 +972,13 @@ function renderProps(){
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
  el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
- $('#applyProps').onclick=()=>{push();for(const n of el.querySelectorAll('[data-prop]')){let val=Number(n.value);if(Number.isFinite(val)){if(real&&n.dataset.prop==='width')val=Math.max(.1,Math.min(30,val));o[n.dataset.prop]=val}}save();rebuild()};
+ $('#applyProps').onclick=()=>{
+  const fields=Object.fromEntries([...el.querySelectorAll('[data-prop]')].map(n=>[n.dataset.prop,n.value]));
+  const updated=validatedLandscapeProps(o,fields,{plot:doc.site,kind:ref.type,model:Boolean(real),contains:p=>inParcel(p,doc.site)});
+  if(!updated)return status('Проверьте значения: размеры должны быть положительными, координаты внутри участка.');
+  if(Object.keys(fields).every(key=>o[key]===updated[key]))return status('Значения уже сохранены.');
+  push();Object.assign(o,updated);save();rebuild();renderProps();
+ };
  $('#rotateLeft').onclick=()=>rotateSelected(-15);
  $('#rotateRight').onclick=()=>rotateSelected(15);
  $('#duplicateObject').onclick=duplicateSelected;
