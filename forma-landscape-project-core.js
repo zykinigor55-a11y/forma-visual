@@ -1,4 +1,5 @@
 import {visibleSurfaceAreas} from './forma-landscape-area.js?v=overlap-union-v1';
+import {housePresetIds} from './forma-landscape-3d-buildings.js';
 /* FORMA Landscape Project — real-world geometry is authoritative.
    Units are metres. AI is never trusted for measurements or object coordinates.
  */
@@ -99,8 +100,8 @@ export function normalizeProject(raw){
  const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
  const boundary=Array.isArray(site.boundary)&&site.boundary.length>=3&&site.boundary.length<=80?site.boundary.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)})):null;
  const r={version:1,title:String(obj.title||base.title).slice(0,75),site:{width,height,orientation:finite(site.orientation,-360,360,0),boundary},
- house:{x:finite(house.x,0,width,width/2),y:finite(house.y,0,height,height*.4),width:finite(house.width,2,60,12),height:finite(house.height,2,60,8),rotation:finite(house.rotation,-360,360,0),type:['house','bath','garage','gazebo','outbuilding'].includes(house.type)?house.type:'house',
- roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',archStyle:['barn','scandi','timber','brick','modern','japandi','classic','aframe'].includes(house.archStyle)?house.archStyle:'barn',modelKey:/^[a-z0-9-]{1,48}$/i.test(house.modelKey||'')?house.modelKey:null,roofRise:finite(house.roofRise,.4,8,1.4),roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:safePhoto(house.photo)},
+ house:{x:finite(house.x,0,width,width/2),y:finite(house.y,0,height,height*.4),width:finite(house.width,2,60,12),height:finite(house.height,2,60,8),rotation:finite(house.rotation,-360,360,0),type:['house','bath','garage','carport','greenhouse','gazebo','outbuilding'].includes(house.type)?house.type:'house',
+ roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',archStyle:housePresetIds.includes(house.archStyle)?house.archStyle:'barn',modelKey:/^[a-z0-9-]{1,48}$/i.test(house.modelKey||'')?house.modelKey:null,roofRise:finite(house.roofRise,.4,8,1.4),roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:safePhoto(house.photo)},
  objects:[],buildings:[],underlay:safePhoto(obj.underlay),
  underlayOpacity:finite(obj.underlayOpacity,0,1,.25),north:finite(obj.north,0,360,0),
  verified:obj.verified===true,style:['natural','modern','architectural'].includes(obj.style)?obj.style:'natural',
@@ -124,7 +125,7 @@ export function normalizeProject(raw){
  }
  for(const b of (Array.isArray(obj.buildings)?obj.buildings:[]).slice(0,24)){
   if(!b||typeof b!=='object')continue;
-  r.buildings.push({id:/^[a-z0-9-]{1,48}$/i.test(b.id||'')?b.id:'b-'+Math.random().toString(36).slice(2,10),x:finite(b.x,0,width,width*.7),y:finite(b.y,0,height,height*.7),width:finite(b.width,2,60,6),height:finite(b.height,2,60,4),rotation:finite(b.rotation,-360,360,0),type:['bath','garage','gazebo','outbuilding','house'].includes(b.type)?b.type:'bath',roof:['gable','hip','flat'].includes(b.roof)?b.roof:'gable',archStyle:['barn','scandi','timber','brick','modern','japandi','classic','aframe'].includes(b.archStyle)?b.archStyle:'scandi',modelKey:/^[a-z0-9-]{1,48}$/i.test(b.modelKey||'')?b.modelKey:null,roofRise:finite(b.roofRise,.4,8,1.2),roofColor:/^#[a-f0-9]{6}$/i.test(b.roofColor||'')?b.roofColor:'#454543',photo:safePhoto(b.photo)});
+  r.buildings.push({id:/^[a-z0-9-]{1,48}$/i.test(b.id||'')?b.id:'b-'+Math.random().toString(36).slice(2,10),x:finite(b.x,0,width,width*.7),y:finite(b.y,0,height,height*.7),width:finite(b.width,2,60,6),height:finite(b.height,2,60,4),rotation:finite(b.rotation,-360,360,0),type:['bath','garage','carport','greenhouse','gazebo','outbuilding','house'].includes(b.type)?b.type:'bath',roof:['gable','hip','flat'].includes(b.roof)?b.roof:'gable',archStyle:housePresetIds.includes(b.archStyle)?b.archStyle:'scandi',modelKey:/^[a-z0-9-]{1,48}$/i.test(b.modelKey||'')?b.modelKey:null,roofRise:finite(b.roofRise,.4,8,1.2),roofColor:/^#[a-f0-9]{6}$/i.test(b.roofColor||'')?b.roofColor:'#454543',photo:safePhoto(b.photo)});
  }
  return r;
 }
