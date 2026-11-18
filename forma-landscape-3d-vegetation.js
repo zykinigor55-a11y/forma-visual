@@ -172,31 +172,49 @@ function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  * independent curved leaf/needle blades. Its origin is the branch endpoint.
  * This fixes hovering green blobs and makes canopy porous in perspective. */
 function foliageSprigGeometry(T,needle,id='oak'){
+ // Botanical terminal shoots in THREE DIMENSIONS, not the former hedgehog-like
+ // radial pointy star. Leaves are paired along a short curved rachis; every
+ // species uses its characteristic leaf outline and branchlet length.
  const vertices=[];
- const tri=(a,b,c)=>vertices.push(...a,...b,...c);
- const fine=id==='birch'||id==='spirea'||id==='rowan'||id==='ornamental-grass',
-  broad=id==='oak'||id==='hydrangea'||id==='hosta'||id==='ninebark';
- const arms=needle?5:fine?6:4,leaves=needle?3:broad?3:2;
- for(let arm=0;arm<arms;arm++){
-  const a=arm*Math.PI*2/arms,ca=Math.cos(a),sa=Math.sin(a);
-  for(let j=0;j<leaves;j++){
-   const k=(j+.75)/leaves,side=j%2?-1:1;
-   const base=[ca*k*.23, k*.21, sa*k*.23];
-   const tip=[ca*(.22+k*.42), (.18+k*.31)+(needle?.035:.065),sa*(.22+k*.42)];
-   const normal=[-sa,0,ca],w=(needle?.012:id==='ornamental-grass'?.009:
-    id==='spirea'?.028:id==='hosta'?.105:fine?.030:broad?.086:.062)*(.55+.5*k),mid=[
-    (base[0]+tip[0])*.5+(normal[0]*side*w*.65),
-    (base[1]+tip[1])*.5+.025,
-    (base[2]+tip[2])*.5+(normal[2]*side*w*.65)
-   ];
-   const left=[base[0]+normal[0]*w,base[1],base[2]+normal[2]*w];
-   const right=[base[0]-normal[0]*w,base[1],base[2]-normal[2]*w];
-   tri(left,mid,tip);tri(left,tip,right);
+ const push=(a,b,c)=>vertices.push(...a,...b,...c);
+ const conifer=needle,profile=conifer?coniferNeedleProfile(id):null;
+ const isSmall=['birch','rowan','ash','aspen','spirea','barberry'].includes(id);
+ const pairs=conifer?(id==='spruce'?13:9):isSmall?7:5;
+ const contour=leafOutline(id,10);
+ const leafWidth=conifer?(id==='pine'?.018:.015):id==='birch'?.091:
+  id==='spirea'?.066:id==='oak'?.135:id==='hydrangea'?.16:isSmall?.09:.12;
+ const leafLength=conifer?(id==='pine'?.28:.17):id==='birch'?.21:
+  id==='spirea'?.175:id==='oak'?.30:isSmall?.22:.265;
+ const along=(u,v)=>[u[0]+v[0],u[1]+v[1],u[2]+v[2]];
+ for(let i=0;i<pairs;i++)for(const side of [-1,1]){
+  const t=(i+.7)/(pairs+1),inward=1-.25*t;
+  // Growth alternates along a single twig. This prevents evenly spaced
+  // spherical bursts that formerly looked like plastic sea urchins.
+  const az=(i*.27+side*.34),cs=Math.cos(az),sn=Math.sin(az);
+  const base=[.085*Math.sin(t*1.7),t*.67,.065*Math.cos(t*1.7)];
+  const direction=[side*cs*.77, .32+.28*t, side*sn*.67];
+  const transverse=[-direction[2],.06,direction[0]];
+  const len=leafLength*inward,width=leafWidth*(.68+.28*Math.sin(Math.PI*t));
+  const centre=along(base,[direction[0]*len*.48,direction[1]*len*.48,direction[2]*len*.48]);
+  let outline=[];
+  for(const [u,v] of contour){
+   // 2D leaf contour is only a parametric template; transformed leaves have
+   // a genuine curved middle and a free 3D orientation.
+   const vr=v*.82;
+   const wave=.018*Math.sin(Math.PI*(vr+.8)*.625);
+   outline.push([
+    centre[0]+transverse[0]*u*width+direction[0]*vr*len,
+    centre[1]+transverse[1]*u*width+direction[1]*vr*len+wave,
+    centre[2]+transverse[2]*u*width+direction[2]*vr*len+
+     .035*(1-Math.abs(u))*Math.cos(Math.PI*vr*.5)
+   ]);
   }
+  for(let j=0;j<outline.length;j++)push(centre,outline[j],outline[(j+1)%outline.length]);
  }
  const geo=new T.BufferGeometry();
  geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
- geo.computeVertexNormals();return geo;
+ geo.computeVertexNormals();
+ return geo;
 }
 function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  if(!points.length||foliageProfile(id,season).leafless)return;
