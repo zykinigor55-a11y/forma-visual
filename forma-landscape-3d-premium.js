@@ -5,9 +5,13 @@
 export const PREMIUM_LANDSCAPE_MODELS=Object.freeze({
  pine:'assets/landscape-models/pine.glb',
  spruce:'assets/landscape-models/spruce.glb',
- 'granite-boulder':'assets/landscape-models/granite-boulder.glb'
+ 'granite-boulder':'assets/landscape-models/granite-boulder.glb',
+ 'outdoor-dining':'assets/landscape-models/outdoor-dining.glb',
+ 'picnic-table':'assets/landscape-models/picnic-table.glb',
+ 'wild-shrub':'assets/landscape-models/wild-shrub.glb',
+ periwinkle:'assets/landscape-models/periwinkle.glb'
 });
 export const PREMIUM_RESERVED_MODELS=Object.freeze({
  fern:'assets/landscape-models/fern.glb'
 });
-export const modelPath=id=>PREMIUM_LANDSCAPE_MODELS[id]||null;
+export const modelPath=id=>PREMIUM_LANDSCAPE_MODELS[id]||PREMIUM_RESERVED_MODELS[id]||null;
