@@ -389,7 +389,9 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  const evergreen=c.kind==='conifer-shrub',branches=[],points=[],isCreeper=id==='juniper',isSpike=id==='lavender';
  const stems=isCreeper?24:isSpike?38:id==='hydrangea'?30:c.branches;
  for(let j=0;j<stems;j++){
-  const az=j*2.399+r()*.19,dist=radius*(.52+r()*.43),
+  // Botanical asymmetry: individual shrubs form naturally offset branch whorls,
+  // rather than a perfect radial hedgehog around their survey point.
+  const az=j*2.399+r()*.34,dist=radius*(.43+r()*.53),
    horizontal=isCreeper?1:isSpike?.72:id==='thuja-globe'?.8:1;
   const tipHeight=isCreeper?actual*(.17+r()*.23):
    isSpike?actual*(.50+r()*.45):
@@ -401,7 +403,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
   for(let k=0;k<15;k++){
    const f=.22+r()*.77,
     mid=[pt[0]*f,.045+(pt[1]-.045)*f,pt[2]*f],length=radius*(isCreeper?.19:isSpike?.08:.16);
-   const direction=az+(r()-.5)*2.3,tip=[
+   const direction=az+(r()-.5)*2.6,tip=[
     clamp(mid[0]+Math.cos(direction)*length*(.25+r()*.85),-radius,radius),
     clamp(mid[1]+actual*(isSpike?.035:.08)*(r()-.33),.04,actual),
     clamp(mid[2]+Math.sin(direction)*length*(.25+r()*.85),-radius,radius)
