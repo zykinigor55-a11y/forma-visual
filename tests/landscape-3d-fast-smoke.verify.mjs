@@ -126,7 +126,9 @@ try{
  await page.locator('[data-view="3d"]').click();
  await page.locator('#fit3dScene').click();
  await page.screenshot({path:'artifacts/landscape-editor/3d-outdoor-luminaires-perspective.png'});
- await page.locator('#cameraEyeLevel').click();
+ const cameraPageURL=page.url();
+ await page.locator('#cameraEyeLevel').click({noWaitAfter:true});
+ assert.equal(page.url(),cameraPageURL,'Eye-level control adjusts camera without page navigation');
  assert.equal(await page.locator('#cameraHeightValue').textContent(),'1.7 м','camera can reach natural eye level');
  await page.locator('[data-view="walk"]').click();
  assert.equal(await page.locator('#walkInstructions').isVisible(),true,'walk mode has readable WASD instructions');
