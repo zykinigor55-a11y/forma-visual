@@ -300,6 +300,7 @@ import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strok
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
+import {createOutdoorReflectionMap,updateOutdoorReflectionMap} from './forma-landscape-3d-environment.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
 const $=s=>document.querySelector(s);
@@ -309,7 +310,7 @@ const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projec
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
-let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),cloudLayer=null,waterRippleTexture=null;
+let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),cloudLayer=null,waterRippleTexture=null,outdoorReflectionMap=null;
 const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
 let lastWalkFrame=0;
@@ -417,6 +418,8 @@ function initialize(){
  if(initialPlantCount>12){autoReduced=true;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,.85));renderer.shadowMap.enabled=false;}
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
+ outdoorReflectionMap=createOutdoorReflectionMap(THREE,document);
+ scene.environment=outdoorReflectionMap;scene.environmentIntensity=.67;
  atmosphereSky=new Sky();atmosphereSky.name='forma-physical-sky';atmosphereSky.scale.setScalar(1750);
  atmosphereSky.material.uniforms.turbidity.value=3.5;
  atmosphereSky.material.uniforms.rayleigh.value=2.5;
@@ -947,6 +950,7 @@ async function makeHouseThumbnails(){
   rendererThumb.setSize(240,150,false);rendererThumb.setPixelRatio(1);rendererThumb.shadowMap.enabled=true;
   rendererThumb.outputColorSpace=THREE.SRGBColorSpace;
   const previewScene=new THREE.Scene();previewScene.background=new THREE.Color('#CAD0C8');
+  previewScene.environment=outdoorReflectionMap;previewScene.environmentIntensity=.60;
   previewScene.add(new THREE.HemisphereLight(0xffffff,0x728075,2.5));
   const light=new THREE.DirectionalLight(0xfff0d9,3.2);light.position.set(-10,18,14);
   light.castShadow=true;light.shadow.mapSize.set(512,512);previewScene.add(light);
@@ -1072,6 +1076,11 @@ function updateSun(){
   uniforms.mieCoefficient.value=doc.atmosphere.weather==='fog'?.022:.005;
  }
  const weather=doc.atmosphere.weather||'sunny',factor={sunny:1,overcast:.42,'after-rain':.7,rain:.28,fog:.25,snow:.5}[weather]||1;
+ if(outdoorReflectionMap){
+  updateOutdoorReflectionMap(outdoorReflectionMap,{time:val,weather,
+   azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,clouds:sceneAtmosphere.clouds});
+  scene.environmentIntensity=val==='night'?.47:val==='evening'?.62:.72;
+ }
  sun.intensity=(val==='night'?.025:cfg[val]*factor*solarSettings.strength);
  sun.color.set(val==='evening'?'#ffb87b':val==='morning'?'#ffe1be':'#fff2db');
  const sky=scene.getObjectByName('forma-sky-fill');
