@@ -57,7 +57,7 @@ try{
  assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').some(x=>x.type==='rock-grey'&&x.width===1.4)),'Measured 3D rock persisted with its source identity and exact footprint');
  // Selecting a photorealistic mesh should expose duplicate and rotate actions.
  await page.locator('[data-tool="select"]').click();
- await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('PBR-модель загружена'),null,{timeout:30000});
+ await page.waitForFunction(()=>document.querySelector('#modelHealth strong')?.textContent.includes('1/1 загружено'),null,{timeout:90000});
  await clickSite(.59,.39);
  await page.locator('#duplicateObject').click({timeout:12000});
  let rocks=await page.evaluate(()=>JSON.parse(localStorage.getItem('forma-landscape-3d-extra-v1-landscape')||'[]').filter(x=>x.type==='rock-grey'));
