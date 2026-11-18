@@ -222,7 +222,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  const source=foliageProfile(id,season),number=clamp(
-  Math.round(points.length*quality*(needle?2.5:2.45)),shrub?170:680,shrub?1650:6000
+  Math.round(points.length*quality*(needle?2.5:2.45)),shrub?170:680,shrub?1650:needle?2900:5400
  );
  const geometry=foliageSprigGeometry(T,needle,id);
  const material=foliageMaterial(T,id,{physical:false});
