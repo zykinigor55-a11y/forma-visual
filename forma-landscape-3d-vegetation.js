@@ -24,7 +24,10 @@ export const VEGETATION_SPECIES=Object.freeze({
  dogwood:{kind:'shrub',density:520,branches:25,crownStart:.06,leaf:'#7b9d68',bark:'#a35748'},
  'thuja-globe':{kind:'conifer-shrub',density:830,branches:25,crownStart:.05,leaf:'#396c57',bark:'#5d624f'},
  lavender:{kind:'shrub',density:330,branches:30,crownStart:.04,leaf:'#73846b',flower:'#9f8ca8',bark:'#6c7364'},
- boxwood:{kind:'shrub',density:680,branches:26,crownStart:.02,leaf:'#506f42',bark:'#68614d'}
+ boxwood:{kind:'shrub',density:680,branches:26,crownStart:.02,leaf:'#506f42',bark:'#68614d'},
+ ninebark:{kind:'shrub',density:590,branches:28,crownStart:.06,leaf:'#86674e',bark:'#816050'},
+ hosta:{kind:'shrub',density:440,branches:18,crownStart:.02,leaf:'#64865b',bark:'#69795a'},
+ 'ornamental-grass':{kind:'shrub',density:620,branches:44,crownStart:.02,leaf:'#989b67',bark:'#968c62'}
 });
 export const vegetationSpeciesIds=Object.freeze(Object.keys(VEGETATION_SPECIES));
 export const isEvergreen=id=>['pine','spruce','juniper','thuja-globe','boxwood'].includes(id);
@@ -165,8 +168,8 @@ function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
 function foliageSprigGeometry(T,needle,id='oak'){
  const vertices=[];
  const tri=(a,b,c)=>vertices.push(...a,...b,...c);
- const fine=id==='birch'||id==='spirea'||id==='rowan',
-  broad=id==='oak'||id==='hydrangea';
+ const fine=id==='birch'||id==='spirea'||id==='rowan'||id==='ornamental-grass',
+  broad=id==='oak'||id==='hydrangea'||id==='hosta'||id==='ninebark';
  const arms=needle?5:fine?6:4,leaves=needle?3:broad?3:2;
  for(let arm=0;arm<arms;arm++){
   const a=arm*Math.PI*2/arms,ca=Math.cos(a),sa=Math.sin(a);
@@ -174,7 +177,8 @@ function foliageSprigGeometry(T,needle,id='oak'){
    const k=(j+.75)/leaves,side=j%2?-1:1;
    const base=[ca*k*.23, k*.21, sa*k*.23];
    const tip=[ca*(.22+k*.42), (.18+k*.31)+(needle?.035:.065),sa*(.22+k*.42)];
-   const normal=[-sa,0,ca],w=(needle?.012:fine?.030:broad?.086:.062)*(.55+.5*k),mid=[
+   const normal=[-sa,0,ca],w=(needle?.012:id==='ornamental-grass'?.009:
+    id==='spirea'?.028:id==='hosta'?.105:fine?.030:broad?.086:.062)*(.55+.5*k),mid=[
     (base[0]+tip[0])*.5+(normal[0]*side*w*.65),
     (base[1]+tip[1])*.5+.025,
     (base[2]+tip[2])*.5+(normal[2]*side*w*.65)
@@ -454,13 +458,16 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
 function generateShrub(T,g,id,height,diameter,season,r,quality){
  const c=VEGETATION_SPECIES[id],radius=diameter/2,actual=clamp(height,.3,3.5);
  const evergreen=c.kind==='conifer-shrub',branches=[],points=[],isCreeper=id==='juniper',isSpike=id==='lavender';
- const stems=isCreeper?24:isSpike?38:id==='hydrangea'?30:c.branches;
+ const stems=isCreeper?24:isSpike?38:id==='hosta'?19:id==='ornamental-grass'?56:id==='hydrangea'?30:c.branches;
  for(let j=0;j<stems;j++){
   // Botanical asymmetry: individual shrubs form naturally offset branch whorls,
   // rather than a perfect radial hedgehog around their survey point.
   const az=j*2.399+r()*.34,dist=radius*(.43+r()*.53),
-   horizontal=isCreeper?1:isSpike?.72:id==='thuja-globe'?.8:1;
+   horizontal=isCreeper?1:isSpike?.72:id==='ornamental-grass'?.72:
+   id==='hosta'?.89:id==='thuja-globe'?.8:1;
   const tipHeight=isCreeper?actual*(.17+r()*.23):
+   id==='ornamental-grass'?actual*(.65+r()*.34):
+   id==='hosta'?actual*(.31+r()*.56):
    id==='spirea'?actual*(.32+r()*.43):
    isSpike?actual*(.50+r()*.45):
    id==='boxwood'||id==='thuja-globe'?actual*(.51+r()*.47):
