@@ -1,0 +1,42 @@
+name: FORMA A-B-C visual reference — architecture, plants, atmosphere
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-3d.html'
+      - 'forma-landscape-3d-buildings.js'
+      - 'forma-landscape-3d-vegetation.js'
+      - 'forma-landscape-3d-understory.js'
+      - 'forma-landscape-3d-atmosphere.js'
+      - 'forma-landscape-3d-environment.js'
+      - 'tests/landscape-3d-abc-reference.verify.mjs'
+      - 'tests/fixtures/forma-abc-reference-scene.mjs'
+      - '.github/workflows/forma-abc-visual-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-abc-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: Capture day, evening, night and tuned atmosphere from surveyed 3D fixture
+        run: |
+          node server.mjs > /tmp/forma-abc-server.log 2>&1 &
+          node tests/landscape-3d-abc-reference.verify.mjs
+      - name: Attach real WebGL comparison captures
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-abc-visual-reference
+          path: artifacts/landscape-editor/abc-reference-*.png
+          if-no-files-found: warn
