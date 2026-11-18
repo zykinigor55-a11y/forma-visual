@@ -5,6 +5,7 @@ on:
     paths:
       - 'forma-landscape-3d-vegetation.js'
       - 'forma-landscape-3d-botany.js'
+      - 'forma-landscape-3d-geometry.js'
       - 'forma-landscape-3d.html'
       - 'tests/landscape-botany-browser.verify.mjs'
       - '.github/workflows/landscape-botany-visual.yml'
