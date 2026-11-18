@@ -29,7 +29,7 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
 .real-flora-upload input{width:100%;font-size:10px;max-width:100%}
 .real-flora-upload button{width:100%;margin:9px 0;font-size:11px}
 .real-flora-upload small{display:block;font-size:10px;color:#d0d9cf}
-#library [hidden]{display:none!important}#catalogSearch{position:sticky;top:0;z-index:3;background:#24312b;border-color:#77897b;margin:0 0 9px}#catalogSearch::placeholder{color:#a1b4aa}.catalog-filter{display:flex;gap:5px;margin-bottom:10px}.catalog-filter button{flex:1;font-size:10px;padding:7px 3px}.catalog-filter button.active{background:#d9dfca;color:#16251f}.scene-quick-actions{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:5px;padding:5px;border-radius:14px;background:#192723e8;border:1px solid #667269;box-shadow:0 10px 35px #08130e44}.scene-quick-actions button{font-size:11px;white-space:nowrap;padding:9px 11px;border-radius:9px}.scene-quick-actions button.active{background:#4b4439;color:#fff3df;border-color:#c3a783}.scene-quick-actions button{display:inline-flex;align-items:center;gap:7px}.scene-quick-actions button svg{width:33px;height:33px;flex:none;display:block;filter:drop-shadow(0 3px 3px #0006)}#library .choice.has-preview{display:flex;align-items:center;gap:10px;text-align:left;min-height:65px;padding:7px 9px}
+#library [hidden]{display:none!important}#catalogSearch{position:sticky;top:0;z-index:3;background:#24312b;border-color:#77897b;margin:0 0 9px}#catalogSearch::placeholder{color:#a1b4aa}.catalog-filter{display:flex;gap:5px;margin-bottom:10px}.catalog-filter button{flex:1;font-size:10px;padding:7px 3px}.catalog-filter button.active{background:#d9dfca;color:#16251f}.scene-quick-actions{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:5px;padding:5px;border-radius:14px;background:#192723e8;border:1px solid #667269;box-shadow:0 10px 35px #08130e44}.scene-quick-actions button{font-size:11px;white-space:nowrap;padding:9px 11px;border-radius:9px}.scene-quick-actions button.active{background:#4b4439;color:#fff3df;border-color:#c3a783}.scene-quick-actions button{display:inline-flex;align-items:center;gap:7px}.scene-quick-actions button svg{width:33px;height:33px;flex:none;display:block;filter:drop-shadow(0 3px 3px #0006)}.camera-focus button{display:inline-flex;align-items:center;justify-content:center;gap:5px}.camera-focus button svg.forma-premium-icon{width:25px;height:25px;flex:0 0 25px;filter:drop-shadow(0 2px 2px #0005)}#library .choice.has-preview{display:flex;align-items:center;gap:10px;text-align:left;min-height:65px;padding:7px 9px}
 #library .choice[data-surface] img{object-fit:cover}#library .choice.has-preview img{width:50px;height:50px;object-fit:contain;border-radius:7px;background:#343e37;flex-shrink:0}
 #library .choice.has-preview span{display:block;flex:1;line-height:1.3;font-weight:600}
 #library .choice.has-preview .asset-size{color:#c4b198;font-weight:500;font-size:10px;margin-top:4px}
@@ -129,7 +129,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </header>
 <main>
 <canvas id="viewport"></canvas>
-<div class="scene-quick-actions" id="sceneQuickTools" aria-label="Быстрые инструменты 3D-редактора"><button data-quick-tool="select" class="active" type="button">↗ Выбор</button><button data-quick-tool="plant" type="button">♧ Озеленение</button><button data-quick-tool="terrain" type="button">⛰ Рельеф</button><button data-quick-tool="surface" type="button">▤ Покрытия</button></div>
+<div class="scene-quick-actions" id="sceneQuickTools" role="toolbar" aria-label="Быстрые инструменты 3D-редактора"><button data-quick-tool="select" class="active" type="button" aria-pressed="true">Выбор</button><button data-quick-tool="plant" type="button" aria-pressed="false">Озеленение</button><button data-quick-tool="terrain" type="button" aria-pressed="false">Рельеф</button><button data-quick-tool="surface" type="button" aria-pressed="false">Покрытия</button></div>
 <div id="mobileWorkspaceTabs" aria-label="Мобильные панели">
  <button type="button" data-mobile-panel="tools" class="active">Инструменты</button>
  <button type="button" data-mobile-panel="details">Дома / параметры</button>
@@ -139,7 +139,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <div id="right" class="panel">
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
- </div><div class="camera-focus"><button type="button" id="focusHouse">⌂ К дому</button><button type="button" id="focusSelected">◎ К растению</button><button type="button" id="fit3dScene">▢ Весь участок</button></div>
+ </div><div class="camera-focus"><button type="button" id="focusHouse">К дому</button><button type="button" id="focusSelected">К растению</button><button type="button" id="fit3dScene">Весь участок</button></div>
  <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 12 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
   <div id="houseStyles" class="house-style-list" aria-label="Архитектурные стили домов"></div>
   <label for="customHouseGlb">Своя точная модель дома · GLB до 35 МБ</label>
@@ -1043,6 +1043,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
 
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
  document.querySelectorAll('[data-quick-tool]').forEach(button=>{button.insertAdjacentHTML('afterbegin',premiumIcon(button.dataset.quickTool));button.onclick=()=>{chooseTool(button.dataset.quickTool);if(window.innerWidth<=850)activateMobilePanel('tools')}});
+ [['focusHouse','build'],['focusSelected','trees'],['fit3dScene','site']].forEach(([id,icon])=>document.getElementById(id)?.insertAdjacentHTML('afterbegin',premiumIcon(icon)));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
  $('#quality3d').onchange=()=>{renderQuality=$('#quality3d').value;autoReduced=false;slowFrameStreak=0;
   const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy;
