@@ -48,6 +48,8 @@ try{
  assert.equal(project.objects.length,10);
  await page.reload({waitUntil:'domcontentloaded',timeout:30000});
  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:50000});
+ await page.waitForFunction(()=>window.FORMA_TERRAIN_TEXTURE_READY===true,null,{timeout:30000});
+ await page.waitForTimeout(280); // allow the invalidated WebGL frame to present
  // The editor initializes in 3D; avoid an unnecessary second WebGL camera reset.
  await mkdir('artifacts/landscape-editor',{recursive:true});
  const perspectivePng=await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-3d.png'});
