@@ -146,6 +146,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <input type="file" id="customHouseGlb" accept=".glb,model/gltf-binary">
   <button type="button" class="action" id="clearCustomHouse">Вернуться к выбранному стилю</button>
   <p class="muted">GLB сохраняется локально в этом браузере. Масштаб пропорционально вписывается в выбранные размеры дома без растяжения.</p></section>
+ <label for="quality3d">Качество 3D-сцены</label><select id="quality3d"><option value="auto">Автоматически · адаптивно</option><option value="high">Максимум · PBR и тени</option><option value="speed">Плавная работа · облегчённое</option></select>
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
@@ -194,7 +195,8 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
-let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
+let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
+let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();let plantSpeciesStored=new Set();
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
@@ -286,6 +288,8 @@ function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMa
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
 function mark(group,key){group.userData.key=key;pickables.push(group);return group}
 function rebuild(){
+ currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length;
+ currentPlantQuality=vegetationQuality(window.innerWidth,currentPlantCount,state.view)*(renderQuality==='speed'||autoReduced ? .60 : 1);
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})}
  pickables=[];shadowedGardenLights=0;
@@ -365,8 +369,10 @@ function drawObject(o,entry,key){
  if(group==='trees'||group==='shrubs'){
   // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
   // accurate crown diameter and height, all 18 species from shared catalog.
-  const quality=vegetationQuality(window.innerWidth,doc.objects.filter(p=>['trees','shrubs'].includes(p.type)).length,state.view);
-  const imported=importedPlantModels.get(o.catalogId),source=imported||bundledModelSources.get(o.catalogId);
+  const quality=currentPlantQuality;
+  const imported=importedPlantModels.get(o.catalogId);
+  const performanceFallback=(renderQuality==='speed'||autoReduced)&&currentPlantCount>9;
+  const source=imported||(!performanceFallback?bundledModelSources.get(o.catalogId):null);
   g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!imported}):createVegetation(THREE,o,{season:doc.atmosphere.season,quality});
  }else if(group==='boulders'){
   const source=bundledModelSources.get(o.catalogId);
@@ -1017,6 +1023,9 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
  document.querySelectorAll('[data-quick-tool]').forEach(button=>button.onclick=()=>{chooseTool(button.dataset.quickTool);if(window.innerWidth<=850)activateMobilePanel('tools')});
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
+ $('#quality3d').onchange=()=>{renderQuality=$('#quality3d').value;autoReduced=false;slowFrameStreak=0;
+  const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy;
+  resize();rebuild();status(economy?'Облегчённый просмотр для плавной работы. Размеры проекта сохранены.':'Высокая детализация 3D восстановлена.')};
  $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;save();rebuild()};
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
@@ -1071,6 +1080,18 @@ function animate(now=0){
   const start=performance.now();
   renderer.render(scene,camera);
   lastRenderCost=performance.now()-start;
+  // After sustained frame lag, protect editing and mobile interactions.
+  // Surveyed coordinates and plant sizes are never changed by this preview.
+  if(renderQuality==='auto'&&!autoReduced){
+   slowFrameStreak=lastRenderCost>140?slowFrameStreak+1:Math.max(0,slowFrameStreak-1);
+   if(slowFrameStreak>=3){
+    autoReduced=true;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,.85));
+    renderer.shadowMap.enabled=false;
+    resize();scheduleBrushRebuild();
+    status('Автокачество: облегчённое 3D для плавного вращения и работы с посадками.');
+   }
+  }
  }
 }
 try{initialize()}catch(err){console.error(err);$('#loadError').style.display='flex';$('#status').textContent=err.message}
