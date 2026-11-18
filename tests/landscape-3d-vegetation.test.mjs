@@ -48,7 +48,7 @@ test('botanical realism v2 has no spherical crown clumps or disconnected foliage
  assert.match(src,/function curveBranch\(/,'Tapered organic branches exist');
  assert.match(src,/function foliageSprigGeometry\(/,'Leaf clusters use individual 3D blades');
  assert.match(src,/const offset=Math\.min\(\.08,diameter\*\.012\)/,'Crown points stay near the physical branch tips');
- assert.match(src,/const offset=shrub\?\.04:\.075/,'Sprays stay attached to shrub twigs');
+ assert.match(src,/offset=shrub\?\.05:\.09/,'Crossed foliage sprays remain anchored within 9 cm of their terminal twigs');
  assert.match(src,/function flowerPetalGeometry\(/,'Flowers are petals rather than coloured stones');
 });
 
