@@ -13,6 +13,8 @@ export function premiumIcon(id){
    boulders:'<path d="M9 31l6-12 12-7 10 9 3 12-14 6-15-2z" fill="url(#lpiFill)" stroke="#e6d0af" stroke-width="1.6"/><path d="M15 19l8 13-12 5M23 32l17 1M23 32l4-20" stroke="#f4e1be" opacity=".55" stroke-width="1.4" fill="none"/>'
   };
   const extras={
+   "eraser":"<path d=\"M12 29l16-18 14 12-16 18H17z\" fill=\"url(#lpiFill)\" stroke=\"#f1ddb6\" stroke-width=\"1.8\"/><path d=\"M20 20l15 13M17 41h26\" fill=\"none\" stroke=\"#fff2d3\" stroke-width=\"2\"/>",
+   "delete":"<path d=\"M14 17h21l-2 23H16zM11 14h27M19 11h11\" fill=\"url(#lpiFill)\" stroke=\"#efd7b1\" stroke-width=\"1.7\"/><path d=\"M22 22v12M28 22v12\" stroke=\"#fff2d2\" stroke-width=\"2\"/>",
    "select":"<path d=\"M12 8l20 27-11-6-6 12z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.8\"/>",
    "site":"<path d=\"M9 13l16-6 14 11-16 8zM9 13v22l14 7V26l16-8v18l-16 6\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.6\"/>",
    "terrain":"<path d=\"M5 37l12-17 8 7 9-19 10 29z\" fill=\"url(#lpiFill)\" stroke=\"#f0ddb9\" stroke-width=\"1.8\"/><path d=\"M8 41h33\" stroke=\"#fff1d0\" stroke-width=\"2\"/>",
