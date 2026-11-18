@@ -6,7 +6,7 @@ import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
 import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
-import {referenceCanopy,referenceBranchTips,referenceFoliageDensity} from './forma-landscape-3d-reference-canopies.js';
+import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity} from './forma-landscape-3d-reference-canopies.js';
 import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
@@ -237,8 +237,8 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   d.position.set(p.x+(r()-.5)*.055,p.y+(r()-.5)*.055,p.z+(r()-.5)*.055);
   d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
   const crown=Math.max(.45,Math.min(2.4,diameter/4));
-  const reference=referenceCanopy(id);
-  const scale=(needle?.235:.25)*crown*(.70+r()*.54)*(reference?.leafClusterScale||1);
+  const growth=speciesGrowthProfile(id);
+  const scale=(needle?.235:.25)*crown*(.70+r()*.54)*(growth?.leafClusterScale||1);
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
@@ -396,7 +396,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  const conifer=kind==='spruce'||kind==='pine',trunkRadius=clamp(height*(kind==='pine'?.025:.022),.065,.46);
  const trunkEnd=kind==='spruce'?height*.88:kind==='pine'?height*.88:height*.75;
  const branches=[[[0,0,0],[0,trunkEnd,0],trunkRadius]];
- const reference=referenceCanopy(id);
+ const reference=referenceCanopy(id),growth=speciesGrowthProfile(id);
  const leafPoints=[],tiers=reference?Math.round(c.branches*reference.tierMultiplier):c.branches,leafless=foliageProfile(id,season).leafless;
  const start=height*c.crownStart,crownH=height-start;
  const centers=[];
@@ -404,16 +404,16 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
   const t=(i+.5)/tiers,y=start+crownH*t,angle=i*2.399+r()*.6;
   let radial;
   radial=radius*naturalCrown(id,t)*(.76+r()*.26);
-  const arms=reference?.primaryArms|| (kind==='spruce'?7:kind==='pine'?4:5);
+  const arms=growth?.primaryArms|| (kind==='spruce'?7:kind==='pine'?4:5);
   for(let k=0;k<arms;k++){
    const direction=angle+k*2*Math.PI/arms+r()*.30;
    const length=radial*(.66+r()*.31);
-   const branchRise=conifer?(kind==='pine'?.12:-.11):reference?.branchAngle||(.2+r()*.25);
+   const branchRise=conifer?(kind==='pine'?.12:-.11):growth?.branchAngle||(.2+r()*.25);
    const outerY=clamp(y+crownH*branchRise*(r()-.25)-branchTipDrop(id,height,t)*.35,.12,height*.99);
    const tip=[Math.cos(direction)*length,outerY,Math.sin(direction)*length];
    const stemY=y-(conifer?.04:.02)*height;
    curveBranch(branches,[0,stemY,0],tip,trunkRadius*(conifer?.25:.37)*(1-t*.55),height*(conifer?-.012:.028));
-   if(reference){
+   if(growth&&!conifer){
     // Birch grows airy, pendant secondary shoots; oak has deep branching forks.
     // All foliage attaches to these authored branch tips, never to a random
     // spherical canopy surface or an off-centre alpha card.
@@ -498,7 +498,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
 function generateShrub(T,g,id,height,diameter,season,r,quality){
  const c=VEGETATION_SPECIES[id],radius=diameter/2,actual=clamp(height,.3,3.5);
  const evergreen=c.kind==='conifer-shrub',branches=[],points=[],isCreeper=id==='juniper',isSpike=id==='lavender';
- const reference=referenceCanopy(id);
+ const reference=referenceCanopy(id),growth=speciesGrowthProfile(id);
  const stems=isCreeper?24:isSpike?38:id==='hosta'?19:id==='ornamental-grass'?56:id==='hydrangea'?30:id==='spirea'?38:c.branches;
  for(let j=0;j<stems;j++){
   // Botanical asymmetry: individual shrubs form naturally offset branch whorls,
@@ -517,7 +517,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    radiusStem=id==='spirea'?.0045+r()*.0035:id==='hosta'?.0035:isSpike?.007:isCreeper?.012:.016+r()*.016;
   curveBranch(branches,[0,.045,0],pt,radiusStem,
    actual*(isCreeper?-.01:id==='spirea'?.16:.065));
-  if(reference){
+  if(growth&&!isSpike){
    // Spirea is a fan of arching woody stems, with small leaf clusters
    // concentrated on laterally branched shoots, not a uniform green sphere.
    for(const shoot of referenceBranchTips(id,{start:[0,.045,0],end:pt,stage:j/stems,
