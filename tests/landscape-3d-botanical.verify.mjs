@@ -34,7 +34,12 @@ try{
  assert.equal(await page.locator('[data-item="hydrangea"]').count(),1);
  assert.equal(await page.locator('#library .has-preview').count(),18,'All 18 measured botanicals have photo cards');
  await page.locator('[data-tool="landscape"]').click({noWaitAfter:true});
- assert.equal(await page.locator('#library .has-preview').count(),4);
+ assert.equal(await page.locator('#library .has-preview').count(),7,'Four boulders and three CC0 botanical undergrowth models');
+ assert.equal(await page.locator('[data-item="fern"]').count(),1);
+ assert.equal(await page.locator('[data-item="periwinkle"]').count(),1);
+ await page.locator('[data-tool="furniture"]').click({noWaitAfter:true});
+ assert.equal(await page.locator('[data-item="outdoor-dining"]').count(),1);
+ assert.equal(await page.locator('[data-item="picnic-table"]').count(),1);
  await page.locator('[data-tool="light"]').click({noWaitAfter:true});
  assert.equal(await page.locator('#library .has-preview').count(),6);
  await page.locator('#fit3dScene').click({noWaitAfter:true});
