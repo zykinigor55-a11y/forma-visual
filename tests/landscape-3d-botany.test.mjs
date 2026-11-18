@@ -61,3 +61,18 @@ test('each major species has its own anatomically distinct small-leaf silhouette
  const code=readFileSync(new URL('../forma-landscape-3d-vegetation.js',import.meta.url),'utf8');
  assert.match(code,/makeLeafGeometry\(T,needle,id\)/);
 });
+
+test('plant silhouette variants survive 2D/3D save and remain within measured footprint',async()=>{
+ const {normalizeProject,freshProject}=await import('../forma-landscape-project-core.js');
+ const doc=freshProject();
+ doc.objects=[{id:'p-variation-3',catalogId:'pine',type:'trees',x:7,y:8,diameter:6,height:14,rotation:0,variant:3}];
+ const next=normalizeProject(doc);
+ assert.equal(next.objects[0].variant,3);
+ assert.equal(next.objects[0].diameter,6);
+ assert.equal(next.objects[0].height,14);
+ assert.equal(next.objects[0].x,7);
+ const src=readFileSync(new URL('../forma-landscape-3d-vegetation.js',import.meta.url),'utf8');
+ const editor=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
+ assert.match(src,/crown-'\+variant/);
+ assert.match(editor,/id="plantVariant"/);
+});
