@@ -82,3 +82,23 @@ export function referenceFoliageDensity(id,quality=1){
  const q=clamp(Number(quality)||.2,.15,1);
  return p?Math.max(.25,Math.min(1.5,p.layeredFoliage*(.65+.35*q))):1;
 }
+
+/** Bounded, deterministic crown lobes for real specimen silhouettes.
+ * Breaks the uniform rotational symmetry of procedural crown whorls.
+ * Every instance keeps the same surveyed MAXIMUM crown radius and height.
+ * No camera dependence, no per-frame random or LOD-driven geometry shift. */
+export function specimenCrownVariation(id,stage=0,azimuth=0,seed=0){
+ const t=clamp(Number(stage)||0,0,1),a=Number(azimuth)||0,s=Number(seed)||0;
+ const uneven={
+  pine:.28,spruce:.13,birch:.24,oak:.20,maple:.16,willow:.18,
+  juniper:.18,hydrangea:.15,spirea:.27,'thuja-globe':.10,
+  barberry:.20,dogwood:.24,'wild-shrub':.27
+ }[id]??.15;
+ const low=Math.sin(a*3.13+s*.017+t*5.1);
+ const secondary=Math.sin(a*5.7+s*.029-t*8.4);
+ const windward=Math.sin(a+s*.009)*.30;
+ const lobe=.62*low+.28*secondary+.10*windward;
+ // Particularly uneven Scots-pine whorls; spruce holds a tapered leader.
+ const crownBase=id==='pine'?.895:id==='spirea'?.89:.92;
+ return clamp(crownBase+uneven*lobe*.38,.72,1.015);
+}
