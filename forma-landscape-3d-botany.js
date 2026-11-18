@@ -84,3 +84,16 @@ export function foliageSprayWidth(id,diameter){
  const species=id==='spruce'?.74:id==='pine'?.81:id==='birch'?.83:id==='willow'?.80:id==='lavender'?.42:1;
  return Math.max(shrub?.075:.12,base*species);
 }
+
+/* Needle morphology drives actual foliage atlases. Scots pine has long,
+ * comparatively sparse paired needles; Norway spruce has short dense needles.
+ * Compact juniper and thuja have their own smaller scale-like silhouettes. */
+export function coniferNeedleProfile(id){
+ switch(id){
+  case 'pine':return Object.freeze({arms:11,length:.98,spread:1.20,needlesPerSide:2,thickness:.82});
+  case 'spruce':return Object.freeze({arms:17,length:.70,spread:.70,needlesPerSide:5,thickness:.90});
+  case 'juniper':return Object.freeze({arms:16,length:.64,spread:.60,needlesPerSide:4,thickness:.88});
+  case 'thuja-globe':return Object.freeze({arms:19,length:.53,spread:.85,needlesPerSide:5,thickness:1.06});
+  default:return Object.freeze({arms:13,length:.82,spread:1,needlesPerSide:3,thickness:.85});
+ }
+}
