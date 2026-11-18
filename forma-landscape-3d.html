@@ -866,8 +866,11 @@ function renderHouseLibrary(){
  target.querySelectorAll('[data-house-preset]').forEach(button=>button.onclick=()=>{
   const preset=housePreset(button.dataset.housePreset),house=activeHouseTarget();
   if(house.archStyle===preset.id&&!house.modelKey)return;
-  push();house.archStyle=preset.id;house.modelKey=null;house.roof=preset.roof;
-  house.roofRise=preset.id==='aframe'?Math.max(3.2,Math.min(6,(house.width||8)*.64)):Math.min(2.1,(house.width||8)*.22);
+  push();house.archStyle=preset.id;house.modelKey=null;
+  house.roof=house.type==='greenhouse'?'gable':house.type==='carport'?'flat':preset.roof;
+  house.roofRise=house.roof==='flat'?.40:
+   preset.id==='aframe'?Math.max(4.2,Math.min(6,(house.width||8)*.70)):
+   Math.min(2.1,Math.max(.6,(house.width||8)*.22));
   state.housePreset=preset.id;save();rebuild();renderHouseLibrary();
   status('Архитектура: '+preset.name+'. Фундамент, габариты и координаты сохранены.');
  });
