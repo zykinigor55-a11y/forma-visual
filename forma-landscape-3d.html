@@ -265,6 +265,8 @@ import {surfaceMaterial} from './forma-landscape-3d-surfaces.js';
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush} from './forma-landscape-3d-terrain-brush.js';
+import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
+import {walkStep,walkMovementKey,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
 const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
@@ -273,7 +275,7 @@ const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let solarSettings=solarPreset('day');
-let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
+let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
 const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
 let plantSpeciesStored=new Set();
@@ -355,7 +357,8 @@ function initialize(){
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
- if(heightmap.length!==(GRID+1)*(GRID+1))heightmap=Array((GRID+1)*(GRID+1)).fill(0);
+ // Existing 48x48 saved projects are bilinearly remapped to 96x96.
+ heightmap=resampleTerrainGrid(heightmap,GRID);
  $('#projectName').value=doc.title;$('#plotW').value=doc.site.width;$('#plotH').value=doc.site.height;
  $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;$('#weather').value=doc.atmosphere.weather||'sunny';
  try{
@@ -364,7 +367,9 @@ function initialize(){
  }catch{solarSettings=solarPreset(doc.atmosphere.time)}
  syncSolarControls();
  renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
- renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap; // PCF respects shadow.radius; PCFSoft ignores it.renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap; // This filter respects adjustable shadow radius.
+ renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
  // Dense planting must remain responsive even in software WebGL (Playwright,
  // old laptops and mid-range phones). The user can override this in settings.
  const initialPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
@@ -445,7 +450,10 @@ function rebuild(){
  const vertices=terrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
  for(let i=0;i<vertices.length;i+=3){const j=i/3*2;uvs[j]=vertices[i]/w+.5;uvs[j+1]=vertices[i+2]/h+.5}
  geo.setAttribute('position',new THREE.BufferAttribute(vertices,3));
- geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));geo.computeVertexNormals();
+ geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));
+ // Smooth shared gradients instead of hard, faceted per-triangle normals.
+ geo.setAttribute('normal',new THREE.BufferAttribute(
+  sampledTerrainNormals(vertices,w,h,(x,z)=>terrainAt(x,z)),3));
  const grass=groundPhotoTexture();grass.repeat.set(w/3.2,h/3.2);
  const groundMat=material(doc.atmosphere.season==='winter'?'#c8d0cc':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
@@ -652,7 +660,7 @@ function chooseTool(t){
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'+(t==='models40'?'<button type="button" class="model-favorite" data-favorite-id="'+c[0]+'" aria-label="Добавить '+c[1]+' в избранное" aria-pressed="'+readModelList(MODEL_FAVORITES_KEY).includes(c[0])+'">'+(readModelList(MODEL_FAVORITES_KEY).includes(c[0])?'★':'☆')+'</button></div>':'')
  }).join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+
- (t==='terrain'?'<div class="brush-panel"><label for="brushRadius">Радиус кисти · 0.5—12 м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label for="brushStrength">Сила изменения высоты</label><input id="brushStrength" type="range" min=".1" max="2" step=".1" value=".5"><label for="brushSoftness">Плавность края · 0—100%</label><input id="brushSoftness" type="range" min="0" max="100" step="5" value="75"><label for="brushShape">Форма кисти</label><select id="brushShape"><option value="circle">● Круглая</option><option value="square">■ Квадратная</option></select><p class="hint">Плавно рисуйте ЛКМ. ПКМ вращает камеру, не затрагивая рельеф.</p></div>':'')+
+ (t==='terrain'?'<div class="brush-panel"><label for="brushRadius">Радиус кисти · 0.5—12 м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label for="brushStrength">Сила изменения высоты</label><input id="brushStrength" type="range" min=".02" max=".8" step=".02" value=".12"><label for="brushSoftness">Плавность края · 0—100%</label><input id="brushSoftness" type="range" min="0" max="100" step="2" value="92"><label for="brushShape">Форма кисти</label><select id="brushShape"><option value="circle">● Круглая</option><option value="square">■ Квадратная</option></select><p class="hint">Плавно рисуйте ЛКМ. ПКМ вращает камеру, не затрагивая рельеф.</p></div>':'')+
  (t==='plant'?'<div class="real-flora-upload"><strong>ПРОФЕССИОНАЛЬНАЯ 3D-МОДЕЛЬ</strong><p>Выберите вид растения выше, затем загрузите детализированную GLB-модель этого вида. Она заменит процедурные экземпляры, но сохранит их размеры и расположение.</p><input id="vegetationGlb" type="file" accept=".glb,model/gltf-binary"><button id="removePlantGlb" type="button">Вернуть встроенную 3D-модель</button><small id="floraModelStatus">Выберите дерево или кустарник.</small></div>':'');
  const search=$('#catalogSearch');let category='all';
  const filterCatalog=()=>{const query=(search?.value||'').toLocaleLowerCase('ru').trim();$('#library').querySelectorAll('[data-item]').forEach(el=>{const name=el.textContent.toLocaleLowerCase('ru');const group=t==='models40'?realModelById(el.dataset.item)?.group:catalog(el.dataset.item)?.group;const matches=t==='plant'?(category==='all'||(category==='trees'?group==='trees':group==='shrubs')):t==='surface'?(category==='all'||category===group):t==='models40'?(category==='all'||category===group||(category==='favorites'&&readModelList(MODEL_FAVORITES_KEY).includes(el.dataset.item))||(category==='recent'&&readModelList(MODEL_RECENT_KEY).includes(el.dataset.item))):true;const hide=Boolean(query&&!name.includes(query))||!matches;el.hidden=hide;if(t==='models40'&&el.parentElement?.classList.contains('model-row'))el.parentElement.hidden=hide});$('#library').querySelectorAll('.asset-group-heading').forEach(el=>{el.hidden=Boolean(query)||category!=='all'})};
@@ -1045,8 +1053,8 @@ function scheduleBrushRebuild(){
 function modifyTerrain(world){
  heightmap=applyTerrainBrush({heights:heightmap,grid:GRID,width:doc.site.width,length:doc.site.height,world,
   mode:state.placing||'raise',
-  radius:Number($('#brushRadius')?.value||3),strength:Number($('#brushStrength')?.value||.5),
-  softness:Number($('#brushSoftness')?.value??75),shape:$('#brushShape')?.value||'circle',
+  radius:Number($('#brushRadius')?.value||3),strength:Number($('#brushStrength')?.value||.12),
+  softness:Number($('#brushSoftness')?.value??92),shape:$('#brushShape')?.value||'circle',
   contains:(x,y)=>inParcel({x,y},doc.site)});
  scheduleBrushRebuild();
 }
