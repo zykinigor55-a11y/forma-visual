@@ -182,11 +182,10 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
 }
 
 function roofPlane(g,T,slopeLength,depth,x,y,angle,roofMat){
- const geo=new T.PlaneGeometry(slopeLength,depth);
- geo.rotateX(-Math.PI/2);
- const roof=add(g,T,geo,roofMat,x,y,0);
+ // Physically thick 85 mm roof layer instead of infinitely thin plane.
+ const roof=add(g,T,new T.BoxGeometry(slopeLength,.085,depth),roofMat,x,y,0);
  roof.rotation.z=angle;
- roof.material.side=T.DoubleSide;
+ roof.userData.architecturePart='roof-layer';
  return roof;
 }
 function edgeBeam(g,T,a,b,thickness,material){
@@ -254,6 +253,9 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
    mesh.material.side=T.DoubleSide;
   }
   edgeBeam(g,T,[0,top,-startZ],[0,top,startZ],.10,dark);
+  // Actual hip-edge flashings, not lines painted onto the texture.
+  for(const x of [-half,half])for(const z of [-depth/2,depth/2])
+   edgeBeam(g,T,[x,bodyHeight+.04,z],[0,top,z<0?-startZ:startZ],.055,dark);
   for(const x of [-half,half])box(g,T,.13,.075,depth,x,bodyHeight+.038,0,dark);
   for(const z of [-depth/2,depth/2])box(g,T,w+overhang*2,.075,.13,0,bodyHeight+.038,z,dark);
  }
@@ -420,19 +422,26 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
      box(g,THREE,.29,.22,.39,w/2-.08,yy,z,timber);
    }
    // Existing doors/windows remain real apertures: only wood runs on solids.
-   for(const [face,span,z,angle] of [['front',w,d/2,0],['rear',w,-d/2,Math.PI]]){
-    const solid=facadePlan[face],trim=new THREE.Group();trim.position.z=z;trim.rotation.y=angle;g.add(trim);
+   for(const [face,span,px,pz,angle] of [
+    ['front',w,0,d/2,0],['rear',w,0,-d/2,Math.PI],
+    ['left',d,-w/2,0,-Math.PI/2],['right',d,w/2,0,Math.PI/2]
+   ]){
+    const openings=facadePlan[face],trim=new THREE.Group();
+    trim.position.set(px,0,pz);trim.rotation.y=angle;trim.name='lafet-courses-'+face;g.add(trim);
+    // Exactly 290 mm crown pitch. Seams break at real apertures, not across glazing.
     for(let yy=.72;yy<bodyHeight-.16;yy+=.29){
-     const occupied=solid.filter(o=>yy>o.bottom-.045&&yy<o.bottom+o.height+.045)
+     const occupied=openings.filter(o=>yy>o.bottom-.045&&yy<o.bottom+o.height+.045)
       .map(o=>[o.x-o.width/2-.045,o.x+o.width/2+.045]).sort((a,b)=>a[0]-b[0]);
      let at=-span/2+.13;
      for(const [lo,hi] of [...occupied,[span/2-.13,span/2-.13]]){
-      if(lo>at+.12)box(trim,THREE,lo-at,.016,.032,(at+lo)/2,yy,.126,seam);
+      if(lo>at+.12){
+       box(trim,THREE,lo-at,.018,.035,(at+lo)/2,yy,.127,seam);
+       box(trim,THREE,lo-at,.022,.014,(at+lo)/2,yy+.041,.118,timber);
+      }
       at=Math.max(at,hi);
      }
     }
-   }
-  }
+   }  }
   if(['barn','scandi','modern','classic','modular','panoramic','duplex','tiny'].includes(style))
    for(const x of [-w/2,w/2])for(const z of [-d/2,d/2])
     box(g,THREE,.059,bodyHeight-.45,.059,x,bodyHeight/2+.22,z,darkTrim);
