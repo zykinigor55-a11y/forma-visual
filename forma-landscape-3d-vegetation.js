@@ -247,7 +247,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   const growth=speciesGrowthProfile(id);
   // Terminal needle shoots are longer, but individual needles stay narrow.
   // Preserve the measured crown envelope by limiting sprig radius.
-  const mass=needle?(id==='spruce'?.66:id==='pine'?.72:.55):.25;
+  const mass=needle?(id==='spruce'?.67:id==='pine'?.72:.55):id==='birch'?.37:id==='oak'?.43:.33;
   const scale=mass*crown*(.70+r()*.54)*(growth?.leafClusterScale||1);
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
