@@ -24,7 +24,18 @@
   account:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-3c0-5 16-5 16 0v3"/>',
   release:'<path d="M4 13l5 5L20 6"/><rect x="3" y="3" width="18" height="18" rx="3"/>'
  };
- const svg=id=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">'+icons[id]+'</svg>';
+ const basicSvg=id=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">'+icons[id]+'</svg>';
+ let dimensionalIcon=null;
+ const svg=id=>dimensionalIcon?dimensionalIcon(id):basicSvg(id);
+ // Home tools are a classic deferred script; load the same ES-module icon
+ // library as the main 3D editor without changing script execution order.
+ import('./forma-premium-icons.js').then(({premiumIcon})=>{
+  dimensionalIcon=premiumIcon;
+  document.querySelectorAll('#formaProjectPanel .fa-home-tool[data-tool-id]').forEach(button=>{
+   const target=button.querySelector('.fa-home-tool-icon');
+   if(target)target.innerHTML=svg(button.dataset.toolId);
+  });
+ }).catch(error=>console.warn('Premium icons unavailable; line-icon fallback retained',error));
  const groups={all:'Все',render:'Визуализация',edit:'Обработка',studio:'Студия',system:'Система'};
  const tools=[
   {id:'upscale',name:'Upscaler · 4K',desc:'Увеличить изображение до 4K',group:'edit',state:'local',note:'Без AI',type:'pro'},
