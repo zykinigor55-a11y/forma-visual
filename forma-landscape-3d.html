@@ -415,7 +415,14 @@ function initialize(){
  // Dense planting must remain responsive even in software WebGL (Playwright,
  // old laptops and mid-range phones). The user can override this in settings.
  const initialPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
- if(initialPlantCount>12){autoReduced=true;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,.85));renderer.shadowMap.enabled=false;}
+ // In crowded landscapes automatically budget the preview before the first
+ // expensive framebuffer. Manual 'Премиум' still restores full PBR quality.
+ const crowdedPreview=initialPlantCount>8||(window.innerWidth<=720&&initialPlantCount>4);
+ if(crowdedPreview){
+  autoReduced=true;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?.75:.85));
+  renderer.shadowMap.enabled=false;
+ }
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
  outdoorReflectionMap=createOutdoorReflectionMap(THREE,document);
