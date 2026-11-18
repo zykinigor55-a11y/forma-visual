@@ -1513,29 +1513,30 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#cancelContour').onclick=()=>{pointMode=[];refreshDraft();status('Черновой контур отменён.');};
  $('#exportJSON').onclick=()=>{const data=JSON.stringify({schema:'FORMA-landscape-3d-v1',project:doc,extra,terrain:{grid:GRID,values:heightmap}},null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='FORMA-landscape-3d.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
  window.addEventListener('keydown',e=>{
-  if(/input|select|textarea/i.test(e.target.tagName))return;
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();restore(e.shiftKey?redo:undo,e.shiftKey?undo:redo)}
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();restore(redo,undo)}
-  if(state.view!=='walk'&&state.selected&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
-   const key=e.key.toLowerCase();
+  // Never move the camera or remove objects while editing text/numeric inputs.
+  if(/input|select|textarea/i.test(e.target?.tagName||'')||e.target?.isContentEditable)return;
+  const key=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&key==='z'){e.preventDefault();restore(e.shiftKey?redo:undo,e.shiftKey?undo:redo);return}
+  if((e.ctrlKey||e.metaKey)&&key==='y'){e.preventDefault();restore(redo,undo);return}
+  if(state.view==='walk'){
+   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&(walkMovementKey(key)||key==='shift')){
+    e.preventDefault();heldWalkKeys.add(key);renderGate.invalidate();
+   }
+   return; // D strafe must never duplicate objects while walking.
+  }
+  if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&(key==='delete'||key==='backspace')){
+   e.preventDefault();deleteSelectedObject();return;
+  }
+  if(state.selected&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
    if(key==='d'&&!e.repeat){e.preventDefault();duplicateSelected();return}
    if(key==='q'||key==='e'){e.preventDefault();rotateSelected((key==='q'?-1:1)*(e.shiftKey?5:15));return}
   }
   if(e.key==='Enter'&&pointMode.length){e.preventDefault();finishContour()}
   if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
-  if(state.view==='walk'){
-   const amount=e.shiftKey?1.4:.5,forward=new THREE.Vector3(),old=camera.position.clone();
-   camera.getWorldDirection(forward);forward.y=0;forward.normalize();
-   const side=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize(),key=e.key.toLowerCase();
-   if(['w','arrowup'].includes(key))camera.position.addScaledVector(forward,amount);
-   if(['s','arrowdown'].includes(key))camera.position.addScaledVector(forward,-amount);
-   if(['a','arrowleft'].includes(key))camera.position.addScaledVector(side,-amount);
-   if(['d','arrowright'].includes(key))camera.position.addScaledVector(side,amount);
-   if(!inParcel(fromWorld(camera.position),doc.site))camera.position.copy(old);
-   camera.position.y=terrainAt(camera.position.x,camera.position.z)+1.7;
-   renderGate.invalidate();
-  }
  });
+ window.addEventListener('keyup',e=>heldWalkKeys.delete(e.key.toLowerCase()));
+ window.addEventListener('blur',()=>heldWalkKeys.clear());
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)heldWalkKeys.clear()});
  window.addEventListener('resize',resize);
  canvas.addEventListener('webglcontextlost',e=>{
   e.preventDefault();window.FORMA_3D_READY=false;
@@ -1562,10 +1563,27 @@ function animate(now=0){
  const interval=Math.max(preferred,Math.min(110,lastRenderCost*2.0));
  if(now-lastRenderMs<interval)return;
  lastRenderMs=now;
- // Three.js OrbitControls returns true only if the camera changed.
- // Do not spend hundreds of milliseconds shading static plants between clicks.
- const cameraMoved=Boolean(controls?.enabled&&controls.update());
- const activeWalk=state.view==='walk'&&document.pointerLockElement===canvas;
+ const frameSeconds=lastWalkFrame?Math.min(.1,(now-lastWalkFrame)/1000):0;
+ lastWalkFrame=now;
+ let walked=false;
+ if(state.view==='walk'&&camera?.isPerspectiveCamera){
+  const step=walkStep({
+   x:camera.position.x,z:camera.position.z,yaw:walkYaw,keys:heldWalkKeys,
+   dt:frameSeconds,sprint:heldWalkKeys.has('shift'),
+   ground:terrainAt,eyeHeight:WALK_EYE_HEIGHT,
+   contains:(x,z)=>inParcel({x:x+doc.site.width/2,y:z+doc.site.height/2},doc.site)
+  });
+  walked=step.moved;
+  // Never alter the camera's Y using movement keys or pitch: feet follow
+  // terrain, eyes stay precisely 1.7 metres above the ground.
+  if(walked||Math.abs(camera.position.y-step.y)>.001){
+   camera.position.set(step.x,step.y,step.z);
+   renderGate.invalidate();
+  }
+ }
+ // Orbit controls own 2D/3D; walk mode is a separate ground-locked camera.
+ const cameraMoved=walked||Boolean(controls?.enabled&&controls.update());
+ const activeWalk=state.view==='walk'&&walked;
  if(root&&camera&&(shadowBudgetDirty||((cameraMoved||activeWalk)&&now-lastShadowBudgetAt>350))){
   const changed=applyRealModelShadowBudget(root,camera,{mobile:window.innerWidth<=720,maxCasters:5});
   lastShadowBudgetAt=now;shadowBudgetDirty=false;
