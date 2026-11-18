@@ -23,6 +23,13 @@ main{position:relative;min-height:0}#viewport{width:100%;height:100%;display:blo
 hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{padding:9px 13px 16px;overflow:auto;min-height:150px;flex:1;overscroll-behavior:contain}
 #library .choice{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 12px;margin:5px 0;text-align:left}
 #library .choice.active{border-color:#d6e0c7;color:#d6e0c7}
+.camera-elevation-controls,.walk-instructions{padding:10px 11px;margin:8px 0;border-radius:10px;border:1px solid #576b60;background:#26362f;line-height:1.5}
+.camera-elevation-controls label{font-size:11px;color:#e5d6ba;display:block}
+.camera-elevation-controls output{font-weight:700;color:#fff0cf}
+.camera-elevation-controls input{width:100%;accent-color:#d6bb8d;margin:8px 0}
+.camera-elevation-controls button{width:100%;font-size:11px;border:1px solid #a38d68;color:#f0e2c6;background:#3a443b}
+.walk-instructions{font-size:11px;color:#f4e9d6}
+.walk-instructions[hidden],.camera-elevation-controls[hidden]{display:none}
 .real-flora-upload{margin:10px 9px 16px;padding:12px;border:1px solid #6b6c54;background:#23302b;border-radius:11px}
 .real-flora-upload strong{font-size:10px;letter-spacing:.12em;color:#e5d6b8}
 .real-flora-upload p{font-size:11px;color:#becac0;line-height:1.5;margin:9px 0}
@@ -177,6 +184,12 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
  </div><div class="camera-focus"><button type="button" id="focusHouse">К дому</button><button type="button" id="focusSelected">К растению</button><button type="button" id="fit3dScene">Весь участок</button></div>
+ <div class="camera-elevation-controls" id="cameraElevationPanel">
+  <label for="cameraHeight">Высота 3D-камеры над землёй: <output id="cameraHeightValue">30 м</output></label>
+  <input id="cameraHeight" type="range" min=".8" max="80" step=".2" value="30">
+  <button id="cameraEyeLevel" type="button">◎ Камера на уровне глаз · 1,7 м</button>
+ </div>
+ <div class="walk-instructions" id="walkInstructions" hidden role="status">Прогулка: <strong>W / S</strong> вперёд / назад, <strong>A / D</strong> влево / вправо, <strong>Shift</strong> быстрее. Клик в сцене — мышь осматривает; <strong>Esc</strong> — курсор. Камера всегда в 1,7 м от земли.</div>
  <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 12 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
   <div id="houseStyles" class="house-style-list" aria-label="Архитектурные стили домов"></div>
   <label for="customHouseGlb">Своя точная модель дома · GLB до 35 МБ</label>
@@ -275,6 +288,8 @@ const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let solarSettings=solarPreset('day');
+const heldWalkKeys=new Set();
+let lastWalkFrame=0;
 let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
 const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
@@ -383,7 +398,7 @@ function initialize(){
  atmosphereSky.material.uniforms.mieDirectionalG.value=.82;
  atmosphereSky.material.depthWrite=false;atmosphereSky.frustumCulled=false;scene.add(atmosphereSky);
  camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
- controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=3;controls.maxDistance=220;
+ controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.005;controls.minDistance=.8;controls.maxDistance=220;
  const skyFill=new THREE.HemisphereLight(0xdceafa,0x334b3c,1.75);skyFill.name='forma-sky-fill';scene.add(skyFill);
  const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(window.innerWidth<720?1024:2048,window.innerWidth<720?1024:2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;sun.shadow.normalBias=.022;sun.shadow.radius=2.6;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
@@ -883,6 +898,21 @@ function makeHouseThumbnails(){
  finally{rendererThumb?.dispose()}
 }
 function selectable(key){const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
+function deleteSelectedObject(){
+ const selected=state.selected,ref=selected?selectable(selected):null;
+ if(!ref?.obj){status('Сначала выделите объект. Нажмите на него в режиме «Управление».');return false}
+ if(ref.type==='house'){status('Главный дом удалять нельзя. Другие объекты удаляются клавишей Delete.');return false}
+ // Only valid objects create an undo entry: protected main house is untouched.
+ push();
+ if(ref.type==='object')doc.objects=doc.objects.filter(o=>o.id!==ref.obj.id);
+ else if(ref.type==='building')doc.buildings=doc.buildings.filter(o=>o.id!==ref.obj.id);
+ else if(ref.type==='extra')extra=extra.filter(o=>o.id!==ref.obj.id);
+ else return false;
+ state.selected=null;state.drag=false;state.dragPoints=null;
+ save();rebuild();renderProps();
+ status('Объект удалён. Ctrl+Z вернёт его.');
+ return true;
+}
 function duplicateSelected(){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return status('Сначала выберите объект для копирования.');
@@ -912,12 +942,12 @@ function renderProps(){
  else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
- el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject">Удалить объект</button><p class="hint">Быстрые клавиши: Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Координаты сохраняются в метрах.</p>';
+ el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
  $('#applyProps').onclick=()=>{push();for(const n of el.querySelectorAll('[data-prop]')){let val=Number(n.value);if(Number.isFinite(val)){if(real&&n.dataset.prop==='width')val=Math.max(.1,Math.min(30,val));o[n.dataset.prop]=val}}save();rebuild()};
  $('#rotateLeft').onclick=()=>rotateSelected(-15);
  $('#rotateRight').onclick=()=>rotateSelected(15);
  $('#duplicateObject').onclick=duplicateSelected;
- $('#deleteObject').onclick=()=>{push();if(ref.type==='object')doc.objects=doc.objects.filter(x=>x!==o);else if(ref.type==='building')doc.buildings=doc.buildings.filter(x=>x!==o);else if(ref.type==='extra')extra=extra.filter(x=>x!==o);else{status('Главный дом удалять нельзя. Измените его размеры.');return}state.selected=null;save();rebuild()};
+ $('#deleteObject').onclick=deleteSelectedObject;
 }
 function syncSolarControls(){
  for(const [id,key,suffix,scale] of [['sunAzimuth','azimuth','°',1],['sunElevation','elevation','°',1],['sunStrength','strength','%',100],['sunSoftness','softness','',1]]){
