@@ -351,6 +351,11 @@ async function performRender(p,requestId){
  const task=p.imageTask?normalizeImageTask(p.imageTask):null;
  const needsPlan=task&&['plan','plan2d','room'].includes(task.kind);
  const needsLandscape=!!(p.landscapeMasterplan||p.roofTopView);
+ // Optional image model comparison is enabled ONLY for perspective WebGL frames.
+ // Measured top-down landscaping and roof plans keep their GPT 2.6 workflow.
+ if(p.landscapeModel&&!['gpt-image-2.6','nano-banana-2.1'].includes(p.landscapeModel))fail('Неизвестная модель 3D-рендера.',400,'invalid_landscape_model');
+ if(p.landscapeModel&&p.landscapeMasterplan?.cameraMode!=='3d-perspective')fail('Выбор модели доступен только в 3D-рендере.',400,'model_not_allowed');
+ const landscapeModel=needsLandscape&&p.landscapeMasterplan?.cameraMode==='3d-perspective'&&p.landscapeModel==='nano-banana-2.1'?MODEL:LANDSCAPE_IMAGE_MODEL;
  if(needsPlan&&!PLAN_IMAGE_MODEL)fail('Модель GPT Image 2.6 для планов не настроена на сервере. Укажите PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render. Nano Banana для этого раздела не используется.',503,'plan_model_missing');
  if(['room','view'].includes(task?.kind)&&!reference)fail('Сначала утвердите главный кадр или визуализацию плана.',400);
  const prompt=task?imageTaskPrompt(task):createPrompt(p);
@@ -360,7 +365,7 @@ async function performRender(p,requestId){
   // Count BEFORE the external request: even a timeout may be billed by the provider.
   dailyCount++;
   try{
-   const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:needsLandscape?LANDSCAPE_IMAGE_MODEL:needsPlan?PLAN_IMAGE_MODEL:MODEL,prompt:n>1?prompt+'\\nCreate variation '+(i+1)+' of '+n+' with the same architecture and camera.':prompt,quality:p.quality});
+   const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:needsLandscape?landscapeModel:needsPlan?PLAN_IMAGE_MODEL:MODEL,prompt:n>1?prompt+'\\nCreate variation '+(i+1)+' of '+n+' with the same architecture and camera.':prompt,quality:p.quality});
    images.push(result.b64);mimes.push(result.mimeType);
   }catch(error){
    if(!images.length)throw error;
@@ -368,7 +373,7 @@ async function performRender(p,requestId){
   }
  }
  console.info('[AI]',requestId,'готово',images.length,'кадров; длительность_мс:',Date.now()-started);
- return {images,mimes,model:needsLandscape?LANDSCAPE_IMAGE_MODEL:needsPlan?PLAN_IMAGE_MODEL:MODEL,provider:'API Market',warning};
+ return {images,mimes,model:needsLandscape?landscapeModel:needsPlan?PLAN_IMAGE_MODEL:MODEL,provider:'API Market',warning};
 }
 const renderJobs=createRenderJobQueue({
  worker:async(p,requestId)=>{
