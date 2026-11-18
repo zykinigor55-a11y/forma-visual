@@ -73,3 +73,14 @@ export function leafOutline(id,steps=20){
  }
  return points;
 }
+
+/* Real-metre foliage silhouette: crossed tuft planes are individual terminal
+ * twigs, not metre-wide floating panels. Keep species scale when the user
+ * changes a measured crown diameter, especially for juvenile plants. */
+export function foliageSprayWidth(id,diameter){
+ const crown=Math.max(.2,Math.min(30,Number(diameter)||1));
+ const shrub=['juniper','hydrangea','spirea','barberry','dogwood','thuja-globe','lavender','boxwood'].includes(id);
+ const base=shrub?Math.min(.34,crown*.19):Math.min(.82,crown*.135);
+ const species=id==='spruce'?.74:id==='pine'?.81:id==='birch'?.83:id==='willow'?.80:id==='lavender'?.42:1;
+ return Math.max(shrub?.075:.12,base*species);
+}
