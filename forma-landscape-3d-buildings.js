@@ -1,6 +1,7 @@
 /* FORMA architectural houses: metrically correct footprints, distinct facade
  * systems and real roof planes. These are editable, procedural Three.js models.
  * Presets do not infer unknown details from a user's architectural photograph. */
+import {buildingHeights,facadeOpeningSchedule,wallPatches} from './forma-landscape-3d-architecture-geometry.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Светлый планкен · графит',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#C1AD91'},
@@ -13,7 +14,13 @@ export const HOUSE_PRESETS=Object.freeze([
  {id:'chalet',name:'Альпийское шале',subtitle:'Широкая кровля · деревянная терраса',wall:'walnut',roof:'gable',roofFinish:'tile',accent:'#957157'},
  {id:'cottage',name:'Английский коттедж',subtitle:'Фахверк · крутая кровля',wall:'stone',roof:'gable',roofFinish:'tile',accent:'#B1A193'},
  {id:'mediterranean',name:'Средиземноморский',subtitle:'Терракота · светлый камень',wall:'plaster',roof:'hip',roofFinish:'tile',accent:'#B98764'},
- {id:'hightech',name:'Хай-тек',subtitle:'Консоль · бетон · витраж',wall:'plaster',roof:'flat',roofFinish:'flat',accent:'#A9B6B1'}
+ {id:'hightech',name:'Хай-тек',subtitle:'Консоль · бетон · витраж',wall:'plaster',roof:'flat',roofFinish:'flat',accent:'#A9B6B1'},
+ {id:'modular',name:'Модульный дом',subtitle:'Фальц · вертикальный планкен · сборные модули',wall:'lightwood',roof:'flat',roofFinish:'flat',accent:'#A69B88'},
+ {id:'logcabin',name:'Рубленый лафет',subtitle:'Реальные венцы · рубленные углы',wall:'walnut',roof:'gable',roofFinish:'tile',accent:'#85664A'},
+ {id:'bungalow',name:'Бунгало',subtitle:'Один этаж · широкая веранда',wall:'cedar',roof:'hip',roofFinish:'tile',accent:'#B29F81'},
+ {id:'duplex',name:'Двухэтажный',subtitle:'Два этажа · два входа · окна второго уровня',wall:'plaster',roof:'hip',roofFinish:'tile',accent:'#C5B8A8'},
+ {id:'panoramic',name:'Панорамный дом',subtitle:'Большой витраж · деревянные ламели',wall:'darkwood',roof:'flat',roofFinish:'flat',accent:'#837869'},
+ {id:'tiny',name:'Tiny House',subtitle:'Компактный дом · крыльцо · скатная крыша',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#AFA58B'}
 ]);
 const presetById=id=>HOUSE_PRESETS.find(p=>p.id===id);
 export const housePreset=id=>presetById(id)||HOUSE_PRESETS[0];
@@ -105,6 +112,62 @@ function doorGroup(T,width=1.04,height=2.16,modern=false){
  box(g,T,.025,.31,.035,width*.33,-.04,.118,mat(T,'#D0C6AF',.3,.65));
  return g;
 }
+/* A continuous solid cube under fake windows is architecturally wrong.
+ * The wall envelope below consists only of closed wall segments *outside*
+ * measured door and window apertures. Door/window meshes occupy the void.
+ */
+function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,night}){
+ const plan=facadeOpeningSchedule({width:w,depth:d,height:h,style,type});
+ const walls=[
+  ['front',w,0,d/2,0],['rear',w,0,-d/2,Math.PI],
+  ['left',d,-w/2,0,-Math.PI/2],['right',d,w/2,0,Math.PI/2]
+ ];
+ const interior=mat(T,'#1C2223',.94,.02);
+ for(const [name,span,px,pz,angle] of walls){
+  const facade=new T.Group();
+  facade.name='facade-'+name;
+  facade.position.set(px,0,pz);facade.rotation.y=angle;g.add(facade);
+  const openings=plan[name];
+  const patches=wallPatches(span,.48,h-.09,openings);
+  const shellThickness=.19;
+  for(const patch of patches){
+   const segment=box(facade,T,patch.width,patch.height,shellThickness,
+    patch.x,patch.y,0,material);
+   segment.userData.architecturePart='solid-wall';
+   segment.userData.facade=name;
+  }
+  for(const opening of openings){
+   let part;
+   if(opening.kind==='garage'){
+    const garageMat=mat(T,'#343B3E',.64,.45);
+    const frameMat=mat(T,'#20282B',.46,.55);
+    part=new T.Group();
+    box(part,T,opening.width,opening.height,.065,0,0,.035,garageMat);
+    for(let yy=-opening.height/2+.26;yy<opening.height/2;yy+=.36)
+     box(part,T,opening.width,.023,.075,0,yy,.082,frameMat);
+    for(const x of [-opening.width/2,opening.width/2])
+     box(part,T,.064,opening.height,.16,x,0,.070,frameMat);
+    box(part,T,opening.width+.10,.08,.15,0,opening.height/2,.068,frameMat);
+   }else if(opening.kind==='door'){
+    part=doorGroup(T,opening.width,opening.height,
+     ['modern','hightech','japandi','panoramic','modular'].includes(style));
+   }else{
+    part=windowGroup(T,opening.width,opening.height,night,opening.panoramic);
+   }
+   part.position.set(opening.x,opening.bottom+opening.height/2,.106);
+   part.userData.architecturePart=opening.kind;
+   part.userData.architectureOpening={
+    facade:name,width:opening.width,height:opening.height,bottom:opening.bottom
+   };
+   facade.add(part);
+   // Dark interior return on the opening's inner edge; no solid wall beneath.
+   for(const edge of [-1,1])box(facade,T,.055,opening.height,.13,
+    opening.x+edge*(opening.width/2+.023),opening.bottom+opening.height/2,-.022,interior);
+  }
+ }
+ return plan;
+}
+
 function roofPlane(g,T,slopeLength,depth,x,y,angle,roofMat){
  const geo=new T.PlaneGeometry(slopeLength,depth);
  geo.rotateX(-Math.PI/2);
