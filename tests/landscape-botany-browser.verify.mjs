@@ -50,7 +50,20 @@ try{
  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:50000});
  // The editor initializes in 3D; avoid an unnecessary second WebGL camera reset.
  await mkdir('artifacts/landscape-editor',{recursive:true});
- await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-3d.png'});
+ const perspectivePng=await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-3d.png'});
+ const lawnLuminance=await page.evaluate(async(src)=>{
+  const image=new Image();
+  await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=src});
+  const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
+  const context=canvas.getContext('2d',{willReadFrequently:true});
+  context.drawImage(image,0,0);
+  const locations=[[780,740],[700,760],[865,740]];
+  return locations.map(([x,y])=>{
+   const p=context.getImageData(x,y,1,1).data;
+   return Math.round((p[0]+p[1]+p[2])/3);
+  });
+ },'data:image/png;base64,'+perspectivePng.toString('base64'));
+ assert.ok(lawnLuminance.every(value=>value>=38),'Daytime 3D lawn must not render near black: '+JSON.stringify(lawnLuminance));
  await page.evaluate(()=>document.querySelector('[data-view="2d"]')?.click());
  await page.waitForTimeout(350);
  await page.screenshot({path:'artifacts/landscape-editor/botanical-ten-species-nadir.png'});
