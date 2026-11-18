@@ -6,7 +6,7 @@ import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
 import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
-import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity} from './forma-landscape-3d-reference-canopies.js';
+import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity,constrainCrownRadius,specimenCrownVariation} from './forma-landscape-3d-reference-canopies.js';
 import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js';
 export const VEGETATION_SPECIES=Object.freeze({
  pine:{kind:'pine',density:650,branches:12,crownStart:.42,leaf:'#507254',bark:'#91674b'},
@@ -398,6 +398,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  const branches=[[[0,0,0],[0,trunkEnd,0],trunkRadius]];
  const reference=referenceCanopy(id),growth=speciesGrowthProfile(id);
  const leafPoints=[],tiers=reference?Math.round(c.branches*reference.tierMultiplier):c.branches,leafless=foliageProfile(id,season).leafless;
+ const specimenSeed=Math.floor(r()*100000);
  const start=height*c.crownStart,crownH=height-start;
  const centers=[];
  for(let i=0;i<tiers;i++){
@@ -407,10 +408,12 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
   const arms=growth?.primaryArms|| (kind==='spruce'?7:kind==='pine'?4:5);
   for(let k=0;k<arms;k++){
    const direction=angle+k*2*Math.PI/arms+r()*.30;
-   const length=radial*(.66+r()*.31);
+   // Uneven windward whorls instead of a regular green cone.
+   const length=Math.min(radius*.995,radial*(.74+r()*.29)*specimenCrownVariation(id,t,direction,specimenSeed));
    const branchRise=conifer?(kind==='pine'?.12:-.11):growth?.branchAngle||(.2+r()*.25);
    const outerY=clamp(y+crownH*branchRise*(r()-.25)-branchTipDrop(id,height,t)*.35,.12,height*.99);
-   const tip=[Math.cos(direction)*length,outerY,Math.sin(direction)*length];
+   const [tipX,tipZ]=constrainCrownRadius(Math.cos(direction)*length,Math.sin(direction)*length,radius);
+   const tip=[tipX,outerY,tipZ];
    const stemY=y-(conifer?.04:.02)*height;
    curveBranch(branches,[0,stemY,0],tip,trunkRadius*(conifer?.25:.37)*(1-t*.55),height*(conifer?-.012:.028));
    if(growth&&!conifer){
@@ -431,8 +434,8 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
    for(let j=0;j<twigCount;j++){
     const f=(j+.2+r()*.45)/twigCount,flare=(r()-.5)*length*.4;
     const mid=[tip[0]*f,stemY+(outerY-stemY)*f,tip[2]*f];
-    const x=mid[0]+Math.cos(direction+Math.PI/2)*flare;
-    const z=mid[2]+Math.sin(direction+Math.PI/2)*flare;
+    const [x,z]=constrainCrownRadius(mid[0]+Math.cos(direction+Math.PI/2)*flare,
+     mid[2]+Math.sin(direction+Math.PI/2)*flare,radius);
     const yy=mid[1]+(kind==='willow'?-.20-height*.07*r():height*.03*r());
     curveBranch(branches,mid,[x,yy,z],trunkRadius*(conifer?.072:.10)*(1-t*.5),height*(conifer?-.004:.008));
     if(id==='willow'){
@@ -477,10 +480,8 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
   const offset=Math.min(.08,diameter*.012),scale=botanicalLeafScale(id,height,diameter);
   const leafY=clamp(p.y+(r()-.5)*offset,.075,height);
   const size=(conifer?(.11+r()*.12):(.11+r()*.16))*scale;
-  leafPoints.push({
-   x:clamp(p.x+(r()-.5)*offset,-radius,radius),y:leafY,
-   z:clamp(p.z+(r()-.5)*offset,-radius,radius),s:size
-  });
+  const [leafX,leafZ]=constrainCrownRadius(p.x+(r()-.5)*offset,p.z+(r()-.5)*offset,radius);
+  leafPoints.push({x:leafX,y:leafY,z:leafZ,s:size});
  }
  // Birch has a visible pale trunk; Scots pine a taller open red-brown bole.
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
@@ -500,10 +501,12 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  const evergreen=c.kind==='conifer-shrub',branches=[],points=[],isCreeper=id==='juniper',isSpike=id==='lavender';
  const reference=referenceCanopy(id),growth=speciesGrowthProfile(id);
  const stems=isCreeper?24:isSpike?38:id==='hosta'?19:id==='ornamental-grass'?56:id==='hydrangea'?30:id==='spirea'?38:c.branches;
+ const specimenSeed=Math.floor(r()*100000);
  for(let j=0;j<stems;j++){
   // Botanical asymmetry: individual shrubs form naturally offset branch whorls,
   // rather than a perfect radial hedgehog around their survey point.
-  const az=j*2.399+r()*.34,dist=radius*(.43+r()*.53),
+  const az=j*2.399+r()*.34,
+   dist=radius*(.48+r()*.52)*specimenCrownVariation(id,j/stems,az,specimenSeed),
    horizontal=isCreeper?1:isSpike?.72:id==='ornamental-grass'?.72:
    id==='hosta'?.89:id==='thuja-globe'?.8:1;
   const tipHeight=isCreeper?actual*(.17+r()*.23):
@@ -513,7 +516,8 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    isSpike?actual*(.50+r()*.45):
    id==='boxwood'||id==='thuja-globe'?actual*(.51+r()*.47):
    actual*(.38+r()*.54);
-  const pt=[Math.cos(az)*dist*horizontal,tipHeight,Math.sin(az)*dist*horizontal],
+  const [tipX,tipZ]=constrainCrownRadius(Math.cos(az)*dist*horizontal,Math.sin(az)*dist*horizontal,radius);
+  const pt=[tipX,tipHeight,tipZ],
    radiusStem=id==='spirea'?.0045+r()*.0035:id==='hosta'?.0035:isSpike?.007:isCreeper?.012:.016+r()*.016;
   curveBranch(branches,[0,.045,0],pt,radiusStem,
    actual*(isCreeper?-.01:id==='spirea'?.16:.065));
@@ -529,11 +533,11 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
   for(let k=0;k<15;k++){
    const f=.22+r()*.77,
     mid=[pt[0]*f,.045+(pt[1]-.045)*f,pt[2]*f],length=radius*(isCreeper?.19:isSpike?.08:.16);
-   const direction=az+(r()-.5)*2.6,tip=[
-    clamp(mid[0]+Math.cos(direction)*length*(.25+r()*.85),-radius,radius),
-    clamp(mid[1]+actual*(isSpike?.035:.08)*(r()-.33),.04,actual),
-    clamp(mid[2]+Math.sin(direction)*length*(.25+r()*.85),-radius,radius)
-   ];
+   const direction=az+(r()-.5)*2.6,
+    [twigX,twigZ]=constrainCrownRadius(
+     mid[0]+Math.cos(direction)*length*(.25+r()*.85),
+     mid[2]+Math.sin(direction)*length*(.25+r()*.85),radius),
+    tip=[twigX,clamp(mid[1]+actual*(isSpike?.035:.08)*(r()-.33),.04,actual),twigZ];
    branches.push([mid,tip,Math.max(.0025,radiusStem*.32)]);
    points.push({x:tip[0],y:tip[1],z:tip[2],s:
     id==='spirea'?.045+r()*.065:evergreen?.09+r()*.10:.095+r()*.12});
