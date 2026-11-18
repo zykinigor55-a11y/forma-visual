@@ -63,8 +63,8 @@ try{
  assert.equal(await page.locator('#brushShape').isVisible(),true);
  await page.locator('[data-quick-tool="select"]').click();
  // These are genuine WebGL-rendered house thumbnails, not flat pictograms.
- assert.equal(await page.locator('[data-house-preset]').count(),12);
- await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===12,null,{timeout:30000});
+ assert.equal(await page.locator('[data-house-preset]').count(),18);
+ await page.waitForFunction(()=>document.querySelectorAll('#houseStyles img').length===18,null,{timeout:30000});
  await mkdir('artifacts/landscape-editor',{recursive:true});
  await page.locator('#selectMainHouse').click();
  await page.locator('[data-house-preset="brick"]').click();
