@@ -41,7 +41,13 @@ try{
  // Licensed 40-object collection is a real editing tool, not a static mock.
  await page.locator('[data-tool="models40"]').click({timeout:20000});
  assert.equal(await page.locator('#library [data-item]').count(),40);
- assert.equal(await page.locator('[data-catalog-filter]').count(),7,'6 functional material/object categories + all');
+ assert.equal(await page.locator('[data-catalog-filter]').count(),9,'6 material/object categories, all, favorites and recent');
+ await page.locator('[data-favorite-id="rock-grey"]').click();
+ assert.equal(await page.locator('[data-favorite-id="rock-grey"]').getAttribute('aria-pressed'),'true');
+ await page.locator('[data-catalog-filter="favorites"]').click();
+ assert.equal(await page.locator('[data-item="rock-grey"]').isVisible(),true);
+ assert.equal(await page.locator('[data-item="street-lamp-one"]').isVisible(),false);
+ await page.locator('[data-catalog-filter="all"]').click();
  await page.locator('[data-catalog-filter="nature"]').click();
  assert.equal(await page.locator('[data-item="rock-grey"]').isVisible(),true);
  assert.equal(await page.locator('[data-item="street-lamp-one"]').isVisible(),false);
@@ -51,6 +57,10 @@ try{
  assert.equal(await page.locator('[data-item="pine"]').isVisible(),false);
  await page.locator('#catalogSearch').fill('');
  await page.locator('[data-item="rock-grey"]').click();
+ await page.locator('[data-catalog-filter="recent"]').click();
+ assert.equal(await page.locator('[data-item="rock-grey"]').isVisible(),true);
+ assert.equal(await page.locator('[data-item="street-lamp-one"]').isVisible(),false);
+ await page.locator('[data-catalog-filter="all"]').click();
  const glbResponse=page.waitForResponse(r=>r.url().includes('/assets/landscape-models/rock-grey.glb')&&r.status()===200,{timeout:35000});
  await clickSite(.59,.39);
  await glbResponse;
