@@ -84,7 +84,8 @@ test('front-end and server are wired to the dedicated GPT 2.6 landscape workflow
  assert.match(editor,/landscapeMasterplan:coordinateSummary/);
  assert.match(server,/LANDSCAPE_IMAGE_MODEL/);
  assert.match(server,/gpt-image-2\.6-sunburst/);
- assert.match(server,/needsLandscape\?LANDSCAPE_IMAGE_MODEL/);
+ assert.match(server,/needsLandscape\?landscapeModel/);
+ assert.match(server,/landscapeModel=.*nano-banana-2\.1/);
  assert.doesNotMatch(server,/needsLandscape\?MODEL/);
  const {createPrompt,renderQuantity}=await import('../server.mjs');
  assert.match(createPrompt({landscapeMasterplan:coordinateSummary(freshProject())}),/MASTERPLAN REALISM 4\.0/);
