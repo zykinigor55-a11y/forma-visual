@@ -11,7 +11,7 @@ export function vegetationFit({width,height,depth},instance){
  return {scaleXZ:crown/Math.max(srcW,srcD),scaleY:plantHeight/srcH,
          physicalHeight:plantHeight,crownDiameter:crown};
 }
-export function makeRealVegetation(T,source,instance){
+export function makeRealVegetation(T,source,instance,{shareGeometry=false}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
  const clone=source.clone(true),bounds=new T.Box3().setFromObject(clone);
  if(bounds.isEmpty())throw Error('3D model has no measurable geometry.');
@@ -22,7 +22,7 @@ export function makeRealVegetation(T,source,instance){
  // safe. Textures can stay shared with imported source until browser reload.
  clone.traverse(node=>{
   if(!node.isMesh)return;
-  node.geometry=node.geometry?.clone();
+  if(shareGeometry){node.userData.bundledSharedGeometry=true;}else{node.geometry=node.geometry?.clone();}
   node.material=Array.isArray(node.material)?node.material.map(m=>m.clone()):node.material?.clone();
   node.castShadow=true;node.receiveShadow=true;
   if(node.material){
@@ -38,6 +38,7 @@ export function makeRealVegetation(T,source,instance){
  group.add(clone);
  group.userData.species=instance.catalogId;
  group.userData.realGlb=true;
+ group.userData.bundledModel=shareGeometry;
  group.userData.physicalHeight=fit.physicalHeight;
  group.userData.crownDiameter=fit.crownDiameter;
  return group;
