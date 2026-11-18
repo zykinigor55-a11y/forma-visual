@@ -75,7 +75,7 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #status.status-hidden{opacity:0;pointer-events:none}
 #hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
 #loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
-#loadError strong{font-size:19px}
+#loadError strong{font-size:19px}.model-health{padding:11px 12px;margin:11px 0 13px;border:1px solid #6a634f;border-radius:11px;background:linear-gradient(135deg,#31362f,#242c2a)}.model-health strong{font-size:12px;color:#ebcfa5;letter-spacing:.04em}.model-health small{display:block;margin-top:5px;color:#bac7bc;line-height:1.55;font-size:10px}.model-health button{margin-top:7px;background:#514735;color:#f8e1bc;border:1px solid #a18a64;border-radius:7px;padding:7px 10px;font-size:11px}.model-health button:focus-visible{outline:2px solid #edd0a2}
 #aiResult{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
 #aiResult[hidden]{display:none}
 .ai-result-card{width:min(100%,1000px);max-height:94%;display:flex;flex-direction:column;gap:10px;padding:16px;background:#222629;border:1px solid #615746;border-radius:15px;box-shadow:0 20px 90px #0009}
@@ -150,7 +150,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
- <hr><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
+ <hr><div id="modelHealth" class="model-health" role="status" aria-live="polite"><strong>3D-модели</strong><small>Проверяем загруженные объекты…</small></div><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
  <hr><div class="pair"><div><label>Участок, ширина м</label><input id="plotW" type="number" min="5" max="500" step=".5"></div><div><label>Длина, м</label><input id="plotH" type="number" min="5" max="500" step=".5"></div></div>
  <button class="action" id="resizePlot">Применить размеры</button>
   <hr><h3>ЧЕРТЁЖ УЧАСТКА · ПОДЛОЖКА</h3>
@@ -171,7 +171,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <img id="aiResultImage" alt="Фотореалистичный рендер текущего 3D-ракурса">
  <div class="ai-result-actions"><a id="downloadAiResult" download="FORMA-landscape-3d-ai.png">↓ Скачать изображение</a><span>Изображение справочное. Размеры — только из модели.</span></div>
  </div></div>
-<div id="loadError"><div><strong>Не удалось загрузить 3D-движок</strong><p>Для редактора требуется WebGL и доступ к библиотеке Three.js. Проверьте подключение к сети и обновите страницу.</p></div></div>
+<div id="loadError" role="alert"><div><strong>Не удалось загрузить 3D-движок</strong><p>Для редактора требуется WebGL и доступ к библиотеке Three.js. Проверьте подключение к сети и обновите страницу.</p><button type="button" id="reload3d" class="action primary" onclick="location.reload()">Перезапустить 3D-редактор</button></div></div>
 </main>
 </div>
 <script type="module">
@@ -203,6 +203,20 @@ let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,ter
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();let plantSpeciesStored=new Set();
+function updateModelHealth(){
+ const el=$('#modelHealth');if(!el||!doc)return;
+ const ids=[...new Set([...extra.map(o=>o.type),...doc.objects.map(o=>o.catalogId)].filter(x=>modelPath(x)))];
+ const loaded=ids.filter(x=>bundledModelSources.has(x)).length;
+ const loading=ids.filter(x=>bundledModelLoading.has(x)).length;
+ const failed=ids.filter(x=>bundledModelFailures.has(x)).length;
+ el.innerHTML='<strong>3D-модели · '+loaded+'/'+ids.length+' загружено</strong><small>'+
+  (ids.length?'В сцене '+ids.length+' видов · '+loading+' загружается · '+failed+' с ошибкой':'40 CC0 PBR-моделей доступны в отдельном каталоге. Загрузка начинается при размещении.')+
+  '</small>'+(failed?'<button type="button" id="retry3dModels">Повторить загрузку ('+failed+')</button>':'');
+ if(failed)el.querySelector('#retry3dModels').onclick=()=>{
+  const retry=[...bundledModelFailures];bundledModelFailures.clear();
+  retry.forEach(loadBundledLandscapeModel);updateModelHealth();
+ };
+}
 const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
@@ -344,7 +358,7 @@ function rebuild(){
  buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
- refreshDraft();updateSun();renderProps();renderer.render(scene,camera);
+ refreshDraft();updateSun();renderProps();updateModelHealth();renderer.render(scene,camera);
 }
 function buildingGroup(b){
  const model=b.modelKey&&importedHouseModels.get(b.modelKey);
@@ -374,7 +388,7 @@ function loadBundledLandscapeModel(catalogId){
  const path=modelPath(catalogId);
  if(!path||bundledModelSources.has(catalogId)||bundledModelLoading.has(catalogId)||bundledModelFailures.has(catalogId))return;
  if(importedPlantModels.has(catalogId))return; // User's imported species has priority.
- bundledModelLoading.add(catalogId);
+ bundledModelLoading.add(catalogId);updateModelHealth();
  if(realModelById(catalogId))status('Загружаем реальную PBR-модель: '+realModelById(catalogId).name+'…');
  new GLTFLoader().loadAsync(path).then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
@@ -382,14 +396,14 @@ function loadBundledLandscapeModel(catalogId){
   result.scene.traverse(n=>{if(n.isMesh&&n.geometry?.attributes?.position)meshes++});
   if(!meshes)throw Error('GLB has no mesh geometry');
   bundledModelSources.set(catalogId,result.scene);
-  if(root&&renderer&&doc)rebuild();
+  updateModelHealth();if(root&&renderer&&doc)rebuild();
   refreshPlantAssetStatus();
   status('CC0 PBR-модель загружена: '+(realModelById(catalogId)?.name||catalog(catalogId)?.name||catalogId)+' · '+meshes+' 3D-мешей');
  }).catch(error=>{
-  bundledModelFailures.add(catalogId);
+  bundledModelFailures.add(catalogId);updateModelHealth();
   status('Не удалось загрузить 3D-модель «'+(realModelById(catalogId)?.name||catalogId)+'». Проверьте публикацию GLB на сервере.');
   console.warn('Licensed landscape GLB unavailable:',catalogId,error?.message);
- }).finally(()=>bundledModelLoading.delete(catalogId));
+ }).finally(()=>{bundledModelLoading.delete(catalogId);updateModelHealth()});
 }
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
