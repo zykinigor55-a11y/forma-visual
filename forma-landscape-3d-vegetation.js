@@ -169,7 +169,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality){
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  const source=foliageProfile(id,season),number=clamp(
-  Math.round(points.length*quality*(needle?1.12:1.35)),shrub?130:270,shrub?800:1700
+  Math.round(points.length*quality*(needle?1.48:1.72)),shrub?170:400,shrub?1050:2200
  );
  const geometry=foliageSprigGeometry(T,needle);
  const material=new T.MeshStandardMaterial({color:'#ffffff',roughness:.86,metalness:0,side:T.DoubleSide});
@@ -201,24 +201,24 @@ function createSprayTexture(T,needles){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
  const ctx=canvas.getContext('2d'),random=rng(hash(id));
  const stem=(a,b,c,d,w=1.1)=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.strokeStyle='rgba(186,194,169,.70)';ctx.lineWidth=w;ctx.stroke()};
- for(let j=0;j<9;j++){
-  const angle=j*Math.PI*2/9+(random()-.5)*.36;
-  const length=50+random()*57;
+ for(let j=0;j<13;j++){
+  const angle=j*Math.PI*2/13+(random()-.5)*.32;
+  const length=54+random()*59;
   const endX=128+Math.cos(angle)*length,endY=128+Math.sin(angle)*length*.80;
   stem(128,128,endX,endY);
-  for(let k=1;k<=6;k++){
-   const t=k/7,x=128+(endX-128)*t,y=128+(endY-128)*t;
+  for(let k=1;k<=8;k++){
+   const t=k/9,x=128+(endX-128)*t,y=128+(endY-128)*t;
    for(const side of [-1,1]){
     const nx=-Math.sin(angle)*side,ny=Math.cos(angle)*side;
-    const dx=nx*(12+random()*8),dy=ny*(12+random()*8);
+    const dx=nx*(14+random()*10),dy=ny*(14+random()*10);
     if(needles){for(let n=0;n<3;n++)stem(x+n*1.7,y,x+dx*(.70+n*.14),y+dy*(.70+n*.14),.8)}
     else{
      ctx.save();ctx.translate(x+dx*.7,y+dy*.7);ctx.rotate(Math.atan2(dy,dx));
      ctx.fillStyle='rgba(232,239,217,.94)';
-     ctx.beginPath();ctx.moveTo(-10,0);ctx.quadraticCurveTo(0,-6,12,0);
-     ctx.quadraticCurveTo(0,6,-10,0);ctx.fill();
+     ctx.beginPath();ctx.moveTo(-14,0);ctx.quadraticCurveTo(0,-9,16,0);
+     ctx.quadraticCurveTo(0,9,-14,0);ctx.fill();
      ctx.strokeStyle='rgba(89,111,88,.28)';ctx.lineWidth=.8;
-     ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();
+     ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(14,0);ctx.stroke();
      ctx.restore();
     }
    }
@@ -370,7 +370,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
  addBranch(g,T,branches,c.bark,id);
  if(!leafless){
-  if(quality>=.64)addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);
+  if(quality>=.36)addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality);
   if(quality>=.43)addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295),id);
   addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality);
  }
@@ -415,7 +415,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  }
  addBranch(g,T,branches,c.bark,id);
  if(!foliageProfile(id,season).leafless){
-  if(quality>=.64)addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);
+  if(quality>=.36)addFoliageVolume(g,T,points,id,diameter,season,Math.floor(r()*4294967295),quality);
   if(quality>=.43)addLeaves(g,T,points,foliageProfile(id,season).color,evergreen,season,Math.floor(r()*4294967295),id);
   addFoliageSprays(g,T,points,id,season,Math.floor(r()*4294967295),quality);
  }
