@@ -190,7 +190,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <button id="cameraEyeLevel" type="button">◎ Камера на уровне глаз · 1,7 м</button>
  </div>
  <div class="walk-instructions" id="walkInstructions" hidden role="status">Прогулка: <strong>W / S</strong> вперёд / назад, <strong>A / D</strong> влево / вправо, <strong>Shift</strong> быстрее. Клик в сцене — мышь осматривает; <strong>Esc</strong> — курсор. Камера всегда в 1,7 м от земли.</div>
- <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 12 СТИЛЕЙ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
+ <section class="house-preset-section"><div class="house-preset-heading"><h3>АРХИТЕКТУРА · 18 ТИПОВ ДОМОВ</h3><button type="button" id="selectMainHouse">Главный дом</button></div><small id="houseEditing">Редактируется основной дом</small>
   <div id="houseStyles" class="house-style-list" aria-label="Архитектурные стили домов"></div>
   <label for="customHouseGlb">Своя точная модель дома · GLB до 35 МБ</label>
   <input type="file" id="customHouseGlb" accept=".glb,model/gltf-binary">
@@ -332,7 +332,7 @@ const choices={
  site:[['rect','Прямоугольный участок'],['outline','Свободный контур (точки)']],
  surface:CATALOG.filter(x=>['pavers','fills','lawns'].includes(x.group)).map(x=>[x.id,x.name]),
  terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['flatten','Выровнять площадку'],['smooth','Сгладить рельеф'],['roughen','Добавить неровности']],
- build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
+ build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['carport','Навес для автомобиля'],['gazebo','Беседка'],['greenhouse','Теплица'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
  plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
  water:[['formal-pond','Водоём (контур)']],
@@ -1159,7 +1159,16 @@ function place(world){
   save();rebuild();status('3D-растение добавлено. Перемещайте его инструментом «Управление».');return;
  }
  push();
- if(tool==='build'){const preset=housePreset(state.housePreset||doc.house.archStyle);doc.buildings.push({id:id(),type:state.placing,x:point.x,y:point.y,width:Math.min(8,doc.site.width*.35),height:Math.min(7,doc.site.height*.35),rotation:0,roof:preset.roof,roofColor:'#454543',archStyle:preset.id,roofRise:1.4})}
+ if(tool==='build'){
+  const preset=housePreset(state.housePreset||doc.house.archStyle);
+  const targetType=state.placing;
+  const roof=targetType==='greenhouse'?'gable':targetType==='carport'?'flat':preset.roof;
+  const width=Math.max(2.5,Math.min(8,doc.site.width*.35)),
+   height=Math.max(2.5,Math.min(7,doc.site.height*.35));
+  doc.buildings.push({id:id(),type:targetType,x:point.x,y:point.y,width,height,
+   rotation:0,roof,roofColor:targetType==='greenhouse'?'#A3C2B6':'#454543',
+   archStyle:preset.id,roofRise:targetType==='greenhouse'?Math.min(1.8,width*.28):roof==='flat'?.18:Math.min(1.5,width*.20)})
+ }
  else if(tool==='plant'||tool==='landscape'||tool==='light'){
   const good=catalog(state.placing);if(!good){status('Объект недоступен в каталоге');return}
   doc.objects.push({id:id(),catalogId:state.placing,type:good.group,x:point.x,y:point.y,diameter:good.diameter||1.6,height:good.group==='trees'?(TREE_HEIGHT_M[state.placing]||12):good.group==='shrubs'?(SHRUB_HEIGHT_M[state.placing]||.95):good.group==='lights'?(gardenLightingSpec[state.placing]?.height||good.height||.9):.95,variant:tool==='plant'?Number($('#plantVariant')?.value||1):1,rotation:0})
