@@ -474,4 +474,70 @@ function addPresetVolumes(g,T,{style,w,d,bodyHeight:y}){
   for(const x of [-w*.40,w*.40])
    box(g,T,.10,y*.62,.16,x,y*.37,d/2+.16,dark);
  }
+ if(style==='modular'){
+  const dark=m('#364144',.44),wood=m('#9B8365');
+  // Three panel divisions in genuine metal, with externally proud end ribs.
+  for(const x of [-w*.48,w*.48]){
+   box(g,T,.085,y-.52,.065,x,y/2+.23,d/2+.13,dark);
+   box(g,T,.085,y-.52,.065,x,y/2+.23,-d/2-.13,dark);
+  }
+  for(const z of [-d*.45,d*.45]){
+   box(g,T,.065,y-.52,.085,w/2+.13,y/2+.23,z,dark);
+   box(g,T,.065,y-.52,.085,-w/2-.13,y/2+.23,z,dark);
+  }
+  box(g,T,w-.20,.08,.14,0,y-.16,d/2+.12,wood);
+  for(const x of [-w*.40,w*.40])box(g,T,.11,.23,.48,x,.52,d/2+.25,dark);
+ }
+ if(style==='bungalow'){
+  const decking=m('#9E7B58'),frame=m('#665542',.75);
+  // Covered low veranda with actual vertical bearing posts.
+  const width=Math.max(2,Math.min(w-.5,w*.83));
+  const z=d/2+.67;
+  box(g,T,width,.17,1.3,0,.52,z,decking);
+  for(const x of [-width*.45,width*.45]){
+   box(g,T,.14,2.23,.14,x,1.70,z+.52,frame);
+   box(g,T,.29,.10,.29,x,.60,z+.52,frame);
+  }
+  box(g,T,width+.20,.15,1.55,0,2.91,z+.20,frame);
+  // Safe, discrete entrance step; not an invented second balcony.
+  box(g,T,Math.min(2.0,width*.5),.13,.42,0,.30,d/2+1.46,decking);
+ }
+ if(style==='duplex'){
+  const band=m('#D1CABD'),rail=m('#444B4F',.50);
+  // Story line must follow the actual 5.9m two-storey envelope.
+  box(g,T,w+.07,.12,d+.08,0,3.08,0,band);
+  for(const x of [-w*.28,w*.28]){
+   box(g,T,Math.min(w*.20,1.6),.13,.64,x,2.79,d/2+.37,band);
+   for(const side of [-1,1])
+    box(g,T,.055,.28,.065,x+side*.55,2.69,d/2+.47,rail);
+  }
+  for(const x of [-w*.41,w*.41])
+   box(g,T,.07,Math.max(1,y-3.1),.08,x,(y+3.08)/2,d/2+.11,rail);
+ }
+ if(style==='panoramic'){
+  const teak=m('#907457'),struct=m('#333D40',.48);
+  // Structural portal and exterior deck frame the real panorama opening.
+  box(g,T,w*.86,.13,1.22,0,.53,d/2+.64,teak);
+  for(const x of [-w*.46,w*.46]){
+   box(g,T,.095,y-.40,.14,x,y/2+.25,d/2+.14,struct);
+   box(g,T,.15,.12,1.21,x,y-.18,d/2+.53,struct);
+  }
+  box(g,T,w*.88,.14,1.25,0,y-.12,d/2+.62,struct);
+  for(let i=0;i<5;i++){
+   const x=-w*.44+i*w*.22;
+   box(g,T,.034,.62,.045,x,y-.47,d/2+1.17,teak);
+  }
+ }
+ if(style==='tiny'){
+  const decking=m('#A78C68'),steel=m('#4B5559',.49);
+  // Compact entry, step and one correctly scaled porch roof.
+  const width=Math.min(w*.66,2.5);
+  box(g,T,width,.13,.86,w*.22,.46,d/2+.51,decking);
+  box(g,T,width*.64,.10,.36,w*.22,.25,d/2+1.08,decking);
+  for(const x of [w*.22-width*.42,w*.22+width*.42]){
+   box(g,T,.078,2.13,.078,x,1.70,d/2+.86,steel);
+  }
+  box(g,T,width+.14,.12,1.04,w*.22,2.79,d/2+.49,steel);
+ }
+
 }
