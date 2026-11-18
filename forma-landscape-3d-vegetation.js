@@ -169,7 +169,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),needle=['pine','spruce','juniper','thuja-globe'].includes(id);
  const source=foliageProfile(id,season),number=clamp(
-  Math.round(points.length*quality*(needle?1.48:1.72)),shrub?170:400,shrub?1050:2200
+  Math.round(points.length*quality*(needle?2.05:2.15)),shrub?170:520,shrub?1100:2450
  );
  const geometry=foliageSprigGeometry(T,needle);
  const material=new T.MeshStandardMaterial({color:'#ffffff',roughness:.86,metalness:0,side:T.DoubleSide});
@@ -181,7 +181,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   d.position.set(p.x+(r()-.5)*.055,p.y+(r()-.5)*.055,p.z+(r()-.5)*.055);
   d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
   const crown=Math.max(.45,Math.min(2.4,diameter/4));
-  const scale=(needle?.22:.23)*crown*(.63+r()*.62);
+  const scale=(needle?.235:.25)*crown*(.70+r()*.54);
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
