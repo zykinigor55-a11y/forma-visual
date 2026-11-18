@@ -438,12 +438,13 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  for(let i=0;i<tiers;i++){
   const t=(i+.5)/tiers,y=start+crownH*t,angle=i*2.399+r()*.6;
   let radial;
-  radial=radius*naturalCrown(id,t)*(.76+r()*.26);
+  // Reach the true surveyed crown envelope at mature branching tiers.
+  radial=radius*naturalCrown(id,t)*(.86+r()*.14);
   const arms=growth?.primaryArms|| (kind==='spruce'?7:kind==='pine'?4:5);
   for(let k=0;k<arms;k++){
    const direction=angle+k*2*Math.PI/arms+r()*.30;
    // Uneven windward whorls instead of a regular green cone.
-   const length=Math.min(radius*.995,radial*(.74+r()*.29)*specimenCrownVariation(id,t,direction,specimenSeed));
+   const length=Math.min(radius*.995,radial*(.92+r()*.15)*specimenCrownVariation(id,t,direction,specimenSeed));
    const branchRise=conifer?(kind==='pine'?.12:-.11):growth?.branchAngle||(.2+r()*.25);
    const outerY=clamp(y+crownH*branchRise*(r()-.25)-branchTipDrop(id,height,t)*.35,.12,height*.99);
    const [tipX,tipZ]=constrainCrownRadius(Math.cos(direction)*length,Math.sin(direction)*length,radius);
