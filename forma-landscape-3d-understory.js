@@ -21,7 +21,8 @@ function curvedLeaf(T,form){
  // 8 genuine triangles in 3D with a slight midrib fold and a tapered tip.
  // The leaf does not rotate to face the camera (no billboard).
  const points=[],uv=[],indices=[];
- const narrow=form==='grass'?.068:form==='fronds'?.29:form==='creeping'?.41:form==='basal'?.74:.49;
+ // Natural fern pinnae and woodland leaflets are narrow, not plastic paddles.
+ const narrow=form==='grass'?.068:form==='fronds'?.115:form==='creeping'?.39:form==='basal'?.74:.255;
  const segments=form==='grass'?8:6;
  for(let j=0;j<=segments;j++){
   const t=j/segments,w=narrow*Math.pow(Math.sin(Math.PI*t),form==='basal'?.60:.76);
@@ -116,9 +117,9 @@ export function createNativeUnderstory(T,instance,{season='summer',quality=1,mod
     const tx=-sn*spread*side,tz=cs*spread*side;
     const scale=form==='grass'?.18+height*.15:
      form==='basal'?.19+diameter*.14:
-     form==='fronds'?.09+diameter*.075:
+     form==='fronds'?.065+diameter*.052:
      form==='creeping'?.055+diameter*.06:
-     .065+diameter*.05;
+     .032+diameter*.025;
     leaves.push({x:clamp(p[0]+tx,-radius,radius),y:clamp(p[1]+.013,.025,height),
      z:clamp(p[2]+tz,-radius,radius),yaw:az+side*(.35+r()*.32),
      pitch:form==='fronds'?-0.26+r()*.38:r()*.3-.25,roll:side*(.24+r()*.3),
