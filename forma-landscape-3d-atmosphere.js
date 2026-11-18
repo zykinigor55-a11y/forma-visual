@@ -20,7 +20,8 @@ export function atmosphereLighting({time='day',weather='sunny',siteSize=40,setti
  const cloudCover=Math.min(1,(v.clouds/100)*(cloudWeather?1.0:.78)+(cloudWeather?.17:0));
  const fill=v.globalFill/100;
  const nightAmount=night?.55+v.nightGlow*.006:1;
- const base=night?.54:evening?1.20:morning?1.45:weather==='overcast'?1.72:1.88;
+ // Retain contrast in foliage and plaster when reflection lighting is enabled.
+ const base=night?.54:evening?1.12:morning?1.38:weather==='overcast'?1.60:1.72;
  const extent=Math.max(10,Number(siteSize)||40),haze=v.haze/100;
  const weatherFog=weather==='fog',wetFog=['rain','snow'].includes(weather);
  const fogFactor=1-haze*.38;
@@ -75,16 +76,19 @@ export function makeCloudLayer(T){
  * so surveyed shorelines, level and editing hit-tests never move. */
 export function makeWaterRippleTexture(T,domDocument){
  const canvas=domDocument.createElement('canvas');canvas.width=canvas.height=256;
- const c=canvas.getContext('2d');
- c.fillStyle='#858585';c.fillRect(0,0,256,256);
- for(let k=0;k<22;k++){
-  const x=(k*87+23)%256,y=(k*53+91)%256,r=7+(k*17)%47;
-  for(let band=0;band<3;band++){
-   c.beginPath();c.ellipse(x,y,r+band*5,(r+band*5)*.62,k*.31,0,Math.PI*2);
-   c.strokeStyle=band===0?'rgba(225,225,225,.20)':band===1?'rgba(24,24,24,.18)':'rgba(230,230,230,.13)';
-   c.lineWidth=1.6;c.stroke();
-  }
+ const c=canvas.getContext('2d'),image=c.createImageData(256,256);
+ // Interfering diagonal wind waves, not perfect expanding cartoon rings.
+ // This is grayscale normal/bump detail only: the water polygon stays level.
+ for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+  const u=x/256*6.28318530718,v=y/256*6.28318530718;
+  const wave=16*Math.sin(14*u+2*v)+9*Math.sin(23*u-5*v)+
+   5*Math.sin(9*u+13*v)+3*Math.cos(37*u+8*v);
+  const h=Math.max(0,Math.min(255,Math.round(128+wave)));
+  const index=(y*256+x)*4;
+  image.data[index]=image.data[index+1]=image.data[index+2]=h;
+  image.data[index+3]=255;
  }
+ c.putImageData(image,0,0);
  const tex=new T.CanvasTexture(canvas);
  tex.wrapS=tex.wrapT=T.RepeatWrapping;
  tex.repeat.set(3.5,3.5);tex.anisotropy=4;
