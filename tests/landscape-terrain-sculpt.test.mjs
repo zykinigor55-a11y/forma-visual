@@ -13,7 +13,7 @@ const at=(h,i,j)=>h[i*(GRID+1)+j];
 test('round, soft terrain brush raises center but does not alter outer vertices',()=>{
  const input=empty(),result=brush(input);
  assert.equal(at(input,5,5),0,'the editor must not mutate undo snapshots');
- assert.ok(at(result,5,5)>.4);
+ assert.ok(at(result,5,5)>.08&&at(result,5,5)<.13,'each brush event should produce a gentle centimetre-scale change');
  assert.equal(at(result,0,0),0);
  assert.equal(at(result,5,8),0);
  assert.ok(at(result,5,6)<at(result,5,5));
