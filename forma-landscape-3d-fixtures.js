@@ -158,13 +158,13 @@ export function photographGardenLightPreviews(T,ids){
  renderer.setPixelRatio(1);
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.55;
+ renderer.toneMappingExposure=1.35;
  const scene=new T.Scene();
- scene.background=new T.Color('#343f40');
+ scene.background=new T.Color('#c8cac4');
  const key=new T.DirectionalLight(0xffebce,3.4);key.position.set(-3,7,5);scene.add(key);
  const fill=new T.HemisphereLight(0xd7ebff,0x35403a,2.5);scene.add(fill);
  const rim=new T.DirectionalLight(0xaac5e0,2);rim.position.set(3,5,-4);scene.add(rim);
- const floor=new T.Mesh(new T.CylinderGeometry(.63,.63,.035,48),new T.MeshStandardMaterial({color:'#59615f',metalness:.18,roughness:.75}));
+ const floor=new T.Mesh(new T.CylinderGeometry(.63,.63,.035,48),new T.MeshStandardMaterial({color:'#8e9791',metalness:.10,roughness:.80}));
  floor.position.y=-.033;scene.add(floor);
  const camera=new T.PerspectiveCamera(38,1,.02,40);
  const result={};
