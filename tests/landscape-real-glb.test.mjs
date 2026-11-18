@@ -18,7 +18,9 @@ test('real GLBs are autoloaded in the editable scene and defer to user GLB impor
  const models=readFileSync(new URL('../forma-landscape-3d-models.js',import.meta.url),'utf8');
  assert.match(page,/loadBundledLandscapeModel\(o.catalogId\)/);
  assert.match(page,/new GLTFLoader\(\).loadAsync\(path\)/);
- assert.match(page,/importedPlantModels.get\(o.catalogId\),source=imported\|\|bundledModelSources.get/);
+ assert.match(page,/const imported=importedPlantModels\.get\(o\.catalogId\)/);
+ assert.match(page,/const source=imported\|\|/);
+ assert.match(page,/bundledModelSources\.get\(o\.catalogId\)/);
  assert.match(page,/if\(n.geometry&&!n.userData\?\.bundledSharedGeometry\)/);
  assert.match(models,/node.userData.bundledSharedGeometry=true/);
  assert.match(page,/makeRealVegetation\(THREE,source/);
