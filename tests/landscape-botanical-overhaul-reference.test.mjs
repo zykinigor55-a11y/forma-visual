@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {REFERENCE_CANOPIES,ADDITIONAL_GROWTH_TRAITS,speciesGrowthProfile,referenceBranchTips,referenceCanopy,referenceFoliageDensity} from '../forma-landscape-3d-reference-canopies.js';
+import {REFERENCE_CANOPIES,ADDITIONAL_GROWTH_TRAITS,speciesGrowthProfile,constrainCrownRadius,referenceBranchTips,referenceCanopy,referenceFoliageDensity} from '../forma-landscape-3d-reference-canopies.js';
 import {normalizeProject,freshProject} from '../forma-landscape-project-core.js';
 import {BOTANICAL_QUALITY,enableBotanicalLod,setFoliageTier,pickBotanicalLod} from '../forma-landscape-3d-foliage-lod.js';
 const source=readFileSync(new URL('../forma-landscape-3d-vegetation.js',import.meta.url),'utf8');
@@ -83,5 +83,15 @@ test('each additional catalogue tree and shrub has a distinct authored growth pr
   const p=referenceBranchTips(id,{start:[0,.15,0],end:[.5,.8,0],plantHeight:1,crownRadius:1.5,seed:3});
   assert.ok(p.length>=2,id+' must have genuine secondary twigs');
   assert.ok(p.every(o=>o.tip.every(Number.isFinite)&&o.base.every(Number.isFinite)));
+ }
+});
+
+test('branch tips obey real radial crown footprint, not a larger square AABB',()=>{
+ assert.deepEqual(constrainCrownRadius(0,3,3),[0,3]);
+ const [x,z]=constrainCrownRadius(3,4,3);
+ assert.ok(Math.abs(Math.hypot(x,z)-3)<1e-10);
+ for(const id of Object.keys(REFERENCE_CANOPIES).concat(Object.keys(ADDITIONAL_GROWTH_TRAITS))){
+  const shoots=referenceBranchTips(id,{start:[0,2,0],end:[2.9,6,1.8],stage:.35,crownRadius:3,plantHeight:11,seed:42});
+  for(const {tip} of shoots)assert.ok(Math.hypot(tip[0],tip[2])<=3.0000001,id+' genuine radius');
  }
 });
