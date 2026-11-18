@@ -145,6 +145,7 @@
    $$('.fa-home-tool',panel).forEach(b=>{const selected=b.dataset.toolId===id;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))})
   });
   window.FORMA_HOME_TOOLS={open:choose,filter:filterTools};
+  document.dispatchEvent(new Event('forma:home-tools-ready'));
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
