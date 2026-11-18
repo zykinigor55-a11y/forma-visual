@@ -195,6 +195,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {SHRUB_HEIGHT_M,vegetationQuality} from './forma-landscape-3d-botany.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
+import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
 import {duplicateLandscapeObject,rotatedLandscapeObject} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
@@ -353,6 +354,7 @@ function mark(group,key){
  return group;
 }
 function rebuild(){
+ shadowBudgetDirty=true;
  renderGate.invalidate();
  currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
  currentPlantQuality=vegetationQuality(window.innerWidth,currentPlantCount,state.view)*(renderQuality==='speed'||autoReduced ? .60 : 1);
@@ -1302,7 +1304,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  });
 }
 function resize(){renderGate.invalidate();const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
-let lastRenderMs=0,lastRenderCost=0;
+let lastRenderMs=0,lastRenderCost=0,lastShadowBudgetAt=0,shadowBudgetDirty=true;
 function animate(now=0){
  requestAnimationFrame(animate);
  // On hardware-accelerated browsers retain 50fps/30fps. When WebGL falls
@@ -1316,6 +1318,11 @@ function animate(now=0){
  // Do not spend hundreds of milliseconds shading static plants between clicks.
  const cameraMoved=Boolean(controls?.enabled&&controls.update());
  const activeWalk=state.view==='walk'&&document.pointerLockElement===canvas;
+ if(root&&camera&&(shadowBudgetDirty||((cameraMoved||activeWalk)&&now-lastShadowBudgetAt>350))){
+  const changed=applyRealModelShadowBudget(root,camera,{mobile:window.innerWidth<=720,maxCasters:5});
+  lastShadowBudgetAt=now;shadowBudgetDirty=false;
+  if(changed){if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;renderGate.invalidate()}
+ }
  if(renderer&&scene&&camera&&renderGate.allow(now,{cameraMoved,walking:activeWalk,interval})){
   const start=performance.now();
   renderer.render(scene,camera);
