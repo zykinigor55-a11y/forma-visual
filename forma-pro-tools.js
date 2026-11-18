@@ -2,6 +2,21 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const STORE='forma-archviz-pro-workspace-v1';
+let premiumProIcon=null;
+const proIcon=(id,fallback)=>premiumProIcon?premiumProIcon(id==='overview'?'project':id):fallback;
+// This is a classic script. Share the same ES-module icon renderer used by
+// Landscape Project and update any pro dialog opened before module load.
+import('./forma-premium-icons.js').then(({premiumIcon})=>{
+ premiumProIcon=premiumIcon;
+ document.querySelectorAll('.fa-pro-nav [data-pro-tab]').forEach(button=>{
+  const slot=button.querySelector('i.fa-pro-icon');
+  if(slot)slot.innerHTML=proIcon(button.dataset.proTab,'');
+ });
+ const launcher=document.querySelector('.fa-pro-nav-launch > svg.ico');
+ if(launcher)launcher.outerHTML=proIcon('settings','');
+ const mini=document.querySelector('.fa-pro-launch');
+ if(mini)mini.innerHTML=proIcon('settings','')+' Инструменты';
+}).catch(error=>console.warn('Pro tools bronze icons unavailable',error));
 const ITEMS=[
  ['overview','Панель проекта','Обзор', '◈'],
  ['camera','Камера и оптика','Работает локально','◎'],
@@ -234,7 +249,7 @@ function open(id='overview'){
  modal.innerHTML='<div class="fa-pro-shell" role="dialog" aria-modal="true" aria-label="Профессиональные инструменты"><header class="fa-pro-head"><div class="fa-pro-monogram"><img src="assets/brand/forma-fa-mark.svg" alt="" width="29" height="29"></div><div><b>ФОРМА <span>/ ИНСТРУМЕНТЫ</span></b><small>ПРОФЕССИОНАЛЬНАЯ АРХИТЕКТУРНАЯ СТУДИЯ</small></div><button id="faProClose" type="button" aria-label="Закрыть">×</button></header><div class="fa-pro-main"><nav class="fa-pro-nav" aria-label="Разделы инструментов"></nav><div id="faProContent" class="fa-pro-content"></div></div><footer class="fa-pro-footer"><span id="faProStatus" role="status">Проекты и настройки могут храниться локально в этом браузере.</span><span>ФОРМА / СТУДИЯ 01</span></footer></div>';
  document.body.append(modal);document.body.classList.add('fa-pro-is-open');
  const nav=$('.fa-pro-nav');
- nav.innerHTML=ITEMS.map(([id,title,caption,icon])=>`<button type="button" data-pro-tab="${id}"><i>${icon}</i><span><b>${title}</b><small>${caption}</small></span></button>`).join('');
+ nav.innerHTML=ITEMS.map(([id,title,caption,icon])=>`<button type="button" data-pro-tab="${id}"><i class="fa-pro-icon" aria-hidden="true">${proIcon(id,icon)}</i><span><b>${title}</b><small>${caption}</small></span></button>`).join('');
  nav.addEventListener('click',e=>{const b=e.target.closest('[data-pro-tab]');if(b)show(b.dataset.proTab)});
  modal.addEventListener('click',actions);
  modal.addEventListener('click',e=>{if(e.target===modal)close()});
@@ -247,12 +262,12 @@ function close(){if(!modal)return;modal.remove();modal=null;document.body.classL
 function init(){
  const actions=$('.forma-context-actions');
  if(actions){
-  const b=document.createElement('button');b.type='button';b.className='forma-mini-btn fa-pro-launch';b.textContent='◈ Инструменты';b.title='Профессиональные инструменты студии';b.addEventListener('click',()=>open());
+  const b=document.createElement('button');b.type='button';b.className='forma-mini-btn fa-pro-launch';b.innerHTML=proIcon('settings','◈')+' Инструменты';b.title='Профессиональные инструменты студии';b.addEventListener('click',()=>open());
   const c=actions.querySelector('[data-studio-action="commands"]');if(c)actions.insertBefore(b,c);else actions.append(b);
  }
  const nav=$('.rail-nav');
  if(nav){
-  const b=document.createElement('button');b.type='button';b.className='rail-btn fa-pro-nav-launch';b.innerHTML='<svg class="ico"><use href="#i-sliders"/></svg><span class="rail-name">Инструменты</span>';b.title='Профессиональные инструменты';b.addEventListener('click',()=>open());nav.append(b);
+  const b=document.createElement('button');b.type='button';b.className='rail-btn fa-pro-nav-launch';b.innerHTML=proIcon('settings','<svg class="ico"><use href="#i-sliders"/></svg>')+'<span class="rail-name">Инструменты</span>';b.title='Профессиональные инструменты';b.addEventListener('click',()=>open());nav.append(b);
  }
  window.FORMA_PRO={open,close,mountInline:(host,onSelect)=>{if(!host)return;inlineHost=host;inlineSelection=onSelect;show('upscale')},cameraBrief:()=>{
   if(!state.cameraConfigured)return null;
