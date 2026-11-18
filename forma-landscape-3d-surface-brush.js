@@ -20,6 +20,37 @@ export function smoothPaintPath(points){
  out.push(clean.at(-1));
  return out;
 }
+/* Conserve the full outline of very long paint strokes within the project's
+ * 512-point serialized object limit. RDP keeps endpoints and actual bends. */
+export function simplifyPaintStroke(points,maxPoints=512){
+ const data=(Array.isArray(points)?points:[]).filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y));
+ const cap=Math.max(2,Math.floor(Number(maxPoints)||512));
+ if(data.length<=cap)return data.map(p=>({x:p.x,y:p.y}));
+ const deviation=(p,a,b)=>{
+  const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy;
+  if(den<1e-12)return strokeDistance(p,a);
+  const t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/den));
+  return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+ };
+ const reduce=epsilon=>{
+  const keep=new Set([0,data.length-1]),stack=[[0,data.length-1]];
+  while(stack.length){
+   const [a,b]=stack.pop();let index=-1,far=epsilon;
+   for(let i=a+1;i<b;i++){
+    const d=deviation(data[i],data[a],data[b]);
+    if(d>far){far=d;index=i}
+   }
+   if(index>=0){keep.add(index);stack.push([a,index],[index,b])}
+  }
+  return [...keep].sort((a,b)=>a-b).map(i=>({...data[i]}));
+ };
+ let tolerance=.008;
+ for(let i=0;i<25;i++){const reduced=reduce(tolerance);if(reduced.length<=cap)return reduced;tolerance*=1.75}
+ // Worst case: highly chaotic input, avoid silent truncation and keep endpoints.
+ const result=[];
+ for(let i=0;i<cap;i++)result.push({...data[Math.round(i*(data.length-1)/(cap-1))]});
+ return result;
+}
 function distancePointSegment(p,a,b){
  const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy;
  if(den<1e-12)return strokeDistance(p,a);
@@ -62,7 +93,7 @@ export function erasePaintedStrips(objects,{point,radius,group,makeId,capacity=5
   const fragments=runs.filter(pts=>pts.length>=2&&strokeDistance(pts[0],pts.at(-1))>.035);
   // Do not silently lose stroke data when the 500-object cap is reached.
   if(out.length+fragments.length>capacity){out.push(obj);continue}
-  fragments.forEach((pts,i)=>out.push({...obj,id:i===0?obj.id:makeId(),points:pts}));
+  fragments.forEach((pts,i)=>out.push({...obj,id:i===0?obj.id:makeId(),points:simplifyPaintStroke(pts,512)}));
   changed=true;removed++;
  }
  return {objects:changed?out:objects,changed,removed};
