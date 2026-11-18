@@ -67,7 +67,12 @@ try{
  await page.locator('#weather').selectOption('fog');
  assert.equal(await page.locator('#weather').inputValue(),'fog');
  await page.locator('[data-tool="surface"]').click();
- assert.equal(await page.locator('#draftActions').isVisible(),true);
+ assert.equal(await page.locator('#draftActions').isVisible(),false,'Brush mode hides polygon completion');
+ assert.equal(await page.locator('[data-paint-mode="brush"]').getAttribute('aria-pressed'),'true');
+ await page.locator('[data-paint-mode="polygon"]').click();
+ assert.equal(await page.locator('#draftActions').isVisible(),true,'Polygon mode exposes finish controls');
+ await page.locator('[data-paint-mode="brush"]').click();
+ assert.equal(await page.locator('#draftActions').isVisible(),false);
  // Brush / camera separation: left drag paints a continuous metric lawn,
  // right drag rotates the WebGL camera without modifying the editable plan.
  await page.locator('[data-tool="surface"]').click();
