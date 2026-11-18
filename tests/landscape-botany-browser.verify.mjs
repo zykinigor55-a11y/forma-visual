@@ -7,7 +7,7 @@ try{
  const page=await browser.newPage({viewport:{width:1540,height:950},deviceScaleFactor:1});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:3000/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:30000});
- await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:45000});
+ await page.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:45000});
  const metrics=await page.evaluate(async()=>{
   const T=await import('three'),{createVegetation}=await import('./forma-landscape-3d-vegetation.js');
   const species=['pine','spruce','birch','oak','willow','juniper','hydrangea','lavender'];
@@ -47,7 +47,7 @@ try{
  });
  assert.equal(project.objects.length,10);
  await page.reload({waitUntil:'domcontentloaded',timeout:30000});
- await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('3D-конструктор готов'),null,{timeout:50000});
+ await page.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:50000});
  await page.waitForFunction(()=>window.FORMA_TERRAIN_TEXTURE_READY===true,null,{timeout:30000});
  await page.waitForTimeout(280); // allow the invalidated WebGL frame to present
  // The editor initializes in 3D; avoid an unnecessary second WebGL camera reset.
