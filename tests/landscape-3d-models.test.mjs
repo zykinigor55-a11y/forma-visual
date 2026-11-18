@@ -22,7 +22,7 @@ test('asymmetric imported GLB uses maximal width to respect crown metric',()=>{
 
 test('all catalogue vegetation species can accept an imported GLB and keep built-in fallback',()=>{
  const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
- assert.equal(Object.keys(VEGETATION_SPECIES).length,18);
+ assert.equal(Object.keys(VEGETATION_SPECIES).length,26);
  for(const species of Object.keys(VEGETATION_SPECIES))assert.match(species,/^[a-z-]+$/);
  assert.match(html,/id="vegetationGlb"/);
  assert.match(html,/id="removePlantGlb"/);
