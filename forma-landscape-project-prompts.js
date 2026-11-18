@@ -77,6 +77,51 @@ export function topDownRoofPrompt(info){
 
 /* 3D camera output has a different contract from the orthographic masterplan.
    AI changes materials and photo realism, NEVER the editable geometry or camera. */
+/** Photo-specific physical characteristics for the *existing* catalog surface.
+ * Only selected catalog IDs are described. Never populate an empty category
+ * with an attractive but nonexistent lawn, bed, tree or paving material. */
+const PHOTO_MATERIAL_DETAILS=Object.freeze({
+ formal:'FORMAL SHORT-CUT PARTERRE TURF: level 18–28 mm clipped dense narrow grass blades, soft non-uniform chlorophyll greens, micro shadow between blades, very subtle mowing direction ONLY where already visible, no invented flowers or bare patches',
+ universal:'UNIVERSAL MIXED HOME LAWN: approximately 30–45 mm varied narrow grass blades, subtle differences in density and height, restrained natural green variation, no repetitive carpet texture',
+ shade:'SHADE-TOLERANT FINE TURF: approximately 35–55 mm fine thin blades, deeper cool greens, mild variation where sunlight reaches, not moss or broadleaf artificial plastic',
+ meadow:'MEADOW MIXED GRASSES: uneven 80–200 mm natural grass stems with clumps and authentic seed heads, small irregular gaps in density, wildflowers ONLY when already present in reference',
+ 'marble-chips':'MARBLE CHIPS: pale white-cream angular irregular natural stone fragments 8–20 mm, genuine crystal/grain variation, diffuse mineral roughness, granular contact shadows',
+ 'granite-chips':'GRANITE CHIPPINGS: angular crushed granite pieces 5–20 mm, gray salt-and-pepper mineral flecks, matte broken faces, realistic varied aggregate sizes',
+ 'river-pebble':'RIVER PEBBLES: rounded weathered stones approximately 15–40 mm, naturally varied gray-beige hues, subtle smooth stone highlights, separate contact gaps',
+ 'slate-chips':'CRUSHED SLATE: flat angular blue-gray/dark gray layered flakes around 15–40 mm, realistic lamination and edge highlights, irregular orientations',
+ 'pine-bark':'SHREDDED PINE BARK MULCH: irregular layered pine-bark fragments approximately 20–60 mm, deep warm russet-brown fiber texture, natural cracks and tiny dry highlights',
+ 'concrete-pavers':'LARGE CONCRETE PAVING SLABS: authentic fine exposed aggregate, micro-chamfered existing edges, precise true-to-plan joint width and subtle tonal variation',
+ 'granite-setts':'SPLIT GRANITE SETTS: rough hand-split granite blocks with restrained mineral sparkle, existing measured layout and deep realistic mortar joint shadows',
+ 'clinker-herringbone':'CLAY CLINKER HERRINGBONE: slightly irregular fired clay brick tones and fine fired-ceramic texture, preserve the exact existing herringbone bond',
+ 'slate-pavers':'NATURAL SLATE PAVERS: layered cleft dark slate surface with authentic cleavage lines and subtle directional highlights, existing joints unchanged',
+ 'radial-setts':'RADIAL STONE SETTS: naturally rough mineral pavers aligned to existing radial construction only, realistic joints and varied stone tones',
+ 'grass-grid':'PERMEABLE GRASS GRID: visible planted cellular paver structure with realistic small grass blades only inside existing planted cells, preserve geometry',
+ natural:'NATURAL POND WATER: daylight sky reflections, believable water depth, irregular existing shoreline, subtle surface movement, no newly invented rocks',
+ 'formal-pond':'FORMAL DECORATIVE POND: clean restrained water reflections and accurate existing hard-edged banks, no invented fountains',
+ 'bio-pond':'BIO-POND: realistic shallow water depth and restrained reflection, aquatic plants ONLY if already in existing 3D/reference',
+ 'granite-boulder':'GRANITE BOULDER: crystalline mineral roughness, scale-accurate coarse grains, edges and crevices, ground-contact shadow',
+ 'limestone-boulder':'LIMESTONE BOULDER: warm pale porous layered stone with minute pits, authentic ground-contact shadow',
+ 'slate-boulder':'LAYERED SLATE BOULDER: dark mineral stratification and physical fracture edges, realistic roughness',
+ 'sandstone-boulder':'SANDSTONE BOULDER: warm sand-colored fine grains and weathered sediment layers, matte roughness'
+});
+function selectedPhotoMaterials(entries){
+ const groups=new Map();
+ for(const item of entries){
+  const asset=byId(item.catalogId);
+  if(!asset)continue;
+  const k=asset.group;if(!groups.has(k))groups.set(k,new Map());
+  const names=groups.get(k),entry=names.get(asset.id)||{asset,count:0};
+  entry.count++;names.set(asset.id,entry);
+ }
+ const names={lawns:'ACTUAL LAWN VARIETIES',fills:'ACTUAL MULCH / GRAVEL FILL',pavers:'ACTUAL PATH PAVING',trees:'ACTUAL TREE SPECIES',shrubs:'ACTUAL SHRUB SPECIES',ponds:'ACTUAL WATER TYPES',boulders:'ACTUAL ROCK TYPES',lights:'ACTUAL INSTALLED FIXTURES'};
+ return [...groups].map(([group,map])=>names[group]+': '+[...map.values()].map(({asset,count})=>
+  asset.name+(asset.latin?' / '+asset.latin:'')+' (instances='+count+') — '+(PHOTO_MATERIAL_DETAILS[asset.id]||(
+  group==='trees'?'RECOGNIZABLE SPECIES-TRUE MATURE BRANCHING, authentic bark, individual foliage and natural canopy transparency':
+  group==='shrubs'?'SPECIES-TRUE LEAF SIZE, growth habit, branching and realistic seasonal health':
+  group==='lights'?'USE ONLY THE EXISTING LUMINAIRE with physical body, no invented fixtures':
+  'PHYSICAL SURFACE AND TRUE SCALE, exactly as in the 3D reference'))).join('; ')).join('. ');
+}
+
 export function perspectiveLandscapePrompt(input){
  if(!input||typeof input!=='object')throw Object.assign(Error('Не передан 3D-проект ландшафта.'),{status:400});
  const w=Number(input.site?.width),h=Number(input.site?.height);
@@ -112,11 +157,13 @@ export function perspectiveLandscapePrompt(input){
   'IMMUTABLE CAMERA CONTRACT: KEEP EXACTLY THE INPUT CAMERA POSITION, HEIGHT, VIEW DIRECTION, FOCAL LENGTH, HORIZON, OCCLUSION, FRAMING, CROPPING AND PERSPECTIVE. Current view: '+view+'. Do not force overhead view, do not turn a perspective image into a map or change the lens. Camera direction and projected pixel positions are frozen.',
   'ABSOLUTE GEOMETRY LOCK: all measured objects, buildings, roof slopes, ridge orientation, paths, corners, polygon edges, garden areas, pond banks, terrain hills, surface heights, fences, tree centres, tree heights, tree crown diameters, placements and distances are fixed to the input pixels. Do not add, move, stretch, copy, remove, redesign, rotate or replace any object. No imagined architectural features, chimneys, roof windows or furniture. Preserve the exact amount of empty space. Never introduce unseen structures.',
   'PROPERTY SIZE '+w.toFixed(2)+'m by '+h.toFixed(2)+'m. MAIN HOUSE AND OTHER STRUCTURES: '+buildings.join('; ')+'.',
+  'EXACT INSTALLED LANDSCAPE MATERIAL SCHEDULE: '+(selectedPhotoMaterials(entries)||'No catalog landscape materials were placed: do not invent turf, mulch, paths, trees or shrubs.')+'. Follow the named surface/plant specifications ONLY where the corresponding object exists in the supplied camera image. Do not replace one material with another and do not fill deliberately bare soil with grass.',
   'CATALOG AND INSTANCE COUNT: '+entries.length+' measured landscape-plan objects PLUS '+extra3d.length+' placed three-dimensional assets. '+(plantSchedule.length?plantSchedule.join('; '):'No plan objects')+'. Distinguish the exact botanical species: needles, branches, leaves, natural bark, varied crown silhouettes and physically realistic tree heights. A pine must not be replaced with a shrub or generic tree. Preserve individual species, count and their pixel positions.',
   'EXISTING 3D ASSET LOCK: '+(extraSchedule.length?extraSchedule.join('; '):'No extra models placed')+'. Every listed 3D asset IS ALREADY VISIBLE IN IMAGE 1 and MUST remain in place, same count, dimensions, rotation and physical material; never remove a visible plant or outdoor object as an imagined addition. GLB-origin vegetation must be photographed as its real species, not invented as another plant.',
   'PHYSICAL CAMERA / SUN METADATA: '+(Number.isFinite(Number(input.cameraFovDegrees))?'Input vertical field of view '+Number(input.cameraFovDegrees).toFixed(2)+' degrees. ':'Use the same source camera projection. ')+(input.sunPosition&&Number.isFinite(Number(input.sunPosition.y))?'Existing 3D sun vector X='+Number(input.sunPosition.x||0).toFixed(2)+' Y='+Number(input.sunPosition.y||0).toFixed(2)+' Z='+Number(input.sunPosition.z||0).toFixed(2)+'. Match the shadow orientation from the reference. ':'No explicit sun position: infer direction ONLY from existing reference shadows.')+' Do not rotate or move the sun just to beautify the image.',
   'EMPTY CATEGORIES FORBIDDEN: '+missing.join(', ')+'. '+(entries.length===0&&extra3d.length===0?'There are NO landscape objects: leave the parcel EMPTY with only the existing building and ground. No invented lawn, vegetation, roads, stones, borders, lights or other landscaping.':'Keep all existing plan objects AND placed GLB models visible; do not add any new landscaping objects of any kind.'),
   'ATMOSPHERE: '+time+'; '+season+'; '+weather+'. One physically consistent sunlight direction; matching contact shadows and soft bounce light. Surfaces: real-scale grass blades, paver joints, mineral gravel and natural mulch fibres, nuanced wet or dry surfaces only when weather requires it. Water has depth, subtle natural reflection and exact shoreline.',
+  'PHOTOGRAPHIC CAMERA CAPTURE PROFILE: Make the frame look AS IF photographed by a Nikon Z8 full-frame 45.7-megapixel camera through a NIKKOR Z 24–70mm f/2.8 S professional zoom, stopped down to f/8–f/11, ISO 64–100 for daylight with a shutter speed matched to physically available light and a neutral custom white balance. Natural RAW-like dynamic range, believable optical microcontrast, clean shadows, highlight detail, subtle sensor grain, deep practical focus over the architecture and landscape, corrected but source-matching verticals, no fake bokeh or CGI sharpness. The lens and capture settings are photographic STYLE REFERENCES, not instructions to change focal length, view direction, position, existing source image FOV, geometric perspective, crop or framing. This is AI image processing, not an actual camera capture.',
   'ABSOLUTE PHOTOGRAPHIC TARGET: The output must look indistinguishable from an actual outdoor architectural photograph, not an attractive 3D render. Treat IMAGE 1 as a strictly locked camera, asset placement, landscape and architectural composition. Only replace synthetic shading and low-detail material appearance with plausible photographic optics and real-world measured material texture; never re-imagine the scene. Natural camera color science, physically believable white balance, full-frame sharpness, restrained highlights, appropriate 28–35mm architectural photographic perspective only if consistent with the source, realistic atmospheric perspective and no exaggerated cinematic grading.',
   'PHYSICALLY BASED ARCHITECTURAL MATERIALS: Preserve the exact original building type, roof slopes, facade board direction, window count, door positions and construction joints. Wood: individually legible fine longitudinal grain, end-grain where visible, slightly irregular real timber fibers and accurate roughness. Roof metal: subtle anisotropic highlights, existing standing seams only, no invented seams. Roof tile: true mineral roughness, small realistic shadows at existing overlaps. Brick and stone: naturally uneven porous microstructure, joints and roughness; plaster/concrete: fine aggregate and weather-appropriate restrained variation. Glazing: view-angle-dependent Fresnel reflections, partial transparency, plausible interior darkness and window-frame edge depth; no fake mirrored black glass. Paving, mulch and gravel: distinct sharp fragments at physical scale and authentic color variation; never a flat noise overlay. Microdetail must not change the count, layout, shape or positions of surfaces.',
   'TRUE SUN AND GLOBAL ILLUMINATION: Use exactly ONE solar light source from the selected time-of-day, season and weather, plus broad physically plausible skylight fill. Sun altitude and shadow azimuth must agree across all buildings, tree trunks, branches, shrub leaves and terrain. Natural penumbra depends on solar angular size and distance to ground; soft bounce light brightens shaded facades, under-eaves and leaf interiors without eliminating contact shadows. Correct realistic sunlight translucency/subsurface transmission on thin fresh leaves and needles, restrained specular leaf wax, subtle ambient occlusion inside dense crowns. Overcast: broad soft sky and very weak directionality; night: NO direct sun. No extra or duplicate sun, lens flare, light streaks or synthetic spotlights unless already present in Image 1.',
