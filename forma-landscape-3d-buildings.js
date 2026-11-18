@@ -285,9 +285,10 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   }
   const rise=(b.roof||preset.roof)==='flat'?.18:Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
   const flue=mat(THREE,'#454D4C',.39,.68);
-  const chimney=add(g,THREE,new THREE.CylinderGeometry(.115,.115,Math.max(.7,rise*.75),14),flue,w*.25,bodyHeight+rise*.75,0);
+  const flueHeight=Math.max(.7,rise*.75),flueCenter=bodyHeight+rise*.75;
+  const chimney=add(g,THREE,new THREE.CylinderGeometry(.115,.115,flueHeight,14),flue,w*.25,flueCenter,0);
   chimney.castShadow=true;
-  const cap=add(g,THREE,new THREE.CylinderGeometry(.18,.18,.04,14),railMat,w*.25,bodyHeight+rise*1.12+.31,0);
+  const cap=add(g,THREE,new THREE.CylinderGeometry(.18,.18,.04,14),railMat,w*.25,flueCenter+flueHeight*.5+.025,0);
   cap.castShadow=true;
  }
  addPresetVolumes(g,THREE,{style,w,d,bodyHeight});
