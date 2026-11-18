@@ -84,6 +84,13 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #hint{position:absolute;left:300px;top:20px;background:#22322eca;border:1px solid #4e6456;border-radius:10px;padding:9px 15px;font-size:11px;color:#d3ddd6;max-width:400px}
 #loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
 #loadError strong{font-size:19px}.model-health{padding:11px 12px;margin:11px 0 13px;border:1px solid #6a634f;border-radius:11px;background:linear-gradient(135deg,#31362f,#242c2a)}.model-health strong{font-size:12px;color:#ebcfa5;letter-spacing:.04em}.model-health small{display:block;margin-top:5px;color:#bac7bc;line-height:1.55;font-size:10px}.model-health button{margin-top:7px;background:#514735;color:#f8e1bc;border:1px solid #a18a64;border-radius:7px;padding:7px 10px;font-size:11px}.model-health button:focus-visible{outline:2px solid #edd0a2}.build-info{font-size:10px;padding:6px 8px;margin:6px 0 10px;border-radius:7px;color:#adbcad;line-height:1.45}.build-info.stale{border:1px solid #a78851;background:#493b29;color:#ffe3ae}
+.solar-controls{border:1px solid #655c45;background:linear-gradient(145deg,#31352f,#202928);border-radius:12px;padding:12px 11px;margin-top:12px;display:grid;gap:9px}
+.solar-controls h3{margin:0;color:#e9d4ae;font-size:12px;letter-spacing:.07em}
+.solar-controls label{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#e1e6dc}
+.solar-controls output{color:#ebcb99;font-weight:700;font-variant-numeric:tabular-nums}
+.solar-controls input[type=range]{width:100%;accent-color:#c9ac7c;cursor:pointer;margin:0}
+.solar-controls small{font-size:10px;color:#b9c7bb;line-height:1.5}
+.solar-controls button{background:#404839;color:#eee2c9;border:1px solid #a48d64;border-radius:7px;padding:8px;cursor:pointer}
 #aiResult,#aiProgress{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
 #aiProgress{z-index:7;backdrop-filter:blur(10px)}
 #aiProgress[hidden]{display:none}
@@ -174,6 +181,19 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
+ <section class="solar-controls" aria-label="Физическое солнце">
+  <h3>☀ ФИЗИЧЕСКОЕ СОЛНЦЕ · 3D</h3>
+  <label for="sunAzimuth">Направление (азимут) <output id="sunAzimuthValue" for="sunAzimuth">311°</output></label>
+  <input type="range" id="sunAzimuth" min="0" max="359" step="1" value="311" aria-label="Азимут солнца в градусах">
+  <label for="sunElevation">Высота над горизонтом <output id="sunElevationValue" for="sunElevation">67°</output></label>
+  <input type="range" id="sunElevation" min="2" max="85" step="1" value="67" aria-label="Высота солнца в градусах">
+  <label for="sunStrength">Яркость солнечного света <output id="sunStrengthValue" for="sunStrength">100%</output></label>
+  <input type="range" id="sunStrength" min="30" max="170" step="5" value="100" aria-label="Множитель яркости солнца">
+  <label for="sunSoftness">Мягкость теней <output id="sunSoftnessValue" for="sunSoftness">2.6</output></label>
+  <input type="range" id="sunSoftness" min="1" max="5" step=".2" value="2.6" aria-label="Мягкость солнечных теней">
+  <button id="sunReset" type="button">↺ Солнце по времени суток</button>
+  <small>Изменения видны в 3D-сцене и передаются в AI-фоторендер. Точные тени доступны в режиме «Максимум · PBR и тени». Значения сохраняются для проекта.</small>
+ </section>
  <hr><div id="modelHealth" class="model-health" role="status" aria-live="polite"><strong>3D-модели</strong><small>Проверяем загруженные объекты…</small></div><div id="buildInfo" class="build-info" role="status" aria-live="polite">Сборка: проверяем версию сервера…</div><h3>СВОЙСТВА ОБЪЕКТА</h3><div id="properties"><p>Нажмите на объект в сцене для изменения координат, размера и поворота.</p></div>
  <hr><div class="pair"><div><label>Участок, ширина м</label><input id="plotW" type="number" min="5" max="500" step=".5"></div><div><label>Длина, м</label><input id="plotH" type="number" min="5" max="500" step=".5"></div></div>
  <button class="action" id="resizePlot">Применить размеры</button>
@@ -228,6 +248,7 @@ import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
+import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-3d-sun.js';
 import {duplicateLandscapeObject,rotatedLandscapeObject} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
@@ -240,9 +261,10 @@ const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
-const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid;
+const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
+let solarSettings=solarPreset('day');
 let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;const GRID=48;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();let plantSpeciesStored=new Set();
 function readBuildInfo(){
@@ -326,6 +348,11 @@ function initialize(){
  if(heightmap.length!==(GRID+1)*(GRID+1))heightmap=Array((GRID+1)*(GRID+1)).fill(0);
  $('#projectName').value=doc.title;$('#plotW').value=doc.site.width;$('#plotH').value=doc.site.height;
  $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;$('#weather').value=doc.atmosphere.weather||'sunny';
+ try{
+  const stored=JSON.parse(localStorage.getItem(SOLAR)||'null');
+  solarSettings=stored?.time===doc.atmosphere.time?normalizeSolarSettings(stored.settings,doc.atmosphere.time):solarPreset(doc.atmosphere.time);
+ }catch{solarSettings=solarPreset(doc.atmosphere.time)}
+ syncSolarControls();
  renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
  // Dense planting must remain responsive even in software WebGL (Playwright,
@@ -846,12 +873,25 @@ function renderProps(){
  $('#duplicateObject').onclick=duplicateSelected;
  $('#deleteObject').onclick=()=>{push();if(ref.type==='object')doc.objects=doc.objects.filter(x=>x!==o);else if(ref.type==='building')doc.buildings=doc.buildings.filter(x=>x!==o);else if(ref.type==='extra')extra=extra.filter(x=>x!==o);else{status('Главный дом удалять нельзя. Измените его размеры.');return}state.selected=null;save();rebuild()};
 }
+function syncSolarControls(){
+ for(const [id,key,suffix,scale] of [['sunAzimuth','azimuth','°',1],['sunElevation','elevation','°',1],['sunStrength','strength','%',100],['sunSoftness','softness','',1]]){
+  const el=$('#'+id),out=$('#'+id+'Value');
+  if(el)el.value=String(Math.round(solarSettings[key]*scale*10)/10);
+  if(out)out.textContent=(scale===100?Math.round(solarSettings[key]*scale):solarSettings[key])+suffix;
+ }
+}
+function saveSolarSettings(){
+ try{localStorage.setItem(SOLAR,JSON.stringify({time:doc.atmosphere.time,settings:solarSettings}))}
+ catch(error){status('Не удалось сохранить положение солнца: '+error.message)}
+}
 function updateSun(){
  renderGate.invalidate();
  const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
- const cfg={day:[-25,65,22,3],morning:[-56,21,12,1.75],evening:[55,14,17,1.3],night:[-30,8,15,.15]}[val]||[-25,65,22,3];
- sun.position.set(cfg[0],cfg[1],cfg[2]);
+ const cfg={day:3,morning:1.75,evening:1.3,night:.15};
+ const solarPosition=solarVector(solarSettings);
+ sun.position.set(solarPosition.x,solarPosition.y,solarPosition.z);
+ sun.shadow.radius=solarSettings.softness;
  if(atmosphereSky){
   atmosphereSky.visible=val!=='night'&&state.view!=='2d';
   const uniforms=atmosphereSky.material.uniforms;
@@ -861,7 +901,7 @@ function updateSun(){
   uniforms.mieCoefficient.value=doc.atmosphere.weather==='fog'?.022:.005;
  }
  const weather=doc.atmosphere.weather||'sunny',factor={sunny:1,overcast:.42,'after-rain':.7,rain:.28,fog:.25,snow:.5}[weather]||1;
- sun.intensity=(val==='night'?.025:cfg[3]*factor);
+ sun.intensity=(val==='night'?.025:cfg[val]*factor*solarSettings.strength);
  sun.color.set(val==='evening'?'#ffb87b':val==='morning'?'#ffe1be':'#fff2db');
  const sky=scene.getObjectByName('forma-sky-fill');
  if(sky){
@@ -1316,7 +1356,17 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#quality3d').onchange=()=>{renderQuality=$('#quality3d').value;autoReduced=false;slowFrameStreak=0;
   const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy;
   resize();rebuild();status(economy?'Облегчённый просмотр для плавной работы. Размеры проекта сохранены.':'Высокая детализация 3D восстановлена.')};
- $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;save();rebuild()};
+ $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();save();rebuild()};
+ const onSolarInput=()=>{
+  solarSettings=normalizeSolarSettings({azimuth:Number($('#sunAzimuth').value),elevation:Number($('#sunElevation').value),
+   strength:Number($('#sunStrength').value)/100,softness:Number($('#sunSoftness').value)},doc.atmosphere.time);
+  syncSolarControls();saveSolarSettings();updateSun();if(renderer&&scene&&camera)renderer.render(scene,camera);
+ };
+ for(const id of ['sunAzimuth','sunElevation','sunStrength','sunSoftness']){
+  $('#'+id).addEventListener('input',onSolarInput);
+  $('#'+id).addEventListener('change',onSolarInput);
+ }
+ $('#sunReset').onclick=()=>{solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();updateSun();renderer.render(scene,camera);status('Солнце возвращено к пресету '+$('#time').selectedOptions[0]?.textContent+'.')};
  $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
