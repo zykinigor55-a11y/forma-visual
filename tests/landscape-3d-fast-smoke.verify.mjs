@@ -115,6 +115,9 @@ try{
  assert.ok(fittings.some(x=>x.catalogId==='garden-lantern'&&x.height===2.35),'Tall lantern does not fall back to generic 1.2m bollard');
  await mkdir('artifacts/landscape-editor',{recursive:true});
  await page.screenshot({path:'artifacts/landscape-editor/3d-fast-asset-catalog.png'});
+ await page.locator('[data-view="3d"]').click();
+ await page.locator('#fit3dScene').click();
+ await page.screenshot({path:'artifacts/landscape-editor/3d-outdoor-luminaires-perspective.png'});
  assert.deepEqual(errors,[],'Editor must not have JavaScript errors');
  console.log('PASS: 40 licensed PBR GLBs, editable measured placement, 6 searchable groups, all 15 surfaces, soft terrain brush');
 }finally{await browser.close()}
