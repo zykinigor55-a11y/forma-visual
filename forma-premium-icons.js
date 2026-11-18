@@ -1,5 +1,6 @@
 /* FORMA VISUAL shared dimensional icon language — extracted from Landscape Project. */
 export const PREMIUM_ICON_ALIASES=Object.freeze({"plant":"trees","surface":"pavers","water":"ponds","landscape":"boulders","light":"lights","landscape-project":"plan","landscapeProject":"plan","landscapeProjectIcon":"plan","environment":"build","render":"build","variants":"gallery","parameters":"settings","preview":"atmosphere","models":"nodes","image3d":"world","enhance":"upscale","frames":"gallery","cad":"plan","furniture":"furniture"});
+let nextGradientId=0;
 export function premiumIcon(id){
   id=PREMIUM_ICON_ALIASES[id]||id;
   const paths={
@@ -42,5 +43,7 @@ export function premiumIcon(id){
    "geometry":"<path d=\"M9 9h17v17H9zM22 22h17v17H22z\" fill=\"url(#lpiFill)\" stroke=\"#ecd4b1\"/><path d=\"M11 36l25-25\" fill=\"none\" stroke=\"#fff1d0\" stroke-width=\"2\"/>"
   };
   const inset=extras[id]?'<path d="M8 10q16-3 32 0" fill="none" stroke="#fff1cd" stroke-opacity=".22" stroke-width=".8"/><path d="M8 38q14 5 32-1" fill="none" stroke="#d9b48a" stroke-opacity=".24" stroke-width="1"/><path d="M6 21v12M42 21v12" stroke="#fff0d3" stroke-opacity=".13" stroke-width="1"/>':'';
-  return '<svg class="lp-3d-icon forma-premium-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><linearGradient id="lpiFill" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#f7e4bc"/><stop offset=".45" stop-color="#c6a379"/><stop offset="1" stop-color="#70533d"/></linearGradient></defs><rect x="2.5" y="2.5" width="43" height="43" rx="11" fill="#383630" stroke="#8b7760" stroke-width="1.1"/><path d="M8 7h29" stroke="#fff1d1" stroke-opacity=".19" stroke-width="1.4"/>'+(paths[id]||extras[id]||paths.shrubs)+inset+'</svg>';
+  const gradientId='forma-icon-gradient-'+(++nextGradientId);
+  const svgMarkup='<svg class="lp-3d-icon forma-premium-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><linearGradient id="lpiFill" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#f7e4bc"/><stop offset=".45" stop-color="#c6a379"/><stop offset="1" stop-color="#70533d"/></linearGradient></defs><rect x="2.5" y="2.5" width="43" height="43" rx="11" fill="#383630" stroke="#8b7760" stroke-width="1.1"/><path d="M8 7h29" stroke="#fff1d1" stroke-opacity=".19" stroke-width="1.4"/>'+(paths[id]||extras[id]||paths.shrubs)+inset+'</svg>';
+  return svgMarkup.replace('id="lpiFill"','id="'+gradientId+'"').replaceAll('url(#lpiFill)','url(#'+gradientId+')');
  }
