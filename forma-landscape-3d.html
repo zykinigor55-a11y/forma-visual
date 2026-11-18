@@ -30,7 +30,7 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
 .real-flora-upload button{width:100%;margin:9px 0;font-size:11px}
 .real-flora-upload small{display:block;font-size:10px;color:#d0d9cf}
 #library [hidden]{display:none!important}#catalogSearch{position:sticky;top:0;z-index:3;background:#24312b;border-color:#77897b;margin:0 0 9px}#catalogSearch::placeholder{color:#a1b4aa}.catalog-filter{display:flex;gap:5px;margin-bottom:10px}.catalog-filter button{flex:1;font-size:10px;padding:7px 3px}.catalog-filter button.active{background:#d9dfca;color:#16251f}.scene-quick-actions{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:5px;padding:5px;border-radius:14px;background:#192723e8;border:1px solid #667269;box-shadow:0 10px 35px #08130e44}.scene-quick-actions button{font-size:11px;white-space:nowrap;padding:9px 11px;border-radius:9px}.scene-quick-actions button.active{background:#d9dfca;color:#15221a;border-color:#d9dfca}#library .choice.has-preview{display:flex;align-items:center;gap:10px;text-align:left;min-height:65px;padding:7px 9px}
-#library .choice.has-preview img{width:50px;height:50px;object-fit:contain;border-radius:7px;background:#343e37;flex-shrink:0}
+#library .choice[data-surface] img{object-fit:cover}#library .choice.has-preview img{width:50px;height:50px;object-fit:contain;border-radius:7px;background:#343e37;flex-shrink:0}
 #library .choice.has-preview span{display:block;flex:1;line-height:1.3;font-weight:600}
 #library .choice.has-preview .asset-size{color:#c4b198;font-weight:500;font-size:10px;margin-top:4px}
 #library .choice.has-preview .asset-add{flex:0 0 auto;font-size:17px;color:#ceb997}
@@ -206,7 +206,7 @@ const toolList=[
 ];
 const choices={
  site:[['rect','Прямоугольный участок'],['outline','Свободный контур (точки)']],
- surface:[['concrete-pavers','Дорожка · плиты'],['universal','Газон'],['granite-chips','Отсыпка']],
+ surface:CATALOG.filter(x=>['pavers','fills','lawns'].includes(x.group)).map(x=>[x.id,x.name]),
  terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['flatten','Выровнять площадку'],['smooth','Сгладить рельеф'],['roughen','Добавить неровности']],
  build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['gazebo','Беседка'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
@@ -447,13 +447,13 @@ function chooseTool(t){
  document.querySelectorAll('[data-quick-tool]').forEach(b=>{const active=b.dataset.quickTool===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
- $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 18</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':'')+arr.map((c,ci)=>{
-  const asset=catalog(c[0]),photo=['plant','landscape','light'].includes(t);
+ $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 18</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':'')+arr.map((c,ci)=>{
+  const asset=catalog(c[0]),photo=['plant','landscape','light','surface'].includes(t);
   const uri=t==='plant'?'/assets/landscape-photo/'+c[0]+'.png':
-    t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':'';
+    t==='landscape'||t==='light'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
   const diameter=asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
-  const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':'';
-  return header+'<button class="choice'+(photo?' has-preview':'')+'" data-item="'+c[0]+'">'+
+  const header=t==='plant'&&(ci===0||ci===10)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 10 ВИДОВ':'КУСТАРНИКИ · 8 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':'';
+  return header+'<button class="choice'+(photo?' has-preview':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="" loading="lazy" decoding="async">':'')+
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'
@@ -461,7 +461,7 @@ function chooseTool(t){
  (t==='terrain'?'<div class="brush-panel"><label for="brushRadius">Радиус кисти · 0.5—12 м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label for="brushStrength">Сила изменения высоты</label><input id="brushStrength" type="range" min=".1" max="2" step=".1" value=".5"><label for="brushSoftness">Плавность края · 0—100%</label><input id="brushSoftness" type="range" min="0" max="100" step="5" value="75"><label for="brushShape">Форма кисти</label><select id="brushShape"><option value="circle">● Круглая</option><option value="square">■ Квадратная</option></select><p class="hint">Плавно рисуйте ЛКМ. ПКМ вращает камеру, не затрагивая рельеф.</p></div>':'')+
  (t==='plant'?'<div class="real-flora-upload"><strong>ПРОФЕССИОНАЛЬНАЯ 3D-МОДЕЛЬ</strong><p>Выберите вид растения выше, затем загрузите детализированную GLB-модель этого вида. Она заменит процедурные экземпляры, но сохранит их размеры и расположение.</p><input id="vegetationGlb" type="file" accept=".glb,model/gltf-binary"><button id="removePlantGlb" type="button">Вернуть встроенную 3D-модель</button><small id="floraModelStatus">Выберите дерево или кустарник.</small></div>':'');
  const search=$('#catalogSearch');let category='all';
- const filterCatalog=()=>{const query=(search?.value||'').toLocaleLowerCase('ru').trim();$('#library').querySelectorAll('[data-item]').forEach(el=>{const name=el.textContent.toLocaleLowerCase('ru');const isTree=choices.plant.slice(0,10).some(c=>c[0]===el.dataset.item);el.hidden=Boolean(query&&!name.includes(query))||(t==='plant'&&category!=='all'&&(category==='trees'?!isTree:isTree))});$('#library').querySelectorAll('.asset-group-heading').forEach(el=>{el.hidden=Boolean(query)||category!=='all'})};
+ const filterCatalog=()=>{const query=(search?.value||'').toLocaleLowerCase('ru').trim();$('#library').querySelectorAll('[data-item]').forEach(el=>{const name=el.textContent.toLocaleLowerCase('ru');const group=catalog(el.dataset.item)?.group;const matches=t==='plant'?(category==='all'||(category==='trees'?group==='trees':group==='shrubs')):t==='surface'?(category==='all'||category===group):true;el.hidden=Boolean(query&&!name.includes(query))||!matches});$('#library').querySelectorAll('.asset-group-heading').forEach(el=>{el.hidden=Boolean(query)||category!=='all'})};
  if(search)search.oninput=filterCatalog;
  $('#library').querySelectorAll('[data-catalog-filter]').forEach(button=>button.onclick=()=>{category=button.dataset.catalogFilter;$('#library').querySelectorAll('[data-catalog-filter]').forEach(el=>el.classList.toggle('active',el===button));filterCatalog()});
  $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{
