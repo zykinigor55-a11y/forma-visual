@@ -73,3 +73,33 @@ svg.forma-premium-icon{pointer-events:none}
  .tool-btn svg.forma-premium-icon{width:25px!important;height:25px!important;min-width:25px}
  .mobile-nav button svg.forma-premium-icon{width:30px!important;height:30px!important}
 }
+
+/* Professional-tools modal: true dimensional graphite tiles rather than
+   thin symbols. Preserve labels, focus order, keyboard and click handlers. */
+.fa-pro-nav button{min-height:60px;gap:10px}
+.fa-pro-nav i.fa-pro-icon{
+ width:42px;height:42px;flex:0 0 42px;
+ display:grid;place-items:center;font-size:17px;line-height:1;
+ text-align:center;font-style:normal;
+}
+.fa-pro-nav i.fa-pro-icon svg.forma-premium-icon{
+ width:42px!important;height:42px!important;display:block!important;
+}
+.fa-pro-nav button.active i.fa-pro-icon svg.forma-premium-icon{
+ filter:drop-shadow(0 3px 5px rgba(178,126,67,.28));
+}
+.fa-pro-nav button:focus-visible{
+ outline:2px solid #e3be8b;outline-offset:2px;
+}
+.fa-pro-launch{display:inline-flex!important;gap:6px;align-items:center}
+.fa-pro-launch svg.forma-premium-icon{
+ width:23px!important;height:23px!important;flex:none;
+}
+@media(max-width:760px){
+ .fa-pro-nav button{min-height:55px}
+ .fa-pro-nav i.fa-pro-icon,
+ .fa-pro-nav i.fa-pro-icon svg.forma-premium-icon{
+  width:37px!important;height:37px!important;
+ }
+ .fa-pro-nav i.fa-pro-icon{flex-basis:37px}
+}
