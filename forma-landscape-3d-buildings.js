@@ -79,16 +79,20 @@ function surface(g,T,w,h,x,y,z,material,rotation=0){
 }
 function windowGroup(T,width,height,night=false,panoramic=false){
  const g=new T.Group();
- const frame=mat(T,'#181E20',.52,.5),glass=new T.MeshPhysicalMaterial({
+ const frame=mat(T,'#181E20',.52,.5),recess=mat(T,'#121A1C',.91,.02),glass=new T.MeshPhysicalMaterial({
   color:night?'#9EAB9B':'#24404C',metalness:.18,roughness:.14,transparent:true,opacity:.94,
-  clearcoat:.85,clearcoatRoughness:.08,emissive:night?'#E3B77C':'#102630',emissiveIntensity:night?.38:.07
+  clearcoat:.85,clearcoatRoughness:.08,side:T.FrontSide,depthWrite:true,emissive:night?'#E3B77C':'#102630',emissiveIntensity:night?.38:.07
  });
  const w=Math.max(.45,width),h=Math.max(.6,height),edge=.084;
- box(g,T,w+edge*2,h+edge*2,.105,0,0,0,frame);
- box(g,T,w,h,.022,0,0,.075,glass);
+ // Dark recessed opening masks the solid procedural wall behind the pane.
+ // Explicit border profiles create the reveal without an unrealistic opaque frame slab.
+ box(g,T,w,h,.035,0,0,.035,recess);
+ box(g,T,w,h,.022,0,0,.095,glass);
+ for(const side of [-1,1])box(g,T,edge,h+edge*2,.16,side*(w+edge)/2,0,.065,frame);
+ for(const side of [-1,1])box(g,T,w+edge*2,edge,.16,0,side*(h+edge)/2,.065,frame);
  const mullion=panoramic?2:1;
- for(let i=1;i<=mullion;i++)box(g,T,.036,h,.12,(i/(mullion+1)-.5)*w,0,.095,frame);
- box(g,T,w,.033,.12,0,.012,.093,frame);
+ for(let i=1;i<=mullion;i++)box(g,T,.036,h,.12,(i/(mullion+1)-.5)*w,0,.105,frame);
+ box(g,T,w,.033,.12,0,.012,.105,frame);
  box(g,T,w+.26,.065,.26,0,-h/2-.14,.045,mat(T,'#414747',.68,.26));
  return g;
 }
@@ -188,9 +192,14 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const roofTex=texture(THREE,roofKey,roofTint).clone();
  wallTex.needsUpdate=true;roofTex.needsUpdate=true;
  const wallMaterial=mat(THREE,'#FFFFFF',.86,.02,wallTex);
+ // Source-authored canvas relief: subtle fiber and mortar variation in grazing light,
+ // avoiding uniformly flat procedural facades without altering footprint geometry.
+ wallMaterial.bumpMap=wallTex;
+ wallMaterial.bumpScale=preset.wall==='brick'?.018:preset.wall==='stone'?.012:preset.wall==='plaster'?.004:.008;
  const roofColor=new THREE.Color(b.roofColor||'#394348');
  roofColor.lerp(new THREE.Color('#FAFAFA'),.69);
  const roofMaterial=mat(THREE,roofColor,preset.roofFinish==='standing'?.36:.69,.42,roofTex);
+ roofMaterial.bumpMap=roofTex;roofMaterial.bumpScale=preset.roofFinish==='tile'?.012:.003;
  wallTex.repeat.set(Math.max(1,w/3.6),Math.max(1,bodyHeight/2.2));
  roofTex.repeat.set(Math.max(1,w/2.8),Math.max(1,d/3.4));
  // Exact footprint is represented by the house body. Decorative overhang is not
