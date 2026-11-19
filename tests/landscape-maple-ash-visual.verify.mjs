@@ -86,7 +86,7 @@ try{
  const m=await model.evaluate(()=>({info:window.__treeDetails,error:window.__treeError||null}));
  assert.equal(m.error,null,'original maple PBR GLB loads without replacing it');
  assert.equal(m.info.name,'maple');assert.ok(m.info.meshes>1);
- assert.ok(m.info.textures>0);
+ assert.ok(m.info.materials>0,'original CC0 maple uses real glTF materials, even when maps are embedded as vertex colours');
  await model.evaluate(()=>window.__treeView(.65,.16));
  await model.screenshot({path:dir+'/maple-original-glb.png'});
  assert.deepEqual(errors2,[]);
