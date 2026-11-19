@@ -21,7 +21,7 @@ export const VEGETATION_SPECIES=Object.freeze({
  rowan:{kind:'deciduous',density:920,branches:11,crownStart:.47,leaf:'#6b9850',bark:'#696153'},
  apple:{kind:'deciduous',density:1000,branches:11,crownStart:.33,leaf:'#789650',bark:'#715342'},
  sakura:{kind:'deciduous',density:1200,branches:12,crownStart:.36,leaf:'#82a25e',bark:'#79584a'},
- ash:{kind:'deciduous',density:1280,branches:16,crownStart:.43,leaf:'#64864d',bark:'#807365'},
+ ash:{kind:'deciduous',density:1700,branches:16,crownStart:.43,leaf:'#64864d',bark:'#807365'},
  aspen:{kind:'deciduous',density:1550,branches:13,crownStart:.43,leaf:'#90ae68',bark:'#c9d2b3'},
  juniper:{kind:'conifer-shrub',density:650,branches:20,crownStart:.04,leaf:'#587a65',bark:'#675d4c'},
  hydrangea:{kind:'shrub',density:520,branches:24,crownStart:.1,leaf:'#76935d',flower:'#e6d9b1',bark:'#6f6650'},
@@ -292,7 +292,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   const growth=speciesGrowthProfile(id);
   // Terminal needle shoots are longer, but individual needles stay narrow.
   // Preserve the measured crown envelope by limiting sprig radius.
-  const mass=needle?(id==='spruce'?.56:id==='pine'?.49:.52):id==='birch'?.37:id==='oak'?.43:.33;
+  const mass=needle?(id==='spruce'?.56:id==='pine'?.49:.52):id==='birch'?.37:id==='oak'?.43:id==='ash'?.41:.33;
   const scale=mass*crown*(.70+r()*.54)*(growth?.leafClusterScale||1);
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
