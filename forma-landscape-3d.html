@@ -90,7 +90,13 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #right .buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}#right .buttons button{font-size:12px;padding:9px 2px}
 #right .buttons button.active{color:#1e2e23;background:#d9dfca;border-color:#d9dfca}
 .camera-focus{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0 10px}
-.camera-focus button{font-size:10px;padding:8px 3px;color:#E6D6BE;border-color:#83745C}.object-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 4px}.object-actions button{padding:10px 5px;border:1px solid #84735a;color:#f1d6aa;background:#34362f;border-radius:9px;min-height:40px}.object-actions button:hover{background:#514839}.object-actions button:focus-visible{outline:2px solid #ebc88b;outline-offset:2px}
+.camera-focus button{font-size:10px;padding:8px 3px;color:#E6D6BE;border-color:#83745C}
+#pineInspectorShortcut{width:100%;margin:7px 0 10px;padding:11px 9px;
+ background:#4f4334;color:#fff1d5;border:1px solid #c1a273;border-radius:10px;font-weight:700}
+#pineInspectorShortcut[hidden]{display:none}
+#properties.pine-inspector-open{border:1px solid #bb9a69;background:#222d29;
+ box-shadow:0 0 0 1px #ab8b5940;border-radius:12px;padding:12px 11px}
+#properties.pine-inspector-open .pine-growth-editor{scroll-margin-top:15px}.object-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 4px}.object-actions button{padding:10px 5px;border:1px solid #84735a;color:#f1d6aa;background:#34362f;border-radius:9px;min-height:40px}.object-actions button:hover{background:#514839}.object-actions button:focus-visible{outline:2px solid #ebc88b;outline-offset:2px}
 #right .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}#right .action{width:100%;margin-top:7px}
 #status{position:absolute;left:50%;bottom:23px;transform:translateX(-50%);transition:opacity .35s ease;background:#1b2725df;border:1px solid #52665a;border-radius:100px;padding:11px 19px;color:#e1eade;font-size:12px;max-width:calc(100% - 60px);text-align:center;pointer-events:none}
 #status.status-hidden{opacity:0;pointer-events:none}
@@ -221,6 +227,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
  </div><div class="camera-focus"><button type="button" id="focusHouse">К дому</button><button type="button" id="focusSelected">К растению</button><button type="button" id="fit3dScene">Весь участок</button></div>
+ <button type="button" id="pineInspectorShortcut" hidden>🌲 Открыть настройки выбранной сосны</button>
  <div class="camera-elevation-controls" id="cameraElevationPanel">
   <label for="cameraHeight">Высота 3D-камеры над землёй: <output id="cameraHeightValue">30 м</output></label>
   <input id="cameraHeight" type="range" min=".8" max="80" step=".2" value="30">
@@ -427,10 +434,29 @@ function scrollToSelectedPine(){
  parent.scrollTop+=target.top-rect.top-12;
 }
 function showSelectedPineControls(){
- if(window.innerWidth>850)return;
- document.body.dataset.mobilePine='true';
- activateMobilePanel('details');
- requestAnimationFrame(()=>{scrollToSelectedPine();requestAnimationFrame(scrollToSelectedPine)});
+ if(state.selected?.startsWith('object:')!==true||
+    selectable(state.selected)?.obj?.catalogId!=='pine')return;
+ if(window.innerWidth<=850){
+  document.body.dataset.mobilePine='true';
+  activateMobilePanel('details');
+  requestAnimationFrame(()=>{scrollToSelectedPine();requestAnimationFrame(scrollToSelectedPine)});
+  return;
+ }
+ // On desktop the inspector is after the (long) 18-house catalogue,
+ // so merely rendering #pineAge does not make the settings visible.
+ // Scroll INSIDE the right panel, never the main page or 3D canvas.
+ const parent=$('#right'),properties=$('#properties');
+ if(!parent||!properties)return;
+ properties.classList.add('pine-inspector-open');
+ const reveal=()=>{
+  if(state.selected?.startsWith('object:')!==true||
+     selectable(state.selected)?.obj?.catalogId!=='pine')return;
+  const top=properties.getBoundingClientRect().top-parent.getBoundingClientRect().top;
+  parent.scrollTop+=top-12;
+  renderGate.invalidate();
+ };
+ reveal();
+ requestAnimationFrame(reveal);
 }
 function selectPineById(id){
  const pine=doc.objects.find(o=>o.id===id&&o.catalogId==='pine');
@@ -1213,7 +1239,8 @@ function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
  if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
  const el=$('#properties'),ref=state.selected?selectable(state.selected):null;
- if(!ref?.obj){document.body.dataset.mobilePine='false';$('#mobilePineSelect')?.classList.remove('active');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
+ if(!ref?.obj){document.body.dataset.mobilePine='false';$('#mobilePineSelect')?.classList.remove('active');
+ $('#pineInspectorShortcut').hidden=true;el.classList.remove('pine-inspector-open');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj, fields=o.catalogId==='pine'?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
@@ -1222,6 +1249,8 @@ function renderProps(){
  const isPine=ref.type==='object'&&o.catalogId==='pine';
  document.body.dataset.mobilePine=String(isPine);
  $('#mobilePineSelect')?.classList.toggle('active',isPine);
+ $('#pineInspectorShortcut').hidden=!isPine;
+ el.classList.toggle('pine-inspector-open',isPine);
  const pineAssetStatus=isPine?(
   importedPlantModels.has('pine')?'✓ Используется ваша GLB-модель сосны':
   bundledModelFailures.has('pine')?'⚠ Реальная сосна не загрузилась. Можно повторить загрузку':
@@ -1423,9 +1452,11 @@ function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
 function hitTreeOnMobile(e){
- // Thin branches and transparent needle textures often miss finger raycasts.
+ // Branch/needle GLB alpha cards can miss a geometric raycast on BOTH mouse
+ // and touch. Pick from the projected crown volume, not a fake 3D billboard.
  const direct=hitObj(e);
- if(e.pointerType!=='touch'&&e.pointerType!=='pen')return direct;
+ if(direct&&selectable(direct)?.obj?.catalogId==='pine')return direct;
+ const finger=e.pointerType==='touch'||e.pointerType==='pen';
  const rect=canvas.getBoundingClientRect();
  if(!rect.width||!rect.height)return direct;
  const px=e.clientX-rect.left,py=e.clientY-rect.top;
@@ -1440,13 +1471,17 @@ function hitTreeOnMobile(e){
    if(!Number.isFinite(center.x)||!Number.isFinite(center.y)||center.z<-1||center.z>1)continue;
    const x=(center.x+1)*rect.width*.5,y=(1-center.y)*rect.height*.5;
    const edge=new THREE.Vector3(point.x+D*.5,floor+H*fraction,point.z).project(camera);
-   const radius=Math.max(38,Math.min(100,Math.abs(edge.x-center.x)*rect.width*.425+18));
+   const projected=Math.abs(edge.x-center.x)*rect.width*.425;
+   const radius=finger?
+    Math.max(38,Math.min(100,projected+18)):
+    Math.max(16,Math.min(58,projected+9));
    const d=Math.hypot(px-x,py-y);
    if(d<=radius&&d<best){closest='object:'+o.id;best=d}
   }
  }
- if(direct&&selectable(direct)?.obj?.catalogId==='pine')return direct;
- if(closest&&(!direct||best<33))return closest;
+ // Preserve exact selection of other objects except for unmistakable
+ // mouse hits on visible pine crowns, whose alpha leaf cards are sparse.
+ if(closest&&(!direct||best<(finger?33:20)))return closest;
  return direct||closest;
 }
 let surfacePreviewFrame=0,surfacePreviewLast=0,brushRebuildLast=0;
@@ -1791,14 +1826,28 @@ function addEvents(){
  // Touch selection finishes on release; opening the panel during pointerdown
  // caused Android to lose the gesture and prevented editing.
  if(state.tool==='select'&&(e.pointerType==='touch'||e.pointerType==='pen'))return;
- const key=hitObj(e);
+ // Clicking an already planted pine while the plant palette is open
+ // edits the original tree; it must not spawn another object or brush.
+ if(state.tool==='plant'&&!e.shiftKey){
+  const planted=hitTreeOnMobile(e),found=planted?selectable(planted)?.obj:null;
+  if(found?.catalogId==='pine'){
+   e.preventDefault();
+   selectPineById(found.id);
+   return;
+  }
+ }
+ const key=state.tool==='select'?hitTreeOnMobile(e):hitObj(e);
  if(state.tool==='select'&&key){
   state.selected=key;state.drag=true;state.draggingMoved=false;
   const obj=selectable(key)?.obj,anchor=hitGround(e);
   state.dragAnchor=anchor?fromWorld(anchor):null;
   state.dragPoints=Array.isArray(obj?.points)?obj.points.map(p=>({...p})):null;
   renderProps();
-  // The pine panel opens on pointerup, after the finger is released.
+  // Desktop must reveal the inspector immediately, even if the user
+  // clicked the crown rather than its trunk.
+  if(window.innerWidth>850&&selectable(key)?.obj?.catalogId==='pine')
+   showSelectedPineControls();
+  // Touch opens after pointerup to keep gestures responsive.
  }
 };
 const move=e=>{
@@ -1874,7 +1923,7 @@ const up=e=>{
   const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;
   state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';
   if(moved){save();rebuild()}
-  else if(window.innerWidth<=850&&selectable(state.selected)?.obj?.catalogId==='pine')showSelectedPineControls();
+  else if(selectable(state.selected)?.obj?.catalogId==='pine')showSelectedPineControls();
   state.down=null;return;
  }
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
@@ -1884,7 +1933,8 @@ const up=e=>{
    if(selected?.catalogId==='pine')selectPineById(selected.id);
    else{
     state.selected=key;renderProps();
-    if(key&&window.innerWidth<=850)activateMobilePanel('details');
+    if(selectable(key)?.obj?.catalogId==='pine')showSelectedPineControls();
+    else if(key&&window.innerWidth<=850)activateMobilePanel('details');
     if(!key&&finger)status('Нажмите «🌲 Сосна» внизу, чтобы открыть параметры дерева.');
    }
   }else{const p=hitGround(e);if(p)place(p)}
@@ -1933,6 +1983,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();status('Выбран главный дом. Выберите любой из 18 архитектурных 3D-стилей.')};
  $('#focusHouse').onclick=focusHouseCamera;
  $('#focusSelected').onclick=focusSelectedPlant;
+ $('#pineInspectorShortcut').onclick=showSelectedPineControls;
  $('#fit3dScene').onclick=()=>setView('3d');
  $('#cameraHeight').oninput=()=>setOrbitCameraHeight($('#cameraHeight').value);
  $('#cameraEyeLevel').onclick=()=>{if(state.view!=='3d')setView('3d');setOrbitCameraHeight(WALK_EYE_HEIGHT);status('Камера опущена к уровню глаз: 1,7 м над рельефом.')};
