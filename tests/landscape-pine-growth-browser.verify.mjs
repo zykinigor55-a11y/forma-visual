@@ -19,7 +19,9 @@ try{
   }));
  },key);
  async function selectPine(){
+  if((await page.viewportSize()).width<=850)await page.locator('[data-mobile-panel="details"]').click();
   await page.locator('[data-view="2d"]').click();
+  if((await page.viewportSize()).width<=850)await page.locator('[data-mobile-panel="scene"]').click();
   const box=await page.locator('#viewport').boundingBox(),half=40*.73;
   await page.mouse.click(box.x+box.width*(.5+5/(2*half*box.width/box.height)),
    box.y+box.height*(.5+9/(2*half)));
@@ -53,7 +55,6 @@ try{
  assert.equal(await page.locator('#pineGrow-branchDensity').inputValue(),'175');
  assert.equal(await page.locator('#pineGrow-needleDensity').inputValue(),'225');
  await page.setViewportSize({width:430,height:900});
- await page.locator('[data-mobile-panel="scene"]').click();
  await selectPine();
  assert.equal(await page.locator('body').getAttribute('data-mobile-panel'),'details');
  assert.ok(await page.locator('#pineGrow-branchDensity').isVisible());
