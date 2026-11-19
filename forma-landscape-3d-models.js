@@ -1,5 +1,6 @@
 import {reshapeNativePine} from './forma-landscape-pine-native.js';
 import {reshapeNativeSpruce} from './forma-landscape-spruce-native.js';
+import {refineNativeBirch} from './forma-landscape-birch-native.js';
 /* Real 3D botanical asset adapter for FORMA.
  * Geometry never supplies measured project dimensions: a catalogue object does.
  * Imports are user-controlled binary GLB files with local IndexedDB storage.
@@ -46,6 +47,10 @@ export function prepareRealFoliageMaterial(T,material,species){
 const boundsCache=new WeakMap();
 export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
+ // Refine the *bundled* Betula pendula once, then reuse its original
+ // three-mesh PBR geometry across all planted instances. Imported user GLBs
+ // remain strictly untouched. Never replace the real birch with a proxy.
+ if(instance.catalogId==='birch'&&shareGeometry)source=refineNativeBirch(T,source);
  let bounds=boundsCache.get(source);
  if(!bounds){
   bounds=new T.Box3().setFromObject(source);
@@ -143,6 +148,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
  }
  group.userData.species=instance.catalogId;
+ if(instance.catalogId==='birch'&&shareGeometry)group.userData.nativeBirchRefined=true;
  group.userData.realGlb=true;
  group.userData.bundledModel=shareGeometry;
  group.userData.uniquePbrMaterials=materialCache.size;
