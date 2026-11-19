@@ -294,6 +294,11 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <option value="auto" selected>Стандарт · реалистичная 3D-сцена</option>
  <option value="high">Премиум / фотореализм · детальная ботаника и PBR</option>
  </select>
+ <label for="treeSource3d">Сосна и берёза · геометрия 3D</label>
+ <select id="treeSource3d" aria-label="Способ построения сосны и берёзы">
+  <option value="code">CODE 3D · ветви и листья созданы в коде</option>
+  <option value="glb">Исходные GLB · модель из каталога</option>
+ </select>
  <p class="muted" id="botanicalLodStatus">Кроны обновляются по расстоянию до камеры. Вблизи — настоящая 3D-листва, вдали — облегчённые кластеры.</p>
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
@@ -383,6 +388,7 @@ import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliag
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
 import {pineGrowthMarkup,mountPineGrowth,normalizePineGrowth,pineGrowthEquals,pineDimensions} from './forma-landscape-pine-growth.js';
 import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from './forma-landscape-3d-mature-trees.js';
+import {createCodeTree} from './forma-code-3d-trees.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
 import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-3d-sun.js';
@@ -412,6 +418,10 @@ const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
 let lastWalkFrame=0;
 let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;
+// 'code' rebuilds pine/birch as authored geometry, 'glb' restores original
+// self-hosted CC0 assets. User GLB imports always take priority.
+const CODE_TREE_KEY='forma-botanical-code3d-source-v1';
+function treeSourceChoice(){try{return localStorage.getItem(CODE_TREE_KEY)==='glb'?'glb':'code'}catch{return 'code'}}
 const botanicalGroups=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
 const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
@@ -779,6 +789,7 @@ function loadBundledLandscapeModel(catalogId){
 const MATURE_SCOTS_PINE_GLB='/assets/landscape-models/pine-mature-cc0.glb';
 function loadMatureScotsPine(){
  const species='pine';
+ if(treeSourceChoice()==='code')return;
  if(importedPlantModels.has(species)||bundledModelSources.has(species)||
   bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
  bundledModelLoading.add(species);updateModelHealth();
@@ -817,6 +828,7 @@ function loadMatureScotsPine(){
  * Missing binaries and unsupported texture extensions retain procedural fallbacks.
  */
 function loadCuratedAdultTree(species){
+ if(species==='birch'&&treeSourceChoice()==='code')return;
  const entry=MATURE_TREE_MODELS[species];
  if(!entry||importedPlantModels.has(species)||bundledModelSources.has(species)||
     bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
@@ -872,12 +884,18 @@ function drawObject(o,entry,key){
    bundledModelSources.get('pine'):null;
   const bundledAdult=MATURE_TREE_MODELS[o.catalogId]&&!performanceFallback&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
   const source=imported||bundledPine||bundledAdult||null;
+  // An actual, editable Three.js mesh is built from authored geometry.
+  // Never discard an explicitly imported user-owned GLB.
+  const codeRebuilt=!imported&&treeSourceChoice()==='code'&&
+   (o.catalogId==='pine'||(o.catalogId==='birch'&&doc.atmosphere.season!=='winter'));
   const waitingForReal=!source&&!seasonalNative&&!performanceFallback&&
    (o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId])&&
    !bundledModelFailures.has(o.catalogId);
   // NEVER flash a fake procedural tree while a verified original GLB loads.
   // The target retains an invisible metric pickable and selection ring.
-  g=source?makeRealVegetation(THREE,source,o,{
+  g=codeRebuilt?createCodeTree(THREE,o,{
+   quality:renderQuality==='high'?'high':renderQuality==='speed'||autoReduced?'speed':'standard'
+  }):source?makeRealVegetation(THREE,source,o,{
    shareGeometry:!!(bundledPine||bundledAdult)&&!imported,
    canopyCopies:0,
    pineGrowth:o.catalogId==='pine'?normalizePineGrowth(o.pine):null
@@ -2052,6 +2070,14 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  document.querySelectorAll('[data-quick-tool]').forEach(button=>{button.insertAdjacentHTML('afterbegin',premiumIcon(button.dataset.quickTool));button.onclick=()=>{chooseTool(button.dataset.quickTool);if(window.innerWidth<=850)activateMobilePanel('tools')}});
  [['focusHouse','build'],['focusSelected','trees'],['fit3dScene','site']].forEach(([id,icon])=>document.getElementById(id)?.insertAdjacentHTML('afterbegin',premiumIcon(icon)));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
+ $('#treeSource3d').value=treeSourceChoice();
+ $('#treeSource3d').onchange=()=>{
+  const choice=$('#treeSource3d').value;
+  try{localStorage.setItem(CODE_TREE_KEY,choice)}catch(e){console.warn('Code tree mode persistence unavailable',e)}
+  if(choice==='glb'){bundledModelFailures.delete('pine');bundledModelFailures.delete('birch')}
+  rebuild();updateModelHealth();
+  status(choice==='code'?'Сосна и берёза теперь строятся как настоящая 3D-геометрия в коде.':'Включены исходные GLB сосны и берёзы для сравнения.');
+ };
  $('#quality3d').onchange=()=>{renderQuality=$('#quality3d').value;autoReduced=false;slowFrameStreak=0;
   const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy;
   resize();rebuild();status(economy?'Облегчённый просмотр для плавной работы. Размеры проекта сохранены.':'Высокая детализация 3D восстановлена.')};
