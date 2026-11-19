@@ -1,0 +1,20 @@
+{
+  "species": "spirea",
+  "name": "Flowering Bush (stylized surrogate for Spiraea japonica)",
+  "sourcePage": "https://grab3d.com/models/nature/bush/",
+  "downloadUrl": "https://grab3d.com/dl/bush/bush.glb",
+  "modelPath": "assets/landscape-models/spirea-flowering-grab3d-cc0.glb",
+  "license": "CC0 1.0",
+  "licenseFile": "https://grab3d.com/dl/bush/LICENSE.txt",
+  "sourceManifest": "https://grab3d.com/dl/bush/manifest.json",
+  "sourceModelLabel": "bush.glb",
+  "expectedSizeBytes": 1410856,
+  "sourceTriangles": 11570,
+  "originalDimensionsMetres": {
+    "width": 1.327,
+    "depth": 1.263,
+    "height": 1.091
+  },
+  "status": "pending download and verification",
+  "note": "This is a stylized flowering bush, NOT a botanically exact Spiraea japonica. Use as selected visual placeholder. Do not claim photographic realism."
+}

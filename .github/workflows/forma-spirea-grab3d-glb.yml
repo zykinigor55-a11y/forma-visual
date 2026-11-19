@@ -1,0 +1,56 @@
+name: FORMA - install chosen CC0 pink flowering bush GLB
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-spirea-grab3d-glb.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  download-and-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Download original free GLB and validate source
+        run: |
+          python3 - <<'PY'
+          import urllib.request,hashlib,struct,json,pathlib
+          target=pathlib.Path('assets/landscape-models/spirea-flowering-grab3d-cc0.glb')
+          meta=pathlib.Path('assets/landscape-models/spirea-flowering-grab3d-cc0.source.json')
+          source=json.loads(meta.read_text())
+          url='https://grab3d.com/dl/bush/bush.glb'
+          req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (compatible; FORMA-Visual-Assets/1.0)','Accept':'application/octet-stream,model/gltf-binary,*/*'})
+          with urllib.request.urlopen(req, timeout=65) as response:
+              payload=response.read(5000000)
+              resolved=response.geturl()
+              ctype=response.headers.get('Content-Type','')
+          if len(payload)!=1410856:
+              raise ValueError(f'Unexpected GLB file length {len(payload)}, expected 1410856')
+          if payload[:4]!=b'glTF' or struct.unpack_from('<I',payload,4)[0]!=2 or struct.unpack_from('<I',payload,8)[0]!=len(payload):
+              raise ValueError('Download is not valid binary glTF 2.0')
+          jlen=struct.unpack_from('<I',payload,12)[0]
+          if payload[16:20]!=b'JSON':raise ValueError('No glTF JSON chunk')
+          gltf=json.loads(payload[20:20+jlen].decode('utf-8'))
+          if not gltf.get('meshes') or not gltf.get('materials'):
+              raise ValueError('3D geometry/materials missing')
+          sha=hashlib.sha256(payload).hexdigest()
+          target.parent.mkdir(parents=True,exist_ok=True)
+          target.write_bytes(payload)
+          source.update(status='downloaded and glTF-header verified',sha256=sha,sizeBytes=len(payload),meshCount=len(gltf['meshes']),materialCount=len(gltf['materials']),resolvedUrl=resolved)
+          meta.write_text(json.dumps(source,ensure_ascii=False,indent=2)+'\n')
+          print('Verified CC0 GLB',len(payload),'bytes',sha,'meshes',len(gltf['meshes']),'materials',len(gltf['materials']),ctype)
+          PY
+      - name: Commit model only after successful verification
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- 'assets/landscape-models/spirea-flowering-grab3d-cc0.glb' 'assets/landscape-models/spirea-flowering-grab3d-cc0.source.json'
+          if ! git diff --cached --quiet; then
+            git commit -m 'assets(shrubs): add verified CC0 pink flowering bush GLB'
+            git push origin HEAD:dom-render-nanobanana
+          fi
