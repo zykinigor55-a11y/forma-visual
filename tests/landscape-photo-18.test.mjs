@@ -6,13 +6,13 @@ import {PHOTO_ASSETS,fallbackIconURL} from '../forma-landscape-project-graphics.
 
 test('historical 18 species retain their verified 1080 RGBA cards; 8 new native 3D species have safe images',()=>{
  const plants=CATALOG.filter(x=>x.group==='trees'||x.group==='shrubs');
- assert.equal(plants.length,26);
+ assert.equal(plants.length,27);
  const original=[
   'pine','spruce','birch','oak','maple','linden','willow','rowan','apple','sakura',
   'juniper','hydrangea','spirea','barberry','dogwood','thuja-globe','lavender','boxwood'
  ];
- const fresh=['ninebark','hosta','ornamental-grass','fern','periwinkle','wild-shrub','ash','aspen'];
- assert.deepEqual(new Set(plants.map(p=>p.id)),new Set([...original,...fresh]));
+ const fresh=['ninebark','hosta','ornamental-grass','fern','periwinkle','wild-shrub','ash','aspen','beech','poplar'];
+ assert.deepEqual(new Set(plants.map(p=>p.id)),new Set([...original.filter(id=>id!=='linden'),...fresh]));
  for(const id of original){
   const name=PHOTO_ASSETS[id];
   assert.match(name,/^[a-z-]+\.png$/,id);
