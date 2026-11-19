@@ -396,7 +396,7 @@ function init(){
  if(!bridge())return;
  const nav=document.querySelector('.rail-nav');for(const [key,name] of [['landscape','Благоустройство'],['atmosphere','Атмосфера']]){
   if(nav&&!nav.querySelector(`[data-art-open="${key}"]`)){const b=document.createElement('button');b.type='button';b.className='rail-btn';b.dataset.artOpen=key;b.setAttribute('aria-label',name);b.title=name;b.innerHTML=icon(key)+'<span class="rail-name">'+name+'</span>';const anchor=nav.querySelector('[data-nav="animation"]');anchor?nav.insertBefore(b,anchor):nav.append(b);
-   import('./forma-premium-icons.js?v=main-rail-icons-20261119').then(({premiumIcon})=>{
+   import('./forma-premium-icons.js').then(({premiumIcon})=>{
     const svg=b.querySelector('svg.ico,svg.forma-premium-icon');
     if(svg&&b.isConnected)svg.outerHTML=premiumIcon(key==='landscape'?'trees':'atmosphere');
    }).catch(error=>console.warn('Landscape/atmosphere rail SVG enhancement unavailable',error));
