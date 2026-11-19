@@ -912,14 +912,15 @@ function drawObject(o,entry,key){
    ['birch','oak','maple','linden','apple','rowan','aspen'].includes(o.catalogId))||
    (doc.atmosphere.season==='winter'&&o.catalogId==='ash')||
    (doc.atmosphere.season==='winter'&&o.catalogId==='beech')||
+   (doc.atmosphere.season==='winter'&&o.catalogId==='poplar')||
    (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring');
   // Detailed CC0 broadleaves can have hundreds of meshes; on crowded
   // phones prefer instanced botanical native trees to prevent freezes.
   // Keep self-hosted Scots pine, aspen, spruce and birch PBR GLBs
   // on phones even after planting more trees or automatic quality reduction.
-  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&o.catalogId!=='beech'&&
+  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&o.catalogId!=='beech'&&o.catalogId!=='poplar'&&
    (['oak','maple','linden'].includes(o.catalogId)?currentPlantCount>2:currentPlantCount>6);
-  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&o.catalogId!=='beech'&&window.innerWidth<=850&&
+  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&o.catalogId!=='beech'&&o.catalogId!=='poplar'&&window.innerWidth<=850&&
    (((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree);
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
@@ -933,7 +934,7 @@ function drawObject(o,entry,key){
   // Never discard an explicitly imported user-owned GLB.
   const codeRebuilt=!imported&&treeSourceChoice()==='code'&&
    (o.catalogId==='pine'||(o.catalogId==='birch'&&doc.atmosphere.season!=='winter'));
-  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId)||o.catalogId==='ash'||o.catalogId==='oak'||o.catalogId==='beech';
+  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId)||o.catalogId==='ash'||o.catalogId==='oak'||o.catalogId==='beech'||o.catalogId==='poplar';
   const waitingForReal=!source&&!seasonalNative&&!performanceFallback&&
    (o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId])&&
    (importantRealTree||!bundledModelFailures.has(o.catalogId));
