@@ -36,6 +36,12 @@
       "file": "sakura-mature-cc0.glb",
       "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/flowering-cherry-tree-6d80049e",
       "download": "https://www.innerscene.com/api/library/flowering-cherry-tree-6d80049e/download"
+    },
+    {
+      "species": "ash",
+      "file": "ash-terraintale-cc0.glb",
+      "sourcePage": "https://terraintale.com/library/realistic-surfaces/ash-tree-large",
+      "download": "https://terraintale.com/library/realistic-surfaces/ash_tree_large.glb"
     }
   ]
 }
