@@ -8,9 +8,10 @@ const page=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'u
 
 test('verified sources match local tree paths and CC0 license',()=>{
  assert.equal(manifest.license,'CC0 1.0');
- assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['birch','oak','spruce']);
- assert.equal(manifest.trees.length,3);
+ assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['birch','linden','maple','oak','sakura','spruce']);
+ assert.equal(manifest.trees.length,6);
  assert.ok(TREE_MODEL_SOURCE_LINKS.pine);
+ assert.equal(MATURE_TREE_MODELS.sakura.season,'spring');
  for(const model of manifest.trees){
   assert.equal(MATURE_TREE_MODELS[model.species].path,'/assets/landscape-models/'+model.file);
   assert.equal(MATURE_TREE_MODELS[model.species].sourcePage,model.sourcePage);
@@ -41,4 +42,10 @@ test('compressed third-party GLBs are accepted on upload and project restore',()
  assert.match(page,/setMeshoptDecoder\(MeshoptDecoder\)/);
  assert.match(page,/const bytes=await file\.arrayBuffer\(\),glb=await parseImportedGlb\(bytes\)/);
  assert.match(page,/const glb=await parseImportedGlb\(bytes\)/);
+});
+
+test('new species use true 3D summer/spring GLBs and safe winter native crowns',()=>{
+ assert.match(page,/\['birch','oak','maple','linden'\]\.includes\(o\.catalogId\)/);
+ assert.match(page,/o\.catalogId==='sakura'&&doc\.atmosphere\.season!=='spring'/);
+ assert.match(page,/\['oak','maple','linden'\]\.includes\(o\.catalogId\)/);
 });
