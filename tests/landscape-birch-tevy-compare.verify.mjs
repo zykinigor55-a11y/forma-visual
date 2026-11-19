@@ -9,12 +9,13 @@ try{
  const page=await browser.newPage({viewport:{width:1024,height:820},deviceScaleFactor:1});
  page.on('pageerror',error=>errors.push(String(error)));
  const results={};
- for(const [variant,query] of [['current',''],['tevy','&candidate=tevy']]){
+ for(const [variant,query] of [['current','&candidate=old'],['tevy','']]){
   await page.goto('http://127.0.0.1:3000/forma-mature-trees-preview.html?species=birch'+query,
     {waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForFunction(()=>window.__treeReady===true||Boolean(window.__treeError),null,{timeout:90000});
   const status=await page.evaluate(()=>({error:window.__treeError||null,details:window.__treeDetails||null}));
   assert.equal(status.error,null,variant+' silver birch model should load');
+  assert.equal(status.details.candidate,variant==='current'?'old':'tevy');
   assert.ok(Math.abs(status.details.height-14)<.08,'retain exact planted tree height 14m');
   assert.ok(Math.abs(status.details.diameter-8)<.08,'retain exact crown diameter 8m');
   assert.ok(status.details.textures>0,'must retain local original PBR leaves');
