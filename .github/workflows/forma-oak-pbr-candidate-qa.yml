@@ -1,0 +1,67 @@
+name: FORMA · English oak native PBR GLB A-B WebGL
+on:
+  push:
+    branches: [experiments/forma-oak-pbr-20261119]
+    paths:
+      - 'forma-mature-trees-preview.html'
+      - 'tests/landscape-oak-cc0-visual.verify.mjs'
+      - '.github/workflows/forma-oak-pbr-candidate-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-oak-textured-candidate
+  cancel-in-progress: true
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch CC0 original from TerrainTale and check embedded PBR geometry
+        run: |
+          mkdir -p assets/landscape-models
+          curl -fLsS --retry 3 --connect-timeout 18 --max-time 110 \
+            'https://terraintale.com/library/realistic-surfaces/oak_tree_large.glb' \
+            -o assets/landscape-models/oak-terraintale-cc0.glb
+          python3 - <<'PY'
+          import pathlib,struct,json,hashlib
+          src=pathlib.Path('assets/landscape-models/oak-terraintale-cc0.glb')
+          raw=src.read_bytes()
+          assert 50_000<len(raw)<6_000_000
+          assert raw[:4]==b'glTF' and struct.unpack_from('<I',raw,4)[0]==2
+          assert struct.unpack_from('<I',raw,8)[0]==len(raw)
+          length=struct.unpack_from('<I',raw,12)[0]
+          gltf=json.loads(raw[20:20+length])
+          assert len(gltf.get('meshes',[]))>=1
+          assert len(gltf.get('materials',[]))>=1
+          assert len(gltf.get('images',[]))>=2,'Need a genuinely textured trunk and foliage'
+          report=dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),
+            meshes=len(gltf.get('meshes',[])),materials=len(gltf.get('materials',[])),
+            images=len(gltf.get('images',[])),textures=len(gltf.get('textures',[])))
+          print('OAK SOURCE VERIFIED:',report,flush=True)
+          PY
+      - run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install chromium
+      - name: A/B WebGL comparison of crown, branch junctions, trunk and phone
+        run: |
+          node server.mjs > /tmp/forma-oak-qa.log 2>&1 &
+          sleep 3
+          node tests/landscape-oak-cc0-visual.verify.mjs
+      - name: Preserve validated CC0 binary in GitHub evaluation branch
+        run: |
+          git config user.name "FORMA Botanical QA"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/landscape-models/oak-terraintale-cc0.glb
+          git commit -m "asset(oak): pin tested CC0 native textured Quercus GLB"
+          git push origin HEAD:refs/heads/experiments/forma-oak-pbr-20261119
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-oak-pbr-compare-real-webgl
+          path: artifacts/landscape-editor/oak-pbr-compare/*
+          if-no-files-found: warn
