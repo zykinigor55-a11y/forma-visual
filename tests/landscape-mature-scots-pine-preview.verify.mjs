@@ -32,6 +32,15 @@ try{
  assert.ok(dense.details.leafMaterials>=2,'dense crown must contain extra PBR needle meshes');
  await page.evaluate(()=>window.__pineView(.65,.12,27));
  await page.screenshot({path:`${output}/mature-pine-dense.png`});
+ // A/B the second publisher-verified CC0 asset before changing production.
+ await page.goto('http://127.0.0.1:3000/forma-pine-glb-preview.html?alt=1',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.waitForFunction(()=>window.__pineReady===true||window.__pineError,{timeout:90000});
+ const alt=await page.evaluate(()=>({error:window.__pineError||null,details:window.__pineDetails||null}));
+ assert.equal(alt.error,null,'alternative CC0 GLB should load successfully');
+ assert.equal(alt.details.source,'innerscene');
+ assert.ok(alt.details.meshes>=3,'alternative must contain several textured meshes');
+ await page.evaluate(()=>window.__pineView(.65,.12,27));
+ await page.screenshot({path:`${output}/mature-pine-innerscene.png`});
  await page.setViewportSize({width:430,height:760});
  await page.evaluate(()=>window.__pineView(.45,.12,27));
  await page.screenshot({path:`${output}/mature-pine-mobile.png`});
