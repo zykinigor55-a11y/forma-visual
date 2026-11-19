@@ -13,8 +13,8 @@
   "predictedMaterialCount": 10,
   "status": "built and SHA-256 verified original GLB",
   "notes": "Original, procedural burgundy Berberis thunbergii: ~13K attached alpha-masked leaf planes with a self-authored 256x512 vein/pigment PNG embedded in GLB, thin curved woody branches, spines, red fruit, and PBR materials. Summer foliage; autumn/winter use seasonal native fallback. Not a photogrammetric scan.",
-  "sizeBytes": 1597580,
-  "sha256": "c48442782b86411ac16275d82d2361e9af04ed06f2fd49b9334725d26cd4f362",
+  "sizeBytes": 2927468,
+  "sha256": "87aaa5f8351a0bef5e674aaa54b0a694cd1d27385f20fd887f65ab1e5a5388e5",
   "meshCount": 10,
   "materialCount": 10
 }
