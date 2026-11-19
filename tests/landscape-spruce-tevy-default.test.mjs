@@ -37,5 +37,5 @@ test('editor uses new self-hosted spruce GLB with fall back to old CC0 mesh',()=
  assert.match(editor,/loadAsync\(entry\.path\)\.catch\(error=>\{/);
  assert.match(editor,/matureTreeLoader\.loadAsync\(entry\.fallbackPath\)/);
  assert.match(editor,/const source=imported\|\|bundledPine\|\|bundledAdult\|\|null/);
- assert.match(editor,/const performanceFallback=!\['pine','aspen'\]/);
+ assert.match(editor,/const performanceFallback=!\['pine','aspen','spruce','birch'\]/);
 });
