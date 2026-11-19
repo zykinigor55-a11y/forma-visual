@@ -73,8 +73,10 @@ const specs=[
  ['aspen','Осина',15.61,7.61]
 ];
 const pitch=11.1,start=-(specs.length-1)*pitch/2;
-const originalGlb=new URL(location.href).searchParams.get('source')==='glb';
-document.querySelector('#treeSourceCompare').textContent=originalGlb?'Показать новые CODE 3D':'Сравнить с исходными GLB';
+// Showcase the original CC0 GLB assets by default; procedural trees are
+// available only as an explicit comparison (?source=code).
+const originalGlb=new URL(location.href).searchParams.get('source')!=='code';
+document.querySelector('#treeSourceCompare').textContent=originalGlb?'Сравнить с CODE 3D':'Показать оригинальные GLB';
 document.querySelector('#treeSourceCompare').href=originalGlb?'?source=code':'?source=glb';
 for(const id of ['saveCodePine','saveCodeBirch'])document.querySelector('#'+id).hidden=originalGlb;
 const canvas=document.querySelector('#view'),indicator=document.querySelector('#progress');
