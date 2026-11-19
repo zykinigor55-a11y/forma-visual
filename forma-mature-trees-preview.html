@@ -20,8 +20,11 @@ import {makeRealVegetation} from './forma-landscape-3d-models.js';
 import {MATURE_TREE_MODELS} from './forma-landscape-3d-mature-trees.js';
 
 const name=new URL(location.href).searchParams.get('species')||'birch';
-const showOldSpruce=name==='spruce'&&new URL(location.href).searchParams.get('candidate')==='old';
-const asset=showOldSpruce?{...MATURE_TREE_MODELS.spruce,name:'Ель · прежняя редкая GLB',path:MATURE_TREE_MODELS.spruce.fallbackPath}:MATURE_TREE_MODELS[name];
+const candidate=new URL(location.href).searchParams.get('candidate');
+const showOldSpruce=name==='spruce'&&candidate==='old';
+const compareBirch=name==='birch'&&candidate==='tevy';
+const asset=compareBirch?{...MATURE_TREE_MODELS.birch,name:'Берёза повислая · Tevy CC0',path:'/assets/landscape-models/birch-tevy-cc0.glb'}:
+ showOldSpruce?{...MATURE_TREE_MODELS.spruce,name:'Ель · прежняя редкая GLB',path:MATURE_TREE_MODELS.spruce.fallbackPath}:MATURE_TREE_MODELS[name];
 const details=document.querySelector('#state');
 const sizes={birch:[14,8],spruce:[16,9],oak:[8.6,7.8],maple:[9.5,7.1],linden:[8.8,7.1],sakura:[6,7.4],apple:[5.13,5.88],aspen:[15.61,7.61],rowan:[8.1,6.95]};
 const canvas=document.querySelector('#canvas');
@@ -61,7 +64,7 @@ try{
   for(const m of (Array.isArray(obj.material)?obj.material:[obj.material])){
    if(!m)continue;materials++;if(m.map)textures++;if(m.alphaTest||m.transparent)alphas++;
   }});
- window.__treeDetails={name,height:size.y,diameter:Math.max(size.x,size.z),meshes,materials,textures,alphas,candidate:name==='spruce'?(showOldSpruce?'old':'tevy'):'current'};
+ window.__treeDetails={name,height:size.y,diameter:Math.max(size.x,size.z),meshes,materials,textures,alphas,candidate:compareBirch?'tevy':name==='spruce'?(showOldSpruce?'old':'tevy'):'current'};
  details.textContent='Загружено · '+meshes+' мешей · '+textures+' текстурных материалов';
  window.__treeReady=true;view();
 }catch(error){window.__treeError=String(error);details.textContent='Ошибка: '+error.message;}
