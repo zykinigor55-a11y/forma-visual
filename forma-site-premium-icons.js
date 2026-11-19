@@ -33,15 +33,25 @@ function upgradeButton(button,id){
 }
 function upgradeCompactRail(button,id){
  if(!button||!id)return;
+ // Some later-mounted modules append a second old glyph after the premium
+ // SVG. Clear every stale glyph within THIS button, without touching labels,
+ // handlers or adjacent navigation entries.
+ const removeGhosts=()=>{
+  const chosen=button.querySelector('svg.forma-main-nav-icon');
+  if(!chosen)return;
+  button.querySelectorAll('svg').forEach(svg=>{if(svg!==chosen)svg.remove()});
+  const title=button.querySelector('.rail-name')?.textContent?.trim();
+  if(title&&!button.title)button.title=title;
+ };
  const existing=button.querySelector('svg.forma-premium-icon');
- if(existing?.dataset.formaRev==='main-atelier-v3')return;
- const rendered=mainNavIcon(id);
- if(existing)existing.outerHTML=rendered;
- else{
-  const legacy=button.querySelector('svg.ico');
-  if(legacy)legacy.outerHTML=rendered;
-  else button.insertAdjacentHTML('afterbegin',rendered);
+ if(existing?.dataset.formaRev==='main-atelier-v3'){
+  removeGhosts();return;
  }
+ const rendered=mainNavIcon(id);
+ const legacy=existing||button.querySelector('svg.ico')||button.querySelector('svg');
+ if(legacy)legacy.outerHTML=rendered;
+ else button.insertAdjacentHTML('afterbegin',rendered);
+ removeGhosts();
 }
 export function applyPremiumSiteIcons(){
  // Rail includes buttons injected AFTER boot by Interior, Landscape,
