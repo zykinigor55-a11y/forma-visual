@@ -241,8 +241,13 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
  if(!points.length||foliageProfile(id,season).leafless)return;
  const cfg=VEGETATION_SPECIES[id],shrub=['shrub','conifer-shrub'].includes(cfg.kind);
  const r=rng(seed^0x8fc1a0),needle=['pine','spruce','juniper','thuja-globe'].includes(id);
+ // On mobile the mature pine must still retain some real 3D needle mass.
+ // Keep this reduced volume cost bounded; other species are unaffected.
+ const lightPine=id==='pine'&&quality<.36;
  const source=foliageProfile(id,season),number=clamp(
-  Math.round(points.length*quality*(needle?2.5:2.45)),shrub?170:680,shrub?1650:needle?2900:5400
+  Math.round(points.length*quality*(needle?2.5:2.45)),
+  lightPine?260:shrub?170:680,
+  lightPine?720:shrub?1650:needle?2900:5400
  );
  const geometry=foliageSprigGeometry(T,needle,id);
  const material=foliageMaterial(T,id,{physical:false});
@@ -260,7 +265,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   const growth=speciesGrowthProfile(id);
   // Terminal needle shoots are longer, but individual needles stay narrow.
   // Preserve the measured crown envelope by limiting sprig radius.
-  const mass=needle?(id==='spruce'?.67:id==='pine'?.72:.55):id==='birch'?.37:id==='oak'?.43:.33;
+  const mass=needle?(id==='spruce'?.56:id==='pine'?.49:.52):id==='birch'?.37:id==='oak'?.43:.33;
   const scale=mass*crown*(.70+r()*.54)*(growth?.leafClusterScale||1);
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
@@ -350,7 +355,8 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
  const texture=createPhotoFoliageTexture(T,id,{fallback:createSprayTexture(T,needle,id)});
  const material=new T.MeshStandardMaterial({map:texture,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide,roughness:.86,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
-  cross=new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count);
+  cross=new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count),
+  third=id==='pine'?new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count):null;
  const d=new T.Object3D(),palette=normalizeFoliagePalette(id,season),
   shadeColor=new T.Color(palette.shade),sunColor=new T.Color(palette.sunlit),
   fallColors=palette.fall?.map(hex=>new T.Color(hex));
@@ -359,8 +365,11 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
  for(let i=0;i<count;i++){
   const p=points[Math.floor(r()*points.length)],offset=shrub?.05:.09;
   d.position.set(p.x+(r()-.5)*offset,p.y+(r()-.5)*offset,p.z+(r()-.5)*offset);
-  d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
-  const w=foliageSprayWidth(id,diameter)*(sprucePine?.63:1)*(.70+r()*.63);
+  // Avoid randomly horizontal, square-on cutouts in the mobile orbit camera.
+  // Conifer sprigs keep a natural mostly vertical plane and variable yaw.
+  d.rotation.set(sprucePine?(r()-.5)*.86:r()*6.283,r()*6.283,
+   sprucePine?(r()-.5)*.75:r()*6.283);
+  const w=foliageSprayWidth(id,diameter)*(sprucePine?.57:1)*(.78+r()*.52);
   d.scale.set(w,w,1);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
   const colour=shadeColor.clone().lerp(sunColor,.10+r()*.79).multiplyScalar(shade);
@@ -368,8 +377,14 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
   mesh.setColorAt(i,colour);
   d.rotateY(Math.PI/2);d.updateMatrix();cross.setMatrixAt(i,d.matrix);
   cross.setColorAt(i,colour);
+  if(third){
+   // A third angular lobe on every mature pine shoot fills silhouettes
+   // without a camera-facing full-tree billboard.
+   d.rotateY(Math.PI/3);d.updateMatrix();third.setMatrixAt(i,d.matrix);
+   third.setColorAt(i,colour);
+  }
  }
- for(const tuft of [mesh,cross]){
+ for(const tuft of [mesh,cross,...(third?[third]:[])]){
   tuft.instanceMatrix.needsUpdate=true;
   if(tuft.instanceColor)tuft.instanceColor.needsUpdate=true;
   tuft.castShadow=quality>=.30;
@@ -450,7 +465,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
   radial=radius*naturalCrown(id,t)*(.86+r()*.14);
   const arms=growth?.primaryArms|| (kind==='spruce'?7:kind==='pine'?4:5);
   for(let k=0;k<arms;k++){
-   const direction=angle+k*2*Math.PI/arms+r()*.30;
+   const direction=angle+k*2*Math.PI/arms+(r()-.5)*(id==='pine'?.75:.30);
    // Uneven windward whorls instead of a regular green cone.
    const length=Math.min(radius*.995,radial*(.92+r()*.15)*specimenCrownVariation(id,t,direction,specimenSeed));
    const branchRise=conifer?(kind==='pine'?.12:-.11):growth?.branchAngle||(.2+r()*.25);
@@ -472,7 +487,7 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
      centers.push({x:shoot.tip[0],y:shoot.tip[1],z:shoot.tip[2]});
     }
    }
-   const twigCount=kind==='pine'?6:kind==='spruce'?8:
+   const twigCount=kind==='pine'?9:kind==='spruce'?8:
    id==='birch'?13:id==='oak'||id==='ash'?12:id==='aspen'?14:9;
    for(let j=0;j<twigCount;j++){
     const f=(j+.2+r()*.45)/twigCount,flare=(r()-.5)*length*.4;
@@ -499,16 +514,17 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
     // Real lateral shoots start on the outer half of the parent branch.
     // Without these, most silhouette foliage is concentrated at a few isolated
     // twig tips and mature conifers resemble bare trunks at parcel distance.
-    const shoots=kind==='spruce'?4:3;
+    const shoots=kind==='spruce'?4:kind==='pine'?7:3;
     for(let n=0;n<shoots;n++){
-     const fraction=.54+(n+r()*.42)/shoots*.42;
+     const fraction=.58+(n+r()*.44)/shoots*.40;
      const base=[tip[0]*fraction,stemY+(outerY-stemY)*fraction,tip[2]*fraction];
-     const sideways=(n%2===0?1:-1)*(.10+r()*.15)*length;
-     const end=[
-      clamp(base[0]-Math.sin(direction)*sideways,-radius,radius),
-      clamp(base[1]+(kind==='spruce'?-.065:.035)*height*(.3+r()*.3),.08,height),
-      clamp(base[2]+Math.cos(direction)*sideways,-radius,radius)
-     ];
+     const sideways=(n%2===0?1:-1)*(.075+r()*.14)*length;
+     const [endX,endZ]=constrainCrownRadius(
+      base[0]-Math.sin(direction)*sideways,
+      base[2]+Math.cos(direction)*sideways,radius*.995);
+     const end=[endX,
+      clamp(base[1]+(kind==='spruce'?-.035:.025)*height*(.3+r()*.3),.08,height),
+      endZ];
      curveBranch(branches,base,end,Math.max(.003,trunkRadius*.024*(1-t*.50)),0);
      centers.push({x:end[0],y:end[1],z:end[2]});
     }
@@ -530,7 +546,8 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
  if(id==='birch'){for(let i=0;i<8;i++){const y=height*(.12+i*.07);branches.push([[-trunkRadius,y,0],[trunkRadius,y+.055,.02],trunkRadius*.10])}}
  addBranch(g,T,branches,c.bark,id);
  if(!leafless){
-  if(quality>=.36)addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality,height);
+  if(quality>=.36||(id==='pine'&&quality>=.22))
+    addFoliageVolume(g,T,leafPoints,id,diameter,season,Math.floor(r()*4294967295),quality,height);
   if(quality>=.43)addLeaves(g,T,leafPoints,foliageProfile(id,season).color,conifer,season,Math.floor(r()*4294967295),id);
   addFoliageSprays(g,T,leafPoints,id,season,Math.floor(r()*4294967295),quality,diameter,height);
  }
