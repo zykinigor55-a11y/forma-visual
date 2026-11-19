@@ -55,7 +55,8 @@ test('LOD uses three distinct layers; middle retains a small branch silhouette a
   userData:{botanicalLayer:layer}});
  const m=['branches','micro','volume','sprays'].map(make),group={userData:{},traverse(fn){m.forEach(fn)}};
  enableBotanicalLod(group,'premium');setFoliageTier(group,'near');
- assert.deepEqual(m.map(x=>x.visible),[true,true,true,false]);
+ assert.deepEqual(m.map(x=>x.visible),[true,true,true,true]);
+ assert.ok(m[3].count<35,'near: small photo layer complements real 3D foliage');
  setFoliageTier(group,'middle');
  assert.deepEqual(m.map(x=>x.visible),[true,false,true,true]);
  assert.ok(m[3].count<50,'partial distance silhouette');
