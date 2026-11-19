@@ -1,0 +1,24 @@
+name: FORMA - Real hydrangea GLB integration QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-3d.html'
+      - 'forma-landscape-3d-shrub-models.js'
+      - 'assets/landscape-models/hydrangea-flowering-innerscene-cc0.source.json'
+      - 'assets/landscape-models/hydrangea-flowering-innerscene-cc0.glb'
+      - 'tests/landscape-real-hydrangea.test.mjs'
+      - '.github/workflows/forma-hydrangea-real-glb-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Verify GLB PBR, license, source checksum, editor integration
+        run: node --test tests/landscape-real-hydrangea.test.mjs tests/landscape-curated-adult-trees.test.mjs tests/landscape-3d-botany.test.mjs

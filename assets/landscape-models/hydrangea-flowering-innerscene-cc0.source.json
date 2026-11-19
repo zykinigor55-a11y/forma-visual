@@ -17,5 +17,16 @@
   "usage": "Reference GLB for future modeling; do not replace Hydrangea paniculata until visually confirmed.",
   "sizeBytes": 2754612,
   "sha256": "d30fc858f15f2bc15a943f50105e45e8982106097acc44bab0b606d4a7056328",
-  "downloadedVia": "https://files.innerscene.com/library/flowering-hydrangea-shrub-af2da5d3/9d0694188c351f2a5237/flowering-hydrangea-shrub.glb"
+  "downloadedVia": "https://files.innerscene.com/library/flowering-hydrangea-shrub-af2da5d3/9d0694188c351f2a5237/flowering-hydrangea-shrub.glb",
+  "integration": {
+    "species": "hydrangea",
+    "catalogueLabel": "Гортензия метельчатая",
+    "modelQuality": "flowers/foliage/bark GLB (cultivar not verified)",
+    "season": "summer only",
+    "defaultSizeMeters": {
+      "height": 1.55,
+      "diameter": 1.6
+    },
+    "note": "Visual refinement to conical panicle inflorescences still required. No replacement of existing trees."
+  }
 }
