@@ -602,7 +602,9 @@ function loadMatureScotsPine(){
  if(importedPlantModels.has(species)||bundledModelSources.has(species)||
   bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
  bundledModelLoading.add(species);updateModelHealth();
- new GLTFLoader().loadAsync(MATURE_SCOTS_PINE_GLB).then(result=>{
+ const pineKtx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ pineKtx2.detectSupport(renderer);
+ new GLTFLoader().setKTX2Loader(pineKtx2).loadAsync(MATURE_SCOTS_PINE_GLB).then(result=>{
   if(!result?.scene)throw Error('GLB не содержит 3D-сцену');
   const meshes=[],foliage=[],trunks=[];
   result.scene.traverse(node=>{
@@ -627,7 +629,7 @@ function loadMatureScotsPine(){
   bundledModelFailures.add(species);
   console.warn('CC0 mature Scots pine fallback:',error?.message||error);
   status('GLB-сосна недоступна; сохранена резервная процедурная сосна.');
- }).finally(()=>{bundledModelLoading.delete(species);updateModelHealth()});
+ }).finally(()=>{pineKtx2.dispose();bundledModelLoading.delete(species);updateModelHealth()});
 }
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
