@@ -37,6 +37,22 @@ export const VEGETATION_SPECIES=Object.freeze({
  periwinkle:{kind:'shrub',density:490,branches:25,crownStart:.01,leaf:'#5e8f6a',bark:'#67644e'},
  'wild-shrub':{kind:'shrub',density:690,branches:36,crownStart:.05,leaf:'#71965f',bark:'#705b47'}
 });
+/* Survey-safe shrub silhouettes; unlike generic rounded leaf volumes these
+ * represent the natural height, spread and branch curvature of each species.
+ * They preserve the catalogue's exact user-defined height and diameter.
+ * 5 groundcover/understory species keep their independent native 3D builder. */
+export const SHRUB_ARCHITECTURE=Object.freeze({
+ juniper:Object.freeze({width:.99,low:.15,span:.24,curve:-.012,branchlets:12,habit:'creeping'}),
+ hydrangea:Object.freeze({width:.84,low:.54,span:.42,curve:.085,branchlets:11,habit:'upright-panicle'}),
+ spirea:Object.freeze({width:.94,low:.32,span:.43,curve:.16,branchlets:17,habit:'arching'}),
+ barberry:Object.freeze({width:.96,low:.28,span:.62,curve:.035,branchlets:17,habit:'thorny-open'}),
+ dogwood:Object.freeze({width:1,low:.46,span:.49,curve:.14,branchlets:13,habit:'arching-red-stems'}),
+ 'thuja-globe':Object.freeze({width:.81,low:.51,span:.47,curve:.025,branchlets:14,habit:'compact-conifer'}),
+ lavender:Object.freeze({width:.72,low:.50,span:.45,curve:.07,branchlets:9,habit:'narrow-spike'}),
+ boxwood:Object.freeze({width:.90,low:.51,span:.47,curve:.025,branchlets:17,habit:'dense-leafy'}),
+ ninebark:Object.freeze({width:.99,low:.35,span:.57,curve:.13,branchlets:13,habit:'open-arching'})
+});
+export function shrubArchitecture(id){return SHRUB_ARCHITECTURE[id]||null}
 export const vegetationSpeciesIds=Object.freeze(Object.keys(VEGETATION_SPECIES));
 export const isEvergreen=id=>['pine','spruce','juniper','thuja-globe','boxwood'].includes(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -560,6 +576,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
  const c=VEGETATION_SPECIES[id],radius=diameter/2,actual=clamp(height,.3,3.5);
  const evergreen=c.kind==='conifer-shrub',branches=[],points=[],isCreeper=id==='juniper',isSpike=id==='lavender';
  const reference=referenceCanopy(id),growth=speciesGrowthProfile(id);
+ const habit=shrubArchitecture(id);
  const stems=isCreeper?24:isSpike?38:id==='hosta'?19:id==='ornamental-grass'?56:id==='hydrangea'?30:id==='spirea'?38:c.branches;
  const specimenSeed=Math.floor(r()*100000);
  for(let j=0;j<stems;j++){
@@ -568,19 +585,19 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
   const az=j*2.399+r()*.34,
    dist=radius*(.48+r()*.52)*specimenCrownVariation(id,j/stems,az,specimenSeed),
    horizontal=isCreeper?1:isSpike?.72:id==='ornamental-grass'?.72:
-   id==='hosta'?.89:id==='thuja-globe'?.8:1;
+   id==='hosta'?.89:habit?.width??1;
   const tipHeight=isCreeper?actual*(.17+r()*.23):
    id==='ornamental-grass'?actual*(.65+r()*.34):
    id==='hosta'?actual*(.31+r()*.56):
    id==='spirea'?actual*(.32+r()*.43):
    isSpike?actual*(.50+r()*.45):
    id==='boxwood'||id==='thuja-globe'?actual*(.51+r()*.47):
-   actual*(.38+r()*.54);
+   habit?actual*(habit.low+r()*habit.span):actual*(.38+r()*.54);
   const [tipX,tipZ]=constrainCrownRadius(Math.cos(az)*dist*horizontal,Math.sin(az)*dist*horizontal,radius);
   const pt=[tipX,tipHeight,tipZ],
    radiusStem=id==='spirea'?.0045+r()*.0035:id==='hosta'?.0035:isSpike?.007:isCreeper?.012:.016+r()*.016;
   curveBranch(branches,[0,.045,0],pt,radiusStem,
-   actual*(isCreeper?-.01:id==='spirea'?.16:.065));
+   actual*(isCreeper?-.01:id==='spirea'?.16:habit?.curve??.065));
   if(growth&&!isSpike){
    // Spirea is a fan of arching woody stems, with small leaf clusters
    // concentrated on laterally branched shoots, not a uniform green sphere.
@@ -590,7 +607,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
     points.push({x:shoot.tip[0],y:shoot.tip[1],z:shoot.tip[2],s:.038+r()*.055});
    }
   }
-  for(let k=0;k<15;k++){
+  for(let k=0;k<(habit?.branchlets||15);k++){
    const f=.22+r()*.77,
     mid=[pt[0]*f,.045+(pt[1]-.045)*f,pt[2]*f],length=radius*(isCreeper?.19:isSpike?.08:.16);
    const direction=az+(r()-.5)*2.6,
