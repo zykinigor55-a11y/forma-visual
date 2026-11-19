@@ -18,3 +18,15 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node --test tests/landscape-shrub-editor-interaction.test.mjs tests/landscape-spirea-chosen-glb.test.mjs tests/landscape-real-hydrangea.test.mjs tests/landscape-3d-botany.test.mjs
+      - name: Parse-check the complete live browser editor module
+        run: |
+          python3 - <<'PY'
+          import re,pathlib
+          page=pathlib.Path('forma-landscape-3d.html').read_text()
+          block=re.search(r'<script type="module">([\\s\\S]*?)</script>',page)
+          if not block:
+              block=re.search(r'<script type="module">(.*?)</script>',page,re.S)
+          if not block:raise RuntimeError('Inline editor module missing')
+          pathlib.Path('/tmp/forma-editor-qa.mjs').write_text(block.group(1))
+          PY
+          node --check /tmp/forma-editor-qa.mjs

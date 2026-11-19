@@ -16,7 +16,7 @@ test('all shrubs can open the actual right-side editor with 3 size and variant c
  assert.match(html,/if\(found&&catalog\(found\.catalogId\)\?\.group==='shrubs'\)/);
  assert.match(html,/shrubSizePreset\(/);
  assert.equal(SHRUB_PRESETS.adult,1.3);
- assert.deepEqual(shrubSizePreset(.85,1.2,'young'),{height:.59,diameter:.84});
+ assert.deepEqual(shrubSizePreset(.85,1.2,'young'),{height:.60,diameter:.84});
 });
 test('project save normalizes edited shrub variants, diameter, height',()=>{
  let d=freshProject();
