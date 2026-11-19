@@ -1,0 +1,43 @@
+name: FORMA - Real WebGL barberry screenshot
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/capture_barberry_webgl.mjs'
+      - '.github/workflows/forma-barberry-webgl-screenshot.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser automation
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Take ACTUAL 3D editor screenshot on deployed site
+        run: node tools/capture_barberry_webgl.mjs
+      - name: Preserve screenshot evidence on GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: forma-actual-barberry-webgl-screenshot
+          path: assets/landscape-screenshots/barberry-*
+          if-no-files-found: error
+      - name: Publish screenshots to branch for review
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f -- assets/landscape-screenshots/barberry-from-live-editor.png assets/landscape-screenshots/barberry-webgl-scene.png assets/landscape-screenshots/barberry-live-evidence.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs(screenshots): genuine Render WebGL barberry screenshot with GLB proof'
+            git push origin HEAD:dom-render-nanobanana
+          fi
