@@ -1,0 +1,60 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FORMA · Ясень обыкновенный · CC0 PBR GLB</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#dce2da;color:#faf8f0;font:14px system-ui}
+canvas{width:100%;height:100%;display:block}
+aside{position:absolute;top:12px;left:12px;max-width:340px;background:#1b2527ee;border:1px solid #47525a;padding:11px 15px;border-radius:10px;line-height:1.5}
+small{color:#b9c4c7}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head><body><canvas id="viewport"></canvas><aside><strong>FORMA · Ясень · PBR GLB 3D</strong><div id="loading">Загрузка модели...</div><small>Источник CC0 · TerrainTale · фактурная кора и листья</small></aside>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {makeRealVegetation} from './forma-landscape-3d-models.js';
+const canvas=document.querySelector('#viewport'),status=document.querySelector('#loading');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#d9e1dc');
+scene.add(new THREE.HemisphereLight('#f3f7ff','#a1a28a',1.75));
+const key=new THREE.DirectionalLight('#fff0d7',3);key.position.set(-13,23,16);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-22;key.shadow.camera.right=22;
+key.shadow.camera.bottom=-18;key.shadow.camera.top=24;scene.add(key);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:'#859b83',roughness:.98}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.10;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const camera=new THREE.PerspectiveCamera(35,1,.1,200);
+let tree=null;
+function view(yaw=.55,close=false){
+ const w=Math.max(350,window.innerWidth),h=Math.max(390,window.innerHeight);
+ renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+ if(close){const d=5.2;camera.position.set(Math.sin(yaw)*d,4.1,Math.cos(yaw)*d);
+  camera.lookAt(0,3.2,0);}
+ else{const d=34;camera.position.set(Math.sin(yaw)*d,11,Math.cos(yaw)*d);camera.lookAt(0,7.3,0);}
+ renderer.render(scene,camera);
+}
+window.__ashView=view;window.addEventListener('resize',()=>view());
+try{
+ const gltf=await new GLTFLoader().loadAsync('/assets/landscape-models/ash-terraintale-cc0.glb');
+ tree=makeRealVegetation(THREE,gltf.scene,{catalogId:'ash',height:16,diameter:8},{shareGeometry:true});
+ scene.add(tree);
+ let meshCount=0,triangles=0,materials=0,textureMaps=0,normalMaps=0;
+ const names=[];
+ tree.traverse(node=>{
+  if(!node.isMesh)return;meshCount++;
+  names.push(node.name||'Mesh '+meshCount);
+  if(node.geometry){const idx=node.geometry.getIndex(),a=node.geometry.getAttribute('position');
+   triangles+=Math.floor((idx?.count||a?.count||0)/3);}
+  for(const m of (Array.isArray(node.material)?node.material:[node.material])){
+   if(!m)continue;materials++;if(m.map)textureMaps++;if(m.normalMap)normalMaps++;
+  }
+ });
+ const bb=new THREE.Box3().setFromObject(tree),size=bb.getSize(new THREE.Vector3());
+ const details={meshCount,triangles,materials,textureMaps,normalMaps,
+  height:size.y,diameter:Math.max(size.x,size.z),names};
+ window.__ashDetails=details;window.__ashReady=true;
+ status.textContent='Загружено · '+meshCount+' мешей · '+triangles+' треугольников · '+textureMaps+' текстур';
+ view();
+}catch(err){window.__ashError=String(err);status.textContent='Ошибка: '+String(err.message||err)}
+</script></body></html>

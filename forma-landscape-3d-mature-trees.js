@@ -10,6 +10,7 @@ export const MATURE_TREE_MODELS=Object.freeze({
  sakura:Object.freeze({name:'Весеннее цветущее дерево · сакура',path:'/assets/landscape-models/sakura-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/flowering-cherry-tree-6d80049e',license:'CC0 1.0',season:'spring'}),
  apple:Object.freeze({name:'Садовая яблоня с плодами',path:'/assets/landscape-models/apple-mature-cc0.glb',sourcePage:'https://tevy.dev/models/apple-tree',license:'CC0 1.0'}),
  rowan:Object.freeze({name:'Рябина обыкновенная с ягодами',path:'/assets/landscape-models/rowan-mature-cc0.glb',sourcePage:'https://tevy.dev/models/rowan',license:'CC0 1.0'}),
+ ash:Object.freeze({name:'Ясень обыкновенный · фактурная кора и PBR-листва',path:'/assets/landscape-models/ash-terraintale-cc0.glb',sourcePage:'https://terraintale.com/library/realistic-surfaces/ash-tree-large',license:'CC0 1.0'}),
  aspen:Object.freeze({name:'Осина европейская',path:'/assets/landscape-models/aspen-mature-cc0.glb',sourcePage:'https://tevy.dev/models/aspen',license:'CC0 1.0'})
 });
 export const TREE_MODEL_SOURCE_LINKS=Object.freeze({

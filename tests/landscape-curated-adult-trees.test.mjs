@@ -8,8 +8,8 @@ const page=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'u
 
 test('verified sources match local tree paths and CC0 license',()=>{
  assert.equal(manifest.license,'CC0 1.0');
- assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['apple','aspen','birch','linden','maple','oak','rowan','sakura','spruce']);
- assert.equal(manifest.trees.length,6);
+ assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['apple','ash','aspen','birch','linden','maple','oak','rowan','sakura','spruce']);
+ assert.equal(manifest.trees.length,7);
  assert.ok(TREE_MODEL_SOURCE_LINKS.pine);
  assert.equal(MATURE_TREE_MODELS.sakura.season,'spring');
  for(const model of manifest.trees){
@@ -32,7 +32,8 @@ test('verified sources match local tree paths and CC0 license',()=>{
   assert.equal(bytes.toString('ascii',0,4),'glTF');
   assert.equal(bytes.readUInt32LE(4),2);
   assert.equal(bytes.readUInt32LE(8),bytes.length);
-  const provenance=JSON.parse(readFileSync(new URL('../assets/landscape-models/'+model.species+'-mature-cc0.source.json',import.meta.url)));
+  const provenanceName=model.species==='ash'?'ash-terraintale-cc0.source.json':model.species+'-mature-cc0.source.json';
+  const provenance=JSON.parse(readFileSync(new URL('../assets/landscape-models/'+provenanceName,import.meta.url)));
   assert.equal(provenance.license,'CC0 1.0');
   assert.equal(provenance.species,model.species);
  }
@@ -55,7 +56,7 @@ test('compressed third-party GLBs are accepted on upload and project restore',()
 });
 
 test('new species use true 3D summer/spring GLBs and safe winter native crowns',()=>{
- assert.match(page,/\['birch','oak','maple','linden','apple','rowan','aspen'\]\.includes\(o\.catalogId\)/);
+ assert.match(page,/\['birch','oak','maple','linden','apple','rowan','aspen','ash'\]\.includes\(o\.catalogId\)/);
  assert.match(page,/o\.catalogId==='sakura'&&doc\.atmosphere\.season!=='spring'/);
  assert.match(page,/\['oak','maple','linden'\]\.includes\(o\.catalogId\)/);
 });
