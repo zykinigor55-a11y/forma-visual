@@ -34,7 +34,7 @@ test('CC0 origin is recorded and pine is the only automatic native-species overr
  assert.match(editor,/function loadMatureScotsPine\(\)/);
  assert.match(editor,/if\(o\.catalogId==='pine'&&!imported\)loadMatureScotsPine\(\)/);
  assert.match(editor,/const bundledPine=o\.catalogId==='pine'/);
- assert.match(editor,/const source=imported\|\|bundledPine\|\|null/);
+ assert.match(editor,/const source=imported\|\|bundledPine\|\|bundledAdult\|\|null/);
  assert.match(editor,/makeRealVegetation\(THREE,source,o,/);
  assert.match(editor,/setTranscoderPath\('\/assets\/three-basis\/'\)/);
  assert.match(editor,/setKTX2Loader\(pineKtx2\)/);
