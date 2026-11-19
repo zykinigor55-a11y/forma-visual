@@ -1,0 +1,40 @@
+name: FORMA · Pine growth sliders browser QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-pine-growth.js'
+      - 'forma-landscape-pine-geometry.js'
+      - 'forma-landscape-3d-models.js'
+      - 'forma-landscape-3d.html'
+      - 'forma-landscape-project-core.js'
+      - 'tests/landscape-pine-growth-browser.verify.mjs'
+      - '.github/workflows/forma-pine-growth-ui.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-pine-growth-qa
+  cancel-in-progress: true
+jobs:
+  ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: Change growth on one pine, save, reload, verify mobile inspector
+        run: |
+          node server.mjs > /tmp/forma-pine-growth-server.log 2>&1 &
+          sleep 2
+          node tests/landscape-pine-growth-browser.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-pine-growth-browser-qa
+          path: artifacts/landscape-editor/pine-growth-*.png
+          if-no-files-found: warn
