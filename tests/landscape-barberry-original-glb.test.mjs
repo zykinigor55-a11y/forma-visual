@@ -16,7 +16,7 @@ test('original Berberis thunbergii GLB pinned by SHA-256 with 10 PBR materials',
  assert.equal(bytes.toString('ascii',0,4),'glTF');
  assert.equal(bytes.readUInt32LE(4),2);
  assert.equal(bytes.readUInt32LE(8),bytes.length);
- assert.equal(bytes.length,1597580);
+ assert.equal(bytes.length,2927468);
  assert.equal(createHash('sha256').update(bytes).digest('hex'),source.sha256);
  const len=bytes.readUInt32LE(12);
  const gltf=JSON.parse(bytes.toString('utf8',20,20+len));
@@ -24,7 +24,9 @@ test('original Berberis thunbergii GLB pinned by SHA-256 with 10 PBR materials',
  assert.equal(gltf.materials.length,10);
  for(const part of ['plum','burgundy','ruby','bark','twig','thorn','fruit'])
   assert.ok(gltf.materials.some(m=>m.name.includes(part)),part);
- assert.equal(source.predictedTriangles,61200);
+ assert.equal(source.predictedTriangles,76628);
+ assert.equal(gltf.images.length,6,'Six small authored botanical leaf textures');
+ assert.equal(gltf.materials.filter(m=>m.alphaMode==='MASK').length,6,'Leaves use alpha-cutout PBR');
  assert.ok(CATALOG.some(c=>c.id==='barberry'&&c.group==='shrubs'));
 });
 test('barberry is selectable, season-appropriate, and editable in metres',()=>{

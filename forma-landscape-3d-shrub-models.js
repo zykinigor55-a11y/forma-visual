@@ -27,7 +27,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_barberry_thunbergii.py',
   license:'FORMA original authorship; no external source models',
   season:'summer',
-  fidelity:'own geometric foliage, twigs, thorns and red fruit; 61,200 triangles; PBR flat color materials, no photographs',
-  sha256:'c48442782b86411ac16275d82d2361e9af04ed06f2fd49b9334725d26cd4f362'
+  fidelity:'self-authored Berberis with alpha-cutout vein textures on attached burgundy leaves, thorny twigs and red fruit; 76,628 triangles; original GLB, not photo scan',
+  sha256:'87aaa5f8351a0bef5e674aaa54b0a694cd1d27385f20fd887f65ab1e5a5388e5'
  })
 });

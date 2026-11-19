@@ -49,6 +49,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- 'assets/landscape-models/barberry-thunberg-forma-original.glb' 'assets/landscape-models/barberry-thunberg-forma-original.source.json'
           if ! git diff --cached --quiet; then
-            git commit -m 'assets(barberry): build verified original 61K-triangle GLB with 10 PBR materials'
+            git commit -m 'assets(barberry): build verified botanical leaf-textured original GLB'
             git push origin HEAD:dom-render-nanobanana
           fi
