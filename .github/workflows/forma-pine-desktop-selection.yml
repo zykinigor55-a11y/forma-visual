@@ -1,0 +1,38 @@
+name: FORMA · Desktop pine click → inspector QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-3d.html'
+      - 'tests/landscape-pine-desktop-selection.verify.mjs'
+      - '.github/workflows/forma-pine-desktop-selection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-pine-desktop-selection
+  cancel-in-progress: true
+jobs:
+  desktop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: Click actual 3D pine on desktop and verify visible controls
+        run: |
+          node server.mjs > /tmp/forma-pine-desktop-server.log 2>&1 &
+          sleep 2
+          node tests/landscape-pine-desktop-selection.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-desktop-pine-click-screenshots
+          path: artifacts/landscape-editor/pine-desktop-*.png
+          if-no-files-found: warn
