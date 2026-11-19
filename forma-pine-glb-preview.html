@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FORMA | Mature Scots pine · GLB visual quality gate</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#d9dcd6;color:#24352f;font:14px system-ui,sans-serif}
+canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;top:16px;left:16px;background:#182723e0;color:#f5f4e7;border:1px solid #62756a;padding:13px 17px;border-radius:13px;max-width:260px;line-height:1.6}
+.overlay strong{letter-spacing:.14em}.overlay small{color:#b9c8bd}#result{margin-top:5px}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head>
+<body><canvas id="preview"></canvas><div class="overlay"><strong>FORMA · PINUS SYLVESTRIS</strong><div id="result">Загружаем реальную модель…</div><small>GLB CC0 · 14 × 7 м · текстура коры + хвоя</small></div>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {makeRealVegetation} from './forma-landscape-3d-models.js';
+const canvas=document.querySelector('#preview'),result=document.querySelector('#result');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,preserveDrawingBuffer:true});
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.setPixelRatio(1);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#d4d8d1');
+scene.fog=new THREE.Fog('#d4d8d1',55,90);
+scene.add(new THREE.HemisphereLight('#f4faff','#92a28d',2.1));
+const sun=new THREE.DirectionalLight('#ffedd5',3.0);
+sun.position.set(-17,26,16);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-15;sun.shadow.camera.right=15;
+sun.shadow.camera.top=20;sun.shadow.camera.bottom=-15;sun.shadow.normalBias=.03;
+scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(38,38),new THREE.MeshStandardMaterial({color:'#7e957b',roughness:1}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const camera=new THREE.PerspectiveCamera(34,1,.1,120);
+function resize(){
+ const w=Math.max(320,window.innerWidth),h=Math.max(360,window.innerHeight);
+ renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+function view(yaw=0,elev=.26,distance=27){
+ resize();
+ camera.position.set(Math.sin(yaw)*distance,7+Math.sin(elev)*distance,Math.cos(yaw)*distance);
+ camera.lookAt(0,7.4,0);renderer.render(scene,camera);
+}
+window.__pineView=view;
+window.addEventListener('resize',()=>view(window.__pineYaw||0));
+try{
+ const loaded=await new GLTFLoader().loadAsync('/assets/landscape-models/pine-mature-cc0.glb');
+ const group=makeRealVegetation(THREE,loaded.scene,{catalogId:'pine',height:14,diameter:7},{shareGeometry:true});
+ scene.add(group);
+ const box=new THREE.Box3().setFromObject(group),size=box.getSize(new THREE.Vector3());
+ let leafMaterials=0,barkMaterials=0,meshes=0;
+ group.traverse(o=>{if(!o.isMesh)return;meshes++;for(const m of (Array.isArray(o.material)?o.material:[o.material])){
+  if(m?.alphaTest>0||m?.transparent)leafMaterials++;else barkMaterials++;
+ }});
+ result.textContent='Готово · '+meshes+' меша · '+leafMaterials+' материала хвои · '+barkMaterials+' коры';
+ window.__pineDetails={meshes,leafMaterials,barkMaterials,height:size.y,diameter:Math.max(size.x,size.z)};
+ window.__pineReady=true;
+ view(0,.20);
+}catch(error){result.textContent='Ошибка: '+error.message;window.__pineError=String(error)}
+</script></body></html>
