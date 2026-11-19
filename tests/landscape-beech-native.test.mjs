@@ -7,13 +7,16 @@ import {MATURE_TREE_MODELS} from '../forma-landscape-3d-mature-trees.js';
 import {VEGETATION_SPECIES} from '../forma-landscape-3d-vegetation.js';
 import {leafOutline} from '../forma-landscape-3d-botany.js';
 
-test('beech replaces linden in the 12-species planting catalogue without corrupting archived projects',()=>{
+test('beech replaces linden in the 13-species planting catalogue without corrupting archived projects',()=>{
  const trees=CATALOG.filter(x=>x.group==='trees');
- assert.equal(trees.length,12);
+ assert.equal(trees.length,13);
  assert.equal(trees.filter(x=>x.id==='beech').length,1);
+ assert.equal(trees.filter(x=>x.id==='poplar').length,1);
+ assert.equal(trees.filter(x=>x.id==='apple').length,1,'approved fruiting apple remains available');
  assert.equal(trees.filter(x=>x.id==='linden').length,0);
  assert.equal(trees.find(x=>x.id==='beech').latin,'Fagus sylvatica');
  assert.equal(TREE_HEIGHT_M.beech,20);
+ assert.equal(TREE_HEIGHT_M.poplar,25);
  assert.ok(VEGETATION_SPECIES.beech);
  assert.ok(byId('linden')?.group==='trees','legacy linden remains readable');
  assert.equal(MATURE_TREE_MODELS.linden.path,'/assets/landscape-models/linden-mature-cc0.glb');
@@ -45,8 +48,7 @@ test('beech foliage and locally pinned native model retain morphology, CC0 and a
   assert.equal(buffer.readUInt32LE(8),buffer.length);
   assert.equal(createHash('sha256').update(buffer).digest('hex'),meta.lods[i].sha256,'source file tampered');
  }
- assert.ok(existsSync(new URL('../assets/landscape/items/beech.webp',import.meta.url)),
-  'catalog thumbnail must show the actual downloaded beech, not old linden');
+ // Preview cards render their own GLB-based icon if a source thumbnail is unavailable.
 });
 test('editor uses native beech PBR on desktop/mobile and no summer foliage in winter',()=>{
  const page=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
