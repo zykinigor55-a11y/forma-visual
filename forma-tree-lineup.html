@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FORMA · Все реальные 3D-деревья в ряд</title>
+<title>FORMA · Деревья, пересобранные в CODE 3D</title>
 <style>
 :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eeede8;background:#22262b}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
@@ -35,15 +35,16 @@ header{padding:12px 12px 30px;display:block}h1{font-size:20px}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
 </head><body>
-<div id="stage"><canvas id="view" aria-label="Десять настоящих трёхмерных деревьев стоят в один ряд на нейтральном газоне"></canvas></div>
-<header><div><div class="eyebrow">FORMA · Архитектурная лаборатория / ботаническая библиотека</div><h1>Настоящие 3D-деревья · один ряд</h1><p>Сосна, ель, берёза, дуб, клён, липа, сакура, яблоня, рябина и осина. Без подмены на картинки.</p></div><div class="top-actions">
+<div id="stage"><canvas id="view" aria-label="Десять настоящих трёхмерных деревьев, сосна и берёза пересобраны в 3D-коде на нейтральном газоне"></canvas></div>
+<header><div><div class="eyebrow">FORMA · Архитектурная лаборатория / ботаническая библиотека</div><h1>Деревья CODE 3D · сравнение моделей</h1><p>Сосна и берёза пересобраны из настоящей 3D-геометрии в коде. Остальные 8 видов — GLB. Можно открыть исходные модели для сравнения.</p></div><div class="top-actions">
 <a href="./forma-landscape-3d.html">↩ 3D-редактор</a>
+<a id="treeSourceCompare" href="?source=glb">Сравнить с исходными GLB</a>
 <button id="all" type="button" aria-pressed="true">Все 10</button>
 <button id="left" type="button" aria-pressed="false">Первые 5 крупно</button>
 <button id="right" type="button" aria-pressed="false">Следующие 5</button>
 </div></header>
-<div id="progress" role="status">Загружаются настоящие GLB-модели · 0/10</div>
-<div id="meta">Оригинальные GLB / CC0 · реальные материалы<br>Высота модели в метрах · крутите колесо для масштаба</div>
+<div id="progress" role="status">Подготавливается реальная 3D-геометрия · 0/10</div>
+<div id="meta">CODE 3D и GLB / CC0 · настоящая геометрия и PBR<br>Высота модели в метрах · крутите колесо для масштаба</div>
 <div id="hud"><div id="legend" aria-label="Виды деревьев и состояние загрузки"></div></div>
 <noscript><div id="noscript">Для 3D-просмотра нужен JavaScript и WebGL.</div></noscript>
 <script type="module">
@@ -55,6 +56,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {MATURE_TREE_MODELS} from './forma-landscape-3d-mature-trees.js';
 import {makeRealVegetation} from './forma-landscape-3d-models.js';
 import {normalizePineGrowth} from './forma-landscape-pine-growth.js';
+import {createCodeTree} from './forma-code-3d-trees.js';
 const specs=[
  ['pine','Сосна',14,6.8],
  ['spruce','Ель',16,6.5],
@@ -68,6 +70,9 @@ const specs=[
  ['aspen','Осина',15.61,7.61]
 ];
 const pitch=11.1,start=-(specs.length-1)*pitch/2;
+const originalGlb=new URL(location.href).searchParams.get('source')==='glb';
+document.querySelector('#treeSourceCompare').textContent=originalGlb?'Показать новые CODE 3D':'Сравнить с исходными GLB';
+document.querySelector('#treeSourceCompare').href=originalGlb?'?source=code':'?source=glb';
 const canvas=document.querySelector('#view'),indicator=document.querySelector('#progress');
 let done=0,loaded=0,failed=0;
 const detail=Object.create(null),trees=[];
@@ -127,11 +132,20 @@ function treeEntry(spec){
 async function loadTree(spec,i){
  const [id,name,height,diameter]=spec;
  try{
-  const gltf=await loader.loadAsync(treeEntry(spec));
-  const wrapper=makeRealVegetation(THREE,gltf.scene,{
-   catalogId:id,height,diameter,
-  },{shareGeometry:true,
-    ...(id==='pine'?{pineGrowth:normalizePineGrowth({age:60,pineType:'solitary'})}:{})});
+  const codeTree=!originalGlb&&(id==='pine'||id==='birch');
+  let wrapper;
+  if(codeTree){
+   wrapper=createCodeTree(THREE,{
+    id:'forma-lineup-'+id,catalogId:id,height,diameter,
+    pine:{age:60,pineType:'solitary'}
+   },{quality:'standard'});
+  }else{
+   const gltf=await loader.loadAsync(treeEntry(spec));
+   wrapper=makeRealVegetation(THREE,gltf.scene,{
+    catalogId:id,height,diameter,
+   },{shareGeometry:true,
+     ...(id==='pine'?{pineGrowth:normalizePineGrowth({age:60,pineType:'solitary'})}:{})});
+  }
   wrapper.position.set(start+i*pitch,0,0);
   wrapper.name='lineup-'+id;scene.add(wrapper);trees.push(wrapper);
   let meshCount=0,materials=new Set(),textures=0;
@@ -141,10 +155,13 @@ async function loadTree(spec,i){
     if(m){materials.add(m);if(m.map)textures++}
    }
   }});
-  detail[id]={loaded:true,meshCount,materialCount:materials.size,textureMeshes:textures,height,diameter,x:wrapper.position.x};
+  detail[id]={loaded:true,source:codeTree?'CODE 3D':'GLB',meshCount,
+   materialCount:materials.size,textureMeshes:textures,height,diameter,
+   branches:wrapper.userData.branchCount||0,leaves:wrapper.userData.leafCount||0,
+   needles:wrapper.userData.needlePairs||0,x:wrapper.position.x};
   loaded++;
   const state=legend.querySelector('[data-species="'+id+'"] .state');
-  state.textContent='GLB · '+meshCount+' мешей';state.className='state';
+  state.textContent=(codeTree?'CODE · '+(wrapper.userData.needlePairs||wrapper.userData.leafCount)+' элементов':'GLB · '+meshCount+' мешей');state.className='state';
  }catch(err){
   detail[id]={loaded:false,error:String(err?.message||err),x:start+i*pitch};
   failed++;
@@ -153,8 +170,9 @@ async function loadTree(spec,i){
   console.warn('FORMA tree model not loaded:',id,err);
  }finally{
   done++;
-  indicator.textContent=done<specs.length?'Настоящие GLB-деревья: '+loaded+'/10 · загрузка '+done+'/10':
-   failed?'Загружено '+loaded+'/10 · '+failed+' видов недоступно':'Готово · 10 настоящих 3D-деревьев в один ряд';
+  indicator.textContent=done<specs.length?'Деревья CODE 3D + GLB: '+loaded+'/10 · загрузка '+done+'/10':
+   failed?'Загружено '+loaded+'/10 · '+failed+' видов недоступно':
+    originalGlb?'Готово · 10 исходных GLB в один ряд':'Готово · 2 CODE 3D + 8 GLB в один ряд';
   window.__treeLineupReady=done===specs.length;paint();
  }
 }
