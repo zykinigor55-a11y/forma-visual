@@ -16,6 +16,14 @@ try{
  },null,{timeout:90000});
  await page.waitForFunction(()=>document.querySelectorAll('.rail-nav .rail-btn svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]').length>=6,null,{timeout:25000});
  await page.waitForFunction(()=>document.querySelectorAll('#formaStudioHome .fa-studio-task>svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]').length>=9,null,{timeout:25000});
+ // Regression: the user's screenshot showed the entire center missing.
+ // Mere presence in DOM is insufficient; assert actual onscreen visibility.
+ const center=page.locator('#formaStudioHome');
+ assert.ok(await center.isVisible(),'Main content panel must be visible, not blank');
+ const box=await center.boundingBox();
+ assert.ok(box&&box.width>300&&box.height>350,'Main cards must occupy real screen area: '+JSON.stringify(box));
+ const firstCard=page.locator('#formaStudioHome .fa-studio-task').first();
+ assert.ok(await firstCard.isVisible(),'At least one main card must be painted');
  await page.waitForFunction(()=>{
   const rail=document.querySelector('.rail-nav');
   return rail?.querySelector('.fa-interior-nav svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]')
