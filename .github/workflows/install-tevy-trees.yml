@@ -1,0 +1,46 @@
+name: FORMA · Install Tevy CC0 orchard and broadleaf trees
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/install-tevy-trees.yml'
+      - 'tools/install-tevy-trees.py'
+      - 'assets/landscape-models/tevy-trees.sources.json'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-install-cc0-tevy-trees
+  cancel-in-progress: false
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download and validate pinned 3D tree sources
+        run: python3 tools/install-tevy-trees.py
+      - name: Verify species registry and GLB header/season contract
+        run: node --test tests/landscape-tevy-tree-sources.test.mjs tests/landscape-curated-adult-trees.test.mjs
+      - name: Commit verified self-hosted CC0 models and audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/landscape-models/{apple,aspen,rowan}-mature-cc0.glb assets/landscape-models/{apple,aspen,rowan}-mature-cc0.source.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "assets(botany): add verified CC0 orchard apple aspen rowan trees"
+          for i in 1 2 3 4 5; do
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            if git push origin HEAD:dom-render-nanobanana; then exit 0; fi
+            sleep "$((i * 2))"
+          done
+          exit 1
