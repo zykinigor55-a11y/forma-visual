@@ -1,11 +1,12 @@
-/* FORMA · genuine, adjustable extra pine branch geometry and PBR needle sprays.
- * Supplement the CC0 GLB; never change the source trunk or licensed mesh data.
- * Branches and textured needle cards are InstancedMesh (two draw calls at most).
+/* FORMA · editable mature Scots pine. Instanced 3D branchlets and
+ * tapered evergreen needle clusters complement the untouched CC0 GLB.
+ * Zero additions return the exact original PBR tree.
  */
 import {normalizePineGrowth} from './forma-landscape-pine-growth.js';
 
-function seededRandom(seed){
- let n=(seed>>>0)||1;
+const clamp=(v,low,high)=>Math.max(low,Math.min(high,v));
+function makeRandom(seed){
+ let n=seed>>>0||1;
  return ()=>{
   n+=0x6d2b79f5;
   let t=n;t=Math.imul(t^(t>>>15),t|1);
@@ -13,127 +14,122 @@ function seededRandom(seed){
   return ((t^(t>>>14))>>>0)/4294967296;
  };
 }
-function materialFor(source,type){
- let found=null;
- source.traverse(node=>{
-  if(found||!node.isMesh)return;
-  for(const m of (Array.isArray(node.material)?node.material:[node.material])){
-   if(!m)continue;
-   const needles=(m.alphaTest>0||m.transparent);
-   if((type==='needle'&&needles)||(type==='bark'&&!needles)){found=m;break}
-  }
- });
- return found;
+function stableIdHash(id){
+ let hash=2166136261;
+ for(const c of String(id||'')){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619)}
+ return hash>>>0;
 }
-const limit=(n,min,max)=>Math.max(min,Math.min(max,n));
-
-export function makePineExtraGrowth(T,source,instance,settings){
- const p=normalizePineGrowth(settings);
- if(!Number.isFinite(Number(instance?.height))||!Number.isFinite(Number(instance?.diameter)))return null;
- const height=limit(Number(instance.height),2,40),radius=limit(Number(instance.diameter)/2,.25,15);
- const branchCount=Math.round(p.branchDensity*.45);
- const spraysCount=Math.round(p.needleDensity*3.0);
- if(!branchCount&&!spraysCount)return null;
- const g=new T.Group();
- g.name='pine-extra-growth';
- g.userData.pineExtra=true;
- const rand=seededRandom((p.seed*9719+(instance.variant||1)*7919+11719)>>>0);
- const needleMatSource=materialFor(source,'needle'),barkMatSource=materialFor(source,'bark');
- const needles=needleMatSource?.map||needleMatSource?.alphaMap||null;
- // PBR bark is reused from the author's tree. The cylinder's small UVs are
- // sufficient because limbs are only a few centimetres wide.
- const bark=barkMatSource?.clone()||new T.MeshStandardMaterial({color:0x805947,roughness:1});
- bark.roughness=Math.max(.82,bark.roughness??.93);
- const branchGeometry=new T.CylinderGeometry(.56,1,1,6,1);
- const segmentCount=branchCount*2;
- const wood=branchCount?new T.InstancedMesh(branchGeometry,bark,segmentCount):null;
- if(wood){wood.name='pine-extra-real-branches';wood.castShadow=true;wood.receiveShadow=true}
- const axes=new T.Vector3(0,1,0);
- const start=new T.Vector3(),middle=new T.Vector3(),end=new T.Vector3();
- const dummy=new T.Object3D();
- let segmentIdx=0;
- const setSegment=(a,b,r)=>{
-  if(!wood)return;
-  const direction=b.clone().sub(a);
-  const length=direction.length();
-  if(length<.005)return;
-  dummy.position.copy(a).add(b).multiplyScalar(.5);
-  dummy.quaternion.setFromUnitVectors(axes,direction.normalize());
-  dummy.scale.set(r,length,r);dummy.updateMatrix();
-  wood.setMatrixAt(segmentIdx++,dummy.matrix);
- };
- const anchors=[];
- const growingBase=height*p.crownBase/100;
- const growHeight=Math.max(.3,height-growingBase);
- const widthFactor=.70+.30*(p.crownSpread-70)/70;
- const angleSeed=rand()*Math.PI*2;
- // Staggered whorls with crown taper at the top, broader in the middle.
- const count=Math.max(branchCount,Math.min(45,Math.round(spraysCount/15)));
- for(let i=0;i<count;i++){
-  const t=(i+.4+rand()*.25)/count;
-  const level=limit(growingBase+t*growHeight,height*.15,height*.975);
-  const theta=angleSeed+i*2.39996323+(rand()-.5)*p.irregularity*.045;
-  const asym=(rand()-.5)*p.irregularity/100;
-  const crownProfile=limit(Math.sin(Math.PI*(.18+t*.78)),.15,1);
-  const reach=radius*widthFactor*crownProfile*(.67+rand()*.26+asym);
-  const outward=Math.max(.18,reach);
-  const tilt=(rand()-.5)*height*(.012+p.irregularity*.0002);
-  start.set(Math.sin(theta)*height*.006,level-Math.min(.35,height*.03),Math.cos(theta)*height*.006);
-  middle.set(Math.cos(theta)*outward*.59,level+tilt*.5,Math.sin(theta)*outward*.59);
-  end.set(Math.cos(theta)*outward,level+tilt+height*.014,Math.sin(theta)*outward);
-  const branchRadius=limit(height*(.0038+(1-t)*.0032),.012,.09);
-  if(i<branchCount){
-   setSegment(start,middle,branchRadius);
-   setSegment(middle,end,branchRadius*.49);
+/** A small tapered *three-dimensional* pine shoot, never a black alpha quad.
+ * 36 real blades are crossed in space at various elevations, so they retain
+ * volume from 2D overhead and Walk mode. One shared geometry is instanced
+ * for the entire tree; there is no draw call per blade.
+ */
+export function makePineNeedleSprayGeometry(T){
+ const p=[];
+ for(let tier=0;tier<4;tier++){
+  const advance=tier*.17;
+  for(let k=0;k<9;k++){
+   const angle=(k+tier*.44)*Math.PI*2/9;
+   const reach=(.33+(k%3)*.045)*(1-tier*.12);
+   const tipY=advance+.06+Math.sin(angle*2.2)*.10;
+   const baseX=Math.cos(angle)*.06,baseZ=Math.sin(angle)*.06;
+   const tipX=Math.cos(angle)*reach,tipZ=Math.sin(angle)*reach;
+   const sideX=-Math.sin(angle)*.022,sideZ=Math.cos(angle)*.022;
+   p.push(baseX,advance-.11,baseZ,
+    tipX+sideX,tipY,tipZ+sideZ,
+    tipX-sideX,tipY-.012,tipZ-sideZ);
   }
-  anchors.push({x:end.x,y:end.y,z:end.z,theta,radius:outward,t});
  }
- if(wood){
-  wood.count=segmentIdx;
-  wood.instanceMatrix.needsUpdate=true;
-  g.add(wood);
- }else{branchGeometry.dispose();bark.dispose()}
+ const geom=new T.BufferGeometry();
+ geom.setAttribute('position',new T.Float32BufferAttribute(p,3));
+ geom.computeVertexNormals();
+ return geom;
+}
+export function makePineExtraGrowth(T,source,instance,settings){
+ const growth=normalizePineGrowth(settings);
+ if(!Number.isFinite(Number(instance?.height))||!Number.isFinite(Number(instance?.diameter)))return null;
+ const height=clamp(Number(instance.height),2,40);
+ const crownRadius=clamp(Number(instance.diameter)/2,.25,15);
+ const branchCount=Math.round(growth.branchDensity*.25);
+ const spraysCount=Math.round(growth.needleDensity*2.2);
+ if(!branchCount&&!spraysCount)return null;
+
+ const tree=new T.Group();
+ tree.name='pine-extra-growth';
+ tree.userData.pineExtra=true;
+ const rng=makeRandom((growth.seed*9719+stableIdHash(instance.id)*7919+(instance.variant||1)*97)>>>0);
+ const branchGeom=new T.CylinderGeometry(.58,1,1,7,1);
+ // Preserve PBR bark on the source GLB; its own narrow bark UV atlas does not
+ // fit procedural side shoots. Use a subtle warm-brown rough matte here, not
+ // the original atlas wrapped into nearly-black streaks.
+ const bark=new T.MeshStandardMaterial({color:'#927153',roughness:.97,metalness:0});
+ const wood=branchCount?new T.InstancedMesh(branchGeom,bark,branchCount*2):null;
+ if(wood){wood.name='pine-extra-real-branches';wood.castShadow=false;wood.receiveShadow=false;}
+ const up=new T.Vector3(0,1,0),start=new T.Vector3(),mid=new T.Vector3(),tip=new T.Vector3(),dummy=new T.Object3D();
+ let segmentIndex=0;
+ function segment(a,b,r){
+  if(!wood)return;
+  const dir=b.clone().sub(a),len=dir.length();
+  if(len<.01)return;
+  dummy.position.copy(a).add(b).multiplyScalar(.5);
+  dummy.quaternion.setFromUnitVectors(up,dir.normalize());
+  dummy.scale.set(r,len,r);dummy.updateMatrix();
+  wood.setMatrixAt(segmentIndex++,dummy.matrix);
+ }
+ const base=height*growth.crownBase/100;
+ const crownH=Math.max(.5,height-base);
+ const breadth=.70+.30*(growth.crownSpread-70)/70;
+ const anchors=[],angle0=rng()*Math.PI*2;
+ const count=Math.max(1,branchCount,Math.min(32,Math.ceil(spraysCount/14)));
+ for(let i=0;i<count;i++){
+  const t=(i+.3+rng()*.38)/count;
+  const y=clamp(base+t*crownH,height*.18,height*.96);
+  const angle=angle0+i*2.3999632297+(rng()-.5)*growth.irregularity*.04;
+  const variation=(rng()-.5)*growth.irregularity/100;
+  const crownProfile=clamp(Math.sin(Math.PI*(.12+.82*t)),.18,1);
+  const reach=crownRadius*breadth*crownProfile*(.66+rng()*.22+variation);
+  const length=Math.max(.15,reach);
+  const rise=(rng()-.5)*height*(.014+growth.irregularity*.00028);
+  start.set(Math.sin(angle)*.025,y-.10,Math.cos(angle)*.025);
+  mid.set(Math.cos(angle)*length*.54,y+rise*.47,Math.sin(angle)*length*.54);
+  tip.set(Math.cos(angle)*length,y+rise+height*.012,Math.sin(angle)*length);
+  if(i<branchCount){
+   const thickness=clamp(height*(.0021+(1-t)*.0016),.012,.055);
+   segment(start,mid,thickness);
+   segment(mid,tip,thickness*.55);
+  }
+  anchors.push({x:tip.x,y:tip.y,z:tip.z,angle,reach:length});
+ }
+ if(wood){wood.count=segmentIndex;wood.instanceMatrix.needsUpdate=true;tree.add(wood)}
+ else{branchGeom.dispose();bark.dispose()}
+
  if(spraysCount){
-  // Reuse alpha-cut needle photography already present in the imported GLB.
-  // If no alpha image was supplied, narrow dark green sprays remain drawable
-  // without inventing a photographic source.
-  const leaf=needleMatSource?.clone()||new T.MeshStandardMaterial({color:'#375e3b',roughness:1});
-  leaf.side=T.DoubleSide;leaf.depthWrite=true;leaf.transparent=false;
-  if(needles){
-   if(!leaf.map)leaf.map=needles;
-   leaf.alphaTest=Math.max(.24,leaf.alphaTest||.24);
-  }else leaf.color=new T.Color('#3b6445');
-  leaf.roughness=1;
-  const sprayGeom=new T.PlaneGeometry(1,1);
-  const cards=new T.InstancedMesh(sprayGeom,leaf,spraysCount*2);
-  cards.name='pine-extra-photo-needles';
-  cards.castShadow=false;cards.receiveShadow=true;
-  const stem=new T.Vector3(),spin=new T.Euler();
-  let idx=0;
+  const greens=['#406a48','#365e42','#51774c','#456d43','#597953','#3b644b'];
+  const needleGeom=makePineNeedleSprayGeometry(T);
+  const needleMat=new T.MeshStandardMaterial({color:'#ffffff',roughness:.98,metalness:0,side:T.DoubleSide});
+  const shoots=new T.InstancedMesh(needleGeom,needleMat,spraysCount);
+  shoots.name='pine-extra-real-needles';shoots.castShadow=false;shoots.receiveShadow=true;
+  const stem=new T.Vector3(),angles=new T.Euler();
   for(let i=0;i<spraysCount;i++){
    const a=anchors[i%anchors.length];
-   const dist=.72+rand()*.22;
-   const tangent=(rand()-.5)*.18*radius;
-   stem.set(
-    a.x*dist-Math.sin(a.theta)*tangent,
-    limit(a.y+(rand()-.5)*height*.055,growingBase*.90,height*.987),
-    a.z*dist+Math.cos(a.theta)*tangent
-   );
-   const breadth=limit((.19+rand()*.19)*(height/14)**.23,.16,.55);
-   for(let j=0;j<2;j++){
-    dummy.position.copy(stem);
-    // Crossed real alpha-cut needles preserve volume when viewed from any side.
-    spin.set((rand()-.5)*.65,a.theta+j*Math.PI/2+(rand()-.5)*.45,(rand()-.5)*.4,'YXZ');
-    dummy.quaternion.setFromEuler(spin);
-    dummy.scale.set(breadth,breadth*(1.25+rand()*.65),1);dummy.updateMatrix();
-    cards.setMatrixAt(idx++,dummy.matrix);
-   }
+   const fraction=.62+rng()*.32,tangent=(rng()-.5)*crownRadius*.15;
+   stem.set(a.x*fraction-Math.sin(a.angle)*tangent,
+    clamp(a.y+(rng()-.5)*height*.06,base*.93,height*.99),
+    a.z*fraction+Math.cos(a.angle)*tangent);
+   dummy.position.copy(stem);
+   angles.set((rng()-.5)*.72,a.angle+(rng()-.5)*1.9,(rng()-.5)*.60,'YXZ');
+   dummy.quaternion.setFromEuler(angles);
+   const spread=clamp((.66+rng()*.28)*(height/14)**.16,.36,1.2);
+   dummy.scale.set(spread,spread,spread);dummy.updateMatrix();
+   shoots.setMatrixAt(i,dummy.matrix);
+   shoots.setColorAt(i,new T.Color(greens[Math.floor(rng()*greens.length)]));
   }
-  cards.instanceMatrix.needsUpdate=true;
-  g.add(cards);
+  shoots.instanceMatrix.needsUpdate=true;
+  if(shoots.instanceColor)shoots.instanceColor.needsUpdate=true;
+  tree.add(shoots);
  }
- g.userData.pineExtraBranches=branchCount;
- g.userData.pineExtraNeedleCards=spraysCount*2;
- g.userData.pineGrowth={...p};
- return g;
+ tree.userData.pineExtraBranches=branchCount;
+ tree.userData.pineExtraNeedleClusters=spraysCount;
+ tree.userData.pineGrowth={...growth};
+ return tree;
 }
