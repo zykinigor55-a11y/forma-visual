@@ -39,6 +39,8 @@ header{padding:12px 12px 30px;display:block}h1{font-size:20px}
 <header><div><div class="eyebrow">FORMA · Архитектурная лаборатория / ботаническая библиотека</div><h1>Деревья CODE 3D · сравнение моделей</h1><p>Сосна и берёза пересобраны из настоящей 3D-геометрии в коде. Остальные 8 видов — GLB. Можно открыть исходные модели для сравнения.</p></div><div class="top-actions">
 <a href="./forma-landscape-3d.html">↩ 3D-редактор</a>
 <a id="treeSourceCompare" href="?source=glb">Сравнить с исходными GLB</a>
+<button type="button" id="saveCodePine" disabled>Скачать сосну · GLB</button>
+<button type="button" id="saveCodeBirch" disabled>Скачать берёзу · GLB</button>
 <button id="all" type="button" aria-pressed="true">Все 10</button>
 <button id="left" type="button" aria-pressed="false">Первые 5 крупно</button>
 <button id="right" type="button" aria-pressed="false">Следующие 5</button>
@@ -53,6 +55,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {MATURE_TREE_MODELS} from './forma-landscape-3d-mature-trees.js';
 import {makeRealVegetation} from './forma-landscape-3d-models.js';
 import {normalizePineGrowth} from './forma-landscape-pine-growth.js';
@@ -73,9 +76,31 @@ const pitch=11.1,start=-(specs.length-1)*pitch/2;
 const originalGlb=new URL(location.href).searchParams.get('source')==='glb';
 document.querySelector('#treeSourceCompare').textContent=originalGlb?'Показать новые CODE 3D':'Сравнить с исходными GLB';
 document.querySelector('#treeSourceCompare').href=originalGlb?'?source=code':'?source=glb';
+for(const id of ['saveCodePine','saveCodeBirch'])document.querySelector('#'+id).hidden=originalGlb;
 const canvas=document.querySelector('#view'),indicator=document.querySelector('#progress');
 let done=0,loaded=0,failed=0;
 const detail=Object.create(null),trees=[];
+const modelNodes=new Map();
+const exporter=new GLTFExporter();
+async function saveModelGlb(species){
+ const source=modelNodes.get(species),button=document.querySelector('#saveCode'+(species==='pine'?'Pine':'Birch'));
+ if(!source||source.userData.code3D!==true)return;
+ button.disabled=true;const previous=button.textContent;button.textContent='Экспортируем GLB…';
+ try{
+  const clone=source.clone(true);clone.position.set(0,0,0);
+  const binary=await new Promise((resolve,reject)=>exporter.parse(clone,resolve,reject,{
+   binary:true,trs:true,onlyVisible:true,includeCustomExtensions:true,maxTextureSize:1024
+  }));
+  if(!(binary instanceof ArrayBuffer)||binary.byteLength<5000)throw Error('GLB пустой');
+  const blob=new Blob([binary],{type:'model/gltf-binary'}),url=URL.createObjectURL(blob);
+  const anchor=document.createElement('a');anchor.href=url;
+  anchor.download='FORMA_CODE3D_'+species+'.glb';document.body.append(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1200);
+ }catch(error){console.error('FORMA CODE 3D GLB export',species,error);alert('Ошибка экспорта: '+error.message)}
+ finally{button.disabled=false;button.textContent=previous}
+}
+document.querySelector('#saveCodePine').onclick=()=>saveModelGlb('pine');
+document.querySelector('#saveCodeBirch').onclick=()=>saveModelGlb('birch');
 const legend=document.querySelector('#legend');
 legend.innerHTML=specs.map(([id,name,h],i)=>'<button type="button" data-species="'+id+'" title="'+name+' · '+h+' м"><span class="num">'+String(i+1).padStart(2,'0')+'</span><span class="title">'+name+'</span><span class="height">'+h.toFixed(1)+' м</span><span class="state">Загрузка…</span></button>').join('');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
@@ -148,6 +173,8 @@ async function loadTree(spec,i){
   }
   wrapper.position.set(start+i*pitch,0,0);
   wrapper.name='lineup-'+id;scene.add(wrapper);trees.push(wrapper);
+  modelNodes.set(id,wrapper);
+  if(codeTree)document.querySelector('#saveCode'+(id==='pine'?'Pine':'Birch')).disabled=false;
   let meshCount=0,materials=new Set(),textures=0;
   wrapper.traverse(node=>{if(node.isMesh){
    meshCount++;
