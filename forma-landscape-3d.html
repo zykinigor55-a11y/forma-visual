@@ -888,11 +888,11 @@ function drawObject(o,entry,key){
    (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring');
   // Detailed CC0 broadleaves can have hundreds of meshes; on crowded
   // phones prefer instanced botanical native trees to prevent freezes.
-  // Keep the original self-hosted Scots pine and European aspen PBR GLBs
-  // even when mobile scenes contain several additional plants.
-  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen'].includes(o.catalogId)&&
+  // Keep self-hosted Scots pine, aspen, spruce and birch PBR GLBs
+  // on phones even after planting more trees or automatic quality reduction.
+  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&
    (['oak','maple','linden'].includes(o.catalogId)?currentPlantCount>2:currentPlantCount>6);
-  const performanceFallback=!['pine','aspen'].includes(o.catalogId)&&window.innerWidth<=850&&
+  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&window.innerWidth<=850&&
    (((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree);
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
