@@ -65,7 +65,8 @@ test('compressed third-party GLBs are accepted on upload and project restore',()
 });
 
 test('new species use true 3D summer/spring GLBs and safe winter native crowns',()=>{
- assert.match(page,/\['birch','oak','maple','linden','apple','rowan','aspen','ash'\]\.includes\(o\.catalogId\)/);
+ assert.match(page,/\['birch','oak','maple','linden','apple','rowan','aspen'\]\.includes\(o\.catalogId\)/);
  assert.match(page,/o\.catalogId==='sakura'&&doc\.atmosphere\.season!=='spring'/);
+ assert.match(page,/doc\.atmosphere\.season==='winter'&&o\.catalogId==='ash'/,'ash retains leafless native winter mode');
  assert.match(page,/\['oak','maple','linden'\]\.includes\(o\.catalogId\)/);
 });
