@@ -53,7 +53,20 @@ export function applyPremiumSiteIcons(){
    button.classList.contains('fa-interior-nav')?'interior':
    button.classList.contains('fa-flow-rail')?'nodes':
    button.classList.contains('fa-pro-nav-launch')?'settings':null;
-  upgradeCompactRail(button,icon);
+  // Dynamic extensions can add their own rail entry after the app boots.
+  // Never leave those entries with missing or thin generic symbols.
+  const name=(button.textContent||button.title||'').toLowerCase();
+  const inferred=/интерьер/.test(name)?'interior':
+   /озелен|растен|благоустр|ландшафт/.test(name)?'trees':
+   /атмосфер|погод|врем/.test(name)?'atmosphere':
+   /сценари|нод|связ/.test(name)?'nodes':
+   /кадр|галере/.test(name)?'gallery':
+   /анимац|видео/.test(name)?'animation':
+   /материал/.test(name)?'materials':
+   /проект/.test(name)?'project':
+   /рендер|экстерьер/.test(name)?'build':
+   /настрой/.test(name)?'settings':'tools';
+  upgradeCompactRail(button,icon||inferred);
  });
  document.querySelectorAll('.mobile-nav button').forEach(button=>{
   const icon=button.dataset.mobile?NAV_IDS[button.dataset.mobile]:
