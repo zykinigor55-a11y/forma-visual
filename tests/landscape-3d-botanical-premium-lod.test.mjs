@@ -44,7 +44,8 @@ test('layer switching uses real near instanced geometry and keeps fallback folia
  assert.equal(nodes[0].visible,true);
  assert.equal(nodes[1].visible,true,'real 3D leaves for closeups');
  assert.equal(nodes[2].visible,true,'curved 3D micro-sprigs for volume');
- assert.equal(nodes[3].visible,false,'no paper cards near camera');
+ assert.equal(nodes[3].visible,true,'near view combines real 3D leaves with restrained photo-alpha cutouts');
+ assert.ok(nodes[3].count<35,'near photo detail remains a minority of all foliage sprites');
  setFoliageTier(group,'far');
  assert.equal(nodes[1].visible,false);
  assert.equal(nodes[2].visible,false);
