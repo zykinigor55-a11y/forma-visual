@@ -3,6 +3,7 @@
  * are same graphite/bronze SVG system as Landscape Project.
  */
 import {premiumIcon} from './forma-premium-icons.js';
+import {mainNavIcon} from './forma-main-nav-icons.js';
 const NAV_IDS=Object.freeze({
  project:'project',environment:'build',materials:'materials',
  animation:'animation',variants:'gallery',parameters:'settings'
@@ -30,6 +31,18 @@ function upgradeButton(button,id){
  if(legacy)legacy.outerHTML=markup;
  else button.insertAdjacentHTML('afterbegin',markup);
 }
+function upgradeCompactRail(button,id){
+ if(!button||!id)return;
+ const existing=button.querySelector('svg.forma-premium-icon');
+ if(existing?.dataset.formaRev==='main-atelier-v3')return;
+ const rendered=mainNavIcon(id);
+ if(existing)existing.outerHTML=rendered;
+ else{
+  const legacy=button.querySelector('svg.ico');
+  if(legacy)legacy.outerHTML=rendered;
+  else button.insertAdjacentHTML('afterbegin',rendered);
+ }
+}
 export function applyPremiumSiteIcons(){
  // Rail includes buttons injected AFTER boot by Interior, Landscape,
  // Atmosphere and Scenarios. They have no data-nav attribute, so the old
@@ -40,13 +53,13 @@ export function applyPremiumSiteIcons(){
    button.classList.contains('fa-interior-nav')?'interior':
    button.classList.contains('fa-flow-rail')?'nodes':
    button.classList.contains('fa-pro-nav-launch')?'settings':null;
-  upgradeButton(button,icon);
+  upgradeCompactRail(button,icon);
  });
  document.querySelectorAll('.mobile-nav button').forEach(button=>{
   const icon=button.dataset.mobile?NAV_IDS[button.dataset.mobile]:
    button.classList.contains('fa-interior-mobile')?'interior':
    button.classList.contains('fa-flow-mobile')?'nodes':null;
-  upgradeButton(button,icon);
+  upgradeCompactRail(button,icon);
  });
  document.querySelectorAll('.tool-btn[data-tool]').forEach(button=>
   upgradeButton(button,TOOLS[button.dataset.tool]));
