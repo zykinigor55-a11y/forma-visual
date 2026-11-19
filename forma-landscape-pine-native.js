@@ -109,6 +109,37 @@ function nativeSection(T,original,categoryName,profile){
  for(const [name,{out,itemSize}] of Object.entries(data)){
   next.setAttribute(name,new T.BufferAttribute(out,itemSize,false));
  }
+ // BufferGeometry.toNonIndexed() retains native glTF material groups, but
+ // a new BufferGeometry has none. Without transferring them, a mesh with
+ // multiple glTF materials loses its needles/branch patches when edited.
+ // Preserve every source range and tag transplanted triangles with the
+ // material index of their original native triangle.
+ if(expanded.groups?.length){
+  for(const group of expanded.groups){
+   next.addGroup(group.start,group.count,group.materialIndex);
+  }
+  const materialOf=triangle=>{
+   const match=expanded.groups.find(group=>
+    triangle>=group.start&&triangle<group.start+group.count);
+   return match?.materialIndex??0;
+  };
+  let offset=pos.count;
+  for(let k=0;k<profile.copies;k++){
+   let runStart=offset,runCount=0,activeMaterial=null;
+   for(const triangle of triangles){
+    const currentMaterial=materialOf(triangle);
+    if(runCount&&currentMaterial!==activeMaterial){
+     next.addGroup(runStart,runCount,activeMaterial);
+     runStart+=runCount;
+     runCount=0;
+    }
+    activeMaterial=currentMaterial;
+    runCount+=3;
+   }
+   if(runCount)next.addGroup(runStart,runCount,activeMaterial);
+   offset+=triangles.length*3;
+  }
+ }
  next.computeBoundingBox();next.computeBoundingSphere();
  expanded.dispose();
  return next;
