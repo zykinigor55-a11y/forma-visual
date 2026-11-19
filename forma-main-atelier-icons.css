@@ -1,0 +1,119 @@
+/* FORMA · ATELIER — premium main-page icon styling, 19 Nov 2026.
+   Only the main studio navigation and home cards. No changes to 3D editor. */
+body.fa-unified-studio .app{grid-template-columns:88px minmax(0,1fr)!important}
+body.fa-unified-studio .rail{
+ width:88px!important;padding-inline:7px!important;
+ background:linear-gradient(180deg,#242a28,#1b2020 64%,#191e1d)!important;
+ border-right:1px solid #4d5049!important;
+ box-shadow:4px 0 25px rgba(0,0,0,.12)!important
+}
+body.fa-unified-studio .rail-nav{display:flex!important;flex-direction:column;align-items:stretch;gap:8px!important}
+body.fa-unified-studio .rail-nav>.rail-btn{
+ position:relative;display:flex!important;flex-direction:column;align-items:center;justify-content:center;
+ gap:3px;min-height:78px!important;width:100%!important;padding:8px 2px!important;
+ background:linear-gradient(155deg,#303832,#252d29 52%,#1c2421)!important;
+ border:1px solid #52594f!important;border-radius:12px!important;
+ box-shadow:inset 0 1px 0 #fff8e31b,0 4px 10px #060c0b3b!important;
+ color:#d3d8d0!important;transition:transform .18s,border-color .18s,background .18s
+}
+body.fa-unified-studio .rail-nav>.rail-btn:before{
+ content:'';position:absolute;inset:3px;border:1px solid #bb9b6b33;
+ border-radius:9px;pointer-events:none
+}
+body.fa-unified-studio .rail-nav>.rail-btn:is(:hover,.active){
+ background:linear-gradient(145deg,#484439,#373830 52%,#252c27)!important;
+ border-color:#c1a27d!important;color:#f9edda!important;
+ box-shadow:inset 0 1px 0 #ead0a537,0 7px 15px #03060576!important;
+ transform:translateY(-1px)
+}
+body.fa-unified-studio .rail-nav .rail-name{
+ font-size:9px!important;line-height:1.1!important;letter-spacing:.015em;
+ font-weight:620!important;white-space:nowrap;color:inherit!important
+}
+body.fa-unified-studio .rail-nav>.rail-btn svg.forma-premium-icon{
+ display:block!important;position:relative!important;flex:0 0 42px!important;
+ width:42px!important;height:42px!important;max-width:42px!important;
+ margin:0 auto 2px!important;opacity:1!important;visibility:visible!important;
+ filter:drop-shadow(0 4px 3px rgba(0,0,0,.44))!important
+}
+body.fa-unified-studio .rail-nav>.rail-btn .ico{
+ display:block!important;width:33px!important;height:33px!important;
+ opacity:1!important;visibility:visible!important
+}
+body.fa-unified-studio .rail-nav>.rail-btn:focus-visible{
+ outline:2px solid #ebc897!important;outline-offset:3px!important
+}
+/* MAIN cards: materials and icon ornaments evoke machined bronze on graphite,
+   not a bright golden overlay; the descriptions remain the visual priority. */
+#formaStudioHome .fa-studio-task-grid{gap:15px!important}
+#formaStudioHome .fa-studio-task{
+ min-height:158px!important;gap:8px!important;padding:21px 21px 18px!important;
+ border-radius:14px!important;border:1px solid #4b514a!important;
+ color:#f1ede5!important;
+ background:linear-gradient(154deg,#343835 0%,#2a2f2b 49%,#252a27 100%)!important;
+ box-shadow:inset 0 1px 0 #fff2d315,0 7px 24px #050a0936!important;
+ overflow:hidden;isolation:isolate;
+ transition:transform .2s,border-color .2s,box-shadow .2s,background .2s!important
+}
+#formaStudioHome .fa-studio-task:before{
+ content:'';display:block!important;position:absolute;left:0;right:0;top:0;height:1px;
+ border:0!important;background:linear-gradient(90deg,transparent,#cfb18775,transparent)!important;
+ transform:none!important;pointer-events:none
+}
+#formaStudioHome .fa-studio-task:after{
+ content:'';display:block!important;position:absolute;right:22px;top:auto;bottom:21px;
+ width:8px;height:8px;border:0!important;
+ border-top:1px solid #c0a781!important;border-right:1px solid #c0a781!important;
+ transform:rotate(45deg)!important;pointer-events:none
+}
+#formaStudioHome .fa-studio-task:hover,#formaStudioHome .fa-studio-task:focus-visible{
+ transform:translateY(-2px)!important;border-color:#b79b75!important;
+ box-shadow:inset 0 1px 0 #fae3be24,0 12px 31px #02050468!important;
+ background:linear-gradient(154deg,#3b413b,#2d342d 51%,#242d26)!important
+}
+#formaStudioHome .fa-studio-task>svg.forma-premium-icon{
+ display:block!important;position:relative;width:52px!important;height:52px!important;
+ max-width:52px!important;flex:0 0 52px!important;margin:0 0 4px!important;
+ opacity:1!important;visibility:visible!important;overflow:visible!important;
+ filter:drop-shadow(0 5px 5px #04090774)!important
+}
+#formaStudioHome .fa-studio-task>strong{
+ font-size:15px!important;line-height:1.25!important;font-weight:650!important;
+ color:#f0eee7!important;letter-spacing:-.015em!important
+}
+#formaStudioHome .fa-studio-task>small{
+ color:#afb9ad!important;line-height:1.5!important;font-size:10.5px!important;
+ max-width:92%
+}
+#formaStudioHome .fa-studio-task>span{display:none!important}
+#formaStudioHome .fa-studio-utilities svg.forma-premium-icon,
+#formaStudioHome .fa-studio-recent svg.forma-premium-icon{
+ display:inline-block!important;opacity:1!important;visibility:visible!important;
+ width:35px!important;height:35px!important;flex:0 0 35px!important
+}
+.fa-home-panel .fa-home-tool-icon svg.forma-premium-icon{
+ display:block!important;width:52px!important;height:52px!important;
+ opacity:1!important;visibility:visible!important
+}
+.mobile-nav button svg.forma-premium-icon{
+ display:block!important;width:34px!important;height:34px!important;
+ opacity:1!important;visibility:visible!important
+}
+@media(max-width:1100px){
+ body.fa-unified-studio .app{grid-template-columns:80px minmax(0,1fr)!important}
+ body.fa-unified-studio .rail{width:80px!important;padding-inline:5px!important}
+ body.fa-unified-studio .rail-nav>.rail-btn{min-height:72px!important}
+ body.fa-unified-studio .rail-nav>.rail-btn svg.forma-premium-icon{width:38px!important;height:38px!important;flex-basis:38px!important}
+ #formaStudioHome .fa-studio-task{padding:17px 16px!important;min-height:145px!important}
+}
+@media(max-width:760px){
+ body.fa-unified-studio .app{display:block!important}
+ body.fa-unified-studio .rail{display:none!important}
+ #formaStudioHome .fa-studio-task{min-height:145px!important;padding:15px 13px!important}
+ #formaStudioHome .fa-studio-task>svg.forma-premium-icon{width:47px!important;height:47px!important;flex-basis:47px!important}
+ #formaStudioHome .fa-studio-task>strong{font-size:13px!important}
+ .mobile-nav button svg.forma-premium-icon{width:32px!important;height:32px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #formaStudioHome .fa-studio-task,body.fa-unified-studio .rail-nav>.rail-btn{transition:none!important}
+}
