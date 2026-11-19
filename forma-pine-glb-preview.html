@@ -45,7 +45,10 @@ function view(yaw=0,elev=.26,distance=27){
 window.__pineView=view;
 window.addEventListener('resize',()=>view(window.__pineYaw||0));
 try{
- const loaded=await new GLTFLoader().loadAsync('/assets/landscape-models/pine-mature-cc0.glb');
+ const pineKtx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ pineKtx2.detectSupport(renderer);
+ const loaded=await new GLTFLoader().setKTX2Loader(pineKtx2).loadAsync('/assets/landscape-models/pine-mature-cc0.glb');
+ pineKtx2.dispose();
  const group=makeRealVegetation(THREE,loaded.scene,{catalogId:'pine',height:14,diameter:7},{shareGeometry:true});
  scene.add(group);
  const box=new THREE.Box3().setFromObject(group),size=box.getSize(new THREE.Vector3());
