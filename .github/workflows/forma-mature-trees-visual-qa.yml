@@ -1,0 +1,37 @@
+name: FORMA · CC0 adult tree visual QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-mature-trees-preview.html'
+      - 'tests/landscape-mature-trees-visual.verify.mjs'
+      - 'assets/landscape-models/*-mature-cc0.glb'
+      - '.github/workflows/forma-mature-trees-visual-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-mature-tree-visual-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  visual:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: Check adult birch spruce oak from four views each
+        run: |
+          node server.mjs > /tmp/forma-tree-qa-server.log 2>&1 &
+          sleep 2
+          node tests/landscape-mature-trees-visual.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-cc0-adult-tree-visuals
+          path: artifacts/landscape-editor/mature-cc0-trees/*.png
+          if-no-files-found: warn
