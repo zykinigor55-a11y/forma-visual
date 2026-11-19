@@ -26,6 +26,23 @@ export function prepareRealMaterial(material){
  // Keep glTF side, roughness, metalness, normal maps, alpha mode and cutoff.
  return material;
 }
+/** Make source glTF needle and leaf cards visible from below and sideways.
+ * The color, albedo/normal textures, UVs and native PBR response are NEVER
+ * replaced. Tevy masks previously discarded too much dark-green foliage
+ * because the default 0.5 alpha cut hid the fine edges of 2K needles.
+ * Only alpha-masked botanical meshes use this visibility adjustment.
+ */
+export function prepareRealFoliageMaterial(T,material,species){
+ const m=prepareRealMaterial(material);
+ if(!m||!['pine','spruce','birch','aspen'].includes(species))return m;
+ if(m.alphaTest>0){
+  m.side=T.DoubleSide;
+  m.alphaTest=Math.min(m.alphaTest,species==='birch'?.31:species==='spruce'?.34:.36);
+  m.depthWrite=true;
+  m.needsUpdate=true;
+ }
+ return m;
+}
 const boundsCache=new WeakMap();
 export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
@@ -50,7 +67,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   if(!material)return material;
   let copy=materialCache.get(material);
   if(!copy){
-   copy=prepareRealMaterial(material.clone());
+   copy=prepareRealFoliageMaterial(T,material.clone(),instance.catalogId);
    materialCache.set(material,copy);
   }
   return copy;
@@ -59,7 +76,13 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   if(!node.isMesh)return;
   if(shareGeometry){node.userData.bundledSharedGeometry=true;}else{node.geometry=node.geometry?.clone();}
   node.material=Array.isArray(node.material)?node.material.map(copyMaterial):copyMaterial(node.material);
-  node.castShadow=true;node.receiveShadow=true;
+  node.castShadow=true;
+  // The alpha needle cards still cast realistic tree shadows onto the ground.
+  // Avoid dark, incorrect self-shadow from crossed paper-thin spruce/birch
+  // foliage: both sides retain the ORIGINAL Tevy leaf color.
+  const materials=Array.isArray(node.material)?node.material:[node.material];
+  const masked=materials.some(m=>m&&m.alphaTest>0);
+  node.receiveShadow=!(masked&&['pine','spruce','birch','aspen'].includes(instance.catalogId));
  });
  if(instance.catalogId==='pine'&&pineGrowth)reshapeNativePine(T,clone,pineGrowth);
  if(instance.catalogId==='spruce'&&spruceGrowth){
