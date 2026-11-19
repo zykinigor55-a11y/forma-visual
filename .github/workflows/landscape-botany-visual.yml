@@ -5,6 +5,8 @@ on:
     paths:
       - 'forma-landscape-3d-vegetation.js'
       - 'forma-landscape-3d-understory.js'
+      - 'forma-landscape-3d-photo-foliage.js'
+      - 'tests/landscape-photo-alpha-browser.verify.mjs'
       - 'forma-landscape-3d-reference-canopies.js'
       - 'tests/landscape-botanical-overhaul-reference.test.mjs'
       - 'forma-landscape-3d-botany.js'
@@ -38,6 +40,7 @@ jobs:
           sleep 2
           node tests/landscape-botany-browser.verify.mjs
           node tests/landscape-botany-reference.verify.mjs
+          node tests/landscape-photo-alpha-browser.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
