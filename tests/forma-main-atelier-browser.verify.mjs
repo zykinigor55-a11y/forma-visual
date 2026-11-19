@@ -14,7 +14,7 @@ try{
   return Boolean(panel&&document.body.classList.contains('fa-unified-studio')
    &&document.querySelectorAll('#formaStudioHome .fa-studio-task[data-studio-tool]').length>=9);
  },null,{timeout:90000});
- await page.waitForFunction(()=>document.querySelectorAll('.rail-nav .rail-btn svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]').length>=6,null,{timeout:25000});
+ await page.waitForFunction(()=>document.querySelectorAll('.rail-nav .rail-btn svg.forma-premium-icon[data-forma-rev="main-atelier-v3"]').length>=6,null,{timeout:25000});
  await page.waitForFunction(()=>document.querySelectorAll('#formaStudioHome .fa-studio-task>svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]').length>=9,null,{timeout:25000});
  // Regression: the user's screenshot showed the entire center missing.
  // Mere presence in DOM is insufficient; assert actual onscreen visibility.
@@ -26,9 +26,9 @@ try{
  assert.ok(await firstCard.isVisible(),'At least one main card must be painted');
  await page.waitForFunction(()=>{
   const rail=document.querySelector('.rail-nav');
-  return rail?.querySelector('.fa-interior-nav svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]')
-   &&rail.querySelector('[data-art-open="landscape"] svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]')
-   &&rail.querySelector('[data-art-open="atmosphere"] svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]');
+  return rail?.querySelector('.fa-interior-nav svg.forma-premium-icon[data-forma-rev="main-atelier-v3"]')
+   &&rail.querySelector('[data-art-open="landscape"] svg.forma-premium-icon[data-forma-rev="main-atelier-v3"]')
+   &&rail.querySelector('[data-art-open="atmosphere"] svg.forma-premium-icon[data-forma-rev="main-atelier-v3"]');
  },null,{timeout:25000});
  const desktop=await page.evaluate(()=>{
   const select=(selector)=>[...document.querySelectorAll(selector)].map(el=>{
@@ -47,13 +47,32 @@ try{
  assert.ok(desktop.rail.some(x=>x.label?.includes('Сценарии')),'Scenarios exists in rail');
  assert.equal(desktop.cards.length,9,'All 9 original studio cards remain present');
  assert.ok(desktop.cssLoaded,'New main-page premium stylesheet is active');
- for(const [section,items,minimum] of [['rail',desktop.rail,30],['card',desktop.cards,43]]){
+ for(const [section,items,minimum] of [['rail',desktop.rail,27],['card',desktop.cards,43]]){
   for(const item of items){
    assert.ok(item.hasSvg&&item.width>=minimum&&item.height>=minimum&&item.visibility==='visible'&&Number(item.opacity)===1,
     section+' premium icon invisible: '+JSON.stringify(item));
-   assert.equal(item.revision,'main-atelier-v2');
+   assert.equal(item.revision,section==='rail'?'main-atelier-v3':'main-atelier-v2');
   }
  }
+
+ // Compact navigation must remain usable in a standard 1366x768 desktop.
+ await page.setViewportSize({width:1366,height:768});
+ const compact=await page.evaluate(()=>{
+  const rail=document.querySelector('.rail-nav');
+  const nav=[...rail.querySelectorAll('.rail-btn')];
+  const rect=rail.getBoundingClientRect();
+  const buttons=nav.map(b=>({h:b.getBoundingClientRect().height,
+   icon:b.querySelector('svg.forma-main-nav-icon')?.getBoundingClientRect().height||0}));
+  return {width:rect.width,height:rect.height,scrollHeight:rail.scrollHeight,
+   background:getComputedStyle(document.querySelector('.rail')).backgroundColor,
+   visible:nav.length,buttons};
+ });
+ assert.ok(compact.visible>=10,'expected all main navigation actions');
+ assert.ok(compact.width<=80,'sidebar returns to compact original 76px: '+JSON.stringify(compact));
+ assert.ok(compact.buttons.every(x=>x.h<=54&&x.icon>=26&&x.icon<=34),'premium rail pictograms must be compact: '+JSON.stringify(compact));
+ assert.ok(compact.scrollHeight<=compact.height+30,'sidebar should fit standard desktop with minimal scrolling: '+JSON.stringify(compact));
+ await page.screenshot({path:'artifacts/forma-main-atelier/main-studio-1366x768.png',fullPage:false});
+ await page.setViewportSize({width:1680,height:960});
  await page.screenshot({path:'artifacts/forma-main-atelier/main-studio-desktop.png',fullPage:false});
  // Interaction must be unchanged: click navigation, still opens the real tool.
  const renderRail=page.locator('.rail-nav [data-nav="environment"]');
