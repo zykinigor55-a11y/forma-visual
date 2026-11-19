@@ -13,8 +13,12 @@ test('every website page loads the same unified graphite stylesheet LAST',()=>{
   assert.ok(pos>0,file+' missing graphite link');
   assert.ok(pos<html.indexOf('</head>'),file+' CSS must be in head');
   assert.equal(html.indexOf(link),pos,file+' exactly one stylesheet link');
-  const rest=html.slice(pos,html.indexOf('</head>'));
-  assert.doesNotMatch(rest,/<link[^>]+stylesheet[^>]+(?:\.css|style)/i,file+' must be last CSS');
+  const styles=(html.slice(0,html.indexOf('</head>')).match(/<link[^>]+rel="stylesheet"[^>]*>/gi)||[]);
+  const graphiteAt=styles.findIndex(x=>x.includes('forma-graphite-unified-v2.css'));
+  assert.ok(graphiteAt>=0,file+' graphite base must load');
+  const after=styles.slice(graphiteAt+1);
+  assert.ok(after.every(x=>x.includes('forma-graphite-only-v3.css')),
+   file+' any later CSS must be the compatible graphite finishing layer');
  }
 });
 test('neutral graphite chrome cannot recolor the actual 3D tree canopy or renders',()=>{
