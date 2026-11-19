@@ -1,4 +1,4 @@
-import {makePineExtraGrowth} from './forma-landscape-pine-geometry.js';
+import {reshapeNativePine} from './forma-landscape-pine-native.js';
 /* Real 3D botanical asset adapter for FORMA.
  * Geometry never supplies measured project dimensions: a catalogue object does.
  * Imports are user-controlled binary GLB files with local IndexedDB storage.
@@ -51,6 +51,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
    }
   }
  });
+ if(instance.catalogId==='pine'&&pineGrowth)reshapeNativePine(T,clone,pineGrowth);
  const group=new T.Group();
  clone.scale.set(fit.scaleXZ,fit.scaleY,fit.scaleXZ);
  clone.position.set(-centre.x*fit.scaleXZ,-bounds.min.y*fit.scaleY,-centre.z*fit.scaleXZ);
@@ -61,7 +62,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  // textures downloaded twice or fake metre-wide flat green billboards.
  // Never replicate branches or the trunk, which should remain botanically
  // continuous; only alpha-masked foliage geometry is shared.
- if(instance.catalogId==='pine'&&Number.isFinite(canopyCopies)&&canopyCopies>0){
+ if(instance.catalogId==='pine'&&!pineGrowth&&Number.isFinite(canopyCopies)&&canopyCopies>0){
   group.updateMatrixWorld(true);
   const foliage=[];
   clone.traverse(node=>{
@@ -95,10 +96,6 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
    group.add(turn);
   }
   group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
- }
- if(instance.catalogId==='pine'&&pineGrowth){
-  const extra=makePineExtraGrowth(T,clone,instance,pineGrowth);
-  if(extra)group.add(extra);
  }
  group.userData.species=instance.catalogId;
  group.userData.realGlb=true;
