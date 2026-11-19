@@ -288,6 +288,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
+import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from './forma-landscape-3d-mature-trees.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
 import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-3d-sun.js';
@@ -334,7 +335,7 @@ function readBuildInfo(){
 }
 function updateModelHealth(){
  const el=$('#modelHealth');if(!el||!doc)return;
- const ids=[...new Set([...extra.map(o=>o.type),...doc.objects.map(o=>o.catalogId)].filter(x=>modelPath(x)))];
+ const ids=[...new Set([...extra.map(o=>o.type),...doc.objects.map(o=>o.catalogId)].filter(x=>modelPath(x)||MATURE_TREE_MODELS[x]||x==='pine'))];
  const loaded=ids.filter(x=>bundledModelSources.has(x)).length;
  const loading=ids.filter(x=>bundledModelLoading.has(x)).length;
  const failed=ids.filter(x=>bundledModelFailures.has(x)).length;
@@ -343,7 +344,7 @@ function updateModelHealth(){
   '</small>'+(failed?'<button type="button" id="retry3dModels">Повторить загрузку ('+failed+')</button>':'');
  if(failed)el.querySelector('#retry3dModels').onclick=()=>{
   const retry=[...bundledModelFailures];bundledModelFailures.clear();
-  retry.forEach(loadBundledLandscapeModel);updateModelHealth();
+  retry.forEach(id=>id==='pine'?loadMatureScotsPine():MATURE_TREE_MODELS[id]?loadCuratedAdultTree(id):loadBundledLandscapeModel(id));updateModelHealth();
  };
 }
 const MODEL_FAVORITES_KEY='forma-3d-model-favorites-v1',MODEL_RECENT_KEY='forma-3d-model-recent-v1';
@@ -632,6 +633,34 @@ function loadMatureScotsPine(){
   status('GLB-сосна недоступна; сохранена резервная процедурная сосна.');
  }).finally(()=>{pineKtx2.dispose();bundledModelLoading.delete(species);updateModelHealth()});
 }
+/* CC0 adult trees are always loaded locally from our own server.
+ * Missing binaries and unsupported texture extensions retain procedural fallbacks.
+ */
+function loadCuratedAdultTree(species){
+ const entry=MATURE_TREE_MODELS[species];
+ if(!entry||importedPlantModels.has(species)||bundledModelSources.has(species)||
+    bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
+ bundledModelLoading.add(species);updateModelHealth();
+ const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ try{ktx2.detectSupport(renderer)}catch(error){
+  bundledModelLoading.delete(species);bundledModelFailures.add(species);updateModelHealth();
+  console.warn('CC0 tree KTX2 unavailable:',species,error?.message);return;
+ }
+ new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder).loadAsync(entry.path).then(result=>{
+  if(!result?.scene)throw Error('GLB has no scene');
+  let meshes=0;
+  result.scene.traverse(node=>{if(node.isMesh&&node.geometry?.attributes?.position)meshes++});
+  if(!meshes)throw Error('GLB tree has no geometry');
+  bundledModelSources.set(species,result.scene);
+  if(root&&renderer&&doc)rebuild();
+  refreshPlantAssetStatus();updateModelHealth();
+  status('CC0 3D-модель дерева загружена: '+entry.name+' · '+meshes+' мешей');
+ }).catch(error=>{
+  bundledModelFailures.add(species);
+  console.warn('Adult tree GLB unavailable; using native model:',species,error?.message||error);
+  status('Встроенная 3D-модель сохранена для '+entry.name+'.');
+ }).finally(()=>{ktx2.dispose();bundledModelLoading.delete(species);updateModelHealth()});
+}
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
  // Licensed nursery-sapling GLBs are not used automatically for mature trees.
@@ -644,12 +673,14 @@ function drawObject(o,entry,key){
   const imported=importedPlantModels.get(o.catalogId);
   const performanceFallback=(renderQuality==='speed'||autoReduced)&&currentPlantCount>9;
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
+  if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
   // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
   // Fast mode on very crowded mobile plots preserves lightweight geometry.
   const bundledPine=o.catalogId==='pine'&&!performanceFallback?
    bundledModelSources.get('pine'):null;
-  const source=imported||bundledPine||null;
-  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!!bundledPine&&!imported}):
+  const bundledAdult=MATURE_TREE_MODELS[o.catalogId]&&!performanceFallback?bundledModelSources.get(o.catalogId):null;
+  const source=imported||bundledPine||bundledAdult||null;
+  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!!(bundledPine||bundledAdult)&&!imported}):
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
  }else if(group==='boulders'){
@@ -799,7 +830,7 @@ function chooseTool(t){
    '</span><b class="asset-add">＋</b></button>'+(t==='models40'?'<button type="button" class="model-favorite" data-favorite-id="'+c[0]+'" aria-label="Добавить '+c[1]+' в избранное" aria-pressed="'+readModelList(MODEL_FAVORITES_KEY).includes(c[0])+'">'+(readModelList(MODEL_FAVORITES_KEY).includes(c[0])?'★':'☆')+'</button></div>':'')
  }).join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+
  (t==='terrain'?'<div class="brush-panel"><label for="brushRadius">Радиус кисти · 0.5—12 м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label for="brushStrength">Сила изменения высоты</label><input id="brushStrength" type="range" min=".02" max=".8" step=".02" value=".12"><label for="brushSoftness">Плавность края · 0—100%</label><input id="brushSoftness" type="range" min="0" max="100" step="2" value="92"><label for="brushShape">Форма кисти</label><select id="brushShape"><option value="circle">● Круглая</option><option value="square">■ Квадратная</option></select><p class="hint">Плавно рисуйте ЛКМ. ПКМ вращает камеру, не затрагивая рельеф.</p></div>':'')+
- (t==='plant'?'<div class="real-flora-upload"><strong>ПРОФЕССИОНАЛЬНАЯ 3D-МОДЕЛЬ</strong><p>Выберите вид растения выше, затем загрузите детализированную GLB-модель этого вида. Она заменит процедурные экземпляры, но сохранит их размеры и расположение.</p><input id="vegetationGlb" type="file" accept=".glb,model/gltf-binary"><button id="removePlantGlb" type="button">Вернуть встроенную 3D-модель</button><small id="floraModelStatus">Выберите дерево или кустарник.</small></div>':'');
+ (t==='plant'?'<div class="real-flora-upload"><strong>ПРОФЕССИОНАЛЬНАЯ 3D-МОДЕЛЬ</strong><p>Выберите вид растения выше, затем загрузите детализированную GLB-модель этого вида. Она заменит процедурные экземпляры, но сохранит их размеры и расположение.</p><input id="vegetationGlb" type="file" accept=".glb,model/gltf-binary"><button id="removePlantGlb" type="button">Вернуть встроенную 3D-модель</button><small id="floraModelStatus">Выберите дерево или кустарник.</small><div class="tree-source-links" id="treeSourceLinks" hidden></div></div>':'');
  const search=$('#catalogSearch');let category='all';
  const filterCatalog=()=>{const query=(search?.value||'').toLocaleLowerCase('ru').trim();$('#library').querySelectorAll('[data-item]').forEach(el=>{const name=el.textContent.toLocaleLowerCase('ru');const group=t==='models40'?realModelById(el.dataset.item)?.group:catalog(el.dataset.item)?.group;const matches=t==='plant'?(category==='all'||(category==='trees'?group==='trees':group==='shrubs')):t==='surface'?(category==='all'||category===group):t==='models40'?(category==='all'||category===group||(category==='favorites'&&readModelList(MODEL_FAVORITES_KEY).includes(el.dataset.item))||(category==='recent'&&readModelList(MODEL_RECENT_KEY).includes(el.dataset.item))):true;const hide=Boolean(query&&!name.includes(query))||!matches;el.hidden=hide;if(t==='models40'&&el.parentElement?.classList.contains('model-row'))el.parentElement.hidden=hide});$('#library').querySelectorAll('.asset-group-heading').forEach(el=>{el.hidden=Boolean(query)||category!=='all'})};
  if(search)search.oninput=filterCatalog;
@@ -926,6 +957,13 @@ async function restoreHouseGlbs(){
  }
  if(list.length){rebuild();renderHouseLibrary();}
 }
+async function parseImportedGlb(bytes){
+ const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ try{
+  ktx2.detectSupport(renderer);
+  return await new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes,'');
+ }finally{ktx2.dispose()}
+}
 function refreshPlantAssetStatus(){
  const el=$('#floraModelStatus');if(!el)return;
  const species=state.placing,name=catalog(species)?.name;
@@ -933,7 +971,10 @@ function refreshPlantAssetStatus(){
   el.textContent='Сначала выберите конкретный вид растения.';return;
  }
  const loaded=importedPlantModels.has(species),bundled=bundledModelSources.has(species),stored=plantSpeciesStored.has(species);
- el.textContent=(name||species)+': '+(loaded?'ваша GLB активна':stored?'GLB восстанавливается из браузера':bundled?'профессиональная CC0 PBR GLB активна':modelPath(species)?'CC0 PBR GLB загрузится при посадке':'встроенная процедурная 3D-модель');
+ el.textContent=(name||species)+': '+(loaded?'ваша GLB активна':stored?'GLB восстанавливается из браузера':bundled?'профессиональная CC0 PBR GLB активна':MATURE_TREE_MODELS[species]||species==='pine'?'взрослая GLB загрузится при посадке':'встроенная процедурная 3D-модель');
+ const source=$('#treeSourceLinks'),reference=TREE_MODEL_SOURCE_LINKS[species];
+ if(source){source.hidden=!reference;source.innerHTML=reference?
+  '<a href="'+reference.sourcePage+'" target="_blank" rel="noopener noreferrer">Источник CC0: '+reference.name+'</a><small>Скачайте GLB, затем загрузите его выше — собственный файл имеет приоритет.</small>':'';}
 }
 async function importPlantGlb(file){
  const input=$('#vegetationGlb'),species=state.placing;
@@ -944,7 +985,7 @@ async function importPlantGlb(file){
  }
  input.disabled=true;status('Проверяем реалистичную 3D-модель: '+species+'…');
  try{
-  const bytes=await file.arrayBuffer(),glb=await new GLTFLoader().parseAsync(bytes,'');
+  const bytes=await file.arrayBuffer(),glb=await parseImportedGlb(bytes);
   if(!glb?.scene)throw Error('Нет 3D-сцены.');
   let meshes=0;glb.scene.traverse(n=>{if(n.isMesh){meshes++;if(!n.geometry?.attributes?.position)throw Error('Повреждённая геометрия GLB.')}});
   if(!meshes)throw Error('Модель не содержит 3D-сетки.');
@@ -973,7 +1014,7 @@ async function restorePlantGlbs(){
   try{
    const bytes=await readGlb('plant:'+species);
    if(!bytes)continue;
-   const glb=await new GLTFLoader().parseAsync(bytes,'');
+   const glb=await parseImportedGlb(bytes);
    if(glb?.scene){importedPlantModels.set(species,glb.scene);changed=true}
   }catch(e){console.warn('Professional 3D flora unavailable for',species,e?.message)}
  }
