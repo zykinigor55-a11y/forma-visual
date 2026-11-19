@@ -1,0 +1,54 @@
+name: FORMA - build original PBR Berberis thunbergii GLB
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/generate_barberry_thunbergii.py'
+      - '.github/workflows/forma-barberry-original-glb.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install deterministic Python GLB exporter
+        run: python -m pip install 'numpy==2.3.5' 'trimesh==4.11.1' 'Pillow==12.3.0'
+      - name: Build true original GLB geometry and verify authored PBR content
+        run: |
+          python 'tools/generate_barberry_thunbergii.py' 'assets/landscape-models/barberry-thunberg-forma-original.glb'
+          python - <<'PY'
+          import pathlib,json,hashlib,struct
+          target=pathlib.Path('assets/landscape-models/barberry-thunberg-forma-original.glb')
+          data=target.read_bytes()
+          assert data[:4]==b'glTF' and struct.unpack_from('<I',data,4)[0]==2
+          assert struct.unpack_from('<I',data,8)[0]==len(data)
+          length=struct.unpack_from('<I',data,12)[0]
+          obj=json.loads(data[20:20+length].decode())
+          assert len(obj['meshes'])==10 and len(obj['materials'])==10
+          triangles=sum(p['attributes']['POSITION']>=0 for m in obj['meshes'] for p in m['primitives'])
+          assert triangles==10
+          source=pathlib.Path('assets/landscape-models/barberry-thunberg-forma-original.source.json')
+          manifest=json.loads(source.read_text())
+          manifest.update(status='built and SHA-256 verified original GLB',sizeBytes=len(data),sha256=hashlib.sha256(data).hexdigest(),
+            meshCount=len(obj['meshes']),materialCount=len(obj['materials']))
+          source.write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+'\n')
+          print('GLB validated',len(data),'sha256',manifest['sha256'])
+          PY
+      - name: Commit generated binary with provenance
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- 'assets/landscape-models/barberry-thunberg-forma-original.glb' 'assets/landscape-models/barberry-thunberg-forma-original.source.json'
+          if ! git diff --cached --quiet; then
+            git commit -m 'assets(barberry): build verified original 61K-triangle GLB with 10 PBR materials'
+            git push origin HEAD:dom-render-nanobanana
+          fi

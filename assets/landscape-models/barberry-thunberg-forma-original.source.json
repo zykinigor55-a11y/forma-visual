@@ -1,0 +1,16 @@
+{
+  "species": "barberry",
+  "botanicalName": "Berberis thunbergii 'Atropurpurea'",
+  "authors": "FORMA VISUAL original procedural model, no third-party geometry or textures",
+  "license": "project-owned original asset",
+  "generator": "tools/generate_barberry_thunbergii.py",
+  "modelPath": "assets/landscape-models/barberry-thunberg-forma-original.glb",
+  "dimensionsTargetMetres": {
+    "height": 1.15,
+    "diameter": 1.4
+  },
+  "predictedTriangles": 61200,
+  "predictedMaterialCount": 10,
+  "status": "pending GitHub Action build",
+  "notes": "Photorealistic intent, but self-authored geometry and PBR flat colors; visual WebGL check and further detailed textures still recommended. Keep autumn/winter procedural foliage until validated."
+}
