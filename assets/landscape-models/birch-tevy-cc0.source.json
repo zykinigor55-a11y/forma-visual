@@ -1,0 +1,27 @@
+{
+  "species": "birch",
+  "name": "Silver Birch (Betula pendula) · natural drooping twigs",
+  "sourcePage": "https://tevy.dev/models/silver-birch",
+  "sourceDownload": "https://tevy.dev/models/silver-birch/v1/lod0.glb",
+  "resolvedDownload": "https://tevy.dev/models/silver-birch/v1/lod0.glb",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedUtc": "2026-11-19T15:17:52.428081+00:00",
+  "sha256": "e12466d3c07083acdbb248b252b8129fb72808d4d2bf9d08580ff646ab34e44b",
+  "sizeBytes": 4651496,
+  "analysis": {
+    "meshCount": 3,
+    "triangles": 34726,
+    "materials": 3,
+    "images": 4,
+    "extensionsUsed": [
+      "EXT_meshopt_compression",
+      "KHR_materials_specular",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "alphaMaterials": 1
+  },
+  "status": "candidate; old birch retained until browser visual QA passes",
+  "runtime": "self-hosted glTF with KTX2+Meshopt loaders"
+}
