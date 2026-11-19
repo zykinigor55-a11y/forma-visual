@@ -15,7 +15,7 @@ export const GROUPS=Object.freeze([
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
  {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
 ]);
-export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18});
+export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,beech:20,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18});
 export const SCENE_OPTIONS=Object.freeze({
  time:[['morning','Утро'],['day','День'],['evening','Вечер'],['night','Ночь']],
  season:[['spring','Весна'],['summer','Лето'],['autumn','Осень'],['winter','Зима']],
@@ -44,7 +44,7 @@ export const CATALOG=Object.freeze([
  ['birch','Берёза повислая','#b2c49b',6,'Betula pendula','birch'],
  ['oak','Дуб черешчатый','#64854d',10,'Quercus robur','broadleaf'],
  ['maple','Клён остролистный','#829b49',8,'Acer platanoides','broadleaf'],
- ['linden','Липа мелколистная','#93ae62',8,'Tilia cordata','broadleaf'],
+ ['beech','Бук европейский','#809e72',11,'Fagus sylvatica','broadleaf'],
  ['willow','Ива плакучая','#91a45e',9,'Salix babylonica','willow'],
  ['rowan','Рябина обыкновенная','#7a9c51',5,'Sorbus aucuparia','berries'],
  ['apple','Яблоня декоративная','#aa9a78',5,'Malus ornamental','flower'],
@@ -98,7 +98,9 @@ export const CATALOG=Object.freeze([
  ['sandstone-boulder','Песчаник тёплый','#ad9170','sandstone',1.8]
  ].map(([id,name,color,texture,diameter])=>({id,group:'boulders',name,color,texture,diameter,shape:'rock'}))
 ]);
-export const byId=id=>CATALOG.find(x=>x.id===id)||null;
+// Keep old Linden entries for saved projects, but remove them from new choices.
+export const LEGACY_TREE_IDS=Object.freeze({linden:Object.freeze({id:'linden',group:'trees',name:'Липа (архив)',color:'#93ae62',diameter:8,latin:'Tilia cordata',shape:'broadleaf'})});
+export const byId=id=>CATALOG.find(x=>x.id===id)||LEGACY_TREE_IDS[id]||null;
 const finite=(x,min,max,fallback)=>Number.isFinite(Number(x))?Math.max(min,Math.min(max,Number(x))):fallback;
 const round=(x,d=3)=>Math.round(x*10**d)/10**d;
 const point=p=>({x:finite(p?.x,-5000,5000,0),y:finite(p?.y,-5000,5000,0)});
