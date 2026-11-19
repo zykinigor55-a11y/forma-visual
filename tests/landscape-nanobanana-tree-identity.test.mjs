@@ -64,7 +64,7 @@ test('Nano Banana perspective prompt follows every specific GLB species, age and
  assert.match(prompt,/Betula pendula/);
  assert.match(prompt,/age 8 years/);
  assert.match(prompt,/age 95 years/);
- assert.match(prompt,/young Norway spruce/i);
+ assert.match(prompt,/YOUNG LOW Norway spruce/);
  assert.match(prompt,/CENTURY-OLD Norway spruce/);
  assert.match(prompt,/X=14\.00m Y=15\.00m/);
  assert.match(prompt,/X=25\.00m Y=15\.00m/);
