@@ -1,0 +1,29 @@
+{
+  "species": "oak",
+  "scientificName": "Quercus robur (species-inspired; source marketed as Oak Tree Large)",
+  "name": "Mature broad oak with textured bark and lobed PBR foliage",
+  "sourcePage": "https://terraintale.com/library/realistic-surfaces/oak-tree-large",
+  "sourceDownload": "https://terraintale.com/library/realistic-surfaces/oak_tree_large.glb",
+  "author": "TerrainTale / ambientCG, tree generated using ez-tree by Daniel Greenheck",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedUtcDate": "2026-11-19",
+  "sha256": "6f2d4f60807f73fd24e0860b8e536d93aff2aecff79341122dffd89373627667",
+  "sizeBytes": 664812,
+  "gltf": {
+    "version": 2,
+    "meshes": 1,
+    "materials": 2,
+    "images": 4,
+    "textures": 4
+  },
+  "webgl": {
+    "renderedMeshes": 2,
+    "renderedTextureMaterials": 2,
+    "dimensionsQa": {
+      "heightMeters": 8.6,
+      "crownDiameterMeters": 7.8
+    }
+  },
+  "note": "Local bundled glTF, tested against previous 625-mesh no-texture oak; original Innerscene GLB remains in repository as fallback/reference. Quercus species form inspired, not a botanical scan."
+}
