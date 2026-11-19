@@ -162,6 +162,11 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 #library .choice.has-preview>span{min-width:0;flex:1 1 0;overflow-wrap:anywhere;word-break:normal}
 #library .choice.has-preview .asset-size{display:block;white-space:normal;font-size:10px;line-height:1.4;overflow-wrap:anywhere;margin-top:5px}
 #library .choice.has-preview .asset-add{flex:0 0 18px;text-align:center;margin-left:2px}
+@media(max-width:850px){
+ #catalogSearch{position:relative;top:auto;z-index:1;margin-bottom:8px}
+ .catalog-filter{position:relative;flex-wrap:nowrap;gap:6px;min-height:36px}
+ .catalog-filter button{min-width:0;overflow-wrap:anywhere}
+}
 .pine-real-status{border-radius:9px;padding:10px 11px;background:#293d34;border:1px solid #6f8069;font-size:11px;color:#e2ecd7;line-height:1.45;margin:8px 0}
 .pine-real-status:has(#pineRetryModel){background:#3b332b;border-color:#a37a50;color:#ffe0b4}
 .pine-real-status button{display:block;width:100%;margin-top:8px;padding:8px;background:#564734;color:#f9ebd4;border:1px solid #ba9065;border-radius:7px;cursor:pointer}
@@ -871,6 +876,7 @@ function chooseTool(t){
   }
   if(t==='models40')saveModelList(MODEL_RECENT_KEY,[b.dataset.item,...readModelList(MODEL_RECENT_KEY).filter(id=>id!==b.dataset.item)].slice(0,12));
   $('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));
+  if(t==='plant'&&state.placing==='pine')loadMatureScotsPine();
   if(t==='plant')refreshPlantAssetStatus();
   if(t==='surface')syncSurfacePaintMode();
   status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.');
