@@ -11,7 +11,10 @@ const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function category(mesh){
  const materials=Array.isArray(mesh.material)?mesh.material:[mesh.material];
  if(materials.some(m=>/pine_needles/i.test(m?.name||'')))return 'needles';
- if(materials.some(m=>/pine_branch|pine_deadwood/i.test(m?.name||'')))return 'branches';
+ // Deadwood is naturally sparse and sometimes heavily tinted in the source;
+ // keep it exactly as authored, and extend only living bark-covered branches.
+ if(materials.some(m=>/pine_deadwood/i.test(m?.name||'')))return '';
+ if(materials.some(m=>/pine_branch/i.test(m?.name||'')))return 'branches';
  if(/needles/i.test(mesh.name))return 'needles';
  if(/branches/i.test(mesh.name))return 'branches';
  return '';
