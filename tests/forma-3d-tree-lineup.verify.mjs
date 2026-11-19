@@ -21,16 +21,9 @@ try{
   assert.ok(status[name].materialCount>=1,name+' lacks materials');
  }
  assert.equal(await page.locator('#legend button').count(),10);
- assert.equal(await page.locator('#progress').innerText(),'Готово · 2 CODE 3D + 8 GLB в один ряд');
- for(const species of ['pine','birch']){
-  assert.equal(status[species].source,'CODE 3D','New code-built species '+species);
-  assert.ok(status[species].branches>50,'Physical wood twig geometry must exist: '+species);
-  assert.ok((status[species].needles||status[species].leaves)>1800,
-   'Physical leaf/needle geometry must be dense: '+species);
-  assert.ok(status[species].meshCount>=3,'Trunk + branches + instanced foliage: '+species);
- }
- for(const species of ['spruce','oak','maple','linden','sakura','apple','rowan','aspen'])
-  assert.equal(status[species].source,'GLB','Preserve licensed GLB for '+species);
+ assert.equal(await page.locator('#progress').innerText(),'Готово · 10 исходных GLB в один ряд');
+ for(const species of ['pine','spruce','birch','oak','maple','linden','sakura','apple','rowan','aspen'])
+  assert.equal(status[species].source,'GLB','Native self-hosted CC0 GLB for '+species);
  await page.screenshot({path:root+'/ten-actual-3d-trees-row.png',timeout:45000});
  await page.getByRole('button',{name:'Первые 5 крупно'}).click();
  await page.waitForTimeout(500);
