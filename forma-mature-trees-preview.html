@@ -25,6 +25,7 @@ const name=new URL(location.href).searchParams.get('species')||'birch';
 const candidate=new URL(location.href).searchParams.get('candidate');
 const showOldSpruce=name==='spruce'&&candidate==='old';
 const showOldBirch=name==='birch'&&candidate==='old';
+const showLightLinden=name==='linden'&&candidate==='light-cc0';
 const showTerrainOak=name==='oak'&&candidate==='terraintale';
 const showOriginalOak=name==='oak'&&candidate==='innerscene';
 const showOriginalBirch=name==='birch'&&candidate==='original';
@@ -32,7 +33,8 @@ const showSoftBirch=name==='birch'&&candidate==='soft';
 const asset=showOldBirch?{...MATURE_TREE_MODELS.birch,name:'Берёза · старая GLB для сравнения',path:MATURE_TREE_MODELS.birch.fallbackPath}:
  showOldSpruce?{...MATURE_TREE_MODELS.spruce,name:'Ель · прежняя редкая GLB',path:MATURE_TREE_MODELS.spruce.fallbackPath}:
  showOriginalOak?{...MATURE_TREE_MODELS.oak,name:'Дуб · прежняя Innerscene GLB',path:MATURE_TREE_MODELS.oak.fallbackPath}:
- showTerrainOak?{...MATURE_TREE_MODELS.oak,name:'Дуб · TerrainTale · новый PBR'}:MATURE_TREE_MODELS[name];
+ showTerrainOak?{...MATURE_TREE_MODELS.oak,name:'Дуб · TerrainTale · новый PBR'}:
+ showLightLinden?{...MATURE_TREE_MODELS.linden,name:'Липа · Innerscene CC0 · Light canopy',path:'/assets/landscape-models/linden-light-cc0-candidate.glb'}:MATURE_TREE_MODELS[name];
 const details=document.querySelector('#state');
 const sizes={birch:[14,8],spruce:[16,9],oak:[8.6,7.8],maple:[9.5,7.1],linden:[8.8,7.1],sakura:[6,7.4],apple:[5.13,5.88],aspen:[15.61,7.61],rowan:[8.1,6.95]};
 const canvas=document.querySelector('#canvas');
@@ -79,7 +81,7 @@ try{
   for(const m of (Array.isArray(obj.material)?obj.material:[obj.material])){
    if(!m)continue;materials++;if(m.map)textures++;if(m.alphaTest||m.transparent)alphas++;
   }});
- window.__treeDetails={name,height:size.y,diameter:Math.max(size.x,size.z),meshes,materials,textures,alphas,candidate:name==='oak'?(showOriginalOak?'innerscene':'terraintale'):name==='birch'?(showOldBirch?'old':showSoftBirch?'soft':showOriginalBirch?'original':'tevy'):name==='spruce'?(showOldSpruce?'old':'tevy'):'current'};
+ window.__treeDetails={name,height:size.y,diameter:Math.max(size.x,size.z),meshes,materials,textures,alphas,candidate:name==='linden'?(showLightLinden?'light-cc0':'detailed'):name==='oak'?(showOriginalOak?'innerscene':'terraintale'):name==='birch'?(showOldBirch?'old':showSoftBirch?'soft':showOriginalBirch?'original':'tevy'):name==='spruce'?(showOldSpruce?'old':'tevy'):'current'};
  details.textContent='Загружено · '+meshes+' мешей · '+textures+' текстурных материалов';
  window.__treeReady=true;view();
 }catch(error){window.__treeError=String(error);details.textContent='Ошибка: '+error.message;}
