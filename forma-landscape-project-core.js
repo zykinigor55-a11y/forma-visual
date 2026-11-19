@@ -1,3 +1,4 @@
+import {normalizePineGrowth} from './forma-landscape-pine-growth.js';
 import {visibleSurfaceAreas} from './forma-landscape-area.js?v=overlap-union-v1';
 import {housePresetIds} from './forma-landscape-3d-buildings.js';
 /* FORMA Landscape Project — real-world geometry is authoritative.
@@ -129,7 +130,7 @@ export function normalizeProject(raw){
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
     r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
-  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),height:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs'].includes(entry.group)?{variant:finite(item.variant,1,3,1)}:{})});
+  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),height:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs'].includes(entry.group)?{variant:finite(item.variant,1,3,1)}:{}),...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{})});
  }
  for(const b of (Array.isArray(obj.buildings)?obj.buildings:[]).slice(0,24)){
   if(!b||typeof b!=='object')continue;
