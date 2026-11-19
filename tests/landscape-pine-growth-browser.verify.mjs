@@ -19,12 +19,9 @@ try{
   }));
  },key);
  async function selectPine(){
-  if((await page.viewportSize()).width<=850)await page.locator('[data-mobile-panel="details"]').click();
-  await page.locator('[data-view="2d"]').click();
-  if((await page.viewportSize()).width<=850)await page.locator('[data-mobile-panel="scene"]').click();
-  const box=await page.locator('#viewport').boundingBox(),half=40*.73;
-  await page.mouse.click(box.x+box.width*(.5+5/(2*half*box.width/box.height)),
-   box.y+box.height*(.5+9/(2*half)));
+  if((await page.viewportSize()).width<=850)await page.locator('[data-mobile-panel="tools"]').click();
+  await page.locator('[data-quick-tool="select"]').click();
+  await page.locator('[data-select-pine="qa-pine-a"]').click();
   await page.locator('#pineGrow-branchDensity').waitFor({state:'attached',timeout:15000});
  }
  await page.goto('http://127.0.0.1:3000/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:45000});
