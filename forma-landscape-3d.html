@@ -149,6 +149,15 @@ body[data-mobile-pine="true"][data-mobile-panel="details"] #mobileWorkspaceTabs{
 body[data-mobile-pine="true"][data-mobile-panel="details"] #status{bottom:calc(min(65dvh,640px) + 65px)}
 body[data-mobile-pine="true"] #properties{scroll-margin-top:10px}
 body[data-mobile-pine="true"] .pine-growth-editor{margin-bottom:18px}
+#properties:has(.pine-native-editor) .object-actions,
+#properties:has(.pine-native-editor) #applyProps,
+#properties:has(.pine-native-editor) #duplicateObject,
+#properties:has(.pine-native-editor) .hint{display:none}
+#properties:has(.pine-native-editor) #deleteObject{margin-top:12px;opacity:.7;font-size:11px}
+#properties .pine-native-editor{padding:15px;gap:9px}
+#properties .pine-native-editor input[type=number],
+#properties .pine-native-editor select{width:100%;min-height:44px;background:#29392e;border:1px solid #73816e;border-radius:9px;padding:10px;color:#f4f2e8;font-size:16px}
+#properties .pine-native-editor label{font-size:12px;color:#eee4d2;font-weight:650}
 .pine-object-list{display:grid;gap:6px;padding:10px;background:#26372e;border-radius:10px}
 .pine-object-list strong{font-size:11px;color:#e9d3ae}
 .pine-object-list button{text-align:left;padding:12px 9px;border:1px solid #8b7459;border-radius:8px;color:#f1e1c2;background:#334337}
@@ -316,9 +325,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
-import {makePineExtraGrowth} from './forma-landscape-pine-geometry.js';
-import {pineGrowthMarkup,mountPineGrowth,normalizePineGrowth,pineGrowthEquals} from './forma-landscape-pine-growth.js';
-import {pineSizeMarkup,mountPineSizing} from './forma-landscape-pine-sizing.js';
+import {pineGrowthMarkup,mountPineGrowth,normalizePineGrowth,pineGrowthEquals,pineDimensions} from './forma-landscape-pine-growth.js';
 import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from './forma-landscape-3d-mature-trees.js';
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
@@ -352,8 +359,6 @@ let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=f
 const botanicalGroups=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
 const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
-const pineScaleLocks=new Map();
-let pineGrowthPreviewFrame=0,pineGrowthPreview=null;
 let plantSpeciesStored=new Set();
 function readBuildInfo(){
  const el=$('#buildInfo');if(!el)return;
@@ -758,7 +763,7 @@ function drawObject(o,entry,key){
   g=source?makeRealVegetation(THREE,source,o,{
    shareGeometry:!!(bundledPine||bundledAdult)&&!imported,
    // Real needle density can differ on every placed Scots pine.
-   canopyCopies:bundledPine?Math.min(3,Math.round(normalizePineGrowth(o.pine).needleDensity/65)):0,
+   canopyCopies:0,
    pineGrowth:o.catalogId==='pine'?normalizePineGrowth(o.pine):null
   }):
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
@@ -1194,38 +1199,12 @@ function rotateSelected(degrees){
  if(!result)return;
  push();ref.obj.rotation=result.rotation;save();rebuild();
 }
-function previewSelectedPineGrowth(o,settings){
- pineGrowthPreview={id:o.id,settings:normalizePineGrowth(settings)};
- if(pineGrowthPreviewFrame)return;
- pineGrowthPreviewFrame=requestAnimationFrame(()=>{
-  pineGrowthPreviewFrame=0;
-  const pending=pineGrowthPreview;pineGrowthPreview=null;
-  if(!pending||state.selected!=='object:'+pending.id)return;
-  const model=pickables.find(node=>node.userData.key==='object:'+pending.id);
-  const source=importedPlantModels.get('pine')||bundledModelSources.get('pine');
-  if(!model||!source)return;
-  const existing=model.getObjectByName('pine-extra-growth');
-  if(existing){
-   model.remove(existing);
-   existing.traverse(node=>{
-    node.geometry?.dispose?.();
-    for(const material of (Array.isArray(node.material)?node.material:[node.material]))material?.dispose?.();
-   });
-  }
-  const extra=makePineExtraGrowth(THREE,source,o,pending.settings);
-  if(extra)model.add(extra);
-  model.userData.pineGrowth=pending.settings;
-  shadowBudgetDirty=true;if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
-  renderGate.invalidate();
- });
-}
-function commitSelectedPineGrowth(o,value){
- if(pineGrowthPreviewFrame){cancelAnimationFrame(pineGrowthPreviewFrame);pineGrowthPreviewFrame=0}
- pineGrowthPreview=null;
- const next=normalizePineGrowth(value);
- if(pineGrowthEquals(o.pine,next))return;
- push();o.pine=next;save();rebuild();
- status('Сосна: ветви, хвоя и крона обновлены и сохранены. Ctrl+Z — отмена.');
+function commitSelectedPineGrowth(o,{pine,height}){
+ const next=normalizePineGrowth(pine),dims=pineDimensions(height,next.age,next.pineType);
+ if(pineGrowthEquals(o.pine,next)&&Number(o.height)===dims.height&&Number(o.diameter)===dims.diameter)return;
+ push();o.pine=next;o.height=dims.height;o.diameter=dims.diameter;
+ save();rebuild();renderProps();
+ status('Сосна изменена: '+next.age+' лет, '+dims.height+' м. Родная хвоя сохранена.');
 }
 function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
@@ -1233,9 +1212,9 @@ function renderProps(){
  const el=$('#properties'),ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj){document.body.dataset.mobilePine='false';$('#mobilePineSelect')?.classList.remove('active');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
- const o=ref.obj, fields=[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
+ const o=ref.obj, fields=o.catalogId==='pine'?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
- else if('diameter'in o)fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
+ else if('diameter'in o&&o.catalogId!=='pine')fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
  else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
  const isPine=ref.type==='object'&&o.catalogId==='pine';
  document.body.dataset.mobilePine=String(isPine);
@@ -1248,9 +1227,9 @@ function renderProps(){
  ):'';
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
- el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
+ el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
-  pineSizeMarkup(o,pineScaleLocks.get(o.id)!==false)):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
+  '<small>Сохранены родные материалы ветвей и хвои.</small>'):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
  $('#applyProps').onclick=()=>{
   const fields=Object.fromEntries([...el.querySelectorAll('[data-prop]')].map(n=>[n.dataset.prop,n.value]));
   const updated=validatedLandscapeProps(o,fields,{plot:doc.site,kind:ref.type,model:Boolean(real),contains:p=>inParcel(p,doc.site)});
@@ -1262,27 +1241,7 @@ function renderProps(){
  if(isPine){el.querySelector('#pineRetryModel')?.addEventListener('click',()=>{
   bundledModelFailures.delete('pine');loadMatureScotsPine();renderProps();
  });}
- if(isPine)mountPineSizing(el,o,{
-  locked:pineScaleLocks.get(o.id)!==false,
-  onLock:locked=>pineScaleLocks.set(o.id,locked),
-  onPreview:({height,diameter})=>{
-   const model=pickables.find(node=>node.userData.key==='object:'+o.id);
-   if(!model||state.selected!=='object:'+o.id)return;
-   model.scale.set(diameter/Math.max(.01,Number(o.diameter)||7),height/Math.max(.01,Number(o.height)||14),diameter/Math.max(.01,Number(o.diameter)||7));
-   shadowBudgetDirty=true;if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
-   renderGate.invalidate();
-  },
-  onCommit:()=>el.querySelector('#applyProps')?.click(),
-  onInvalid:()=>{
-   const model=pickables.find(node=>node.userData.key==='object:'+o.id);
-   if(model)model.scale.set(1,1,1);
-   renderGate.invalidate();status('Для сосны: высота 2–40 м, крона 0,5–30 м.');renderProps();
-  }
- });
- if(isPine)mountPineGrowth(el,o,{
-  onPreview:settings=>previewSelectedPineGrowth(o,settings),
-  onCommit:settings=>commitSelectedPineGrowth(o,settings)
- });
+ if(isPine)mountPineGrowth(el,o,{onCommit:value=>commitSelectedPineGrowth(o,value)});
  $('#rotateLeft').onclick=()=>rotateSelected(-15);
  $('#rotateRight').onclick=()=>rotateSelected(15);
  $('#duplicateObject').onclick=duplicateSelected;
