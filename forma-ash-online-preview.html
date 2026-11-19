@@ -36,7 +36,7 @@ function view(yaw=.55,close=false){
 }
 window.__ashView=view;window.addEventListener('resize',()=>view());
 try{
- const gltf=await new GLTFLoader().loadAsync('/assets/landscape-models/ash-terraintale-cc0-candidate.glb');
+ const gltf=await new GLTFLoader().loadAsync('/assets/landscape-models/ash-terraintale-cc0.glb');
  tree=makeRealVegetation(THREE,gltf.scene,{catalogId:'ash',height:16,diameter:8},{shareGeometry:true});
  scene.add(tree);
  let meshCount=0,triangles=0,materials=0,textureMaps=0,normalMaps=0;
