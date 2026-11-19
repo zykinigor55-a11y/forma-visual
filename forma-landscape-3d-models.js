@@ -38,7 +38,9 @@ export function prepareRealFoliageMaterial(T,material,species){
  if(!m||!['pine','spruce','birch','aspen'].includes(species))return m;
  if(m.alphaTest>0){
   m.side=T.DoubleSide;
-  m.alphaTest=Math.min(m.alphaTest,species==='birch'?.31:species==='spruce'?.34:.36);
+  // Birches need light between terminal leaves, not a solid green clump.
+  // A .39 cutout keeps fine PBR foliage but restores small crown gaps.
+  m.alphaTest=Math.min(m.alphaTest,species==='birch'?.39:species==='spruce'?.34:.36);
   m.depthWrite=true;
   m.needsUpdate=true;
  }

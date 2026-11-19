@@ -21,6 +21,21 @@ export function birchCrownDisplacement({height=1,radius=1,relativeY=0,relativeRa
  return h*.052*crown*lateral*asymmetry;
 }
 
+/** Natural, bounded irregularity of a silver-birch crown.
+ * Offset *native* leaf/branch vertices together, keeping both geometry and
+ * KTX2 PBR leaf cutouts; no second sprite or crown volume is created.
+ * The field vanishes at the stem, at the roots and at the central leader.
+ */
+export function birchCrownSpread({relativeY=0,relativeRadius=0,azimuth=0}={}){
+ const t=clamp(Number(relativeY)||0,0,1);
+ const r=clamp(Number(relativeRadius)||0,0,1.5);
+ const crown=smooth(.22,.43,t)*(1-smooth(.90,1,t));
+ const outer=smooth(.18,.70,r);
+ const az=Number(azimuth)||0;
+ const lobes=.64*Math.sin(3.07*az+5.8*t)+.36*Math.sin(5.79*az-7.3*t);
+ return 1+.085*crown*outer*lobes;
+}
+
 export function refineNativeBirch(T,source){
  if(!source?.isObject3D)return source;
  const already=refinedSources.get(source);
@@ -68,11 +83,14 @@ export function refineNativeBirch(T,source){
    worldPoint.copy(nativePoint).applyMatrix4(mesh.matrixWorld);
    const dx=worldPoint.x-axisX,dz=worldPoint.z-axisZ;
    const radial=Math.hypot(dx,dz),t=(worldPoint.y-bounds.min.y)/height;
+   const azimuth=Math.atan2(dz,dx),relativeRadius=radial/radius;
    const drop=birchCrownDisplacement({
-    height,radius,relativeY:t,relativeRadius:radial/radius,
-    azimuth:Math.atan2(dz,dx)
+    height,radius,relativeY:t,relativeRadius,azimuth
    });
-   if(drop<=0)continue;
+   const spread=birchCrownSpread({relativeY:t,relativeRadius,azimuth});
+   if(drop<=0&&spread===1)continue;
+   worldPoint.x=axisX+dx*spread;
+   worldPoint.z=axisZ+dz*spread;
    worldPoint.y=Math.max(bounds.min.y+height*.005,worldPoint.y-drop);
    nativePoint.copy(worldPoint).applyMatrix4(inverse);
    positions.setXYZ(i,nativePoint.x,nativePoint.y,nativePoint.z);

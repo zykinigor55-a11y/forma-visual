@@ -18,7 +18,7 @@ test('all original PBR foliage hue and maps are preserved, visible on both sides
  assert.equal(tuned.roughness,.81);
  assert.equal(source.alphaTest,.5,'cached GLB material must remain unmodified');
  const birch=prepareRealFoliageMaterial(T,{...source},'birch');
- assert.equal(birch.alphaTest,.31);
+ assert.equal(birch.alphaTest,.39);
  const pine=prepareRealFoliageMaterial(T,{...source},'pine');
  assert.equal(pine.alphaTest,.36);
  assert.equal(prepareRealFoliageMaterial(T,{...source},'oak').alphaTest,.5,'only audited low-mesh GLBs tuned');
