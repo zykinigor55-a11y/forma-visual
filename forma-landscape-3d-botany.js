@@ -60,6 +60,17 @@ export function vegetationQuality(viewWidth,plantCount=1,view='3d'){
  return Math.max(.22,Math.min(1,device*crowd*overhead));
 }
 
+/** Acer platanoides: five sharply pointed palmate lobes, not a
+ * radially smooth round leaf. Top lobe is vertical, four side/basal lobes
+ * at 72-degree intervals with natural recesses between them.
+ */
+export function norwayMapleLobeRadius(angle){
+ const a=(Number(angle)||0)-Math.PI*.5;
+ const lobe=Math.pow((1+Math.cos(5*a))*.5,1.28);
+ const teeth=.018*Math.cos(15*a);
+ return Math.max(.64,Math.min(1.04,.70+.30*lobe+teeth));
+}
+
 /* Parametric species leaf silhouettes. Returned outline points are normalized
  * in the leaf plane; the 3D mesh built from them is lightly curved and double
  * sided, never a camera-facing tree billboard. */
@@ -71,7 +82,7 @@ export function leafOutline(id,steps=20){
   if(id==='willow'){width=.16;length=1.18}
   else if(id==='birch'){width=.38;length=.69;serration=1+.075*Math.cos(a*14)}
   else if(id==='oak'){width=.51;length=.77;serration=.82+.20*Math.cos(a*6)}
-  else if(id==='maple'){width=.68;length=.86;serration=.73+.27*Math.cos(a*5)}
+  else if(id==='maple'){width=.83;length=.88;serration=norwayMapleLobeRadius(a)}
   else if(id==='linden'){width=.65;length=.75;serration=1-.17*Math.exp(-Math.pow((a-Math.PI/2)/.30,2))}
   else if(id==='rowan'){width=.28;length=.72;serration=1+.045*Math.cos(a*12)}
   else if(id==='apple'){width=.46;length=.70}
