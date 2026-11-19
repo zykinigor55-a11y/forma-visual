@@ -11,10 +11,10 @@
   },
   "predictedTriangles": 160180,
   "predictedMaterialCount": 10,
-  "status": "v3 generation pending binary verification",
+  "status": "built and SHA-256 verified original GLB",
   "notes": "FORMA v3: original 3D broad-domed Berberis thunbergii, 115 woody stems with short-shoot clusters of 3-4 obovate leaves, 8 hand-authored embedded PBR albedo/opacity textures (6 burgundy foliage, 2 subtle woody bark), textured thorns and fruit, and a softer natural lower canopy. Original source retained, no third-party model. Summer GLB with native fallback for other seasons; avoid claiming photogrammetry.",
-  "sizeBytes": 2927468,
-  "sha256": "87aaa5f8351a0bef5e674aaa54b0a694cd1d27385f20fd887f65ab1e5a5388e5",
+  "sizeBytes": 6538924,
+  "sha256": "87bc4582c63fe57e9fe5277841b84c9dedea2f911dc481bd402cf209fdc2def7",
   "meshCount": 10,
   "materialCount": 10,
   "predictedTextureCount": 8
