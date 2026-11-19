@@ -2,72 +2,51 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {freshProject,normalizeProject} from '../forma-landscape-project-core.js';
-import {PINE_GROWTH_DEFAULTS,PINE_GROWTH_RANGES,PINE_GROWTH_PRESETS,
- normalizePineGrowth,pineGrowthMarkup,pineGrowthEquals} from '../forma-landscape-pine-growth.js';
-import {makePineExtraGrowth} from '../forma-landscape-pine-geometry.js';
+import {PINE_TYPES,normalizePineGrowth,pineGrowthMarkup,pineGrowthEquals,pineDimensions} from '../forma-landscape-pine-growth.js';
+import {nativePineProfile,reshapeNativePine} from '../forma-landscape-pine-native.js';
 
-test('pine growth settings are clamped and defaults are safe',()=>{
- const d=normalizePineGrowth();
- assert.deepEqual(d,PINE_GROWTH_DEFAULTS);
- const strange=normalizePineGrowth({branchDensity:950,needleDensity:-8,crownBase:100,
-  crownSpread:-200,irregularity:999,seed:100000});
- assert.equal(strange.branchDensity,200);
- assert.equal(strange.needleDensity,0);
- assert.equal(strange.crownBase,65);
- assert.equal(strange.crownSpread,70);
- assert.equal(strange.irregularity,40);
- assert.equal(strange.seed,99999);
- assert.ok(pineGrowthEquals({},PINE_GROWTH_DEFAULTS));
- assert.ok(!pineGrowthEquals({branchDensity:110},PINE_GROWTH_DEFAULTS));
- assert.equal(PINE_GROWTH_PRESETS.length,6);
- assert.ok(Object.keys(PINE_GROWTH_RANGES).includes('needleDensity'));
+test('only age, height and type are exposed to the user',()=>{
+ const markup=pineGrowthMarkup({age:42,pineType:'forest'},{height:17});
+ for(const id of ['pineAge','pineHeight','pineType'])assert.match(markup,new RegExp('id="'+id+'"'));
+ assert.match(markup,/value="42"/);assert.match(markup,/value="17"/);
+ assert.doesNotMatch(markup,/type="range"|data-pine-growth-preset|pineNaturalRandom|pineGrow-branchDensity/);
+ assert.equal(PINE_TYPES.length,3);
+ assert.deepEqual(PINE_TYPES.map(x=>x.id),['solitary','forest','garden']);
 });
-test('each pine in the saved masterplan keeps independent branch and needle values',()=>{
- const d=freshProject();
- const a={id:'pine-a',catalogId:'pine',type:'trees',x:10,y:20,height:14,diameter:7,
-   pine:{branchDensity:165,needleDensity:220,crownBase:37,crownSpread:132,irregularity:33,seed:19}};
- const b={id:'pine-b',catalogId:'pine',type:'trees',x:23,y:29,height:9,diameter:4.5,
-   pine:{branchDensity:10,needleDensity:55,seed:4}};
- const birch={id:'birch',catalogId:'birch',type:'trees',x:7,y:25,height:14,diameter:6};
- const result=normalizeProject({...d,objects:[a,b,birch]});
- assert.equal(result.objects.length,3);
- assert.equal(result.objects[0].pine.branchDensity,165);
- assert.equal(result.objects[0].pine.needleDensity,220);
- assert.equal(result.objects[0].pine.seed,19);
- assert.equal(result.objects[1].pine.branchDensity,10);
- assert.equal(result.objects[1].pine.needleDensity,55);
- assert.equal(result.objects[2].pine,undefined,'other trees retain their schema');
- const restored=normalizeProject(JSON.parse(JSON.stringify(result)));
- assert.deepEqual(restored.objects[0].pine,result.objects[0].pine);
- assert.deepEqual(restored.objects[1].pine,result.objects[1].pine);
+test('age and type are normalized safely and persisted separately per original pine',()=>{
+ assert.equal(normalizePineGrowth({age:500,pineType:'invalid'}).age,150);
+ assert.equal(normalizePineGrowth({age:1}).age,3);
+ assert.equal(normalizePineGrowth({age:35,pineType:'garden'}).pineType,'garden');
+ assert.equal(pineGrowthEquals({age:35,pineType:'garden'},{age:35,pineType:'forest'}),false);
+ const plot=freshProject();
+ const saved=normalizeProject({...plot,objects:[
+  {id:'a',catalogId:'pine',type:'trees',x:7,y:12,height:14,diameter:7,pine:{age:55,pineType:'garden'}},
+  {id:'b',catalogId:'pine',type:'trees',x:17,y:12,height:9,diameter:4,pine:{age:14,pineType:'forest'}}
+ ]});
+ const again=normalizeProject(JSON.parse(JSON.stringify(saved)));
+ assert.deepEqual(again.objects.map(o=>[o.pine.age,o.pine.pineType]),[[55,'garden'],[14,'forest']]);
+ assert.equal(saved.objects[0].x,7);
 });
-test('real pine editor exposes functioning inputs, natural randomness, and presets',()=>{
- const html=pineGrowthMarkup(PINE_GROWTH_DEFAULTS);
- for(const name of Object.keys(PINE_GROWTH_RANGES)){
-  assert.ok(html.includes('data-pine-growth="'+name+'"'),name);
-  assert.ok(html.includes('pineGrowOut-'+name),name);
- }
- assert.match(html,/id="pineNaturalRandom"/);
- assert.match(html,/data-pine-growth-preset="5"/);
- assert.match(html,/data-pine-growth="branchDensity"/);
- assert.match(html,/data-pine-growth="needleDensity"/);
- const css=readFileSync(new URL('../forma-landscape-pine-sizing.css',import.meta.url),'utf8');
- assert.match(css,/touch-action:pan-x/);
+test('pine dimensions follow actual height and selected crown type',()=>{
+ assert.equal(pineDimensions(18,80,'forest').height,18);
+ assert.ok(pineDimensions(18,80,'garden').diameter>pineDimensions(18,80,'forest').diameter);
+ assert.ok(pineDimensions(18,80,'solitary').diameter>pineDimensions(18,8,'solitary').diameter);
+ assert.ok(nativePineProfile({age:80,pineType:'garden'}).copies>=nativePineProfile({age:10,pineType:'garden'}).copies);
+ assert.ok(nativePineProfile({age:60,pineType:'forest'}).copies<nativePineProfile({age:60,pineType:'garden'}).copies);
 });
-test('pine supplements are actual instanced branch and needle geometry',()=>{
- const source=readFileSync(new URL('../forma-landscape-pine-geometry.js',import.meta.url),'utf8');
- const editor=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
+test('modification uses the exact native GLB needle/branch materials, no overlay tree',()=>{
+ const native=readFileSync(new URL('../forma-landscape-pine-native.js',import.meta.url),'utf8');
  const model=readFileSync(new URL('../forma-landscape-3d-models.js',import.meta.url),'utf8');
- assert.equal(typeof makePineExtraGrowth,'function');
- assert.match(source,/new T\.InstancedMesh\(branchGeom,bark,branchCount\*2\)/);
- assert.match(source,/new T\.InstancedMesh\(needleGeom,needleMat,spraysCount\)/);
- assert.match(source,/makePineNeedleSprayGeometry\(T\)/);
- assert.match(source,/new T\.MeshStandardMaterial\(\{color:'#927153'/);
- assert.match(source,/function makeRandom/);
- assert.match(model,/makePineExtraGrowth\(T,clone,instance,pineGrowth\)/);
- assert.match(editor,/mountPineGrowth\(el,o/);
- assert.match(editor,/previewSelectedPineGrowth\(/);
- assert.match(editor,/commitSelectedPineGrowth\(/);
- assert.match(editor,/o\.pine=next;save\(\);rebuild\(\)/);
- assert.match(editor,/activateMobilePanel\('details'\)/);
+ const editor=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
+ assert.equal(typeof reshapeNativePine,'function');
+ assert.match(native,/pine_needles/);
+ assert.match(native,/pine_branch/);
+ assert.match(native,/mesh\.geometry=replacement/);
+ assert.match(native,/mesh\.userData\.pineNativeSculpted=true/);
+ assert.match(model,/reshapeNativePine\(T,clone,pineGrowth\)/);
+ assert.doesNotMatch(model,/makePineExtraGrowth/);
+ assert.match(editor,/canopyCopies:0/);
+ assert.match(editor,/pineGrowthMarkup\(o\.pine,o\)/);
+ assert.match(editor,/commitSelectedPineGrowth\(o,value\)/);
+ assert.doesNotMatch(editor,/mountPineSizing\(|pineScaleHeight|makePineExtraGrowth\(/);
 });
