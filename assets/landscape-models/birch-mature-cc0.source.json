@@ -1,0 +1,19 @@
+{
+  "species": "birch",
+  "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/mature-silver-birch-tree-8e297753",
+  "sourceDownload": "https://www.innerscene.com/api/library/mature-silver-birch-tree-8e297753/download",
+  "resolvedDownload": "https://files.innerscene.com/library/mature-silver-birch-tree-8e297753/aa07a142ddd1cb8e3cfc/mature-silver-birch-tree.glb",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedUtc": "2026-11-19T02:17:15.703490+00:00",
+  "sizeBytes": 4902480,
+  "sha256": "b4ab6d194a76face4c1dedb54155ff111c0b479f67c6ac8ed6685ef29c8da155",
+  "analysis": {
+    "meshes": 103,
+    "triangles": 52476,
+    "materials": 5,
+    "images": 5,
+    "alphaMaterials": 0
+  },
+  "note": "Downloaded from original CC0 publisher and served locally by FORMA."
+}
