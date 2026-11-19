@@ -1,0 +1,53 @@
+name: FORMA - Download free CC0 berry shrub as Barberry reference
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-download-barberry-cc0-reference.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  download:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Fetch original CC0 3D model and validate binary
+        run: |
+          python3 - <<'PY'
+          import hashlib,struct,json,pathlib,urllib.request
+          metadata=pathlib.Path('assets/landscape-models/barberry-berry-bush-grab3d-cc0.source.json')
+          dest=pathlib.Path('assets/landscape-models/berry-bush-grab3d-cc0.glb')
+          info=json.loads(metadata.read_text())
+          url=info['directDownload']
+          req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (compatible; FORMA-Visual-CC0-download/1.0)','Accept':'model/gltf-binary,application/octet-stream,*/*'})
+          with urllib.request.urlopen(req,timeout=75) as response:
+              b=response.read(10000000)
+              final=response.geturl()
+          if len(b)<50000 or len(b)>8000000:raise ValueError('Unexpected model file size '+str(len(b)))
+          if b[:4]!=b'glTF' or struct.unpack_from('<I',b,4)[0]!=2 or struct.unpack_from('<I',b,8)[0]!=len(b):
+              raise ValueError('Not a complete glTF 2.0 GLB')
+          chunkSize=struct.unpack_from('<I',b,12)[0]
+          if b[16:20]!=b'JSON':raise ValueError('Missing glTF JSON chunk')
+          gltf=json.loads(b[20:20+chunkSize].decode('utf8'))
+          if len(gltf.get('meshes',[]))==0 or len(gltf.get('materials',[]))==0:raise ValueError('Missing geometry or materials')
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          dest.write_bytes(b)
+          info.update(status='downloaded and verified GLB v2',sha256=hashlib.sha256(b).hexdigest(),
+              sizeBytes=len(b),meshCount=len(gltf['meshes']),materialCount=len(gltf['materials']),resolvedUrl=final)
+          metadata.write_text(json.dumps(info,indent=2,ensure_ascii=False)+'\n')
+          print('Verified original',len(b),'bytes',info['sha256'],'meshes',info['meshCount'])
+          PY
+      - name: Save original reference asset to GitHub without replacing shrub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- 'assets/landscape-models/barberry-berry-bush-grab3d-cc0.source.json' 'assets/landscape-models/berry-bush-grab3d-cc0.glb'
+          if ! git diff --cached --quiet; then
+            git commit -m 'assets(barberry): store downloaded CC0 generic berry-shrub reference, not species substitute'
+            git push origin HEAD:dom-render-nanobanana
+          fi

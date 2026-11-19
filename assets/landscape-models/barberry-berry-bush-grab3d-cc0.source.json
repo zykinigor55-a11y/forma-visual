@@ -1,0 +1,19 @@
+{
+  "kind": "botanical reference - not a real Berberis thunbergii model",
+  "targetSpecies": "Berberis thunbergii",
+  "modelName": "Berry Bush (generic fruit-bearing shrub)",
+  "sourcePage": "https://grab3d.com/models/nature/berry-bush/",
+  "directDownload": "https://grab3d.com/dl/berry-bush/berry-bush.glb",
+  "license": "CC0 1.0",
+  "licenseFile": "https://grab3d.com/dl/berry-bush/LICENSE.txt",
+  "originalTriangles": 14742,
+  "dimensionsMetres": {
+    "x": 0.88,
+    "y": 0.87,
+    "z": 0.88
+  },
+  "sourceResolution": "2K PBR textures",
+  "targetPath": "assets/landscape-models/berry-bush-grab3d-cc0.glb",
+  "status": "download pending",
+  "caveat": "This is a stylized generic berry bush with mixed red and blue berries, not Japanese barberry. Keep outside the existing barberry catalogue until botanic similarity is accepted. Never replace real barberry automatically."
+}
