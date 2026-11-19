@@ -1,0 +1,242 @@
+/* FORMA · UNIFIED GRAPHITE 2026-11-19
+   All control chrome uses neutral graphite / smoke / muted champagne.
+   NO overrides to rendered WebGL canvas, plant textures or photographic media.
+   Compatible with dark studio, light-mode monochrome, and mobile 3D editor.
+*/
+:root,
+html[data-forma-theme="dark"]{
+ color-scheme:dark;
+ --forma-g-0:#121316;
+ --forma-g-1:#191b1f;
+ --forma-g-2:#22252a;
+ --forma-g-3:#2d3037;
+ --forma-g-4:#383b43;
+ --forma-g-line:#4a4d57;
+ --forma-g-text:#eeedf0;
+ --forma-g-muted:#b0b2bc;
+ --forma-g-amber:#c7ac86;
+ --forma-g-amber-2:#e0c49c;
+ --fa-back:#141519;--fa-canvas:#17191d;--fa-panel:#202228;--fa-card:#292b32;
+ --fa-elev:#33363f;--fa-field:#25272d;--fa-ink:#efeff1;--fa-muted:#afb1b9;
+ --fa-line:#474a54;--fa-line-strong:#857763;--fa-accent:#c7ac86;
+ --fa-accent-text:#d8b98c;--fa-side:#16171b;--fa-active:#373940;
+ --fa-hover:#33353c;--fa-grid:#41444b;
+ --fs-bg:#141519;--fs-panel:#22242a;--fs-raised:#30323b;
+ --fs-line:#474a54;--fs-text:#efeff1;--fs-muted:#aeb0ba;
+ --fs-ink:#17191d;--fs-accent:#c7ac86;--fs-accent-text:#d8b98c;
+ --bg:#141519;--paper:#24262d;--ink:#efeff1;--muted:#b1b3bb;
+ --muted2:#999ca7;--hair:#474a54;--dark:#17191e;--dark2:#2c2e35;
+ --soft:#30333a;--soft2:#24262d;--chosen:#413b34;--green:#c7ac86;--rail:#16171b;
+}
+html[data-forma-theme="light"]{
+ --fa-back:#e8e9eb;--fa-canvas:#e1e2e5;--fa-panel:#f8f8fa;--fa-card:#ffffff;
+ --fa-elev:#ececf0;--fa-field:#f3f3f5;--fa-ink:#25262d;--fa-muted:#747780;
+ --fa-line:#c6c8cd;--fa-line-strong:#968571;--fa-accent:#9e8566;
+ --fa-accent-text:#91775b;--fa-side:#f6f6f8;--fa-active:#e8e1d9;
+ --fa-hover:#eeedef;
+ --bg:#eaebed;--paper:#fff;--ink:#25262d;--muted:#777981;
+ --muted2:#9b9da5;--hair:#c8cbd1;--dark:#292b31;--dark2:#34373e;
+ --soft:#f0f1f3;--soft2:#f8f8fa;--chosen:#e5ddd4;--green:#9e8566;--rail:#27292f;
+}
+html:not([data-forma-theme="light"]) body{
+ background-color:var(--forma-g-0);
+ color:var(--forma-g-text);
+}
+html[data-forma-theme="dark"] body.fa-unified-studio,
+html[data-forma-theme="dark"] body.fa-unified-studio .app,
+html[data-forma-theme="dark"] body.fa-unified-studio .rail,
+html[data-forma-theme="dark"] body.fa-unified-studio .mobile-header,
+html[data-forma-theme="dark"] body.fa-unified-studio .mobile-nav{
+ background:#17181c!important;
+ background-image:none!important;
+}
+html[data-forma-theme="dark"] body.fa-unified-studio :is(
+ .inspector,.viewer-card,.viewer-toolbar,.viewer-footer,.fa-studio-workspace,.fa-studio-task,
+ .fa-home-tool,.fa-home-recent,.fa-studio-recent,.fa-studio-home-recent,
+ .fa-studio-rail,.fa-studio-sidebar,.scene-choice-panel,.scene-auto-environment,
+ .scene-variants-panel,.render-summary-card,.materials-quick-panel,.render-status-card,
+ .render-setup,.fa-home-panel,.fa-flow-card,.forma-workflow-card,.fa-studio-card
+){
+ background-color:#24262c!important;
+ border-color:#484b53!important;
+ background-image:none!important;
+}
+html[data-forma-theme="dark"] body.fa-unified-studio :is(
+ .inspector-scroll,.tab-panel,.rail,.mobile-nav,.scene-settings,.fa-home-tools
+){color:var(--fa-ink)}
+html[data-forma-theme] :is(input,textarea,select,button){accent-color:var(--fa-accent)}
+html[data-forma-theme] :is(button,select,input,textarea):focus-visible{
+ outline:2px solid var(--fa-accent)!important;
+ outline-offset:2px;
+}
+html[data-forma-theme="dark"] :is(.fa-studio-heading,.fa-studio-workspace-heading,.fa-home-tool-caption,
+ .tab,.forma-chip,.status,.scene-choice-trigger,.scene-choice-item,.scene-setup-header,
+ .scene-mode-switch button,.fa-workspace-choice,.fa-workspace-action){
+ border-color:var(--fa-line)!important;
+}
+html[data-forma-theme="dark"] :is(.fa-studio-primary,.btn-primary,.btn-dark,.generate-btn,
+ .scene-action-primary,.fa-home-tool-cta,.fa-pro-action.primary){
+ background:linear-gradient(135deg,#d7bf9d,#ab8f6c)!important;
+ color:#1c1b1b!important;
+ border-color:#b49a76!important;
+}
+html[data-forma-theme="dark"] :is(.rail-btn.active,.mobile-nav button.active,
+ .tab.active,.scene-choice-item.selected,.scene-mode-switch .active,
+ .scene-variant-card.active,.image-option.active,.fa-workspace-choice.active){
+ background:#3b3940!important;
+ color:#f2ede5!important;
+ border-color:#c1a37a!important;
+ box-shadow:none!important;
+}
+html[data-forma-theme="dark"] :is(.eyebrow,.section-label,.inspector-kicker,
+ .scene-panel-heading small,.render-progress-kicker,.fa-home-tool-status,.fa-home-heading>span){
+ color:#d0b28a!important;
+}
+html[data-forma-theme="dark"] :is(.status.ready,.fa-studio-task,.fa-studio-summary){
+ border-color:#60564b!important;
+}
+html[data-forma-theme="dark"] :is(.status-dot,.status.ready .status-dot){
+ background:#c7ac86!important;
+ box-shadow:none!important;
+}
+
+/* Landscape WebGL editor is a separate HTML app. Only its UI chrome is styled. */
+html:has(#shell #viewport){
+ background:#111216!important;
+ color:#eeeff1!important;
+ color-scheme:dark;
+}
+body:has(#shell #viewport) #shell,
+body:has(#shell #viewport) header{
+ background:#181a1e!important;
+ color:#eeeef1!important;
+ border-color:#40434a!important;
+}
+body:has(#shell #viewport) :is(.panel,#left,#right,#objectInspectorDock,.pine-real-status,
+ .model-health,.solar-controls,.real-flora-upload,.brush-panel,.camera-elevation-controls,
+ .walk-instructions,.pine-growth-editor,.pine-scale-editor,.house-style-list,.pine-object-list){
+ background:#202228f7!important;
+ background-image:none!important;
+ color:#eeedf0!important;
+ border-color:#484b54!important;
+ box-shadow:0 15px 42px #03040744!important;
+}
+body:has(#shell #viewport) #left{
+ background:linear-gradient(170deg,#24262bfa,#191a1ffa)!important;
+ border-color:#494c55!important;
+}
+body:has(#shell #viewport) #right{
+ background:#202228f8!important;
+ border-color:#494c55!important;
+}
+body:has(#shell #viewport) :is(button,.btn,#tools button,#library .choice,
+ .catalog-filter button,.paint-mode-tabs button,.camera-focus button,.house-style-list button,
+ #mobileWorkspaceTabs button,#draftActions button,.object-actions button,
+ .pine-growth-presets button,.pine-growth-footer button,.model-health button,
+ .pine-object-list button,.camera-elevation-controls button,.ai-progress-actions button){
+ color:#e3e4e9!important;
+ background:#2a2c33!important;
+ background-image:none!important;
+ border-color:#494c55!important;
+ box-shadow:inset 0 1px 0 #ffffff09!important;
+}
+body:has(#shell #viewport) :is(button,.btn,#tools button,#library .choice,
+ .catalog-filter button,.paint-mode-tabs button,.house-style-list button,
+ #mobileWorkspaceTabs button):hover{
+ background:#36383f!important;
+ border-color:#8d7b66!important;
+}
+body:has(#shell #viewport) :is(#tools button.active,#library .choice.active,.catalog-filter button.active,
+ .paint-mode-tabs button.active,.scene-quick-actions button.active,#mobileWorkspaceTabs button.active,
+ .house-style-list button.active,.model-favorite[aria-pressed="true"],.object-actions button.active){
+ color:#f6ead6!important;
+ background:#454039!important;
+ border-color:#c7aa83!important;
+ box-shadow:inset 0 0 0 1px #c7aa8331!important;
+}
+body:has(#shell #viewport) :is(button.primary,.btn.primary,.action.primary,#renderAi,
+ #applyProps,#mobilePineSelect.active){
+ background:#c7ad86!important;
+ border-color:#d4b78e!important;
+ color:#181a1d!important;
+ font-weight:700;
+}
+body:has(#shell #viewport) #tools button{
+ background:linear-gradient(160deg,#363840 0%,#292b31 51%,#202127 100%)!important;
+ color:#e7e7e9!important;
+ border-color:#4a4b52!important;
+}
+body:has(#shell #viewport) #tools button:hover{
+ background:linear-gradient(160deg,#42444d,#303239)!important;
+}
+body:has(#shell #viewport) #tools button.active{
+ background:linear-gradient(160deg,#51493f,#37353a 60%,#28292f)!important;
+ border-color:#c6a980!important;
+}
+body:has(#shell #viewport) #tools button .glyph{
+ background:radial-gradient(ellipse at 43% 20%,#bca47b25,transparent 75%)!important;
+}
+body:has(#shell #viewport) :is(input[type="text"],input[type="number"],input[type="password"],
+ input[type="search"],select,textarea,#catalogSearch,#properties .pine-native-editor input,
+ #properties .pine-native-editor select){
+ background:#282a31!important;
+ border-color:#555861!important;
+ color:#eff0f3!important;
+ caret-color:#ddc19c;
+ accent-color:#c7ac86!important;
+}
+body:has(#shell #viewport) :is(input::placeholder,textarea::placeholder){color:#a5a7af!important}
+body:has(#shell #viewport) :is(label,.heading,p,.muted,.hint,.brush-panel .hint,
+ .real-flora-upload p,.model-health small,.house-style-list .house-hint,
+ .walk-instructions,.camera-elevation-controls,.pine-real-status){
+ color:#bfc1c9!important;
+}
+body:has(#shell #viewport) :is(.heading,#left>.heading,#objectInspectorDock h3,.pine-native-editor h3,
+ .model-health strong,.real-flora-upload strong,.house-preset-heading h3,
+ .pine-growth-editor h3,.ai-progress-eyebrow,.ai-result-head strong,.build-info){
+ color:#d3b58e!important;
+}
+body:has(#shell #viewport) :is(#status,#hint,.scene-quick-actions,#mobileWorkspaceTabs,
+ .ai-progress-card,.ai-result-card,.real-model-intro){
+ background:#25272eea!important;
+ background-image:none!important;
+ border-color:#555861!important;
+ color:#e8e8ec!important;
+ box-shadow:0 12px 32px #08090c55!important;
+}
+body:has(#shell #viewport) :is(.ai-progress-track,.ai-progress-actions button,
+ .model-favorite,.pine-real-status,.house-preset-section,.brush-erase,
+ #draftActions,.house-style-list .house-fallback){
+ background-color:#30323a!important;
+ border-color:#4f5159!important;
+}
+body:has(#shell #viewport) :is(.ai-progress-track:after){background:linear-gradient(90deg,transparent,#b89b73,#ead6b9,transparent)!important}
+body:has(#shell #viewport) :is(input[type="range"],input[type="checkbox"],input[type="radio"]){
+ accent-color:#c7aa83!important;
+}
+body:has(#shell #viewport) :is(button,input,select,textarea):focus-visible{
+ outline:2px solid #d7bc94!important;outline-offset:2px!important;
+}
+/* No hue transforms on render, actual GLB thumbnails, vegetation or photos. */
+body:has(#shell #viewport) :is(#viewport,canvas,img,.choice.has-preview img){filter:none}
+body:has(#shell #viewport) #loadError{background:#141518f3!important}
+
+/* 3D worlds, standalone GLB previews, gallery and plan-to-interior: UI only. */
+html:has(.fw-app),html:has(.fw-app) body{background:#15171b!important;color:#eeeef1!important}
+body:has(.fw-app) :is(.fw-header,.fw-sidebar,.fw-panel,.fw-actions,.fw-hdr-upload,
+ .fw-ai-status,.fw-ai-section,.fw-setup,.fw-window,.fw-tools){
+ background-color:#24262c!important;border-color:#494b54!important;color:#edebee!important;
+}
+body:has(.fw-app) :is(.fw-hdr-upload,.fw-hdr-upload:hover,.fw-primary-dark,
+ .fw-actions .fw-primary-dark,.fw-ai-section input,.fw-ai-section textarea){
+ background:#30323a!important;border-color:#55565d!important;color:#ebedf1!important;
+}
+body:has(.fw-app) :is(.fw-ai-actions button,.fw-actions button){accent-color:#c7aa83}
+body:has(.fw-app) :is(input,textarea,select):focus-visible{outline:2px solid #d4b58d!important}
+@media(max-width:850px){
+ body:has(#shell #viewport) :is(.panel,#left,#right){border-color:#454850!important}
+ body:has(#shell #viewport) #mobileWorkspaceTabs{
+  background:#202228f5!important;border-color:#565861!important;
+ }
+ body:has(#shell #viewport) #mobileWorkspaceTabs button{font-size:11px!important}
+}
