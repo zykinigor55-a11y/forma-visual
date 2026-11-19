@@ -1,0 +1,192 @@
+/* FORMA VISUAL · GRAPHITE ONLY · 2026-11-19
+   Product-wide neutral graphite UI. Warm bronze details remain.
+   WebGL render, trees, textures, artworks and image previews are never recolored.
+   This layer loads AFTER all existing page CSS and graphite v2 overrides. */
+:root,html,html[data-forma-theme="dark"]{
+ color-scheme:dark;
+ --forma-g-0:#111216;--forma-g-1:#191b20;--forma-g-2:#24262c;
+ --forma-g-3:#30323a;--forma-g-4:#3a3c45;
+ --forma-g-line:#51535d;--forma-g-text:#edecf0;--forma-g-muted:#b8b9c1;
+ --forma-g-amber:#c5aa84;--forma-g-amber-2:#dec19a;
+ --fs-bg:#141519;--fs-panel:#25272d;--fs-raised:#30323a;--fs-line:#50525b;
+ --fs-text:#eae9ec;--fs-muted:#b7b8c0;--fs-ink:#18191c;
+ --fs-accent:#c5aa84;--fs-accent-text:#dec19a;
+ --fa-back:#15161a;--fa-panel:#25272d;--fa-card:#292b32;
+ --fa-canvas:#202127;--fa-elev:#34363d;--fa-field:#292b32;
+ --fa-ink:#ebeaee;--fa-muted:#adb0b8;--fa-line:#50525b;
+ --fa-side:#1a1b20;--fa-active:#403a35;--fa-hover:#393b43;
+ --fa-accent:#c5aa84;--fa-accent-text:#dec19a;
+ --bg:#15161a;--paper:#26282f;--ink:#edecf0;--muted:#b6b7bf;
+ --dark:#191a1f;--dark2:#30323a;--soft:#32343b;--soft2:#24262d;
+ --chosen:#423b34;--hair:#50525b;--green:#c5aa84;--rail:#1a1b20;
+}
+/* The standalone 3D studio uses embedded green CSS. This page scope is
+   intentionally explicit so a landscape image never inherits panel color. */
+html:has(#shell #viewport){
+ background:#111216!important;color:#edecf0!important;color-scheme:dark;
+}
+body:has(#shell #viewport),
+body:has(#shell #viewport) #shell,
+body:has(#shell #viewport) header{
+ background:#17191e!important;background-image:none!important;
+ color:#edecf0!important;border-color:#44464e!important;
+}
+body:has(#shell #viewport) :is(
+ #left,#right,.panel,#objectInspectorDock,.brush-panel,.real-flora-upload,
+ .model-health,.solar-controls,.walk-instructions,.camera-elevation-controls,
+ .pine-growth-editor,.pine-scale-editor,.pine-object-list,.pine-real-status,
+ .real-model-intro,.house-preset-section,#houseCatalog,
+ .house-style-list button,.camera-focus,.library-section,
+ .detail-panel,.tool-panel
+){
+ background:#24262cef!important;background-image:none!important;
+ border-color:#4d5059!important;color:#e9e8ec!important;
+ box-shadow:none!important;
+}
+body:has(#shell #viewport) #left{background:#1e2025f5!important}
+body:has(#shell #viewport) #right{background:#22242af5!important}
+body:has(#shell #viewport) :is(
+ #tools button,#library .choice,.catalog-filter button,#draftActions button,
+ .brush-panel button,.paint-mode-tabs button,.camera-focus button,
+ .pine-object-list button,.pine-growth-presets button,.pine-growth-footer button,
+ .pine-scale-presets button,.pine-scale-reset,.house-style-list button,
+ .model-favorite,.scene-quick-actions button,.scene-mode-switch button,
+ .object-actions button,#mobileWorkspaceTabs button,.model-health button,
+ .real-flora-upload button,.camera-elevation-controls button,
+ .solar-controls button,#houseCatalog>summary,#right button,
+ .light-choice,.pine-native-editor button
+){
+ background:#30323a!important;background-image:none!important;
+ color:#e6e5e9!important;border-color:#53555f!important;
+ box-shadow:inset 0 1px 0 #ffffff08!important;
+}
+body:has(#shell #viewport) :is(
+ #tools button,#library .choice,.catalog-filter button,.scene-quick-actions button,
+ #mobileWorkspaceTabs button,#right button,.pine-object-list button
+):hover{
+ background:#3b3d46!important;border-color:#917c60!important;
+}
+body:has(#shell #viewport) :is(
+ #tools button.active,#library .choice.active,.catalog-filter button.active,
+ .paint-mode-tabs button.active,#mobileWorkspaceTabs button.active,
+ .scene-quick-actions button.active,.house-style-list button.active,
+ .model-favorite[aria-pressed="true"]
+){
+ background:#454039!important;color:#f6ebd7!important;
+ border-color:#c5aa84!important;box-shadow:inset 0 0 0 1px #c5aa842e!important;
+}
+body:has(#shell #viewport) :is(
+ .primary,.action.primary,button.primary,#applyProps,#renderAi,
+ #mobilePineSelect.active,#catalogFilterApply
+){
+ background:#d6c09b!important;color:#1b1b1f!important;
+ border-color:#d6c09b!important;font-weight:700;
+}
+body:has(#shell #viewport) :is(
+ input:not([type=range]):not([type=checkbox]):not([type=radio]),
+ select,textarea,#catalogSearch,.pine-native-editor input,.pine-native-editor select
+){
+ background:#2c2e35!important;color:#efedf0!important;
+ border-color:#585a64!important;caret-color:#e4c89e!important;
+}
+body:has(#shell #viewport) :is(input[type=range],input[type=checkbox],input[type=radio]){
+ accent-color:#c5aa84!important;
+}
+body:has(#shell #viewport) :is(
+ #status,#hint,#mobileWorkspaceTabs,.scene-quick-actions,.model-health,
+ #aiProgress,#aiResult,.ai-progress-card,.ai-result-card,
+ #loadError,.ai-progress-track,#draftActions,.house-fallback
+){
+ background:#25272eed!important;background-image:none!important;
+ color:#e9e8ec!important;border-color:#50535c!important;
+}
+body:has(#shell #viewport) :is(
+ .brand,.heading,.asset-group-heading,.model-health strong,
+ .pine-native-editor h3,.pine-growth-editor h3,.ai-progress-eyebrow,
+ .house-preset-heading h3,#objectInspectorDock h3
+){color:#d7ba91!important}
+body:has(#shell #viewport) :is(
+ label,.muted,.hint,small,.brush-panel .hint,.walk-instructions,
+ .house-style-list .house-hint,#properties p,#library p
+){color:#c1c2c9!important}
+body:has(#shell #viewport) :is(
+ #catalogSearch,.real-model-intro,#library:has(#lightPickerStatus) #catalogSearch
+){box-shadow:none!important;background:#292b32!important}
+body:has(#shell #viewport) :is(
+ .house-preset-section,.brush-erase,#draftActions,.ai-progress-track,.model-health
+){border-color:#50525b!important}
+body:has(#shell #viewport) :is(
+ #library .choice.has-preview img,.house-style-list img,.house-fallback img
+){filter:none!important}
+body:has(#shell #viewport) :is(#viewport,canvas){filter:none!important}
+body:has(#shell #viewport) .scene-quick-actions svg,
+body:has(#shell #viewport) .forma-premium-icon{filter:none!important}
+/* Project workspaces, plan editor and image editor: override UI panels only. */
+body :is(
+ #faLandscapeMasterplan,.lp-sidebar,.lp-properties,.lp-work-foot,
+ .lp-head,.lp-path-controls,.lp-tools,.lp-groups,.lp-outputs,
+ .fa-studio-sidebar,.fa-studio-panel,.fa-studio-workspace,
+ .fa-home-tool,.fa-home-tools,.fa-studio-task,.fa-studio-rail,
+ .inspector,.inspector-scroll,.viewer-card,.viewer-toolbar,.viewer-footer,
+ .render-setup,.scene-choice-panel,.scene-auto-environment,.scene-variants-panel,
+ .fa-flow-card,.render-summary-card,.scene-settings,.material-panel,
+ .fa-workspace-card,.fa-graphite-surface
+){
+ background-color:#24262c!important;
+ border-color:#50525b!important;
+ color:#ebeaf0!important;
+}
+body :is(
+ #faLandscapeMasterplan .lp-groups button,
+ #faLandscapeMasterplan .lp-assets button,
+ #faLandscapeMasterplan .lp-tools button,
+ #faLandscapeMasterplan #lpInspector button,
+ .fa-studio-task button,.fa-studio-sidebar button,.fa-studio-workspace button,
+ .scene-choice-item,.scene-mode-switch button,.fa-workspace-choice,
+ .forma-chip,.tab,.rail-btn,.mobile-nav button
+){
+ background-color:#30323a!important;
+ border-color:#53555f!important;
+ color:#e7e6ea!important;
+}
+body :is(
+ #faLandscapeMasterplan .lp-groups button.active,
+ #faLandscapeMasterplan .lp-assets button.active,
+ #faLandscapeMasterplan .lp-tools button.active,
+ .scene-choice-item.selected,.tab.active,.rail-btn.active,
+ .mobile-nav button.active,.scene-mode-switch button.active
+){
+ background:#454039!important;border-color:#c5aa84!important;
+ color:#f5e9d7!important;
+}
+body :is(
+ .fa-studio-primary,.fa-home-tool-cta,.fa-pro-action.primary,
+ .btn-primary,.generate-btn,.scene-action-primary,
+ #faLandscapeMasterplan #lpAi
+){
+ background:linear-gradient(130deg,#dcc5a3,#b39770)!important;
+ color:#1d1c1f!important;border-color:#bd9e76!important;
+}
+body :is(
+ #faLandscapeMasterplan .lp-canvas,
+ #faLandscapeMasterplan #lpMap
+){background:#1a1c21!important;background-image:none!important}
+/* Preserve plan drawing SVG colors, all botanical textures and photos. */
+body :is(
+ #viewport,canvas,video,img,picture,svg[data-landscape],
+ #faLandscapeMasterplan #lpSvg,.material-preview,.render-preview
+){filter:none!important}
+body :is(input,select,textarea,button):focus-visible{
+ outline:2px solid #ddbf95!important;outline-offset:2px!important;
+}
+@media(max-width:850px){
+ body:has(#shell #viewport) #mobileWorkspaceTabs{
+  background:#202229f7!important;border-color:#555861!important;
+ }
+ body:has(#shell #viewport) #right{background:#24262cf9!important}
+ body:has(#shell #viewport) #tools button{background:#2f3139!important}
+}
+/* Typography on themed dark views remains neutral, not desaturated by filter. */
+html[data-forma-theme="dark"] body:not(:has(#shell #viewport)){
+ background-color:#15161a!important;color:#eeedf1;
+}
