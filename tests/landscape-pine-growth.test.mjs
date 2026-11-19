@@ -59,7 +59,7 @@ test('pine supplements are actual instanced branch and needle geometry',()=>{
  const editor=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
  const model=readFileSync(new URL('../forma-landscape-3d-models.js',import.meta.url),'utf8');
  assert.equal(typeof makePineExtraGrowth,'function');
- assert.match(source,/new T\.InstancedMesh\(branchGeometry,bark,segmentCount\)/);
+ assert.match(source,/new T\.InstancedMesh\(branchGeom,bark,branchCount\*2\)/);
  assert.match(source,/new T\.InstancedMesh\(needleGeom,needleMat,spraysCount\)/);
  assert.match(source,/makePineNeedleSprayGeometry\(T\)/);
  assert.match(source,/new T\.MeshStandardMaterial\(\{color:'#927153'/);
