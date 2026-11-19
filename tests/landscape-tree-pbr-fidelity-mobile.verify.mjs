@@ -41,14 +41,14 @@ try{
  // Add a new birch and a shrub to reproduce the user's real mobile regression:
  // 5 planted objects trigger preview adaptation. All existing spruces must
  // keep their same high-detail Tevy model, location, height and spruce type.
- await page.evaluate((key,base)=>{
+ await page.evaluate(key=>{
   const doc=JSON.parse(localStorage.getItem(key));
   doc.objects.push(
    {id:'birch-1',catalogId:'birch',type:'trees',x:21,y:30,height:14,diameter:7,rotation:0},
    {id:'shrub-1',catalogId:'spirea',type:'shrubs',x:36,y:28,height:.85,diameter:1.2,rotation:0}
   );
   localStorage.setItem(key,JSON.stringify(doc));
- },key,base);
+ },key);
  await page.reload({waitUntil:'domcontentloaded',timeout:45000});
  const after=await ready(page,['spruce','pine','birch']);
  assert.equal(after.filter(x=>x.species==='spruce'&&x.status==='glb').length,2);
