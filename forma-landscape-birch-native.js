@@ -31,8 +31,28 @@ export function refineNativeBirch(T,source){
  if(bounds.isEmpty()){refinedSources.set(source,clone);return clone}
  const size=new T.Vector3(),center=new T.Vector3();
  bounds.getSize(size);bounds.getCenter(center);
- const height=Math.max(.001,size.y),radius=Math.max(.001,Math.max(size.x,size.z)*.5);
+ const height=Math.max(.001,size.y);
  const worldPoint=new T.Vector3(),nativePoint=new T.Vector3();
+ // An open-grown birch often has a lop-sided crown: its bounding-box centre
+ // is NOT the trunk axis. Derive the real stem axis from basal mesh vertices
+ // so the white trunk does not drift or bow when the crown is reshaped.
+ let baseX=0,baseZ=0,baseCount=0;
+ clone.traverse(mesh=>{
+  if(!mesh.isMesh||!mesh.geometry?.getAttribute)return;
+  const a=mesh.geometry.getAttribute('position');
+  if(!a)return;
+  mesh.updateWorldMatrix(true,false);
+  for(let i=0;i<a.count;i++){
+   worldPoint.set(a.getX(i),a.getY(i),a.getZ(i)).applyMatrix4(mesh.matrixWorld);
+   if(worldPoint.y<=bounds.min.y+height*.14){
+    baseX+=worldPoint.x;baseZ+=worldPoint.z;baseCount++;
+   }
+  }
+ });
+ const axisX=baseCount?baseX/baseCount:center.x;
+ const axisZ=baseCount?baseZ/baseCount:center.z;
+ const radius=Math.max(.001,Math.abs(bounds.max.x-axisX),Math.abs(bounds.min.x-axisX),
+  Math.abs(bounds.max.z-axisZ),Math.abs(bounds.min.z-axisZ));
  let changed=0;
  clone.traverse(mesh=>{
   if(!mesh.isMesh||!mesh.geometry?.getAttribute)return;
@@ -46,7 +66,7 @@ export function refineNativeBirch(T,source){
   for(let i=0;i<positions.count;i++){
    nativePoint.set(positions.getX(i),positions.getY(i),positions.getZ(i));
    worldPoint.copy(nativePoint).applyMatrix4(mesh.matrixWorld);
-   const dx=worldPoint.x-center.x,dz=worldPoint.z-center.z;
+   const dx=worldPoint.x-axisX,dz=worldPoint.z-axisZ;
    const radial=Math.hypot(dx,dz),t=(worldPoint.y-bounds.min.y)/height;
    const drop=birchCrownDisplacement({
     height,radius,relativeY:t,relativeRadius:radial/radius,
