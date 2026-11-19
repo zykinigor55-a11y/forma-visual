@@ -1,0 +1,23 @@
+{
+  "license": "CC0 1.0",
+  "trees": [
+    {
+      "species": "birch",
+      "file": "birch-mature-cc0.glb",
+      "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/mature-silver-birch-tree-8e297753",
+      "download": "https://www.innerscene.com/api/library/mature-silver-birch-tree-8e297753/download"
+    },
+    {
+      "species": "spruce",
+      "file": "spruce-mature-cc0.glb",
+      "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/mature-norway-spruce-tree-48c2566f",
+      "download": "https://www.innerscene.com/api/library/mature-norway-spruce-tree-48c2566f/download"
+    },
+    {
+      "species": "oak",
+      "file": "oak-mature-cc0.glb",
+      "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/oak-street-tree-detailed-leaves-a273fef9",
+      "download": "https://www.innerscene.com/api/library/oak-street-tree-detailed-leaves-a273fef9/download"
+    }
+  ]
+}
