@@ -30,7 +30,7 @@ test('botanical leaves preserve species scale and real winter silhouette',()=>{
  assert.ok(botanicalLeafScale('birch',14,6)<botanicalLeafScale('oak',14,6));
  assert.equal(foliageProfile('willow','winter').leafless,true);
  assert.equal(foliageProfile('pine','winter').leafless,false);
- assert.equal(Object.keys(VEGETATION_SPECIES).length,26);
+ assert.equal(Object.keys(VEGETATION_SPECIES).length,28,'13 tree choices + 14 shrubs + archived linden');
 });
 
 test('adaptive vegetation detail protects mobile, high-density scenes',()=>{
