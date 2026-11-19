@@ -19,7 +19,7 @@ jobs:
           curl --retry 7 --retry-delay 6 --retry-all-errors --connect-timeout 12 --max-time 100 -fsSI "$URL" > /tmp/forma-barberry-headers.txt
           cat /tmp/forma-barberry-headers.txt
           grep -qi 'content-type: model/gltf-binary' /tmp/forma-barberry-headers.txt
-          grep -qi 'content-length: 2927468' /tmp/forma-barberry-headers.txt
+          grep -qi 'content-length: 6538924' /tmp/forma-barberry-headers.txt
           curl --retry 5 --retry-delay 5 --retry-all-errors --max-time 150 -fsS "$URL" -o /tmp/forma-barberry-live.glb
           curl --retry 4 --retry-delay 4 -fsS 'https://dom-render-nanobanana.onrender.com/forma-landscape-3d-shrub-models.js' -o /tmp/forma-shrub-registry.js
           python3 - <<'PY'
@@ -27,8 +27,8 @@ jobs:
           data=pathlib.Path('/tmp/forma-barberry-live.glb').read_bytes()
           assert data[:4]==b'glTF' and struct.unpack_from('<I',data,4)[0]==2 and struct.unpack_from('<I',data,8)[0]==len(data)
           sha=hashlib.sha256(data).hexdigest()
-          assert len(data)==2927468,(len(data),sha)
-          assert sha=='87aaa5f8351a0bef5e674aaa54b0a694cd1d27385f20fd887f65ab1e5a5388e5',sha
+          assert len(data)==6538924,(len(data),sha)
+          assert sha=='87bc4582c63fe57e9fe5277841b84c9dedea2f911dc481bd402cf209fdc2def7',sha
           registry=pathlib.Path('/tmp/forma-shrub-registry.js').read_text()
           assert 'barberry-thunberg-forma-original.glb' in registry
           print('LIVE FORMA GLB VERIFIED',len(data),'bytes',sha,'and registry matched')
