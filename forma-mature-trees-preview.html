@@ -25,6 +25,7 @@ const name=new URL(location.href).searchParams.get('species')||'birch';
 const candidate=new URL(location.href).searchParams.get('candidate');
 const showOldSpruce=name==='spruce'&&candidate==='old';
 const showOldBirch=name==='birch'&&candidate==='old';
+const showOriginalBirch=name==='birch'&&candidate==='original';
 const asset=showOldBirch?{...MATURE_TREE_MODELS.birch,name:'Берёза · старая GLB для сравнения',path:MATURE_TREE_MODELS.birch.fallbackPath}:
  showOldSpruce?{...MATURE_TREE_MODELS.spruce,name:'Ель · прежняя редкая GLB',path:MATURE_TREE_MODELS.spruce.fallbackPath}:MATURE_TREE_MODELS[name];
 const details=document.querySelector('#state');
@@ -58,7 +59,7 @@ try{
  ktx2.detectSupport(renderer);
  const gltf=await new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder).loadAsync(asset.path);
  ktx2.dispose();
- const tree=makeRealVegetation(THREE,gltf.scene,{catalogId:name,height:sizes[name][0],diameter:sizes[name][1]},{shareGeometry:true});
+ const tree=makeRealVegetation(THREE,gltf.scene,{catalogId:name,height:sizes[name][0],diameter:sizes[name][1]},{shareGeometry:true,birchRefinement:showOriginalBirch?'original':'soft'});
  scene.add(tree);
  const box=new THREE.Box3().setFromObject(tree),size=box.getSize(new THREE.Vector3());
  let meshes=0,materials=0,textures=0,alphas=0;
@@ -66,7 +67,7 @@ try{
   for(const m of (Array.isArray(obj.material)?obj.material:[obj.material])){
    if(!m)continue;materials++;if(m.map)textures++;if(m.alphaTest||m.transparent)alphas++;
   }});
- window.__treeDetails={name,height:size.y,diameter:Math.max(size.x,size.z),meshes,materials,textures,alphas,candidate:name==='birch'?(showOldBirch?'old':'tevy'):name==='spruce'?(showOldSpruce?'old':'tevy'):'current'};
+ window.__treeDetails={name,height:size.y,diameter:Math.max(size.x,size.z),meshes,materials,textures,alphas,candidate:name==='birch'?(showOldBirch?'old':showOriginalBirch?'original':'tevy'):name==='spruce'?(showOldSpruce?'old':'tevy'):'current'};
  details.textContent='Загружено · '+meshes+' мешей · '+textures+' текстурных материалов';
  window.__treeReady=true;view();
 }catch(error){window.__treeError=String(error);details.textContent='Ошибка: '+error.message;}
