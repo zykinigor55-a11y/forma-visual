@@ -23,7 +23,9 @@ test('photo-alpha source exists for every one of 26 existing catalog species',()
 test('photo foliage loads lazily, masks borders and falls back on unusable photographs',()=>{
  const code=readFileSync(new URL('../forma-landscape-3d-photo-foliage.js',import.meta.url),'utf8');
  for(const fragment of [
-  'img.src=\'/assets/landscape-photo/\'+source+\'.png\'',
+  "img.src=FOLIAGE_SIDE_REFERENCE[id]||'/assets/landscape-photo/'+source+'.png'",
+  "pine:'/assets/landscape/items/pine-branch.webp'",
+  "spruce:'/assets/landscape/items/spruce-tall.webp'", 
   "texture.userData.photoState='fallback'",
   "texture.userData.photoState='ready'",
   'texture.needsUpdate=true',
