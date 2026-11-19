@@ -743,13 +743,16 @@ function drawObject(o,entry,key){
   // accurate crown diameter and height, all 18 species from shared catalog.
   const quality=currentPlantQuality;
   const imported=importedPlantModels.get(o.catalogId);
-  // A winter oak/birch must not stay green. The native species-aware 3D
-  // growth model provides deciduous autumn foliage or leafless winter twigs.
-  const seasonalNative=doc.atmosphere.season!=='summer'&&['birch','oak'].includes(o.catalogId);
-  // Oak's 625 meshes are limited on crowded phones to protect frame rate.
+  // Keep summer-only broadleaf GLBs out of autumn/winter; use seasonal
+  // species-aware 3D branches instead. Flowering cherry is spring-only.
+  const seasonalNative=(doc.atmosphere.season!=='summer'&&
+   ['birch','oak','maple','linden'].includes(o.catalogId))||
+   (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring');
+  // Detailed CC0 broadleaves can have hundreds of meshes; on crowded
+  // phones prefer instanced botanical native trees to prevent freezes.
   // Real Scots pine GLB must remain active even in dense mobile planting.
   const denseMobileTree=window.innerWidth<=720&&o.catalogId!=='pine'&&
-   (o.catalogId==='oak'?currentPlantCount>2:currentPlantCount>6);
+   (['oak','maple','linden'].includes(o.catalogId)?currentPlantCount>2:currentPlantCount>6);
   const performanceFallback=o.catalogId!=='pine'&&
    (((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree);
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
