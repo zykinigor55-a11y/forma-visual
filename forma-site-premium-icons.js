@@ -1,40 +1,76 @@
-/* FORMA VISUAL — premium icon wiring on the main website.
- * Landscape Project is the art-direction source of truth.
- * Upgrade only icon slots. Never replace buttons, change IDs or event handlers.
+/* FORMA VISUAL — resilient self-contained premium icons on the MAIN site.
+ * Existing buttons and all their listeners remain intact. Rendered pictograms
+ * are same graphite/bronze SVG system as Landscape Project.
  */
-import {premiumIcon} from './forma-premium-icons.js';
-const NAV_IDS={
+import {premiumIcon} from './forma-premium-icons.js?v=main-atelier-20261119';
+const NAV_IDS=Object.freeze({
  project:'project',environment:'build',materials:'materials',
  animation:'animation',variants:'gallery',parameters:'settings'
-};
-function upgradeToolbar(selector,attribute){
- document.querySelectorAll(selector).forEach(button=>{
-  const key=NAV_IDS[button.getAttribute(attribute)];
-  if(!key||button.querySelector('svg.forma-premium-icon'))return;
-  const old=button.querySelector('svg.ico');
-  if(old)old.outerHTML=premiumIcon(key);
- });
+});
+const TASK_ICONS=Object.freeze({
+ render:'build',interior:'interior',materials:'materials',landscape:'trees',
+ 'landscape-project':'plan',atmosphere:'atmosphere',animation:'animation',
+ plan:'plan',frames:'gallery'
+});
+const TOOLS=Object.freeze({brush:'brush',erase:'eraser',polygon:'polygon',wand:'wand'});
+function safeIcon(id){
+ try {
+  const value=premiumIcon(id);
+  return typeof value==='string'&&value.includes('<svg')&&value.includes('</svg>')?value:null;
+ }catch(e){console.warn('FORMA premium icon fallback',id,e);return null}
+}
+function upgradeButton(button,id){
+ if(!button||!id||button.querySelector('svg.forma-premium-icon'))return;
+ const markup=safeIcon(id);
+ if(!markup)return; // preserve working legacy icon if enhancement unavailable
+ const legacy=button.querySelector('svg.ico');
+ if(legacy)legacy.outerHTML=markup;
+ else button.insertAdjacentHTML('afterbegin',markup);
 }
 export function applyPremiumSiteIcons(){
- // Keep the same premium visual vocabulary in both navigation and the
- // interactive material-mask tools without changing their click handlers.
- const editorTools={brush:'brush',erase:'eraser',polygon:'polygon',wand:'wand'};
- document.querySelectorAll('.tool-btn[data-tool]').forEach(button=>{
-  const key=editorTools[button.dataset.tool];
-  if(!key||button.querySelector('svg.forma-premium-icon'))return;
-  const old=button.querySelector('svg.ico');
-  if(old)old.outerHTML=premiumIcon(key);
- });
- upgradeToolbar('.rail-nav [data-nav]','data-nav');
- upgradeToolbar('.mobile-nav [data-mobile]','data-mobile');
+ document.querySelectorAll('.rail-nav [data-nav]').forEach(button=>
+  upgradeButton(button,NAV_IDS[button.dataset.nav]));
+ document.querySelectorAll('.mobile-nav [data-mobile]').forEach(button=>
+  upgradeButton(button,NAV_IDS[button.dataset.mobile]));
+ document.querySelectorAll('.tool-btn[data-tool]').forEach(button=>
+  upgradeButton(button,TOOLS[button.dataset.tool]));
+ // Main screen tools are created asynchronously by forma-studio-shell.js.
+ // Never rely on their being present at DOMContentLoaded.
+ document.querySelectorAll('#formaStudioHome .fa-studio-task[data-studio-tool]').forEach(button=>
+  upgradeButton(button,TASK_ICONS[button.dataset.studioTool]||button.dataset.studioTool));
+ document.querySelectorAll('#formaStudioHome .fa-studio-utilities button[data-studio-tool]').forEach(button=>
+  upgradeButton(button,button.dataset.studioTool));
  document.querySelectorAll('.fa-home-tool[data-tool-id]').forEach(button=>{
   const slot=button.querySelector('.fa-home-tool-icon');
   if(slot&&!slot.querySelector('svg.forma-premium-icon')){
-   slot.innerHTML=premiumIcon(button.dataset.toolId);
+   const icon=safeIcon(button.dataset.toolId);
+   if(icon)slot.innerHTML=icon;
   }
  });
 }
+const relevant='.rail-nav,.mobile-nav,#formaStudioHome,.fa-home-tool,.tool-btn';
+let scheduled=false;
+function scheduleUpgrade(){
+ if(scheduled)return;
+ scheduled=true;
+ queueMicrotask(()=>{scheduled=false;applyPremiumSiteIcons()});
+}
+function watchDynamicHome(){
+ if(!document.body)return;
+ // A new homepage task is injected after the intro. Recheck only relevant
+ // DOM mutations, rather than polling every frame of the WebGL editor.
+ const observer=new MutationObserver(changes=>{
+  if(changes.some(change=>{
+   const element=change.target?.nodeType===1?change.target:change.target?.parentElement;
+   if(element?.closest?.(relevant)||element?.matches?.(relevant))return true;
+   return [...change.addedNodes].some(node=>node.nodeType===1&&
+    (node.matches?.(relevant)||node.querySelector?.(relevant)));
+  }))scheduleUpgrade();
+ });
+ observer.observe(document.body,{childList:true,subtree:true});
+}
 if(document.readyState==='loading'){
- document.addEventListener('DOMContentLoaded',applyPremiumSiteIcons,{once:true});
-}else applyPremiumSiteIcons();
-document.addEventListener('forma:home-tools-ready',applyPremiumSiteIcons);
+ document.addEventListener('DOMContentLoaded',()=>{applyPremiumSiteIcons();watchDynamicHome()},{once:true});
+}else{applyPremiumSiteIcons();watchDynamicHome()}
+document.addEventListener('forma:home-tools-ready',scheduleUpgrade);
+document.addEventListener('forma:studio-home-ready',scheduleUpgrade);
