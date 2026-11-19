@@ -35,7 +35,7 @@ const DAILY_CAP=Math.min(200,Math.max(1,Number(process.env.DAILY_GENERATION_LIMI
 const PUBLIC_SUPPORT_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.PUBLIC_SUPPORT_EMAIL||'')?process.env.PUBLIC_SUPPORT_EMAIL:'';
 let dailyCount=0, day=new Date().toISOString().slice(0,10);
 function sameOrigin(req){const origin=req.headers.origin;if(!origin)return true;const host=req.headers.host;try{return new URL(origin).host===host}catch{return false}}
-const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.avif':'image/avif','.svg':'image/svg+xml','.glb':'model/gltf-binary','.json':'application/json; charset=utf-8'};
+const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.avif':'image/avif','.svg':'image/svg+xml','.wasm':'application/wasm','.glb':'model/gltf-binary','.json':'application/json; charset=utf-8'};
 const MAX_BODY=44*1024*1024; // Up to two full-quality 12MB references plus edit metadata; each file also capped at 14MB.
 function json(res,status,payload){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(payload))}
 async function readJSON(req){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY){const err=Error('Запрос слишком большой');err.status=413;throw err}chunks.push(chunk)}try{return JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{const err=Error('Некорректный JSON');err.status=400;throw err}}
