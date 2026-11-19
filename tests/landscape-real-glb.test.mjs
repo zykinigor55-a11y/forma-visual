@@ -28,7 +28,8 @@ test('real GLBs are autoloaded in the editable scene and defer to user GLB impor
  assert.match(page,/new GLTFLoader\(\).loadAsync\(path\)/);
  assert.match(page,/const imported=importedPlantModels\.get\(o\.catalogId\)/);
  assert.match(page,/const source=imported\|\|/);
- assert.match(page,/const source=imported\|\|null/);
+ assert.match(page,/const source=imported\|\|bundledPine\|\|null/);
+ assert.match(page,/if\(o\.catalogId==='pine'&&!imported\)loadMatureScotsPine\(\)/);
  assert.match(page,/if\(n.geometry&&!n.userData\?\.bundledSharedGeometry\)/);
  assert.match(models,/node.userData.bundledSharedGeometry=true/);
  assert.match(page,/makeRealVegetation\(THREE,source/);
