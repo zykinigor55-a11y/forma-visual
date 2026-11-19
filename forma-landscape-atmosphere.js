@@ -398,7 +398,7 @@ function init(){
   if(nav&&!nav.querySelector(`[data-art-open="${key}"]`)){const b=document.createElement('button');b.type='button';b.className='rail-btn';b.dataset.artOpen=key;b.setAttribute('aria-label',name);b.title=name;b.innerHTML=icon(key)+'<span class="rail-name">'+name+'</span>';const anchor=nav.querySelector('[data-nav="animation"]');anchor?nav.insertBefore(b,anchor):nav.append(b);
    import('./forma-premium-icons.js').then(({premiumIcon})=>{
     const svg=b.querySelector('svg.ico,svg.forma-premium-icon');
-    if(svg&&b.isConnected)svg.outerHTML=premiumIcon(key==='landscape'?'trees':'atmosphere');
+    if(svg&&b.isConnected)svg.outerHTML=premiumIcon(key==='landscape'?'trees':'atmosphere').replace('class="lp-3d-icon forma-premium-icon"','class="lp-3d-icon forma-premium-icon" data-forma-rev="main-atelier-v2"');
    }).catch(error=>console.warn('Landscape/atmosphere rail SVG enhancement unavailable',error));
   }
  }
