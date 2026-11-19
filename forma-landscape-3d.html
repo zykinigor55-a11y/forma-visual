@@ -700,7 +700,13 @@ function drawObject(o,entry,key){
    bundledModelSources.get('pine'):null;
   const bundledAdult=MATURE_TREE_MODELS[o.catalogId]&&!performanceFallback&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
   const source=imported||bundledPine||bundledAdult||null;
-  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!!(bundledPine||bundledAdult)&&!imported}):
+  g=source?makeRealVegetation(THREE,source,o,{
+   shareGeometry:!!(bundledPine||bundledAdult)&&!imported,
+   // Two shared foliage layers fill the sparse original pine silhouette.
+   // Reduce extra GPU draw calls only in very dense scenes, never revert
+   // to the skeletal procedural pine.
+   canopyCopies:bundledPine?(currentPlantCount>10?1:renderQuality==='high'?3:2):0
+  }):
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
  }else if(group==='boulders'){
