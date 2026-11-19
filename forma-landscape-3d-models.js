@@ -1,3 +1,4 @@
+import {makePineExtraGrowth} from './forma-landscape-pine-geometry.js';
 /* Real 3D botanical asset adapter for FORMA.
  * Geometry never supplies measured project dimensions: a catalogue object does.
  * Imports are user-controlled binary GLB files with local IndexedDB storage.
@@ -25,7 +26,7 @@ export function prepareRealMaterial(material){
  return material;
 }
 const boundsCache=new WeakMap();
-export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0}={}){
+export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
  let bounds=boundsCache.get(source);
  if(!bounds){
@@ -94,6 +95,10 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
    group.add(turn);
   }
   group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
+ }
+ if(instance.catalogId==='pine'&&pineGrowth){
+  const extra=makePineExtraGrowth(T,clone,instance,pineGrowth);
+  if(extra)group.add(extra);
  }
  group.userData.species=instance.catalogId;
  group.userData.realGlb=true;
