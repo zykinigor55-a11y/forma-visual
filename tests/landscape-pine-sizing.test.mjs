@@ -27,7 +27,9 @@ test('live pine inspector has real GLB size controls, proportional lock and pres
 });
 test('pine sliders render instantly, then save through normal measured undoable editor path',()=>{
  assert.match(editor,/import \{pineSizeMarkup,mountPineSizing\} from '\.\/forma-landscape-pine-sizing\.js'/);
- assert.match(editor,/isPine\?pineSizeMarkup\(o,pineScaleLocks\.get\(o\.id\)!==false\)/);
+ assert.match(editor,/pineSizeMarkup\(o,pineScaleLocks\.get\(o\.id\)!==false\)/);
+ assert.match(editor,/const performanceFallback=o\.catalogId!=='pine'/);
+ assert.match(editor,/canopyCopies:bundledPine\?/);
  assert.match(editor,/if\(isPine\)mountPineSizing\(el,o,/);
  assert.match(editor,/model\.scale\.set\(diameter\/Math\.max\(\.01,Number\(o\.diameter\)/);
  assert.match(editor,/onCommit:\(\)=>el\.querySelector\('#applyProps'\)\?\.click\(\)/);
