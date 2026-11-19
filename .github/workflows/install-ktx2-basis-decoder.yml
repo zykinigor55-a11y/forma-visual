@@ -48,5 +48,13 @@ jobs:
           git add assets/three-basis
           if ! git diff --cached --quiet; then
             git commit -m "assets: bundle licensed Basis KTX2 transcoder for adult pine without CDN dependency"
-            git push origin HEAD:dom-render-nanobanana
+            # Parallel IDE changes must never prevent installing the decoder.
+            # Replay this isolated asset commit onto the latest working branch.
+            for attempt in 1 2 3 4; do
+              git fetch origin dom-render-nanobanana
+              git rebase origin/dom-render-nanobanana
+              if git push origin HEAD:dom-render-nanobanana; then break; fi
+              if [ "$attempt" = 4 ]; then exit 1; fi
+              sleep 2
+            done
           fi
