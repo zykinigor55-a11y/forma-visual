@@ -61,8 +61,16 @@ try{
   const rail=document.querySelector('.rail-nav');
   const nav=[...rail.querySelectorAll('.rail-btn')];
   const rect=rail.getBoundingClientRect();
-  const buttons=nav.map(b=>({h:b.getBoundingClientRect().height,
-   icon:b.querySelector('svg.forma-main-nav-icon')?.getBoundingClientRect().height||0}));
+  const buttons=nav.map(b=>{
+   const bounds=b.getBoundingClientRect(),icon=b.querySelector('svg.forma-main-nav-icon');
+   const label=b.querySelector('.rail-name'),lb=label?.getBoundingClientRect();
+   return {h:bounds.height,
+    icon:icon?.getBoundingClientRect().height||0,
+    svgCount:b.querySelectorAll('svg').length,
+    label:label?.textContent?.trim()||'',
+    labelFits:!lb||lb.bottom<=bounds.bottom+1&&lb.top>=bounds.top-1
+   };
+  });
   return {width:rect.width,height:rect.height,scrollHeight:rail.scrollHeight,
    background:getComputedStyle(document.querySelector('.rail')).backgroundColor,
    visible:nav.length,buttons};
@@ -70,6 +78,8 @@ try{
  assert.ok(compact.visible>=10,'expected all main navigation actions');
  assert.ok(compact.width<=80,'sidebar returns to compact original 76px: '+JSON.stringify(compact));
  assert.ok(compact.buttons.every(x=>x.h<=54&&x.icon>=26&&x.icon<=34),'premium rail pictograms must be compact: '+JSON.stringify(compact));
+ assert.ok(compact.buttons.every(x=>x.svgCount===1),'old and new rail SVGs must never overlap: '+JSON.stringify(compact));
+ assert.ok(compact.buttons.every(x=>x.labelFits),'long navigation labels must remain inside their own button: '+JSON.stringify(compact));
  assert.ok(compact.scrollHeight<=compact.height+30,'sidebar should fit standard desktop with minimal scrolling: '+JSON.stringify(compact));
  await page.screenshot({path:'artifacts/forma-main-atelier/main-studio-1366x768.png',fullPage:false});
  await page.setViewportSize({width:1680,height:960});
