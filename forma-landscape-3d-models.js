@@ -150,7 +150,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
  }
  group.userData.species=instance.catalogId;
- if(instance.catalogId==='birch'&&shareGeometry)group.userData.nativeBirchRefined=true;
+ if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement!=='original')group.userData.nativeBirchRefined=true;
  group.userData.realGlb=true;
  group.userData.bundledModel=shareGeometry;
  group.userData.uniquePbrMaterials=materialCache.size;
