@@ -14,6 +14,7 @@ canvas{display:block;width:100%;height:100%}
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {makeRealVegetation} from './forma-landscape-3d-models.js';
 const canvas=document.querySelector('#preview'),result=document.querySelector('#result');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,preserveDrawingBuffer:true});
