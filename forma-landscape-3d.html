@@ -671,14 +671,20 @@ function drawObject(o,entry,key){
   // accurate crown diameter and height, all 18 species from shared catalog.
   const quality=currentPlantQuality;
   const imported=importedPlantModels.get(o.catalogId);
-  const performanceFallback=(renderQuality==='speed'||autoReduced)&&currentPlantCount>9;
+  // A winter oak/birch must not stay green. The native species-aware 3D
+  // growth model provides deciduous autumn foliage or leafless winter twigs.
+  const seasonalNative=doc.atmosphere.season!=='summer'&&['birch','oak'].includes(o.catalogId);
+  // Oak's 625 meshes are limited on crowded phones to protect frame rate.
+  const denseMobileTree=window.innerWidth<=720&&
+   (o.catalogId==='oak'?currentPlantCount>2:currentPlantCount>6);
+  const performanceFallback=((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree;
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
   // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
   // Fast mode on very crowded mobile plots preserves lightweight geometry.
   const bundledPine=o.catalogId==='pine'&&!performanceFallback?
    bundledModelSources.get('pine'):null;
-  const bundledAdult=MATURE_TREE_MODELS[o.catalogId]&&!performanceFallback?bundledModelSources.get(o.catalogId):null;
+  const bundledAdult=MATURE_TREE_MODELS[o.catalogId]&&!performanceFallback&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
   const source=imported||bundledPine||bundledAdult||null;
   g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!!(bundledPine||bundledAdult)&&!imported}):
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
