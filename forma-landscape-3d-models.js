@@ -38,7 +38,8 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  const clone=source.clone(true);
  const size=new T.Vector3(),centre=new T.Vector3();bounds.getSize(size);bounds.getCenter(centre);
  if(!Number.isFinite(size.y)||size.y<1e-5||Math.max(size.x,size.z)<1e-5)throw Error('GLB has zero height or crown width.');
- const fit=vegetationFit({width:size.x,height:size.y,depth:size.z},instance);
+ let fit=vegetationFit({width:size.x,height:size.y,depth:size.z},instance);
+ let placementBounds=bounds;
  // Preserve the original PBR leaf and bark materials, but do not create
  // hundreds of equivalent GPU materials for 625-mesh oak/maple/linden GLBs.
  // Clone each distinct source material ONCE PER TREE. All leaves in one tree
@@ -61,10 +62,21 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   node.castShadow=true;node.receiveShadow=true;
  });
  if(instance.catalogId==='pine'&&pineGrowth)reshapeNativePine(T,clone,pineGrowth);
- if(instance.catalogId==='spruce'&&spruceGrowth)reshapeNativeSpruce(T,clone,spruceGrowth);
+ if(instance.catalogId==='spruce'&&spruceGrowth){
+  const morph=reshapeNativeSpruce(T,clone,spruceGrowth);
+  if(morph.changed){
+   // Recompute final fitted bounding box: century-old lower branches become
+   // broader, but the user's numeric crown diameter must remain EXACT.
+   placementBounds=new T.Box3().setFromObject(clone);
+   const sculptedSize=new T.Vector3();
+   placementBounds.getSize(sculptedSize);
+   placementBounds.getCenter(centre);
+   fit=vegetationFit({width:sculptedSize.x,height:sculptedSize.y,depth:sculptedSize.z},instance);
+  }
+ }
  const group=new T.Group();
  clone.scale.set(fit.scaleXZ,fit.scaleY,fit.scaleXZ);
- clone.position.set(-centre.x*fit.scaleXZ,-bounds.min.y*fit.scaleY,-centre.z*fit.scaleXZ);
+ clone.position.set(-centre.x*fit.scaleXZ,-placementBounds.min.y*fit.scaleY,-centre.z*fit.scaleXZ);
  group.add(clone);
  // The CC0 adult Scots pine has authentic bark and PBR needle cutouts, but
  // only three very thin foliage tiers. Reuse the same original needle meshes
