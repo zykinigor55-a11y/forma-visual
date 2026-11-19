@@ -3,7 +3,7 @@
  */
 export const MATURE_TREE_MODELS=Object.freeze({
  birch:Object.freeze({name:'Взрослая берёза',path:'/assets/landscape-models/birch-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/mature-silver-birch-tree-8e297753',license:'CC0 1.0'}),
- spruce:Object.freeze({name:'Взрослая ель',path:'/assets/landscape-models/spruce-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/mature-norway-spruce-tree-48c2566f',license:'CC0 1.0'}),
+ spruce:Object.freeze({name:'Ель обыкновенная · густая PBR-хвоя',path:'/assets/landscape-models/spruce-tevy-cc0.glb',sourcePage:'https://tevy.dev/models/norway-spruce',fallbackPath:'/assets/landscape-models/spruce-mature-cc0.glb',license:'CC0 1.0'}),
  oak:Object.freeze({name:'Дуб с детальной листвой',path:'/assets/landscape-models/oak-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/oak-street-tree-detailed-leaves-a273fef9',license:'CC0 1.0'}),
  maple:Object.freeze({name:'Клён с детальной листвой',path:'/assets/landscape-models/maple-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/maple-street-tree-detailed-leaves-006cddf4',license:'CC0 1.0'}),
  linden:Object.freeze({name:'Липа с детальной листвой',path:'/assets/landscape-models/linden-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/linden-street-tree-detailed-leaves-6300c26e',license:'CC0 1.0'}),
