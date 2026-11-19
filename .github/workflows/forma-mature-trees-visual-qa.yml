@@ -24,7 +24,7 @@ jobs:
           node-version: '22'
       - run: npm install --no-save playwright@1.56.0
       - run: npx playwright install --with-deps chromium
-      - name: Check adult birch spruce oak from four views each
+      - name: Check six licensed adult/ornamental GLB trees from four views
         run: |
           node server.mjs > /tmp/forma-tree-qa-server.log 2>&1 &
           sleep 2
