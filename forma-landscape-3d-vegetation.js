@@ -18,6 +18,7 @@ export const VEGETATION_SPECIES=Object.freeze({
  maple:{kind:'deciduous',density:1300,branches:13,crownStart:.37,leaf:'#70994f',bark:'#62503e'},
  linden:{kind:'deciduous',density:1180,branches:11,crownStart:.34,leaf:'#83a95b',bark:'#645641'}, // archival projects only
  beech:{kind:'deciduous',density:1550,branches:15,crownStart:.41,leaf:'#668953',bark:'#7b7e77'},
+ poplar:{kind:'deciduous',density:1600,branches:18,crownStart:.16,leaf:'#67975c',bark:'#696e65'},
  willow:{kind:'willow',density:1500,branches:15,crownStart:.33,leaf:'#94aa67',bark:'#70644c'},
  rowan:{kind:'deciduous',density:920,branches:11,crownStart:.47,leaf:'#6b9850',bark:'#696153'},
  apple:{kind:'deciduous',density:1000,branches:11,crownStart:.33,leaf:'#789650',bark:'#715342'},
