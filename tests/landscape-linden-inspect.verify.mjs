@@ -12,12 +12,13 @@ try{
  const info=await page.evaluate(()=>({data:window.__treeDetails,error:window.__treeError||null}));
  assert.equal(info.error,null);
  assert.equal(info.data.name,'linden');
- assert.ok(info.data.meshes>100,'existing detailed CC0 linden should show mesh geometry');
+ assert.ok(info.data.meshes>=3&&info.data.meshes<=6,'merged bark should reduce original 625 draw calls to <=6');
+ assert.ok(info.data.materials<=6,'approved source leaf materials must be preserved but shared');
  await page.evaluate(()=>window.__treeView(.65,.17));
- await page.screenshot({path:dir+'/linden-before-diagonal.png'});
+ await page.screenshot({path:dir+'/linden-after-pbr-diagonal.png'});
  await page.evaluate(()=>window.__oakBarkView(.6));
- await page.screenshot({path:dir+'/linden-before-bark-close.png'});
- await writeFile(dir+'/before-stats.json',JSON.stringify({...info.data,errors},null,2));
+ await page.screenshot({path:dir+'/linden-after-pbr-bark-close.png'});
+ await writeFile(dir+'/after-stats.json',JSON.stringify({...info.data,errors},null,2));
  assert.deepEqual(errors,[]);
  console.log('LINDEN INSPECTION',JSON.stringify(info));
 }finally{await browser.close()}
