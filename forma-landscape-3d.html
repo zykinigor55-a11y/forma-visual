@@ -592,6 +592,42 @@ function loadBundledLandscapeModel(catalogId){
   console.warn('Licensed landscape GLB unavailable:',catalogId,error?.message);
  }).finally(()=>{bundledModelLoading.delete(catalogId);updateModelHealth()});
 }
+/* CC0 adult Pinus sylvestris from tevy, bundled on our own Render host.
+ * 46,910 triangles, embedded bark/foliage PBR textures and alpha needle cutouts.
+ * Preserve user geometry and never block scene construction if unavailable. */
+const MATURE_SCOTS_PINE_GLB='/assets/landscape-models/pine-mature-cc0.glb';
+function loadMatureScotsPine(){
+ const species='pine';
+ if(importedPlantModels.has(species)||bundledModelSources.has(species)||
+  bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
+ bundledModelLoading.add(species);updateModelHealth();
+ new GLTFLoader().loadAsync(MATURE_SCOTS_PINE_GLB).then(result=>{
+  if(!result?.scene)throw Error('GLB не содержит 3D-сцену');
+  const meshes=[],foliage=[],trunks=[];
+  result.scene.traverse(node=>{
+   if(!node.isMesh||!node.geometry?.attributes?.position)return;
+   meshes.push(node);
+   for(const material of Array.isArray(node.material)?node.material:[node.material]){
+    if(!material)continue;
+    if(material.alphaTest>0||material.transparent)foliage.push(material);
+    else trunks.push(material);
+    if(material.transparent&&material.opacity>=.999&&material.alphaTest>0){
+     material.depthWrite=true;material.transparent=false;
+    }
+   }
+  });
+  if(meshes.length<2||!foliage.length||!trunks.length)
+   throw Error('Модель должна содержать геометрию ствола и прозрачную хвою');
+  bundledModelSources.set(species,result.scene);
+  if(root&&renderer&&doc)rebuild();
+  refreshPlantAssetStatus();updateModelHealth();
+  status('Сосна: CC0-модель взрослого дерева с реалистичной корой и хвоей загружена.');
+ }).catch(error=>{
+  bundledModelFailures.add(species);
+  console.warn('CC0 mature Scots pine fallback:',error?.message||error);
+  status('GLB-сосна недоступна; сохранена резервная процедурная сосна.');
+ }).finally(()=>{bundledModelLoading.delete(species);updateModelHealth()});
+}
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
  // Licensed nursery-sapling GLBs are not used automatically for mature trees.
@@ -603,10 +639,13 @@ function drawObject(o,entry,key){
   const quality=currentPlantQuality;
   const imported=importedPlantModels.get(o.catalogId);
   const performanceFallback=(renderQuality==='speed'||autoReduced)&&currentPlantCount>9;
-  // All catalogue trees and shrubs now use our own procedural geometry.
-  // Only a user-imported GLB can explicitly override the native model.
-  const source=imported||null;
-  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!imported}):
+  if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
+  // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
+  // Fast mode on very crowded mobile plots preserves lightweight geometry.
+  const bundledPine=o.catalogId==='pine'&&!performanceFallback?
+   bundledModelSources.get('pine'):null;
+  const source=imported||bundledPine||null;
+  g=source?makeRealVegetation(THREE,source,o,{shareGeometry:!!bundledPine&&!imported}):
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
  }else if(group==='boulders'){
