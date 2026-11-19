@@ -1,0 +1,24 @@
+{
+  "species": "ash",
+  "scientificName": "Fraxinus excelsior",
+  "displayName": "Common ash · realistic bark + compound leaves",
+  "sourcePage": "https://terraintale.com/library/realistic-surfaces/ash-tree-large",
+  "sourceDownload": "https://terraintale.com/library/realistic-surfaces/ash_tree_large.glb",
+  "attribution": "TerrainTale · ambientCG materials, ez-tree by Daniel Greenheck (MIT)",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedOn": "2026-11-19",
+  "sha256": "e2f6c99b9a46e3b4ba40ff8efd4f734dc02511023feb9eb85492a6260f0f4e17",
+  "sizeBytes": 542616,
+  "glTF": {
+    "version": 2,
+    "materials": 2,
+    "embeddedTextures": 4,
+    "meshes": 1,
+    "renderedMeshes": 2,
+    "trianglesInRenderer": 6556,
+    "normalMaps": 1
+  },
+  "runtime": "Locally bundled GLB, GLTFLoader, no CDN request from browser; 16 m/8 m for QA, actual object dimensions from project",
+  "note": "This is a CC0 realtime model, not a photogrammetric archviz tree; preserve procedural winter fallback"
+}
