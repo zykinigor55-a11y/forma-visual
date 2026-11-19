@@ -15,7 +15,7 @@ export const GROUPS=Object.freeze([
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
  {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
 ]);
-export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18});
+export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18,poplar:24});
 export const SCENE_OPTIONS=Object.freeze({
  time:[['morning','Утро'],['day','День'],['evening','Вечер'],['night','Ночь']],
  season:[['spring','Весна'],['summer','Лето'],['autumn','Осень'],['winter','Зима']],
@@ -50,7 +50,8 @@ export const CATALOG=Object.freeze([
  ['apple','Яблоня декоративная','#aa9a78',5,'Malus ornamental','flower'],
  ['sakura','Сакура','#d4a8bf',5,'Prunus serrulata','flower'],
  ['ash','Ясень обыкновенный','#678e50',8,'Fraxinus excelsior','pinnate'],
- ['aspen','Осина европейская','#a4be76',6,'Populus tremula','aspen']
+ ['aspen','Осина европейская','#a4be76',6,'Populus tremula','aspen'],
+ ['poplar','Тополь пирамидальный','#718360',4.8,'Populus nigra Italica','broadleaf']
  ].map(([id,name,color,diameter,latin,shape])=>({id,group:'trees',name,color,diameter,latin,shape})),
  ...[
  ['concrete-pavers','Крупноформатная плита','#b1ada2','slabs'],

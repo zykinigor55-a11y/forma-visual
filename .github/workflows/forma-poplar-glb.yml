@@ -1,0 +1,63 @@
+name: FORMA - Install verified Lombardy poplar CC0 GLB
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-poplar-glb.yml'
+      - 'forma-landscape-3d-mature-trees.js'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    if: github.ref == 'refs/heads/dom-render-nanobanana'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download pinned original GLB and verify its checksum
+        run: |
+          python3 - <<'PY'
+          import urllib.request,pathlib,hashlib,struct,time
+          url='https://tevy.dev/models/lombardy-poplar/v1/lod0.glb'
+          file=pathlib.Path('assets/landscape-models/poplar-lombardy-tevy-cc0.glb')
+          expected='0732a7a7e6581d14ecef09be8356ec2365b511b626fbdf8cfc301d350eaa623a'
+          size=6519584
+          if file.exists():
+              existing=file.read_bytes()
+              if len(existing)==size and hashlib.sha256(existing).hexdigest()==expected:
+                  print('Already installed and verified')
+                  raise SystemExit(0)
+          for attempt in range(3):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'FORMA-Visual-CC0/1.0'})
+                  with urllib.request.urlopen(req,timeout=90) as response: data=response.read()
+                  if len(data)!=size or hashlib.sha256(data).hexdigest()!=expected:
+                      raise ValueError('Original 3D model checksum or length mismatch')
+                  if data[:4]!=b'glTF' or struct.unpack_from('<I',data,4)[0]!=2 or struct.unpack_from('<I',data,8)[0]!=size:
+                      raise ValueError('Invalid glTF 2.0 binary header')
+                  file.parent.mkdir(parents=True,exist_ok=True)
+                  file.write_bytes(data)
+                  print('Installed verified GLB',size,'bytes')
+                  break
+              except Exception:
+                  if attempt==2:raise
+                  time.sleep(4*(attempt+1))
+          PY
+      - name: Check model, source licence, catalogue and GLB
+        run: node --test tests/landscape-poplar-cc0.test.mjs
+      - name: Store binary in project branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/landscape-models/poplar-lombardy-tevy-cc0.glb
+          if ! git diff --cached --quiet; then
+            git commit -m "assets(poplar): install SHA-verified 6.5MB Tevy CC0 GLB"
+            git push origin HEAD:dom-render-nanobanana
+          fi

@@ -23,6 +23,7 @@ export const VEGETATION_SPECIES=Object.freeze({
  sakura:{kind:'deciduous',density:1200,branches:12,crownStart:.36,leaf:'#82a25e',bark:'#79584a'},
  ash:{kind:'deciduous',density:1700,branches:16,crownStart:.43,leaf:'#64864d',bark:'#807365'},
  aspen:{kind:'deciduous',density:1550,branches:13,crownStart:.43,leaf:'#90ae68',bark:'#c9d2b3'},
+ poplar:{kind:'deciduous',density:2050,branches:18,crownStart:.13,leaf:'#668b50',bark:'#65675a'},
  juniper:{kind:'conifer-shrub',density:650,branches:20,crownStart:.04,leaf:'#587a65',bark:'#675d4c'},
  hydrangea:{kind:'shrub',density:520,branches:24,crownStart:.1,leaf:'#76935d',flower:'#e6d9b1',bark:'#6f6650'},
  spirea:{kind:'shrub',density:940,branches:24,crownStart:.04,leaf:'#94a86c',flower:'#ece4ca',bark:'#736958'},
@@ -72,7 +73,7 @@ export function foliageProfile(id,season='summer'){
  const cfg=VEGETATION_SPECIES[id]||VEGETATION_SPECIES.oak;
  let color=cfg.leaf,leafless=season==='winter'&&!isEvergreen(id);
  if(season==='autumn'&&!isEvergreen(id)){
-  color=({birch:'#cba84f',oak:'#987548',maple:'#c26d40',linden:'#bca548',willow:'#c5ad66',rowan:'#a97744',apple:'#bd9554',sakura:'#ba8c50',ash:'#b4a056',aspen:'#d6ae54',ninebark:'#a8704e','wild-shrub':'#b48c55',fern:'#a18d5f',hosta:'#b09c66'})[id]||color;
+  color=({birch:'#cba84f',oak:'#987548',maple:'#c26d40',linden:'#bca548',willow:'#c5ad66',rowan:'#a97744',apple:'#bd9554',sakura:'#ba8c50',ash:'#b4a056',aspen:'#d6ae54',poplar:'#b4a457',ninebark:'#a8704e','wild-shrub':'#b48c55',fern:'#a18d5f',hosta:'#b09c66'})[id]||color;
  }
  return {color,leafless,kind:cfg.kind};
 }
@@ -107,6 +108,7 @@ export function barkPalette(id){
  if(id==='pine')return {base:'#96613F',dark:'#563C30',light:'#C08B61',cross:false};
  if(id==='spruce')return {base:'#62534A',dark:'#302E2B',light:'#96826A',cross:false};
  if(id==='willow')return {base:'#857A65',dark:'#585B4B',light:'#B2AB92',cross:false};
+ if(id==='poplar')return {base:'#6B6A60',dark:'#46453D',light:'#9F9B88',cross:false};
  if(['oak','apple','rowan'].includes(id))return {base:'#6C5C4E',dark:'#37352F',light:'#90806D',cross:false};
  return {base:'#83715D',dark:'#4D4339',light:'#A9997C',cross:false};
 }

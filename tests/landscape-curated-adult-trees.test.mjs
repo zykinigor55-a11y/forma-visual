@@ -9,7 +9,7 @@ const page=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'u
 
 test('verified sources match local tree paths and CC0 license',()=>{
  assert.equal(manifest.license,'CC0 1.0');
- assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['apple','ash','aspen','birch','linden','maple','oak','rowan','sakura','spruce']);
+ assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['apple','ash','aspen','birch','linden','maple','oak','poplar','rowan','sakura','spruce']);
  assert.equal(manifest.trees.length,6,'original verified Innerscene installer remains unchanged');
  assert.ok(TREE_MODEL_SOURCE_LINKS.pine);
  assert.equal(MATURE_TREE_MODELS.sakura.season,'spring');
@@ -84,7 +84,7 @@ test('compressed third-party GLBs are accepted on upload and project restore',()
 });
 
 test('new species use true 3D summer/spring GLBs and safe winter native crowns',()=>{
- assert.match(page,/\['birch','oak','maple','linden','apple','rowan','aspen'\]\.includes\(o\.catalogId\)/);
+ assert.match(page,/\['birch','oak','maple','linden','apple','rowan','aspen','poplar'\]\.includes\(o\.catalogId\)/);
  assert.match(page,/o\.catalogId==='sakura'&&doc\.atmosphere\.season!=='spring'/);
  assert.match(page,/doc\.atmosphere\.season==='winter'&&o\.catalogId==='ash'/,'ash retains leafless native winter mode');
  assert.match(page,/\['oak','maple','linden'\]\.includes\(o\.catalogId\)/);

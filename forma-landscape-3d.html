@@ -880,7 +880,14 @@ function loadCuratedAdultTree(species){
  const matureTreeLoader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
  // A failed preferred GLB stays selectable, but will NOT silently show the
  // obsolete sparse backup spruce/birch. The user sees a retry prompt instead.
- matureTreeLoader.loadAsync(entry.path).then(result=>{
+ (async()=>{
+  try{return await matureTreeLoader.loadAsync(entry.path)}
+  catch(error){
+   if(!entry.remoteFallbackPath)throw error;
+   console.warn('Local CC0 tree model unavailable, using pinned source:',species,error?.message||error);
+   return matureTreeLoader.loadAsync(entry.remoteFallbackPath);
+  }
+ })().then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
   let meshes=0;
   result.scene.traverse(node=>{if(node.isMesh&&node.geometry?.attributes?.position)meshes++});
@@ -909,7 +916,7 @@ function drawObject(o,entry,key){
   // Keep summer-only broadleaf GLBs out of autumn/winter; use seasonal
   // species-aware 3D branches instead. Flowering cherry is spring-only.
   const seasonalNative=(doc.atmosphere.season==='winter'&&
-   ['birch','oak','maple','linden','apple','rowan','aspen'].includes(o.catalogId))||
+   ['birch','oak','maple','linden','apple','rowan','aspen','poplar'].includes(o.catalogId))||
    (doc.atmosphere.season==='winter'&&o.catalogId==='ash')||
    (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring');
   // Detailed CC0 broadleaves can have hundreds of meshes; on crowded

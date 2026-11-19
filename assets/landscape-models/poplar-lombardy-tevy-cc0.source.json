@@ -1,0 +1,19 @@
+{
+  "species": "poplar",
+  "name": "Тополь пирамидальный / Lombardy Poplar",
+  "origin": "Tevy",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sourcePage": "https://tevy.dev/models/lombardy-poplar",
+  "sourceDownload": "https://tevy.dev/models/lombardy-poplar/v1/lod0.glb",
+  "version": "v1",
+  "sha256": "0732a7a7e6581d14ecef09be8356ec2365b511b626fbdf8cfc301d350eaa623a",
+  "sizeBytes": 6519584,
+  "triangles": 74038,
+  "dimensionsMeters": {
+    "width": 5.73,
+    "height": 25.386,
+    "depth": 6.132
+  },
+  "note": "Pinned-origin GLB; self-host binary installed by GitHub Actions downloader."
+}
