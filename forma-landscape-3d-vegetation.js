@@ -309,12 +309,51 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
 /* Botanical leaf atlas: thin leaflets and conifer needles on real angled
  * 3D foliage quads, not flat whole-tree billboards. */
 const sprayTextureCache=new Map();
+/* A native alpha atlas for common ash. The old photo path borrowed ROWAN
+ * leaves, whose silhouette is not an authentic Fraxinus excelsior crown.
+ * Each twig below carries paired narrow leaflets and one terminal leaflet.
+ */
+function paintAshLeafSpray(ctx){
+ const stem=(x1,y1,x2,y2,w=1.6)=>{
+  ctx.strokeStyle='rgba(147,161,123,.94)';ctx.lineWidth=w;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ };
+ const leaflet=(x,y,dx,dy,width=8)=>{
+  ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(dy,dx));
+  const L=Math.hypot(dx,dy);
+  ctx.fillStyle='rgba(234,241,219,.97)';
+  ctx.beginPath();ctx.moveTo(0,0);
+  ctx.bezierCurveTo(L*.2,-width*.76,L*.58,-width*.98,L,0);
+  ctx.bezierCurveTo(L*.62,width*.92,L*.22,width*.72,0,0);ctx.fill();
+  ctx.strokeStyle='rgba(94,116,77,.33)';ctx.lineWidth=.8;
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(L*.91,0);ctx.stroke();
+  ctx.restore();
+ };
+ for(const branch of [-1,0,1]){
+  const rootX=128+branch*13,rootY=230;
+  const topX=128+branch*52,topY=39+(branch===0?0:19);
+  stem(rootX,rootY,topX,topY,1.8);
+  for(let j=0;j<5;j++){
+   const t=(j+.75)/6;
+   const px=rootX+(topX-rootX)*t,py=rootY+(topY-rootY)*t;
+   const spread=24*(1-.25*t);
+   for(const side of [-1,1]){
+    const dx=side*spread+(topX-rootX)*.08,dy=-15-(5-j)*1.3;
+    stem(px,py,px+dx*.23,py+dy*.23,.8);
+    leaflet(px+dx*.15,py+dy*.14,dx*.85,dy*.85,6.6*(1-.20*t));
+   }
+  }
+  leaflet(topX,topY+5,branch*2,-21,7.3);
+ }
+}
 function createSprayTexture(T,needles,id){
  const textureId=(needles?'needles-':'leaves-')+id;
  if(sprayTextureCache.has(textureId))return sprayTextureCache.get(textureId);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
  const ctx=canvas.getContext('2d'),random=rng(hash(textureId)),profile=needles?coniferNeedleProfile(id):null;
  const stem=(a,b,c,d,w=1.1)=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.strokeStyle='rgba(186,194,169,.70)';ctx.lineWidth=w;ctx.stroke()};
+ if(id==='ash'&&!needles)paintAshLeafSpray(ctx);
+ else{
  const arms=profile?.arms||13;
  for(let j=0;j<arms;j++){
   const angle=j*Math.PI*2/arms+(random()-.5)*.32;
@@ -353,6 +392,7 @@ function createSprayTexture(T,needles,id){
     }
    }
   }
+ }
  }
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
  texture.minFilter=T.LinearMipmapLinearFilter;texture.magFilter=T.LinearFilter;
