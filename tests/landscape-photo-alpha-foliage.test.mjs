@@ -6,9 +6,9 @@ import {VEGETATION_SPECIES} from '../forma-landscape-3d-vegetation.js';
 import {NATIVE_UNDERSTORY} from '../forma-landscape-3d-understory.js';
 import {enableBotanicalLod,setFoliageTier} from '../forma-landscape-3d-foliage-lod.js';
 
-test('photo-alpha source exists for every one of 26 existing catalog species',()=>{
+test('photo-alpha source exists for 27 current and 1 legacy vegetation species',()=>{
  const species=Object.keys(VEGETATION_SPECIES).sort();
- assert.equal(species.length,26,'catalog size must not change');
+ assert.equal(species.length,28,'27 active species plus the archived linden');
  assert.deepEqual(Object.keys(FOLIAGE_PHOTO_SOURCE).sort(),species);
  assert.ok(exactPhotoSpecies.length>=18,'primary photo coverage');
  for(const id of species){
