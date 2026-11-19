@@ -1,0 +1,72 @@
+/* FORMA | Silver birch (Betula pendula) crown refinement.
+ * Turn the bundled, original CC0 GLB into a more pendulous native tree:
+ * only the original vertices are moved. No billboards, new leaf meshes,
+ * extra trunks, material recoloring or loss of UVs/PBR/alpha masks.
+ * The adjusted source is cached once and its geometries are shared by all
+ * planted birches. The loader's original source remains unmodified.
+ */
+const refinedSources=new WeakMap();
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const smooth=(a,b,x)=>{const t=clamp((x-a)/Math.max(1e-9,b-a),0,1);return t*t*(3-2*t)};
+
+export function birchCrownDisplacement({height=1,radius=1,relativeY=0,relativeRadius=0,azimuth=0}={}){
+ const h=Math.max(.001,Number(height)||1);
+ const r=clamp(Number(relativeRadius)||0,0,1.5);
+ const t=clamp(Number(relativeY)||0,0,1);
+ // Preserve the white basal stem and top leader; droop starts on lateral
+ // crown branches and increases gradually toward their terminal leaf sprays.
+ const crown=smooth(.20,.44,t)*(1-smooth(.86,1,t));
+ const lateral=smooth(.14,.72,r);
+ const asymmetry=1+.085*Math.sin((Number(azimuth)||0)*2.7+t*8.2);
+ return h*.052*crown*lateral*asymmetry;
+}
+
+export function refineNativeBirch(T,source){
+ if(!source?.isObject3D)return source;
+ const already=refinedSources.get(source);
+ if(already)return already;
+ const clone=source.clone(true);
+ clone.updateMatrixWorld(true);
+ const bounds=new T.Box3().setFromObject(clone);
+ if(bounds.isEmpty()){refinedSources.set(source,clone);return clone}
+ const size=new T.Vector3(),center=new T.Vector3();
+ bounds.getSize(size);bounds.getCenter(center);
+ const height=Math.max(.001,size.y),radius=Math.max(.001,Math.max(size.x,size.z)*.5);
+ const worldPoint=new T.Vector3(),nativePoint=new T.Vector3();
+ let changed=0;
+ clone.traverse(mesh=>{
+  if(!mesh.isMesh||!mesh.geometry?.getAttribute)return;
+  const current=mesh.geometry.getAttribute('position');
+  if(!current||current.count<3)return;
+  // The original GLB is also used by other scene consumers. Never edit it.
+  const geometry=mesh.geometry.clone();
+  const positions=geometry.getAttribute('position');
+  mesh.updateWorldMatrix(true,false);
+  const inverse=mesh.matrixWorld.clone().invert();
+  for(let i=0;i<positions.count;i++){
+   nativePoint.set(positions.getX(i),positions.getY(i),positions.getZ(i));
+   worldPoint.copy(nativePoint).applyMatrix4(mesh.matrixWorld);
+   const dx=worldPoint.x-center.x,dz=worldPoint.z-center.z;
+   const radial=Math.hypot(dx,dz),t=(worldPoint.y-bounds.min.y)/height;
+   const drop=birchCrownDisplacement({
+    height,radius,relativeY:t,relativeRadius:radial/radius,
+    azimuth:Math.atan2(dz,dx)
+   });
+   if(drop<=0)continue;
+   worldPoint.y=Math.max(bounds.min.y+height*.005,worldPoint.y-drop);
+   nativePoint.copy(worldPoint).applyMatrix4(inverse);
+   positions.setXYZ(i,nativePoint.x,nativePoint.y,nativePoint.z);
+  }
+  positions.needsUpdate=true;
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  mesh.geometry=geometry;
+  mesh.userData={...mesh.userData,birchNativeRefined:true,bundledSharedGeometry:true};
+  changed++;
+ });
+ clone.userData={...clone.userData,birchNativeRefinement:{
+  name:'Betula pendula · native hanging twigs',modifiedMeshes:changed
+ }};
+ refinedSources.set(source,clone);
+ return clone;
+}
