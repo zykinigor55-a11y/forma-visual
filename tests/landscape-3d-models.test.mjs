@@ -29,7 +29,9 @@ test('all catalogue vegetation species can accept an imported GLB and keep built
  assert.match(html,/async function importPlantGlb/);
  assert.match(html,/async function restorePlantGlbs/);
  assert.match(html,/importedPlantModels\.get\(o\.catalogId\)/);
- assert.match(html,/g=source\?makeRealVegetation\(THREE,source,o,\{shareGeometry:!imported\}\):/);
+ assert.match(html,/const source=imported\|\|bundledPine\|\|null/);
+ assert.match(html,/g=source\?makeRealVegetation\(THREE,source,o,\{shareGeometry:!!bundledPine&&!imported\}\):/);
+ assert.match(html,/loadMatureScotsPine\(\)/);
  assert.match(html,/createVegetation\(THREE,o,\{season:doc\.atmosphere\.season,quality/);
  assert.match(html,/bundledModelSources\.get\(o\.catalogId\)/);
  assert.match(html,/localStorage\.setItem\(FLORA/);
