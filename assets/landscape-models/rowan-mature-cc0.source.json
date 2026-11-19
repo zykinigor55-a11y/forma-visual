@@ -1,0 +1,27 @@
+{
+  "species": "rowan",
+  "name": "Рябина обыкновенная с ягодами",
+  "origin": "Tevy",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sourcePage": "https://tevy.dev/models/rowan",
+  "sourceDownload": "https://tevy.dev/models/rowan/v1/lod0.glb",
+  "resolvedDownload": "https://tevy.dev/models/rowan/v1/lod0.glb",
+  "sha256": "c336865012797f9c59f0455704f6f562fd19d2313334c44e8b923c1892133ca7",
+  "sizeBytes": 1145464,
+  "retrievedUtc": "2026-11-19T09:50:40.148372+00:00",
+  "analysis": {
+    "meshCount": 3,
+    "triangles": 18988,
+    "materials": 3,
+    "images": 4,
+    "extensionsUsed": [
+      "EXT_meshopt_compression",
+      "KHR_materials_specular",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "alphaMaterials": 1
+  },
+  "runtime": "self-hosted local GLB; KTX2+Meshopt decoders bundled"
+}

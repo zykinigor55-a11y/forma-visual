@@ -1,0 +1,27 @@
+{
+  "species": "apple",
+  "name": "Плодовая яблоня · лето",
+  "origin": "Tevy",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sourcePage": "https://tevy.dev/models/apple-tree",
+  "sourceDownload": "https://tevy.dev/models/apple-tree/v1/lod0.glb",
+  "resolvedDownload": "https://tevy.dev/models/apple-tree/v1/lod0.glb",
+  "sha256": "ff3495c993bdc682981760ad5cce0d3794c3d324015895553d60e1a405407adc",
+  "sizeBytes": 3004044,
+  "retrievedUtc": "2026-11-19T09:50:40.070803+00:00",
+  "analysis": {
+    "meshCount": 4,
+    "triangles": 42582,
+    "materials": 4,
+    "images": 5,
+    "extensionsUsed": [
+      "EXT_meshopt_compression",
+      "KHR_materials_specular",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "alphaMaterials": 1
+  },
+  "runtime": "self-hosted local GLB; KTX2+Meshopt decoders bundled"
+}

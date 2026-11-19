@@ -1,0 +1,27 @@
+{
+  "species": "aspen",
+  "name": "Осина европейская",
+  "origin": "Tevy",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sourcePage": "https://tevy.dev/models/aspen",
+  "sourceDownload": "https://tevy.dev/models/aspen/v1/lod0.glb",
+  "resolvedDownload": "https://tevy.dev/models/aspen/v1/lod0.glb",
+  "sha256": "28eee34f667fefcfcedbc8952ee29d9d40845d1b01f3438501d07ddf1c6eaefc",
+  "sizeBytes": 1407296,
+  "retrievedUtc": "2026-11-19T09:50:40.270566+00:00",
+  "analysis": {
+    "meshCount": 3,
+    "triangles": 20358,
+    "materials": 3,
+    "images": 4,
+    "extensionsUsed": [
+      "EXT_meshopt_compression",
+      "KHR_materials_specular",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "alphaMaterials": 1
+  },
+  "runtime": "self-hosted local GLB; KTX2+Meshopt decoders bundled"
+}
