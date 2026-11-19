@@ -1,4 +1,5 @@
 import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
+import {ashCompoundLeafGeometry} from './forma-landscape-ash-leaves.js';
 /* FORMA VISUAL / Species-aware hybrid botanical vegetation.
  * Real measured 3D branch systems, close-up leaf geometry and transparent
  * photographic cutouts on terminal twigs (never whole-tree billboards).
@@ -20,7 +21,7 @@ export const VEGETATION_SPECIES=Object.freeze({
  rowan:{kind:'deciduous',density:920,branches:11,crownStart:.47,leaf:'#6b9850',bark:'#696153'},
  apple:{kind:'deciduous',density:1000,branches:11,crownStart:.33,leaf:'#789650',bark:'#715342'},
  sakura:{kind:'deciduous',density:1200,branches:12,crownStart:.36,leaf:'#82a25e',bark:'#79584a'},
- ash:{kind:'deciduous',density:1400,branches:15,crownStart:.39,leaf:'#64864d',bark:'#807365'},
+ ash:{kind:'deciduous',density:1280,branches:16,crownStart:.43,leaf:'#64864d',bark:'#807365'},
  aspen:{kind:'deciduous',density:1550,branches:13,crownStart:.43,leaf:'#90ae68',bark:'#c9d2b3'},
  juniper:{kind:'conifer-shrub',density:650,branches:20,crownStart:.04,leaf:'#587a65',bark:'#675d4c'},
  hydrangea:{kind:'shrub',density:520,branches:24,crownStart:.1,leaf:'#76935d',flower:'#e6d9b1',bark:'#6f6650'},
@@ -206,6 +207,7 @@ function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  * independent curved leaf/needle blades. Its origin is the branch endpoint.
  * This fixes hovering green blobs and makes canopy porous in perspective. */
 function foliageSprigGeometry(T,needle,id='oak'){
+ if(id==='ash'&&!needle)return ashCompoundLeafGeometry(T);
  // Botanical terminal shoots in THREE DIMENSIONS, not the former hedgehog-like
  // radial pointy star. Leaves are paired along a short curved rachis; every
  // species uses its characteristic leaf outline and branchlet length.
@@ -307,12 +309,51 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
 /* Botanical leaf atlas: thin leaflets and conifer needles on real angled
  * 3D foliage quads, not flat whole-tree billboards. */
 const sprayTextureCache=new Map();
+/* A native alpha atlas for common ash. The old photo path borrowed ROWAN
+ * leaves, whose silhouette is not an authentic Fraxinus excelsior crown.
+ * Each twig below carries paired narrow leaflets and one terminal leaflet.
+ */
+function paintAshLeafSpray(ctx){
+ const stem=(x1,y1,x2,y2,w=1.6)=>{
+  ctx.strokeStyle='rgba(147,161,123,.94)';ctx.lineWidth=w;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ };
+ const leaflet=(x,y,dx,dy,width=8)=>{
+  ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(dy,dx));
+  const L=Math.hypot(dx,dy);
+  ctx.fillStyle='rgba(234,241,219,.97)';
+  ctx.beginPath();ctx.moveTo(0,0);
+  ctx.bezierCurveTo(L*.2,-width*.76,L*.58,-width*.98,L,0);
+  ctx.bezierCurveTo(L*.62,width*.92,L*.22,width*.72,0,0);ctx.fill();
+  ctx.strokeStyle='rgba(94,116,77,.33)';ctx.lineWidth=.8;
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(L*.91,0);ctx.stroke();
+  ctx.restore();
+ };
+ for(const branch of [-1,0,1]){
+  const rootX=128+branch*13,rootY=230;
+  const topX=128+branch*52,topY=39+(branch===0?0:19);
+  stem(rootX,rootY,topX,topY,1.8);
+  for(let j=0;j<5;j++){
+   const t=(j+.75)/6;
+   const px=rootX+(topX-rootX)*t,py=rootY+(topY-rootY)*t;
+   const spread=24*(1-.25*t);
+   for(const side of [-1,1]){
+    const dx=side*spread+(topX-rootX)*.08,dy=-15-(5-j)*1.3;
+    stem(px,py,px+dx*.23,py+dy*.23,.8);
+    leaflet(px+dx*.15,py+dy*.14,dx*.85,dy*.85,6.6*(1-.20*t));
+   }
+  }
+  leaflet(topX,topY+5,branch*2,-21,7.3);
+ }
+}
 function createSprayTexture(T,needles,id){
  const textureId=(needles?'needles-':'leaves-')+id;
  if(sprayTextureCache.has(textureId))return sprayTextureCache.get(textureId);
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
  const ctx=canvas.getContext('2d'),random=rng(hash(textureId)),profile=needles?coniferNeedleProfile(id):null;
  const stem=(a,b,c,d,w=1.1)=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.strokeStyle='rgba(186,194,169,.70)';ctx.lineWidth=w;ctx.stroke()};
+ if(id==='ash'&&!needles)paintAshLeafSpray(ctx);
+ else{
  const arms=profile?.arms||13;
  for(let j=0;j<arms;j++){
   const angle=j*Math.PI*2/arms+(random()-.5)*.32;
@@ -351,6 +392,7 @@ function createSprayTexture(T,needles,id){
     }
    }
   }
+ }
  }
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
  texture.minFilter=T.LinearMipmapLinearFilter;texture.magFilter=T.LinearFilter;
