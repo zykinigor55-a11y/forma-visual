@@ -32,7 +32,7 @@ jobs:
       - name: Install Chromium and dependencies
         run: |
           npm install --no-save playwright@1.56.0
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Check and screenshot the real main screen on desktop and phone
         run: |
           node server.mjs > /tmp/forma-main-atelier-server.log 2>&1 &
