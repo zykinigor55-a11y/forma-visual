@@ -1,19 +1,22 @@
-name: FORMA · Internet CC0 ash GLB candidate visual inspection
+name: FORMA · Native textured ash CC0 WebGL quality
 on:
   push:
-    branches: [experiments/forma-ash-real-glb-webgl-20261119]
+    branches: [dom-render-nanobanana]
     paths:
       - 'forma-ash-online-preview.html'
+      - 'forma-landscape-3d.html'
+      - 'forma-landscape-3d-mature-trees.js'
+      - 'assets/landscape-models/ash-terraintale-cc0.glb'
       - 'tests/landscape-ash-online-model-qa.verify.mjs'
       - '.github/workflows/forma-ash-online-glb-candidate-qa.yml'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 concurrency:
-  group: forma-online-ash-candidate
+  group: forma-mature-ash-webgl
   cancel-in-progress: true
 jobs:
-  candidate:
+  ash:
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
@@ -21,44 +24,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Retrieve CC0 source without replacing production tree
+      - name: Verify local source and CC0 signed-off checksum
         run: |
-          mkdir -p assets/landscape-models
-          curl -fLsS --retry 3 --connect-timeout 18 --max-time 90 \
-            'https://terraintale.com/library/realistic-surfaces/ash_tree_large.glb' \
-            -o assets/landscape-models/ash-terraintale-cc0.glb
           python3 - <<'PY'
-          import struct,hashlib,pathlib,json
-          path=pathlib.Path('assets/landscape-models/ash-terraintale-cc0.glb')
-          raw=path.read_bytes()
-          assert raw[:4]==b'glTF' and struct.unpack_from('<I',raw,4)[0]==2
-          assert struct.unpack_from('<I',raw,8)[0]==len(raw), 'complete GLB required'
-          n=struct.unpack_from('<I',raw,12)[0]
-          data=json.loads(raw[20:20+n].decode('utf-8'))
-          summary=dict(size=len(raw),sha256=hashlib.sha256(raw).hexdigest(),
-            meshes=len(data.get('meshes',[])),materials=len(data.get('materials',[])),
-            images=len(data.get('images',[])),textures=len(data.get('textures',[])))
-          print('FREE SOURCE GLB',summary)
-          assert summary['sha256']=='e2f6c99b9a46e3b4ba40ff8efd4f734dc02511023feb9eb85492a6260f0f4e17', 'source changed since visual QA, refuse commit'
+          import hashlib,json,struct,pathlib
+          asset=pathlib.Path('assets/landscape-models/ash-terraintale-cc0.glb').read_bytes()
+          provenance=json.loads(pathlib.Path('assets/landscape-models/ash-terraintale-cc0.source.json').read_text())
+          assert asset[:4]==b'glTF' and struct.unpack_from('<I',asset,4)[0]==2
+          assert struct.unpack_from('<I',asset,8)[0]==len(asset)
+          assert hashlib.sha256(asset).hexdigest()=='e2f6c99b9a46e3b4ba40ff8efd4f734dc02511023feb9eb85492a6260f0f4e17'==provenance['sha256']
+          assert provenance['license']=='CC0 1.0'
+          print('LOCAL GLB OK',len(asset),'bytes, SHA-256',provenance['sha256'])
           PY
-      - name: Keep verified CC0 binary in isolated evaluation branch
-        run: |
-          git config user.name "FORMA botanical QA"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/landscape-models/ash-terraintale-cc0.glb
-          git commit -m "asset(ash): add SHA-verified CC0 textured mature Fraxinus GLB" || exit 0
-          git push origin HEAD:refs/heads/experiments/forma-ash-real-glb-webgl-20261119
       - run: |
           npm install --no-save playwright@1.56.0
           npx playwright install chromium
-      - name: Render close-range bark and mature Fraxinus crown
+      - name: Full native tree catalogue and winter fallbacks
+        run: node --test tests/landscape-curated-adult-trees.test.mjs tests/landscape-maple-ash-morphology.test.mjs
+      - name: Render actual GLB bark closeup, crown and mobile
         run: |
-          node server.mjs > /tmp/forma-ash-candidate.log 2>&1 &
+          node server.mjs > /tmp/forma-mature-ash.log 2>&1 &
           sleep 3
           node tests/landscape-ash-online-model-qa.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: forma-ash-free-glb-source-review
+          name: forma-mature-ash-pbr-real-glb
           path: artifacts/landscape-editor/ash-online-cc0/*
           if-no-files-found: warn
