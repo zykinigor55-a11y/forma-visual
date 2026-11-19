@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-g
 try{
  const page=await browser.newPage({viewport:{width:1024,height:820},deviceScaleFactor:1});
  const pageErrors=[];page.on('pageerror',error=>pageErrors.push(String(error)));
- for(const species of ['birch','spruce','oak']){
+ for(const species of ['birch','spruce','oak','maple','linden','sakura']){
   await page.goto('http://127.0.0.1:3000/forma-mature-trees-preview.html?species='+species,
    {waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForFunction(()=>window.__treeReady===true||Boolean(window.__treeError),{timeout:90000});
@@ -16,8 +16,9 @@ try{
   assert.equal(result.error,null,species+' WebGL loader');
   assert.ok(result.details.meshes>1,species+' should have real multi-part 3D geometry');
   assert.ok(result.details.materials>0,species+' should have PBR materials');
-  assert.ok(result.details.textures>0||species==='oak',species+' should have embedded textures');
-  assert.ok(result.details.height>8,species+' physical tree height');
+  assert.ok(result.details.textures>0||['oak','maple','linden'].includes(species),species+' needs valid textured PBR or individual leaf geometry');
+  const expected={birch:14,spruce:16,oak:8.6,maple:9.5,linden:8.8,sakura:6}[species];
+  assert.ok(Math.abs(result.details.height-expected)<.04,species+' preserves real metric height');
   for(const [angle,yaw] of [['front',0],['three-quarter',Math.PI/4],['rear',Math.PI]]){
    await page.evaluate(yaw=>window.__treeView(yaw,.15),yaw);
    await page.screenshot({path:folder+'/'+species+'-'+angle+'.png'});
