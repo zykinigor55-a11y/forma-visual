@@ -1,0 +1,60 @@
+name: FORMA - Download CC0 flowering hydrangea GLB
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-download-innerscene-hydrangea.yml'
+      - 'assets/landscape-models/hydrangea-flowering-innerscene-cc0.source.json'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  download:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Download Innerscene GLB, check file magic, size and checksum
+        run: |
+          python3 - <<'PY'
+          import urllib.request,hashlib,struct,pathlib,json,time
+          paths=["https://files.innerscene.com/library/flowering-hydrangea-shrub-af2da5d3/9d0694188c351f2a5237/flowering-hydrangea-shrub.glb","https://www.innerscene.com/api/library/flowering-hydrangea-shrub-af2da5d3/download"]
+          target=pathlib.Path('assets/landscape-models/hydrangea-flowering-innerscene-cc0.glb')
+          metadata=pathlib.Path('assets/landscape-models/hydrangea-flowering-innerscene-cc0.source.json')
+          errors=[]
+          for attempt,url in enumerate(paths):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 FORMA-Visual-CC0-assets/1.0','Accept':'application/octet-stream,*/*'})
+                  with urllib.request.urlopen(req,timeout=60) as response:
+                      contents=response.read(10_000_000)
+                      print('Resolved URL',response.geturl(),'mime',response.headers.get('Content-Type'),'bytes',len(contents))
+                  if len(contents)<100_000 or len(contents)>8_000_000:
+                      raise ValueError('Unexpected binary size: '+str(len(contents)))
+                  if contents[:4]!=b'glTF' or struct.unpack_from('<I',contents,4)[0]!=2 or struct.unpack_from('<I',contents,8)[0]!=len(contents):
+                      raise ValueError('Not a glTF 2.0 GLB binary')
+                  checksum=hashlib.sha256(contents).hexdigest()
+                  target.parent.mkdir(parents=True,exist_ok=True)
+                  target.write_bytes(contents)
+                  source=json.loads(metadata.read_text())
+                  source.update({'status':'downloaded, GLB header and checksum verified','sizeBytes':len(contents),'sha256':checksum,'downloadedVia':response.geturl()})
+                  metadata.write_text(json.dumps(source,ensure_ascii=False,indent=2)+'\n')
+                  print('GLB verified sha256',checksum)
+                  break
+              except Exception as ex:
+                  errors.append(f'{url}: {ex}')
+                  if attempt == len(paths)-1:
+                      raise RuntimeError('All original source downloads failed: '+' | '.join(errors))
+                  time.sleep(3)
+          PY
+      - name: Commit verified original GLB and provenance only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- 'assets/landscape-models/hydrangea-flowering-innerscene-cc0.glb' 'assets/landscape-models/hydrangea-flowering-innerscene-cc0.source.json'
+          if ! git diff --cached --quiet; then
+            git commit -m 'assets(hydrangea): download verified Innerscene CC0 flowering shrub GLB'
+            git push origin HEAD:dom-render-nanobanana
+          fi

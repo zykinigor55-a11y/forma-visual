@@ -1,0 +1,18 @@
+{
+  "species": "flowering-hydrangea-shrub",
+  "name": "Flowering hydrangea shrub (variety not established)",
+  "originalFile": "flowering-hydrangea-shrub.glb",
+  "license": "CC0 1.0",
+  "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/flowering-hydrangea-shrub-af2da5d3",
+  "sourceDownload": "https://www.innerscene.com/api/library/flowering-hydrangea-shrub-af2da5d3/download",
+  "cdnFile": "https://files.innerscene.com/library/flowering-hydrangea-shrub-af2da5d3/9d0694188c351f2a5237/flowering-hydrangea-shrub.glb",
+  "modelPath": "assets/landscape-models/hydrangea-flowering-innerscene-cc0.glb",
+  "claimedSize": "2.6 MB",
+  "dimensionsMetres": {
+    "x": 1.047,
+    "y": 1.016,
+    "z": 1.14
+  },
+  "status": "pending verified binary download; installer populates checksum and size",
+  "usage": "Reference GLB for future modeling; do not replace Hydrangea paniculata until visually confirmed."
+}
