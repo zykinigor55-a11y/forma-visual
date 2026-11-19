@@ -17,6 +17,10 @@ test('verified sources match local tree paths and CC0 license',()=>{
    assert.equal(MATURE_TREE_MODELS.spruce.path,'/assets/landscape-models/spruce-tevy-cc0.glb');
    assert.equal(MATURE_TREE_MODELS.spruce.fallbackPath,'/assets/landscape-models/spruce-mature-cc0.glb');
    assert.equal(MATURE_TREE_MODELS.spruce.sourcePage,'https://tevy.dev/models/norway-spruce');
+  }else if(model.species==='birch'){
+   assert.equal(MATURE_TREE_MODELS.birch.path,'/assets/landscape-models/birch-tevy-cc0.glb');
+   assert.equal(MATURE_TREE_MODELS.birch.fallbackPath,'/assets/landscape-models/birch-mature-cc0.glb');
+   assert.equal(MATURE_TREE_MODELS.birch.sourcePage,'https://tevy.dev/models/silver-birch');
   }else{
    assert.equal(MATURE_TREE_MODELS[model.species].path,'/assets/landscape-models/'+model.file);
    assert.equal(MATURE_TREE_MODELS[model.species].sourcePage,model.sourcePage);
