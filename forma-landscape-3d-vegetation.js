@@ -53,6 +53,15 @@ export const SHRUB_ARCHITECTURE=Object.freeze({
  ninebark:Object.freeze({width:.99,low:.35,span:.57,curve:.13,branchlets:13,habit:'open-arching'})
 });
 export function shrubArchitecture(id){return SHRUB_ARCHITECTURE[id]||null}
+/* Physically connected falling birch/willow twigs must never project
+ * outside the user's surveyed crown diameter. The 3D skeleton and its
+ * terminal leaf centres use these exact coordinates.
+ */
+export function hangingTreeTerminal(x,y,z,{radius=1,drop=0,spread=1}={}){
+ const r=Math.max(.01,Number(radius)||1);
+ const [px,pz]=constrainCrownRadius(x*spread,z*spread,r);
+ return [px,Math.max(.12,(Number(y)||0)-Math.max(0,Number(drop)||0)),pz];
+}
 export const vegetationSpeciesIds=Object.freeze(Object.keys(VEGETATION_SPECIES));
 export const isEvergreen=id=>['pine','spruce','juniper','thuja-globe','boxwood'].includes(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -515,13 +524,14 @@ function generateTree(T,g,id,height,diameter,season,r,quality){
     if(id==='willow'){
      // Three connected hanging twig segments create real cascades visible in
      // perspective and Walk. They are geometry, not billboard strips.
-     const fall=branchTipDrop(id,height,t),end=[x*1.02,Math.max(.18,yy-fall),z*1.02];
-     const bow=[x*1.09,Math.max(.2,yy-fall*.46),z*1.09];
+     const fall=branchTipDrop(id,height,t);
+     const end=hangingTreeTerminal(x,yy,z,{radius,drop:fall,spread:1.02});
+     const bow=hangingTreeTerminal(x,yy,z,{radius,drop:fall*.46,spread:1.09});
      branches.push([[x,yy,z],bow,trunkRadius*.046],[bow,end,trunkRadius*.027]);
      centers.push({x:bow[0],y:bow[1],z:bow[2]},{x:end[0],y:end[1],z:end[2]});
     }else if(id==='birch'){
      const droop=branchTipDrop(id,height,t);
-     const end=[x*1.10,Math.max(.12,yy-droop),z*1.10];
+     const end=hangingTreeTerminal(x,yy,z,{radius,drop:droop,spread:1.10});
      branches.push([[x,yy,z],end,trunkRadius*.038]);centers.push({x:end[0],y:end[1],z:end[2]});
     }
     centers.push({x,y:yy,z});
