@@ -31,10 +31,23 @@ function upgradeButton(button,id){
  else button.insertAdjacentHTML('afterbegin',markup);
 }
 export function applyPremiumSiteIcons(){
- document.querySelectorAll('.rail-nav [data-nav]').forEach(button=>
-  upgradeButton(button,NAV_IDS[button.dataset.nav]));
- document.querySelectorAll('.mobile-nav [data-mobile]').forEach(button=>
-  upgradeButton(button,NAV_IDS[button.dataset.mobile]));
+ // Rail includes buttons injected AFTER boot by Interior, Landscape,
+ // Atmosphere and Scenarios. They have no data-nav attribute, so the old
+ // selector silently left their thin placeholder icons unchanged.
+ document.querySelectorAll('.rail-nav .rail-btn').forEach(button=>{
+  const icon=button.dataset.nav?NAV_IDS[button.dataset.nav]:
+   button.dataset.artOpen?TASK_ICONS[button.dataset.artOpen]:
+   button.classList.contains('fa-interior-nav')?'interior':
+   button.classList.contains('fa-flow-rail')?'nodes':
+   button.classList.contains('fa-pro-nav-launch')?'settings':null;
+  upgradeButton(button,icon);
+ });
+ document.querySelectorAll('.mobile-nav button').forEach(button=>{
+  const icon=button.dataset.mobile?NAV_IDS[button.dataset.mobile]:
+   button.classList.contains('fa-interior-mobile')?'interior':
+   button.classList.contains('fa-flow-mobile')?'nodes':null;
+  upgradeButton(button,icon);
+ });
  document.querySelectorAll('.tool-btn[data-tool]').forEach(button=>
   upgradeButton(button,TOOLS[button.dataset.tool]));
  // Main screen tools are created asynchronously by forma-studio-shell.js.
