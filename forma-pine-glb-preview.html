@@ -82,14 +82,15 @@ try{
  pineKtx2.detectSupport(renderer);
  const loaded=await new GLTFLoader().setKTX2Loader(pineKtx2).setMeshoptDecoder(MeshoptDecoder).loadAsync('/assets/landscape-models/pine-mature-cc0.glb');
  pineKtx2.dispose();
- const group=makeRealVegetation(THREE,loaded.scene,{catalogId:'pine',height:14,diameter:7},{shareGeometry:true});
+ const denseCanopy=new URLSearchParams(location.search).get('dense')==='1';
+ const group=makeRealVegetation(THREE,loaded.scene,{catalogId:'pine',height:14,diameter:7},{shareGeometry:true,canopyCopies:denseCanopy?2:0});
  scene.add(group);
  const box=new THREE.Box3().setFromObject(group),size=box.getSize(new THREE.Vector3());
  let leafMaterials=0,barkMaterials=0,meshes=0;
  group.traverse(o=>{if(!o.isMesh)return;meshes++;for(const m of (Array.isArray(o.material)?o.material:[o.material])){
   if(m?.alphaTest>0||m?.transparent)leafMaterials++;else barkMaterials++;
  }});
- result.textContent='Готово · '+meshes+' меша · '+leafMaterials+' материала хвои · '+barkMaterials+' коры';
+ result.textContent='Готово · '+meshes+' меша · '+leafMaterials+' материала хвои · '+barkMaterials+' коры'+(denseCanopy?' · густая крона':'');
  window.__pineDetails={meshes,leafMaterials,barkMaterials,height:size.y,diameter:Math.max(size.x,size.z)};
  window.__pineReady=true;
  const controls=document.querySelector('#controls');
