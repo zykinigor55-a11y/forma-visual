@@ -9,7 +9,7 @@ const page=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'u
 test('verified sources match local tree paths and CC0 license',()=>{
  assert.equal(manifest.license,'CC0 1.0');
  assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['apple','ash','aspen','birch','linden','maple','oak','rowan','sakura','spruce']);
- assert.equal(manifest.trees.length,7);
+ assert.equal(manifest.trees.length,6,'original verified Innerscene installer remains unchanged');
  assert.ok(TREE_MODEL_SOURCE_LINKS.pine);
  assert.equal(MATURE_TREE_MODELS.sakura.season,'spring');
  for(const model of manifest.trees){
@@ -37,6 +37,15 @@ test('verified sources match local tree paths and CC0 license',()=>{
   assert.equal(provenance.license,'CC0 1.0');
   assert.equal(provenance.species,model.species);
  }
+});
+
+test('additional textured ash is independently licensed and SHA-pinned',()=>{
+ const source=JSON.parse(readFileSync(new URL('../assets/landscape-models/ash-terraintale-cc0.source.json',import.meta.url)));
+ assert.equal(source.species,'ash');
+ assert.equal(source.license,'CC0 1.0');
+ assert.equal(MATURE_TREE_MODELS.ash.path,'/assets/landscape-models/ash-terraintale-cc0.glb');
+ assert.equal(source.sourcePage,MATURE_TREE_MODELS.ash.sourcePage);
+ assert.equal(source.sha256,'e2f6c99b9a46e3b4ba40ff8efd4f734dc02511023feb9eb85492a6260f0f4e17');
 });
 
 test('adult trees autoload with user override and graceful fallback',()=>{
