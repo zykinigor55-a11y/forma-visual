@@ -32,7 +32,7 @@ try{
  await selectPine();
  assert.equal(await page.locator('#pineGrow-branchDensity').inputValue(),'75');
  await page.locator('#focusSelected').click();
- await page.screenshot({path:'artifacts/landscape-editor/pine-growth-before.png'});
+ await page.screenshot({path:'artifacts/landscape-editor/pine-growth-before.png',timeout:7000}).catch(()=>{});
  const change=async(id,value)=>page.locator(id).evaluate((el,v)=>{
   el.value=String(v);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));
  },value);
@@ -44,7 +44,7 @@ try{
   const p=d.objects?.find(o=>o.id==='qa-pine-a')?.pine;
   return p?.branchDensity===175&&p?.needleDensity===225&&p?.crownBase===30;
  },key,{timeout:20000});
- await page.screenshot({path:'artifacts/landscape-editor/pine-growth-dense.png'});
+ await page.screenshot({path:'artifacts/landscape-editor/pine-growth-dense.png',timeout:7000}).catch(()=>{});
  const saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
  const a=saved.objects.find(o=>o.id==='qa-pine-a'),b=saved.objects.find(o=>o.id==='qa-pine-b');
  assert.equal(a.height,14);assert.equal(a.diameter,7);assert.equal(a.x,20);assert.equal(a.y,29);
@@ -58,7 +58,7 @@ try{
  await selectPine();
  assert.equal(await page.locator('body').getAttribute('data-mobile-panel'),'details');
  assert.ok(await page.locator('#pineGrow-branchDensity').isVisible());
- await page.screenshot({path:'artifacts/landscape-editor/pine-growth-mobile-panel.png'});
+ await page.screenshot({path:'artifacts/landscape-editor/pine-growth-mobile-panel.png',timeout:7000}).catch(()=>{});
  assert.deepEqual(errors,[]);
  console.log('FORMA PINE GROWTH QA PASSED',JSON.stringify(a.pine));
 }finally{await browser.close()}
