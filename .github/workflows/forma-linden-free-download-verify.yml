@@ -1,0 +1,64 @@
+name: FORMA · Download open CC0 linden from publisher and compare WebGL
+on:
+  push:
+    branches: [experiments/forma-linden-free-light-direct-20261119]
+    paths:
+      - 'forma-mature-trees-preview.html'
+      - 'tests/landscape-linden-cc0-light-ab.verify.mjs'
+      - '.github/workflows/forma-linden-free-download-verify.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-linden-free-cc0-download
+  cancel-in-progress: true
+jobs:
+  download_and_compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download free CC0 GLB directly from Innerscene
+        run: |
+          mkdir -p assets/landscape-models
+          curl -fLsS --retry 3 --connect-timeout 18 --max-time 95 \
+            'https://www.innerscene.com/api/library/linden-street-tree-light-canopy-1bdbd90f/download' \
+            -o assets/landscape-models/linden-light-cc0-candidate.glb
+          python3 - <<'PY'
+          import json,pathlib,hashlib,struct
+          p=pathlib.Path('assets/landscape-models/linden-light-cc0-candidate.glb')
+          b=p.read_bytes()
+          assert 100_000<len(b)<2_000_000, 'expected 329k lightweight free asset'
+          assert b[:4]==b'glTF' and struct.unpack_from('<I',b,4)[0]==2
+          assert struct.unpack_from('<I',b,8)[0]==len(b),'no partial download'
+          length=struct.unpack_from('<I',b,12)[0]
+          obj=json.loads(b[20:20+length])
+          assert len(obj.get('meshes',[]))>0
+          print('CC0 LINDEN FREE DOWNLOADED',dict(size=len(b),sha256=hashlib.sha256(b).hexdigest(),
+              meshes=len(obj.get('meshes',[])),materials=len(obj.get('materials',[])),
+              textures=len(obj.get('textures',[])),images=len(obj.get('images',[]))),flush=True)
+          PY
+      - run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install chromium
+      - name: Compare current and free alternate model in WebGL
+        run: |
+          node server.mjs > /tmp/forma-linden-free-cc0.log 2>&1 &
+          sleep 3
+          node tests/landscape-linden-cc0-light-ab.verify.mjs
+      - name: Preserve downloaded CC0 candidate on experiment branch only
+        run: |
+          git config user.name "FORMA Botanical QA"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/landscape-models/linden-light-cc0-candidate.glb
+          git commit -m "asset(linden): download verified free CC0 alternative GLB" || exit 0
+          git push origin HEAD:refs/heads/experiments/forma-linden-free-light-direct-20261119
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-linden-open-free-download-ab
+          path: artifacts/landscape-editor/linden-free-alternate/*
+          if-no-files-found: warn
