@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {SHRUB_3D_MODELS} from '../forma-landscape-3d-shrub-models.js';
+import {CATALOG} from '../forma-landscape-project-core.js';
+const info=JSON.parse(readFileSync(new URL('../assets/landscape-models/spirea-flowering-grab3d-cc0.source.json',import.meta.url),'utf8'));
+const file=readFileSync(new URL('../assets/landscape-models/spirea-flowering-grab3d-cc0.glb',import.meta.url));
+test('chosen bush was downloaded, contains a complete licensed GLB and is assigned to spirea',()=>{
+ assert.equal(info.license,'CC0 1.0');
+ assert.equal(file.length,1410856);
+ assert.equal(file.toString('ascii',0,4),'glTF');
+ assert.equal(file.readUInt32LE(4),2);
+ assert.equal(file.readUInt32LE(8),file.length);
+ assert.equal(createHash('sha256').update(file).digest('hex'),info.sha256);
+ assert.equal(SHRUB_3D_MODELS.spirea.path,'/assets/landscape-models/spirea-flowering-grab3d-cc0.glb');
+ assert.equal(SHRUB_3D_MODELS.spirea.season,'summer');
+ assert.match(SHRUB_3D_MODELS.spirea.fidelity,/not verified botanical/);
+ assert.ok(CATALOG.some(c=>c.id==='spirea'&&c.group==='shrubs'));
+});

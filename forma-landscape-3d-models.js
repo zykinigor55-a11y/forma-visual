@@ -115,6 +115,12 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  }
  const group=new T.Group();
  clone.scale.set(fit.scaleXZ,fit.scaleY,fit.scaleXZ);
+ // Three visible rotations of the original low-poly GLB preserve real dimensions
+ // and materials while creating less repetitive planting groups.
+ if(instance.catalogId==='spirea'){
+  const variant=Math.max(1,Math.min(3,Math.round(Number(instance.variant)||1)));
+  clone.rotation.y=[.12,1.47,2.80][variant-1];
+ }
  clone.position.set(-centre.x*fit.scaleXZ,-placementBounds.min.y*fit.scaleY,-centre.z*fit.scaleXZ);
  group.add(clone);
  // The CC0 adult Scots pine has authentic bark and PBR needle cutouts, but

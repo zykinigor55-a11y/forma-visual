@@ -11,5 +11,14 @@ export const SHRUB_3D_MODELS=Object.freeze({
   license:'CC0 1.0',
   season:'summer',
   fidelity:'flowering shrub; paniculata cultivar not confirmed'
+ }),
+ spirea:Object.freeze({
+  name:'Спирея · цветущий куст с розовыми цветами (стилизованный GLB)',
+  path:'/assets/landscape-models/spirea-flowering-grab3d-cc0.glb',
+  sourcePage:'https://grab3d.com/models/nature/bush/',
+  license:'CC0 1.0',
+  season:'summer',
+  fidelity:'stylized flowering bush, not verified botanical Spiraea japonica',
+  sha256:'29e6c09939cf45327c9a1086515b78e383a62c30b0abe085f4348d30863bb695'
  })
 });

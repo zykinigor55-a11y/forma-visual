@@ -1,0 +1,21 @@
+name: FORMA - Spirea CC0 GLB registration QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-3d-shrub-models.js'
+      - 'forma-landscape-3d-models.js'
+      - 'tests/landscape-spirea-chosen-glb.test.mjs'
+      - '.github/workflows/forma-spirea-integration-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Verify original GLB, SHA256, catalog and hydrangea regression
+        run: node --test tests/landscape-spirea-chosen-glb.test.mjs tests/landscape-real-hydrangea.test.mjs tests/landscape-curated-adult-trees.test.mjs
