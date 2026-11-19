@@ -36,4 +36,10 @@ test('CC0 origin is recorded and pine is the only automatic native-species overr
  assert.match(editor,/const bundledPine=o\.catalogId==='pine'/);
  assert.match(editor,/const source=imported\|\|bundledPine\|\|null/);
  assert.match(editor,/makeRealVegetation\(THREE,source,o,/);
+ assert.match(editor,/setTranscoderPath\('\/assets\/three-basis\/'\)/);
+ assert.match(editor,/setKTX2Loader\(pineKtx2\)/);
+ assert.match(editor,/setMeshoptDecoder\(MeshoptDecoder\)/);
+ const basis=readFileSync(new URL('../assets/three-basis/basis_transcoder.wasm',import.meta.url));
+ assert.deepEqual([...basis.subarray(0,4)],[0,97,115,109],'WebAssembly decoder is self-hosted');
+ assert.ok(basis.length>50000,'Bundled Basis transcoder must be intact');
 });
