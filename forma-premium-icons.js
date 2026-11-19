@@ -46,7 +46,29 @@ export function premiumIcon(id){
    "geometry":"<path d=\"M9 9h17v17H9zM22 22h17v17H22z\" fill=\"url(#lpiFill)\" stroke=\"#ecd4b1\"/><path d=\"M11 36l25-25\" fill=\"none\" stroke=\"#fff1d0\" stroke-width=\"2\"/>"
   };
   const inset=extras[id]?'<path d="M8 10q16-3 32 0" fill="none" stroke="#fff1cd" stroke-opacity=".22" stroke-width=".8"/><path d="M8 38q14 5 32-1" fill="none" stroke="#d9b48a" stroke-opacity=".24" stroke-width="1"/><path d="M6 21v12M42 21v12" stroke="#fff0d3" stroke-opacity=".13" stroke-width="1"/>':'';
-  const gradientId='forma-icon-gradient-'+(++nextGradientId);
-  const svgMarkup='<svg class="lp-3d-icon forma-premium-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><linearGradient id="lpiFill" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#f7e4bc"/><stop offset=".45" stop-color="#c6a379"/><stop offset="1" stop-color="#70533d"/></linearGradient></defs><rect x="2.5" y="2.5" width="43" height="43" rx="11" fill="#383630" stroke="#8b7760" stroke-width="1.1"/><path d="M8 7h29" stroke="#fff1d1" stroke-opacity=".19" stroke-width="1.4"/>'+(paths[id]||extras[id]||paths.shrubs)+inset+'</svg>';
-  return svgMarkup.replace('id="lpiFill"','id="'+gradientId+'"').replaceAll('url(#lpiFill)','url(#'+gradientId+')');
+  // Every occurrence is completely self-contained: unique gradients and
+  // inline geometry. No sprite sheets, external icon fonts, CSS masks or
+  // network calls that can leave the tool palette empty after deployment.
+  const serial=++nextGradientId;
+  const metal='forma-metal-'+serial;
+  const glass='forma-glass-'+serial;
+  const frame='forma-rim-'+serial;
+  const aura='forma-aura-'+serial;
+  const drawing=(paths[id]||extras[id]||paths.shrubs)
+    .split('url(#lpiFill)').join('url(#'+metal+')');
+  const decoration=inset.split('url(#lpiFill)').join('url(#'+metal+')');
+  return '<svg xmlns="http://www.w3.org/2000/svg" class="lp-3d-icon forma-premium-icon" viewBox="0 0 48 48" width="48" height="48" role="presentation" aria-hidden="true" focusable="false">'+
+   '<defs>'+
+   '<linearGradient id="'+metal+'" x1="0" y1="0" x2=".95" y2="1"><stop offset="0" stop-color="#f0e0c4"/><stop offset=".22" stop-color="#c8a77e"/><stop offset=".55" stop-color="#a17c56"/><stop offset="1" stop-color="#55463a"/></linearGradient>'+
+   '<linearGradient id="'+glass+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3c4b45"/><stop offset=".52" stop-color="#25312c"/><stop offset="1" stop-color="#161e1b"/></linearGradient>'+
+   '<linearGradient id="'+frame+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3c19a"/><stop offset=".5" stop-color="#765c42"/><stop offset="1" stop-color="#b99b75"/></linearGradient>'+
+   '<radialGradient id="'+aura+'" cx=".42" cy=".2" r=".8"><stop offset="0" stop-color="#bd9566" stop-opacity=".22"/><stop offset="1" stop-color="#bd9566" stop-opacity="0"/></radialGradient>'+
+   '</defs>'+
+   '<rect x="1.8" y="2.5" width="44.4" height="44" rx="12" fill="#0c1512" stroke="#101b17" stroke-width="1"/>'+
+   '<rect x="3.4" y="3.6" width="41.2" height="40.7" rx="10" fill="url(#'+glass+')" stroke="url(#'+frame+')" stroke-width=".9"/>'+
+   '<rect x="4.6" y="4.8" width="38.8" height="38.1" rx="8.7" fill="url(#'+aura+')" />'+
+   '<path d="M9 7.7h27" fill="none" stroke="#f5d9b3" stroke-width=".7" opacity=".45"/>'+
+   '<g stroke-linejoin="round" stroke-linecap="round">'+drawing+decoration+'</g>'+
+   '<path d="M10 41h28" fill="none" stroke="#b49b79" stroke-width=".6" opacity=".5"/>'+
+   '</svg>';
  }
