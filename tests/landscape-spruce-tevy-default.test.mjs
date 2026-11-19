@@ -34,8 +34,8 @@ test('live spruce is a CC0 original dense Norway spruce with masked foliage',()=
 test('editor uses new self-hosted spruce GLB with fall back to old CC0 mesh',()=>{
  assert.equal(MATURE_TREE_MODELS.spruce.path,'/assets/landscape-models/spruce-tevy-cc0.glb');
  assert.equal(MATURE_TREE_MODELS.spruce.fallbackPath,'/assets/landscape-models/spruce-mature-cc0.glb');
- assert.match(editor,/loadAsync\(entry\.path\)\.catch\(error=>\{/);
- assert.match(editor,/matureTreeLoader\.loadAsync\(entry\.fallbackPath\)/);
+ assert.match(editor,/matureTreeLoader\.loadAsync\(entry\.path\)\.then\(result=>\{/);
+ assert.doesNotMatch(editor,/matureTreeLoader\.loadAsync\(entry\.fallbackPath\)/,'obsolete sparse backup is never automatically shown');
  assert.match(editor,/const source=imported\|\|bundledPine\|\|bundledAdult\|\|null/);
  assert.match(editor,/const performanceFallback=!\['pine','aspen','spruce','birch'\]/);
 });
