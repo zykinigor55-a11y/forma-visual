@@ -160,18 +160,40 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
    }else{
     part=windowGroup(T,opening.width,opening.height,night,opening.panoramic);
    }
-   part.position.set(opening.x,opening.bottom+opening.height/2,.106);
+   // 190mm thick wall (outer face +.095): the window glass is now set
+   // 110mm behind it. Aperture geometry and surveyed facade never move.
+   part.position.set(opening.x,opening.bottom+opening.height/2,
+    opening.kind==='window'?-.11:opening.kind==='door'?-.045:.014);
    part.userData.architecturePart=opening.kind;
+   if(opening.kind==='window'){
+    part.userData.recessDepth=.11;
+    part.userData.reveals=true;
+   }
    part.userData.architectureOpening={
     facade:name,width:opening.width,height:opening.height,bottom:opening.bottom
    };
    facade.add(part);
    if(opening.kind==='window'){
+    // Genuine 190mm deep jamb and head/sill returns, not black trim
+    // painted over the facade. Four surfaces bridge the wall to the sash.
+    const reveal=mat(T,['barn','modern','hightech','panoramic'].includes(style)?
+     '#505554':'#B3ABA0',.91,.025);
+    const revealDepth=.20,cy=opening.bottom+opening.height/2;
+    for(const edge of [-1,1])
+     box(facade,T,.042,opening.height,revealDepth,
+      opening.x+edge*(opening.width/2-.021),cy,-.004,reveal);
+    for(const edge of [-1,1])
+     box(facade,T,opening.width,.042,revealDepth,
+      opening.x,cy+edge*(opening.height/2-.021),-.004,reveal);
+    const outerTrim=mat(T,'#333C3E',.56,.25);
+    for(const edge of [-1,1])
+     box(facade,T,.031,opening.height+.11,.029,
+      opening.x+edge*(opening.width/2+.018),cy,.108,outerTrim);
     // Sill and lintel stop at the sides of this exact aperture.
     const modern=['modern','hightech','panoramic','modular','barn'].includes(style);
     const trim=mat(T,modern?'#414A4D':'#A8A49A',modern?.51:.90,modern?.3:.025);
-    box(facade,T,opening.width+.18,.046,.27,opening.x,opening.bottom-.05,.13,trim);
-    box(facade,T,opening.width+.17,.035,.20,opening.x,opening.bottom+opening.height+.047,.075,trim);
+    box(facade,T,opening.width+.21,.065,.31,opening.x,opening.bottom-.06,.14,trim);
+    box(facade,T,opening.width+.19,.048,.24,opening.x,opening.bottom+opening.height+.048,.09,trim);
    }
    // Dark interior return on the opening's inner edge; no solid wall beneath.
    for(const edge of [-1,1])box(facade,T,.055,opening.height,.13,
