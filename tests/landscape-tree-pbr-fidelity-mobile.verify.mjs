@@ -28,11 +28,11 @@ try{
  const page=await ctx.newPage();
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript((key,source)=>{
+ await page.addInitScript(({key,source})=>{
   if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(source));
   localStorage.setItem('forma-botanical-code3d-source-v1','glb');
   localStorage.setItem('forma-prefer-real-glb-trees-v2','1');
- },key,base);
+ },{key,source:base});
  await page.goto('http://127.0.0.1:3000/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:45000});
  const before=await ready(page,['spruce','pine']);
  assert.equal(before.filter(x=>x.species==='spruce').length,2);
@@ -67,11 +67,11 @@ try{
  const broken=await browser.newContext({viewport:{width:430,height:850},deviceScaleFactor:1,isMobile:true,hasTouch:true});
  await broken.route('**/assets/landscape-models/spruce-tevy-cc0.glb',route=>route.abort('failed'));
  const failPage=await broken.newPage();
- await failPage.addInitScript((key,source)=>{
+ await failPage.addInitScript(({key,source})=>{
   localStorage.setItem(key,JSON.stringify({...source,objects:[source.objects[0]]}));
   localStorage.setItem('forma-botanical-code3d-source-v1','glb');
   localStorage.setItem('forma-prefer-real-glb-trees-v2','1');
- },key,base);
+ },{key,source:base});
  await failPage.goto('http://127.0.0.1:3000/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:45000});
  await failPage.waitForFunction(()=>window.FORMA_TREE_MODEL_DIAGNOSTICS?.().some(s=>s.species==='spruce'&&s.status==='glb-error'),null,{timeout:65000});
  const failed=await failPage.evaluate(()=>window.FORMA_TREE_MODEL_DIAGNOSTICS());
