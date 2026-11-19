@@ -103,6 +103,18 @@ function windowGroup(T,width,height,night=false,panoramic=false){
  for(let i=1;i<=mullion;i++)box(g,T,.036,h,.12,(i/(mullion+1)-.5)*w,0,.105,frame);
  box(g,T,w,.033,.12,0,.012,.105,frame);
  box(g,T,w+.26,.065,.26,0,-h/2-.14,.045,mat(T,'#414747',.68,.26));
+ // Working casement hardware: discreet hinges on the sash and an upper
+ // trickle-vent grille. All are within the actual surveyed glass aperture.
+ const hardware=mat(T,'#626C6C',.36,.58);
+ for(const y of [-h*.31,h*.31]){
+  const hinge=box(g,T,.033,.085,.035,w/2-.055,y,.142,hardware);
+  hinge.userData.architecturePart='window-hinge';
+ }
+ if(w>.85){
+  const vent=box(g,T,Math.min(.34,w*.29),.018,.029,-w*.13,h/2-.095,.145,
+   mat(T,'#31383C',.72,.18));
+  vent.userData.architecturePart='window-trickle-vent';
+ }
  // Thin inner seals provide believable depth without covering the true opening.
  const seal=mat(T,'#121718',.91,.05);
  box(g,T,w-.12,.016,.025,0,-h/2+.043,.125,seal);
@@ -267,6 +279,21 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
   const lip=mat(T,'#32393A',.8,.15);
   for(const x of [-1,1])box(g,T,.17,.38,d+overhang*2,x*(w/2+overhang-.08),bodyHeight+.41,0,lip);
   for(const z of [-1,1])box(g,T,w+overhang*2,.38,.17,0,bodyHeight+.41,z*(d/2+overhang-.08),lip);
+  // A folded metal coping caps the entire parapet, including a small
+  // projecting drip edge. Bare rectangular parapet tops looked unfinished.
+  const coping=mat(T,'#7B8484',.48,.46);
+  for(const x of [-1,1]){
+   box(g,T,.24,.035,d+overhang*2+.18,x*(w/2+overhang-.08),
+    bodyHeight+.615,0,coping).userData.architecturePart='parapet-metal-coping';
+  }
+  for(const z of [-1,1]){
+   box(g,T,w+overhang*2+.18,.035,.24,0,
+    bodyHeight+.615,z*(d/2+overhang-.08),coping)
+    .userData.architecturePart='parapet-metal-coping';
+  }
+  // Shadowed underside makes the insulated 300mm slab readable at eye level.
+  box(g,T,w+overhang*2-.12,.023,d+overhang*2-.12,0,
+   bodyHeight-.007,0,soffit).userData.architecturePart='roof-underside';
   return;
  }
  const half=(w+overhang*2)/2,depth=d+overhang*2,run=Math.hypot(half,rise),angle=Math.atan2(rise,half);
@@ -306,6 +333,13 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
   }
   edgeBeam(g,T,[0,bodyHeight+rise+.07,-depth/2-.06],
    [0,bodyHeight+rise+.07,depth/2+.06],.21,fascia);
+  // Continuous thin metal eave flashing catches the roof-edge highlight.
+  // It follows the outer plane, without changing the house footprint.
+  const drip=mat(T,'#6D7779',.42,.51);
+  for(const side of [-1,1]){
+   box(g,T,.125,.035,depth+.12,side*(half+.065),
+    bodyHeight-.215,0,drip).userData.architecturePart='gable-roof-drip-flashing';
+  }
   // Vertical gable-end triangle remains visible beneath the true roof.
   const wallColor=mat(T,b.archStyle==='scandi'?'#D0C1AA':b.archStyle==='classic'?'#D9D4C7':'#403B35');
   const faces=new Float32Array([-w/2,bodyHeight,d/2, w/2,bodyHeight,d/2,0,bodyHeight+rise*.94,d/2,
