@@ -357,51 +357,68 @@ function addEntranceDetails(g,T,{style,width,depth,frontOpenings}){
   box(g,T,step.stepWidth-.16,.022,.014,step.x,.105,step.front+.955,joint);
  }
 }
-/* Independent metal rainwater system and layered plinth details. These
- * decorative parts never modify measured house/sauna footprint or parcel size. */
+/* Physically cylindrical downpipes and elbows, not square pipe stubs. */
+function roundPipeBetween(g,T,a,b,radius,material,part){
+ const start=new T.Vector3(...a),end=new T.Vector3(...b),
+  direction=end.clone().sub(start);
+ const midpoint=start.clone().add(end).multiplyScalar(.5);
+ const item=add(g,T,new T.CylinderGeometry(radius,radius,direction.length(),16),
+  material,midpoint.x,midpoint.y,midpoint.z);
+ item.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),direction.normalize());
+ item.userData.architecturePart=part;
+ return item;
+}
+/* Independent rainwater and plinth detailing. True measured house footprint
+ * and window/door voids remain unchanged. */
 function addFacadeFinish(g,T,{width,depth,height,roof,style}){
  const w=width,d=depth,y=height;
- const metal=mat(T,'#394548',.46,.62),stone=mat(T,'#565B59',.93,.05);
- // A low exposed masonry plinth stops large walls reading as floating boxes.
+ const metal=mat(T,'#65757A',.43,.66),stone=mat(T,'#565B59',.93,.05);
+ // Exposed masonry plinth makes the house grounded; no floating wall box.
  for(const z of [-1,1])box(g,T,w,.18,.06,0,.49,z*(d*.5+.034),stone);
  for(const x of [-1,1])box(g,T,.06,.18,d,x*(w*.5+.034),.49,0,stone);
- // Gutters and wall-mounted downpipes are actual geometry, with connecting
- // offsets from the eave trough to the downpipe on the front facade.
  const isFlat=roof==='flat',pitchOverhang=
   style==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
   style==='cottage'?Math.min(.75,Math.min(w,d)*.09):
   Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
- const gutterY=isFlat?y+.18:y+.04;
+ const gutterY=isFlat?y+.19:y-.065;
  for(const side of [-1,1]){
-  const x=side*(w*.5-.13),z=d*.5+.165;
-  const tubeRadius=.055,pipeLength=Math.max(.35,gutterY-.64);
-  const down=add(g,T,new T.CylinderGeometry(tubeRadius,tubeRadius,pipeLength,14),
-   metal,x,(gutterY+.64)*.5,z);
-  down.userData.architecturePart='downpipe';
-  const shoe=add(g,T,new T.CylinderGeometry(.06,.055,.23,14),
-   metal,x,.68,z+.12);
-  shoe.rotation.x=Math.PI/2;shoe.userData.architecturePart='downpipe-shoe';
-  for(let yy=1.12;yy<gutterY-.25;yy+=.93)
-   box(g,T,.135,.05,.095,x,yy,z-.040,metal)
+  // Deliberately 330mm away from the facade corner so these remain visible
+  // rather than coinciding with the architectural corner edge.
+  const x=side*(w*.5-.33),z=d*.5+.205,pipeTop=gutterY-.18;
+  const radius=.067,pipeBottom=.68;
+  roundPipeBetween(g,T,[x,pipeBottom,z],[x,pipeTop,z],radius,metal,'downpipe');
+  // Downpipe clips include a spacer back to the facade.
+  for(let yy=1.10;yy<pipeTop-.13;yy+=.85){
+   box(g,T,.175,.052,.085,x,yy,z-.042,metal)
     .userData.architecturePart='downpipe-clamp';
+   box(g,T,.05,.055,.13,x,yy,z-.110,metal)
+    .userData.architecturePart='downpipe-wall-bracket';
+  }
+  roundPipeBetween(g,T,[x,.69,z],[x,.61,z+.17],.069,metal,'downpipe-shoe');
+  roundPipeBetween(g,T,[x,.61,z+.17],[x,.51,z+.17],.069,metal,'downpipe-shoe');
   if(!isFlat){
-   const outletX=side*(w*.5+pitchOverhang+.07);
-   const outletZ=d*.5+pitchOverhang-.12;
-   edgeBeam(g,T,[outletX,gutterY,outletZ],
-    [x,gutterY-.23,z],.105,metal).userData.architecturePart='gutter-elbow';
-   const hopper=box(g,T,.16,.17,.14,x,gutterY-.14,z,metal);
-   hopper.userData.architecturePart='gutter-outlet';
+   // Funnel at the eave and two tilted round elbows into the real pipe.
+   const outletX=side*(w*.5+pitchOverhang+.145);
+   const outletZ=d*.5+pitchOverhang-.075;
+   const hub=[outletX,gutterY-.02,outletZ],middle=[x,gutterY-.13,z+.035];
+   roundPipeBetween(g,T,hub,middle,.079,metal,'gutter-elbow');
+   roundPipeBetween(g,T,middle,[x,pipeTop,z],radius,metal,'gutter-elbow');
+   const funnel=add(g,T,new T.CylinderGeometry(.115,.079,.16,16),metal,
+    outletX,gutterY-.04,outletZ);
+   funnel.userData.architecturePart='gutter-outlet';
+  }else{
+   const scupper=box(g,T,.20,.13,.22,x,y+.26,z-.055,metal);
+   scupper.userData.architecturePart='flat-roof-scupper';
+   roundPipeBetween(g,T,[x,y+.19,z],[x,pipeTop,z],radius,metal,'gutter-elbow');
   }
  }
- if(isFlat){
-  for(const x of [-w*.32,w*.32])
-   box(g,T,.18,.10,.18,x,y+.32,d*.5+.10,metal)
-    .userData.architecturePart='flat-roof-scupper';
- }else if(roof==='hip'){
-  const edgeColor=mat(T,'#454D50',.52,.46);
-  for(const z of [-1,1])
-   box(g,T,w+.16,.12,.14,0,gutterY,z*(d*.5+.025),edgeColor)
+ if(roof==='hip'){
+  const edgeColor=mat(T,'#444E52',.55,.44);
+  for(const side of [-1,1]){
+   const z=side*(d*.5+pitchOverhang-.10);
+   box(g,T,w+pitchOverhang*2,.22,.21,0,gutterY,z,edgeColor)
     .userData.architecturePart='hip-roof-fascia';
+  }
  }
 }
 export function createArchitecturalBuilding(THREE,building,{night=false}={}){
