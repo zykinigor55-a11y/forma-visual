@@ -512,7 +512,7 @@ const choices={
  light:CATALOG.filter(x=>x.group==='lights').map(x=>[x.id,x.name]),
  models40:[...REAL_3D_NON_BOTANICAL].sort((a,b)=>Object.keys(REAL_3D_CATEGORIES).indexOf(a.group)-Object.keys(REAL_3D_CATEGORIES).indexOf(b.group)).map(x=>[x.id,x.name])
 };
-const fallback={pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
+const fallback={linden:{group:'trees',color:'#93ae62',diameter:8,name:'Липа (архив)'},pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
 const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
 const PROP_WIDTH_M=Object.freeze({fern:.95,'wild-shrub':1.7,periwinkle:.8,'outdoor-dining':3.0,'picnic-table':2.7});
 const id=()=>('o-'+Math.random().toString(36).slice(2,10));
@@ -911,14 +911,15 @@ function drawObject(o,entry,key){
   const seasonalNative=(doc.atmosphere.season==='winter'&&
    ['birch','oak','maple','linden','apple','rowan','aspen'].includes(o.catalogId))||
    (doc.atmosphere.season==='winter'&&o.catalogId==='ash')||
+   (doc.atmosphere.season==='winter'&&o.catalogId==='beech')||
    (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring');
   // Detailed CC0 broadleaves can have hundreds of meshes; on crowded
   // phones prefer instanced botanical native trees to prevent freezes.
   // Keep self-hosted Scots pine, aspen, spruce and birch PBR GLBs
   // on phones even after planting more trees or automatic quality reduction.
-  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&
+  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&o.catalogId!=='beech'&&
    (['oak','maple','linden'].includes(o.catalogId)?currentPlantCount>2:currentPlantCount>6);
-  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&window.innerWidth<=850&&
+  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&o.catalogId!=='beech'&&window.innerWidth<=850&&
    (((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree);
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
@@ -932,7 +933,7 @@ function drawObject(o,entry,key){
   // Never discard an explicitly imported user-owned GLB.
   const codeRebuilt=!imported&&treeSourceChoice()==='code'&&
    (o.catalogId==='pine'||(o.catalogId==='birch'&&doc.atmosphere.season!=='winter'));
-  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId)||o.catalogId==='ash'||o.catalogId==='oak';
+  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId)||o.catalogId==='ash'||o.catalogId==='oak'||o.catalogId==='beech';
   const waitingForReal=!source&&!seasonalNative&&!performanceFallback&&
    (o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId])&&
    (importantRealTree||!bundledModelFailures.has(o.catalogId));
