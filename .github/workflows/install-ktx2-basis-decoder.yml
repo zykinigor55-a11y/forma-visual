@@ -1,0 +1,52 @@
+name: FORMA · Bundle Basis KTX2 decoder for pine
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/install-ktx2-basis-decoder.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - name: Download pinned Three.js Basis Universal transcoder
+        run: |
+          set -euo pipefail
+          mkdir -p assets/three-basis
+          for file in basis_transcoder.js basis_transcoder.wasm; do
+            curl -fLsS --retry 3 --connect-timeout 15 --max-time 90 \
+              "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/libs/basis/$file" \
+              -o "assets/three-basis/$file" || \
+            curl -fLsS --retry 3 --connect-timeout 15 --max-time 90 \
+              "https://unpkg.com/three@0.179.1/examples/jsm/libs/basis/$file" \
+              -o "assets/three-basis/$file"
+          done
+          curl -fLsS --retry 3 --connect-timeout 15 --max-time 60 \
+            'https://raw.githubusercontent.com/BinomialLLC/basis_universal/master/LICENSE' \
+            -o assets/three-basis/LICENSE-Apache-2.0.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          base=Path('assets/three-basis')
+          js=(base/'basis_transcoder.js').read_bytes()
+          wasm=(base/'basis_transcoder.wasm').read_bytes()
+          assert len(js)>10000,'No Basis transcoder javascript'
+          assert wasm[:4]==b'\x00asm' and len(wasm)>50000,'No WebAssembly Basis transcoder'
+          assert len((base/'LICENSE-Apache-2.0.txt').read_bytes())>1000,'Missing required license text'
+          print('Bundled KTX2 Basis: JS',len(js),'bytes, WASM',len(wasm),'bytes')
+          PY
+      - name: Commit self-hosted decoder with license
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/three-basis
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: bundle licensed Basis KTX2 transcoder for adult pine without CDN dependency"
+            git push origin HEAD:dom-render-nanobanana
+          fi
