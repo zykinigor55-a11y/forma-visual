@@ -85,14 +85,18 @@ try{
  const loaded=await new GLTFLoader().setKTX2Loader(pineKtx2).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelUrl);
  pineKtx2.dispose();
  const denseCanopy=new URLSearchParams(location.search).get('dense')==='1';
- const group=makeRealVegetation(THREE,loaded.scene,{catalogId:'pine',height:14,diameter:7},{shareGeometry:true,canopyCopies:denseCanopy?2:0});
+ const growthDemo=new URLSearchParams(location.search).get('growth')==='1';
+ const group=makeRealVegetation(THREE,loaded.scene,{catalogId:'pine',height:14,diameter:7},{
+  shareGeometry:true,canopyCopies:(denseCanopy||growthDemo)?2:0,
+  pineGrowth:growthDemo?{branchDensity:160,needleDensity:230,crownBase:32,crownSpread:120,irregularity:24,seed:3}:null
+ });
  scene.add(group);
  const box=new THREE.Box3().setFromObject(group),size=box.getSize(new THREE.Vector3());
  let leafMaterials=0,barkMaterials=0,meshes=0;
  group.traverse(o=>{if(!o.isMesh)return;meshes++;for(const m of (Array.isArray(o.material)?o.material:[o.material])){
   if(m?.alphaTest>0||m?.transparent)leafMaterials++;else barkMaterials++;
  }});
- result.textContent='Готово · '+meshes+' меша · '+leafMaterials+' материала хвои · '+barkMaterials+' коры'+(denseCanopy?' · густая крона':'')+(altPine?' · альтернатива Innerscene':'');
+ result.textContent='Готово · '+meshes+' меша · '+leafMaterials+' материала хвои · '+barkMaterials+' коры'+(denseCanopy?' · густая крона':'')+(growthDemo?' · ветви и хвоя 3D':'')+(altPine?' · альтернатива Innerscene':'');
  window.__pineDetails={meshes,leafMaterials,barkMaterials,height:size.y,diameter:Math.max(size.x,size.z),source:altPine?'innerscene':'tevy'};
  window.__pineReady=true;
  const controls=document.querySelector('#controls');
