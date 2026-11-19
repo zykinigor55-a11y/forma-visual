@@ -868,7 +868,8 @@ function loadMatureScotsPine(){
  */
 function loadCuratedAdultTree(species){
  if(species==='birch'&&treeSourceChoice()==='code')return;
- const entry=MATURE_TREE_MODELS[species];
+ const entryOriginal=MATURE_TREE_MODELS[species];
+ const entry=window.innerWidth<=720&&entryOriginal?.lods?.[1]?{...entryOriginal,path:entryOriginal.lods[1]}:entryOriginal;
  if(!entry||importedPlantModels.has(species)||bundledModelSources.has(species)||
     bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
  bundledModelLoading.add(species);updateModelHealth();
@@ -880,10 +881,9 @@ function loadCuratedAdultTree(species){
  const matureTreeLoader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
  // A failed preferred GLB stays selectable, but will NOT silently show the
  // obsolete sparse backup spruce/birch. The user sees a retry prompt instead.
- // Use author-supplied LOD1 on small screens. This keeps the same real
- // licensed GLB silhouette rather than reverting to primitive cylinders.
- const realGlbPath=(window.innerWidth<=720&&entry.lods?.[1])||entry.path;
- matureTreeLoader.loadAsync(realGlbPath).then(result=>{
+ // entry.path uses the author-supplied LOD1 only for mobile beech/poplar.
+ // All existing approved species continue to load their original entry.path.
+ matureTreeLoader.loadAsync(entry.path).then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
   let meshes=0;
   result.scene.traverse(node=>{if(node.isMesh&&node.geometry?.attributes?.position)meshes++});
