@@ -17,6 +17,12 @@ export const FOLIAGE_PHOTO_SOURCE=Object.freeze({
 export const exactPhotoSpecies=Object.freeze(
  Object.keys(FOLIAGE_PHOTO_SOURCE).filter(id=>FOLIAGE_PHOTO_SOURCE[id]===id)
 );
+// Side-view branch textures replace the former top-view landscape icons,
+// which looked like solid green clumps when attached to vertical branches.
+export const FOLIAGE_SIDE_REFERENCE=Object.freeze({
+ pine:'/assets/landscape/items/pine-branch.webp',
+ spruce:'/assets/landscape/items/spruce-tall.webp'
+});
 const cache=new Map();
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 function fallbackSpray(canvas,sourceCanvas){
@@ -85,17 +91,45 @@ function stampPhotographicTwigs(canvas,scratch,id){
  ctx.clearRect(0,0,w,h);
  // Use multiple independent photo regions, not a duplicated whole-tree
  // billboard. The upper canopy avoids tree trunks in reference cutouts.
- const sourceSites=[
+ const sourceSites=id==='pine'?[
+  [.06,.17,.33,.19,-.29,.28,.33,.56,.40],
+  [.37,.08,.31,.20,.36,.62,.28,.61,.42],
+  [.60,.20,.29,.19,-.14,.73,.48,.55,.40],
+  [.10,.35,.30,.18,.24,.32,.65,.56,.39],
+  [.48,.36,.33,.18,-.30,.66,.69,.59,.40],
+  [.22,.49,.32,.15,.15,.49,.50,.53,.34]
+ ]:id==='spruce'?[
+  [.23,.10,.31,.20,-.34,.36,.26,.55,.47],
+  [.46,.20,.28,.19,.37,.65,.29,.53,.46],
+  [.24,.34,.31,.19,-.20,.33,.55,.58,.42],
+  [.46,.40,.28,.19,.34,.67,.57,.57,.42],
+  [.26,.57,.31,.19,-.18,.47,.75,.64,.45],
+  [.44,.61,.27,.18,.19,.60,.73,.51,.44]
+ ]:[
   [.18,.06,.35,.33,-.53,.32,.34,.70,.60],
-  [.48,.09,.33,.38, .42,.68,.35,.72,.66],
+  [.48,.09,.33,.38,.42,.68,.35,.72,.66],
   [.28,.29,.36,.31,-.14,.46,.60,.70,.57],
-  [.57,.23,.31,.37, .16,.60,.58,.61,.66],
+  [.57,.23,.31,.37,.16,.60,.58,.61,.66],
   [.07,.30,.31,.35,-.80,.26,.60,.49,.46],
-  [.63,.35,.31,.32, .66,.78,.61,.45,.49]
+  [.63,.35,.31,.32,.66,.78,.61,.45,.49]
  ];
+ // Trim individual SOURCE patches, not only the final atlas boundary.
+ // Avoid the square-edged clumps formerly visible in the pine silhouette.
+ const patch=document.createElement('canvas');
+ patch.width=patch.height=192;
+ const pctx=patch.getContext('2d',{willReadFrequently:true});
  for(const [sx,sy,sw,sh,rot,tx,ty,dw,dh] of sourceSites){
+  pctx.clearRect(0,0,192,192);
+  pctx.drawImage(scratch,sx*384,sy*384,sw*384,sh*384,0,0,192,192);
+  const pix=pctx.getImageData(0,0,192,192),mask=pix.data;
+  for(let y=0;y<192;y++)for(let x=0;x<192;x++){
+   const edge=Math.min(x,y,191-x,191-y);
+   const i=(y*192+x)*4+3;
+   mask[i]=Math.round(mask[i]*clamp(edge/24,0,1));
+  }
+  pctx.putImageData(pix,0,0);
   ctx.save();ctx.translate(tx*w,ty*h);ctx.rotate(rot);
-  ctx.drawImage(scratch,sx*384,sy*384,sw*384,sh*384,-dw*w/2,-dh*h/2,dw*w,dh*h);
+  ctx.drawImage(patch,-dw*w/2,-dh*h/2,dw*w,dh*h);
   ctx.restore();
  }
  // Cutout's perimeter must be transparent so mipmaps do not show a square.
@@ -136,6 +170,6 @@ export function createPhotoFoliageTexture(T,id,{fallback=null}={}){
   }
  };
  img.onerror=()=>{texture.userData.photoState='fallback'};
- img.src='/assets/landscape-photo/'+source+'.png';
+ img.src=FOLIAGE_SIDE_REFERENCE[id]||'/assets/landscape-photo/'+source+'.png';
  return texture;
 }
