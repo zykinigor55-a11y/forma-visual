@@ -23,6 +23,15 @@ try{
   await page.evaluate(([yaw,elev])=>window.__pineView(yaw,elev),[yaw,elevation]);
   await page.screenshot({path:`${output}/mature-pine-${name}.png`});
  }
+ // Capture the fuller crown built only from the same original PBR needle
+ // meshes; keep the baseline model QA and measured 14x7m checks intact.
+ await page.goto('http://127.0.0.1:3000/forma-pine-glb-preview.html?dense=1',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.waitForFunction(()=>window.__pineReady===true||window.__pineError,{timeout:90000});
+ const dense=await page.evaluate(()=>({error:window.__pineError||null,details:window.__pineDetails||null}));
+ assert.equal(dense.error,null,'denser GLB foliage must render without errors');
+ assert.ok(dense.details.leafMaterials>=2,'dense crown must contain extra PBR needle meshes');
+ await page.evaluate(()=>window.__pineView(.65,.12,27));
+ await page.screenshot({path:`${output}/mature-pine-dense.png`});
  await page.setViewportSize({width:430,height:760});
  await page.evaluate(()=>window.__pineView(.45,.12,27));
  await page.screenshot({path:`${output}/mature-pine-mobile.png`});
