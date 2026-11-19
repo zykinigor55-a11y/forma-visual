@@ -41,12 +41,13 @@ try{
  assert.ok(alt.details.meshes>=3,'alternative must contain several textured meshes');
  await page.evaluate(()=>window.__pineView(.65,.12,27));
  await page.screenshot({path:`${output}/mature-pine-innerscene.png`});
- // Real procedural branch and photo-needle supplements must load and render.
+ // The native GLB's original branch and needle buffers must be sculpted in place.
  await page.goto('http://127.0.0.1:3000/forma-pine-glb-preview.html?growth=1',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForFunction(()=>window.__pineReady===true||window.__pineError,{timeout:90000});
  const growth=await page.evaluate(()=>({error:window.__pineError||null,details:window.__pineDetails||null}));
  assert.equal(growth.error,null,'editable Scots pine additional 3D growth must render');
- assert.ok(growth.details.meshes>=4,'PBR model gains instanced bark and needle meshes');
+ assert.equal(growth.details.meshes,state.details.meshes,'same native glTF mesh count; no overlay objects');
+ assert.ok(growth.details.nativeEditedMeshes>=2,'native GLB bark branches and original needles change in-place');
  await page.evaluate(()=>window.__pineView(.65,.12,27));
  await page.screenshot({path:`${output}/mature-pine-editable-growth.png`});
  await page.setViewportSize({width:430,height:760});
