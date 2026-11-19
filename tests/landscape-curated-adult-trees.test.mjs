@@ -9,7 +9,7 @@ const page=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'u
 
 test('verified sources match local tree paths and CC0 license',()=>{
  assert.equal(manifest.license,'CC0 1.0');
- assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['apple','ash','aspen','birch','linden','maple','oak','rowan','sakura','spruce']);
+ assert.deepEqual(Object.keys(MATURE_TREE_MODELS).sort(),['apple','ash','aspen','beech','birch','linden','maple','oak','rowan','sakura','spruce']);
  assert.equal(manifest.trees.length,6,'original verified Innerscene installer remains unchanged');
  assert.ok(TREE_MODEL_SOURCE_LINKS.pine);
  assert.equal(MATURE_TREE_MODELS.sakura.season,'spring');
@@ -68,6 +68,8 @@ test('licensed PBR oak keeps its own immutable local binary, original oak as ref
 });
 
 test('adult trees autoload with user override and graceful fallback',()=>{
+ assert.equal(MATURE_TREE_MODELS.beech.license,'CC0 1.0');
+ assert.equal(MATURE_TREE_MODELS.beech.sourcePage,'https://tevy.dev/models/european-beech');
  assert.match(page,/function loadCuratedAdultTree\(species\)/);
  assert.match(page,/if\(MATURE_TREE_MODELS\[o\.catalogId\]&&!imported\)loadCuratedAdultTree\(o\.catalogId\)/);
  assert.match(page,/const source=imported\|\|bundledPine\|\|bundledAdult\|\|null/);
