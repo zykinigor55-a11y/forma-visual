@@ -8,6 +8,8 @@ export const FOLIAGE_PHOTO_SOURCE=Object.freeze({
  pine:'pine',spruce:'spruce',birch:'birch',oak:'oak',
  maple:'maple',linden:'linden',willow:'willow',rowan:'rowan',
  apple:'apple',sakura:'sakura',ash:'rowan',aspen:'birch',
+ // Ash is retained in the legacy source table for catalogue compatibility,
+ // but its real-time crown uses a dedicated native 11-leaflet atlas below.
  juniper:'juniper',hydrangea:'hydrangea',spirea:'spirea',
  barberry:'barberry',dogwood:'dogwood','thuja-globe':'thuja-globe',
  lavender:'lavender',boxwood:'boxwood',ninebark:'dogwood',
@@ -155,6 +157,13 @@ export function createPhotoFoliageTexture(T,id,{fallback=null}={}){
  texture.magFilter=T.LinearFilter;
  texture.userData={photographicFoliage:true,photoState:'loading',source:FOLIAGE_PHOTO_SOURCE[id]||null};
  cache.set(id,texture);
+ // Rowan is a different species. Do not paint its leaf photo on common ash.
+ // Use the already-created species-correct local compound-leaf atlas instead.
+ if(id==='ash'){
+  texture.userData.source='native-fraxinus-excelsior';
+  texture.userData.photoState='native';
+  return texture;
+ }
  const source=FOLIAGE_PHOTO_SOURCE[id];if(!source){texture.userData.photoState='fallback';return texture}
  const img=new Image();
  img.decoding='async';
