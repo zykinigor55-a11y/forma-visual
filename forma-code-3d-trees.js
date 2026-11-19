@@ -225,7 +225,7 @@ function createCodeTree(T,tree,{quality='standard'}={}){
  foliage.instanceMatrix.needsUpdate=true;
  if(foliage.instanceColor)foliage.instanceColor.needsUpdate=true;
  root.add(foliage);
- root.userData={
+ root.userData={textures:[bark],
   code3D:true,botanicalSpecies:species,source:'FORMA authored procedural mesh',
   branchCount:outerBranches+tips.length,needlePairs:pine?index:0,leafCount:pine?0:index,
   physicalHeight:H,crownDiameter:D,bark:'seeded procedural CanvasTexture',
