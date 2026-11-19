@@ -1,0 +1,29 @@
+{
+  "species": "linden",
+  "scientificName": "Tilia cordata",
+  "model": "Linden tree",
+  "creator": "Georgeous (@intice184)",
+  "sourcePage": "https://sketchfab.com/3d-models/linden-tree-c0c3aa73cc9945d2a36c01a0d8d6d4bb",
+  "sourceId": "c0c3aa73cc9945d2a36c01a0d8d6d4bb",
+  "license": "CC BY (Sketchfab listing — attribution required)",
+  "licensePage": "https://creativecommons.org/licenses/by/4.0/",
+  "expected": {
+    "sourceLoDs": [
+      "LOD0",
+      "LOD1"
+    ],
+    "approxTriangles": 46200,
+    "textures": [
+      "bark diffuse and normal",
+      "branch diffuse and normal"
+    ]
+  },
+  "targetAsset": "assets/landscape-models/linden-georgeous-ccby.glb",
+  "originalSourceArchive": null,
+  "sha256": null,
+  "downloadStatus": "NOT_DOWNLOADED — official Sketchfab account sign-in required; do not treat manifest as installed asset",
+  "productionStatus": "NOT_ACTIVE — current CC0 linden GLB remains active until authorized source is obtained and WebGL passes",
+  "legacyFallback": "assets/landscape-models/linden-mature-cc0.glb",
+  "attribution": "Linden tree by Georgeous (@intice184), via Sketchfab, licensed under CC BY. Changes, if any, should be noted.",
+  "updatedUtcDate": "2026-11-19"
+}
