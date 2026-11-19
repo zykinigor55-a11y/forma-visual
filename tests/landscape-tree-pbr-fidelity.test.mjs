@@ -17,8 +17,11 @@ test('all original PBR foliage hue and maps are preserved, visible on both sides
  assert.equal(tuned.normalMap,source.normalMap,'original bump detail remains');
  assert.equal(tuned.roughness,.81);
  assert.equal(source.alphaTest,.5,'cached GLB material must remain unmodified');
+ assert.equal(source.side,0,'cached glTF PBR sidedness remains untouched');
  const birch=prepareRealFoliageMaterial(T,{...source},'birch');
- assert.equal(birch.alphaTest,.44);
+ assert.equal(birch.alphaTest,.5,'Betula pendula must preserve the original author-authored cutoff');
+ assert.equal(birch.side,source.side,'Birch leaves must not be forced double sided');
+ assert.equal(birch.map,source.map,'Original birch 2K albedo is retained');
  const pine=prepareRealFoliageMaterial(T,{...source},'pine');
  assert.equal(pine.alphaTest,.36);
  assert.equal(prepareRealFoliageMaterial(T,{...source},'oak').alphaTest,.5,'only audited low-mesh GLBs tuned');
