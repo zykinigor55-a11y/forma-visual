@@ -1,0 +1,20 @@
+name: FORMA - Shrub click and editor QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-shrub-editor.js'
+      - 'forma-landscape-3d.html'
+      - 'tests/landscape-shrub-editor-interaction.test.mjs'
+      - '.github/workflows/forma-shrub-editor-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node --test tests/landscape-shrub-editor-interaction.test.mjs tests/landscape-spirea-chosen-glb.test.mjs tests/landscape-real-hydrangea.test.mjs tests/landscape-3d-botany.test.mjs
