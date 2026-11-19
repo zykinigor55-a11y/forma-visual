@@ -8,6 +8,7 @@ on:
       - 'forma-landscape-3d-mature-trees.js'
       - 'assets/landscape-models/ash-terraintale-cc0.glb'
       - 'tests/landscape-ash-online-model-qa.verify.mjs'
+      - 'tests/landscape-ash-editor-mobile.verify.mjs'
       - '.github/workflows/forma-ash-online-glb-candidate-qa.yml'
   workflow_dispatch:
 permissions:
@@ -46,6 +47,7 @@ jobs:
           node server.mjs > /tmp/forma-mature-ash.log 2>&1 &
           sleep 3
           node tests/landscape-ash-online-model-qa.verify.mjs
+          node tests/landscape-ash-editor-mobile.verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
