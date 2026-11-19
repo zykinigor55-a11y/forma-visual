@@ -1,0 +1,45 @@
+name: FORMA · Main-page bronze icons and cards PC + Mobile
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-preview.html'
+      - 'forma-main-atelier-icons.css'
+      - 'forma-site-premium-icons.js'
+      - 'tests/forma-main-atelier-home.test.mjs'
+      - 'tests/forma-main-atelier-browser.verify.mjs'
+      - '.github/workflows/forma-main-atelier-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-main-atelier-qa
+  cancel-in-progress: true
+jobs:
+  homepage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Main-page static icon wiring checks
+        run: node --test tests/forma-main-atelier-home.test.mjs tests/premium-icon-system.test.mjs
+      - name: Install Chromium and dependencies
+        run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Check and screenshot the real main screen on desktop and phone
+        run: |
+          node server.mjs > /tmp/forma-main-atelier-server.log 2>&1 &
+          sleep 2
+          node tests/forma-main-atelier-browser.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-main-atelier-pc-mobile
+          path: artifacts/forma-main-atelier/*.png
+          if-no-files-found: warn
