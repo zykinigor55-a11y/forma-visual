@@ -2,7 +2,7 @@
  * Existing buttons and all their listeners remain intact. Rendered pictograms
  * are same graphite/bronze SVG system as Landscape Project.
  */
-import {premiumIcon} from './forma-premium-icons.js?v=main-atelier-20261119';
+import {premiumIcon} from './forma-premium-icons.js';
 const NAV_IDS=Object.freeze({
  project:'project',environment:'build',materials:'materials',
  animation:'animation',variants:'gallery',parameters:'settings'
