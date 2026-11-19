@@ -1229,7 +1229,9 @@ function commitSelectedPineGrowth(o,value){
 function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
  if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
- const el=$('#properties'),ref=state.selected?selectable(state.selected):null;if(!ref?.obj){el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
+ const el=$('#properties'),ref=state.selected?selectable(state.selected):null;
+ if(!ref?.obj){el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
+ const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj, fields=[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
  else if('diameter'in o)fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
@@ -1282,6 +1284,7 @@ function renderProps(){
  $('#rotateRight').onclick=()=>rotateSelected(15);
  $('#duplicateObject').onclick=duplicateSelected;
  $('#deleteObject').onclick=deleteSelectedObject;
+ if(pinePanel&&isPine)pinePanel.scrollTop=priorScroll;
 }
 function syncSolarControls(){
  for(const [id,key,suffix,scale] of [['sunAzimuth','azimuth','°',1],['sunElevation','elevation','°',1],['sunStrength','strength','%',100],['sunSoftness','softness','',1]]){
@@ -1454,6 +1457,33 @@ function focusHouseCamera(){
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
+function hitTreeOnMobile(e){
+ // Thin branches and transparent needle textures often miss finger raycasts.
+ const direct=hitObj(e);
+ if(e.pointerType!=='touch'&&e.pointerType!=='pen')return direct;
+ const rect=canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height)return direct;
+ const px=e.clientX-rect.left,py=e.clientY-rect.top;
+ camera.updateMatrixWorld();camera.updateProjectionMatrix();
+ let closest=null,best=Infinity;
+ for(const o of doc.objects){
+  if(o.catalogId!=='pine')continue;
+  const point=pos(o.x,o.y),floor=terrainAt(point.x,point.z);
+  const H=Number(o.height)||14,D=Number(o.diameter)||7;
+  for(const fraction of (state.view==='2d'?[.05]:[.30,.48,.64,.79,.92])){
+   const center=new THREE.Vector3(point.x,floor+H*fraction,point.z).project(camera);
+   if(!Number.isFinite(center.x)||!Number.isFinite(center.y)||center.z<-1||center.z>1)continue;
+   const x=(center.x+1)*rect.width*.5,y=(1-center.y)*rect.height*.5;
+   const edge=new THREE.Vector3(point.x+D*.5,floor+H*fraction,point.z).project(camera);
+   const radius=Math.max(38,Math.min(100,Math.abs(edge.x-center.x)*rect.width*.425+18));
+   const d=Math.hypot(px-x,py-y);
+   if(d<=radius&&d<best){closest='object:'+o.id;best=d}
+  }
+ }
+ if(direct&&selectable(direct)?.obj?.catalogId==='pine')return direct;
+ if(closest&&(!direct||best<33))return closest;
+ return direct||closest;
+}
 let surfacePreviewFrame=0,surfacePreviewLast=0,brushRebuildLast=0;
 function refreshActiveSurface(){
  const obj=brushStroke?.object;if(!obj||!root)return;
@@ -1793,6 +1823,9 @@ function addEvents(){
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
  if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
+ // Touch selection finishes on release; opening the panel during pointerdown
+ // caused Android to lose the gesture and prevented editing.
+ if(state.tool==='select'&&(e.pointerType==='touch'||e.pointerType==='pen'))return;
  const key=hitObj(e);
  if(state.tool==='select'&&key){
   state.selected=key;state.drag=true;state.draggingMoved=false;
@@ -1800,7 +1833,7 @@ function addEvents(){
   state.dragAnchor=anchor?fromWorld(anchor):null;
   state.dragPoints=Array.isArray(obj?.points)?obj.points.map(p=>({...p})):null;
   renderProps();
-  if(window.innerWidth<=850&&obj?.catalogId==='pine')activateMobilePanel('details');
+  // The pine panel opens on pointerup, after the finger is released.
  }
 };
 const move=e=>{
@@ -1872,8 +1905,25 @@ const up=e=>{
   state.down=null;return
  }
  const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
- if(state.drag){const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';if(moved){save();rebuild()}state.down=null;return}
- if(movement<5){if(state.tool==='select'){state.selected=hitObj(e);renderProps()}else{const p=hitGround(e);if(p)place(p)}}
+ if(state.drag){
+  const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;
+  state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';
+  if(moved){save();rebuild()}
+  else if(window.innerWidth<=850&&selectable(state.selected)?.obj?.catalogId==='pine')showSelectedPineControls();
+  state.down=null;return;
+ }
+ const finger=e.pointerType==='touch'||e.pointerType==='pen';
+ if(movement<(finger?20:5)){
+  if(state.tool==='select'){
+   const key=hitTreeOnMobile(e),selected=key?selectable(key)?.obj:null;
+   if(selected?.catalogId==='pine')selectPineById(selected.id);
+   else{
+    state.selected=key;renderProps();
+    if(key&&window.innerWidth<=850)activateMobilePanel('details');
+    if(!key&&finger)status('Нажмите «🌲 Сосна» внизу, чтобы открыть параметры дерева.');
+   }
+  }else{const p=hitGround(e);if(p)place(p)}
+ }
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
