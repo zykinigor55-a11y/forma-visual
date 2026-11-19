@@ -20,5 +20,14 @@ export const SHRUB_3D_MODELS=Object.freeze({
   season:'summer',
   fidelity:'stylized flowering bush, not verified botanical Spiraea japonica',
   sha256:'29e6c09939cf45327c9a1086515b78e383a62c30b0abe085f4348d30863bb695'
+ }),
+ barberry:Object.freeze({
+  name:'Барбарис Тунберга «Атропурпуреа» · авторская 3D-модель FORMA',
+  path:'/assets/landscape-models/barberry-thunberg-forma-original.glb',
+  sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_barberry_thunbergii.py',
+  license:'FORMA original authorship; no external source models',
+  season:'summer',
+  fidelity:'own geometric foliage, twigs, thorns and red fruit; 61,200 triangles; PBR flat color materials, no photographs',
+  sha256:'c48442782b86411ac16275d82d2361e9af04ed06f2fd49b9334725d26cd4f362'
  })
 });

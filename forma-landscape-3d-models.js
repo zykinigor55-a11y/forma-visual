@@ -117,7 +117,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  clone.scale.set(fit.scaleXZ,fit.scaleY,fit.scaleXZ);
  // Three visible rotations of the original low-poly GLB preserve real dimensions
  // and materials while creating less repetitive planting groups.
- if(instance.catalogId==='spirea'){
+ if(['spirea','barberry'].includes(instance.catalogId)){
   const variant=Math.max(1,Math.min(3,Math.round(Number(instance.variant)||1)));
   clone.rotation.y=[.12,1.47,2.80][variant-1];
  }

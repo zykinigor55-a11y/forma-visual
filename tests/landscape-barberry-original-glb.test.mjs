@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {SHRUB_3D_MODELS} from '../forma-landscape-3d-shrub-models.js';
+import {CATALOG,normalizeProject,freshProject} from '../forma-landscape-project-core.js';
+import {SHRUB_HEIGHT_M} from '../forma-landscape-3d-botany.js';
+const source=JSON.parse(readFileSync(new URL('../assets/landscape-models/barberry-thunberg-forma-original.source.json',import.meta.url),'utf8'));
+const bytes=readFileSync(new URL('../assets/landscape-models/barberry-thunberg-forma-original.glb',import.meta.url));
+const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
+const modelJs=readFileSync(new URL('../forma-landscape-3d-models.js',import.meta.url),'utf8');
+test('original Berberis thunbergii GLB pinned by SHA-256 with 10 PBR materials',()=>{
+ assert.equal(source.species,'barberry');
+ assert.equal(source.license,'project-owned original asset');
+ assert.equal(source.generator,'tools/generate_barberry_thunbergii.py');
+ assert.equal(bytes.toString('ascii',0,4),'glTF');
+ assert.equal(bytes.readUInt32LE(4),2);
+ assert.equal(bytes.readUInt32LE(8),bytes.length);
+ assert.equal(bytes.length,1597580);
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),source.sha256);
+ const len=bytes.readUInt32LE(12);
+ const gltf=JSON.parse(bytes.toString('utf8',20,20+len));
+ assert.equal(gltf.meshes.length,10);
+ assert.equal(gltf.materials.length,10);
+ for(const part of ['plum','burgundy','ruby','bark','twig','thorn','fruit'])
+  assert.ok(gltf.materials.some(m=>m.name.includes(part)),part);
+ assert.equal(source.predictedTriangles,61200);
+ assert.ok(CATALOG.some(c=>c.id==='barberry'&&c.group==='shrubs'));
+});
+test('barberry is selectable, season-appropriate, and editable in metres',()=>{
+ assert.equal(SHRUB_HEIGHT_M.barberry,1.15);
+ assert.equal(SHRUB_3D_MODELS.barberry.path,'/assets/landscape-models/barberry-thunberg-forma-original.glb');
+ assert.equal(SHRUB_3D_MODELS.barberry.season,'summer');
+ assert.match(modelJs,/\['spirea','barberry'\]\.includes\(instance\.catalogId\)/);
+ assert.match(html,/const entry=MATURE_TREE_MODELS\[species\]\|\|SHRUB_3D_MODELS\[species\]/);
+ assert.match(html,/if\(SHRUB_3D_MODELS\[o\.catalogId\]&&!imported&&doc\.atmosphere\.season==='summer'\)loadCuratedAdultTree/);
+ assert.match(html,/el\.classList\.toggle\('forma-shrub-open',isShrub\)/);
+ const p=freshProject();p.objects=[{id:'barb-1',catalogId:'barberry',type:'shrubs',x:12,y:13,diameter:1.35,height:1.22,variant:3,rotation:28}];
+ const item=normalizeProject(p).objects[0];
+ assert.equal(item.height,1.22);assert.equal(item.diameter,1.35);assert.equal(item.variant,3);
+});
