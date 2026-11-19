@@ -10,19 +10,20 @@ test('3D, 2D and studio all share exactly the same bronze dimensional SVG system
  const shell=read('forma-studio-shell.js');
  assert.match(two,/premiumIcon as categoryIcon/);
  assert.match(three,/import \{premiumIcon\} from '\.\/forma-premium-icons\.js'/);
- assert.match(three,/premiumIcon\(a\[0\]\)/);
+ assert.match(three,/safeToolIcon\(a\[0\]\)/);
+ assert.match(three,/const svg=premiumIcon\(tool\)/);
  assert.match(three,/premiumIcon\(button\.dataset\.quickTool\)/);
  assert.match(shell,/export const studioIcon=id=>premiumIcon\(id\)/);
 });
 
-test('all 13 native 3D tools get the exact glossy-graphite tile silhouette',()=>{
- const ids=['select','site','surface','terrain','build','fence','plant','water','landscape','small','furniture','transport','light'];
+test('all 14 native 3D tools get the premium graphite-and-bronze dimensional icons',()=>{
+ const ids=['select','site','surface','terrain','build','fence','plant','water','landscape','small','furniture','transport','light','models40'];
  for(const id of ids){
   const svg=premiumIcon(id);
-  assert.match(svg,/<svg class="lp-3d-icon forma-premium-icon"/);
+  assert.match(svg,/<svg[^>]*class="lp-3d-icon forma-premium-icon"/);
   assert.match(svg,/viewBox="0 0 48 48"/);
-  assert.match(svg,/linearGradient id="forma-icon-gradient-\d+"/);
-  assert.match(svg,/<rect x="2.5" y="2.5" width="43" height="43"/);
+  assert.match(svg,/linearGradient id="forma-metal-\d+"/);
+  assert.match(svg,/<rect x="3.4" y="3.6" width="41.2" height="40.7"/);
   assert.match(svg,/<path|<ellipse|<circle/);
   assert.match(svg,/<path d=|<ellipse|<circle/,'SVG must contain an actual vector silhouette: '+id);
  }
@@ -32,8 +33,8 @@ test('all 13 native 3D tools get the exact glossy-graphite tile silhouette',()=>
 
 test('original 8 landscape category illustrations are retained in all workspaces',()=>{
  for(const id of ['trees','shrubs','pavers','fills','lights','lawns','ponds','boulders'])
-  assert.match(premiumIcon(id),/url\(#forma-icon-gradient-\d+\)|stroke="#/);
- const normalize=svg=>svg.replace(/forma-icon-gradient-\d+/g,'GRADIENT');
+  assert.match(premiumIcon(id),/url\(#forma-metal-\d+\)|stroke="#/);
+ const normalize=svg=>svg.replace(/forma-(metal|glass|rim|aura)-\d+/g,(_,kind)=>'FORMA-'+kind);
  assert.equal(normalize(premiumIcon('plant')),normalize(premiumIcon('trees')));
  assert.equal(normalize(premiumIcon('surface')),normalize(premiumIcon('pavers')));
  assert.equal(normalize(premiumIcon('water')),normalize(premiumIcon('ponds')));
