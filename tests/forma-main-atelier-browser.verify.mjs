@@ -29,13 +29,14 @@ try{
     width:rect?.width,height:rect?.height,visibility:style?.visibility,opacity:style?.opacity,
     revision:icon?.dataset.formaRev,gradient:icon?.querySelector('linearGradient')?.id};
   });
-  return {rail:select('.rail-nav .rail-btn'),cards:select('#formaStudioHome .fa-studio-task[data-studio-tool]'),
+  return {rail:select('.rail-nav [data-nav],.rail-nav .fa-interior-nav,.rail-nav [data-art-open],.rail-nav .fa-flow-rail,.rail-nav .fa-pro-nav-launch'),cards:select('#formaStudioHome .fa-studio-task[data-studio-tool]'),
    cssLoaded:[...document.styleSheets].some(s=>s.href?.includes('forma-main-atelier-icons.css'))};
  });
  assert.ok(desktop.rail.length>=9,'Main rail includes 6 original and 3 dynamically injected tools');
  assert.ok(desktop.rail.some(x=>x.label?.includes('Интерьеры')),'Interior exists in rail');
  assert.ok(desktop.rail.some(x=>x.label?.includes('Благоустройство')),'Landscape exists in rail');
  assert.ok(desktop.rail.some(x=>x.label?.includes('Атмосфера')),'Atmosphere exists in rail');
+ assert.ok(desktop.rail.some(x=>x.label?.includes('Сценарии')),'Scenarios exists in rail');
  assert.equal(desktop.cards.length,9,'All 9 original studio cards remain present');
  assert.ok(desktop.cssLoaded,'New main-page premium stylesheet is active');
  for(const [section,items,minimum] of [['rail',desktop.rail,30],['card',desktop.cards,43]]){
