@@ -1,4 +1,5 @@
 import {reshapeNativePine} from './forma-landscape-pine-native.js';
+import {reshapeNativeSpruce} from './forma-landscape-spruce-native.js';
 /* Real 3D botanical asset adapter for FORMA.
  * Geometry never supplies measured project dimensions: a catalogue object does.
  * Imports are user-controlled binary GLB files with local IndexedDB storage.
@@ -26,7 +27,7 @@ export function prepareRealMaterial(material){
  return material;
 }
 const boundsCache=new WeakMap();
-export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null}={}){
+export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
  let bounds=boundsCache.get(source);
  if(!bounds){
@@ -60,6 +61,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   node.castShadow=true;node.receiveShadow=true;
  });
  if(instance.catalogId==='pine'&&pineGrowth)reshapeNativePine(T,clone,pineGrowth);
+ if(instance.catalogId==='spruce'&&spruceGrowth)reshapeNativeSpruce(T,clone,spruceGrowth);
  const group=new T.Group();
  clone.scale.set(fit.scaleXZ,fit.scaleY,fit.scaleXZ);
  clone.position.set(-centre.x*fit.scaleXZ,-bounds.min.y*fit.scaleY,-centre.z*fit.scaleXZ);
