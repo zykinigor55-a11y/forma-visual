@@ -342,27 +342,43 @@ function addFacadeFinish(g,T,{width,depth,height,roof,style}){
  // A low exposed masonry plinth stops large walls reading as floating boxes.
  for(const z of [-1,1])box(g,T,w,.18,.06,0,.49,z*(d*.5+.034),stone);
  for(const x of [-1,1])box(g,T,.06,.18,d,x*(w*.5+.034),.49,0,stone);
- // Pitched roof: downpipes align with the actual roof eaves. Flat roofs
- // use corner scuppers instead of an invented pitched gutter.
- const isFlat=roof==='flat';
- const gutterY=isFlat?y+.18:y+.10;
+ // Gutters and wall-mounted downpipes are actual geometry, with connecting
+ // offsets from the eave trough to the downpipe on the front facade.
+ const isFlat=roof==='flat',pitchOverhang=
+  style==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
+  style==='cottage'?Math.min(.75,Math.min(w,d)*.09):
+  Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
+ const gutterY=isFlat?y+.18:y+.04;
  for(const side of [-1,1]){
-  const x=side*(w*.5-.18),z=d*.5+.095;
-  const down=new T.Mesh(new T.CylinderGeometry(.046,.046,Math.max(.35,gutterY-.64),10),metal);
-  down.position.set(x,(gutterY+.64)*.5,z);
-  down.castShadow=true;down.receiveShadow=true;g.add(down);
-  const shoe=new T.Mesh(new T.CylinderGeometry(.050,.050,.20,10),metal);
-  shoe.rotation.x=Math.PI/2;shoe.position.set(x,.66,z+.10);shoe.castShadow=true;g.add(shoe);
-  const collar=box(g,T,.14,.085,.13,x,gutterY,z,metal);
-  collar.castShadow=true;
+  const x=side*(w*.5-.13),z=d*.5+.165;
+  const tubeRadius=.055,pipeLength=Math.max(.35,gutterY-.64);
+  const down=add(g,T,new T.CylinderGeometry(tubeRadius,tubeRadius,pipeLength,14),
+   metal,x,(gutterY+.64)*.5,z);
+  down.userData.architecturePart='downpipe';
+  const shoe=add(g,T,new T.CylinderGeometry(.06,.055,.23,14),
+   metal,x,.68,z+.12);
+  shoe.rotation.x=Math.PI/2;shoe.userData.architecturePart='downpipe-shoe';
+  for(let yy=1.12;yy<gutterY-.25;yy+=.93)
+   box(g,T,.135,.05,.095,x,yy,z-.040,metal)
+    .userData.architecturePart='downpipe-clamp';
+  if(!isFlat){
+   const outletX=side*(w*.5+pitchOverhang+.07);
+   const outletZ=d*.5+pitchOverhang-.12;
+   edgeBeam(g,T,[outletX,gutterY,outletZ],
+    [x,gutterY-.23,z],.105,metal).userData.architecturePart='gutter-elbow';
+   const hopper=box(g,T,.16,.17,.14,x,gutterY-.14,z,metal);
+   hopper.userData.architecturePart='gutter-outlet';
+  }
  }
  if(isFlat){
-  // Parapet scuppers, aligned with roof edge rather than dangling in air.
-  for(const x of [-w*.32,w*.32])box(g,T,.18,.10,.18,x,y+.32,d*.5+.10,metal);
- }else if(style!=='aframe'){
+  for(const x of [-w*.32,w*.32])
+   box(g,T,.18,.10,.18,x,y+.32,d*.5+.10,metal)
+    .userData.architecturePart='flat-roof-scupper';
+ }else if(roof==='hip'){
   const edgeColor=mat(T,'#454D50',.52,.46);
-  // Continuous eave/fascia edge gives readable roof thickness at eye level.
-  for(const z of [-1,1])box(g,T,w+.16,.075,.11,0,gutterY,z*(d*.5+.025),edgeColor);
+  for(const z of [-1,1])
+   box(g,T,w+.16,.12,.14,0,gutterY,z*(d*.5+.025),edgeColor)
+    .userData.architecturePart='hip-roof-fascia';
  }
 }
 export function createArchitecturalBuilding(THREE,building,{night=false}={}){
