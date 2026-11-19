@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 
 const root='artifacts/landscape-editor/tree-lineup';
@@ -48,6 +48,24 @@ try{
  const original=await page.evaluate(()=>window.__treeLineupStatus);
  assert.equal(original.pine.source,'GLB');assert.equal(original.birch.source,'GLB');
  await page.screenshot({path:root+'/original-glb-comparison.png',timeout:45000});
+  // Export each authored tree to an actual GLB asset. Header and file length
+ // are checked, proving the CODE model is portable native 3D geometry.
+ await page.goto('http://127.0.0.1:3000/forma-tree-lineup.html?source=code',{waitUntil:'domcontentloaded',timeout:60000});
+ await page.waitForFunction(()=>window.__treeLineupReady===true,null,{timeout:180000,polling:1500});
+ for(const [species,id] of [['pine','saveCodePine'],['birch','saveCodeBirch']]){
+  assert.equal(await page.locator('#'+id).isEnabled(),true,'Export control available: '+species);
+  const pending=page.waitForEvent('download',{timeout:90000});
+  await page.locator('#'+id).click();
+  const download=await pending;
+  assert.equal(download.suggestedFilename(),'FORMA_CODE3D_'+species+'.glb');
+  const file=root+'/FORMA_CODE3D_'+species+'.glb';
+  await download.saveAs(file);
+  const bytes=await readFile(file);
+  assert.ok(bytes.length>5000,'GLB must contain nonempty geometry and materials');
+  assert.equal(bytes.toString('ascii',0,4),'glTF','Native glTF 2.0 GLB header');
+  assert.equal(bytes.readUInt32LE(4),2);
+  assert.equal(bytes.readUInt32LE(8),bytes.length,'GLB must be length-consistent');
+ }
   assert.deepEqual(errors,[],'No uncaught JavaScript errors in tree lineup');
  console.log('FORMA GLB TREE LINEUP PASS '+JSON.stringify(status));
 }finally{await browser.close()}
