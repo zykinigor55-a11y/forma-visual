@@ -1,0 +1,66 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FORMA · Проверка взрослых GLB-деревьев</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#dce3da;color:#26342c;font:14px system-ui}
+canvas{width:100%;height:100%;display:block}
+aside{position:absolute;top:15px;left:15px;max-width:290px;padding:12px 16px;line-height:1.5;
+ background:#172922ec;border:1px solid #647c6a;border-radius:12px;color:#f4eee2}
+small{color:#c0cfc3}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head><body><canvas id="canvas"></canvas><aside><strong id="species">FORMA · ДЕРЕВЬЯ CC0</strong>
+<div id="state">Подготовка GLB...</div><small>Взрослые 3D-модели · обзор с разных ракурсов</small></aside>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {makeRealVegetation} from './forma-landscape-3d-models.js';
+import {MATURE_TREE_MODELS} from './forma-landscape-3d-mature-trees.js';
+
+const name=new URL(location.href).searchParams.get('species')||'birch';
+const asset=MATURE_TREE_MODELS[name],details=document.querySelector('#state');
+const sizes={birch:[14,8],spruce:[16,9],oak:[8.6,7.8]};
+const canvas=document.querySelector('#canvas');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#d9e0d7');
+scene.add(new THREE.HemisphereLight('#e8f4ff','#9e977d',1.7));
+const sun=new THREE.DirectionalLight('#fff0d8',3);
+sun.position.set(-18,28,17);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-20;sun.shadow.camera.right=20;sun.shadow.camera.top=25;sun.shadow.camera.bottom=-18;
+sun.shadow.normalBias=.02;scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:'#83977d',roughness:.99}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const camera=new THREE.PerspectiveCamera(34,1,.1,150);
+function view(yaw=0,elev=.18){
+ const w=Math.max(320,innerWidth),h=Math.max(360,innerHeight);
+ renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+ const height=sizes[name]?.[0]||14,dist=Math.max(22,height*2.2);
+ camera.position.set(Math.sin(yaw)*dist,height*.49+Math.sin(elev)*dist,Math.cos(yaw)*dist);
+ camera.lookAt(0,height*.49,0);renderer.render(scene,camera);
+}
+window.__treeView=view;window.addEventListener('resize',()=>view());
+try{
+ if(!asset)throw Error('Неизвестный вид дерева');
+ document.querySelector('#species').textContent='FORMA · '+asset.name;
+ const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ ktx2.detectSupport(renderer);
+ const gltf=await new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder).loadAsync(asset.path);
+ ktx2.dispose();
+ const tree=makeRealVegetation(THREE,gltf.scene,{catalogId:name,height:sizes[name][0],diameter:sizes[name][1]},{shareGeometry:true});
+ scene.add(tree);
+ const box=new THREE.Box3().setFromObject(tree),size=box.getSize(new THREE.Vector3());
+ let meshes=0,materials=0,textures=0,alphas=0;
+ tree.traverse(obj=>{if(!obj.isMesh)return;meshes++;
+  for(const m of (Array.isArray(obj.material)?obj.material:[obj.material])){
+   if(!m)continue;materials++;if(m.map)textures++;if(m.alphaTest||m.transparent)alphas++;
+  }});
+ window.__treeDetails={name,height:size.y,diameter:Math.max(size.x,size.z),meshes,materials,textures,alphas};
+ details.textContent='Загружено · '+meshes+' мешей · '+textures+' текстурных материалов';
+ window.__treeReady=true;view();
+}catch(error){window.__treeError=String(error);details.textContent='Ошибка: '+error.message;}
+</script></body></html>
