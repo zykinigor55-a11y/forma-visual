@@ -140,6 +140,18 @@ header .header-right button{padding:6px;font-size:10px}
 #mobileWorkspaceTabs button{padding:10px;font-size:12px}
 #mobileWorkspaceTabs button.active{background:#D6D9C9;color:#203027;font-weight:800}
 body[data-mobile-panel="scene"] #mobileWorkspaceTabs{bottom:9px;left:auto;right:8px;width:min(355px,calc(100% - 16px))}
+#mobileWorkspaceTabs{grid-template-columns:1.05fr .98fr .60fr .77fr;gap:4px}
+#mobileWorkspaceTabs button{min-width:0;padding:9px 3px;font-size:11px}
+#mobilePineSelect{background:#4a4635;color:#f4dfbc;border-color:#a9926d}
+#mobilePineSelect.active{background:#d7c094;color:#1d2822}
+body[data-mobile-pine="true"][data-mobile-panel="details"] #right{height:min(65dvh,640px);max-height:calc(100dvh - 90px)}
+body[data-mobile-pine="true"][data-mobile-panel="details"] #mobileWorkspaceTabs{bottom:calc(min(65dvh,640px) + 11px)}
+body[data-mobile-pine="true"] #properties{scroll-margin-top:10px}
+body[data-mobile-pine="true"] .pine-growth-editor{margin-bottom:18px}
+.pine-object-list{display:grid;gap:6px;padding:10px;background:#26372e;border-radius:10px}
+.pine-object-list strong{font-size:11px;color:#e9d3ae}
+.pine-object-list button{text-align:left;padding:12px 9px;border:1px solid #8b7459;border-radius:8px;color:#f1e1c2;background:#334337}
+.pine-object-list small{font-size:11px;color:#c1cfc2}
 body[data-mobile-panel="scene"] #status{bottom:67px}
 body[data-mobile-panel="scene"] #left,body[data-mobile-panel="scene"] #right{display:none}
 #mobileWorkspaceTabs button[data-mobile-panel="scene"]{background:#324439;color:#dfecd9}
@@ -192,6 +204,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <button type="button" data-mobile-panel="tools" class="active">Инструменты</button>
  <button type="button" data-mobile-panel="details">Дома / параметры</button>
  <button type="button" data-mobile-panel="scene" aria-label="Скрыть панели и показать всю 3D-сцену">Сцена</button>
+ <button type="button" id="mobilePineSelect" aria-label="Выбрать посаженную сосну и открыть параметры">🌲 Сосна</button>
 </div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
@@ -400,9 +413,41 @@ function status(t){
  if(statusTimer)clearTimeout(statusTimer);
  statusTimer=setTimeout(()=>el.classList.add('status-hidden'),/ошиб|не удалось|вне участка/i.test(t)?6800:3600);
 }
+function scrollToSelectedPine(){
+ if(window.innerWidth>850)return;
+ const parent=$('#right'),properties=$('#properties');
+ if(!parent||!properties)return;
+ const rect=parent.getBoundingClientRect(),target=properties.getBoundingClientRect();
+ parent.scrollTop+=target.top-rect.top-12;
+}
+function showSelectedPineControls(){
+ if(window.innerWidth>850)return;
+ document.body.dataset.mobilePine='true';
+ activateMobilePanel('details');
+ requestAnimationFrame(()=>{scrollToSelectedPine();requestAnimationFrame(scrollToSelectedPine)});
+}
+function selectPineById(id){
+ const pine=doc.objects.find(o=>o.id===id&&o.catalogId==='pine');
+ if(!pine)return false;
+ if(state.tool!=='select')chooseTool('select');
+ state.selected='object:'+pine.id;state.drag=false;state.draggingMoved=false;
+ renderProps();showSelectedPineControls();
+ status('Сосна выбрана. Настройки веток и хвои открыты.');
+ return true;
+}
+function selectNextPine(){
+ const pines=doc.objects.filter(o=>o.catalogId==='pine');
+ if(!pines.length){status('На участке пока нет сосны. Добавьте её через «Озеленение».');return}
+ const current=state.selected?.startsWith('object:')?state.selected.slice(7):null;
+ const i=pines.findIndex(p=>p.id===current);
+ selectPineById(pines[(i+1)%pines.length].id);
+}
 function activateMobilePanel(name){
  document.body.dataset.mobilePanel=name;
  document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.classList.toggle('active',button.dataset.mobilePanel===name));
+ if(name==='details'&&state.selected?.startsWith('object:')&&selectable(state.selected)?.obj?.catalogId==='pine'){
+  document.body.dataset.mobilePine='true';requestAnimationFrame(scrollToSelectedPine);
+ }
  requestAnimationFrame(resize);
 }
 function save(){
@@ -415,6 +460,7 @@ function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc
 function initialize(){
  activateMobilePanel('tools');
  document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>activateMobilePanel(button.dataset.mobilePanel)));
+ $('#mobilePineSelect').addEventListener('click',selectNextPine);
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
@@ -851,7 +897,9 @@ function chooseTool(t){
  document.querySelectorAll('[data-quick-tool]').forEach(b=>{const active=b.dataset.quickTool===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
- $('#library').innerHTML=t==='select'?'<p>Выберите объект в сцене, затем настройте его справа. Перетаскивание перемещает выделенный объект.</p>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 26</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
+ $('#library').innerHTML=t==='select'?'<p>Коснитесь дерева в сцене или выберите сосну из списка.</p><div class="pine-object-list"><strong>СОСНЫ НА УЧАСТКЕ</strong>'+
+ doc.objects.filter(o=>o.catalogId==='pine').map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 Сосна '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
+ (!doc.objects.some(o=>o.catalogId==='pine')?'<small>Посаженных сосен пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 26</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
   const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&['landscape','furniture','models40'].includes(t),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
   const uri=modelPreview?'/assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?(['ninebark','hosta','ornamental-grass'].includes(c[0])?fallbackIconURL(asset):'/assets/landscape-photo/'+c[0]+'.png'):
     t==='light'?iconURL(asset):t==='landscape'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
@@ -883,6 +931,8 @@ function chooseTool(t){
   if(t==='surface')syncSurfacePaintMode();
   status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.');
  });
+ if(t==='select')$('#library').querySelectorAll('[data-select-pine]').forEach(b=>
+  b.addEventListener('click',()=>selectPineById(b.dataset.selectPine)));
  if(t==='light')refreshGardenLightCatalogPreviews();
  if(t==='plant'){
   $('#vegetationGlb').onchange=e=>importPlantGlb(e.target.files?.[0]);
