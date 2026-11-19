@@ -112,10 +112,12 @@ function windowGroup(T,width,height,night=false,panoramic=false){
 function doorGroup(T,width=1.04,height=2.16,modern=false){
  const g=new T.Group();
  const dark=mat(T,'#242D30',.45,.44),panel=mat(T,modern?'#23343A':'#574437',.6,.16);
- box(g,T,width+.14,height+.12,.1,0,0,0,dark);
- box(g,T,width,height,.07,0,0,.066,panel);
+ box(g,T,width+.14,height+.12,.14,0,0,-.04,dark);
+ box(g,T,width,height,.085,0,0,.032,panel);
  if(modern){box(g,T,width*.25,height*.86,.04,-width*.25,0,.12,mat(T,'#20383F',.13,.24))}
- box(g,T,.025,.31,.035,width*.33,-.04,.118,mat(T,'#D0C6AF',.3,.65));
+ box(g,T,.025,.31,.035,width*.33,-.04,.099,mat(T,'#D0C6AF',.3,.65));
+ box(g,T,width+.22,.042,.26,0,-height/2-.085,.095,dark)
+  .userData.architecturePart='door-threshold';
  return g;
 }
 /* A continuous solid cube under fake windows is architecturally wrong.
@@ -163,10 +165,10 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
    // 190mm thick wall (outer face +.095): the window glass is now set
    // 110mm behind it. Aperture geometry and surveyed facade never move.
    part.position.set(opening.x,opening.bottom+opening.height/2,
-    opening.kind==='window'?-.11:opening.kind==='door'?-.045:.014);
+    opening.kind==='window'?-.16:opening.kind==='door'?-.095:.014);
    part.userData.architecturePart=opening.kind;
    if(opening.kind==='window'){
-    part.userData.recessDepth=.11;
+    part.userData.recessDepth=.16;
     part.userData.reveals=true;
    }
    part.userData.architectureOpening={
@@ -177,14 +179,14 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     // Genuine 190mm deep jamb and head/sill returns, not black trim
     // painted over the facade. Four surfaces bridge the wall to the sash.
     const reveal=mat(T,['barn','modern','hightech','panoramic'].includes(style)?
-     '#505554':'#B3ABA0',.91,.025);
-    const revealDepth=.20,cy=opening.bottom+opening.height/2;
+     '#343E42':'#A69C8D',.88,.025);
+    const revealDepth=.25,cy=opening.bottom+opening.height/2;
     for(const edge of [-1,1])
      box(facade,T,.042,opening.height,revealDepth,
-      opening.x+edge*(opening.width/2-.021),cy,-.004,reveal);
+      opening.x+edge*(opening.width/2-.021),cy,-.028,reveal);
     for(const edge of [-1,1])
      box(facade,T,opening.width,.042,revealDepth,
-      opening.x,cy+edge*(opening.height/2-.021),-.004,reveal);
+      opening.x,cy+edge*(opening.height/2-.021),-.028,reveal);
     const outerTrim=mat(T,'#333C3E',.56,.25);
     for(const edge of [-1,1])
      box(facade,T,.031,opening.height+.11,.029,
@@ -194,6 +196,21 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     const trim=mat(T,modern?'#414A4D':'#A8A49A',modern?.51:.90,modern?.3:.025);
     box(facade,T,opening.width+.21,.065,.31,opening.x,opening.bottom-.06,.14,trim);
     box(facade,T,opening.width+.19,.048,.24,opening.x,opening.bottom+opening.height+.048,.09,trim);
+    // Substantial jamb shadow and external sill-drip; the opening remains void.
+    const shadow=mat(T,'#182326',.92,.02);
+    for(const edge of [-1,1])
+     box(facade,T,.018,opening.height-.08,.17,
+      opening.x+edge*(opening.width/2-.058),cy,-.067,shadow)
+      .userData.architecturePart='window-jamb-shadow';
+    box(facade,T,opening.width-.09,.019,.13,opening.x,
+     opening.bottom+opening.height-.028,-.045,shadow)
+     .userData.architecturePart='window-head-reveal';
+    box(facade,T,opening.width+.24,.024,.035,opening.x,
+     opening.bottom-.099,.31,trim)
+     .userData.architecturePart='window-drip';
+    box(facade,T,opening.width+.09,.018,.025,opening.x,
+     opening.bottom+.021,-.015,shadow)
+     .userData.architecturePart='window-sill-seal';
    }
    // Dark interior return on the opening's inner edge; no solid wall beneath.
    for(const edge of [-1,1])box(facade,T,.055,opening.height,.13,
