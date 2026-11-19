@@ -35,11 +35,16 @@ export function prepareRealMaterial(material){
  */
 export function prepareRealFoliageMaterial(T,material,species){
  const m=prepareRealMaterial(material);
- if(!m||!['pine','spruce','birch','aspen'].includes(species))return m;
+ // The licensed Betula pendula has its own tuned alpha/side PBR authoring.
+ // The generic conifer visibility override turned its open leaf sprays into
+ // a dark, solid cone. Restore its original glTF MASK cutoff and single-sided
+ // leaf shading without touching spruce, pine or any other species.
+ if(species==='birch')return m;
+ if(!m||!['pine','spruce','aspen'].includes(species))return m;
  if(m.alphaTest>0){
   m.side=T.DoubleSide;
   // Birches need light between terminal leaves, not a solid green clump.
-  // A .44 cutout keeps fine PBR foliage but restores natural crown gaps.
+  // The spruce and pine fine-needle cutouts retain their audited thresholds.
   m.alphaTest=Math.min(m.alphaTest,species==='birch'?.44:species==='spruce'?.34:.36);
   m.depthWrite=true;
   m.needsUpdate=true;
@@ -47,12 +52,12 @@ export function prepareRealFoliageMaterial(T,material,species){
  return m;
 }
 const boundsCache=new WeakMap();
-export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null,birchRefinement='soft'}={}){
+export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null,birchRefinement='original'}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
  // Refine the *bundled* Betula pendula once, then reuse its original
  // three-mesh PBR geometry across all planted instances. Imported user GLBs
  // remain strictly untouched. Never replace the real birch with a proxy.
- if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement!=='original')source=refineNativeBirch(T,source);
+ if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement==='soft')source=refineNativeBirch(T,source);
  let bounds=boundsCache.get(source);
  if(!bounds){
   bounds=new T.Box3().setFromObject(source);
@@ -150,7 +155,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
  }
  group.userData.species=instance.catalogId;
- if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement!=='original')group.userData.nativeBirchRefined=true;
+ if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement==='soft')group.userData.nativeBirchRefined=true;
  group.userData.realGlb=true;
  group.userData.bundledModel=shareGeometry;
  group.userData.uniquePbrMaterials=materialCache.size;
