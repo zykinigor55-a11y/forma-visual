@@ -12,9 +12,9 @@ const vegetationSource=readFileSync(new URL('../forma-landscape-3d-vegetation.js
 const understorySource=readFileSync(new URL('../forma-landscape-3d-understory.js',import.meta.url),'utf8');
 const uiSource=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
 
-test('quality improvements retain 18 measured houses and existing 26 species only',()=>{
+test('quality improvements retain 18 measured houses and 27 current species and archived linden',()=>{
  assert.equal(HOUSE_PRESETS.length,18);
- assert.equal(Object.keys(VEGETATION_SPECIES).length,26);
+ assert.equal(Object.keys(VEGETATION_SPECIES).length,28);
  for(const id of Object.keys(NATIVE_UNDERSTORY))assert.ok(VEGETATION_SPECIES[id]);
  for(const id of ['pine','spruce','birch','oak','spirea']){
   assert.ok(VEGETATION_SPECIES[id],id);
