@@ -90,12 +90,12 @@ ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 const frontGuide=new THREE.Mesh(new THREE.BoxGeometry(115,.055,.06),new THREE.MeshStandardMaterial({color:'#c1c0b1',roughness:.8}));
 frontGuide.position.set(0,.045,7.8);frontGuide.receiveShadow=true;scene.add(frontGuide);
 const camera=new THREE.PerspectiveCamera(36,1,.1,380);
-const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.07;
+const controls=new OrbitControls(camera,canvas);controls.enableDamping=false; // Trees are static; draw on interaction, not every frame.
 controls.enablePan=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=5;controls.maxDistance=250;
 function view(mode='all'){
- let centerX=0,distance=150,targetY=7;
- if(mode==='left'){centerX=start+2*pitch;distance=74;targetY=8}
- if(mode==='right'){centerX=start+7*pitch;distance=74;targetY=8}
+ let centerX=0,distance=105,targetY=7;
+ if(mode==='left'){centerX=start+2*pitch;distance=63;targetY=8}
+ if(mode==='right'){centerX=start+7*pitch;distance=63;targetY=8}
  controls.target.set(centerX,targetY,0);
  camera.position.set(centerX+distance*.055,targetY+distance*.12,distance);
  camera.lookAt(controls.target);controls.update();
@@ -106,7 +106,7 @@ function paint(){
  const w=Math.max(300,canvas.clientWidth),h=Math.max(260,canvas.clientHeight);
  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.render(scene,camera);
 }
-const pulse=()=>{controls.update();renderer.render(scene,camera);requestAnimationFrame(pulse)};
+controls.addEventListener('change',()=>paint());
 const resize=()=>paint();window.addEventListener('resize',resize);
 window.__treeLineupStatus=detail;window.__treeLineupReady=false;
 window.__treeLineupView=view;
@@ -158,7 +158,7 @@ async function loadTree(spec,i){
   window.__treeLineupReady=done===specs.length;paint();
  }
 }
-view('all');pulse();
+view('all');
 await Promise.all(specs.map((spec,i)=>loadTree(spec,i)));
 ktx2.dispose();
 </script>
