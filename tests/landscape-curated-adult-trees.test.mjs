@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from '../forma-landscape-3d-mature-trees.js';
 
 const manifest=JSON.parse(readFileSync(new URL('../assets/landscape-models/mature-trees.sources.json',import.meta.url)));
@@ -21,6 +22,10 @@ test('verified sources match local tree paths and CC0 license',()=>{
    assert.equal(MATURE_TREE_MODELS.birch.path,'/assets/landscape-models/birch-tevy-cc0.glb');
    assert.equal(MATURE_TREE_MODELS.birch.fallbackPath,'/assets/landscape-models/birch-mature-cc0.glb');
    assert.equal(MATURE_TREE_MODELS.birch.sourcePage,'https://tevy.dev/models/silver-birch');
+  }else if(model.species==='oak'){
+   assert.equal(MATURE_TREE_MODELS.oak.path,'/assets/landscape-models/oak-terraintale-cc0.glb');
+   assert.equal(MATURE_TREE_MODELS.oak.fallbackPath,'/assets/landscape-models/oak-mature-cc0.glb');
+   assert.equal(MATURE_TREE_MODELS.oak.sourcePage,'https://terraintale.com/library/realistic-surfaces/oak-tree-large');
   }else{
    assert.equal(MATURE_TREE_MODELS[model.species].path,'/assets/landscape-models/'+model.file);
    assert.equal(MATURE_TREE_MODELS[model.species].sourcePage,model.sourcePage);
@@ -46,6 +51,20 @@ test('additional textured ash is independently licensed and SHA-pinned',()=>{
  assert.equal(MATURE_TREE_MODELS.ash.path,'/assets/landscape-models/ash-terraintale-cc0.glb');
  assert.equal(source.sourcePage,MATURE_TREE_MODELS.ash.sourcePage);
  assert.equal(source.sha256,'e2f6c99b9a46e3b4ba40ff8efd4f734dc02511023feb9eb85492a6260f0f4e17');
+});
+
+test('licensed PBR oak keeps its own immutable local binary, original oak as reference',()=>{
+ const source=JSON.parse(readFileSync(new URL('../assets/landscape-models/oak-terraintale-cc0.source.json',import.meta.url)));
+ const binary=readFileSync(new URL('../assets/landscape-models/oak-terraintale-cc0.glb',import.meta.url));
+ assert.equal(source.license,'CC0 1.0');
+ assert.equal(source.species,'oak');
+ assert.equal(source.sha256,'6f2d4f60807f73fd24e0860b8e536d93aff2aecff79341122dffd89373627667');
+ assert.equal(createHash('sha256').update(binary).digest('hex'),source.sha256);
+ assert.equal(binary.toString('utf8',0,4),'glTF');
+ assert.equal(binary.readUInt32LE(8),binary.length);
+ assert.equal(source.gltf.textures,4);
+ assert.ok(existsSync(new URL('../assets/landscape-models/oak-mature-cc0.glb',import.meta.url)));
+ assert.match(page,/o\.catalogId!=='oak'/,'2-mesh textured oak should remain GLB on Android');
 });
 
 test('adult trees autoload with user override and graceful fallback',()=>{
