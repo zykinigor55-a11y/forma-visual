@@ -1230,13 +1230,15 @@ function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
  if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
  const el=$('#properties'),ref=state.selected?selectable(state.selected):null;
- if(!ref?.obj){el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
+ if(!ref?.obj){document.body.dataset.mobilePine='false';$('#mobilePineSelect')?.classList.remove('active');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj, fields=[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
  else if('diameter'in o)fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
  else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
  const isPine=ref.type==='object'&&o.catalogId==='pine';
+ document.body.dataset.mobilePine=String(isPine);
+ $('#mobilePineSelect')?.classList.toggle('active',isPine);
  const pineAssetStatus=isPine?(
   importedPlantModels.has('pine')?'✓ Используется ваша GLB-модель сосны':
   bundledModelFailures.has('pine')?'⚠ Реальная сосна не загрузилась. Можно повторить загрузку':
@@ -1245,9 +1247,9 @@ function renderProps(){
  ):'';
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
- el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
+ el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
-  pineSizeMarkup(o,pineScaleLocks.get(o.id)!==false)+pineGrowthMarkup(o.pine)):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
+  pineSizeMarkup(o,pineScaleLocks.get(o.id)!==false)):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
  $('#applyProps').onclick=()=>{
   const fields=Object.fromEntries([...el.querySelectorAll('[data-prop]')].map(n=>[n.dataset.prop,n.value]));
   const updated=validatedLandscapeProps(o,fields,{plot:doc.site,kind:ref.type,model:Boolean(real),contains:p=>inParcel(p,doc.site)});
