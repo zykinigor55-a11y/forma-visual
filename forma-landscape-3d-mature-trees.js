@@ -7,7 +7,10 @@ export const MATURE_TREE_MODELS=Object.freeze({
  oak:Object.freeze({name:'Дуб с детальной листвой',path:'/assets/landscape-models/oak-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/oak-street-tree-detailed-leaves-a273fef9',license:'CC0 1.0'}),
  maple:Object.freeze({name:'Клён с детальной листвой',path:'/assets/landscape-models/maple-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/maple-street-tree-detailed-leaves-006cddf4',license:'CC0 1.0'}),
  linden:Object.freeze({name:'Липа с детальной листвой',path:'/assets/landscape-models/linden-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/linden-street-tree-detailed-leaves-6300c26e',license:'CC0 1.0'}),
- sakura:Object.freeze({name:'Весеннее цветущее дерево · сакура',path:'/assets/landscape-models/sakura-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/flowering-cherry-tree-6d80049e',license:'CC0 1.0',season:'spring'})
+ sakura:Object.freeze({name:'Весеннее цветущее дерево · сакура',path:'/assets/landscape-models/sakura-mature-cc0.glb',sourcePage:'https://www.innerscene.com/tools/library/3d-parts/flowering-cherry-tree-6d80049e',license:'CC0 1.0',season:'spring'}),
+ apple:Object.freeze({name:'Садовая яблоня с плодами',path:'/assets/landscape-models/apple-mature-cc0.glb',sourcePage:'https://tevy.dev/models/apple-tree',license:'CC0 1.0'}),
+ rowan:Object.freeze({name:'Рябина обыкновенная с ягодами',path:'/assets/landscape-models/rowan-mature-cc0.glb',sourcePage:'https://tevy.dev/models/rowan',license:'CC0 1.0'}),
+ aspen:Object.freeze({name:'Осина европейская',path:'/assets/landscape-models/aspen-mature-cc0.glb',sourcePage:'https://tevy.dev/models/aspen',license:'CC0 1.0'})
 });
 export const TREE_MODEL_SOURCE_LINKS=Object.freeze({
  pine:{name:'Poly Haven · Pine Tree 01',sourcePage:'https://polyhaven.com/a/pine_tree_01'},
