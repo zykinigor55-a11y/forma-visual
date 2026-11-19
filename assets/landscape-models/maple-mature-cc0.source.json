@@ -1,0 +1,19 @@
+{
+  "species": "maple",
+  "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/maple-street-tree-detailed-leaves-006cddf4",
+  "sourceDownload": "https://www.innerscene.com/api/library/maple-street-tree-detailed-leaves-006cddf4/download",
+  "resolvedDownload": "https://files.innerscene.com/library/maple-street-tree-detailed-leaves-006cddf4/6a0262c58bd05d89be6d/maple-detailed.glb",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedUtc": "2026-11-19T09:44:45.824338+00:00",
+  "sizeBytes": 4823516,
+  "sha256": "da7246dd7592afaebe66d1693c86a31b7322eebf47f9d7ac0a796eefc5218e18",
+  "analysis": {
+    "meshes": 625,
+    "triangles": 175572,
+    "materials": 4,
+    "images": 0,
+    "alphaMaterials": 0
+  },
+  "note": "Downloaded from original CC0 publisher and served locally by FORMA."
+}

@@ -1,0 +1,19 @@
+{
+  "species": "linden",
+  "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/linden-street-tree-detailed-leaves-6300c26e",
+  "sourceDownload": "https://www.innerscene.com/api/library/linden-street-tree-detailed-leaves-6300c26e/download",
+  "resolvedDownload": "https://files.innerscene.com/library/linden-street-tree-detailed-leaves-6300c26e/8e60f808bc351ee21a15/linden-detailed.glb",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedUtc": "2026-11-19T09:44:46.375460+00:00",
+  "sizeBytes": 3840824,
+  "sha256": "2f15ec1e702a430fa1273118d2efb79c42d352d87e98b45951665b1c4257dc99",
+  "analysis": {
+    "meshes": 625,
+    "triangles": 137772,
+    "materials": 4,
+    "images": 0,
+    "alphaMaterials": 0
+  },
+  "note": "Downloaded from original CC0 publisher and served locally by FORMA."
+}

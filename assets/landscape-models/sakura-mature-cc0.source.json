@@ -1,0 +1,19 @@
+{
+  "species": "sakura",
+  "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/flowering-cherry-tree-6d80049e",
+  "sourceDownload": "https://www.innerscene.com/api/library/flowering-cherry-tree-6d80049e/download",
+  "resolvedDownload": "https://files.innerscene.com/library/flowering-cherry-tree-6d80049e/abfa6cd6ed433591b58f/flowering-cherry-tree.glb",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedUtc": "2026-11-19T09:44:46.923972+00:00",
+  "sizeBytes": 5391180,
+  "sha256": "57ed893ddfdb765f1ba1384dc1013ea6b2c3915cbd4d82c1b9deb0ff917fbe7d",
+  "analysis": {
+    "meshes": 95,
+    "triangles": 56580,
+    "materials": 6,
+    "images": 5,
+    "alphaMaterials": 0
+  },
+  "note": "Downloaded from original CC0 publisher and served locally by FORMA."
+}
