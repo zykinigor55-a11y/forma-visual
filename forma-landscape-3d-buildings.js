@@ -232,6 +232,9 @@ function thickHipRoofFace(g,T,points,material,thickness=.20){
  geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
  geometry.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
  geometry.setIndex(index);geometry.computeVertexNormals();
+ // Both long hip faces use opposite authored vertex winding; allow
+ // double-sided physically lit facets instead of disappearing roof slopes.
+ material.side=T.DoubleSide;
  const mesh=add(g,T,geometry,material);
  mesh.userData.architecturePart='roof-layer';
  mesh.userData.roofThickness=thickness;
