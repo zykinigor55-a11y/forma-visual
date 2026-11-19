@@ -111,7 +111,7 @@ function init(){
  });
  const nav=$('.rail-nav');
  if(nav){const b=document.createElement('button');b.type='button';b.className='rail-btn fa-interior-nav';b.innerHTML='<svg class="ico"><use href="#i-image"/></svg><span class="rail-name">Интерьеры</span>';b.title='Интерьеры · из скетча в фото';b.setAttribute('aria-label',b.title);b.addEventListener('click',open);const anchor=nav.querySelector('[data-nav="materials"]');if(anchor)nav.insertBefore(b,anchor);else nav.append(b);
-  import('./forma-premium-icons.js?v=main-rail-icons-20261119').then(({premiumIcon})=>{
+  import('./forma-premium-icons.js').then(({premiumIcon})=>{
    const icon=b.querySelector('svg.ico,svg.forma-premium-icon');if(icon&&b.isConnected)
     icon.outerHTML=premiumIcon('interior');
   }).catch(error=>console.warn('Interior rail SVG enhancement unavailable',error));
