@@ -166,13 +166,17 @@ function createCodeTree(T,tree,{quality='standard'}={}){
  const whorls=Math.round((pine?19:24)*Math.sqrt(H/14)),up=new T.Vector3(0,1,0);
  let outerBranches=0;
  for(let j=0;j<whorls;j++){
-  const t=(j+rand()*.44)/whorls,y=crownBase+(H-crownBase)*t;
+  const t=(j+rand()*.86)/whorls,y=crownBase+(H-crownBase)*t;
   if(y>=H*.97)continue;
   const n=pine?3+(rand()>.43?1:0):2+(rand()>.37?1:0);
   for(let b=0;b<n;b++){
    const ang=(j*.59+b/n)*2*Math.PI+(rand()-.5)*.40;
    const dir=new T.Vector3(Math.cos(ang),0,Math.sin(ang));
-   const shape=pine?Math.pow(1-t,.6):Math.pow(Math.sin((t*.85+.12)*Math.PI),.70);
+   // Scots pine (Pinus sylvestris) develops a broad, asymmetrical crown in
+   // its upper half, NOT a perfectly conical Christmas-tree profile.
+   const shape=pine?(type==='forest'?Math.pow(1-t,.68):
+    Math.pow(Math.max(.02,Math.sin(Math.PI*(.08+.85*t))),.64)*(.73+.30*t)):
+    Math.pow(Math.max(.02,Math.sin(Math.PI*(.19+.73*t))),.68);
    const spread=R*shape*(.78+rand()*.3);
    const curl=pine?(t<.45?-.12:.22):(.02-.26*t);
    const from=new T.Vector3(Math.sin(y/H*5.1+.2)*.13*y*y/(H*H),y,
