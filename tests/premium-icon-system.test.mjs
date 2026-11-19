@@ -45,8 +45,10 @@ test('main website 17 cards, rail, mobile navigation and studio tool headers use
  assert.match(main,/forma-premium-icons\.css/);
  assert.match(main,/forma-site-premium-icons\.js/);
  assert.match(home,/forma:home-tools-ready/);
- assert.match(site,/\.rail-nav \[data-nav\]/);
- assert.match(site,/\.mobile-nav \[data-mobile\]/);
+ assert.match(site,/\.rail-nav \.rail-btn/);
+ assert.match(site,/\.fa-interior-nav/);
+ assert.match(site,/\[data-art-open="landscape"\]/);
+ assert.match(site,/\.mobile-nav button/);
  assert.match(site,/\.fa-home-tool\[data-tool-id\]/);
  assert.match(site,/\.tool-btn\[data-tool\]/);
  for(const id of ['upscale','render','interior','materials','animation','nodes','camera','preview','geometry','cad','image3d','world','presentation','gallery','models','account','release']){
