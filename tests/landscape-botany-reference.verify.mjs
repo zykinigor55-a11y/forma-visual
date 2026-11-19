@@ -78,7 +78,7 @@ try{
   const facts=await page.evaluate(({id,season})=>window.__renderBotanyRef(id,season),{id,season});
   assert.ok(facts.visibleLayers.includes('micro')&&facts.visibleLayers.includes('volume'),
    id+' must use genuine 3D instanced leaf and twig geometry near camera');
-  assert.ok(!facts.visibleLayers.includes('sprays'),id+' close-up may NOT use flat alpha paper cards');
+  assert.ok(facts.visibleLayers.includes('sprays'),id+' close-up blends genuine 3D leaves with attached photographic cutouts');
   assert.equal(facts.height,{birch:16,oak:15,spirea:.85,pine:14,spruce:12,ash:16,aspen:18,fern:.85,periwinkle:.24,'wild-shrub':1.7}[id]);
   assert.ok(facts.layerCounts.branches>=1);
   await page.locator('#botanyReferenceCanvas').screenshot({
