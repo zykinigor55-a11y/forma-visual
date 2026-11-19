@@ -916,9 +916,9 @@ function drawObject(o,entry,key){
   // phones prefer instanced botanical native trees to prevent freezes.
   // Keep self-hosted Scots pine, aspen, spruce and birch PBR GLBs
   // on phones even after planting more trees or automatic quality reduction.
-  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&
+  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&
    (['oak','maple','linden'].includes(o.catalogId)?currentPlantCount>2:currentPlantCount>6);
-  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&window.innerWidth<=850&&
+  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&window.innerWidth<=850&&
    (((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree);
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
@@ -932,7 +932,7 @@ function drawObject(o,entry,key){
   // Never discard an explicitly imported user-owned GLB.
   const codeRebuilt=!imported&&treeSourceChoice()==='code'&&
    (o.catalogId==='pine'||(o.catalogId==='birch'&&doc.atmosphere.season!=='winter'));
-  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId)||o.catalogId==='ash';
+  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId)||o.catalogId==='ash'||o.catalogId==='oak';
   const waitingForReal=!source&&!seasonalNative&&!performanceFallback&&
    (o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId])&&
    (importantRealTree||!bundledModelFailures.has(o.catalogId));
