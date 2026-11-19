@@ -513,7 +513,7 @@ function init(){
   b.addEventListener('click',open);nav.append(b);
   import('./forma-premium-icons.js').then(({premiumIcon})=>{
    const icon=b.querySelector('svg.ico,svg.forma-premium-icon');
-   if(icon&&b.isConnected)icon.outerHTML=premiumIcon('nodes');
+   if(icon&&b.isConnected)icon.outerHTML=premiumIcon('nodes').replace('class="lp-3d-icon forma-premium-icon"','class="lp-3d-icon forma-premium-icon" data-forma-rev="main-atelier-v2"');
   }).catch(error=>console.warn('Scenario rail SVG enhancement unavailable',error));
  }
  const mobile=$('.mobile-nav');
