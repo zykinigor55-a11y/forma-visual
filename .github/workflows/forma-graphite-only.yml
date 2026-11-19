@@ -1,0 +1,42 @@
+name: FORMA · Graphite-only UI audit
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-graphite-only-v3.css'
+      - 'forma-landscape-3d.html'
+      - 'index.html'
+      - 'forma-preview.html'
+      - 'tests/forma-graphite-only.verify.mjs'
+      - '.github/workflows/forma-graphite-only.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-graphite-only
+  cancel-in-progress: true
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install chromium
+      - name: Check mobile graphite controls without tinting 3D canvas
+        run: |
+          node server.mjs >/tmp/forma-graphite.log 2>&1 &
+          sleep 3
+          node tests/forma-graphite-only.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-graphite-only-mobile
+          path: artifacts/graphite-v3/*.png
+          if-no-files-found: warn
