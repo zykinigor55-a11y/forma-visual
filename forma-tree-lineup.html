@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FORMA · Деревья, пересобранные в CODE 3D</title>
+<title>FORMA · 10 реалистичных GLB деревьев</title>
 <style>
 :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eeede8;background:#22262b}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
@@ -36,7 +36,7 @@ header{padding:12px 12px 30px;display:block}h1{font-size:20px}
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
 </head><body>
 <div id="stage"><canvas id="view" aria-label="Десять настоящих трёхмерных деревьев, сосна и берёза пересобраны в 3D-коде на нейтральном газоне"></canvas></div>
-<header><div><div class="eyebrow">FORMA · Архитектурная лаборатория / ботаническая библиотека</div><h1>Деревья CODE 3D · сравнение моделей</h1><p>Сосна и берёза пересобраны из настоящей 3D-геометрии в коде. Остальные 8 видов — GLB. Можно открыть исходные модели для сравнения.</p></div><div class="top-actions">
+<header><div><div class="eyebrow">FORMA · Архитектурная лаборатория / ботаническая библиотека</div><h1 id="treeLibraryTitle">Реалистичные GLB · 10 деревьев</h1><p id="treeLibraryDescription">Все 10 деревьев — оригинальные CC0 GLB с реалистичными 3D-ветвями и PBR-материалами. Ель теперь с густой хвоей.</p></div><div class="top-actions">
 <a href="./forma-landscape-3d.html">↩ 3D-редактор</a>
 <a id="treeSourceCompare" href="?source=glb">Сравнить с исходными GLB</a>
 <button type="button" id="saveCodePine" disabled>Скачать сосну · GLB</button>
@@ -76,6 +76,11 @@ const pitch=11.1,start=-(specs.length-1)*pitch/2;
 // Showcase the original CC0 GLB assets by default; procedural trees are
 // available only as an explicit comparison (?source=code).
 const originalGlb=new URL(location.href).searchParams.get('source')!=='code';
+if(!originalGlb){
+ document.title='FORMA · Деревья CODE 3D';
+ document.querySelector('#treeLibraryTitle').textContent='Деревья CODE 3D · сравнение моделей';
+ document.querySelector('#treeLibraryDescription').textContent='Сосна и берёза построены кодом для сравнения. Остальные восемь деревьев загружаются как оригинальные GLB.';
+}
 document.querySelector('#treeSourceCompare').textContent=originalGlb?'Сравнить с CODE 3D':'Показать оригинальные GLB';
 document.querySelector('#treeSourceCompare').href=originalGlb?'?source=code':'?source=glb';
 for(const id of ['saveCodePine','saveCodeBirch'])document.querySelector('#'+id).hidden=originalGlb;
