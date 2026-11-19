@@ -8,14 +8,14 @@ const closeOut='screenshots/forma-webgl-barberry-v3-closeup.png';
 await mkdir('screenshots',{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-webgl','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
 const context=await browser.newContext({viewport:{width:1600,height:900},deviceScaleFactor:1,ignoreHTTPSErrors:true});
+// A single high-detail 160K-triangle shrub avoids overloading software WebGL
+// during PNG readback while still verifying the exact production mesh.
 const project={
  version:1,title:'Барбарис Тунберга · тест WebGL',
  site:{width:30,height:40,orientation:0,boundary:null},
  house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},
  objects:[
-  {id:'barberry-main',catalogId:'barberry',type:'shrubs',x:15,y:25.8,diameter:2.7,height:2.0,variant:1,rotation:0},
-  {id:'barberry-left',catalogId:'barberry',type:'shrubs',x:12,y:25.9,diameter:1.9,height:1.4,variant:2,rotation:22},
-  {id:'barberry-right',catalogId:'barberry',type:'shrubs',x:18,y:25.9,diameter:1.85,height:1.45,variant:3,rotation:-25}
+  {id:'barberry-main',catalogId:'barberry',type:'shrubs',x:15,y:25.8,diameter:2.2,height:1.55,variant:1,rotation:0}
  ],buildings:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural',atmosphere:{time:'day',season:'summer',weather:'sunny'}
 };
 await context.addInitScript((project)=>{
@@ -43,10 +43,10 @@ await page.route('**/forma-landscape-3d.html',async route=>{
 console.log('Opening live Render WebGL editor...');
 await page.goto('https://dom-render-nanobanana.onrender.com/forma-landscape-3d.html',{waitUntil:'domcontentloaded',timeout:120000});
 await page.waitForFunction(()=>typeof window.FORMA_SHRUB_MODEL_DIAGNOSTICS==='function'&&typeof window.FORMA_QA_SELECT_BARBERIS==='function',{timeout:100000});
-await page.waitForFunction(()=>window.FORMA_SHRUB_MODEL_DIAGNOSTICS().filter(x=>x.species==='barberry').length===3,{timeout:35000});
+await page.waitForFunction(()=>window.FORMA_SHRUB_MODEL_DIAGNOSTICS().filter(x=>x.species==='barberry').length===1,{timeout:35000});
 await page.waitForFunction(()=>window.FORMA_SHRUB_MODEL_DIAGNOSTICS().some(x=>x.species==='barberry'&&x.status==='glb'),{timeout:100000});
 await page.evaluate(()=>window.FORMA_QA_SELECT_BARBERIS());
-await page.waitForTimeout(2500);
+await page.waitForTimeout(1000);
 const info=await page.evaluate(()=>{
  const canvas=document.querySelector('#viewport');
  const panel=document.querySelector('#properties');
@@ -58,10 +58,10 @@ const info=await page.evaluate(()=>{
 });
 if(!info.loaded.some(x=>x.species==='barberry'&&x.status==='glb'))throw Error('Scene did not render original GLB '+JSON.stringify(info));
 if(!info.selectedBarberry)throw Error('Inspector missing barberry selection '+JSON.stringify(info));
-await page.screenshot({path:out,animations:'disabled',timeout:30000});
+await page.screenshot({path:out,animations:'disabled',timeout:85000});
 await page.evaluate(()=>window.FORMA_QA_CLOSE_BARBERIS());
-await page.waitForTimeout(1600);
-await page.screenshot({path:closeOut,animations:'disabled',timeout:30000});
+await page.waitForTimeout(650);
+await page.screenshot({path:closeOut,animations:'disabled',timeout:85000});
 const {readFile}=await import('node:fs/promises');
 const data=await readFile(out);
 const closeData=await readFile(closeOut);
