@@ -746,7 +746,7 @@ function drawObject(o,entry,key){
   // Keep summer-only broadleaf GLBs out of autumn/winter; use seasonal
   // species-aware 3D branches instead. Flowering cherry is spring-only.
   const seasonalNative=(doc.atmosphere.season!=='summer'&&
-   ['birch','oak','maple','linden'].includes(o.catalogId))||
+   ['birch','oak','maple','linden','apple','rowan','aspen'].includes(o.catalogId))||
    (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring');
   // Detailed CC0 broadleaves can have hundreds of meshes; on crowded
   // phones prefer instanced botanical native trees to prevent freezes.
