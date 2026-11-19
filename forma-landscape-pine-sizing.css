@@ -12,3 +12,22 @@
 .pine-scale-presets button,.pine-scale-reset{border:1px solid #897656;background:#3c433a;color:#eddec5;border-radius:8px;padding:8px 4px;min-height:39px;font-size:10px}
 .pine-scale-presets button:hover,.pine-scale-reset:hover{background:#554b3b}
 #properties input[data-prop="diameter"]:disabled{opacity:.5;cursor:not-allowed}
+
+/* Per-tree botanical density editor — polished graphite and brass. */
+.pine-growth-editor{margin:13px 0;padding:12px 11px;border:1px solid #71654e;border-radius:12px;background:linear-gradient(155deg,#303831,#212b28);display:grid;gap:12px}
+.pine-growth-editor h3{margin:0;color:#eed3ac;font-size:11px;letter-spacing:.09em}
+.pine-growth-editor small{display:block;color:#b4c3b8;font-size:10px;line-height:1.4}
+.pine-growth-control{display:grid;gap:5px}
+.pine-growth-control label{display:flex;justify-content:space-between;align-items:center;gap:7px;color:#e7e5da;font-size:11px;margin:0}
+.pine-growth-control output{color:#eec995;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pine-growth-control input[type=range]{width:100%;min-height:30px;accent-color:#d6b786;touch-action:pan-x;cursor:ew-resize}
+.pine-growth-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.pine-growth-presets button,.pine-growth-footer button{min-height:40px;border:1px solid #897356;border-radius:8px;background:#3b4037;color:#f0dfc3;font-size:10px;padding:7px 4px;line-height:1.25}
+.pine-growth-presets button:hover,.pine-growth-footer button:hover{background:#55513e}
+.pine-growth-footer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#properties:has(.pine-growth-editor){padding-bottom:25px}
+@media(max-width:850px){
+ .pine-growth-editor{padding:13px;gap:14px}
+ .pine-growth-control input[type=range]{min-height:42px}
+ .pine-growth-presets button,.pine-growth-footer button{min-height:44px;font-size:11px}
+}
