@@ -22,10 +22,11 @@ test('quality improvements retain 18 measured houses and existing 26 species onl
 });
 
 test('existing house roof slabs and log crowns are physical but measured footprints unchanged',()=>{
- assert.match(buildingSource,/new T\.BoxGeometry\(slopeLength,\.24,depth\)/);
+ assert.match(buildingSource,/new T\.BoxGeometry\(slopeLength,\.32,depth\)/);
  assert.match(buildingSource,/function thickHipRoofFace\(/);
- assert.match(buildingSource,/roof\.userData\.roofThickness=\.24/);
- assert.match(buildingSource,/edgeBeam\(g,T,\[x,bodyHeight\+\.04,z\]/);
+ assert.match(buildingSource,/roof\.userData\.roofThickness=\.32/);
+ assert.match(buildingSource,/roundPipeBetween\(g,T,hub,middle,\.079,metal,'gutter-elbow'\)/);
+ assert.match(buildingSource,/new T\.CylinderGeometry\(\.12,\.12,depth-\.05,22,1,true,Math\.PI,Math\.PI\)/);
  for(const facade of ['front','rear','left','right'])
   assert.ok(buildingSource.includes("'"+facade+"'"),facade+' has authored log crown coursing');
  assert.match(buildingSource,/const openings=facadePlan\[face\]/);
