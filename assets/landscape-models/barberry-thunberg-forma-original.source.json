@@ -9,10 +9,10 @@
     "height": 1.15,
     "diameter": 1.4
   },
-  "predictedTriangles": 61200,
+  "predictedTriangles": 76628,
   "predictedMaterialCount": 10,
   "status": "built and SHA-256 verified original GLB",
-  "notes": "Photorealistic intent, but self-authored geometry and PBR flat colors; visual WebGL check and further detailed textures still recommended. Keep autumn/winter procedural foliage until validated.",
+  "notes": "Original, procedural burgundy Berberis thunbergii: ~13K attached alpha-masked leaf planes with a self-authored 256x512 vein/pigment PNG embedded in GLB, thin curved woody branches, spines, red fruit, and PBR materials. Summer foliage; autumn/winter use seasonal native fallback. Not a photogrammetric scan.",
   "sizeBytes": 1597580,
   "sha256": "c48442782b86411ac16275d82d2361e9af04ed06f2fd49b9334725d26cd4f362",
   "meshCount": 10,
