@@ -14,6 +14,11 @@
   },
   "sourceResolution": "2K PBR textures",
   "targetPath": "assets/landscape-models/berry-bush-grab3d-cc0.glb",
-  "status": "download pending",
-  "caveat": "This is a stylized generic berry bush with mixed red and blue berries, not Japanese barberry. Keep outside the existing barberry catalogue until botanic similarity is accepted. Never replace real barberry automatically."
+  "status": "downloaded and verified GLB v2",
+  "caveat": "This is a stylized generic berry bush with mixed red and blue berries, not Japanese barberry. Keep outside the existing barberry catalogue until botanic similarity is accepted. Never replace real barberry automatically.",
+  "sha256": "353a0a0223e689bfe3c1fd26aaabfa35bfe321e1a13d1a3f915a5c4848aaf994",
+  "sizeBytes": 1433752,
+  "meshCount": 1,
+  "materialCount": 1,
+  "resolvedUrl": "https://grab3d.com/dl/berry-bush/berry-bush.glb"
 }
