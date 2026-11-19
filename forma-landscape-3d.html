@@ -880,7 +880,10 @@ function loadCuratedAdultTree(species){
  const matureTreeLoader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
  // A failed preferred GLB stays selectable, but will NOT silently show the
  // obsolete sparse backup spruce/birch. The user sees a retry prompt instead.
- matureTreeLoader.loadAsync(entry.path).then(result=>{
+ // Use author-supplied LOD1 on small screens. This keeps the same real
+ // licensed GLB silhouette rather than reverting to primitive cylinders.
+ const realGlbPath=(window.innerWidth<=720&&entry.lods?.[1])||entry.path;
+ matureTreeLoader.loadAsync(realGlbPath).then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
   let meshes=0;
   result.scene.traverse(node=>{if(node.isMesh&&node.geometry?.attributes?.position)meshes++});
