@@ -32,12 +32,17 @@ export function nativePineProfile(growth){
  // Solitary trees naturally retain lower whorls. Forest trees shed more of
  // their lowest branches; all growth is still taken from the native model.
  const type=p.pineType;
- const count=p.age<=9?0:p.age<25?1:p.age<60?2:3;
- const copies=type==='forest'?Math.max(0,count-1):count;
+ // A mature 14m Scots pine cannot have only three sparse needle tiers.
+ // Redistribute *native* UV-mapped branch and needle triangles, never add a
+ // second tree. Mature solitary specimens keep broad low crowns; forest
+ // specimens shed more lower branches; garden trees carry one extra whorl.
+ const count=p.age<=9?0:p.age<20?1:p.age<35?2:p.age<75?3:4;
+ const copies=type==='forest'?Math.max(0,count-1):
+  type==='garden'?Math.min(4,count+1):count;
  return {
   copies,
   crownStart:type==='forest'?.46:type==='garden'?.20:.30,
-  foliageWidth:type==='forest'?.82:type==='garden'?1.11:1.01,
+  foliageWidth:type==='forest'?.84:type==='garden'?1.13:1.04,
   maturity:mature,
   type
  };
