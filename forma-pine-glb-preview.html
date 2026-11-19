@@ -80,7 +80,9 @@ canvas.addEventListener('wheel',event=>{event.preventDefault();viewZoom=Math.max
 try{
  const pineKtx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
  pineKtx2.detectSupport(renderer);
- const loaded=await new GLTFLoader().setKTX2Loader(pineKtx2).setMeshoptDecoder(MeshoptDecoder).loadAsync('/assets/landscape-models/pine-mature-cc0.glb');
+ const altPine=new URLSearchParams(location.search).get('alt')==='1';
+ const modelUrl=altPine?'/assets/landscape-models/pine-mature-innerscene-cc0.glb':'/assets/landscape-models/pine-mature-cc0.glb';
+ const loaded=await new GLTFLoader().setKTX2Loader(pineKtx2).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelUrl);
  pineKtx2.dispose();
  const denseCanopy=new URLSearchParams(location.search).get('dense')==='1';
  const group=makeRealVegetation(THREE,loaded.scene,{catalogId:'pine',height:14,diameter:7},{shareGeometry:true,canopyCopies:denseCanopy?2:0});
@@ -90,8 +92,8 @@ try{
  group.traverse(o=>{if(!o.isMesh)return;meshes++;for(const m of (Array.isArray(o.material)?o.material:[o.material])){
   if(m?.alphaTest>0||m?.transparent)leafMaterials++;else barkMaterials++;
  }});
- result.textContent='Готово · '+meshes+' меша · '+leafMaterials+' материала хвои · '+barkMaterials+' коры'+(denseCanopy?' · густая крона':'');
- window.__pineDetails={meshes,leafMaterials,barkMaterials,height:size.y,diameter:Math.max(size.x,size.z)};
+ result.textContent='Готово · '+meshes+' меша · '+leafMaterials+' материала хвои · '+barkMaterials+' коры'+(denseCanopy?' · густая крона':'')+(altPine?' · альтернатива Innerscene':'');
+ window.__pineDetails={meshes,leafMaterials,barkMaterials,height:size.y,diameter:Math.max(size.x,size.z),source:altPine?'innerscene':'tevy'};
  window.__pineReady=true;
  const controls=document.querySelector('#controls');
  const hs=document.querySelector('#hSize'),ds=document.querySelector('#dSize'),lock=document.querySelector('#ratioLock');
