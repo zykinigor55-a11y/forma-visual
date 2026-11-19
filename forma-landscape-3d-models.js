@@ -25,7 +25,7 @@ export function prepareRealMaterial(material){
  return material;
 }
 const boundsCache=new WeakMap();
-export function makeRealVegetation(T,source,instance,{shareGeometry=false}={}){
+export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
  let bounds=boundsCache.get(source);
  if(!bounds){
@@ -54,6 +54,40 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false}={}){
  clone.scale.set(fit.scaleXZ,fit.scaleY,fit.scaleXZ);
  clone.position.set(-centre.x*fit.scaleXZ,-bounds.min.y*fit.scaleY,-centre.z*fit.scaleXZ);
  group.add(clone);
+ // The CC0 adult Scots pine has authentic bark and PBR needle cutouts, but
+ // only three very thin foliage tiers. Reuse the same original needle meshes
+ // with rotated offsets around the trunk: natural crown volume without
+ // textures downloaded twice or fake metre-wide flat green billboards.
+ // Never replicate branches or the trunk, which should remain botanically
+ // continuous; only alpha-masked foliage geometry is shared.
+ if(instance.catalogId==='pine'&&Number.isFinite(canopyCopies)&&canopyCopies>0){
+  group.updateMatrixWorld(true);
+  const foliage=[];
+  clone.traverse(node=>{
+   if(!node.isMesh)return;
+   const materials=Array.isArray(node.material)?node.material:[node.material];
+   if(materials.some(m=>m&&(m.alphaTest>0||m.transparent)))foliage.push(node);
+  });
+  const angles=[Math.PI*.27,-Math.PI*.42,Math.PI*.71];
+  for(let i=0;i<Math.min(angles.length,Math.max(0,Math.floor(canopyCopies)));i++){
+   const turn=new T.Group();
+   turn.name='pine-needle-density-'+(i+1);
+   turn.rotation.y=angles[i];
+   for(const mesh of foliage){
+    // Copy relative transform including the native glTF node hierarchy.
+    const copy=mesh.clone(false);
+    copy.matrix.copy(mesh.matrixWorld);
+    copy.matrix.decompose(copy.position,copy.quaternion,copy.scale);
+    copy.geometry=mesh.geometry;
+    copy.material=Array.isArray(mesh.material)?mesh.material.map(m=>m.clone()):mesh.material?.clone();
+    copy.userData={...copy.userData,bundledSharedGeometry:true,pineNeedleReplica:true};
+    copy.castShadow=i===0;copy.receiveShadow=true;
+    turn.add(copy);
+   }
+   group.add(turn);
+  }
+  group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
+ }
  group.userData.species=instance.catalogId;
  group.userData.realGlb=true;
  group.userData.bundledModel=shareGeometry;
