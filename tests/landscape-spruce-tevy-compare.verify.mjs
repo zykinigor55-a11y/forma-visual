@@ -10,13 +10,13 @@ try{
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  const captures={};
- for(const [variant,query] of [['original',''],['tevy','&candidate=tevy']]){
+ for(const [variant,query] of [['original','&candidate=old'],['tevy','']]){
   const url='http://127.0.0.1:3000/forma-mature-trees-preview.html?species=spruce'+query;
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForFunction(()=>window.__treeReady===true||Boolean(window.__treeError),null,{timeout:90000});
   const result=await page.evaluate(()=>({error:window.__treeError||null,details:window.__treeDetails||null}));
   assert.equal(result.error,null,variant+' spruce GLB must load');
-  assert.equal(result.details.candidate,variant==='tevy'?'tevy':'current');
+  assert.equal(result.details.candidate,variant==='tevy'?'tevy':'old');
   assert.ok(Math.abs(result.details.height-16)<.06,'preserves 16m planting height');
   assert.ok(Math.abs(result.details.diameter-9)<.06,'preserves 9m planting diameter');
   assert.ok(result.details.textures>=1,'PBR textures present');
