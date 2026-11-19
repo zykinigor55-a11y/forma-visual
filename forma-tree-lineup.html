@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FORMA · Все реальные 3D-деревья в ряд</title>
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eeede8;background:#22262b}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+#stage{position:fixed;inset:0}canvas{width:100%;height:100%;display:block;touch-action:pan-y}
+header{position:absolute;top:0;left:0;right:0;z-index:3;background:linear-gradient(180deg,#1d2229f7,#1d2229c4 68%,transparent);padding:19px clamp(14px,3vw,44px) 34px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;pointer-events:none}
+header>*{pointer-events:auto}h1{margin:3px 0 3px;font-size:clamp(19px,2.2vw,30px);letter-spacing:-.035em;font-weight:640}small, .eyebrow{color:#bba989;font-size:11px;letter-spacing:.15em;text-transform:uppercase}p{margin:2px 0;color:#bdc5c7;font-size:12px;line-height:1.5}
+a,button{color:#e9dfcb;background:#343a3f;border:1px solid #737166;border-radius:9px;padding:10px 14px;text-decoration:none;font:inherit;cursor:pointer;white-space:nowrap}
+button:hover,a:hover{background:#4b4a45;border-color:#cead84}
+.top-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+button[aria-pressed=true]{background:#a98e6c;color:#191e20;font-weight:700;border-color:#dac5a4}
+#hud{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);width:min(calc(100% - 28px),1250px);z-index:3;pointer-events:none}
+#legend{pointer-events:auto;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;padding:7px;border:1px solid #6e6b64b0;border-radius:12px;background:#1d2228e8;box-shadow:0 12px 55px #14181e67;backdrop-filter:blur(18px)}
+#legend button{min-width:0;padding:10px 3px;border:1px solid transparent;background:transparent;text-align:center;white-space:normal}
+#legend button:is(.active,:hover,:focus-visible){background:#414346;border-color:#ac8e6a}
+#legend .num{display:block;color:#b99e78;font-size:10px;line-height:1}
+#legend .title{display:block;font-size:11px;margin-top:5px;font-weight:630}
+#legend .height{display:block;font-size:10px;color:#a7b2af;margin-top:3px}
+#legend .state{display:block;font-size:9px;color:#99c3a5;margin-top:4px}
+#legend .state.error{color:#e8a39c}
+#progress{position:absolute;top:114px;left:clamp(14px,3vw,44px);background:#20272fd9;border:1px solid #6e6c64b8;border-radius:10px;padding:10px 14px;color:#e6d9c7;z-index:3;font-size:12px}
+#meta{position:absolute;bottom:119px;right:25px;font-size:11px;line-height:1.6;color:#3d4544;text-align:right;text-shadow:0 1px 1px #ffffffb7;z-index:2}
+#noscript{position:absolute;z-index:9;top:42%;left:12%;background:white;color:#222;padding:25px}
+@media(max-width:900px){
+header{padding:12px 12px 30px;display:block}h1{font-size:20px}
+.top-actions{justify-content:flex-start;margin-top:10px}a,button{padding:8px 9px;font-size:11px}
+#progress{top:145px;left:12px}#hud{bottom:8px;width:calc(100% - 12px)}
+#legend{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:4px}
+#legend button{min-width:98px;scroll-snap-align:start}
+#meta{display:none}
+}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head><body>
+<div id="stage"><canvas id="view" aria-label="Десять настоящих трёхмерных деревьев стоят в один ряд на нейтральном газоне"></canvas></div>
+<header><div><div class="eyebrow">FORMA · Архитектурная лаборатория / ботаническая библиотека</div><h1>Настоящие 3D-деревья · один ряд</h1><p>Сосна, ель, берёза, дуб, клён, липа, сакура, яблоня, рябина и осина. Без подмены на картинки.</p></div><div class="top-actions">
+<a href="./forma-landscape-3d.html">↩ 3D-редактор</a>
+<button id="all" type="button" aria-pressed="true">Все 10</button>
+<button id="left" type="button" aria-pressed="false">Первые 5 крупно</button>
+<button id="right" type="button" aria-pressed="false">Следующие 5</button>
+</div></header>
+<div id="progress" role="status">Загружаются настоящие GLB-модели · 0/10</div>
+<div id="meta">Оригинальные GLB / CC0 · реальные материалы<br>Высота модели в метрах · крутите колесо для масштаба</div>
+<div id="hud"><div id="legend" aria-label="Виды деревьев и состояние загрузки"></div></div>
+<noscript><div id="noscript">Для 3D-просмотра нужен JavaScript и WebGL.</div></noscript>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {MATURE_TREE_MODELS} from './forma-landscape-3d-mature-trees.js';
+import {makeRealVegetation} from './forma-landscape-3d-models.js';
+import {normalizePineGrowth} from './forma-landscape-pine-growth.js';
+const specs=[
+ ['pine','Сосна',14,6.8],
+ ['spruce','Ель',16,6.5],
+ ['birch','Берёза',14,6.3],
+ ['oak','Дуб',8.6,7.8],
+ ['maple','Клён',9.5,7.1],
+ ['linden','Липа',8.8,7.1],
+ ['sakura','Сакура',6,7.4],
+ ['apple','Яблоня',5.13,5.88],
+ ['rowan','Рябина',8.1,6.95],
+ ['aspen','Осина',15.61,7.61]
+];
+const pitch=11.1,start=-(specs.length-1)*pitch/2;
+const canvas=document.querySelector('#view'),indicator=document.querySelector('#progress');
+let done=0,loaded=0,failed=0;
+const detail=Object.create(null),trees=[];
+const legend=document.querySelector('#legend');
+legend.innerHTML=specs.map(([id,name,h],i)=>'<button type="button" data-species="'+id+'" title="'+name+' · '+h+' м"><span class="num">'+String(i+1).padStart(2,'0')+'</span><span class="title">'+name+'</span><span class="height">'+h.toFixed(1)+' м</span><span class="state">Загрузка…</span></button>').join('');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(1.4,devicePixelRatio||1));
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.16;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#c5ced0');
+scene.fog=new THREE.Fog('#c5ced0',125,230);
+scene.add(new THREE.HemisphereLight('#f6faff','#777664',1.85));
+const sunlight=new THREE.DirectionalLight('#fff0d7',2.65);sunlight.position.set(-32,55,23);
+sunlight.castShadow=true;sunlight.shadow.mapSize.set(2048,2048);
+sunlight.shadow.camera.left=-65;sunlight.shadow.camera.right=65;sunlight.shadow.camera.top=55;sunlight.shadow.camera.bottom=-30;sunlight.shadow.normalBias=.03;
+scene.add(sunlight);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,55),new THREE.MeshStandardMaterial({color:'#88988a',roughness:.98,metalness:0}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const frontGuide=new THREE.Mesh(new THREE.BoxGeometry(115,.055,.06),new THREE.MeshStandardMaterial({color:'#c1c0b1',roughness:.8}));
+frontGuide.position.set(0,.045,7.8);frontGuide.receiveShadow=true;scene.add(frontGuide);
+const camera=new THREE.PerspectiveCamera(36,1,.1,380);
+const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.07;
+controls.enablePan=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=5;controls.maxDistance=250;
+function view(mode='all'){
+ let centerX=0,distance=150,targetY=7;
+ if(mode==='left'){centerX=start+2*pitch;distance=74;targetY=8}
+ if(mode==='right'){centerX=start+7*pitch;distance=74;targetY=8}
+ controls.target.set(centerX,targetY,0);
+ camera.position.set(centerX+distance*.055,targetY+distance*.12,distance);
+ camera.lookAt(controls.target);controls.update();
+ document.querySelectorAll('.top-actions button').forEach(b=>b.setAttribute('aria-pressed',String(b.id===mode)));
+ paint();
+}
+function paint(){
+ const w=Math.max(300,canvas.clientWidth),h=Math.max(260,canvas.clientHeight);
+ renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.render(scene,camera);
+}
+const pulse=()=>{controls.update();renderer.render(scene,camera);requestAnimationFrame(pulse)};
+const resize=()=>paint();window.addEventListener('resize',resize);
+window.__treeLineupStatus=detail;window.__treeLineupReady=false;
+window.__treeLineupView=view;
+document.querySelectorAll('.top-actions button').forEach(button=>button.addEventListener('click',()=>view(button.id)));
+legend.querySelectorAll('[data-species]').forEach(b=>b.addEventListener('click',()=>{
+ const i=specs.findIndex(x=>x[0]===b.dataset.species);
+ view(i<5?'left':'right');
+ legend.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));
+}));
+window.addEventListener('wheel',()=>paint(),{passive:true});
+const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ktx2.detectSupport(renderer);
+const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
+function treeEntry(spec){
+ const [id,name,height,diameter]=spec;
+ return id==='pine'?'/assets/landscape-models/pine-mature-cc0.glb':MATURE_TREE_MODELS[id].path;
+}
+async function loadTree(spec,i){
+ const [id,name,height,diameter]=spec;
+ try{
+  const gltf=await loader.loadAsync(treeEntry(spec));
+  const wrapper=makeRealVegetation(THREE,gltf.scene,{
+   catalogId:id,height,diameter,
+  },{shareGeometry:true,
+    ...(id==='pine'?{pineGrowth:normalizePineGrowth({age:60,pineType:'solitary'})}:{})});
+  wrapper.position.set(start+i*pitch,0,0);
+  wrapper.name='lineup-'+id;scene.add(wrapper);trees.push(wrapper);
+  let meshCount=0,materials=new Set(),textures=0;
+  wrapper.traverse(node=>{if(node.isMesh){
+   meshCount++;
+   for(const m of (Array.isArray(node.material)?node.material:[node.material])){
+    if(m){materials.add(m);if(m.map)textures++}
+   }
+  }});
+  detail[id]={loaded:true,meshCount,materialCount:materials.size,textureMeshes:textures,height,diameter,x:wrapper.position.x};
+  loaded++;
+  const state=legend.querySelector('[data-species="'+id+'"] .state');
+  state.textContent='GLB · '+meshCount+' мешей';state.className='state';
+ }catch(err){
+  detail[id]={loaded:false,error:String(err?.message||err),x:start+i*pitch};
+  failed++;
+  const state=legend.querySelector('[data-species="'+id+'"] .state');
+  state.textContent='Ошибка GLB';state.className='state error';
+  console.warn('FORMA tree model not loaded:',id,err);
+ }finally{
+  done++;
+  indicator.textContent=done<specs.length?'Настоящие GLB-деревья: '+loaded+'/10 · загрузка '+done+'/10':
+   failed?'Загружено '+loaded+'/10 · '+failed+' видов недоступно':'Готово · 10 настоящих 3D-деревьев в один ряд';
+  window.__treeLineupReady=done===specs.length;paint();
+ }
+}
+view('all');pulse();
+await Promise.all(specs.map((spec,i)=>loadTree(spec,i)));
+ktx2.dispose();
+</script>
+</body></html>
