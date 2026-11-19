@@ -1,4 +1,5 @@
 import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
+import {ashCompoundLeafGeometry} from './forma-landscape-ash-leaves.js';
 /* FORMA VISUAL / Species-aware hybrid botanical vegetation.
  * Real measured 3D branch systems, close-up leaf geometry and transparent
  * photographic cutouts on terminal twigs (never whole-tree billboards).
@@ -20,7 +21,7 @@ export const VEGETATION_SPECIES=Object.freeze({
  rowan:{kind:'deciduous',density:920,branches:11,crownStart:.47,leaf:'#6b9850',bark:'#696153'},
  apple:{kind:'deciduous',density:1000,branches:11,crownStart:.33,leaf:'#789650',bark:'#715342'},
  sakura:{kind:'deciduous',density:1200,branches:12,crownStart:.36,leaf:'#82a25e',bark:'#79584a'},
- ash:{kind:'deciduous',density:1400,branches:15,crownStart:.39,leaf:'#64864d',bark:'#807365'},
+ ash:{kind:'deciduous',density:1280,branches:16,crownStart:.43,leaf:'#64864d',bark:'#807365'},
  aspen:{kind:'deciduous',density:1550,branches:13,crownStart:.43,leaf:'#90ae68',bark:'#c9d2b3'},
  juniper:{kind:'conifer-shrub',density:650,branches:20,crownStart:.04,leaf:'#587a65',bark:'#675d4c'},
  hydrangea:{kind:'shrub',density:520,branches:24,crownStart:.1,leaf:'#76935d',flower:'#e6d9b1',bark:'#6f6650'},
@@ -206,6 +207,7 @@ function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  * independent curved leaf/needle blades. Its origin is the branch endpoint.
  * This fixes hovering green blobs and makes canopy porous in perspective. */
 function foliageSprigGeometry(T,needle,id='oak'){
+ if(id==='ash'&&!needle)return ashCompoundLeafGeometry(T);
  // Botanical terminal shoots in THREE DIMENSIONS, not the former hedgehog-like
  // radial pointy star. Leaves are paired along a short curved rachis; every
  // species uses its characteristic leaf outline and branchlet length.
