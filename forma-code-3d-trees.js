@@ -82,36 +82,57 @@ function batchTubeGeometry(T,paths){
  g.computeVertexNormals();g.computeBoundingSphere();
  return g;
 }
-function needlePair(T){
- const positions=[],normals=[],indices=[];
- for(let needle=0;needle<2;needle++){
-  const side=needle?1:-1,base=positions.length/3;
-  const coordinates=[
-   [0,0,0],[side*.003,.018,.004],
-   [side*.018,.064,.007],[side*.03,.104,.011],
-   [side*.003,.019,-.003],[side*.016,.062,-.003]
+// Tangled botanical clumps made from individual 3D needle blades / leaves.
+// Each clump combines many pieces into ONE source BufferGeometry. Its instance
+// transforms are physical (never camera-facing), and instancing produces dense
+// crowns with a single draw call rather than thousands of leaf meshes.
+function foliageCluster(T,pine){
+ const positions=[],indices=[];
+ const count=pine?16:13;
+ let n=0;
+ function blade(origin,azimuth,len,width,curve){
+  const dx=Math.cos(azimuth),dz=Math.sin(azimuth);
+  const sx=-dz,sz=dx,base=positions.length/3;
+  const p0=origin;
+  const mid=[
+   origin[0]+dx*len*.45+sx*width,
+   origin[1]+len*.53,
+   origin[2]+dz*len*.45+sz*width
   ];
-  for(const [x,y,z]of coordinates){positions.push(x,y,z);normals.push(0,0,1)}
-  indices.push(base,base+1,base+4,base+1,base+2,base+4,
-   base+4,base+2,base+5,base+2,base+3,base+5,
-   base,base+4,base+1,base+1,base+4,base+2,
-   base+4,base+5,base+2,base+2,base+5,base+3);
+  const opposite=[
+   origin[0]+dx*len*.43-sx*width,
+   origin[1]+len*.51,
+   origin[2]+dz*len*.43-sz*width
+  ];
+  const tip=[
+   origin[0]+dx*len*(.84+curve),
+   origin[1]+len*.93,
+   origin[2]+dz*len*(.84+curve)
+  ];
+  for(const v of [p0,mid,opposite,tip])positions.push(...v);
+  indices.push(base,base+1,base+2,base+1,base+3,base+2);
+  n++;
+ }
+ for(let k=0;k<count;k++){
+  const phi=k*2.3999632297;
+  const radial=.025+(k%4)*.016;
+  const h=.009+(k%5)*.027;
+  const origin=[Math.cos(phi)*radial,h,Math.sin(phi)*radial];
+  if(pine){
+   // Two long needles rise in a subtly diverging pair from each short shoot.
+   blade(origin,phi+.13,.14+(k%4)*.023,.0038,.04);
+   blade(origin,phi-.22,.12+(k%3)*.029,.0040,-.025);
+  }else{
+   // Birch foliage comes from a twig as individually diamond-shaped blades;
+   // their different rotations create genuine 3D parallax from any view.
+   blade(origin,phi+.4,.13+(k%4)*.032,.032,.09);
+  }
  }
  const g=new T.BufferGeometry();
  g.setAttribute('position',new T.Float32BufferAttribute(positions,3));
- g.setIndex(indices);g.computeVertexNormals();return g;
-}
-function birchLeaf(T){
- // Physically oriented, slightly bent three-dimensional diamond leaf with
- // a central ridge. This geometry NEVER rotates to face the camera.
- const p=[
-  0,0,0, -.033,.027,.006, 0,.061,.012, .031,.029,.006,
-  0,.032,-.005, 0,.084,.001
- ];
- const g=new T.BufferGeometry();
- g.setAttribute('position',new T.Float32BufferAttribute(p,3));
- g.setIndex([0,1,4,1,2,4,4,2,3,4,3,0,1,5,2,2,5,3]);
- g.computeVertexNormals();return g;
+ g.setIndex(indices);g.computeVertexNormals();
+ g.userData={botanicalFoliageUnits:n,source:'physical botanical blades, no billboards'};
+ return g;
 }
 function mainAxis(T,H,rnd,species){
  const p=[];
@@ -190,8 +211,8 @@ function createCodeTree(T,tree,{quality='standard'}={}){
  branches.castShadow=true;branches.receiveShadow=true;root.add(branches);
  // Each instance represents an actual curved physical needle PAIR or leaf:
  // no camera-facing planes, no screenshot layer, no one-sprite tree.
- const density=(pine?Math.round(28*q):Math.round(39*q));
- const maxInstances=tips.length*density,leafGeo=pine?needlePair(T):birchLeaf(T);
+ const density=(pine?Math.round(20*q):Math.round(24*q));
+ const maxInstances=tips.length*density,leafGeo=foliageCluster(T,pine);
  const foliage=new T.InstancedMesh(leafGeo,
   new T.MeshStandardMaterial({color:'#ffffff',roughness:.85,metalness:0,side:T.DoubleSide}),
   maxInstances);
@@ -227,7 +248,9 @@ function createCodeTree(T,tree,{quality='standard'}={}){
  root.add(foliage);
  root.userData={textures:[bark],
   code3D:true,botanicalSpecies:species,source:'FORMA authored procedural mesh',
-  branchCount:outerBranches+tips.length,needlePairs:pine?index:0,leafCount:pine?0:index,
+  branchCount:outerBranches+tips.length,
+  needlePairs:pine?index*leafGeo.userData.botanicalFoliageUnits/2:0,
+  leafCount:pine?0:index*leafGeo.userData.botanicalFoliageUnits,
   physicalHeight:H,crownDiameter:D,bark:'seeded procedural CanvasTexture',
   renderQuality:quality
  };
