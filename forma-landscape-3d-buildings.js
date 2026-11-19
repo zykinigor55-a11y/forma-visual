@@ -204,8 +204,9 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
 }
 
 function roofPlane(g,T,slopeLength,depth,x,y,angle,roofMat){
- // Physically thick 85 mm roof layer instead of infinitely thin plane.
- const roof=add(g,T,new T.BoxGeometry(slopeLength,.085,depth),roofMat,x,y,0);
+ // Full 240mm roof cassette. The visible edge has the mass of a real roof.
+ const roof=add(g,T,new T.BoxGeometry(slopeLength,.24,depth),roofMat,x,y,0);
+ roof.userData.roofThickness=.24;
  roof.rotation.z=angle;
  roof.userData.architecturePart='roof-layer';
  return roof;
@@ -214,6 +215,27 @@ function edgeBeam(g,T,a,b,thickness,material){
  const p=new T.Vector3(...a),q=new T.Vector3(...b),d=q.clone().sub(p),m=new T.Vector3().addVectors(p,q).multiplyScalar(.5);
  const item=add(g,T,new T.BoxGeometry(thickness,thickness,d.length()),material,m.x,m.y,m.z);
  item.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),d.normalize());return item;
+}
+function thickHipRoofFace(g,T,points,material,thickness=.20){
+ // Closed hip-roof panel: outer cladding, underside and four real edges.
+ const count=points.length,positions=[],uv=[],index=[];
+ for(const dy of [.055,.055-thickness])for(const p of points){
+  positions.push(p[0],p[1]+dy,p[2]);
+  uv.push(p[0]*.22,p[2]*.22);
+ }
+ for(let i=1;i<count-1;i++)index.push(0,i,i+1,count,count+i+1,count+i);
+ for(let i=0;i<count;i++){
+  const n=(i+1)%count;
+  index.push(i,n,count+n,i,count+n,count+i);
+ }
+ const geometry=new T.BufferGeometry();
+ geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
+ geometry.setIndex(index);geometry.computeVertexNormals();
+ const mesh=add(g,T,geometry,material);
+ mesh.userData.architecturePart='roof-layer';
+ mesh.userData.roofThickness=thickness;
+ return mesh;
 }
 function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
  const roof=b.roof||housePreset(b.archStyle).roof,overhang=b.archStyle==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
@@ -231,28 +253,37 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
  if(gable){
   roofPlane(g,T,run,depth,-half/2,bodyHeight+rise/2+.07,angle,roofMaterial);
   roofPlane(g,T,run,depth,half/2,bodyHeight+rise/2+.07,-angle,roofMaterial);
+  // Low underside soffits remain aligned with the sloped roof surfaces.
+  for(const side of [-1,1]){
+   const panel=add(g,T,new T.BoxGeometry(run,.025,depth-.07),soffit,
+    side*half/2,bodyHeight+rise/2-.061,0);
+   panel.rotation.z=side<0?angle:-angle;
+   panel.userData.architecturePart='roof-soffit';
+  }
   if(roofFinish==='standing'){
    // True standing-seam ribs run down the slope; they catch light separately
    // from the painted roof texture and retain the same measured roof planes.
    const rib=mat(T,'#4F5B5C',.43,.62);
    for(let z=-depth/2+.27;z<depth/2;z+=.58){
     for(const side of [-1,1]){
-     const bar=box(g,T,run,.018,.028,side*half/2,bodyHeight+rise/2+.087,z,rib);
+     const bar=box(g,T,run,.025,.03,side*half/2,bodyHeight+rise/2+.208,z,rib);
      bar.rotation.z=side<0?angle:-angle;
     }
    }
   }
+  const fascia=mat(T,'#30393D',.62,.36);
   for(const x of [-half,half]){
-   edgeBeam(g,T,[x,bodyHeight+.08,-depth/2],[0,bodyHeight+rise+.08,-depth/2],.065,dark);
-   edgeBeam(g,T,[x,bodyHeight+.08,depth/2],[0,bodyHeight+rise+.08,depth/2],.065,dark);
-   // The eave reads as a real layered roof, not a single zero-thickness plane.
-   box(g,T,.22,.055,depth,x>0?half-.11:-half+.11,bodyHeight-.006,0,soffit);
+   for(const z of [-depth/2-.052,depth/2+.052])
+    edgeBeam(g,T,[x,bodyHeight+.07,z],
+     [0,bodyHeight+rise+.07,z],.21,fascia);
+   // The edge fascia/soffit overlaps the 240mm roof sandwich visually.
+   box(g,T,.24,.15,depth+.07,x>0?half-.12:-half+.12,bodyHeight-.025,0,soffit);
+   const gutter=add(g,T,new T.CylinderGeometry(.085,.085,depth-.11,14),dark,
+    x+(x>0?.073:-.073),bodyHeight+.04,0);
+   gutter.rotation.x=Math.PI/2;gutter.userData.architecturePart='gutter';
   }
-  edgeBeam(g,T,[0,bodyHeight+rise+.08,-depth/2],[0,bodyHeight+rise+.08,depth/2],.10,dark);
-  for(const x of [-half,half]){
-   const gutter=add(g,T,new T.CylinderGeometry(.057,.057,depth,10),dark,x,bodyHeight+.07,0);
-   gutter.rotation.x=Math.PI/2;
-  }
+  edgeBeam(g,T,[0,bodyHeight+rise+.07,-depth/2-.06],
+   [0,bodyHeight+rise+.07,depth/2+.06],.16,fascia);
   // Vertical gable-end triangle remains visible beneath the true roof.
   const wallColor=mat(T,b.archStyle==='scandi'?'#D0C1AA':b.archStyle==='classic'?'#D9D4C7':'#403B35');
   const faces=new Float32Array([-w/2,bodyHeight,d/2, w/2,bodyHeight,d/2,0,bodyHeight+rise*.94,d/2,
@@ -267,19 +298,19 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
    [[-half,bodyHeight,-depth/2],[half,bodyHeight,-depth/2],[0,top,-startZ]],
    [[half,bodyHeight,depth/2],[-half,bodyHeight,depth/2],[0,top,startZ]]
   ];
-  for(const p of planes){
-   const xyz=p.length===4?[...p[0],...p[1],...p[2],...p[0],...p[2],...p[3]]:[...p[0],...p[1],...p[2]];
-   const uv=p.length===4?[0,0,0,1,1,1,0,0,1,1,1,0]:[0,0,1,0,.5,1];
-   const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
-   geo.computeVertexNormals();const mesh=add(g,T,geo,roofMaterial);
-   mesh.material.side=T.DoubleSide;
-  }
+  for(const p of planes)thickHipRoofFace(g,T,p,roofMaterial,.20);
   edgeBeam(g,T,[0,top,-startZ],[0,top,startZ],.10,dark);
   // Actual hip-edge flashings, not lines painted onto the texture.
   for(const x of [-half,half])for(const z of [-depth/2,depth/2])
    edgeBeam(g,T,[x,bodyHeight+.04,z],[0,top,z<0?-startZ:startZ],.055,dark);
-  for(const x of [-half,half])box(g,T,.13,.075,depth,x,bodyHeight+.038,0,dark);
-  for(const z of [-depth/2,depth/2])box(g,T,w+overhang*2,.075,.13,0,bodyHeight+.038,z,dark);
+  for(const x of [-half,half]){
+   box(g,T,.20,.18,depth,x,bodyHeight+.028,0,dark);
+   const gutter=add(g,T,new T.CylinderGeometry(.083,.083,depth-.12,12),dark,
+    x+(x<0?-.07:.07),bodyHeight+.028,0);
+   gutter.rotation.x=Math.PI/2;gutter.userData.architecturePart='gutter';
+  }
+  for(const z of [-depth/2,depth/2])
+   box(g,T,w+overhang*2,.19,.19,0,bodyHeight+.028,z,dark);
  }
 }
 /** Existing house doors receive measured entry steps, without changing
