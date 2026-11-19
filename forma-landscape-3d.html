@@ -849,7 +849,12 @@ function loadCuratedAdultTree(species){
   bundledModelLoading.delete(species);bundledModelFailures.add(species);updateModelHealth();
   console.warn('CC0 tree KTX2 unavailable:',species,error?.message);return;
  }
- new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder).loadAsync(entry.path).then(result=>{
+ const matureTreeLoader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
+ matureTreeLoader.loadAsync(entry.path).catch(error=>{
+  if(!entry.fallbackPath)throw error;
+  console.warn('Preferred CC0 GLB unavailable, loading previous spruce backup:',species,error?.message||error);
+  return matureTreeLoader.loadAsync(entry.fallbackPath);
+ }).then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
   let meshes=0;
   result.scene.traverse(node=>{if(node.isMesh&&node.geometry?.attributes?.position)meshes++});
