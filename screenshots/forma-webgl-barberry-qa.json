@@ -1,0 +1,39 @@
+{
+  "source": "Real Chromium/Playwright screenshot of Render WebGL editor, screenshot not AI-generated",
+  "sourcePage": "https://dom-render-nanobanana.onrender.com/forma-landscape-3d.html",
+  "timestampUtc": "2026-11-19T23:15:03.595Z",
+  "testOnlyPlan": true,
+  "screenshotBytes": 1633809,
+  "screenshotSha256": "0632fea35d3b742415de9558a327c22788d6ed6afd41eb904bcf18ba328dd99c",
+  "diagnostics": {
+    "loaded": [
+      {
+        "species": "barberry",
+        "model": "/assets/landscape-models/barberry-thunberg-forma-original.glb",
+        "status": "glb",
+        "height": 2,
+        "diameter": 2.7
+      },
+      {
+        "species": "barberry",
+        "model": "/assets/landscape-models/barberry-thunberg-forma-original.glb",
+        "status": "glb",
+        "height": 1.4,
+        "diameter": 1.9
+      },
+      {
+        "species": "barberry",
+        "model": "/assets/landscape-models/barberry-thunberg-forma-original.glb",
+        "status": "glb",
+        "height": 1.45,
+        "diameter": 1.85
+      }
+    ],
+    "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "inspector": "Барбарис Тунберга\n\nРЕДАКТОР КУСТАРНИКА\nБарбарис Тунберга\n\n✓ Подключён GLB\n\nВозраст / размер\nМолодой\nОбычный\nВзрослый\nВариант внешнего вида\n№ 1\n№ 2\n№ 3\nНиже можно точно указать высоту, ширину и поворот. У готовой GLB меняется ракурс исходной формы, её цветы и ветки не редактируются отдельно.\nПриблизить куст\nX, м\nY, м\nПоворот, °\nДиаметр, м\nВысота, м\n↶ Повернуть −15°\n↷ Повернуть +15°\nПрименитьДублировать объектУдалить объект · Delete\n\nDelete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.",
+    "canvasWidth": 1600,
+    "canvasHeight": 840,
+    "selectedBarberry": true
+  },
+  "consoleErrors": []
+}
