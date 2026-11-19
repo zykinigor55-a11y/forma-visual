@@ -5,6 +5,7 @@
  */
 import {foliageMaterial,normalizeFoliagePalette} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
+import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js';
 
 export const NATIVE_UNDERSTORY=Object.freeze({
  fern:{latin:'Dryopteris filix-mas',form:'fronds',stems:22,leaves:24,height:.85,diameter:1.2},
@@ -109,6 +110,38 @@ function buildLeaves(T,items,id,form,season,quality){
  make('micro',1,1);make('volume',2,.95);make('sprays',4,1.15);
  return g;
 }
+/* All five native understory species use the same photo-alpha technique
+ * as tall trees. The real 3D fronds, grass blades and leaf stalks remain
+ * primary structure, while these cards only add fine photographic detail. */
+function makeUnderstoryPhotoCards(T,leaves,id,season,quality){
+ if(!leaves.length||season==='winter'&&id!=='periwinkle')return null;
+ const number=Math.min(300,Math.max(8,Math.round(leaves.length*Math.max(.24,quality)*.46)));
+ const texture=createPhotoFoliageTexture(T,id);
+ if(!texture)return null;
+ const material=new T.MeshStandardMaterial({
+  map:texture,alphaTest:.34,alphaToCoverage:true,side:T.DoubleSide,
+  depthWrite:true,roughness:.86,metalness:0
+ });
+ const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,number);
+ const dummy=new T.Object3D(),palette=normalizeFoliagePalette(id,season),
+  shade=new T.Color(palette.shade),sun=new T.Color(palette.sunlit),rand=random(hash(id+'|photo|'+season));
+ for(let i=0;i<number;i++){
+  const item=leaves[(i*7+Math.floor(rand()*leaves.length))%leaves.length];
+  dummy.position.set(item.x,item.y,item.z);
+  dummy.rotation.set(item.pitch+rand()*.35,item.yaw+rand()*1.15,item.roll+rand()*.28);
+  const scale=Math.min(.32,Math.max(.035,item.size*(id==='fern'?.72:.87)));
+  dummy.scale.set(scale,scale*(id==='ornamental-grass'?1.5:1),1);
+  dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
+  mesh.setColorAt(i,shade.clone().lerp(sun,.20+rand()*.70));
+ }
+ mesh.instanceMatrix.needsUpdate=true;
+ if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+ mesh.castShadow=quality>=.5;
+ mesh.frustumCulled=false;
+ mesh.userData.botanicalLayer='sprays';
+ mesh.userData.photoAlphaCard=true;
+ return mesh;
+}
 export function createNativeUnderstory(T,instance,{season='summer',quality=1,mode='standard'}={}){
  const id=instance.catalogId,spec=NATIVE_UNDERSTORY[id];if(!spec)throw Error('Unknown native 3D plant '+id);
  const height=clamp(Number(instance.height)||spec.height,.12,4),diameter=clamp(Number(instance.diameter)||spec.diameter,.2,10);
@@ -156,6 +189,8 @@ export function createNativeUnderstory(T,instance,{season='summer',quality=1,mod
  }
  const group=new T.Group();group.add(twigSegments(T,stems,id));
  group.add(buildLeaves(T,leaves,id,spec.form,season,quality));
+ const photoCards=makeUnderstoryPhotoCards(T,leaves,id,season,quality);
+ if(photoCards)group.add(photoCards);
  group.userData.species=id;group.userData.physicalHeight=height;
  group.userData.crownDiameter=diameter;group.userData.variant=instance.variant||1;
  group.userData.nativeUnderstory=true;
