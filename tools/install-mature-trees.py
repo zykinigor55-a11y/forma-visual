@@ -68,7 +68,7 @@ def fetch(url):
 def main():
     if SOURCES.get("license") != "CC0 1.0":
         raise ValueError("CC0 sources expected")
-    if {o["species"] for o in SOURCES["trees"]} != {"spruce", "birch", "oak"}:
+    if {o["species"] for o in SOURCES["trees"]} != {"spruce", "birch", "oak", "maple", "linden", "sakura"}:
         raise ValueError("Missing or unreviewed species")
     for item in SOURCES["trees"]:
         species = item["species"]
