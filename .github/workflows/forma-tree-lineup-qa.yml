@@ -38,5 +38,7 @@ jobs:
         if: always()
         with:
           name: FORMA-real-3d-trees-in-one-row
-          path: artifacts/landscape-editor/tree-lineup/*.png
+          path: |
+            artifacts/landscape-editor/tree-lineup/*.png
+            artifacts/landscape-editor/tree-lineup/*.glb
           if-no-files-found: warn
