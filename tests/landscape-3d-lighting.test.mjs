@@ -32,9 +32,9 @@ test('dusk lighting is weaker than night and spotlights have a different physica
  assert.equal(gardenLightingState('spike-spot',{time:'night'}).kind,'uplight');
 });
 
-test('all 26 vegetation species have deterministic seasonal PBR bark palettes',()=>{
+test('all 28 supported species including archived linden have deterministic seasonal PBR bark palettes',()=>{
  const ids=Object.keys(VEGETATION_SPECIES);
- assert.equal(ids.length,26);
+ assert.equal(ids.length,28);
  for(const id of ids){
   const palette=barkPalette(id);
   assert.match(palette.base,/^#[0-9A-F]{6}$/i);
