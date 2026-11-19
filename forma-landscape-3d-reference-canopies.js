@@ -21,6 +21,7 @@ export const ADDITIONAL_GROWTH_TRAITS=Object.freeze({
  maple:{primaryArms:5,branchAngle:.37,shootsPerBranch:3,droop:.018,crownAsymmetry:.13,layeredFoliage:1.10,leafClusterScale:1.04},
  linden:{primaryArms:5,branchAngle:.31,shootsPerBranch:3,droop:.045,crownAsymmetry:.12,layeredFoliage:1.10,leafClusterScale:.91},
  beech:{primaryArms:5,branchAngle:.33,shootsPerBranch:3,droop:.015,crownAsymmetry:.11,layeredFoliage:1.16,leafClusterScale:.81},
+ poplar:{primaryArms:7,branchAngle:.12,shootsPerBranch:3,droop:0,crownAsymmetry:.065,layeredFoliage:1.04,leafClusterScale:.72},
  willow:{primaryArms:5,branchAngle:.27,shootsPerBranch:4,droop:.26,crownAsymmetry:.20,layeredFoliage:.88,leafClusterScale:.86},
  rowan:{primaryArms:4,branchAngle:.33,shootsPerBranch:2,droop:.035,crownAsymmetry:.20,layeredFoliage:.87,leafClusterScale:.68},
  apple:{primaryArms:5,branchAngle:.31,shootsPerBranch:3,droop:.042,crownAsymmetry:.23,layeredFoliage:1.16,leafClusterScale:.95},
