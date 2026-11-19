@@ -34,7 +34,7 @@ const asset=showOldBirch?{...MATURE_TREE_MODELS.birch,name:'Берёза · ст
  showOriginalOak?{...MATURE_TREE_MODELS.oak,name:'Дуб · прежняя Innerscene GLB',path:MATURE_TREE_MODELS.oak.fallbackPath}:
  showTerrainOak?{...MATURE_TREE_MODELS.oak,name:'Дуб · TerrainTale · новый PBR'}:MATURE_TREE_MODELS[name];
 const details=document.querySelector('#state');
-const sizes={birch:[14,8],spruce:[16,9],oak:[8.6,7.8],maple:[9.5,7.1],linden:[8.8,7.1],sakura:[6,7.4],apple:[5.13,5.88],aspen:[15.61,7.61],rowan:[8.1,6.95]};
+const sizes={birch:[14,8],spruce:[16,9],oak:[8.6,7.8],maple:[9.5,7.1],linden:[8.8,7.1],beech:[20,14],sakura:[6,7.4],apple:[5.13,5.88],aspen:[15.61,7.61],rowan:[8.1,6.95]};
 const canvas=document.querySelector('#canvas');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;
