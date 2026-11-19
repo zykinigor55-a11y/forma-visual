@@ -1,0 +1,35 @@
+name: FORMA - Real WebGL barberry screenshot
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-live-barberry-screenshot.yml'
+      - 'tools/capture-live-barberry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  screenshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Capture actual WebGL editor and read model diagnostics
+        run: node tools/capture-live-barberry.mjs
+      - name: Commit raw real browser screenshot with QA
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add screenshots/forma-webgl-barberry.png screenshots/forma-webgl-barberry-qa.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'qa(screenshot): capture real WebGL barberry and shrub inspector on Render'
+            git push origin HEAD:dom-render-nanobanana
+          fi
