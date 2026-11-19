@@ -6,6 +6,8 @@ on:
       - 'forma-landscape-3d-shrub-models.js'
       - 'forma-landscape-3d-models.js'
       - 'tests/landscape-barberry-original-glb.test.mjs'
+      - 'assets/landscape-models/barberry-thunberg-forma-original.glb'
+      - 'assets/landscape-models/barberry-thunberg-forma-original.source.json'
       - '.github/workflows/forma-barberry-integration-qa.yml'
   workflow_dispatch:
 permissions:

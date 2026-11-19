@@ -25,6 +25,9 @@ test('original Berberis thunbergii GLB pinned by SHA-256 with 10 PBR materials',
  for(const part of ['plum','burgundy','ruby','bark','twig','thorn','fruit'])
   assert.ok(gltf.materials.some(m=>m.name.includes(part)),part);
  assert.equal(source.predictedTriangles,160180);
+ const totalTriangles=gltf.meshes.reduce((n,m)=>n+m.primitives.reduce((sum,p)=>sum+gltf.accessors[p.indices].count/3,0),0);
+ assert.equal(totalTriangles,source.predictedTriangles,'Actual glTF triangle index count matches generator manifest');
+ assert.ok(bytes.length < 8*1024*1024,'Full-resolution GLB stays within WebGL transfer budget');
  assert.equal(source.predictedTextureCount,8);
  assert.equal(gltf.images.length,8,'Six PBR leaf textures plus two authored bark textures');
  assert.equal(gltf.materials.filter(m=>m.alphaMode==='MASK').length,6,'Leaves use alpha-cutout PBR');
