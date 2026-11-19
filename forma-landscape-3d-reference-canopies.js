@@ -24,7 +24,7 @@ export const ADDITIONAL_GROWTH_TRAITS=Object.freeze({
  rowan:{primaryArms:4,branchAngle:.33,shootsPerBranch:2,droop:.035,crownAsymmetry:.20,layeredFoliage:.87,leafClusterScale:.68},
  apple:{primaryArms:5,branchAngle:.31,shootsPerBranch:3,droop:.042,crownAsymmetry:.23,layeredFoliage:1.16,leafClusterScale:.95},
  sakura:{primaryArms:5,branchAngle:.35,shootsPerBranch:3,droop:.029,crownAsymmetry:.21,layeredFoliage:1.05,leafClusterScale:.83},
- ash:{primaryArms:5,branchAngle:.38,shootsPerBranch:3,droop:.01,crownAsymmetry:.19,layeredFoliage:.87,leafClusterScale:.76},
+ ash:{primaryArms:5,branchAngle:.38,shootsPerBranch:3,droop:.01,crownAsymmetry:.19,layeredFoliage:1.01,leafClusterScale:.91},
  aspen:{primaryArms:4,branchAngle:.30,shootsPerBranch:2,droop:.02,crownAsymmetry:.12,layeredFoliage:.96,leafClusterScale:.67},
  juniper:{primaryArms:0,branchAngle:.12,shootsPerBranch:2,droop:.07,crownAsymmetry:.21,layeredFoliage:1.21,leafClusterScale:.59},
  hydrangea:{primaryArms:0,branchAngle:.43,shootsPerBranch:3,droop:.08,crownAsymmetry:.17,layeredFoliage:1.19,leafClusterScale:.96},
