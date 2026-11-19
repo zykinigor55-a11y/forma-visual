@@ -20,10 +20,13 @@ function safeIcon(id){
  }catch(e){console.warn('FORMA premium icon fallback',id,e);return null}
 }
 function upgradeButton(button,id){
- if(!button||!id||button.querySelector('svg.forma-premium-icon'))return;
- const markup=safeIcon(id);
- if(!markup)return; // preserve working legacy icon if enhancement unavailable
- const legacy=button.querySelector('svg.ico');
+ if(!button||!id)return;
+ const current=button.querySelector('svg.forma-premium-icon');
+ if(current?.dataset.formaRev==='main-atelier-v2')return;
+ const markup=safeIcon(id)?.replace('class="lp-3d-icon forma-premium-icon"',
+  'class="lp-3d-icon forma-premium-icon" data-forma-rev="main-atelier-v2"');
+ if(!markup)return; // preserve a working legacy icon if enhancement unavailable
+ const legacy=current||button.querySelector('svg.ico');
  if(legacy)legacy.outerHTML=markup;
  else button.insertAdjacentHTML('afterbegin',markup);
 }
@@ -42,8 +45,9 @@ export function applyPremiumSiteIcons(){
   upgradeButton(button,button.dataset.studioTool));
  document.querySelectorAll('.fa-home-tool[data-tool-id]').forEach(button=>{
   const slot=button.querySelector('.fa-home-tool-icon');
-  if(slot&&!slot.querySelector('svg.forma-premium-icon')){
-   const icon=safeIcon(button.dataset.toolId);
+  if(slot&&!slot.querySelector('svg.forma-premium-icon[data-forma-rev="main-atelier-v2"]')){
+   const icon=safeIcon(button.dataset.toolId)?.replace('class="lp-3d-icon forma-premium-icon"',
+    'class="lp-3d-icon forma-premium-icon" data-forma-rev="main-atelier-v2"');
    if(icon)slot.innerHTML=icon;
   }
  });
