@@ -1,0 +1,20 @@
+{
+  "species": "pine",
+  "variant": "CC0 alternative for visual comparison, not yet runtime default",
+  "sourcePage": "https://www.innerscene.com/tools/library/3d-parts/mature-scots-pine-tree-280307e1",
+  "sourceDownload": "https://www.innerscene.com/api/library/mature-scots-pine-tree-280307e1/download",
+  "resolvedDownload": "https://files.innerscene.com/library/mature-scots-pine-tree-280307e1/e52dca598822dfa9ffa9/mature-scots-pine-tree.glb",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrievedUtc": "2026-11-19T03:04:48.394958+00:00",
+  "sha256": "b049751122260755d281e85ba9d9f9b370c61d4ca86e39378e6fa23570041bff",
+  "sizeBytes": 2105648,
+  "analysis": {
+    "meshes": 18,
+    "triangles": 54318,
+    "materials": 2,
+    "images": 2,
+    "alphaMaterials": 0
+  },
+  "note": "Downloaded for A/B visual QA. Existing pine remains active until approved."
+}
