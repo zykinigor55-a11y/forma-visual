@@ -9,6 +9,7 @@ on:
       - 'assets/landscape-models/ash-terraintale-cc0.glb'
       - 'tests/landscape-ash-online-model-qa.verify.mjs'
       - 'tests/landscape-ash-editor-mobile.verify.mjs'
+      - 'tests/landscape-curated-adult-trees.test.mjs'
       - '.github/workflows/forma-ash-online-glb-candidate-qa.yml'
   workflow_dispatch:
 permissions:
