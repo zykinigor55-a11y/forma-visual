@@ -39,7 +39,7 @@ const THREE={BufferGeometry:Geometry,BufferAttribute:Attribute};
 test('native pine ageing retains separate glTF foliage material ranges',()=>{
  const original=new Geometry();
  const positions=[];
- const heights=[.1,.54,.65,.72,.9];
+ const heights=[.1,.54,.65,.68,.9];
  for(const y of heights){
   positions.push(-.15,y,0,.15,y,0,0,y,.20);
  }
