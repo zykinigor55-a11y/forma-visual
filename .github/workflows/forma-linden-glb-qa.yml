@@ -1,0 +1,51 @@
+name: FORMA · Linden bark and crown GLB QA
+on:
+  push:
+    branches: [improve/forma-linden-bark-20261119, dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-3d-models.js'
+      - 'forma-landscape-linden-pbr.js'
+      - 'forma-mature-trees-preview.html'
+      - 'tests/landscape-linden-inspect.verify.mjs'
+      - '.github/workflows/forma-linden-glb-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-linden-native-glb-qa
+  cancel-in-progress: true
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Describe licensed local linden source geometry and material references
+        run: |
+          python3 - <<'PY'
+          import json,struct,pathlib,collections
+          b=pathlib.Path('assets/landscape-models/linden-mature-cc0.glb').read_bytes()
+          n=struct.unpack_from('<I',b,12)[0]
+          j=json.loads(b[20:20+n])
+          print('LINDEN MATERIALS',json.dumps(j.get('materials',[]),ensure_ascii=False)[:5000])
+          print('LINDEN NODES',json.dumps(j.get('nodes',[])[:14],ensure_ascii=False)[:5000])
+          meshes=j.get('meshes',[])
+          print('LINDEN MESHES',len(meshes),'NAMED',collections.Counter(m.get('name','') for m in meshes).most_common(14))
+          print('LINDEN PRIMITIVES',collections.Counter((p.get('material'),tuple(p.get('attributes',{}))) for m in meshes for p in m.get('primitives',[])).most_common(20))
+          PY
+      - run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install chromium
+      - name: Render Tilia cordata crown and trunk bark
+        run: |
+          node server.mjs > /tmp/forma-linden-pbr.log 2>&1 &
+          sleep 3
+          node tests/landscape-linden-inspect.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-linden-real-glb-reference
+          path: artifacts/landscape-editor/linden-pbr/*
+          if-no-files-found: warn
