@@ -44,23 +44,20 @@ export function setFoliageTier(group,tier){
  group.traverse(node=>{
   if(!node.isMesh||!node.userData?.botanicalLayer)return;
   const layer=node.userData.botanicalLayer;
-  // Near: fine actual 3D leaf/needle geometry, volumetric terminal sprouts,
-  // no crossed alpha cards. Middle: 3D volume + a restrained alpha silhouette.
-  // Far: lightweight alpha clusters; keep physical trunk and branches visible.
-  // Mid-distance deliberately keeps a partial silhouette on TOP of the
-  // real 3D branch-anchored foliage. Previous code hid all spray geometry in
-  // mid LOD then revealed it abruptly in far LOD, causing crown popping.
+  // Near: true 3D leaves AND a restrained photographic terminal cutout
+  // layer. Middle: real 3D branch volume plus photo-alpha sprigs. Far:
+  // photographic alpha silhouette over the retained measured branch skeleton.
+  // Never replace an entire tree with a single camera-facing billboard.
   node.visible=layer==='branches'||
    (layer==='micro'&&next==='near')||
    (layer==='volume'&&(next==='near'||next==='middle'))||
-   (layer==='sprays'&&(next==='far'||next==='middle'||
-    (next==='near'&&!group.userData.botanicalHasVolume&&!group.userData.botanicalHasMicro)));
+   layer==='sprays';
   const original=node.userData.botanicalOriginalCount;
   if(node.isInstancedMesh&&Number.isInteger(original)){
    // The far crown keeps its botanical silhouette; only real expensive
    // volume/microgeometry loses instances as the plant gets smaller on screen.
    const factor=layer==='branches'?1:
-    layer==='sprays'?(next==='middle'?.30:next==='far'?.82:1):
+    layer==='sprays'?(next==='near'?.26:next==='middle'?.45:.82):
     next==='near'?1:next==='middle'?.74:.40;
    node.count=Math.max(1,Math.min(original,Math.round(original*factor)));
   }
