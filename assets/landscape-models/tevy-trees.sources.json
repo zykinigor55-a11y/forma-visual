@@ -1,0 +1,28 @@
+{
+  "schema": "FORMA-Tevy-CC0-PBR-trees-v1",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "trees": [
+    {
+      "species": "apple",
+      "name": "Плодовая яблоня · лето",
+      "file": "apple-mature-cc0.glb",
+      "sourcePage": "https://tevy.dev/models/apple-tree",
+      "download": "https://tevy.dev/models/apple-tree/v1/lod0.glb"
+    },
+    {
+      "species": "rowan",
+      "name": "Рябина обыкновенная с ягодами",
+      "file": "rowan-mature-cc0.glb",
+      "sourcePage": "https://tevy.dev/models/rowan",
+      "download": "https://tevy.dev/models/rowan/v1/lod0.glb"
+    },
+    {
+      "species": "aspen",
+      "name": "Осина европейская",
+      "file": "aspen-mature-cc0.glb",
+      "sourcePage": "https://tevy.dev/models/aspen",
+      "download": "https://tevy.dev/models/aspen/v1/lod0.glb"
+    }
+  ]
+}
