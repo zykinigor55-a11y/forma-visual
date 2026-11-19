@@ -42,8 +42,8 @@ test('real GLB is the user-facing default, including migration from old procedur
  assert.match(html,/if\(MATURE_TREE_MODELS\[o\.catalogId\]&&!imported\)loadCuratedAdultTree\(o\.catalogId\)/);
  assert.match(html,/const source=imported\|\|bundledPine\|\|bundledAdult\|\|null/);
  assert.match(html,/if\(species==='birch'&&treeSourceChoice\(\)==='code'\)return/);
- assert.match(html,/const performanceFallback=!\['pine','aspen'\]\.includes\(o\.catalogId\)/);
- assert.match(html,/const denseMobileTree=window\.innerWidth<=720&&!\['pine','aspen'\]/);
+ assert.match(html,/const performanceFallback=!\['pine','aspen','spruce','birch'\]\.includes\(o\.catalogId\)/);
+ assert.match(html,/const denseMobileTree=window\.innerWidth<=720&&!\['pine','aspen','spruce','birch'\]/);
  assert.match(html,/const seasonalNative=\(doc\.atmosphere\.season==='winter'/);
  assert.match(lineup,/get\('source'\)!=='code'/);
 });
