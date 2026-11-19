@@ -457,8 +457,10 @@ function updateModelHealth(){
  const loaded=ids.filter(x=>bundledModelSources.has(x)).length;
  const loading=ids.filter(x=>bundledModelLoading.has(x)).length;
  const failed=ids.filter(x=>bundledModelFailures.has(x)).length;
+ const missing=ids.filter(x=>bundledModelFailures.has(x)).map(x=>catalog(x)?.name||x);
  el.innerHTML='<strong>3D-модели · '+loaded+'/'+ids.length+' загружено</strong><small>'+
   (ids.length?'В сцене '+ids.length+' видов · '+loading+' загружается · '+failed+' с ошибкой':'40 CC0 PBR-моделей доступны в отдельном каталоге. Загрузка начинается при размещении.')+
+  (missing.length?'<br>Не подменяем реалистичные деревья: '+missing.join(', ')+'. Нажмите повторную загрузку.':'')+
   '</small>'+(failed?'<button type="button" id="retry3dModels">Повторить загрузку ('+failed+')</button>':'');
  if(failed)el.querySelector('#retry3dModels').onclick=()=>{
   const retry=[...bundledModelFailures];bundledModelFailures.clear();
@@ -607,7 +609,9 @@ function initialize(){
  const crowdedPreview=initialPlantCount>8||(window.innerWidth<=720&&initialPlantCount>4);
  if(crowdedPreview){
   autoReduced=true;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?.75:.85));
+  // Budget costly shadows first; never sacrifice fine KTX2 leaf details
+  // merely because another tree was added to the mobile landscape.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?1.18:1.30));
   renderer.shadowMap.enabled=false;
  }
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
@@ -853,11 +857,9 @@ function loadCuratedAdultTree(species){
   console.warn('CC0 tree KTX2 unavailable:',species,error?.message);return;
  }
  const matureTreeLoader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
- matureTreeLoader.loadAsync(entry.path).catch(error=>{
-  if(!entry.fallbackPath)throw error;
-  console.warn('Preferred CC0 GLB unavailable, loading previous spruce backup:',species,error?.message||error);
-  return matureTreeLoader.loadAsync(entry.fallbackPath);
- }).then(result=>{
+ // A failed preferred GLB stays selectable, but will NOT silently show the
+ // obsolete sparse backup spruce/birch. The user sees a retry prompt instead.
+ matureTreeLoader.loadAsync(entry.path).then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
   let meshes=0;
   result.scene.traverse(node=>{if(node.isMesh&&node.geometry?.attributes?.position)meshes++});
@@ -869,7 +871,7 @@ function loadCuratedAdultTree(species){
  }).catch(error=>{
   bundledModelFailures.add(species);
   console.warn('Adult tree GLB unavailable; using native model:',species,error?.message||error);
-  status('GLB '+entry.name+' не загрузилась — включена резервная модель.');
+  status('GLB '+entry.name+' не загрузилась. Повторите загрузку в настройках 3D-моделей.');
   if(root&&renderer&&doc)rebuild();
  }).finally(()=>{ktx2.dispose();bundledModelLoading.delete(species);updateModelHealth()});
 }
@@ -908,9 +910,10 @@ function drawObject(o,entry,key){
   // Never discard an explicitly imported user-owned GLB.
   const codeRebuilt=!imported&&treeSourceChoice()==='code'&&
    (o.catalogId==='pine'||(o.catalogId==='birch'&&doc.atmosphere.season!=='winter'));
+  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId);
   const waitingForReal=!source&&!seasonalNative&&!performanceFallback&&
    (o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId])&&
-   !bundledModelFailures.has(o.catalogId);
+   (importantRealTree||!bundledModelFailures.has(o.catalogId));
   // NEVER flash a fake procedural tree while a verified original GLB loads.
   // The target retains an invisible metric pickable and selection ring.
   g=codeRebuilt?createCodeTree(THREE,o,{
@@ -1225,7 +1228,7 @@ function refreshPlantAssetStatus(){
   el.textContent='Сначала выберите конкретный вид растения.';return;
  }
  const loaded=importedPlantModels.has(species),bundled=bundledModelSources.has(species),stored=plantSpeciesStored.has(species);
- el.textContent=(name||species)+': '+(loaded?'ваша GLB активна':stored?'GLB восстанавливается из браузера':bundled?'профессиональная CC0 PBR GLB активна':MATURE_TREE_MODELS[species]||species==='pine'?'взрослая GLB загрузится при посадке':'встроенная процедурная 3D-модель');
+ el.textContent=(name||species)+': '+(loaded?'ваша GLB активна':stored?'GLB восстанавливается из браузера':bundled?'профессиональная CC0 PBR GLB активна':bundledModelFailures.has(species)?'ошибка GLB. Нажмите «Повторить загрузку» в параметрах сцены':MATURE_TREE_MODELS[species]||species==='pine'?'взрослая GLB загрузится при посадке':'встроенная процедурная 3D-модель');
  const source=$('#treeSourceLinks'),reference=TREE_MODEL_SOURCE_LINKS[species];
  if(source){source.hidden=!reference;source.innerHTML=reference?
   '<a href="'+reference.sourcePage+'" target="_blank" rel="noopener noreferrer">Источник CC0: '+reference.name+'</a><small>Скачайте GLB, затем загрузите его выше — собственный файл имеет приоритет.</small>':'';}
@@ -2266,7 +2269,7 @@ function animate(now=0){
    slowFrameStreak=lastRenderCost>140?slowFrameStreak+1:Math.max(0,slowFrameStreak-1);
    if(slowFrameStreak>=3){
     autoReduced=true;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,.85));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?1.08:1.20));
     renderer.shadowMap.enabled=false;
     resize();scheduleBrushRebuild();
     status('Автокачество: облегчённое 3D для плавного вращения и работы с посадками.');
