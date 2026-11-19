@@ -1,7 +1,7 @@
 name: FORMA · Native textured ash CC0 WebGL quality
 on:
   push:
-    branches: [dom-render-nanobanana]
+    branches: [dom-render-nanobanana, experiments/forma-ash-real-glb-webgl-20261119]
     paths:
       - 'forma-ash-online-preview.html'
       - 'forma-landscape-3d.html'
