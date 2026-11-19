@@ -27,8 +27,8 @@ test('architectural rainfall and foundation details do not alter measured house 
  assert.match(architecture,/function roundPipeBetween\(/);
  assert.match(architecture,/new T\.CylinderGeometry\(radius,radius,direction\.length\(\),16\)/);
  assert.match(architecture,/architecturePart='downpipe-clamp'/);
- assert.match(architecture,/architecturePart='downpipe'/);
- assert.match(architecture,/architecturePart='gutter-elbow'/);
+ assert.match(architecture,/roundPipeBetween\(g,T,\[x,pipeBottom,z\],\[x,pipeTop,z\],radius,metal,'downpipe'\)/);
+ assert.match(architecture,/roundPipeBetween\(g,T,hub,middle,\.079,metal,'gutter-elbow'\)/);
  assert.match(architecture,/if\(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe'\)\{/);
  assert.match(architecture,/addFacadeFinish\(g,THREE,/);
  assert.match(architecture,/addEntranceDetails\(g,THREE,/);
