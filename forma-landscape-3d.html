@@ -451,6 +451,27 @@ function readBuildInfo(){
    'ВНИМАНИЕ: Render запущен из ветки «'+branch+'», а редактор обновляется в dom-render-nanobanana. Проверьте источник сервиса.';
  }).catch(()=>{el.textContent='Версию Render определить не удалось. Проверьте публикацию.'});
 }
+function treeModelDiagnostics(){
+ // Read-only scene health to catch PBR-to-procedural substitutions on Android.
+ // Avoid exposing stored project names, tokens or model binary data.
+ return doc?.objects.filter(o=>catalog(o.catalogId)?.group==='trees').map(o=>{
+  const group=pickables.find(g=>g.userData.key==='object:'+o.id);
+  const real=Boolean(group?.userData?.realGlb);
+  const state=real?'glb':bundledModelFailures.has(o.catalogId)?'glb-error':
+   bundledModelLoading.has(o.catalogId)?'glb-loading':
+   group?.children.some(child=>child.isMesh&&!child.userData.selectionProxy)?'procedural':'empty';
+  let foliageMeshes=0,foliageMaterials=0;
+  if(real)group.traverse(node=>{
+   if(!node.isMesh||node.userData.selectionProxy)return;
+   const materials=Array.isArray(node.material)?node.material:[node.material];
+   const foliage=materials.filter(m=>m&&m.alphaTest>0);
+   if(foliage.length){foliageMeshes++;foliageMaterials+=foliage.length}
+  });
+  return {species:o.catalogId,status:state,foliageMeshes,foliageMaterials,
+   height:Number(o.height)||0,diameter:Number(o.diameter)||0};
+ })||[];
+}
+window.FORMA_TREE_MODEL_DIAGNOSTICS=treeModelDiagnostics;
 function updateModelHealth(){
  const el=$('#modelHealth');if(!el||!doc)return;
  const ids=[...new Set([...extra.map(o=>o.type),...doc.objects.map(o=>o.catalogId)].filter(x=>modelPath(x)||MATURE_TREE_MODELS[x]||x==='pine'))];
