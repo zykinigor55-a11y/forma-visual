@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {birchCrownDisplacement,refineNativeBirch} from '../forma-landscape-birch-native.js';
+import {birchCrownDisplacement,birchCrownSpread,refineNativeBirch} from '../forma-landscape-birch-native.js';
 import {spruceTipDrop,spruceNativeProfile} from '../forma-landscape-spruce-native.js';
 
 test('birch droops at branch tips but preserves the basal white trunk and top leader',()=>{
@@ -9,6 +9,18 @@ test('birch droops at branch tips but preserves the basal white trunk and top le
  assert.equal(birchCrownDisplacement({height:16,relativeY:.61,relativeRadius:0}),0);
  assert.equal(birchCrownDisplacement({height:16,relativeY:0,relativeRadius:.95}),0);
  assert.equal(birchCrownDisplacement({height:16,relativeY:1,relativeRadius:.95}),0);
+});
+test('silver birch native canopy is airy and irregular, never altering the white trunk',()=>{
+ assert.equal(birchCrownSpread({relativeY:0,relativeRadius:.9,azimuth:1}),1);
+ assert.equal(birchCrownSpread({relativeY:.6,relativeRadius:0,azimuth:1}),1);
+ assert.equal(birchCrownSpread({relativeY:1,relativeRadius:.9,azimuth:1}),1);
+ const shapes=[];
+ for(const azimuth of [0,.8,1.6,2.4,3.2,4.0,5.0]){
+  const spread=birchCrownSpread({relativeY:.58,relativeRadius:.94,azimuth});
+  assert.ok(spread>.91&&spread<1.09,'PBR GLB native silhouette changes are restrained');
+  shapes.push(spread);
+ }
+ assert.ok(Math.max(...shapes)-Math.min(...shapes)>.04,'the outline must not remain a perfectly symmetric leaf sphere');
 });
 test('spruce ageing drops supported twigs and needle sprays together, not the trunk',()=>{
  const old=spruceNativeProfile({type:'century'});
