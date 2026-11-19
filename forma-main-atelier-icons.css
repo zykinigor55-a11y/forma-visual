@@ -221,3 +221,22 @@ body.fa-unified-studio .rail-nav>.rail-btn svg.forma-premium-icon{
   font-size:8px!important;line-height:1!important
  }
 }
+
+/* Every 13-item navigation button stays one self-contained icon + one line.
+ * The full Russian tool name is preserved via title/aria-label on hover.
+ * Prevents "Благоустройство" from painting on top of "Атмосфера". */
+@media(min-width:761px){
+ body.fa-unified-studio .rail-nav>.rail-btn{
+  overflow:hidden!important;isolation:isolate;white-space:nowrap!important
+ }
+ body.fa-unified-studio .rail-nav>.rail-btn .rail-name{
+  display:block!important;flex:0 0 auto!important;box-sizing:border-box!important;
+  width:100%!important;max-width:100%!important;
+  white-space:nowrap!important;text-overflow:ellipsis!important;
+  overflow:hidden!important;height:10px!important;line-height:10px!important;
+  font-size:8px!important;letter-spacing:-.015em!important
+ }
+ body.fa-unified-studio .rail-nav>.rail-btn svg.forma-main-nav-icon{
+  display:block!important;flex-shrink:0!important
+ }
+}
