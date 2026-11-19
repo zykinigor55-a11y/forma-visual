@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save playwright@1.56.0
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install chromium
       - name: Capture day, evening, night and tuned atmosphere from surveyed 3D fixture
         run: |
           node server.mjs > /tmp/forma-abc-server.log 2>&1 &
