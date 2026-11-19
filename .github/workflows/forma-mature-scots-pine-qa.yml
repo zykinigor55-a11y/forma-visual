@@ -1,0 +1,40 @@
+name: FORMA · Mature Scots pine PBR visual QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-pine-glb-preview.html'
+      - 'forma-landscape-3d.html'
+      - 'assets/landscape-models/pine-mature-cc0.glb'
+      - 'assets/landscape-models/pine-mature-cc0.source.json'
+      - 'forma-landscape-3d-models.js'
+      - 'tests/landscape-mature-scots-pine-preview.verify.mjs'
+      - '.github/workflows/forma-mature-scots-pine-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-mature-pine-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  visual:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: Render adult pine bark and needle GLB in Chromium at four angles
+        run: |
+          node server.mjs > /tmp/forma-pine-preview-server.log 2>&1 &
+          sleep 2
+          node tests/landscape-mature-scots-pine-preview.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-mature-pine-pbr-qa
+          path: artifacts/landscape-editor/mature-pine-*.png
+          if-no-files-found: warn
