@@ -21,6 +21,7 @@ export function naturalCrown(id,t){
   case 'oak':return .25+.82*Math.pow(Math.sin(Math.PI*f),.32);
   case 'maple':return .15+.90*Math.pow(Math.sin(Math.PI*f),.50);
   case 'linden':return .13+.87*Math.pow(Math.sin(Math.PI*f),.42);
+  case 'beech':return .12+.88*Math.pow(Math.sin(Math.PI*f),.49);
   case 'willow':return .55+.41*Math.pow(Math.sin(Math.PI*f),.35);
   case 'rowan':return .16+.73*Math.pow(Math.sin(Math.PI*f),.63);
   case 'apple':return .26+.78*Math.pow(Math.sin(Math.PI*f),.42);
@@ -43,6 +44,7 @@ export function botanicalLeafScale(id,height,diameter){
  if(id==='willow'||id==='birch'||id==='rowan'||id==='ash'||id==='aspen')return .54;
  if(id==='fern'||id==='periwinkle')return .67;
  if(id==='oak')return .89;
+ if(id==='beech')return .78;
  if(id==='maple')return .80;
  if(id==='lavender'||id==='juniper'||id==='ornamental-grass')return .52;
  if(id==='hosta')return 1.08;
@@ -84,6 +86,7 @@ export function leafOutline(id,steps=20){
   else if(id==='oak'){width=.51;length=.77;serration=.82+.20*Math.cos(a*6)}
   else if(id==='maple'){width=.83;length=.88;serration=norwayMapleLobeRadius(a)}
   else if(id==='linden'){width=.65;length=.75;serration=1-.17*Math.exp(-Math.pow((a-Math.PI/2)/.30,2))}
+  else if(id==='beech'){width=.49;length=.84;serration=1+.027*Math.sin(a*12)}
   else if(id==='rowan'){width=.28;length=.72;serration=1+.045*Math.cos(a*12)}
   else if(id==='apple'){width=.46;length=.70}
   else if(id==='sakura'){width=.47;length=.78;serration=1+.05*Math.cos(a*12)}
