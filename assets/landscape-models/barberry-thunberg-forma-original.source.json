@@ -11,6 +11,10 @@
   },
   "predictedTriangles": 61200,
   "predictedMaterialCount": 10,
-  "status": "pending GitHub Action build",
-  "notes": "Photorealistic intent, but self-authored geometry and PBR flat colors; visual WebGL check and further detailed textures still recommended. Keep autumn/winter procedural foliage until validated."
+  "status": "built and SHA-256 verified original GLB",
+  "notes": "Photorealistic intent, but self-authored geometry and PBR flat colors; visual WebGL check and further detailed textures still recommended. Keep autumn/winter procedural foliage until validated.",
+  "sizeBytes": 1597580,
+  "sha256": "c48442782b86411ac16275d82d2361e9af04ed06f2fd49b9334725d26cd4f362",
+  "meshCount": 10,
+  "materialCount": 10
 }
