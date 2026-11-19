@@ -337,9 +337,16 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
  // independent terminal sprays to hold a readable crown at parcel scale.
  // Crowded auto-preview intentionally caps alpha cards. Actual premium
  // geometry and surveyed crown dimensions are unaffected.
- const minimum=quality<.35?(shrub?145:420):quality<.45?(shrub?320:980):(shrub?670:2250);
- const maximum=quality<.35?(shrub?450:860):quality<.45?(shrub?900:2200):(shrub?2150:4200);
- const count=clamp(Math.round(points.length*(1.25+quality*1.55)),minimum,maximum);
+ // Smaller branch sprites in greater numbers: no isolated green spheres.
+ // Total drawn alpha area stays comparable to the former 420 wide cards.
+ const sprucePine=id==='pine'||id==='spruce';
+ const minimum=quality<.35?(shrub?145:sprucePine?740:420):
+  quality<.45?(shrub?320:sprucePine?1400:980):
+  (shrub?670:sprucePine?2550:2250);
+ const maximum=quality<.35?(shrub?450:sprucePine?1350:860):
+  quality<.45?(shrub?900:sprucePine?2950:2200):
+  (shrub?2150:sprucePine?4500:4200);
+ const count=clamp(Math.round(points.length*(sprucePine?2.45:1.25+quality*1.55)),minimum,maximum);
  const texture=createPhotoFoliageTexture(T,id,{fallback:createSprayTexture(T,needle,id)});
  const material=new T.MeshStandardMaterial({map:texture,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide,roughness:.86,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
@@ -353,7 +360,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
   const p=points[Math.floor(r()*points.length)],offset=shrub?.05:.09;
   d.position.set(p.x+(r()-.5)*offset,p.y+(r()-.5)*offset,p.z+(r()-.5)*offset);
   d.rotation.set(r()*6.283,r()*6.283,r()*6.283);
-  const w=foliageSprayWidth(id,diameter)*(.72+r()*.70);
+  const w=foliageSprayWidth(id,diameter)*(sprucePine?.63:1)*(.70+r()*.63);
   d.scale.set(w,w,1);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
   const colour=shadeColor.clone().lerp(sunColor,.10+r()*.79).multiplyScalar(shade);
