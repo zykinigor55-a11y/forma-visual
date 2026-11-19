@@ -33,6 +33,9 @@ test('pine dimensions follow actual height and selected crown type',()=>{
  assert.ok(pineDimensions(18,80,'solitary').diameter>pineDimensions(18,8,'solitary').diameter);
  assert.ok(nativePineProfile({age:80,pineType:'garden'}).copies>=nativePineProfile({age:10,pineType:'garden'}).copies);
  assert.ok(nativePineProfile({age:60,pineType:'forest'}).copies<nativePineProfile({age:60,pineType:'garden'}).copies);
+ assert.ok(nativePineProfile({age:40,pineType:'solitary'}).copies>=3,'Mature pine must retain native lower whorls');
+ assert.ok(nativePineProfile({age:40,pineType:'garden'}).copies>=4,'Garden pine should have dense lower needle tiers');
+ assert.ok(nativePineProfile({age:40,pineType:'forest'}).copies<nativePineProfile({age:40,pineType:'solitary'}).copies);
 });
 test('modification uses the exact native GLB needle/branch materials, no overlay tree',()=>{
  const native=readFileSync(new URL('../forma-landscape-pine-native.js',import.meta.url),'utf8');
