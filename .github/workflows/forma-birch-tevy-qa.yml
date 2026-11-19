@@ -1,0 +1,40 @@
+name: FORMA · Silver birch PBR A-B comparison
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-mature-trees-preview.html'
+      - 'assets/landscape-models/birch-tevy-cc0.glb'
+      - 'tests/landscape-birch-tevy-compare.verify.mjs'
+      - '.github/workflows/forma-birch-tevy-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: forma-birch-glb-compare
+  cancel-in-progress: true
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install chromium
+      - name: Visually compare natural silver birch GLBs from matching angles
+        run: |
+          node server.mjs >/tmp/forma-birch-ab.log 2>&1 &
+          sleep 3
+          node tests/landscape-birch-tevy-compare.verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-silver-birch-old-vs-tevy
+          path: artifacts/landscape-editor/birch-ab/*.png
+          if-no-files-found: warn
