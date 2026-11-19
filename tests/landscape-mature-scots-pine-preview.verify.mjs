@@ -41,6 +41,14 @@ try{
  assert.ok(alt.details.meshes>=3,'alternative must contain several textured meshes');
  await page.evaluate(()=>window.__pineView(.65,.12,27));
  await page.screenshot({path:`${output}/mature-pine-innerscene.png`});
+ // Real procedural branch and photo-needle supplements must load and render.
+ await page.goto('http://127.0.0.1:3000/forma-pine-glb-preview.html?growth=1',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.waitForFunction(()=>window.__pineReady===true||window.__pineError,{timeout:90000});
+ const growth=await page.evaluate(()=>({error:window.__pineError||null,details:window.__pineDetails||null}));
+ assert.equal(growth.error,null,'editable Scots pine additional 3D growth must render');
+ assert.ok(growth.details.meshes>=4,'PBR model gains instanced bark and needle meshes');
+ await page.evaluate(()=>window.__pineView(.65,.12,27));
+ await page.screenshot({path:`${output}/mature-pine-editable-growth.png`});
  await page.setViewportSize({width:430,height:760});
  await page.evaluate(()=>window.__pineView(.45,.12,27));
  await page.screenshot({path:`${output}/mature-pine-mobile.png`});
