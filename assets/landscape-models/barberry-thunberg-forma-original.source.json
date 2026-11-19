@@ -9,12 +9,13 @@
     "height": 1.15,
     "diameter": 1.4
   },
-  "predictedTriangles": 76628,
+  "predictedTriangles": 160180,
   "predictedMaterialCount": 10,
-  "status": "built and SHA-256 verified original GLB",
-  "notes": "Original, procedural burgundy Berberis thunbergii: ~13K attached alpha-masked leaf planes with a self-authored 256x512 vein/pigment PNG embedded in GLB, thin curved woody branches, spines, red fruit, and PBR materials. Summer foliage; autumn/winter use seasonal native fallback. Not a photogrammetric scan.",
+  "status": "v3 generation pending binary verification",
+  "notes": "FORMA v3: original 3D broad-domed Berberis thunbergii, 115 woody stems with short-shoot clusters of 3-4 obovate leaves, 8 hand-authored embedded PBR albedo/opacity textures (6 burgundy foliage, 2 subtle woody bark), textured thorns and fruit, and a softer natural lower canopy. Original source retained, no third-party model. Summer GLB with native fallback for other seasons; avoid claiming photogrammetry.",
   "sizeBytes": 2927468,
   "sha256": "87aaa5f8351a0bef5e674aaa54b0a694cd1d27385f20fd887f65ab1e5a5388e5",
   "meshCount": 10,
-  "materialCount": 10
+  "materialCount": 10,
+  "predictedTextureCount": 8
 }
