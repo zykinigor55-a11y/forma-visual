@@ -1,0 +1,63 @@
+{
+  "capturedFrom": "https://dom-render-nanobanana.onrender.com/forma-landscape-3d.html",
+  "source": "automated Chromium/Playwright screenshot of live Render WebGL program",
+  "glbVerified": true,
+  "diagnostics": [
+    {
+      "species": "barberry",
+      "model": "/assets/landscape-models/barberry-thunberg-forma-original.glb",
+      "status": "glb",
+      "height": 1.15,
+      "diameter": 1.4
+    }
+  ],
+  "shrubsEditorOpened": true,
+  "gl": {
+    "webgl": true,
+    "canvasPixels": [
+      1600,
+      840
+    ],
+    "samples": [
+      [
+        83,
+        129,
+        45,
+        255
+      ],
+      [
+        160,
+        153,
+        149,
+        255
+      ],
+      [
+        123,
+        158,
+        62,
+        255
+      ],
+      [
+        125,
+        162,
+        64,
+        255
+      ],
+      [
+        124,
+        162,
+        76,
+        255
+      ]
+    ]
+  },
+  "errorLog": [
+    "console: Failed to load resource: the server responded with a status of 404 ()",
+    "console: Failed to load resource: the server responded with a status of 404 ()",
+    "console: Failed to load resource: the server responded with a status of 404 ()",
+    "console: Failed to load resource: the server responded with a status of 404 ()",
+    "console: Failed to load resource: the server responded with a status of 404 ()",
+    "console: Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "timestamp": "2026-11-19T23:03:36.163Z"
+}
