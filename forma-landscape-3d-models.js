@@ -73,6 +73,13 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
    const turn=new T.Group();
    turn.name='pine-needle-density-'+(i+1);
    turn.rotation.y=angles[i];
+   // The source Scots pine concentrates foliage at three discrete heights.
+   // Stagger secondary needles between those branch tiers while keeping
+   // the root and natural leader at their measured location.
+   const verticalOffsets=[-.045,-.095,-.065];
+   const crownWidths=[.94,.87,.91];
+   turn.position.y=fit.physicalHeight*verticalOffsets[i];
+   turn.scale.set(crownWidths[i],1,crownWidths[i]);
    for(const mesh of foliage){
     // Copy relative transform including the native glTF node hierarchy.
     const copy=mesh.clone(false);
