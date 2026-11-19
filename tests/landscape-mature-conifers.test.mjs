@@ -16,7 +16,9 @@ test('sapling meshes stay juvenile; full-size trees use mature native branch arc
 test('mature conifer source is never a stretched pine sapling, user GLB still overrides',()=>{
  const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
  assert.doesNotMatch(html,/if\(modelPath\(o\.catalogId\)&&bundledPlantIsTrueScale/);
- assert.match(html,/const source=imported\|\|null/);
+ assert.match(html,/const source=imported\|\|bundledPine\|\|null/);
+ assert.match(html,/const bundledPine=o\.catalogId==='pine'/);
+ assert.match(html,/const MATURE_SCOTS_PINE_GLB='\/assets\/landscape-models\/pine-mature-cc0\.glb'/);
  assert.match(html,/createVegetation\(THREE,o,\{season:doc\.atmosphere\.season,quality,/);
  assert.match(html,/mode:renderQuality==='high'\?'premium'/);
 });
