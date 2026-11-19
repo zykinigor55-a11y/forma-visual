@@ -1,11 +1,12 @@
 import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
-/* FORMA VISUAL / Species-aware real 3D vegetation.
- * True branch geometry + instanced leaf meshes; no image billboards, no flat
- * cutouts. Everything uses metres and can be orbited, walked through and
- * rendered with real directional shadows. Deterministic per-object seed. */
+/* FORMA VISUAL / Species-aware hybrid botanical vegetation.
+ * Real measured 3D branch systems, close-up leaf geometry and transparent
+ * photographic cutouts on terminal twigs (never whole-tree billboards).
+ * Everything uses metres and deterministic per-object seeds. */
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
 import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
+import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js';
 import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity,constrainCrownRadius,specimenCrownVariation} from './forma-landscape-3d-reference-canopies.js';
 import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js';
 export const VEGETATION_SPECIES=Object.freeze({
@@ -339,8 +340,8 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
  const minimum=quality<.35?(shrub?145:420):quality<.45?(shrub?320:980):(shrub?670:2250);
  const maximum=quality<.35?(shrub?450:860):quality<.45?(shrub?900:2200):(shrub?2150:4200);
  const count=clamp(Math.round(points.length*(1.25+quality*1.55)),minimum,maximum);
- const texture=createSprayTexture(T,needle,id);
- const material=new T.MeshStandardMaterial({map:texture,alphaTest:.26,side:T.DoubleSide,roughness:.94,metalness:0,depthWrite:true});
+ const texture=createPhotoFoliageTexture(T,id,{fallback:createSprayTexture(T,needle,id)});
+ const material=new T.MeshStandardMaterial({map:texture,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide,roughness:.86,metalness:0,depthWrite:true});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
   cross=new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count);
  const d=new T.Object3D(),palette=normalizeFoliagePalette(id,season),
@@ -365,7 +366,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
   tuft.instanceMatrix.needsUpdate=true;
   if(tuft.instanceColor)tuft.instanceColor.needsUpdate=true;
   tuft.castShadow=quality>=.30;
-  tuft.frustumCulled=false;tuft.userData.botanicalLayer='sprays';g.add(tuft);
+  tuft.frustumCulled=false;tuft.userData.botanicalLayer='sprays';tuft.userData.photoAlphaCard=true;g.add(tuft);
  }
 }
 /* Real petalled flowers instead of tiny stone-shaped spheres.
