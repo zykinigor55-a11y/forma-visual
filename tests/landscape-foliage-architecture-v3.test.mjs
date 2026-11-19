@@ -10,7 +10,8 @@ const architecture=readFileSync(new URL('../forma-landscape-3d-buildings.js',imp
 test('mature conifer shoots grow from parent branch with measured crown limits',()=>{
  assert.match(flora,/if\(conifer\)\{[\s\S]{0,650}const shoots=kind==='spruce'\?4:kind==='pine'\?7:3/);
  assert.match(flora,/curveBranch\(branches,base,end,Math\.max\(\.003,trunkRadius\*\.024/);
- assert.match(flora,/constrainCrownRadius\(/[\s\S]{0,160}base\[0\]-Math\.sin\(direction\)\*sideways/);
+ assert.ok(flora.includes('const [endX,endZ]=constrainCrownRadius('));
+ assert.match(flora,/base\[0\]-Math\.sin\(direction\)\*sideways/);
  assert.ok(VEGETATION_SPECIES.spruce.branches>=12);
  assert.ok(VEGETATION_SPECIES.pine.branches>=10);
 });
