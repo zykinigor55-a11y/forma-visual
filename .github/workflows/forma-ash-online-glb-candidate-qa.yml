@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p assets/landscape-models
           curl -fLsS --retry 3 --connect-timeout 18 --max-time 90 \
-            'https://terraintale.com/library/realistic-surfaces/ash_tree.glb' \
+            'https://terraintale.com/library/realistic-surfaces/ash_tree_large.glb' \
             -o assets/landscape-models/ash-terraintale-cc0-candidate.glb
           python3 - <<'PY'
           import struct,hashlib,pathlib,json
