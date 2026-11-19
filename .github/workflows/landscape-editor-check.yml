@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save playwright@1.56.0
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install chromium
       - run: |
           node server.mjs > /tmp/forma-server.log 2>&1 &
           node tests/landscape-editor.verify.mjs
