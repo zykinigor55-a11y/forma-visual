@@ -511,6 +511,10 @@ function init(){
   const b=document.createElement('button');b.type='button';b.className='rail-btn fa-flow-rail';
   b.innerHTML='<svg class="ico"><use href="#i-layer"/></svg><span class="rail-name">Сценарии</span>';b.title='Сценарии обработки';b.setAttribute('aria-label',b.title);
   b.addEventListener('click',open);nav.append(b);
+  import('./forma-premium-icons.js?v=main-rail-icons-20261119').then(({premiumIcon})=>{
+   const icon=b.querySelector('svg.ico,svg.forma-premium-icon');
+   if(icon&&b.isConnected)icon.outerHTML=premiumIcon('nodes');
+  }).catch(error=>console.warn('Scenario rail SVG enhancement unavailable',error));
  }
  const mobile=$('.mobile-nav');
  if(mobile){
