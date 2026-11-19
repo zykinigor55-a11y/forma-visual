@@ -1,0 +1,23 @@
+{
+  "name": "Mature Scots pine (Pinus sylvestris)",
+  "origin": "tevy",
+  "sourcePage": "https://tevy.dev/models/scots-pine",
+  "sourceDownload": "https://tevy.dev/models/scots-pine/v1/lod0.glb",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "integratedBy": "FORMA VISUAL",
+  "retrievedUtc": "2026-11-19T01:30:54.281750+00:00",
+  "sha256": "937d65ec30f47b72800e684d9cb1c1b4524bcfbb1bcd65bd4532c1e28dd47f7b",
+  "analysis": {
+    "source": "tevy",
+    "sizeBytes": 4342348,
+    "meshCount": 3,
+    "triangles": 46910,
+    "materials": 4,
+    "images": 4,
+    "transparentMaterials": 1,
+    "texturedMaterials": 4
+  },
+  "selectionScore": 93.984,
+  "note": "Original CC0 source. Kept locally for no external model network dependency."
+}
