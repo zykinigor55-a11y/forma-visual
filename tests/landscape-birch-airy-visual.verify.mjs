@@ -32,6 +32,18 @@ try{
  await page.setViewportSize({width:430,height:900});
  await page.evaluate(()=>window.__treeView(.75,.12));
  await page.screenshot({path:dir+'/birch-mobile.png'});
+
+ // Keep the untouched GLB as a visual A/B reference for the designer.
+ await page.setViewportSize({width:1100,height:850});
+ await page.goto('http://127.0.0.1:3000/forma-mature-trees-preview.html?species=birch&candidate=original',
+  {waitUntil:'domcontentloaded',timeout:60000});
+ await page.waitForFunction(()=>window.__treeReady===true||Boolean(window.__treeError),
+  null,{timeout:90000});
+ const baseline=await page.evaluate(()=>window.__treeDetails||null);
+ assert.equal(baseline?.candidate,'original','A/B source must bypass native deformation');
+ assert.ok(Math.abs(baseline.height-14)<.08);
+ await page.evaluate(()=>window.__treeView(.75,.17));
+ await page.screenshot({path:dir+'/birch-source-diagonal.png'});
  assert.deepEqual(errors,[],'WebGL preview should not throw runtime errors');
  console.log('PASS: 14m native Tevy GLB birch · 8m crown · PBR/alpha · mobile · front/back/diagonal');
 }finally{await browser.close()}

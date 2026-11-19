@@ -18,7 +18,7 @@ export function birchCrownDisplacement({height=1,radius=1,relativeY=0,relativeRa
  const crown=smooth(.20,.44,t)*(1-smooth(.86,1,t));
  const lateral=smooth(.14,.72,r);
  const asymmetry=1+.085*Math.sin((Number(azimuth)||0)*2.7+t*8.2);
- return h*.052*crown*lateral*asymmetry;
+ return h*.018*crown*lateral*asymmetry;
 }
 
 /** Natural, bounded irregularity of a silver-birch crown.

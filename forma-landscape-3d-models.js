@@ -39,20 +39,20 @@ export function prepareRealFoliageMaterial(T,material,species){
  if(m.alphaTest>0){
   m.side=T.DoubleSide;
   // Birches need light between terminal leaves, not a solid green clump.
-  // A .39 cutout keeps fine PBR foliage but restores small crown gaps.
-  m.alphaTest=Math.min(m.alphaTest,species==='birch'?.39:species==='spruce'?.34:.36);
+  // A .44 cutout keeps fine PBR foliage but restores natural crown gaps.
+  m.alphaTest=Math.min(m.alphaTest,species==='birch'?.44:species==='spruce'?.34:.36);
   m.depthWrite=true;
   m.needsUpdate=true;
  }
  return m;
 }
 const boundsCache=new WeakMap();
-export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null}={}){
+export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null,birchRefinement='soft'}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
  // Refine the *bundled* Betula pendula once, then reuse its original
  // three-mesh PBR geometry across all planted instances. Imported user GLBs
  // remain strictly untouched. Never replace the real birch with a proxy.
- if(instance.catalogId==='birch'&&shareGeometry)source=refineNativeBirch(T,source);
+ if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement!=='original')source=refineNativeBirch(T,source);
  let bounds=boundsCache.get(source);
  if(!bounds){
   bounds=new T.Box3().setFromObject(source);
@@ -150,7 +150,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
  }
  group.userData.species=instance.catalogId;
- if(instance.catalogId==='birch'&&shareGeometry)group.userData.nativeBirchRefined=true;
+ if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement!=='original')group.userData.nativeBirchRefined=true;
  group.userData.realGlb=true;
  group.userData.bundledModel=shareGeometry;
  group.userData.uniquePbrMaterials=materialCache.size;

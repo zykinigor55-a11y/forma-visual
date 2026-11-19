@@ -5,7 +5,7 @@ import {spruceTipDrop,spruceNativeProfile} from '../forma-landscape-spruce-nativ
 
 test('birch droops at branch tips but preserves the basal white trunk and top leader',()=>{
  const tip=birchCrownDisplacement({height:16,relativeY:.61,relativeRadius:.95,azimuth:0});
- assert.ok(tip>.4&&tip<1,'hanging branchlets need visible but restrained sag');
+ assert.ok(tip>.12&&tip<.4,'native Tevy branchlets already droop: only a gentle finishing sag is necessary');
  assert.equal(birchCrownDisplacement({height:16,relativeY:.61,relativeRadius:0}),0);
  assert.equal(birchCrownDisplacement({height:16,relativeY:0,relativeRadius:.95}),0);
  assert.equal(birchCrownDisplacement({height:16,relativeY:1,relativeRadius:.95}),0);
