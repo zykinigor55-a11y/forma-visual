@@ -6,7 +6,7 @@
  */
 export const FOLIAGE_PHOTO_SOURCE=Object.freeze({
  pine:'pine',spruce:'spruce',birch:'birch',oak:'oak',
- maple:'maple',linden:'linden',willow:'willow',rowan:'rowan',
+ maple:'maple',linden:'linden',beech:'oak',poplar:'birch',willow:'willow',rowan:'rowan',
  apple:'apple',sakura:'sakura',ash:'rowan',aspen:'birch',
  // Ash is retained in the legacy source table for catalogue compatibility,
  // but its real-time crown uses a dedicated native 11-leaflet atlas below.
