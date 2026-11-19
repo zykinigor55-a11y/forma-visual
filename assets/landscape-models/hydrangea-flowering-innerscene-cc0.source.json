@@ -13,6 +13,9 @@
     "y": 1.016,
     "z": 1.14
   },
-  "status": "pending verified binary download; installer populates checksum and size",
-  "usage": "Reference GLB for future modeling; do not replace Hydrangea paniculata until visually confirmed."
+  "status": "downloaded, GLB header and checksum verified",
+  "usage": "Reference GLB for future modeling; do not replace Hydrangea paniculata until visually confirmed.",
+  "sizeBytes": 2754612,
+  "sha256": "d30fc858f15f2bc15a943f50105e45e8982106097acc44bab0b606d4a7056328",
+  "downloadedVia": "https://files.innerscene.com/library/flowering-hydrangea-shrub-af2da5d3/9d0694188c351f2a5237/flowering-hydrangea-shrub.glb"
 }
