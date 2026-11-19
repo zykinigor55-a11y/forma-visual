@@ -1,0 +1,108 @@
+name: FORMA · Real European Beech and Lombardy Poplar CC0 GLB
+on:
+  push:
+    branches: [feature/forma-european-beech-tevy-20261119]
+    paths:
+      - '.github/workflows/forma-beech-poplar-cc0-install.yml'
+      - 'forma-landscape-project-core.js'
+      - 'forma-landscape-3d.html'
+      - 'tests/landscape-beech-native.test.mjs'
+      - 'tests/landscape-poplar-native.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-fagus-populus-cc0-download
+  cancel-in-progress: true
+jobs:
+  qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download 6 official free CC0 GLB LODs directly
+        run: |
+          mkdir -p assets/landscape-models
+          for pair in \
+            'european-beech beech' \
+            'lombardy-poplar poplar'; do
+            set -- $pair
+            slug="$1"; species="$2"
+            for level in 0 1 2; do
+              if [ "$level" = '0' ]; then name="$species-tevy-cc0.glb"; else name="$species-tevy-lod$level-cc0.glb"; fi
+              echo "Downloading $species LOD$level"
+              curl -fLsS --retry 3 --connect-timeout 15 --max-time 120 \
+                "https://tevy.dev/models/$slug/v1/lod$level.glb" \
+                -o "assets/landscape-models/$name"
+            done
+          done
+      - name: Inspect actual 3D GLBs and lock each source by SHA256
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,hashlib,struct
+          base=pathlib.Path('assets/landscape-models')
+          specs=[('beech','european-beech','Fagus sylvatica'),
+                 ('poplar','lombardy-poplar','Populus nigra var. italica')]
+          for species,slug,latin in specs:
+            reports=[]
+            for level in range(3):
+              filename=f'{species}-tevy-'+('cc0.glb' if level==0 else f'lod{level}-cc0.glb')
+              data=(base/filename).read_bytes()
+              assert data[:4]==b'glTF' and struct.unpack_from('<I',data,4)[0]==2, filename
+              assert struct.unpack_from('<I',data,8)[0]==len(data), 'Incomplete '+filename
+              length,typ=struct.unpack_from('<II',data,12)
+              assert typ==0x4E4F534A
+              obj=json.loads(data[20:20+length])
+              assert len(obj.get('meshes',[]))>=1 and len(obj.get('materials',[]))>=1
+              assert len(data)>150000
+              report=dict(file=filename,sizeBytes=len(data),sha256=hashlib.sha256(data).hexdigest(),
+                meshCount=len(obj['meshes']),materials=len(obj['materials']),
+                textures=len(obj.get('textures',[])),images=len(obj.get('images',[])),
+                extensions=obj.get('extensionsUsed',[]))
+              print('VERIFIED GLB',species,'LOD'+str(level),report,flush=True)
+              reports.append(report)
+            assert reports[0]['sizeBytes']>reports[1]['sizeBytes']>reports[2]['sizeBytes']
+            assert reports[0]['textures']>0,'LOD0 must have real albedo/cutout material'
+            meta=dict(species=species,scientificName=latin,license='CC0 1.0',
+              version='v1',source='tevy',
+              sourcePage=f'https://tevy.dev/models/{slug}',
+              licenseUrl='https://creativecommons.org/publicdomain/zero/1.0/',
+              originalPinnedUrl=f'https://tevy.dev/models/{slug}/v1/lod0.glb',
+              usage='Use LOD0 desktop, LOD1 mobile; summer GLB only; keep procedural winter',
+              lods=reports)
+            (base/f'{species}-tevy-cc0.source.json').write_text(json.dumps(meta,indent=2,ensure_ascii=False)+'\n')
+          PY
+      - name: Run full FORMA tests including apple, poplar, beech, and legacy linden
+        run: npm test
+      - name: Prepare mobile WebGL browser
+        run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install chromium
+      - name: Real native GLB previews + actual Android landscape editor
+        run: |
+          node server.mjs > /tmp/forma-beech-poplar.log 2>&1 &
+          sleep 3
+          node tests/landscape-beech-webgl.verify.mjs
+          node tests/landscape-poplar-webgl.verify.mjs
+      - name: Commit only validated CC0 GLBs and source provenance
+        if: github.ref == 'refs/heads/feature/forma-european-beech-tevy-20261119'
+        run: |
+          git config user.name 'FORMA Botanical QA'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/landscape-models/beech-tevy-*.glb \
+                  assets/landscape-models/poplar-tevy-*.glb \
+                  assets/landscape-models/beech-tevy-cc0.source.json \
+                  assets/landscape-models/poplar-tevy-cc0.source.json
+          git commit -m 'asset(landscape): install tested CC0 beech and poplar GLBs with 3 LODs'
+          git push origin HEAD:refs/heads/feature/forma-european-beech-tevy-20261119
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-beech-poplar-real-webgl-review
+          path: |
+            artifacts/landscape-editor/beech-original-tevy/*
+            artifacts/landscape-editor/poplar-original-tevy/*
+          if-no-files-found: warn
