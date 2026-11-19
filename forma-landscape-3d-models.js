@@ -1,6 +1,7 @@
 import {reshapeNativePine} from './forma-landscape-pine-native.js';
 import {reshapeNativeSpruce} from './forma-landscape-spruce-native.js';
 import {refineNativeBirch} from './forma-landscape-birch-native.js';
+import {optimizeNativeLinden,enhanceLindenBark} from './forma-landscape-linden-pbr.js';
 /* Real 3D botanical asset adapter for FORMA.
  * Geometry never supplies measured project dimensions: a catalogue object does.
  * Imports are user-controlled binary GLB files with local IndexedDB storage.
@@ -58,6 +59,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  // three-mesh PBR geometry across all planted instances. Imported user GLBs
  // remain strictly untouched. Never replace the real birch with a proxy.
  if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement==='soft')source=refineNativeBirch(T,source);
+ if(instance.catalogId==='linden'&&shareGeometry)source=optimizeNativeLinden(T,source);
  let bounds=boundsCache.get(source);
  if(!bounds){
   bounds=new T.Box3().setFromObject(source);
@@ -80,6 +82,8 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   let copy=materialCache.get(material);
   if(!copy){
    copy=prepareRealFoliageMaterial(T,material.clone(),instance.catalogId);
+   if(instance.catalogId==='linden'&&String(material.name||'').toLowerCase()==='bark')
+    enhanceLindenBark(T,copy);
    materialCache.set(material,copy);
   }
   return copy;
@@ -155,6 +159,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   group.userData.pineCanopyCopies=Math.min(angles.length,Math.floor(canopyCopies));
  }
  group.userData.species=instance.catalogId;
+ if(instance.catalogId==='linden'&&shareGeometry)group.userData.lindenNativePbr=true;
  if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement==='soft')group.userData.nativeBirchRefined=true;
  group.userData.realGlb=true;
  group.userData.bundledModel=shareGeometry;
