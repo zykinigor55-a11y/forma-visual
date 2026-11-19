@@ -13,6 +13,7 @@ test('pine/spruce needle forms are species distinct and opaque enough to survive
  assert.match(source,/minimum=quality<\.35\?\(shrub\?145:sprucePine\?740:420\)/);
  assert.match(source,/maximum=quality<\.35\?\(shrub\?450:sprucePine\?1350:860\)/);
  assert.match(source,/const count=clamp\(Math\.round\(points\.length\*\(sprucePine\?2\.45:1\.25\+quality\*1\.55\)\),minimum,maximum\)/);
- assert.match(source,/const w=foliageSprayWidth\(id,diameter\)\*\(sprucePine\?\.63:1\)/);
+ assert.match(source,/const w=foliageSprayWidth\(id,diameter\)\*\(sprucePine\?\.57:1\)/);
+ assert.match(source,/third=id==='pine'\?new T\.InstancedMesh/);
  assert.ok(foliageDepthTone('pine',.8,.7)>foliageDepthTone('pine',.2,.2));
 });
