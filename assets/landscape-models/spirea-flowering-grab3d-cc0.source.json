@@ -15,6 +15,11 @@
     "depth": 1.263,
     "height": 1.091
   },
-  "status": "pending download and verification",
-  "note": "This is a stylized flowering bush, NOT a botanically exact Spiraea japonica. Use as selected visual placeholder. Do not claim photographic realism."
+  "status": "downloaded and glTF-header verified",
+  "note": "This is a stylized flowering bush, NOT a botanically exact Spiraea japonica. Use as selected visual placeholder. Do not claim photographic realism.",
+  "sha256": "29e6c09939cf45327c9a1086515b78e383a62c30b0abe085f4348d30863bb695",
+  "sizeBytes": 1410856,
+  "meshCount": 1,
+  "materialCount": 1,
+  "resolvedUrl": "https://grab3d.com/dl/bush/bush.glb"
 }
