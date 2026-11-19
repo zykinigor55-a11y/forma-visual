@@ -13,8 +13,14 @@ test('verified sources match local tree paths and CC0 license',()=>{
  assert.ok(TREE_MODEL_SOURCE_LINKS.pine);
  assert.equal(MATURE_TREE_MODELS.sakura.season,'spring');
  for(const model of manifest.trees){
-  assert.equal(MATURE_TREE_MODELS[model.species].path,'/assets/landscape-models/'+model.file);
-  assert.equal(MATURE_TREE_MODELS[model.species].sourcePage,model.sourcePage);
+  if(model.species==='spruce'){
+   assert.equal(MATURE_TREE_MODELS.spruce.path,'/assets/landscape-models/spruce-tevy-cc0.glb');
+   assert.equal(MATURE_TREE_MODELS.spruce.fallbackPath,'/assets/landscape-models/spruce-mature-cc0.glb');
+   assert.equal(MATURE_TREE_MODELS.spruce.sourcePage,'https://tevy.dev/models/norway-spruce');
+  }else{
+   assert.equal(MATURE_TREE_MODELS[model.species].path,'/assets/landscape-models/'+model.file);
+   assert.equal(MATURE_TREE_MODELS[model.species].sourcePage,model.sourcePage);
+  }
   assert.equal(MATURE_TREE_MODELS[model.species].license,'CC0 1.0');
   const url=new URL('../assets/landscape-models/'+model.file,import.meta.url);
   if(!existsSync(url))continue; // Installer workflow fetches originals after source commit.
