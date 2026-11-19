@@ -63,7 +63,7 @@ test('pine supplements are actual instanced branch and needle geometry',()=>{
  assert.match(source,/new T\.InstancedMesh\(needleGeom,needleMat,spraysCount\)/);
  assert.match(source,/makePineNeedleSprayGeometry\(T\)/);
  assert.match(source,/new T\.MeshStandardMaterial\(\{color:'#927153'/);
- assert.match(source,/seededRandom/);
+ assert.match(source,/function makeRandom/);
  assert.match(model,/makePineExtraGrowth\(T,clone,instance,pineGrowth\)/);
  assert.match(editor,/mountPineGrowth\(el,o/);
  assert.match(editor,/previewSelectedPineGrowth\(/);
