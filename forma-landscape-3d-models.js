@@ -38,18 +38,26 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  const size=new T.Vector3(),centre=new T.Vector3();bounds.getSize(size);bounds.getCenter(centre);
  if(!Number.isFinite(size.y)||size.y<1e-5||Math.max(size.x,size.z)<1e-5)throw Error('GLB has zero height or crown width.');
  const fit=vegetationFit({width:size.x,height:size.y,depth:size.z},instance);
- // Meshes are independent of the source cache, making scene rebuild disposal
- // safe. Textures can stay shared with imported source until browser reload.
+ // Preserve the original PBR leaf and bark materials, but do not create
+ // hundreds of equivalent GPU materials for 625-mesh oak/maple/linden GLBs.
+ // Clone each distinct source material ONCE PER TREE. All leaves in one tree
+ // share the exact same cloned roughness, normal/alpha textures and draw state.
+ // Different planted trees still have independently disposable materials.
+ const materialCache=new Map();
+ const copyMaterial=material=>{
+  if(!material)return material;
+  let copy=materialCache.get(material);
+  if(!copy){
+   copy=prepareRealMaterial(material.clone());
+   materialCache.set(material,copy);
+  }
+  return copy;
+ };
  clone.traverse(node=>{
   if(!node.isMesh)return;
   if(shareGeometry){node.userData.bundledSharedGeometry=true;}else{node.geometry=node.geometry?.clone();}
-  node.material=Array.isArray(node.material)?node.material.map(m=>m.clone()):node.material?.clone();
+  node.material=Array.isArray(node.material)?node.material.map(copyMaterial):copyMaterial(node.material);
   node.castShadow=true;node.receiveShadow=true;
-  if(node.material){
-   for(const material of Array.isArray(node.material)?node.material:[node.material]){
-    prepareRealMaterial(material);
-   }
-  }
  });
  if(instance.catalogId==='pine'&&pineGrowth)reshapeNativePine(T,clone,pineGrowth);
  const group=new T.Group();
@@ -100,6 +108,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  group.userData.species=instance.catalogId;
  group.userData.realGlb=true;
  group.userData.bundledModel=shareGeometry;
+ group.userData.uniquePbrMaterials=materialCache.size;
  group.userData.physicalHeight=fit.physicalHeight;
  group.userData.crownDiameter=fit.crownDiameter;
  return group;
