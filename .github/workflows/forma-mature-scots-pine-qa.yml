@@ -10,6 +10,7 @@ on:
       - 'forma-landscape-3d-models.js'
       - 'forma-landscape-pine-geometry.js'
       - 'forma-landscape-pine-growth.js'
+      - 'forma-landscape-pine-native.js'
       - 'tests/landscape-mature-scots-pine-preview.verify.mjs'
       - '.github/workflows/forma-mature-scots-pine-qa.yml'
   workflow_dispatch:
