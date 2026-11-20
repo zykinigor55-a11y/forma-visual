@@ -1,0 +1,16 @@
+{
+  "species": "dogwood",
+  "botanicalName": "Cornus alba 'Elegantissima'",
+  "modelPath": "assets/landscape-models/dogwood-elegantissima-forma-original.glb",
+  "sourceCode": "tools/generate_dogwood_elegantissima.py",
+  "license": "Original FORMA-authored geometry and PBR texture, no purchased assets",
+  "reference": "3DDD Cornus alba Elegantissima with natural, sphere and box forms",
+  "shapeNodes": [
+    "DOGWOOD_NATURAL",
+    "DOGWOOD_SPHERE",
+    "DOGWOOD_BOX"
+  ],
+  "branchColor": "dark brown-burgundy",
+  "foliage": "muted greens with cream edges",
+  "status": "build pending"
+}
