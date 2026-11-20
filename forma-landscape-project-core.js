@@ -28,7 +28,7 @@ export const CATALOG=Object.freeze([
  ['spirea','Спирея японская','#9caa6e',1.2,'Spiraea japonica'],
  ['barberry','Барбарис Тунберга','#874a4a',1.4,'Berberis thunbergii'],
  ['dogwood','Дёрен белый «Элегантиссима»','#849a79',2.91,'Cornus alba Elegantissima'],
- ['thuja-globe','Туя шаровидная','#3f6c55',1.4,'Thuja occidentalis globosa'],
+ ['thuja-globe','Туя западная «Даника»','#3f6c55',1.02,'Thuja occidentalis Danica'],
  ['lavender','Лаванда узколистная','#8b88af',0.8,'Lavandula angustifolia'],
  ['boxwood','Самшит вечнозелёный','#587346',1.0,'Buxus sempervirens'],
  ['ninebark','Пузыреплодник калинолистный','#8a6b58',2.1,'Physocarpus opulifolius'],
