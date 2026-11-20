@@ -30,6 +30,16 @@ export const SHRUB_3D_MODELS=Object.freeze({
   fidelity:'self-authored Berberis with alpha-cutout vein textures on attached burgundy leaves, thorny twigs and red fruit; 160,180 triangles; original GLB, not photo scan',
   sha256:'87bc4582c63fe57e9fe5277841b84c9dedea2f911dc481bd402cf209fdc2def7'
  }),
+ 'thuja-globe':Object.freeze({
+  name:'Туя западная «Даника» · оригинальная GLB-модель FORMA, 3 формы',
+  path:'/assets/landscape-models/thuja-danica-forma-original.glb',
+  sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_thuja_danica.py',
+  license:'Original FORMA procedural geometry and procedural PBR foliage textures',
+  season:'evergreen',
+  fidelity:'Flat, upright and scale-leafed emerald arborvitae sprays; original natural, compact and mature GLB crown geometry',
+  sha256:'ebb01ff71c645eb34903de53985ee5f4900cdca2c606aa297044a87ceb1f61f0',
+  variants:['THUJA_DANICA_NATURAL','THUJA_DANICA_COMPACT','THUJA_DANICA_MATURE']
+ }),
  dogwood:Object.freeze({
   name:'Дёрен белый «Элегантиссима» · три оригинальных PBR 3D-формы FORMA',
   path:'/assets/landscape-models/dogwood-elegantissima-forma-original.glb',
