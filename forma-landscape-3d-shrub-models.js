@@ -29,5 +29,15 @@ export const SHRUB_3D_MODELS=Object.freeze({
   season:'summer',
   fidelity:'self-authored Berberis with alpha-cutout vein textures on attached burgundy leaves, thorny twigs and red fruit; 160,180 triangles; original GLB, not photo scan',
   sha256:'87bc4582c63fe57e9fe5277841b84c9dedea2f911dc481bd402cf209fdc2def7'
+ }),
+ dogwood:Object.freeze({
+  name:'Дёрен белый «Элегантиссима» · три оригинальных PBR 3D-формы FORMA',
+  path:'/assets/landscape-models/dogwood-elegantissima-forma-original.glb',
+  sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_dogwood_elegantissima.py',
+  license:'Original FORMA geometry and textures; no 3DDD model files used',
+  season:'summer',
+  fidelity:'variegated creamy-white and muted-green Cornus leaves, dark original branching; independent natural, sphere and hedge box geometry',
+  sha256:'ac8c7e18a4a0f90aa2f92608eb5893e8fc5981e085092d9ee1ce83ad14b75921',
+  variants:['DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX']
  })
 });

@@ -58,6 +58,15 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  // Refine the *bundled* Betula pendula once, then reuse its original
  // three-mesh PBR geometry across all planted instances. Imported user GLBs
  // remain strictly untouched. Never replace the real birch with a proxy.
+ // The original FORMA dogwood GLB contains 3 independently modelled crowns.
+ // Select the actual subtree BEFORE fitting bounds; this is not a rotation of
+ // the same model and preserves accurate dimensions for each landscape object.
+ if(instance.catalogId==='dogwood'&&shareGeometry){
+  const variants=['DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX'];
+  const variant=Math.max(1,Math.min(3,Math.round(Number(instance.variant)||1)));
+  const selected=source.getObjectByName(variants[variant-1]);
+  if(selected)source=selected;
+ }
  if(instance.catalogId==='birch'&&shareGeometry&&birchRefinement==='soft')source=refineNativeBirch(T,source);
  if(instance.catalogId==='linden'&&shareGeometry)source=optimizeNativeLinden(T,source);
  let bounds=boundsCache.get(source);

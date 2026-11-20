@@ -1,0 +1,25 @@
+name: FORMA - Original dogwood and three-shape selector QA
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-landscape-3d-shrub-models.js'
+      - 'forma-landscape-3d-models.js'
+      - 'forma-landscape-3d.html'
+      - 'forma-landscape-shrub-editor.js'
+      - 'forma-landscape-project-core.js'
+      - 'tests/landscape-dogwood-three-shapes.test.mjs'
+      - '.github/workflows/forma-dogwood-editor-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Check three real dogwood GLB geometries, metrics and existing shrubs
+        run: node --test tests/landscape-dogwood-three-shapes.test.mjs tests/landscape-barberry-original-glb.test.mjs tests/landscape-spirea-chosen-glb.test.mjs tests/landscape-real-hydrangea.test.mjs tests/landscape-shrub-editor-interaction.test.mjs

@@ -27,7 +27,7 @@ export const CATALOG=Object.freeze([
  ['hydrangea','Гортензия метельчатая','#96a773',1.6,'Hydrangea paniculata'],
  ['spirea','Спирея японская','#9caa6e',1.2,'Spiraea japonica'],
  ['barberry','Барбарис Тунберга','#874a4a',1.4,'Berberis thunbergii'],
- ['dogwood','Дёрен белый','#869f6d',2.0,'Cornus alba'],
+ ['dogwood','Дёрен белый «Элегантиссима»','#849a79',2.91,'Cornus alba Elegantissima'],
  ['thuja-globe','Туя шаровидная','#3f6c55',1.4,'Thuja occidentalis globosa'],
  ['lavender','Лаванда узколистная','#8b88af',0.8,'Lavandula angustifolia'],
  ['boxwood','Самшит вечнозелёный','#587346',1.0,'Buxus sempervirens'],
