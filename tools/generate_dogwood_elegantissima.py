@@ -19,10 +19,10 @@ UP=np.array([0.,1.,0.])
 LEAF_KEYS=('plum','burgundy','ruby','copper','dusk','olive')  # stable existing material IDs
 MATS=(*LEAF_KEYS,'bark','twig')
 FOLIAGE_COLORS={
- 'plum':(87,127,108),'burgundy':(118,157,128),'ruby':(80,119,101),
- 'copper':(126,158,129),'dusk':(86,132,128),'olive':(142,164,124),
+ 'plum':(40,75,48),'burgundy':(76,112,65),'ruby':(52,90,58),
+ 'copper':(103,136,91),'dusk':(69,108,89),'olive':(132,157,112),
 }
-FOLIAGE_WEIGHTS=(16,30,20,15,10,9)
+FOLIAGE_WEIGHTS=(19,28,23,14,10,6)
 
 
 def texture_leaf(center, seed):
@@ -35,19 +35,19 @@ def texture_leaf(center, seed):
  width=.487*np.power(np.clip(np.sin(PI*t),0,1),.72)*(0.85+0.16*t)
  mid=.50+.018*np.sin(PI*t*1.25)
  q=np.abs(u-mid)/np.maximum(.002,width)
- border=(.45+.052*np.sin(10*t+17*u)+.027*np.sin(38*t+16*u))
- band=np.clip((q-border)*11,0,1);band=band*band*(3-2*band)
- noise=rng.normal(0,3.1,(h,w)) + 3.1*np.sin(u*26+t*12) + 2*np.sin(t*52)
+ border=(.55+.064*np.sin(10*t+17*u)+.034*np.sin(38*t+16*u)+.018*np.sin(59*t+10*u))
+ band=np.clip((q-border)*13,0,1);band=band*band*(3-2*band)
+ noise=rng.normal(0,3.0,(h,w)) + 2.8*np.sin(u*26+t*12) + 2*np.sin(t*52)
  base=np.zeros((h,w,3),float)
  base[:]=center
  base+=noise[...,None]
  # smoky grey/green center with pronounced irregular ivory edges
- ivory=np.array([231,235,213.])
+ ivory=np.array([241,241,226.])
  base=base*(1-band[...,None])+ivory*band[...,None]
  # bright central vein and subtle lateral venation branching from midrib
  rib=np.abs(u-mid)<(.010+.008*np.sin(PI*t))
- base[rib]=base[rib]*.79+np.array([196,217,176])* .21
- vein=np.abs(np.sin((u-mid)*21+t*23))<.07
+ base[rib]=base[rib]*.65+np.array([178,195,143])* .35
+ vein=np.abs(np.sin((u-mid)*21+t*23))<.09
  base[vein & (q<.80)] *=.968
  alpha=np.clip((1-q)*55,0,1)
  alpha=np.where(q<.975,1.,alpha)
@@ -70,7 +70,7 @@ def texture_wood(base,seed):
  return Image.fromarray(pic,'RGBA')
 
 LEAF_TEX={key:texture_leaf(FOLIAGE_COLORS[key],20261120+i*59) for i,key in enumerate(LEAF_KEYS)}
-WOOD_TEX={'bark':texture_wood((83,61,57),91),'twig':texture_wood((121,53,62),96)}
+WOOD_TEX={'bark':texture_wood((67,55,47),91),'twig':texture_wood((104,51,58),96)}
 
 
 def normalize(p):
@@ -125,7 +125,7 @@ class MeshAccumulator:
    geom=trimesh.Trimesh(vertices=np.asarray(vertices,dtype=np.float32),faces=np.asarray(faces,dtype=np.int32),process=False)
    leaf=key in LEAF_KEYS
    material=PBRMaterial(name='FORMA-'+key,metallicFactor=0.0,
-    roughnessFactor=.89 if leaf else .95, doubleSided=leaf,
+    roughnessFactor=.8 if leaf else .93, doubleSided=leaf,
     baseColorFactor=[255,255,255,255] if leaf else [255,255,255,255],
     baseColorTexture=LEAF_TEX[key] if leaf else WOOD_TEX[key],
     alphaMode='MASK' if leaf else 'OPAQUE',alphaCutoff=.45 if leaf else None)
@@ -168,9 +168,9 @@ def sample_point(shape,rng,W,D,H):
  y=H*(.10+.86*frac)
  rx,rz=canopy_envelope(shape,y,H,W,D)
  phi=rng.random()*2*PI
- radial=(rng.random()**.40)*(.99 if rng.random()<.9 else .75)
+ radial=(rng.random()**.33)*(.99 if rng.random()<.88 else .70)
  # tiny natural crown undulations prevent a perfectly computer-generated oval
- radial*=.955+.055*math.sin(6*phi+2*y)+.023*math.sin(13*phi-5*y)
+ radial*=.92+.10*math.sin(4*phi+1.7*y)+.073*math.sin(9*phi-4*y)+.038*math.cos(16*phi+11*y)
  return np.array([math.cos(phi)*rx*radial,y,math.sin(phi)*rz*radial])
 
 
@@ -178,11 +178,11 @@ def generate(shape,seed):
  rng=random.Random(seed)
  mesh=MeshAccumulator(shape)
  if shape=='DOGWOOD_NATURAL':
-  W,D,H=2.91,2.97,2.25;canes=25;clumps=810
+  W,D,H=2.91,2.97,2.25;canes=20;clumps=900
  elif shape=='DOGWOOD_SPHERE':
-  W,D,H=1.58,1.55,1.55;canes=22;clumps=450
+  W,D,H=1.58,1.55,1.55;canes=16;clumps=500
  else:
-  W,D,H=1.02,1.24,1.11;canes=24;clumps=520
+  W,D,H=1.02,1.24,1.11;canes=18;clumps=520
  # Primary multistemmed architecture, 2–4 cm mature basal wood,
  # tapered burgundy young shoot tips. Unlike the v1 mesh there is no broom of
  # eighty-plus straight black stems.
@@ -190,21 +190,21 @@ def generate(shape,seed):
  for j in range(canes):
   tip=sample_point(shape,rng,W,D,H)
   if j%4 != 0: tip[1]=min(H*.94,max(H*.65,tip[1]+H*.07))
-  base=np.array([rng.uniform(-W*.07,W*.07),.018+rng.random()*.012,rng.uniform(-D*.07,D*.07)])
+  base=np.array([rng.uniform(-W*.048,W*.048),.01+rng.random()*.015,rng.uniform(-D*.048,D*.048)])
   shift=tip-base
   cp=(base,
-      base+np.array([shift[0]*.38,tip[1]*.25,shift[2]*.38]),
-      base+np.array([shift[0]*.84,tip[1]*.62,shift[2]*.84]),
+      base+np.array([shift[0]*.13,tip[1]*.32,shift[2]*.13]),
+      base+np.array([shift[0]*.72,tip[1]*.76,shift[2]*.72]),
       tip)
   last=base
   nsteps=12
-  r0=.0063+rng.random()*.0033
+  r0=.0057+rng.random()*.0033
   for s in range(1,nsteps+1):
    t=s/nsteps
    pos=bezier(cp,t)
    prev=(s-1)/nsteps
    mesh.wood(last,pos,max(.0013,r0*(1-prev*.86)),max(.0012,r0*(1-t*.86)),
-             'bark' if t<.48 else 'twig',sides=6 if s<5 else 5)
+             'bark' if t<.52 else 'twig',sides=6 if s<5 else 5)
    if s%2==0: anchors.append(pos.copy())
    last=pos
  # Distributed, genuinely three-dimensional variegated leaf crown. Every
@@ -215,16 +215,21 @@ def generate(shape,seed):
   near=np.argmin(((anchors-center)**2).sum(axis=1))
   begin=anchors[near]
   if np.linalg.norm(center-begin)>.018:
-   middle=begin*.44+center*.56+np.array([rng.uniform(-.018,.018),rng.uniform(.012,.035),rng.uniform(-.018,.018)])
-   mesh.wood(begin,middle,.0028,.0018,'twig',sides=4)
-   mesh.wood(middle,center,.0018,.0011,'twig',sides=4)
+   dis=center-begin
+   # Three curved segments with a subtle gravity bend rather than one ruler-straight line.
+   sway=np.array([rng.uniform(-.035,.035),-rng.uniform(.012,.045),rng.uniform(-.035,.035)])
+   p1=begin+dis*.32+sway*.4
+   p2=begin+dis*.71+sway
+   mesh.wood(begin,p1,.0029,.00225,'twig',sides=5)
+   mesh.wood(p1,p2,.00225,.00145,'twig',sides=5)
+   mesh.wood(p2,center,.00145,.0008,'twig',sides=5)
   radial=normalize(np.array([center[0],.1,center[2]]))
-  for arm in range(3):
-   phase=2*PI*(arm/3+rng.uniform(-.07,.07))
+  for arm in range(1 if rng.random()<.6 else 2):
+   phase=2*PI*(arm/2+rng.uniform(-.12,.12))
    tangent=np.array([math.cos(phase),rng.uniform(-.08,.24),math.sin(phase)])
    direction=normalize(tangent*.60 + radial*.45 + UP*rng.uniform(.02,.23))
-   length=rng.uniform(.085,.15) * (1 if shape=='DOGWOOD_NATURAL' else .87)
-   shoot_mid=center+direction*length*.49+UP*.006
+   length=rng.uniform(.118,.235) * (1 if shape=='DOGWOOD_NATURAL' else .86)
+   shoot_mid=center+direction*length*.48+UP*rng.uniform(.004,.024)
    tip=center+direction*length
    if shape=='DOGWOOD_BOX':
     tip[0]=np.clip(tip[0],-W*.475,W*.475)
@@ -237,22 +242,29 @@ def generate(shape,seed):
    lateral=normalize(np.cross(axis,UP if abs(axis[1])<.9 else [1.,0.,0.]))
    # Cornus leaves are opposite and decussate — successive paired nodes
    # rotate, preserving characteristic opposite broad leaves.
-   for pair in range(3):
-    f=(pair+.28+rng.random()*.14)/3.35
+   for pair in range(5):
+    f=(pair+.20+rng.random()*.10)/5.40
     p=center*(1-f)+tip*f+UP*.002
-    turn=rng.uniform(-.48,.48)+(PI*.37 if pair%2 else 0)
+    turn=rng.uniform(-.28,.28)+(PI*.46 if pair%2 else 0)
     side=normalize(lateral*math.cos(turn)+np.cross(lateral,axis)*math.sin(turn))
     for sign in (-1,1):
      d=normalize(side*sign*.8+axis*(.20+rng.random()*.30)+UP*rng.uniform(-.08,.29))
-     ll=rng.uniform(.062,.097) * (1 if shape=='DOGWOOD_NATURAL' else .90)
-     ww=ll*rng.uniform(.49,.66)
-     mat=rng.choices(LEAF_KEYS,FOLIAGE_WEIGHTS)[0]
-     mesh.leaf(p+sign*side*.005,d,ll,ww,mat,rng.uniform(-PI*.75,PI*.75))
+     ll=rng.uniform(.070,.114) * (1 if shape=='DOGWOOD_NATURAL' else .92)
+     ww=ll*rng.uniform(.62,.81)
+     # Soft shoot attached to the stem by a slender petiole; not a floating leaf.
+     petiole=side*sign*rng.uniform(.007,.014)+axis*.003
+     stem_tip=p+petiole
+     mesh.wood(p,stem_tip,.0008,.0004,'twig',sides=3)
+     # More shaded green internal foliage, lighter creamy edge in the outer layers.
+     rx,rz=canopy_envelope(shape,p[1],H,W,D)
+     depth=math.sqrt((p[0]/max(.15,rx))**2+(p[2]/max(.15,rz))**2)
+     mat=rng.choices(('plum','ruby','dusk') if depth<.62 else ('burgundy','copper','olive','dusk'),(30,50,20) if depth<.62 else (39,28,12,21))[0]
+     mesh.leaf(stem_tip,d,ll,ww,mat,rng.uniform(-PI*.57,PI*.57))
    # Tiny fresh terminal cluster closes the silhouette, no protruding rods.
    for q in range(2):
     ang=2*PI*(q/2+.13*rng.random())
     d=normalize(direction*.27+np.array([math.cos(ang),rng.uniform(.15,.46),math.sin(ang)])*.73)
-    ll=rng.uniform(.051,.073)
+    ll=rng.uniform(.06,.09)
     mesh.leaf(tip,d,ll,ll*rng.uniform(.50,.63),rng.choices(LEAF_KEYS,FOLIAGE_WEIGHTS)[0],rng.uniform(-PI*.6,PI*.6))
  return mesh
 
@@ -277,7 +289,7 @@ def main():
  'triangles':sum(gltf['accessors'][part['indices']]['count']//3 for m in gltf['meshes'] for part in m['primitives']),
  'meshCount':len(gltf['meshes']),'materialCount':len(gltf['materials']),
  'textureCount':len(gltf.get('textures',[])), 'stats':results,
- 'version':'5.0-creamy-white-dogwood-rounded-crown-full-skirt'
+ 'version':'9.0-vertical-cane-bases-cream-edge-petioles-ambient-occlusion-ready'
  }
  print(json.dumps(info,ensure_ascii=False))
  if len(sys.argv)>2:

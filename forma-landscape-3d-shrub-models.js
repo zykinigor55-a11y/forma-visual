@@ -36,8 +36,8 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_dogwood_elegantissima.py',
   license:'Original FORMA geometry and textures; no 3DDD model files used',
   season:'summer',
-  fidelity:'variegated creamy-white and muted-green Cornus leaves, dark original branching; independent natural, sphere and hedge box geometry',
-  sha256:'ac8c7e18a4a0f90aa2f92608eb5893e8fc5981e085092d9ee1ce83ad14b75921',
+  fidelity:'self-authored v9, cream-edged opposite leaves, 3D petioles, darker interior leaves, upright mature canes and three independently modelled PBR crowns',
+  sha256:'7eca9000e3473b36303bc8d18b720bdf3ec05323c33a6a54abe48225b15a13a8',
   variants:['DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX']
  })
 });
