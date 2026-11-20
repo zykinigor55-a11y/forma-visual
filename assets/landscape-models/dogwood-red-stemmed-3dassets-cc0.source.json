@@ -16,7 +16,12 @@
   "describedMaterials": 2,
   "format": "GLB",
   "targetPath": "assets/landscape-models/dogwood-red-stemmed-3dassets-cc0.glb",
-  "status": "pending retrieval",
+  "status": "downloaded, GLB v2 header and JSON validated",
   "integration": "reference_only_not_active",
-  "caveat": "Stylized low-poly winter red twig dogwood model, species-level identification not independently proven. DO NOT replace photo-realistic summer Cornus alba Elegantissima without approval."
+  "caveat": "Stylized low-poly winter red twig dogwood model, species-level identification not independently proven. DO NOT replace photo-realistic summer Cornus alba Elegantissima without approval.",
+  "sha256": "81f5fbea3d6e667c753d2b18d710b683f70ee4dc84a0dfa049638d5690775647",
+  "sizeBytes": 145836,
+  "meshCount": 2,
+  "materialCount": 2,
+  "resolvedUrl": "https://cdn.3dassets.dev/assets/3839/v1/model.glb"
 }
