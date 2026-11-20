@@ -1,0 +1,40 @@
+{
+  "species": "Thuja occidentalis Danica",
+  "version": "v1-real-scale-spray",
+  "sha256": "ebb01ff71c645eb34903de53985ee5f4900cdca2c606aa297044a87ceb1f61f0",
+  "sizeBytes": 5037300,
+  "triangles": 123930,
+  "meshCount": 27,
+  "materials": 9,
+  "textures": 7,
+  "forms": {
+    "THUJA_DANICA_NATURAL": {
+      "width": 1.02,
+      "height": 0.89,
+      "depth": 1.0,
+      "radius": 0.52,
+      "plumes": 5100,
+      "irregular": 0.055,
+      "triangles": 41580
+    },
+    "THUJA_DANICA_COMPACT": {
+      "width": 0.78,
+      "height": 0.68,
+      "depth": 0.79,
+      "radius": 0.4,
+      "plumes": 3200,
+      "irregular": 0.025,
+      "triangles": 26130
+    },
+    "THUJA_DANICA_MATURE": {
+      "width": 1.3,
+      "height": 1.04,
+      "depth": 1.27,
+      "radius": 0.66,
+      "plumes": 6900,
+      "irregular": 0.09,
+      "triangles": 56220
+    }
+  },
+  "license": "FORMA-original procedural mesh, procedural foliage texture"
+}
