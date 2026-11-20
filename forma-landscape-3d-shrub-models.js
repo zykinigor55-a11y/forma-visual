@@ -36,8 +36,8 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_thuja_danica.py',
   license:'Original FORMA procedural geometry and procedural PBR foliage textures',
   season:'evergreen',
-  fidelity:'Flat, upright and scale-leafed emerald arborvitae sprays; original natural, compact and mature GLB crown geometry',
-  sha256:'ebb01ff71c645eb34903de53985ee5f4900cdca2c606aa297044a87ceb1f61f0',
+  fidelity:'FORMA original v4; 3 separate true-scale crowns with nested flat fan sprays, physical woody stems and 7 independently painted alpha-masked PBR needle atlases',
+  sha256:'dddcf23ad26608d9ee6a917d1d40378a9223e6683203b2cefc1ce266fc9822ce',
   variants:['THUJA_DANICA_NATURAL','THUJA_DANICA_COMPACT','THUJA_DANICA_MATURE']
  }),
  dogwood:Object.freeze({
