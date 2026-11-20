@@ -1,0 +1,22 @@
+{
+  "targetSpecies": "dogwood",
+  "targetBotanicalName": "Cornus alba",
+  "variant": "winter red-stemmed thicket",
+  "title": "Red-stemmed dogwood thicket (Forest Trees and Woodland Plants)",
+  "sourcePage": "https://3dassets.dev/assets/temperate-forest-ecology-dogwood-thicket-71bc6fb3",
+  "directDownload": "https://cdn.3dassets.dev/assets/3839/v1/model.glb",
+  "license": "CC0 1.0 Universal",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "describedDimensionsMeters": [
+    2.819,
+    2.686,
+    2.734
+  ],
+  "describedTriangles": 3000,
+  "describedMaterials": 2,
+  "format": "GLB",
+  "targetPath": "assets/landscape-models/dogwood-red-stemmed-3dassets-cc0.glb",
+  "status": "pending retrieval",
+  "integration": "reference_only_not_active",
+  "caveat": "Stylized low-poly winter red twig dogwood model, species-level identification not independently proven. DO NOT replace photo-realistic summer Cornus alba Elegantissima without approval."
+}
