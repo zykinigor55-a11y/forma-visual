@@ -1,32 +1,20 @@
 {
   "source": "Real Chromium/Playwright screenshot of Render WebGL editor, screenshot not AI-generated",
   "sourcePage": "https://dom-render-nanobanana.onrender.com/forma-landscape-3d.html",
-  "timestampUtc": "2026-11-19T23:15:03.595Z",
+  "timestampUtc": "2026-11-20T00:03:17.047Z",
   "testOnlyPlan": true,
-  "screenshotBytes": 1633809,
-  "screenshotSha256": "0632fea35d3b742415de9558a327c22788d6ed6afd41eb904bcf18ba328dd99c",
+  "screenshotBytes": 1670863,
+  "screenshotSha256": "0c4f8a51220b62c29e0b605178482a330dcbe1fe58172cacfb6e7d3d40b465f9",
+  "closeupScreenshotBytes": 1545053,
+  "closeupSha256": "b586cb5535e7eca1a3a2095b7ed0f23c85bae16a16fd4af688c947a2cf7ac963",
   "diagnostics": {
     "loaded": [
       {
         "species": "barberry",
         "model": "/assets/landscape-models/barberry-thunberg-forma-original.glb",
         "status": "glb",
-        "height": 2,
-        "diameter": 2.7
-      },
-      {
-        "species": "barberry",
-        "model": "/assets/landscape-models/barberry-thunberg-forma-original.glb",
-        "status": "glb",
-        "height": 1.4,
-        "diameter": 1.9
-      },
-      {
-        "species": "barberry",
-        "model": "/assets/landscape-models/barberry-thunberg-forma-original.glb",
-        "status": "glb",
-        "height": 1.45,
-        "diameter": 1.85
+        "height": 1.55,
+        "diameter": 2.2
       }
     ],
     "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
