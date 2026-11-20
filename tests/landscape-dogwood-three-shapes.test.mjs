@@ -20,8 +20,8 @@ test('original dogwood GLB is real, independently authored, verified and has 3 c
  const names=gltf.nodes.map(x=>x.name);
  for(const shape of ['DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX']){
   assert.ok(names.includes(shape),shape);
-  assert.ok(names.some(x=>x.startsWith(shape+'-leaf-')),shape+' foliage mesh');
-  assert.ok(names.some(x=>x.startsWith(shape+'-wood-')),shape+' dark branch mesh');
+  assert.ok(names.some(x=>['plum','burgundy','ruby','copper','dusk','olive'].some(id=>x===shape+'-'+id)),shape+' foliage mesh');
+  assert.ok(names.some(x=>['bark','twig'].some(id=>x===shape+'-'+id)),shape+' dark branch mesh');
  }
  assert.equal(gltf.meshes.length,24);
  assert.equal(gltf.materials.length,8);
