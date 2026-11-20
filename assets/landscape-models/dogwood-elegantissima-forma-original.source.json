@@ -12,5 +12,11 @@
   ],
   "branchColor": "dark brown-burgundy",
   "foliage": "muted greens with cream edges",
-  "status": "build pending"
+  "status": "original verified GLB",
+  "sha256": "ac8c7e18a4a0f90aa2f92608eb5893e8fc5981e085092d9ee1ce83ad14b75921",
+  "sizeBytes": 8311868,
+  "triangles": 320508,
+  "meshCount": 24,
+  "materialCount": 8,
+  "textureCount": 8
 }
