@@ -1,0 +1,22 @@
+{
+  "species": "dogwood",
+  "botanicalName": "Cornus alba 'Elegantissima'",
+  "uiName": "Дёрен белый Элегантиссима",
+  "desiredAppearance": "summer broad natural red-twig dogwood shrub with richly variegated creamy-white and green leaf foliage, branch architecture faithful to Cornus alba, realistic PBR materials",
+  "userSelection": "option 1: 3D Warehouse '3D Landscape Plant- Cornus alba Elegantissima Variegated Red twig Dogwood Bush'",
+  "status": "selected as visual/model reference; redistribution license NOT granted",
+  "licenseStatus": "DO NOT download, convert, host or redistribute the 3D Warehouse model in FORMA public 3D plant library without written approval from rights holders and Trimble as required by their terms",
+  "referencePage": "https://3dwarehouse.sketchup.com/model/1fce4b98-ee8e-431a-b894-56d5c62d0dc3/3D-Landscape-Plant-Cornus-alba-Elegantissima-Variegated-Red-twig-Dogwood-Bush",
+  "creatorProfile": "https://3dwarehouse.sketchup.com/by/skapeup",
+  "sourceDescription": "The author identifies the freely viewable warehouse model as heavily polygon reduced; a higher-resolution commercial version is linked by the author.",
+  "higherQualityAuthorPage": "https://winningwithsketchup.gumroad.com/l/cykMfU",
+  "termsSource": "https://help.sketchup.com/en/3d-warehouse/3d-warehouse-terms-use-faq",
+  "intendedSeason": "summer",
+  "winterReference": {
+    "status": "downloaded CC0 low-poly model (reference only)",
+    "file": "assets/landscape-models/dogwood-red-stemmed-3dassets-cc0.glb",
+    "source": "https://3dassets.dev/assets/temperate-forest-ecology-dogwood-thicket-71bc6fb3"
+  },
+  "integrationDecision": "Do not switch catalogue entry until a licensed original GLB is secured, or a truly independently authored equivalent is approved by the user.",
+  "confirmedOn": "2026-11-20"
+}
