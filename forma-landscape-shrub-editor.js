@@ -15,11 +15,11 @@ export function shrubEditorMarkup({id,species='',variant=1,real=false,loading=fa
  return '<div class="forma-shrub-editor" aria-label="Редактор кустарника">'+
   '<strong>РЕДАКТОР КУСТАРНИКА</strong><small>'+type+'</small>'+
   '<p class="forma-shrub-status">'+(real?'✓ Подключён GLB':loading?'Загружаем модель GLB…':failed?'⚠ Ошибка загрузки GLB':'3D-геометрия растения')+
-  (season!=='summer'?' · сезонный вид':'')+'</p>'+
+  (season!=='summer'&&species!=='thuja-globe'?' · сезонный вид':'')+'</p>'+
   '<label>Возраст / размер</label><div class="forma-shrub-buttons">'+
   [['young','Молодой'],['normal','Обычный'],['adult','Взрослый']].map(([key,text])=>'<button type="button" data-shrub-size="'+key+'">'+text+'</button>').join('')+
   '</div><label>Вариант внешнего вида</label><div class="forma-shrub-buttons">'+
-  [1,2,3].map(x=>'<button type="button" data-shrub-variant="'+x+'" aria-pressed="'+(x===picked)+'" class="'+(x===picked?'active':'')+'">'+(species==='dogwood'?['Природный','Шар','Изгородь'][x-1]:'№ '+x)+'</button>').join('')+
+  [1,2,3].map(x=>'<button type="button" data-shrub-variant="'+x+'" aria-pressed="'+(x===picked)+'" class="'+(x===picked?'active':'')+'">'+(species==='dogwood'?['Природный','Шар','Изгородь'][x-1]:species==='thuja-globe'?['Естественная','Компактная','Взрослая'][x-1]:'№ '+x)+'</button>').join('')+
   '</div><small>Ниже можно точно указать высоту, ширину и поворот. У готовой GLB меняется ракурс исходной формы, её цветы и ветки не редактируются отдельно.</small>'+
   '<button class="forma-shrub-focus" type="button" id="shrubFocus">Приблизить куст</button>'+
   (failed?'<button type="button" id="shrubRetry">Загрузить GLB повторно</button>':'')+
