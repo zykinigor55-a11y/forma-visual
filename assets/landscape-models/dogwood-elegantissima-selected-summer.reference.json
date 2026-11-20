@@ -4,7 +4,7 @@
   "uiName": "Дёрен белый Элегантиссима",
   "desiredAppearance": "summer broad natural red-twig dogwood shrub with richly variegated creamy-white and green leaf foliage, branch architecture faithful to Cornus alba, realistic PBR materials",
   "userSelection": "option 1: 3D Warehouse '3D Landscape Plant- Cornus alba Elegantissima Variegated Red twig Dogwood Bush'",
-  "status": "Independently authored FORMA Elegantissima 3-crown GLB installed in 3D editor source; production deployment not yet confirmed",
+  "status": "Original FORMA v5 three-form GLB committed to 3D editor source; production deployment not yet confirmed",
   "licenseStatus": "DO NOT download, convert, host or redistribute the 3D Warehouse model in FORMA public 3D plant library without written approval from rights holders and Trimble as required by their terms",
   "referencePage": "https://3dwarehouse.sketchup.com/model/1fce4b98-ee8e-431a-b894-56d5c62d0dc3/3D-Landscape-Plant-Cornus-alba-Elegantissima-Variegated-Red-twig-Dogwood-Bush",
   "creatorProfile": "https://3dwarehouse.sketchup.com/by/skapeup",
@@ -27,8 +27,8 @@
       "DOGWOOD_SPHERE",
       "DOGWOOD_BOX"
     ],
-    "status": "code committed and unit tests passing",
-    "sha256": "ac8c7e18a4a0f90aa2f92608eb5893e8fc5981e085092d9ee1ce83ad14b75921",
+    "status": "v5 geometry rebuilt from source and tested",
+    "sha256": "4642bad461984dfa9ac88a3d48d229cc87133a8b95767e2548a7221477f00ca0",
     "license": "original FORMA-generated 3D content"
   }
 }

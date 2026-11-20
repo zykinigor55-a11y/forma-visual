@@ -4,7 +4,7 @@
   "modelPath": "assets/landscape-models/dogwood-elegantissima-forma-original.glb",
   "sourceCode": "tools/generate_dogwood_elegantissima.py",
   "license": "Original FORMA-authored geometry and PBR texture, no purchased assets",
-  "reference": "3DDD Cornus alba Elegantissima with natural, sphere and box forms",
+  "reference": "Original independently-generated summer Cornus alba Elegantissima",
   "shapeNodes": [
     "DOGWOOD_NATURAL",
     "DOGWOOD_SPHERE",
@@ -12,11 +12,17 @@
   ],
   "branchColor": "dark brown-burgundy",
   "foliage": "muted greens with cream edges",
-  "status": "original verified GLB",
-  "sha256": "ac8c7e18a4a0f90aa2f92608eb5893e8fc5981e085092d9ee1ce83ad14b75921",
-  "sizeBytes": 8311868,
-  "triangles": 320508,
+  "status": "original verified GLB; locally rendered v5; deployment pending",
+  "sha256": "4642bad461984dfa9ac88a3d48d229cc87133a8b95767e2548a7221477f00ca0",
+  "sizeBytes": 11561060,
+  "triangles": 293872,
   "meshCount": 24,
   "materialCount": 8,
-  "textureCount": 8
+  "textureCount": 8,
+  "version": "5.0-creamy-white-dogwood-rounded-crown-full-skirt",
+  "leafCounts": {
+    "DOGWOOD_NATURAL": 19440,
+    "DOGWOOD_SPHERE": 10800,
+    "DOGWOOD_BOX": 12480
+  }
 }

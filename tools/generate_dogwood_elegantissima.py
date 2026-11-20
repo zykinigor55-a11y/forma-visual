@@ -1,176 +1,286 @@
 #!/usr/bin/env python3
-"""Original FORMA three-form Cornus alba Elegantissima (self-generated).
-No third-party meshes, textures, photos or CC-restricted assets are copied.
-Natural scale: approximately 1.15m high, 1.4m spread; original branching,
-many small pointed-oval leaves, spines, fruit, metallic-roughness PBR material.
+"""FORMA original Cornus alba 'Elegantissima' v2 (summer), three native crowns.
+Original independently generated mesh/texels; botanical references only.
+DO NOT incorporate copyrighted third-party 3D Warehouse geometry or textures.
+Geometry uses opposite leaves, asymmetric arching canes, branching shoots,
+cream-variegated foliage and red-burgundy young stems; no thorns.
 """
-import math, random, numpy as np, trimesh, sys, json, hashlib, struct
+from __future__ import annotations
+import sys, os, math, random, hashlib, json, struct
 from pathlib import Path
+import numpy as np
+import trimesh
 from trimesh.visual.material import PBRMaterial
 from trimesh.visual.texture import TextureVisuals
-from PIL import Image
-r=random.Random(20261120);up=np.array([0.,1.,0.]);pi=math.pi
-# Dense, broad-domed Atropurpurea with original clumps of short-shot leaves.
+from PIL import Image, ImageDraw, ImageFilter
 
-colors={'plum':(89,120,82),'burgundy':(99,132,91),'ruby':(75,106,72),'copper':(112,142,108),'dusk':(64,99,66),'olive':(107,139,98),'bark':(48,31,35),'twig':(61,31,36),'thorn':(68,39,42),'fruit':(194,206,172)}
-data={name:[[],[]] for name in colors}
-uvs={name:[] for name in colors}
-LEAF_MATS={'plum','burgundy','ruby','copper','dusk','olive'}
-def leaf_texture(base,seed):
- # Original variegated Cornus leaf (no purchased or downloaded maps).
- # Oval alpha mask, muted green center and softly uneven cream-white edge.
- pixels=np.zeros((384,256,4),dtype=np.uint8);noise=random.Random(seed)
- for y in range(384):
-  t=1-y/383
-  radius=.49*max(0,math.sin(math.pi*t))**.73
-  mid=.502+.008*math.sin(4*t)
-  for x in range(256):
-   u=x/255;w=abs(u-mid)/max(.001,radius)
-   if w>=1:continue
-   boundary=.66+.052*math.sin(t*9+u*18)+.019*math.sin(t*47+u*41)
-   rim=min(1,max(0,(w-boundary)*12))
-   rim=rim*rim*(3-2*rim)
-   grain=noise.uniform(-6,6)+3*math.cos(t*35+u*19)
-   internal=np.array(base)+grain
-   cream=np.array([213,218,186])
-   rgb=internal*(1-rim)+cream*rim
-   if abs(u-mid)<.008:rgb=rgb*.79+np.array([200,219,175])*.21
-   pixels[y,x]=(*np.clip(rgb,0,255).astype(np.uint8),255)
- return Image.fromarray(pixels,mode='RGBA')
-LEAF_TEXTURES={name:leaf_texture(colors[name],20261120+i*47) for i,name in enumerate(['plum','burgundy','ruby','copper','dusk','olive'])}
-def bark_texture():
- # Tiny self-created subtle longitudinal woody grooving, without photographs.
- noise=random.Random(20261121)
- a=np.zeros((256,256,4),dtype=np.uint8)
- columns=[noise.uniform(-23,20) for _ in range(256)]
- for y in range(256):
-  for x in range(256):
-   n=columns[x]*.55+noise.uniform(-7,7)+math.sin(x*.38+math.sin(y*.052)) * 8 +math.sin(x*.95+y*.17)*3
-   c=int(max(125,min(245,216+n)))
-   a[y,x]=(c, max(115,c-7),max(115,c-13),255)
- return Image.fromarray(a,mode='RGBA')
-BARK_TEXTURE=bark_texture()
-def unit(v):
- v=np.asarray(v,dtype=float);return v/max(1e-9,np.linalg.norm(v))
-def add(key,pts,faces,tex=None):
- v,f=data[key];n=len(v);v.extend(pts);f.extend(tuple(n+i for i in face) for face in faces)
- uvs[key].extend(tex if tex is not None else [(0,0)]*len(pts))
-def tube(a,b,ra,rb,key,sides=5):
- a=np.asarray(a);b=np.asarray(b);d=unit(b-a);side=unit(np.cross(d,up if abs(d[1])<.92 else [1,0,0]));other=unit(np.cross(d,side));points=[]
- for p,radius in [(a,ra),(b,rb)]:
-  for i in range(sides):points.append(p+radius*(side*math.cos(2*pi*i/sides)+other*math.sin(2*pi*i/sides)))
- add(key,points,[(i,(i+1)%sides,sides+(i+1)%sides) for i in range(sides)]+[(i,sides+(i+1)%sides,sides+i) for i in range(sides)],[(i/sides,j) for j in (0,1) for i in range(sides)])
-def leaf(pos,d,length,width):
- # Curved alpha-masked 3D ribbon, not jagged triangular 3D leaf geometry.
- d=unit(d);s=unit(np.cross(d,up));z=unit(np.cross(s,d));p=np.asarray(pos)
- v=[p-s*width*.51,p+s*width*.51,
-  p+d*length*.53-s*width*.53+z*length*.075,
-  p+d*length*.53+s*width*.53+z*length*.075,
-  p+d*length-s*width*.1+z*length*.025,
-  p+d*length+s*width*.1+z*length*.025]
- key=r.choices(['plum','burgundy','ruby','copper','dusk','olive'],[15,36,25,11,9,4])[0]
- add(key,v,[(0,1,2),(1,3,2),(2,3,4),(3,5,4)],[(0,0),(1,0),(0,.53),(1,.53),(0,1),(1,1)])
-def thorn(p,d):
- p=np.asarray(p);d=unit(d);s=unit(np.cross(d,up));w=.0018;h=.014+r.random()*.014
- add('thorn',[p-s*w,p+s*w,p+up*.0025,p+d*h],[(0,1,3),(1,2,3),(2,0,3),(0,2,1)])
-def fruit(p):
- p=np.asarray(p);w=.0048+r.random()*.0031
- add('fruit',[p+[0,w,0],p+[w,0,0],p+[0,0,w],p+[-w,0,0],p+[0,0,-w],p+[0,-w*1.5,0]],[(0,1,2),(0,2,3),(0,3,4),(0,4,1),(5,2,1),(5,3,2),(5,4,3),(5,1,4)])
-for j in range(87):
- a=j*pi*(3-math.sqrt(5))+r.uniform(-.08,.08);out=np.array([math.cos(a),0,math.sin(a)])
- reach=.69*(.18+.80*r.random())*(.91+.08*math.sin(a*3.1+j*.02))
- crown=math.sqrt(max(.08,1-(reach/.77)**2))
- h=1.15*(.48+.47*crown)*(.92+.08*r.random())*(.89 if j%13==0 else 1)
- base=np.array([r.uniform(-.085,.085),.025,r.uniform(-.085,.085)]);control=[base,base+out*reach*.21+up*h*.43,base+out*reach*.70+up*h*1.02,base+out*reach+up*h]
- def bend(t):
-  s=1-t;return s**3*control[0]+3*s*s*t*control[1]+3*s*t*t*control[2]+t**3*control[3]
- previous=base
- for z in range(1,9):
-  t=z/8;v=bend(t);tube(previous,v,.003*(1-t*.52)+.0011,.003*(1-t*.56)+.001,'bark' if z<5 else 'twig');previous=v
-  # Cornus has dark twig nodes, not barberry thorns.
- for k in range(8):
-  t=.14+k*.088+r.uniform(-.013,.013);start=bend(t);direction=unit(out*math.cos(r.uniform(-.7,.7))+np.cross(out,up)*r.uniform(-.8,.8))
-  length=.067+.10*r.random();elev=r.uniform(-.27,.18)-(t>.74)*.20
-  v1=start+direction*length*.55+up*(length*elev+.016);v2=start+direction*length+up*(length*(elev+.05))
-  for aa,bb,w0,w1 in [(start,v1,.0022,.0016),(v1,v2,.0016,.0009)]:
-   bb[1]=min(1.13,max(.12,bb[1]));xz=np.linalg.norm(bb[[0,2]])
-   if xz>.69:bb[[0,2]]*=.69/xz
-   tube(aa,bb,w0,w1,'twig')
-  # Dark woody leaf-bearing twigs.
-  for n in range(8):
-   f=.09+(n+.37)*.109;p=start*(1-f)+v2*f
-   if np.linalg.norm(p[[0,2]])>.66:continue
-   # Alternate short spurs; 3 or 4 leaves in a whorl, as on real barberry.
-   sides=4 if (n+k+j)%4 else 3
-   for leafNo in range(sides):
-    spin=2*pi*(leafNo+.2*r.random())/sides
-    axis=unit(.32*direction+math.cos(spin)*np.cross(up,direction)+math.sin(spin)*up)
-    d=unit(axis*.79+up*.18+direction*.13)
-    length=.030+.020*r.random();w=length*(.53+.20*r.random())
-    leaf(p+axis*.0026,d,length,w)
-  # The main ornamental characteristic is variegated summer foliage.
- # Miniature leaves growing from terminal buds soften exposed twig ends.
- tip=bend(1)
- for q in range(7):
-  phi=2*pi*(q+.21*r.random())/7
-  axis=unit(out*.32+np.cross(up,out)*math.cos(phi)*.66+up*math.sin(phi)*.66)
-  leaf(tip+axis*.004,axis+up*.16,.020+.010*r.random(),.011+.005*r.random())
-# Every leaf is attached to a real twig. No floating leaf particles.
-scene=trimesh.Scene();tris=0
-for key,(verts,faces) in data.items():
- if not faces:continue
- mesh=trimesh.Trimesh(vertices=np.array(verts,dtype=np.float32),faces=np.array(faces),process=False)
- rgb=colors[key]
- material=PBRMaterial(name='FORMA-'+key,baseColorFactor=[255,255,255,255] if key in LEAF_MATS else [*rgb,255],metallicFactor=0.,roughnessFactor=.78 if key in LEAF_MATS else .93,
-  doubleSided=key in LEAF_MATS,
-  baseColorTexture=LEAF_TEXTURES[key] if key in LEAF_MATS else (BARK_TEXTURE if key in {'bark','twig'} else None),
-  alphaMode='MASK' if key in LEAF_MATS else 'OPAQUE',
-  alphaCutoff=.42 if key in LEAF_MATS else None)
- mesh.visual=TextureVisuals(uv=np.array(uvs[key],dtype=np.float32),material=material) if key in (LEAF_MATS|{'bark','twig'}) else TextureVisuals(material=material)
- scene.add_geometry(mesh,geom_name=key,node_name=key);tris+=len(faces)
-# One GLB containing three genuine geometric crown variants. The paid 3DDD
-# mesh/material files have not been used: source assets are authored from scratch.
-srcMeshes={name:mesh.copy() for name,mesh in scene.geometry.items()}
-allVertices=np.concatenate([mesh.vertices for mesh in srcMeshes.values()],axis=0)
-lo=allVertices.min(axis=0);hi=allVertices.max(axis=0);span=np.maximum(hi-lo,.001)
-shapes={
- 'DOGWOOD_NATURAL':(2.91,2.25,2.97),
- 'DOGWOOD_SPHERE':(1.58,1.55,1.55),
- 'DOGWOOD_BOX':(1.02,1.11,1.24)
+PI=math.pi
+UP=np.array([0.,1.,0.])
+LEAF_KEYS=('plum','burgundy','ruby','copper','dusk','olive')  # stable existing material IDs
+MATS=(*LEAF_KEYS,'bark','twig')
+FOLIAGE_COLORS={
+ 'plum':(87,127,108),'burgundy':(118,157,128),'ruby':(80,119,101),
+ 'copper':(126,158,129),'dusk':(86,132,128),'olive':(142,164,124),
 }
-combined=trimesh.Scene()
-for form,(wide,high,deep) in shapes.items():
- combined.graph.update(frame_to=form,frame_from=combined.graph.base_frame,matrix=np.eye(4))
- for key,source in srcMeshes.items():
-  mesh=source.copy()
-  p=np.asarray(mesh.vertices,dtype=np.float64)
-  normalized=(p-lo)/span
-  x=(normalized[:,0]-.5)*2
-  z=(normalized[:,2]-.5)*2
-  y=normalized[:,1]
-  if form=='DOGWOOD_NATURAL':
-   # Tall loose shrub with asymmetric upright leading shoots.
-   px=x*(.86+.14*y);pz=z*(.82+.18*y)
-   py=y
-  elif form=='DOGWOOD_SPHERE':
-   # Distinct rounded crown. Not merely the original bush rotated.
-   dome=np.maximum(.22,1-((y-.56)/.75)**2)**.47
-   px=x*dome;pz=z*dome;py=y
-  else:
-   # Distinct trimmed hedge block with flatish broad crown.
-   px=np.sign(x)*np.abs(x)**.67
-   pz=np.sign(z)*np.abs(z)**.67
-   py=np.where(y>.82,.82+(y-.82)*.42,y)
-  p[:,0]=px*wide*.50
-  p[:,1]=py*high
-  p[:,2]=pz*deep*.50
-  mesh.vertices=p
-  combined.add_geometry(mesh,geom_name=form+'-'+key,node_name=form+'-'+key,parent_node_name=form)
-out=Path(sys.argv[1]);out.parent.mkdir(parents=True,exist_ok=True)
-blob=combined.export(file_type='glb');out.write_bytes(blob)
-assert blob[:4]==b'glTF' and struct.unpack_from('<I',blob,4)[0]==2 and struct.unpack_from('<I',blob,8)[0]==len(blob)
-glen=struct.unpack_from('<I',blob,12)[0];gltf=json.loads(blob[20:20+glen].decode('utf8'))
-names={n.get('name') for n in gltf['nodes']}
-assert set(shapes)<=names,names
-triangles=sum(gltf['accessors'][part['indices']]['count']//3 for m in gltf['meshes'] for part in m['primitives'])
-print(json.dumps({'sizeBytes':len(blob),'sha256':hashlib.sha256(blob).hexdigest(),'triangles':triangles,'meshes':len(gltf['meshes']),'materials':len(gltf['materials']),'textures':len(gltf.get('textures',[])),'shapes':list(shapes)}))
+FOLIAGE_WEIGHTS=(16,30,20,15,10,9)
+
+
+def texture_leaf(center, seed):
+ """RGBA ovate elliptic leaf, asymmetric pale-cream variegation and veins."""
+ w,h=256,384
+ rng=np.random.default_rng(seed)
+ yy,xx=np.mgrid[0:h,0:w]
+ u=xx/(w-1);t=yy/(h-1)
+ # pointed tip at top, slightly narrowed base; curved outline
+ width=.487*np.power(np.clip(np.sin(PI*t),0,1),.72)*(0.85+0.16*t)
+ mid=.50+.018*np.sin(PI*t*1.25)
+ q=np.abs(u-mid)/np.maximum(.002,width)
+ border=(.45+.052*np.sin(10*t+17*u)+.027*np.sin(38*t+16*u))
+ band=np.clip((q-border)*11,0,1);band=band*band*(3-2*band)
+ noise=rng.normal(0,3.1,(h,w)) + 3.1*np.sin(u*26+t*12) + 2*np.sin(t*52)
+ base=np.zeros((h,w,3),float)
+ base[:]=center
+ base+=noise[...,None]
+ # smoky grey/green center with pronounced irregular ivory edges
+ ivory=np.array([231,235,213.])
+ base=base*(1-band[...,None])+ivory*band[...,None]
+ # bright central vein and subtle lateral venation branching from midrib
+ rib=np.abs(u-mid)<(.010+.008*np.sin(PI*t))
+ base[rib]=base[rib]*.79+np.array([196,217,176])* .21
+ vein=np.abs(np.sin((u-mid)*21+t*23))<.07
+ base[vein & (q<.80)] *=.968
+ alpha=np.clip((1-q)*55,0,1)
+ alpha=np.where(q<.975,1.,alpha)
+ alpha[(t<.01)|(t>.995)]=0
+ out=np.empty((h,w,4),dtype=np.uint8)
+ out[:,:,:3]=np.clip(base,0,255).astype('uint8')
+ out[:,:,3]=(alpha*255).astype('uint8')
+ return Image.fromarray(out,'RGBA')
+
+
+def texture_wood(base,seed):
+ rng=np.random.default_rng(seed)
+ h=w=256
+ col=rng.normal(0,7,w)
+ y,x=np.mgrid[:h,:w]
+ variation=col[None,:]+5*np.sin(x*.25 + 1.7*np.sin(y*.02)) + rng.normal(0,3,(h,w))
+ pic=np.empty((h,w,4),dtype=np.uint8)
+ for k in range(3): pic[:,:,k]=np.clip(base[k]+variation,0,255).astype(np.uint8)
+ pic[:,:,3]=255
+ return Image.fromarray(pic,'RGBA')
+
+LEAF_TEX={key:texture_leaf(FOLIAGE_COLORS[key],20261120+i*59) for i,key in enumerate(LEAF_KEYS)}
+WOOD_TEX={'bark':texture_wood((83,61,57),91),'twig':texture_wood((121,53,62),96)}
+
+
+def normalize(p):
+ p=np.asarray(p,float); n=np.linalg.norm(p)
+ return p/max(1e-8,n)
+
+class MeshAccumulator:
+ def __init__(self,shape):
+  self.shape=shape
+  self.vertices={k:[] for k in MATS}
+  self.faces={k:[] for k in MATS}
+  self.uv={k:[] for k in MATS}
+  self.stats={'leaves':0,'stems':0,'twig_segments':0}
+ def add(self,k,vertices,faces,uv):
+  nv=len(self.vertices[k]);self.vertices[k].extend(vertices)
+  self.faces[k].extend(tuple(nv+i for i in f) for f in faces)
+  self.uv[k].extend(uv)
+ def wood(self,a,b,rad0,rad1,key,sides=5):
+  a=np.asarray(a,float);b=np.asarray(b,float)
+  axis=normalize(b-a)
+  side=normalize(np.cross(axis,UP if abs(axis[1])<.95 else [1.,0.,0.]))
+  other=normalize(np.cross(axis,side))
+  verts=[]
+  for pt,r in ((a,rad0),(b,rad1)):
+   for j in range(sides): verts.append(pt+r*(side*np.cos(2*PI*j/sides)+other*np.sin(2*PI*j/sides)))
+  faces=[(j,(j+1)%sides,sides+(j+1)%sides) for j in range(sides)]
+  faces += [(j,sides+(j+1)%sides,sides+j) for j in range(sides)]
+  uv=[(j/sides,row) for row in (0,1) for j in range(sides)]
+  self.add(key,verts,faces,uv)
+  self.stats['twig_segments' if key=='twig' else 'stems']+=1
+ def leaf(self,p,d,lc,w,material,roll=0):
+  p=np.asarray(p,float);d=normalize(d)
+  right=normalize(np.cross(d,UP if abs(d[1])<.92 else [1.,0.,0.]))
+  normal=normalize(np.cross(right,d))
+  right=normalize(right*math.cos(roll)+normal*math.sin(roll))
+  normal=normalize(np.cross(right,d))
+  # moderately cupped leaf, with base, broad middle and tapered pointed apex
+  verts=[p-right*w*.28,
+         p+right*w*.28,
+         p+d*(lc*.43)-right*w*.51+normal*(lc*.055),
+         p+d*(lc*.43)+right*w*.51+normal*(lc*.055),
+         p+d*lc-right*w*.07+normal*(lc*.022),
+         p+d*lc+right*w*.07+normal*(lc*.022)]
+  faces=((0,1,2),(1,3,2),(2,3,4),(3,5,4))
+  uv=((.28,0),(.72,0),(0,.47),(1,.47),(.43,1),(.57,1))
+  self.add(material,verts,faces,uv)
+  self.stats['leaves']+=1
+ def to_scene(self, scene):
+  for key in MATS:
+   vertices=self.vertices[key];faces=self.faces[key]
+   if not faces:continue
+   geom=trimesh.Trimesh(vertices=np.asarray(vertices,dtype=np.float32),faces=np.asarray(faces,dtype=np.int32),process=False)
+   leaf=key in LEAF_KEYS
+   material=PBRMaterial(name='FORMA-'+key,metallicFactor=0.0,
+    roughnessFactor=.89 if leaf else .95, doubleSided=leaf,
+    baseColorFactor=[255,255,255,255] if leaf else [255,255,255,255],
+    baseColorTexture=LEAF_TEX[key] if leaf else WOOD_TEX[key],
+    alphaMode='MASK' if leaf else 'OPAQUE',alphaCutoff=.45 if leaf else None)
+   geom.visual=TextureVisuals(uv=np.asarray(self.uv[key],dtype=np.float32),material=material)
+   scene.add_geometry(geom,geom_name=self.shape+'-'+key,node_name=self.shape+'-'+key,parent_node_name=self.shape)
+
+
+def bezier(cp,t):
+ a,b,c,d=cp;s=1-t
+ return s**3*a+3*s*s*t*b+3*s*t*t*c+t**3*d
+
+
+def canopy_envelope(shape,y,H,W,D):
+ """Natural crown side elevation with a soft skirt and rounded roof."""
+ if shape=='DOGWOOD_NATURAL':
+  profile=((.11,.19),(.20,.54),(.32,.82),(.49,1.0),(.65,.95),(.79,.80),(.92,.52),(1.0,.035))
+ elif shape=='DOGWOOD_SPHERE':
+  profile=((.10,.27),(.20,.60),(.38,.89),(.55,.98),(.70,.89),(.86,.61),(1.0,.05))
+ else:
+  return W*.47,D*.47
+ yfrac=y/H
+ for (y0,r0),(y1,r1) in zip(profile,profile[1:]):
+  if yfrac<=y1:
+   f=max(0,min(1,(yfrac-y0)/(y1-y0)))
+   radius=r0+(r1-r0)*f
+   return W*.5*radius,D*.5*radius
+ return W*.025,D*.025
+
+
+def sample_point(shape,rng,W,D,H):
+ if shape=='DOGWOOD_BOX':
+  # Trimmed hedge: boxy foliage and broad, almost level upper face.
+  y=H*(.14+.82*rng.betavariate(1.55,1.55))
+  x=(rng.random()*2-1)*W*.455
+  z=(rng.random()*2-1)*D*.455
+  return np.array([x,y,z])
+ frac=rng.betavariate(1.85,1.65)
+ # one in eight sprigs fills the shaded lower skirt instead of a bare stem cone
+ if rng.random()<.20:frac=rng.uniform(.00,.28)
+ y=H*(.10+.86*frac)
+ rx,rz=canopy_envelope(shape,y,H,W,D)
+ phi=rng.random()*2*PI
+ radial=(rng.random()**.40)*(.99 if rng.random()<.9 else .75)
+ # tiny natural crown undulations prevent a perfectly computer-generated oval
+ radial*=.955+.055*math.sin(6*phi+2*y)+.023*math.sin(13*phi-5*y)
+ return np.array([math.cos(phi)*rx*radial,y,math.sin(phi)*rz*radial])
+
+
+def generate(shape,seed):
+ rng=random.Random(seed)
+ mesh=MeshAccumulator(shape)
+ if shape=='DOGWOOD_NATURAL':
+  W,D,H=2.91,2.97,2.25;canes=25;clumps=810
+ elif shape=='DOGWOOD_SPHERE':
+  W,D,H=1.58,1.55,1.55;canes=22;clumps=450
+ else:
+  W,D,H=1.02,1.24,1.11;canes=24;clumps=520
+ # Primary multistemmed architecture, 2–4 cm mature basal wood,
+ # tapered burgundy young shoot tips. Unlike the v1 mesh there is no broom of
+ # eighty-plus straight black stems.
+ anchors=[]
+ for j in range(canes):
+  tip=sample_point(shape,rng,W,D,H)
+  if j%4 != 0: tip[1]=min(H*.94,max(H*.65,tip[1]+H*.07))
+  base=np.array([rng.uniform(-W*.07,W*.07),.018+rng.random()*.012,rng.uniform(-D*.07,D*.07)])
+  shift=tip-base
+  cp=(base,
+      base+np.array([shift[0]*.38,tip[1]*.25,shift[2]*.38]),
+      base+np.array([shift[0]*.84,tip[1]*.62,shift[2]*.84]),
+      tip)
+  last=base
+  nsteps=12
+  r0=.0063+rng.random()*.0033
+  for s in range(1,nsteps+1):
+   t=s/nsteps
+   pos=bezier(cp,t)
+   prev=(s-1)/nsteps
+   mesh.wood(last,pos,max(.0013,r0*(1-prev*.86)),max(.0012,r0*(1-t*.86)),
+             'bark' if t<.48 else 'twig',sides=6 if s<5 else 5)
+   if s%2==0: anchors.append(pos.copy())
+   last=pos
+ # Distributed, genuinely three-dimensional variegated leaf crown. Every
+ # sprig is connected by an independently generated slender woody branch.
+ anchors=np.asarray(anchors)
+ for i in range(clumps):
+  center=sample_point(shape,rng,W,D,H)
+  near=np.argmin(((anchors-center)**2).sum(axis=1))
+  begin=anchors[near]
+  if np.linalg.norm(center-begin)>.018:
+   middle=begin*.44+center*.56+np.array([rng.uniform(-.018,.018),rng.uniform(.012,.035),rng.uniform(-.018,.018)])
+   mesh.wood(begin,middle,.0028,.0018,'twig',sides=4)
+   mesh.wood(middle,center,.0018,.0011,'twig',sides=4)
+  radial=normalize(np.array([center[0],.1,center[2]]))
+  for arm in range(3):
+   phase=2*PI*(arm/3+rng.uniform(-.07,.07))
+   tangent=np.array([math.cos(phase),rng.uniform(-.08,.24),math.sin(phase)])
+   direction=normalize(tangent*.60 + radial*.45 + UP*rng.uniform(.02,.23))
+   length=rng.uniform(.085,.15) * (1 if shape=='DOGWOOD_NATURAL' else .87)
+   shoot_mid=center+direction*length*.49+UP*.006
+   tip=center+direction*length
+   if shape=='DOGWOOD_BOX':
+    tip[0]=np.clip(tip[0],-W*.475,W*.475)
+    tip[1]=np.clip(tip[1],H*.10,H*.975)
+    tip[2]=np.clip(tip[2],-D*.475,D*.475)
+    shoot_mid=center*.50+tip*.50+UP*.008
+   mesh.wood(center,shoot_mid,.0018,.0012,'twig',sides=4)
+   mesh.wood(shoot_mid,tip,.0012,.00065,'twig',sides=4)
+   axis=normalize(tip-center)
+   lateral=normalize(np.cross(axis,UP if abs(axis[1])<.9 else [1.,0.,0.]))
+   # Cornus leaves are opposite and decussate — successive paired nodes
+   # rotate, preserving characteristic opposite broad leaves.
+   for pair in range(3):
+    f=(pair+.28+rng.random()*.14)/3.35
+    p=center*(1-f)+tip*f+UP*.002
+    turn=rng.uniform(-.48,.48)+(PI*.37 if pair%2 else 0)
+    side=normalize(lateral*math.cos(turn)+np.cross(lateral,axis)*math.sin(turn))
+    for sign in (-1,1):
+     d=normalize(side*sign*.8+axis*(.20+rng.random()*.30)+UP*rng.uniform(-.08,.29))
+     ll=rng.uniform(.062,.097) * (1 if shape=='DOGWOOD_NATURAL' else .90)
+     ww=ll*rng.uniform(.49,.66)
+     mat=rng.choices(LEAF_KEYS,FOLIAGE_WEIGHTS)[0]
+     mesh.leaf(p+sign*side*.005,d,ll,ww,mat,rng.uniform(-PI*.75,PI*.75))
+   # Tiny fresh terminal cluster closes the silhouette, no protruding rods.
+   for q in range(2):
+    ang=2*PI*(q/2+.13*rng.random())
+    d=normalize(direction*.27+np.array([math.cos(ang),rng.uniform(.15,.46),math.sin(ang)])*.73)
+    ll=rng.uniform(.051,.073)
+    mesh.leaf(tip,d,ll,ll*rng.uniform(.50,.63),rng.choices(LEAF_KEYS,FOLIAGE_WEIGHTS)[0],rng.uniform(-PI*.6,PI*.6))
+ return mesh
+
+
+def main():
+ out=Path(sys.argv[1]);out.parent.mkdir(exist_ok=True,parents=True)
+ scene=trimesh.Scene()
+ results={}
+ for shape,seed in [('DOGWOOD_NATURAL',3810),('DOGWOOD_SPHERE',3811),('DOGWOOD_BOX',3812)]:
+  scene.graph.update(frame_to=shape,frame_from=scene.graph.base_frame,matrix=np.eye(4))
+  obj=generate(shape,seed);results[shape]=obj.stats
+  obj.to_scene(scene)
+ blob=scene.export(file_type='glb')
+ out.write_bytes(blob)
+ glen=struct.unpack_from('<I',blob,12)[0]
+ gltf=json.loads(blob[20:20+glen].decode('utf-8'))
+ names={n.get('name') for n in gltf['nodes']}
+ assert {'DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX'} <= names
+ assert all(k in names for k in ['DOGWOOD_NATURAL-'+m for m in ('plum','twig','bark')])
+ info={
+ 'sizeBytes':len(blob),'sha256':hashlib.sha256(blob).hexdigest(),
+ 'triangles':sum(gltf['accessors'][part['indices']]['count']//3 for m in gltf['meshes'] for part in m['primitives']),
+ 'meshCount':len(gltf['meshes']),'materialCount':len(gltf['materials']),
+ 'textureCount':len(gltf.get('textures',[])), 'stats':results,
+ 'version':'5.0-creamy-white-dogwood-rounded-crown-full-skirt'
+ }
+ print(json.dumps(info,ensure_ascii=False))
+ if len(sys.argv)>2:
+  Path(sys.argv[2]).write_text(json.dumps(info,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+if __name__=='__main__':main()
