@@ -1,0 +1,62 @@
+name: FORMA · build original Thuja Danica GLB
+
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-thuja-danica-build.yml'
+      - 'tools/thuja-danica-v1.py.xz.b64'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forma-thuja-danica-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-test-commit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout working FORMA branch
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Use Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install reproducible original GLB generator dependencies
+        run: python -m pip install --quiet 'numpy==2.3.5' 'trimesh==4.11.1' 'pillow==12.3.0'
+      - name: Restore original procedural source and build three native crowns
+        run: |
+          base64 --decode tools/thuja-danica-v1.py.xz.b64 | xz --decompress > tools/generate_thuja_danica.py
+          python tools/generate_thuja_danica.py assets/landscape-models/thuja-danica-forma-original.glb assets/landscape-models/thuja-danica-forma-original.source.json
+      - name: Validate generated GLB provenance
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          p=Path('assets/landscape-models/thuja-danica-forma-original.glb')
+          doc=json.loads(Path('assets/landscape-models/thuja-danica-forma-original.source.json').read_text())
+          assert p.read_bytes()[:4]==b'glTF'
+          assert doc['sha256']==hashlib.sha256(p.read_bytes()).hexdigest()
+          assert doc['sha256']=='ebb01ff71c645eb34903de53985ee5f4900cdca2c606aa297044a87ceb1f61f0'
+          assert doc['meshCount']==27 and doc['triangles']==123930
+          assert doc['textures']>=7
+          assert len(doc['forms'])==3
+          print('Verified original FORMA Danica',p.stat().st_size,doc['sha256'])
+          PY
+      - name: Test native shrub geometry, editing and existing dogwood
+        run: node --test tests/landscape-thuja-danica-original.test.mjs tests/landscape-shrub-editor-interaction.test.mjs tests/landscape-dogwood-three-shapes.test.mjs
+      - name: Commit reproducibly generated GLB to DOM.RENDER branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/generate_thuja_danica.py assets/landscape-models/thuja-danica-forma-original.glb assets/landscape-models/thuja-danica-forma-original.source.json
+          if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
+          git commit -m "feat(thuja): add original Danica PBR GLB with three true-scale crowns"
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
