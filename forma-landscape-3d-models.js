@@ -61,8 +61,10 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  // The original FORMA dogwood GLB contains 3 independently modelled crowns.
  // Select the actual subtree BEFORE fitting bounds; this is not a rotation of
  // the same model and preserves accurate dimensions for each landscape object.
- if(instance.catalogId==='dogwood'&&shareGeometry){
-  const variants=['DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX'];
+ if(['dogwood','thuja-globe'].includes(instance.catalogId)&&shareGeometry){
+  const variants=instance.catalogId==='thuja-globe'
+   ?['THUJA_DANICA_NATURAL','THUJA_DANICA_COMPACT','THUJA_DANICA_MATURE']
+   :['DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX'];
   const variant=Math.max(1,Math.min(3,Math.round(Number(instance.variant)||1)));
   const selected=source.getObjectByName(variants[variant-1]);
   if(selected)source=selected;
