@@ -1,0 +1,27 @@
+name: FORMA · four independent Poly Haven ferns editor regression
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-fern-polyhaven-four-qa.yml'
+      - 'tests/landscape-polyhaven-four-ferns.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify four REAL mesh nodes, UV / PBR, catalog cards and user coordinates
+        run: |
+          node --check forma-landscape-3d-models.js
+          node --check forma-landscape-shrub-editor.js
+          node --check forma-landscape-project-core.js
+          node --test tests/landscape-polyhaven-four-ferns.test.mjs tests/landscape-dryopteris-original.test.mjs tests/landscape-fern-cc0-photo-v2.test.mjs tests/landscape-shrub-editor-interaction.test.mjs
