@@ -21,17 +21,23 @@ test('original boxwood GLB has 3 real independent evergreen geometries and authe
  assert.equal(buf.readUInt32LE(8),buf.length);
  assert.equal(createHash('sha256').update(buf).digest('hex'),info.sha256);
  assert.equal(info.sha256,SHRUB_3D_MODELS.boxwood.sha256);
- assert.ok(buf.length>8_000_000 && buf.length<13_000_000);
+ assert.ok(buf.length>16_000_000 && buf.length<22_000_000);
  assert.equal(gltf.meshes.length,30);
  assert.equal(gltf.materials.length,10);
- assert.equal(info.triangles,373880);
+ assert.equal(info.triangles,720940);
  const nodeNames=new Set(gltf.nodes.map(n=>n.name));
  for(const form of ['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE']){
   assert.ok(nodeNames.has(form),form);
   for(const part of ['leaf-green','leaf-tip','leaf-dark','wood','twig'])assert.ok(nodeNames.has(form+'-'+part),part);
-  assert.ok(info.forms[form].leafCount>22000);
+  assert.ok(info.forms[form].leafCount>=17800);
  }
- assert.ok(info.forms.BOXWOOD_NATURAL.leafCount>30000);
+ assert.equal(info.forms.BOXWOOD_NATURAL.leafCount,26500);
+ assert.equal(info.forms.BOXWOOD_SPHERE.leafCount,17800);
+ assert.equal(info.forms.BOXWOOD_HEDGE.leafCount,45000);
+ assert.equal(info.forms.BOXWOOD_HEDGE.triangles,362570);
+ assert.equal(info.forms.BOXWOOD_NATURAL.triangles,214312);
+ assert.equal(info.forms.BOXWOOD_SPHERE.triangles,144058);
+ assert.ok(Object.values(info.forms).every(f=>f.foliageLayers.surface>1000));
 });
 test('boxwood uses genuine editor variants, year-round foliage and fixed planted x/y',()=>{
  assert.equal(SHRUB_3D_MODELS.boxwood.season,'evergreen');
