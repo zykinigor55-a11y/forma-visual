@@ -1,0 +1,16 @@
+{
+  "id": "ph-quiver-02",
+  "asset": "quiver_tree_02",
+  "sourcePage": "https://polyhaven.com/a/quiver_tree_02",
+  "api": "https://api.polyhaven.com/files/quiver_tree_02",
+  "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/quiver_tree_02/quiver_tree_02_1k.gltf",
+  "license": "CC0 1.0",
+  "sha256": "eef1595602aeab8a9a9f581e00397d5a8643ae3ef90efaa7d4b6a0f144aada69",
+  "bytes": 4546860,
+  "gltf": {
+    "triangles": 82074,
+    "meshes": 1,
+    "images": 3,
+    "texturedMaterials": 1
+  }
+}

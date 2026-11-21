@@ -1,0 +1,117 @@
+{
+  "source": "https://polyhaven.com/models/nature/trees",
+  "license": "CC0 1.0",
+  "installed": [
+    {
+      "id": "ph-fir-sapling",
+      "asset": "fir_sapling",
+      "sourcePage": "https://polyhaven.com/a/fir_sapling",
+      "api": "https://api.polyhaven.com/files/fir_sapling",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_sapling/fir_sapling_1k.gltf",
+      "license": "CC0 1.0",
+      "sha256": "c576024163beb049da9e0507c7fae1081c930782a977f31f10849bdbc1016d4f",
+      "bytes": 25419344,
+      "gltf": {
+        "triangles": 433021,
+        "meshes": 3,
+        "images": 6,
+        "texturedMaterials": 2
+      }
+    },
+    {
+      "id": "ph-pine-sapling",
+      "asset": "pine_sapling_small",
+      "sourcePage": "https://polyhaven.com/a/pine_sapling_small",
+      "api": "https://api.polyhaven.com/files/pine_sapling_small",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/pine_sapling_small/pine_sapling_small_1k.gltf",
+      "license": "CC0 1.0",
+      "sha256": "79fd186f650e46c530de565a07324c9faa39e278778b4ab283121c380b1a745a",
+      "bytes": 21886904,
+      "gltf": {
+        "triangles": 398144,
+        "meshes": 3,
+        "images": 6,
+        "texturedMaterials": 2
+      }
+    },
+    {
+      "id": "ph-quiver-01",
+      "asset": "quiver_tree_01",
+      "sourcePage": "https://polyhaven.com/a/quiver_tree_01",
+      "api": "https://api.polyhaven.com/files/quiver_tree_01",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/quiver_tree_01/quiver_tree_01_1k.gltf",
+      "license": "CC0 1.0",
+      "sha256": "936e7862c440fd78632dfd81a45ea0b320287dd03a33a5f0de8cb224d0577661",
+      "bytes": 8878664,
+      "gltf": {
+        "triangles": 150124,
+        "meshes": 1,
+        "images": 6,
+        "texturedMaterials": 2
+      }
+    },
+    {
+      "id": "ph-quiver-02",
+      "asset": "quiver_tree_02",
+      "sourcePage": "https://polyhaven.com/a/quiver_tree_02",
+      "api": "https://api.polyhaven.com/files/quiver_tree_02",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/quiver_tree_02/quiver_tree_02_1k.gltf",
+      "license": "CC0 1.0",
+      "sha256": "eef1595602aeab8a9a9f581e00397d5a8643ae3ef90efaa7d4b6a0f144aada69",
+      "bytes": 4546860,
+      "gltf": {
+        "triangles": 82074,
+        "meshes": 1,
+        "images": 3,
+        "texturedMaterials": 1
+      }
+    }
+  ],
+  "notInstalled": [
+    {
+      "id": "ph-tree-small",
+      "asset": "tree_small_02",
+      "reason": "Too large for interactive editor: 101.0 MB"
+    },
+    {
+      "id": "ph-jacaranda",
+      "asset": "jacaranda_tree",
+      "reason": "Too large for interactive editor: 214.6 MB"
+    },
+    {
+      "id": "ph-fir-forest",
+      "asset": "fir_tree_01",
+      "reason": "Too large for interactive editor: 487.4 MB"
+    },
+    {
+      "id": "ph-pine-forest",
+      "asset": "pine_tree_01",
+      "reason": "Too large for interactive editor: 958.1 MB"
+    },
+    {
+      "id": "ph-fir-medium",
+      "asset": "fir_sapling_medium",
+      "reason": "Too large for interactive editor: 78.1 MB"
+    },
+    {
+      "id": "ph-pine-medium",
+      "asset": "pine_sapling_medium",
+      "reason": "Too large for interactive editor: 267.8 MB"
+    },
+    {
+      "id": "ph-island-01",
+      "asset": "island_tree_01",
+      "reason": "Too large for interactive editor: 66.3 MB"
+    },
+    {
+      "id": "ph-island-02",
+      "asset": "island_tree_02",
+      "reason": "Too large for interactive editor: 46.2 MB"
+    },
+    {
+      "id": "ph-island-03",
+      "asset": "island_tree_03",
+      "reason": "Too large for interactive editor: 84.9 MB"
+    }
+  ]
+}

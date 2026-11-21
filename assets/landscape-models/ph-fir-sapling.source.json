@@ -1,0 +1,16 @@
+{
+  "id": "ph-fir-sapling",
+  "asset": "fir_sapling",
+  "sourcePage": "https://polyhaven.com/a/fir_sapling",
+  "api": "https://api.polyhaven.com/files/fir_sapling",
+  "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_sapling/fir_sapling_1k.gltf",
+  "license": "CC0 1.0",
+  "sha256": "c576024163beb049da9e0507c7fae1081c930782a977f31f10849bdbc1016d4f",
+  "bytes": 25419344,
+  "gltf": {
+    "triangles": 433021,
+    "meshes": 3,
+    "images": 6,
+    "texturedMaterials": 2
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "ph-pine-sapling",
+  "asset": "pine_sapling_small",
+  "sourcePage": "https://polyhaven.com/a/pine_sapling_small",
+  "api": "https://api.polyhaven.com/files/pine_sapling_small",
+  "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/pine_sapling_small/pine_sapling_small_1k.gltf",
+  "license": "CC0 1.0",
+  "sha256": "79fd186f650e46c530de565a07324c9faa39e278778b4ab283121c380b1a745a",
+  "bytes": 21886904,
+  "gltf": {
+    "triangles": 398144,
+    "meshes": 3,
+    "images": 6,
+    "texturedMaterials": 2
+  }
+}
