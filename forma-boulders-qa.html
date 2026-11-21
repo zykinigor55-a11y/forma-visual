@@ -1,0 +1,52 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DOM.RENDER · Сканы камней Poly Haven</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#303538;font-family:Inter,system-ui,sans-serif}canvas{display:block}
+#captions{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:space-around;color:#e8ebed;font-size:17px;letter-spacing:.04em;pointer-events:none;text-shadow:0 1px 4px #111}#captions>*{width:22%;text-align:center;background:#202429d9;border-radius:8px;padding:10px}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script></head>
+<body><div id="captions"><div>01 · GRANITE / Boulder 01</div><div>02 · ROCK GREY / Rock 07</div><div>03 · ROCK ROUGH / Rock 09</div><div>04 · ROCK MOSS / Moss Set</div></div>
+<script type="module">
+import * as T from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(1);
+renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.35;renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=T.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene=new T.Scene();scene.background=new T.Color('#323639');
+scene.environment=new T.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),.035).texture;
+const ambient=new T.HemisphereLight(0xd9e1e9,0x534939,1.2);scene.add(ambient);
+const key=new T.DirectionalLight(0xffe8d0,4.0);key.position.set(-4,7,5);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-9;key.shadow.camera.right=9;
+key.shadow.camera.top=6;key.shadow.camera.bottom=-6;key.shadow.bias=-.00035;scene.add(key);
+const fill=new T.DirectionalLight(0xb6d2eb,1.75);fill.position.set(5,4,-5);scene.add(fill);
+const floor=new T.Mesh(new T.PlaneGeometry(100,100),new T.MeshStandardMaterial({color:'#5a5e5d',roughness:.89}));
+floor.rotation.x=-Math.PI/2;floor.position.y=-.045;floor.receiveShadow=true;scene.add(floor);
+const sources=['granite-boulder','rock-grey','rock-rough','rock-moss'],proof=[];
+const loader=new GLTFLoader();
+for(let i=0;i<sources.length;i++){
+ const src=sources[i];
+ const gltf=await loader.loadAsync('/assets/landscape-models/'+src+'.glb');
+ const model=gltf.scene;
+ const b=new T.Box3().setFromObject(model);const size=b.getSize(new T.Vector3());
+ const center=b.getCenter(new T.Vector3());
+ const maxXZ=Math.max(size.x,size.z),scale=1.65/Math.max(.01,maxXZ);
+ model.scale.setScalar(scale);
+ model.position.set((i-1.5)*2.65-center.x*scale,-b.min.y*scale-.065,-center.z*scale);
+ let meshes=0,triangles=0,photoTextures=0;
+ model.traverse(o=>{if(!o.isMesh)return;meshes++;o.castShadow=true;o.receiveShadow=true;
+  const geo=o.geometry;const p=geo?.getAttribute('position');if(geo?.index)triangles+=geo.index.count/3;
+  else triangles+=(p?.count||0)/3;
+  const mats=Array.isArray(o.material)?o.material:[o.material];
+  for(const m of mats)if(m?.map||m?.normalMap)photoTextures++;
+ });
+ scene.add(model);
+ proof.push({source:src,meshes,triangles:Math.round(triangles),photoTextures,
+  size:{x:size.x,y:size.y,z:size.z},scaledWidth:1.65});
+}
+const camera=new T.PerspectiveCamera(35,innerWidth/innerHeight,.05,120);
+camera.position.set(7.5,4.3,15.8);camera.lookAt(0,.45,0);
+renderer.render(scene,camera);
+window.FORMA_ROCK_SCAN_READY=true;window.FORMA_ROCK_SCAN_PROOF=proof;
+</script></body></html>
