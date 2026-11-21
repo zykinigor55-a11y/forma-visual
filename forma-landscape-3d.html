@@ -1444,6 +1444,9 @@ function renderProps(){
  const isSpruce=ref.type==='object'&&o.catalogId==='spruce';
  const isTreeEditor=isPine||isSpruce;
  const isShrub=ref.type==='object'&&catalog(o.catalogId)?.group==='shrubs';
+ const isLight=ref.type==='object'&&catalog(o.catalogId)?.group==='lights';
+ const lightBrightness=Number.isFinite(Number(o.brightness))?Number(o.brightness):1;
+ const lightKelvin=[2200,2700,3000,4000].includes(Number(o.kelvin))?Number(o.kelvin):2700;
  document.body.dataset.mobilePine=String(isTreeEditor);
  $('#mobilePineSelect')?.classList.toggle('active',isTreeEditor);
  $('#pineInspectorShortcut').hidden=!isPine;
@@ -1457,7 +1460,8 @@ function renderProps(){
  ):'';
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
- el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
+ el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
+ (isLight?'<div class="light-physical-inspector"><strong>СВЕТ · РЕАЛЬНЫЙ 3D-КОРПУС</strong><label for="lampBrightness">Яркость <output id="lampBrightnessValue">'+Math.round(lightBrightness*100)+'%</output></label><input type="range" min="0" max="200" step="5" id="lampBrightness" value="'+Math.round(lightBrightness*100)+'"><label for="lampKelvin">Цветовая температура</label><select id="lampKelvin">'+[[2200,'2200 K · янтарный'],[2700,'2700 K · тёплый'],[3000,'3000 K · нейтрально-тёплый'],[4000,'4000 K · нейтральный']].map(([k,n])=>'<option value="'+k+'"'+(lightKelvin===k?' selected':'')+'>'+n+'</option>').join('')+'</select><small>Реальный источник внутри модели. Ночью свет влияет на растения и поверхности. Положение лампы не меняется.</small></div>':'')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
   '<small>Сохранены родные материалы ветвей и хвои.</small>'):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
  $('#applyProps').onclick=()=>{
@@ -1468,6 +1472,20 @@ function renderProps(){
   if(isPine&&(Number(fields.height)<2||Number(fields.height)>40||Number(fields.diameter)<.5||Number(fields.diameter)>30))return status('Для сосны: высота 2–40 м, крона 0,5–30 м.');
   push();Object.assign(o,updated);save();rebuild();renderProps();
  };
+ if(isLight){
+  const bright=el.querySelector('#lampBrightness'),readout=el.querySelector('#lampBrightnessValue');
+  bright.oninput=()=>{if(readout)readout.textContent=bright.value+'%'};
+  bright.onchange=()=>{
+   const v=Math.max(0,Math.min(2,Number(bright.value)/100));
+   if(v===lightBrightness)return;
+   push();o.brightness=v;save();rebuild();renderProps();status('Яркость светильника: '+Math.round(v*100)+'%.');
+  };
+  el.querySelector('#lampKelvin').onchange=e=>{
+   const k=Number(e.target.value);
+   if(![2200,2700,3000,4000].includes(k)||k===lightKelvin)return;
+   push();o.kelvin=k;save();rebuild();renderProps();status('Цветовая температура: '+k+' K.');
+  };
+ }
  if(isPine){el.querySelector('#pineRetryModel')?.addEventListener('click',()=>{
   bundledModelFailures.delete('pine');loadMatureScotsPine();renderProps();
  });}
