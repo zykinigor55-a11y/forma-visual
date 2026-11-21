@@ -10,7 +10,7 @@ from urllib.request import Request,urlopen
 
 OUT=Path('assets/house-pbr')
 SRC={
- 'brick':'brick_wall_003',
+ 'brick':'red_brick',
  'wood':'wooden_planks',
  'stucco':'white_stucco_02',
  'tile':'roof_tiles'
