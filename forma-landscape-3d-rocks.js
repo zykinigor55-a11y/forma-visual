@@ -51,14 +51,18 @@ function dominantRockMesh(cloned,variant=1){
  return {cloned,modelCount:1};
 }
 function modelMeshes(g){
- let count=0,triangles=0,photoMaps=0;
+ let count=0,triangles=0,photoMaps=0,normalMaps=0,roughnessMaps=0,occlusionMaps=0;
  g.traverse(node=>{if(!node.isMesh)return;count++;
   const geometry=node.geometry;
   triangles+=geometry?.index?geometry.index.count/3:(geometry?.attributes?.position?.count||0)/3;
-  for(const mat of Array.isArray(node.material)?node.material:[node.material])
+  for(const mat of Array.isArray(node.material)?node.material:[node.material]){
    if(mat?.map)photoMaps++;
+   if(mat?.normalMap)normalMaps++;
+   if(mat?.roughnessMap)roughnessMaps++;
+   if(mat?.aoMap)occlusionMaps++;
+  }
  });
- return {count,triangles:Math.round(triangles),photoMaps};
+ return {count,triangles:Math.round(triangles),photoMaps,normalMaps,roughnessMaps,occlusionMaps};
 }
 export function createPhotogrammetryBoulder(T,source,instance){
  if(!source)return null;
@@ -68,7 +72,7 @@ export function createPhotogrammetryBoulder(T,source,instance){
  rock.userData.geology=profile.name;
  rock.userData.scannedCC0=true;
  rock.userData.scanSource=ROCK_SCAN_SOURCES[instance.catalogId];
- rock.userData.modelVersion='real-boulders-photo-pbr-v2';
+ rock.userData.modelVersion='real-boulders-source-pbr-v4';
  rock.name='FORMA-PBR-BOULDER-'+instance.catalogId;
  const scan=source.clone(true);
  // Select exactly one scanned natural stone from the multi-piece limestone
@@ -88,30 +92,37 @@ export function createPhotogrammetryBoulder(T,source,instance){
  // saved rotation on the wrapper group remain unchanged.
  scan.rotation.y=variant===1?0:variant===2?.48:variant===3?1.11:1.71;
  scan.updateMatrixWorld(true);
- let sharedMaterials=0;
+ // Preserve genuine scan albedo: do not multiply its photographic
+ // mineral colours by the catalogue tint. Keep source UV, normal, roughness
+ // and occlusion maps untouched. The palette tint is only for the fallback.
+ const materialCache=new Map();
+ const keepSourcePBR=material=>{
+  if(!material?.isMaterial)return material;
+  if(materialCache.has(material))return materialCache.get(material);
+  const copy=material.clone();
+  copy.metalness=0;
+  // Unmapped stone should remain matte; when roughnessMap exists, respect
+  // the scanner's detailed microsurface instead of overriding it.
+  if(!copy.roughnessMap){
+   const authored=Number(copy.roughness);
+   copy.roughness=Number.isFinite(authored)?Math.max(.82,Math.min(1,authored)):profile.roughness;
+  }
+  if(!Number.isFinite(copy.envMapIntensity))copy.envMapIntensity=1;
+  copy.needsUpdate=true;
+  materialCache.set(material,copy);
+  return copy;
+ };
  scan.traverse(node=>{
   if(!node.isMesh)return;
   node.castShadow=true;node.receiveShadow=true;
-  const sourceMaterials=Array.isArray(node.material)?node.material:[node.material];
-  const materials=sourceMaterials.map(material=>{
-   if(!material?.isMaterial)return material;
-   const copy=material.clone();
-   if(copy.color)copy.color.multiply(new T.Color(profile.tint));
-   copy.roughness=Math.max(profile.roughness,Number(copy.roughness)||0);
-   copy.metalness=0;
-   copy.envMapIntensity=.65;
-   copy.needsUpdate=true;
-   sharedMaterials++;
-   return copy;
-  });
-  node.material=Array.isArray(node.material)?materials:materials[0];
+  node.material=Array.isArray(node.material)?node.material.map(keepSourcePBR):keepSourcePBR(node.material);
  });
  rock.add(scan);
  rock.userData.measuredDiameter=diameter;
  rock.userData.measuredHeight=height;
  rock.userData.burial=burial;
  rock.userData.variant=variant;
- rock.userData.scanStats={...modelMeshes(scan),materials:sharedMaterials};
+ rock.userData.scanStats={...modelMeshes(scan),materials:materialCache.size};
  return rock;
 }
 function seedHash(str){
