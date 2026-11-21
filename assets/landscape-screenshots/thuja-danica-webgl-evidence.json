@@ -1,0 +1,25 @@
+{
+  "source": "REAL DOM.RENDER editor launched from active GitHub branch in Chromium via localhost",
+  "appUrl": "http://127.0.0.1:3000/forma-landscape-3d.html",
+  "notAStandaloneGLBRender": true,
+  "screenshotFile": "assets/landscape-screenshots/thuja-danica-from-real-editor.png",
+  "species": "thuja-globe",
+  "modelLoaded": true,
+  "diagnostics": [
+    {
+      "species": "thuja-globe",
+      "model": "/assets/landscape-models/thuja-danica-forma-original.glb",
+      "status": "glb",
+      "height": 0.89,
+      "diameter": 1.02
+    }
+  ],
+  "editorOpened": true,
+  "webgl": {
+    "webgl": true,
+    "width": 1600,
+    "height": 880
+  },
+  "errors": [],
+  "timestamp": "2026-11-21T16:00:30.156Z"
+}
