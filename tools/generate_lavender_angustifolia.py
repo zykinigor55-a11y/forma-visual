@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """FORMA original flowering Lavandula angustifolia, physically-scaled GLB.
-v2: Three independently-authored crown habits, denser silver-leaf cushions and organic peduncles.
+v3 optimized: precise botanically-shaped silhouettes with reduced polygon density and unneeded UVs.
 Procedural geometry and PBR materials; no copied images or third-party meshes.
 """
 import json, math, random, sys, hashlib, struct
@@ -30,13 +30,13 @@ STEMS={'stem':(109,121,99),'wood':(74,68,58),'flower-stem':(101,117,100)}
 COLORS={**FOLIAGE,**FLORAL,**STEMS}
 
 class Batch:
- def __init__(self):self.vertices=[];self.faces=[];self.uvs=[]
+ def __init__(self):self.vertices=[];self.faces=[]
  def polygon(self,verts,triangles=None):
   n=len(self.vertices)
-  self.vertices.extend([np.asarray(v).tolist() for v in verts]);self.uvs.extend([(0,0)]*len(verts))
+  self.vertices.extend([np.asarray(v).tolist() for v in verts])
   if triangles is None:triangles=[(0,i,i+1) for i in range(1,len(verts)-1)]
   self.faces.extend([(n+a,n+b,n+c) for a,b,c in triangles])
- def tube(self,p0,p1,r0,r1,sides=5):
+ def tube(self,p0,p1,r0,r1,sides=4):
   a=np.asarray(p0,dtype=float);b=np.asarray(p1,dtype=float)
   axis=b-a;d=float(np.linalg.norm(axis))
   if d<1e-6:return
@@ -63,10 +63,8 @@ class Batch:
   p=np.asarray(root,float)
   tip=p+d*length+bend*length*.065
   shoulder=p+d*length*.36
-  end=p+d*length*.77+bend*length*.046
-  verts=[p,shoulder-x*width*.50,shoulder+bend*width*.12,shoulder+x*width*.50,
-         end-x*width*.30,end+x*width*.30,tip]
-  tri=[(0,1,2),(0,2,3),(1,4,2),(2,4,5),(2,5,3),(4,6,5)]
+  verts=[p,shoulder-x*width*.52,shoulder+bend*width*.12,shoulder+x*width*.52,tip]
+  tri=[(0,1,2),(0,2,3),(1,4,2),(2,4,3)]
   self.polygon(verts,tri)
  def bud(self,center,stem_axis,height,rad,seed):
   """Eight-triangle tapered five-sepal calyx, not a sphere or dense cylinder."""
@@ -74,12 +72,12 @@ class Batch:
   x=unit(np.cross(d,UP if abs(d[1])<.9 else np.array([1.,0,0])))
   y=unit(np.cross(d,x))
   verts=[p-d*height*.34]
-  for k in range(5):
-   a=2*PI*k/5+seed*.19
+  for k in range(4):
+   a=2*PI*k/4+seed*.19
    verts.append(p+rad*(x*math.cos(a)+y*math.sin(a)))
   verts.append(p+d*height*.80)
   tri=[]
-  for k in range(5):tri.extend([(0,1+(k+1)%5,1+k),(1+k,1+(k+1)%5,6)])
+  for k in range(4):tri.extend([(0,1+(k+1)%4,1+k),(1+k,1+(k+1)%4,5)])
   self.polygon(verts,tri)
  def petals(self,p,axis,length,rad):
   p=np.asarray(p,float);d=unit(axis)
@@ -87,15 +85,14 @@ class Batch:
   y=unit(np.cross(d,x))
   end=p+d*length
   tri=[];verts=[]
-  # Two-lipped lavender corolla, 2 upper lobes, 3 lower lobes.
+  # Two-lipped five-lobed lavender corolla retained with one shaped triangle per petal.
   for n,phi in enumerate((0,1.1,2.4,3.7,5.1)):
    ang=phi+.3;vec=x*math.cos(ang)+y*math.sin(ang)
    side=unit(np.cross(d,vec))
    center=end+vec*(rad*.42)
    k=len(verts)
-   verts.extend([p+d*length*.32,center-side*rad*.62,
-      center+vec*rad*1.04,center+side*rad*.62])
-   tri.extend([(k,k+1,k+2),(k,k+2,k+3)])
+   verts.extend([p+d*length*.32,center+vec*rad*1.04,center+side*rad*.78])
+   tri.append((k,k+1,k+2))
   self.polygon(verts,tri)
 
 def unit(a):
@@ -170,7 +167,7 @@ def build_form(form,index):
   # Small textured lavender sprig, rather than radial disconnected star leaves:
   # an inward woody connection with paired leaves staggered along it.
   inner=centre-outward*rr.uniform(.012,.023)
-  mats['stem'].tube(inner,centre,.00075,.00043,sides=4)
+  mats['stem'].tube(inner,centre,.00075,.00043,sides=3)
   for q in range(nLeaves):
    alpha=PI*q + .45*(q//2) + rr.uniform(-.36,.36)
    along=outward*(q/max(1,nLeaves-1))*.009
@@ -248,7 +245,7 @@ def main():
      baseColorFactor=[*color,255],metallicFactor=0,roughnessFactor=.86 if name in FLORAL else .94,
      doubleSided=name not in STEMS)
    mesh=trimesh.Trimesh(vertices=np.array(batch.vertices,dtype=np.float32),faces=np.array(batch.faces,dtype=np.int32),process=False)
-   mesh.visual=TextureVisuals(uv=np.array(batch.uvs,dtype=np.float32),material=material)
+   mesh.visual=TextureVisuals(material=material) # no UV: materials are solid PBR colours
    scene.add_geometry(mesh,geom_name=form+'-'+name,node_name=form+'-'+name,parent_node_name=form)
    tris+=len(batch.faces);materials+=1
   stats[form]={'width':cfg['width'],'height':cfg['height'],'depth':cfg['depth'],'flowerStems':cfg['stems'],'foliageStems':cfg['leafBranches'],'foliageTufts':cfg['tufts'],'triangles':tris}
@@ -257,7 +254,7 @@ def main():
  glen=struct.unpack_from('<I',data,12)[0];gltf=json.loads(data[20:20+glen])
  names={n.get('name') for n in gltf['nodes']}
  assert set(stats)<=names
- doc={'species':'Lavandula angustifolia','version':'2.2 FORMA original dense mature silver cushion with staggered lavender flower spikes',
+ doc={'species':'Lavandula angustifolia','version':'3.0 FORMA optimized PBR geometry: same size and count of real leaves and floral stems, fewer polygons, no unused UVs',
       'modelPath':'assets/landscape-models/lavender-angustifolia-forma-original.glb',
       'sourceCode':'tools/generate_lavender_angustifolia.py',
       'season':'summer flowering','license':'Original FORMA-authored mesh and procedural geometry; no copied external assets',
