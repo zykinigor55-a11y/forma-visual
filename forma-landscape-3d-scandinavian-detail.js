@@ -5,10 +5,12 @@
  * Existing 2D building, footprint, roof and fenestration are immutable.
  */
 export const SCANDI_DETAIL=Object.freeze({
- mainWood:'#CCBDA5',accentWood:'#80725E',
+ // Two distinct real vertical timber finishes: silver-weathered ash-grey
+ // and deeply smoked graphite. Never replace the siding with stucco.
+ mainWood:'#919897',accentWood:'#50585B',
  boardWidth:.115,boardPitch:.132,boardDepth:.020,ventilationCavity:.026,
  entryRise:.48,stepRiser:.16,stepGoing:.32,landingDepth:1.24,
- entryWidth:1.72,vergeMetal:'#40494C'
+ entryWidth:1.72,vergeMetal:'#333B3F',windowFrame:'#222A2D'
 });
 export function scandiEntranceBand(frontOpenings=[],width=8){
  const door=frontOpenings.find(o=>o.kind==='door');
@@ -20,6 +22,37 @@ export function scandiEntranceBand(frontOpenings=[],width=8){
 }
 function finishMaterial(T,color){
  return new T.MeshStandardMaterial({color,roughness:.83,metalness:0});
+}
+// The lightweight, self-hosted 1K Poly Haven timber normal / roughness
+// photographs add real fibre relief without turning the silver-grey
+// architectural finish brown (diffuse from source is intentionally unused).
+// Cached maps are shared by both grey wood finishes and across houses.
+const timberTextureCache=new Map();
+function timberTexture(T,channel){
+ if(timberTextureCache.has(channel))return timberTextureCache.get(channel);
+ const filename='/assets/house-pbr/wood-'+channel+'-1k.jpg';
+ const tex=new T.TextureLoader().load(filename,()=>{
+  if(typeof window!=='undefined')
+   window.dispatchEvent(new Event('forma-house-pbr-ready'));
+ },undefined,()=>{});
+ tex.wrapS=tex.wrapT=T.RepeatWrapping;
+ tex.anisotropy=8;
+ // The photographed source is a plank floor: align fibre grain to +Y
+ // for real upright wall boards, not horizontal wood scratches.
+ tex.center.set(.5,.5);
+ tex.rotation=-Math.PI/2;
+ tex.needsUpdate=true;
+ timberTextureCache.set(channel,tex);
+ return tex;
+}
+export function scandiTimberMaterial(T,color){
+ const mat=finishMaterial(T,color);
+ mat.normalMap=timberTexture(T,'nor_gl');
+ mat.normalScale=new T.Vector2(.34,.34);
+ mat.roughnessMap=timberTexture(T,'rough');
+ mat.roughness=.94;
+ mat.userData.scandiPhotographedTimberNormal=true;
+ return mat;
 }
 function attach(g,T,geom,material,x,y,z,part){
  const m=new T.Mesh(geom,material);m.position.set(x,y,z);
@@ -36,11 +69,18 @@ function segmentBoards(T,g,segments,material,part,z){
  const geometry=new T.BoxGeometry(1,1,1);
  const mesh=new T.InstancedMesh(geometry,material,segments.length);
  const matrix=new T.Matrix4(),at=new T.Vector3(),scale=new T.Vector3(),rotate=new T.Quaternion();
+ const boardColor=new T.Color();
  segments.forEach(([x,y,w,h],i)=>{
   at.set(x,y,z);scale.set(w,h,SCANDI_DETAIL.boardDepth);
   matrix.compose(at,rotate,scale);
   mesh.setMatrixAt(i,matrix);
+  // Deterministic 6% light/dark wood grain variation for each real board.
+  // Separate instance colors remove the identical cloned-plank appearance.
+  const seed=Math.sin(x*127.173+y*.371+i*.001)*43758.5453;
+  const light=.945+((seed-Math.floor(seed))*.105);
+  mesh.setColorAt(i,boardColor.setRGB(light,light,light));
  });
+ mesh.instanceColor.needsUpdate=true;
  mesh.instanceMatrix.needsUpdate=true;
  mesh.castShadow=true;mesh.receiveShadow=true;
  mesh.frustumCulled=false; // thin shingles beyond a single instance bound
@@ -58,8 +98,8 @@ function splitAt(xlo,xhi,left,right){
 export function addScandinavianVerticalCladding(T,facade,{
  span,patches,frontDoor=null,front=false,mainMaterial=null,accentMaterial=null
 }={}){
- const main=mainMaterial||finishMaterial(T,SCANDI_DETAIL.mainWood);
- const accent=accentMaterial||finishMaterial(T,SCANDI_DETAIL.accentWood);
+ const main=mainMaterial||scandiTimberMaterial(T,SCANDI_DETAIL.mainWood);
+ const accent=accentMaterial||scandiTimberMaterial(T,SCANDI_DETAIL.accentWood);
  const band=front?scandiEntranceBand(frontDoor?[frontDoor]:[],span):null;
  const all=[[],[]],pitch=SCANDI_DETAIL.boardPitch;
  const count=Math.min(500,Math.ceil(span/pitch));
@@ -89,7 +129,7 @@ export function addScandinavianVerticalCladding(T,facade,{
  segmentBoards(T,facade,all[0],main,'scandi-vertical-cladding-main',.135);
  segmentBoards(T,facade,all[1],accent,'scandi-vertical-cladding-accent',.135);
  // Subtle ventilation/drainage starter profile ends above masonry plinth.
- const starter=finishMaterial(T,'#555B59');
+ const starter=finishMaterial(T,'#41494B');
  addBox(facade,T,span,.018,.024,0,.498,.154,starter,'rainscreen-ventilated-starter');
  facade.userData.scandiCladding={pitch:actualPitch,boardDepth:SCANDI_DETAIL.boardDepth,
   nominalVentilatedCavity:SCANDI_DETAIL.ventilationCavity,
@@ -99,7 +139,7 @@ export function addScandinavianVerticalCladding(T,facade,{
  return facade.userData.scandiCladding;
 }
 export function addScandiCornerDetails(T,group,{width,depth,bodyHeight}={}){
- const casing=finishMaterial(T,'#535B58');
+ const casing=finishMaterial(T,'#343D40');
  casing.metalness=.16;
  for(const sx of [-1,1])for(const sz of [-1,1]){
   // Two mitered vertical returns close the ventilated wood facade at
@@ -117,8 +157,8 @@ export function addScandiGableCladding(T,group,{
 }={}){
  const half=(width+overhang*2)*.5,pitch=SCANDI_DETAIL.boardPitch;
  const count=Math.min(450,Math.ceil(width/pitch));
- const plank=finishMaterial(T,SCANDI_DETAIL.mainWood);
- const backer=finishMaterial(T,'#BFB19D');
+ const plank=scandiTimberMaterial(T,SCANDI_DETAIL.mainWood);
+ const backer=finishMaterial(T,'#4E5658');
  for(const side of [-1,1]){
   const v=[];
   for(let i=0;i<count;i++){
@@ -152,7 +192,7 @@ export function addScandiRoofEdgeDetails(T,group,{
  const half=(width+overhang*2)*.5,edgeZ=depth*.5+overhang;
  const metal=finishMaterial(T,SCANDI_DETAIL.vergeMetal);
  metal.metalness=.54;metal.roughness=.42;
- const soffit=finishMaterial(T,'#756F64'),flashing=finishMaterial(T,'#697274');
+ const soffit=finishMaterial(T,'#565F60'),flashing=finishMaterial(T,'#626C70');
  flashing.metalness=.66;flashing.roughness=.38;
  const eaveY=bodyHeight+.075,peakY=bodyHeight+rise+.075;
  for(const end of [-1,1]){
@@ -195,9 +235,9 @@ export function addScandiEntrance(T,group,{door,width,depth}={}){
  if(!door)return null;
  const plan=scandiEntryStairSpec(door,width,depth);
  const x=plan.x,z=plan.facade,w=plan.stepWidth;
- const wood=finishMaterial(T,'#9D8C73'),structure=finishMaterial(T,'#41494A');
+ const wood=finishMaterial(T,'#858D8B'),structure=finishMaterial(T,'#41494A');
  const trim=finishMaterial(T,'#303A3D'),concrete=finishMaterial(T,'#7C807B');
- const tread=finishMaterial(T,'#B9A88E');
+ const tread=finishMaterial(T,'#989E9B');
  // Top landing level exactly +0.480 m, with a continuous supporting
  // structure down to grade. A 1.24m deep platform allows the door to open.
  const landingStart=.075,landingEnd=landingStart+plan.landingDepth;
