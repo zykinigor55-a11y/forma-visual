@@ -10,6 +10,8 @@ const ROCKS=['granite-boulder','limestone-boulder','slate-boulder','sandstone-bo
 test('exactly four stable geological catalog IDs mapped to real local CC0 scans',()=>{
  assert.deepEqual(CATALOG.filter(x=>x.group==='boulders').map(x=>x.id),ROCKS);
  assert.deepEqual(Object.keys(ROCK_SCAN_SOURCES),ROCKS);
+ assert.equal(ROCK_SCAN_SOURCES['sandstone-boulder'],'assets/landscape-models/sandstone-boulder.glb');
+ assert.equal(ROCK_GEOLOGICAL_PROFILES['sandstone-boulder'].reference,'namaqualand_boulder_05');
  assert.equal(Object.keys(ROCK_GEOLOGICAL_PROFILES).length,4);
  for(const id of ROCKS){
   assert.equal(byId(id).group,'boulders');
