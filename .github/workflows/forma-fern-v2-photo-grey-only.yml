@@ -33,7 +33,7 @@ jobs:
           PORT=3000 HOST=127.0.0.1 node server.mjs > /tmp/forma-server-grey.log 2>&1 &
           for i in $(seq 1 45); do if curl -fsS http://127.0.0.1:3000/forma-fern-v2-grey-studio.html >/dev/null; then break; fi; sleep 1; done
           curl -fsSI http://127.0.0.1:3000/forma-fern-v2-grey-studio.html
-          curl -fsSI http://127.0.0.1:3000/assets/landscape-models/fern-sempervirens-forma-original.glb
+          curl -fsSI http://127.0.0.1:3000/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb
       - name: Render real GLB close in studio light on grey background
         run: node tools/capture_fern_v2_grey_close.mjs
       - name: Archive screenshots
