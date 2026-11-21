@@ -36,7 +36,7 @@ test('all eleven housings are real independently articulated PBR Three.js geomet
  for(const id of ids)assert.ok(fixtures.includes("id==='"+id+"'"),'missing geometry: '+id);
  assert.match(fixtures,/g\.userData\.fixtureId=id/);
  assert.match(fixtures,/photographGardenLightPreviews\(T,ids\)/);
- assert.match(fixtures,/createProfessionalGardenLight\(T,\{catalogId:id,height:spec\.height\}/);
+ assert.match(fixtures,/createProfessionalGardenLight\(T,\{catalogId:id,height:spec\.height,brightness:1,kelvin:2700\}/);
  assert.match(editor,/photographGardenLightPreviews\(THREE,choices\.light\.map/);
  assert.match(editor,/gardenLightingSpec\[state\.placing\]\?\.height/);
  assert.match(editor,/if\(t==='light'\)refreshGardenLightCatalogPreviews\(\)/);
@@ -102,7 +102,7 @@ test('seven exact user-uploaded photographs supersede previous manufacturer phot
  assert.match(source,/horizontal-engraved-optic-grid/,'cylindrical cap has real prismatic geometry');
  assert.match(source,/external-visible-routed-PVC-cable/,'spike-spot cable is a curved 3D model');
  assert.match(source,/side-mounted-adjustable-head/);
- assert.match(source,/uniform-seamless-opal-polyethylene-ball/);
+ assert.match(file('forma-landscape-globe-optics.js'),/uniform-seamless-opal-polyethylene-ball/);
  assert.match(file('forma-landscape-3d-luminaires-reference.js'),/createUserReferenceGardenLuminaire\(T,instance,\{night\}\)/);
  assert.match(editor,/id="lampGlobeSize"/);
  assert.match(editor,/o.variant=variant;o.diameter=sizes\[variant\];o.height=sizes\[variant\]/);
