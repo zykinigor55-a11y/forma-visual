@@ -509,6 +509,12 @@ export function entranceDetailPlan(style,frontOpenings,width,depth){
  }));
 }
 function addEntranceDetails(g,T,{style,width,depth,frontOpenings}){
+ if(style==='scandi'){
+  // A 480mm entry has 3 x 160mm risers and 320mm goings. Build genuine
+  // supported treads and a deep landing in front of the ORIGINAL door.
+  addScandiEntrance(T,g,{door:frontOpenings.find(o=>o.kind==='door'),width,depth});
+  return;
+ }
  const plans=entranceDetailPlan(style,frontOpenings,width,depth);
  const timber=mat(T,'#876C50',.85,.02),masonry=mat(T,'#999991',.94,.015),joint=mat(T,'#414644',.80,.04);
  for(const step of plans){
@@ -751,6 +757,16 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  }):roofMaterial;
  const roofBuilding=isGreenhouse?{...b,roof:'gable'}:isCarport?{...b,roof:'flat'}:b;
  roofGeometry(g,THREE,roofBuilding,w,d,0,bodyHeight,greenhouseRoof,preset.roofFinish);
+ if(style==='scandi'&&b.type==='house'&&(b.roof||preset.roof)==='gable'){
+  // The original roof stays untouched. Technical flashings and timber
+  // gable siding follow its existing ridge, slopes and measured overhangs.
+  const overhang=Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
+  const rise=Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
+  addScandiGableCladding(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
+  addScandiRoofEdgeDetails(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
+  g.userData.scandiEnvelope={facadeMaterials:['vertical-natural-timber','vertical-smoked-timber'],
+   roofGableWindBoard:true,vergeMetalFlashing:true};
+ }
  if(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe'){
   addFacadeFinish(g,THREE,{width:w,depth:d,height:bodyHeight,roof:b.roof||preset.roof,style});
   addEntranceDetails(g,THREE,{style,width:w,depth:d,frontOpenings:g.userData.facadeSchedule?.front||[]});
