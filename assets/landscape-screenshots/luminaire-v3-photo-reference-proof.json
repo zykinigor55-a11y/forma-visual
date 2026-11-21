@@ -5,9 +5,9 @@
     {
       "id": "bollard",
       "file": "assets/landscape-screenshots/luminaire-v3-bollard-real-render.png",
-      "size": 76344,
-      "partCount": 8,
-      "version": "real-photo-reference-v3"
+      "size": 103051,
+      "partCount": 51,
+      "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "ground",
@@ -19,16 +19,16 @@
     {
       "id": "spot",
       "file": "assets/landscape-screenshots/luminaire-v3-spot-real-render.png",
-      "size": 123658,
-      "partCount": 8,
-      "version": "real-photo-reference-v3"
+      "size": 36840,
+      "partCount": 6,
+      "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "low-post",
       "file": "assets/landscape-screenshots/luminaire-v3-low-post-real-render.png",
-      "size": 64547,
-      "partCount": 13,
-      "version": "real-photo-reference-v3"
+      "size": 66875,
+      "partCount": 14,
+      "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "deck-light",
@@ -54,31 +54,31 @@
     {
       "id": "square-bollard",
       "file": "assets/landscape-screenshots/luminaire-v3-square-bollard-real-render.png",
-      "size": 226142,
-      "partCount": 12,
-      "version": "real-photo-reference-v3"
+      "size": 49388,
+      "partCount": 28,
+      "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "garden-lantern",
       "file": "assets/landscape-screenshots/luminaire-v3-garden-lantern-real-render.png",
-      "size": 101976,
+      "size": 99188,
       "partCount": 21,
-      "version": "real-photo-reference-v3"
+      "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "spike-spot",
       "file": "assets/landscape-screenshots/luminaire-v3-spike-spot-real-render.png",
-      "size": 85314,
-      "partCount": 12,
-      "version": "real-photo-reference-v3"
+      "size": 48589,
+      "partCount": 8,
+      "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "globe",
       "file": "assets/landscape-screenshots/luminaire-v3-globe-real-render.png",
-      "size": 75051,
-      "partCount": 3,
-      "version": "real-photo-reference-v3"
+      "size": 71824,
+      "partCount": 4,
+      "version": "user-uploaded-7-photos-v4"
     }
   ],
-  "timestamp": "2026-11-21T21:00:00.971Z"
+  "timestamp": "2026-11-21T21:35:10.621Z"
 }
