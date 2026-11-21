@@ -1,0 +1,122 @@
+name: FORMA - real CC0 photo leaf texture on original Buxus GLB
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/boxwood-v3-photo-uv.patch.xz.b64'
+      - '.github/workflows/forma-boxwood-v3-photo-pbr.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-boxwood-v3-photo-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  source-photo-material-and-glb:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - name: Checkout user's real DOM.RENDER project
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deterministic GLB and photographic PBR dependencies
+        run: python -m pip install --quiet 'numpy==2.3.5' 'trimesh==4.11.1' 'pillow==12.3.0' 'scipy==1.16.3'
+      - name: Restore real UV-mapped CC0 photo material generator
+        run: |
+          base64 --decode tools/boxwood-v3-photo-uv.patch.xz.b64 | xz --decompress >/tmp/boxwood-photo-texture.patch
+          (cd tools && patch --batch -p1 < /tmp/boxwood-photo-texture.patch)
+          python -m py_compile tools/generate_boxwood_sempervirens.py
+      - name: Download ORIGINAL public-domain botanical photograph
+        run: |
+          set -euo pipefail
+          URL='https://upload.wikimedia.org/wikipedia/commons/d/d7/Buxus_sempervirens-1.jpg'
+          curl --retry 4 --retry-delay 4 --connect-timeout 15 --max-time 110 --location --fail --silent --show-error \
+            --user-agent 'FORMA VISUAL original botanical material research (Wikimedia Commons public-domain photograph)' \
+            "$URL" -o /tmp/buxus-cc0-leaf-photo.jpg || \
+            curl --retry 3 --retry-delay 6 --location --fail --silent --show-error \
+              'https://commons.wikimedia.org/wiki/Special:Redirect/file/Buxus_sempervirens-1.jpg' \
+              -o /tmp/buxus-cc0-leaf-photo.jpg
+          python - <<'PY'
+          from PIL import Image
+          f='/tmp/buxus-cc0-leaf-photo.jpg'
+          im=Image.open(f);im.verify()
+          im=Image.open(f)
+          assert im.size==(2589,1714),('Unexpected image: do not substitute stock photo',im.size)
+          print('Public domain Buxus botanical photograph verified',im.size)
+          PY
+          echo 'FORMA_BOXWOOD_CC0_PHOTO=/tmp/buxus-cc0-leaf-photo.jpg' >> "$GITHUB_ENV"
+      - name: Bake REAL PHOTO albedo and normal into three actual GLB crowns
+        run: |
+          python tools/generate_boxwood_sempervirens.py assets/landscape-models/boxwood-sempervirens-forma-original.glb assets/landscape-models/boxwood-sempervirens-forma-original.source.json
+          python - <<'PY'
+          import importlib.util
+          spec=importlib.util.spec_from_file_location('buxus','tools/generate_boxwood_sempervirens.py')
+          mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
+          albedo,normal,meta=mod.build_cc0_photo_texture('/tmp/buxus-cc0-leaf-photo.jpg')
+          albedo.save('assets/landscape-models/boxwood-leaf-photo-512-albedo.png')
+          normal.save('assets/landscape-models/boxwood-leaf-photo-512-normal.png')
+          print('Source photo patch',meta['sampledLeafPhotoPatch'])
+          PY
+          cp /tmp/buxus-cc0-leaf-photo.jpg assets/landscape-models/boxwood-original-source-PUBLIC-DOMAIN.jpg
+          cat > assets/landscape-models/boxwood-photo-ATTRIBUTION.txt <<'EOF'
+          FORMA VISUAL — Buxus sempervirens v3 photographic leaf material
+          Original photo: Buxus sempervirens-1.jpg
+          Photographer: Karduelis; public domain; dated 30 April 2005
+          Source: https://commons.wikimedia.org/wiki/File:Buxus_sempervirens-1.jpg
+          Original direct image: https://upload.wikimedia.org/wikipedia/commons/d/d7/Buxus_sempervirens-1.jpg
+          Photo was colour-corrected and used as a 512x512 leaf epidermis texture,
+          with derived tangent-space normal map. Original crown geometry by FORMA.
+          File is redistributed under public domain declaration of photographer.
+          EOF
+      - name: Verify photographed GLB and update SHA-locked model registry
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,struct,hashlib,re
+          p=Path('assets/landscape-models/boxwood-sempervirens-forma-original.glb')
+          b=p.read_bytes()
+          meta=json.loads(Path('assets/landscape-models/boxwood-sempervirens-forma-original.source.json').read_text())
+          assert b[:4]==b'glTF' and struct.unpack_from('<I',b,8)[0]==len(b)
+          sha=hashlib.sha256(b).hexdigest()
+          assert sha==meta['sha256']
+          assert meta['triangles']==720940 and meta['meshCount']==30
+          assert meta['photoTexture']['sourceDimensions']==[2589,1714]
+          assert len(meta['photoTexture']['sourceSHA256'])==64
+          doc=json.loads(b[20:20+struct.unpack_from('<I',b,12)[0]])
+          assert len(doc['images'])==16
+          assert sum('TEXCOORD_0' in prim.get('attributes',{}) for mesh in doc['meshes'] for prim in mesh['primitives'])==24
+          for mat in doc['materials']:
+            if 'CC0-photo-' in mat['name']:
+              assert 'baseColorTexture' in mat['pbrMetallicRoughness']
+              assert 'normalTexture' in mat
+          r=Path('forma-landscape-3d-shrub-models.js')
+          s=r.read_text()
+          a=s.index(' boxwood:Object.freeze({')
+          z=s.index('\n }),',a)
+          block=s[a:z]
+          new,n=re.subn(r"sha256:'[0-9a-f]{64}'","sha256:'"+sha+"'",block)
+          assert n==1
+          new=re.sub("fidelity:'[^']*'","fidelity:'Buxus premium v3: REAL PUBLIC-DOMAIN photographed leaf albedo + tangent-space normal map, UV-mapped onto 89300 curved 3D leaves; original three true-scale crowns, year-round evergreen'",new)
+          r.write_text(s[:a]+new+s[z:])
+          print('Verified real photographic PBR leaf model',sha,len(b))
+          PY
+      - name: Run photographed material and three-crown editor tests
+        run: |
+          node --test tests/landscape-boxwood-cc0-photo-material.test.mjs tests/landscape-boxwood-original-glb.test.mjs tests/landscape-shrub-editor-interaction.test.mjs tests/landscape-thuja-danica-original.test.mjs
+      - name: Commit self-contained GLB and licensed leaf texture files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/generate_boxwood_sempervirens.py forma-landscape-3d-shrub-models.js
+          git add assets/landscape-models/boxwood-sempervirens-forma-original.glb assets/landscape-models/boxwood-sempervirens-forma-original.source.json
+          git add assets/landscape-models/boxwood-leaf-photo-512-albedo.png assets/landscape-models/boxwood-leaf-photo-512-normal.png
+          git add assets/landscape-models/boxwood-original-source-PUBLIC-DOMAIN.jpg assets/landscape-models/boxwood-photo-ATTRIBUTION.txt
+          if git diff --cached --quiet; then echo 'Already saved'; exit 0; fi
+          git commit -m 'feat(boxwood): apply real CC0 photographed leaf albedo and micro-normal to original three GLB crowns'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
