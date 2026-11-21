@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FORMA · Poly Haven Fern 02 · real individual PBR mesh viewer</title>
+<style>
+*{box-sizing:border-box}body,html{margin:0;width:100%;height:100%;overflow:hidden;background:#858789}
+canvas{display:block;width:100%;height:100%}#error{position:absolute;inset:12px auto auto 12px;background:#8b2a2a;color:white;padding:16px;font:14px system-ui;display:none}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head><body><div id="error"></div>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const parts={01:'fern_02_a',02:'fern_02_b',03:'fern_02_c',04:'fern_02_d'};
+const part=new URLSearchParams(location.search).get('part')||'01';
+try {
+ if(!parts[part])throw Error('Unknown original fern mesh '+part);
+ const scene=new THREE.Scene();
+ scene.background=new THREE.Color('#858789');
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true});
+ renderer.setPixelRatio(1);renderer.setSize(innerWidth,innerHeight);
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;
+ document.body.append(renderer.domElement);
+ const ambient=new THREE.HemisphereLight(0xffffff,0x555c56,2.4);scene.add(ambient);
+ const key=new THREE.DirectionalLight(0xfffbef,3.2);key.position.set(2,4,3);scene.add(key);
+ const fill=new THREE.DirectionalLight(0xe1edff,1.05);fill.position.set(-2,2,1.5);scene.add(fill);
+ const rim=new THREE.DirectionalLight(0xffffff,1.4);rim.position.set(-1.5,3,-3);scene.add(rim);
+ const data=await new GLTFLoader().loadAsync('/assets/landscape-models/polyhaven-fern-02-source.glb');
+ const src=data.scene.getObjectByName(parts[part]);
+ if(!src||!src.isMesh)throw Error('Real mesh not found: '+parts[part]);
+ const model=src.clone(true);scene.add(model);
+ model.updateMatrixWorld(true);
+ const box=new THREE.Box3().setFromObject(model), size=box.getSize(new THREE.Vector3()),middle=box.getCenter(new THREE.Vector3());
+ model.position.x-=middle.x;model.position.y-=box.min.y;model.position.z-=middle.z;
+ model.updateMatrixWorld(true);
+ const camera=new THREE.PerspectiveCamera(32,innerWidth/innerHeight,.015,30);
+ const target=new THREE.Vector3(0,size.y*.40,0);
+ const angle=32*Math.PI/180;
+ const fit=Math.max(size.x,size.z,size.y*1.7)/(2*Math.tan(angle/2))*1.38;
+ camera.position.copy(target).add(new THREE.Vector3(.85,.72,1.15).normalize().multiplyScalar(fit));
+ camera.lookAt(target);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(8,8),new THREE.MeshStandardMaterial({color:'#87898b',roughness:1}));
+ ground.rotation.x=-Math.PI/2;ground.position.y=-.018;scene.add(ground);
+ const c=document.createElement('canvas');c.width=256;c.height=256;
+ const ctx=c.getContext('2d'),g=ctx.createRadialGradient(128,128,1,128,128,125);
+ g.addColorStop(0,'rgba(20,24,24,.33)');g.addColorStop(.45,'rgba(20,24,24,.17)');g.addColorStop(1,'rgba(20,24,24,0)');
+ ctx.fillStyle=g;ctx.fillRect(0,0,256,256);
+ const sh=new THREE.Mesh(new THREE.PlaneGeometry(size.x*1.4,size.z*1.4),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));
+ sh.rotation.x=-Math.PI/2;sh.position.y=-.009;scene.add(sh);
+ renderer.render(scene,camera);
+ await new Promise(resolve=>requestAnimationFrame(()=>{renderer.render(scene,camera);resolve()}));
+ let textured=0,partsCount=0;
+ model.traverse(n=>{if(n.isMesh){partsCount++;const materials=Array.isArray(n.material)?n.material:[n.material];for(const m of materials){if(m?.map)textured++}}});
+ window.__FORMA_POLYHAVEN_FERN_READY__={part,name:parts[part],source:'/assets/landscape-models/polyhaven-fern-02-source.glb',width:size.x,height:size.y,depth:size.z,meshCount:partsCount,texturedMaterials:textured};
+}catch(error){
+ document.getElementById('error').textContent=String(error?.stack||error);
+ document.getElementById('error').style.display='block';
+ window.__FORMA_POLYHAVEN_FERN_ERROR__=String(error);
+ console.error(error);
+}
+</script></body></html>
