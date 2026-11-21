@@ -57,10 +57,12 @@ function terrainPBR(T,id){
   out.needsUpdate=true;
   loader.load(pbrAsset(data.slug,channel),image=>{
    out.image=image.image;out.needsUpdate=true;
+   if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('forma-surface-texture-ready',{detail:{id,channel}}));
   },undefined,()=>{
    if(channel!=='diff')return; // Neutral normal and white roughness survive.
    loader.load('/assets/landscape-photo/'+data.fallback+'.jpg',image=>{
     out.image=image.image;out.needsUpdate=true;
+    if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('forma-surface-texture-ready',{detail:{id,channel:'fallback'}}));
    },undefined,()=>console.warn('FORMA surface image unavailable:',id));
   });
   return out;
