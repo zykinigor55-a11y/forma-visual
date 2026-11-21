@@ -170,16 +170,21 @@ export function createPhotoReferenceLuminaire(T, instance, {night=false}={}){
   // SLV RUSTY SLOT 50: genuine 12 x 12 x 50 cm corten-steel box with an
   // open vertical slot, not a luminous sticker placed on a solid side.
   const rust=cortenMaterial(),w=.12,h=.50,thick=.009;
-  box(w,h,w,0,h/2,0,rust,'rear-and-core-body');
-  // The surface opening is visibly recessed and framed with rust metal.
-  box(.09,.255,.002,0,.264,w/2+.001,matteBlack,'deep-open-light-cavity');
-  box(.076,.227,.001,0,.266,w/2+.003,mirror,'warm-inner-reflector');
-  box(.070,.203,.001,0,.263,w/2+.005,opal,'concealed-LED-optic');
-  for(const x of [-.051,.051])box(.015,.29,.012,x,.264,w/2+.007,rust,'thick-cutout-side');
-  box(.112,.035,.011,0,.425,w/2+.007,rust,'cutout-upper-cap');
-  box(.112,.04,.011,0,.10,w/2+.007,rust,'cutout-lower-cap');
-  box(w+.002,.009,w+.002,0,h-.004,0,rust,'flat-steel-top');
+  // Hollow Corten body. The front is four separate steel panels so its
+  // cut-out is actual missing geometry with depth, not a glowing decal.
+  box(w,h,thick,0,h/2,-w/2+thick/2,rust,'rear-wall');
+  for(const x of [-w/2+thick/2,w/2-thick/2])
+   box(thick,h,w,x,h/2,0,rust,'corten-side-wall');
+  box(w,.10,thick,0,.05,w/2-thick/2,rust,'lower-front-panel');
+  box(w,.105,thick,0,h-.0525,w/2-thick/2,rust,'upper-front-panel');
+  for(const x of [-.053,.053])
+   box(.014,.30,thick,x,.250,w/2-thick/2,rust,'vertical-corten-edge');
+  box(w,.009,w,0,h-.0045,0,rust,'fully-closed-steel-top');
   box(w,.008,w,0,.004,0,matteBlack,'foundation-seal');
+  // Inner reflector sits behind the cut steel edge, within the 120-mm prism.
+  box(.085,.28,.005,0,.250,w/2-.027,matteBlack,'real-dark-cavity');
+  box(.072,.235,.002,0,.250,w/2-.022,mirror,'deep-cavity-reflector');
+  box(.062,.195,.001,0,.250,w/2-.019,opal,'indirect-warm-light-source');
  }else if(id==='garden-lantern'){
   // Philips myGarden Creek 15383/30/16: slender traditional post with a
   // flared pedestal, vertical clear lantern panes and softly curved roof.
