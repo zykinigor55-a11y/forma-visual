@@ -5,6 +5,7 @@ on:
     paths:
       - 'assets/landscape-models/boxwood-sempervirens-forma-original.glb'
       - '.github/workflows/forma-boxwood-v2-real-screenshot.yml'
+      - 'tools/capture_boxwood_v2_webgl_actual.mjs'
   workflow_dispatch:
 permissions:
   contents: write
