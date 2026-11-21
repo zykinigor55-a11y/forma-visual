@@ -4,8 +4,11 @@
  * No trademarked or unlicensed third-party geometry is embedded.
  */
 import {gardenLightingSpec} from './forma-landscape-3d-lighting.js';
+import {createPhotoReferenceLuminaire} from './forma-landscape-3d-luminaires-reference.js';
 
 export function createProfessionalGardenLight(T,instance,{night=false}={}){
+ const photoReplica=createPhotoReferenceLuminaire(T,instance,{night});
+ if(photoReplica)return photoReplica;
  const id=instance?.catalogId,spec=gardenLightingSpec[id];
  if(!spec)return null;
  const g=new T.Group();
