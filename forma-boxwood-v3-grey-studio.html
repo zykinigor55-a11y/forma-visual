@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FORMA · Boxwood v3 · Real GLB grey studio detail</title>
+<style>
+  *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#828588}
+  #stage{position:fixed;inset:0}#stage canvas{display:block;width:100%;height:100%}
+  #error{display:none;position:absolute;top:35px;left:35px;color:#fff;background:#9e2929;padding:20px;font:16px system-ui}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="stage"></div><div id="error"></div>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const params=new URLSearchParams(location.search);
+const detail=params.get('detail')==='macro';
+const selector=['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE'].includes(params.get('form'))
+  ? params.get('form') : 'BOXWOOD_NATURAL';
+const src='/assets/landscape-models/boxwood-sempervirens-forma-original.glb';
+const stage=document.getElementById('stage');
+try {
+ const scene=new THREE.Scene();
+ const gray=new THREE.Color('#85878a');
+ scene.background=gray;
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+ renderer.setPixelRatio(1);
+ renderer.setSize(window.innerWidth,window.innerHeight);
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;
+ renderer.toneMappingExposure=1.35;
+ stage.appendChild(renderer.domElement);
+ const hemi=new THREE.HemisphereLight(0xffffff,0x535a5d,2.4);
+ scene.add(hemi);
+ const key=new THREE.DirectionalLight(0xfff8ef,3.4);key.position.set(3.1,5.2,4.8);scene.add(key);
+ const fill=new THREE.DirectionalLight(0xd7e8fb,1.15);fill.position.set(-3,1.8,2.8);scene.add(fill);
+ const rim=new THREE.DirectionalLight(0xffffff,1.55);rim.position.set(-1.2,3.4,-3.0);scene.add(rim);
+ const camera=new THREE.PerspectiveCamera(detail?27:33,window.innerWidth/window.innerHeight,.015,40);
+ const loader=new GLTFLoader();
+ const result=await loader.loadAsync(src);
+ const actual=result.scene.getObjectByName(selector);
+ if(!actual)throw Error('No Buxus original 3D geometry named '+selector);
+ const plant=actual.clone(true);
+ scene.add(plant);
+ plant.updateMatrixWorld(true);
+ const box=new THREE.Box3().setFromObject(plant);
+ const c=box.getCenter(new THREE.Vector3()), size=box.getSize(new THREE.Vector3());
+ // Recenter the true GLB for this isolated view only. Do not modify the user's placed object.
+ plant.position.x-=c.x;
+ plant.position.z-=c.z;
+ plant.position.y-=box.min.y;
+ plant.updateMatrixWorld(true);
+ const target=detail?new THREE.Vector3(.18,size.y*.74,.16):new THREE.Vector3(0,size.y*.48,0);
+ const vFov=(detail?27:33)*Math.PI/180;
+ const portraitFit=size.y/(2*Math.tan(vFov/2));
+ if(detail){
+   camera.position.set(.68,size.y*.94,.94);camera.lookAt(target);
+ }else{
+   const d=Math.max(portraitFit*1.12,size.x*1.20);
+   const offset=new THREE.Vector3(.67,.34,.74).normalize().multiplyScalar(d);
+   camera.position.copy(target).add(offset);
+   camera.lookAt(target);
+ }
+ // Soft neutral ground contact, computed procedurally; no photo manipulation.
+ const shadowCanvas=document.createElement('canvas');shadowCanvas.width=256;shadowCanvas.height=256;
+ const context=shadowCanvas.getContext('2d'),grad=context.createRadialGradient(128,128,15,128,128,126);
+ grad.addColorStop(0,'rgba(23,28,30,.35)');grad.addColorStop(.38,'rgba(24,28,31,.21)');
+ grad.addColorStop(1,'rgba(24,28,31,0)');
+ context.fillStyle=grad;context.fillRect(0,0,256,256);
+ const shadow=new THREE.Mesh(new THREE.PlaneGeometry(size.x*1.4,size.z*1.45),
+   new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
+ shadow.rotation.x=-Math.PI/2;shadow.position.y=-.007;scene.add(shadow);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial({color:'#85878a',roughness:1,metalness:0}));
+ ground.rotation.x=-Math.PI/2;ground.position.y=-.014;scene.add(ground);
+ renderer.render(scene,camera);
+ await new Promise(r=>requestAnimationFrame(()=>{renderer.render(scene,camera);r()}));
+ window.__BOXWOOD_REAL_GLB_READY__={
+   source:src,name:selector,actualGltf:true,
+   photoMaterialCount:plant.getObjectByProperty('isMesh',true)?1:0,
+   width:size.x,height:size.y,depth:size.z,detail,meshCount:0
+ };
+ plant.traverse(n=>{if(n.isMesh)window.__BOXWOOD_REAL_GLB_READY__.meshCount++});
+} catch(e){
+ document.querySelector('#error').textContent=e.stack||e.message;
+ document.querySelector('#error').style.display='block';
+ window.__BOXWOOD_ERROR__=String(e);
+ console.error(e);
+}
+</script>
+</body>
+</html>
