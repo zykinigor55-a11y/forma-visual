@@ -1,0 +1,72 @@
+name: FORMA - 4 real CC0 PBR boulders WebGL studio and editor
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-boulders-v2-real.yml'
+      - 'forma-landscape-3d-rocks.js'
+      - 'forma-landscape-3d.html'
+      - 'forma-landscape-project-core.js'
+      - 'forma-boulders-v2-studio.html'
+      - 'tools/capture_boulders_v2.mjs'
+      - 'tools/build_boulders_v2_board.py'
+      - 'tests/landscape-3d-boulders.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-4-true-rock-glbs-v2
+  cancel-in-progress: false
+jobs:
+  photogrammetry:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate rock IDs, actual CC0 binary meshes, persisted coordinates, PBR integration
+        run: node --test tests/landscape-3d-boulders.test.mjs
+      - name: Install real headless Chromium WebGL and Pillow
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python -m pip install --disable-pip-version-check pillow
+      - name: Serve original DOM.RENDER application
+        run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs >/tmp/forma-rocks-v2.log 2>&1 &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:3000/forma-boulders-v2-studio.html?id=granite-boulder >/dev/null; then break; fi
+            sleep 1
+          done
+      - name: Capture 4 real PBR rocks and all four inside the editor
+        run: node tools/capture_boulders_v2.mjs
+      - name: Create 4-model premium comparison board without repainting WebGL pixels
+        run: python tools/build_boulders_v2_board.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-four-photogrammetry-garden-boulders-real-WebGL
+          if-no-files-found: warn
+          path: |
+            assets/landscape-screenshots/boulder-v2-*-actual-pbr-webgl.png
+            assets/landscape-screenshots/boulder-v2-real-*.png
+            assets/landscape-screenshots/boulder-v2-genuine-3d-proof.json
+            assets/landscape-screenshots/boulder-v2-all-four-real-PBR-WebGL-board.png
+      - name: Publish real proof screenshots to user project branch
+        if: success()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f assets/landscape-screenshots/boulder-v2-*.png assets/landscape-screenshots/boulder-v2-genuine-3d-proof.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'visual(boulders): four actual photogrammetry PBR rocks in studio and editor'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
