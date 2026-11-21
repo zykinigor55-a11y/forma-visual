@@ -11,7 +11,7 @@ canvas{display:block;width:100%;height:100%}#error{position:absolute;inset:12px 
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-const parts={01:'fern_02_a',02:'fern_02_b',03:'fern_02_c',04:'fern_02_d'};
+const parts={'01':'fern_02_a','02':'fern_02_b','03':'fern_02_c','04':'fern_02_d'};
 const part=new URLSearchParams(location.search).get('part')||'01';
 try {
  if(!parts[part])throw Error('Unknown original fern mesh '+part);
