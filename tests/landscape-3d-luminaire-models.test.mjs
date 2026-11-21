@@ -94,7 +94,7 @@ test('seven exact user-uploaded photographs supersede previous manufacturer phot
  const refs=['spike-spot','square-bollard','low-post','globe','spot','garden-lantern','bollard'];
  assert.equal(refs.length,7);
  for(const id of refs) assert.ok(source.includes("id==='"+id+"'"),'needs real authored geometry for uploaded '+id);
- assert.match(source,/fixtureVersion='user-uploaded-7-photos-v5'/);
+ assert.match(source,/fixtureVersion='user-uploaded-7-photos-v6'/);
  assert.match(source,/actual-microprism-reflector/,'uploaded spotlight includes facet optics');
  assert.match(source,/continuous-smoked-acrylic-wrap/,'three stacked transparent lit square-post bands');
  assert.match(source,/rounded-front-glass/,'square post uses independent rounded translucent panels');
@@ -114,4 +114,26 @@ test('uploaded reference globe has four geometrically distinct user-selected siz
  assert.equal(new Set(uploadedGardenLightIds).size,7);
  assert.equal(gardenLightingState('bollard',{time:'night'}).height,.83);
  assert.equal(gardenLightingState('spike-spot',{time:'night'}).height,.39);
+});
+
+test('opal globe physically radiates through its translucent shell without casting opaque self-shadow', async()=>{
+ const optics=file('forma-landscape-globe-optics.js');
+ const lighting=file('forma-landscape-3d-lighting.js');
+ const models=file('forma-landscape-3d-user-7-lights.js');
+ assert.match(models,/createTranslucentOpalGlobe\(T,G,\{diameter,night,brightness:dim/);
+ assert.match(optics,/new T.ShaderMaterial/);
+ assert.match(optics,/shellMaterial:'angular milky polyethylene scattering'/);
+ assert.match(optics,/uniform-seamless-opal-polyethylene-ball/);
+ assert.match(optics,/globe.castShadow=false/);
+ assert.match(optics,/depthWrite:false/);
+ assert.match(optics,/soft-diffusing-inner-LED-volume/);
+ assert.match(lighting,/softOpalAreaSource=true/);
+ assert.match(lighting,/lamp.castShadow=Boolean\(shadow\)&&instance.catalogId!=='globe'/);
+ assert.match(lighting,/state.actualIntensity\*ratio\*ratio/);
+ assert.match(lighting,/const ys=\[.63,.69,.745\]/);
+ assert.match(lighting,/if\(instance.catalogId==='garden-lantern'\)/);
+ assert.equal(gardenLightingState('globe',{time:'day'}).actualIntensity,0);
+ assert.equal(gardenLightingState('globe',{time:'night',brightness:0}).actualIntensity,0);
+ assert.equal(gardenLightingState('globe',{time:'night',brightness:1}).actualIntensity,14);
+ assert.equal(gardenLightingState('globe',{time:'night',brightness:2}).actualIntensity,28);
 });
