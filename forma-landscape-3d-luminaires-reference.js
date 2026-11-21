@@ -5,8 +5,11 @@
  * The model ID and saved x/y/rotation remain unchanged.
  */
 import {gardenLightingSpec} from './forma-landscape-3d-lighting.js';
+import {createUserReferenceGardenLuminaire} from './forma-landscape-3d-user-7-lights.js';
 
 export function createPhotoReferenceLuminaire(T, instance, {night=false}={}){
+ const photo= createUserReferenceGardenLuminaire(T,instance,{night});
+ if(photo)return photo;
  const id=instance?.catalogId, spec=gardenLightingSpec[id];
  if(!spec)return null;
  const g=new T.Group();
