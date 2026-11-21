@@ -36,11 +36,9 @@ function dominantRockMesh(cloned,variant=1){
  cloned.updateMatrixWorld(true);
  cloned.traverse(node=>{
   if(!node.isMesh||!node.geometry?.attributes?.position)return;
-  const box=new node.geometry.boundingBox?.constructor?.()||null;
   node.geometry.computeBoundingBox?.();
   const bb=node.geometry.boundingBox;
-  const size=bb?.getSize?.({x:0,y:0,z:0,set(){},subVectors(a,b){this.x=a.x-b.x;this.y=a.y-b.y;this.z=a.z-b.z;return this}})||null;
-  const volume=size?Math.abs(size.x*size.y*size.z):0;
+  const volume=bb?Math.abs((bb.max.x-bb.min.x)*(bb.max.y-bb.min.y)*(bb.max.z-bb.min.z)):0;
   meshes.push({node,volume});
  });
  if(!meshes.length)return {cloned,modelCount:0};
