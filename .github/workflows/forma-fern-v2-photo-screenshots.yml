@@ -1,0 +1,70 @@
+name: FORMA - verified fern v2 photographed GLB in editor and grey studio
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-fern-v2-photo-screenshots.yml'
+      - 'tools/capture_fern_v2_photo_webgl.mjs'
+      - 'tools/capture_fern_v2_grey_close.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-fern-v2-photo-screens-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  capture-and-save:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - name: Checkout real FORMA 3D project and PBR assets
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright and actual Chromium WebGL
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Start genuine app and photo-textured grey studio viewer
+        run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs > /tmp/forma-fern-photo-server.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:3000/forma-landscape-3d.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:3000/forma-landscape-3d.html
+          curl -fsSI http://127.0.0.1:3000/forma-fern-v2-grey-studio.html
+          curl -fsSI http://127.0.0.1:3000/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb
+          node -e "const m=require('./assets/landscape-models/fern-dryopteris-filix-mas.source.json');if(!m.version.startsWith('2.0')||m.photoTexture.license!=='CC0 1.0 public domain')throw Error('Photo GLB is not v2');console.log('Photographed fern version',m.sha256)"
+      - name: Capture real WebGL DOM.RENDER screen with photo-textured fern and open inspector
+        run: node tools/capture_fern_v2_photo_webgl.mjs
+      - name: Photograph the actual GLB in neutral-grey studio and true leaf macro
+        continue-on-error: true
+        run: node tools/capture_fern_v2_grey_close.mjs
+      - name: Archive proof and full-size screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-FORMA-fern-v2-CC0-photo-real-GLB-screenshots
+          if-no-files-found: warn
+          path: |
+            assets/landscape-screenshots/fern-v2-photo-*.png
+            assets/landscape-screenshots/fern-v2-real-photo-grey-*.png
+            assets/landscape-screenshots/fern-v2-photo-webgl-evidence.json
+            assets/landscape-screenshots/fern-v2-grey-close-evidence.json
+      - name: Save true GLB WebGL screenshots and studio views in user's GitHub branch
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          shopt -s nullglob
+          files=(assets/landscape-screenshots/fern-v2-photo-*.png assets/landscape-screenshots/fern-v2-real-photo-grey-*.png assets/landscape-screenshots/fern-v2-photo-webgl-evidence.json assets/landscape-screenshots/fern-v2-grey-close-evidence.json)
+          if (( ${#files[@]} == 0 )); then echo 'No new verified screenshot outputs'; exit 1; fi
+          git add -f -- "${files[@]}"
+          if git diff --cached --quiet; then echo 'Screenshots already saved'; exit 0; fi
+          git commit -m 'docs(fern): real WebGL app screen and grey macro of CC0 photo-textured GLB v2'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
