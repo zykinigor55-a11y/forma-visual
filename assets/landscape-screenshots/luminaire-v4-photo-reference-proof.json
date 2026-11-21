@@ -5,7 +5,7 @@
     {
       "id": "bollard",
       "file": "assets/landscape-screenshots/luminaire-v4-bollard-real-render.png",
-      "size": 103107,
+      "size": 120926,
       "partCount": 51,
       "version": "user-uploaded-7-photos-v4"
     },
@@ -19,14 +19,14 @@
     {
       "id": "spot",
       "file": "assets/landscape-screenshots/luminaire-v4-spot-real-render.png",
-      "size": 104818,
+      "size": 106074,
       "partCount": 6,
       "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "low-post",
       "file": "assets/landscape-screenshots/luminaire-v4-low-post-real-render.png",
-      "size": 66875,
+      "size": 72605,
       "partCount": 14,
       "version": "user-uploaded-7-photos-v4"
     },
@@ -54,21 +54,21 @@
     {
       "id": "square-bollard",
       "file": "assets/landscape-screenshots/luminaire-v4-square-bollard-real-render.png",
-      "size": 81597,
+      "size": 81700,
       "partCount": 28,
       "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "garden-lantern",
       "file": "assets/landscape-screenshots/luminaire-v4-garden-lantern-real-render.png",
-      "size": 102123,
+      "size": 105546,
       "partCount": 21,
       "version": "user-uploaded-7-photos-v4"
     },
     {
       "id": "spike-spot",
       "file": "assets/landscape-screenshots/luminaire-v4-spike-spot-real-render.png",
-      "size": 48589,
+      "size": 62599,
       "partCount": 8,
       "version": "user-uploaded-7-photos-v4"
     },
@@ -80,5 +80,5 @@
       "version": "user-uploaded-7-photos-v4"
     }
   ],
-  "timestamp": "2026-11-21T21:39:40.475Z"
+  "timestamp": "2026-11-21T21:42:56.136Z"
 }
