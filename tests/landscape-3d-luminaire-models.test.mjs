@@ -56,8 +56,8 @@ test('summer day is physically unlit; different choices have correct night optic
  assert.equal(gardenLightingState('mushroom',{time:'night'}).kind,'downlight');
  assert.equal(gardenLightingState('spot',{time:'night'}).kind,'uplight');
  assert.equal(gardenLightingState('spike-spot',{time:'night'}).kind,'uplight');
- assert.equal(gardenLightingState('garden-lantern',{time:'night'}).height,2.35);
- assert.equal(gardenLightingState('globe',{time:'night'}).height,.68);
+ assert.equal(gardenLightingState('garden-lantern',{time:'night'}).height,.995);
+ assert.equal(gardenLightingState('globe',{time:'night'}).height,.38);
  assert.equal(gardenLightingState('ground',{time:'night',height:1.2}).height,.12,'migrate historic wrong 1.2m');
 });
 test('photo prompt recognizes actual globe with precise shape and forbids inventing other light styles',()=>{
@@ -72,4 +72,18 @@ test('photo prompt recognizes actual globe with precise shape and forbids invent
  assert.ok(!prompt.includes('CLASSIC PARK LANTERN:'),'not selected, not described');
  assert.match(prompt,/No fake floating beams/);
  assert.match(prompt,/instances=1/);
+});
+
+test('photo reference geometries and source measurements are wired to all 11 original IDs',()=>{
+ const original=file('forma-landscape-3d-luminaires-reference.js');
+ assert.match(fixtures,/createPhotoReferenceLuminaire\(T,instance,\{night\}\)/);
+ for(const id of ids)assert.ok(original.includes("id==='"+id+"'"),id+' has exact photo reference mesh');
+ assert.match(original,/fixtureVersion='real-photo-reference-v3'/);
+ assert.equal(gardenLightingState('square-bollard',{time:'night'}).height,.50);
+ assert.equal(gardenLightingState('mushroom',{time:'night'}).height,.38);
+ assert.equal(gardenLightingState('spot',{time:'night'}).height,.30);
+ assert.equal(gardenLightingState('ground',{time:'night'}).kind,'uplight');
+ assert.equal(gardenLightingState('deck-light',{time:'night'}).kind,'uplight');
+ assert.equal(gardenLightingState('linear',{time:'night'}).kind,'uplight');
+ assert.equal(gardenLightingState('square-bollard',{time:'night'}).kind,'forward');
 });
