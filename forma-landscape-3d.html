@@ -934,7 +934,7 @@ function drawObject(o,entry,key){
    ['birch','oak','maple','linden','apple','rowan','aspen','poplar'].includes(o.catalogId))||
    (doc.atmosphere.season==='winter'&&o.catalogId==='ash')||
    (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring')||
-    (SHRUB_3D_MODELS[o.catalogId]&&doc.atmosphere.season!=='summer'&&o.catalogId!=='thuja-globe');
+    (SHRUB_3D_MODELS[o.catalogId]&&doc.atmosphere.season!=='summer'&&!['thuja-globe','boxwood'].includes(o.catalogId));
   // Detailed CC0 broadleaves can have hundreds of meshes; on crowded
   // phones prefer instanced botanical native trees to prevent freezes.
   // Keep self-hosted Scots pine, aspen, spruce and birch PBR GLBs
@@ -945,7 +945,7 @@ function drawObject(o,entry,key){
    (((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree);
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
-   if(SHRUB_3D_MODELS[o.catalogId]&&!imported&&(o.catalogId==='thuja-globe'||doc.atmosphere.season==='summer'))loadCuratedAdultTree(o.catalogId);
+   if(SHRUB_3D_MODELS[o.catalogId]&&!imported&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'))loadCuratedAdultTree(o.catalogId);
   // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
   // Fast mode on very crowded mobile plots preserves lightweight geometry.
   const bundledPine=o.catalogId==='pine'&&!performanceFallback?
@@ -1457,7 +1457,7 @@ function renderProps(){
  ):'';
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
- el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(o.catalogId==='thuja-globe'||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
+ el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
   '<small>Сохранены родные материалы ветвей и хвои.</small>'):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
  $('#applyProps').onclick=()=>{
@@ -1488,6 +1488,10 @@ function renderProps(){
    }
    if(o.catalogId==='lavender'){
     const forms=[{height:.63,diameter:.88},{height:.47,diameter:.70},{height:.77,diameter:1.12}];
+    Object.assign(o,forms[choice-1]);
+   }
+   if(o.catalogId==='boxwood'){
+    const forms=[{height:.95,diameter:1.00},{height:.79,diameter:.80},{height:.88,diameter:1.18}];
     Object.assign(o,forms[choice-1]);
    }
    save();rebuild();renderProps();revealSelectedInspector();
