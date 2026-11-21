@@ -74,15 +74,15 @@ export const CATALOG=Object.freeze([
  ...[
  ['bollard','Боллард цилиндрический · LED','#d9c3a0','bollard',.30,.85],
  ['ground','Встраиваемый круглый · IP67','#f2d4a2','ground',.28,.12],
- ['spot','Прожектор поворотный · грунтовый','#ead0a3','spot',.30,.24],
+ ['spot','Прожектор поворотный · грунтовый','#ead0a3','spot',.30,.30],
  ['low-post','Столбик с боковой подсветкой','#e6c395','post',.23,1.20],
- ['deck-light','Террасный квадратный · IP67','#e5c390','deck',.22,.10],
- ['linear','Линейный в мощении · LED','#ffcf8f','linear',.14,.08],
- ['mushroom','Грибовидный · мягкий свет вниз','#e6cdaa','mushroom',.48,.68],
- ['square-bollard','Столбик квадратный · LED','#d8c29f','square-bollard',.23,.82],
- ['garden-lantern','Фонарь парковый · классический','#f0d4a0','garden-lantern',.43,2.35],
+ ['deck-light','Террасный квадратный · IP67','#e5c390','deck',.095,.10],
+ ['linear','Линейный в мощении · LED','#ffcf8f','linear',.037,.08],
+ ['mushroom','Грибовидный · мягкий свет вниз','#e6cdaa','mushroom',.15,.38],
+ ['square-bollard','Столбик квадратный · LED','#d8c29f','square-bollard',.12,.50],
+ ['garden-lantern','Фонарь парковый · классический','#f0d4a0','garden-lantern',.23,.995],
  ['spike-spot','Прожектор на колышке · акцент','#e9cda3','spike-spot',.20,.36],
- ['globe','Светильник-шар · опаловый','#f0d9b3','globe',.48,.68]
+ ['globe','Светильник-шар · опаловый','#f0d9b3','globe',.40,.38]
  ].map(([id,name,color,texture,diameter,height])=>({id,group:'lights',name,color,diameter,height,texture})),
  ...[
  ['formal','Коротко стриженный · партерный газон','#79a24e','formal'],
