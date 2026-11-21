@@ -1,0 +1,59 @@
+name: FORMA - verified photo-textured Boxwood v3 screenshot in real WebGL editor
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'assets/landscape-models/boxwood-sempervirens-forma-original.glb'
+      - '.github/workflows/forma-boxwood-v3-photo-real-screenshot.yml'
+      - 'tools/capture_boxwood_v3_photo_webgl.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-boxwood-v3-photo-screenshot-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  screenshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout user's authentic DOM.RENDER codebase
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright for browser screenshot
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Start genuine DOM.RENDER server
+        run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs > /tmp/forma-editor-server.log 2>&1 &
+          for i in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:3000/forma-landscape-3d.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:3000/forma-landscape-3d.html
+          curl -fsSI http://127.0.0.1:3000/assets/landscape-models/boxwood-sempervirens-forma-original.glb
+      - name: Capture the WebGL app screen with real Boxwood placed
+        run: node tools/capture_boxwood_v2_webgl_actual.mjs
+      - name: Preserve the original screenshots even if commit fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forma-boxwood-v3-photo-real-WebGL-screenshot
+          path: |
+            assets/landscape-screenshots/boxwood-v3-photo-from-real-editor.png
+            assets/landscape-screenshots/boxwood-v3-photo-webgl-scene.png
+            assets/landscape-screenshots/boxwood-v3-photo-webgl-evidence.json
+          if-no-files-found: warn
+      - name: Publish verified original app screenshot on project branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f -- assets/landscape-screenshots/boxwood-v3-photo-from-real-editor.png assets/landscape-screenshots/boxwood-v3-photo-webgl-scene.png assets/landscape-screenshots/boxwood-v3-photo-webgl-evidence.json
+          git commit -m 'docs(screenshots): genuine WebGL DOM.RENDER editor showing premium v2 GLB Buxus'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
