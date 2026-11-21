@@ -1,0 +1,112 @@
+{
+  "source": "native FORMA DOM.RENDER Three.js WebGL plus self-hosted original CC0 PBR photogrammetry GLBs",
+  "count": 4,
+  "boulders": [
+    {
+      "id": "granite-boulder",
+      "scanSource": "assets/landscape-models/granite-boulder.glb",
+      "modelVersion": "real-boulders-photo-pbr-v2",
+      "scanStats": {
+        "count": 1,
+        "triangles": 66122,
+        "photoMaps": 1,
+        "materials": 1
+      },
+      "geometryBounds": [
+        1.042543692239847,
+        0.9,
+        1.5
+      ],
+      "center": [
+        0,
+        0.35100000000000003,
+        0
+      ],
+      "diameter": 1.5,
+      "renderer": "Three.js original WebGL",
+      "webgl": true,
+      "file": "assets/landscape-screenshots/boulder-v3-granite-boulder-actual-pbr-webgl.png",
+      "bytes": 451668
+    },
+    {
+      "id": "limestone-boulder",
+      "scanSource": "assets/landscape-models/rock-moss.glb",
+      "modelVersion": "real-boulders-photo-pbr-v2",
+      "scanStats": {
+        "count": 1,
+        "triangles": 11000,
+        "photoMaps": 1,
+        "materials": 1
+      },
+      "geometryBounds": [
+        1.062754346057314,
+        0.7799999999999999,
+        1.6
+      ],
+      "center": [
+        0,
+        0.30419999999999997,
+        -1.6653345369377348e-16
+      ],
+      "diameter": 1.6,
+      "renderer": "Three.js original WebGL",
+      "webgl": true,
+      "file": "assets/landscape-screenshots/boulder-v3-limestone-boulder-actual-pbr-webgl.png",
+      "bytes": 243234
+    },
+    {
+      "id": "slate-boulder",
+      "scanSource": "assets/landscape-models/rock-rough.glb",
+      "modelVersion": "real-boulders-photo-pbr-v2",
+      "scanStats": {
+        "count": 1,
+        "triangles": 12416,
+        "photoMaps": 1,
+        "materials": 1
+      },
+      "geometryBounds": [
+        0.8699546346335012,
+        0.6200000000000001,
+        1.7000000000000002
+      ],
+      "center": [
+        0,
+        0.24180000000000004,
+        -5.551115123125783e-17
+      ],
+      "diameter": 1.7,
+      "renderer": "Three.js original WebGL",
+      "webgl": true,
+      "file": "assets/landscape-screenshots/boulder-v3-slate-boulder-actual-pbr-webgl.png",
+      "bytes": 270714
+    },
+    {
+      "id": "sandstone-boulder",
+      "scanSource": "assets/landscape-models/sandstone-boulder.glb",
+      "modelVersion": "real-boulders-photo-pbr-v2",
+      "scanStats": {
+        "count": 1,
+        "triangles": 89618,
+        "photoMaps": 1,
+        "materials": 1
+      },
+      "geometryBounds": [
+        1.8000000000000003,
+        0.89,
+        0.9870472847331035
+      ],
+      "center": [
+        5.551115123125783e-17,
+        0.3471,
+        -2.7755575615628914e-17
+      ],
+      "diameter": 1.8,
+      "renderer": "Three.js original WebGL",
+      "webgl": true,
+      "file": "assets/landscape-screenshots/boulder-v3-sandstone-boulder-actual-pbr-webgl.png",
+      "bytes": 366252
+    }
+  ],
+  "errors": [],
+  "timestamp": "2026-11-21T22:39:35.464Z"
+}
