@@ -11,17 +11,21 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
  const g=new T.Group();
  g.name='FORMA-LUMINAIRE-'+id;
  g.userData.fixtureId=id;
- g.userData.fixtureVersion='pbr-11-v1';
- const metal=new T.MeshPhysicalMaterial({color:'#303b40',metalness:.84,roughness:.32,clearcoat:.24,clearcoatRoughness:.24});
- const brushed=new T.MeshPhysicalMaterial({color:'#566269',metalness:.82,roughness:.43,clearcoat:.10});
+ g.userData.fixtureVersion='pbr-11-v2';
+ const dimmer=Number.isFinite(Number(instance?.brightness))?Math.max(0,Math.min(2,Number(instance.brightness))):1;
+ const glow=night?dimmer:0;
+ const kelvin=Number(instance?.kelvin)||2700;
+ const lightTint=({2200:'#ffbd84',2700:'#ffdbb0',3000:'#ffe3c5',4000:'#fff2e6'})[kelvin]||'#ffdbb0';
+ const metal=new T.MeshPhysicalMaterial({color:'#292f34',metalness:.82,roughness:.40,clearcoat:.18,clearcoatRoughness:.32});
+ const brushed=new T.MeshPhysicalMaterial({color:'#62666c',metalness:.78,roughness:.38,clearcoat:.12});
  const bronze=new T.MeshPhysicalMaterial({color:'#827663',metalness:.76,roughness:.29,clearcoat:.21});
  const rubber=new T.MeshStandardMaterial({color:'#171e20',metalness:.03,roughness:.89});
  const opal=new T.MeshPhysicalMaterial({color:'#efe5d3',metalness:0,roughness:.58,transmission:.08,
-  thickness:.012,ior:1.45,emissive:'#ffdfb0',emissiveIntensity:night?1.12:.015});
+  thickness:.012,ior:1.45,emissive:lightTint,emissiveIntensity:glow*1.12+.008});
  const lens=new T.MeshPhysicalMaterial({color:'#d5e1e0',metalness:0,roughness:.16,clearcoat:.35,transmission:.28,
-  thickness:.008,ior:1.48,emissive:'#ffdfb5',emissiveIntensity:night?1.45:.025});
+  thickness:.008,ior:1.48,emissive:lightTint,emissiveIntensity:glow*1.45+.008});
  const led=new T.MeshStandardMaterial({color:'#fff0d1',metalness:0,roughness:.57,
-  emissive:'#ffdbac',emissiveIntensity:night?2.15:.06});
+  emissive:lightTint,emissiveIntensity:glow*2.15+.008});
  const add=(geo,mat,x=0,y=0,z=0,part='housing',casts=true)=>{
   const mesh=new T.Mesh(geo,mat);
   mesh.position.set(x,y,z);mesh.castShadow=casts;mesh.receiveShadow=true;
@@ -38,11 +42,19 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
   mesh.rotation.x=Math.PI/2;return mesh;
  };
  const screw=(x,y,z)=>{
-  const m=cyl(.008,.008,.006,x,y,z,brushed,'fastener',false,12);
-  m.rotation.z=0;
+  const m=cyl(.008,.008,.006,x,y,z,brushed,'fastener',false,16);
+  box(.010,.0016,.0022,x,y+.0035,z,rubber,'screw-slot',false);
   return m;
  };
- const base=(r=.12)=>{cyl(r*.92,r,.042,0,.024,0,metal,'base');ring(r*.78,.008,0,.048,0,brushed)};
+ const base=(r=.12)=>{
+  cyl(r*.92,r,.042,0,.024,0,metal,'base');
+  ring(r*.79,.007,0,.048,0,brushed,'machined-base-edge');
+  ring(r*.64,.005,0,.051,0,rubber,'weather-gasket');
+  for(let i=0;i<4;i++){
+   const a=i*Math.PI/2+.25;
+   screw(Math.cos(a)*r*.82,.049,Math.sin(a)*r*.82);
+  }
+ };
  if(id==='bollard'){
   base(.135);cyl(.058,.075,.67,0,.374,0,metal,'shaft');
   for(let a=0;a<4;a++){const t=a*Math.PI/2;
@@ -55,6 +67,9 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
   cyl(.132,.132,.010,0,.063,0,brushed,'rim');
   cyl(.103,.103,.005,0,.069,0,lens,'glass-lens',false);
   ring(.123,.011,0,.074,0,metal,'recessed-bezel');
+  ring(.111,.003,0,.077,0,rubber,'waterproof-lens-gasket');
+  const reflector=add(new T.CircleGeometry(.09,48),brushed,0,.062,0,'optic-reflector',false);
+  reflector.rotation.x=-Math.PI/2;
   for(let i=0;i<4;i++){const a=i*Math.PI/2;screw(.118*Math.cos(a),.078,.118*Math.sin(a))}
   for(let i=-2;i<=2;i++)box(.008,.005,.17,i*.029,.075,0,metal,'anti-glare-grid',false);
  }else if(id==='spot'||id==='spike-spot'){
@@ -72,6 +87,13 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
   glass.position.y=mini?.091:.119;glass.userData.fixturePart='spot-lens';head.add(glass);
   const bezel=new T.Mesh(new T.TorusGeometry(r*.8,.010,8,36),bronze);
   bezel.rotation.x=Math.PI/2;bezel.position.y=mini?.101:.126;head.add(bezel);
+  // Die-cast adjustable U-bracket and deep anti-glare hood.
+  for(const x of [-r*.83,r*.83]){
+   const arm=box(.013,mini?.12:.17,.019,x,mini?.235:.255,.035,brushed,'yoke-bracket');
+   arm.rotation.x=-.28;
+  }
+  const visor=new T.Mesh(new T.CylinderGeometry(r*.93,r*.93,.025,40,1,true),metal);
+  visor.position.y=mini?.11:.137;visor.userData.fixturePart='deep-visor';head.add(visor);
   // Visible heat sinks are true housing geometry, not emissive billboards.
   for(let i=0;i<4;i++){
    const fin=new T.Mesh(new T.TorusGeometry(r*.88,.004,6,28),metal);
@@ -88,12 +110,14 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
   box(.23,.072,.23,0,.041,0,rubber,'recessed-housing');
   box(.219,.015,.219,0,.080,0,brushed,'square-bezel');
   box(.145,.007,.145,0,.091,0,opal,'opal-window',false);
+  box(.17,.002,.17,0,.087,0,rubber,'compressed-IP-gasket',false);
   for(const x of [-.085,.085])for(const z of [-.085,.085])screw(x,.095,z);
   box(.224,.008,.224,0,.096,0,bronze,'edge-trim',false);
  }else if(id==='linear'){
   box(.138,.074,.94,0,.040,0,rubber,'recessed-linear-tray');
   box(.142,.010,.96,0,.083,0,brushed,'metal-extrusion');
   box(.072,.006,.86,0,.091,0,opal,'linear-diffuser',false);
+  for(let z=-.39;z<=.4;z+=.065)box(.035,.002,.018,0,.086,z,led,'led-cell',false);
   for(const z of [-.44,.44])box(.13,.008,.028,0,.095,z,metal,'end-cap');
   for(const x of [-.046,.046])box(.004,.006,.86,x,.095,0,bronze,'linear-edge',false);
  }else if(id==='mushroom'){
@@ -101,6 +125,7 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
   cyl(.203,.115,.057,0,.553,0,opal,'downward-diffuser',false);
   cyl(.12,.23,.092,0,.619,0,metal,'mushroom-shade');
   ring(.224,.009,0,.579,0,bronze,'cap-edge');
+  ring(.16,.006,0,.572,0,rubber,'concealed-diffuser-seal');
   cyl(.074,.074,.021,0,.675,0,brushed,'top-disc');
  }else if(id==='square-bollard'){
   box(.188,.052,.188,0,.028,0,metal,'base');
@@ -133,6 +158,7 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
   base(.14);
   cyl(.072,.095,.174,0,.130,0,metal,'pedestal');
   ring(.11,.012,0,.227,0,bronze,'opal-collar');
+  ring(.097,.008,0,.236,0,rubber,'opal-neck-gasket');
   const center=.448;
   ball(.238,0,center,0,opal,'opal-globe',false);
   // Inner low-power luminous core is visible only through the diffuser.
@@ -154,7 +180,9 @@ export function createProfessionalGardenLight(T,instance,{night=false}={}){
  */
 export function photographGardenLightPreviews(T,ids){
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true});
- renderer.setSize(160,160,false);
+ renderer.setSize(192,192,false);
+ renderer.shadowMap.enabled=true;
+ renderer.shadowMap.type=T.PCFSoftShadowMap;
  renderer.setPixelRatio(1);
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
@@ -165,6 +193,7 @@ export function photographGardenLightPreviews(T,ids){
  const fill=new T.HemisphereLight(0xd7ebff,0x35403a,2.5);scene.add(fill);
  const rim=new T.DirectionalLight(0xaac5e0,2);rim.position.set(3,5,-4);scene.add(rim);
  const floor=new T.Mesh(new T.CylinderGeometry(.63,.63,.035,48),new T.MeshStandardMaterial({color:'#8e9791',metalness:.10,roughness:.80}));
+ floor.receiveShadow=true;
  floor.position.y=-.033;scene.add(floor);
  const camera=new T.PerspectiveCamera(38,1,.02,40);
  const result={};
