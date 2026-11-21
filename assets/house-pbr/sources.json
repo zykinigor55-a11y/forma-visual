@@ -2,6 +2,29 @@
   "license": "CC0 1.0",
   "source": "https://polyhaven.com/license",
   "materials": {
+    "brick": {
+      "page": "https://polyhaven.com/a/red_brick",
+      "maps": {
+        "diff": {
+          "name": "brick-diff-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_brick/red_brick_diff_1k.jpg",
+          "bytes": 766044,
+          "sha256": "6dea3a2b5a3185ff48d299d182c405a9f787129d79677792db6de4afd81c47f6"
+        },
+        "nor_gl": {
+          "name": "brick-nor_gl-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_brick/red_brick_nor_gl_1k.jpg",
+          "bytes": 1052038,
+          "sha256": "99bd2c60dfdb02b011cc3551bd9ab51d9b0be2807e3ba8f7a53c8a4c945b2f87"
+        },
+        "rough": {
+          "name": "brick-rough-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_brick/red_brick_rough_1k.jpg",
+          "bytes": 178614,
+          "sha256": "9bc9ece8264eb53d6f290bd2950ece5e462f83ce9e65b945fb1caf9972973ab9"
+        }
+      }
+    },
     "wood": {
       "page": "https://polyhaven.com/a/wooden_planks",
       "maps": {
@@ -72,7 +95,5 @@
       }
     }
   },
-  "failed": {
-    "brick": "HTTP Error 404: Not Found"
-  }
+  "failed": {}
 }
