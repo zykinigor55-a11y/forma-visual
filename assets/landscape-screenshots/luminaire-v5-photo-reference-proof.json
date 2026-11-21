@@ -26,7 +26,7 @@
     {
       "id": "low-post",
       "file": "assets/landscape-screenshots/luminaire-v5-low-post-real-render.png",
-      "size": 78366,
+      "size": 75158,
       "partCount": 16,
       "version": "user-uploaded-7-photos-v5"
     },
@@ -54,7 +54,7 @@
     {
       "id": "square-bollard",
       "file": "assets/landscape-screenshots/luminaire-v5-square-bollard-real-render.png",
-      "size": 80068,
+      "size": 80221,
       "partCount": 28,
       "version": "user-uploaded-7-photos-v5"
     },
@@ -68,17 +68,17 @@
     {
       "id": "spike-spot",
       "file": "assets/landscape-screenshots/luminaire-v5-spike-spot-real-render.png",
-      "size": 60066,
+      "size": 59714,
       "partCount": 9,
       "version": "user-uploaded-7-photos-v5"
     },
     {
       "id": "globe",
       "file": "assets/landscape-screenshots/luminaire-v5-globe-real-render.png",
-      "size": 80510,
+      "size": 77540,
       "partCount": 4,
       "version": "user-uploaded-7-photos-v5"
     }
   ],
-  "timestamp": "2026-11-21T21:58:06.904Z"
+  "timestamp": "2026-11-21T21:59:42.676Z"
 }
