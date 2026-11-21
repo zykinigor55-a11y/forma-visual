@@ -50,6 +50,16 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sha256:'46ca248559075f5893c928b3e8d4bf7d64426c6c5ed9ce6df434834612dd9d76',
   variants:['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE']
  }),
+ fern:Object.freeze({
+  name:'Щитовник мужской · оригинальная PBR 3D-модель FORMA, 3 формы',
+  path:'/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb',
+  sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_fern_dryopteris.py',
+  license:'FORMA original self-authored botanical geometry, albedo and tangent normal maps',
+  season:'summer',
+  fidelity:'FORMA original v1: realistic arching shuttlecock crown, three independently sculpted frond groups, 50,000+ distinct jagged 3D pinnules, 507704 triangles combined, procedural PBR vein and leaf micro-normal textures',
+  sha256:'af697f0384742b1ff1442bdb53ec3b870877fe13a2dcc210d80e336b3bda2b3b',
+  variants:['FERN_NATURAL','FERN_YOUNG','FERN_MATURE']
+ }),
  pennisetum:Object.freeze({
   name:'Пеннисетум лисохвостный «Hameln» · пушистый декоративный злак FORMA',
   path:'/assets/landscape-models/pennisetum-hameln-forma-original.glb',
