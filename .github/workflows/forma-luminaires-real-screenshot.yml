@@ -47,15 +47,15 @@ jobs:
           name: FORMA-real-11-luminaires-WebGL-night
           if-no-files-found: warn
           path: |
-            assets/landscape-screenshots/lighting-v2-real-editor-night.png
-            assets/landscape-screenshots/lighting-v2-real-webgl-night.png
-            assets/landscape-screenshots/lighting-v2-real-editor-evidence.json
+            assets/landscape-screenshots/lighting-v3-real-editor-all-11-night.png
+            assets/landscape-screenshots/lighting-v3-real-webgl-all-11-night.png
+            assets/landscape-screenshots/lighting-v3-real-editor-all-11-evidence.json
       - name: Commit real screenshots back to DOM.RENDER branch
         if: success()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f assets/landscape-screenshots/lighting-v2-real-editor-night.png assets/landscape-screenshots/lighting-v2-real-webgl-night.png assets/landscape-screenshots/lighting-v2-real-editor-evidence.json
+          git add -f assets/landscape-screenshots/lighting-v3-real-editor-all-11-night.png assets/landscape-screenshots/lighting-v3-real-webgl-all-11-night.png assets/landscape-screenshots/lighting-v3-real-editor-all-11-evidence.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'visual(luminaires): real WebGL scene and editor screenshot'
           git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
