@@ -56,8 +56,8 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_fern_dryopteris.py',
   license:'FORMA original self-authored botanical geometry, albedo and tangent normal maps',
   season:'summer',
-  fidelity:'FORMA original v1: realistic arching shuttlecock crown, three independently sculpted frond groups, 50,000+ distinct jagged 3D pinnules, 507704 triangles combined, procedural PBR vein and leaf micro-normal textures',
-  sha256:'af697f0384742b1ff1442bdb53ec3b870877fe13a2dcc210d80e336b3bda2b3b',
+  fidelity:'FORMA fern v2: UV-mapped true CC0 Dryopteris frond photograph, photo-derived PBR normal atlas, asymmetrical sculpted pinnule tips and irregular naturally arching fronds; three original real-size 3D crowns',
+  sha256:'1a359e5ba392f24a25b5f3af6db57c9f5770b97c9a32212cd208c2a3e3d32ddc',
   variants:['FERN_NATURAL','FERN_YOUNG','FERN_MATURE']
  }),
  pennisetum:Object.freeze({

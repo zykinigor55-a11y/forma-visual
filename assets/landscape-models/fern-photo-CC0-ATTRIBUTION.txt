@@ -1,0 +1,8 @@
+FORMA VISUAL: photographed Dryopteris filix-mas epidermis on original 3D fern
+Photographer: Sdjurovic, own work taken May 31, 2022.
+Wikimedia Commons source: https://commons.wikimedia.org/wiki/File:20220531_114609_Dryopteris_filix-mas.jpg
+Original file: https://upload.wikimedia.org/wikipedia/commons/4/43/20220531_114609_Dryopteris_filix-mas.jpg
+License: Creative Commons CC0 1.0 Universal Public Domain Dedication
+Photo contribution: actual leaf green micro-crops in albedo and photo-derived
+high-pass normal map, plus independently sculpted 3D irregular pinnules.
+Geometry/UVs entirely original FORMA; no extracted third-party 3D assets.

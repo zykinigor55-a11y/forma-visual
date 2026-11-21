@@ -1,10 +1,10 @@
 {
-  "version": "1.0 FORMA realistic curved fern fronds, pinnate pinnae and textured 3D serrated pinnules",
+  "version": "2.0 FORMA TRUE CC0-photographed leaf epidermis, organic asymmetrical fern pinnules",
   "species": "Dryopteris filix-mas",
   "englishName": "Male fern",
-  "source": "Original FORMA 3D meshes and original procedural PBR maps. Botanical refs RHS and World Flora Online",
-  "sha256": "af697f0384742b1ff1442bdb53ec3b870877fe13a2dcc210d80e336b3bda2b3b",
-  "sizeBytes": 16978372,
+  "source": "Original FORMA 3D geometry enhanced with CC0 Wikimedia male-fern photograph. License: CC0 1.0; photographer Sdjurovic.",
+  "sha256": "1a359e5ba392f24a25b5f3af6db57c9f5770b97c9a32212cd208c2a3e3d32ddc",
+  "sizeBytes": 16685304,
   "triangleCount": 507704,
   "meshCount": 30,
   "forms": {
@@ -46,5 +46,26 @@
     }
   },
   "modelFile": "fern-dryopteris-filix-mas-forma-original.glb",
-  "materialNotes": "Native glTF 2.0 double-sided leaf PBR with epidermis albedo and normal map; geometry is genuine 3D"
+  "materialNotes": "Embedded original CC0 photographic epidermis and normal map on every 3D pinnule; no AI or texture swap on an image",
+  "photoTexture": {
+    "photoSource": "https://commons.wikimedia.org/wiki/File:20220531_114609_Dryopteris_filix-mas.jpg",
+    "photoAuthor": "Sdjurovic",
+    "license": "CC0 1.0 public domain",
+    "sourcePhotoSHA256": "3cb25092a759514d670e6199956c50f3e78f5534598e2c6eea4ef2c5fa81bbdb",
+    "sourceDimensions": [
+      4608,
+      3456
+    ],
+    "verifiedLeafCropCount": 105,
+    "atlasSize": [
+      512,
+      512
+    ],
+    "maps": [
+      "baseColor",
+      "normal"
+    ],
+    "technique": "real photograph green-only micro crops, UV-fitted raised leaf vein, photo-derived tangent normal"
+  },
+  "botany": "Dryopteris filix-mas, 3 natural-height rosettes, pinnate-pinnatifid lamina, tapered and irregular toothed pinnules"
 }
