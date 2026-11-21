@@ -1,13 +1,13 @@
 {
   "species": "Lavandula angustifolia",
-  "version": "2.2 FORMA original dense mature silver cushion with staggered lavender flower spikes",
+  "version": "3.0 FORMA optimized PBR geometry: same size and count of real leaves and floral stems, fewer polygons, no unused UVs",
   "modelPath": "assets/landscape-models/lavender-angustifolia-forma-original.glb",
   "sourceCode": "tools/generate_lavender_angustifolia.py",
   "season": "summer flowering",
   "license": "Original FORMA-authored mesh and procedural geometry; no copied external assets",
-  "sha256": "9fbd5d63af507d6442d8781cc1bc90fa163c529bb8c1278318fcaa80cdc71600",
-  "sizeBytes": 20365776,
-  "triangles": 621874,
+  "sha256": "d8ad111821ddaae2508a4ef40e0386ab83b0529b2ba4ca8fe67af2bf3bd301d1",
+  "sizeBytes": 11173924,
+  "triangles": 444419,
   "meshCount": 39,
   "materialCount": 13,
   "forms": {
@@ -18,7 +18,7 @@
       "flowerStems": 197,
       "foliageStems": 420,
       "foliageTufts": 1480,
-      "triangles": 210660
+      "triangles": 150653
     },
     "LAVENDER_COMPACT": {
       "width": 0.7,
@@ -27,7 +27,7 @@
       "flowerStems": 122,
       "foliageStems": 294,
       "foliageTufts": 1010,
-      "triangles": 138654
+      "triangles": 98928
     },
     "LAVENDER_MATURE": {
       "width": 1.12,
@@ -36,7 +36,7 @@
       "flowerStems": 254,
       "foliageStems": 540,
       "foliageTufts": 1870,
-      "triangles": 272560
+      "triangles": 194838
     }
   }
 }

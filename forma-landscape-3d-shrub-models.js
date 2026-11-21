@@ -46,8 +46,8 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_lavender_angustifolia.py',
   license:'Original FORMA procedural geometry, no third-party meshes or textures',
   season:'summer',
-  fidelity:'FORMA original v2.2: denser silver-green Lavandula foliage cushion, staggered narrow 3D leaves, bent flowering peduncles and natural irregular violet whorls; three true-scale crown variants',
-  sha256:'9fbd5d63af507d6442d8781cc1bc90fa163c529bb8c1278318fcaa80cdc71600',
+  fidelity:'FORMA original v3 mobile-optimized PBR Lavender; three true-scale variants, all 573 flower stems and 4360 foliage tufts retained, 444419 triangles total, UV-free vertex payload and original botanical geometry',
+  sha256:'d8ad111821ddaae2508a4ef40e0386ab83b0529b2ba4ca8fe67af2bf3bd301d1',
   variants:['LAVENDER_NATURAL','LAVENDER_COMPACT','LAVENDER_MATURE']
  }),
  dogwood:Object.freeze({
