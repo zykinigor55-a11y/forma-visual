@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/forma-luminaire-reference-v3.yml'
       - 'tools/capture_luminaires_v3.mjs'
+      - 'tests/landscape-3d-luminaire-models.test.mjs'
       - 'forma-landscape-3d-luminaires-reference.js'
       - 'forma-landscape-3d-user-7-lights.js'
   workflow_dispatch:
