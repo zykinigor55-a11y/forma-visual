@@ -209,7 +209,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   hinge.rotation.z=Math.PI/2;
   // Cylindrical head drops below its upper swivel, faces down.
   const axis=new T.Group();
-  axis.position.set(.118,H-.137,.012);axis.rotation.z=.21; // aim outward, away from pole
+  axis.position.set(.118,H-.137,.012);axis.rotation.z=.21; axis.rotation.x=-.16; // angle visible lens toward the viewer while aiming away from the post
   axis.name='side-mounted-adjustable-head';G.add(axis);
   cy(.051,.051,.132,0,-.015,0,dark,'side-downward-lamp-head',64,axis);
   cy(.049,.049,.012,0,.054,0,bodySoft,'upper-cover-heat-sink',64,axis);
