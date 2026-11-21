@@ -1,0 +1,26 @@
+{
+  "source": "REAL DOM.RENDER editor launched from active GitHub branch in Chromium via localhost",
+  "appUrl": "http://127.0.0.1:3000/forma-landscape-3d.html",
+  "notAStandaloneGLBRender": true,
+  "screenshotFile": "assets/landscape-screenshots/pennisetum-hameln-from-real-editor.png",
+  "species": "pennisetum",
+  "glbSha256": "15991fd8e7a7944def689dac5db0389fd1b6365aad30c1f99c50dd2454a644b9",
+  "modelLoaded": true,
+  "diagnostics": [
+    {
+      "species": "pennisetum",
+      "model": "/assets/landscape-models/pennisetum-hameln-forma-original.glb",
+      "status": "glb",
+      "height": 0.76,
+      "diameter": 0.87
+    }
+  ],
+  "editorOpened": true,
+  "webgl": {
+    "webgl": true,
+    "width": 1600,
+    "height": 880
+  },
+  "errors": [],
+  "timestamp": "2026-11-21T19:32:07.549Z"
+}
