@@ -1,0 +1,58 @@
+name: FORMA · Optimize Poly Haven broadleaf trees into PBR GLBs
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/optimize-polyhaven-broadleaf.py'
+      - '.github/workflows/optimize-polyhaven-broadleaf.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-polyhaven-broadleaf-optimizer
+  cancel-in-progress: false
+jobs:
+  optimize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 23
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install glTF Transform optimizer
+        run: npm install --prefix /tmp/forma-gltf --no-save @gltf-transform/cli@4.5.1
+      - name: Optimize low-poly, CC0 photographed original tree scans
+        env:
+          PATH: /tmp/forma-gltf/node_modules/.bin:${{ env.PATH }}
+        run: |
+          export PATH="/tmp/forma-gltf/node_modules/.bin:$PATH"
+          python tools/optimize-polyhaven-broadleaf.py
+      - name: Publish original trees as optimized PBR versions with source provenance
+        run: |
+          set -euo pipefail
+          git config user.name 'FORMA CC0 Asset Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/landscape-models/ph-tree-small.glb assets/landscape-models/ph-island-02.glb assets/landscape-models/ph-jacaranda.glb assets/landscape-models/ph-tree-small.source.json assets/landscape-models/ph-island-02.source.json assets/landscape-models/ph-jacaranda.source.json assets/landscape-models/thumbs/ph-tree-small.webp assets/landscape-models/thumbs/ph-island-02.webp assets/landscape-models/thumbs/ph-jacaranda.webp assets/landscape-models/polyhaven-optimized-trees.json || true
+          if git diff --cached --quiet; then echo 'Optimized assets already published'; exit 0; fi
+          git commit -m 'assets(trees): add mobile-optimised source-faithful Poly Haven 3D broadleaf trees'
+          for i in 1 2 3 4; do
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            if git push origin HEAD:dom-render-nanobanana; then exit 0; fi
+            sleep $((i * 3))
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-broadleaf-tree-optimize-audit
+          path: assets/landscape-models/polyhaven-optimized-trees.json
+          if-no-files-found: ignore
