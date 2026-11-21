@@ -3,7 +3,7 @@
    editable, as opposed to substituting a flat sprite or an AI image. */
 export const SHRUB_HEIGHT_M=Object.freeze({
  juniper:.55,hydrangea:1.55,spirea:.85,barberry:1.15,
- dogwood:2.25,'thuja-globe':.89,lavender:.63,boxwood:.95,ninebark:1.90,hosta:.55,'ornamental-grass':1.10,fern:.85,periwinkle:.23,'wild-shrub':1.7
+ dogwood:2.25,'thuja-globe':.89,lavender:.63,boxwood:.95,pennisetum:.76,hosta:.55,'ornamental-grass':1.10,fern:.85,periwinkle:.23,'wild-shrub':1.7
 });
 export function naturalCrown(id,t){
  const f=Math.max(0,Math.min(1,Number(t)||0));
