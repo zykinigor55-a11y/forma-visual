@@ -10,7 +10,7 @@ landscape editor used for plants and lights, at photo-realistic quality.
 | `granite-boulder` | Гранитный валун | `assets/landscape-models/granite-boulder.glb` | https://polyhaven.com/a/boulder_01 | Full photogrammetry profile, re-tinted toward weathered grey/cool granite, micro-pitting and normal-map detail retained |
 | `limestone-boulder` | Известняковый валун | `assets/landscape-models/rock-moss.glb` | https://polyhaven.com/a/rock_moss_set_01 | ONE stone from the six-scanned-rock source (not the entire cluster), lightly limestone-tinted; eroded bright fractures and patina |
 | `slate-boulder` | Слоистый сланец | `assets/landscape-models/rock-rough.glb` | https://polyhaven.com/a/rock_09 | Broad, low flat-ridged natural rock, dark/cool PBR coloration |
-| `sandstone-boulder` | Песчаник тёплый | `assets/landscape-models/rock-grey.glb` | https://polyhaven.com/a/rock_07 | Ochre-toned rugged natural stone with weathered uneven surfaces |
+| `sandstone-boulder` | Песчаник тёплый | `assets/landscape-models/sandstone-boulder.glb` | https://polyhaven.com/a/namaqualand_boulder_05 | Real Namaqualand dry sandstone scan, layered bedding, pale ochre/cream surfaces, no rusty artificial brick coloration |
 
 The source assets were installed by `tools/install-real-landscape-models.py`;
 all four GLBs are bundled with their source PBR textures, independently
@@ -46,12 +46,12 @@ sample of that mineral would be required.
 `forma-boulders-v2-studio.html?id=granite-boulder` and the other three IDs
 show the exact native PBR GLB meshes under photographic studio light. Chromium
 captures four actual WebGL canvases in
-`assets/landscape-screenshots/boulder-v2-*-actual-pbr-webgl.png`.
-The comparison `boulder-v2-all-four-real-PBR-WebGL-board.png` is assembled
+`assets/landscape-screenshots/boulder-v3-*-actual-pbr-webgl.png`.
+The comparison `boulder-v3-all-four-real-PBR-WebGL-board.png` is assembled
 from these real WebGL screenshots, not AI-concept renders.
 
 The same test runner then opens the actual `forma-landscape-3d.html`
-with four rocks and saves `boulder-v2-real-editor-four-photogrammetry-rocks.png`,
+with four rocks and saves `boulder-v3-real-editor-four-photogrammetry-rocks.png`,
 including a proof JSON of model triangles, source and PBR map counts.
 Run `node --test tests/landscape-3d-boulders.test.mjs` to verify the mapping
 and coordinate-preservation behavior.
