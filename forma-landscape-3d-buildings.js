@@ -2,6 +2,7 @@
  * systems and real roof planes. These are editable, procedural Three.js models.
  * Presets do not infer unknown details from a user's architectural photograph. */
 import {buildingHeights,facadeOpeningSchedule,wallPatches} from './forma-landscape-3d-architecture-geometry.js';
+import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Светлый планкен · графит',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#C1AD91'},
@@ -126,8 +127,18 @@ function doorGroup(T,width=1.04,height=2.16,modern=false){
  const dark=mat(T,'#242D30',.45,.44),panel=mat(T,modern?'#23343A':'#574437',.6,.16);
  box(g,T,width+.14,height+.12,.14,0,0,-.04,dark);
  box(g,T,width,height,.085,0,0,.032,panel);
+ // Real perimeter gasket on the recessed door leaf.
+ const gasket=mat(T,'#0A1114',.94,.04);
+ for(const sx of [-1,1])box(g,T,.012,height-.10,.018,sx*(width/2-.020),0,.088,gasket)
+  .userData.architecturePart='door-gasket';
+ box(g,T,width-.08,.013,.020,0,height/2-.036,.087,gasket);
  if(modern){box(g,T,width*.25,height*.86,.04,-width*.25,0,.12,mat(T,'#20383F',.13,.24))}
- box(g,T,.025,.31,.035,width*.33,-.04,.099,mat(T,'#D0C6AF',.3,.65));
+ const handle=box(g,T,.025,.31,.035,width*.33,-.04,.099,mat(T,'#D0C6AF',.3,.65));
+ handle.userData.architecturePart='door-handle';
+ const lock=add(g,T,new T.CylinderGeometry(.022,.022,.018,14),
+  mat(T,'#C0C3BD',.30,.72),width*.33,-.26,.109);
+ lock.rotation.x=Math.PI/2;
+ lock.userData.architecturePart='door-lock-cylinder';
  box(g,T,width+.22,.042,.26,0,-height/2-.085,.095,dark)
   .userData.architecturePart='door-threshold';
  return g;
@@ -149,10 +160,12 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
   facade.position.set(px,0,pz);facade.rotation.y=angle;g.add(facade);
   const openings=plan[name];
   const patches=wallPatches(span,.48,h-.09,openings);
+  // Each measured facade segment remains a genuine 190mm thick wall.
   const shellThickness=.19;
   for(const patch of patches){
-   const segment=box(facade,T,patch.width,patch.height,shellThickness,
-    patch.x,patch.y,0,material);
+   const segment=add(facade,T,
+    measuredFacadePatchGeometry(T,patch,span,material.userData?.tileMetres||1.8),
+    material,patch.x,patch.y,0);
    segment.userData.architecturePart='solid-wall';
    segment.userData.facade=name;
   }
@@ -220,6 +233,15 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     box(facade,T,opening.width+.24,.024,.035,opening.x,
      opening.bottom-.099,.31,trim)
      .userData.architecturePart='window-drip';
+    // A pitched sill and rolled edge shed rain beyond the glazing plane.
+    const sill=box(facade,T,opening.width+.25,.017,.30,
+     opening.x,opening.bottom-.056,.192,trim);
+    sill.rotation.x=-.062;
+    sill.userData.architecturePart='window-pitched-sill';
+    for(const side of [-1,1])
+     box(facade,T,.020,.035,.28,
+      opening.x+side*(opening.width*.5+.116),opening.bottom-.06,.186,trim)
+      .userData.architecturePart='sill-end-cap';
     box(facade,T,opening.width+.09,.018,.025,opening.x,
      opening.bottom+.021,-.015,shadow)
      .userData.architecturePart='window-sill-seal';
@@ -474,6 +496,8 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const roofTex=texture(THREE,roofKey,roofTint).clone();
  wallTex.needsUpdate=true;roofTex.needsUpdate=true;
  const wallMaterial=mat(THREE,'#FFFFFF',.86,.02,wallTex);
+ wallMaterial.userData.tileMetres=preset.wall==='brick'?1.24:
+  ['plaster','stone'].includes(preset.wall)?2.1:1.8;
  // Source-authored canvas relief: subtle fiber and mortar variation in grazing light,
  // avoiding uniformly flat procedural facades without altering footprint geometry.
  wallMaterial.bumpMap=wallTex;
@@ -483,8 +507,14 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  const roofMaterial=mat(THREE,roofColor,preset.roofFinish==='standing'?.36:.69,
   preset.roofFinish==='standing'?.76:preset.roofFinish==='tile'?.05:.14,roofTex);
  roofMaterial.bumpMap=roofTex;roofMaterial.bumpScale=preset.roofFinish==='tile'?.012:.003;
- wallTex.repeat.set(Math.max(1,w/3.6),Math.max(1,bodyHeight/2.2));
+ // UV coordinates now flow uninterrupted across real window/door openings.
+ wallTex.repeat.set(1,1);
  roofTex.repeat.set(Math.max(1,w/2.8),Math.max(1,d/3.4));
+ const ownedHouseTextures=[wallTex,roofTex];
+ applyArchitecturalPBR(THREE,{wall:preset.wall,roofFinish:preset.roofFinish,
+  wallMaterial,roofMaterial,
+  roofScale:[Math.max(1,w/2.8),Math.max(1,d/3.4)],
+  ownedTextures:ownedHouseTextures});
  // Exact footprint is represented by the house body. Decorative overhang is not
  // included in measured area, and never shifts parcel coordinates.
  const foundation=mat(THREE,'#373B3C',.92,.05,texture(THREE,'stone','#777D80'));
@@ -620,7 +650,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  }
  if(!isGarage&&!isGazebo&&!isCarport&&!isGreenhouse)
   addPresetVolumes(g,THREE,{style,w,d,bodyHeight});
- g.userData.archStyle=style;g.userData.footprint={width:w,height:d};g.userData.textures=[wallTex,roofTex];
+ g.userData.archStyle=style;g.userData.footprint={width:w,height:d};g.userData.textures=ownedHouseTextures;
  return g;
 }
 
