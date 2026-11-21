@@ -1,0 +1,18 @@
+{
+  "id": "ph-island-02",
+  "asset": "island_tree_02",
+  "sourcePage": "https://polyhaven.com/a/island_tree_02",
+  "license": "CC0 1.0",
+  "optimizer": "gltf-transform optimize / meshopt + WebP 1K",
+  "originalDownloadBytes": 46172406,
+  "originalTriangles": 1072213,
+  "targetSimplifyRatio": 0.2984481628183952,
+  "sha256": "537c55510b1126fbeedfd876c29d4704567660ae4581f884913d963029bf8876",
+  "bytes": 4768756,
+  "gltf": {
+    "triangles": 314418,
+    "meshes": 1,
+    "images": 9,
+    "texturedMaterials": 3
+  }
+}

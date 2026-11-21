@@ -1,0 +1,60 @@
+{
+  "installed": [
+    {
+      "id": "ph-tree-small",
+      "asset": "tree_small_02",
+      "sourcePage": "https://polyhaven.com/a/tree_small_02",
+      "license": "CC0 1.0",
+      "optimizer": "gltf-transform optimize / meshopt + WebP 1K",
+      "originalDownloadBytes": 100974143,
+      "originalTriangles": 2062487,
+      "targetSimplifyRatio": 0.15515249308238063,
+      "sha256": "2c59d9049eb37134f0bde2f5828c8aa94f6fe7948d551256155246f5244e67c9",
+      "bytes": 5066888,
+      "gltf": {
+        "triangles": 318292,
+        "meshes": 1,
+        "images": 9,
+        "texturedMaterials": 3
+      }
+    },
+    {
+      "id": "ph-island-02",
+      "asset": "island_tree_02",
+      "sourcePage": "https://polyhaven.com/a/island_tree_02",
+      "license": "CC0 1.0",
+      "optimizer": "gltf-transform optimize / meshopt + WebP 1K",
+      "originalDownloadBytes": 46172406,
+      "originalTriangles": 1072213,
+      "targetSimplifyRatio": 0.2984481628183952,
+      "sha256": "537c55510b1126fbeedfd876c29d4704567660ae4581f884913d963029bf8876",
+      "bytes": 4768756,
+      "gltf": {
+        "triangles": 314418,
+        "meshes": 1,
+        "images": 9,
+        "texturedMaterials": 3
+      }
+    },
+    {
+      "id": "ph-jacaranda",
+      "asset": "jacaranda_tree",
+      "sourcePage": "https://polyhaven.com/a/jacaranda_tree",
+      "license": "CC0 1.0",
+      "optimizer": "gltf-transform optimize / meshopt + WebP 1K",
+      "originalDownloadBytes": 214609299,
+      "originalTriangles": 3863832,
+      "targetSimplifyRatio": 0.08281933583033631,
+      "sha256": "67485c303d52c80e3574a5a1b407692a68c603087ed628329cdde47c79ad5904",
+      "bytes": 7464316,
+      "gltf": {
+        "triangles": 315864,
+        "meshes": 1,
+        "images": 9,
+        "texturedMaterials": 3
+      }
+    }
+  ],
+  "notInstalled": [],
+  "license": "CC0 1.0"
+}

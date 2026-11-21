@@ -1,0 +1,18 @@
+{
+  "id": "ph-tree-small",
+  "asset": "tree_small_02",
+  "sourcePage": "https://polyhaven.com/a/tree_small_02",
+  "license": "CC0 1.0",
+  "optimizer": "gltf-transform optimize / meshopt + WebP 1K",
+  "originalDownloadBytes": 100974143,
+  "originalTriangles": 2062487,
+  "targetSimplifyRatio": 0.15515249308238063,
+  "sha256": "2c59d9049eb37134f0bde2f5828c8aa94f6fe7948d551256155246f5244e67c9",
+  "bytes": 5066888,
+  "gltf": {
+    "triangles": 318292,
+    "meshes": 1,
+    "images": 9,
+    "texturedMaterials": 3
+  }
+}

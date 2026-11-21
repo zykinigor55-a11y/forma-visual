@@ -1,0 +1,18 @@
+{
+  "id": "ph-jacaranda",
+  "asset": "jacaranda_tree",
+  "sourcePage": "https://polyhaven.com/a/jacaranda_tree",
+  "license": "CC0 1.0",
+  "optimizer": "gltf-transform optimize / meshopt + WebP 1K",
+  "originalDownloadBytes": 214609299,
+  "originalTriangles": 3863832,
+  "targetSimplifyRatio": 0.08281933583033631,
+  "sha256": "67485c303d52c80e3574a5a1b407692a68c603087ed628329cdde47c79ad5904",
+  "bytes": 7464316,
+  "gltf": {
+    "triangles": 315864,
+    "meshes": 1,
+    "images": 9,
+    "texturedMaterials": 3
+  }
+}
