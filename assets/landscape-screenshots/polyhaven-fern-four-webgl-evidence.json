@@ -1,0 +1,149 @@
+{
+  "source": "Actual CC0 Poly Haven Fern 02 GLB in REAL original DOM.RENDER WebGL 3D editor",
+  "sha256": "3f5de1969d029db133986123aa5be6bff0137443800f53a209c6b25bcd8aab4c",
+  "original": "https://polyhaven.com/a/fern_02",
+  "fourDistinctMeshNames": [
+    "fern_02_a",
+    "fern_02_b",
+    "fern_02_c",
+    "fern_02_d"
+  ],
+  "siteObjects": [
+    {
+      "id": "fern-polyhaven-1",
+      "catalogId": "fern",
+      "type": "shrubs",
+      "x": 9.4,
+      "y": 15.5,
+      "height": 0.29,
+      "diameter": 0.62,
+      "rotation": 0,
+      "variant": 1
+    },
+    {
+      "id": "fern-polyhaven-2",
+      "catalogId": "fern-02",
+      "type": "shrubs",
+      "x": 12.5,
+      "y": 15.95,
+      "height": 0.43,
+      "diameter": 1,
+      "rotation": 0,
+      "variant": 1
+    },
+    {
+      "id": "fern-polyhaven-3",
+      "catalogId": "fern-03",
+      "type": "shrubs",
+      "x": 15.600000000000001,
+      "y": 15.5,
+      "height": 0.35,
+      "diameter": 0.88,
+      "rotation": 0,
+      "variant": 1
+    },
+    {
+      "id": "fern-polyhaven-4",
+      "catalogId": "fern-04",
+      "type": "shrubs",
+      "x": 18.700000000000003,
+      "y": 15.95,
+      "height": 0.22,
+      "diameter": 0.6,
+      "rotation": 0,
+      "variant": 1
+    }
+  ],
+  "screenshots": [
+    {
+      "part": "01",
+      "catalogId": "fern",
+      "path": "assets/landscape-screenshots/polyhaven-fern-01-real-glb-grey.png",
+      "bytes": 325084,
+      "meshName": "fern_02_a",
+      "dimensions": [
+        0.5519406199455261,
+        0.2868035454303026,
+        0.6134210824966431
+      ],
+      "texturedMaterials": 1
+    },
+    {
+      "part": "02",
+      "catalogId": "fern-02",
+      "path": "assets/landscape-screenshots/polyhaven-fern-02-real-glb-grey.png",
+      "bytes": 350756,
+      "meshName": "fern_02_b",
+      "dimensions": [
+        0.9897474050521851,
+        0.4276947118341923,
+        0.8936897218227386
+      ],
+      "texturedMaterials": 1
+    },
+    {
+      "part": "03",
+      "catalogId": "fern-03",
+      "path": "assets/landscape-screenshots/polyhaven-fern-03-real-glb-grey.png",
+      "bytes": 344424,
+      "meshName": "fern_02_c",
+      "dimensions": [
+        0.8743258118629456,
+        0.3490203693509102,
+        0.7652256786823273
+      ],
+      "texturedMaterials": 1
+    },
+    {
+      "part": "04",
+      "catalogId": "fern-04",
+      "path": "assets/landscape-screenshots/polyhaven-fern-04-real-glb-grey.png",
+      "bytes": 337853,
+      "meshName": "fern_02_d",
+      "dimensions": [
+        0.5727821886539459,
+        0.21308755222707987,
+        0.5932782888412476
+      ],
+      "texturedMaterials": 1
+    }
+  ],
+  "browserErrors": [],
+  "timestamp": "2026-11-21T20:25:55.154Z",
+  "editorScreenshot": "assets/landscape-screenshots/polyhaven-four-ferns-real-editor.png",
+  "webgl": {
+    "valid": true,
+    "width": 1600,
+    "height": 880
+  },
+  "diagnostics": [
+    {
+      "species": "fern",
+      "model": "/assets/landscape-models/polyhaven-fern-02-source.glb",
+      "status": "glb",
+      "height": 0.29,
+      "diameter": 0.62
+    },
+    {
+      "species": "fern-02",
+      "model": "/assets/landscape-models/polyhaven-fern-02-source.glb",
+      "status": "glb",
+      "height": 0.43,
+      "diameter": 1
+    },
+    {
+      "species": "fern-03",
+      "model": "/assets/landscape-models/polyhaven-fern-02-source.glb",
+      "status": "glb",
+      "height": 0.35,
+      "diameter": 0.88
+    },
+    {
+      "species": "fern-04",
+      "model": "/assets/landscape-models/polyhaven-fern-02-source.glb",
+      "status": "glb",
+      "height": 0.22,
+      "diameter": 0.6
+    }
+  ]
+}
