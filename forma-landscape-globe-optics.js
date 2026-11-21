@@ -11,6 +11,7 @@ export function createTranslucentOpalGlobe(T,group,{diameter=.4,night=false,brig
  const material=new T.ShaderMaterial({
   uniforms:{
    glow:{value:power},
+   nightMode:{value:night?1:0},
    warm:{value:vec(tint)},
    cold:{value:vec('#d7dbd5')},
    milky:{value:vec('#f4f1ea')}
@@ -27,7 +28,7 @@ export function createTranslucentOpalGlobe(T,group,{diameter=.4,night=false,brig
     gl_Position=projectionMatrix*mv;
    }`,
   fragmentShader:`
-   uniform float glow;
+   uniform float glow,nightMode;
    uniform vec3 warm,cold,milky;
    varying vec3 vNormalView,vViewDirection;
    varying float vUp;
@@ -36,11 +37,14 @@ export function createTranslucentOpalGlobe(T,group,{diameter=.4,night=false,brig
     float rim=pow(1.0-face,1.65);
     float lit=clamp(glow,0.0,1.9);
     vec3 offColor=mix(cold,milky,clamp(.50+vUp*.10,0.0,1.0));
+    // At night an unpowered ball must not be permanently bright white.
+    // Daylight still shows natural pale-grey opal polyethylene.
+    offColor*=mix(1.0,.14+.86*min(1.0,lit),nightMode);
     // Warm luminous volume is strongest in the center, where the real
     // translucent polyethylene carries shortest light path to the eye.
     vec3 onColor=mix(milky,warm,.18+.08*(1.0-face));
     vec3 colour=mix(offColor,onColor,min(1.0,lit)*.86);
-    colour+=warm*(lit*.22)*(.48+.52*face);
+    colour+=warm*(lit*.30)*(.48+.52*face);
     colour*=.91+.07*face;
     float opacity=mix(.74,.965,rim);
     gl_FragColor=vec4(colour,opacity);
