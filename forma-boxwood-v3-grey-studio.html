@@ -79,10 +79,10 @@ try {
  await new Promise(r=>requestAnimationFrame(()=>{renderer.render(scene,camera);r()}));
  window.__BOXWOOD_REAL_GLB_READY__={
    source:src,name:selector,actualGltf:true,
-   photoMaterialCount:plant.getObjectByProperty('isMesh',true)?1:0,
+   photoMaterialCount:0,normalMaterialCount:0,
    width:size.x,height:size.y,depth:size.z,detail,meshCount:0
  };
- plant.traverse(n=>{if(n.isMesh)window.__BOXWOOD_REAL_GLB_READY__.meshCount++});
+ plant.traverse(n=>{if(n.isMesh){window.__BOXWOOD_REAL_GLB_READY__.meshCount++;let mats=Array.isArray(n.material)?n.material:[n.material];for(const m of mats){if(m?.map)window.__BOXWOOD_REAL_GLB_READY__.photoMaterialCount++;if(m?.normalMap)window.__BOXWOOD_REAL_GLB_READY__.normalMaterialCount++;}}});
 } catch(e){
  document.querySelector('#error').textContent=e.stack||e.message;
  document.querySelector('#error').style.display='block';
