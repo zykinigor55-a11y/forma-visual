@@ -1,0 +1,38 @@
+name: FORMA - 11 lights all-in-one genuine WebGL screenshot sheet
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-luminaires-all-sheet.yml'
+      - 'tools/build_luminaire_sheet.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-sheet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Compose ALL 11 actual WebGL renders into a single proof board
+        run: python tools/build_luminaire_sheet.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FORMA-11-lighting-3D-comparison-sheet
+          path: assets/landscape-screenshots/lighting-v3-all-11-genuine-WebGL-sheet.png
+      - name: Save screenshot sheet to current FORMA branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f assets/landscape-screenshots/lighting-v3-all-11-genuine-WebGL-sheet.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'visual(luminaires): all 11 real Three.js WebGL renders on one sheet'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
