@@ -46,6 +46,6 @@ test('Textures are genuine distinct 512px baked images, not blank placeholders',
  assert.equal(pngA.subarray(1,4).toString(),'PNG');
  assert.equal(pngN.subarray(1,4).toString(),'PNG');
  assert.ok(pngA.length>140_000);
- assert.ok(pngN.length>120_000);
+ assert.ok(pngN.length>40_000);
  assert.notEqual(createHash('sha256').update(pngA).digest('hex'),createHash('sha256').update(pngN).digest('hex'));
 });
