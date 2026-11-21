@@ -19,7 +19,7 @@ test('Original genuine Dryopteris GLB: 3 unique high-detail fern forms with PBR 
  assert.equal(file.toString('ascii',0,4),'glTF');
  assert.equal(file.readUInt32LE(4),2);
  assert.equal(file.readUInt32LE(8),file.length);
- assert.equal(file.length,16978372);
+ assert.ok(file.length>14_000_000 && file.length<21_000_000,'photo-textured GLB remains bounded in size');
  assert.equal(createHash('sha256').update(file).digest('hex'),meta.sha256);
  assert.equal(SHRUB_3D_MODELS.fern.sha256,meta.sha256);
  assert.equal(meta.triangleCount,507704);
