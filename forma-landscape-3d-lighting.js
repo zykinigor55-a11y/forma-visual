@@ -5,7 +5,7 @@
 export const gardenLightingSpec=Object.freeze({
  bollard:{height:.83,mountHeight:.715,color:0xffd8b0,intensity:23,range:6,kind:'radial',beam:0},
  ground:{height:.12,mountHeight:.085,color:0xffdfb7,intensity:8,range:4.6,kind:'uplight',beam:.64},
- spot:{height:1.11,mountHeight:.91,color:0xffd4ac,intensity:40,range:7.5,kind:'downlight',beam:.72},
+ spot:{height:1.11,mountHeight:.91,color:0xffd4ac,intensity:35,range:7.5,kind:'downlight',beam:.41},
  'low-post':{height:1.20,mountHeight:1.04,color:0xffd8a9,intensity:22,range:6.8,kind:'radial',beam:0},
  'deck-light':{height:.10,mountHeight:.013,color:0xffe0b8,intensity:6,range:3.3,kind:'uplight',beam:.58},
  linear:{height:.08,mountHeight:.013,color:0xffdfb3,intensity:11,range:3.8,kind:'uplight',beam:.72},
@@ -52,7 +52,7 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
   if(instance.catalogId==='spot'){
    // Uploaded photo 5: side-mounted head is OFF-AXIS and points at the ground.
    lamp.position.set(.118,state.mountHeight,.012);
-   target.position.set(.145,0,.012);
+   target.position.set(.54,0,.24); // angled away from shaft: illuminates the PATH, not its own pole
   }else if(state.kind==='downlight')target.position.set(0,0,0);
   else if(state.kind==='forward')target.position.set(0,0,Math.min(state.range*.65,4));
   else if(['ground','deck-light','linear'].includes(instance.catalogId))target.position.set(0,Math.min(state.range*.8,6),0);
