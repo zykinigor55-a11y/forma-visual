@@ -4,10 +4,10 @@
 import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile} from './forma-landscape-3d-architecture-geometry.js';
 import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
-import {SCANDI_DETAIL,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
+import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
- {id:'scandi',name:'Скандинавский',subtitle:'Вертикальный планкен двух оттенков · графитовая кровля',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#C1AD91'},
+ {id:'scandi',name:'Скандинавский',subtitle:'Серый вертикальный планкен · графитовая кровля · чёрные окна',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#919897'},
  {id:'timber',name:'Клеёный брус',subtitle:'Орех · строгая геометрия',wall:'walnut',roof:'gable',roofFinish:'tile',accent:'#7E5740'},
  {id:'brick',name:'Кирпичный дом',subtitle:'Баварский кирпич · металл',wall:'brick',roof:'hip',roofFinish:'tile',accent:'#996B5A'},
  {id:'modern',name:'Современный',subtitle:'Штукатурка · панорамное стекло',wall:'plaster',roof:'flat',roofFinish:'flat',accent:'#D5CEBF'},
@@ -89,7 +89,7 @@ function surface(g,T,w,h,x,y,z,material,rotation=0){
 }
 function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=false){
  const g=new T.Group();
- const frame=mat(T,'#181E20',tripleGlazed?.40:.52,tripleGlazed?0:.5),recess=mat(T,'#121A1C',.91,.02),glass=new T.MeshPhysicalMaterial({
+ const frame=mat(T,tripleGlazed?SCANDI_DETAIL.windowFrame:'#181E20',tripleGlazed?.40:.52,tripleGlazed?0:.5),recess=mat(T,'#121A1C',.91,.02),glass=new T.MeshPhysicalMaterial({
   // Photographic architectural glazing reflects its environment rather than glowing cyan.
   color:night?'#AAB9B1':'#6C888B',metalness:0,roughness:.19,transparent:true,opacity:.88,
   ior:1.46,clearcoat:.48,clearcoatRoughness:.16,side:T.FrontSide,depthWrite:true,
@@ -122,7 +122,7 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
     box(g,T,w-edge*2,.009,.010,0,sy*(h*.5-edge+.012),z,spacer)
      .userData.architecturePart='ig-unit-warm-edge-spacer';
   }
-  const pvc=mat(T,'#333B3D',.43,0);
+  const pvc=mat(T,SCANDI_DETAIL.windowFrame,.43,0);
   const inset=Math.min(.13,edge+.026);
   for(const side of [-1,1]){
    box(g,T,.038,h,.058,side*(w*.5-inset),0,.128,pvc)
@@ -198,9 +198,9 @@ function addWindowFinishing(facade,T,o,style){
  const p=windowTrimProfile(style),w=o.width,h=o.height,x=o.x;
  const bottom=o.bottom,cy=bottom+h*.5,scandi=style==='scandi';
  const wood=['scandi','timber','logcabin','chalet','tiny','bungalow'].includes(style);
- const outer=mat(T,p.material,wood?.78:.55,wood?.03:.35);
- const reveal=mat(T,['barn','modern','hightech','panoramic'].includes(style)?
-  '#343E42':wood?'#A89C87':'#C2C0B8',.87,.03);
+ const outer=mat(T,p.material,wood?.78:.55,scandi?0:wood?.03:.35);
+ const reveal=mat(T,scandi?'#50585A':['barn','modern','hightech','panoramic'].includes(style)?
+  '#343E42':wood?'#A89C87':'#C2C0B8',.87,scandi?0:.03);
  const seal=mat(T,'#192023',.94,.025);
  const sillFinish=mat(T,wood?'#8F9492':['classic','cottage','mediterranean','brick'].includes(style)?
   '#B3AFA4':'#636E71',.48,wood?.30:.49);
@@ -310,10 +310,8 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
   ['left',d,-w/2,0,-Math.PI/2],['right',d,w/2,0,Math.PI/2]
  ];
  const interior=mat(T,'#1C2223',.94,.02);
- const scandiMain=style==='scandi'?new T.MeshStandardMaterial({
-  color:SCANDI_DETAIL.mainWood,roughness:.88,metalness:0}):null;
- const scandiAccent=style==='scandi'?new T.MeshStandardMaterial({
-  color:SCANDI_DETAIL.accentWood,roughness:.84,metalness:0}):null;
+ const scandiMain=style==='scandi'?scandiTimberMaterial(T,SCANDI_DETAIL.mainWood):null;
+ const scandiAccent=style==='scandi'?scandiTimberMaterial(T,SCANDI_DETAIL.accentWood):null;
  for(const [name,span,px,pz,angle] of walls){
   const facade=new T.Group();
   facade.name='facade-'+name;
@@ -495,7 +493,7 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
     bodyHeight-.215,0,drip).userData.architecturePart='gable-roof-drip-flashing';
   }
   // Vertical gable-end triangle remains visible beneath the true roof.
-  const wallColor=mat(T,b.archStyle==='scandi'?'#D0C1AA':b.archStyle==='classic'?'#D9D4C7':'#403B35');
+  const wallColor=mat(T,b.archStyle==='scandi'?'#707A7B':b.archStyle==='classic'?'#D9D4C7':'#403B35');
   const faces=new Float32Array([-w/2,bodyHeight,d/2, w/2,bodyHeight,d/2,0,bodyHeight+rise*.94,d/2,
                                  -w/2,bodyHeight,-d/2,0,bodyHeight+rise*.94,-d/2,w/2,bodyHeight,-d/2]);
   const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(faces,3));geo.computeVertexNormals();
@@ -745,7 +743,11 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   entrance.position.set(0,1.56,d/2+.095);g.add(entrance);
  }else{
   const facadePlan=addMeasuredFacades(g,THREE,{width:w,depth:d,height:bodyHeight,style,
-   type:b.type||'house',material:wallMaterial,night});
+   type:b.type||'house',
+    // Dark weather-resistive rainscreen membrane appears between REAL
+    // vertical board joints; it must not reveal old beige wall texture.
+    material:style==='scandi'?new THREE.MeshStandardMaterial({
+     color:'#424A4C',roughness:.96,metalness:0}):wallMaterial,night});
   g.userData.facadeSchedule=facadePlan;
   const darkTrim=mat(THREE,'#262B2D',.52,.34);
   // Thin projecting base and eave band cast physically grounded shadows.
@@ -800,7 +802,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   addScandiGableCladding(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
   addScandiRoofEdgeDetails(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
   addScandiCornerDetails(THREE,g,{width:w,depth:d,bodyHeight});
-  g.userData.scandiEnvelope={facadeMaterials:['vertical-natural-timber','vertical-smoked-timber'],
+  g.userData.scandiEnvelope={facadeMaterials:['vertical-weathered-silver-grey-timber','vertical-smoked-graphite-grey-timber'],
    roofGableWindBoard:true,vergeMetalFlashing:true};
  }
  if(!isGazebo&&!isCarport&&!isGreenhouse&&style!=='aframe'){
