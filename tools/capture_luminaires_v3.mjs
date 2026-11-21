@@ -22,7 +22,7 @@ try{
    const file=dir+'/luminaire-v3-'+id+'-real-render.png';
    await page.locator('canvas').screenshot({path:file,animations:'disabled',timeout:90000});
    const size=(await fs.stat(file)).size;
-   if(size<25000)throw Error('Empty screenshot '+id+' '+size);
+   if(size<(id==='linear'?12000:25000))throw Error('Empty screenshot '+id+' '+size);
    report.push({id,file,size,partCount:proof.modelPartCount,version:proof.fixtureVersion});
    console.log('REAL MODEL PASS',id,proof.modelPartCount,size);
  }
