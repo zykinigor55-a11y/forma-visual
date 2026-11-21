@@ -391,6 +391,7 @@ import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummar
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
+import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
@@ -446,6 +447,7 @@ function treeSourceChoice(){
 }
 const botanicalGroups=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
+const geologicalRockSources=new Map(),geologicalRockLoading=new Set(),geologicalRockFailures=new Set();
 const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
 let plantSpeciesStored=new Set();
 function readBuildInfo(){
@@ -918,6 +920,27 @@ function loadCuratedAdultTree(species){
   if(root&&renderer&&doc)rebuild();
  }).finally(()=>{ktx2.dispose();bundledModelLoading.delete(species);updateModelHealth()});
 }
+function loadGeologicalScan(id){
+ const path=ROCK_SCAN_SOURCES[id];
+ if(!path||geologicalRockLoading.has(id)||geologicalRockSources.has(id)||geologicalRockFailures.has(id))return;
+ geologicalRockLoading.add(id);
+ new GLTFLoader().loadAsync('/'+path).then(asset=>{
+  if(!asset?.scene)throw Error('GLB does not contain a scanned rock scene');
+  let triangles=0,textures=0;
+  asset.scene.traverse(node=>{
+   if(!node.isMesh)return;
+   triangles+=node.geometry?.index?node.geometry.index.count/3:(node.geometry?.attributes?.position?.count||0)/3;
+   for(const m of Array.isArray(node.material)?node.material:[node.material])if(m?.map)textures++;
+  });
+  if(triangles<1000||textures<1)throw Error('Scanned boulder missing photogrammetry geometry or photographic PBR material');
+  geologicalRockSources.set(id,asset.scene);
+  if(renderer&&root&&doc)rebuild();
+ }).catch(error=>{
+  geologicalRockFailures.add(id);
+  console.warn('FORMA geological scan unavailable, showing authored geologic fallback:',id,error?.message||error);
+  if(renderer&&root&&doc)rebuild();
+ }).finally(()=>geologicalRockLoading.delete(id));
+}
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
  // Licensed nursery-sapling GLBs are not used automatically for mature trees.
@@ -973,8 +996,12 @@ function drawObject(o,entry,key){
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
  }else if(group==='boulders'){
-  const source=bundledModelSources.get(o.catalogId);
-  g=source?makeRealVegetation(THREE,source,{...o,height:Math.max(.35,Number(o.diameter||1.5)*.62)},{shareGeometry:true}):createRock(THREE,o);
+  // Four actually scanned CC0 boulder assets, with preserved original PBR
+  // colour/normal maps and true lithology-specific stone geometry.
+  // No x/y/rotation migration: only the local mesh is upgraded.
+  const source=geologicalRockSources.get(o.catalogId);
+  if(!source)loadGeologicalScan(o.catalogId);
+  g=source?createPhotogrammetryBoulder(THREE,source,o):createGeologicalFallbackBoulder(THREE,o);
  }
  else if(group==='lights'){
   const time=doc.atmosphere.time,weather=doc.atmosphere.weather;
