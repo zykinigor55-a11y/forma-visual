@@ -20,7 +20,7 @@ MAX_BYTES=2_500_000
 def fetch(url):
  with urlopen(Request(url,headers={'User-Agent':'FORMA-Visual-CC0-PBR-Installer/1.0'}),timeout=50) as r:
   b=r.read(MAX_BYTES+1)
- if len(b)>MAX_BYTES or len(b)<8000 or not b.startswith(b'\\xff\\xd8') or not b.rstrip().endswith(b'\\xff\\xd9'):
+ if len(b)>MAX_BYTES or len(b)<8000 or not b.startswith(b'\xff\xd8') or not b.rstrip().endswith(b'\xff\xd9'):
   raise ValueError('Invalid JPEG or texture outside acceptable 1K-size budget: '+url)
  return b
 
@@ -34,7 +34,7 @@ def main():
     p=OUT/f'{name}-{ch}-1k.jpg'
     url=f'https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/{slug}/{slug}_{ch}_1k.jpg'
     blob=p.read_bytes() if p.exists() else fetch(url)
-    if not blob.startswith(b'\\xff\\xd8'):raise ValueError('Bad JPEG')
+    if not blob.startswith(b'\xff\xd8'):raise ValueError('Bad JPEG')
     pending[ch]={'name':p.name,'url':url,'bytes':len(blob),
       'sha256':hashlib.sha256(blob).hexdigest()}
     if not p.exists():p.write_bytes(blob)
@@ -43,6 +43,6 @@ def main():
   except Exception as exc:
    manifest['failed'][name]=str(exc)
    print('SKIPPED',name,slug,str(exc),flush=True)
- (OUT/'sources.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\\n')
+ (OUT/'sources.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
  if len(manifest['materials'])<3:raise SystemExit('No usable CC0 material library; keep existing procedural fallback')
 if __name__=='__main__':main()
