@@ -11,46 +11,50 @@ import {addRealGardenEmission,gardenLightingSpec} from './forma-landscape-3d-lig
 const params=new URLSearchParams(location.search),lampId=params.get('id')||'bollard';
 if(!gardenLightingSpec[lampId])throw Error('Invalid original fixture id '+lampId);
 const spec=gardenLightingSpec[lampId],w=innerWidth,h=innerHeight;
+const darkStudio=params.get('mode')==='night',offMode=params.get('mode')==='day';
+const specifiedBrightness=Number(params.get('brightness'));
+const dimmer=params.has('brightness')&&Number.isFinite(specifiedBrightness)?Math.max(0,Math.min(2,specifiedBrightness)):1;
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(w,h);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.15;
+renderer.toneMappingExposure=darkStudio?1.32:1.15;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 const scene=new THREE.Scene();
-scene.background=new THREE.Color('#464b4d');
-scene.fog=new THREE.Fog('#464b4d',5,18);
+scene.background=new THREE.Color(darkStudio?'#10191b':'#464b4d');
+scene.fog=new THREE.Fog(darkStudio?'#10191b':'#464b4d',5,18);
 const pmrem=new THREE.PMREMGenerator(renderer);
 scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
-const groundMat=new THREE.MeshStandardMaterial({color:'#53575a',metalness:.10,roughness:.87});
+const groundMat=new THREE.MeshStandardMaterial({color:darkStudio?'#202c23':'#53575a',metalness:.04,roughness:.94});
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(18,18),groundMat);
 ground.rotation.x=-Math.PI/2;ground.position.y=-.007;
 ground.receiveShadow=true;scene.add(ground);
 // In photo 1 the detached stake must be visible in full; it lies below the
 // installation-grade ground level, so hide ONLY studio floor for its proof view.
 if(lampId==='spike-spot')ground.visible=false;
-const key=new THREE.DirectionalLight(0xffe5c7,4.8);
+const key=new THREE.DirectionalLight(0xffe5c7,darkStudio?.16:4.8);
 key.position.set(-1.8,4,3.2);key.castShadow=true;
 key.shadow.mapSize.set(2048,2048);key.shadow.camera.near=.01;key.shadow.camera.far=18;
 key.shadow.camera.left=-3;key.shadow.camera.right=3;key.shadow.camera.top=3;key.shadow.camera.bottom=-3;key.shadow.bias=-.0004;key.shadow.normalBias=.015;
 key.shadow.radius=4;scene.add(key);
-const fill=new THREE.DirectionalLight(0xc6ddf4,2.5);fill.position.set(2.6,2.8,-2);scene.add(fill);
-const edge=new THREE.DirectionalLight(0xdde8f3,3.1);edge.position.set(1,3,-3);scene.add(edge);
-scene.add(new THREE.HemisphereLight(0xe8edf0,0x3d3632,2));
-const instance={catalogId:lampId,height:spec.height,brightness:1,kelvin:2700,rotation:0};
-const fixture=createProfessionalGardenLight(THREE,instance,{night:true});
+const fill=new THREE.DirectionalLight(0xc6ddf4,darkStudio?.13:2.5);fill.position.set(2.6,2.8,-2);scene.add(fill);
+const edge=new THREE.DirectionalLight(0xdde8f3,darkStudio?.20:3.1);edge.position.set(1,3,-3);scene.add(edge);
+scene.add(new THREE.HemisphereLight(0xe8edf0,0x3d3632,darkStudio?.24:2));
+const instance={catalogId:lampId,height:spec.height,brightness:dimmer,kelvin:2700,rotation:0,variant:1};
+const fixture=createProfessionalGardenLight(THREE,instance,{night:!offMode});
 fixture.position.y=0;fixture.rotation.y=.34;scene.add(fixture);
-addRealGardenEmission(THREE,fixture,instance,{time:'night',weather:'sunny',shadow:false});
+const realEmitter=addRealGardenEmission(THREE,fixture,instance,{time:offMode?'day':'night',weather:'sunny',shadow:false});
+let globeShell=null;fixture.traverse(o=>{if(o.userData?.fixturePart==='uniform-seamless-opal-polyethylene-ball')globeShell=o});
 const fixtureBox=new THREE.Box3().setFromObject(fixture);
 const trueHeight=fixtureBox.max.y-fixtureBox.min.y;
 const center=fixtureBox.getCenter(new THREE.Vector3());
 const camera=new THREE.PerspectiveCamera(32,w/h,.01,50);
 const bounds=fixtureBox.getSize(new THREE.Vector3());
 const extent=Math.max(bounds.x,bounds.y,bounds.z);
-const distance=extent/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)))*1.31;
+const distance=extent/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)))*(darkStudio&&lampId==='globe'?2.5:1.31);
 const flush= ['ground','deck-light','linear'].includes(lampId);
 const camDir=new THREE.Vector3(1.07,flush?2.10:.64,1.35).normalize();
 camera.position.copy(center).addScaledVector(camDir,distance);
@@ -66,7 +70,12 @@ window.FORMA_LAMP_PROOF={
  originalModule:'forma-landscape-3d-fixtures.js',
  renderer:'Three.js r179',
  originalProject:'dom-render-nanobanana',
- screenshotKind:'actual authored 3D geometry, not AI image'
+ screenshotKind:'actual authored 3D geometry, not AI image',
+ studioMode:params.get('mode')||'standard',
+ globeOptics:fixture.userData.globeOptics||null,
+ lightIntensity:realEmitter?.intensity??0,
+ emitterPosition:realEmitter?.position.toArray()||null,
+ sphereCastsShadow:lampId==='globe'?(globeShell?.castShadow??null):null
 };
 window.FORMA_LAMP_READY=true;
 </script></body></html>
