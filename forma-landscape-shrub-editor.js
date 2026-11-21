@@ -10,7 +10,9 @@ export function shrubSizePreset(height,diameter,id){
   diameter:Math.round(Math.max(.2,Math.min(10,Number(diameter)*mult))*100)/100};
 }
 export function shrubEditorMarkup({id,species='',variant=1,real=false,loading=false,failed=false,season='summer'}={}){
- const picked=Math.max(1,Math.min(3,Math.round(Number(variant)||1)));
+ const fernIds=['fern','fern-02','fern-03','fern-04'];
+ const isFourFern=fernIds.includes(species);
+ const picked=isFourFern?fernIds.indexOf(species)+1:Math.max(1,Math.min(3,Math.round(Number(variant)||1)));
  const type=String(id||'кустарник').replace(/[<>&"]/g,'');
  return '<div class="forma-shrub-editor" aria-label="Редактор кустарника">'+
   '<strong>РЕДАКТОР КУСТАРНИКА</strong><small>'+type+'</small>'+
@@ -19,8 +21,8 @@ export function shrubEditorMarkup({id,species='',variant=1,real=false,loading=fa
   '<label>Возраст / размер</label><div class="forma-shrub-buttons">'+
   [['young','Молодой'],['normal','Обычный'],['adult','Взрослый']].map(([key,text])=>'<button type="button" data-shrub-size="'+key+'">'+text+'</button>').join('')+
   '</div><label>Вариант внешнего вида</label><div class="forma-shrub-buttons">'+
-  [1,2,3].map(x=>'<button type="button" data-shrub-variant="'+x+'" aria-pressed="'+(x===picked)+'" class="'+(x===picked?'active':'')+'">'+(species==='dogwood'?['Природный','Шар','Изгородь'][x-1]:species==='thuja-globe'?['Естественная','Компактная','Взрослая'][x-1]:species==='lavender'?['Цветущая','Компактная','Взрослая'][x-1]:species==='boxwood'?['Природный','Шар','Изгородь'][x-1]:species==='pennisetum'?['Пушистый','Компактный','Взрослый'][x-1]:species==='fern'?['Естественный','Молодой','Взрослый'][x-1]:'№ '+x)+'</button>').join('')+
-  '</div><small>Ниже можно точно указать высоту, ширину и поворот. У готовой GLB меняется ракурс исходной формы, её цветы и ветки не редактируются отдельно.</small>'+
+  (isFourFern?[1,2,3,4]:[1,2,3]).map(x=>'<button type="button" data-shrub-variant="'+x+'" aria-pressed="'+(x===picked)+'" class="'+(x===picked?'active':'')+'">'+(species==='dogwood'?['Природный','Шар','Изгородь'][x-1]:species==='thuja-globe'?['Естественная','Компактная','Взрослая'][x-1]:species==='lavender'?['Цветущая','Компактная','Взрослая'][x-1]:species==='boxwood'?['Природный','Шар','Изгородь'][x-1]:species==='pennisetum'?['Пушистый','Компактный','Взрослый'][x-1]:isFourFern?['Папоротник 01','Папоротник 02','Папоротник 03','Папоротник 04'][x-1]:'№ '+x)+'</button>').join('')+
+  '</div><small>'+(isFourFern?'Четыре самостоятельных куста из оригинальной Fern 02 GLB. Каждая форма имеет свои листья и геометрию.':'Ниже можно точно указать высоту, ширину и поворот. У готовой GLB меняется ракурс исходной формы, её цветы и ветки не редактируются отдельно.')+'</small>'+
   '<button class="forma-shrub-focus" type="button" id="shrubFocus">Приблизить куст</button>'+
   (failed?'<button type="button" id="shrubRetry">Загрузить GLB повторно</button>':'')+
   '</div>';
