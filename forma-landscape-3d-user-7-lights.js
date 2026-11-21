@@ -1,3 +1,4 @@
+import {createTranslucentOpalGlobe} from './forma-landscape-globe-optics.js';
 /* FORMA VISUAL · Seven user-approved visual references, 22 Nov 2026.
  * Original editable geometry, metres. All materials are physically shaded.
  * Exact visual sources: the seven images uploaded in the conversation.
@@ -16,7 +17,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  const G=new T.Group();
  G.name='FORMA-LUMINAIRE-'+id;
  G.userData.fixtureId=id;
- G.userData.fixtureVersion='user-uploaded-7-photos-v5';
+ G.userData.fixtureVersion='user-uploaded-7-photos-v6';
  G.userData.userPhotoReference=true;
  const number=(n,f)=>Number.isFinite(Number(n))?Number(n):f;
  const dim=Math.max(0,Math.min(2,number(instance?.brightness,1)));
@@ -196,14 +197,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   const explicit=number(instance?.diameter,NaN);
   if(Number.isFinite(explicit)&&explicit>=.20&&explicit<=1&&Math.abs(explicit-.40)>.02)
    diameter=explicit;
-  const r=diameter/2;
-  const referenceOpal=P('#e2e1dc',.005,.88,{transmission:.015,thickness:.024,
-    emissive:warm,emissiveIntensity:emission*.47+.008,side:T.DoubleSide});
-  cy(r*.29,r*.31,.006,0,-.021,0,blackRubber,'fully-concealed-ground-base',48);
-  cy(r*.24,r*.24,.008,0,-.023,0,body,'concealed-electrical-driver',48);
-  const sphere=sp(r,0,r*.99,0,referenceOpal,'uniform-seamless-opal-polyethylene-ball');
-  sphere.scale.y=.99;
-  sp(r*.12,0,r*.99,0,led,'LED-module-inside-diffuser').castShadow=false;
+  createTranslucentOpalGlobe(T,G,{diameter,night,brightness:dim,kelvin:number(instance?.kelvin,2700)});
   G.userData.availableDiameters=[.25,.40,.60,.80];
   G.userData.sphereDiameter=diameter;
   G.userData.measuredHeight=diameter;
