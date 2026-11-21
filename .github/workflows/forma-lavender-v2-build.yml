@@ -1,0 +1,82 @@
+name: FORMA · Lavender v2.2 botanical GLB refinement
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/lavender-angustifolia-v2.patch.xz.b64'
+      - '.github/workflows/forma-lavender-v2-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forma-lavender-v2-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  rebuild-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out user's working DOM.RENDER branch
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reproducible original GLB toolchain
+        run: python -m pip install --quiet 'numpy==2.3.5' 'trimesh==4.11.1' 'pillow==12.3.0'
+      - name: Apply original v2.2 lavender geometry patch
+        run: |
+          base64 --decode tools/lavender-angustifolia-v2.patch.xz.b64 | xz --decompress >/tmp/lavender-v2.patch
+          (cd tools && patch -p1 < /tmp/lavender-v2.patch)
+          python -m py_compile tools/generate_lavender_angustifolia.py
+      - name: Rebuild three original GLB forms, leave position and dimensions fixed
+        run: python tools/generate_lavender_angustifolia.py assets/landscape-models/lavender-angustifolia-forma-original.glb assets/landscape-models/lavender-angustifolia-forma-original.source.json
+      - name: Validate exact SHA-256 and 3 independent flowering crowns
+        run: |
+          python - <<'PY'
+          import json,hashlib,struct,re
+          from pathlib import Path
+          p=Path('assets/landscape-models/lavender-angustifolia-forma-original.glb')
+          buf=p.read_bytes()
+          meta=json.loads(Path('assets/landscape-models/lavender-angustifolia-forma-original.source.json').read_text())
+          assert buf[:4]==b'glTF' and struct.unpack_from('<I',buf,4)[0]==2
+          assert struct.unpack_from('<I',buf,8)[0]==len(buf)
+          sha=hashlib.sha256(buf).hexdigest()
+          assert sha==meta['sha256']== '9fbd5d63af507d6442d8781cc1bc90fa163c529bb8c1278318fcaa80cdc71600',sha
+          assert meta['triangles']==621874 and meta['meshCount']==39 and meta['materialCount']==13
+          assert meta['forms']['LAVENDER_NATURAL']['foliageTufts']==1480
+          assert meta['forms']['LAVENDER_COMPACT']['foliageTufts']==1010
+          assert meta['forms']['LAVENDER_MATURE']['foliageTufts']==1870
+          dims=[(.88,.63,.87),(.70,.47,.69),(1.12,.77,1.09)]
+          for name,expected in zip(['LAVENDER_NATURAL','LAVENDER_COMPACT','LAVENDER_MATURE'],dims):
+            shape=meta['forms'][name]
+            assert tuple(shape[k] for k in ('width','height','depth'))==expected
+          # Update only this botanical record; keep other plant assets untouched.
+          registry=Path('forma-landscape-3d-shrub-models.js')
+          text=registry.read_text()
+          begin=text.index(' lavender:Object.freeze({')
+          end=text.index('\n }),',begin)
+          block=text[begin:end]
+          changed,n=re.subn(r"sha256:'[0-9a-f]{64}'",f"sha256:'{sha}'",block)
+          assert n==1
+          changed=re.sub("fidelity:'[^']*'","fidelity:'FORMA original v2.2: denser silver-green Lavandula foliage cushion, staggered narrow 3D leaves, bent flowering peduncles and natural irregular violet whorls; three true-scale crown variants'",changed)
+          registry.write_text(text[:begin]+changed+text[end:])
+          print('Verified Lavender v2.2:',sha,len(buf),'bytes')
+          PY
+      - name: Verify real model and shrub editor regression tests
+        run: |
+          node --test tests/landscape-lavender-original-glb.test.mjs tests/landscape-shrub-editor-interaction.test.mjs tests/landscape-thuja-danica-original.test.mjs
+      - name: Commit revised model to current FORMA landscape branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/generate_lavender_angustifolia.py assets/landscape-models/lavender-angustifolia-forma-original.glb assets/landscape-models/lavender-angustifolia-forma-original.source.json forma-landscape-3d-shrub-models.js
+          if git diff --cached --quiet; then echo 'Already up to date'; exit 0; fi
+          git commit -m 'feat(lavender): dense silver-green cushion and naturally varied violet spikes v2.2'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
