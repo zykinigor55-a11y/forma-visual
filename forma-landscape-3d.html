@@ -427,6 +427,12 @@ import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-la
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
 const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
+window.addEventListener('forma-house-pbr-ready',()=>{
+ // Materials load after the first WebGL frame, without moving any building.
+ if(!renderer||!scene||!camera)return;
+ renderGate.invalidate();
+ requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
+});
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
