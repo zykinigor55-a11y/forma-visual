@@ -43,7 +43,13 @@ function terrainPBR(T,id){
  const make=(channel,rgba)=>{
   // Valid 1x1 texel until the photograph finishes downloading; even a
   // blocked CDN never leaves the 3D editor with a black / invalid material.
-  const out=new T.DataTexture(new Uint8Array(rgba),1,1,T.RGBAFormat);
+  // CanvasTexture accepts an HTMLImageElement later without using the
+  // DataTexture upload path (which requires image.data and would fail).
+  const pixel=document.createElement('canvas');pixel.width=pixel.height=1;
+  const ctx=pixel.getContext('2d');
+  ctx.fillStyle='rgba('+rgba[0]+','+rgba[1]+','+rgba[2]+','+(rgba[3]/255)+')';
+  ctx.fillRect(0,0,1,1);
+  const out=new T.CanvasTexture(pixel);
   out.wrapS=out.wrapT=T.RepeatWrapping;
   out.repeat.set(data.scale,data.scale);
   out.anisotropy=8;
