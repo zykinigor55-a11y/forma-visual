@@ -132,14 +132,14 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   cy(.028,.036,.025,0,-.100,0,body,'rear-optic-driver',48,head);
   // Electrical cable loops behind body, disappears into the stake:
   tube([[.039,.166,.064],[.059,.127,.104],[.079,.083,.120],
-    [.083,.018,.098],[.063,-.053,.060],[.040,-.090,.020]],.006,blackRubber,'external-visible-routed-PVC-cable');
+    [.080,.025,.096],[.062,-.013,.066],[.036,-.018,.037],[.009,-.020,.006]],.0055,blackRubber,'external-visible-routed-PVC-cable');
   cy(.013,.013,.017,.029,.151,.052,machined,'satin-steel-cable-gland',24);
   tor(.015,.0018,.029,.160,.052,blackRubber,'waterproof-cable-grommet');
   G.userData.measuredHeight=.39;
  }else if(id==='square-bollard'){
   // Image 2: charcoal rectangular post and THREE illuminated thin belts near top.
   const H=.82,w=.145,band=.021,gap=.034;
-  const bandWarm=P('#b9a06f',.08,.39,{emissive:warm,emissiveIntensity:emission*.25+.004});
+  const bandWarm=P('#a28a61',.08,.39,{emissive:warm,emissiveIntensity:emission*.24+.004});
   const champagne=P('#968977',.06,.28,{transmission:.39,transparent:true,opacity:.69,
     emissive:warm,emissiveIntensity:emission*.085+.003});
   const first=H-.067; // narrow warm glass belts under the solid metal top
@@ -168,9 +168,9 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   // Image 3: long, satin dark grey square post and large warm frosted
   // rectangular head; rounded pane corners, visibly glowing lamp inside.
   const H=1.20,w=.205,lower=.923,headTop=H-.027;
-  const referenceFrosted=P('#9c9e9b',.01,.54,{transmission:.52,thickness:.005,
-    ior:1.45,emissive:warm,emissiveIntensity:emission*.046+.002,
-    transparent:true,opacity:.54,side:T.DoubleSide});
+  const referenceFrosted=P('#aeada8',.01,.81,{transmission:.32,thickness:.005,
+    ior:1.45,emissive:warm,emissiveIntensity:emission*.047+.002,
+    transparent:true,opacity:.63,side:T.DoubleSide});
   bx(w,lower,w,0,lower/2,0,bodySoft,'cast-graphite-square-column');
   bx(w+.005,.018,w+.005,0,lower+.006,0,body,'neck-weatherproof-transition');
   // Crucial: interior is NOT a giant opaque solid block; the lamp is inside.
@@ -199,8 +199,8 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   const r=diameter/2;
   const referenceOpal=P('#e2e1dc',.005,.88,{transmission:.015,thickness:.024,
     emissive:warm,emissiveIntensity:emission*.47+.008,side:T.DoubleSide});
-  const base=cy(r*.42,r*.47,.014,0,.007,0,blackRubber,'hidden-ground-base',48);
-  cy(r*.35,r*.35,.009,0,.013,0,body,'invisible-electrical-driver',48);
+  cy(r*.29,r*.31,.006,0,-.005,0,blackRubber,'fully-concealed-ground-base',48);
+  cy(r*.24,r*.24,.008,0,-.007,0,body,'concealed-electrical-driver',48);
   const sphere=sp(r,0,r*.99,0,referenceOpal,'uniform-seamless-opal-polyethylene-ball');
   sphere.scale.y=.99;
   sp(r*.12,0,r*.99,0,led,'LED-module-inside-diffuser').castShadow=false;
