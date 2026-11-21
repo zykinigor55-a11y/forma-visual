@@ -34,7 +34,7 @@ export const CATALOG=Object.freeze([
  ['pennisetum','Пеннисетум «Хамельн» · пушистый декоративный злак','#a6a67b',0.87,'Pennisetum alopecuroides Hameln'],
  ['hosta','Хоста декоративная','#658e63',1.2,'Hosta plantaginea'],
  ['ornamental-grass','Декоративный злак · мискантус','#9b9e68',1.5,'Miscanthus sinensis'],
- ['fern','Папоротник лесной · собственная 3D-модель','#608568',1.2,'Dryopteris filix-mas'],
+ ['fern','Щитовник мужской · реалистичный папоротник','#4b8154',1.2,'Dryopteris filix-mas'],
  ['periwinkle','Барвинок стелющийся · собственная 3D-модель','#6f997a',1.0,'Vinca minor'],
  ['wild-shrub','Кустарник природный · собственная 3D-модель','#779763',1.8,'Native mixed woodland shrub']
  ].map(([id,name,color,diameter,latin])=>({id,group:'shrubs',name,color,diameter,latin,shape:'shrub'})),
