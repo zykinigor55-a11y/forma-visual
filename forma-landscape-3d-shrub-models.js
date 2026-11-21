@@ -51,6 +51,46 @@ export const SHRUB_3D_MODELS=Object.freeze({
   variants:['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE']
  }),
  fern:Object.freeze({
+  name:'Папоротник 01 · Poly Haven Fern 02 · отдельный PBR-куст',
+  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  sourcePage:'https://polyhaven.com/a/fern_02',
+  license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
+  season:'summer',
+  fidelity:'Один из четырёх самостоятельных оригинальных кустов Fern 02; реальная геометрия fern_02_a, UV и PBR-текстуры из Poly Haven. Не копия с поворотом.',
+  sha256:'3f5de1969d029db133986123aa5be6bff0137443800f53a209c6b25bcd8aab4c',
+  variants:['fern_02_a']
+ }),
+ 'fern-02':Object.freeze({
+  name:'Папоротник 02 · Poly Haven Fern 02 · отдельный PBR-куст',
+  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  sourcePage:'https://polyhaven.com/a/fern_02',
+  license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
+  season:'summer',
+  fidelity:'Один из четырёх самостоятельных оригинальных кустов Fern 02; реальная геометрия fern_02_b, UV и PBR-текстуры из Poly Haven. Не копия с поворотом.',
+  sha256:'3f5de1969d029db133986123aa5be6bff0137443800f53a209c6b25bcd8aab4c',
+  variants:['fern_02_b']
+ }),
+ 'fern-03':Object.freeze({
+  name:'Папоротник 03 · Poly Haven Fern 02 · отдельный PBR-куст',
+  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  sourcePage:'https://polyhaven.com/a/fern_02',
+  license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
+  season:'summer',
+  fidelity:'Один из четырёх самостоятельных оригинальных кустов Fern 02; реальная геометрия fern_02_c, UV и PBR-текстуры из Poly Haven. Не копия с поворотом.',
+  sha256:'3f5de1969d029db133986123aa5be6bff0137443800f53a209c6b25bcd8aab4c',
+  variants:['fern_02_c']
+ }),
+ 'fern-04':Object.freeze({
+  name:'Папоротник 04 · Poly Haven Fern 02 · отдельный PBR-куст',
+  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  sourcePage:'https://polyhaven.com/a/fern_02',
+  license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
+  season:'summer',
+  fidelity:'Один из четырёх самостоятельных оригинальных кустов Fern 02; реальная геометрия fern_02_d, UV и PBR-текстуры из Poly Haven. Не копия с поворотом.',
+  sha256:'3f5de1969d029db133986123aa5be6bff0137443800f53a209c6b25bcd8aab4c',
+  variants:['fern_02_d']
+ }),
+ 'fern-original':Object.freeze({
   name:'Щитовник мужской · оригинальная PBR 3D-модель FORMA, 3 формы',
   path:'/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb',
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_fern_dryopteris.py',
