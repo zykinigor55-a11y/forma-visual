@@ -56,9 +56,10 @@ jobs:
           python tools/generate_boxwood_sempervirens.py assets/landscape-models/boxwood-sempervirens-forma-original.glb assets/landscape-models/boxwood-sempervirens-forma-original.source.json
           python - <<'PY'
           import importlib.util
+          from pathlib import Path
           spec=importlib.util.spec_from_file_location('buxus','tools/generate_boxwood_sempervirens.py')
           mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
-          albedo,normal,meta=mod.build_cc0_photo_texture('/tmp/buxus-cc0-leaf-photo.jpg')
+          albedo,normal,meta=mod.build_cc0_photo_texture(Path('/tmp/buxus-cc0-leaf-photo.jpg'))
           albedo.save('assets/landscape-models/boxwood-leaf-photo-512-albedo.png')
           normal.save('assets/landscape-models/boxwood-leaf-photo-512-normal.png')
           print('Source photo patch',meta['sampledLeafPhotoPatch'])
