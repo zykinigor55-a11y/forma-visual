@@ -1,0 +1,65 @@
+{
+  "model": "Buxus sempervirens v3 REAL photographed UV and normal-map GLB",
+  "source": "Actual scene GLB loaded via THREE.js GLTFLoader, no generative image",
+  "screenshotType": "local dedicated grey studio GLB model renderer, not original landscape editor screenshot",
+  "actualSha256": "46ca248559075f5893c928b3e8d4bf7d64426c6c5ed9ce6df434834612dd9d76",
+  "photoTextureSource": "https://commons.wikimedia.org/wiki/File:Buxus_sempervirens-1.jpg",
+  "proofs": [
+    {
+      "form": "BOXWOOD_NATURAL",
+      "detail": false,
+      "file": "assets/landscape-screenshots/boxwood-v3-real-photo-grey-close.png",
+      "ready": {
+        "source": "/assets/landscape-models/boxwood-sempervirens-forma-original.glb",
+        "name": "BOXWOOD_NATURAL",
+        "actualGltf": true,
+        "photoMaterialCount": 8,
+        "normalMaterialCount": 8,
+        "width": 1.2023325562477112,
+        "height": 0.9572659954428673,
+        "depth": 1.1674799919128418,
+        "detail": false,
+        "meshCount": 10
+      },
+      "bytes": 3306835
+    },
+    {
+      "form": "BOXWOOD_NATURAL",
+      "detail": true,
+      "file": "assets/landscape-screenshots/boxwood-v3-real-photo-grey-leaf-macro.png",
+      "ready": {
+        "source": "/assets/landscape-models/boxwood-sempervirens-forma-original.glb",
+        "name": "BOXWOOD_NATURAL",
+        "actualGltf": true,
+        "photoMaterialCount": 8,
+        "normalMaterialCount": 8,
+        "width": 1.2023325562477112,
+        "height": 0.9572659954428673,
+        "depth": 1.1674799919128418,
+        "detail": true,
+        "meshCount": 10
+      },
+      "bytes": 3409810
+    },
+    {
+      "form": "BOXWOOD_SPHERE",
+      "detail": false,
+      "file": "assets/landscape-screenshots/boxwood-v3-real-photo-grey-sphere.png",
+      "ready": {
+        "source": "/assets/landscape-models/boxwood-sempervirens-forma-original.glb",
+        "name": "BOXWOOD_SPHERE",
+        "actualGltf": true,
+        "photoMaterialCount": 8,
+        "normalMaterialCount": 8,
+        "width": 0.8953224420547485,
+        "height": 0.8060426656156778,
+        "depth": 0.8781946003437042,
+        "detail": false,
+        "meshCount": 10
+      },
+      "bytes": 2879808
+    }
+  ],
+  "errors": [],
+  "timestamp": "2026-11-21T19:12:17.222Z"
+}
