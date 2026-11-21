@@ -86,16 +86,31 @@ export function addScandinavianVerticalCladding(T,facade,{
    }
   }
  }
- segmentBoards(T,facade,all[0],main,'scandi-vertical-cladding-main',.116);
- segmentBoards(T,facade,all[1],accent,'scandi-vertical-cladding-accent',.116);
+ segmentBoards(T,facade,all[0],main,'scandi-vertical-cladding-main',.135);
+ segmentBoards(T,facade,all[1],accent,'scandi-vertical-cladding-accent',.135);
  // Subtle ventilation/drainage starter profile ends above masonry plinth.
  const starter=finishMaterial(T,'#555B59');
- addBox(facade,T,span,.018,.024,0,.498,.133,starter,'rainscreen-ventilated-starter');
+ addBox(facade,T,span,.018,.024,0,.498,.154,starter,'rainscreen-ventilated-starter');
  facade.userData.scandiCladding={pitch:actualPitch,boardDepth:SCANDI_DETAIL.boardDepth,
   nominalVentilatedCavity:SCANDI_DETAIL.ventilationCavity,
+  measuredAirGapFromWallFace:.030,
   mainCount:all[0].length,accentCount:all[1].length,backingPanels:panelCount,
   band};
  return facade.userData.scandiCladding;
+}
+export function addScandiCornerDetails(T,group,{width,depth,bodyHeight}={}){
+ const casing=finishMaterial(T,'#535B58');
+ casing.metalness=.16;
+ for(const sx of [-1,1])for(const sz of [-1,1]){
+  // Two mitered vertical returns close the ventilated wood facade at
+  // the exposed external corner. They are NOT full-width facade cladding.
+  addBox(group,T,.042,bodyHeight-.49,.058,
+   sx*(width*.5+.142),bodyHeight*.5+.235,sz*(depth*.5+.126),
+   casing,'rainscreen-corner-termination-x');
+  addBox(group,T,.058,bodyHeight-.49,.042,
+   sx*(width*.5+.126),bodyHeight*.5+.235,sz*(depth*.5+.142),
+   casing,'rainscreen-corner-termination-z');
+ }
 }
 export function addScandiGableCladding(T,group,{
  width,depth,bodyHeight,rise,overhang
