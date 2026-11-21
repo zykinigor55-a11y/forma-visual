@@ -1,0 +1,40 @@
+{
+  "species": "Pennisetum alopecuroides Hameln",
+  "alias": "Cenchrus alopecuroides",
+  "version": "1.0 FORMA original fountain grass with fuzzy foxtail plumes",
+  "source": "Original procedural meshes; research RHS / UF IFAS",
+  "sha256": "15991fd8e7a7944def689dac5db0389fd1b6365aad30c1f99c50dd2454a644b9",
+  "sizeBytes": 7021132,
+  "triangleCount": 195876,
+  "meshCount": 36,
+  "forms": {
+    "PENNISETUM_NATURAL": {
+      "blades": 2250,
+      "plumes": 112,
+      "plumeBristles": 30464,
+      "triangles": 63624,
+      "meshes": 12,
+      "requestedDiameter": 0.87,
+      "requestedHeight": 0.76
+    },
+    "PENNISETUM_COMPACT": {
+      "blades": 1430,
+      "plumes": 73,
+      "plumeBristles": 19856,
+      "triangles": 41031,
+      "meshes": 12,
+      "requestedDiameter": 0.69,
+      "requestedHeight": 0.58
+    },
+    "PENNISETUM_MATURE": {
+      "blades": 3160,
+      "plumes": 163,
+      "plumeBristles": 44336,
+      "triangles": 91221,
+      "meshes": 12,
+      "requestedDiameter": 1.15,
+      "requestedHeight": 0.94
+    }
+  },
+  "modelFile": "pennisetum-hameln-forma-original.glb"
+}
