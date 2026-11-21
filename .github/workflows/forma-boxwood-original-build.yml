@@ -4,6 +4,7 @@ on:
     branches: [dom-render-nanobanana]
     paths:
       - 'tools/boxwood-sempervirens-v1.py.xz.b64'
+      - 'tests/landscape-thuja-danica-original.test.mjs'
       - '.github/workflows/forma-boxwood-original-build.yml'
   workflow_dispatch:
 permissions:
