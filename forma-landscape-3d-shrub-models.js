@@ -50,6 +50,16 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sha256:'46ca248559075f5893c928b3e8d4bf7d64426c6c5ed9ce6df434834612dd9d76',
   variants:['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE']
  }),
+ pennisetum:Object.freeze({
+  name:'Пеннисетум лисохвостный «Hameln» · пушистый декоративный злак FORMA',
+  path:'/assets/landscape-models/pennisetum-hameln-forma-original.glb',
+  sourcePage:'https://www.rhs.org.uk/plants/43921/pennisetum-alopecuroides-hameln/details',
+  license:'Original FORMA procedural 3D geometry; botanical reference RHS and UF IFAS; no copied meshes or photographs',
+  season:'summer',
+  fidelity:'FORMA original v1: 3 independent fountain-grass crowns with physically curved grass blades, slender flowering culms and real mesh fluffy foxtail bristles; 195876 combined triangles',
+  sha256:'15991fd8e7a7944def689dac5db0389fd1b6365aad30c1f99c50dd2454a644b9',
+  variants:['PENNISETUM_NATURAL','PENNISETUM_COMPACT','PENNISETUM_MATURE']
+ }),
  lavender:Object.freeze({
   name:'Лаванда узколистная · оригинальная PBR 3D-модель FORMA',
   path:'/assets/landscape-models/lavender-angustifolia-forma-original.glb',
