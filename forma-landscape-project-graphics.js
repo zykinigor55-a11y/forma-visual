@@ -166,7 +166,8 @@ export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURICompo
 // New live PBR terrain has no bundled 2D photo card yet; keep the measured
 // plan readable with its deterministic vector sample rather than a broken IMG.
 const STREAMED_SURFACES=new Set(['sand-fine','gravel-natural','crushed-stone','sandy-gravel']);
-export const iconURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):STREAMED_SURFACES.has(entry.id)?fallbackIconURL(entry):availablePhotos.has(entry.id)?photoUrl(entry):(premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry));
+const POLY_HAVEN_TREE_IDS=new Set(['ph-fir-sapling','ph-pine-sapling','ph-quiver-01','ph-quiver-02']);
+export const iconURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):POLY_HAVEN_TREE_IDS.has(entry?.id)?fallbackIconURL(entry):STREAMED_SURFACES.has(entry.id)?fallbackIconURL(entry):availablePhotos.has(entry.id)?photoUrl(entry):(premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry));
 export const isPhotographic=(entry)=>Boolean(entry&&availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'));
 export async function enablePremiumAssets(){
  try{await prepareTreeAtlas()}catch{}
