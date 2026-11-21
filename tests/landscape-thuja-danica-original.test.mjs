@@ -37,8 +37,8 @@ test('Danica is editable, true-scale and evergreen across seasons',()=>{
  assert.ok(!ui.includes('сезонный вид'));
  assert.match(native,/THUJA_DANICA_COMPACT/);
  assert.match(native,/getObjectByName\(variants\[variant-1\]\)/);
- assert.match(html,/o\.catalogId!=='thuja-globe'/);
- assert.match(html,/o\.catalogId==='thuja-globe'\|\|doc\.atmosphere\.season==='summer'/);
+ assert.match(html,/!\['thuja-globe','boxwood'\]\.includes\(o\.catalogId\)/);
+ assert.match(html,/\['thuja-globe','boxwood'\]\.includes\(o\.catalogId\)\|\|doc\.atmosphere\.season==='summer'/);
  const d=freshProject();
  d.objects=[{id:'t-01',catalogId:'thuja-globe',type:'shrubs',x:12,y:10,height:.68,diameter:.79,variant:2}];
  const norm=normalizeProject(d);
