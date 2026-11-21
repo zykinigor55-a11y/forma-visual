@@ -13,7 +13,7 @@ export const gardenLightingSpec=Object.freeze({
  'square-bollard':{height:.82,mountHeight:.71,color:0xffdbb5,intensity:19,range:5.5,kind:'radial',beam:0},
  'garden-lantern':{height:1.03,mountHeight:.74,color:0xffd4a3,intensity:44,range:9,kind:'radial',beam:0},
  'spike-spot':{height:.39,mountHeight:.22,color:0xffd4ab,intensity:65,range:12,kind:'uplight',beam:.34},
- globe:{height:.40,mountHeight:.20,color:0xffe6c6,intensity:27,range:6.6,kind:'radial',beam:0}
+ globe:{height:.40,mountHeight:.20,color:0xffe6c6,intensity:14,range:4.5,kind:'radial',beam:0}
 });
 const adjustable=new Set(['bollard','low-post','mushroom','square-bollard','garden-lantern','globe']);
 export const gardenLightTemperatures=Object.freeze({
@@ -52,7 +52,7 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
   if(instance.catalogId==='spot'){
    // Uploaded photo 5: side-mounted head is OFF-AXIS and points at the ground.
    lamp.position.set(.118,state.mountHeight,.012);
-   target.position.set(.54,0,.24); // angled away from shaft: illuminates the PATH, not its own pole
+   target.position.set(.24,0,.11); // shallow angle follows the actual head tilt (-Y with a small +X/+Z component)
   }else if(state.kind==='downlight')target.position.set(0,0,0);
   else if(state.kind==='forward')target.position.set(0,0,Math.min(state.range*.65,4));
   else if(['ground','deck-light','linear'].includes(instance.catalogId))target.position.set(0,Math.min(state.range*.8,6),0);
@@ -63,13 +63,24 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
   }else target.position.set(0,state.mountHeight+Math.min(state.range*.75,9),-Math.min(state.range*.55,6.5));
   g.add(target);lamp.target=target;
  }else{
-  lamp=new T.PointLight(state.color,state.actualIntensity,state.range,2);
-  lamp.position.set(0,state.mountHeight,0);
+  if(instance.catalogId==='globe'){
+   // Flux scales with the area of the opal sphere: equal perceived surface
+   // brightness for the 25/40/60/80 cm choices.
+   const realDiameter=Math.max(.20,Math.min(.80,Number(g.userData?.sphereDiameter)||state.height));
+   const ratio=realDiameter/.40;
+   lamp=new T.PointLight(state.color,state.actualIntensity*ratio*ratio,
+    state.range*Math.sqrt(ratio),2);
+   lamp.position.set(0,realDiameter*.495,0);
+   lamp.userData.softOpalAreaSource=true;
+  }else{
+   lamp=new T.PointLight(state.color,state.actualIntensity,state.range,2);
+   lamp.position.set(0,state.mountHeight,0);
+  }
  }
  lamp.name='forma-garden-emitter';
  lamp.userData.fixtureId=instance.catalogId;
  lamp.userData.kelvin=state.kelvin;
- lamp.castShadow=Boolean(shadow);
+ lamp.castShadow=Boolean(shadow)&&instance.catalogId!=='globe'; // opal diffuser must never shadow its own interior emitter
  if(lamp.castShadow){
   lamp.shadow.mapSize.set(256,256);
   lamp.shadow.bias=-.00025;
@@ -79,8 +90,8 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
  // A linear ground luminaire carries several independently located LEDs.
  // Split its flux between cells instead of a fake single radial light point.
  if(instance.catalogId==='linear'){
-  lamp.intensity/=4;
-  for(const z of [-.28,-.09,.09,.28]){
+  lamp.intensity/=5;
+  for(const z of [-.215,0,.215,.43]){
    const clone=lamp.clone();
    clone.position.z=z;
    clone.castShadow=false;
@@ -88,6 +99,27 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
    g.add(target);clone.target=target;g.add(clone);
   }
   lamp.position.z=-.43;
+ }
+ // The three separate lit acrylic belts radiate from different heights.
+ // Avoid a single implausibly hot dot from the middle of the post.
+ if(instance.catalogId==='square-bollard'){
+  const ys=[.63,.69,.745];
+  lamp.intensity/=ys.length;
+  lamp.position.y=ys[0];
+  for(const y of ys.slice(1)){
+   const belt=lamp.clone();belt.position.y=y;belt.castShadow=false;
+   g.add(belt);
+  }
+ }
+ // Four open vertical glowing tubes: ambient light should read along the
+ // height of the cage, not as one harsh unphysical upper point.
+ if(instance.catalogId==='garden-lantern'){
+  lamp.intensity*=.72;
+  const bottom=lamp.clone();
+  bottom.intensity=state.actualIntensity*.28;
+  bottom.position.y=.49;
+  bottom.castShadow=false;
+  g.add(bottom);
  }
  return lamp;
 }
