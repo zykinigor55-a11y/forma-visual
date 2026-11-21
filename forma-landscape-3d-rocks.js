@@ -5,7 +5,7 @@
  * NOT change any previously placed object's saved x/y, id or rotation.
  *
  * Sources: https://polyhaven.com/a/boulder_01
- *          https://polyhaven.com/a/rock_07
+ *          https://polyhaven.com/a/namaqualand_boulder_05
  *          https://polyhaven.com/a/rock_09
  *          https://polyhaven.com/a/rock_moss_set_01
  */
@@ -13,13 +13,13 @@ export const ROCK_SCAN_SOURCES=Object.freeze({
  'granite-boulder':'assets/landscape-models/granite-boulder.glb',
  'limestone-boulder':'assets/landscape-models/rock-moss.glb',
  'slate-boulder':'assets/landscape-models/rock-rough.glb',
- 'sandstone-boulder':'assets/landscape-models/rock-grey.glb'
+ 'sandstone-boulder':'assets/landscape-models/sandstone-boulder.glb'
 });
 export const ROCK_GEOLOGICAL_PROFILES=Object.freeze({
  'granite-boulder':{name:'Гранит',reference:'boulder_01',tint:'#a6b1b2',roughness:.91,aspect:.69},
  'limestone-boulder':{name:'Известняк',reference:'rock_moss_set_01',tint:'#e7dfcb',roughness:.95,aspect:.67},
  'slate-boulder':{name:'Сланец',reference:'rock_09',tint:'#75838b',roughness:.96,aspect:.45},
- 'sandstone-boulder':{name:'Песчаник',reference:'rock_07',tint:'#e4bf91',roughness:.95,aspect:.57}
+ 'sandstone-boulder':{name:'Песчаник',reference:'namaqualand_boulder_05',tint:'#f2e4d0',roughness:.96,aspect:.57}
 });
 const limits=(v,a,b,d)=>Number.isFinite(Number(v))?Math.max(a,Math.min(b,Number(v))):d;
 export function landscapeRockSize(instance){
@@ -68,7 +68,7 @@ export function createPhotogrammetryBoulder(T,source,instance){
  rock.userData.geology=profile.name;
  rock.userData.scannedCC0=true;
  rock.userData.scanSource=ROCK_SCAN_SOURCES[instance.catalogId];
- rock.userData.modelVersion='real-boulders-photo-pbr-v1';
+ rock.userData.modelVersion='real-boulders-photo-pbr-v2';
  rock.name='FORMA-PBR-BOULDER-'+instance.catalogId;
  const scan=source.clone(true);
  // Select exactly one scanned natural stone from the multi-piece limestone
