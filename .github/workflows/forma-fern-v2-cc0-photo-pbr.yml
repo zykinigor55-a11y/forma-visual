@@ -1,0 +1,125 @@
+name: FORMA - genuine CC0 photo leaf texture for Dryopteris v2 GLB
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/fern-v2-photo-upgrade.py.xz.b64'
+      - '.github/workflows/forma-fern-v2-cc0-photo-pbr.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-fern-v2-photo-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  photographic-fern:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 27
+    steps:
+      - name: Check out genuine DOM.RENDER project branch
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install reproducible GLB PBR and photo toolchain
+        run: python -m pip install --quiet 'numpy==2.3.5' 'trimesh==4.11.1' 'pillow==12.3.0'
+      - name: Recover authentic textured fern v2 geometry source
+        run: |
+          set -euo pipefail
+          base64 --decode tools/fern-v2-photo-upgrade.py.xz.b64 | xz --decompress > tools/generate_fern_dryopteris_v2.py
+          python -m py_compile tools/generate_fern_dryopteris_v2.py tools/generate_fern_dryopteris.py
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('tools/generate_fern_dryopteris_v2.py')
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=='033774c7735a23101ea3fb00b03ce76d8d23615935472720a2e0522a819a1952'
+          print('Exact original v2 source recovered and verified')
+          PY
+      - name: Retrieve real CC0 Dryopteris filix-mas frond photograph
+        run: |
+          set -euo pipefail
+          mkdir -p assets/landscape-models
+          PHOTO='assets/landscape-models/fern-CC0-source-Dryopteris.jpg'
+          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 18 --max-time 130 -L -f -sS \
+            -A 'Mozilla/5.0 (compatible; FORMA-Visual/1.0; open source botanic-textures)' \
+            'https://upload.wikimedia.org/wikipedia/commons/4/43/20220531_114609_Dryopteris_filix-mas.jpg' -o "$PHOTO"
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          src=Path('assets/landscape-models/fern-CC0-source-Dryopteris.jpg')
+          photo=Image.open(src)
+          photo.verify()
+          assert photo.size==(4608,3456),('Incorrect licensed botanical reference',photo.size)
+          print('CC0 Wikimedia Commons Sdjurovic 2022 Male Fern photo verified',photo.size,src.stat().st_size)
+          PY
+      - name: Rebuild same real GLB crown geometry with photographed albedo and tangent normal maps
+        run: |
+          python tools/generate_fern_dryopteris_v2.py \
+            assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb \
+            assets/landscape-models/fern-dryopteris-filix-mas.source.json \
+            assets/landscape-models/fern-CC0-source-Dryopteris.jpg
+          cat > assets/landscape-models/fern-photo-CC0-ATTRIBUTION.txt <<'EOF'
+          FORMA VISUAL: photographed Dryopteris filix-mas epidermis on original 3D fern
+          Photographer: Sdjurovic, own work taken May 31, 2022.
+          Wikimedia Commons source: https://commons.wikimedia.org/wiki/File:20220531_114609_Dryopteris_filix-mas.jpg
+          Original file: https://upload.wikimedia.org/wikipedia/commons/4/43/20220531_114609_Dryopteris_filix-mas.jpg
+          License: Creative Commons CC0 1.0 Universal Public Domain Dedication
+          Photo contribution: actual leaf green micro-crops in albedo and photo-derived
+          high-pass normal map, plus independently sculpted 3D irregular pinnules.
+          Geometry/UVs entirely original FORMA; no extracted third-party 3D assets.
+          EOF
+      - name: Verify exact photographic GLB and update project plant registry integrity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,re,struct
+          glb=Path('assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb')
+          source=Path('assets/landscape-models/fern-dryopteris-filix-mas.source.json')
+          bytes_=glb.read_bytes()
+          meta=json.loads(source.read_text())
+          assert bytes_[:4]==b'glTF' and struct.unpack_from('<I',bytes_,4)[0]==2
+          assert struct.unpack_from('<I',bytes_,8)[0]==len(bytes_)
+          actual=hashlib.sha256(bytes_).hexdigest()
+          assert actual==meta['sha256']
+          assert meta['triangleCount']==507704 and meta['meshCount']==30
+          assert meta['photoTexture']['license']=='CC0 1.0 public domain'
+          assert meta['photoTexture']['photoAuthor']=='Sdjurovic'
+          assert meta['photoTexture']['verifiedLeafCropCount']>=15
+          hdr=struct.unpack_from('<I',bytes_,12)[0]
+          model=json.loads(bytes_[20:20+hdr])
+          assert len(model['materials'])==10 and len(model['images'])>=14
+          assert sum('TEXCOORD_0' in p['attributes'] for mesh in model['meshes'] for p in mesh['primitives'])==21
+          reg=Path('forma-landscape-3d-shrub-models.js')
+          s=reg.read_text()
+          a=s.index(' fern:Object.freeze({')
+          b=s.index('\n }),',a)
+          old=s[a:b]
+          new,n=re.subn(r"sha256:'[0-9a-f]{64}'",f"sha256:'{actual}'",old)
+          assert n==1
+          new=re.sub(r"fidelity:'[^']*'",
+             "fidelity:'FORMA fern v2: UV-mapped true CC0 Dryopteris frond photograph, photo-derived PBR normal atlas, asymmetrical sculpted pinnule tips and irregular naturally arching fronds; three original real-size 3D crowns'",
+             new)
+          reg.write_text(s[:a]+new+s[b:])
+          print('VERIFIED photographed FERN v2',actual,len(bytes_),'bytes',meta['photoTexture'])
+          PY
+      - name: Test genuine photo materials, original three independent 3D forms and editable site coordinates
+        run: |
+          node --test tests/landscape-fern-cc0-photo-v2.test.mjs tests/landscape-dryopteris-original.test.mjs tests/landscape-shrub-editor-interaction.test.mjs
+      - name: Save verified photo PBR GLB, actual CC0 source and editable geometry generator to GitHub
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/generate_fern_dryopteris_v2.py forma-landscape-3d-shrub-models.js
+          git add assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb
+          git add assets/landscape-models/fern-dryopteris-filix-mas.source.json
+          git add assets/landscape-models/fern-original-epidermis-albedo.png
+          git add assets/landscape-models/fern-original-epidermis-normal.png
+          git add assets/landscape-models/fern-CC0-source-Dryopteris.jpg
+          git add assets/landscape-models/fern-photo-CC0-ATTRIBUTION.txt
+          if git diff --cached --quiet; then echo 'Version already saved'; exit 0; fi
+          git commit -m 'feat(fern): v2 real CC0 photographic male-fern leaf texture and irregular fronds'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
