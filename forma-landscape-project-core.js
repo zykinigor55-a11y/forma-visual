@@ -72,17 +72,17 @@ export const CATALOG=Object.freeze([
  ['pine-bark','Кора сосновая','#7b563d','bark']
  ].map(([id,name,color,texture])=>({id,group:'fills',name,color,texture})),
  ...[
- ['bollard','Боллард цилиндрический · LED','#d9c3a0','bollard',.30,.85],
+ ['bollard','Цилиндрический с ребристым стеклом · 07','#d9c3a0','bollard',.16,.83],
  ['ground','Встраиваемый круглый · IP67','#f2d4a2','ground',.28,.12],
- ['spot','Прожектор поворотный · грунтовый','#ead0a3','spot',.30,.30],
- ['low-post','Столбик с боковой подсветкой','#e6c395','post',.23,1.20],
+ ['spot','Поворотный на стойке · 05','#ead0a3','spot',.18,1.11],
+ ['low-post','Квадратный с матовым стеклом · 03','#e6c395','post',.17,1.20],
  ['deck-light','Террасный квадратный · IP67','#e5c390','deck',.095,.10],
  ['linear','Линейный в мощении · LED','#ffcf8f','linear',.037,.08],
  ['mushroom','Грибовидный · мягкий свет вниз','#e6cdaa','mushroom',.15,.38],
- ['square-bollard','Столбик квадратный · LED','#d8c29f','square-bollard',.12,.50],
- ['garden-lantern','Фонарь парковый · классический','#f0d4a0','garden-lantern',.23,.995],
- ['spike-spot','Прожектор на колышке · акцент','#e9cda3','spike-spot',.20,.36],
- ['globe','Светильник-шар · опаловый','#f0d9b3','globe',.40,.38]
+ ['square-bollard','Чёрный с тремя световыми поясами · 02','#d8c29f','square-bollard',.145,.82],
+ ['garden-lantern','Открытая прямоугольная рама · 06','#f0d4a0','garden-lantern',.205,1.03],
+ ['spike-spot','Прожектор с фасеточным отражателем · 01','#e9cda3','spike-spot',.13,.39],
+ ['globe','Светильник-шар · опаловый','#f0d9b3','globe',.40,.40]
  ].map(([id,name,color,texture,diameter,height])=>({id,group:'lights',name,color,diameter,height,texture})),
  ...[
  ['formal','Коротко стриженный · партерный газон','#79a24e','formal'],
