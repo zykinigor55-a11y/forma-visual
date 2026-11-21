@@ -9,7 +9,7 @@ export const GROUPS=Object.freeze([
  {id:'shrubs',name:'Кустарники и почвопокровные',qty:14,symbol:'◈'},
  {id:'trees',name:'Деревья',qty:12,symbol:'♧'},
  {id:'pavers',name:'Брусчатка',qty:6,symbol:'▤'},
- {id:'fills',name:'Отсыпки',qty:5,symbol:'░'},
+ {id:'fills',name:'Отсыпки',qty:9,symbol:'░'},
  {id:'lights',name:'Светильники',qty:11,symbol:'☼'},
  {id:'lawns',name:'Газоны',qty:4,symbol:'≋'},
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
@@ -69,7 +69,11 @@ export const CATALOG=Object.freeze([
  ['granite-chips','Гранитная крошка','#8c8d8b','granite'],
  ['river-pebble','Речная галька','#b1a288','pebble'],
  ['slate-chips','Сланцевая отсыпка','#4d5358','slate'],
- ['pine-bark','Кора сосновая','#7b563d','bark']
+ ['pine-bark','Кора сосновая','#7b563d','bark'],
+ ['sand-fine','Песок природный','#ceb896','sand'],
+ ['gravel-natural','Гравий природный','#878580','gravel'],
+ ['crushed-stone','Щебень мелкий','#a3a09a','crushed'],
+ ['sandy-gravel','Песчано-гравийная смесь','#b9a589','sandy-gravel']
  ].map(([id,name,color,texture])=>({id,group:'fills',name,color,texture})),
  ...[
  ['bollard','Цилиндрический с ребристым стеклом · 07','#d9c3a0','bollard',.16,.83],
