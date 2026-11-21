@@ -1,0 +1,81 @@
+name: FORMA - original male fern 3D model, photo-real leaf PBR and 3 size variants
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/fern-dryopteris-original.py.xz.b64'
+      - '.github/workflows/forma-fern-dryopteris-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-fern-dryopteris-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build-test-save:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout actual FORMA DOM.RENDER landscape branch
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Reproducible Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install botanical GLB and procedural PBR atlas dependencies
+        run: python -m pip install --quiet 'numpy==2.3.5' 'trimesh==4.11.1' 'pillow==12.3.0'
+      - name: Restore original independently authored fern modeling source
+        run: |
+          set -euo pipefail
+          base64 --decode tools/fern-dryopteris-original.py.xz.b64 | xz --decompress > tools/generate_fern_dryopteris.py
+          python -m py_compile tools/generate_fern_dryopteris.py
+      - name: Build original 3D fern leaflets, 3 crowns, and PBR vein atlases
+        run: |
+          python tools/generate_fern_dryopteris.py \
+            assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb \
+            assets/landscape-models/fern-dryopteris-filix-mas.source.json
+      - name: Verify exact GLB binary, 3 independent botanical frond crowns and real PBR
+        run: |
+          python - <<'PY'
+          import json,hashlib,struct
+          from pathlib import Path
+          model=Path('assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb')
+          data=model.read_bytes()
+          meta=json.loads(Path('assets/landscape-models/fern-dryopteris-filix-mas.source.json').read_text())
+          sha=hashlib.sha256(data).hexdigest()
+          assert data[:4]==b'glTF' and struct.unpack_from('<I',data,4)[0]==2
+          assert struct.unpack_from('<I',data,8)[0]==len(data)
+          assert sha==meta['sha256']=='af697f0384742b1ff1442bdb53ec3b870877fe13a2dcc210d80e336b3bda2b3b',sha
+          assert meta['sizeBytes']==16978372
+          assert meta['triangleCount']==507704 and meta['meshCount']==30
+          expected={'FERN_NATURAL':(23,16192),'FERN_YOUNG':(15,7980),'FERN_MATURE':(32,28800)}
+          for key,(fronds,parts) in expected.items():
+            assert meta['forms'][key]['fronds']==fronds
+            assert meta['forms'][key]['pinnules']==parts
+          gltf=json.loads(data[20:20+struct.unpack_from('<I',data,12)[0]])
+          assert len(gltf['materials'])==10 and len(gltf['images'])>=14
+          names={x.get('name') for x in gltf['nodes']}
+          for name in expected:
+            assert name in names
+            assert name+'-forest' in names
+            assert name+'-stem' in names
+          print('Real male fern geometry + PBR verified:',sha,len(data),meta['triangleCount'])
+          PY
+      - name: Test editor fern form selector and unchanged planting coordinates
+        run: |
+          node --test tests/landscape-dryopteris-original.test.mjs tests/landscape-shrub-editor-interaction.test.mjs
+      - name: Commit tested fern GLB and its source/textures to GitHub branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/generate_fern_dryopteris.py
+          git add assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb
+          git add assets/landscape-models/fern-dryopteris-filix-mas.source.json
+          git add assets/landscape-models/fern-original-epidermis-albedo.png
+          git add assets/landscape-models/fern-original-epidermis-normal.png
+          if git diff --cached --quiet; then echo 'Already saved'; exit 0; fi
+          git commit -m 'feat(fern): original richly pinnate male fern, three real PBR GLB crowns'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
