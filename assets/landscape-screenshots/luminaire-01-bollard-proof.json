@@ -1,14 +1,23 @@
 {
   "fixtureId": "bollard",
-  "fixtureVersion": "user-uploaded-7-photos-v4",
-  "modelPartCount": 51,
+  "fixtureVersion": "user-uploaded-7-photos-v6",
+  "modelPartCount": 52,
   "webgl": true,
   "heightMetres": 0.83,
   "originalModule": "forma-landscape-3d-fixtures.js",
   "renderer": "Three.js r179",
   "originalProject": "dom-render-nanobanana",
   "screenshotKind": "actual authored 3D geometry, not AI image",
+  "studioMode": "standard",
+  "globeOptics": null,
+  "lightIntensity": 23,
+  "emitterPosition": [
+    0,
+    0.715,
+    0
+  ],
+  "sphereCastsShadow": null,
   "filename": "assets/landscape-screenshots/luminaire-01-bollard-real-pbr-render.png",
   "errors": [],
-  "timestamp": "2026-11-21T21:42:49.462Z"
+  "timestamp": "2026-11-21T22:16:15.550Z"
 }
