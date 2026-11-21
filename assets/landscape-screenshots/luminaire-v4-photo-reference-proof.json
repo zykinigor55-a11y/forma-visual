@@ -19,7 +19,7 @@
     {
       "id": "spot",
       "file": "assets/landscape-screenshots/luminaire-v4-spot-real-render.png",
-      "size": 106074,
+      "size": 57176,
       "partCount": 6,
       "version": "user-uploaded-7-photos-v4"
     },
@@ -68,7 +68,7 @@
     {
       "id": "spike-spot",
       "file": "assets/landscape-screenshots/luminaire-v4-spike-spot-real-render.png",
-      "size": 62599,
+      "size": 54116,
       "partCount": 8,
       "version": "user-uploaded-7-photos-v4"
     },
@@ -80,5 +80,5 @@
       "version": "user-uploaded-7-photos-v4"
     }
   ],
-  "timestamp": "2026-11-21T21:42:56.136Z"
+  "timestamp": "2026-11-21T21:44:48.405Z"
 }
