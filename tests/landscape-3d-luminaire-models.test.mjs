@@ -94,13 +94,13 @@ test('seven exact user-uploaded photographs supersede previous manufacturer phot
  const refs=['spike-spot','square-bollard','low-post','globe','spot','garden-lantern','bollard'];
  assert.equal(refs.length,7);
  for(const id of refs) assert.ok(source.includes("id==='"+id+"'"),'needs real authored geometry for uploaded '+id);
- assert.match(source,/fixtureVersion='user-uploaded-7-photos-v4'/);
+ assert.match(source,/fixtureVersion='user-uploaded-7-photos-v5'/);
  assert.match(source,/actual-microprism-reflector/,'uploaded spotlight includes facet optics');
- assert.match(source,/continuous-clear-acrylic-wrap/,'three stacked transparent lit square-post bands');
+ assert.match(source,/continuous-smoked-acrylic-wrap/,'three stacked transparent lit square-post bands');
  assert.match(source,/rounded-front-glass/,'square post uses independent rounded translucent panels');
  assert.match(source,/hollow-frame-black-vertical-corner/,'open frame is a true hollow structure');
- assert.match(source,/horizontal-refractive-grid/,'cylindrical cap has real prismatic geometry');
- assert.match(source,/external-routed-PVC-cable/,'spike-spot cable is a curved 3D model');
+ assert.match(source,/horizontal-engraved-optic-grid/,'cylindrical cap has real prismatic geometry');
+ assert.match(source,/external-visible-routed-PVC-cable/,'spike-spot cable is a curved 3D model');
  assert.match(source,/side-mounted-adjustable-head/);
  assert.match(source,/uniform-seamless-opal-polyethylene-ball/);
  assert.match(file('forma-landscape-3d-luminaires-reference.js'),/createUserReferenceGardenLuminaire\(T,instance,\{night\}\)/);
