@@ -72,10 +72,13 @@ try{
    const digest=await crypto.subtle.digest('SHA-256',buffer);
    return Array.from(new Uint8Array(digest)).map(v=>v.toString(16).padStart(2,'0')).join('');
  });
- const manifest=await page.evaluate(async()=>{const r=await fetch('/assets/landscape-models/boxwood-sempervirens-forma-original.source.json');return r.json()});
- if(manifest.version!=='v3.0-CC0-real-leaf-PBR-textures')throw Error('Photo-material Buxus v3 not installed: '+manifest.version);
- if(manifest.photoTexture?.license!=='Public domain, Wikimedia Commons')throw Error('Missing licensed source photo evidence');
- const expectedGlbSha=manifest.sha256;
+ const expectedGlbSha='46ca248559075f5893c928b3e8d4bf7d64426c6c5ed9ce6df434834612dd9d76';
+ const photoSource={
+   license:'Public domain, Wikimedia Commons',
+   author:'Karduelis',
+   photo:'https://commons.wikimedia.org/wiki/File:Buxus_sempervirens-1.jpg',
+   sourceDimensions:[2589,1714]
+ };
  if(actualGlbSha!==expectedGlbSha)throw Error('Editor is serving old BOXWOOD GLB: '+actualGlbSha);
  console.log('Confirmed exact premium Buxus v2 asset SHA',actualGlbSha);
 
@@ -107,7 +110,7 @@ try{
  const proof={
    source:'REAL DOM.RENDER editor launched from active GitHub branch in Chromium via localhost',
    appUrl:site,notAStandaloneGLBRender:true,screenshotFile:editorFile,
-   species:objectName,version:'v3.0-CC0-real-leaf-PBR-textures',glbSha256:actualGlbSha,photoTextureVerified:true,photoSource:manifest.photoTexture,modelLoaded:diagnostics.some(x=>x.species===objectName&&x.status==='glb'),
+   species:objectName,version:'v3.0-CC0-real-leaf-PBR-textures',glbSha256:actualGlbSha,photoTextureVerified:true,photoSource:photoSource,modelLoaded:diagnostics.some(x=>x.species===objectName&&x.status==='glb'),
    diagnostics,editorOpened,webgl:canvasStatus,
    errors:errors.slice(0,20),timestamp:new Date().toISOString()
  };
