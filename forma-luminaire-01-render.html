@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FORMA · LUMINAIRE 01 · real geometry studio render</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#3e4344}canvas{display:block;width:100vw;height:100vh}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
+</head><body><script type="module">
+import * as THREE from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {createProfessionalGardenLight} from './forma-landscape-3d-fixtures.js';
+import {addRealGardenEmission,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
+const params=new URLSearchParams(location.search),lampId=params.get('id')||'bollard';
+if(!gardenLightingSpec[lampId])throw Error('Invalid original fixture id '+lampId);
+const spec=gardenLightingSpec[lampId],w=innerWidth,h=innerHeight;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(w,h);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color('#464b4d');
+scene.fog=new THREE.Fog('#464b4d',5,18);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
+const groundMat=new THREE.MeshStandardMaterial({color:'#53575a',metalness:.10,roughness:.87});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(18,18),groundMat);
+ground.rotation.x=-Math.PI/2;ground.position.y=-.007;
+ground.receiveShadow=true;scene.add(ground);
+const key=new THREE.DirectionalLight(0xffe5c7,4.8);
+key.position.set(-1.8,4,3.2);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);key.shadow.camera.near=.01;key.shadow.camera.far=18;
+key.shadow.camera.left=-3;key.shadow.camera.right=3;key.shadow.camera.top=3;key.shadow.camera.bottom=-3;key.shadow.bias=-.0004;key.shadow.normalBias=.015;
+key.shadow.radius=4;scene.add(key);
+const fill=new THREE.DirectionalLight(0xc6ddf4,2.5);fill.position.set(2.6,2.8,-2);scene.add(fill);
+const edge=new THREE.DirectionalLight(0xdde8f3,3.1);edge.position.set(1,3,-3);scene.add(edge);
+scene.add(new THREE.HemisphereLight(0xe8edf0,0x3d3632,2));
+const instance={catalogId:lampId,height:spec.height,brightness:1,kelvin:2700,rotation:0};
+const fixture=createProfessionalGardenLight(THREE,instance,{night:true});
+fixture.position.y=0;fixture.rotation.y=.34;scene.add(fixture);
+addRealGardenEmission(THREE,fixture,instance,{time:'night',weather:'sunny',shadow:false});
+const fixtureBox=new THREE.Box3().setFromObject(fixture);
+const trueHeight=fixtureBox.max.y-fixtureBox.min.y;
+const center=fixtureBox.getCenter(new THREE.Vector3());
+const camera=new THREE.PerspectiveCamera(32,w/h,.01,50);
+const extent=Math.max(trueHeight,fixtureBox.getSize(new THREE.Vector3()).x*.9);
+const distance=extent/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)))*1.31;
+const camDir=new THREE.Vector3(1.07,.55,1.35).normalize();
+camera.position.copy(center).addScaledVector(camDir,distance);
+camera.lookAt(center.x,center.y,center.z);
+camera.updateProjectionMatrix();
+renderer.render(scene,camera);
+window.FORMA_LAMP_PROOF={
+ fixtureId:fixture.userData.fixtureId,
+ fixtureVersion:fixture.userData.fixtureVersion,
+ modelPartCount:fixture.children.filter(x=>x.isMesh).length,
+ webgl:!!renderer.getContext(),
+ heightMetres:spec.height,
+ originalModule:'forma-landscape-3d-fixtures.js',
+ renderer:'Three.js r179',
+ originalProject:'dom-render-nanobanana',
+ screenshotKind:'actual authored 3D geometry, not AI image'
+};
+window.FORMA_LAMP_READY=true;
+</script></body></html>
