@@ -144,10 +144,10 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
   g.userData.windowSystem={frame:'uPVC 76mm',unit:'triple glazed 4-16-4-16-4',
    panes:3,spacer:'warm-edge',nominalPaneThicknessMm:4};
  }else box(g,T,w,h,.022,0,0,.095,glass);
- for(const side of [-1,1])box(g,T,edge,h+edge*2,.16,side*(w+edge)/2,0,.065,frame);
- for(const side of [-1,1])box(g,T,w+edge*2,edge,.16,0,side*(h+edge)/2,.065,frame);
+ for(const side of [-1,1])box(g,T,edge,h+edge*2,tripleGlazed?.076:.16,side*(w+edge)/2,0,tripleGlazed?.089:.065,frame);
+ for(const side of [-1,1])box(g,T,w+edge*2,edge,tripleGlazed?.076:.16,0,side*(h+edge)/2,tripleGlazed?.089:.065,frame);
  const mullion=panoramic?2:1;
- for(let i=1;i<=mullion;i++)box(g,T,.036,h,.12,(i/(mullion+1)-.5)*w,0,.105,frame);
+ for(let i=1;i<=mullion;i++)box(g,T,.036,h,tripleGlazed?.076:.12,(i/(mullion+1)-.5)*w,0,.105,frame);
  box(g,T,w,.033,.12,0,.012,.105,frame);
  box(g,T,w+.26,.065,.26,0,-h/2-.14,.045,mat(T,'#414747',.68,.26));
  // Working casement hardware: discreet hinges on the sash and an upper
@@ -294,7 +294,7 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
    segment.userData.architecturePart='solid-wall';
    segment.userData.facade=name;
   }
-  if(style==='scandi'&&type==='house'){
+  if(style==='scandi'&&(type==='house'||!type)){
    addScandinavianVerticalCladding(T,facade,{
     span,patches,front:name==='front',
     frontDoor:name==='front'?openings.find(o=>o.kind==='door'):null,
@@ -710,7 +710,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   entrance.position.set(0,1.56,d/2+.095);g.add(entrance);
  }else{
   const facadePlan=addMeasuredFacades(g,THREE,{width:w,depth:d,height:bodyHeight,style,
-   type:b.type,material:wallMaterial,night});
+   type:b.type||'house',material:wallMaterial,night});
   g.userData.facadeSchedule=facadePlan;
   const darkTrim=mat(THREE,'#262B2D',.52,.34);
   // Thin projecting base and eave band cast physically grounded shadows.
@@ -757,7 +757,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  }):roofMaterial;
  const roofBuilding=isGreenhouse?{...b,roof:'gable'}:isCarport?{...b,roof:'flat'}:b;
  roofGeometry(g,THREE,roofBuilding,w,d,0,bodyHeight,greenhouseRoof,preset.roofFinish);
- if(style==='scandi'&&b.type==='house'&&(b.roof||preset.roof)==='gable'){
+ if(style==='scandi'&&(!b.type||b.type==='house')&&(b.roof||preset.roof)==='gable'){
   // The original roof stays untouched. Technical flashings and timber
   // gable siding follow its existing ridge, slopes and measured overhangs.
   const overhang=Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
