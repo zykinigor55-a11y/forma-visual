@@ -46,8 +46,8 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_boxwood_sempervirens.py',
   license:'Original independently authored FORMA mesh and PBR materials',
   season:'evergreen',
-  fidelity:'v1: 3D pairs of small glossy elliptical leaves on woody stems, dense interior foliage, three native silhouette forms; 373880 triangles across three forms',
-  sha256:'83d3a0041c863144ae4fe21bc78795785c8ded104b8559dcd3645528d0adb296',
+  fidelity:'Premium original Buxus v2: curved thick oval leaf geometry, 8 leaf tone materials, decussate twig pairs, dense lower canopy, uniform perimeter-sampled hedge wall foliage and three original true-scale crowns; 720940 triangles combined',
+  sha256:'1d199528b759bb250879613a734fbc2d08c53f8dc4b2c38abb513a5b17ab88ce',
   variants:['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE']
  }),
  lavender:Object.freeze({
