@@ -5,7 +5,7 @@
 export const gardenLightingSpec=Object.freeze({
  bollard:{height:.85,mountHeight:.75,color:0xffd8b0,intensity:23,range:6,kind:'radial',beam:0},
  ground:{height:.12,mountHeight:.085,color:0xffdfb7,intensity:8,range:4.6,kind:'uplight',beam:.64},
- spot:{height:.24,mountHeight:.34,color:0xffd4ac,intensity:86,range:14,kind:'uplight',beam:.38},
+ spot:{height:.24,mountHeight:.30,color:0xffd4ac,intensity:86,range:14,kind:'uplight',beam:.38},
  'low-post':{height:1.20,mountHeight:1.04,color:0xffd8a9,intensity:22,range:6.8,kind:'radial',beam:0},
  'deck-light':{height:.10,mountHeight:.115,color:0xffe0b8,intensity:6,range:3.3,kind:'radial',beam:0},
  linear:{height:.08,mountHeight:.10,color:0xffdfb3,intensity:11,range:3.8,kind:'radial',beam:0},
