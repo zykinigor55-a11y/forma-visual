@@ -73,7 +73,7 @@ test('open U-section roof gutter has caps, fixing brackets and fall to outlet',(
  assert.match(houses,/architecturePart='flat-roof-scupper'/);
  assert.match(houses,/architecturePart='downpipe-clamp'/);
  assert.match(houses,/architecturePart='downpipe-wall-bracket'/);
- assert.match(houses,/architecturePart='downpipe-shoe'/);
+ assert.match(houses,/roundPipeBetween\(g,T,shoeA,shoeB,\.069,metal,'downpipe-shoe'\)/);
  assert.match(houses,/connectedToGutter=true/);
 });
 test('house foundation and measured footprint remain exactly defined by original input',()=>{
