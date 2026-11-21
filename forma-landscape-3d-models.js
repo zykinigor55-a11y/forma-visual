@@ -61,7 +61,16 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  // The original FORMA dogwood GLB contains 3 independently modelled crowns.
  // Select the actual subtree BEFORE fitting bounds; this is not a rotation of
  // the same model and preserves accurate dimensions for each landscape object.
- if(['dogwood','thuja-globe','lavender','boxwood','pennisetum','fern'].includes(instance.catalogId)&&shareGeometry){
+ if(['fern','fern-02','fern-03','fern-04'].includes(instance.catalogId)&&shareGeometry){
+  // The Poly Haven GLB contains FOUR genuinely different PBR mesh parts;
+  // pick by catalogue key, not by the old 3-age variant spinner.
+  // Bounds fitting below re-centers its original [0/1,0/1] source-space positions
+  // without changing the user's plant x/y or nearby landscape objects.
+  const meshNames={fern:'fern_02_a','fern-02':'fern_02_b','fern-03':'fern_02_c','fern-04':'fern_02_d'};
+  const part=source.getObjectByName(meshNames[instance.catalogId]);
+  if(!part||!part.isMesh)throw Error('Missing independent Fern 02 mesh: '+meshNames[instance.catalogId]);
+  source=part;
+ }else if(['dogwood','thuja-globe','lavender','boxwood','pennisetum'].includes(instance.catalogId)&&shareGeometry){
   const variants=instance.catalogId==='thuja-globe'
    ?['THUJA_DANICA_NATURAL','THUJA_DANICA_COMPACT','THUJA_DANICA_MATURE']
    :instance.catalogId==='lavender'
@@ -70,8 +79,6 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
    ?['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE']
    :instance.catalogId==='pennisetum'
    ?['PENNISETUM_NATURAL','PENNISETUM_COMPACT','PENNISETUM_MATURE']
-   :instance.catalogId==='fern'
-   ?['FERN_NATURAL','FERN_YOUNG','FERN_MATURE']
    :['DOGWOOD_NATURAL','DOGWOOD_SPHERE','DOGWOOD_BOX'];
   const variant=Math.max(1,Math.min(3,Math.round(Number(instance.variant)||1)));
   const selected=source.getObjectByName(variants[variant-1]);
