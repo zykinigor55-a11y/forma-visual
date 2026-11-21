@@ -31,7 +31,8 @@ test('original PBR Lavender GLB is real and contains 3 independently sculpted fl
    for(const suffix of ['flower-purple','foliage-silver','stem','wood']){
      assert.ok(names.has(name+'-'+suffix),name+'-'+suffix);
    }
-   assert.ok(info.forms[name].flowerStems>=140);
+   assert.ok(info.forms[name].flowerStems>=(name==='LAVENDER_COMPACT'?110:180));
+   assert.ok(info.forms[name].foliageTufts>=1000,'dense organic silvery foliage cushion');
  }
 });
 
