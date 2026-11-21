@@ -25,8 +25,10 @@ export function gardenLightingState(id,{time='day',weather='sunny',height=null,b
  const power=factor*(weather==='fog'?.82:weather==='rain'?.90:1);
  const actual=Number(height);
  // Old projects wrote 1.2 metres for every light. Preserve original scale.
+ const historicDefaults={bollard:[.85],'square-bollard':[.50],'garden-lantern':[.995,2.35],globe:[.38,.68]};
+ const historic=(historicDefaults[id]||[]).some(v=>Math.abs(v-actual)<.012);
  const legacy=actual===1.2&&id!=='low-post';
- const custom=adjustable.has(id)&&Number.isFinite(actual)&&actual>.14&&actual<4&&!legacy;
+ const custom=adjustable.has(id)&&Number.isFinite(actual)&&actual>.14&&actual<4&&!legacy&&!historic;
  const scale=custom?actual/source.height:1;
  const validTemperature=Object.hasOwn(gardenLightTemperatures,Number(kelvin))?Number(kelvin):2700;
  const n=Number(brightness),dimmer=Number.isFinite(n)?Math.max(0,Math.min(2,n)):1;
