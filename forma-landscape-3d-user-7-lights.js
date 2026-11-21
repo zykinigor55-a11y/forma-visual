@@ -199,8 +199,8 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   const r=diameter/2;
   const referenceOpal=P('#e2e1dc',.005,.88,{transmission:.015,thickness:.024,
     emissive:warm,emissiveIntensity:emission*.47+.008,side:T.DoubleSide});
-  cy(r*.29,r*.31,.006,0,-.005,0,blackRubber,'fully-concealed-ground-base',48);
-  cy(r*.24,r*.24,.008,0,-.007,0,body,'concealed-electrical-driver',48);
+  cy(r*.29,r*.31,.006,0,-.021,0,blackRubber,'fully-concealed-ground-base',48);
+  cy(r*.24,r*.24,.008,0,-.023,0,body,'concealed-electrical-driver',48);
   const sphere=sp(r,0,r*.99,0,referenceOpal,'uniform-seamless-opal-polyethylene-ball');
   sphere.scale.y=.99;
   sp(r*.12,0,r*.99,0,led,'LED-module-inside-diffuser').castShadow=false;
