@@ -1,0 +1,73 @@
+name: FORMA - build and verify original Lavandula angustifolia GLB
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/lavender-angustifolia-v1.py.xz.b64'
+      - '.github/workflows/forma-lavender-original-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-lavender-original-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build-test-commit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout genuine landscape editor branch
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install reproducible 3D dependencies
+        run: python -m pip install --quiet 'numpy==2.3.5' 'trimesh==4.11.1' 'pillow==12.3.0'
+      - name: Restore source and produce original flowering lavender GLB
+        run: |
+          base64 --decode tools/lavender-angustifolia-v1.py.xz.b64 | xz --decompress > tools/generate_lavender_angustifolia.py
+          python -m py_compile tools/generate_lavender_angustifolia.py
+          python tools/generate_lavender_angustifolia.py assets/landscape-models/lavender-angustifolia-forma-original.glb assets/landscape-models/lavender-angustifolia-forma-original.source.json
+      - name: Verify full GLTF and botanical plant dimensions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib,struct
+          file=Path('assets/landscape-models/lavender-angustifolia-forma-original.glb')
+          buf=file.read_bytes()
+          src=json.loads(Path('assets/landscape-models/lavender-angustifolia-forma-original.source.json').read_text())
+          assert buf[:4]==b'glTF' and struct.unpack_from('<I',buf,4)[0]==2
+          assert struct.unpack_from('<I',buf,8)[0]==len(buf)
+          assert hashlib.sha256(buf).hexdigest()==src['sha256']
+          assert src['triangles']>=350000
+          assert src['meshCount']>=39 and src['materialCount']>=13
+          assert set(src['forms'])=={'LAVENDER_NATURAL','LAVENDER_COMPACT','LAVENDER_MATURE'}
+          assert src['forms']['LAVENDER_NATURAL']['flowerStems']==220
+          assert 10_000_000<len(buf)<24_000_000
+          print('ORIGINAL FORMA lavender verified',src['sha256'],len(buf),src['triangles'])
+          # The registry sha must correspond to this exact tested binary.
+          reg=Path('forma-landscape-3d-shrub-models.js')
+          text=reg.read_text(encoding='utf-8')
+          start=text.index(" lavender:Object.freeze({")
+          stop=text.index("\n }),",start)
+          block=text[start:stop]
+          import re
+          updated,n=re.subn("sha256:'[0-9a-f]{64}'","sha256:'"+src['sha256']+"'",block)
+          assert n==1
+          reg.write_text(text[:start]+updated+text[stop:],encoding='utf-8')
+          PY
+      - name: Test actual native GLB, selector and shrub editor
+        run: |
+          node --test tests/landscape-lavender-original-glb.test.mjs tests/landscape-shrub-editor-interaction.test.mjs tests/landscape-thuja-danica-original.test.mjs
+      - name: Save proven GLB in actual DOM.RENDER GitHub branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/generate_lavender_angustifolia.py assets/landscape-models/lavender-angustifolia-forma-original.glb assets/landscape-models/lavender-angustifolia-forma-original.source.json forma-landscape-3d-shrub-models.js
+          if git diff --cached --quiet; then echo 'No changes'; exit 0; fi
+          git commit -m 'feat(lavender): original PBR narrow-leaf Lavandula with three flowering crowns'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
