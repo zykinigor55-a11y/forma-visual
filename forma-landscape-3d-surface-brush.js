@@ -65,12 +65,12 @@ export function surfaceStrokeTouchesCircle(obj,point,radius){
  }
  return false;
 }
-export function erasePaintedStrips(objects,{point,radius,group,makeId,capacity=500}={}){
+export function erasePaintedStrips(objects,{point,radius,group,catalogId=null,makeId,capacity=500}={}){
  if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y)||!(radius>0)||
     !['lawns','fills'].includes(group))return {objects,changed:false,removed:0};
  const out=[];let changed=false,removed=0;
  for(const obj of objects){
-  if(obj?.type!==group||obj.geometry!=='strip'||!surfaceStrokeTouchesCircle(obj,point,radius)){
+  if(obj?.type!==group||(catalogId&&obj.catalogId!==catalogId)||obj.geometry!=='strip'||!surfaceStrokeTouchesCircle(obj,point,radius)){
    out.push(obj);continue;
   }
   const r=radius+Math.max(.2,Number(obj.width)||1.2)/2;
