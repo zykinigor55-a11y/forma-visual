@@ -1,0 +1,29 @@
+{
+  "source": "actual DOM.RENDER WebGL editor from project branch",
+  "files": [
+    "lighting-v4-user-7-editor-night.png",
+    "lighting-v4-user-7-webgl-night.png"
+  ],
+  "choices": [
+    "bollard",
+    "ground",
+    "spot",
+    "low-post",
+    "deck-light",
+    "linear",
+    "mushroom",
+    "square-bollard",
+    "garden-lantern",
+    "spike-spot",
+    "globe"
+  ],
+  "canvas": {
+    "w": 1680,
+    "h": 964,
+    "ok": true
+  },
+  "night": true,
+  "realPhotoModelVersion": "user-uploaded-7-photos-v4",
+  "errors": [],
+  "timestamp": "2026-11-21T21:47:23.297Z"
+}
