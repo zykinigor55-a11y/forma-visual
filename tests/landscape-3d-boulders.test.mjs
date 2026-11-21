@@ -50,9 +50,9 @@ test('real uploaded GLBs are reused and expose full PBR maps with per-type shape
  const rocks=source('forma-landscape-3d-rocks.js');
  const editor=source('forma-landscape-3d.html');
  assert.match(rocks,/createPhotogrammetryBoulder\(T,source,instance\)/);
- assert.doesNotMatch(rocks,/copy\\.color\\.multiply\\(new T\\.Color\\(profile\\.tint\\)\\)/);
- assert.match(rocks,/keepSourcePBR/);
- assert.match(rocks,/if\\(!copy\\.roughnessMap\\)/);
+ assert.equal(rocks.includes('copy.color.multiply('),false,'photographic scanned albedo must not be artificially tinted');
+ assert.ok(rocks.includes('keepSourcePBR'),'stone materials must keep their original PBR maps');
+ assert.ok(rocks.includes('if(!copy.roughnessMap)'),'unmapped stone roughness has a physically matte fallback');
  assert.match(rocks,/normalMaps,roughnessMaps,occlusionMaps/);
  assert.match(rocks,/node\.castShadow=true;node\.receiveShadow=true/);
  assert.match(rocks,/if\(instance\.catalogId==='limestone-boulder'\)dominantRockMesh/);
