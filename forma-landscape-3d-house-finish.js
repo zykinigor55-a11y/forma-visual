@@ -3,7 +3,7 @@
  * so homes render without any third-party request or VPN.
  */
 export const HOUSE_PHOTO_PBR=Object.freeze({
- brick:Object.freeze({slug:'brick_wall_003',source:'https://polyhaven.com/a/brick_wall_003'}),
+ brick:Object.freeze({slug:'red_brick',source:'https://polyhaven.com/a/red_brick'}),
  wood:Object.freeze({slug:'wooden_planks',source:'https://polyhaven.com/a/wooden_planks'}),
  stucco:Object.freeze({slug:'white_stucco_02',source:'https://polyhaven.com/a/white_stucco_02'}),
  tile:Object.freeze({slug:'roof_tiles',source:'https://polyhaven.com/a/roof_tiles'})
