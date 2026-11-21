@@ -1,0 +1,65 @@
+{
+  "model": "Dryopteris filix-mas v2 REAL photographed UV and normal-map GLB",
+  "source": "Actual scene GLB loaded via THREE.js GLTFLoader, no generative image",
+  "screenshotType": "local dedicated grey studio GLB model renderer, not original landscape editor screenshot",
+  "actualSha256": "1a359e5ba392f24a25b5f3af6db57c9f5770b97c9a32212cd208c2a3e3d32ddc",
+  "photoTextureSource": "https://commons.wikimedia.org/wiki/File:20220531_114609_Dryopteris_filix-mas.jpg",
+  "proofs": [
+    {
+      "form": "FERN_NATURAL",
+      "detail": false,
+      "file": "assets/landscape-screenshots/fern-v2-real-photo-grey-close.png",
+      "ready": {
+        "source": "/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb",
+        "name": "FERN_NATURAL",
+        "actualGltf": true,
+        "photoMaterialCount": 7,
+        "normalMaterialCount": 7,
+        "width": 1.000703752040863,
+        "height": 0.755341175943613,
+        "depth": 0.9202805757522583,
+        "detail": false,
+        "meshCount": 10
+      },
+      "bytes": 2225862
+    },
+    {
+      "form": "FERN_NATURAL",
+      "detail": true,
+      "file": "assets/landscape-screenshots/fern-v2-real-photo-grey-leaf-macro.png",
+      "ready": {
+        "source": "/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb",
+        "name": "FERN_NATURAL",
+        "actualGltf": true,
+        "photoMaterialCount": 7,
+        "normalMaterialCount": 7,
+        "width": 1.000703752040863,
+        "height": 0.755341175943613,
+        "depth": 0.9202805757522583,
+        "detail": true,
+        "meshCount": 10
+      },
+      "bytes": 3387783
+    },
+    {
+      "form": "FERN_YOUNG",
+      "detail": false,
+      "file": "assets/landscape-screenshots/fern-v2-real-photo-grey-young.png",
+      "ready": {
+        "source": "/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb",
+        "name": "FERN_YOUNG",
+        "actualGltf": true,
+        "photoMaterialCount": 7,
+        "normalMaterialCount": 7,
+        "width": 0.6047007143497467,
+        "height": 0.4867220730520785,
+        "depth": 0.6562906503677368,
+        "detail": false,
+        "meshCount": 10
+      },
+      "bytes": 2185690
+    }
+  ],
+  "errors": [],
+  "timestamp": "2026-11-21T20:08:59.482Z"
+}

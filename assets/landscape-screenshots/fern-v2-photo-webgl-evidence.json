@@ -1,0 +1,28 @@
+{
+  "source": "REAL DOM.RENDER editor launched from active GitHub branch in Chromium via localhost",
+  "appUrl": "http://127.0.0.1:3000/forma-landscape-3d.html",
+  "notAStandaloneGLBRender": true,
+  "screenshotFile": "assets/landscape-screenshots/fern-v2-photo-from-real-editor.png",
+  "species": "fern",
+  "glbSha256": "1a359e5ba392f24a25b5f3af6db57c9f5770b97c9a32212cd208c2a3e3d32ddc",
+  "photoSource": "https://commons.wikimedia.org/wiki/File:20220531_114609_Dryopteris_filix-mas.jpg",
+  "photoMaterialVerified": true,
+  "modelLoaded": true,
+  "diagnostics": [
+    {
+      "species": "fern",
+      "model": "/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb",
+      "status": "glb",
+      "height": 0.87,
+      "diameter": 1.2
+    }
+  ],
+  "editorOpened": true,
+  "webgl": {
+    "webgl": true,
+    "width": 1600,
+    "height": 880
+  },
+  "errors": [],
+  "timestamp": "2026-11-21T20:08:40.230Z"
+}
