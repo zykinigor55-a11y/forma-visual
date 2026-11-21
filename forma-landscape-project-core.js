@@ -31,7 +31,7 @@ export const CATALOG=Object.freeze([
  ['thuja-globe','Туя западная «Даника»','#3f6c55',1.02,'Thuja occidentalis Danica'],
  ['lavender','Лаванда узколистная','#8b88af',0.88,'Lavandula angustifolia'],
  ['boxwood','Самшит вечнозелёный','#587346',1.0,'Buxus sempervirens'],
- ['ninebark','Пузыреплодник калинолистный','#8a6b58',2.1,'Physocarpus opulifolius'],
+ ['pennisetum','Пеннисетум «Хамельн» · пушистый декоративный злак','#a6a67b',0.87,'Pennisetum alopecuroides Hameln'],
  ['hosta','Хоста декоративная','#658e63',1.2,'Hosta plantaginea'],
  ['ornamental-grass','Декоративный злак · мискантус','#9b9e68',1.5,'Miscanthus sinensis'],
  ['fern','Папоротник лесной · собственная 3D-модель','#608568',1.2,'Dryopteris filix-mas'],
@@ -122,7 +122,8 @@ export function normalizeProject(raw){
   weather:SCENE_OPTIONS.weather.some(x=>x[0]===obj.atmosphere?.weather)?obj.atmosphere.weather:'sunny'
  }};
  for(const item of (Array.isArray(obj.objects)?obj.objects:[]).slice(0,maxObjects)){
-  const entry=byId(item.catalogId);if(!entry)continue;
+  const legacyNinebark=item.catalogId==='ninebark';
+  const entry=byId(legacyNinebark?'pennisetum':item.catalogId);if(!entry)continue;
   const id=/^[a-z0-9-]{1,48}$/i.test(item.id||'')?item.id:'o-'+Math.random().toString(36).slice(2,10);
   if(['pavers','fills','lawns','ponds'].includes(entry.group)){
    const points=(Array.isArray(item.points)?item.points:[]).slice(0,512).map(point);
@@ -132,7 +133,7 @@ export function normalizeProject(raw){
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
     r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
-  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:finite(item.diameter,.1,30,entry.diameter||1),height:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs'].includes(entry.group)?{variant:finite(item.variant,1,3,1)}:{}),...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{}),
+  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:legacyNinebark?.87:finite(item.diameter,.1,30,entry.diameter||1),height:legacyNinebark?.76:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs'].includes(entry.group)?{variant:finite(item.variant,1,3,1)}:{}),...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{}),
     ...(entry.id==='spruce'?{spruce:{
       type:sprucePromptStage(item),
       ...(Number.isFinite(Number(item.spruce?.age))&&Number(item.spruce.age)>=3&&Number(item.spruce.age)<=350
