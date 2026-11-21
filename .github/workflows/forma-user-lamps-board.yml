@@ -1,0 +1,38 @@
+name: FORMA - all 7 user photo reference lamp models in one screenshot
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/build_user_7_lamps_board.py'
+      - '.github/workflows/forma-user-lamps-board.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  seven-lights:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image compositor
+        run: pip install pillow
+      - name: Compose 7 verified real user-reference WebGL shots
+        run: python tools/build_user_7_lamps_board.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Seven-real-user-photo-reference-3D-models
+          path: assets/landscape-screenshots/lighting-v4-user-photo-7-models-board.png
+      - name: Save board into main model branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f assets/landscape-screenshots/lighting-v4-user-photo-7-models-board.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'visual(luminaires): 7 user photo replicas as one verified WebGL board'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
