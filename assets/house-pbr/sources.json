@@ -1,0 +1,78 @@
+{
+  "license": "CC0 1.0",
+  "source": "https://polyhaven.com/license",
+  "materials": {
+    "wood": {
+      "page": "https://polyhaven.com/a/wooden_planks",
+      "maps": {
+        "diff": {
+          "name": "wood-diff-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_diff_1k.jpg",
+          "bytes": 489587,
+          "sha256": "1273876d6f92fb1a1d29c1bb28f548a9256154187531e84f993b56e347f1d17b"
+        },
+        "nor_gl": {
+          "name": "wood-nor_gl-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_nor_gl_1k.jpg",
+          "bytes": 705118,
+          "sha256": "6c85ff0a410a2993cc09d25859d7d735bc05e9f15dc51393d2e58aa2ce8a0916"
+        },
+        "rough": {
+          "name": "wood-rough-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_rough_1k.jpg",
+          "bytes": 233217,
+          "sha256": "c1b1a7e3266a082d66f1c786a28a05674227158684d655e42ab2420e47ae746e"
+        }
+      }
+    },
+    "stucco": {
+      "page": "https://polyhaven.com/a/white_stucco_02",
+      "maps": {
+        "diff": {
+          "name": "stucco-diff-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_stucco_02/white_stucco_02_diff_1k.jpg",
+          "bytes": 704132,
+          "sha256": "1bd4c13b65d5a56615ef14d077f39b8907a71ea7cea6c2414cf55f900d03adbc"
+        },
+        "nor_gl": {
+          "name": "stucco-nor_gl-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_stucco_02/white_stucco_02_nor_gl_1k.jpg",
+          "bytes": 1223733,
+          "sha256": "539f968b2e74f111e5c4624151c1313725f9e2234b87462f8c0793513bdee669"
+        },
+        "rough": {
+          "name": "stucco-rough-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_stucco_02/white_stucco_02_rough_1k.jpg",
+          "bytes": 453400,
+          "sha256": "2c147915ad5afaa1f43109c05a3a2bb1dfb685813829662706578d33f3b17a43"
+        }
+      }
+    },
+    "tile": {
+      "page": "https://polyhaven.com/a/roof_tiles",
+      "maps": {
+        "diff": {
+          "name": "tile-diff-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_tiles/roof_tiles_diff_1k.jpg",
+          "bytes": 1105673,
+          "sha256": "1b30c1f0a9d3f761afb1354d95b36990fc670fac5f811889af8cb2ab682c8e66"
+        },
+        "nor_gl": {
+          "name": "tile-nor_gl-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_tiles/roof_tiles_nor_gl_1k.jpg",
+          "bytes": 883229,
+          "sha256": "1eb4e911e3d1b38c7c3b06bdecb6fde5f9646dca5498caf67ffa651cb6cb8d8c"
+        },
+        "rough": {
+          "name": "tile-rough-1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_tiles/roof_tiles_rough_1k.jpg",
+          "bytes": 919232,
+          "sha256": "b4e832d544fb663728128fe178919d1c9be4d937236d8e8d3f7669a8b896e86c"
+        }
+      }
+    }
+  },
+  "failed": {
+    "brick": "HTTP Error 404: Not Found"
+  }
+}
