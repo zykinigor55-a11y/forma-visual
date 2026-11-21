@@ -1,0 +1,51 @@
+name: FORMA - import real sandstone boulder GLB from Poly Haven
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-sandstone-real-scan.yml'
+      - 'tools/install-sandstone-boulder.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sandstone:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download exact CC0 sandstone scanned mesh and 1K PBR maps from source
+        run: python tools/install-sandstone-boulder.py
+      - name: Validate binary physical 3D model
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import struct,json
+          p=Path('assets/landscape-models/sandstone-boulder.glb')
+          b=p.read_bytes()
+          assert b[:4]==b'glTF' and struct.unpack_from('<I',b,4)[0]==2
+          assert struct.unpack_from('<I',b,8)[0]==len(b)
+          assert len(b)>300000
+          a=json.loads(Path('assets/landscape-models/sandstone-boulder-source.json').read_text())
+          assert a['license']=='CC0-1.0' and a['bytes']==len(b)
+          print('VERIFIED PHOTOGRAMMETRY SANDSTONE',len(b),'bytes')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FORMA-real-CC0-sandstone-boulder-PBR-GLB
+          path: |
+            assets/landscape-models/sandstone-boulder.glb
+            assets/landscape-models/sandstone-boulder-source.json
+      - name: Save exact PBR GLB to user's existing branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f assets/landscape-models/sandstone-boulder.glb assets/landscape-models/sandstone-boulder-source.json
+          git commit -m 'assets(boulders): original CC0 Namaqualand layered sandstone PBR 3D scan'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
