@@ -1,0 +1,27 @@
+{
+  "source": "REAL DOM.RENDER editor launched from active GitHub branch in Chromium via localhost",
+  "appUrl": "http://127.0.0.1:3000/forma-landscape-3d.html",
+  "notAStandaloneGLBRender": true,
+  "screenshotFile": "assets/landscape-screenshots/boxwood-v2-from-real-editor.png",
+  "species": "boxwood",
+  "version": "v2.0-premium-botanical-foliage",
+  "glbSha256": "1d199528b759bb250879613a734fbc2d08c53f8dc4b2c38abb513a5b17ab88ce",
+  "modelLoaded": true,
+  "diagnostics": [
+    {
+      "species": "boxwood",
+      "model": "/assets/landscape-models/boxwood-sempervirens-forma-original.glb",
+      "status": "glb",
+      "height": 0.95,
+      "diameter": 1
+    }
+  ],
+  "editorOpened": true,
+  "webgl": {
+    "webgl": true,
+    "width": 1600,
+    "height": 880
+  },
+  "errors": [],
+  "timestamp": "2026-11-21T18:49:29.777Z"
+}
