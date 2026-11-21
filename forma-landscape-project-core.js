@@ -7,7 +7,7 @@ import {housePresetIds} from './forma-landscape-3d-buildings.js';
  */
 export const GROUPS=Object.freeze([
  {id:'shrubs',name:'Кустарники и почвопокровные',qty:14,symbol:'◈'},
- {id:'trees',name:'Деревья',qty:12,symbol:'♧'},
+ {id:'trees',name:'Деревья',qty:17,symbol:'♧'},
  {id:'pavers',name:'Брусчатка',qty:6,symbol:'▤'},
  {id:'fills',name:'Отсыпки',qty:9,symbol:'░'},
  {id:'lights',name:'Светильники',qty:11,symbol:'☼'},
@@ -15,7 +15,7 @@ export const GROUPS=Object.freeze([
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
  {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
 ]);
-export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18,poplar:24});
+export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18,poplar:24,'ph-fir-sapling':3,'ph-pine-sapling':2.8,'ph-quiver-01':4.5,'ph-quiver-02':3.7});
 export const SCENE_OPTIONS=Object.freeze({
  time:[['morning','Утро'],['day','День'],['evening','Вечер'],['night','Ночь']],
  season:[['spring','Весна'],['summer','Лето'],['autumn','Осень'],['winter','Зима']],
@@ -54,7 +54,11 @@ export const CATALOG=Object.freeze([
  ['sakura','Сакура','#d4a8bf',5,'Prunus serrulata','flower'],
  ['ash','Ясень обыкновенный','#678e50',8,'Fraxinus excelsior','pinnate'],
  ['aspen','Осина европейская','#a4be76',6,'Populus tremula','aspen'],
- ['poplar','Тополь пирамидальный','#718360',4.8,'Populus nigra Italica','broadleaf']
+ ['poplar','Тополь пирамидальный','#718360',4.8,'Populus nigra Italica','broadleaf'],
+ ['ph-fir-sapling','Пихта молодая · Poly Haven','#4d7561',2.0,'Fir sapling (Poly Haven)','conifer'],
+ ['ph-pine-sapling','Сосна молодая · Poly Haven','#677b60',1.8,'Pine sapling (Poly Haven)','pine'],
+ ['ph-quiver-01','Колчанное дерево 01 · Poly Haven','#719179',2.5,'Aloidendron dichotomum','broadleaf'],
+ ['ph-quiver-02','Колчанное дерево 02 · Poly Haven','#719179',2.1,'Aloidendron dichotomum','broadleaf']
  ].map(([id,name,color,diameter,latin,shape])=>({id,group:'trees',name,color,diameter,latin,shape})),
  ...[
  ['concrete-pavers','Крупноформатная плита','#b1ada2','slabs'],
