@@ -1,0 +1,37 @@
+{
+  "source": "REAL DOM.RENDER editor launched from active GitHub branch in Chromium via localhost",
+  "appUrl": "http://127.0.0.1:3000/forma-landscape-3d.html",
+  "notAStandaloneGLBRender": true,
+  "screenshotFile": "assets/landscape-screenshots/boxwood-v3-photo-from-real-editor.png",
+  "species": "boxwood",
+  "version": "v3.0-CC0-real-leaf-PBR-textures",
+  "glbSha256": "46ca248559075f5893c928b3e8d4bf7d64426c6c5ed9ce6df434834612dd9d76",
+  "photoTextureVerified": true,
+  "photoSource": {
+    "license": "Public domain, Wikimedia Commons",
+    "author": "Karduelis",
+    "photo": "https://commons.wikimedia.org/wiki/File:Buxus_sempervirens-1.jpg",
+    "sourceDimensions": [
+      2589,
+      1714
+    ]
+  },
+  "modelLoaded": true,
+  "diagnostics": [
+    {
+      "species": "boxwood",
+      "model": "/assets/landscape-models/boxwood-sempervirens-forma-original.glb",
+      "status": "glb",
+      "height": 0.95,
+      "diameter": 1
+    }
+  ],
+  "editorOpened": true,
+  "webgl": {
+    "webgl": true,
+    "width": 1600,
+    "height": 880
+  },
+  "errors": [],
+  "timestamp": "2026-11-21T19:07:11.075Z"
+}
