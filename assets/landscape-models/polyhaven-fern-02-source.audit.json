@@ -1,0 +1,166 @@
+{
+  "originalSource": "https://polyhaven.com/a/fern_02",
+  "downloadUrl": "https://www.innerscene.com/api/library/fern-clumps-82a87bea/download",
+  "license": "CC0 1.0 Universal, Poly Haven; Rob Tuytel & Rico Cilliers",
+  "sha256": "3f5de1969d029db133986123aa5be6bff0137443800f53a209c6b25bcd8aab4c",
+  "bytes": 3390352,
+  "generator": "tools/inspect_fern_polyhaven.py",
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "fern_02_b",
+      "mesh": 0,
+      "id": 0,
+      "meshName": "Plane.024",
+      "primitives": [
+        {
+          "material": 0,
+          "attributes": [
+            "POSITION",
+            "NORMAL",
+            "TEXCOORD_0"
+          ],
+          "accessor": 0,
+          "positionsBounds": {
+            "min": [
+              -0.5281425714492798,
+              -0.030510280281305313,
+              -0.421874463558197
+            ],
+            "max": [
+              0.4616048336029053,
+              0.39718443155288696,
+              0.4718152582645416
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "fern_02_c",
+      "mesh": 1,
+      "translation": [
+        1.0000009536743164,
+        0,
+        0
+      ],
+      "id": 1,
+      "meshName": "Plane.044",
+      "primitives": [
+        {
+          "material": 0,
+          "attributes": [
+            "POSITION",
+            "NORMAL",
+            "TEXCOORD_0"
+          ],
+          "accessor": 7,
+          "positionsBounds": {
+            "min": [
+              -0.4299395680427551,
+              -0.028773672878742218,
+              -0.4172818064689636
+            ],
+            "max": [
+              0.44438624382019043,
+              0.32024669647216797,
+              0.34794387221336365
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "fern_02_a",
+      "mesh": 2,
+      "translation": [
+        0,
+        0,
+        1.0000001192092896
+      ],
+      "id": 2,
+      "meshName": "Plane.006",
+      "primitives": [
+        {
+          "material": 0,
+          "attributes": [
+            "POSITION",
+            "NORMAL",
+            "TEXCOORD_0"
+          ],
+          "accessor": 10,
+          "positionsBounds": {
+            "min": [
+              -0.2976571321487427,
+              -0.028773518279194832,
+              -0.31126806139945984
+            ],
+            "max": [
+              0.25428348779678345,
+              0.2580300271511078,
+              0.3021530210971832
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "fern_02_d",
+      "mesh": 3,
+      "translation": [
+        1,
+        0,
+        0.9999995827674866
+      ],
+      "id": 3,
+      "meshName": "Plane.059",
+      "primitives": [
+        {
+          "material": 0,
+          "attributes": [
+            "POSITION",
+            "NORMAL",
+            "TEXCOORD_0"
+          ],
+          "accessor": 13,
+          "positionsBounds": {
+            "min": [
+              -0.2907802164554596,
+              -0.013578944839537144,
+              -0.35213664174079895
+            ],
+            "max": [
+              0.28200197219848633,
+              0.19950860738754272,
+              0.2411416471004486
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "meshes": 4,
+  "materials": [
+    "fern_02"
+  ],
+  "images": 3,
+  "textures": 3,
+  "extensionsUsed": [],
+  "accessors": 16,
+  "buffers": [
+    {
+      "byteLength": 3386352
+    }
+  ]
+}

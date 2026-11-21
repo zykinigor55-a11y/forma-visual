@@ -1,0 +1,6 @@
+Fern 02 by Rob Tuytel and Rico Cilliers, Poly Haven
+https://polyhaven.com/a/fern_02
+GLB public download mirror (CC0): https://www.innerscene.com/tools/library/3d-parts/fern-clumps-82a87bea
+License: CC0 1.0 Universal. Redistribution and commercial use allowed.
+This is the unchanged asset for traceability; catalog variants will be separated
+and fitted in real scene units without changing user-placed x/y coordinates.
