@@ -1,0 +1,56 @@
+name: FORMA · Screenshot real architecture editor
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tests/architecture-house-screenshot.mjs'
+      - '.github/workflows/architecture-house-screenshot.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-house-screenshots
+  cancel-in-progress: false
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium WebGL browser
+        run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Photograph the actual WebGL 3D editor
+        run: |
+          node server.mjs > /tmp/forma-house-preview.log 2>&1 &
+          sleep 4
+          node tests/architecture-house-screenshot.mjs
+      - name: Publish genuine unedited screenshots from the browser
+        run: |
+          set -euo pipefail
+          git config user.name 'FORMA Visual QA'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add screenshots/architecture-current/*.jpg
+          if git diff --cached --quiet; then echo 'Screenshot unchanged'; exit 0; fi
+          git commit -m 'visual(houses): current WebGL architecture screenshot from actual Chromium editor'
+          for i in 1 2 3 4; do
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            if git push origin HEAD:dom-render-nanobanana; then exit 0; fi
+            sleep $((i*2))
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-house-browser-screenshots
+          path: screenshots/architecture-current/*.jpg
+          if-no-files-found: warn
