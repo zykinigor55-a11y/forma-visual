@@ -50,7 +50,10 @@ test('real uploaded GLBs are reused and expose full PBR maps with per-type shape
  const rocks=source('forma-landscape-3d-rocks.js');
  const editor=source('forma-landscape-3d.html');
  assert.match(rocks,/createPhotogrammetryBoulder\(T,source,instance\)/);
- assert.match(rocks,/copy\.color\.multiply\(new T\.Color\(profile\.tint\)\)/);
+ assert.doesNotMatch(rocks,/copy\\.color\\.multiply\\(new T\\.Color\\(profile\\.tint\\)\\)/);
+ assert.match(rocks,/keepSourcePBR/);
+ assert.match(rocks,/if\\(!copy\\.roughnessMap\\)/);
+ assert.match(rocks,/normalMaps,roughnessMaps,occlusionMaps/);
  assert.match(rocks,/node\.castShadow=true;node\.receiveShadow=true/);
  assert.match(rocks,/if\(instance\.catalogId==='limestone-boulder'\)dominantRockMesh/);
  assert.match(rocks,/rock\.userData\.scanStats/);
