@@ -6,6 +6,7 @@ on:
       - '.github/workflows/forma-luminaires-real-screenshot.yml'
       - 'tools/capture_luminaires_real_editor.mjs'
       - 'forma-landscape-3d-fixtures.js'
+      - 'forma-landscape-3d-user-7-lights.js'
       - 'forma-landscape-3d-lighting.js'
       - 'forma-landscape-3d.html'
   workflow_dispatch:
