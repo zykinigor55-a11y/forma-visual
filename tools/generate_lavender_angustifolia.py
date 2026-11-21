@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """FORMA original flowering Lavandula angustifolia, physically-scaled GLB.
-Three independently-authored crown habits: natural, compact, mature.
+v2: Three independently-authored crown habits, denser silver-leaf cushions and organic peduncles.
 Procedural geometry and PBR materials; no copied images or third-party meshes.
 """
 import json, math, random, sys, hashlib, struct
@@ -13,18 +13,18 @@ from trimesh.visual.texture import TextureVisuals
 PI=math.pi
 UP=np.array([0.,1.,0.])
 FOLIAGE={
- 'foliage-silver':(121,140,122),
- 'foliage-sage':(100,125,110),
- 'foliage-deep':(76,99,85),
- 'foliage-light':(145,159,137),
- 'foliage-blue':(112,135,134),
+ 'foliage-silver':(127,143,135),
+ 'foliage-sage':(111,129,118),
+ 'foliage-deep':(83,106,98),
+ 'foliage-light':(146,160,146),
+ 'foliage-blue':(116,138,138),
 }
 FLORAL={
- 'flower-purple':(104,79,152),
- 'flower-royal':(78,55,128),
- 'flower-lavender':(141,110,178),
- 'flower-dusk':(93,71,123),
- 'flower-pale':(176,147,196),
+ 'flower-purple':(116,91,157),
+ 'flower-royal':(88,73,130),
+ 'flower-lavender':(150,123,180),
+ 'flower-dusk':(101,87,128),
+ 'flower-pale':(174,155,197),
 }
 STEMS={'stem':(109,121,99),'wood':(74,68,58),'flower-stem':(101,117,100)}
 COLORS={**FOLIAGE,**FLORAL,**STEMS}
@@ -106,9 +106,9 @@ def lerp(a,b,f):return a*(1-f)+b*f
 
 def build_form(form,index):
  cfg=[
-  dict(height=.63,width=.88,depth=.87,dome=.37,stems=220,leafBranches=385,leafCount=25,seed=267),
-  dict(height=.47,width=.70,depth=.69,dome=.28,stems=145,leafBranches=268,leafCount=23,seed=389),
-  dict(height=.77,width=1.12,depth=1.09,dome=.45,stems=270,leafBranches=490,leafCount=27,seed=478)
+  dict(height=.63,width=.88,depth=.87,dome=.38,stems=197,leafBranches=420,leafCount=25,tufts=1480,seed=267),
+  dict(height=.47,width=.70,depth=.69,dome=.285,stems=122,leafBranches=294,leafCount=24,tufts=1010,seed=389),
+  dict(height=.77,width=1.12,depth=1.09,dome=.465,stems=254,leafBranches=540,leafCount=26,tufts=1870,seed=478)
  ][index]
  rr=random.Random(cfg['seed']);mats={name:Batch() for name in COLORS}
  radiusX=cfg['width']*.5;radiusZ=cfg['depth']*.5;H=cfg['height'];dome=cfg['dome']
@@ -126,7 +126,7 @@ def build_form(form,index):
  for j in range(cfg['leafBranches']):
   angle=j*GOLD+rr.uniform(-.22,.22)
   u=rr.random()**.55
-  outer=.08+.91*u
+  outer=.07+.87*u
   radius=outer*rr.uniform(.88,1.04)
   crownHeight=(.07+dome*math.sqrt(max(.045,1-outer**2)))
   crownHeight*=rr.uniform(.90,1.06)
@@ -139,60 +139,95 @@ def build_form(form,index):
   axis=unit(end-root)
   side=unit(np.cross(axis,UP if abs(axis[1])<.91 else np.array([1.,0,0])))
   for q in range(cfg['leafCount']):
-   t=.38+(q+.28)*(.61/cfg['leafCount'])
+   t=.19+(q+.28)*(.79/cfg['leafCount'])
    pos=(1-t)**2*root+2*t*(1-t)*mid+t*t*end
    baseAngle=PI*(q%2)+(PI*.5*((q//2)%2))+rr.uniform(-.32,.32)
    leafAxis=unit(side*math.cos(baseAngle)*rr.uniform(.28,.68)+UP*rr.uniform(.42,.80)+axis*.36+np.cross(side,axis)*math.sin(baseAngle)*rr.uniform(.25,.55))
    # Inner darker growth, exterior silver and pale foliage.
-   color=rr.choices(list(FOLIAGE),weights=[24,30,20,18,8])[0]
+   color=rr.choices(list(FOLIAGE),weights=[29,26,14,21,10])[0]
    if t>.70 and q%3==0:color='foliage-light'
    if t<.52 and q%6==0:color='foliage-deep'
-   length=rr.uniform(.018,.033)*([1,.91,1.07][index])
-   width=length*rr.uniform(.11,.17)
+   length=rr.uniform(.018,.032)*([1,.91,1.07][index])
+   width=length*rr.uniform(.17,.23)
    mats[color].leaf(pos,leafAxis,length,width,roll=rr.uniform(-.35,.35))
   for q in range(2):
    tipdir=unit(axis*.35+UP*.55+side*(q-.5)*.65)
-   mats[rr.choice(['foliage-silver','foliage-light','foliage-sage'])].leaf(end,tipdir,rr.uniform(.021,.033),rr.uniform(.0026,.0044))
- # Many long, slender, gently curved independent flowering peduncles.
+   mats[rr.choice(['foliage-silver','foliage-light','foliage-sage'])].leaf(end,tipdir,rr.uniform(.021,.033),rr.uniform(.0032,.0052))
+ # Mature Lavandula has a rounded, dense, overlapping silvery foliage cushion,
+ # not one set of bare straight stalks forming a fan from a single point.
+ # Clusters are individually placed IN the volume; each has 3-D narrow blades.
+ for j in range(cfg['tufts']):
+  theta=j*GOLD+rr.uniform(-.36,.36)
+  rho=rr.random()**.57 * .89
+  x=math.cos(theta);z=math.sin(theta)
+  crown=.06+dome*math.sqrt(max(.012,1-rho*rho))
+  centre=np.array([x*radiusX*rho*rr.uniform(.91,1.03),
+                   crown*rr.uniform(.81,.99)-rr.uniform(.004,.018),
+                   z*radiusZ*rho*rr.uniform(.91,1.03)])
+  outward=unit([x*rr.uniform(.33,.75),rr.uniform(.65,1.06),z*rr.uniform(.33,.75)])
+  nLeaves=rr.choice([4,5,5,6])
+  spread=rr.uniform(.30,.68)
+  # Small textured lavender sprig, rather than radial disconnected star leaves:
+  # an inward woody connection with paired leaves staggered along it.
+  inner=centre-outward*rr.uniform(.012,.023)
+  mats['stem'].tube(inner,centre,.00075,.00043,sides=4)
+  for q in range(nLeaves):
+   alpha=PI*q + .45*(q//2) + rr.uniform(-.36,.36)
+   along=outward*(q/max(1,nLeaves-1))*.009
+   vec=unit(outward*.56+np.array([math.cos(alpha)*spread,
+                                  rr.uniform(-.04,.20),
+                                  math.sin(alpha)*spread]))
+   tcol=rr.choices(list(FOLIAGE),weights=[33,27,13,17,10])[0]
+   if rho<.5 and rr.random()<.22:tcol='foliage-deep'
+   l=rr.uniform(.017,.029)*([1,.91,1.10][index])
+   mats[tcol].leaf(centre-outward*.008+along,vec,l,l*rr.uniform(.14,.20),roll=rr.uniform(-PI,PI))
+ # Curved, independently branching lavender flowering peduncles rise above
+ # foliage; irregular lengths, occasional faded heads, NO even flat top.
+
  for i in range(cfg['stems']):
   ang=i*GOLD+rr.uniform(-.40,.40)
   r=math.sqrt(rr.random())*.92
   px=math.cos(ang)*radiusX*r; pz=math.sin(ang)*radiusZ*r
-  baseY=.07+dome*math.sqrt(max(.04,1-r*r))*rr.uniform(.86,.99)
-  base=np.array([px*.89,baseY,pz*.89])
-  lean=(r*.12+rr.uniform(-.015,.035))*([1,.85,1.15][index])
+  baseY=.055+dome*math.sqrt(max(.012,1-r*r))*rr.uniform(.83,.98)
+  base=np.array([px*.88,baseY,pz*.88])
+  lean=(r*.098+rr.uniform(-.025,.035))*([1,.85,1.12][index])
   shift=np.array([math.cos(ang)*lean,0,math.sin(ang)*lean])
-  tipY=H*rr.uniform(.77,.985)
-  if i%17==0:tipY*=.85
-  spikeLength=rr.uniform(.034,.072)*([1,.81,1.08][index])
-  tip=np.array([px,pz*.0+tipY,pz])+shift
-  tip[1]=max(tip[1],base[1]+spikeLength+.07)
+  spikeLength=rr.uniform(.036,.069)*([1,.83,1.10][index])
+  tipY=H*(.72+.21*math.sqrt(max(.0,1-r*r))+rr.uniform(-.090,.085))
+  if i%13==0:tipY*=rr.uniform(.75,.92)
+  if i%17==0:tipY*=rr.uniform(.88,.99)
+  tip=np.array([px+shift[0],tipY,pz+shift[2]])
+  tip[1]=max(min(H*.992,tip[1]),base[1]+spikeLength+.038)
   flowerBase=tip.copy();flowerBase[1]-=spikeLength
-  mid=lerp(base,flowerBase,.57);mid[0]+=rr.uniform(-.011,.011);mid[2]+=rr.uniform(-.012,.012)
-  mats['flower-stem'].tube(base,mid,.00123,.00090)
-  mats['flower-stem'].tube(mid,flowerBase,.00090,.00049)
+  mid1=lerp(base,flowerBase,.32)
+  mid2=lerp(base,flowerBase,.68)
+  sway=np.array([rr.uniform(-.018,.018),0,rr.uniform(-.018,.018)])
+  mid1+=sway*.58;mid2+=sway
+  mats['flower-stem'].tube(base,mid1,.00122,.00102)
+  mats['flower-stem'].tube(mid1,mid2,.00102,.00072)
+  mats['flower-stem'].tube(mid2,flowerBase,.00072,.00043)
   tilt=unit(tip-flowerBase+np.array([rr.uniform(-.016,.016),0,rr.uniform(-.016,.016)]))
   # Each terminal spike has separated verticillasters, not violet cylinders.
-  nlevels=rr.randint(6,9)
+  nlevels=rr.randint(5,10)
   color_base=rr.choices(['flower-purple','flower-royal','flower-lavender','flower-dusk'],weights=[35,30,18,17])[0]
   for level in range(nlevels):
    f=(level+.3)/(nlevels+.4)
    whorlCenter=lerp(flowerBase,tip,f)
    band=.47+.53*math.sin(PI*f)**.65
-   ringCount=rr.choice([4,5,5])
+   ringCount=rr.choice([3,4,5,5])
    for b in range(ringCount):
     petalAngle=2*PI*(b+.1*rr.random())/ringCount + ang*.17 + level*1.42
     angleAxis=np.array([math.cos(petalAngle),.22+rr.random()*.32,math.sin(petalAngle)])
     radial=unit(angleAxis)
-    radius=rr.uniform(.0032,.0061)*band
+    radius=rr.uniform(.0030,.0064)*band
     point=whorlCenter+radial*radius
     d=unit(radial*.30+UP*.7)
-    height=rr.uniform(.0070,.0135)*band
+    height=rr.uniform(.0058,.0135)*band
     col=color_base if rr.random()<.62 else rr.choices(list(FLORAL),weights=[28,30,17,19,6])[0]
     mats[col].bud(point,d,height,rr.uniform(.0026,.0045)*band,i*701+level*31+b)
     if rr.random()<.16 and level>1:
      # True lavender two-lipped flower tips in varying directions.
-     mats['flower-pale' if rr.random()<.22 else 'flower-lavender'].petals(point+d*height*.5,d,.0065*band,.0034*band)
+     mats['flower-pale' if rr.random()<.22 else 'flower-lavender'].petals(point+d*height*.5,d,.0060*band,.0031*band)
   if i%5==0: # Delicate pale green floral leaf on a few stems
    smallbase=lerp(base,mid,rr.uniform(.52,.77))
    mats['foliage-sage'].leaf(smallbase,unit([rr.uniform(-1,1),.5,rr.uniform(-1,1)]),.016,.0025)
@@ -216,13 +251,13 @@ def main():
    mesh.visual=TextureVisuals(uv=np.array(batch.uvs,dtype=np.float32),material=material)
    scene.add_geometry(mesh,geom_name=form+'-'+name,node_name=form+'-'+name,parent_node_name=form)
    tris+=len(batch.faces);materials+=1
-  stats[form]={'width':cfg['width'],'height':cfg['height'],'depth':cfg['depth'],'flowerStems':cfg['stems'],'foliageStems':cfg['leafBranches'],'triangles':tris}
+  stats[form]={'width':cfg['width'],'height':cfg['height'],'depth':cfg['depth'],'flowerStems':cfg['stems'],'foliageStems':cfg['leafBranches'],'foliageTufts':cfg['tufts'],'triangles':tris}
  data=scene.export(file_type='glb');outfile.write_bytes(data)
  assert data[:4]==b'glTF' and struct.unpack_from('<I',data,8)[0]==len(data)
  glen=struct.unpack_from('<I',data,12)[0];gltf=json.loads(data[20:20+glen])
  names={n.get('name') for n in gltf['nodes']}
  assert set(stats)<=names
- doc={'species':'Lavandula angustifolia','version':'1.0 FORMA original finely modelled flowering lavender',
+ doc={'species':'Lavandula angustifolia','version':'2.2 FORMA original dense mature silver cushion with staggered lavender flower spikes',
       'modelPath':'assets/landscape-models/lavender-angustifolia-forma-original.glb',
       'sourceCode':'tools/generate_lavender_angustifolia.py',
       'season':'summer flowering','license':'Original FORMA-authored mesh and procedural geometry; no copied external assets',
