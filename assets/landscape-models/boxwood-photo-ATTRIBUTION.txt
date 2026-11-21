@@ -1,0 +1,8 @@
+FORMA VISUAL — Buxus sempervirens v3 photographic leaf material
+Original photo: Buxus sempervirens-1.jpg
+Photographer: Karduelis; public domain; dated 30 April 2005
+Source: https://commons.wikimedia.org/wiki/File:Buxus_sempervirens-1.jpg
+Original direct image: https://upload.wikimedia.org/wikipedia/commons/d/d7/Buxus_sempervirens-1.jpg
+Photo was colour-corrected and used as a 512x512 leaf epidermis texture,
+with derived tangent-space normal map. Original crown geometry by FORMA.
+File is redistributed under public domain declaration of photographer.

@@ -1,8 +1,8 @@
 {
   "species": "Buxus sempervirens",
-  "version": "v2.0-premium-botanical-foliage",
-  "sha256": "1d199528b759bb250879613a734fbc2d08c53f8dc4b2c38abb513a5b17ab88ce",
-  "sizeBytes": 18386388,
+  "version": "v3.0-CC0-real-leaf-PBR-textures",
+  "sha256": "46ca248559075f5893c928b3e8d4bf7d64426c6c5ed9ce6df434834612dd9d76",
+  "sizeBytes": 25055120,
   "triangles": 720940,
   "meshCount": 30,
   "materialCount": 10,
@@ -57,6 +57,26 @@
     }
   },
   "license": "Original procedurally authored FORMA geometry and materials",
+  "photoTexture": {
+    "license": "Public domain, Wikimedia Commons",
+    "photo": "https://commons.wikimedia.org/wiki/File:Buxus_sempervirens-1.jpg",
+    "author": "Karduelis",
+    "sourceDimensions": [
+      2589,
+      1714
+    ],
+    "sampledLeafPhotoPatch": [
+      2080,
+      1148,
+      45,
+      45
+    ],
+    "albedoTextureSize": [
+      512,
+      512
+    ],
+    "sourceSHA256": "3ea7456e40cf08470e0d33b1d1cc96b42d7e5dfd35c18b138ad2aee0e6ff007c"
+  },
   "sourceCode": "tools/generate_boxwood_sempervirens.py",
   "modelPath": "/assets/landscape-models/boxwood-sempervirens-forma-original.glb"
 }
