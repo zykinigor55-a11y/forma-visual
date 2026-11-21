@@ -1486,6 +1486,10 @@ function renderProps(){
     const forms=[{height:.89,diameter:1.02},{height:.68,diameter:.79},{height:1.04,diameter:1.30}];
     Object.assign(o,forms[choice-1]);
    }
+   if(o.catalogId==='lavender'){
+    const forms=[{height:.63,diameter:.88},{height:.47,diameter:.70},{height:.77,diameter:1.12}];
+    Object.assign(o,forms[choice-1]);
+   }
    save();rebuild();renderProps();revealSelectedInspector();
    status('Вариант куста '+choice+' сохранён.');
   });
