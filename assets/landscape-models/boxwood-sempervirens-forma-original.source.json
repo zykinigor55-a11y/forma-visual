@@ -1,0 +1,44 @@
+{
+  "species": "Buxus sempervirens",
+  "version": "v1-forma-original-2026-11-21",
+  "sha256": "83d3a0041c863144ae4fe21bc78795785c8ded104b8559dcd3645528d0adb296",
+  "sizeBytes": 10092168,
+  "triangles": 373880,
+  "meshCount": 30,
+  "materialCount": 10,
+  "forms": {
+    "BOXWOOD_NATURAL": {
+      "width": 1.0,
+      "height": 0.95,
+      "depth": 0.96,
+      "sprays": 1710,
+      "radius": 0.52,
+      "irregular": 0.085,
+      "leafCount": 30780,
+      "triangles": 124872
+    },
+    "BOXWOOD_SPHERE": {
+      "width": 0.8,
+      "height": 0.79,
+      "depth": 0.78,
+      "sprays": 1350,
+      "radius": 0.4,
+      "irregular": 0.022,
+      "leafCount": 24300,
+      "triangles": 98640
+    },
+    "BOXWOOD_HEDGE": {
+      "width": 1.18,
+      "height": 0.88,
+      "depth": 0.77,
+      "sprays": 2060,
+      "radius": 0.6,
+      "irregular": 0.017,
+      "leafCount": 37080,
+      "triangles": 150368
+    }
+  },
+  "license": "Original procedural mesh and materials by FORMA, no borrowed geometry",
+  "sourceCode": "tools/generate_boxwood_sempervirens.py",
+  "modelPath": "/assets/landscape-models/boxwood-sempervirens-forma-original.glb"
+}
