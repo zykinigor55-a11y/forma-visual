@@ -1,0 +1,54 @@
+{
+  "proof": [
+    {
+      "source": "granite-boulder",
+      "meshes": 1,
+      "triangles": 66122,
+      "photoTextures": 1,
+      "size": {
+        "x": 1.272135615348816,
+        "y": 1.0038301944732666,
+        "z": 1.8303342461585999
+      },
+      "scaledWidth": 1.65
+    },
+    {
+      "source": "rock-grey",
+      "meshes": 1,
+      "triangles": 14844,
+      "photoTextures": 1,
+      "size": {
+        "x": 0.16888190805912018,
+        "y": 0.14372014999389648,
+        "z": 0.3202769607305527
+      },
+      "scaledWidth": 1.65
+    },
+    {
+      "source": "rock-rough",
+      "meshes": 1,
+      "triangles": 12416,
+      "photoTextures": 1,
+      "size": {
+        "x": 0.07400986179709435,
+        "y": 0.03286941419355571,
+        "z": 0.144624512642622
+      },
+      "scaledWidth": 1.65
+    },
+    {
+      "source": "rock-moss",
+      "meshes": 6,
+      "triangles": 63127,
+      "photoTextures": 6,
+      "size": {
+        "x": 8.004603862762451,
+        "y": 1.768319845199585,
+        "z": 6.948764681816101
+      },
+      "scaledWidth": 1.65
+    }
+  ],
+  "errors": [],
+  "timestamp": "2026-11-21T22:26:42.782Z"
+}
