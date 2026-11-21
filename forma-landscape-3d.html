@@ -2075,7 +2075,7 @@ function beginBrush(world){
   eraseSurface:state.tool==='surface'&&$('#eraseSurfaceBrush')?.checked===true};
  if(state.tool==='surface'){
   if(brushStroke.eraseSurface){
-   const result=erasePaintedStrips(doc.objects,{point:first,radius:brushDiameter()/2,group:entry.group,makeId:id});
+   const result=erasePaintedStrips(doc.objects,{point:first,radius:brushDiameter()/2,group:entry.group,catalogId:state.placing,makeId:id});
    if(result.changed){doc.objects=result.objects;scheduleBrushRebuild()}
   }else{
    const o={id:id(),catalogId:state.placing,type:entry.group,geometry:'strip',width:brushDiameter(),points:[first,{x:first.x+.025,y:first.y}]};
@@ -2111,7 +2111,7 @@ function advanceBrush(world){
   points.push(point);let changed=false;
   for(const p of points){
    if(!inParcel(p,doc.site))continue;
-   const result=erasePaintedStrips(doc.objects,{point:p,radius:brushDiameter()/2,group:stroke.entry.group,makeId:id});
+   const result=erasePaintedStrips(doc.objects,{point:p,radius:brushDiameter()/2,group:stroke.entry.group,catalogId:stroke.entry.id,makeId:id});
    if(result.changed){doc.objects=result.objects;changed=true}
   }
   stroke.last=point;if(changed)scheduleBrushRebuild();
