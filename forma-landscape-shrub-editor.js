@@ -15,7 +15,7 @@ export function shrubEditorMarkup({id,species='',variant=1,real=false,loading=fa
  return '<div class="forma-shrub-editor" aria-label="Редактор кустарника">'+
   '<strong>РЕДАКТОР КУСТАРНИКА</strong><small>'+type+'</small>'+
   '<p class="forma-shrub-status">'+(real?'✓ Подключён GLB':loading?'Загружаем модель GLB…':failed?'⚠ Ошибка загрузки GLB':'3D-геометрия растения')+
-  (season!=='summer'&&species!=='thuja-globe'?' · сезонный вид':'')+'</p>'+
+  (season!=='summer'&&!['thuja-globe','boxwood'].includes(species)?' · сезонный вид':'')+'</p>'+
   '<label>Возраст / размер</label><div class="forma-shrub-buttons">'+
   [['young','Молодой'],['normal','Обычный'],['adult','Взрослый']].map(([key,text])=>'<button type="button" data-shrub-size="'+key+'">'+text+'</button>').join('')+
   '</div><label>Вариант внешнего вида</label><div class="forma-shrub-buttons">'+
