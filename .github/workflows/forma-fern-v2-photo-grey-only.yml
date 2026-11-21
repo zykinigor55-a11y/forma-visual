@@ -1,0 +1,56 @@
+name: FORMA - close grey studio render of actual photo-textured Dryopteris v2
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'forma-fern-v2-grey-studio.html'
+      - 'tools/capture_fern_v2_grey_close.mjs'
+      - '.github/workflows/forma-fern-v2-photo-grey-only.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-fern-v2-grey-close-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  actual-glb-studio:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual Chromium renderer
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Start project static server and check photo GLB
+        run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs > /tmp/forma-server-grey.log 2>&1 &
+          for i in $(seq 1 45); do if curl -fsS http://127.0.0.1:3000/forma-fern-v2-grey-studio.html >/dev/null; then break; fi; sleep 1; done
+          curl -fsSI http://127.0.0.1:3000/forma-fern-v2-grey-studio.html
+          curl -fsSI http://127.0.0.1:3000/assets/landscape-models/fern-sempervirens-forma-original.glb
+      - name: Render real GLB close in studio light on grey background
+        run: node tools/capture_fern_v2_grey_close.mjs
+      - name: Archive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fern-v2-actual-glb-grey-studio
+          if-no-files-found: warn
+          path: |
+            assets/landscape-screenshots/fern-v2-real-photo-grey-close.png
+            assets/landscape-screenshots/fern-v2-real-photo-grey-leaf-macro.png
+            assets/landscape-screenshots/fern-v2-real-photo-grey-young.png
+            assets/landscape-screenshots/fern-v2-grey-close-evidence.json
+      - name: Save screenshot to original user's GitHub branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f -- assets/landscape-screenshots/fern-v2-real-photo-grey-close.png assets/landscape-screenshots/fern-v2-real-photo-grey-leaf-macro.png assets/landscape-screenshots/fern-v2-real-photo-grey-young.png assets/landscape-screenshots/fern-v2-grey-close-evidence.json
+          git commit -m 'docs(fern): true photo-textured v2 Dryopteris close and macro on studio grey'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
