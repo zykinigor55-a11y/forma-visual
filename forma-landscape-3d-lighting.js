@@ -5,15 +5,15 @@
 export const gardenLightingSpec=Object.freeze({
  bollard:{height:.85,mountHeight:.75,color:0xffd8b0,intensity:23,range:6,kind:'radial',beam:0},
  ground:{height:.12,mountHeight:.085,color:0xffdfb7,intensity:8,range:4.6,kind:'uplight',beam:.64},
- spot:{height:.24,mountHeight:.30,color:0xffd4ac,intensity:86,range:14,kind:'uplight',beam:.38},
+ spot:{height:.30,mountHeight:.24,color:0xffd4ac,intensity:86,range:14,kind:'uplight',beam:.38},
  'low-post':{height:1.20,mountHeight:1.04,color:0xffd8a9,intensity:22,range:6.8,kind:'radial',beam:0},
- 'deck-light':{height:.10,mountHeight:.115,color:0xffe0b8,intensity:6,range:3.3,kind:'radial',beam:0},
- linear:{height:.08,mountHeight:.10,color:0xffdfb3,intensity:11,range:3.8,kind:'radial',beam:0},
- mushroom:{height:.68,mountHeight:.53,color:0xffd9b3,intensity:33,range:6.8,kind:'downlight',beam:1.16},
- 'square-bollard':{height:.82,mountHeight:.70,color:0xffdbb5,intensity:27,range:6.6,kind:'radial',beam:0},
- 'garden-lantern':{height:2.35,mountHeight:2.07,color:0xffd4a3,intensity:44,range:9,kind:'radial',beam:0},
+ 'deck-light':{height:.10,mountHeight:.013,color:0xffe0b8,intensity:6,range:3.3,kind:'uplight',beam:.58},
+ linear:{height:.08,mountHeight:.013,color:0xffdfb3,intensity:11,range:3.8,kind:'uplight',beam:.72},
+ mushroom:{height:.38,mountHeight:.308,color:0xffd9b3,intensity:33,range:6.8,kind:'downlight',beam:1.16},
+ 'square-bollard':{height:.50,mountHeight:.26,color:0xffdbb5,intensity:27,range:6.6,kind:'forward',beam:.87},
+ 'garden-lantern':{height:.995,mountHeight:.86,color:0xffd4a3,intensity:44,range:9,kind:'radial',beam:0},
  'spike-spot':{height:.36,mountHeight:.34,color:0xffd4ab,intensity:65,range:12,kind:'uplight',beam:.30},
- globe:{height:.68,mountHeight:.448,color:0xffe6c6,intensity:27,range:6.6,kind:'radial',beam:0}
+ globe:{height:.38,mountHeight:.19,color:0xffe6c6,intensity:27,range:6.6,kind:'radial',beam:0}
 });
 const adjustable=new Set(['bollard','low-post','mushroom','square-bollard','garden-lantern','globe']);
 export const gardenLightTemperatures=Object.freeze({
@@ -40,7 +40,7 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
   brightness:instance.brightness,kelvin:instance.kelvin});
  if(!state||!state.visible||!g)return null;
  let lamp;
- if(state.kind==='uplight'||state.kind==='downlight'){
+ if(state.kind==='uplight'||state.kind==='downlight'||state.kind==='forward'){
   // In-ground optics point straight up. Articulated spot heads are tilted
   // -0.64 radians about X, so their lens faces UP AND toward -Z.
   // The light beam must point the same way as the visible model.
@@ -48,7 +48,8 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
   lamp.position.set(0,state.mountHeight,0);
   const target=new T.Object3D();
   if(state.kind==='downlight')target.position.set(0,0,0);
-  else if(instance.catalogId==='ground')target.position.set(0,Math.min(state.range*.8,6),0);
+  else if(state.kind==='forward')target.position.set(0,0,Math.min(state.range*.65,4));
+  else if(['ground','deck-light','linear'].includes(instance.catalogId))target.position.set(0,Math.min(state.range*.8,6),0);
   else target.position.set(0,state.mountHeight+Math.min(state.range*.75,9),-Math.min(state.range*.55,6.5));
   g.add(target);lamp.target=target;
  }else{
@@ -64,5 +65,19 @@ export function addRealGardenEmission(T,g,instance,{time='day',weather='sunny',s
   lamp.shadow.bias=-.00025;
   lamp.shadow.normalBias=.02;
  }
- g.add(lamp);return lamp;
+ g.add(lamp);
+ // A linear ground luminaire carries several independently located LEDs.
+ // Split its flux between cells instead of a fake single radial light point.
+ if(instance.catalogId==='linear'){
+  lamp.intensity/=4;
+  for(const z of [-.28,-.09,.09,.28]){
+   const clone=lamp.clone();
+   clone.position.z=z;
+   clone.castShadow=false;
+   const target=new T.Object3D();target.position.set(0,state.mountHeight+Math.min(state.range*.8,6),z);
+   g.add(target);clone.target=target;g.add(clone);
+  }
+  lamp.position.z=-.43;
+ }
+ return lamp;
 }
