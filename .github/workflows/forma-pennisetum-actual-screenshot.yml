@@ -38,7 +38,7 @@ jobs:
           curl -fsSI http://127.0.0.1:3000/forma-landscape-3d.html
           curl -fsSI http://127.0.0.1:3000/assets/landscape-models/pennisetum-hameln-forma-original.glb
       - name: Capture the WebGL app screen with real Pennisetum placed
-        run: node tools/capture_pennisetum_webgl_actual.mjs
+        run: node tools/capture_pennisetum_hameln_webgl.mjs
       - name: Preserve the original screenshots even if commit fails
         if: always()
         uses: actions/upload-artifact@v4
