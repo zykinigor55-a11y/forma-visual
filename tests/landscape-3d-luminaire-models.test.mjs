@@ -21,7 +21,7 @@ test('ten common outdoor luminaires and an opal globe each have one stable ID an
   const item=byId(id),spec=gardenLightingSpec[id];
   assert.ok(spec,id+' light source');
   assert.ok(item.height>=.08&&item.height<=3,id+' plausible mounting height');
-  assert.ok(item.diameter>=.1&&item.diameter<=.6,id+' plausible housing diameter');
+  assert.ok(item.diameter>=.03&&item.diameter<=.6,id+' plausible housing diameter, including thin recessed LED rails');
   assert.equal(item.height,spec.height,id+' housing and emitter match');
   assert.ok(spec.mountHeight>=0&&spec.mountHeight<=spec.height+.07,id+' emitter sits inside housing');
   assert.ok(spec.intensity>0&&spec.range>0);
