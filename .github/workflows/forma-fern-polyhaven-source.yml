@@ -1,0 +1,54 @@
+name: FORMA · import Poly Haven Fern 02 CC0 four real clumps
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-fern-polyhaven-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-fern-polyhaven-source-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  get-real-model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout current 3D landscape project
+        uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - name: Download real public-domain Fern 02 GLB, no mock models
+        run: |
+          set -euo pipefail
+          mkdir -p assets/landscape-models
+          outfile='assets/landscape-models/polyhaven-fern-02-source.glb'
+          curl --fail --location --retry 5 --retry-all-errors --connect-timeout 20 --max-time 150 \
+            --user-agent 'Mozilla/5.0 (compatible; FORMA Visual original 3D assets import)' \
+            'https://www.innerscene.com/api/library/fern-clumps-82a87bea/download' -o "$outfile"
+          test $(stat -c%s "$outfile") -gt 400000
+          head -c 4 "$outfile" | grep -q 'glTF'
+          sha256sum "$outfile"
+      - name: Verify four genuine glTF part nodes before replacing anything
+        run: |
+          python tools/inspect_fern_polyhaven.py assets/landscape-models/polyhaven-fern-02-source.glb assets/landscape-models/polyhaven-fern-02-source.audit.json
+      - name: Record authors and CC0 provenance
+        run: |
+          cat > assets/landscape-models/polyhaven-fern-02-CC0.txt <<'EOF'
+          Fern 02 by Rob Tuytel and Rico Cilliers, Poly Haven
+          https://polyhaven.com/a/fern_02
+          GLB public download mirror (CC0): https://www.innerscene.com/tools/library/3d-parts/fern-clumps-82a87bea
+          License: CC0 1.0 Universal. Redistribution and commercial use allowed.
+          This is the unchanged asset for traceability; catalog variants will be separated
+          and fitted in real scene units without changing user-placed x/y coordinates.
+          EOF
+      - name: Commit real four-clump GLB and technical inspection
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/landscape-models/polyhaven-fern-02-source.glb assets/landscape-models/polyhaven-fern-02-source.audit.json assets/landscape-models/polyhaven-fern-02-CC0.txt
+          if git diff --cached --quiet; then echo 'Asset already saved'; exit 0; fi
+          git commit -m 'assets(fern): import actual CC0 Poly Haven Fern 02 four PBR clumps'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
