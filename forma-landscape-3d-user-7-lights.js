@@ -16,7 +16,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  const G=new T.Group();
  G.name='FORMA-LUMINAIRE-'+id;
  G.userData.fixtureId=id;
- G.userData.fixtureVersion='user-uploaded-7-photos-v4';
+ G.userData.fixtureVersion='user-uploaded-7-photos-v5';
  G.userData.userPhotoReference=true;
  const number=(n,f)=>Number.isFinite(Number(n))?Number(n):f;
  const dim=Math.max(0,Math.min(2,number(instance?.brightness,1)));
@@ -24,7 +24,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  const emission=night?dim:0;
  const P=(color,metalness=.5,roughness=.46,other={})=>
   new T.MeshPhysicalMaterial({color,metalness,roughness,clearcoat:.16,clearcoatRoughness:.39,...other});
- const body=P('#242629',.58,.58),bodySoft=P('#333639',.54,.56),
+ const body=P('#25282b',.47,.58),bodySoft=P('#373b3e',.52,.53),
   dark=P('#121416',.38,.58),blackRubber=P('#121313',.02,.91),
   machined=P('#a1a3a1',.85,.28),chromium=P('#eaebe8',.96,.15),
   screwMetal=P('#c4c8c8',.78,.23),
@@ -118,39 +118,42 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   const profile=[
    new T.Vector2(0,-.102),new T.Vector2(.033,-.102),
    new T.Vector2(.044,-.091),new T.Vector2(.053,-.054),
-   new T.Vector2(.061,.015),new T.Vector2(.064,.064),
-   new T.Vector2(.065,.071)
+   new T.Vector2(.068,.015),new T.Vector2(.070,.064),
+   new T.Vector2(.071,.071)
   ];
   part(new T.LatheGeometry(profile,72),bodySoft,0,0,0,'tapered-cast-alloy-housing',head);
   // Annular bezel ONLY: never cover the actual metallic reflector with a solid cap.
-  const openBezel=part(new T.RingGeometry(.055,.068,72),dark,0,.075,0,'real-open-annular-bezel',head);
+  const openBezel=part(new T.RingGeometry(.058,.073,88),dark,0,.075,0,'real-open-annular-bezel',head);
   openBezel.rotation.x=-Math.PI/2;
-  tor(.055,.005,0,.075,0,blackRubber,'front-waterproof-gasket',head);
-  microPrismReflector(.052,.066,head);
+  tor(.058,.0035,0,.076,0,blackRubber,'front-waterproof-gasket',head);
+  microPrismReflector(.057,.066,head);
   cy(.011,.011,.0016,0,.047,0,led,'central-CREE-LED',32,head);
   tor(.012,.002,0,.051,0,warmPlate,'LED-yellow-phosphor',head);
   cy(.028,.036,.025,0,-.100,0,body,'rear-optic-driver',48,head);
   // Electrical cable loops behind body, disappears into the stake:
-  tube([[0,.126,-.048],[-.023,.105,-.065],[-.041,.04,-.071],
-    [-.047,-.035,-.055],[-.034,-.069,-.022],[-.01,-.074,0]],.006,blackRubber,'external-routed-PVC-cable');
-  cy(.014,.014,.019,-.017,.142,-.045,machined,'metal-cable-gland',20);
+  tube([[.039,.166,.064],[.059,.127,.104],[.079,.083,.120],
+    [.083,.018,.098],[.063,-.053,.060],[.040,-.090,.020]],.006,blackRubber,'external-visible-routed-PVC-cable');
+  cy(.013,.013,.017,.029,.151,.052,machined,'satin-steel-cable-gland',24);
+  tor(.015,.0018,.029,.160,.052,blackRubber,'waterproof-cable-grommet');
   G.userData.measuredHeight=.39;
  }else if(id==='square-bollard'){
   // Image 2: charcoal rectangular post and THREE illuminated thin belts near top.
-  const H=.82,w=.145,band=.030,gap=.030;
-  const bandWarm=P('#b49b78',.06,.32,{emissive:warm,emissiveIntensity:emission*.36+.005});
-  const first=H-.082; // near cap, top of luminous belt
+  const H=.82,w=.145,band=.021,gap=.034;
+  const bandWarm=P('#b9a06f',.08,.39,{emissive:warm,emissiveIntensity:emission*.25+.004});
+  const champagne=P('#968977',.06,.28,{transmission:.39,transparent:true,opacity:.69,
+    emissive:warm,emissiveIntensity:emission*.085+.003});
+  const first=H-.067; // narrow warm glass belts under the solid metal top
   const lower=first-3*band-2*gap;
   bx(w,lower,w,0,lower/2,0,body,'one-piece-matte-charcoal-post');
   for(let i=0;i<3;i++){
    const yc=first-band/2-i*(band+gap);
    // Individual wraps are transparent acrylic, separated by opaque black bridges.
-   bx(w-.007,band,w-.007,0,yc,0,warmGlass,'continuous-clear-acrylic-wrap-'+i);
+   bx(w-.008,band,w-.008,0,yc,0,champagne,'continuous-smoked-acrylic-wrap-'+i);
    bx(w-.030,band-.005,w-.030,0,yc,0,opticDark,'hidden-core-LED-rail-'+i);
    for(let side=0;side<4;side++){
     const localZ=side%2===0?(side===0?1:-1)*(w/2+.0009):0;
     const localX=side%2===1?(side===1?1:-1)*(w/2+.0009):0;
-    const face=bx(side%2===0?w-.022:.005,band*.53,side%2===0?.005:w-.022,
+    const face=bx(side%2===0?w-.024:.005,band*.58,side%2===0?.005:w-.024,
       localX,yc,localZ,bandWarm,'warm-optical-window-'+i+'-'+side);
     face.castShadow=false;
    }
@@ -164,18 +167,23 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  }else if(id==='low-post'){
   // Image 3: long, satin dark grey square post and large warm frosted
   // rectangular head; rounded pane corners, visibly glowing lamp inside.
-  const H=1.20,w=.205,lower=.925,headTop=H-.027;
+  const H=1.20,w=.205,lower=.923,headTop=H-.027;
+  const referenceFrosted=P('#9c9e9b',.01,.54,{transmission:.52,thickness:.005,
+    ior:1.45,emissive:warm,emissiveIntensity:emission*.046+.002,
+    transparent:true,opacity:.54,side:T.DoubleSide});
   bx(w,lower,w,0,lower/2,0,bodySoft,'cast-graphite-square-column');
   bx(w+.005,.018,w+.005,0,lower+.006,0,body,'neck-weatherproof-transition');
   // Crucial: interior is NOT a giant opaque solid block; the lamp is inside.
   bx(w-.025,.014,w-.025,0,lower+.012,0,reflector,'internal-mirrored-LED-bottom');
-  const source=sp(.044,0,1.064,0,warmPlate,'actual-warm-internal-bulb');
-  source.scale.set(.83,1.28,.83);
+  cy(.021,.021,.028,0,lower+.036,0,dark,'concealed-internal-LED-socket',32);
+  const source=sp(.034,0,1.056,0,warmPlate,'visible-central-warm-bulb');
+  source.scale.set(.88,1.20,.88);
+  sp(.015,0,1.057,0,led,'visible-LED-chip').castShadow=false;
   const glassY=(lower+headTop)/2,glassH=headTop-lower-.032,paneW=w-.032;
-  roundedPane(paneW,glassH,.024,frosted,0,glassY,w/2+.002,0,'rounded-front-glass');
-  roundedPane(paneW,glassH,.024,frosted,0,glassY,-w/2-.002,Math.PI,'rounded-back-glass');
-  roundedPane(paneW,glassH,.024,frosted,w/2+.002,glassY,0,Math.PI/2,'rounded-right-glass');
-  roundedPane(paneW,glassH,.024,frosted,-w/2-.002,glassY,0,-Math.PI/2,'rounded-left-glass');
+  roundedPane(paneW,glassH,.030,referenceFrosted,0,glassY,w/2+.002,0,'rounded-front-glass');
+  roundedPane(paneW,glassH,.030,referenceFrosted,0,glassY,-w/2-.002,Math.PI,'rounded-back-glass');
+  roundedPane(paneW,glassH,.030,referenceFrosted,w/2+.002,glassY,0,Math.PI/2,'rounded-right-glass');
+  roundedPane(paneW,glassH,.030,referenceFrosted,-w/2-.002,glassY,0,-Math.PI/2,'rounded-left-glass');
   for(const x of [-w/2+.008,w/2-.008])for(const z of [-w/2+.008,w/2-.008])
    cy(.007,.007,headTop-lower, x,(headTop+lower)/2,z,body,'slim-rounded-black-corner-frame',24);
   bx(w+.012,.032,w+.012,0,H-.016,0,body,'flat-waterproof-square-top');
@@ -189,9 +197,11 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   if(Number.isFinite(explicit)&&explicit>=.20&&explicit<=1&&Math.abs(explicit-.40)>.02)
    diameter=explicit;
   const r=diameter/2;
+  const referenceOpal=P('#e2e1dc',.005,.88,{transmission:.015,thickness:.024,
+    emissive:warm,emissiveIntensity:emission*.47+.008,side:T.DoubleSide});
   const base=cy(r*.42,r*.47,.014,0,.007,0,blackRubber,'hidden-ground-base',48);
   cy(r*.35,r*.35,.009,0,.013,0,body,'invisible-electrical-driver',48);
-  const sphere=sp(r,0,r*.99,0,opal,'uniform-seamless-opal-polyethylene-ball');
+  const sphere=sp(r,0,r*.99,0,referenceOpal,'uniform-seamless-opal-polyethylene-ball');
   sphere.scale.y=.99;
   sp(r*.12,0,r*.99,0,led,'LED-module-inside-diffuser').castShadow=false;
   G.userData.availableDiameters=[.25,.40,.60,.80];
@@ -207,14 +217,16 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   bx(.056,.032,.040,.076,H-.081,0,body,'side-bearing-arm');
   const hinge=cy(.014,.014,.009,.104,H-.078,0,machined,'spot-tilt-hinge',24);
   hinge.rotation.z=Math.PI/2;
+  const referenceSpotLens=P('#d1d0c8',.015,.38,{emissive:warm,
+    emissiveIntensity:emission*.35+.006,side:T.DoubleSide});
   // Cylindrical head drops below its upper swivel, faces down.
   const axis=new T.Group();
-  axis.position.set(.118,H-.137,.012);axis.rotation.z=.21; axis.rotation.x=-.16; // angle visible lens toward the viewer while aiming away from the post
+  axis.position.set(.118,H-.137,.012);axis.rotation.z=.13; axis.rotation.x=-.09; // angle visible lens toward the viewer while aiming away from the post
   axis.name='side-mounted-adjustable-head';G.add(axis);
-  cy(.051,.051,.132,0,-.015,0,dark,'side-downward-lamp-head',64,axis);
+  cy(.050,.050,.123,0,-.015,0,dark,'side-downward-lamp-head',64,axis);
   cy(.049,.049,.012,0,.054,0,bodySoft,'upper-cover-heat-sink',64,axis);
   cy(.049,.049,.012,0,-.089,0,body,'thick-black-optic-bezel',64,axis);
-  cy(.038,.038,.003,0,-.095,0,opal,'downward-white-optical-disc',56,axis);
+  cy(.038,.038,.003,0,-.095,0,referenceSpotLens,'downward-frosted-optical-disc',56,axis);
   cy(.032,.032,.001,0,-.097,0,led,'internal-COB-light-source',56,axis);
   tor(.045,.002,0,-.097,0,blackRubber,'flush-lens-gasket',axis);
   cy(shaftR*1.03,shaftR*1.03,.014,0,.007,0,dark,'slim-sealed-bottom');
@@ -233,11 +245,12 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   const inner=.064;
   const smoked=P('#4b4436',.07,.34,{transmission:.10,transparent:true,opacity:.78,
     emissive:warm,emissiveIntensity:emission*.06});
-  const amber=P('#8d6e42',.08,.36,{emissive:warm,emissiveIntensity:emission*.38+.003});
+  const amber=P('#a78a5e',.07,.37,{emissive:warm,emissiveIntensity:emission*.56+.006});
   for(const x of [-inner,inner])for(const z of [-inner,inner]){
    // The original photo has warm gold light high up; the lower channels remain shaded.
    bx(.011,H-.21,.007,x,H*.48,z,smoked,'smoked-vertical-inner-protector');
-   bx(.007,H*.37,.004,x,H*.737,z,amber,'high-warm-LED-tube');
+   bx(.009,H*.35,.006,x,H*.73,z,amber,'recessed-amber-vertical-LED');
+   bx(.003,H*.35,.002,x,H*.73,z,warmPlate,'LED-diffuser-core');
   }
   // Crossbrace holds suspended inner diffuser but leaves open air on sides.
   bx(w-.03,.012,.012,0,H-.10,0,bodySoft,'inner-floating-rail');
@@ -252,24 +265,27 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   cy(r,r,shaftTop,0,shaftTop/2,0,body,'dark-cylindrical-aluminium-column',72);
   cy(r+.018,r+.018,.013,0,.007,0,dark,'wide-circular-mounting-flange',72);
   tor(r*.96,.0025,0,shaftTop,0,blackRubber,'IP-rated-lens-foot-gasket');
-  cy(r*.94,r*.94,glassH,0,shaftTop+glassH/2,0,clearGlass,'transparent-cylindrical-basket',72);
+  const basketGlass=P('#adb5b5',.025,.18,{transmission:.64,thickness:.004,ior:1.5,
+    transparent:true,opacity:.31,side:T.DoubleSide});
+  cy(r*.94,r*.94,glassH,0,shaftTop+glassH/2,0,basketGlass,'transparent-cylindrical-basket',72);
   cy(r*.61,r*.61,glassH*.85,0,shaftTop+glassH*.425,0,
     P('#abb8b6',.03,.43,{transmission:.40,transparent:true,opacity:.48,
      emissive:warm,emissiveIntensity:emission*.045,side:T.DoubleSide}),
     'inside-smoked-glass-LED-diffuser',64);
   // Visible individual engraved grid lines across clear cylindrical glass.
-  const prism=P('#8f9798',.26,.31,{transmission:.14,transparent:true,opacity:.76,side:T.DoubleSide});
+  const prism=P('#a5a8a5',.18,.28,{transmission:.47,transparent:true,opacity:.42,side:T.DoubleSide});
   for(let j=0;j<21;j++){
    const y=shaftTop+.007+(j+.5)*(glassH-.017)/21;
-   tor(r*.93,.0017,0,y,0,prism,'horizontal-refractive-grid-'+j);
+   tor(r*.93,.0010,0,y,0,prism,'horizontal-engraved-optic-grid-'+j);
   }
   for(let j=0;j<22;j++){
    const a=j*2*Math.PI/22,rad=r*.934;
-   cy(.0017,.0017,glassH-.013,Math.cos(a)*rad,shaftTop+glassH/2,Math.sin(a)*rad,prism,
-    'vertical-glass-prism-'+j,10);
+   cy(.0011,.0011,glassH-.013,Math.cos(a)*rad,shaftTop+glassH/2,Math.sin(a)*rad,prism,
+    'vertical-clear-prism-'+j,10);
   }
   // Actual LED bulb visible through the clear prismatic chamber.
-  sp(.027,0,shaftTop+glassH*.45,0,led,'internal-visible-LED-bulb').castShadow=false;
+  sp(.028,0,shaftTop+glassH*.45,0,warmPlate,'central-internal-lamp').castShadow=false;
+  cy(.014,.014,.016,0,shaftTop+.022,0,reflector,'internal-mounting-socket',24);
   cy(r,r,.015,0,H-.0075,0,dark,'cylindrical-flat-cap',72);
   tor(r*.97,.002,0,H-.019,0,blackRubber,'roof-glass-seal');
   G.userData.measuredHeight=H;
