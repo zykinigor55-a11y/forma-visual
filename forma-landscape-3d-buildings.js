@@ -4,7 +4,7 @@
 import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile} from './forma-landscape-3d-architecture-geometry.js';
 import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
-import {SCANDI_DETAIL,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
+import {SCANDI_DETAIL,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Вертикальный планкен двух оттенков · графитовая кровля',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#C1AD91'},
@@ -195,7 +195,7 @@ function doorGroup(T,width=1.04,height=2.16,modern=false){
  */
 function addWindowFinishing(facade,T,o,style){
  const p=windowTrimProfile(style),w=o.width,h=o.height,x=o.x;
- const bottom=o.bottom,cy=bottom+h*.5;
+ const bottom=o.bottom,cy=bottom+h*.5,scandi=style==='scandi';
  const wood=['scandi','timber','logcabin','chalet','tiny','bungalow'].includes(style);
  const outer=mat(T,p.material,wood?.78:.55,wood?.03:.35);
  const reveal=mat(T,['barn','modern','hightech','panoramic'].includes(style)?
@@ -219,14 +219,14 @@ function addWindowFinishing(facade,T,o,style){
  }
  // External architraves live outside the glass aperture and physically
  // touch the facade. They are narrower on minimal aluminum buildings.
- const cw=p.width,cz=.095+p.depth*.46;
+ const cw=p.width,cz=scandi?.152:.095+p.depth*.46;
  for(const side of [-1,1]){
   box(facade,T,cw,h+cw*.62,p.depth,
    x+side*(w*.5+cw*.5+.013),cy+cw*.10,cz,outer)
    .userData.architecturePart='window-casing-side';
   // A narrow return where the architrave meets the plaster or timber.
   box(facade,T,.012,h+.03,.022,
-   x+side*(w*.5+cw+.01),cy,.113,seal)
+   x+side*(w*.5+cw+.01),cy,scandi?.158:.113,seal)
    .userData.architecturePart='window-casing-joint';
  }
  box(facade,T,w+cw*2+.045,cw*.78,p.depth,
@@ -235,24 +235,58 @@ function addWindowFinishing(facade,T,o,style){
  // Upper head flashing directs facade runoff away from glazing, not into
  // the glazing recess. Keep its projection subordinate to the sill.
  box(facade,T,w+cw*2+.065,.015,.084,
-  x,bottom+h+cw*.83,.128,sillFinish)
+  x,bottom+h+cw*.83,scandi?.174:.128,sillFinish)
   .userData.architecturePart='window-head-flashing';
- // The metal/stone sill is fixed UNDER the sash, projects 62 mm past the
- // +95mm facade and is angled down toward the exterior (+Z).
- const sill=box(facade,T,w+.20,.021,.30,
-  x,bottom-.068,.008,sillFinish);
+ // The sill sits BELOW the sash and slopes toward exterior +Z. On the
+ // ventilated Scandinavian facade the drip projects > 40mm OUTSIDE the
+ // raised boards (not just outside the structural wall).
+ const sillDepth=scandi?.37:.30,sillCenter=scandi?.012:.008;
+ const nose=scandi?.197:.158;
+ const sill=box(facade,T,w+.20,.021,sillDepth,
+  x,bottom-.068,sillCenter,sillFinish);
  sill.rotation.x=p.sillSlopeRadians;
  sill.userData.architecturePart='window-pitched-sill';
  sill.userData.slopeOutwardRadians=p.sillSlopeRadians;
  sill.userData.wallExteriorFace=.095;
  sill.userData.sillExteriorNose=.158;
+ if(scandi){
+  sill.userData.sillExteriorNose=nose;
+  sill.userData.claddingOuterFace=.145;
+  sill.userData.dripClearanceBeyondCladdingMm=52;
+ }
  // Roll-under drip makes water detach from the cladding and caps the ends.
- box(facade,T,w+.22,.020,.020,x,bottom-.094,.158,sillFinish)
+ box(facade,T,w+.22,.020,.020,x,bottom-.094,nose,sillFinish)
   .userData.architecturePart='window-drip';
  for(const side of [-1,1]){
-  box(facade,T,.024,.039,.30,
-   x+side*(w*.5+.103),bottom-.069,.008,sillFinish)
+  box(facade,T,.024,.039,sillDepth,
+   x+side*(w*.5+.103),bottom-.069,sillCenter,sillFinish)
    .userData.architecturePart='sill-end-cap';
+ }
+ if(scandi){
+  // Extra rainscreen returns span the physical timber ventilation cavity;
+  // weather-resisting tapes and expanding joint form a continuous seal
+  // between cladding, uPVC sash and the 190mm structural wall.
+  const returnMat=mat(T,'#B5A58D',.89,0);
+  const epdm=mat(T,'#222B2B',.94,0);
+  for(const side of [-1,1]){
+   box(facade,T,.018,h,.055,
+    x+side*(w*.5-.010),cy,.117,returnMat)
+    .userData.architecturePart='rainscreen-window-side-return';
+   box(facade,T,.012,h-.06,.023,
+    x+side*(w*.5-.045),cy,.064,epdm)
+    .userData.architecturePart='window-installation-weather-seal';
+  }
+  box(facade,T,w+.04,.018,.055,
+   x,bottom+h-.010,.117,returnMat)
+   .userData.architecturePart='rainscreen-window-head-return';
+  box(facade,T,w+.08,.008,.024,
+   x,bottom+h+.024,.104,epdm)
+   .userData.architecturePart='window-head-waterproof-tape';
+  // Two tiny hemmed returns under the outer sill block lateral wind rain.
+  for(const side of [-1,1])
+   box(facade,T,.017,.047,.030,
+    x+side*(w*.5+.095),bottom-.058,nose-.018,epdm)
+    .userData.architecturePart='sill-wind-rain-end-upstand';
  }
  box(facade,T,w+.068,.012,.020,x,bottom+.011,-.052,seal)
   .userData.architecturePart='window-sill-seal';
@@ -764,6 +798,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   const rise=Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
   addScandiGableCladding(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
   addScandiRoofEdgeDetails(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
+  addScandiCornerDetails(THREE,g,{width:w,depth:d,bodyHeight});
   g.userData.scandiEnvelope={facadeMaterials:['vertical-natural-timber','vertical-smoked-timber'],
    roofGableWindBoard:true,vergeMetalFlashing:true};
  }
