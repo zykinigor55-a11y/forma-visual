@@ -1,0 +1,84 @@
+{
+  "source": "original DOM.RENDER Three.js geometry, not AI imagery",
+  "count": 11,
+  "models": [
+    {
+      "id": "bollard",
+      "file": "assets/landscape-screenshots/luminaire-v3-bollard-real-render.png",
+      "size": 72226,
+      "partCount": 8,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "ground",
+      "file": "assets/landscape-screenshots/luminaire-v3-ground-real-render.png",
+      "size": 90544,
+      "partCount": 23,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "spot",
+      "file": "assets/landscape-screenshots/luminaire-v3-spot-real-render.png",
+      "size": 124318,
+      "partCount": 8,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "low-post",
+      "file": "assets/landscape-screenshots/luminaire-v3-low-post-real-render.png",
+      "size": 61946,
+      "partCount": 13,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "deck-light",
+      "file": "assets/landscape-screenshots/luminaire-v3-deck-light-real-render.png",
+      "size": 50827,
+      "partCount": 14,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "linear",
+      "file": "assets/landscape-screenshots/luminaire-v3-linear-real-render.png",
+      "size": 62195,
+      "partCount": 31,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "mushroom",
+      "file": "assets/landscape-screenshots/luminaire-v3-mushroom-real-render.png",
+      "size": 107347,
+      "partCount": 6,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "square-bollard",
+      "file": "assets/landscape-screenshots/luminaire-v3-square-bollard-real-render.png",
+      "size": 213465,
+      "partCount": 12,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "garden-lantern",
+      "file": "assets/landscape-screenshots/luminaire-v3-garden-lantern-real-render.png",
+      "size": 99337,
+      "partCount": 21,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "spike-spot",
+      "file": "assets/landscape-screenshots/luminaire-v3-spike-spot-real-render.png",
+      "size": 82855,
+      "partCount": 12,
+      "version": "real-photo-reference-v3"
+    },
+    {
+      "id": "globe",
+      "file": "assets/landscape-screenshots/luminaire-v3-globe-real-render.png",
+      "size": 68138,
+      "partCount": 3,
+      "version": "real-photo-reference-v3"
+    }
+  ],
+  "timestamp": "2026-11-21T20:56:31.410Z"
+}
