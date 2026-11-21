@@ -62,7 +62,7 @@ test('scandinavian 76mm PVC profile includes separated triple glazing, warm edge
  assert.match(house,/style==='scandi'\);/);
  for(const part of ['ig-unit-outer-pane','ig-unit-middle-pane','ig-unit-inner-pane','ig-unit-warm-edge-spacer',
   'upvc-sash-76mm','outer-glazing-gasket','upvc-drainage-weep-hole'])
-  assert.ok(house.includes(part),'missing "+part);
+  assert.ok(house.includes(part),'missing '+part);
  assert.match(house,/nominalPaneThicknessMm:4/);
  assert.match(house,/unit:'triple glazed 4-16-4-16-4'/);
  assert.match(house,/tripleGlazed\?0:\.5/,'PVC is non-metallic');
