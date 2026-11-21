@@ -98,7 +98,8 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
  const w=Math.max(.45,width),h=Math.max(.6,height),edge=.084;
  // Dark recessed opening masks the solid procedural wall behind the pane.
  // Explicit border profiles create the reveal without an unrealistic opaque frame slab.
- box(g,T,w,h,.035,0,0,tripleGlazed?-.045:.035,recess);
+ if(tripleGlazed)box(g,T,w,h,.035,0,0,-.045,recess);
+ else box(g,T,w,h,.035,0,0,.035,recess);
  if(tripleGlazed){
   // Three separate transparent 4mm leaves, dual cavities and visible
   // warm-edge spacers. The frame is uPVC (no metallic reflective finish).
