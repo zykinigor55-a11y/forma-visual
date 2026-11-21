@@ -4,8 +4,8 @@ import {readFileSync} from 'node:fs';
 import {shrubEditorMarkup,shrubSizePreset,SHRUB_PRESETS} from '../forma-landscape-shrub-editor.js';
 import {CATALOG,normalizeProject,freshProject} from '../forma-landscape-project-core.js';
 const html=readFileSync(new URL('../forma-landscape-3d.html',import.meta.url),'utf8');
-test('all shrubs can open the actual right-side editor with 3 size and variant controls',()=>{
- assert.equal(CATALOG.filter(c=>c.group==='shrubs').length,14);
+test('all shrubs open the right-side editor, including four separate real fern variants',()=>{
+ assert.equal(CATALOG.filter(c=>c.group==='shrubs').length,17);
  const src=shrubEditorMarkup({id:'Спирея японская',variant:2,real:true});
  assert.match(src,/РЕДАКТОР КУСТАРНИКА/);
  assert.match(src,/data-shrub-size="young"/);
