@@ -9,7 +9,7 @@
       "mode": "night",
       "brightness": 1,
       "file": "assets/landscape-screenshots/lighting-v6-night-on-actual-WebGL.png",
-      "size": 173556,
+      "size": 173722,
       "groundLuminance": 117.45,
       "proof": {
         "fixtureId": "globe",
@@ -44,7 +44,7 @@
       "mode": "night",
       "brightness": 0,
       "file": "assets/landscape-screenshots/lighting-v6-night-off-actual-WebGL.png",
-      "size": 29030,
+      "size": 14618,
       "groundLuminance": 79.01,
       "proof": {
         "fixtureId": "globe",
@@ -160,5 +160,5 @@
     }
   ],
   "errors": [],
-  "timestamp": "2026-11-21T22:17:56.295Z"
+  "timestamp": "2026-11-21T22:20:07.742Z"
 }
