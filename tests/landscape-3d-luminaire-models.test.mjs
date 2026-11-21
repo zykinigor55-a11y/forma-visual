@@ -54,10 +54,10 @@ test('summer day is physically unlit; different choices have correct night optic
  }
  assert.equal(gardenLightingState('globe',{time:'night'}).kind,'radial');
  assert.equal(gardenLightingState('mushroom',{time:'night'}).kind,'downlight');
- assert.equal(gardenLightingState('spot',{time:'night'}).kind,'uplight');
+ assert.equal(gardenLightingState('spot',{time:'night'}).kind,'downlight');
  assert.equal(gardenLightingState('spike-spot',{time:'night'}).kind,'uplight');
- assert.equal(gardenLightingState('garden-lantern',{time:'night'}).height,.995);
- assert.equal(gardenLightingState('globe',{time:'night'}).height,.38);
+ assert.equal(gardenLightingState('garden-lantern',{time:'night'}).height,1.03);
+ assert.equal(gardenLightingState('globe',{time:'night'}).height,.40);
  assert.equal(gardenLightingState('ground',{time:'night',height:1.2}).height,.12,'migrate historic wrong 1.2m');
 });
 test('photo prompt recognizes actual globe with precise shape and forbids inventing other light styles',()=>{
@@ -79,11 +79,39 @@ test('photo reference geometries and source measurements are wired to all 11 ori
  assert.match(fixtures,/createPhotoReferenceLuminaire\(T,instance,\{night\}\)/);
  for(const id of ids)assert.ok(original.includes("id==='"+id+"'"),id+' has exact photo reference mesh');
  assert.match(original,/fixtureVersion='real-photo-reference-v3'/);
- assert.equal(gardenLightingState('square-bollard',{time:'night'}).height,.50);
+ assert.equal(gardenLightingState('square-bollard',{time:'night'}).height,.82);
  assert.equal(gardenLightingState('mushroom',{time:'night'}).height,.38);
- assert.equal(gardenLightingState('spot',{time:'night'}).height,.30);
+ assert.equal(gardenLightingState('spot',{time:'night'}).height,1.11);
  assert.equal(gardenLightingState('ground',{time:'night'}).kind,'uplight');
  assert.equal(gardenLightingState('deck-light',{time:'night'}).kind,'uplight');
  assert.equal(gardenLightingState('linear',{time:'night'}).kind,'uplight');
- assert.equal(gardenLightingState('square-bollard',{time:'night'}).kind,'forward');
+ assert.equal(gardenLightingState('square-bollard',{time:'night'}).kind,'radial');
+});
+
+
+test('seven exact user-uploaded photographs supersede previous manufacturer photo concepts',()=>{
+ const source=file('forma-landscape-3d-user-7-lights.js');
+ const refs=['spike-spot','square-bollard','low-post','globe','spot','garden-lantern','bollard'];
+ assert.equal(refs.length,7);
+ for(const id of refs) assert.ok(source.includes("id==='"+id+"'"),'needs real authored geometry for uploaded '+id);
+ assert.match(source,/fixtureVersion='user-uploaded-7-photos-v4'/);
+ assert.match(source,/actual-microprism-reflector/,'uploaded spotlight includes facet optics');
+ assert.match(source,/continuous-clear-acrylic-wrap/,'three stacked transparent lit square-post bands');
+ assert.match(source,/rounded-front-glass/,'square post uses independent rounded translucent panels');
+ assert.match(source,/hollow-frame-black-vertical-corner/,'open frame is a true hollow structure');
+ assert.match(source,/horizontal-refractive-grid/,'cylindrical cap has real prismatic geometry');
+ assert.match(source,/external-routed-PVC-cable/,'spike-spot cable is a curved 3D model');
+ assert.match(source,/side-mounted-adjustable-head/);
+ assert.match(source,/uniform-seamless-opal-polyethylene-ball/);
+ assert.match(file('forma-landscape-3d-luminaires-reference.js'),/createUserReferenceGardenLuminaire\(T,instance,\{night\}\)/);
+ assert.match(editor,/id="lampGlobeSize"/);
+ assert.match(editor,/o.variant=variant;o.diameter=sizes\[variant\];o.height=sizes\[variant\]/);
+ assert.match(file('forma-landscape-3d-lighting.js'),/lamp.position.set\(.118,state.mountHeight,.012\)/);
+});
+test('uploaded reference globe has four geometrically distinct user-selected sizes',async()=>{
+ const {globeDiameterByVariant,uploadedGardenLightIds}=await import('../forma-landscape-3d-user-7-lights.js');
+ assert.deepEqual(Object.values(globeDiameterByVariant),[.40,.25,.60,.80]);
+ assert.equal(new Set(uploadedGardenLightIds).size,7);
+ assert.equal(gardenLightingState('bollard',{time:'night'}).height,.83);
+ assert.equal(gardenLightingState('spike-spot',{time:'night'}).height,.39);
 });
