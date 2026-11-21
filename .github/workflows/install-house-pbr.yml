@@ -1,0 +1,49 @@
+name: FORMA · Local CC0 architectural PBR materials
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/install-house-pbr.py'
+      - '.github/workflows/install-house-pbr.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-house-lightweight-pbr
+  cancel-in-progress: false
+jobs:
+  materials:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch verified CC0 albedo, normal and roughness 1K JPEGs
+        run: python tools/install-house-pbr.py
+      - name: Keep texture maps on the same origin as the editor
+        run: |
+          set -euo pipefail
+          git config user.name 'FORMA CC0 Asset Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/house-pbr/
+          if git diff --cached --quiet; then echo 'PBR maps already present'; exit 0; fi
+          git commit -m 'assets(houses): store verified 1K CC0 photo PBR maps locally'
+          for i in 1 2 3 4; do
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            if git push origin HEAD:dom-render-nanobanana; then exit 0; fi
+            sleep $((i*2))
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-house-PBR-licenses-and-hashes
+          path: assets/house-pbr/sources.json
+          if-no-files-found: ignore
