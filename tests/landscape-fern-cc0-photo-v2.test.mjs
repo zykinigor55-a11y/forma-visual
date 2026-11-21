@@ -19,8 +19,8 @@ test('CC0 photographed Dryopteris leaf microdetail is actually baked into GLB, n
  assert.ok(meta.photoTexture.verifiedLeafCropCount>=15);
  const source=read('assets/landscape-models/fern-CC0-source-Dryopteris.jpg');
  assert.equal(createHash('sha256').update(source).digest('hex'),meta.photoTexture.sourcePhotoSHA256);
- assert.equal(createHash('sha256').update(glb).digest('hex'),SHRUB_3D_MODELS.fern.sha256);
- assert.equal(meta.sha256,SHRUB_3D_MODELS.fern.sha256);
+ assert.equal(createHash('sha256').update(glb).digest('hex'),SHRUB_3D_MODELS['fern-original'].sha256);
+ assert.equal(meta.sha256,SHRUB_3D_MODELS['fern-original'].sha256);
  assert.equal(glb.toString('ascii',0,4),'glTF');
  assert.equal(glb.readUInt32LE(8),glb.length);
  assert.equal(meta.triangleCount,507704);
