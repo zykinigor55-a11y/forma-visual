@@ -1120,7 +1120,7 @@ function chooseTool(t){
  doc.objects.filter(o=>['pine','spruce','birch'].includes(o.catalogId)).map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
  (!doc.objects.some(o=>['pine','spruce','birch'].includes(o.catalogId))?'<small>Посаженных деревьев пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 26</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 15</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
   const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&['landscape','furniture','models40'].includes(t),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
-  const uri=modelPreview?'/assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?(['pennisetum','hosta','ornamental-grass','fern'].includes(c[0])?fallbackIconURL(asset):'/assets/landscape-photo/'+c[0]+'.png'):
+  const uri=modelPreview?'/assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?(['pennisetum','hosta','ornamental-grass','fern','fern-02','fern-03','fern-04'].includes(c[0])?fallbackIconURL(asset):'/assets/landscape-photo/'+c[0]+'.png'):
     t==='light'?iconURL(asset):t==='landscape'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?'/assets/landscape-photo/'+c[0]+'.jpg':'';
   const diameter=t==='light'&&asset?'Высота '+Number(asset.height).toFixed(2)+' м · корпус '+Number(asset.diameter).toFixed(2)+' м':t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
   const header=t==='light'&&ci===0?'<div class="asset-group-heading">САДОВОЕ ОСВЕЩЕНИЕ · 11 РАЗНЫХ 3D-МОДЕЛЕЙ</div>':t==='plant'&&(ci===0||ci===12)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · 12 ВИДОВ':'КУСТАРНИКИ · 14 ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===11)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 5 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':t==='models40'&&(ci===0||real?.group!==realModelById(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+REAL_3D_CATEGORIES[real.group]+' · '+REAL_3D_OBJECTS.filter(x=>x.group===real.group).length+' МОДЕЛЕЙ</div>':'';
@@ -1476,6 +1476,23 @@ function renderProps(){
  if(isShrub){
   el.querySelectorAll('[data-shrub-variant]').forEach(button=>button.onclick=()=>{
    const choice=Number(button.dataset.shrubVariant);
+   const fernIds=['fern','fern-02','fern-03','fern-04'];
+   if(fernIds.includes(o.catalogId)){
+    const targetId=fernIds[choice-1];
+    if(!targetId||targetId===o.catalogId)return;
+    push();
+    o.catalogId=targetId;
+    // Each selection is a DIFFERENT original fern mesh, never a rotated duplicate.
+    // Only dimensions and botanical type change; preserve scene x/y, rotation and id.
+    o.variant=1;
+    Object.assign(o,[
+      {height:.29,diameter:.62},{height:.43,diameter:1.00},
+      {height:.35,diameter:.88},{height:.22,diameter:.60}
+    ][choice-1]);
+    save();rebuild();renderProps();revealSelectedInspector();
+    status('Папоротник '+String(choice).padStart(2,'0')+' · оригинальная GLB-форма выбрана.');
+    return;
+   }
    if(choice===Number(o.variant||1))return;
    push();o.variant=choice;
    if(o.catalogId==='dogwood'){
@@ -1496,10 +1513,6 @@ function renderProps(){
    }
    if(o.catalogId==='pennisetum'){
     const forms=[{height:.76,diameter:.87},{height:.58,diameter:.69},{height:.94,diameter:1.15}];
-    Object.assign(o,forms[choice-1]);
-   }
-   if(o.catalogId==='fern'){
-    const forms=[{height:.87,diameter:1.20},{height:.58,diameter:.80},{height:1.08,diameter:1.60}];
     Object.assign(o,forms[choice-1]);
    }
    save();rebuild();renderProps();revealSelectedInspector();
