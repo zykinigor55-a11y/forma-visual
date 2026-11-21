@@ -21,7 +21,7 @@ test('original boxwood GLB has 3 real independent evergreen geometries and authe
  assert.equal(buf.readUInt32LE(8),buf.length);
  assert.equal(createHash('sha256').update(buf).digest('hex'),info.sha256);
  assert.equal(info.sha256,SHRUB_3D_MODELS.boxwood.sha256);
- assert.ok(buf.length>16_000_000 && buf.length<22_000_000);
+ assert.ok(buf.length>16_000_000 && buf.length<36_000_000); // UV coordinates plus embedded CC0 photo/normal atlas
  assert.equal(gltf.meshes.length,30);
  assert.equal(gltf.materials.length,10);
  assert.equal(info.triangles,720940);
