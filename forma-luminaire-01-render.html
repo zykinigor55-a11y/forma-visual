@@ -29,6 +29,9 @@ const groundMat=new THREE.MeshStandardMaterial({color:'#53575a',metalness:.10,ro
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(18,18),groundMat);
 ground.rotation.x=-Math.PI/2;ground.position.y=-.007;
 ground.receiveShadow=true;scene.add(ground);
+// In photo 1 the detached stake must be visible in full; it lies below the
+// installation-grade ground level, so hide ONLY studio floor for its proof view.
+if(lampId==='spike-spot')ground.visible=false;
 const key=new THREE.DirectionalLight(0xffe5c7,4.8);
 key.position.set(-1.8,4,3.2);key.castShadow=true;
 key.shadow.mapSize.set(2048,2048);key.shadow.camera.near=.01;key.shadow.camera.far=18;
