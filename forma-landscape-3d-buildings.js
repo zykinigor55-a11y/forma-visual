@@ -1,7 +1,7 @@
 /* FORMA architectural houses: metrically correct footprints, distinct facade
  * systems and real roof planes. These are editable, procedural Three.js models.
  * Presets do not infer unknown details from a user's architectural photograph. */
-import {buildingHeights,facadeOpeningSchedule,wallPatches} from './forma-landscape-3d-architecture-geometry.js';
+import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile} from './forma-landscape-3d-architecture-geometry.js';
 import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
@@ -143,6 +143,81 @@ function doorGroup(T,width=1.04,height=2.16,modern=false){
   .userData.architecturePart='door-threshold';
  return g;
 }
+/** Measured window assembly: 190 mm wall, recessed real glazed opening,
+ * four returns, weather-shedding outer sill, slim inner windowsill and
+ * style-appropriate outside casing. No geometry blocks the aperture.
+ */
+function addWindowFinishing(facade,T,o,style){
+ const p=windowTrimProfile(style),w=o.width,h=o.height,x=o.x;
+ const bottom=o.bottom,cy=bottom+h*.5;
+ const wood=['scandi','timber','logcabin','chalet','tiny','bungalow'].includes(style);
+ const outer=mat(T,p.material,wood?.78:.55,wood?.03:.35);
+ const reveal=mat(T,['barn','modern','hightech','panoramic'].includes(style)?
+  '#343E42':wood?'#A89C87':'#C2C0B8',.87,.03);
+ const seal=mat(T,'#192023',.94,.025);
+ const sillFinish=mat(T,wood?'#8F9492':['classic','cottage','mediterranean','brick'].includes(style)?
+  '#B3AFA4':'#636E71',.48,wood?.30:.49);
+ // Exterior face of a 190mm wall is +.095; glass plane is -.065.
+ // Returns fill only the measured 160mm depth between wall and glass.
+ const depth=p.revealDepth,mid=.015;
+ for(const side of [-1,1]){
+  box(facade,T,.026,h,depth,x+side*(w*.5-.013),cy,mid,reveal)
+   .userData.architecturePart='window-side-reveal';
+  box(facade,T,.011,h-.052,depth-.012,
+   x+side*(w*.5-.043),cy,mid-.005,seal)
+   .userData.architecturePart='window-jamb-shadow';
+ }
+ for(const side of [-1,1]){
+  box(facade,T,w,.025,depth,x,cy+side*(h*.5-.013),mid,reveal)
+   .userData.architecturePart=side===1?'window-head-reveal':'window-bottom-reveal';
+ }
+ // External architraves live outside the glass aperture and physically
+ // touch the facade. They are narrower on minimal aluminum buildings.
+ const cw=p.width,cz=.095+p.depth*.46;
+ for(const side of [-1,1]){
+  box(facade,T,cw,h+cw*.62,p.depth,
+   x+side*(w*.5+cw*.5+.013),cy+cw*.10,cz,outer)
+   .userData.architecturePart='window-casing-side';
+  // A narrow return where the architrave meets the plaster or timber.
+  box(facade,T,.012,h+.03,.022,
+   x+side*(w*.5+cw+.01),cy,.113,seal)
+   .userData.architecturePart='window-casing-joint';
+ }
+ box(facade,T,w+cw*2+.045,cw*.78,p.depth,
+  x,bottom+h+cw*.40,cz,outer)
+  .userData.architecturePart='window-casing-head';
+ // Upper head flashing directs facade runoff away from glazing, not into
+ // the glazing recess. Keep its projection subordinate to the sill.
+ box(facade,T,w+cw*2+.065,.015,.084,
+  x,bottom+h+cw*.83,.128,sillFinish)
+  .userData.architecturePart='window-head-flashing';
+ // The metal/stone sill is fixed UNDER the sash, projects 62 mm past the
+ // +95mm facade and is angled down toward the exterior (+Z).
+ const sill=box(facade,T,w+.20,.021,.30,
+  x,bottom-.068,.008,sillFinish);
+ sill.rotation.x=p.sillSlopeRadians;
+ sill.userData.architecturePart='window-pitched-sill';
+ sill.userData.slopeOutwardRadians=p.sillSlopeRadians;
+ sill.userData.wallExteriorFace=.095;
+ sill.userData.sillExteriorNose=.158;
+ // Roll-under drip makes water detach from the cladding and caps the ends.
+ box(facade,T,w+.22,.020,.020,x,bottom-.094,.158,sillFinish)
+  .userData.architecturePart='window-drip';
+ for(const side of [-1,1]){
+  box(facade,T,.024,.039,.30,
+   x+side*(w*.5+.103),bottom-.069,.008,sillFinish)
+   .userData.architecturePart='sill-end-cap';
+ }
+ box(facade,T,w+.068,.012,.020,x,bottom+.011,-.052,seal)
+  .userData.architecturePart='window-sill-seal';
+ // The actual interior windowsill projects INTO the house (-Z).
+ // A shallow shade line makes its thickness visible through the glass.
+ const inner=mat(T,wood?'#B8A99A':'#E2DECF',.77,.025);
+ box(facade,T,w+.17,.032,.18,x,bottom-.078,-.146,inner)
+  .userData.architecturePart='interior-windowsill';
+ box(facade,T,w+.17,.012,.018,x,bottom-.099,-.229,seal)
+  .userData.architecturePart='interior-sill-edge';
+}
 /* A continuous solid cube under fake windows is architecturally wrong.
  * The wall envelope below consists only of closed wall segments *outside*
  * measured door and window apertures. Door/window meshes occupy the void.
@@ -200,55 +275,11 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     facade:name,width:opening.width,height:opening.height,bottom:opening.bottom
    };
    facade.add(part);
-   if(opening.kind==='window'){
-    // Genuine 190mm deep jamb and head/sill returns, not black trim
-    // painted over the facade. Four surfaces bridge the wall to the sash.
-    const reveal=mat(T,['barn','modern','hightech','panoramic'].includes(style)?
-     '#343E42':'#A69C8D',.88,.025);
-    const revealDepth=.25,cy=opening.bottom+opening.height/2;
-    for(const edge of [-1,1])
-     box(facade,T,.042,opening.height,revealDepth,
-      opening.x+edge*(opening.width/2-.021),cy,-.028,reveal);
-    for(const edge of [-1,1])
-     box(facade,T,opening.width,.042,revealDepth,
-      opening.x,cy+edge*(opening.height/2-.021),-.028,reveal);
-    const outerTrim=mat(T,'#333C3E',.56,.25);
-    for(const edge of [-1,1])
-     box(facade,T,.031,opening.height+.11,.029,
-      opening.x+edge*(opening.width/2+.018),cy,.108,outerTrim);
-    // Sill and lintel stop at the sides of this exact aperture.
-    const modern=['modern','hightech','panoramic','modular','barn'].includes(style);
-    const trim=mat(T,modern?'#414A4D':'#A8A49A',modern?.51:.90,modern?.3:.025);
-    box(facade,T,opening.width+.21,.065,.31,opening.x,opening.bottom-.06,.14,trim);
-    box(facade,T,opening.width+.19,.048,.24,opening.x,opening.bottom+opening.height+.048,.09,trim);
-    // Substantial jamb shadow and external sill-drip; the opening remains void.
-    const shadow=mat(T,'#182326',.92,.02);
-    for(const edge of [-1,1])
-     box(facade,T,.018,opening.height-.08,.17,
-      opening.x+edge*(opening.width/2-.058),cy,-.067,shadow)
-      .userData.architecturePart='window-jamb-shadow';
-    box(facade,T,opening.width-.09,.019,.13,opening.x,
-     opening.bottom+opening.height-.028,-.045,shadow)
-     .userData.architecturePart='window-head-reveal';
-    box(facade,T,opening.width+.24,.024,.035,opening.x,
-     opening.bottom-.099,.31,trim)
-     .userData.architecturePart='window-drip';
-    // A pitched sill and rolled edge shed rain beyond the glazing plane.
-    const sill=box(facade,T,opening.width+.25,.017,.30,
-     opening.x,opening.bottom-.056,.192,trim);
-    sill.rotation.x=-.062;
-    sill.userData.architecturePart='window-pitched-sill';
-    for(const side of [-1,1])
-     box(facade,T,.020,.035,.28,
-      opening.x+side*(opening.width*.5+.116),opening.bottom-.06,.186,trim)
-      .userData.architecturePart='sill-end-cap';
-    box(facade,T,opening.width+.09,.018,.025,opening.x,
-     opening.bottom+.021,-.015,shadow)
-     .userData.architecturePart='window-sill-seal';
-   }
-   // Dark interior return on the opening's inner edge; no solid wall beneath.
-   for(const edge of [-1,1])box(facade,T,.055,opening.height,.13,
-    opening.x+edge*(opening.width/2+.023),opening.bottom+opening.height/2,-.022,interior);
+   if(opening.kind==='window')addWindowFinishing(facade,T,opening,style);
+   // Non-window openings have their own dark interior door/garage returns.
+   if(opening.kind!=='window')for(const edge of [-1,1])
+    box(facade,T,.055,opening.height,.13,
+     opening.x+edge*(opening.width/2+.023),opening.bottom+opening.height/2,-.022,interior);
   }
  }
  return plan;
