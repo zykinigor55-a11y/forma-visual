@@ -40,6 +40,16 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sha256:'dddcf23ad26608d9ee6a917d1d40378a9223e6683203b2cefc1ce266fc9822ce',
   variants:['THUJA_DANICA_NATURAL','THUJA_DANICA_COMPACT','THUJA_DANICA_MATURE']
  }),
+ lavender:Object.freeze({
+  name:'Лаванда узколистная · оригинальная PBR 3D-модель FORMA',
+  path:'/assets/landscape-models/lavender-angustifolia-forma-original.glb',
+  sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_lavender_angustifolia.py',
+  license:'Original FORMA procedural geometry, no third-party meshes or textures',
+  season:'summer',
+  fidelity:'real-scale 3D lavender with narrow silvery-sage lanceolate leaves, physical peduncles, separate whorled two-lipped purple flower spikes; three distinct crowns',
+  sha256:'9b2622f98b30e1e33858ce38fcea3b88a9f5d19cb62b5c8b19e22da0d1c8780b',
+  variants:['LAVENDER_NATURAL','LAVENDER_COMPACT','LAVENDER_MATURE']
+ }),
  dogwood:Object.freeze({
   name:'Дёрен белый «Элегантиссима» · три оригинальных PBR 3D-формы FORMA',
   path:'/assets/landscape-models/dogwood-elegantissima-forma-original.glb',
