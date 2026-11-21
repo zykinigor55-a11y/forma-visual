@@ -1,0 +1,56 @@
+name: FORMA - single real garden bollard studio WebGL render
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-single-luminaire-studio.yml'
+      - 'forma-luminaire-01-render.html'
+      - 'tools/capture_single_luminaire.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-one-luminaire-studio
+  cancel-in-progress: false
+jobs:
+  studio:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual Chromium with WebGL
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Launch DOM.RENDER original assets
+        run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs >/tmp/forma-bollard.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS 'http://127.0.0.1:3000/forma-luminaire-01-render.html?id=bollard' >/dev/null; then break; fi
+            sleep 1
+          done
+      - name: Screenshot original 3D luminaire at premium studio resolution
+        run: node tools/capture_single_luminaire.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-bollard-one-luminaire-real-WebGL-PBR
+          if-no-files-found: warn
+          path: |
+            assets/landscape-screenshots/luminaire-01-bollard-real-pbr-render.png
+            assets/landscape-screenshots/luminaire-01-bollard-proof.json
+      - name: Save one original light render and verification in repo
+        if: success()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f assets/landscape-screenshots/luminaire-01-bollard-real-pbr-render.png assets/landscape-screenshots/luminaire-01-bollard-proof.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'visual(luminaire): one genuine WebGL bollard studio render'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
