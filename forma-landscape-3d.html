@@ -411,6 +411,12 @@ import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './fo
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
 import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js';
 import {surfaceMaterial,surfacePreviewURL} from './forma-landscape-3d-surfaces.js';
+ // The editor is demand-rendered: update the frame after streamed PBR arrives.
+ window.addEventListener('forma-surface-texture-ready',()=>{
+  if(!renderer||!scene||!camera)return;
+  renderGate.invalidate();
+  requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
+ });
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
