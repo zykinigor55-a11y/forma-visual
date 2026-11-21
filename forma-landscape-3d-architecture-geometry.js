@@ -114,3 +114,56 @@ export function wallPatches(width,baseY,topY,openings=[]){
  }
  return patches;
 }
+
+
+/** Survey-space roof drainage. Pitched-roof downpipes attach to the
+ * supporting side wall under a real eave, NOT across the front windows.
+ * For a gable/hip roof, use two diagonally opposite outlet corners so
+ * each independent eave run has a short downpipe run and sensible fall.
+ * Flat roof downpipes are on the rear facade, below parapet scuppers.
+ */
+export function rainwaterDrainPlan({width=8,depth=7,roof='gable',style='barn'}={}){
+ const w=Math.max(2,finite(width,8)),d=Math.max(2,finite(depth,7));
+ const overhang=style==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
+  style==='cottage'?Math.min(.75,Math.min(w,d)*.09):
+  Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
+ const gutterRadius=.115;
+ if(roof==='flat'){
+  return [-1,1].map(side=>({
+   facade:'rear',side,end:-1,
+   pipeX:side*(w*.5-Math.min(.45,w*.15)),
+   pipeZ:-d*.5-.18,
+   outletX:side*(w*.5-Math.min(.45,w*.15)),
+   outletZ:-d*.5-overhang+.065,
+   overhang,gutterRadius,pipeBottom:.68
+  }));
+ }
+ const cornerInset=Math.min(.55,Math.max(.30,d*.08));
+ return [-1,1].map(side=>{
+  const end=side; // opposite ends reduce rainwater travel distance
+  return {
+   facade:side<0?'left':'right',side,end,
+   pipeX:side*(w*.5+.175),
+   pipeZ:end*(d*.5-cornerInset),
+   outletX:side*(w*.5+overhang+.145),
+   outletZ:end*(d*.5+overhang-.10),
+   overhang,gutterRadius,pipeBottom:.68
+  };
+ });
+}
+/** Style-specific trim is a real assembled profile surrounding measured voids.
+ * Modern: narrow powder-coated aluminum. Classic/timber: substantial casing.
+ */
+export function windowTrimProfile(style='barn'){
+ const understated=['modern','hightech','panoramic','modular','barn','japandi'].includes(style);
+ const timber=['scandi','timber','logcabin','chalet','tiny','bungalow'].includes(style);
+ return {
+  width:understated?.042:timber?.090:.112,
+  depth:understated?.030:.046,
+  material:understated?'#333E42':timber?'#9B856D':'#C3BCB0',
+  recessedWindowMm:110,
+  revealDepth:.16,
+  sillProjection:.062,
+  sillSlopeRadians:.075
+ };
+}
