@@ -1,0 +1,91 @@
+name: FORMA · real PBR thumbnail renders and four-fern WebGL proof
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - '.github/workflows/forma-fern-polyhaven-four-publish.yml'
+      - 'tools/capture_polyhaven_fern_four_webgl.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-four-fern-thumbnails-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish-verified-views:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate distinct GLB meshes and 4 fern catalogue entries
+        run: |
+          node --check forma-landscape-3d-models.js
+          node --check forma-landscape-project-core.js
+          node --check forma-landscape-shrub-editor.js
+          node --test tests/landscape-polyhaven-four-ferns.test.mjs tests/landscape-shrub-editor-interaction.test.mjs
+      - name: Install Chromium WebGL and Pillow for lossless catalogue thumbnails
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python -m pip install --quiet pillow
+      - name: Start actual project and HTTP server
+        run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs > /tmp/forma-fern-four.log 2>&1 &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:3000/forma-landscape-3d.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:3000/forma-landscape-3d.html
+          curl -fsSI http://127.0.0.1:3000/forma-polyhaven-fern-studio.html
+          curl -fsSI http://127.0.0.1:3000/assets/landscape-models/polyhaven-fern-02-source.glb
+      - name: Verify all 4 ferns in actual WebGL scene and render 4 GLB thumbnails
+        run: node tools/capture_polyhaven_fern_four_webgl.mjs
+      - name: Generate small real-render WebP images for four independent catalog cards
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          folder=Path('assets/landscape-models/thumbs')
+          folder.mkdir(parents=True,exist_ok=True)
+          for i,slug in enumerate(['fern','fern-02','fern-03','fern-04'],1):
+            src=Path(f'assets/landscape-screenshots/polyhaven-fern-{i:02}-real-glb-grey.png')
+            assert src.exists()
+            im=Image.open(src).convert('RGB')
+            assert im.width>=700 and im.height>=700
+            im.thumbnail((512,512),Image.Resampling.LANCZOS)
+            dest=folder/(slug+'.webp')
+            im.save(dest,'WEBP',quality=85,method=6)
+            assert dest.stat().st_size>12000
+            print('Real fern mesh thumbnail',dest,dest.stat().st_size)
+          PY
+      - name: Archive original 3D app screenshot and per-mesh renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forma-polyhaven-fern-02-four-real-glb-variants
+          path: |
+            assets/landscape-screenshots/polyhaven-four-ferns-real-editor.png
+            assets/landscape-screenshots/polyhaven-fern-*-real-glb-grey.png
+            assets/landscape-screenshots/polyhaven-fern-four-webgl-evidence.json
+            assets/landscape-models/thumbs/fern*.webp
+          if-no-files-found: warn
+      - name: Publish full real WebGL proof and four individual PBR thumbnails to project
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f -- assets/landscape-screenshots/polyhaven-four-ferns-real-editor.png
+          git add -f -- assets/landscape-screenshots/polyhaven-fern-*-real-glb-grey.png
+          git add -f -- assets/landscape-screenshots/polyhaven-fern-four-webgl-evidence.json
+          git add assets/landscape-models/thumbs/fern*.webp
+          if git diff --cached --quiet; then echo 'Screenshots already saved'; exit 0; fi
+          git commit -m 'visual(ferns): four distinct real PBR GLB thumbnails and editor screenshot'
+          git push origin HEAD:dom-render-nanobanana || (git pull --rebase origin dom-render-nanobanana && git push origin HEAD:dom-render-nanobanana)
