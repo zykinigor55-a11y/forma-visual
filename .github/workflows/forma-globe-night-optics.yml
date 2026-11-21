@@ -7,6 +7,7 @@ on:
       - 'tools/capture_opal_globe_night.mjs'
       - 'forma-landscape-globe-optics.js'
       - 'forma-landscape-3d-lighting.js'
+      - 'tests/landscape-3d-luminaire-models.test.mjs'
       - 'forma-landscape-3d-user-7-lights.js'
       - 'forma-luminaire-01-render.html'
   workflow_dispatch:
