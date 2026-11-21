@@ -40,6 +40,16 @@ export const SHRUB_3D_MODELS=Object.freeze({
   sha256:'dddcf23ad26608d9ee6a917d1d40378a9223e6683203b2cefc1ce266fc9822ce',
   variants:['THUJA_DANICA_NATURAL','THUJA_DANICA_COMPACT','THUJA_DANICA_MATURE']
  }),
+ boxwood:Object.freeze({
+  name:'Самшит вечнозелёный · оригинальная PBR-модель FORMA, три кроны',
+  path:'/assets/landscape-models/boxwood-sempervirens-forma-original.glb',
+  sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_boxwood_sempervirens.py',
+  license:'Original independently authored FORMA mesh and PBR materials',
+  season:'evergreen',
+  fidelity:'v1: 3D pairs of small glossy elliptical leaves on woody stems, dense interior foliage, three native silhouette forms; 373880 triangles across three forms',
+  sha256:'83d3a0041c863144ae4fe21bc78795785c8ded104b8559dcd3645528d0adb296',
+  variants:['BOXWOOD_NATURAL','BOXWOOD_SPHERE','BOXWOOD_HEDGE']
+ }),
  lavender:Object.freeze({
   name:'Лаванда узколистная · оригинальная PBR 3D-модель FORMA',
   path:'/assets/landscape-models/lavender-angustifolia-forma-original.glb',
