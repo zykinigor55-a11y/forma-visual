@@ -1,0 +1,164 @@
+{
+  "source": "real DOM.RENDER authored Three.js WebGL; user-supplied sphere reference; never AI-generated",
+  "verifiedBrightGround": true,
+  "shadowFreeOpalShell": true,
+  "results": [
+    {
+      "name": "night-on",
+      "id": "globe",
+      "mode": "night",
+      "brightness": 1,
+      "file": "assets/landscape-screenshots/lighting-v6-night-on-actual-WebGL.png",
+      "size": 173556,
+      "groundLuminance": 117.45,
+      "proof": {
+        "fixtureId": "globe",
+        "fixtureVersion": "user-uploaded-7-photos-v6",
+        "modelPartCount": 3,
+        "webgl": true,
+        "heightMetres": 0.4,
+        "originalModule": "forma-landscape-3d-fixtures.js",
+        "renderer": "Three.js r179",
+        "originalProject": "dom-render-nanobanana",
+        "screenshotKind": "actual authored 3D geometry, not AI image",
+        "studioMode": "night",
+        "globeOptics": {
+          "diffuseShell": true,
+          "visibleLightVolume": true,
+          "noOpaqueSelfShadow": true,
+          "shellMaterial": "angular milky polyethylene scattering",
+          "diameter": 0.4
+        },
+        "lightIntensity": 14,
+        "emitterPosition": [
+          0,
+          0.198,
+          0
+        ],
+        "sphereCastsShadow": false
+      }
+    },
+    {
+      "name": "night-off",
+      "id": "globe",
+      "mode": "night",
+      "brightness": 0,
+      "file": "assets/landscape-screenshots/lighting-v6-night-off-actual-WebGL.png",
+      "size": 29030,
+      "groundLuminance": 79.01,
+      "proof": {
+        "fixtureId": "globe",
+        "fixtureVersion": "user-uploaded-7-photos-v6",
+        "modelPartCount": 2,
+        "webgl": true,
+        "heightMetres": 0.4,
+        "originalModule": "forma-landscape-3d-fixtures.js",
+        "renderer": "Three.js r179",
+        "originalProject": "dom-render-nanobanana",
+        "screenshotKind": "actual authored 3D geometry, not AI image",
+        "studioMode": "night",
+        "globeOptics": {
+          "diffuseShell": true,
+          "visibleLightVolume": true,
+          "noOpaqueSelfShadow": true,
+          "shellMaterial": "angular milky polyethylene scattering",
+          "diameter": 0.4
+        },
+        "lightIntensity": 0,
+        "emitterPosition": null,
+        "sphereCastsShadow": false
+      }
+    },
+    {
+      "name": "day",
+      "id": "globe",
+      "mode": "day",
+      "brightness": 1,
+      "file": "assets/landscape-screenshots/lighting-v6-day-actual-WebGL.png",
+      "size": 23350,
+      "groundLuminance": 195.67,
+      "proof": {
+        "fixtureId": "globe",
+        "fixtureVersion": "user-uploaded-7-photos-v6",
+        "modelPartCount": 2,
+        "webgl": true,
+        "heightMetres": 0.4,
+        "originalModule": "forma-landscape-3d-fixtures.js",
+        "renderer": "Three.js r179",
+        "originalProject": "dom-render-nanobanana",
+        "screenshotKind": "actual authored 3D geometry, not AI image",
+        "studioMode": "day",
+        "globeOptics": {
+          "diffuseShell": true,
+          "visibleLightVolume": true,
+          "noOpaqueSelfShadow": true,
+          "shellMaterial": "angular milky polyethylene scattering",
+          "diameter": 0.4
+        },
+        "lightIntensity": 0,
+        "emitterPosition": null,
+        "sphereCastsShadow": false
+      }
+    },
+    {
+      "name": "black-3-bands",
+      "id": "square-bollard",
+      "mode": "night",
+      "brightness": 1,
+      "file": "assets/landscape-screenshots/lighting-v6-black-3-bands-actual-WebGL.png",
+      "size": 145130,
+      "groundLuminance": 174.92,
+      "proof": {
+        "fixtureId": "square-bollard",
+        "fixtureVersion": "user-uploaded-7-photos-v6",
+        "modelPartCount": 28,
+        "webgl": true,
+        "heightMetres": 0.82,
+        "originalModule": "forma-landscape-3d-fixtures.js",
+        "renderer": "Three.js r179",
+        "originalProject": "dom-render-nanobanana",
+        "screenshotKind": "actual authored 3D geometry, not AI image",
+        "studioMode": "night",
+        "globeOptics": null,
+        "lightIntensity": 6.333333333333333,
+        "emitterPosition": [
+          0,
+          0.63,
+          0
+        ],
+        "sphereCastsShadow": null
+      }
+    },
+    {
+      "name": "open-frame",
+      "id": "garden-lantern",
+      "mode": "night",
+      "brightness": 1,
+      "file": "assets/landscape-screenshots/lighting-v6-open-frame-actual-WebGL.png",
+      "size": 178484,
+      "groundLuminance": 214.54,
+      "proof": {
+        "fixtureId": "garden-lantern",
+        "fixtureVersion": "user-uploaded-7-photos-v6",
+        "modelPartCount": 25,
+        "webgl": true,
+        "heightMetres": 1.03,
+        "originalModule": "forma-landscape-3d-fixtures.js",
+        "renderer": "Three.js r179",
+        "originalProject": "dom-render-nanobanana",
+        "screenshotKind": "actual authored 3D geometry, not AI image",
+        "studioMode": "night",
+        "globeOptics": null,
+        "lightIntensity": 31.68,
+        "emitterPosition": [
+          0,
+          0.74,
+          0
+        ],
+        "sphereCastsShadow": null
+      }
+    }
+  ],
+  "errors": [],
+  "timestamp": "2026-11-21T22:17:56.295Z"
+}
