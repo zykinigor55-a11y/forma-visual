@@ -269,7 +269,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  // if the user explicitly set a height, scale *only the height* of bollards.
  const actual=number(instance?.height,NaN);
  const natural=Number(G.userData.measuredHeight)||1;
- const oldDefaults={bollard:[.85], 'square-bollard':[.50], 'garden-lantern':[.995,2.35],globe:[.38,.68]};
+ const oldDefaults={bollard:[.85], 'square-bollard':[.50], 'garden-lantern':[.995,2.35],globe:[.38,.40,.68]};
  const historicDefault=(oldDefaults[id]||[]).some(v=>Math.abs(v-actual)<.012);
  const hasRealCustom=Number.isFinite(actual)&&actual>.14&&actual<4&&
    Math.abs(actual-natural)>.04&&!historicDefault&&
