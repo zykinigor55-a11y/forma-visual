@@ -49,7 +49,7 @@ try{
    JSON.stringify({model:'Dryopteris filix-mas v2 REAL photographed UV and normal-map GLB',
    source:'Actual scene GLB loaded via THREE.js GLTFLoader, no generative image',
    screenshotType:'local dedicated grey studio GLB model renderer, not original landscape editor screenshot',
-   actualSha256:checksum,photoTextureSource:'https://commons.wikimedia.org/wiki/File:Dryopteris_sempervirens-1.jpg',
+   actualSha256:checksum,photoTextureSource:'https://commons.wikimedia.org/wiki/File:20220531_114609_Dryopteris_filix-mas.jpg',
    proofs,errors,timestamp:new Date().toISOString()},null,2)+'\n');
  console.log('SHA verified '+checksum);
 } finally {await browser.close();}
