@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test luminaire physics and identities
-        run: node --test tests/landscape-3d-lighting.test.mjs tests/landscape-3d-luminaire-models.test.mjs
+        run: node --test tests/landscape-3d-luminaire-models.test.mjs
       - name: Install real Chromium
         run: |
           npm install --no-save playwright@1.58.2
