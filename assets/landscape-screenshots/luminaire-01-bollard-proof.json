@@ -1,0 +1,14 @@
+{
+  "fixtureId": "bollard",
+  "fixtureVersion": "pbr-11-v2",
+  "modelPartCount": 19,
+  "webgl": true,
+  "heightMetres": 0.85,
+  "originalModule": "forma-landscape-3d-fixtures.js",
+  "renderer": "Three.js r179",
+  "originalProject": "dom-render-nanobanana",
+  "screenshotKind": "actual authored 3D geometry, not AI image",
+  "filename": "assets/landscape-screenshots/luminaire-01-bollard-real-pbr-render.png",
+  "errors": [],
+  "timestamp": "2026-11-21T20:44:18.494Z"
+}
