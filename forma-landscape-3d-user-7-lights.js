@@ -30,8 +30,8 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   screwMetal=P('#c4c8c8',.78,.23),
   warmGlass=P('#e6dbbd',.04,.31,{transmission:.23,thickness:.006,ior:1.51,
    emissive:warm,emissiveIntensity:emission*.17+.006,transparent:true,opacity:.92,side:T.DoubleSide}),
-  frosted=P('#ede7dd',.02,.72,{transmission:.09,thickness:.014,ior:1.45,
-   emissive:warm,emissiveIntensity:emission*.32+.008,side:T.DoubleSide}),
+  frosted=P('#d1d0c9',.02,.67,{transmission:.30,thickness:.011,ior:1.45,
+   emissive:warm,emissiveIntensity:emission*.12+.004,transparent:true,opacity:.87,side:T.DoubleSide}),
   clearGlass=P('#e2e8e8',.06,.13,{transmission:.55,thickness:.003,ior:1.49,
    clearcoat:.85,clearcoatRoughness:.06,transparent:true,opacity:.77,side:T.DoubleSide}),
   led=P('#fff7e0',.03,.43,{emissive:warm,emissiveIntensity:emission*2.1+.02}),
@@ -122,7 +122,9 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
    new T.Vector2(.065,.071)
   ];
   part(new T.LatheGeometry(profile,72),bodySoft,0,0,0,'tapered-cast-alloy-housing',head);
-  cy(.063,.063,.012,0,.069,0,dark,'deep-black-optic-rim',72,head);
+  // Annular bezel ONLY: never cover the actual metallic reflector with a solid cap.
+  const openBezel=part(new T.RingGeometry(.055,.068,72),dark,0,.075,0,'real-open-annular-bezel',head);
+  openBezel.rotation.x=-Math.PI/2;
   tor(.055,.005,0,.075,0,blackRubber,'front-waterproof-gasket',head);
   microPrismReflector(.052,.066,head);
   cy(.011,.011,.0016,0,.047,0,led,'central-CREE-LED',32,head);
@@ -136,6 +138,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  }else if(id==='square-bollard'){
   // Image 2: charcoal rectangular post and THREE illuminated thin belts near top.
   const H=.82,w=.145,band=.030,gap=.030;
+  const bandWarm=P('#b49b78',.06,.32,{emissive:warm,emissiveIntensity:emission*.36+.005});
   const first=H-.082; // near cap, top of luminous belt
   const lower=first-3*band-2*gap;
   bx(w,lower,w,0,lower/2,0,body,'one-piece-matte-charcoal-post');
@@ -148,7 +151,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
     const localZ=side%2===0?(side===0?1:-1)*(w/2+.0009):0;
     const localX=side%2===1?(side===1?1:-1)*(w/2+.0009):0;
     const face=bx(side%2===0?w-.022:.005,band*.53,side%2===0?.005:w-.022,
-      localX,yc,localZ,warmPlate,'warm-optical-window-'+i+'-'+side);
+      localX,yc,localZ,bandWarm,'warm-optical-window-'+i+'-'+side);
     face.castShadow=false;
    }
    if(i<2){const bridgeY=yc-(band+gap)/2;bx(w,gap,w,0,bridgeY,0,body,'opaque-recessed-separator-'+i)}
@@ -161,11 +164,11 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  }else if(id==='low-post'){
   // Image 3: long, satin dark grey square post and large warm frosted
   // rectangular head; rounded pane corners, visibly glowing lamp inside.
-  const H=1.20,w=.168,lower=.925,headTop=H-.027;
+  const H=1.20,w=.205,lower=.925,headTop=H-.027;
   bx(w,lower,w,0,lower/2,0,bodySoft,'cast-graphite-square-column');
   bx(w+.005,.018,w+.005,0,lower+.006,0,body,'neck-weatherproof-transition');
   // Crucial: interior is NOT a giant opaque solid block; the lamp is inside.
-  bx(w-.022,headTop-lower-.018,w-.022,0,(lower+headTop)/2,0,opticDark,'internal-shadow-recess');
+  bx(w-.025,.014,w-.025,0,lower+.012,0,reflector,'internal-mirrored-LED-bottom');
   const source=sp(.044,0,1.064,0,warmPlate,'actual-warm-internal-bulb');
   source.scale.set(.83,1.28,.83);
   const glassY=(lower+headTop)/2,glassH=headTop-lower-.032,paneW=w-.032;
@@ -206,7 +209,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   hinge.rotation.z=Math.PI/2;
   // Cylindrical head drops below its upper swivel, faces down.
   const axis=new T.Group();
-  axis.position.set(.118,H-.137,.012);axis.rotation.z=-.16;
+  axis.position.set(.118,H-.137,.012);axis.rotation.z=.21; // aim outward, away from pole
   axis.name='side-mounted-adjustable-head';G.add(axis);
   cy(.051,.051,.132,0,-.015,0,dark,'side-downward-lamp-head',64,axis);
   cy(.049,.049,.012,0,.054,0,bodySoft,'upper-cover-heat-sink',64,axis);
@@ -228,9 +231,13 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
    bx(edge,H-.068,edge,x,H/2,z,body,'hollow-frame-black-vertical-corner');
   }
   const inner=.064;
+  const smoked=P('#4b4436',.07,.34,{transmission:.10,transparent:true,opacity:.78,
+    emissive:warm,emissiveIntensity:emission*.06});
+  const amber=P('#8d6e42',.08,.36,{emissive:warm,emissiveIntensity:emission*.38+.003});
   for(const x of [-inner,inner])for(const z of [-inner,inner]){
-   bx(.016,H-.150,.009,x,H*.49,z,warmGlass,'clear-long-vertical-light-channel');
-   bx(.008,H-.28,.004,x,H*.63,z,warmPlate,'inward-amber-LED-strip');
+   // The original photo has warm gold light high up; the lower channels remain shaded.
+   bx(.011,H-.21,.007,x,H*.48,z,smoked,'smoked-vertical-inner-protector');
+   bx(.007,H*.37,.004,x,H*.737,z,amber,'high-warm-LED-tube');
   }
   // Crossbrace holds suspended inner diffuser but leaves open air on sides.
   bx(w-.03,.012,.012,0,H-.10,0,bodySoft,'inner-floating-rail');
@@ -246,17 +253,19 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   cy(r+.018,r+.018,.013,0,.007,0,dark,'wide-circular-mounting-flange',72);
   tor(r*.96,.0025,0,shaftTop,0,blackRubber,'IP-rated-lens-foot-gasket');
   cy(r*.94,r*.94,glassH,0,shaftTop+glassH/2,0,clearGlass,'transparent-cylindrical-basket',72);
-  cy(r*.72,r*.72,glassH*.85,0,shaftTop+glassH*.425,0,
-    P('#e4e9e6',.07,.60,{transmission:.05,emissive:warm,emissiveIntensity:emission*.14}),
-    'inner-frosted-diffuser',64);
-  // Image shows dense *square prismatic glass* optics, not smooth white acrylic:
+  cy(r*.61,r*.61,glassH*.85,0,shaftTop+glassH*.425,0,
+    P('#abb8b6',.03,.43,{transmission:.40,transparent:true,opacity:.48,
+     emissive:warm,emissiveIntensity:emission*.045,side:T.DoubleSide}),
+    'inside-smoked-glass-LED-diffuser',64);
+  // Visible individual engraved grid lines across clear cylindrical glass.
+  const prism=P('#8f9798',.26,.31,{transmission:.14,transparent:true,opacity:.76,side:T.DoubleSide});
   for(let j=0;j<21;j++){
    const y=shaftTop+.007+(j+.5)*(glassH-.017)/21;
-   tor(r*.93,.00135,0,y,0,clearGlass,'horizontal-refractive-grid-'+j);
+   tor(r*.93,.0017,0,y,0,prism,'horizontal-refractive-grid-'+j);
   }
   for(let j=0;j<22;j++){
    const a=j*2*Math.PI/22,rad=r*.934;
-   cy(.0015,.0015,glassH-.013,Math.cos(a)*rad,shaftTop+glassH/2,Math.sin(a)*rad,clearGlass,
+   cy(.0017,.0017,glassH-.013,Math.cos(a)*rad,shaftTop+glassH/2,Math.sin(a)*rad,prism,
     'vertical-glass-prism-'+j,10);
   }
   // Actual LED bulb visible through the clear prismatic chamber.
