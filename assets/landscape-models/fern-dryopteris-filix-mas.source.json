@@ -1,0 +1,50 @@
+{
+  "version": "1.0 FORMA realistic curved fern fronds, pinnate pinnae and textured 3D serrated pinnules",
+  "species": "Dryopteris filix-mas",
+  "englishName": "Male fern",
+  "source": "Original FORMA 3D meshes and original procedural PBR maps. Botanical refs RHS and World Flora Online",
+  "sha256": "af697f0384742b1ff1442bdb53ec3b870877fe13a2dcc210d80e336b3bda2b3b",
+  "sizeBytes": 16978372,
+  "triangleCount": 507704,
+  "meshCount": 30,
+  "forms": {
+    "FERN_NATURAL": {
+      "fronds": 23,
+      "pinnaePairsPerFrond": 22,
+      "pinnulePairsPerPinna": 8,
+      "requestedDiameter": 1.2,
+      "requestedHeight": 0.87,
+      "pinnules": 16192,
+      "pinnae": 1012,
+      "rhizomeScales": 92,
+      "triangles": 156308,
+      "meshCount": 10
+    },
+    "FERN_YOUNG": {
+      "fronds": 15,
+      "pinnaePairsPerFrond": 19,
+      "pinnulePairsPerPinna": 7,
+      "requestedDiameter": 0.8,
+      "requestedHeight": 0.58,
+      "pinnules": 7980,
+      "pinnae": 570,
+      "rhizomeScales": 60,
+      "triangles": 79140,
+      "meshCount": 10
+    },
+    "FERN_MATURE": {
+      "fronds": 32,
+      "pinnaePairsPerFrond": 25,
+      "pinnulePairsPerPinna": 9,
+      "requestedDiameter": 1.6,
+      "requestedHeight": 1.08,
+      "pinnules": 28800,
+      "pinnae": 1600,
+      "rhizomeScales": 128,
+      "triangles": 272256,
+      "meshCount": 10
+    }
+  },
+  "modelFile": "fern-dryopteris-filix-mas-forma-original.glb",
+  "materialNotes": "Native glTF 2.0 double-sided leaf PBR with epidermis albedo and normal map; geometry is genuine 3D"
+}
