@@ -1,0 +1,49 @@
+name: FORMA · Install Poly Haven CC0 tree collection
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths:
+      - 'tools/install-polyhaven-tree-collection.py'
+      - '.github/workflows/install-polyhaven-tree-collection.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: forma-polyhaven-new-trees
+  cancel-in-progress: false
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Import only verified, mobile-safe original Poly Haven PBR GLBs
+        run: python tools/install-polyhaven-tree-collection.py
+      - name: Publish separately from existing approved tree models
+        run: |
+          set -euo pipefail
+          git config user.name 'FORMA CC0 Asset Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/landscape-models/ph-*.glb assets/landscape-models/ph-*.source.json assets/landscape-models/thumbs/ph-*.webp assets/landscape-models/polyhaven-trees-manifest.json || true
+          if git diff --cached --quiet; then echo 'Collection already installed'; exit 0; fi
+          git commit -m "assets(trees): publish real Poly Haven CC0 low-poly PBR tree scans"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin dom-render-nanobanana
+            git rebase origin/dom-render-nanobanana
+            if git push origin HEAD:dom-render-nanobanana; then exit 0; fi
+            sleep $((attempt * 3))
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FORMA-Poly-Haven-new-trees-audit
+          path: assets/landscape-models/polyhaven-trees-manifest.json
+          if-no-files-found: ignore
