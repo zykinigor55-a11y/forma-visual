@@ -24,7 +24,7 @@ test('dusk lighting is weaker than night and spotlights have a different physica
  const night=gardenLightingState('bollard',{time:'night'});
  const uplight=gardenLightingState('spot',{time:'night'});
  assert.ok(dusk.actualIntensity<night.actualIntensity);
- assert.equal(uplight.kind,'uplight');assert.ok(uplight.beam>0);
+ assert.equal(uplight.kind,'downlight');assert.ok(uplight.beam>0); // user photo: side-mounted projector shines DOWN
  const adjustable=gardenLightingState('low-post',{time:'night',height:1.6});
  assert.equal(adjustable.height,1.6);
  assert.ok(adjustable.mountHeight>1&&adjustable.mountHeight<1.6);
