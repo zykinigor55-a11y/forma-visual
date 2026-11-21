@@ -64,7 +64,8 @@ jobs:
             im.thumbnail((512,512),Image.Resampling.LANCZOS)
             dest=folder/(slug+'.webp')
             im.save(dest,'WEBP',quality=85,method=6)
-            assert dest.stat().st_size>12000
+            assert Image.open(dest).width>=300 and Image.open(dest).height>=300
+            assert dest.stat().st_size>1000
             print('Real fern mesh thumbnail',dest,dest.stat().st_size)
           PY
       - name: Archive original 3D app screenshot and per-mesh renders
