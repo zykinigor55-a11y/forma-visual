@@ -19,7 +19,7 @@ try{
   const proof=await page.evaluate(()=>window.FORMA_BOULDER_PROOF);
   if(!proof?.webgl||proof.id!==id||!proof.scanStats?.photoMaps||proof.scanStats.triangles<3000)
    throw Error('Not a genuine PBR photogrammetry boulder '+JSON.stringify(proof));
-  const file=dir+'/boulder-v2-'+id+'-actual-pbr-webgl.png';
+  const file=dir+'/boulder-v3-'+id+'-actual-pbr-webgl.png';
   await page.locator('canvas').screenshot({path:file,animations:'disabled',timeout:90000});
   const bytes=(await fs.stat(file)).size;
   if(bytes<50000)throw Error('Invalid screenshot size '+bytes+' '+id);
@@ -27,7 +27,7 @@ try{
   console.log('REAL CC0 PHOTOGRAMMETRY STONE',id,proof.scanStats,bytes);
  }
  if(errors.length)throw Error('Browser errors: '+errors.join('|'));
- await fs.writeFile(dir+'/boulder-v2-genuine-3d-proof.json',
+ await fs.writeFile(dir+'/boulder-v3-genuine-3d-proof.json',
   JSON.stringify({source:'native FORMA DOM.RENDER Three.js WebGL plus self-hosted original CC0 PBR photogrammetry GLBs',
    count:all.length,boulders:all,errors,timestamp:new Date().toISOString()},null,2)+'\n');
  const editor=await browser.newPage({viewport:{width:1680,height:1024},deviceScaleFactor:1,locale:'ru-RU'});
@@ -57,13 +57,13 @@ try{
  await editor.waitForFunction(()=>window.FORMA_3D_READY===true,null,{timeout:110000});
  await editor.waitForFunction(()=>{
   const urls=performance.getEntriesByType('resource').map(x=>x.name);
-  return ['granite-boulder.glb','rock-moss.glb','rock-rough.glb','rock-grey.glb'].every(name=>urls.some(u=>u.endsWith('/'+name)));
+  return ['granite-boulder.glb','rock-moss.glb','rock-rough.glb','sandstone-boulder.glb'].every(name=>urls.some(u=>u.endsWith('/'+name)));
  },null,{timeout:90000});
  await editor.waitForTimeout(1800);
- const image=dir+'/boulder-v2-real-editor-four-photogrammetry-rocks.png';
+ const image=dir+'/boulder-v3-real-editor-four-photogrammetry-rocks.png';
  await editor.screenshot({path:image,animations:'disabled',timeout:90000});
  const canvas=editor.locator('#viewport');
- await canvas.screenshot({path:dir+'/boulder-v2-real-webgl-four-rocks.png',animations:'disabled',timeout:90000});
+ await canvas.screenshot({path:dir+'/boulder-v3-real-webgl-four-rocks.png',animations:'disabled',timeout:90000});
  const fileSize=(await fs.stat(image)).size;
  if(fileSize<50000||editorErrors.length)throw Error('Editor capture error '+fileSize+' '+editorErrors.join('|'));
  console.log('FOUR ROCKS VERIFIED INSIDE ACTUAL EDITOR',fileSize);
