@@ -18,15 +18,15 @@ try{
    await page.waitForFunction(()=>window.FORMA_LAMP_READY===true,null,{timeout:110000});
    const proof=await page.evaluate(()=>window.FORMA_LAMP_PROOF);
    const userSeven=['bollard','square-bollard','low-post','spot','garden-lantern','spike-spot','globe'];
-   const expectedVersion=userSeven.includes(id)?'user-uploaded-7-photos-v5':'real-photo-reference-v3';
+   const expectedVersion=userSeven.includes(id)?'user-uploaded-7-photos-v6':'real-photo-reference-v3';
    if(proof.fixtureId!==id||!proof.webgl||proof.fixtureVersion!==expectedVersion||proof.modelPartCount<(id==='globe'?3:5))throw Error('Wrong 3D mesh or version '+JSON.stringify(proof));
    if(errors.length)throw Error('WebGL errors '+id+': '+errors.join(','));
-   const file=dir+'/luminaire-v5-'+id+'-real-render.png';
+   const file=dir+'/luminaire-v6-'+id+'-real-render.png';
    await page.locator('canvas').screenshot({path:file,animations:'disabled',timeout:90000});
    const size=(await fs.stat(file)).size;
    if(size<(id==='linear'?12000:25000))throw Error('Empty screenshot '+id+' '+size);
    report.push({id,file,size,partCount:proof.modelPartCount,version:proof.fixtureVersion});
    console.log('REAL MODEL PASS',id,proof.modelPartCount,size);
  }
- await fs.writeFile(dir+'/luminaire-v5-photo-reference-proof.json',JSON.stringify({source:'11 original DOM.RENDER Three.js models, seven rebuilt from uploaded reference photographs, not AI imagery',count:report.length,models:report,timestamp:new Date().toISOString()},null,2)+'\n');
+ await fs.writeFile(dir+'/luminaire-v6-photo-reference-proof.json',JSON.stringify({source:'11 original DOM.RENDER Three.js models, seven rebuilt from uploaded reference photographs, not AI imagery',count:report.length,models:report,timestamp:new Date().toISOString()},null,2)+'\n');
 }finally{await browser.close();}
