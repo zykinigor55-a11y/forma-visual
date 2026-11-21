@@ -225,10 +225,10 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   axis.name='side-mounted-adjustable-head';G.add(axis);
   cy(.050,.050,.123,0,-.015,0,dark,'side-downward-lamp-head',64,axis);
   cy(.049,.049,.012,0,.054,0,bodySoft,'upper-cover-heat-sink',64,axis);
-  cy(.049,.049,.012,0,-.089,0,body,'thick-black-optic-bezel',64,axis);
-  cy(.038,.038,.003,0,-.095,0,referenceSpotLens,'downward-frosted-optical-disc',56,axis);
-  cy(.032,.032,.001,0,-.097,0,led,'internal-COB-light-source',56,axis);
-  tor(.045,.002,0,-.097,0,blackRubber,'flush-lens-gasket',axis);
+  cy(.049,.049,.012,0,-.083,0,body,'thick-black-optic-bezel',64,axis);
+  cy(.038,.038,.003,0,-.089,0,referenceSpotLens,'downward-frosted-optical-disc',56,axis);
+  cy(.032,.032,.001,0,-.091,0,led,'internal-COB-light-source',56,axis);
+  tor(.045,.002,0,-.091,0,blackRubber,'flush-lens-gasket',axis);
   cy(shaftR*1.03,shaftR*1.03,.014,0,.007,0,dark,'slim-sealed-bottom');
   G.userData.emitterOffset=[.118,H-.23,0];
   G.userData.measuredHeight=H;
