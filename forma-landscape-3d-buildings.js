@@ -3,6 +3,7 @@
  * Presets do not infer unknown details from a user's architectural photograph. */
 import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile} from './forma-landscape-3d-architecture-geometry.js';
 import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
+import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Светлый планкен · графит',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#C1AD91'},
@@ -379,10 +380,19 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
    // Structural fascia visibly closes the 320mm roof cassette.
    box(g,T,.30,.28,depth+.07,x>0?half-.15:-half+.15,bodyHeight-.062,0,fascia)
     .userData.architecturePart='roof-eave-fascia';
-   const gutter=add(g,T,new T.CylinderGeometry(.12,.12,depth-.05,22,1,true,Math.PI,Math.PI),dark,
-    x+(x>0?.145:-.145),bodyHeight-.065,0);
-   gutter.material.side=T.DoubleSide;
-   gutter.rotation.x=Math.PI/2;gutter.userData.architecturePart='gutter';
+   if(b.archStyle!=='aframe'){
+    if(T.ExtrudeGeometry)addOpenEaveGutter(T,g,{
+     x:x+(x>0?.145:-.145),y:bodyHeight-.065,z:0,
+     length:depth-.05,fallToward:x>0?1:-1,material:dark
+    });
+    else{
+     // Compatibility only for older Three builds without profile extrusion.
+     const gutter=add(g,T,new T.CylinderGeometry(.12,.12,depth-.05,22,1,true,Math.PI,Math.PI),dark,
+      x+(x>0?.145:-.145),bodyHeight-.065,0);
+     gutter.material.side=T.DoubleSide;
+     gutter.rotation.x=Math.PI/2;gutter.userData.architecturePart='gutter';
+    }
+   }
   }
   edgeBeam(g,T,[0,bodyHeight+rise+.07,-depth/2-.06],
    [0,bodyHeight+rise+.07,depth/2+.06],.21,fascia);
@@ -414,13 +424,21 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
    edgeBeam(g,T,[x,bodyHeight+.04,z],[0,top,z<0?-startZ:startZ],.055,dark);
   for(const x of [-half,half]){
    box(g,T,.27,.27,depth,x,bodyHeight+.018,0,dark);
-   const gutter=add(g,T,new T.CylinderGeometry(.115,.115,depth-.10,20,1,true,Math.PI,Math.PI),dark,
-    x+(x<0?-.13:.13),bodyHeight-.065,0);
-   gutter.material.side=T.DoubleSide;
-   gutter.rotation.x=Math.PI/2;gutter.userData.architecturePart='gutter';
+   addOpenEaveGutter(T,g,{
+    x:x+(x<0?-.145:.145),y:bodyHeight-.065,z:0,
+    length:depth-.10,fallToward:x>0?1:-1,material:dark
+   });
   }
-  for(const z of [-depth/2,depth/2])
+  for(const z of [-depth/2,depth/2]){
    box(g,T,w+overhang*2,.28,.19,0,bodyHeight+.028,z,dark);
+   // A hip roof has FOUR eaves. Both front and rear get working,
+   // open-profile gutters that join the longitudinal side runs at corners.
+   addOpenEaveGutter(T,g,{
+    x:0,y:bodyHeight-.065,z:z+(z<0?-.145:.145),
+    length:w+overhang*2-.10,axis:'x',fallToward:z>0?1:-1,
+    material:dark
+   });
+  }
  }
 }
 /** Existing house doors receive measured entry steps, without changing
@@ -459,51 +477,72 @@ function roundPipeBetween(g,T,a,b,radius,material,part){
  * and window/door voids remain unchanged. */
 function addFacadeFinish(g,T,{width,depth,height,roof,style}){
  const w=width,d=depth,y=height;
- const metal=mat(T,'#65757A',.43,.66),stone=mat(T,'#565B59',.93,.05);
- // Exposed masonry plinth makes the house grounded; no floating wall box.
+ const metal=mat(T,'#586468',.43,.68),stone=mat(T,'#565B59',.93,.05);
+ // Exposed 480mm plinth, continuous along all four surveyed elevations.
  for(const z of [-1,1])box(g,T,w,.18,.06,0,.49,z*(d*.5+.034),stone);
  for(const x of [-1,1])box(g,T,.06,.18,d,x*(w*.5+.034),.49,0,stone);
- const isFlat=roof==='flat',pitchOverhang=
-  style==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
-  style==='cottage'?Math.min(.75,Math.min(w,d)*.09):
-  Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
+ const isFlat=roof==='flat';
  const gutterY=isFlat?y+.19:y-.065;
- for(const side of [-1,1]){
-  // Deliberately 330mm away from the facade corner so these remain visible
-  // rather than coinciding with the architectural corner edge.
-  const x=side*(w*.5-.33),z=d*.5+.205,pipeTop=gutterY-.18;
-  const radius=.067,pipeBottom=.68;
-  roundPipeBetween(g,T,[x,pipeBottom,z],[x,pipeTop,z],radius,metal,'downpipe');
-  // Downpipe clips include a spacer back to the facade.
-  for(let yy=1.10;yy<pipeTop-.13;yy+=.85){
-   box(g,T,.175,.052,.085,x,yy,z-.042,metal)
-    .userData.architecturePart='downpipe-clamp';
-   box(g,T,.05,.055,.13,x,yy,z-.110,metal)
-    .userData.architecturePart='downpipe-wall-bracket';
+ const sites=rainwaterDrainPlan({width:w,depth:d,roof,style});
+ g.userData.roofDrainagePlan=sites;
+ for(const site of sites){
+  const {side,end,pipeX:x,pipeZ:z}=site;
+  const radius=.067,pipeBottom=site.pipeBottom;
+  const pipeTop=isFlat?y+.035:gutterY-.26;
+  const pipe=roundPipeBetween(g,T,[x,pipeBottom,z],[x,pipeTop,z],radius,metal,'downpipe');
+  pipe.userData.facade=site.facade;
+  pipe.userData.connectedToGutter=true;
+  // Fastening clamps are on the REAL wall behind the pipe, rather than
+  // floating on the wrong elevation. Side wall for pitched roofs; rear for flat.
+  for(let yy=1.07;yy<pipeTop-.10;yy+=.83){
+   if(isFlat){
+    box(g,T,.152,.052,.065,x,yy,z+.015,metal)
+     .userData.architecturePart='downpipe-clamp';
+    box(g,T,.052,.065,.12,x,yy,z+.077,metal)
+     .userData.architecturePart='downpipe-wall-bracket';
+   }else{
+    box(g,T,.075,.056,.156,x-side*.035,yy,z,metal)
+     .userData.architecturePart='downpipe-clamp';
+    box(g,T,.130,.055,.049,x-side*.085,yy,z,metal)
+     .userData.architecturePart='downpipe-wall-bracket';
+   }
   }
-  roundPipeBetween(g,T,[x,.69,z],[x,.61,z+.17],.069,metal,'downpipe-shoe');
-  roundPipeBetween(g,T,[x,.61,z+.17],[x,.51,z+.17],.069,metal,'downpipe-shoe');
+  // The bottom shoe directs discharge AWAY from the surveyed foundation.
+  const shoeA=[x,pipeBottom+.02,z],shoeB=isFlat?
+   [x,pipeBottom-.10,z-.17]:
+   [x+side*.17,pipeBottom-.10,z];
+  const shoeC=isFlat?[x,pipeBottom-.21,z-.17]:
+   [x+side*.17,pipeBottom-.21,z];
+  roundPipeBetween(g,T,shoeA,shoeB,.069,metal,'downpipe-shoe');
+  roundPipeBetween(g,T,shoeB,shoeC,.069,metal,'downpipe-shoe');
   if(!isFlat){
-   // Funnel at the eave and two tilted round elbows into the real pipe.
-   const outletX=side*(w*.5+pitchOverhang+.145);
-   const outletZ=d*.5+pitchOverhang-.075;
-   const hub=[outletX,gutterY-.02,outletZ],middle=[x,gutterY-.13,z+.035];
+   // The sloped U-channel above terminates in an outlet funnel directly
+   // above the actual side-wall downpipe, not in front of a window.
+   const hub=[site.outletX,gutterY-.045,site.outletZ];
+   const middle=[x+side*.115,gutterY-.15,z+end*.085];
    roundPipeBetween(g,T,hub,middle,.079,metal,'gutter-elbow');
    roundPipeBetween(g,T,middle,[x,pipeTop,z],radius,metal,'gutter-elbow');
    const funnel=add(g,T,new T.CylinderGeometry(.115,.079,.16,16),metal,
-    outletX,gutterY-.04,outletZ);
+    site.outletX,gutterY-.08,site.outletZ);
    funnel.userData.architecturePart='gutter-outlet';
+   funnel.userData.facade=site.facade;
   }else{
-   const scupper=box(g,T,.20,.13,.22,x,y+.26,z-.055,metal);
+   // Flat roofs drain through the REAR parapet scupper and into rear pipes.
+   const outlet=[site.outletX,y+.22,site.outletZ-.045];
+   const scupper=box(g,T,.20,.12,.31,outlet[0],outlet[1],outlet[2],metal);
    scupper.userData.architecturePart='flat-roof-scupper';
-   roundPipeBetween(g,T,[x,y+.19,z],[x,pipeTop,z],radius,metal,'gutter-elbow');
+   const mouth=box(g,T,.23,.02,.115,outlet[0],outlet[1]-.055,
+    outlet[2]-.17,metal);
+   mouth.userData.architecturePart='scupper-drip-lip';
+   roundPipeBetween(g,T,outlet,[x,y+.10,z-.055],radius,metal,'gutter-elbow');
+   roundPipeBetween(g,T,[x,y+.10,z-.055],[x,pipeTop,z],radius,metal,'gutter-elbow');
   }
  }
  if(roof==='hip'){
-  const edgeColor=mat(T,'#444E52',.55,.44);
+  const overhang=sites[0]?.overhang||.3,edgeColor=mat(T,'#444E52',.55,.44);
   for(const side of [-1,1]){
-   const z=side*(d*.5+pitchOverhang-.10);
-   box(g,T,w+pitchOverhang*2,.22,.21,0,gutterY,z,edgeColor)
+   const z=side*(d*.5+overhang-.10);
+   box(g,T,w+overhang*2,.22,.21,0,gutterY,z,edgeColor)
     .userData.architecturePart='hip-roof-fascia';
   }
  }
