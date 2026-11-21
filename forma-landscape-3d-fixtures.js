@@ -203,7 +203,7 @@ export function photographGardenLightPreviews(T,ids){
  try{
   for(const id of ids){
    const spec=gardenLightingSpec[id];if(!spec)continue;
-   const fixture=createProfessionalGardenLight(T,{catalogId:id,height:spec.height},{night:false});
+   const fixture=createProfessionalGardenLight(T,{catalogId:id,height:spec.height,brightness:1,kelvin:2700},{night:id==='globe'});
    scene.add(fixture);
    const h=spec.height,targetHeight=Math.min(h*.49,.9);
    const dist=Math.max(.78,h*1.42+.55,id==='linear'?1.45:0);
