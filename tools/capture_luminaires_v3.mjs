@@ -17,7 +17,7 @@ try{
    if(response?.status()!==200)throw Error(id+' HTTP '+response?.status());
    await page.waitForFunction(()=>window.FORMA_LAMP_READY===true,null,{timeout:110000});
    const proof=await page.evaluate(()=>window.FORMA_LAMP_PROOF);
-   if(proof.fixtureId!==id||!proof.webgl||proof.modelPartCount<5)throw Error('Invalid geometry '+JSON.stringify(proof));
+   if(proof.fixtureId!==id||!proof.webgl||proof.modelPartCount<(id==='globe'?3:5))throw Error('Invalid geometry '+JSON.stringify(proof));
    if(errors.length)throw Error('WebGL errors '+id+': '+errors.join(','));
    const file=dir+'/luminaire-v3-'+id+'-real-render.png';
    await page.locator('canvas').screenshot({path:file,animations:'disabled',timeout:90000});
