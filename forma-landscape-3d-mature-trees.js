@@ -1,3 +1,4 @@
+import {POLY_HAVEN_TREE_MODELS} from './forma-landscape-3d-polyhaven-trees.js';
 /* Licensed source pages, reviewed 19 Nov 2026. Runtime loads bundled local GLBs only.
  * The model importer accepts any user-owned species-matching GLB with priority.
  */
@@ -16,5 +17,6 @@ export const MATURE_TREE_MODELS=Object.freeze({
 });
 export const TREE_MODEL_SOURCE_LINKS=Object.freeze({
  pine:{name:'Poly Haven · Pine Tree 01',sourcePage:'https://polyhaven.com/a/pine_tree_01'},
+ ...POLY_HAVEN_TREE_MODELS,
  ...MATURE_TREE_MODELS
 });
