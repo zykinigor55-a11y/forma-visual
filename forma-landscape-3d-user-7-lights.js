@@ -104,7 +104,7 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
   // Image 1: very long black ground stake with black hinged cylindrical torch.
   // Negative Y is deliberately buried when placed on real garden terrain.
   const spike=part(new T.ConeGeometry(.036,.34,5),blackRubber,0,-.19,0,'faceted-sharp-ground-spike');
-  spike.rotation.y=Math.PI/5;
+  spike.rotation.y=Math.PI/5; spike.rotation.x=Math.PI; // sharp point faces DOWN
   cy(.026,.028,.105,0,.035,0,body,'connector-stake-neck',40);
   bx(.061,.08,.064,0,.089,0,body,'rectangular-yoke');
   sp(.026,0,.137,.012,bodySoft,'pivot-cylinder');
@@ -269,8 +269,10 @@ export function createUserReferenceGardenLuminaire(T,instance,{night=false}={}){
  // if the user explicitly set a height, scale *only the height* of bollards.
  const actual=number(instance?.height,NaN);
  const natural=Number(G.userData.measuredHeight)||1;
+ const oldDefaults={bollard:[.85], 'square-bollard':[.50], 'garden-lantern':[.995,2.35],globe:[.38,.68]};
+ const historicDefault=(oldDefaults[id]||[]).some(v=>Math.abs(v-actual)<.012);
  const hasRealCustom=Number.isFinite(actual)&&actual>.14&&actual<4&&
-   Math.abs(actual-natural)>.02&&
+   Math.abs(actual-natural)>.04&&!historicDefault&&
    // Legacy scene saved 1.2 m on EVERY lamp, not a genuine custom height.
    !(actual===1.2&&id!=='low-post');
  const scalable=['bollard','low-post','square-bollard','garden-lantern','globe'].includes(id);
