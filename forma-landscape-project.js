@@ -476,8 +476,10 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
   const width=w>=h?2048:Math.max(1,Math.round(2048*w/h));
   const height=h>=w?2048:Math.max(1,Math.round(2048*h/w));
   // An AI revision always starts from the measured vector geometry, never a previous AI variation.
-  const previous=preview,previousPhoto=photoVisible;if(!labels){preview=null;photoVisible=false;}
-  let raw;try{raw=drawSvg(true)}finally{preview=previous;photoVisible=previousPhoto}
+  const previous=preview,previousPhoto=photoVisible,previousSelection=selected;
+  selected=null; // Export/AI source must not contain selection handles or amber outlines.
+  if(!labels){preview=null;photoVisible=false;}
+  let raw;try{raw=drawSvg(true)}finally{selected=previousSelection;preview=previous;photoVisible=previousPhoto}
   const svg=await inlineSVGAssets((labels?raw:raw.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g,'')).replace('id="lpSvg"','id="exportedPlan"').replace('width="1400" height="1400"','width="'+width+'" height="'+height+'"'));
   const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
   try{const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(Error('SVG не открылся'));im.src=url});
@@ -608,7 +610,9 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
   if(b.dataset.roof!==undefined){runAI('roof');return}
   if(b.dataset.proSheet!==undefined||b.dataset.proPng!==undefined){
    const png=b.dataset.proPng!==undefined;
-   Promise.all([import('./forma-landscape-professional-sheet.js?v=pro-board-v1-20261122'),Promise.resolve(drawSvg(true))]).then(async([module,src])=>{
+   const originalSelection=selected;let cleanSource;
+   try{selected=null;cleanSource=drawSvg(true)}finally{selected=originalSelection}
+   Promise.all([import('./forma-landscape-professional-sheet.js?v=pro-board-v1-20261122'),Promise.resolve(cleanSource)]).then(async([module,src])=>{
     const authored=module.composeProfessionalPlanSheet(src,doc,presentationMode);
     const svg=await inlineSVGAssets(authored);
     if(!png){download(title()+'-professional-genplan.svg',svg,'image/svg+xml');say('Профессиональный SVG-лист готов: план, легенда, шкала в метрах, север.');return;}
