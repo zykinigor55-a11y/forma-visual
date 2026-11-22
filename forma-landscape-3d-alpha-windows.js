@@ -1,4 +1,5 @@
 import {alphaOpeningPlanes,ALFA_OPENING_DETAIL} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
+import {normalizeNightInterior,interiorLightColor} from './forma-landscape-3d-night-interior.js';
 /* FORMA / ALFA: transparent architectural window assembly.
  * Architectural visualization only, not manufacturer shop drawings.
  * Units: metres; facade front is local +Z.
@@ -32,28 +33,33 @@ function addTriangle(T,g,x,yTop,yBase,z,mat,part){
  const m=new T.Mesh(geometry,mat);m.castShadow=false;m.receiveShadow=false;
  m.userData.architecturePart=part;g.add(m);return m;
 }
-function glassMaterial(T,{night=false,inner=false}={}){
- // Smoked graphite privacy glazing. Day: about 81% combined effective
- // two-leaf opacity, so the lounge is a faint silhouette rather than
- // a fully exposed showroom. At night the glass stays smoked but lets
- // a little warm internal illumination read from the approach.
- // Environment reflections remain present across the outer glass surface.
+function glassMaterial(T,{night=false,inner=false,interior=null}={}){
+ const cfg=normalizeNightInterior(interior);
+ const lit=night&&cfg.lightsEnabled&&cfg.brightness>0,
+  visible=lit&&cfg.visibility!=='off',
+  clarity=cfg.visibility==='full'?1:cfg.visibility==='partial'?.55:0;
+ // Source geometry, glazed area, two pane depths and 140mm installation
+ // are untouched. Only authored translucency and indoor light change.
+ const baseOpacity=inner?.20:night?.69:.76;
+ const opacity=visible?inner?.12:Math.max(.37,.69-.21*clarity):
+  night?(inner?.22:.81):baseOpacity;
+ const temp=interiorLightColor(cfg.temperature);
  const m=new T.MeshPhysicalMaterial({
   color:inner?'#344148':night?'#3B484C':'#29373D',
   roughness:inner?.075:.055,metalness:0,
-  transparent:true,opacity:inner?.20:night?.69:.76,
-  depthWrite:false,side:T.DoubleSide,ior:1.52,
-  clearcoat:.76,clearcoatRoughness:.055,
-  envMapIntensity:inner?.40:1.38
+  transparent:true,opacity,depthWrite:false,side:T.DoubleSide,ior:1.52,
+  clearcoat:.76,clearcoatRoughness:.055,envMapIntensity:inner?.40:1.38,
+  emissive:temp,
+  emissiveIntensity:visible?cfg.windowGlow/100*(inner?.015:.055):0
  });
  m.userData.alphaSmokedGlass={
   tinted:true,tint:'graphite-smoke',isInnerLeaf:inner,
-  privacyTint:true,privacyVsPrevious:'stronger interior concealment'
+  privacyTint:true,nightInteriorVisibility:visible?cfg.visibility:'off'
  };
  return m;
 }
 export function addAlphaGlazedFacade(T,g,{
- w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night=false
+ w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night=false,interior=null
 }){
  const planes=alphaOpeningPlanes(front),{zOuter,zInner,zFrameFront,zFrameBack,
   zGlassOuter,zGlassInner}=planes;
@@ -67,8 +73,8 @@ export function addAlphaGlazedFacade(T,g,{
   spacer=finish(T,'#4A504D',.58,.18),
   wood=finish(T,'#82705D',.79,.01),
   trackMat=finish(T,'#636965',.48,.31);
- const outerGlass=glassMaterial(T,{night}),
-  innerGlass=glassMaterial(T,{night,inner:true});
+ const outerGlass=glassMaterial(T,{night,interior}),
+  innerGlass=glassMaterial(T,{night,inner:true,interior});
  const doorBottom=.49,doorHeight=doorTop-doorBottom,
   midY=(doorBottom+doorTop)*.5,leafW=doorW/4,doorHalf=doorW*.5;
  // The triangular IG glazing is installed 140mm behind the PBR cladding.
@@ -167,7 +173,15 @@ export function addAlphaGlazedFacade(T,g,{
   frameRecessM:ALFA_OPENING_DETAIL.frameRecess
  };
 }
-export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false}){
+export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false,interior=null}){
+ const cfg=normalizeNightInterior(interior),
+  lit=night&&cfg.lightsEnabled&&cfg.brightness>0,
+  readable=!night||lit&&cfg.visibility!=='off';
+ const indoorGroup=new T.Group();indoorGroup.name='alpha-furnished-interior';
+ g.add(indoorGroup);
+ // Indoor furniture and fixtures can be hidden WITHOUT deleting the model.
+ // The structural A-frame and glazed volume remain unchanged.
+ const furnishings=indoorGroup;
  // Keep all objects comfortably INSIDE the roof and the original footprint.
  const wood=finish(T,'#6A5B4E',.89,0),timber=finish(T,'#86725E',.76,.01);
  const dark=finish(T,'#373C39',.95),warm=finish(T,'#B3A086',.92);
@@ -195,27 +209,48 @@ export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false}){
  }
  // A modest recognisable interior, not a blank rear-wall plane:
  // dark sofa, warm rug, small timber table. All remain static, cheap geometry.
- addBox(T,g,[2.26,.09,1.35],[-.82,.556,d*.05],
+ addBox(T,furnishings,[2.26,.09,1.35],[-.82,.556,d*.05],
   warm,'alpha-interior-lounge-rug');
- addBox(T,g,[1.72,.36,.80],[-1.02,.77,d*.11],
+ addBox(T,furnishings,[1.72,.36,.80],[-1.02,.77,d*.11],
   dark,'alpha-interior-sofa-seat');
- addBox(T,g,[1.72,.71,.17],[-1.02,.93,d*.11-.34],
+ addBox(T,furnishings,[1.72,.71,.17],[-1.02,.93,d*.11-.34],
   dark,'alpha-interior-sofa-back');
- addBox(T,g,[.94,.065,.49],[.73,.91,d*.12],
+ addBox(T,furnishings,[.94,.065,.49],[.73,.91,d*.12],
   timber,'alpha-interior-coffee-table-top');
  for(const x of [.36,1.10])for(const z of [d*.12-.19,d*.12+.19]){
-  addBox(T,g,[.036,.36,.036],[x,.71,z],metal,
+  addBox(T,furnishings,[.036,.36,.036],[x,.71,z],metal,
    'alpha-interior-coffee-table-leg');
  }
+ furnishings.visible=readable;
  // Interior warm luminaires are low-energy emissive strips and read from
  // outside without making the facade an unrealistic backlit billboard.
  const lamp=new T.MeshStandardMaterial({
-  color:'#C4A986',roughness:.42,emissive:'#CDA777',
-  emissiveIntensity:night?.52:.24
+  color:'#C4A986',roughness:.42,emissive:interiorLightColor(cfg.temperature),
+  emissiveIntensity:lit?.45+cfg.brightness/100*1.65:.005
  });
+ const lights=lit?Math.max(.1,cfg.brightness/100):0;
  for(const z of [zBack+2.6,zBack+5.0]){
-  addBox(T,g,[.85,.026,.041],[0,3.05,z],lamp,'alpha-interior-warm-luminaire');
+  const fixture=addBox(T,g,[.85,.026,.041],[0,3.05,z],lamp,
+   'alpha-interior-warm-luminaire');
+  fixture.visible=lit;
+  if(lit&&typeof T.PointLight==='function'){
+   const bulb=new T.PointLight(interiorLightColor(cfg.temperature),
+    2.2*lights,Math.min(10,d*.82),2);
+   bulb.position.set(0,2.86,z);bulb.castShadow=false;
+   bulb.userData.architecturePart='alpha-interior-artificial-light';
+   g.add(bulb);
+  }
  }
- g.userData.alphaInterior={visibleBehindGlass:true,mezzanine:true,
-  internalFurniture:true,addedWithinOriginalFootprint:true};
+ if(lit&&typeof T.PointLight==='function'){
+  const entryLight=new T.PointLight(interiorLightColor(cfg.temperature),
+   1.65*lights,Math.min(7,d*.7),2);
+  entryLight.position.set(-.45,2.36,d/2-1.5);
+  entryLight.castShadow=false;
+  entryLight.userData.architecturePart='alpha-interior-entrance-light';
+  g.add(entryLight);
+ }
+ g.userData.alphaInterior={visibleBehindGlass:readable,mezzanine:true,
+  internalFurniture:true,addedWithinOriginalFootprint:true,
+  lightsEnabled:lit,visibility:readable?cfg.visibility:'off',
+  brightness:cfg.brightness,temperature:cfg.temperature,windowGlow:cfg.windowGlow};
 }
