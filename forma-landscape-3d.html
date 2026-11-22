@@ -2028,6 +2028,53 @@ function commitSelectedSpruceGrowth(o,{spruce,height}){
  status('Ель изменена: '+(next.type==='young'?'молодая':next.type==='century'?'вековая':'обычная')+
   ', '+dims.height+' м. Изменена исходная GLB-модель.');
 }
+function houseInteriorMarkup(){
+ const c=normalizeNightInterior(doc.atmosphere?.interior);
+ const night=nightInteriorMode(doc.atmosphere?.time);
+ const option=(value,name,selected)=>'<option value="'+value+'"'+(value===selected?' selected':'')+'>'+name+'</option>';
+ return '<section id="houseNightSettings" class="roof-garland-editor">'+
+  '<strong>ОСВЕЩЕНИЕ И ИНТЕРЬЕР ДОМА</strong>'+
+  '<button id="houseSwitchToNight" type="button"'+(night?' disabled':'')+'>'+
+   (night?'✓ Ночной режим включён':'☾ Показать ночной режим')+'</button>'+
+  '<label class="roof-garland-toggle"><input id="houseInteriorLights" type="checkbox"'+
+   (c.lightsEnabled?' checked':'')+'> Включить внутренний свет</label>'+
+  '<label>Видимость интерьера<select id="houseInteriorVisibility">'+
+   option('off','Не показывать',c.visibility)+option('partial','Часть интерьера',c.visibility)+
+   option('full','Весь интерьер',c.visibility)+'</select></label>'+
+  '<label>Яркость внутри <output id="houseInteriorBrightnessValue">'+c.brightness+'%</output></label>'+
+  '<input id="houseInteriorBrightness" type="range" min="0" max="100" step="5" value="'+c.brightness+'">'+
+  '<label>Цветовая температура<select id="houseInteriorTemperature">'+
+   option('warm','Тёплый · 2700–3000 К',c.temperature)+
+   option('neutral','Нейтральный · 4000 К',c.temperature)+
+   option('cool','Холодный · 6000 К',c.temperature)+'</select></label>'+
+  '<label>Свечение через окна <output id="houseWindowGlowValue">'+c.windowGlow+'%</output></label>'+
+  '<input id="houseWindowGlow" type="range" min="0" max="100" step="5" value="'+c.windowGlow+'">'+
+  '<small>Свет изменяется внутри существующего дома. Результат виден в ночном режиме; геометрия, окна и мебель не перемещаются.</small>'+
+  '</section>';
+}
+function wireHouseInteriorEditor(el){
+ const section=el.querySelector('#houseNightSettings');if(!section)return;
+ const change=(key,value,commit=true)=>{
+  updateNightHome(key,value,commit);
+  if(commit&&section.querySelector('#houseInteriorBrightnessValue'))
+   section.querySelector('#houseInteriorBrightnessValue').textContent=normalizeNightInterior(doc.atmosphere.interior).brightness+'%';
+ };
+ section.querySelector('#houseSwitchToNight')?.addEventListener('click',()=>{
+  if(nightInteriorMode(doc.atmosphere.time))return;
+  const time=$('#time');if(!time)return;
+  time.value='night';time.dispatchEvent(new Event('change',{bubbles:true}));
+  renderProps();status('Ночь включена. Теперь регулируйте свет внутри дома.');
+ });
+ section.querySelector('#houseInteriorLights')?.addEventListener('change',e=>change('lightsEnabled',e.target.checked));
+ section.querySelector('#houseInteriorVisibility')?.addEventListener('change',e=>change('visibility',e.target.value));
+ section.querySelector('#houseInteriorTemperature')?.addEventListener('change',e=>change('temperature',e.target.value));
+ for(const [id,label,key] of [['houseInteriorBrightness','houseInteriorBrightnessValue','brightness'],
+ ['houseWindowGlow','houseWindowGlowValue','windowGlow']]){
+  const slider=section.querySelector('#'+id),out=section.querySelector('#'+label);
+  slider?.addEventListener('input',()=>{if(out)out.textContent=slider.value+'%';change(key,Number(slider.value),false)});
+  slider?.addEventListener('change',()=>change(key,Number(slider.value),true));
+ }
+}
 function roofGarlandMarkup(building){
  const g=normalizeRoofGarland(building?.garland);
  const option=(key,label,selected)=>'<option value="'+key+'"'+(selected===key?' selected':'')+'>'+label+'</option>';
@@ -2114,6 +2161,10 @@ function renderProps(){
  if(ref.type==='house'||ref.type==='building'){
   el.insertAdjacentHTML('afterbegin',roofGarlandMarkup(o));
   wireRoofGarlandEditor(el,o);
+  if(ref.type==='house'){
+   el.insertAdjacentHTML('afterbegin',houseInteriorMarkup());
+   wireHouseInteriorEditor(el);
+  }
  }
  if(ref.type==='object'&&catalog(o.catalogId)?.group==='pavers'){
   const pathMaterial=document.createElement('section');
