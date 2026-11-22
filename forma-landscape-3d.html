@@ -2056,6 +2056,63 @@ function renderProps(){
  $('#deleteObject').onclick=deleteSelectedObject;
  if(pinePanel&&(isPine||isShrub))pinePanel.scrollTop=priorScroll;
 }
+const NIGHT_HOME_FIELDS=['lightsEnabled','visibility','brightness','temperature','windowGlow'];
+const NIGHT_UI={
+ lightsEnabled:'InteriorLights',visibility:'InteriorVisibility',
+ brightness:'InteriorBrightness',temperature:'InteriorTemperature',
+ windowGlow:'WindowGlow'
+};
+let nightGestureSaved=false,nightPreviewTimer=null;
+function syncNightHomeControls(){
+ if(!doc?.atmosphere)return;
+ const interior=normalizeNightInterior(doc.atmosphere.interior);
+ doc.atmosphere.interior=interior;
+ for(const prefix of ['quick','desktop']){
+  const section=$('#'+prefix+'NightHome');
+  if(section)section.hidden=!nightInteriorMode(doc.atmosphere.time);
+  for(const field of NIGHT_HOME_FIELDS){
+   const control=$('#'+prefix+NIGHT_UI[field]);
+   if(!control)continue;
+   if(field==='lightsEnabled')control.checked=interior.lightsEnabled;
+   else control.value=String(interior[field]);
+   if(field==='brightness'||field==='windowGlow'){
+    const out=$('#'+prefix+NIGHT_UI[field]+'Value');
+    if(out)out.textContent=interior[field]+'%';
+   }
+  }
+ }
+}
+function updateNightHome(field,value,commit=false){
+ if(!doc?.atmosphere)return;
+ const current=normalizeNightInterior(doc.atmosphere.interior);
+ const adjusted=normalizeNightInterior({...current,[field]:value});
+ if(!nightGestureSaved){push();nightGestureSaved=true}
+ doc.atmosphere.interior=adjusted;
+ save();syncNightHomeControls();
+ if(nightPreviewTimer!==null)clearTimeout(nightPreviewTimer);
+ nightPreviewTimer=setTimeout(()=>{
+  nightPreviewTimer=null;
+  rebuild();
+  renderGate.invalidate();
+ },commit?0:180);
+ if(commit)nightGestureSaved=false;
+}
+function setupNightHomeControls(){
+ syncNightHomeControls();
+ for(const prefix of ['quick','desktop']){
+  for(const field of NIGHT_HOME_FIELDS){
+   const el=$('#'+prefix+NIGHT_UI[field]);
+   if(!el)continue;
+   if(field==='brightness'||field==='windowGlow'){
+    el.addEventListener('input',()=>updateNightHome(field,Number(el.value),false));
+    el.addEventListener('change',()=>updateNightHome(field,Number(el.value),true));
+   }else{
+    el.addEventListener('change',()=>updateNightHome(field,
+     field==='lightsEnabled'?el.checked:el.value,true));
+   }
+  }
+ }
+}
 const QUICK_CLIMATE_LINKS=[
  ['quickSunAzimuth','sunAzimuth','°'],['quickSunElevation','sunElevation','°'],
  ['quickSunStrength','sunStrength','%'],['quickSunSoftness','sunSoftness',''],
@@ -2123,6 +2180,7 @@ function setupWeatherIntensityControls(){
 function syncQuickClimateControls(){
  if(!doc?.atmosphere)return;
  syncWeatherIntensityControls();
+ syncNightHomeControls();
  const sceneValues={
   quickTime:doc.atmosphere.time||'day',
   quickSeason:doc.atmosphere.season||'summer',
@@ -3048,7 +3106,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#quality3d').onchange=()=>{renderQuality=$('#quality3d').value;autoReduced=false;slowFrameStreak=0;
   const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy;
   resize();rebuild();status(economy?'Облегчённый просмотр для плавной работы. Размеры проекта сохранены.':'Высокая детализация 3D восстановлена.')};
- $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();save();rebuild()};
+ $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();save();rebuild();syncNightHomeControls()};
  const onSolarInput=()=>{
   solarSettings=normalizeSolarSettings({azimuth:Number($('#sunAzimuth').value),elevation:Number($('#sunElevation').value),
    strength:Number($('#sunStrength').value)/100,softness:Number($('#sunSoftness').value)},doc.atmosphere.time);
@@ -3092,6 +3150,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#sceneCameraCycle').onclick=cycleSceneCamera;
  setupSceneClimateControls();
  setupWeatherIntensityControls();
+ setupNightHomeControls();
  $('#focusSelected').onclick=focusSelectedPlant;
  $('#pineInspectorShortcut').onclick=showSelectedPineControls;
  $('#fit3dScene').onclick=()=>{setView('3d');houseCameraStage=2;syncSceneCameraButton();};
