@@ -259,63 +259,63 @@ body::before{position:fixed;inset:0;content:'';z-index:15;pointer-events:none;op
 }
 
 
-/* FORMA AI V24 real 3D hero: maintain approved cinematic composition and mobile framing. */
+/* FORMA AI V25 — original approved Möbius photograph, physically guided light only.
+   Keep the actual image visible at all times, even while WebGL is running. */
 .hero-art{isolation:isolate}
 .hero-art > img{
   position:relative;
   z-index:0;
-  transition:opacity 1.25s cubic-bezier(.22,1,.36,1);
+  opacity:1 !important;
 }
-#hero-three-canvas{
+.hero-art .hero-kinetic-canvas{
   position:absolute;
   inset:0;
   z-index:2;
   display:block;
   width:100%;
   height:100%;
+  pointer-events:none;
   opacity:0;
-  pointer-events:none;
-  transition:opacity 1.35s cubic-bezier(.22,1,.36,1);
+  transition:opacity 1.6s cubic-bezier(.22,1,.36,1);
+  filter:none; /* A transparent highlight layer, not a second copy of the image. */
 }
-.hero-art.hero-three-ready{
-  background:
-    radial-gradient(ellipse 40% 43% at 69% 48%,rgba(105,120,134,.19),transparent 82%),
-    radial-gradient(ellipse 35% 26% at 62% 80%,rgba(180,119,64,.085),transparent 85%),
-    linear-gradient(120deg,#050709 7%,#10151a 59%,#06090d 100%);
+.hero-art.kinetic-ready .hero-kinetic-canvas{opacity:1}
+.hero-art.kinetic-ready::before,
+.hero-art.kinetic-ready::after{display:none} /* GPU highlights replace CSS gloss */
+@media(min-width:901px) and (prefers-reduced-motion:no-preference){
+  .hero-art.kinetic-ready > img,
+  .hero-art.kinetic-ready .hero-kinetic-canvas{
+    animation:original-mobius-motion 18s ease-in-out infinite;
+    transform-origin:66% 54%;
+  }
 }
-.hero-art.hero-three-ready > img{opacity:0}
-.hero-art.hero-three-ready #hero-three-canvas{opacity:1}
-.hero-art.hero-three-ready::before{
-  content:"";
-  position:absolute;
-  z-index:1;
-  width:46%;
-  height:22%;
-  left:38%;
-  bottom:10%;
-  border-radius:50%;
-  pointer-events:none;
-  background:radial-gradient(ellipse,rgba(185,131,82,.18),rgba(75,90,102,.045) 43%,transparent 73%);
-  filter:blur(25px);
+@keyframes original-mobius-motion{
+  0%,100%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(-.10%,.08%,0) scale(1.007)}
 }
 @media(max-width:900px){
-  .hero-art.hero-three-ready{
-    background:
-      radial-gradient(ellipse at 50% 47%,rgba(112,127,137,.18),transparent 72%),
-      linear-gradient(120deg,#050709,#10161d 52%,#07090c);
+  .hero-art > img,
+  .hero-art .hero-kinetic-canvas{
+    transform:none !important;
+    animation:none !important;
+  }
+  .hero-art{
+    max-width:none;
     overflow:hidden;
   }
-  .hero-art.hero-three-ready::before{
-    left:15%;width:70%;height:22%;bottom:9%;filter:blur(14px)
-  }
-  #hero-three-canvas{inset:0;width:100%;height:100%}
 }
 @media(max-width:620px){
-  .hero-art.hero-three-ready{
-    opacity:1;
-    transform:none !important;
+  .hero-art{
+    /* V22 correct inset ensures the right loop never clips on smartphones. */
+    inset:96px max(15px,env(safe-area-inset-right)) auto max(15px,env(safe-area-inset-left));
+    width:auto;
+    aspect-ratio:16 / 9;
   }
 }
+@media(max-width:420px){
+  .hero-art{inset:98px max(12px,env(safe-area-inset-right)) auto max(12px,env(safe-area-inset-left));}
+}
 @media(prefers-reduced-motion:reduce){
-  #hero-three-canvas,.hero-art > img{transition:none!important}
+  .hero-art .hero-kinetic-canvas{display:none !important}
+  .hero-art > img{transform:none !important;animation:none !important}
 }
