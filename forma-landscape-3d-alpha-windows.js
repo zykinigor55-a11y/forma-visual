@@ -1,5 +1,5 @@
 import {alphaOpeningPlanes,ALFA_OPENING_DETAIL} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
-import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js';
+import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js?v=bright-night-v2-20261122';
 /* FORMA / ALFA: transparent architectural window assembly.
  * Architectural visualization only, not manufacturer shop drawings.
  * Units: metres; facade front is local +Z.
