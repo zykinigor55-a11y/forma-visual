@@ -135,6 +135,16 @@ export function addScandinavianVerticalCladding(T,facade,{
  // Subtle ventilation/drainage starter profile ends above masonry plinth.
  const starter=finishMaterial(T,'#41494B');
  addBox(facade,T,span,.018,.024,0,.498,.154,starter,'rainscreen-ventilated-starter');
+ // Folded base flashing underneath the 21.5mm ventilated timber boards.
+ // Its outer drip lip projects past the timber face, so runoff does not
+ // track backward onto the 480mm plinth or soak the end grain.
+ const baseFlashing=finishMaterial(T,'#394144');
+ baseFlashing.metalness=.57;baseFlashing.roughness=.48;
+ const apron=addBox(facade,T,span,.009,.108,0,.482,.155,
+  baseFlashing,'rainscreen-sloped-plinth-flashing');
+ apron.rotation.x=-.11;
+ addBox(facade,T,span,.023,.010,0,.465,.209,
+  baseFlashing,'rainscreen-outboard-drip-hem');
  facade.userData.scandiCladding={pitch:actualPitch,boardDepth:SCANDI_DETAIL.boardDepth,
   nominalVentilatedCavity:SCANDI_DETAIL.ventilationCavity,
   measuredAirGapFromWallFace:.02925,
