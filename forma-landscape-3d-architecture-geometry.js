@@ -25,9 +25,9 @@ export function buildingHeights({archStyle='barn',type='house',width=8,roofRise=
  else if(archStyle==='modular')eave=3.22;
  else if(archStyle==='logcabin')eave=3.55;
  else if(archStyle==='panoramic')eave=3.75;
- else if(archStyle==='aframe')eave=.65;
- const rise=archStyle==='aframe'
-  ? clamp(finite(roofRise,w*.74),4.2,8)
+ else if(archStyle==='aframe'||archStyle==='alpha')eave=.65;
+ const rise=(archStyle==='aframe'||archStyle==='alpha')
+  ? clamp(roofRise==null?(archStyle==='alpha'?w*.79:w*.74):finite(roofRise,w*.79),4.2,8)
   : clamp(finite(roofRise,Math.min(w*.22,2)),.5,4);
  return {eave,rise,base:.48,total:eave+rise};
 }
