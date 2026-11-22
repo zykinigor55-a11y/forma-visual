@@ -310,7 +310,7 @@ function addWindowFinishing(facade,T,o,style){
  * The wall envelope below consists only of closed wall segments *outside*
  * measured door and window apertures. Door/window meshes occupy the void.
  */
-function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,night,interior}){
+function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,night,interiorConfig}){
  const plan=facadeOpeningSchedule({width:w,depth:d,height:h,style,type});
  const walls=[
   ['front',w,0,d/2,0],['rear',w,0,-d/2,Math.PI],
@@ -357,7 +357,7 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     part=doorGroup(T,opening.width,opening.height,
      ['modern','hightech','japandi','panoramic','modular','scandi'].includes(style));
    }else{
-    part=windowGroup(T,opening.width,opening.height,night,opening.panoramic,style==='scandi',interior);
+    part=windowGroup(T,opening.width,opening.height,night,opening.panoramic,style==='scandi',interiorConfig);
    }
    // 190mm thick wall (outer face +.095): the window glass is now set
    // 110mm behind it. Aperture geometry and surveyed facade never move.
@@ -768,7 +768,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false,interior
     // Dark weather-resistive rainscreen membrane appears between REAL
     // vertical board joints; it must not reveal old beige wall texture.
     material:style==='scandi'?new THREE.MeshStandardMaterial({
-     color:'#424A4C',roughness:.96,metalness:0}):wallMaterial,night,interior});
+     color:'#424A4C',roughness:.96,metalness:0}):wallMaterial,night,interiorConfig:interior});
   g.userData.facadeSchedule=facadePlan;
   const darkTrim=mat(THREE,'#262B2D',.52,.34);
   // Thin projecting base and eave band cast physically grounded shadows.
