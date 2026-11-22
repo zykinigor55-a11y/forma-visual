@@ -7,7 +7,7 @@ import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
 import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=alpha-interior-glow-v2-20261122';
-import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js';
+import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js?v=bright-night-v2-20261122';
 import {addRoofGarland} from './forma-landscape-roof-garlands.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
