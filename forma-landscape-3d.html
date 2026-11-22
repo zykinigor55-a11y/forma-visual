@@ -3195,22 +3195,19 @@ const up=e=>{
   const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;
   state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;controls.enabled=state.view!=='walk';
   if(moved){save();rebuild();status('Объект перемещён и сохранён. ↶ отменит изменение.');}
-  else if(selectable(state.selected)?.obj?.catalogId==='pine')showSelectedPineControls();
-  if(state.mobileMoveMode){state.mobileMoveMode=false;syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');}
+  if(state.mobileMoveMode){state.mobileMoveMode=false;state.mobileObjectCollapsed=true;syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');}
   state.down=null;return;
  }
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
  if(movement<(finger?20:5)){
   if(state.tool==='select'){
-   const key=hitTreeOnMobile(e),selected=key?selectable(key)?.obj:null;
-   if(['pine','spruce','birch'].includes(selected?.catalogId))selectPineById(selected.id);
-   else{
-    state.selected=key;renderProps();
-    if(key)revealSelectedInspector();
-    if(['pine','spruce'].includes(selectable(key)?.obj?.catalogId))showSelectedPineControls();
-    else if(key&&window.innerWidth<=850)activateMobilePanel('details');
-    if(!key&&finger)status('Нажмите «🌲 Дерево» внизу, чтобы выбрать посаженную сосну, ель или берёзу.');
-   }
+   const key=hitTreeOnMobile(e);
+   state.selected=key;
+   state.mobileMoveMode=false;
+   state.mobileObjectCollapsed=!key;
+   renderProps();
+   if(key)revealSelectedInspector();
+   else if(finger){activateMobilePanel('scene');status('Коснитесь объекта, чтобы открыть его настройки.');}
   }else{const p=hitGround(e);if(p)place(p)}
  }
  state.down=null;
