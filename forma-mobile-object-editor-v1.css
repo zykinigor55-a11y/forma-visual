@@ -198,3 +198,30 @@
  #mobileWorkspaceTabs #mobileHouseSelect{font-size:11px}
  #mobilePlacementLabel{font-size:10px}
 }
+
+/* Internal night illumination controls nested under the selected house. */
+#houseNightSettings{display:grid;gap:10px;margin:8px 0 16px;padding:13px 12px;
+ min-width:0;background:linear-gradient(150deg,#323336,#25282d);
+ color:#eae5de;border:1px solid #77716b;border-radius:12px;
+ font-size:12px;line-height:1.35}
+#houseNightSettings>strong{font-size:11px;letter-spacing:.07em;
+ font-weight:800;color:#f1d2a1}
+#houseNightSettings>label{display:grid;gap:6px;margin:0;color:#e4ded4;font-size:12px}
+#houseNightSettings .roof-garland-toggle{display:flex;align-items:center;min-height:44px;
+ flex-direction:row;gap:10px;font-weight:750}
+#houseNightSettings .roof-garland-toggle input{width:22px;height:22px;accent-color:#e9c18f}
+#houseNightSettings :is(select,button){min-height:44px;max-width:100%;
+ border:1px solid #71727a;background:#34383f;color:#f6ece2;
+ border-radius:9px;padding:7px 11px;font-size:13px}
+#houseNightSettings #houseSwitchToNight{background:#8b7054;border-color:#c1a37c;
+ color:#fff5df;font-weight:700}
+#houseNightSettings #houseSwitchToNight:disabled{background:#3d413b;
+ border-color:#66716a;color:#e5e7d9;opacity:.85}
+#houseNightSettings input[type=range]{min-height:36px;width:100%;touch-action:pan-x;
+ accent-color:#dfbb83}
+#houseNightSettings output{font-weight:800;color:#f4d2a3}
+#houseNightSettings small{font-size:11px;line-height:1.45;color:#c4bcb2}
+@media(max-width:850px){
+ body[data-mobile-panel="details"][data-object-inspector="true"] #houseNightSettings{
+  margin:7px 0 15px;padding:12px 10px}
+}
