@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preload" href="assets/hero-mobius.webp" as="image" type="image/webp" fetchpriority="high">
-  <link rel="stylesheet" href="styles.css?v=24">
+  <link rel="stylesheet" href="styles.css?v=25">
 </head>
 <body>
 <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -37,7 +37,7 @@
   </nav>
   <main id="main">
     <section class="hero" id="hero" aria-labelledby="hero-title">
-      <div class="hero-art" aria-hidden="true"><img src="assets/hero-mobius.webp" alt="" width="2048" height="1152" fetchpriority="high"><canvas id="hero-three-canvas" aria-hidden="true"></canvas></div>
+      <div class="hero-art" aria-hidden="true"><img src="assets/hero-mobius.webp" alt="" width="2048" height="1152" fetchpriority="high"><canvas id="hero-kinetic-canvas" class="hero-kinetic-canvas" aria-hidden="true"></canvas></div>
       <div class="hero-shade" aria-hidden="true"></div>
       <div class="hero-copy">
         <p class="kicker">WEB / APPS / AI AVATARS / CGI<br>DIGITAL EXPERIENCE</p>
@@ -95,7 +95,7 @@
     </section>
 
     <section class="technology-section" id="technology" aria-labelledby="technology-title">
-      <div class="technology-copy" data-reveal><span class="section-id"><i></i> ЖИВАЯ МЕХАНИКА</span><h2 id="technology-title">Форма<br><em>бесконечного.</em></h2><p>Интерактивный объект Möbius Kinetic — эксперимент с материалом, светом и непрерывным движением. Вращайте конструкцию курсором.</p><span class="technology-caption">MÖBIUS KINETIC / V24 / REAL-TIME 3D</span></div>
+      <div class="technology-copy" data-reveal><span class="section-id"><i></i> ЖИВАЯ МЕХАНИКА</span><h2 id="technology-title">Форма<br><em>бесконечного.</em></h2><p>Интерактивный объект Möbius Kinetic — эксперимент с материалом, светом и непрерывным движением. Вращайте конструкцию курсором.</p><span class="technology-caption">MÖBIUS KINETIC / V25 / ORIGINAL PHOTO MOTION</span></div>
       <div class="spiral-visual" id="spiral-visual"><canvas id="spiral-canvas" role="img" tabindex="0" aria-label="Две кинетические титановые ленты Мёбиуса. Для вращения используйте мышь, стрелки или клавишу Home"></canvas>
         <svg class="spiral-fallback" viewBox="0 0 600 600" aria-hidden="true"><defs><linearGradient id="mob-grad" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#424c59"/><stop offset=".32" stop-color="#d6dce0"/><stop offset=".6" stop-color="#606a77"/><stop offset="1" stop-color="#d8dce2"/></linearGradient></defs><g fill="none" stroke="url(#mob-grad)" stroke-width="25"><ellipse cx="300" cy="222" rx="135" ry="71" transform="rotate(-24 300 222)"/><ellipse cx="300" cy="385" rx="135" ry="71" transform="rotate(22 300 385)"/></g><path d="M300 130v340" stroke="#9caebc" stroke-width="8"/><ellipse cx="300" cy="300" rx="48" ry="15" fill="none" stroke="#b9c7ca" stroke-width="6"/></svg>
         <div class="spiral-label" aria-hidden="true"><span>TI / 6AL-4V</span><span>DRAG TO ROTATE · 180°</span></div>
@@ -118,7 +118,7 @@
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module" src="site.js?v=23"></script>
-<script type="module" src="hero-three.js?v=24"></script>
+<script src="hero-kinetic.js?v=25" defer></script>
 <script src="experience.js?v=23" defer></script>
 </body>
 </html>
