@@ -24,7 +24,7 @@ try{
   null,{timeout:20000});
  await page.waitForTimeout(4800);
  const focused=page.locator('#focusHouse');
- if(await focused.isVisible()){await focused.click();await page.waitForTimeout(2600);}
+ if(await focused.isVisible()){await focused.evaluate(btn=>btn.click());await page.waitForTimeout(3200);}
  // The yellow circle is an editor SELECTION helper, not part of the house.
  // Deselect by clicking vacant lawn, preserving the focussed camera and
  // actual model. Screenshot must not make that helper look like architecture.
