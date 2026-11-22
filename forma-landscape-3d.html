@@ -35,6 +35,9 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
 .creature-source{display:inline-block;margin:1px 0 7px 62px;color:#D1B789;
  font-size:10px;text-decoration:underline;text-underline-offset:2px}
 .creature-footer{display:block;margin:15px 8px;color:#ADB9B8;font-size:10px;line-height:1.6}
+.creature-thumbnail{width:64px;height:64px;flex:0 0 64px;object-fit:contain;
+ background:#202329;border:1px solid #4A5156;border-radius:10px}
+.creature-emoji[hidden]{display:none!important}
 #creatureSearch{width:100%;padding:10px;background:#292D34;color:#F5F2EC;
  border:1px solid #66646B;border-radius:9px;margin:10px 0}
 .camera-elevation-controls,.walk-instructions{padding:10px 11px;margin:8px 0;border-radius:10px;border:1px solid #576b60;background:#26362f;line-height:1.5}
@@ -1453,7 +1456,7 @@ function renderCreatureCatalog(){
   const items=CREATURE_ASSETS.filter(e=>e.group===group);
   return '<div class="asset-group-heading">'+title+' · '+items.length+'</div>'+
    items.map(e=>'<div class="creature-row"><button type="button" class="choice creature-choice" data-creature-id="'+e.id+'">'+
-    '<span class="creature-emoji" aria-hidden="true">'+e.emoji+'</span><span class="creature-copy"><strong>'+e.name+'</strong>'+
+    '<img class="creature-thumbnail" src="'+e.preview+'" loading="lazy" decoding="async" alt="3D-модель: '+e.name+'"><span class="creature-emoji" aria-hidden="true" hidden>'+e.emoji+'</span><span class="creature-copy"><strong>'+e.name+'</strong>'+
     '<small>'+e.notes+'</small><small>Рост: '+e.height.toFixed(2)+' м · CC0 · GLB</small></span><b class="asset-add">＋</b></button>'+
     '<a class="creature-source" href="'+e.source+'" target="_blank" rel="noopener noreferrer" title="Автор и бесплатная лицензия CC0">Источник GLB</a></div>').join('');
  };
@@ -1462,6 +1465,13 @@ function renderCreatureCatalog(){
  '<div class="catalog-filter" role="group" aria-label="Виды"><button type="button" class="active" data-creature-filter="all">Все</button><button type="button" data-creature-filter="people">Люди</button><button type="button" data-creature-filter="animals">Животные</button></div>'+
  make('people','ЛЮДИ')+make('animals','ЖИВОТНЫЕ')+
  '<small class="creature-footer">Источник: tevy.dev · CC0 1.0 · облегчённые LOD1 для мобильного просмотра. Натуральные пропорции при AI-рендере.</small>';
+ target.querySelectorAll('.creature-thumbnail').forEach(img=>{
+  img.addEventListener('error',()=>{
+   img.hidden=true;
+   const fallback=img.nextElementSibling;
+   if(fallback)fallback.hidden=false;
+  },{once:true});
+ });
  let filter='all';const search=$('#creatureSearch');
  const apply=()=>{
   const q=search.value.trim().toLocaleLowerCase('ru');
