@@ -223,3 +223,37 @@ body::before{position:fixed;inset:0;content:'';z-index:15;pointer-events:none;op
   .hero-art:not(.kinetic-ready):not(.kinetic-low-data)::after,
   .hero-art:not(.kinetic-ready):not(.kinetic-low-data)::before{animation:none!important}
 }
+
+
+/* V23 mobile: swipeable premium service rail, no unreadable four-column labels. */
+@media(max-width:620px){
+  .service-strip{
+    display:flex;
+    grid-template-columns:none;
+    align-items:stretch;
+    padding:7px max(14px, env(safe-area-inset-left)) 10px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:thin;
+    scrollbar-color:#6b5b4a #0a0e12;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .service-strip a,
+  .service-strip a:nth-child(3),
+  .service-strip a:nth-child(4),
+  .service-strip a:nth-child(6){
+    flex:0 0 128px;
+    min-width:128px;
+    min-height:95px;
+    border-right:1px solid #ffffff1a;
+    border-bottom:0;
+    padding:11px 8px;
+    scroll-snap-align:start;
+  }
+  .service-strip span{font-size:9px;letter-spacing:.05em;line-height:1.6}
+  .service-strip svg{width:28px;height:28px}
+  .service-card{scroll-margin-top:82px}
+  .web-showcase__frame{width:79%;left:10.5%}
+}
