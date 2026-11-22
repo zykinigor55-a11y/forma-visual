@@ -8,7 +8,9 @@ export const SCANDI_DETAIL=Object.freeze({
  // Two distinct real vertical timber finishes: silver-weathered ash-grey
  // and deeply smoked graphite. Never replace the siding with stucco.
  mainWood:'#919897',accentWood:'#50585B',
- boardWidth:.115,boardPitch:.132,boardDepth:.020,ventilationCavity:.026,
+ // The APR 10 reference profile is 21.5 × 94 mm with 84 mm cover.
+ // Upright boards and a ~10mm shadow joint, ventilated behind the boards.
+ boardWidth:.084,boardPitch:.094,boardDepth:.0215,ventilationCavity:.029,
  entryRise:.48,stepRiser:.16,stepGoing:.32,landingDepth:1.24,
  entryWidth:1.72,vergeMetal:'#333B3F',windowFrame:'#222A2D'
 });
@@ -133,7 +135,7 @@ export function addScandinavianVerticalCladding(T,facade,{
  addBox(facade,T,span,.018,.024,0,.498,.154,starter,'rainscreen-ventilated-starter');
  facade.userData.scandiCladding={pitch:actualPitch,boardDepth:SCANDI_DETAIL.boardDepth,
   nominalVentilatedCavity:SCANDI_DETAIL.ventilationCavity,
-  measuredAirGapFromWallFace:.030,
+  measuredAirGapFromWallFace:.02925,
   mainCount:all[0].length,accentCount:all[1].length,backingPanels:panelCount,
   band};
  return facade.userData.scandiCladding;
