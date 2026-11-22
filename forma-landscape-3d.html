@@ -988,7 +988,7 @@ function rebuild(){
  geo.setAttribute('normal',new THREE.BufferAttribute(
   sampledTerrainNormals(vertices,w,h,(x,z)=>terrainAt(x,z)),3));
  const grass=groundPhotoTexture();grass.repeat.set(w/3.2,h/3.2);
- const groundMat=material(doc.atmosphere.season==='winter'?'#c8d0cc':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
+ const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=false;terrainMesh.userData.ground=true;root.add(terrainMesh);
  if(underlayTexture?.image){
@@ -1006,6 +1006,10 @@ function rebuild(){
  buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
+ // The preview is a disposable overlay: never added to project objects,
+ // never changes planted coordinates, path edges, buildings or terrain.
+ addWeatherSceneVisuals(THREE,root,terrainMesh,doc,terrainAt);
+ applyWetMaterialResponse(root,doc.atmosphere);
  refreshDraft();updateSun();renderProps();updateModelHealth();renderer.render(scene,camera);
 }
 function buildingGroup(b){
@@ -1229,6 +1233,8 @@ function drawObject(o,entry,key){
  else return;
  const groundH=terrainAt(p.x,p.z);
  g.position.set(p.x,groundH,p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+ if(['trees','shrubs'].includes(group)&&g.children.length)
+  addSnowToPlant(THREE,g,o,doc.atmosphere);
  mark(g,key);root.add(g);
  if(g.userData?.botanicalLod)botanicalGroups.push(g);
 }
@@ -1269,6 +1275,8 @@ function drawArea(o,entry,key){
     if(i===1){const start=cap.clone();start.position.set(a.x,a.y+.003,a.z);g.add(start)}
    }}
  }else if(pts.length>=3)g.add(polygon(pts,entry.group==='fills'?.078:entry.group==='lawns'?.052:.055,entry.color||'#6d9874',entry.group==='ponds',o.catalogId));
+ if(['pavers','fills','lawns'].includes(entry.group))
+  g.traverse(n=>{if(n.isMesh)n.userData.formaWeatherableSurface=true});
  mark(g,key);root.add(g);
 }
 function drawExtra(o){
@@ -1281,6 +1289,9 @@ function drawExtra(o){
   },{season:doc.atmosphere.season,quality:currentPlantQuality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
   g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+  if(g.children.length)addSnowToPlant(THREE,g,{...o,catalogId:o.type,
+   height:Number(o.height)||SHRUB_HEIGHT_M[o.type]||.85,
+   diameter:Number(o.width)||PROP_WIDTH_M[o.type]||1.2},doc.atmosphere);
   mark(g,'extra:'+o.id);root.add(g);botanicalGroups.push(g);return;
  }
  const width=Number(o.width)||realModelById(o.type)?.width||PROP_WIDTH_M[o.type];
@@ -2063,6 +2074,16 @@ function updateSun(){
  // Scale fog distance to the plot and orbit camera, not a fixed 25 metres.
  scene.fog.near=atmosphere.fogNear;
  scene.fog.far=atmosphere.fogFar;
+ // Only the selected intensity sliders tune extra weather haze. No new fog
+ // on clear days and no moving distant trees or changing terrain height.
+ const weatherState=weatherEffectsVisible(doc.atmosphere);
+ const intensity=normalizeWeatherEffects(doc.atmosphere.effects);
+ const extraHaze=weatherState.snow?intensity.winterHaze/100:
+  weatherState.rain?intensity.rainMist/100:0;
+ if(extraHaze>0){
+  scene.fog.near=Math.max(1,scene.fog.near*(1-.20*extraHaze));
+  scene.fog.far=Math.max(scene.fog.near+15,scene.fog.far*(1-.47*extraHaze));
+ }
 }
 function setOrbitCameraHeight(height){
  if(state.view!=='3d'||!camera?.isPerspectiveCamera)return;
