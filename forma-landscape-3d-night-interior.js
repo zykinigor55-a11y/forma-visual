@@ -24,6 +24,25 @@ export function nightInteriorMode(time){
 export function interiorLightColor(temperature){
  return {warm:'#FFD2A0',neutral:'#EEE8DA',cool:'#C7E4FF'}[temperature]||'#FFD2A0';
 }
+/** Perceptually progressive, intentionally restrained physically visible night lighting.
+ * Both sliders matter: brightness controls fixture power and indirect light,
+ * while windowGlow controls the emission through already-authored glazing.
+ * No new windows, lamps outside the building, or footprint changes.
+ */
+export function interiorLightLevels(raw){
+ const c=normalizeNightInterior(raw);
+ const enabled=c.lightsEnabled&&c.brightness>0;
+ const b=Math.pow(c.brightness/100,1.32);
+ const g=Math.pow(c.windowGlow/100,1.08);
+ return {
+  enabled,
+  pointIntensity:enabled?0.5+17*b:0,
+  fixtureEmission:enabled?0.15+4.9*b:0,
+  windowEmission:enabled?(0.035+0.65*b)*(0.12+0.88*g):0,
+  floorEmission:enabled?0.035+0.21*b:0,
+  glassClarity:enabled?Math.min(.25,.15*b):0
+ };
+}
 export function nightInteriorPhotoContract(input){
  const time=input?.atmosphere?.time;
  const cfg=normalizeNightInterior(input?.atmosphere?.interior);
