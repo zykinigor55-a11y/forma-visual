@@ -118,7 +118,7 @@ const round=(x,d=3)=>Math.round(x*10**d)/10**d;
 const point=p=>({x:finite(p?.x,-5000,5000,0),y:finite(p?.y,-5000,5000,0)});
 const maxObjects=500;
 const safePhoto=x=>typeof x==='string'&&x.length<1200000&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x)?x:null;
-export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural',atmosphere:{time:'day',season:'summer',weather:'sunny',effects:{...WEATHER_EFFECT_DEFAULTS},interior:{...INTERIOR_NIGHT_DEFAULTS}}});
+export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,northVerified:false,verified:false,style:'natural',atmosphere:{time:'day',season:'summer',weather:'sunny',effects:{...WEATHER_EFFECT_DEFAULTS},interior:{...INTERIOR_NIGHT_DEFAULTS}}});
 export function normalizeProject(raw){
  const obj=raw&&typeof raw==='object'?raw:{},base=freshProject(),site=obj.site||{},house=obj.house||{};
  const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
@@ -127,7 +127,7 @@ export function normalizeProject(raw){
  house:{x:finite(house.x,0,width,width/2),y:finite(house.y,0,height,height*.4),width:finite(house.width,2,60,12),height:finite(house.height,2,60,8),rotation:finite(house.rotation,-360,360,0),type:['house','bath','garage','carport','greenhouse','gazebo','outbuilding'].includes(house.type)?house.type:'house',
  roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',archStyle:housePresetIds.includes(house.archStyle)?house.archStyle:'barn',modelKey:/^[a-z0-9-]{1,48}$/i.test(house.modelKey||'')?house.modelKey:null,roofRise:finite(house.roofRise,.4,8,1.4),roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:safePhoto(house.photo)},
  objects:[],buildings:[],underlay:safePhoto(obj.underlay),
- underlayOpacity:finite(obj.underlayOpacity,0,1,.25),north:finite(obj.north,0,360,0),
+ underlayOpacity:finite(obj.underlayOpacity,0,1,.25),north:finite(obj.north,0,360,0),northVerified:obj.northVerified===true,
  verified:obj.verified===true,style:['natural','modern','architectural'].includes(obj.style)?obj.style:'natural',
  atmosphere:{
   time:SCENE_OPTIONS.time.some(x=>x[0]===obj.atmosphere?.time)?obj.atmosphere.time:'day',
