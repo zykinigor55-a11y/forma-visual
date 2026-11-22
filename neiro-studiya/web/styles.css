@@ -257,3 +257,65 @@ body::before{position:fixed;inset:0;content:'';z-index:15;pointer-events:none;op
   .service-card{scroll-margin-top:82px}
   .web-showcase__frame{width:79%;left:10.5%}
 }
+
+
+/* FORMA AI V24 real 3D hero: maintain approved cinematic composition and mobile framing. */
+.hero-art{isolation:isolate}
+.hero-art > img{
+  position:relative;
+  z-index:0;
+  transition:opacity 1.25s cubic-bezier(.22,1,.36,1);
+}
+#hero-three-canvas{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:block;
+  width:100%;
+  height:100%;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 1.35s cubic-bezier(.22,1,.36,1);
+}
+.hero-art.hero-three-ready{
+  background:
+    radial-gradient(ellipse 40% 43% at 69% 48%,rgba(105,120,134,.19),transparent 82%),
+    radial-gradient(ellipse 35% 26% at 62% 80%,rgba(180,119,64,.085),transparent 85%),
+    linear-gradient(120deg,#050709 7%,#10151a 59%,#06090d 100%);
+}
+.hero-art.hero-three-ready > img{opacity:0}
+.hero-art.hero-three-ready #hero-three-canvas{opacity:1}
+.hero-art.hero-three-ready::before{
+  content:"";
+  position:absolute;
+  z-index:1;
+  width:46%;
+  height:22%;
+  left:38%;
+  bottom:10%;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(ellipse,rgba(185,131,82,.18),rgba(75,90,102,.045) 43%,transparent 73%);
+  filter:blur(25px);
+}
+@media(max-width:900px){
+  .hero-art.hero-three-ready{
+    background:
+      radial-gradient(ellipse at 50% 47%,rgba(112,127,137,.18),transparent 72%),
+      linear-gradient(120deg,#050709,#10161d 52%,#07090c);
+    overflow:hidden;
+  }
+  .hero-art.hero-three-ready::before{
+    left:15%;width:70%;height:22%;bottom:9%;filter:blur(14px)
+  }
+  #hero-three-canvas{inset:0;width:100%;height:100%}
+}
+@media(max-width:620px){
+  .hero-art.hero-three-ready{
+    opacity:1;
+    transform:none !important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #hero-three-canvas,.hero-art > img{transition:none!important}
+}
