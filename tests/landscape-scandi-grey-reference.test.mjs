@@ -64,6 +64,7 @@ test('roof eaves, concrete-supported timber stairs and water-safe sills do not s
  assert.ok(door);
  const band=scandiEntranceBand(openings,11);
  assert.ok(band.left<door.x&&band.right>door.x);
+ assert.ok(band.right-band.left>2.20,'the darker second timber must visibly frame the entrance');
  const stair=scandiEntryStairSpec(door,11,8);
  assert.equal(stair.x,door.x);
  assert.deepEqual(stair.levels,[.16,.32,.48]);
