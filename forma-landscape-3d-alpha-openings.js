@@ -112,7 +112,10 @@ export function addAlphaFrontWallVolume(T,g,opts,createPanel){
  }
  // Window bottom: water drains outward, 4° over the 140mm exterior reveal.
  // The sill plane slopes down ~9.8mm towards positive local Z.
- const D=doorHalf, yStart=doorBottom+.022,yEnd=yStart-.140*Math.tan(4*Math.PI/180);
+ const D=doorHalf, yStart=doorBottom+.022,
+  run=zOuter-zFrameFront,
+  fall=ALFA_OPENING_DETAIL.sillSlopeDegrees*Math.PI/180,
+  yEnd=yStart-run*Math.tan(fall);
  quadMesh(T,g,[[
   [-D,yEnd,zOuter+.014],[D,yEnd,zOuter+.014],
   [D,yStart,zFrameFront],[-D,yStart,zFrameFront]
