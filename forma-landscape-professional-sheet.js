@@ -2,7 +2,7 @@
  * All spatial geometry comes from the source SVG/project, never the AI.
  * A graphic scale represents measured metres; no invented print scale.
  */
-import {byId} from './forma-landscape-project-core.js';
+import {byId,report} from './forma-landscape-project-core.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const fmt=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2});
 const modes={
@@ -43,7 +43,7 @@ export function composeProfessionalPlanSheet(sourceSvg,documentModel,requestedMo
  const content=String(sourceSvg||'').replace(/^\s*<svg\b[^>]*>/i,'').replace(/<\/svg>\s*$/i,'');
  if(!content||/<!DOCTYPE|<!ENTITY/i.test(content))throw Error('Недопустимое содержимое SVG');
  const mapSvg='<svg xmlns="http://www.w3.org/2000/svg" x="'+mapX+'" y="'+mapY+'" width="'+mapW+'" height="'+mapH+'" viewBox="0 0 '+width+' '+height+'" preserveAspectRatio="xMidYMid meet">'+content+'</svg>';
- const catalogue={};
+ const metrics=report(doc),catalogue={};
  for(const obj of Array.isArray(doc.objects)?doc.objects:[]){
   const item=byId(obj.catalogId);if(!item)continue;
   if(!catalogue[item.id])catalogue[item.id]={name:item.name,latin:item.latin||'',count:0,color:item.color||'#748875',group:item.group};
@@ -52,15 +52,19 @@ export function composeProfessionalPlanSheet(sourceSvg,documentModel,requestedMo
  const all=Object.values(catalogue).sort((a,b)=>a.group.localeCompare(b.group)||a.name.localeCompare(b.name));
  const plants=all.filter(x=>['trees','shrubs'].includes(x.group)),surfaces=all.filter(x=>!['trees','shrubs'].includes(x.group));
  const listing=(items,offset,limit)=>items.slice(0,limit).map((x,i)=>{
-  const y=offset+i*42;
+  const y=offset+i*42,area=metrics.areas?.[x.id],length=metrics.lengths?.[x.id];
+  const label=Number.isFinite(Number(area))&&area>0?Number(area).toFixed(1)+' м²':
+   x.group==='pavers'&&Number.isFinite(Number(length))&&length>0?Number(length).toFixed(1)+' м':
+   '× '+x.count;
   return '<rect x="1784" y="'+(y-15)+'" width="15" height="15" rx="3" fill="'+esc(x.color)+'" stroke="'+style.accent+'"/>'+
-   '<text x="1814" y="'+y+'" font-size="21" font-weight="600" fill="'+style.ink+'">'+esc(x.name.length>27?x.name.slice(0,26)+'…':x.name)+'</text>'+
-   '<text x="2306" y="'+y+'" text-anchor="end" font-size="20" fill="'+style.ink+'">× '+x.count+'</text>';
+   '<text x="1814" y="'+(y-5)+'" font-size="19" font-weight="600" fill="'+style.ink+'">'+esc(x.name.length>27?x.name.slice(0,26)+'…':x.name)+'</text>'+
+   (x.latin&&['trees','shrubs'].includes(x.group)?'<text x="1814" y="'+(y+15)+'" font-size="14" font-style="italic" fill="'+style.accent+'">'+esc(x.latin.slice(0,45))+'</text>':'')+
+   '<text x="2306" y="'+y+'" text-anchor="end" font-size="20" fill="'+style.ink+'">'+esc(label)+'</text>';
  }).join('');
  const metres=[1,2,5,10,20,50,100].filter(x=>x<=width/3&&x<=height/2).at(-1)||1;
  const unit=Math.min(mapW/width,mapH/height),barWidth=metres*unit;
  const north=Number.isFinite(Number(doc.north))?Number(doc.north):0;
- const northStatus=doc.verified?'СЕВЕР · ПО ПРОЕКТУ':'СЕВЕР · УСЛОВНЫЙ';
+ const northStatus=doc.northVerified===true?'СЕВЕР · ПОДТВЕРЖДЁН':'СЕВЕР · УСЛОВНЫЙ';
  const outer='<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1680" viewBox="0 0 2400 1680">'+
  '<rect width="2400" height="1680" fill="'+style.background+'"/>'+
  '<rect x="42" y="42" width="2316" height="1596" fill="'+style.paper+'" stroke="#cbc9c0" stroke-width="2"/>'+
