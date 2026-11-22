@@ -64,6 +64,27 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
 .brush-panel .brush-erase:has(input:checked){color:#f0cfac}
 .brush-panel .brush-erase:has(input:disabled){opacity:.45}
 #viewport.tool-brush{cursor:crosshair}
+#alphaSceneButton{position:absolute;z-index:5;top:61px;left:50%;transform:translateX(-50%);
+ min-height:40px;max-width:min(88vw,340px);padding:9px 15px;border:1px solid #929b9b;
+ background:#283033ee;color:#f4f3ed;box-shadow:0 8px 24px #0008;
+ border-radius:999px;font-size:12px;font-weight:750;white-space:nowrap}
+#alphaSceneButton:focus-visible{outline:2px solid #dfc4a3;outline-offset:3px}
+#selectedObjectDock{position:absolute;z-index:5;top:111px;left:50%;
+ transform:translateX(-50%);display:flex;align-items:center;gap:12px;
+ min-width:240px;max-width:calc(100% - 28px);padding:8px 9px 8px 14px;
+ border:1px solid #737d7c;border-radius:12px;background:#202729f4;
+ color:#f0eee8;box-shadow:0 10px 28px #000a}
+#selectedObjectDock[hidden]{display:none!important}
+#selectedObjectName{flex:1;min-width:0;max-width:230px;overflow:hidden;
+ white-space:nowrap;text-overflow:ellipsis;font-size:12px;font-weight:700}
+#selectedObjectDelete{min-height:37px;padding:9px 12px;border:1px solid #ae7772;
+ background:#503334;color:#fff2ec;border-radius:8px;font-size:12px;font-weight:700}
+#selectedObjectDelete:disabled{opacity:.38;cursor:not-allowed}
+@media(min-width:851px){#alphaSceneButton{top:12px}
+ #selectedObjectDock{top:63px}}
+@media(max-width:850px){#alphaSceneButton{top:57px}
+ #selectedObjectDock{top:106px;width:max-content;max-width:calc(100vw - 20px)}
+ #selectedObjectName{max-width:45vw}}
 #draftActions{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;padding:10px;border-top:1px solid #485449}
 #draftActions[hidden]{display:none}
 #draftActions button{font-size:11px;padding:10px 7px}
@@ -269,6 +290,11 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </header>
 <main>
 <canvas id="viewport"></canvas>
+<button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
+<div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
+ <span id="selectedObjectName"></span>
+ <button id="selectedObjectDelete" type="button">Удалить объект</button>
+</div>
 <div class="scene-quick-actions" id="sceneQuickTools" role="toolbar" aria-label="Быстрые инструменты 3D-редактора"><button data-quick-tool="select" class="active" type="button" aria-pressed="true">Выбор</button><button data-quick-tool="plant" type="button" aria-pressed="false">Озеленение</button><button data-quick-tool="terrain" type="button" aria-pressed="false">Рельеф</button><button data-quick-tool="surface" type="button" aria-pressed="false">Покрытия</button></div>
 <div id="mobileWorkspaceTabs" aria-label="Мобильные панели">
  <button type="button" data-mobile-panel="tools" class="active">Инструменты</button>
@@ -691,7 +717,17 @@ function initialize(){
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
  brushCursor=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xE7D0A5,transparent:true,opacity:.78,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
  brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
+ // Deep link applies ALFA to the existing main house without moving it,
+ // affecting its dimensions or touching the rest of the site.
+ const deepLinkAlpha=new URLSearchParams(window.location.search).get('house')==='alpha';
+ if(deepLinkAlpha&&doc.house.archStyle!=='alpha'){
+  push();doc.house.archStyle='alpha';doc.house.modelKey=null;
+  doc.house.roof='gable';
+  doc.house.roofRise=Math.max(4.2,Math.min(8,(Number(doc.house.width)||8)*.79));
+  save();
+ }
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
+ if(deepLinkAlpha){focusHouseCamera();status('Дом АЛЬФА открыт. Композиция и координаты сохранены.');}
  // Android: defer a second WebGL context until the house/details panel is used.
  // 18 offscreen WebGL preview renders create a costly second GPU context.
  // They are not needed until the architectural catalog is actually in view.
@@ -1433,6 +1469,17 @@ async function makeHouseThumbnails(){
  finally{rendererThumb?.dispose();houseThumbBuildRunning=false}
 }
 function selectable(key){const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
+function syncSelectedObjectDock(ref,label){
+ const dock=$('#selectedObjectDock'),title=$('#selectedObjectName'),del=$('#selectedObjectDelete');
+ if(!dock||!title||!del)return;
+ const valid=Boolean(ref?.obj);
+ dock.hidden=!valid;
+ if(!valid)return;
+ title.textContent=String(label||'Выбранный объект');
+ del.disabled=ref.type==='house';
+ del.title=ref.type==='house'?'Главный дом защищён от удаления':'Удалить объект (Ctrl+Z для отмены)';
+ del.textContent=ref.type==='house'?'Главный дом защищён':'Удалить объект';
+}
 function deleteSelectedObject(){
  const selected=state.selected,ref=selected?selectable(selected):null;
  if(!ref?.obj){status('Сначала выделите объект. Нажмите на него в режиме «Управление».');return false}
@@ -1488,7 +1535,7 @@ function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
  if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
  const el=$('#properties'),ref=state.selected?selectable(state.selected):null;
- if(!ref?.obj){document.body.dataset.mobilePine='false';$('#mobilePineSelect')?.classList.remove('active');
+ if(!ref?.obj){syncSelectedObjectDock(null);document.body.dataset.mobilePine='false';$('#mobilePineSelect')?.classList.remove('active');
  $('#pineInspectorShortcut').hidden=true;el.classList.remove('pine-inspector-open','forma-shrub-open');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj, fields=['pine','spruce'].includes(o.catalogId)?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
@@ -1519,6 +1566,7 @@ function renderProps(){
  ):'';
  const real=ref.type==='extra'?realModelById(o.type):null;
  const label=real?.name||(ref.type==='object'?catalog(o.catalogId)?.name:ref.type==='house'?'Главный дом':ref.type==='building'?'Постройка':o.type)||state.selected;
+ syncSelectedObjectDock(ref,label);
  el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
  (isBoulder?'<div class="light-physical-inspector"><strong>КАМЕНЬ · НАТУРАЛЬНАЯ 3D-ФОРМА</strong><label for="rockShapeVariant">Вариант формы</label><select id="rockShapeVariant">'+[[1,'01 · природный'],[2,'02 · другой ракурс'],[3,'03 · природная вариация'],[4,'04 · природная вариация']].map(([v,name])=>'<option value="'+v+'"'+(rockVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><label for="rockBurial">Заглубление <output id="rockBurialValue">'+rockBurial+'%</output></label><input type="range" min="0" max="36" step="2" value="'+rockBurial+'" id="rockBurial"><small>Настоящая сканированная CC0-модель с PBR-текстурами. Диаметр, высота и угол задаются выше. Координаты не меняются.</small></div>':'')+
  (isLight?'<div class="light-physical-inspector"><strong>СВЕТ · РЕАЛЬНЫЙ 3D-КОРПУС</strong><label for="lampBrightness">Яркость <output id="lampBrightnessValue">'+Math.round(lightBrightness*100)+'%</output></label><input type="range" min="0" max="200" step="5" id="lampBrightness" value="'+Math.round(lightBrightness*100)+'"><label for="lampKelvin">Цветовая температура</label><select id="lampKelvin">'+[[2200,'2200 K · янтарный'],[2700,'2700 K · тёплый'],[3000,'3000 K · нейтрально-тёплый'],[4000,'4000 K · нейтральный']].map(([k,n])=>'<option value="'+k+'"'+(lightKelvin===k?' selected':'')+'>'+n+'</option>').join('')+'</select><small>Реальный источник внутри модели. Ночью свет влияет на растения и поверхности. Положение лампы не меняется.</small></div>':'')+(isLight&&o.catalogId==='globe'?'<div class="light-physical-inspector"><label for="lampGlobeSize">Диаметр светильника-шара</label><select id="lampGlobeSize">'+[[1,'40 см · стандартный'],[2,'25 см · малый'],[3,'60 см · большой'],[4,'80 см · XL']].map(([v,name])=>'<option value="'+v+'"'+(globeVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><small>4 размера по вашему референсу. Сохраняем координаты каждого шара.</small></div>':'')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
@@ -2179,6 +2227,17 @@ function addEvents(){
  if(e.pointerType==='mouse'&&e.button!==0)return; // Right drag is reserved for camera orbit.
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
+ // Selecting a placed object takes priority over placing another model
+ // on top of it; Shift+click still allows intentional overlap.
+ if(!e.shiftKey&&['plant','light','build','landscape','models40'].includes(state.tool)){
+  const existing=hitTreeOnMobile(e);
+  if(existing&&selectable(existing)?.obj){
+   e.preventDefault();chooseTool('select');state.selected=existing;
+   renderProps();revealSelectedInspector();
+   status('Объект выбран. «Удалить объект» доступна над сценой.');
+   return;
+  }
+ }
  // Clicking an already planted pine while the plant palette is open
  // edits the original tree; it must not spawn another object or brush.
  if(state.tool==='plant'&&!e.shiftKey){
@@ -2352,6 +2411,8 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();revealSelectedInspector();status('Главный дом выбран — параметры открыты справа. Каталог типов домов находится ниже.')};
+ $('#selectedObjectDelete').onclick=deleteSelectedObject;
+ $('#alphaSceneButton').onclick=()=>$('#alphaQuickSelect').click();
  // Prominent, one-tap access to the ALFA reference house. Reuse exactly
  // the ordinary preset handler to retain undo and preserve scene coordinates.
  $('#alphaQuickSelect').onclick=()=>{
