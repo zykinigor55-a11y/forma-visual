@@ -7,6 +7,7 @@ import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
 import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=alpha-night-v1-20261122';
+import {normalizeNightInterior,interiorLightColor} from './forma-landscape-3d-night-interior.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Серый вертикальный планкен · графитовая кровля · чёрные окна',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#919897'},
@@ -90,13 +91,16 @@ function box(g,T,w,h,d,x,y,z,material){return add(g,T,new T.BoxGeometry(w,h,d),m
 function surface(g,T,w,h,x,y,z,material,rotation=0){
  const v=add(g,T,new T.PlaneGeometry(w,h),material,x,y,z);v.rotation.y=rotation;return v;
 }
-function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=false){
+function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=false,interior=null){
+ const cfg=normalizeNightInterior(interior);
+ const lightsOn=night&&cfg.lightsEnabled&&cfg.brightness>0;
+ const glowStrength=lightsOn?Math.min(.66,.055+cfg.brightness*.0031+cfg.windowGlow*.002):0;
  const g=new T.Group();
  const frame=mat(T,tripleGlazed?SCANDI_DETAIL.windowFrame:'#181E20',tripleGlazed?.40:.52,tripleGlazed?0:.5),recess=mat(T,'#121A1C',.91,.02),glass=new T.MeshPhysicalMaterial({
   // Photographic architectural glazing reflects its environment rather than glowing cyan.
-  color:night?'#AAB9B1':'#6C888B',metalness:0,roughness:.19,transparent:true,opacity:.88,
+  color:lightsOn?'#AAB9B1':'#6C888B',metalness:0,roughness:.19,transparent:true,opacity:lightsOn&&cfg.visibility==='full'?.64:lightsOn&&cfg.visibility==='partial'?.78:.88,
   ior:1.46,clearcoat:.48,clearcoatRoughness:.16,side:T.FrontSide,depthWrite:true,
-  emissive:night?'#E6BD8D':'#000000',emissiveIntensity:night?.23:0
+  emissive:lightsOn?interiorLightColor(cfg.temperature):'#000000',emissiveIntensity:glowStrength
  });
  const w=Math.max(.45,width),h=Math.max(.6,height),edge=.084;
  // Dark recessed opening masks the solid procedural wall behind the pane.
@@ -107,7 +111,7 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
   // Three separate transparent 4mm leaves, dual cavities and visible
   // warm-edge spacers. The frame is uPVC (no metallic reflective finish).
   const pane=new T.MeshPhysicalMaterial({
-   color:night?'#BAC7C0':'#99B6BD',metalness:0,roughness:.058,
+   color:lightsOn?'#BAC7C0':'#99B6BD',metalness:0,roughness:.058,
    ior:1.52,transparent:true,opacity:.28,depthWrite:false,
    side:T.DoubleSide,clearcoat:.15,clearcoatRoughness:.07
   });
@@ -306,7 +310,7 @@ function addWindowFinishing(facade,T,o,style){
  * The wall envelope below consists only of closed wall segments *outside*
  * measured door and window apertures. Door/window meshes occupy the void.
  */
-function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,night}){
+function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,night,interior}){
  const plan=facadeOpeningSchedule({width:w,depth:d,height:h,style,type});
  const walls=[
   ['front',w,0,d/2,0],['rear',w,0,-d/2,Math.PI],
@@ -353,7 +357,7 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     part=doorGroup(T,opening.width,opening.height,
      ['modern','hightech','japandi','panoramic','modular','scandi'].includes(style));
    }else{
-    part=windowGroup(T,opening.width,opening.height,night,opening.panoramic,style==='scandi');
+    part=windowGroup(T,opening.width,opening.height,night,opening.panoramic,style==='scandi',interior);
    }
    // 190mm thick wall (outer face +.095): the window glass is now set
    // 110mm behind it. Aperture geometry and surveyed facade never move.
@@ -764,7 +768,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false,interior
     // Dark weather-resistive rainscreen membrane appears between REAL
     // vertical board joints; it must not reveal old beige wall texture.
     material:style==='scandi'?new THREE.MeshStandardMaterial({
-     color:'#424A4C',roughness:.96,metalness:0}):wallMaterial,night});
+     color:'#424A4C',roughness:.96,metalness:0}):wallMaterial,night,interior});
   g.userData.facadeSchedule=facadePlan;
   const darkTrim=mat(THREE,'#262B2D',.52,.34);
   // Thin projecting base and eave band cast physically grounded shadows.
