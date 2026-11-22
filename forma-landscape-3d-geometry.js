@@ -62,6 +62,39 @@ export function terrainTriangles(site,values,grid=48){
  }
  return new Float32Array(result);
 }
+/** 3D presentation-only ground. The site measurements and parcel boundary stay
+ * authoritative for placement, property lines, brush strokes and the 2D plan.
+ * We deliberately never clip this background surface to an uploaded irregular
+ * property polygon, which otherwise exposes a torn/triangular-looking edge.
+ */
+export function squareTerrainSide(site){
+ const width=Math.max(1,Number(site?.width)||30);
+ const depth=Math.max(1,Number(site?.height)||40);
+ const base=Math.max(width,depth);
+ const margin=Math.max(1.5,Math.min(15,base*.075));
+ return base+2*margin;
+}
+export function squareTerrainTriangles(site,values,grid=48){
+ const width=Math.max(1,Number(site?.width)||30);
+ const depth=Math.max(1,Number(site?.height)||40);
+ const steps=Math.max(2,Math.min(192,Math.floor(Number(grid)||48)));
+ const side=squareTerrainSide(site),half=side*.5,size=side/steps;
+ const triangles=new Float32Array(steps*steps*18);
+ let n=0;
+ const point=(x,z)=>{
+  triangles[n++]=x;
+  triangles[n++]=heightAt(values,steps,width,depth,x,z);
+  triangles[n++]=z;
+ };
+ for(let iz=0;iz<steps;iz++)for(let ix=0;ix<steps;ix++){
+  const x0=-half+ix*size,x1=x0+size;
+  const z0=-half+iz*size,z1=z0+size;
+  // Clockwise when seen from +Y in X/Y/Z coordinates; normals point up.
+  point(x0,z0);point(x0,z1);point(x1,z0);
+  point(x1,z0);point(x0,z1);point(x1,z1);
+ }
+ return triangles;
+}
 export function roofTriangles(width,depth,kind='gable',eave=3.62,rise=1.4){
  const w=width/2+.24,d=depth/2+.24,top=eave+Math.max(.2,rise),positions=[];
  const tri=(a,b,c)=>positions.push(...a,...b,...c);
