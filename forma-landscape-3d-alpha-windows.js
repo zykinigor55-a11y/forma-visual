@@ -1,4 +1,4 @@
-import {alphaOpeningPlanes,ALFA_OPENING_DETAIL} from './forma-landscape-3d-alpha-openings.js';
+import {alphaOpeningPlanes,ALFA_OPENING_DETAIL} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
 /* FORMA / ALFA: transparent architectural window assembly.
  * Architectural visualization only, not manufacturer shop drawings.
  * Units: metres; facade front is local +Z.
