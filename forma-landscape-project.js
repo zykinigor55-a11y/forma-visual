@@ -53,8 +53,13 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
  function treeShadow(item,entry,d){
   const sun=sunSettings();if(!sun.el||sun.strength<.01)return '';
   const height=clamp(Number(item.height)||(TREE_HEIGHT_M[entry.id]||12),.15,40);
-  const distance=height/Math.tan(sun.el*Math.PI/180),a=(sun.az+(doc.north||0))*Math.PI/180;
-  const dx=-Math.sin(a)*distance,dy=Math.cos(a)*distance;
+  // Presentation/planting plans use an anchored canopy shadow, not a full
+  // physical 20–40m long projection that visually disconnects the tree.
+  // WebGL continues to compute true solar shadows independently.
+  const physical=height/Math.tan(sun.el*Math.PI/180);
+  const offset=Math.min(physical,Math.max(.16,Math.min(d*.32,1.6)));
+  const a=(sun.az+(doc.north||0))*Math.PI/180;
+  const dx=-Math.sin(a)*offset,dy=Math.cos(a)*offset;
   return '<image href="'+iconURL(entry)+'" x="'+(item.x-d/2+dx)+'" y="'+(item.y-d/2+dy)+'" width="'+d+'" height="'+d+'" filter="url(#lpTreeCastShadow)" opacity="'+(.48*sun.strength).toFixed(3)+'" pointer-events="none"/>'
    +'<ellipse cx="'+item.x+'" cy="'+item.y+'" rx="'+(d*.22)+'" ry="'+(d*.17)+'" fill="#122216" opacity="'+(.085*sun.strength).toFixed(3)+'" pointer-events="none"/>';
  }
