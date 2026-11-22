@@ -139,3 +139,29 @@ test('ALFA variable widths do not generate non-finite vertices or inverted boxes
   assert.equal(tagged(g,'alpha-standing-seam-roof-with-openings')[0].geometry.shape.holes.length,4);
  }
 });
+
+
+test('ALFA smoked graphite glass conceals the interior without turning opaque',()=>{
+ const g=build(7.5,9.5,5.93);
+ const ext=tagged(g,'alpha-sliding-low-iron-exterior-pane');
+ const inner=tagged(g,'alpha-sliding-low-iron-interior-pane');
+ const triangle=tagged(g,'alpha-gable-glass-exterior-leaf');
+ const roof=tagged(g,'alpha-recessed-rooflight-ig-glass');
+ assert.equal(ext.length,4);
+ assert.equal(inner.length,4);
+ assert.equal(triangle.length,1);
+ assert.equal(roof.length,4);
+ for(const m of [...ext,...triangle]){
+  assert.ok(m.material.opacity>=.68&&m.material.opacity<1);
+  assert.equal(m.material.color,'#29373D');
+  assert.equal(m.material.depthWrite,false);
+  assert.ok(m.material.envMapIntensity>=1.2);
+ }
+ for(const m of inner)assert.ok(m.material.opacity>=.17&&m.material.opacity<.35);
+ for(const m of roof)assert.ok(m.material.opacity>=.6&&m.material.opacity<1);
+ const effectiveOpacity=1-(1-ext[0].material.opacity)*(1-inner[0].material.opacity);
+ assert.ok(effectiveOpacity>.78&&effectiveOpacity<.95,
+  'Tint should largely conceal but not fully obliterate interior');
+ assert.equal(g.userData.alphaWall.thicknessM,.24);
+ assert.equal(g.userData.alphaFenestration.frameRecessM,.14);
+});
