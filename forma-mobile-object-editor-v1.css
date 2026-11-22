@@ -130,3 +130,30 @@
 @media(min-width:851px){
   #selectedObjectEdit,#selectedObjectDismiss,#mobileObjectEditorHeader{display:none!important}
 }
+
+/* Per-house architectural garlands: compact section on desktop and touch. */
+#roofGarlandSettings{display:grid;gap:10px;width:100%;min-width:0;
+ padding:13px 12px;margin:7px 0 16px;
+ background:linear-gradient(150deg,#303238,#23262b);
+ border:1px solid #776f62;border-radius:12px;
+ color:#e8e8e7;font-size:12px;line-height:1.4}
+#roofGarlandSettings>strong{color:#e7cda6;font-size:11px;
+ font-weight:800;letter-spacing:.08em}
+#roofGarlandSettings label{display:grid;gap:6px;margin:0;color:#d7d6d1;
+ font-size:12px;line-height:1.4}
+#roofGarlandSettings .roof-garland-toggle{display:flex;align-items:center;
+ flex-direction:row;gap:11px;font-weight:700;color:#f4e5ce;min-height:44px}
+#roofGarlandSettings .roof-garland-toggle input{width:21px;height:21px;
+ flex:0 0 21px;accent-color:#dabd90}
+#roofGarlandSettings .roof-garland-selects{display:grid;gap:8px}
+#roofGarlandSettings select{appearance:auto;max-width:100%;min-height:44px;
+ border:1px solid #767776;border-radius:9px;background:#363a40;color:#f2ebdf;
+ padding:8px 10px;font-size:14px}
+#roofGarlandSettings input[type="range"]{width:100%;min-height:36px;
+ accent-color:#d4b98d;touch-action:pan-x}
+#roofGarlandSettings output{font-weight:700;color:#e9cb9f}
+#roofGarlandSettings small{color:#adb1b4;font-size:11px;line-height:1.55}
+@media(max-width:850px){
+ body[data-mobile-panel="details"][data-object-inspector="true"] #roofGarlandSettings{
+  margin-top:10px;padding:12px 10px}
+}
