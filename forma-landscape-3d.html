@@ -426,7 +426,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <div id="aiResult" hidden role="dialog" aria-label="Фотореалистичный AI-результат">
  <div class="ai-result-card"><div class="ai-result-head"><strong>FORMA · РЕЗУЛЬТАТ</strong><button type="button" id="closeAiResult">× Закрыть</button></div>
  <img id="aiResultImage" alt="Фотореалистичный рендер текущего 3D-ракурса">
- <div class="ai-result-actions"><a id="downloadAiResult" download="FORMA-landscape-3d-ai.png">↓ Скачать изображение</a><span>Изображение справочное. Размеры — только из модели.</span></div>
+ <div class="ai-result-actions"><a id="downloadAiResult" download="FORMA-landscape-3d-ai.png">↓ Скачать изображение</a><span id="aiResultMeta" aria-live="polite">Изображение справочное. Размеры — только из модели.</span></div>
  </div></div>
 <div id="loadError" role="alert"><div><strong>Не удалось загрузить 3D-движок</strong><p>Для редактора требуется WebGL и доступ к библиотеке Three.js. Проверьте подключение к сети и обновите страницу.</p><button type="button" id="reload3d" class="action primary" onclick="location.reload()">Перезапустить 3D-редактор</button></div></div>
 </main>
@@ -465,6 +465,7 @@ import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './fo
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
 import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js';
 import {surfaceMaterial,surfacePreviewURL} from './forma-landscape-3d-surfaces.js';
+import {inspectRenderDataURL} from './forma-landscape-ai-photo-quality.js?v=fullframe-v1-20261122';
  // The editor is demand-rendered: update the frame after streamed PBR arrives.
  window.addEventListener('forma-surface-texture-ready',()=>{
   if(!renderer||!scene||!camera)return;
@@ -2156,6 +2157,10 @@ async function renderAi(){
  try{
   setAiProgress('running','Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
   const image=captureHighQuality3dReference();
+  const inputQuality=await inspectRenderDataURL(image,{season:doc.atmosphere.season});
+  if(inputQuality.whiteFraction>.91||inputQuality.transparentFraction>.60)
+   throw Error('Исходный 3D-кадр захвачен не полностью: '+inputQuality.reason+
+    '. Платный запрос НЕ отправлен. Откройте режим «Сцена», нажмите «К дому» и повторите.');
   const sunlight=scene.getObjectByName('sun')?.position;
   const sceneInfo={...coordinateSummary(doc),cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
@@ -2163,17 +2168,28 @@ async function renderAi(){
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
    solarAngles:{azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,strength:solarSettings.strength,softness:solarSettings.softness},
    extra3dObjects:extra.slice(0,250).map(o=>({type:o.type,x:o.x,y:o.y,width:o.width,rotation:o.rotation,
-    catalogName:realModelById(o.type)?.name||o.type,group:realModelById(o.type)?.group||'structures'}))};
+    catalogName:realModelById(o.type)?.name||o.type,
+    group:realModelById(o.type)?.group||'structures',
+    speciesLatin:CATALOG.find(a=>a.id===o.type)?.latin||null}))};
   const payload=JSON.stringify({image,landscapeMasterplan:sceneInfo,landscapeModel:model,quality:'high',quantity:1});
   const transport=window.FORMA_RENDER_QUEUE?.fetch||fetch;
   const response=await transport('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:payload});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.images?.[0])throw Error(data.error||'Сервер не вернул изображение. Повторный платный запрос не запускался.');
   const url='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
-  setAiProgress('completed','Фотографический рендер готов.');
+  const outputQuality=await inspectRenderDataURL(url,{season:doc.atmosphere.season});
+  const incomplete=outputQuality.whiteFraction>.91||outputQuality.transparentFraction>.60;
+  const actualModel=String(data.model||model);
+  const modelName=actualModel.startsWith('nano-banana')?'Nano Banana 2.1':
+   actualModel.startsWith('gpt-image-2.6')?'GPT Image 2.6 ('+actualModel+')':actualModel;
+  const resultMeta=$('#aiResultMeta');
+  if(resultMeta)resultMeta.textContent=modelName+' · API Market · '+
+   (incomplete?'ВНИМАНИЕ: AI вернул неполный/пустой низ кадра. Автоматический платный повтор отключён.':
+    'Результат AI; размеры и координаты — только из 3D-модели.');
+  setAiProgress('completed',incomplete?'Получен кадр с возможным дефектом композиции. Повторный платный запрос не запускался.':'Фотографический рендер получен от '+modelName+'.');
   $('#aiResultImage').src=url;$('#downloadAiResult').href=url;
   $('#aiProgress').hidden=true;$('#aiResult').hidden=false;
-  status('AI-изображение получено. Сохраняйте его отдельно; исходная 3D-геометрия не изменена.');
+  status(incomplete?'Внимание: нижняя часть результата выглядит неполной. Проверьте PNG перед скачиванием.':'AI-изображение получено через '+modelName+'. Исходная 3D-геометрия не изменена.');
  }catch(error){
   const message='Ошибка AI: '+(error?.message||'Неизвестная ошибка');
   setAiProgress('failed',message);$('#aiProgress').hidden=false;status(message);
