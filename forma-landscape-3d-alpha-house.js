@@ -13,6 +13,34 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function finish(T,color,roughness=.76,metalness=0){
  return new T.MeshStandardMaterial({color,roughness,metalness});
 }
+const deckPbrCache=new WeakMap();
+function alphaNordicDeckMaterial(T){
+ // Existing licensed/self-hosted 1K wood PBR: fine grain without extra slat meshes.
+ // Fallback keeps the deck usable in headless tests and slow mobile connections.
+ const material=finish(T,'#C3A98B',.89,.015);
+ if(!T.TextureLoader||typeof window==='undefined')return material;
+ let maps=deckPbrCache.get(T);
+ if(!maps){
+  const loader=new T.TextureLoader();
+  const load=(channel)=>{
+   const map=loader.load('/assets/house-pbr/wood-'+channel+'-1k.jpg',
+    ()=>window.dispatchEvent(new Event('forma-house-pbr-ready')));
+   map.wrapS=map.wrapT=T.RepeatWrapping;
+   map.repeat.set(3.2,1.4);
+   map.anisotropy=8;
+   if(channel==='diff')map.colorSpace=T.SRGBColorSpace;
+   return map;
+  };
+  maps={color:load('diff'),normal:load('nor_gl'),roughness:load('rough')};
+  deckPbrCache.set(T,maps);
+ }
+ material.map=maps.color;
+ material.normalMap=maps.normal;
+ if(T.Vector2)material.normalScale=new T.Vector2(.21,.21);
+ material.roughnessMap=maps.roughness;
+ material.needsUpdate=true;
+ return material;
+}
 function box(T,g,w,h,d,x,y,z,material,part){
  const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),material);
  mesh.position.set(x,y,z);
@@ -216,7 +244,7 @@ function addDeck(T,g,w,d){
  const near=d*.5+.065,depth=Math.min(2.1,Math.max(1.65,d*.235));
  const left=-w*.5-.05,right=w*.5+.72,span=right-left;
  const far=near+depth,center=(near+far)/2,xc=(left+right)/2;
- const decking=finish(T,'#92785C',.87,.01),edge=finish(T,'#624B3A',.79,.02);
+ const decking=alphaNordicDeckMaterial(T),edge=finish(T,'#675344',.83,.02);
  const joist=finish(T,'#4A4540',.84,.02);
  const posts=finish(T,'#5C5E58',.89,.02);
  // Exposed supported framing, not a floating cantilevered slab.
