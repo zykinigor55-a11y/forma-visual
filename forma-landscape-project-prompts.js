@@ -1,4 +1,5 @@
 import {byId} from './forma-landscape-project-core.js';
+import {professionalPlanPrompt} from './forma-landscape-professional-sheet.js';
 import {botanicalPhotoProfile} from './forma-landscape-3d-plant-materials.js';
 import {treeInstancePhotoDetail} from './forma-landscape-tree-photo-identity.js';
 import {photoLightingContract} from './forma-landscape-3d-lighting-photo.js';
@@ -17,6 +18,9 @@ export function masterplanPrompt(input){
  const w=Number(site?.width),h=Number(site?.height);
  if(!Number.isFinite(w)||!Number.isFinite(h)||w<5||h<5||w>500||h>500)throw Object.assign(Error('Укажите реальные габариты участка в метрах.'),{status:400});
  if(!Number.isFinite(Number(house?.width))||!Number.isFinite(Number(house?.height))||Number(house.width)<2||Number(house.height)<2)throw Object.assign(Error('Укажите размеры здания.'),{status:400});
+ // Professional plan modes use precise flat architecture graphics, not the
+ // Nikon-Z8 photographic prompt used by the legacy aerial style.
+ if(['presentation','planting','technical'].includes(input.presentationMode))return professionalPlanPrompt(input);
  const count=Array.isArray(input.objects)?Math.min(input.objects.length,500):0;
  const fmt=v=>Number.isFinite(Number(v))?Number(v).toFixed(2):'0.00';
  const sourceObjects=(Array.isArray(input.objects)?input.objects:[]).slice(0,500);
