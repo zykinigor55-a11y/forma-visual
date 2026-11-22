@@ -500,8 +500,10 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <button type="button" data-mobile-panel="tools" class="active" aria-pressed="false">Каталог</button>
  <button type="button" data-mobile-panel="details" aria-pressed="false">Параметры</button>
  <button type="button" data-mobile-panel="scene" aria-pressed="true" aria-label="Скрыть панели и показать всю 3D-сцену">Сцена</button>
- <button type="button" id="mobilePineSelect" aria-label="Выбрать посаженное дерево и открыть его параметры">🌲 Дерево</button>
+ <button type="button" id="mobilePineSelect" aria-label="Выбрать посаженное дерево и открыть его параметры" hidden>🌲 Дерево</button>
+ <button type="button" id="mobileHouseSelect" aria-label="Открыть настройки дома, гирлянд и внутреннего освещения">🏠 Дом</button>
 </div>
+<div id="mobilePlacementHint" role="status" hidden><span id="mobilePlacementLabel"></span><button id="mobilePlacementCancel" type="button" aria-label="Отменить размещение и вернуть выбор">Отмена</button></div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
  <div id="mobileObjectEditorHeader" hidden><strong id="mobileObjectEditorTitle">Объект</strong><button id="mobileObjectMove" type="button" title="Переместить выделенный объект пальцем">↔ Двигать</button><button id="mobileObjectClose" type="button" aria-label="Свернуть редактор и открыть сцену">×</button></div>
@@ -906,6 +908,16 @@ function selectNextPine(){
  const i=pines.findIndex(p=>p.id===current);
  selectPineById(pines[(i+1)%pines.length].id);
 }
+function syncMobilePlacementHint(){
+ const hint=$('#mobilePlacementHint'),label=$('#mobilePlacementLabel');
+ if(!hint||!label)return;
+ const active=window.innerWidth<=850&&state.tool!=='select'&&!!state.placing&&
+  ['light','plant','landscape','models40','creatures','build','furniture'].includes(state.tool);
+ hint.hidden=!active;
+ if(!active)return;
+ const entry=catalog(state.placing)||realModelById(state.placing)||creatureById(state.placing);
+ label.textContent='＋ '+(entry?.name||'Объект')+' · коснитесь земли для установки';
+}
 function activateMobilePanel(name){
  if(name!=='scene')setSceneClimateOpen(false);
  const ref=state.selected?selectable(state.selected):null;
@@ -924,6 +936,7 @@ function activateMobilePanel(name){
   button.setAttribute('aria-pressed',String(active));
  });
  if(window.innerWidth<=850)syncSelectedObjectDock(ref,$('#selectedObjectName')?.textContent||'Объект');
+ syncMobilePlacementHint();
  requestAnimationFrame(resize);
 }
 function save(){
@@ -941,6 +954,16 @@ function initialize(){
   activateMobilePanel(document.body.dataset.mobilePanel===name&&name!=='scene'?'scene':name);
  }));
  $('#mobilePineSelect').addEventListener('click',selectNextPine);
+ $('#mobileHouseSelect').onclick=()=>{
+  if(state.tool!=='select')chooseTool('select');
+  state.selected='house:main';state.mobileObjectCollapsed=false;state.mobileMoveMode=false;
+  renderProps();revealSelectedInspector();
+  status('Дом выбран. Настройки гирлянд и интерьера находятся здесь.');
+ };
+ $('#mobilePlacementCancel').onclick=()=>{
+  chooseTool('select');state.placing=null;activateMobilePanel('scene');
+  status('Размещение отменено. Камера доступна.');
+ };
  // Tap an asset in the catalog, then place it immediately on the visible site.
  // Delay the sheet transition until the existing asset-selection handler runs.
  $('#library').addEventListener('click',event=>{
@@ -1604,6 +1627,8 @@ function renderCreatureCatalog(){
 }
 function chooseTool(t){
  state.tool=t;state.placing=null;pointMode=[];refreshDraft();
+ if(window.innerWidth<=850){state.mobileMoveMode=false;state.mobileObjectCollapsed=true;}
+ syncMobilePlacementHint();
  const draft=$('#draftActions');if(draft)draft.hidden=!['site','surface','water','fence'].includes(t);
  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
  document.querySelectorAll('[data-quick-tool]').forEach(b=>{const active=b.dataset.quickTool===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
@@ -1650,6 +1675,7 @@ function chooseTool(t){
   if(t==='plant')refreshPlantAssetStatus();
   if(t==='surface')syncSurfacePaintMode();
   status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.');
+  syncMobilePlacementHint();
  });
  if(t==='select')$('#library').querySelectorAll('[data-select-pine]').forEach(b=>
   b.addEventListener('click',()=>selectPineById(b.dataset.selectPine)));
@@ -1888,7 +1914,8 @@ function syncSelectedObjectDock(ref,label){
  if(!dock||!title||!del)return;
  // Do not cover the main house with a huge 'protected' floating panel.
  const valid=Boolean(ref?.obj&&ref.type!=='house');
- dock.hidden=!valid||(window.innerWidth<=850&&state.mobileObjectCollapsed);
+ // The large move pad must NEVER appear on tap-to-edit or while placing assets.
+ dock.hidden=!valid||(window.innerWidth<=850&&!state.mobileMoveMode);
  if(!ref?.obj)return;
  title.textContent=String(label||'Выбранный объект');
  const headerTitle=$('#mobileObjectEditorTitle');if(headerTitle)headerTitle.textContent=String(label||'Объект');
@@ -3104,7 +3131,7 @@ function addEvents(){
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
  // Selecting a placed object takes priority over placing another model
  // on top of it; Shift+click still allows intentional overlap.
- if(!e.shiftKey&&['plant','light','build','landscape','models40','creatures'].includes(state.tool)){
+ if(e.pointerType==='mouse'&&!e.shiftKey&&['plant','light','build','landscape','models40','creatures'].includes(state.tool)){
   const existing=hitTreeOnMobile(e);
   if(existing&&selectable(existing)?.obj){
    e.preventDefault();chooseTool('select');state.selected=existing;
@@ -3115,7 +3142,7 @@ function addEvents(){
  }
  // Clicking an already planted pine while the plant palette is open
  // edits the original tree; it must not spawn another object or brush.
- if(state.tool==='plant'&&!e.shiftKey){
+ if(state.tool==='plant'&&e.pointerType==='mouse'&&!e.shiftKey){
   const planted=hitTreeOnMobile(e),found=planted?selectable(planted)?.obj:null;
   if(found?.catalogId==='pine'){
    e.preventDefault();
