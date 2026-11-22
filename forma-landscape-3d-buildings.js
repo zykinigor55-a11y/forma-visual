@@ -7,7 +7,8 @@ import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
 import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=alpha-night-v1-20261122';
-import {normalizeNightInterior,interiorLightColor} from './forma-landscape-3d-night-interior.js';
+import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js';
+import {addRoofGarland} from './forma-landscape-roof-garlands.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Серый вертикальный планкен · графитовая кровля · чёрные окна',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#919897'},
@@ -92,13 +93,13 @@ function surface(g,T,w,h,x,y,z,material,rotation=0){
  const v=add(g,T,new T.PlaneGeometry(w,h),material,x,y,z);v.rotation.y=rotation;return v;
 }
 function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=false,interior=null){
- const cfg=normalizeNightInterior(interior);
- const lightsOn=night&&cfg.lightsEnabled&&cfg.brightness>0;
- const glowStrength=lightsOn?Math.min(.66,.055+cfg.brightness*.0031+cfg.windowGlow*.002):0;
+ const cfg=normalizeNightInterior(interior),levels=interiorLightLevels(cfg);
+ const lightsOn=night&&levels.enabled;
+ const glowStrength=lightsOn?levels.windowEmission:0;
  const g=new T.Group();
  const frame=mat(T,tripleGlazed?SCANDI_DETAIL.windowFrame:'#181E20',tripleGlazed?.40:.52,tripleGlazed?0:.5),recess=mat(T,'#121A1C',.91,.02),glass=new T.MeshPhysicalMaterial({
   // Photographic architectural glazing reflects its environment rather than glowing cyan.
-  color:lightsOn?'#AAB9B1':'#6C888B',metalness:0,roughness:.19,transparent:true,opacity:lightsOn&&cfg.visibility==='full'?.64:lightsOn&&cfg.visibility==='partial'?.78:.88,
+  color:lightsOn?'#AAB9B1':'#6C888B',metalness:0,roughness:.19,transparent:true,opacity:lightsOn&&cfg.visibility==='full'?.45:lightsOn&&cfg.visibility==='partial'?.62:.88,
   ior:1.46,clearcoat:.48,clearcoatRoughness:.16,side:T.FrontSide,depthWrite:true,
   emissive:lightsOn?interiorLightColor(cfg.temperature):'#000000',emissiveIntensity:glowStrength
  });
@@ -111,7 +112,8 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
   // Three separate transparent 4mm leaves, dual cavities and visible
   // warm-edge spacers. The frame is uPVC (no metallic reflective finish).
   const pane=new T.MeshPhysicalMaterial({
-   color:lightsOn?'#BAC7C0':'#99B6BD',metalness:0,roughness:.058,
+   color:lightsOn?'#E0CBB3':'#99B6BD',metalness:0,roughness:.058,
+   emissive:lightsOn?interiorLightColor(cfg.temperature):'#000000',emissiveIntensity:glowStrength*.19,
    ior:1.52,transparent:true,opacity:.28,depthWrite:false,
    side:T.DoubleSide,clearcoat:.15,clearcoatRoughness:.07
   });
@@ -700,6 +702,9 @@ export function createArchitecturalBuilding(THREE,building,{night=false,interior
  // full-height triangular facade. Never fall back to ordinary house walls.
  if(style==='alpha'){
   addAlphaReferenceHouse(THREE,g,b,{width:w,depth:d,night,interior});
+  const alphaGarland=addRoofGarland(THREE,b,{width:w,depth:d,eave:.65,
+   style:'alpha',roof:'gable',rise:Math.max(4.2,Math.min(8,Number(b.roofRise)||(w*.79))),overhang:.22,night});
+  if(alphaGarland)g.add(alphaGarland);
   g.userData.archStyle=style;
   g.userData.footprint={width:w,height:d};
   g.userData.textures=ownedHouseTextures;
@@ -854,6 +859,16 @@ export function createArchitecturalBuilding(THREE,building,{night=false,interior
  }
  if(!isGarage&&!isGazebo&&!isCarport&&!isGreenhouse)
   addPresetVolumes(g,THREE,{style,w,d,bodyHeight});
+ const trimOverhang=style==='scandi'?scandiRoofOverhang(w,d):
+  style==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
+  style==='cottage'?Math.min(.75,Math.min(w,d)*.09):
+  Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
+ const roofType=roofBuilding.roof||preset.roof;
+ const garlandRise=style==='aframe'?Math.max(4.2,Math.min(8,Number(b.roofRise)||w*.74)):
+  Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
+ const garland=addRoofGarland(THREE,b,{width:w,depth:d,eave:bodyHeight,
+  style,roof:roofType,rise:garlandRise,overhang:trimOverhang,night});
+ if(garland)g.add(garland);
  g.userData.archStyle=style;g.userData.footprint={width:w,height:d};g.userData.textures=ownedHouseTextures;
  return g;
 }
