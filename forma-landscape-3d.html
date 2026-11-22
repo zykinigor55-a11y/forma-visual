@@ -602,8 +602,8 @@ import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strok
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
-import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v1';
-import {addSnowToPlant,addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v1';
+import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
+import {addSnowToPlant,addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
 import {createOutdoorReflectionMap,updateOutdoorReflectionMap} from './forma-landscape-3d-environment.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
@@ -1301,6 +1301,11 @@ function drawExtra(o){
   if(source){
    const p=pos(o.x||0,o.y||0),g=makeRealProp(THREE,source,{width});
    g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+   // Imported/extra distant pine or spruce gets the SAME selected snow
+   // as foreground species, without altering this GLB mesh or its transform.
+   if(/pine|spruce|fir|thuja|juniper|cedar/i.test(o.type)&&g.children.length)
+    addSnowToPlant(THREE,g,{id:o.id,catalogId:o.type,
+     height:Number(o.height)||width*2,diameter:width},doc.atmosphere);
    mark(g,'extra:'+o.id);root.add(g);return;
   }
   if(realModelById(o.type)){
