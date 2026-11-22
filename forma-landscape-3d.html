@@ -77,6 +77,44 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
  box-shadow:0 5px 18px #0005;backdrop-filter:blur(10px)}
 #sceneCameraCycle:hover{background:#343B40;border-color:#A1A8AA}
 #sceneCameraCycle:focus-visible{outline:2px solid #D9C3A1;outline-offset:3px}
+#sceneClimateButton{display:none;position:absolute;z-index:7;top:127px;left:12px;
+ min-height:40px;min-width:150px;padding:8px 12px;border:1px solid #817C72;
+ border-radius:11px;background:#2B2C31F2;color:#F5E6CD;
+ font-size:11px;font-weight:750;letter-spacing:.02em;box-shadow:0 6px 18px #0006}
+#sceneClimateButton[aria-expanded="true"]{border-color:#CEB694;background:#4A4138}
+#sceneClimatePanel{position:absolute;z-index:10;top:176px;left:12px;
+ width:min(352px,calc(100% - 24px));max-height:min(62dvh,625px);
+ overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+ padding:13px;border-radius:16px;border:1px solid #80766A;
+ background:#22252BF5;color:#F5F0E6;box-shadow:0 16px 44px #000B;
+ backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#sceneClimatePanel[hidden]{display:none!important}
+.scene-climate-heading{display:flex;align-items:center;justify-content:space-between;
+ gap:8px;margin-bottom:13px;color:#E0CAA7;font-size:11px;letter-spacing:.08em}
+#sceneClimateClose{min-width:34px;min-height:34px;padding:5px;background:#33363D;
+ color:#F6EEE2;border:1px solid #5B5D64;border-radius:8px}
+.scene-climate-grid{display:grid;grid-template-columns:1fr 1.3fr;
+ gap:9px 12px;align-items:center;margin-bottom:14px}
+#sceneClimatePanel label{font-size:11px;line-height:1.2;color:#D4D5D3;
+ font-weight:600;margin:0}
+#sceneClimatePanel select{width:100%;min-height:38px;padding:5px 8px;
+ color:#FFF4E6;background:#353941;border:1px solid #63656A;
+ border-radius:8px;font-size:13px}
+.scene-climate-sliders{display:grid;gap:5px}
+.scene-climate-sliders label{display:flex;justify-content:space-between;
+ align-items:baseline;gap:6px;margin-top:8px!important}
+.scene-climate-sliders output{color:#EBD0A9;font-size:11px;
+ font-variant-numeric:tabular-nums;white-space:nowrap}
+.scene-climate-sliders input[type="range"]{width:100%;height:22px;
+ margin:0;accent-color:#D1AE77;touch-action:pan-x}
+.scene-climate-actions{display:flex;gap:8px;margin:13px 0 10px}
+.scene-climate-actions button{min-height:39px;flex:1;padding:7px 8px;
+ background:#38383B;border:1px solid #786D5E;border-radius:8px;
+ color:#F8E9D3;font-size:11px;font-weight:700}
+#sceneClimatePanel small{color:#ADB1B4;font-size:10px;line-height:1.5;
+ display:block}
+@media(max-width:390px){#sceneClimatePanel{top:165px;max-height:56dvh}
+ #sceneClimateButton{top:119px;left:8px;min-height:36px}}
 #selectedObjectDock{position:absolute;z-index:5;top:111px;left:50%;
  transform:translateX(-50%);display:flex;align-items:center;gap:12px;
  min-width:240px;max-width:calc(100% - 28px);padding:8px 9px 8px 14px;
@@ -231,6 +269,7 @@ body[data-mobile-pine="true"] .pine-growth-editor{margin-bottom:18px}
 body[data-mobile-panel="scene"] #status{bottom:67px}
 body[data-mobile-panel="scene"] #left,body[data-mobile-panel="scene"] #right{display:none}
 body[data-mobile-panel="scene"] #sceneCameraCycle{display:block}
+body[data-mobile-panel="scene"] #sceneClimateButton{display:block}
 @media(max-width:390px){
  body[data-mobile-panel="scene"] #sceneCameraCycle{
   top:75px;left:8px;min-width:105px;min-height:36px;padding:7px 9px}
@@ -312,6 +351,29 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <main>
 <canvas id="viewport"></canvas>
 <button type="button" id="sceneCameraCycle" aria-label="Ракурсы камеры: общий дом, ближе, весь участок" title="Один тап — дом, второй — ближе, третий — весь участок">⌖ К дому</button>
+<button type="button" id="sceneClimateButton" aria-controls="sceneClimatePanel" aria-expanded="false" aria-label="Открыть настройки солнца, времени суток и погоды">☀ Солнце и погода</button>
+<section id="sceneClimatePanel" class="scene-climate-panel" role="region" aria-label="Настройки солнца и погоды" hidden>
+ <div class="scene-climate-heading"><strong>☀ СОЛНЦЕ · ПОГОДА</strong><button type="button" id="sceneClimateClose" aria-label="Закрыть настройки погоды">✕</button></div>
+ <div class="scene-climate-grid">
+  <label for="quickTime">Время суток</label><select id="quickTime"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
+  <label for="quickSeason">Сезон</label><select id="quickSeason"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
+  <label for="quickWeather">Погода</label><select id="quickWeather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
+ </div>
+ <div class="scene-climate-sliders">
+  <label for="quickSunAzimuth">Азимут солнца <output id="quickSunAzimuthValue">311°</output></label><input id="quickSunAzimuth" type="range" min="0" max="359" step="1">
+  <label for="quickSunElevation">Высота солнца <output id="quickSunElevationValue">67°</output></label><input id="quickSunElevation" type="range" min="2" max="85" step="1">
+  <label for="quickSunStrength">Яркость солнца <output id="quickSunStrengthValue">100%</output></label><input id="quickSunStrength" type="range" min="30" max="170" step="5">
+  <label for="quickSunSoftness">Мягкость теней <output id="quickSunSoftnessValue">2.6</output></label><input id="quickSunSoftness" type="range" min="1" max="5" step=".2">
+  <label for="quickCloudCover">Облачность <output id="quickCloudCoverValue">35%</output></label><input id="quickCloudCover" type="range" min="0" max="100" step="5">
+  <label for="quickGlobalFill">Заполняющий свет <output id="quickGlobalFillValue">110%</output></label><input id="quickGlobalFill" type="range" min="30" max="180" step="5">
+  <label for="quickAerialHaze">Дымка <output id="quickAerialHazeValue">30%</output></label><input id="quickAerialHaze" type="range" min="0" max="100" step="5">
+ </div>
+ <div class="scene-climate-actions">
+  <button type="button" id="sceneClimateSunReset">↺ Сброс солнца</button>
+  <button type="button" id="sceneClimateAll">Все параметры</button>
+ </div>
+ <small>Сцена обновляется при изменении. Те же значения используются при AI-фоторендере. Положение дома и растений не меняется.</small>
+</section>
 <button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
 <div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
  <span id="selectedObjectName"></span>
@@ -669,6 +731,7 @@ function selectNextPine(){
  selectPineById(pines[(i+1)%pines.length].id);
 }
 function activateMobilePanel(name){
+ if(name!=='scene')setSceneClimateOpen(false);
  document.body.dataset.mobilePanel=name;
  document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.classList.toggle('active',button.dataset.mobilePanel===name));
  if(name==='details'&&state.selected?.startsWith('object:')&&['pine','spruce'].includes(selectable(state.selected)?.obj?.catalogId)){
