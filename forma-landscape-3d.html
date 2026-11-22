@@ -707,6 +707,7 @@ import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-w
 import {addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
 import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape-3d-snow-canopy.js?v=snow-canopy-opaque-glb-v2-20261122';
 import {normalizeNightInterior,nightInteriorMode} from './forma-landscape-3d-night-interior.js?v=night-interior-v1-20261122';
+import {normalizeRoofGarland} from './forma-landscape-roof-garlands.js';
 import {createOutdoorReflectionMap,updateOutdoorReflectionMap} from './forma-landscape-3d-environment.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
@@ -1997,6 +1998,44 @@ function commitSelectedSpruceGrowth(o,{spruce,height}){
  status('Ель изменена: '+(next.type==='young'?'молодая':next.type==='century'?'вековая':'обычная')+
   ', '+dims.height+' м. Изменена исходная GLB-модель.');
 }
+function roofGarlandMarkup(building){
+ const g=normalizeRoofGarland(building?.garland);
+ const option=(key,label,selected)=>'<option value="'+key+'"'+(selected===key?' selected':'')+'>'+label+'</option>';
+ return '<section id="roofGarlandSettings" class="roof-garland-editor">'+
+  '<strong>ГИРЛЯНДЫ · ПОДШИВКА КРОВЛИ</strong>'+
+  '<label class="roof-garland-toggle"><input type="checkbox" data-roof-garland="enabled" '+(g.enabled?'checked':'')+'> Включить гирлянду на доме</label>'+
+  '<div class="roof-garland-selects">'+
+  '<label>Тип гирлянды<select data-roof-garland="type">'+
+   option('retro','Ретролампочки',g.type)+option('led','Мелкие LED',g.type)+option('icicle','Световой дождик',g.type)+'</select></label>'+
+  '<label>Цвет свечения<select data-roof-garland="temperature">'+
+   option('warm','Тёплый · янтарный',g.temperature)+option('cool','Холодный · белый',g.temperature)+'</select></label>'+
+  '<label>Размещение<select data-roof-garland="placement">'+
+   option('front','Торец кровли',g.placement)+option('perimeter','Торец + боковая подшивка',g.placement)+'</select></label>'+
+  '</div>'+
+  '<label for="roofGarlandBrightness">Яркость гирлянды <output id="roofGarlandBrightnessValue">'+g.brightness+'%</output></label>'+
+  '<input type="range" id="roofGarlandBrightness" data-roof-garland="brightness" min="0" max="100" step="5" value="'+g.brightness+'">'+
+  '<small>У A-frame гирлянда повторяет контур треугольной кровли. У скатных домов — фронтон и карниз. Ночью видно свечение, днём — сами лампочки.</small>'+
+  '</section>';
+}
+function wireRoofGarlandEditor(el,building){
+ const section=el.querySelector('#roofGarlandSettings');if(!section)return;
+ const persist=(key,val)=>{
+  const before=normalizeRoofGarland(building.garland);
+  const after=normalizeRoofGarland({...before,[key]:val});
+  if(JSON.stringify(after)===JSON.stringify(before))return;
+  const parent=$('#right'),scroll=parent?.scrollTop||0;
+  push();building.garland=after;save();rebuild();
+  requestAnimationFrame(()=>{if(parent)parent.scrollTop=scroll;});
+  status('Гирлянда: '+(after.enabled?'включена':'выключена')+' · '+after.type+' · '+after.brightness+'%.');
+ };
+ section.querySelectorAll('select[data-roof-garland],input[type="checkbox"][data-roof-garland]').forEach(input=>{
+  input.addEventListener('change',()=>persist(input.dataset.roofGarland,input.type==='checkbox'?input.checked:input.value));
+ });
+ const slider=section.querySelector('#roofGarlandBrightness');
+ const output=section.querySelector('#roofGarlandBrightnessValue');
+ slider?.addEventListener('input',()=>{if(output)output.textContent=slider.value+'%'});
+ slider?.addEventListener('change',()=>persist('brightness',Number(slider.value)));
+}
 function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
  if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
@@ -2042,6 +2081,10 @@ function renderProps(){
  (isLight?'<div class="light-physical-inspector"><strong>СВЕТ · РЕАЛЬНЫЙ 3D-КОРПУС</strong><label for="lampBrightness">Яркость <output id="lampBrightnessValue">'+Math.round(lightBrightness*100)+'%</output></label><input type="range" min="0" max="200" step="5" id="lampBrightness" value="'+Math.round(lightBrightness*100)+'"><label for="lampKelvin">Цветовая температура</label><select id="lampKelvin">'+[[2200,'2200 K · янтарный'],[2700,'2700 K · тёплый'],[3000,'3000 K · нейтрально-тёплый'],[4000,'4000 K · нейтральный']].map(([k,n])=>'<option value="'+k+'"'+(lightKelvin===k?' selected':'')+'>'+n+'</option>').join('')+'</select><small>Реальный источник внутри модели. Ночью свет влияет на растения и поверхности. Положение лампы не меняется.</small></div>':'')+(isLight&&o.catalogId==='globe'?'<div class="light-physical-inspector"><label for="lampGlobeSize">Диаметр светильника-шара</label><select id="lampGlobeSize">'+[[1,'40 см · стандартный'],[2,'25 см · малый'],[3,'60 см · большой'],[4,'80 см · XL']].map(([v,name])=>'<option value="'+v+'"'+(globeVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><small>4 размера по вашему референсу. Сохраняем координаты каждого шара.</small></div>':'')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
   '<small>Сохранены родные материалы ветвей и хвои.</small>'):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
+ if(ref.type==='house'||ref.type==='building'){
+  el.insertAdjacentHTML('afterbegin',roofGarlandMarkup(o));
+  wireRoofGarlandEditor(el,o);
+ }
  $('#applyProps').onclick=()=>{
   const fields=Object.fromEntries([...el.querySelectorAll('[data-prop]')].map(n=>[n.dataset.prop,n.value]));
   const updated=validatedLandscapeProps(o,fields,{plot:doc.site,kind:ref.type,model:Boolean(real),contains:p=>inParcel(p,doc.site)});
