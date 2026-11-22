@@ -14,7 +14,7 @@ test('Scandinavian house retains vertical natural timber throughout and a darker
  assert.equal(spec.wall,'lightwood');
  assert.equal(spec.roof,'gable');
  assert.equal(spec.roofFinish,'standing');
- assert.match(spec.subtitle,/Вертикальный планкен двух оттенков/);
+ assert.match(spec.subtitle,/Серый вертикальный планкен/);
  assert.equal(SCANDI_DETAIL.boardPitch,.132);
  assert.ok(SCANDI_DETAIL.boardWidth<SCANDI_DETAIL.boardPitch);
  assert.notEqual(SCANDI_DETAIL.mainWood,SCANDI_DETAIL.accentWood);
