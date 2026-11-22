@@ -38,7 +38,7 @@ test('perspective render reconstructs natural spruce and pine rather than lockin
 test('photographic contract does not invent botanical assets',()=>{
  const p=perspectiveLandscapePrompt({...landscape,objects:[],extra3dObjects:[]});
  assert.match(p,/There are NO landscape objects/);
- assert.match(p,/no extra trees|no invented trees|No extra trees|Do not add/i);
+ assert.match(p,/No invented lawn, vegetation|no extra trees|no invented trees|No extra trees/i);
  assert.match(p,/COMPLETE FRAME \/ NO WHITE STRIP/);
 });
 function image(dataFn){
