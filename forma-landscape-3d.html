@@ -602,6 +602,8 @@ import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strok
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
+import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v1';
+import {addSnowToPlant,addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v1';
 import {createOutdoorReflectionMap,updateOutdoorReflectionMap} from './forma-landscape-3d-environment.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
@@ -1852,8 +1854,67 @@ const QUICK_CLIMATE_LINKS=[
  ['quickCloudCover','cloudCover','%'],['quickGlobalFill','globalFill','%'],
  ['quickAerialHaze','aerialHaze','%']
 ];
+const WEATHER_INTENSITY_KEYS=[
+ 'snowTrees','snowGround','snowfall','winterHaze',
+ 'rainIntensity','surfaceWetness','puddles','rainMist'
+];
+let weatherIntensityTimer=null,weatherGestureSaved=false;
+function syncWeatherIntensityControls(){
+ if(!doc?.atmosphere)return;
+ doc.atmosphere.effects=normalizeWeatherEffects(doc.atmosphere.effects);
+ const visible=weatherEffectsVisible(doc.atmosphere);
+ for(const scope of ['quick','desktop']){
+  for(const group of ['snow','rain']){
+   const section=$('#'+scope+'Weather'+group.toUpperCase());
+   if(section)section.hidden=!visible[group];
+  }
+ }
+ for(const key of WEATHER_INTENSITY_KEYS){
+  const name=key[0].toUpperCase()+key.slice(1),value=doc.atmosphere.effects[key];
+  for(const prefix of ['quickWeather','weather']){
+   const id=prefix+name,el=$('#'+id),out=$('#'+id+'Value');
+   if(el&&Number(el.value)!==value)el.value=String(value);
+   if(out)out.textContent=value+'%';
+  }
+ }
+}
+function queueWeatherSceneUpdate(immediate=false){
+ if(weatherIntensityTimer!==null){clearTimeout(weatherIntensityTimer);weatherIntensityTimer=null}
+ if(!scene||!root)return;
+ weatherIntensityTimer=setTimeout(()=>{
+  weatherIntensityTimer=null;
+  rebuild();
+  syncWeatherIntensityControls();
+  renderGate.invalidate();
+ },immediate?0:230);
+}
+function setupWeatherIntensityControls(){
+ syncWeatherIntensityControls();
+ for(const key of WEATHER_INTENSITY_KEYS){
+  const name=key[0].toUpperCase()+key.slice(1);
+  for(const prefix of ['quickWeather','weather']){
+   const el=$('#'+prefix+name);if(!el)continue;
+   el.addEventListener('pointerdown',()=>{
+    if(!weatherGestureSaved){push();weatherGestureSaved=true}
+   },{passive:true});
+   el.addEventListener('input',()=>{
+    if(!weatherGestureSaved){push();weatherGestureSaved=true}
+    doc.atmosphere.effects=normalizeWeatherEffects({...doc.atmosphere.effects,[key]:el.value});
+    // Source of truth is the same normalized project for all tabs, 3D and AI.
+    save();syncWeatherIntensityControls();queueWeatherSceneUpdate(false);
+   });
+   el.addEventListener('change',()=>{
+    if(!weatherGestureSaved)push();
+    doc.atmosphere.effects=normalizeWeatherEffects({...doc.atmosphere.effects,[key]:el.value});
+    save();syncWeatherIntensityControls();queueWeatherSceneUpdate(true);
+    weatherGestureSaved=false;
+   });
+  }
+ }
+}
 function syncQuickClimateControls(){
  if(!doc?.atmosphere)return;
+ syncWeatherIntensityControls();
  const sceneValues={
   quickTime:doc.atmosphere.time||'day',
   quickSeason:doc.atmosphere.season||'summer',
@@ -2748,8 +2809,8 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   for(const surface of waterSurfaces)if(surface.material)surface.material.bumpScale=sceneAtmosphere.ripples*.00023;
   renderGate.invalidate();
  };
- $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild()};
- $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild()};
+ $('#season').onchange=()=>{push();doc.atmosphere.season=$('#season').value;save();rebuild();syncWeatherIntensityControls()};
+ $('#weather').onchange=()=>{push();doc.atmosphere.weather=$('#weather').value;save();rebuild();syncWeatherIntensityControls()};
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();revealSelectedInspector();status('Главный дом выбран — параметры открыты справа. Каталог типов домов находится ниже.')};
  $('#selectedObjectDelete').onclick=deleteSelectedObject;
@@ -2772,6 +2833,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#focusHouse').onclick=()=>focusHouseCamera('overview');
  $('#sceneCameraCycle').onclick=cycleSceneCamera;
  setupSceneClimateControls();
+ setupWeatherIntensityControls();
  $('#focusSelected').onclick=focusSelectedPlant;
  $('#pineInspectorShortcut').onclick=showSelectedPineControls;
  $('#fit3dScene').onclick=()=>{setView('3d');houseCameraStage=2;syncSceneCameraButton();};
