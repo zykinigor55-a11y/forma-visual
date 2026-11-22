@@ -82,13 +82,20 @@ export function addScandiTerrace(T,house,{width,depth,door}={}){
   box(T,house,{w:.036,h:.092,d:spec.depth+.07,x:sx,y:.395,
    z:mid,mat:edge,part:'scandi-deck-side-fascia'});
  }
- // One 160mm lower transition at the front, aligned to the deck surface
- // but spatially separate from the entry-door staircase.
+ // Three 160mm rises from grade to the 480mm terrace. Two outward
+ // timber steps below the finished deck must NEVER be a single 240mm jump.
  const stepW=Math.min(2.15,spec.span*.5);
- box(T,house,{w:stepW,h:.18,d:.37,x:spec.centerX,y:.12,
-  z:far+.22,mat:concrete,part:'scandi-deck-supported-approach-step'});
- box(T,house,{w:stepW+.04,h:.027,d:.40,x:spec.centerX,y:.2265,
-  z:far+.22,mat:timber,part:'scandi-deck-approach-tread'});
+ for(const [i,level] of [.32,.16].entries()){
+  const stepZ=far+.20+i*.35;
+  const coreH=level-.026;
+  box(T,house,{w:stepW,h:coreH,d:.35,x:spec.centerX,y:coreH*.5,
+   z:stepZ,mat:concrete,part:'scandi-deck-supported-approach-step'});
+  box(T,house,{w:stepW+.04,h:.026,d:.36,x:spec.centerX,y:level-.013,
+   z:stepZ,mat:timber,part:'scandi-deck-approach-tread'});
+  box(T,house,{w:stepW+.055,h:.011,d:.018,
+   x:spec.centerX,y:level-.025,z:stepZ+.18,
+   mat:edge,part:'scandi-deck-step-drip-nosing'});
+ }
  house.userData.scandiTerrace=spec;
  return spec;
 }
