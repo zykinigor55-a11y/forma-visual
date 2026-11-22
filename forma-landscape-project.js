@@ -593,7 +593,22 @@ function drawMap(){
  function click(e){
   const b=e.target.closest('button');if(!b||busy)return;
   if(b.dataset.atmoToggle!==undefined){const drawer=$('#lpAtmoQuick',modal);if(drawer){drawer.hidden=!drawer.hidden;b.setAttribute('aria-expanded',String(!drawer.hidden));}return}
-  if(b.dataset.pathMaterial){chosen=b.dataset.pathMaterial;category='pavers';mode='path';points=[];draw();revealCanvas();say('Выбрано мощение: '+itemCatalog().name);return}
+  if(b.dataset.pathMaterial){
+    const material=byId(b.dataset.pathMaterial);
+    if(material?.group!=='pavers')return;
+    const selectedPath=doc.objects.find(o=>o.id===selected&&o.type==='pavers');
+    chosen=material.id;category='pavers';points=[];
+    if(selectedPath){
+     // Changing a selected path is a material replacement, not the creation
+     // of another overlapping copy with the default concrete texture.
+     checkpoint();selectedPath.catalogId=material.id;mode='select';photoVisible=false;
+     save();draw();say('Материал ВЫБРАННОЙ дорожки изменён: '+material.name+'. Ширина, маршрут и координаты сохранены.');
+    }else{
+     mode='path';draw();revealCanvas();
+     say('Выбрано мощение: '+material.name+'. Нажимайте на план, чтобы создать новую дорожку.');
+    }
+    return;
+   }
   if(b.dataset.autoFillLawn!==undefined){autoFillLawn();return}
    if(b.dataset.areaMaterial){chosen=b.dataset.areaMaterial;category=itemCatalog().group;if(category==='lawns'){autoFillLawn();return}setMode('area');return}
   if(b.dataset.clearLandscape!==undefined){
