@@ -3261,14 +3261,28 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();revealSelectedInspector();status('Главный дом выбран — параметры открыты справа. Каталог типов домов находится ниже.')};
  $('#selectedObjectDelete').onclick=deleteSelectedObject;
- $('#selectedObjectMove').onclick=()=>{
+ const closeMobileObjectEditor=()=>{
+  state.mobileMoveMode=false;state.mobileObjectCollapsed=true;state.drag=false;
+  controls.enabled=state.view!=='walk';
+  activateMobilePanel('scene');
+  syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
+ };
+ const enterMobileObjectMove=()=>{
   if(!selectable(state.selected)?.obj){status('Сначала выберите объект.');return}
   if(state.tool!=='select')chooseTool('select');
-  state.mobileMoveMode=!state.mobileMoveMode;
+  state.mobileMoveMode=true;state.mobileObjectCollapsed=false;
   if(window.innerWidth<=850)activateMobilePanel('scene');
   syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
-  status(state.mobileMoveMode?'РЕЖИМ ПЕРЕМЕЩЕНИЯ: удерживайте объект и ведите пальцем по участку. Отпустите для сохранения.':'Режим перемещения выключен.');
+  status('Перемещение: ведите объект пальцем, либо нажимайте стрелки. «Готово» сворачивает панель.');
  };
+ $('#selectedObjectMove').onclick=()=>{
+  if(state.mobileMoveMode)closeMobileObjectEditor();else enterMobileObjectMove();
+ };
+ $('#mobileObjectMove').onclick=enterMobileObjectMove;
+ $('#mobileObjectClose').onclick=closeMobileObjectEditor;
+ $('#selectedObjectDismiss').onclick=closeMobileObjectEditor;
+ $('#selectedObjectEdit').onclick=()=>{if(selectable(state.selected)?.obj)revealSelectedInspector()};
+
  $('#selectedObjectRotate').onclick=()=>rotateSelected(15);
  document.querySelectorAll('[data-object-nudge]').forEach(button=>button.onclick=()=>{
   const [dx,dy]=button.dataset.objectNudge.split(',').map(Number);
@@ -3284,10 +3298,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   status(state.mobileSnap?'Магнит включён: сетка 5 см, дорожки, стены домов.':'Магнит выключен: свободное перемещение.');
  };
  $('#selectedObjectDone').onclick=()=>{
-  state.mobileMoveMode=false;state.drag=false;
-  controls.enabled=state.view!=='walk';
-  syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
-  if(window.innerWidth<=850)activateMobilePanel('scene');
+  closeMobileObjectEditor();
   status('Перемещение завершено. Координаты сохранены.');
  };
  $('#selectedObjectDuplicate').onclick=()=>duplicateSelected();
