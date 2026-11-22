@@ -3010,6 +3010,7 @@ function addEvents(){
   if(!anchor){status('Наведите камеру на участок, чтобы переместить объект.');return}
   state.drag=true;state.draggingMoved=false;
   state.dragAnchor=fromWorld(anchor);
+  state.dragOriginal=Number.isFinite(Number(item.x))?{x:Number(item.x),y:Number(item.y)}:null;
   state.dragPoints=Array.isArray(item.points)?item.points.map(p=>({...p})):null;
   controls.enabled=false;
   canvas.setPointerCapture?.(e.pointerId);
@@ -3070,13 +3071,17 @@ const move=e=>{
   ref.obj.points=shifted;
   scheduleBrushRebuild(); // Vector geometry needs a new mesh, at most once per frame.
  }else if('x'in ref.obj){
-  if(!inParcel(pt,doc.site))return;
-  ref.obj.x=pt.x;ref.obj.y=pt.y;
+  // Preserve the finger's offset from the crown centre while moving assets.
+  const destination=state.mobileMoveMode&&state.dragOriginal&&state.dragAnchor?
+   {x:state.dragOriginal.x+pt.x-state.dragAnchor.x,y:state.dragOriginal.y+pt.y-state.dragAnchor.y}:pt;
+  if(!inParcel(destination,doc.site))return;
+  if(state.mobileMoveMode){destination.x=Math.round(destination.x*20)/20;destination.y=Math.round(destination.y*20)/20;}
+  ref.obj.x=destination.x;ref.obj.y=destination.y;
   // Move the already-instantiated PBR mesh. Rebuilding every large GLB on
   // each pointermove previously made dragging trees and houses appear frozen.
   const node=pickables.find(g=>g.userData.key===state.selected);
   if(node){
-   const position=pos(pt.x,pt.y);
+   const position=pos(ref.obj.x,ref.obj.y);
    node.position.set(position.x,terrainAt(position.x,position.z),position.z);
    if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
   }else scheduleBrushRebuild();
@@ -3103,7 +3108,7 @@ const up=e=>{
  const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
  if(state.drag){
   const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;
-  state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';
+  state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;controls.enabled=state.view!=='walk';
   if(moved){save();rebuild();status('Объект перемещён и сохранён. ↶ отменит изменение.');}
   else if(selectable(state.selected)?.obj?.catalogId==='pine')showSelectedPineControls();
   if(state.mobileMoveMode){state.mobileMoveMode=false;syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');}
@@ -3126,7 +3131,7 @@ const up=e=>{
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',()=>{if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('pointercancel',()=>{if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
