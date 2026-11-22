@@ -31,12 +31,19 @@ try{
   await page.locator('#viewport').screenshot({path:dir+'/FORMA-HOUSE-VIEWPORT-ACTUAL.jpg',type:'jpeg',quality:90,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-HOUSE-TWO-TIMBERS-3D.jpg',type:'jpeg',quality:90,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-VERTICAL-BOARDS-REAL-WEBGL.jpg',type:'jpeg',quality:91,timeout:65000});
+  await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-APR10-94MM-FINAL.jpg',type:'jpeg',quality:92,timeout:65000});
  }
  const result=await page.evaluate(()=>({
   title:document.title,ready:window.FORMA_3D_READY,
   style:document.querySelector('[data-house-preset="scandi"]')?.getAttribute('aria-pressed'),
   canvas:!!document.querySelector('#viewport'),
   ref:'Mocopinus Oldenburg silbergrau grey vertical wood + black windows',
+  referenceProfile:'APR 10 · 21.5 × 94 (84) mm',
+  palette:await import('/forma-landscape-3d-scandinavian-detail.js').then(mod=>({
+   main:mod.SCANDI_DETAIL.mainWood,accent:mod.SCANDI_DETAIL.accentWood,
+   windowFrame:mod.SCANDI_DETAIL.windowFrame,
+   pitch:mod.SCANDI_DETAIL.boardPitch,depth:mod.SCANDI_DETAIL.boardDepth
+  })),
   status:document.querySelector('#status')?.textContent?.slice(0,200),
   build:document.querySelector('#buildInfo')?.textContent?.slice(0,200)
  }));
