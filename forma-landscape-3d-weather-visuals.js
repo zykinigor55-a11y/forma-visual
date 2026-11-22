@@ -67,6 +67,22 @@ function addSnowGround(T,root,terrainMesh,intensity){
  mesh.userData.formaWeatherPreview=true;mesh.userData.textures=[map];
  root.add(mesh);
 }
+function addSnowfall(T,root,site,intensity){
+ if(intensity<2)return;
+ const rnd=randSeed(81923),count=Math.min(600,Math.round(intensity*5.3));
+ const points=[],w=site.width||30,h=site.height||40;
+ for(let i=0;i<count;i++){
+  points.push((rnd()-.5)*w,.3+rnd()*17,(rnd()-.5)*h);
+ }
+ const geometry=new T.BufferGeometry();
+ geometry.setAttribute('position',new T.Float32BufferAttribute(points,3));
+ const material=new T.PointsMaterial({color:'#E7ECEC',size:.07+intensity*.0009,
+  transparent:true,opacity:Math.min(.72,.25+intensity*.004),
+  depthWrite:false,sizeAttenuation:true});
+ const mesh=new T.Points(geometry,material);
+ mesh.userData.formaWeatherPreview=true;mesh.frustumCulled=false;
+ root.add(mesh);
+}
 function addRain(T,root,site,precipitation){
  if(precipitation<2)return;
  const n=Math.min(500,Math.max(25,Math.round(precipitation*4.5)));
@@ -109,7 +125,10 @@ export function addWeatherSceneVisuals(T,root,terrainMesh,doc,terrainAt){
  if(!root||!doc)return;
  const state=doc.atmosphere||{},effects=normalizeWeatherEffects(state.effects);
  const {snow,rain}=weatherEffectsVisible(state);
- if(snow)addSnowGround(T,root,terrainMesh,effects.snowGround);
+ if(snow){
+  addSnowGround(T,root,terrainMesh,effects.snowGround);
+  addSnowfall(T,root,doc.site,effects.snowfall);
+ }
  if(rain){
   if(state.weather==='rain')addRain(T,root,doc.site,effects.rainIntensity);
   addPuddles(T,root,doc.site,terrainAt,effects.puddles);
