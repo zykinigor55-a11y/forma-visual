@@ -156,30 +156,100 @@ export function addScandiCornerDetails(T,group,{width,depth,bodyHeight}={}){
    casing,'rainscreen-corner-termination-z');
  }
 }
+/** Gable with a genuine punched glazed aperture above the tall ground
+ * windows. No tinted glass placed in front of an opaque triangular wall.
+ * Front gable has one thermally glazed window; rear remains insulated wood.
+ */
+export function scandiGableOpening(width=8,rise=1.5,bodyHeight=3.5){
+ const w=Math.max(2,Number(width)||8),r=Math.max(.5,Number(rise)||1.5);
+ const half=(w+.65)/2;
+ const widthOfGlass=Math.min(3.35,Math.max(1.35,w*.35));
+ const roofAtGlazingEdge=r*(1-widthOfGlass/(half*2));
+ const bottom=bodyHeight+.17;
+ const top=bodyHeight+Math.min(r*.78,roofAtGlazingEdge-.15);
+ return {x:0,width:widthOfGlass,bottom,top,height:Math.max(0,top-bottom),
+  glassLeaves:3};
+}
 export function addScandiGableCladding(T,group,{
  width,depth,bodyHeight,rise,overhang
 }={}){
  const half=(width+overhang*2)*.5,pitch=SCANDI_DETAIL.boardPitch;
  const count=Math.min(450,Math.ceil(width/pitch));
  const plank=scandiTimberMaterial(T,SCANDI_DETAIL.mainWood);
- const backer=finishMaterial(T,'#4E5658');
+ const backer=finishMaterial(T,'#424A4C');
+ const frame=finishMaterial(T,SCANDI_DETAIL.windowFrame);
+ const gableGlass=new T.MeshPhysicalMaterial({
+  color:'#90A9B0',roughness:.068,metalness:0,ior:1.52,
+  transparent:true,opacity:.34,depthWrite:false,
+  side:T.DoubleSide,clearcoat:.25,clearcoatRoughness:.1
+ });
+ const opening=scandiGableOpening(width,rise,bodyHeight);
  for(const side of [-1,1]){
+  const front=side===1,windowed=front&&opening.height>.24;
   const v=[];
+  const facade=new T.Group();
+  facade.name=front?'scandi-gable-front':'scandi-gable-rear';
+  facade.position.z=side*depth*.5;
+  if(side<0)facade.rotation.y=Math.PI;
+  // Cut a TRUE hole through an otherwise dark weatherproof gable backing.
+  // It seals the 10mm timber joints but never sits behind the glass.
+  const shape=new T.Shape();
+  shape.moveTo(-width*.5,bodyHeight);
+  shape.lineTo(width*.5,bodyHeight);
+  shape.lineTo(0,bodyHeight+rise);
+  shape.closePath();
+  if(windowed){
+   const h=new T.Path();
+   h.moveTo(-opening.width*.5,opening.bottom);
+   h.lineTo(-opening.width*.5,opening.top);
+   h.lineTo(opening.width*.5,opening.top);
+   h.lineTo(opening.width*.5,opening.bottom);
+   h.closePath();
+   shape.holes.push(h);
+  }
+  const backing=attach(facade,T,new T.ShapeGeometry(shape,8),backer,
+   0,0,.098,'scandi-gable-weather-skin');
+  backing.material.side=T.DoubleSide;
   for(let i=0;i<count;i++){
    const x=-width*.5+(i+.5)*width/count;
    const top=bodyHeight+rise*(1-Math.abs(x)/half)-.065;
-   const h=top-bodyHeight-.045;
-   if(h<.05)continue;
-   v.push([x,bodyHeight+.020+h*.5,Math.min(SCANDI_DETAIL.boardWidth,width/count*.88),h]);
+   const bottom=bodyHeight+.02;
+   if(top-bottom<.05)continue;
+   const w=Math.min(SCANDI_DETAIL.boardWidth,width/count*.88);
+   if(windowed&&Math.abs(x)<opening.width*.5+.035){
+    const lo=Math.min(top,opening.bottom-.032);
+    if(lo-bottom>.05)v.push([x,(bottom+lo)*.5,w,lo-bottom]);
+    const hi=Math.max(bottom,opening.top+.045);
+    if(top-hi>.05)v.push([x,(top+hi)*.5,w,top-hi]);
+   }else v.push([x,(top+bottom)*.5,w,top-bottom]);
   }
-  const facade=new T.Group();
-  facade.name=side>0?'scandi-gable-front':'scandi-gable-rear';
-  facade.position.z=side*depth*.5;
-  // Keep both gables visibly finished without covering the measured
-  // lower facade. Negative rear faces are viewed from the opposite side.
-  if(side<0)facade.rotation.y=Math.PI;
-  addBox(facade,T,width,.012,.012,0,bodyHeight+.025,.110,backer,'gable-timber-starter');
   segmentBoards(T,facade,v,plank,'scandi-gable-vertical-boards',.137);
+  addBox(facade,T,width,.012,.012,0,bodyHeight+.025,.110,
+   backer,'gable-timber-starter');
+  if(windowed){
+   // Black 76mm uPVC frame; three slender 4mm glass leaves and two
+   // insulating cavities. No giant opaque decorative blue rectangle.
+   const wx=opening.x,wy=(opening.bottom+opening.top)*.5,
+    ww=opening.width,hh=opening.height,bar=.063;
+   for(const z of [.115,.135,.155])
+    addBox(facade,T,ww-bar*2,hh-bar*2,.004,wx,wy,z,
+     gableGlass,'scandi-gable-insulating-glass-pane');
+   for(const x of [-1,1])
+    addBox(facade,T,bar,hh+.052,.084,wx+x*ww*.5,wy,.17,
+     frame,'scandi-gable-pvc-side-frame');
+   for(const y of [-1,1])
+    addBox(facade,T,ww+bar*2,bar,.084,wx,wy+y*hh*.5,.17,
+     frame,'scandi-gable-pvc-head-sill');
+   for(const x of [-ww/6,ww/6])
+    addBox(facade,T,.044,hh,.071,x,wy,.168,frame,
+     'scandi-gable-fixed-glass-mullion');
+   // Physical compressible perimeter gasket around real glass opening.
+   const gasket=finishMaterial(T,'#12191B');
+   for(const y of [-1,1])
+    addBox(facade,T,ww-.05,.012,.012,wx,wy+y*(hh*.5-.038),.211,
+     gasket,'scandi-gable-epdm-glazing-seal');
+   facade.userData.scandiGableOpening=opening;
+  }
   group.add(facade);
  }
 }
