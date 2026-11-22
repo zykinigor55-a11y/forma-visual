@@ -90,3 +90,28 @@ export function surfaceMaterial(T,id,color='#888888'){
  if(!tex)return new T.MeshStandardMaterial({color,roughness:.96,metalness:0,side:T.DoubleSide});
  return new T.MeshStandardMaterial({map:tex,color:'#ffffff',roughness:.92,metalness:0,side:T.DoubleSide});
 }
+
+/** A path is a measured ribbon, not a flat 1x1 UV swatch. Distinct selected
+ * catalog surfaces keep their own real photo and joint scale in 3D and as the
+ * input reference to AI reconstruction. Texture clones share the image source.
+ */
+export function pavingPathMaterial(T,id,width,length,color='#a8a99f'){
+ const material=surfaceMaterial(T,id,color);
+ material.userData={...(material.userData||{}),formaMaterialId:id,formaMeasuredPaving:true};
+ if(material.map&&typeof material.map.clone==='function'){
+  const map=material.map.clone();
+  const jointScale={
+   'concrete-pavers':.90,'granite-setts':.18,
+   'clinker-herringbone':.26,'slate-pavers':.58,
+   'radial-setts':.20,'grass-grid':.50
+  }[id]||.50;
+  map.wrapS=map.wrapT=T.RepeatWrapping;
+  map.repeat.set(Math.max(.2,Number(width||1.2)/jointScale),
+   Math.max(.2,Number(length||1)/jointScale));
+  map.anisotropy=Math.max(map.anisotropy||1,8);
+  map.name='forma-path-material-'+id;
+  map.needsUpdate=true;
+  material.map=map;
+ }
+ return material;
+}
