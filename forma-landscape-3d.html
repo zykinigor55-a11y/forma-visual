@@ -388,6 +388,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
 <link rel="stylesheet" href="forma-graphite-unified-v2.css?v=graphite-universal-20261119">
 <link rel="stylesheet" href="forma-graphite-only-v3.css?v=graphite-polish-9-20261122">
+<link rel="stylesheet" href="forma-mobile-landscape-v1.css?v=touch-first-20261122">
 </head>
 <body>
 <div id="shell">
@@ -478,10 +479,10 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <button id="selectedObjectDelete" type="button">Удалить объект</button>
 </div>
 <div class="scene-quick-actions" id="sceneQuickTools" role="toolbar" aria-label="Быстрые инструменты 3D-редактора"><button data-quick-tool="select" class="active" type="button" aria-pressed="true">Выбор</button><button data-quick-tool="plant" type="button" aria-pressed="false">Озеленение</button><button data-quick-tool="terrain" type="button" aria-pressed="false">Рельеф</button><button data-quick-tool="surface" type="button" aria-pressed="false">Покрытия</button></div>
-<div id="mobileWorkspaceTabs" aria-label="Мобильные панели">
- <button type="button" data-mobile-panel="tools" class="active">Инструменты</button>
- <button type="button" data-mobile-panel="details">Дома / параметры</button>
- <button type="button" data-mobile-panel="scene" aria-label="Скрыть панели и показать всю 3D-сцену">Сцена</button>
+<div id="mobileWorkspaceTabs" role="group" aria-label="Мобильные панели редактора">
+ <button type="button" data-mobile-panel="tools" class="active" aria-pressed="false">Каталог</button>
+ <button type="button" data-mobile-panel="details" aria-pressed="false">Параметры</button>
+ <button type="button" data-mobile-panel="scene" aria-pressed="true" aria-label="Скрыть панели и показать всю 3D-сцену">Сцена</button>
  <button type="button" id="mobilePineSelect" aria-label="Выбрать посаженное дерево и открыть его параметры">🌲 Дерево</button>
 </div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
@@ -885,7 +886,11 @@ function selectNextPine(){
 function activateMobilePanel(name){
  if(name!=='scene')setSceneClimateOpen(false);
  document.body.dataset.mobilePanel=name;
- document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.classList.toggle('active',button.dataset.mobilePanel===name));
+ document.querySelectorAll('#mobileWorkspaceTabs [data-mobile-panel]').forEach(button=>{
+  const active=button.dataset.mobilePanel===name;
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',String(active));
+ });
  if(name==='details'&&state.selected?.startsWith('object:')&&['pine','spruce'].includes(selectable(state.selected)?.obj?.catalogId)){
   document.body.dataset.mobilePine='true';requestAnimationFrame(scrollToSelectedPine);
  }
@@ -899,9 +904,16 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function initialize(){
- activateMobilePanel('tools');
- document.querySelectorAll('[data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>activateMobilePanel(button.dataset.mobilePanel)));
+ // On a phone the 3D canvas, not a tiny library drawer, is the starting point.
+ activateMobilePanel(window.innerWidth<=850?'scene':'tools');
+ document.querySelectorAll('#mobileWorkspaceTabs [data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>activateMobilePanel(button.dataset.mobilePanel)));
  $('#mobilePineSelect').addEventListener('click',selectNextPine);
+ // Tap an asset in the catalog, then place it immediately on the visible site.
+ // Delay the sheet transition until the existing asset-selection handler runs.
+ $('#library').addEventListener('click',event=>{
+  if(window.innerWidth>850||!event.target.closest('button.choice'))return;
+  setTimeout(()=>{if(document.body.dataset.mobilePanel==='tools')activateMobilePanel('scene')},0);
+ });
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
@@ -993,7 +1005,7 @@ function initialize(){
  const previousDrawing=localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);
  window.FORMA_3D_READY=true;$('#loadError').style.display='none';readBuildInfo();
- status('3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
+ status(window.innerWidth<=850?'3D готов. Откройте «Каталог», выберите объект и нажмите на участок.':'3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
