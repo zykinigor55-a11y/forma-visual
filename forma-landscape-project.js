@@ -111,10 +111,11 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
     if(itemId||(!full&&viewScale>1))return '';
    }
    const lines=Array.isArray(value)?value:[value];
-   const width=Math.max(...lines.map(line=>[...line].length))*size*.68+size;
+   const compact=typeof value==='string'&&itemId;
+   const width=compact?(value.length*.62+.55)*size:Math.max(...lines.map(line=>[...line].length))*size*.68+size;
    const height=(lines.length*1.22+.48)*size,gap=size*.22;
    if(width+2*gap>view.width||height+2*gap>view.height)return '';
-   const stepX=Math.min(width+gap,size*4),stepY=height+gap;
+   const stepX=Math.min(width+gap*1.25,size*4),stepY=height+gap*1.25;
    for(let ring=0;ring<=4;ring++)for(let row=-ring;row<=ring;row++)for(let col=-ring;col<=ring;col++){
     if(Math.max(Math.abs(row),Math.abs(col))!==ring)continue;
     const x=clamp(anchorX+col*stepX,view.x+width/2+gap,view.x+view.width-width/2-gap);
