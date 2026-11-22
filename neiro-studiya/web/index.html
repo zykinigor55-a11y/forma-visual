@@ -1,56 +1,114 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#07080c">
-<meta name="description" content="Нейро студия — AI-видео, 3D, цифровые продукты, сайты и приложения. Творчество встречает технологии.">
-<title>Нейро студия — Creative × Technology × Intelligence</title>
-<link rel="preload" href="assets/quantum-cover.webp" as="image" type="image/webp">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050709">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="FORMA AI — Нейро студия: AI-видео, CGI, 3D-моделирование по фотографиям, архитектурная визуализация, разработка сайтов, мобильных приложений и интерактивных проектов.">
+  <meta property="og:title" content="FORMA AI — Создаём то, чего ещё нет">
+  <meta property="og:description" content="Нейро студия — AI, 3D, CGI и цифровые продукты полного цикла.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/hero-mobius.webp">
+  <title>FORMA AI — Нейро студия | Кино, 3D, приложения</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" href="assets/hero-mobius.webp" as="image" type="image/webp" fetchpriority="high">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<a class="skip" href="#main">К содержимому</a>
-<header class="site-header" id="top">
-  <a class="brand" href="#top" aria-label="Нейро студия — наверх"><span class="brand-mark" aria-hidden="true"><span></span></span>НЕЙРО<span class="brand-light">СТУДИЯ</span><span class="brand-dot">.</span></a>
-  <nav class="top-nav" aria-label="Навигация"><a href="#spiral">Подход</a><a href="#services">Направления</a><a href="#contact" class="nav-action">О проекте <span aria-hidden="true">↗</span></a></nav>
-</header>
-<main id="main">
-<section class="hero" aria-labelledby="hero-heading">
- <div class="hero-glow" aria-hidden="true"></div>
- <div class="hero-copy">
-   <div class="eyebrow"><span class="shortline"></span> ЦИФРОВЫЕ МИРЫ. РЕАЛЬНЫЕ РЕШЕНИЯ.</div>
-   <h1 id="hero-heading">Будущее<br>принимает<br><em>форму.</em></h1>
-   <p>Создаём визуальные истории, цифровые продукты и интеллектуальные системы. От первой идеи до результата, который работает.</p>
-   <div class="hero-actions"><a href="#services" class="button button-light">Направления студии <span aria-hidden="true">↗</span></a><a href="#spiral" class="button button-ghost">Смотреть подход <span aria-hidden="true">↓</span></a></div>
- </div>
- <figure class="reactor-stage" aria-label="Титановый квантовый реактор Нейро студии">
-    <video id="quantum-video" autoplay muted loop playsinline preload="metadata" poster="assets/quantum-cover.webp" width="1920" height="1080">
-       <source src="assets/neiro-studiya-v14.mp4" type="video/mp4">
-    </video>
-    <div class="reactor-info"><span class="live-dot"></span><span>QUANTUM KINETIC / V14</span><span class="reactor-duration">08:00 LOOP</span></div>
-    <button id="sound-toggle" class="sound-toggle" type="button" aria-label="Включить звук реактора" aria-pressed="false"><span class="sound-icon" aria-hidden="true">◖</span><span class="sound-label">Звук выкл.</span></button>
-    <div id="video-error" class="video-error" role="status" hidden>Видеофайл не найден. Проверьте папку assets.</div>
- </figure>
- <a class="scroll-prompt" href="#spiral">SCROLL TO EXPLORE <span aria-hidden="true">↓</span></a>
-</section>
-<section class="spiral-section" id="spiral" aria-labelledby="spiral-title">
- <div class="section-heading"><div class="eyebrow"><span class="shortline"></span> 01 — ФИЛОСОФИЯ</div><h2 id="spiral-title">Сложное.<br><em>Сделано простым.</em></h2><p>Технология должна быть точной. Движение — осмысленным. Каждая система собирается из деталей, которые работают как единое целое.</p><div class="spiral-key"><span class="ring-dot"></span> MÖBIUS KINETIC <span class="key-muted">/ ТИТАНОВАЯ ЛЕНТА МЁБИУСА · 3D</span></div></div>
- <div class="spiral-visual" id="spiral-visual">
-    <canvas id="spiral-canvas" role="img" tabindex="0" aria-label="Две кинетические ленты Мёбиуса из титана с внутренним механизмом. Перетаскивайте мышью или используйте стрелки влево и вправо для вращения, Home для сброса."></canvas>
-    <svg class="spiral-fallback" id="spiral-fallback" viewBox="0 0 600 600" aria-hidden="true"><defs><linearGradient id="mt" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#323b47"/><stop offset=".25" stop-color="#d8dfe4"/><stop offset=".46" stop-color="#677484"/><stop offset=".72" stop-color="#e3e6eb"/><stop offset="1" stop-color="#2d3744"/></linearGradient><linearGradient id="mb" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#272d39"/><stop offset=".48" stop-color="#9facb8"/><stop offset=".73" stop-color="#424e5f"/><stop offset="1" stop-color="#cbd3dd"/></linearGradient><filter id="mobgl"><feGaussianBlur stdDeviation="3"/></filter></defs><g fill="none" stroke-linejoin="round" stroke-linecap="round"><path d="M300 95 C482 90 503 280 307 317 C124 347 115 123 300 95Z" stroke="#111a24" stroke-width="45"/><path d="M300 95 C482 90 503 280 307 317 C124 347 115 123 300 95Z" stroke="url(#mt)" stroke-width="32"/><path d="M300 95 C482 90 503 280 307 317 C124 347 115 123 300 95Z" stroke="#77c5d7" stroke-opacity=".55" stroke-width="4"/><path d="M300 288 C485 278 485 496 298 512 C117 511 112 307 300 288Z" stroke="#15191e" stroke-width="47"/><path d="M300 288 C485 278 485 496 298 512 C117 511 112 307 300 288Z" stroke="url(#mb)" stroke-width="33"/><path d="M300 288 C485 278 485 496 298 512 C117 511 112 307 300 288Z" stroke="#caa988" stroke-opacity=".48" stroke-width="4"/><path d="M300 120 L300 480" stroke="#657787" stroke-width="7"/><ellipse cx="300" cy="297" rx="49" ry="14" stroke="#afb8c3" stroke-width="8"/><ellipse cx="300" cy="315" rx="36" ry="10" stroke="#8cb7c5" stroke-width="4"/><path d="M300 150 L300 450" stroke="#86baca" stroke-opacity=".5" stroke-width="12" filter="url(#mobgl)"/></g></svg>
-    <div class="spiral-precision" aria-hidden="true">TI / 6AL-4V<br><small>MÖBIUS KINETIC · V17</small></div><div class="spiral-overlay" aria-hidden="true"><span class="spiral-num">02 / 03</span><span>DRAG TO ROTATE · MÖBIUS / 180°</span></div>
- </div>
-</section>
-<section class="services-section" id="services" aria-labelledby="services-title"><div class="eyebrow"><span class="shortline"></span> 02 — ВОЗМОЖНОСТИ</div><div class="service-header"><h2 id="services-title">Одна студия.<br><em>Любые горизонты.</em></h2><p>Объединяем креатив, инженерное мышление и возможности искусственного интеллекта.</p></div><div class="services">
- <article class="service"><span class="service-num">01 / CREATIVE</span><h3>AI & CG<br>Production</h3><p>AI-видео, рекламные кампании, предметный CGI, архитектурная визуализация и анимация.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
- <article class="service"><span class="service-num">02 / DEVELOPMENT</span><h3>Digital<br>Products</h3><p>Сайты, мобильные приложения, сложные интерфейсы и веб-платформы под ключ.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
- <article class="service"><span class="service-num">03 / INTELLIGENCE</span><h3>AI Systems<br>& Automation</h3><p>AI-агенты, чат-боты, интеграции, автоматизация процессов и умные сервисы.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
- </div></section>
-<section class="end-section" id="contact"><div class="eyebrow"><span class="shortline"></span> НА СТЫКЕ ИДЕИ И ТЕХНОЛОГИИ</div><h2>Больше, чем<br><em>возможное.</em></h2><p>Нейро студия / FORMA AI</p><a class="backtop" href="#top">Наверх ↑</a></section>
-</main>
-<footer><span>© 2026 НЕЙРО СТУДИЯ</span><span>FORMA AI · Creative + Development + Intelligence</span><span>Спроектировано с вниманием к деталям.</span></footer>
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<div class="site-shell" id="top">
+  <header class="site-header" id="site-header">
+    <a href="#top" class="wordmark" aria-label="FORMA AI — на главную">
+      <span class="wordmark-main">FORMA<span class="wordmark-accent"> AI</span><span class="wordmark-reg">®</span></span>
+      <span class="wordmark-sub">Н Е Й Р О &nbsp; С Т У Д И Я</span>
+    </a>
+    <nav class="desktop-nav" aria-label="Главная навигация">
+      <a href="#work">Проекты</a><a href="#services">Услуги</a><a href="#technology">Технологии</a><a href="#about">О студии</a><a href="#contact">Контакты</a>
+    </nav>
+    <div class="header-end"><span class="locale">RU <span aria-hidden="true">⌄</span></span>
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню"><span></span><span></span></button>
+    </div>
+  </header>
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Мобильная навигация" inert>
+    <a href="#work">Проекты <span>01</span></a><a href="#services">Услуги <span>02</span></a><a href="#technology">Технологии <span>03</span></a><a href="#about">О студии <span>04</span></a><a href="#contact">Контакты <span>05</span></a>
+  </nav>
+  <main id="main">
+    <section class="hero" id="hero" aria-labelledby="hero-title">
+      <div class="hero-art" aria-hidden="true"><img src="assets/hero-mobius.webp" alt="" width="1358" height="622" fetchpriority="high"></div>
+      <div class="hero-shade" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <p class="kicker">AI FILM / CGI / 3D / APPS<br>DIGITAL EXPERIENCE</p>
+        <h1 id="hero-title">СОЗДАЁМ ТО,<br>ЧЕГО <em>ЕЩЁ НЕТ.</em></h1>
+        <p class="hero-description">Полный цикл AI-производства: от идеи и 3D-модели до приложения, фильма или интерактивного мира.</p>
+        <div class="hero-buttons">
+          <button type="button" class="button button-primary" data-open-showreel><span class="play-ring" aria-hidden="true">▶</span>Смотреть шоу-рил</button>
+          <a class="button button-outline" href="#contact">Обсудить проект <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+      <div class="hero-counter" aria-hidden="true"><strong>01</strong><span class="hero-counter-rule"></span><span>02</span><span>03</span><span>04</span></div>
+      <a href="#services" class="hero-scroll">ПРОКРУТИТЕ ВНИЗ <span aria-hidden="true">↓</span></a>
+      <div class="hero-meta" aria-hidden="true"><span>CREATIVE TECHNOLOGY STUDIO</span><span>FORMA / 2026</span></div>
+    </section>
+
+    <section class="service-strip" aria-label="Направления студии">
+      <a href="#services" data-highlight="film"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="9" width="18" height="15" rx="2"/><path d="m21 13 8-5v17l-8-5"/><path d="M9 9V5h6v4"/></svg><span>AI ФИЛЬМЫ<br>И СЕРИАЛЫ</span></a>
+      <a href="#services" data-highlight="cgi"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 3 13 7-13 7L3 10 16 3ZM3 16l13 7 13-7M3 22l13 7 13-7"/></svg><span>CGI &amp; 3D<br>ПРОДАКШН</span></a>
+      <a href="#services" data-highlight="apps" class="strip-active"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="10" width="17" height="18" rx="2"/><path d="M11 6h16v16M8 14h17"/></svg><span>РАЗРАБОТКА<br>ПРИЛОЖЕНИЙ</span></a>
+      <a href="#services" data-highlight="photogrammetry"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 2 13 7v14l-13 7L3 23V9L16 2Z M3 9l13 7 13-7M16 16v14"/></svg><span>3D-МОДЕЛИ<br>ПО ФОТО</span></a>
+      <a href="#services" data-highlight="architecture"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" rx="2"/><circle cx="11" cy="12" r="2"/><path d="m3 25 10-9 6 5 4-5 6 5"/></svg><span>ВИЗУАЛИЗАЦИЯ<br>АРХИТЕКТУРЫ</span></a>
+      <a href="#services" data-highlight="worlds"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="11" stroke-dasharray="2 4"/><circle cx="16" cy="16" r="4"/><path d="M16 1v5M16 26v5M1 16h5M26 16h5"/></svg><span>ИНТЕРАКТИВНЫЕ<br>МИРЫ</span></a>
+    </section>
+
+    <section class="section services-section" id="services" aria-labelledby="services-title">
+      <div class="section-top" data-reveal><span class="section-id"><i></i> ОСНОВНЫЕ НАПРАВЛЕНИЯ</span><span class="section-index">01 / НАШИ УСЛУГИ</span></div>
+      <div class="section-intro" data-reveal><h2 id="services-title">Технологии, которые<br><em>становятся искусством.</em></h2><p>Объединяем художественное мышление, инженерную точность и новейшие инструменты AI.</p></div>
+      <div class="service-grid">
+        <a href="#contact" class="service-card" data-service="Разработка приложений" data-key="apps" data-reveal><img src="assets/service-apps.webp" alt="Два интерфейса мобильных приложений в темной премиальной стилистике" loading="lazy" width="776" height="420"><span class="service-n">01 / DIGITAL</span><span class="service-content"><strong>Разработка приложений</strong><small>Веб-, мобильные приложения и AI-сервисы под ключ</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" class="service-card" data-service="3D-модели по фото" data-key="photogrammetry" data-reveal><img src="assets/service-photogrammetry.webp" alt="Фотореалистичный автомобиль с разделением на модель и визуализацию" loading="lazy" width="776" height="420"><span class="service-n">02 / MODELING</span><span class="service-content"><strong>3D-модели по фото</strong><small>Воссоздание объектов и предметов по фотографиям</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" class="service-card" data-service="Архитектурная визуализация" data-key="architecture" data-reveal><img src="assets/service-architecture.webp" alt="Современный загородный дом среди хвойного леса" loading="lazy" width="776" height="420"><span class="service-n">03 / ARCHVIZ</span><span class="service-content"><strong>Архитектурная визуализация</strong><small>Экстерьеры, интерьеры, ландшафт и 3D-проекты</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" class="service-card" data-service="AI-видео и кино" data-key="film" data-reveal><img src="assets/service-film.webp" alt="Кинематографическая камера с оранжевыми отражениями" loading="lazy" width="776" height="420"><span class="service-n">04 / MOTION</span><span class="service-content"><strong>AI-видео и кино</strong><small>Трейлеры, короткий метр, реклама и видеосерии</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" class="service-card" data-service="Создание 3D-контента" data-key="cgi" data-reveal><img src="assets/service-cgi.webp" alt="Кинематографичный CGI-портрет с металлическими деталями" loading="lazy" width="776" height="420"><span class="service-n">05 / CGI</span><span class="service-content"><strong>Создание 3D-контента</strong><small>Персонажи, окружение, материалы и визуальные эффекты</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" class="service-card" data-service="Интерактивные миры" data-key="worlds" data-reveal><img src="assets/service-worlds.webp" alt="Футуристический светящийся портал среди гор" loading="lazy" width="776" height="420"><span class="service-n">06 / EXPERIENCE</span><span class="service-content"><strong>Интерактивные миры</strong><small>WebGL-сцены, XR, виртуальные презентации</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+
+    <section class="section works-section" id="work" aria-labelledby="works-title">
+      <div class="section-top" data-reveal><span class="section-id"><i></i> АВТОРСКИЕ МИРЫ</span><a href="#contact" class="text-link">Предложить проект <span>↗</span></a></div>
+      <div class="section-intro" data-reveal><h2 id="works-title">Избранные <em>проекты.</em></h2><p>Истории, эксперименты и вселенные, над которыми работает студия.</p></div>
+      <div class="project-grid">
+        <button class="project-card" type="button" data-project="achron" data-reveal><img src="assets/project-achron.webp" loading="lazy" alt="Научно-фантастический персонаж с золотой энергией" width="832" height="550"><span class="project-tag">СЕРИАЛ · КОНЦЕПТ</span><span class="project-info"><strong>АХРОН</strong><small>Научно-мистическая история о природе разума</small></span><span class="project-open" aria-hidden="true">↗</span></button>
+        <button class="project-card" type="button" data-project="dome" data-reveal><img src="assets/project-dome.webp" loading="lazy" alt="Ракета поднимается к прозрачному куполу над водой" width="832" height="550"><span class="project-tag">КОРОТКИЙ МЕТР · КОНЦЕПТ</span><span class="project-info"><strong>КУПОЛ НАД ВОДОЙ</strong><small>Граница привычной физики и реальности</small></span><span class="project-open" aria-hidden="true">↗</span></button>
+        <button class="project-card" type="button" data-project="gods" data-reveal><img src="assets/project-gods.webp" loading="lazy" alt="Гиперреалистичный мистический CGI-портрет" width="832" height="550"><span class="project-tag">СЕРИАЛ · КОНЦЕПТ</span><span class="project-info"><strong>БОГИ</strong><small>Существа за пределами времени</small></span><span class="project-open" aria-hidden="true">↗</span></button>
+      </div>
+    </section>
+
+    <section class="technology-section" id="technology" aria-labelledby="technology-title">
+      <div class="technology-copy" data-reveal><span class="section-id"><i></i> ЖИВАЯ МЕХАНИКА</span><h2 id="technology-title">Форма<br><em>бесконечного.</em></h2><p>Интерактивный объект Möbius Kinetic — эксперимент с материалом, светом и непрерывным движением. Вращайте конструкцию курсором.</p><span class="technology-caption">MÖBIUS KINETIC / V17 / REAL-TIME 3D</span></div>
+      <div class="spiral-visual" id="spiral-visual"><canvas id="spiral-canvas" role="img" tabindex="0" aria-label="Две кинетические титановые ленты Мёбиуса. Для вращения используйте мышь, стрелки или клавишу Home"></canvas>
+        <svg class="spiral-fallback" viewBox="0 0 600 600" aria-hidden="true"><defs><linearGradient id="mob-grad" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#424c59"/><stop offset=".32" stop-color="#d6dce0"/><stop offset=".6" stop-color="#606a77"/><stop offset="1" stop-color="#d8dce2"/></linearGradient></defs><g fill="none" stroke="url(#mob-grad)" stroke-width="25"><ellipse cx="300" cy="222" rx="135" ry="71" transform="rotate(-24 300 222)"/><ellipse cx="300" cy="385" rx="135" ry="71" transform="rotate(22 300 385)"/></g><path d="M300 130v340" stroke="#9caebc" stroke-width="8"/><ellipse cx="300" cy="300" rx="48" ry="15" fill="none" stroke="#b9c7ca" stroke-width="6"/></svg>
+        <div class="spiral-label" aria-hidden="true"><span>TI / 6AL-4V</span><span>DRAG TO ROTATE · 180°</span></div>
+      </div>
+    </section>
+
+    <section class="about-section" id="about" aria-labelledby="about-title"><img src="assets/about-cyborg.webp" class="about-image" alt="Футуристический портрет с деталями кибернетического механизма" loading="lazy" width="1180" height="510"><div class="about-vignette" aria-hidden="true"></div><div class="about-text" data-reveal><span class="section-id"><i></i> О СТУДИИ</span><h2 id="about-title">FORMA <em>AI</em><sup>®</sup></h2><p>Независимая креативная студия на стыке искусственного интеллекта, 3D, архитектуры, кино и разработки. Создаём не просто изображения — создаём цифровые продукты и миры, которые запоминаются.</p><a href="#contact" class="button button-outline">Обсудить сотрудничество <span aria-hidden="true">↗</span></a></div></section>
+
+    <section class="principles" aria-label="Наши подходы"><div><strong>01 / IDEA</strong><span>Понимаем задачу</span></div><div><strong>02 / DESIGN</strong><span>Создаём форму</span></div><div><strong>03 / BUILD</strong><span>Разрабатываем</span></div><div><strong>04 / DELIVER</strong><span>Доводим результат</span></div></section>
+
+    <section class="contact-section section" id="contact" aria-labelledby="contact-title"><div class="contact-intro" data-reveal><span class="section-id"><i></i> НАЧНЁМ С ИДЕИ</span><h2 id="contact-title">Есть идея?<br><em>Придадим ей форму.</em></h2><p>Опишите задачу, и мы подготовим краткий бриф. Пока прямой канал отправки не подключён, текст можно скопировать.</p></div>
+      <form class="brief-form" id="brief-form" data-reveal><label for="brief-name">Как к вам обращаться</label><input id="brief-name" name="name" autocomplete="name" maxlength="100" placeholder="Имя или название команды" required><label for="brief-service">Направление</label><select id="brief-service" name="service" required><option value="">Выберите услугу</option><option>Разработка приложений</option><option>3D-модели по фото</option><option>Архитектурная визуализация</option><option>AI-видео и кино</option><option>Создание 3D-контента</option><option>Интерактивные миры</option><option>Другое</option></select><label for="brief-description">Расскажите о проекте</label><textarea id="brief-description" name="description" rows="3" maxlength="2500" placeholder="Что нужно создать? Есть ли сроки, референсы, фотографии?" required></textarea><button class="button button-primary brief-button" type="submit"><span class="copy-icon" aria-hidden="true">↗</span>Скопировать бриф</button><p class="brief-status" id="brief-status" role="status" aria-live="polite"></p></form>
+    </section>
+  </main>
+  <footer class="site-footer"><a href="#top" class="footer-wordmark">FORMA <span>AI</span><sup>®</sup></a><p>НЕЙРО СТУДИЯ · CREATIVE × TECHNOLOGY</p><a href="#top">НАВЕРХ ↑</a><small>© <span id="copyright-year">2026</span> FORMA AI</small></footer>
+</div>
+
+<dialog id="showreel-dialog" class="modal showreel-modal" aria-labelledby="showreel-title"><div class="modal-head"><strong id="showreel-title">QUANTUM KINETIC / SHOWREEL</strong><button type="button" class="close-modal" data-close-dialog aria-label="Закрыть видео">×</button></div><video id="quantum-video" muted loop playsinline preload="metadata" poster="assets/quantum-cover.webp" width="1920" height="1080"><source src="assets/neiro-studiya-v14.mp4" type="video/mp4"></video><div class="showreel-footer"><span>ORIGINAL CGI MOTION · V14</span><button type="button" id="sound-toggle" class="sound-toggle" aria-pressed="false"><span aria-hidden="true">♫</span><span class="sound-label">Звук выкл.</span></button></div><div id="video-error" class="video-error" hidden>Видео временно недоступно.</div></dialog>
+<dialog id="project-dialog" class="modal project-modal" aria-labelledby="project-dialog-title"><div class="modal-head"><strong>FORMA AI / PROJECT</strong><button type="button" class="close-modal" data-close-dialog aria-label="Закрыть проект">×</button></div><img id="project-dialog-image" src="assets/project-achron.webp" alt="" width="832" height="550"><span id="project-dialog-tag" class="modal-tag"></span><h2 id="project-dialog-title"></h2><p id="project-dialog-text"></p><a class="button button-outline" href="#contact" id="project-dialog-contact">Обсудить похожий проект ↗</a></dialog>
+
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module" src="site.js"></script>
+<script src="experience.js" defer></script>
 </body>
 </html>
