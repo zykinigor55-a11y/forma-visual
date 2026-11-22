@@ -4,6 +4,7 @@
 import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile,scandiRoofOverhang} from './forma-landscape-3d-architecture-geometry.js';
 import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
+import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
@@ -807,6 +808,9 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
   addScandiGableCladding(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
   addScandiRoofEdgeDetails(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
   addScandiCornerDetails(THREE,g,{width:w,depth:d,bodyHeight});
+  addScandiRoofSnowGuards(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
+  addScandiTerrace(THREE,g,{width:w,depth:d,
+   door:g.userData.facadeSchedule?.front?.find(o=>o.kind==='door')});
   g.userData.scandiEnvelope={facadeMaterials:['vertical-weathered-silver-grey-timber','vertical-smoked-graphite-grey-timber'],
    roofGableWindBoard:true,vergeMetalFlashing:true};
  }
