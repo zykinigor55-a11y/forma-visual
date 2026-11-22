@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {perspectiveLandscapePrompt} from '../forma-landscape-project-prompts.js';
 import {inspectRenderImagePixels} from '../forma-landscape-ai-photo-quality.js';
+import {photoLightingContract} from '../forma-landscape-3d-lighting-photo.js';
 
 const landscape={
  site:{width:40,height:35,boundary:[]},
@@ -67,4 +68,48 @@ test('partially missing transparent WebGL buffer is rejected before paid request
  const result=inspectRenderImagePixels(raw,{season:'summer'});
  assert.equal(result.ok,false);
  assert.ok(result.transparentFraction>.6);
+});
+
+test('full lighting passport preserves author-set sun and all chosen atmospherics',()=>{
+ const lightingRig={
+  time:'morning',season:'autumn',weather:'overcast',
+  sun:{azimuthDeg:282,elevationDeg:20,strength:1.1,softness:3.2,
+   intensity:.81,color:'#ffe1be',position:{x:-60,y:29,z:13},
+   shadowEnabled:true,shadowRadius:3.2,shadowMapWidth:2048,shadowMapHeight:2048},
+  sky:{visible:true,turbidity:9.2,rayleigh:.75,mieCoefficient:.005,mieDirectionalG:.82},
+  clouds:{visible:true,coverage:.44,opacity:.6},
+  atmosphere:{clouds:55,haze:37,globalFill:112,nightGlow:75,ripples:30},
+  fill:{hemisphereIntensity:1.75,hemisphereColor:'#e6eef6',groundColor:'#5b6954',
+   bounceIntensity:.43,bounceColor:'#c6d8e3'},
+  fog:{color:'#bcc9c7',near:120,far:250},
+  renderer:{exposure:1.05,toneMapping:'ACESFilmic',
+   background:'#b8c7c4',environmentIntensity:.72}
+ };
+ const full=photoLightingContract({...landscape,lightingRig});
+ for(const token of [
+  'AZIMUTH 282.0°','ELEVATION 20.0°',
+  'shadow softness 3.20','relative intensity','2048px × 2048px',
+  'sky turbidity 9.20','Rayleigh coefficient 0.75',
+  'Mie coefficient 0.0050','cloud setting 55%',
+  'author haze 37%','global fill 112%',
+  'Hemisphere skylight colour #E6EEF6','bounced directional fill colour #C6D8E3',
+  'exposure 1.050','fog near 120.00m','fog far 250.00m',
+  'colour #FFE1BE','author-selected shadow'
+ ])assert.ok(full.includes(token),'Missing selected lighting attribute: '+token);
+ assert.match(full,/numeric solar control wins/);
+ assert.match(full,/NOT geographic true solar time/);
+ assert.ok(!full.includes('actual astronomical sunrise'));
+ const p=perspectiveLandscapePrompt({...landscape,lightingRig});
+ assert.ok(p.includes('AZIMUTH 282.0°'));
+ assert.ok(p.includes('sky turbidity 9.20'));
+ assert.ok(p.includes('weather overcast sky'));
+});
+test('night controls prohibit daylight and unknown lighting values are not invented',()=>{
+ const night=photoLightingContract({lightingRig:{time:'night',weather:'fog',season:'winter'}});
+ assert.match(night,/NIGHT selected: no visible daylight sunlight/);
+ assert.match(night,/AZIMUTH/);
+ assert.match(night,/not supplied/);
+ const absent=photoLightingContract({...landscape});
+ assert.match(absent,/No full live lighting rig was sent/);
+ assert.match(absent,/do not invent sun angle/);
 });
