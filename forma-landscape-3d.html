@@ -89,6 +89,22 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
  background:#22252BF5;color:#F5F0E6;box-shadow:0 16px 44px #000B;
  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 #sceneClimatePanel[hidden]{display:none!important}
+
+.weather-strength-section[hidden]{display:none!important}
+.weather-strength-section{padding:12px 10px;margin:13px 0 8px;
+ border:1px solid #54575C;border-radius:11px;background:#252930;color:#F1ECE4}
+.weather-strength-section>strong{display:block;font-size:11px;letter-spacing:.07em;
+ color:#E9D0A7;margin-bottom:8px}
+.weather-strength-sliders{display:grid;gap:6px}
+.weather-strength-sliders label{display:flex;justify-content:space-between;gap:10px;
+ margin:6px 0 0!important;color:#DEDFE0;font-size:11px;font-weight:600}
+.weather-strength-sliders output{font-variant-numeric:tabular-nums;color:#F2C98B;
+ font-size:11px}
+.weather-strength-sliders input[type="range"]{width:100%;height:22px;
+ margin:0;accent-color:#D2B184;touch-action:pan-x}
+.weather-strength-section small{display:block;color:#BABDC1;
+ line-height:1.5;margin:6px 0 0;font-size:10px}
+#sceneClimatePanel .weather-strength-section{padding:9px 8px;margin:10px 0}
 .scene-climate-heading{display:flex;align-items:center;justify-content:space-between;
  gap:8px;margin-bottom:13px;color:#E0CAA7;font-size:11px;letter-spacing:.08em}
 #sceneClimateClose{min-width:34px;min-height:34px;padding:5px;background:#33363D;
@@ -359,6 +375,30 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <label for="quickSeason">Сезон</label><select id="quickSeason"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label for="quickWeather">Погода</label><select id="quickWeather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
  </div>
+ <section id="quickWeatherSNOW" class="weather-strength-section" data-weather-section="snow" hidden>
+ <strong>❄ СНЕГ · СИЛА ЭФФЕКТА</strong>
+ <div class="weather-strength-sliders"><label for="quickWeatherSnowTrees">Снег на деревьях <output id="quickWeatherSnowTreesValue">22%</output></label>
+  <input id="quickWeatherSnowTrees" type="range" min="0" max="100" step="5" value="22" data-weather-effect="snowTrees">
+  <label for="quickWeatherSnowGround">Снег на земле <output id="quickWeatherSnowGroundValue">52%</output></label>
+  <input id="quickWeatherSnowGround" type="range" min="0" max="100" step="5" value="52" data-weather-effect="snowGround">
+  <label for="quickWeatherSnowfall">Снегопад <output id="quickWeatherSnowfallValue">0%</output></label>
+  <input id="quickWeatherSnowfall" type="range" min="0" max="100" step="5" value="0" data-weather-effect="snowfall">
+  <label for="quickWeatherWinterHaze">Зимняя дымка <output id="quickWeatherWinterHazeValue">18%</output></label>
+  <input id="quickWeatherWinterHaze" type="range" min="0" max="100" step="5" value="18" data-weather-effect="winterHaze"></div>
+ <small>Дальний план тоже учитывается. 0% снега на деревьях — ветви без снега.</small>
+ </section>
+<section id="quickWeatherRAIN" class="weather-strength-section" data-weather-section="rain" hidden>
+ <strong>☔ ДОЖДЬ · СИЛА ЭФФЕКТА</strong>
+ <div class="weather-strength-sliders"><label for="quickWeatherRainIntensity">Сила дождя <output id="quickWeatherRainIntensityValue">42%</output></label>
+  <input id="quickWeatherRainIntensity" type="range" min="0" max="100" step="5" value="42" data-weather-effect="rainIntensity">
+  <label for="quickWeatherSurfaceWetness">Мокрые поверхности <output id="quickWeatherSurfaceWetnessValue">65%</output></label>
+  <input id="quickWeatherSurfaceWetness" type="range" min="0" max="100" step="5" value="65" data-weather-effect="surfaceWetness">
+  <label for="quickWeatherPuddles">Лужи и отражения <output id="quickWeatherPuddlesValue">20%</output></label>
+  <input id="quickWeatherPuddles" type="range" min="0" max="100" step="5" value="20" data-weather-effect="puddles">
+  <label for="quickWeatherRainMist">Влажная дымка <output id="quickWeatherRainMistValue">25%</output></label>
+  <input id="quickWeatherRainMist" type="range" min="0" max="100" step="5" value="25" data-weather-effect="rainMist"></div>
+ <small>Режим «После дождя» не показывает падающие капли, но сохраняет мокрые материалы.</small>
+ </section>
  <div class="scene-climate-sliders">
   <label for="quickSunAzimuth">Азимут солнца <output id="quickSunAzimuthValue">311°</output></label><input id="quickSunAzimuth" type="range" min="0" max="359" step="1">
   <label for="quickSunElevation">Высота солнца <output id="quickSunElevationValue">67°</output></label><input id="quickSunElevation" type="range" min="2" max="85" step="1">
@@ -426,6 +466,30 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
+<section id="desktopWeatherSNOW" class="weather-strength-section" data-weather-section="snow" hidden>
+ <strong>❄ СНЕГ · СИЛА ЭФФЕКТА</strong>
+ <div class="weather-strength-sliders"><label for="weatherSnowTrees">Снег на деревьях <output id="weatherSnowTreesValue">22%</output></label>
+  <input id="weatherSnowTrees" type="range" min="0" max="100" step="5" value="22" data-weather-effect="snowTrees">
+  <label for="weatherSnowGround">Снег на земле <output id="weatherSnowGroundValue">52%</output></label>
+  <input id="weatherSnowGround" type="range" min="0" max="100" step="5" value="52" data-weather-effect="snowGround">
+  <label for="weatherSnowfall">Снегопад <output id="weatherSnowfallValue">0%</output></label>
+  <input id="weatherSnowfall" type="range" min="0" max="100" step="5" value="0" data-weather-effect="snowfall">
+  <label for="weatherWinterHaze">Зимняя дымка <output id="weatherWinterHazeValue">18%</output></label>
+  <input id="weatherWinterHaze" type="range" min="0" max="100" step="5" value="18" data-weather-effect="winterHaze"></div>
+ <small>Дальний план тоже учитывается. 0% снега на деревьях — ветви без снега.</small>
+ </section>
+<section id="desktopWeatherRAIN" class="weather-strength-section" data-weather-section="rain" hidden>
+ <strong>☔ ДОЖДЬ · СИЛА ЭФФЕКТА</strong>
+ <div class="weather-strength-sliders"><label for="weatherRainIntensity">Сила дождя <output id="weatherRainIntensityValue">42%</output></label>
+  <input id="weatherRainIntensity" type="range" min="0" max="100" step="5" value="42" data-weather-effect="rainIntensity">
+  <label for="weatherSurfaceWetness">Мокрые поверхности <output id="weatherSurfaceWetnessValue">65%</output></label>
+  <input id="weatherSurfaceWetness" type="range" min="0" max="100" step="5" value="65" data-weather-effect="surfaceWetness">
+  <label for="weatherPuddles">Лужи и отражения <output id="weatherPuddlesValue">20%</output></label>
+  <input id="weatherPuddles" type="range" min="0" max="100" step="5" value="20" data-weather-effect="puddles">
+  <label for="weatherRainMist">Влажная дымка <output id="weatherRainMistValue">25%</output></label>
+  <input id="weatherRainMist" type="range" min="0" max="100" step="5" value="25" data-weather-effect="rainMist"></div>
+ <small>Режим «После дождя» не показывает падающие капли, но сохраняет мокрые материалы.</small>
+ </section>
  <section class="solar-controls" aria-label="Небо и атмосфера">
   <h3>☁ НЕБО · АТМОСФЕРА · РАССЕЯННЫЙ СВЕТ</h3>
   <label for="globalFill">Заполняющий свет неба <output id="globalFillValue">110%</output></label>
