@@ -5,6 +5,7 @@ import {treeInstancePhotoDetail} from './forma-landscape-tree-photo-identity.js'
 import {photoLightingContract} from './forma-landscape-3d-lighting-photo.js';
 import {weatherPhotoContract} from './forma-landscape-weather-effects.js';
 import {nightInteriorPhotoContract} from './forma-landscape-3d-night-interior.js';
+import {roofGarlandPhotoContract} from './forma-landscape-roof-garlands.js';
 import {creaturePhotoDescription} from './forma-landscape-3d-creatures.js';
 /** FORMA / plan illustration via GPT Image 2.6.
  * Exact geometric SVG masterplan is the legal/source plan; AI output is
@@ -57,6 +58,8 @@ export function masterplanPrompt(input){
   ...sceneInstructions,
   weatherPhotoContract(input),
   nightInteriorPhotoContract(input),
+  roofGarlandPhotoContract(input.house),
+  ...(Array.isArray(input.buildings)?input.buildings.map(roofGarlandPhotoContract):[]),
   'HARD GEOMETRY LOCK, HIGHEST PRIORITY: IMAGE 1 is the one authoritative measured vector layout. Follow the original pixel coordinates of every shape. Preserve exact parcel outline, orientation, building footprints, house position and rotation, separate bath/garage/gazebo footprints, roof outlines, direction and width of EACH paving segment, precise bends and intersections, each lawn and mulch edge, EVERY measured gravel strip with exact width, planting centre, mature crown diameter, pond polygon, boulder centre, luminaire centre and all retaining or other boundaries. Same object count, same scale, same camera and framing. Never move, resize, replace, invent, delete or duplicate objects. Do not simplify curves. Eraser holes and all free bare-ground gaps are deliberately EMPTY, never refill them with vegetation or water. A site-wide background lawn must stop visually under real houses, paved paths, ponds and mulch, with no overlap at their edges. The landscape editor owns geometry in real metres; you only improve surface appearance.',
   'MEASURED REFERENCE: plot bounding dimensions '+w.toFixed(2)+'m by '+h.toFixed(2)+'m. The main building measured footprint is '+Number(house.width).toFixed(2)+'m by '+Number(house.height).toFixed(2)+'m. The editor records '+count+' editable landscape objects. These numbers are verification metadata, not new objects for you to draw. Do not alter their geometry even when beautifying.',
   'SPECIES AND MATERIALS LOCK — IDENTIFIED SOURCE OBJECTS: '+(schedule.length?schedule.join('; '):'None')+'. Each tree and shrub must be recognizable by botanical species, not generic green spheres. Each path must use its explicitly named material. Preserve the individual real-world crown diameters, source count and every path width. Buildings: '+roofs.join('; ')+'.',
@@ -237,6 +240,8 @@ export function perspectiveLandscapePrompt(input){
   photoLightingContract(input),
   weatherPhotoContract(input),
   nightInteriorPhotoContract(input),
+  roofGarlandPhotoContract(input.house),
+  ...(Array.isArray(input.buildings)?input.buildings.map(roofGarlandPhotoContract):[]),
   'PHYSICAL CAMERA / SUN METADATA: '+(Number.isFinite(Number(input.cameraFovDegrees))?'Input vertical field of view '+Number(input.cameraFovDegrees).toFixed(2)+' degrees. ':'Use the same source camera projection. ')+(input.sunPosition&&Number.isFinite(Number(input.sunPosition.y))?'Existing 3D sun vector X='+Number(input.sunPosition.x||0).toFixed(2)+' Y='+Number(input.sunPosition.y||0).toFixed(2)+' Z='+Number(input.sunPosition.z||0).toFixed(2)+'. Match the shadow orientation from the reference. ':'No explicit sun position: infer direction ONLY from existing reference shadows.')+(input.solarAngles&&Number.isFinite(Number(input.solarAngles.azimuth))?' USER-ADJUSTED PHYSICAL SUN: compass azimuth '+Number(input.solarAngles.azimuth).toFixed(1)+' degrees, elevation '+Number(input.solarAngles.elevation||0).toFixed(1)+' degrees above horizon, relative strength '+Number(input.solarAngles.strength||1).toFixed(2)+'. Respect the light/shadow direction corresponding to these settings.':'')+' Do not rotate or move the sun just to beautify the image.',
   'EMPTY CATEGORIES FORBIDDEN: '+missing.join(', ')+'. '+(entries.length===0&&extra3d.length===0?'There are NO landscape objects: leave the parcel EMPTY with only the existing building and ground. No invented lawn, vegetation, roads, stones, borders, lights or other landscaping.':'Keep all existing plan objects AND placed GLB models visible; do not add any new landscaping objects of any kind.'),
   'ATMOSPHERE: '+time+'; '+season+'; '+weather+'. One physically consistent sunlight direction; matching contact shadows and soft bounce light. Surfaces: real-scale grass blades, paver joints, mineral gravel and natural mulch fibres, nuanced wet or dry surfaces only when weather requires it. Water has depth, subtle natural reflection and exact shoreline.',
