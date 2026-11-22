@@ -39,7 +39,8 @@ export const CREATURE_ASSETS=Object.freeze([
 ].map(item=>Object.freeze({...item,license:'CC0-1.0',
   modelPath:'/api/creatures/'+item.id+'.glb',
   origin:'tevy.dev',sourceVersion:'v1',
-  nativeGLB:'https://tevy.dev/models/'+item.slug+'/v1/lod1.glb'})));
+  nativeGLB:'https://tevy.dev/models/'+item.slug+'/v1/lod1.glb',
+  preview:'https://tevy.dev/models/'+item.slug+'/v1/preview.webp'})));
 const CREATURE_MAP=new Map(CREATURE_ASSETS.map(x=>[x.id,x]));
 export const creatureById=id=>CREATURE_MAP.get(id)||null;
 export const isCreatureId=id=>CREATURE_MAP.has(id);
