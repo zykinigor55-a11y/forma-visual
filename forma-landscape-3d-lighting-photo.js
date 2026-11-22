@@ -3,7 +3,7 @@
  * NOT GPS/ephemeris or absolute illuminance in lux.
  * Never invent absent values: the screenshot remains authoritative.
  */
-const f=(v,n=2)=>Number.isFinite(Number(v))?Number(v).toFixed(n):null;
+const f=(v,n=2)=>v===null||v===undefined||v===''?null:(Number.isFinite(Number(v))?Number(v).toFixed(n):null);
 const safe=(v)=>String(v??'').replace(/[\r\n<>]/g,' ').slice(0,120);
 const measure=(v,unit='',n=2)=>{const q=f(v,n);return q===null?'not supplied':q+unit};
 const bool=v=>typeof v==='boolean'?(v?'enabled':'disabled'):'not supplied';
