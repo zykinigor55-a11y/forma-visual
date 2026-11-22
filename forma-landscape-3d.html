@@ -667,7 +667,7 @@ import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=roof-garland-project-v2-20261122';
-import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
+import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v1-20261122';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=roof-garland-build-v3-20261122';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
@@ -1111,17 +1111,20 @@ function rebuild(){
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();for(const mat of (Array.isArray(n.material)?n.material:[n.material]))mat?.dispose?.()})}
  pickables=[];botanicalGroups.length=0;lastBotanicalLodAt=0;shadowedGardenLights=0;
  const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
- const vertices=terrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
- for(let i=0;i<vertices.length;i+=3){const j=i/3*2;uvs[j]=vertices[i]/w+.5;uvs[j+1]=vertices[i+2]/h+.5}
+ // The ground is an unbroken square around the measured parcel. An irregular
+ // user boundary remains a separate outline and never cuts holes in the scene.
+ const groundSide=squareTerrainSide(doc.site);
+ const vertices=squareTerrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
+ for(let i=0;i<vertices.length;i+=3){const j=i/3*2;uvs[j]=vertices[i]/groundSide+.5;uvs[j+1]=vertices[i+2]/groundSide+.5}
  geo.setAttribute('position',new THREE.BufferAttribute(vertices,3));
  geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));
  // Smooth shared gradients instead of hard, faceted per-triangle normals.
  geo.setAttribute('normal',new THREE.BufferAttribute(
-  sampledTerrainNormals(vertices,w,h,(x,z)=>terrainAt(x,z)),3));
- const grass=groundPhotoTexture();grass.repeat.set(w/3.2,h/3.2);
+  sampledTerrainNormals(vertices,groundSide,groundSide,(x,z)=>terrainAt(x,z)),3));
+ const grass=groundPhotoTexture();grass.repeat.set(groundSide/3.2,groundSide/3.2);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
- terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=false;terrainMesh.userData.ground=true;root.add(terrainMesh);
+ terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=false;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
   for(let i=0;i<verts.length;i+=3){uv.push(verts[i]/w+.5,1-(verts[i+2]/h+.5));verts[i+1]+=.032}
