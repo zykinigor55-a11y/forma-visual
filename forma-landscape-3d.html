@@ -69,6 +69,7 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
  background:#283033ee;color:#f4f3ed;box-shadow:0 8px 24px #0008;
  border-radius:999px;font-size:12px;font-weight:750;white-space:nowrap}
 #alphaSceneButton:focus-visible{outline:2px solid #dfc4a3;outline-offset:3px}
+#alphaSceneButton[hidden]{display:none!important}
 #selectedObjectDock{position:absolute;z-index:5;top:111px;left:50%;
  transform:translateX(-50%);display:flex;align-items:center;gap:12px;
  min-width:240px;max-width:calc(100% - 28px);padding:8px 9px 8px 14px;
@@ -82,9 +83,17 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
 #selectedObjectDelete:disabled{opacity:.38;cursor:not-allowed}
 @media(min-width:851px){#alphaSceneButton{top:12px}
  #selectedObjectDock{top:63px}}
-@media(max-width:850px){#alphaSceneButton{top:57px}
- #selectedObjectDock{top:106px;width:max-content;max-width:calc(100vw - 20px)}
- #selectedObjectName{max-width:45vw}}
+@media(max-width:850px){#alphaSceneButton{top:56px;left:auto;right:8px;transform:none;
+ min-height:34px;padding:7px 10px;font-size:10px;box-shadow:0 3px 8px #0004}
+ #selectedObjectDock{top:auto;bottom:calc(min(29dvh,250px) + 72px);
+  right:8px;left:auto;transform:none;min-width:0;max-width:calc(100vw - 20px);
+  padding:6px 7px 6px 10px;gap:6px}
+ #selectedObjectName{max-width:33vw;font-size:11px}
+ #selectedObjectDelete{min-height:32px;padding:6px 8px;font-size:11px}
+ body[data-mobile-panel="scene"] #selectedObjectDock{bottom:77px}
+ body[data-mobile-pine="true"][data-mobile-panel="details"] #selectedObjectDock{
+  bottom:calc(min(65dvh,640px) + 72px)}
+ }
 #draftActions{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;padding:10px;border-top:1px solid #485449}
 #draftActions[hidden]{display:none}
 #draftActions button{font-size:11px;padding:10px 7px}
@@ -727,7 +736,11 @@ function initialize(){
   save();
  }
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
- if(deepLinkAlpha){focusHouseCamera();status('Дом АЛЬФА открыт. Композиция и координаты сохранены.');}
+ if(deepLinkAlpha){
+  focusHouseCamera();
+  if(window.innerWidth<=850)activateMobilePanel('scene');
+  status('Дом АЛЬФА открыт целиком. Композиция и координаты сохранены.');
+ }
  // Android: defer a second WebGL context until the house/details panel is used.
  // 18 offscreen WebGL preview renders create a costly second GPU context.
  // They are not needed until the architectural catalog is actually in view.
@@ -1415,6 +1428,8 @@ async function restorePlantGlbs(){
 function renderHouseLibrary(){
  const target=$('#houseStyles');if(!target||!doc)return;
  const current=activeHouseTarget(),style=housePreset(current.archStyle).id;
+ const quickAlpha=$('#alphaSceneButton');
+ if(quickAlpha)quickAlpha.hidden=doc.house.archStyle==='alpha';
  $('#houseEditing').textContent=(current===doc.house?'Редактируется: главный дом':'Редактируется: выбранная постройка')+(current.modelKey?' · собственная GLB-модель':'');
  target.innerHTML=HOUSE_PRESETS.map(p=>'<button type="button" data-house-preset="'+p.id+'" class="'+(p.id===style?'active':'')+'" aria-pressed="'+String(p.id===style)+'">'+
   (houseThumbs.has(p.id)?'<img src="'+houseThumbs.get(p.id)+'" alt="3D-превью '+p.name+'" draggable="false">':'<span class="house-fallback" style="background:linear-gradient(145deg,'+p.accent+',#273330)"></span>')+
@@ -1472,7 +1487,8 @@ function selectable(key){const [type,oid]=key.split(':');if(type==='house')retur
 function syncSelectedObjectDock(ref,label){
  const dock=$('#selectedObjectDock'),title=$('#selectedObjectName'),del=$('#selectedObjectDelete');
  if(!dock||!title||!del)return;
- const valid=Boolean(ref?.obj);
+ // Do not cover the main house with a huge 'protected' floating panel.
+ const valid=Boolean(ref?.obj&&ref.type!=='house');
  dock.hidden=!valid;
  if(!valid)return;
  title.textContent=String(label||'Выбранный объект');
@@ -1847,6 +1863,24 @@ function focusHouseCamera(){
  if(state.view!=='3d')setView('3d');
  const b=activeHouseTarget(),p=pos(b.x,b.y);
  const ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));
+ if(b.archStyle==='alpha'&&!b.modelKey){
+  // Mobile architectural 3/4 view. The original generic zoom cropped
+  // the A-frame into a giant, textureless, cyan glass rectangle.
+  const rise=Math.max(4.2,Math.min(8,Number(b.roofRise)||(b.width||7.5)*.79));
+  const peak=.65+rise;
+  const horizontalFov=Math.atan(Math.tan(50*Math.PI/360)*ratio);
+  const widthDistance=(Number(b.width)||7.5)/(2*Math.max(.12,Math.tan(horizontalFov)))*1.43;
+  const far=Math.max((Number(b.height)||9.5)*1.65,widthDistance);
+  const ground=terrainAt(p.x,p.z);
+  const yaw=-(Number(b.rotation)||0)*Math.PI/180;
+  const offset=new THREE.Vector3(-far*.22,peak*.66,far)
+   .applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
+  controls.target.set(p.x,ground+peak*.47,p.z);
+  camera.position.set(p.x+offset.x,ground+peak*.47+offset.y,p.z+offset.z);
+  camera.lookAt(controls.target);controls.update();renderGate.invalidate();
+  status('Весь дом АЛЬФА в кадре. Размеры и расположение сохранены.');
+  return;
+ }
  const range=Math.max(b.width,b.height,7)*1.35*Math.min(2.15,Math.max(1,.90/ratio));
  controls.target.set(p.x,1.6,p.z);
  camera.position.set(p.x+range*.83,Math.max(9,range*.86),p.z+range*1.15);
@@ -2424,8 +2458,9 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   if(!card){status('Модель АЛЬФА отсутствует в загруженной версии. Обновите страницу.');return}
   card.click();
   focusHouseCamera();
-  catalog?.scrollIntoView({behavior:'smooth',block:'nearest'});
-  status('АЛЬФА · A-frame выбрана. Геометрия участка и положение дома сохранены.');
+  if(window.innerWidth<=850)activateMobilePanel('scene');
+  else catalog?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  status('АЛЬФА · A-frame выбрана. Откройте «Дома / параметры» для настроек.');
  };
  $('#focusHouse').onclick=focusHouseCamera;
  $('#focusSelected').onclick=focusSelectedPlant;
