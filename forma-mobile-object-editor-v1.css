@@ -1,0 +1,132 @@
+/* FORMA VISUAL · mobile contextual 3D editor (v1)
+ * A tapped tree, shrub, light, building, rock or creature opens ONE relevant
+ * inspector. Precision move controls are optional, never permanently overlaid.
+ */
+#mobileObjectEditorHeader{display:none}
+@media(max-width:850px){
+  #mobilePineSelect{display:none!important}
+  #mobileWorkspaceTabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    column-gap:6px!important}
+  #mobileWorkspaceTabs button[data-mobile-panel]{min-width:0;min-height:46px;
+    font-size:12px;white-space:nowrap}
+  body[data-mobile-panel="details"][data-object-inspector="true"] #right{
+    display:flex!important;height:min(48dvh,440px)!important;
+    max-height:calc(100dvh - 150px)!important;
+    overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;
+    overscroll-behavior:contain; padding:0 12px calc(18px + env(safe-area-inset-bottom,0px))!important;
+    background:rgba(34,37,41,.98);border:1px solid #686c72
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #mobileWorkspaceTabs{
+    bottom:calc(min(48dvh,440px) + 16px + env(safe-area-inset-bottom,0px))!important
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #right > :not(#mobileObjectEditorHeader):not(#objectInspectorDock){
+    display:none!important
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #mobileObjectEditorHeader:not([hidden]){
+    display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:center;gap:7px;position:sticky;top:0;z-index:3;
+    padding:12px 1px 10px;margin:0 0 4px;
+    background:#24272b;border-bottom:1px solid #5a5c60
+  }
+  #mobileObjectEditorTitle{
+    display:block;max-width:100%;color:#f4e4c9;
+    font:750 14px/1.25 system-ui,sans-serif;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    letter-spacing:.01em
+  }
+  #mobileObjectEditorHeader button{
+    min-width:44px;min-height:44px;padding:7px 11px;
+    border:1px solid #76746e;border-radius:10px;
+    background:#33373b;color:#f4e9d9;font:650 12px system-ui,sans-serif
+  }
+  #mobileObjectEditorHeader #mobileObjectClose{
+    padding:4px;min-width:44px;font-size:23px
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #objectInspectorDock{
+    display:block!important;flex:none;width:100%;
+    background:transparent;border:0!important;box-shadow:none!important;
+    margin:0!important;padding:0 1px!important;
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #objectInspectorDock > h3{
+    display:none!important
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #properties{
+    min-height:0;padding-bottom:12px;overflow:visible;
+    font-size:12px;line-height:1.4
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #properties :is(button,select,input[type="number"]){
+    min-height:44px
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] :is(
+    #sceneQuickTools,#sceneCameraCycle,#sceneClimateButton,#alphaSceneButton,#status){
+    display:none!important
+  }
+  /* Do not show a second floating control pad under the real object inspector. */
+  body[data-mobile-panel="details"] #selectedObjectDock{display:none!important}
+  body[data-mobile-panel="scene"] #selectedObjectDock:not([hidden]){
+    position:absolute;top:auto!important;left:8px!important;right:8px!important;
+    bottom:calc(73px + env(safe-area-inset-bottom,0px))!important;
+    transform:none!important;z-index:8;
+    margin:0 auto;padding:8px!important;
+    width:min(410px,calc(100% - 16px))!important;min-width:0!important;
+    max-width:calc(100% - 16px)!important;max-height:min(252px,45dvh)!important;
+    overflow-y:auto;overscroll-behavior:contain;
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+    align-items:center;gap:6px!important;
+    background:#272a2feb;border:1px solid #72777b;border-radius:14px;
+    box-shadow:0 8px 28px #06090cb5
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectName{
+    grid-column:1/-1;max-width:100%;text-align:center;
+    font-size:12px;font-weight:750;color:#f7e5c5
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectPosition{
+    display:none!important
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock > button{
+    min-width:0;min-height:42px;font-size:12px;
+    padding:6px 7px
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectEdit,
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectDuplicate,
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectDelete,
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectRotate{
+    display:none!important
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectDismiss{
+    display:block!important;grid-column:2;grid-row:2;
+    font-size:22px;min-width:44px;background:#393b42
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectMove{
+    grid-column:1;grid-row:2
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock .mobile-nudge{
+    grid-column:1/-1;width:100%;display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr));gap:5px
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock .mobile-move-settings{
+    grid-column:1/-1;width:100%;display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:5px
+  }
+  body[data-mobile-panel="scene"] #selectedObjectDock #selectedObjectDone{
+    grid-column:1/-1;display:block!important;min-height:43px;
+    background:#cdb38b!important;color:#232729!important;
+    font-size:12px;font-weight:800
+  }
+  body[data-mobile-panel="scene"]:has(#selectedObjectDock:not([hidden])) #status{
+    display:none!important
+  }
+  body[data-mobile-panel="scene"]:has(#selectedObjectDock:not([hidden])) 
+  :is(#sceneCameraCycle,#sceneClimateButton){display:none!important}
+}
+@media(max-width:850px) and (max-height:540px){
+  body[data-mobile-panel="details"][data-object-inspector="true"] #right{
+    height:52dvh!important;max-height:calc(100dvh - 100px)!important
+  }
+  body[data-mobile-panel="details"][data-object-inspector="true"] #mobileWorkspaceTabs{
+    bottom:calc(52dvh + 12px + env(safe-area-inset-bottom,0px))!important
+  }
+}
+@media(min-width:851px){
+  #selectedObjectEdit,#selectedObjectDismiss,#mobileObjectEditorHeader{display:none!important}
+}
