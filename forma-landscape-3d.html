@@ -478,6 +478,13 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <span id="selectedObjectName"></span>
  <button id="selectedObjectMove" type="button" aria-pressed="false" title="Перетащить выбранный объект пальцем">↔ Переместить</button>
  <button id="selectedObjectRotate" type="button" title="Повернуть объект на 15 градусов">⟳ 15°</button>
+ <div class="mobile-nudge" role="group" aria-label="Точное смещение объекта">
+  <button type="button" data-object-nudge="0,-0.1" aria-label="Сдвинуть на 10 сантиметров вверх по генплану">↑</button>
+  <button type="button" data-object-nudge="-0.1,0" aria-label="Сдвинуть на 10 сантиметров влево">←</button>
+  <button type="button" data-object-nudge="0,0.1" aria-label="Сдвинуть на 10 сантиметров вниз по генплану">↓</button>
+  <button type="button" data-object-nudge="0.1,0" aria-label="Сдвинуть на 10 сантиметров вправо">→</button>
+ </div>
+ <button type="button" id="selectedObjectDone" title="Закончить перемещение">✓ Готово</button>
  <button id="selectedObjectDuplicate" type="button" title="Создать копию">＋ Копия</button>
  <button id="selectedObjectDelete" type="button">Удалить объект</button>
 </div>
@@ -1864,6 +1871,22 @@ function syncSelectedObjectDock(ref,label){
  del.title=ref.type==='house'?'Главный дом защищён от удаления':'Удалить объект (Ctrl+Z для отмены)';
  del.textContent=ref.type==='house'?'Главный дом защищён':'Удалить объект';
 }
+function nudgeSelectedObject(dx,dy){
+ const ref=state.selected?selectable(state.selected):null;
+ if(!ref?.obj)return status('Сначала выберите объект.');
+ const obj=ref.obj;
+ if(Array.isArray(obj.points)){
+  const moved=obj.points.map(p=>({x:Math.round((p.x+dx)*100)/100,y:Math.round((p.y+dy)*100)/100}));
+  if(!moved.every(p=>inParcel(p,doc.site)))return status('Граница участка: перемещение отменено.');
+  push();obj.points=moved;
+ }else if(Number.isFinite(Number(obj.x))&&Number.isFinite(Number(obj.y))){
+  const p={x:Math.round((Number(obj.x)+dx)*100)/100,y:Math.round((Number(obj.y)+dy)*100)/100};
+  if(!inParcel(p,doc.site))return status('Граница участка: перемещение отменено.');
+  push();obj.x=p.x;obj.y=p.y;
+ }else return status('У выбранного объекта нет изменяемых координат.');
+ save();rebuild();renderProps();
+ status('Объект сдвинут на 10 см · Ctrl+Z отменяет изменение.');
+}
 function deleteSelectedObject(){
  const selected=state.selected,ref=selected?selectable(selected):null;
  if(!ref?.obj){status('Сначала выделите объект. Нажмите на него в режиме «Управление».');return false}
@@ -3188,6 +3211,17 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   status(state.mobileMoveMode?'РЕЖИМ ПЕРЕМЕЩЕНИЯ: удерживайте объект и ведите пальцем по участку. Отпустите для сохранения.':'Режим перемещения выключен.');
  };
  $('#selectedObjectRotate').onclick=()=>rotateSelected(15);
+ document.querySelectorAll('[data-object-nudge]').forEach(button=>button.onclick=()=>{
+  const [dx,dy]=button.dataset.objectNudge.split(',').map(Number);
+  nudgeSelectedObject(dx,dy);
+ });
+ $('#selectedObjectDone').onclick=()=>{
+  state.mobileMoveMode=false;state.drag=false;
+  controls.enabled=state.view!=='walk';
+  syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
+  if(window.innerWidth<=850)activateMobilePanel('scene');
+  status('Перемещение завершено. Координаты сохранены.');
+ };
  $('#selectedObjectDuplicate').onclick=()=>duplicateSelected();
  $('#alphaSceneButton').onclick=()=>$('#alphaQuickSelect').click();
  // Prominent, one-tap access to the ALFA reference house. Reuse exactly
