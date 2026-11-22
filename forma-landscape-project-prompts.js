@@ -13,6 +13,20 @@ import {creaturePhotoDescription} from './forma-landscape-3d-creatures.js';
  */
 const clean=s=>String(s??'').replace(/\s+/g,' ').slice(0,250);
 const accepted=new Set(['natural','modern','architectural']);
+function describePavingRoutes(entries){
+ return entries.filter(o=>byId(o.catalogId)?.group==='pavers')
+  .map((o,index)=>{
+   const material=byId(o.catalogId);
+   const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'0.00';
+   const route=(Array.isArray(o.points)?o.points:[]).slice(0,48)
+    .map(p=>'('+fmt(p.x)+','+fmt(p.y)+')').join('→');
+   return 'PATH '+(index+1)+' ID '+clean(o.id||'unknown')+
+    ': material ID '+material.id+', material name '+material.name+
+    ', mandatory physical texture '+(PHOTO_MATERIAL_DETAILS[material.id]||material.texture)+
+    ', fixed width '+fmt(o.width||1.2)+' metres, measured polyline '+route+
+    '. Use this material ONLY on this path; do not borrow paving joints from other paths.';
+  }).join(' | ');
+}
 export function masterplanPrompt(input){
  if(!input||typeof input!=='object')throw Object.assign(Error('Не передан план участка.'),{status:400});
  const site=input.site,house=input.house;
@@ -67,6 +81,7 @@ export function masterplanPrompt(input){
   'BOTANICAL PHOTOREALISM — INDIVIDUAL TREE SPECIES: recreate each tree as a physically plausible aerial tree canopy with organically irregular outline, authentic branching scaffold, believable leaf or needle architecture, species-specific leaf scale and distribution, multi-layered foliage, natural gaps allowing glimpses of internal woody branches, uneven growth, subtle wind-independent asymmetry and believable crown density. Scots pine: airy irregular separate clusters of long slender pine needles with visible branching, not a plastic green ball. Spruce: compact layered radial dark-green conifer sprays. Birch: lighter and finer, loosely distributed foliage over fine pale branches. Oak: broader irregular chunky clustered leaf canopies. Maple: broad palmate leaf clusters. Linden: finer dense oval leaf mass. Willow: wispy draping pale-green leaf bundles viewed from directly above. Rowan: fine leaflets with limited seasonal berry accents. Flowering apple or cherry: recognisable branch structure, species-appropriate flowers only where seasonally reasonable. Never make all trees interchangeable. Each crown preserves precisely its source-plan centre and allocated diameter.',
   'SHRUB BOTANICAL PHOTOREALISM: no sphere-shaped generic blobs, cartoon circles or plastic-looking leaves. Identify distinct growth habit, leaf size and branching density for each shrub. Juniper has scale-like or fine needle sprays in dense low horizontal mats. Hydrangea has broad leaves and distinct panicle-like flower clusters where seasonally consistent. Spirea has fine small leaves and compact natural domes. Barberry shows small elongated leaves in its cultivar color. Dogwood has broad foliage and a looser outline. Globe thuja has layered fan-like conifer sprays. Lavender forms open purple-tipped narrow-leaf clusters rather than solid painted purple. Boxwood has dense, tiny dark leaves with imperfect outer edges. Natural varied tonal greens, forest greens, sage, silvery highlights, burgundy where appropriate. Each shrub remains exactly at its specified centre and mature crown diameter.',
   'GRASS, TURF AND MEADOW MICROTEXTURE: natural surface with thousands of individually distinguishable fine grass blades, short cut leaf tips and authentic colour modulation without repetitive tiled noise. Formal lawn: finely trimmed uniform but not perfectly flat; universal lawn: mixed blade density; shade lawn: deeper greens and delicate thin blades; meadow: mixed-height species with sparse natural wildflowers only within the meadow polygon. Respect every hard edge bordering stone, gravel, planters and ponds. No invented decorative flower beds.',
+  'INDIVIDUAL SOURCE-LINKED PAVING PATHS: '+(describePavingRoutes(sourceObjects)||'No paving paths exist.')+' Keep the selected joint pattern and material on each measured route.',
   'HARDSCAPE PHOTOREALISM: each paving type retains the REAL direction, width and joint geometry of its source region. Concrete slabs have correct edge bevels, tiny mineral pores and restrained aggregate. Granite setts feature individual rough stone blocks, authentic granular quartz/feldspar mica grains, realistic joints and small tonal variations. Clay clinker has fired ceramic texture, exact bond pattern and warm mineral variation. Slate exhibits lamination, irregular fissures and subtle directional cleavage. Grass pavers maintain individual openings with live grass. Materials appear dry or subtly weathered, not glossy or wet unless shown in the reference. Ground covers must never cross into lawn or spill over path borders. Mulch/gravel strips have a user-set physical ribbon width, while polygon beds fill their entire closed boundary. Do not change either geometry.',
   'GRAVEL, MULCH AND STONE: natural scale-correct individual marble chips, crushed granite, river-pebble ovals, layered slate chips and fibrous pine bark fragments. Every fragment has slight shape variance, authentic pores, edge highlights, short contact shadows and realistically random distribution; no single-color digital noise texture, no oversized pebbles. Boulders show physically believable weathered geology, rounded or stratified forms, mineral veins, chips, fractures, lichen ONLY when plausibly present. Granite is crystalline; limestone porous; slate layered; sandstone naturally sedimentary and warm. Boulders strictly viewed from above and never moved or enlarged.',
   'WATER PHOTOREALISM: ponds and water features have physically realistic dark-to-teal depth gradients, subtle Fresnel reflections, occasional small smooth natural ripples, credible underwater stones and plant shadows where appropriate. FILL THE ENTIRE INSIDE of each precisely preserved closed pond polygon with water, from bank to bank; never render a water line, outline, moat, or strip. Use sharply preserved source polygon and bank edge. Avoid impossible mirror-like chrome, exaggerated tropical cyan, giant waves or invented bridges, fountains or waterfalls. Visible water plants only if already placed in the source.',
@@ -166,20 +181,7 @@ export function perspectiveLandscapePrompt(input){
    (o.height?' physical height='+Number(o.height).toFixed(2)+'m':'')+
    (o.width?' path strip width='+Number(o.width).toFixed(2)+'m':'')+botanical);
  }
- // Each measured paving route has its own material ID, width and vertices.
- // AI may refine texture, but must not repaint every path as generic slab.
- const pavingRouteLock=entries.filter(o=>byId(o.catalogId)?.group==='pavers')
-  .map((o,index)=>{
-   const material=byId(o.catalogId);
-   const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'0.00';
-   const route=(Array.isArray(o.points)?o.points:[]).slice(0,48)
-    .map(p=>'('+fmt(p.x)+','+fmt(p.y)+')').join('→');
-   return 'PATH '+(index+1)+' ID '+clean(o.id||'unknown')+
-    ': material ID '+material.id+', material name '+material.name+
-    ', mandatory physical texture '+(PHOTO_MATERIAL_DETAILS[material.id]||material.texture)+
-    ', fixed width '+fmt(o.width||1.2)+' metres, measured polyline '+route+
-    '. Use this material ONLY on this path; do not borrow paving joints from other paths.';
-  }).join(' | ');
+ const pavingRouteLock=describePavingRoutes(entries);
  const extra3d=(Array.isArray(input.extra3dObjects)?input.extra3dObjects:[]).slice(0,250)
   .filter(o=>o&&typeof o==='object');
  const extraSchedule=extra3d.map(o=>{

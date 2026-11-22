@@ -3200,7 +3200,14 @@ function finishBrush(){
  save();rebuild();status(wasSurface?(wasEraser?'Ластик покрытия: изменения сохранены. Дом, дорожки и растения не затронуты.':'Покрытие нанесено кистью и сохранено в метрах.'):'Посадка завершена. Размеры растений сохранены.');
 }
 function addEvents(){
+ const touchPointers=new Set();
+ let tapCancelled=false;
  const down=e=>{
+ if(e.pointerType!=='mouse'){
+  touchPointers.add(e.pointerId);
+  if(touchPointers.size>1){tapCancelled=true;return}
+ }
+ tapCancelled=false;
  if(state.painting)return;
  if(e.pointerType==='mouse'&&e.button!==0)return; // Right drag is reserved for camera orbit.
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
@@ -3266,6 +3273,9 @@ function addEvents(){
  }
 };
 const move=e=>{
+ if(e.pointerId===state.activePointer&&state.down&&
+  Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y)>(e.pointerType==='mouse'?5:10))
+  tapCancelled=true;
  renderGate.invalidate();updateBrushCursor(e);
  if(state.view==='walk'){
   const locked=document.pointerLockElement===canvas,mobile=e.pointerType==='touch'&&state.down;
@@ -3329,6 +3339,8 @@ const move=e=>{
   positionLabel.textContent='X '+Number(ref.obj.x).toFixed(2)+' м · Y '+Number(ref.obj.y).toFixed(2)+' м';
 };
 const up=e=>{
+ touchPointers.delete(e.pointerId);
+ if(e.pointerId!==state.activePointer||!state.down)return;
  if(state.view==='walk'){state.down=null;return}
  if(state.painting&&e.pointerId!==state.activePointer)return;
  if(state.painting){
@@ -3352,7 +3364,7 @@ const up=e=>{
   state.down=null;return;
  }
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
- if(movement<(finger?20:5)){
+ if(!tapCancelled&&movement<(finger?10:5)){
   if(state.tool==='select'){
    const key=hitTreeOnMobile(e);
    state.selected=key;
@@ -3361,12 +3373,12 @@ const up=e=>{
    renderProps();
    if(key)revealSelectedInspector();
    else if(finger){activateMobilePanel('scene');status('Коснитесь объекта, чтобы открыть его настройки.');}
-  }else{const p=hitGround(e);if(p)place(p)}
+  }else{const p=hitGround(e);if(p)place(p);else if(finger)status('Коснитесь земли внутри границ участка.');}
  }
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',()=>{if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;state.down=null;if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
