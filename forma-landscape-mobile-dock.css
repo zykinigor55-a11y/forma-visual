@@ -1,0 +1,44 @@
+/* FORMA Landscape: ergonomic mobile object dock. Presentation graphics, project geometry
+ * and site coordinates remain untouched. Hidden on desktop and while drawing. */
+#faLandscapeMasterplan .lp-mobile-selection{display:none}
+#faLandscapeMasterplan .lp-mobile-selection[hidden]{display:none!important}
+@media(max-width:760px){
+ #faLandscapeMasterplan .lp-mobile-selection:not([hidden]){
+  display:flex;flex-direction:column;gap:8px;
+  position:fixed;left:max(8px,env(safe-area-inset-left,0px));
+  right:max(8px,env(safe-area-inset-right,0px));
+  bottom:calc(76px + env(safe-area-inset-bottom,0px));
+  z-index:16;max-width:470px;margin:0 auto;max-height:min(174px,35dvh);
+  overflow-y:auto;overscroll-behavior:contain;
+  background:#26292eea;border:1px solid #797269;
+  backdrop-filter:blur(18px);border-radius:14px;
+  box-shadow:0 10px 34px #090a0bbd;padding:9px 10px 10px;
+ }
+ #faLandscapeMasterplan .lp-touch-selected{display:grid;gap:2px;min-width:0}
+ #faLandscapeMasterplan .lp-touch-selected strong{
+  font:650 12px/1.35 system-ui,sans-serif;color:#f4e8d5;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #faLandscapeMasterplan .lp-touch-selected small{
+  color:#b9b6ac;font:400 10px/1.25 system-ui,sans-serif}
+ #faLandscapeMasterplan .lp-touch-actions{
+  display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;min-width:0}
+ #faLandscapeMasterplan .lp-touch-actions button{
+  min-width:0;min-height:44px;padding:4px 1px;
+  border:1px solid #5b6265;border-radius:8px;background:#383d42;
+  color:#fff0d9;font:650 17px/1.2 system-ui,sans-serif}
+ #faLandscapeMasterplan .lp-touch-actions button.lp-touch-done{
+  background:#d0b894;color:#252a2d;font-size:11px;grid-column:span 1}
+ #faLandscapeMasterplan .lp-touch-actions button[hidden]{display:none}
+ #faLandscapeMasterplan .lp-touch-actions button:focus-visible{
+  outline:2px solid #e6cba1;outline-offset:2px}
+ #faLandscapeMasterplan .lp-mobile-selection:not([hidden]) ~ .lp-mobile-jump{
+  bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:390px){
+ #faLandscapeMasterplan .lp-touch-actions{
+  grid-template-columns:repeat(4,minmax(0,1fr))}
+ #faLandscapeMasterplan .lp-touch-actions button.lp-touch-done{
+  grid-column:span 1}
+ #faLandscapeMasterplan .lp-mobile-selection:not([hidden]){
+  max-height:min(185px,38dvh)}
+}
