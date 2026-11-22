@@ -355,7 +355,8 @@ async function initSpiral() {
     energyWarm.opacity = .39 + .11 * pulse;
     for (let side = 0; side < 2; side++) {
       for (let i = 0; i < 9; i++) {
-        const u = ((i / 9) + elapsed * (side ? -.07 : .09) + 1) % 1;
+        const travel = (i / 9) + elapsed * (side ? -.07 : .09);
+        const u = ((travel % 1) + 1) % 1;
         dummy.position.copy(routes[side].getPointAt(u));
         dummy.scale.setScalar((.6 + .35 * Math.sin(i * 2.3 + elapsed * 1.8)) * (1 + pulse * .27));
         dummy.updateMatrix();
