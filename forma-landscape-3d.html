@@ -475,7 +475,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </section>
 <button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
 <div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
- <span id="selectedObjectName"></span>
+ <span id="selectedObjectName"></span><small id="selectedObjectPosition" aria-live="off"></small>
  <button id="selectedObjectMove" type="button" aria-pressed="false" title="Перетащить выбранный объект пальцем">↔ Переместить</button>
  <button id="selectedObjectRotate" type="button" title="Повернуть объект на 15 градусов">⟳ 15°</button>
  <div class="mobile-nudge" role="group" aria-label="Точное смещение объекта">
@@ -483,6 +483,10 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <button type="button" data-object-nudge="-0.1,0" aria-label="Сдвинуть на 10 сантиметров влево">←</button>
   <button type="button" data-object-nudge="0,0.1" aria-label="Сдвинуть на 10 сантиметров вниз по генплану">↓</button>
   <button type="button" data-object-nudge="0.1,0" aria-label="Сдвинуть на 10 сантиметров вправо">→</button>
+ </div>
+ <div class="mobile-move-settings" role="group" aria-label="Настройки перемещения">
+  <button type="button" id="selectedObjectStep" aria-pressed="false">Шаг: 10 см</button>
+  <button type="button" id="selectedObjectMagnet" aria-pressed="true">Магнит: вкл.</button>
  </div>
  <button type="button" id="selectedObjectDone" title="Закончить перемещение">✓ Готово</button>
  <button id="selectedObjectDuplicate" type="button" title="Создать копию">＋ Копия</button>
@@ -710,7 +714,7 @@ window.addEventListener('forma-house-pbr-ready',()=>{
  renderGate.invalidate();
  requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
 });
-const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,down:null,building:null};
+const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
@@ -1867,9 +1871,45 @@ function syncSelectedObjectDock(ref,label){
  title.textContent=String(label||'Выбранный объект');
  const move=$('#selectedObjectMove');
  if(move){move.setAttribute('aria-pressed',String(!!state.mobileMoveMode));move.classList.toggle('active',!!state.mobileMoveMode);}
+ const step=$('#selectedObjectStep'),magnet=$('#selectedObjectMagnet'),posText=$('#selectedObjectPosition');
+ if(step){step.textContent='Шаг: '+(state.mobileNudgeStep===.5?'50':'10')+' см';step.setAttribute('aria-pressed',String(state.mobileNudgeStep===.5));}
+ if(magnet){magnet.textContent='Магнит: '+(state.mobileSnap?'вкл.':'выкл.');magnet.setAttribute('aria-pressed',String(state.mobileSnap));}
+ if(posText&&Number.isFinite(Number(ref.obj.x))&&Number.isFinite(Number(ref.obj.y)))posText.textContent='X '+Number(ref.obj.x).toFixed(2)+' м · Y '+Number(ref.obj.y).toFixed(2)+' м';
+ else if(posText)posText.textContent='Контур / область';
  del.disabled=ref.type==='house';
  del.title=ref.type==='house'?'Главный дом защищён от удаления':'Удалить объект (Ctrl+Z для отмены)';
  del.textContent=ref.type==='house'?'Главный дом защищён':'Удалить объект';
+}
+// All snapping is optional and only affects the dragged item, never other
+// objects or the house geometry. 0.35 metres is the tap-friendly magnet radius.
+function snapMobileObjectPosition(raw,moving){
+ const gap=Math.max(0,Math.min(4,Number(moving?.diameter||0)/2))+.12;
+ let best={x:raw.x,y:raw.y,d:.35};
+ const candidate=(x,y)=>{
+  if(!Number.isFinite(x)||!Number.isFinite(y)||!inParcel({x,y},doc.site))return;
+  const d=Math.hypot(raw.x-x,raw.y-y);
+  if(d<best.d)best={x,y,d};
+ };
+ for(const path of doc.objects){
+  if(path.type!=='pavers'||!Array.isArray(path.points))continue;
+  for(let i=1;i<path.points.length;i++){
+   const a=path.points[i-1],b=path.points[i],dx=b.x-a.x,dy=b.y-a.y;
+   const den=dx*dx+dy*dy;if(den<1e-8)continue;
+   const t=Math.max(0,Math.min(1,((raw.x-a.x)*dx+(raw.y-a.y)*dy)/den));
+   candidate(a.x+t*dx,a.y+t*dy);
+  }
+ }
+ for(const house of [doc.house,...doc.buildings]){
+  if(!Number.isFinite(Number(house?.x))||!Number.isFinite(Number(house?.y)))continue;
+  const angle=(Number(house.rotation)||0)*Math.PI/180,cs=Math.cos(angle),sn=Math.sin(angle);
+  const x=raw.x-house.x,y=raw.y-house.y,lx=cs*x+sn*y,ly=-sn*x+cs*y;
+  const hw=Math.max(.1,Number(house.width||0)/2+gap),hh=Math.max(.1,Number(house.height||0)/2+gap);
+  const toWorld=(x,y)=>candidate(house.x+cs*x-sn*y,house.y+sn*x+cs*y);
+  if(Math.abs(ly)<=hh)for(const sign of [-1,1])toWorld(sign*hw,ly);
+  if(Math.abs(lx)<=hw)for(const sign of [-1,1])toWorld(lx,sign*hh);
+ }
+ if(best.d<.35)return {x:Math.round(best.x*100)/100,y:Math.round(best.y*100)/100};
+ return {x:Math.round(raw.x*20)/20,y:Math.round(raw.y*20)/20};
 }
 function nudgeSelectedObject(dx,dy){
  const ref=state.selected?selectable(state.selected):null;
@@ -1885,7 +1925,7 @@ function nudgeSelectedObject(dx,dy){
   push();obj.x=p.x;obj.y=p.y;
  }else return status('У выбранного объекта нет изменяемых координат.');
  save();rebuild();renderProps();
- status('Объект сдвинут на 10 см · Ctrl+Z отменяет изменение.');
+ status('Объект сдвинут на '+(state.mobileNudgeStep===.5?'50':'10')+' см · Ctrl+Z отменяет изменение.');
 }
 function deleteSelectedObject(){
  const selected=state.selected,ref=selected?selectable(selected):null;
@@ -3098,7 +3138,10 @@ const move=e=>{
   const destination=state.mobileMoveMode&&state.dragOriginal&&state.dragAnchor?
    {x:state.dragOriginal.x+pt.x-state.dragAnchor.x,y:state.dragOriginal.y+pt.y-state.dragAnchor.y}:pt;
   if(!inParcel(destination,doc.site))return;
-  if(state.mobileMoveMode){destination.x=Math.round(destination.x*20)/20;destination.y=Math.round(destination.y*20)/20;}
+  if(state.mobileMoveMode&&state.mobileSnap){
+   const p=snapMobileObjectPosition(destination,ref.obj);
+   destination.x=p.x;destination.y=p.y;
+  }
   ref.obj.x=destination.x;ref.obj.y=destination.y;
   // Move the already-instantiated PBR mesh. Rebuilding every large GLB on
   // each pointermove previously made dragging trees and houses appear frozen.
@@ -3112,6 +3155,9 @@ const move=e=>{
  const xField=$('#properties [data-prop="x"]'),yField=$('#properties [data-prop="y"]');
  if(xField&&document.activeElement!==xField)xField.value=Number(ref.obj.x).toFixed(2);
  if(yField&&document.activeElement!==yField)yField.value=Number(ref.obj.y).toFixed(2);
+ const positionLabel=$('#selectedObjectPosition');
+ if(positionLabel&&Number.isFinite(Number(ref.obj.x))&&Number.isFinite(Number(ref.obj.y)))
+  positionLabel.textContent='X '+Number(ref.obj.x).toFixed(2)+' м · Y '+Number(ref.obj.y).toFixed(2)+' м';
 };
 const up=e=>{
  if(state.view==='walk'){state.down=null;return}
@@ -3213,8 +3259,17 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#selectedObjectRotate').onclick=()=>rotateSelected(15);
  document.querySelectorAll('[data-object-nudge]').forEach(button=>button.onclick=()=>{
   const [dx,dy]=button.dataset.objectNudge.split(',').map(Number);
-  nudgeSelectedObject(dx,dy);
+  nudgeSelectedObject(dx*(state.mobileNudgeStep/.1),dy*(state.mobileNudgeStep/.1));
  });
+ $('#selectedObjectStep').onclick=()=>{
+  state.mobileNudgeStep=state.mobileNudgeStep===.1?.5:.1;
+  syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
+ };
+ $('#selectedObjectMagnet').onclick=()=>{
+  state.mobileSnap=!state.mobileSnap;
+  syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
+  status(state.mobileSnap?'Магнит включён: сетка 5 см, дорожки, стены домов.':'Магнит выключен: свободное перемещение.');
+ };
  $('#selectedObjectDone').onclick=()=>{
   state.mobileMoveMode=false;state.drag=false;
   controls.enabled=state.view!=='walk';
