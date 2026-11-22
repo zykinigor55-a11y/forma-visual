@@ -39,7 +39,7 @@ footer{border-top:1px solid #262b31;padding:32px clamp(24px,5vw,90px);display:fl
 <p>Креативная и технологическая AI-студия полного цикла. Разработка приложений, визуальный контент и интеллектуальные решения для бизнеса.</p>
 <div class="actions"><a href="#contact" class="cta primary">Обсудить проект ↗</a><button type="button" id="sound" aria-pressed="false" aria-label="Включить звук">Звук: выкл.</button></div></div>
 <div class="stage"><video id="reactor" autoplay loop muted playsinline preload="metadata" poster="./assets/quantum-cover.jpg">
-<source src="./assets/neiro-studiya-v13.mp4" type="video/mp4">
+<source src="./assets/neiro-studiya-v14.mp4" type="video/mp4">
 </video><div class="video-caption">Quantum Kinetic — 8 sec loop</div></div>
 </main>
 <section class="services" id="services"><div class="eyebrow">What we do</div><h2>Технологии под ключ.</h2>
@@ -50,7 +50,7 @@ footer{border-top:1px solid #262b31;padding:32px clamp(24px,5vw,90px);display:fl
 <script>
 const video=document.getElementById('reactor'), button=document.getElementById('sound');
 button.onclick=async()=>{video.muted=!video.muted;button.setAttribute('aria-pressed',String(!video.muted));button.textContent='Звук: '+(video.muted?'выкл.':'вкл.');try{await video.play()}catch(err){console.warn('Нажмите воспроизведение',err)}};
-video.addEventListener('error',()=>{video.style.display='none';const p=document.createElement('div');p.className='placeholder';p.textContent='Quantum Kinetic V13 · Добавьте MP4 в папку assets, чтобы запустить анимацию.';video.parentNode.insertBefore(p,video);});
+video.addEventListener('error',()=>{video.style.display='none';const p=document.createElement('div');p.className='placeholder';p.textContent='Quantum Kinetic V14 · Добавьте MP4 в папку assets, чтобы запустить анимацию.';video.parentNode.insertBefore(p,video);});
 if(matchMedia('(prefers-reduced-motion: reduce)').matches){video.pause();video.controls=true}
 </script>
 </body></html>
