@@ -492,12 +492,17 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
    box(g,T,.125,.035,depth+.12,side*(half+.065),
     bodyHeight-.215,0,drip).userData.architecturePart='gable-roof-drip-flashing';
   }
-  // Vertical gable-end triangle remains visible beneath the true roof.
-  const wallColor=mat(T,b.archStyle==='scandi'?'#707A7B':b.archStyle==='classic'?'#D9D4C7':'#403B35');
-  const faces=new Float32Array([-w/2,bodyHeight,d/2, w/2,bodyHeight,d/2,0,bodyHeight+rise*.94,d/2,
-                                 -w/2,bodyHeight,-d/2,0,bodyHeight+rise*.94,-d/2,w/2,bodyHeight,-d/2]);
-  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(faces,3));geo.computeVertexNormals();
-  const fill=add(g,T,geo,wallColor);fill.material.side=T.DoubleSide;
+  // Scandinavian upper gable has a REAL punched hole for insulating
+  // glass. A solid triangle here would completely hide the window.
+  if(b.archStyle!=='scandi'){
+   const wallColor=mat(T,b.archStyle==='classic'?'#D9D4C7':'#403B35');
+   const faces=new Float32Array([-w/2,bodyHeight,d/2, w/2,bodyHeight,d/2,0,bodyHeight+rise*.94,d/2,
+                                  -w/2,bodyHeight,-d/2,0,bodyHeight+rise*.94,-d/2,w/2,bodyHeight,-d/2]);
+   const geo=new T.BufferGeometry();
+   geo.setAttribute('position',new T.BufferAttribute(faces,3));
+   geo.computeVertexNormals();
+   const fill=add(g,T,geo,wallColor);fill.material.side=T.DoubleSide;
+  }
  }else if(hip){
   const startZ=Math.max(.25,d/2-half*.56),top=bodyHeight+rise+.07;
   const planes=[
