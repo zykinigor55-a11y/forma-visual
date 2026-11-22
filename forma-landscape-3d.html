@@ -2170,12 +2170,57 @@ async function renderAi(){
   if(inputQuality.whiteFraction>.91||inputQuality.transparentFraction>.60)
    throw Error('Исходный 3D-кадр захвачен не полностью: '+inputQuality.reason+
     '. Платный запрос НЕ отправлен. Откройте режим «Сцена», нажмите «К дому» и повторите.');
-  const sunlight=scene.getObjectByName('sun')?.position;
+  const sunLight=scene.getObjectByName('sun'),sunlight=sunLight?.position;
+  const hemisphere=scene.getObjectByName('forma-sky-fill');
+  const bounce=scene.getObjectByName('forma-bounced-fill');
+  const uniforms=atmosphereSky?.material?.uniforms;
+  const cloudUniforms=cloudLayer?.material?.uniforms;
+  const cssColor=c=>c?.isColor?'#'+c.getHexString():null;
+  const weather=doc.atmosphere.weather||'sunny';
+  const lightingRig={
+   time:doc.atmosphere.time,season:doc.atmosphere.season,weather,
+   sun:{
+    azimuthDeg:solarSettings.azimuth,elevationDeg:solarSettings.elevation,
+    strength:solarSettings.strength,softness:solarSettings.softness,
+    intensity:sunLight?.intensity??null,color:cssColor(sunLight?.color),
+    position:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
+    shadowEnabled:!!sunLight?.castShadow,shadowRadius:sunLight?.shadow?.radius??null,
+    shadowMapWidth:sunLight?.shadow?.mapSize?.x??null,
+    shadowMapHeight:sunLight?.shadow?.mapSize?.y??null
+   },
+   sky:{
+    visible:!!atmosphereSky?.visible,
+    turbidity:uniforms?.turbidity?.value??null,
+    rayleigh:uniforms?.rayleigh?.value??null,
+    mieCoefficient:uniforms?.mieCoefficient?.value??null,
+    mieDirectionalG:uniforms?.mieDirectionalG?.value??null
+   },
+   clouds:{
+    visible:!!cloudLayer?.visible,
+    coverage:cloudUniforms?.coverage?.value??null,
+    opacity:cloudUniforms?.opacity?.value??null
+   },
+   atmosphere:{...sceneAtmosphere},
+   fill:{
+    hemisphereIntensity:hemisphere?.intensity??null,
+    hemisphereColor:cssColor(hemisphere?.color),
+    groundColor:cssColor(hemisphere?.groundColor),
+    bounceIntensity:bounce?.intensity??null,bounceColor:cssColor(bounce?.color)
+   },
+   fog:{color:cssColor(scene.fog?.color),
+    near:scene.fog?.near??null,far:scene.fog?.far??null},
+   renderer:{
+    exposure:renderer.toneMappingExposure,toneMapping:'ACESFilmic',
+    environmentIntensity:scene.environmentIntensity??null,
+    background:cssColor(scene.background)
+   }
+  };
   const sceneInfo={...coordinateSummary(doc),cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
    solarAngles:{azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,strength:solarSettings.strength,softness:solarSettings.softness},
+   lightingRig,
    extra3dObjects:extra.slice(0,250).map(o=>({type:o.type,x:o.x,y:o.y,width:o.width,rotation:o.rotation,
     catalogName:realModelById(o.type)?.name||o.type,
     group:realModelById(o.type)?.group||'structures',
