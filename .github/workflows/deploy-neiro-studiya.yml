@@ -4,6 +4,7 @@ on:
     branches: [neiro-studiya]
     paths:
       - 'neiro-studiya/web/**'
+      - 'neiro-studiya/tools/build_2k_cards.py'
       - '.github/workflows/deploy-neiro-studiya.yml'
   workflow_dispatch:
 permissions:
@@ -28,6 +29,23 @@ jobs:
           test -s neiro-studiya/web/site.js
           test -s neiro-studiya/web/styles.css
           test -s neiro-studiya/web/assets/neiro-studiya-v14.mp4
+      - name: Prepare 2K studio imagery
+        run: |
+          python -m pip install --disable-pip-version-check "Pillow>=11,<13"
+          python neiro-studiya/tools/build_2k_cards.py
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          assets=Path('neiro-studiya/web/assets')
+          names=['hero-mobius.webp','service-apps.webp','service-photogrammetry.webp',
+            'service-architecture.webp','service-film.webp','service-cgi.webp',
+            'service-worlds.webp','project-achron.webp','project-dome.webp',
+            'project-gods.webp','about-cyborg.webp']
+          for name in names:
+            with Image.open(assets/name) as im:
+              assert im.size == (2048,1152), (name,im.size)
+          print("11/11 premium card images passed 2K size check")
+          PY
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site
