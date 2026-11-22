@@ -166,6 +166,20 @@ export function perspectiveLandscapePrompt(input){
    (o.height?' physical height='+Number(o.height).toFixed(2)+'m':'')+
    (o.width?' path strip width='+Number(o.width).toFixed(2)+'m':'')+botanical);
  }
+ // Each measured paving route has its own material ID, width and vertices.
+ // AI may refine texture, but must not repaint every path as generic slab.
+ const pavingRouteLock=entries.filter(o=>byId(o.catalogId)?.group==='pavers')
+  .map((o,index)=>{
+   const material=byId(o.catalogId);
+   const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'0.00';
+   const route=(Array.isArray(o.points)?o.points:[]).slice(0,48)
+    .map(p=>'('+fmt(p.x)+','+fmt(p.y)+')').join('→');
+   return 'PATH '+(index+1)+' ID '+clean(o.id||'unknown')+
+    ': material ID '+material.id+', material name '+material.name+
+    ', mandatory physical texture '+(PHOTO_MATERIAL_DETAILS[material.id]||material.texture)+
+    ', fixed width '+fmt(o.width||1.2)+' metres, measured polyline '+route+
+    '. Use this material ONLY on this path; do not borrow paving joints from other paths.';
+  }).join(' | ');
  const extra3d=(Array.isArray(input.extra3dObjects)?input.extra3dObjects:[]).slice(0,250)
   .filter(o=>o&&typeof o==='object');
  const extraSchedule=extra3d.map(o=>{
@@ -229,6 +243,7 @@ export function perspectiveLandscapePrompt(input){
   'PROPERTY SIZE '+w.toFixed(2)+'m by '+h.toFixed(2)+'m. MAIN HOUSE AND OTHER STRUCTURES (EACH IS AUTHORITATIVE, NOT AN EXAMPLE): '+buildings.join('; ')+'.',
   'ARCHITECTURAL CONSTRUCTION TRUTH: The 3D-built walls contain actual window and door openings; do not fill a window with opaque facade, place a fake painted-on window on solid masonry, overlap window frames, repeat a front door, rotate a ridge, erase eave gutters, add extra stories or increase window count. Open carports remain OPEN on all four sides and glazed greenhouses remain true transparent horticultural structures. Treat LAFTET as flat-faced sawn/hewn timber with authentic angular corner joinery and visible crown courses, not rounded logs. A panoramic house has the actual frame-spanned glazing, not invented floor-to-ceiling glass elsewhere. Exact physical footprint, eave/ridge heights and facade opening positions of source IMAGE 1 are invariant.',
   'EXACT INSTALLED LANDSCAPE MATERIAL SCHEDULE: '+(selectedPhotoMaterials(entries)||'No catalog landscape materials were placed: do not invent turf, mulch, paths, trees or shrubs.')+'. Follow the named surface/plant specifications ONLY where the corresponding object exists in the supplied camera image. Do not replace one material with another and do not fill deliberately bare soil with grass.',
+ 'INDIVIDUAL SOURCE-LINKED PAVING PATHS: '+(pavingRouteLock||'No paving paths exist.')+' NEVER convert clinker, granite, concrete, slate, radial setts and grass-grid into a single default slab. Source paving joints, widths, colors and per-path material identities are locked.',
   'CATALOG AND INSTANCE COUNT: '+entries.length+' measured landscape-plan objects PLUS '+extra3d.length+' placed three-dimensional assets. '+(plantSchedule.length?plantSchedule.join('; '):'No plan objects')+'. Distinguish the exact botanical species: needles, branches, leaves, natural bark, varied crown silhouettes and physically realistic tree heights. A pine must not be replaced with a shrub or generic tree. Preserve individual species, count and their pixel positions.',
   'INDIVIDUAL TREE IDENTITY CONTRACT FOR NANO BANANA: Every user-authored Scots pine age/form and Norway spruce stage (young low, ordinary, century-old), plus birch, aspen and every other catalog species, is stated per tree. Species, measured height, crown diameter and root positions are inviolable. Realistic botanical leaf and twig morphology takes priority over any simplifying GLB needles, flat leaf cards, low-polygon silhouettes or repeated prefab crowns: those are NOT photographic surface detail. Different spruces must remain recognizable Picea abies with fine dark needles, drooping layered living twigs and naturally varied irregular outline, not identical elongated flat-green CG cylinders.',
   'PHOTO RECONSTRUCTION PRIORITY — NOT SCREENSHOT ENHANCEMENT: Return a real-location professional architectural photograph, not a sharper version of the WebGL render. For EACH existing spruce (Picea abies), replace generic triangular silhouette with multi-scale bough whorls, individual tapered side shoots, deep natural branch cavities and millions of believable short needles, staying strictly within its measured crown. For EACH existing Scots pine (Pinus sylvestris), show reddish plated bark, uneven nearly horizontal branches, organically clustered long needles and airy canopy gaps. For birch (Betula pendula), true white exfoliating bark, thin pendulous twigs and small translucent leaves. Every tree should read as a distinct living individual photographed outdoors, NEVER the same repeated foliage stamp. Unseen geometry must not be invented outside the supplied 3D envelope.',
