@@ -2055,6 +2055,14 @@ function houseInteriorMarkup(){
 function wireHouseInteriorEditor(el){
  const section=el.querySelector('#houseNightSettings');if(!section)return;
  const change=(key,value,commit=true)=>{
+  // A deliberate brightness gesture means the user wants visible light.
+  // It must not silently do nothing when the global lights switch was OFF.
+  if((key==='brightness'||key==='windowGlow')&&Number(value)>0&&
+     !normalizeNightInterior(doc.atmosphere.interior).lightsEnabled){
+   updateNightHome('lightsEnabled',true,true);
+   const switcher=section.querySelector('#houseInteriorLights');
+   if(switcher)switcher.checked=true;
+  }
   updateNightHome(key,value,commit);
   if(commit&&section.querySelector('#houseInteriorBrightnessValue'))
    section.querySelector('#houseInteriorBrightnessValue').textContent=normalizeNightInterior(doc.atmosphere.interior).brightness+'%';
