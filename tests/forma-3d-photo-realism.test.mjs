@@ -88,7 +88,7 @@ test('full lighting passport preserves author-set sun and all chosen atmospheric
  const full=photoLightingContract({...landscape,lightingRig});
  for(const token of [
   'AZIMUTH 282.0°','ELEVATION 20.0°',
-  'shadow softness 3.20','relative intensity','2048px × 2048px',
+  'shadow softness 3.20','RELATIVE INTENSITY','2048px × 2048px',
   'sky turbidity 9.20','Rayleigh coefficient 0.75',
   'Mie coefficient 0.0050','cloud setting 55%',
   'author haze 37%','global fill 112%',
@@ -107,7 +107,7 @@ test('full lighting passport preserves author-set sun and all chosen atmospheric
 test('night controls prohibit daylight and unknown lighting values are not invented',()=>{
  const night=photoLightingContract({lightingRig:{time:'night',weather:'fog',season:'winter'}});
  assert.match(night,/NIGHT selected: no visible daylight sunlight/);
- assert.match(night,/AZIMUTH/);
+ assert.match(night,/Solar angles not provided/);
  assert.match(night,/not supplied/);
  const absent=photoLightingContract({...landscape});
  assert.match(absent,/No full live lighting rig was sent/);
