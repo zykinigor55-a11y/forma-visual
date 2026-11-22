@@ -34,7 +34,8 @@ export function validatePlan(data){
 }
 export function visionStatus(){return {ready:!!KEY&&!!MODEL,model:MODEL||null,configured:!!MODEL,quotaRemaining:Math.max(0,quota-used),costNotice:'AI-анализ платный по тарифам провайдера и требует подтверждения.'}}
 function deny(res,status,msg){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify({error:msg}))}
-export function createPlanVision({json,readJSON,sameOrigin}){
+export function createPlanVision({json,readJSON,sameOrigin},mode='plan'){
+ const rank=mode==='composition';
  return async function(req,res){
   if(!sameOrigin(req))return deny(res,403,'Недопустимый источник.');
   if(req.method!=='POST')return deny(res,405,'Метод не поддерживается.');
@@ -45,6 +46,10 @@ export function createPlanVision({json,readJSON,sameOrigin}){
   let request;try{request=await readJSON(req)}catch(e){return deny(res,e.status||400,'Некорректное изображение.')}
   const image=request?.image;
   if(typeof image!=='string'||image.length>5_800_000||!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(image))return deny(res,400,'Изображение должно быть PNG, JPG или WEBP до 4 МБ.');
+  const ids=request?.ids;
+  if(rank&&(!Array.isArray(ids)||!ids.length||ids.length>15||new Set(ids).size!==ids.length||
+   ids.some(id=>typeof id!=='string'||!/^(cover|entry|site|garden|detail)-[0-3]$/.test(id))))
+   return deny(res,400,'Некорректный список превью.');
   busy=true;used++;
   try{
    const response=await fetch(ENDPOINT,{method:'POST',
@@ -53,8 +58,10 @@ export function createPlanVision({json,readJSON,sameOrigin}){
     body:JSON.stringify({
      model:MODEL,temperature:0,max_tokens:3000,
      messages:[
-      {role:'system',content:'You are a floor plan geometry parser. Return ONLY a compact JSON object. Detect major walls from the supplied 2D architectural plan, not furniture lines or texts. Use normalised image coordinates 0..1 with top-left origin. JSON schema: {"walls":[{"x1":0,"y1":0,"x2":1,"y2":0,"confidence":0.8}],"openings":[{"wallIndex":0,"kind":"window","offset":0.5,"width":0.1,"sashes":null,"sashConfidence":0.0}]}. Wall endpoints should be in the CENTER of each wall band, along the wall axis. Only output positions you can infer; do not invent measurements. Do not output lengths in meters. Straight segments only. Max 100 walls and 70 openings. IMPORTANT: for each clearly identified window, inspect visible division symbols or an explicitly associated window schedule/annotation. If the plan explicitly shows 2 panes/sashes, return sashes:2 with sashConfidence 0..1. If it explicitly shows 3 panes/sashes, return sashes:3. A window width alone DOES NOT indicate the number of sashes; do not infer it from width. If absent, unclear or plan-only without a readable window symbol, set sashes:null and sashConfidence:0. Always require user verification. Do not pretend to recover window elevation or sill dimensions from a top view. If unsure, omit the uncertain element. No prose.'},
-      {role:'user',content:[{type:'text',text:'Trace the walls and visible door/window openings in this plan. Output JSON only. User will calibrate actual meters afterwards.'},{type:'image_url',image_url:{url:image,detail:'high'}}]}
+      {role:'system',content:rank?
+       'Rank the labeled, real camera previews of one architectural project. Return only {"best":{"cover":"cover-0","entry":"entry-0","site":"site-0","garden":"garden-0","detail":"detail-0"}} with one existing ID per supplied role. Favor readable entry and roof for cover, clear threshold and jambs for entry, paths and terrain context for site, opposite facade and terrace for garden, and legible joinery for detail. Avoid clipped architecture, obstructed entrances, nearly duplicated angles and distorted shots. Score the actual weather and light: grazing side light at sunset, well resolved two planes in overcast, existing warm windows and roof garland at blue hour when visible. Prefer meaningful foreground-to-background separation without occluding the building. Do not invent scene objects or camera IDs.':
+       'You are a floor plan geometry parser. Return ONLY a compact JSON object. Detect major walls from the supplied 2D architectural plan, not furniture lines or texts. Use normalised image coordinates 0..1 with top-left origin. JSON schema: {"walls":[{"x1":0,"y1":0,"x2":1,"y2":0,"confidence":0.8}],"openings":[{"wallIndex":0,"kind":"window","offset":0.5,"width":0.1,"sashes":null,"sashConfidence":0.0}]}. Wall endpoints should be in the CENTER of each wall band, along the wall axis. Only output positions you can infer; do not invent measurements. Do not output lengths in meters. Straight segments only. Max 100 walls and 70 openings. IMPORTANT: for each clearly identified window, inspect visible division symbols or an explicitly associated window schedule/annotation. If the plan explicitly shows 2 panes/sashes, return sashes:2 with sashConfidence 0..1. If it explicitly shows 3 panes/sashes, return sashes:3. A window width alone DOES NOT indicate the number of sashes; do not infer it from width. If absent, unclear or plan-only without a readable window symbol, set sashes:null and sashConfidence:0. Always require user verification. Do not pretend to recover window elevation or sill dimensions from a top view. If unsure, omit the uncertain element. No prose.'},
+      {role:'user',content:[{type:'text',text:rank?'Compare these previews using only IDs '+ids.join(', ')+'. Return JSON only.':'Trace the walls and visible door/window openings in this plan. Output JSON only. User will calibrate actual meters afterwards.'},{type:'image_url',image_url:{url:image,detail:'high'}}]}
      ]
     })
    });
@@ -68,10 +75,14 @@ export function createPlanVision({json,readJSON,sameOrigin}){
    const data=await response.json();
    const raw=data?.choices?.[0]?.message?.content;
    const resultText=typeof raw==='string'?raw:Array.isArray(raw)?raw.map(x=>x.text||'').join(''):'';
-   const parsed=validatePlan(textJSON(resultText));
+   const result=textJSON(resultText);
+   const parsed=rank?{best:Object.fromEntries(['cover','entry','site','garden','detail']
+    .filter(role=>ids.includes(result?.best?.[role])&&result.best[role].startsWith(role+'-'))
+    .map(role=>[role,result.best[role]]))}:validatePlan(result);
+   if(rank&&!Object.keys(parsed.best).length)throw Error('No ranked previews');
    json(res,200,{...parsed,model:MODEL,billedRequest:true});
   }catch(e){
-   const msg=/timeout|abort/i.test(String(e.name||''))?'Время ожидания Vision-модели истекло. Запрос мог быть оплачен.':'AI не смог уверенно распознать план. Используйте ручную проверку.';
+   const msg=/timeout|abort/i.test(String(e.name||''))?'Время ожидания Vision-модели истекло. Запрос мог быть оплачен.':rank?'AI не смог оценить превью. Доступен подбор по 3D-сцене.':'AI не смог уверенно распознать план. Используйте ручную проверку.';
    deny(res,502,msg);
   }finally{busy=false}
  }

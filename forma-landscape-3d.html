@@ -258,7 +258,22 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #aiResult,#aiProgress{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
 #aiProgress{z-index:7;backdrop-filter:blur(10px)}
 #aiProgress[hidden]{display:none}
-main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) > :is(#mobileWorkspaceTabs,#mobilePlacementHint,#selectedObjectDock,#sceneQuickTools,#sceneCameraCycle,#sceneClimateButton,#sceneClimatePanel,#left,#right,#status){display:none!important}
+#openComposition{position:absolute;right:12px;top:12px;z-index:6}
+#compositionPanel{position:absolute;z-index:12;bottom:14px;left:50%;transform:translateX(-50%);width:min(780px,calc(100% - 24px));max-height:55%;overflow:auto;padding:12px;background:#23262c;border:1px solid #595b61;border-radius:14px}
+#compositionPanel[hidden]{display:none}
+.composition-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#compositionFrames{display:flex;gap:8px;overflow:auto;margin:8px 0}
+.composition-frame{flex:0 0 144px;display:grid;gap:5px}
+.composition-preview{padding:0!important;overflow:hidden;text-align:left}
+.composition-preview img{width:100%;height:82px;object-fit:contain;display:block;background:#18191d}
+.composition-preview[aria-pressed="true"]{outline:2px solid #d1ae77}
+.composition-frame label,#compositionStatus,#compositionDownloads{font-size:12px}
+#compositionDownloads a{display:inline-block;padding:8px;color:#ead0a5}
+@media(max-width:850px){
+ #openComposition{top:120px;left:12px;right:auto;font-size:11px}
+ #compositionPanel{bottom:calc(90px + env(safe-area-inset-bottom));font-size:12px}
+}
+main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) > :is(#compositionPanel,#openComposition,#mobileWorkspaceTabs,#mobilePlacementHint,#selectedObjectDock,#sceneQuickTools,#sceneCameraCycle,#sceneClimateButton,#sceneClimatePanel,#left,#right,#status){display:none!important}
 #aiProgress,#aiResult{z-index:30;overflow:auto}
 .ai-progress-card{width:min(94vw,680px);padding:25px;border-radius:17px;background:#222729;border:1px solid #89765b;box-shadow:0 18px 80px #000b;display:flex;flex-direction:column;gap:13px}
 .ai-progress-eyebrow{color:#d9c1a0;letter-spacing:.12em;font-size:11px;font-weight:800}
@@ -407,6 +422,23 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </header>
 <main>
 <canvas id="viewport"></canvas>
+<button id="openComposition" type="button">Идеальная композиция</button>
+<section id="compositionPanel" hidden aria-label="Идеальная композиция">
+ <div class="composition-controls">
+  <label for="compositionCount">Ракурсы</label>
+  <select id="compositionCount"><option value="1">Один кадр</option><option value="3">Серия из 3</option><option value="5">Серия из 5</option></select>
+  <button id="findComposition" type="button">Подобрать</button>
+  <button id="closeComposition" type="button" aria-label="Закрыть подбор">✕</button>
+ </div>
+ <div id="compositionFrames"></div>
+ <div class="composition-controls">
+  <button id="saveComposition" type="button" disabled>Сохранить ракурсы</button>
+  <button id="renderComposition" type="button" disabled>Рендер выбранных</button>
+  <button id="rankComposition" type="button" disabled>Оценить с AI</button>
+ </div>
+ <div id="compositionStatus" role="status"></div>
+ <div id="compositionDownloads"></div>
+</section>
 <button type="button" id="sceneCameraCycle" aria-label="Ракурсы камеры: общий дом, ближе, весь участок" title="Один тап — дом, второй — ближе, третий — весь участок">⌖ К дому</button>
 <button type="button" id="sceneClimateButton" aria-controls="sceneClimatePanel" aria-expanded="false" aria-label="Открыть настройки солнца, времени суток и погоды">☀ Солнце и погода</button>
 <section id="sceneClimatePanel" class="scene-climate-panel" role="region" aria-label="Настройки солнца и погоды" hidden>
@@ -670,6 +702,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=roof-garland-project-v2-20261122';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v1-20261122';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=night-paving-fix-v4-20261122';
@@ -2632,7 +2665,7 @@ function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
  heldWalkKeys.clear();lastWalkFrame=0;
- state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&doc.atmosphere.time!=='night';if(cloudLayer)cloudLayer.visible=view!=='2d'&&sceneAtmosphere.clouds>0;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&sceneAtmosphere.clouds>0;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';
  const W=doc.site.width,H=doc.site.height;
  controls.enabled=view!=='walk';
@@ -2724,6 +2757,211 @@ function focusHouseCamera(mode='overview'){
  houseCameraStage=detail?1:0;syncSceneCameraButton();
  status('Камера показывает выбранный дом. Размеры проекта не изменились.');
 }
+let compositionSeries=[],compositionPool={},compositionActive=null,compositionBusy=false,compositionSignature='';
+const compositionKey=KEY+':composition';
+function compositionSource(){
+ const source=JSON.stringify([doc,extra,heightmap,solarSettings,sceneAtmosphere,activeHouseTarget().id]);
+ let hash=2166136261;
+ for(let i=0;i<source.length;i++)hash=Math.imul(hash^source.charCodeAt(i),16777619);
+ return source.length+':'+(hash>>>0);
+}
+const compositionLabel=role=>COMPOSITION_ROLES.find(([id])=>id===role)?.[1]||'Кадр';
+
+function applyComposition(frame){
+ if(state.view!=='3d')setView('3d');
+ camera.position.fromArray(frame.position);
+ camera.fov=frame.fov;camera.updateProjectionMatrix();
+ controls.target.fromArray(frame.target);
+ camera.lookAt(controls.target);controls.update();renderGate.invalidate();
+ compositionActive=frame.id;
+}
+
+function drawCompositionList(){
+ const list=$('#compositionFrames');list.replaceChildren();
+ for(const frame of compositionSeries){
+  const card=document.createElement('div');card.className='composition-frame';
+  const preview=document.createElement('button');preview.type='button';preview.className='composition-preview';
+  preview.setAttribute('aria-pressed',String(frame.id===compositionActive));
+  if(frame.thumbnail){
+   const image=document.createElement('img');image.src=frame.thumbnail;image.alt='';preview.append(image);
+  }
+  preview.append(compositionLabel(frame.role));
+  preview.onclick=()=>{if(compositionBusy)return;applyComposition(frame);drawCompositionList()};
+  const selected=document.createElement('label'),checkbox=document.createElement('input');
+  checkbox.type='checkbox';checkbox.checked=frame.selected;checkbox.disabled=compositionBusy;
+  checkbox.onchange=()=>{frame.selected=checkbox.checked;syncCompositionActions()};
+  selected.append(checkbox,' В рендер');
+  const pin=document.createElement('button');pin.type='button';pin.textContent='Закрепить';
+  pin.setAttribute('aria-pressed',String(frame.pinned));pin.disabled=compositionBusy;
+  pin.onclick=()=>{frame.pinned=!frame.pinned;drawCompositionList()};
+  const replace=document.createElement('button');replace.type='button';replace.textContent='Заменить ракурс';
+  replace.disabled=compositionBusy||frame.pinned||!compositionPool[frame.role]?.length;
+  replace.onclick=()=>{
+   const candidates=compositionPool[frame.role];
+   const next=candidates[(candidates.findIndex(item=>item.id===frame.id)+1)%candidates.length];
+   compositionSeries=compositionSeries.map(item=>item===frame?{...next,selected:frame.selected,pinned:false}:item);
+   applyComposition(next);drawCompositionList();
+  };
+  card.append(preview,selected,pin,replace);list.append(card);
+ }
+ syncCompositionActions();
+}
+
+function syncCompositionActions(){
+ $('#findComposition').disabled=compositionBusy;
+ $('#compositionCount').disabled=compositionBusy;
+ $('#saveComposition').disabled=compositionBusy||!compositionSeries.length;
+ $('#renderComposition').disabled=compositionBusy||!compositionSeries.some(frame=>frame.selected);
+ $('#rankComposition').disabled=compositionBusy||!Object.keys(compositionPool).length;
+}
+
+function findComposition(){
+ const building=activeHouseTarget();
+ const key=building===doc.house?'house:main':'building:'+building.id;
+ const house=pickables.find(node=>node.userData.key===key);
+ if(!house)throw Error('Модель дома ещё загружается.');
+ const signature=compositionSource();
+ const previous=signature===compositionSignature?compositionSeries:[];
+ const bounds=new THREE.Box3().setFromObject(house);
+ if(bounds.isEmpty())throw Error('Не удалось определить границы дома.');
+ const blockers=[],features=[],paths=[];
+ for(const object of doc.objects){
+  const entry=catalog(object.catalogId);
+  if(entry?.group==='pavers'){
+   for(const point of object.points||[]){
+    const p=pos(point.x,point.y);p.y=terrainAt(p.x,p.z);paths.push(p);
+   }
+  }
+ }
+ for(const node of pickables){
+  if(node===house)continue;
+  const ref=selectable(node.userData.key),group=catalog(ref?.obj?.catalogId)?.group;
+  if(['house','building'].includes(ref?.type))blockers.push(new THREE.Box3().setFromObject(node));
+  if(['trees','shrubs'].includes(group)){
+   const p=node.position,d=Math.max(.2,Number(ref.obj.diameter)||1)*.32,h=Number(ref.obj.height)||1;
+   blockers.push(new THREE.Box3(new THREE.Vector3(p.x-d,p.y+h*.28,p.z-d),new THREE.Vector3(p.x+d,p.y+h,p.z+d)));
+  }
+ }
+ house.traverse(node=>{
+  const part=node.userData.architecturePart||'';
+  if(/window-side-reveal|window-pitched-sill|roof-string-lights/.test(part)){
+   const point=new THREE.Box3().setFromObject(node);
+   if(!point.isEmpty())features.push(point.getCenter(new THREE.Vector3()));
+  }
+ });
+ const aspect=Math.max(.2,canvas.clientWidth/Math.max(1,canvas.clientHeight));
+ const pool=compositionCandidates(THREE,{house:building,bounds,aspect,ground:terrainAt,
+  sun:scene.getObjectByName('sun')?.position,time:doc.atmosphere.time,weather:doc.atmosphere.weather,blockers,paths,features});
+ const count=Number($('#compositionCount').value);
+ const roles=count===1?['cover']:count===3?['cover','site','garden']:COMPOSITION_ROLES.map(([role])=>role);
+ const preview=new THREE.PerspectiveCamera(44,aspect,.1,700);
+ const thumb=document.createElement('canvas');
+ thumb.width=Math.round(240*Math.min(aspect,1));thumb.height=Math.round(240*Math.min(1,1/aspect));
+ const ctx=thumb.getContext('2d');
+ const ratio=renderer.getPixelRatio(),viewportSize=renderer.getSize(new THREE.Vector2());
+ const width=Math.round(Math.max(thumb.width,thumb.height*aspect)),height=Math.round(width/aspect);
+ try{
+  renderer.setPixelRatio(1);renderer.setSize(width,height,false);
+  for(const role of roles){
+   pool[role]=pool[role].slice(0,3);
+   for(const frame of pool[role]){
+    preview.position.fromArray(frame.position);preview.fov=frame.fov;
+    preview.lookAt(new THREE.Vector3().fromArray(frame.target));preview.updateProjectionMatrix();
+    renderer.render(scene,preview);
+    ctx.drawImage(canvas,0,0,thumb.width,thumb.height);
+    frame.thumbnail=thumb.toDataURL('image/jpeg',.83);
+   }
+  }
+ }finally{
+  renderer.setPixelRatio(ratio);renderer.setSize(viewportSize.x,viewportSize.y,false);
+  renderGate.invalidate();
+ }
+ compositionPool=Object.fromEntries(roles.map(role=>[role,pool[role]]));
+ compositionSeries=roles.map(role=>previous.find(frame=>frame.role===role&&frame.pinned)||
+  {...pool[role][0],selected:true,pinned:false});
+ compositionSignature=signature;
+ applyComposition(compositionSeries[0]);drawCompositionList();
+ $('#compositionStatus').textContent='Подбор по 3D-сцене. Можно сравнить кадры и заменить любой ракурс.';
+}
+
+async function rankComposition(){
+ if(compositionSource()!==compositionSignature)throw Error('Сцена изменилась. Подбери ракурсы заново.');
+ const entries=Object.values(compositionPool).flat();
+ if(!entries.length)return;
+ const settings=await fetch('/api/plan/status').then(response=>response.json());
+ if(!settings.ready)throw Error('AI-оценка недоступна. Геометрический подбор уже готов.');
+ if(!confirm('Отправить превью на платную AI-оценку композиции?'))return;
+ const strip=document.createElement('canvas');strip.width=840;strip.height=Math.ceil(entries.length/3)*200;
+ const ctx=strip.getContext('2d');ctx.fillStyle='#202124';ctx.fillRect(0,0,strip.width,strip.height);
+ ctx.font='16px sans-serif';
+ for(const [index,frame] of entries.entries()){
+  const image=new Image();image.src=frame.thumbnail;await image.decode();
+  const x=index%3*280,y=Math.floor(index/3)*200,scale=Math.min(266/image.width,168/image.height);
+  ctx.drawImage(image,x+(280-image.width*scale)/2,y,image.width*scale,image.height*scale);
+  ctx.fillStyle='#fff';ctx.fillText(frame.id,x+8,y+188);
+ }
+ const response=await fetch('/api/composition/rank',{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({image:strip.toDataURL('image/jpeg',.85),ids:entries.map(frame=>frame.id)})});
+ const data=await response.json();
+ if(!response.ok)throw Error(data.error||'AI-оценка недоступна.');
+ if(compositionSource()!==compositionSignature)throw Error('Сцена изменилась во время оценки. Подбери ракурсы заново.');
+ compositionSeries=compositionSeries.map(frame=>{
+  const selected=compositionPool[frame.role].find(candidate=>data.best[frame.role]===candidate.id);
+  return frame.pinned||!selected?frame:{...selected,selected:frame.selected,pinned:false};
+ });
+ applyComposition(compositionSeries[0]);
+ $('#compositionStatus').textContent='AI сравнил превью. Закреплённые ракурсы сохранены.';
+}
+
+async function renderComposition(){
+ if(compositionSource()!==compositionSignature)throw Error('Сцена изменилась. Подбери ракурсы заново.');
+ const selected=compositionSeries.filter(frame=>frame.selected);
+ if(!selected.length||aiRenderActive||!confirm('Запустить фоторендер выбранных кадров ('+selected.length+')? Каждый кадр расходует один платный запрос.'))return;
+ const model=$('#aiRenderModel').value;
+ const downloads=$('#compositionDownloads');downloads.replaceChildren();
+ for(const [index,frame] of selected.entries()){
+  if(compositionSource()!==compositionSignature)throw Error('Сцена изменилась. Остальные запросы остановлены.');
+  applyComposition(frame);
+  const result=await renderAi({model,label:(index+1)+'/'+selected.length+' · '+compositionLabel(frame.role)});
+  if(!result)throw Error('Серия остановлена. Готовые кадры доступны для скачивания.');
+  const link=document.createElement('a');link.href=result.url;
+  link.download='FORMA-'+frame.role+(result.url.startsWith('data:image/jpeg')?'.jpg':result.url.startsWith('data:image/webp')?'.webp':'.png');
+  link.textContent='↓ '+compositionLabel(frame.role)+(result.incomplete?' · проверить кадр':'');downloads.append(link);
+ }
+ $('#compositionStatus').textContent='Серия готова. Каждый кадр доступен отдельным файлом.';
+}
+
+function setupComposition(){
+ const panel=$('#compositionPanel'),message=$('#compositionStatus');
+ const run=async action=>{
+  if(compositionBusy||aiRenderActive)return;
+  compositionBusy=true;drawCompositionList();message.textContent='';
+  try{await action()}catch(error){message.textContent=error.message}
+  finally{compositionBusy=false;drawCompositionList()}
+ };
+ $('#openComposition').onclick=()=>{
+  panel.hidden=!panel.hidden;
+  if(!panel.hidden&&(!compositionSeries.length||compositionSignature!==compositionSource()))run(findComposition);
+ };
+ $('#closeComposition').onclick=()=>{panel.hidden=true};
+ $('#findComposition').onclick=()=>run(findComposition);
+ $('#compositionCount').onchange=()=>run(findComposition);
+ $('#rankComposition').onclick=()=>run(rankComposition);
+ $('#renderComposition').onclick=()=>run(renderComposition);
+ $('#saveComposition').onclick=()=>run(()=>{
+  localStorage.setItem(compositionKey,JSON.stringify({signature:compositionSignature,frames:compositionSeries.map(({thumbnail,...pose})=>pose)}));
+  message.textContent='Ракурсы сохранены для этого проекта.';
+ });
+ try{
+  const saved=JSON.parse(localStorage.getItem(compositionKey)||'null');
+  if(saved?.signature===compositionSource()&&Array.isArray(saved.frames)){
+   compositionSeries=saved.frames.filter(frame=>['position','target'].every(key=>frame[key]?.length===3&&frame[key].every(Number.isFinite))&&Number.isFinite(frame.fov));
+   compositionSignature=saved.signature;
+   $('#compositionCount').value=String(compositionSeries.length);drawCompositionList();
+  }
+ }catch{}
+}
+
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
@@ -2987,17 +3225,17 @@ function captureHighQuality3dReference(){
  }
 }
 
-async function renderAi(){
+async function renderAi(series=null){
  const btn=$('#renderAi');
- const model=$('#aiRenderModel').value;
- if(aiRenderActive||btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Высокое качество':'Сбалансированное качество')+'? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
+ const model=series?.model||$('#aiRenderModel').value;
+ if(aiRenderActive||btn.disabled||(!series&&!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Высокое качество':'Сбалансированное качество')+'? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.')))return;
  aiRenderActive=true;btn.disabled=true;
  $('#aiResult').hidden=true;$('#aiProgress').hidden=false;
  resetAiProgress();
- setAiProgress('preparing','Готовим фотореалистичный рендер текущего ракурса…');
+ setAiProgress('preparing',series?'Кадр '+series.label:'Готовим фотореалистичный рендер текущего ракурса…');
  status('AI-рендер: подготовка исходной 3D-сцены и запрос в очередь…');
  try{
-  setAiProgress('capturing','Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
+  setAiProgress('capturing',series?'Снимаем кадр '+series.label:'Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
   const image=captureHighQuality3dReference();
   const inputQuality=await inspectRenderDataURL(image,{season:doc.atmosphere.season});
   if(inputQuality.whiteFraction>.91||inputQuality.transparentFraction>.60)
@@ -3077,7 +3315,9 @@ async function renderAi(){
   setAiProgress('completed',incomplete?'Получен кадр с возможным дефектом композиции. Повторный платный запрос не запускался.':'Фотографический рендер получен от '+modelName+'.');
   showAiPercent(100,{estimated:false});
   $('#aiResultImage').src=url;$('#downloadAiResult').href=url;
-  $('#aiProgress').hidden=true;$('#aiResult').hidden=false;
+  $('#aiProgress').hidden=true;
+  if(series)return {url,incomplete};
+  $('#aiResult').hidden=false;
   status(incomplete?'Внимание: нижняя часть результата выглядит неполной. Проверьте PNG перед скачиванием.':'AI-изображение получено через '+modelName+'. Исходная 3D-геометрия не изменена.');
  }catch(error){
   const message='Ошибка AI: '+(error?.message||'Неизвестная ошибка');
@@ -3487,6 +3727,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  };
  $('#focusHouse').onclick=()=>focusHouseCamera('overview');
  $('#sceneCameraCycle').onclick=cycleSceneCamera;
+ setupComposition();
  setupSceneClimateControls();
  setupWeatherIntensityControls();
  setupNightHomeControls();
@@ -3497,7 +3738,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#cameraEyeLevel').onclick=()=>{if(state.view!=='3d')setView('3d');setOrbitCameraHeight(WALK_EYE_HEIGHT);status('Камера опущена к уровню глаз: 1,7 м над рельефом.')};
  $('#customHouseGlb').onchange=e=>importHouseGlb(e.target.files?.[0]);
  $('#clearCustomHouse').onclick=()=>{const h=activeHouseTarget();if(!h.modelKey)return status('Вы уже используете встроенный 3D-стиль.');push();h.modelKey=null;save();rebuild();renderHouseLibrary();status('Возврат к 3D-стилю. Исходный GLB остаётся в локальном хранилище.')};
- $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=renderAi;$('#aiProgressHide').onclick=()=>{$('#aiProgress').hidden=true};$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
+ $('#screenshot').onclick=saveScreenshot;$('#renderAi').onclick=()=>renderAi();$('#aiProgressHide').onclick=()=>{$('#aiProgress').hidden=true};$('#closeAiResult').onclick=()=>{$('#aiResult').hidden=true};
  $('#export3dPdf').onclick=export3dPdf;
  $('#sourceDrawing').onchange=e=>importUnderlay(e.target.files?.[0]);
  $('#underlayOpacity').onchange=()=>{if(underlayTexture)rebuild()};
