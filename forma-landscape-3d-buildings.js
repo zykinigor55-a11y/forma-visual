@@ -6,7 +6,7 @@ import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landsca
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
-import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js';
+import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=alpha-windows-v2-20261122';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Серый вертикальный планкен · графитовая кровля · чёрные окна',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#919897'},
