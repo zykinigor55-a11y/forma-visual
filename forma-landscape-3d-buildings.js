@@ -6,7 +6,7 @@ import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landsca
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
-import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=alpha-polish-9-v1-20261122';
+import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=alpha-night-v1-20261122';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Серый вертикальный планкен · графитовая кровля · чёрные окна',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#919897'},
@@ -650,7 +650,7 @@ function addFacadeFinish(g,T,{width,depth,height,roof,style}){
   }
  }
 }
-export function createArchitecturalBuilding(THREE,building,{night=false}={}){
+export function createArchitecturalBuilding(THREE,building,{night=false,interior=null}={}){
  const b=building||{},preset=housePreset(b.archStyle),style=b.archStyle||preset.id;
  const w=Math.max(2,Number(b.width)||8),d=Math.max(2,Number(b.height)||7);
  const g=new THREE.Group();g.name='architecture-'+style;
@@ -695,7 +695,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  // A separate reference-accurate A-frame: built-in roof apertures and a
  // full-height triangular facade. Never fall back to ordinary house walls.
  if(style==='alpha'){
-  addAlphaReferenceHouse(THREE,g,b,{width:w,depth:d,night});
+  addAlphaReferenceHouse(THREE,g,b,{width:w,depth:d,night,interior});
   g.userData.archStyle=style;
   g.userData.footprint={width:w,height:d};
   g.userData.textures=ownedHouseTextures;
