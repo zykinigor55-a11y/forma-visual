@@ -1,7 +1,7 @@
 /* FORMA architectural houses: metrically correct footprints, distinct facade
  * systems and real roof planes. These are editable, procedural Three.js models.
  * Presets do not infer unknown details from a user's architectural photograph. */
-import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile} from './forma-landscape-3d-architecture-geometry.js';
+import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile,scandiRoofOverhang} from './forma-landscape-3d-architecture-geometry.js';
 import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
@@ -413,7 +413,7 @@ function thickHipRoofFace(g,T,points,material,thickness=.20){
  return mesh;
 }
 function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
- const roof=b.roof||housePreset(b.archStyle).roof,overhang=b.archStyle==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
+ const roof=b.roof||housePreset(b.archStyle).roof,overhang=b.archStyle==='scandi'?scandiRoofOverhang(w,d):b.archStyle==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
  b.archStyle==='cottage'?Math.min(.75,Math.min(w,d)*.09):Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
  const dark=mat(T,'#22282B',.75,.38),soffit=mat(T,'#555A59',.82,.06),gable=roof==='gable',hip=roof==='hip';
  const rise=b.archStyle==='aframe'?Math.max(4.2,Math.min(8,Number(b.roofRise)||0,w*.74)):Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
@@ -797,7 +797,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  if(style==='scandi'&&(!b.type||b.type==='house')&&(b.roof||preset.roof)==='gable'){
   // The original roof stays untouched. Technical flashings and timber
   // gable siding follow its existing ridge, slopes and measured overhangs.
-  const overhang=Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
+  const overhang=scandiRoofOverhang(w,d);
   const rise=Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
   addScandiGableCladding(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
   addScandiRoofEdgeDetails(THREE,g,{width:w,depth:d,bodyHeight,rise,overhang});
