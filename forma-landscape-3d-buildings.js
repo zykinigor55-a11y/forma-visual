@@ -6,6 +6,7 @@ import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landsca
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
+import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js';
 export const HOUSE_PRESETS=Object.freeze([
  {id:'barn',name:'Барнхаус',subtitle:'Тёмный металл · дерево',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#B8936E'},
  {id:'scandi',name:'Скандинавский',subtitle:'Серый вертикальный планкен · графитовая кровля · чёрные окна',wall:'lightwood',roof:'gable',roofFinish:'standing',accent:'#919897'},
@@ -15,6 +16,7 @@ export const HOUSE_PRESETS=Object.freeze([
  {id:'japandi',name:'Japandi',subtitle:'Штукатурка · тёплый кедр',wall:'cedar',roof:'flat',roofFinish:'flat',accent:'#BDA78B'},
  {id:'classic',name:'Классический',subtitle:'Светлый фасад · вальмовая кровля',wall:'stone',roof:'hip',roofFinish:'tile',accent:'#D5D0C7'},
  {id:'aframe',name:'A-frame',subtitle:'Высокий треугольный силуэт',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#69533F'},
+ {id:'alpha',name:'АЛЬФА · A-frame',subtitle:'Референс 7,5×9,5 · графитовая доска · 4 мансардных окна · терраса',wall:'darkwood',roof:'gable',roofFinish:'standing',accent:'#40484B'},
  {id:'chalet',name:'Альпийское шале',subtitle:'Широкая кровля · деревянная терраса',wall:'walnut',roof:'gable',roofFinish:'tile',accent:'#957157'},
  {id:'cottage',name:'Английский коттедж',subtitle:'Фахверк · крутая кровля',wall:'stone',roof:'gable',roofFinish:'tile',accent:'#B1A193'},
  {id:'mediterranean',name:'Средиземноморский',subtitle:'Терракота · светлый камень',wall:'plaster',roof:'hip',roofFinish:'tile',accent:'#B98764'},
@@ -690,6 +692,15 @@ export function createArchitecturalBuilding(THREE,building,{night=false}={}){
  // included in measured area, and never shifts parcel coordinates.
  const foundation=mat(THREE,'#373B3C',.92,.05,texture(THREE,'stone','#777D80'));
  box(g,THREE,w,.48,d,0,.24,0,foundation);
+ // A separate reference-accurate A-frame: built-in roof apertures and a
+ // full-height triangular facade. Never fall back to ordinary house walls.
+ if(style==='alpha'){
+  addAlphaReferenceHouse(THREE,g,b,{width:w,depth:d,night});
+  g.userData.archStyle=style;
+  g.userData.footprint={width:w,height:d};
+  g.userData.textures=ownedHouseTextures;
+  return g;
+ }
  if(isGazebo){
   for(const x of [-w/2+.2,w/2-.2])for(const z of [-d/2+.2,d/2-.2]){
    box(g,THREE,.2,bodyHeight-.4,.2,x,bodyHeight/2+.2,z,mat(THREE,'#80664E',.79));
