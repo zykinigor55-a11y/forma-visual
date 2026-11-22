@@ -6,6 +6,7 @@
  * Four real holes in the metal roof accommodate flush roof windows.
  */
 import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js';
+import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function finish(T,color,roughness=.76,metalness=0){
@@ -67,9 +68,10 @@ function addRoof(T,g,profile){
  const trim=finish(T,'#252F32',.46,.59);
  const gasket=finish(T,'#141B1D',.94,.02);
  const glass=new T.MeshPhysicalMaterial({
-  color:'#64848B',roughness:.092,metalness:0,
-  transparent:true,opacity:.74,depthWrite:false,
-  ior:1.52,clearcoat:.65,clearcoatRoughness:.11,side:T.DoubleSide
+  color:'#C4D1CD',roughness:.077,metalness:0,
+  transparent:true,opacity:.23,depthWrite:false,
+  ior:1.52,clearcoat:.56,clearcoatRoughness:.08,side:T.DoubleSide,
+  envMapIntensity:1.04
  });
  const windowLength=clamp(slope*.23,1.35,1.85);
  const windowWidth=clamp(depth*.057,.38,.57);
@@ -161,62 +163,17 @@ function addFacades(T,g,{w,d,eave,rise,half},night){
  const front=d/2+.058,rear=-d/2-.061;
  // One seamless UV-mapped PBR facade per end, not hundreds of slat meshes.
  const cladding=alphaGraphitePBR(T,w);
- const timber=finish(T,'#7B6D5F',.80,.01);
- const frame=finish(T,'#222B2F',.47,.35);
- const glass=new T.MeshPhysicalMaterial({
-  // Light smoke-grey neutral glazing rather than milky cyan solid planes.
-  color:night?'#979C95':'#768481',metalness:.04,roughness:.105,
-  ior:1.52,transparent:true,opacity:.43,depthWrite:false,
-  clearcoat:.78,clearcoatRoughness:.075,side:T.DoubleSide
- });
- const widest=Math.min(w*.67,Math.max(2.3,w-1.1));
+ const frame=finish(T,'#262D30',.39,.21);
+ const doorW=Math.min(w*.67,Math.max(2.3,w-1.1));
  const doorTop=Math.min(glassBase-.11,2.61);
- // Thermal corner jambs and upper-glazing frame are inset from the roof.
  const glassHalf=half*(1-(glassBase-eave)/rise)-.12;
  const top=peak-.34;
- const shellHalf=half*(1-(top-eave)/rise)-.10;
- triangle(T,g,[-glassHalf,glassBase,front,glassHalf,glassBase,front,0,top,front],
-  glass,'alpha-gable-true-triangle-insulated-glazing');
- // Reference has readable warm inner A-rafters inside the graphite envelope.
- for(const side of [-1,1]){
-  beam(T,g,[side*glassHalf,glassBase,front+.030],
-   [0,top,front+.030],.086,.084,timber,'alpha-inner-gable-timber-rafter');
- }
- const glassBand=(glassBase+top)*.5;
- for(const y of [glassBase+.045,glassBand]){
-  const span=glassHalf*(1-(y-glassBase)/(top-glassBase));
-  beam(T,g,[-span,y,front+.07],[span,y,front+.07],
-   .059,.058,frame,'alpha-triangular-glazing-transom');
- }
- // Vertical window mullions terminate exactly at triangular upper border.
- for(const x of [-glassHalf*.55,0,glassHalf*.55]){
-  const stop=top-(top-glassBase)*Math.abs(x)/glassHalf;
-  beam(T,g,[x,glassBase,front+.08],[x,stop,front+.08],
-   .064,.055,frame,'alpha-triangle-mullion');
- }
- // Restrained top ventilation triangle and its perimeter dark gaskets.
- triangle(T,g,[-shellHalf,top,front+.012,shellHalf,top,front+.012,
-  0,peak-.11,front+.012],timber,'alpha-gable-wood-apex-infill');
- const doorZ=front+.016,doorBottom=.49,doorW=widest,doorH=doorTop-doorBottom;
- box(T,g,doorW+.12,.075,.11,0,doorBottom,doorZ,frame,'alpha-sliding-door-bottom-track');
- box(T,g,doorW+.14,.092,.13,0,doorTop,doorZ,frame,'alpha-sliding-door-head');
- for(const x of [-doorW/2,doorW/2]){
-  box(T,g,.072,doorH+.075,.115,x,(doorBottom+doorTop)/2,doorZ,
-   frame,'alpha-sliding-door-side-profile');
- }
- // Four proper glazing panels, two sliding, in one broad timber entrance.
- const leafW=doorW/4;
- for(let i=0;i<4;i++){
-  const cx=-doorW/2+(i+.5)*leafW;
-  box(T,g,leafW-.065,doorH-.14,.009,cx,(doorBottom+doorTop)/2,doorZ+.007,
-   glass,'alpha-lower-facade-door-glazing');
-  if(i>0)
-   box(T,g,.057,doorH,.095,-doorW/2+i*leafW,
-    (doorBottom+doorTop)/2,doorZ+.025,frame,'alpha-sliding-door-mullion');
- }
- const handle=finish(T,'#969B98',.37,.45);
- for(const sx of [-1,1])
-  box(T,g,.019,.22,.025,sx*.034,1.39,doorZ+.07,handle,'alpha-sliding-hardware-handle');
+ // Professional fenestration is separate from the graphite PBR siding.
+ // Ultra-light transparent insulated glass reveals a real recessed interior;
+ // thin aluminium profiles, gaskets, drainage and timber A-rafters stay 3D.
+ addAlphaGlazedFacade(T,g,{
+  w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night
+ });
  // Flat UV-mapped PBR cladding, only TWO facade meshes in the A-frame.
  // Window and door openings remain real cutouts, not opaque blue decals.
  alphaFacadePanel(T,g,{
@@ -296,6 +253,9 @@ export function addAlphaReferenceHouse(T,g,b,{width=7.5,depth=9.5,night=false}={
   depth:d+overhang*2,slope:Math.hypot(half,rise)};
  const group=new T.Group();group.name='alpha-reference-architecture';
  g.add(group);
+ // Real interior geometry must sit behind transparent glass in +Z front.
+ // Order does not change the existing house footprint or local origin.
+ addAlphaVisibleInterior(T,group,{w,d,eave,rise,half,night});
  addFacades(T,group,{w,d,eave,rise,half},night);
  addRoof(T,group,profile);
  addDeck(T,group,w,d);
