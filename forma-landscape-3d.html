@@ -23,6 +23,20 @@ main{position:relative;min-height:0}#viewport{width:100%;height:100%;display:blo
 hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{padding:9px 13px 16px;overflow:auto;min-height:150px;flex:1;overscroll-behavior:contain}
 #library .choice{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 12px;margin:5px 0;text-align:left}
 #library .choice.active{border-color:#d6e0c7;color:#d6e0c7}
+.creature-row{position:relative;margin:8px 0;padding:0 0 4px;border-bottom:1px solid #41434A}
+.creature-choice{gap:9px;min-height:82px!important;background:#292D34!important;
+ border-color:#545861!important}
+.creature-choice.active{border-color:#C5A77A!important;background:#3B3835!important}
+.creature-emoji{font-size:25px;line-height:1;flex:0 0 40px;display:grid;place-items:center;
+ background:#343A3F;border:1px solid #50585A;border-radius:9px;height:44px}
+.creature-copy{display:flex!important;flex-direction:column;flex:1;min-width:0;gap:4px}
+.creature-copy strong{font-size:12px;color:#F4F0E9}
+.creature-copy small{font-size:10px;line-height:1.35;color:#B7C0BC;white-space:normal}
+.creature-source{display:inline-block;margin:1px 0 7px 62px;color:#D1B789;
+ font-size:10px;text-decoration:underline;text-underline-offset:2px}
+.creature-footer{display:block;margin:15px 8px;color:#ADB9B8;font-size:10px;line-height:1.6}
+#creatureSearch{width:100%;padding:10px;background:#292D34;color:#F5F2EC;
+ border:1px solid #66646B;border-radius:9px;margin:10px 0}
 .camera-elevation-controls,.walk-instructions{padding:10px 11px;margin:8px 0;border-radius:10px;border:1px solid #576b60;background:#26362f;line-height:1.5}
 .camera-elevation-controls label{font-size:11px;color:#e5d6ba;display:block}
 .camera-elevation-controls output{font-weight:700;color:#fff0cf}
@@ -1431,6 +1445,45 @@ function refreshGardenLightCatalogPreviews(){
   finally{gardenLightPreviewBusy=false;show()}
  },20);
 }
+function renderCreatureCatalog(){
+ const target=$('#library');if(!target)return;
+ const make=(group,title)=>{
+  const items=CREATURE_ASSETS.filter(e=>e.group===group);
+  return '<div class="asset-group-heading">'+title+' · '+items.length+'</div>'+
+   items.map(e=>'<div class="creature-row"><button type="button" class="choice creature-choice" data-creature-id="'+e.id+'">'+
+    '<span class="creature-emoji" aria-hidden="true">'+e.emoji+'</span><span class="creature-copy"><strong>'+e.name+'</strong>'+
+    '<small>'+e.notes+'</small><small>Рост: '+e.height.toFixed(2)+' м · CC0 · GLB</small></span><b class="asset-add">＋</b></button>'+
+    '<a class="creature-source" href="'+e.source+'" target="_blank" rel="noopener noreferrer" title="Автор и бесплатная лицензия CC0">Источник GLB</a></div>').join('');
+ };
+ target.innerHTML='<div class="real-model-intro"><strong>ЛЮДИ И ЖИВОТНЫЕ · 8 GLB</strong><p>Настоящие лицензированные 3D-модели. Выберите персонажа, затем коснитесь участка. Положение сохраняется, рост и поворот меняются в параметрах. При отсутствии сети модель не подменяется условной фигурой.</p></div>'+
+ '<input id="creatureSearch" type="search" placeholder="Поиск по людям и животным…" aria-label="Поиск живых существ" autocomplete="off">'+
+ '<div class="catalog-filter" role="group" aria-label="Виды"><button type="button" class="active" data-creature-filter="all">Все</button><button type="button" data-creature-filter="people">Люди</button><button type="button" data-creature-filter="animals">Животные</button></div>'+
+ make('people','ЛЮДИ')+make('animals','ЖИВОТНЫЕ')+
+ '<small class="creature-footer">Источник: tevy.dev · CC0 1.0 · облегчённые LOD1 для мобильного просмотра. Натуральные пропорции при AI-рендере.</small>';
+ let filter='all';const search=$('#creatureSearch');
+ const apply=()=>{
+  const q=search.value.trim().toLocaleLowerCase('ru');
+  target.querySelectorAll('.creature-row').forEach(row=>{
+   const entry=creatureById(row.querySelector('[data-creature-id]').dataset.creatureId);
+   row.hidden=!(filter==='all'||filter===entry.group)||
+    !String(entry.name+' '+entry.notes+' '+entry.species).toLocaleLowerCase('ru').includes(q);
+  });
+  target.querySelectorAll('.asset-group-heading').forEach(el=>el.hidden=filter!=='all'||!!q);
+ };
+ search.oninput=apply;
+ target.querySelectorAll('[data-creature-filter]').forEach(button=>button.onclick=()=>{
+  filter=button.dataset.creatureFilter;
+  target.querySelectorAll('[data-creature-filter]').forEach(b=>b.classList.toggle('active',b===button));
+  apply();
+ });
+ target.querySelectorAll('[data-creature-id]').forEach(button=>button.onclick=()=>{
+  state.placing=button.dataset.creatureId;
+  target.querySelectorAll('[data-creature-id]').forEach(b=>b.classList.toggle('active',b===button));
+  const item=creatureById(state.placing);
+  loadCreatureModel(item.id);
+  status('Выбран '+item.name+'. Коснитесь участка для размещения. Рост '+item.height+' м.');
+ });
+}
 function chooseTool(t){
  state.tool=t;state.placing=null;pointMode=[];refreshDraft();
  const draft=$('#draftActions');if(draft)draft.hidden=!['site','surface','water','fence'].includes(t);
@@ -1438,6 +1491,7 @@ function chooseTool(t){
  document.querySelectorAll('[data-quick-tool]').forEach(b=>{const active=b.dataset.quickTool===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
+ if(t==='creatures'){renderCreatureCatalog();return}
  $('#library').innerHTML=t==='select'?'<p>Коснитесь дерева в сцене или выберите его из списка.</p><div class="pine-object-list"><strong>ДЕРЕВЬЯ НА УЧАСТКЕ</strong>'+
  doc.objects.filter(o=>['pine','spruce','birch'].includes(o.catalogId)).map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
  (!doc.objects.some(o=>['pine','spruce','birch'].includes(o.catalogId))?'<small>Посаженных деревьев пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · '+CATALOG.filter(x=>x.group==='trees'||x.group==='shrubs').length+'</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 19</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
