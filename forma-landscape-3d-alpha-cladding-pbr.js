@@ -128,7 +128,7 @@ export function alphaGraphitePBR(T,width=7.5){
  */
 export function alphaFacadePanel(T,g,{
  half,base,peak,z,width,glassHalf,glassBase,glassTop,doorHalf,doorBottom,doorTop,
- front=false,material
+ front=false,material,partName=null
 }){
  const s=new T.Shape();
  s.moveTo(-half,base);s.lineTo(half,base);s.lineTo(0,peak);s.closePath();
@@ -157,7 +157,7 @@ export function alphaFacadePanel(T,g,{
  pos.needsUpdate=true;uv.needsUpdate=true;geometry.computeVertexNormals();
  const mesh=new T.Mesh(geometry,material);
  mesh.castShadow=mesh.receiveShadow=true;
- mesh.userData.architecturePart=front?'alpha-front-single-pbr-textured-facade':'alpha-rear-single-pbr-textured-facade';
+ mesh.userData.architecturePart=partName||(front?'alpha-front-single-pbr-textured-facade':'alpha-rear-single-pbr-textured-facade');
  mesh.userData.openings=front?['sliding-door','triangular-glazing']:[];
  g.add(mesh);
  return mesh;
