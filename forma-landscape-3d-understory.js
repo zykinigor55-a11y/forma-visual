@@ -9,8 +9,12 @@ import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js';
 
 export const NATIVE_UNDERSTORY=Object.freeze({
  fern:{latin:'Dryopteris filix-mas',form:'fronds',stems:22,leaves:24,height:.85,diameter:1.2},
+ 'fern-02':{latin:'Dryopteris filix-mas',form:'fronds',stems:26,leaves:24,height:.43,diameter:1.0},
+ 'fern-03':{latin:'Dryopteris filix-mas',form:'fronds',stems:23,leaves:24,height:.35,diameter:.88},
+ 'fern-04':{latin:'Dryopteris filix-mas',form:'fronds',stems:18,leaves:24,height:.22,diameter:.60},
  periwinkle:{latin:'Vinca minor',form:'creeping',stems:32,leaves:8,height:.24,diameter:1.1},
  hosta:{latin:'Hosta plantaginea',form:'basal',stems:27,leaves:3,height:.60,diameter:1.3},
+ pennisetum:{latin:'Pennisetum alopecuroides Hameln',form:'grass',stems:65,leaves:4,height:.76,diameter:.87},
  'ornamental-grass':{latin:'Miscanthus sinensis',form:'grass',stems:100,leaves:4,height:1.3,diameter:1.5},
  'wild-shrub':{latin:'Mixed native deciduous undergrowth',form:'woodland',stems:48,leaves:13,height:1.6,diameter:1.9}
 });
@@ -147,7 +151,7 @@ export function createNativeUnderstory(T,instance,{season='summer',quality=1,mod
  const height=clamp(Number(instance.height)||spec.height,.12,4),diameter=clamp(Number(instance.diameter)||spec.diameter,.2,10);
  const radius=diameter/2,r=random(hash(String(instance.id||id)+'|'+id+'|'+String(instance.variant||1)));
  const stems=[],leaves=[],shoots=Math.max(8,Math.round(spec.stems*Math.max(.36,Math.min(1,quality))));
- const rootRadius=id==='ornamental-grass'?.18:id==='fern'?.1:id==='hosta'?.15:.23;
+ const rootRadius=spec.form==='grass'?.18:spec.form==='fronds'?.1:id==='hosta'?.15:.23;
  const winter=season==='winter'&&id!=='periwinkle';
  for(let j=0;j<shoots;j++){
   const az=j*2.399+(r()-.5)*.39,cs=Math.cos(az),sn=Math.sin(az);

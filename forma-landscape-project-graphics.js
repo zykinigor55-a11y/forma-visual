@@ -8,6 +8,17 @@ const mix=(hex,change)=>{const n=parseInt(hex.slice(1),16),v=[n>>16&255,n>>8&255
 const f=n=>Number(n).toFixed(2);
 const defs=()=>'<defs><radialGradient id="leaf"><stop stop-color="#e6edbe"/><stop offset=".45" stop-color="#9eae65"/><stop offset="1" stop-color="#45634b"/></radialGradient><radialGradient id="light"><stop stop-color="#fff7da" stop-opacity=".85"/><stop offset=".13" stop-color="#ffdc9c" stop-opacity=".5"/><stop offset="1" stop-color="#ffcb73" stop-opacity="0"/></radialGradient><radialGradient id="water"><stop stop-color="#6b9991"/><stop offset=".7" stop-color="#2c6167"/><stop offset="1" stop-color="#183c45"/></radialGradient><filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter><linearGradient id="rock" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f3e7d4"/><stop offset=".4" stop-color="#9c998f"/><stop offset="1" stop-color="#4b514c"/></linearGradient></defs>';
 const circle=(x,y,r,fill,extra='')=>'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="'+fill+'" '+extra+'/>';
+function grassPlan(entry){
+ const rand=seeded(entry.id);
+ let out=circle(82,85,53,'#111b17','opacity=".20" filter="url(#shadow)"');
+ for(let i=0;i<135;i++){
+  const angle=rand()*Math.PI*2,r=12+rand()*58,bend=(rand()-.5)*38;
+  out+=`<g transform="translate(80 80) rotate(${f(angle*180/Math.PI)})">
+   <path d="M0 0Q${f(r*.55)} ${f(bend)} ${f(r)} 0" fill="none" stroke="${mix(entry.color,(rand()-.5)*85)}" stroke-width="${f(.7+rand()*2.4)}" stroke-linecap="round"/>
+   ${entry.id==='pennisetum'&&i%3===0?`<ellipse cx="${f(r)}" cy="0" rx="${f(3+rand()*5)}" ry="${f(1+rand()*1.3)}" fill="${mix('#bdaa80',(rand()-.5)*57)}"/>`:''}</g>`;
+ }
+ return out;
+}
 function foliage(entry){
  const rand=seeded(entry.id);const shrub=entry.group==='shrubs';const pine=['pine','conifer'].includes(entry.shape)||entry.id.includes('juniper')||entry.id.includes('thuja');
  const blossom=['hydrangea','spirea','lavender','flower'].some(w=>entry.id.includes(w)||entry.shape===w);
@@ -125,6 +136,7 @@ function light(entry){
 }
 export function assetGraphic(entry){
  if(!entry)return '';
+ if(['pennisetum','ornamental-grass'].includes(entry.id))return grassPlan(entry);
  if(entry.group==='trees'||entry.group==='shrubs')return foliage(entry);
  if(entry.group==='boulders')return stone(entry);
  if(entry.group==='lights')return light(entry);
@@ -134,8 +146,15 @@ export function assetSVG(entry,{size=1080,transparent=false}={}){
  const content=assetGraphic(entry);
  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 160 160" role="img" aria-label="'+esc(entry.name)+'"><defs><clipPath id="tileclip"><rect x="7" y="7" width="146" height="146" rx="14"/></clipPath></defs>'+defs()+(transparent?'':'<rect x="0" y="0" width="160" height="160" fill="#222426"/>')+content+'</svg>';
 }
-let premiumEnabled=false;
-let premiumExtension='webp';
+// IDs with bundled orthographic PNGs in assets/landscape-premium.
+const PREMIUM_PLAN_ASSETS=new Set([
+ 'apple','barberry','bio-pond','birch','bollard','boxwood','clinker-herringbone','concrete-pavers',
+ 'deck-light','dogwood','formal-pond','formal','granite-boulder','granite-chips','granite-setts',
+ 'grass-grid','ground','hydrangea','juniper','lavender','limestone-boulder','linden','linear',
+ 'low-post','maple','marble-chips','meadow','natural','oak','pine-bark','pine','radial-setts',
+ 'river-pebble','rowan','sakura','sandstone-boulder','shade','slate-boulder','slate-chips',
+ 'slate-pavers','spirea','spot','spruce','thuja-globe','universal','willow'
+]);
 // Staged 1080 top-view PNGs are individual synthetic previews, not photographs.
 // JPG surface cards are photographic; never mislabel botanical previews as photos.
 export const PHOTO_ASSETS=Object.freeze({
@@ -162,12 +181,11 @@ const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=ph
 export const photographicAssetCount=()=>[...availablePhotos].filter(id=>PHOTO_ASSETS[id]?.endsWith('.jpg')).length;
 export const photographicIconURL=(entry)=>PHOTO_ASSETS[entry.id]?photoUrl(entry):null;
 export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
-export const premiumIconURL=(entry)=>'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.'+premiumExtension+'?v=1080-png-realgrass-v2';
-// New live PBR terrain has no bundled 2D photo card yet; keep the measured
-// plan readable with its deterministic vector sample rather than a broken IMG.
-const STREAMED_SURFACES=new Set(['sand-fine','gravel-natural','crushed-stone','sandy-gravel']);
-const POLY_HAVEN_TREE_IDS=new Set(['ph-fir-sapling','ph-pine-sapling','ph-quiver-01','ph-quiver-02']);
-export const iconURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):POLY_HAVEN_TREE_IDS.has(entry?.id)?fallbackIconURL(entry):STREAMED_SURFACES.has(entry.id)?fallbackIconURL(entry):availablePhotos.has(entry.id)?photoUrl(entry):(premiumEnabled?premiumIconURL(entry):fallbackIconURL(entry));
+export const premiumIconURL=(entry)=>PREMIUM_PLAN_ASSETS.has(entry.id)
+ ?'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.png?v=1080-png-realgrass-v2'
+ :fallbackIconURL(entry);
+export const iconURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id)
+ :availablePhotos.has(entry.id)?photoUrl(entry):premiumIconURL(entry);
 export const isPhotographic=(entry)=>Boolean(entry&&availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'));
 export async function enablePremiumAssets(){
  try{await prepareTreeAtlas()}catch{}
@@ -193,14 +211,7 @@ export async function enablePremiumAssets(){
      else availableCardPhotos.delete(id);
    }catch{availableCardPhotos.delete(id);}
  }));
- for(const extension of ['png','webp']){
-  try{
-   const url='/assets/landscape-premium/pine.'+extension+'?v=1080-png-realgrass-v2';
-   const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
-   if(r.ok){premiumExtension=extension;premiumEnabled=true;return true;}
-  }catch{}
- }
- premiumEnabled=false;return availablePhotos.size>0;
+ return PREMIUM_PLAN_ASSETS.size>0||availablePhotos.size>0;
 }
 export function roofingSVG(house){
  // Vector fallback is dimensioned, truly nadir. AI photograph is applied only as a surface texture.

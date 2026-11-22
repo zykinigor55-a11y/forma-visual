@@ -1,5 +1,5 @@
 import {GROUPS,CATALOG,TREE_HEIGHT_M,SCENE_OPTIONS,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=roof-garland-model-v5-20261122';
-import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=tree-atlas-generated-png-v8-20261117';
+import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=plant-plan-assets-v1';
 import {proposeLandscape} from './forma-landscape-auto-layout.js';
 import {brushPolygon} from './forma-landscape-brush.js';
 import {premiumIcon, premiumIcon as categoryIcon} from './forma-premium-icons.js';

@@ -9,8 +9,9 @@ import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkRelief
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
 import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js';
 import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity,constrainCrownRadius,specimenCrownVariation} from './forma-landscape-3d-reference-canopies.js';
-import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js';
+import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js?v=understory-mobile-v1';
 export const VEGETATION_SPECIES=Object.freeze({
+ ...NATIVE_UNDERSTORY,
  pine:{kind:'pine',density:1750,branches:13,crownStart:.40,leaf:'#507254',bark:'#91674b'},
  spruce:{kind:'spruce',density:2450,branches:17,crownStart:.10,leaf:'#294d3e',bark:'#55433a'},
  birch:{kind:'deciduous',density:2700,branches:12,crownStart:.42,leaf:'#8eb56f',bark:'#d8d8c9'},

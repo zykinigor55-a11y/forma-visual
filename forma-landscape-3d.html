@@ -707,7 +707,7 @@ import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composi
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=roof-garland-project-v2-20261122';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v1-20261122';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=night-paving-fix-v4-20261122';
-import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
+import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=understory-mobile-v1';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js';
@@ -728,7 +728,7 @@ import {REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_CATEGORIES,REAL_3D_TOTAL,r
 import {CREATURE_ASSETS,creatureById,isCreatureId} from './forma-landscape-3d-creatures.js?v=creatures-v1-20261122';
 import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
-import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js';
+import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js?v=plant-plan-assets-v1';
 import {surfaceMaterial,surfacePreviewURL,pavingPathMaterial} from './forma-landscape-3d-surfaces.js?v=paving-identity-v2-20261122';
 import {inspectRenderDataURL} from './forma-landscape-ai-photo-quality.js?v=fullframe-v1-20261122';
  // The editor is demand-rendered: update the frame after streamed PBR arrives.
@@ -1455,7 +1455,7 @@ function drawObject(o,entry,key){
    canopyCopies:0,
    pineGrowth:o.catalogId==='pine'?normalizePineGrowth(o.pine):null,
    spruceGrowth:o.catalogId==='spruce'?normalizeSpruceGrowth(o.spruce):null
-  }):waitingForReal?new THREE.Group():
+  }):waitingForReal||!VEGETATION_SPECIES[o.catalogId]?new THREE.Group():
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
  }else if(group==='boulders'){
