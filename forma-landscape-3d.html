@@ -906,15 +906,23 @@ function selectNextPine(){
 }
 function activateMobilePanel(name){
  if(name!=='scene')setSceneClimateOpen(false);
+ const ref=state.selected?selectable(state.selected):null;
+ if(window.innerWidth<=850){
+  if(name==='scene'&&!state.mobileMoveMode)state.mobileObjectCollapsed=true;
+  if(name==='details'&&ref?.obj)state.mobileObjectCollapsed=false;
+ }
  document.body.dataset.mobilePanel=name;
+ const contextual=window.innerWidth<=850&&name==='details'&&!!ref?.obj&&!state.mobileObjectCollapsed;
+ document.body.dataset.objectInspector=String(contextual);
+ const header=$('#mobileObjectEditorHeader');
+ if(header)header.hidden=!contextual;
+ if(contextual)requestAnimationFrame(()=>{if($('#right'))$('#right').scrollTop=0;});
  document.querySelectorAll('#mobileWorkspaceTabs [data-mobile-panel]').forEach(button=>{
   const active=button.dataset.mobilePanel===name;
   button.classList.toggle('active',active);
   button.setAttribute('aria-pressed',String(active));
  });
- if(name==='details'&&state.selected?.startsWith('object:')&&['pine','spruce'].includes(selectable(state.selected)?.obj?.catalogId)){
-  document.body.dataset.mobilePine='true';requestAnimationFrame(scrollToSelectedPine);
- }
+ if(window.innerWidth<=850)syncSelectedObjectDock(ref,$('#selectedObjectName')?.textContent||'Объект');
  requestAnimationFrame(resize);
 }
 function save(){
@@ -1873,9 +1881,10 @@ function syncSelectedObjectDock(ref,label){
  if(!dock||!title||!del)return;
  // Do not cover the main house with a huge 'protected' floating panel.
  const valid=Boolean(ref?.obj&&ref.type!=='house');
- dock.hidden=!valid;
- if(!valid)return;
+ dock.hidden=!valid||(window.innerWidth<=850&&state.mobileObjectCollapsed);
+ if(!ref?.obj)return;
  title.textContent=String(label||'Выбранный объект');
+ const headerTitle=$('#mobileObjectEditorTitle');if(headerTitle)headerTitle.textContent=String(label||'Объект');
  const move=$('#selectedObjectMove');
  if(move){move.setAttribute('aria-pressed',String(!!state.mobileMoveMode));move.classList.toggle('active',!!state.mobileMoveMode);}
  const step=$('#selectedObjectStep'),magnet=$('#selectedObjectMagnet'),posText=$('#selectedObjectPosition');
@@ -1989,7 +1998,7 @@ function renderProps(){
  const targetKey=state.selected?.startsWith('building:')?state.selected:'house:main';
  if(targetKey!==lastHouseTargetKey){lastHouseTargetKey=targetKey;renderHouseLibrary()}
  const el=$('#properties'),ref=state.selected?selectable(state.selected):null;
- if(!ref?.obj){syncSelectedObjectDock(null);document.body.dataset.mobilePine='false';$('#mobilePineSelect')?.classList.remove('active');
+ if(!ref?.obj){syncSelectedObjectDock(null);document.body.dataset.mobilePine='false';document.body.dataset.objectInspector='false';$('#mobileObjectEditorHeader').hidden=true;$('#mobilePineSelect')?.classList.remove('active');
  $('#pineInspectorShortcut').hidden=true;el.classList.remove('pine-inspector-open','forma-shrub-open');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj, fields=['pine','spruce'].includes(o.catalogId)?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
@@ -2009,7 +2018,7 @@ function renderProps(){
  const lightKelvin=[2200,2700,3000,4000].includes(Number(o.kelvin))?Number(o.kelvin):2700;
  const globeVariant=[1,2,3,4].includes(Number(o.variant))?Number(o.variant):1;
  document.body.dataset.mobilePine=String(isTreeEditor);
- $('#mobilePineSelect')?.classList.toggle('active',isTreeEditor);
+ $('#mobilePineSelect')?.classList.remove('active');
  $('#pineInspectorShortcut').hidden=!isPine;
  el.classList.toggle('pine-inspector-open',isTreeEditor);
  el.classList.toggle('forma-shrub-open',isShrub);
