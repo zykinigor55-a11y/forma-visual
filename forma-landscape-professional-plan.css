@@ -1,0 +1,112 @@
+/* FORMA VISUAL — premium measured masterplan editor controls.
+ * Respect existing graphite theme; no alterations to plans or saved data.
+ */
+#faLandscapeMasterplan .lp-plan-style{
+ display:flex;flex-direction:column;gap:8px;margin:12px 0 10px;
+ color:#d9cbb5;font-size:11px;font-weight:700;letter-spacing:.07em;
+}
+#faLandscapeMasterplan .lp-plan-style select{
+ width:100%;min-height:46px;border:1px solid #82735f;
+ border-radius:10px;background:#2b2d2f;color:#f3eee6;
+ font:600 13px system-ui,sans-serif;padding:8px 12px;
+}
+#faLandscapeMasterplan .lp-outputs button.lp-pro-sheet{
+ border:1px solid #b6a183!important;
+ background:#3b3833!important;color:#f6e5c8!important;
+ min-height:44px;min-width:130px;font-weight:650;white-space:normal;
+}
+#faLandscapeMasterplan .lp-layers{
+ flex:0 0 auto;margin:0 9px 7px;background:#23272a;
+ color:#ded6c8;border:1px solid #55595b;border-radius:11px;
+}
+#faLandscapeMasterplan .lp-layers summary{
+ cursor:pointer;font-size:12px;font-weight:680;letter-spacing:.035em;
+ list-style-position:inside;padding:10px 13px;min-height:39px;
+}
+#faLandscapeMasterplan .lp-layers summary:focus-visible,
+#faLandscapeMasterplan .lp-plan-style select:focus-visible{
+ outline:2px solid #d7bd97;outline-offset:2px;
+}
+#faLandscapeMasterplan .lp-layer-toggles{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:5px 11px 10px;
+}
+#faLandscapeMasterplan .lp-layer-toggles label{
+ display:flex;align-items:center;gap:7px;min-height:42px;
+ border:1px solid #555c60;border-radius:8px;background:#303338;
+ padding:6px 8px;font-size:11px;color:#e8e2d9;
+}
+#faLandscapeMasterplan .lp-layer-toggles input{
+ width:18px;height:18px;flex:none;accent-color:#cab18b;
+}
+#faLandscapeMasterplan .lp-layers small{
+ display:block;padding:0 12px 11px;color:#aeb2b3;font-size:10px;
+}
+#faLandscapeMasterplan .lp-selection-actions{
+ position:relative;padding:15px 12px;margin:4px 8px 14px;
+ border:1px solid #ac9370;background:#33332f;border-radius:12px;
+}
+#faLandscapeMasterplan .lp-selection-actions strong{
+ display:block;color:#e5d3b6;font-size:12px;letter-spacing:.04em;
+}
+#faLandscapeMasterplan .lp-selection-actions small{
+ display:block;color:#cac4b8;font-size:11px;line-height:1.45;margin:7px 0 10px;
+}
+#faLandscapeMasterplan .lp-action-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+}
+#faLandscapeMasterplan .lp-action-grid button{
+ border:1px solid #746e62!important;border-radius:8px;
+ background:#272b2d;color:#f2e3cd;min-height:44px;
+ padding:8px 5px;font-size:11px;font-weight:650;
+}
+#faLandscapeMasterplan .lp-action-grid button:active{
+ transform:scale(.98);
+}
+#faLandscapeMasterplan .lp-action-grid button:disabled{
+ opacity:.4;cursor:not-allowed;
+}
+#selectedObjectDock #selectedObjectMove[aria-pressed="true"]{
+ background:#d3b990!important;color:#24272c!important;
+ border-color:#e2ccab!important;
+}
+@media(max-width:760px){
+ #faLandscapeMasterplan .lp-layers{
+  margin:0 6px 5px;border-radius:9px;order:2;flex:none;
+ }
+ #faLandscapeMasterplan .lp-layers summary{
+  min-height:37px;font-size:11px;padding:8px 10px;
+ }
+ #faLandscapeMasterplan .lp-layer-toggles{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:4px 8px 7px;
+ }
+ #faLandscapeMasterplan .lp-layer-toggles label{min-height:44px}
+ #faLandscapeMasterplan .lp-selection-actions{
+  margin:5px 5px 12px;padding:12px 10px;
+ }
+ #faLandscapeMasterplan .lp-action-grid button{font-size:12px}
+ #faLandscapeMasterplan .lp-plan-style select{font-size:16px}
+ #faLandscapeMasterplan .lp-outputs button.lp-pro-sheet{
+  min-height:46px;font-size:12px;
+ }
+ #selectedObjectDock{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:5px;
+  padding:8px;max-width:calc(100vw - 16px);
+  border-radius:12px;background:#24272df2;z-index:12;
+ }
+ #selectedObjectDock #selectedObjectName{
+  display:block;flex:1 1 100%;max-width:100%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;text-align:center;
+ }
+ #selectedObjectDock button{
+  flex:1 1 70px;min-width:0;min-height:42px;
+  padding:7px 5px;font-size:10px;line-height:1.1;
+  border:1px solid #5b6168;background:#383b42;color:#eee6d8;
+  border-radius:8px;
+ }
+ #selectedObjectDock #selectedObjectDelete{color:#ffcebf}
+ #selectedObjectDock[hidden]{display:none!important}
+}
+@media(max-width:375px){
+ #selectedObjectDock button{font-size:9px;padding:6px 3px}
+ #faLandscapeMasterplan .lp-layer-toggles label{font-size:10px}
+}
