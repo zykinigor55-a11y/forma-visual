@@ -40,6 +40,7 @@ try{
   await page.locator('#viewport').screenshot({path:dir+'/FORMA-HOUSE-VIEWPORT-ACTUAL.jpg',type:'jpeg',quality:90,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-HOUSE-TWO-TIMBERS-3D.jpg',type:'jpeg',quality:90,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-VERTICAL-BOARDS-REAL-WEBGL.jpg',type:'jpeg',quality:91,timeout:65000});
+  await page.locator('#viewport').screenshot({path:dir+'/SCANDI-REFERENCE-GLASS-ROOF-TERRACE-REAL-WEBGL.jpg',type:'jpeg',quality:92,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-APR10-94MM-FINAL.jpg',type:'jpeg',quality:92,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-FINAL-NO-SELECTION.jpg',type:'jpeg',quality:92,timeout:65000});
  }
