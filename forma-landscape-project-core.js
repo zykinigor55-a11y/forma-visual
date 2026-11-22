@@ -1,4 +1,5 @@
 import {normalizePineGrowth} from './forma-landscape-pine-growth.js';
+import {WEATHER_EFFECT_DEFAULTS,normalizeWeatherEffects} from './forma-landscape-weather-effects.js';
 import {sprucePromptStage} from './forma-landscape-tree-photo-identity.js';
 import {visibleSurfaceAreas} from './forma-landscape-area.js?v=overlap-union-v1';
 import {housePresetIds} from './forma-landscape-3d-buildings.js';
@@ -116,7 +117,7 @@ const round=(x,d=3)=>Math.round(x*10**d)/10**d;
 const point=p=>({x:finite(p?.x,-5000,5000,0),y:finite(p?.y,-5000,5000,0)});
 const maxObjects=500;
 const safePhoto=x=>typeof x==='string'&&x.length<1200000&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x)?x:null;
-export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural',atmosphere:{time:'day',season:'summer',weather:'sunny'}});
+export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,verified:false,style:'natural',atmosphere:{time:'day',season:'summer',weather:'sunny',effects:{...WEATHER_EFFECT_DEFAULTS}}});
 export function normalizeProject(raw){
  const obj=raw&&typeof raw==='object'?raw:{},base=freshProject(),site=obj.site||{},house=obj.house||{};
  const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
@@ -130,7 +131,8 @@ export function normalizeProject(raw){
  atmosphere:{
   time:SCENE_OPTIONS.time.some(x=>x[0]===obj.atmosphere?.time)?obj.atmosphere.time:'day',
   season:SCENE_OPTIONS.season.some(x=>x[0]===obj.atmosphere?.season)?obj.atmosphere.season:'summer',
-  weather:SCENE_OPTIONS.weather.some(x=>x[0]===obj.atmosphere?.weather)?obj.atmosphere.weather:'sunny'
+  weather:SCENE_OPTIONS.weather.some(x=>x[0]===obj.atmosphere?.weather)?obj.atmosphere.weather:'sunny',
+  effects:normalizeWeatherEffects(obj.atmosphere?.effects||obj.atmosphere?.weatherEffects)
  }};
  for(const item of (Array.isArray(obj.objects)?obj.objects:[]).slice(0,maxObjects)){
   const legacyNinebark=item.catalogId==='ninebark';
