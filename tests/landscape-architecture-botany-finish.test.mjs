@@ -16,7 +16,7 @@ test('three-dimensional window reveal and PBR relief exist; footprint remains su
  const src=readFileSync(new URL('../forma-landscape-3d-buildings.js',import.meta.url),'utf8');
  assert.match(src,/const frame=mat\(T,[^\n]+recess=mat/);
  assert.match(src,/box\(g,T,w,h,\.035,0,0,\.035,recess\)/);
- assert.match(src,/box\(g,T,edge,h\+edge\*2,\.16/);
+ assert.match(src,/box\(g,T,edge,h\+edge\*2,tripleGlazed\?\.076:\.16/);
  assert.match(src,/wallMaterial\.bumpMap=wallTex/);
  assert.match(src,/roofMaterial\.bumpMap=roofTex/);
  assert.match(src,/g\.userData\.footprint=\{width:w,height:d\}/);
