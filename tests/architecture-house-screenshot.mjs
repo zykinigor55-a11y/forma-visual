@@ -25,6 +25,15 @@ try{
  await page.waitForTimeout(4800);
  const focused=page.locator('#focusHouse');
  if(await focused.isVisible()){await focused.click();await page.waitForTimeout(2600);}
+ // The yellow circle is an editor SELECTION helper, not part of the house.
+ // Deselect by clicking vacant lawn, preserving the focussed camera and
+ // actual model. Screenshot must not make that helper look like architecture.
+ const viewportRect=await page.locator('#viewport').boundingBox();
+ if(viewportRect){
+  await page.mouse.click(viewportRect.x+viewportRect.width*.67,
+   viewportRect.y+viewportRect.height*.86);
+  await page.waitForTimeout(1100);
+ }
  await page.screenshot({path:dir+'/FORMA-HOUSE-EDITOR-ACTUAL.jpg',type:'jpeg',quality:85,timeout:65000});
  const rect=await page.locator('#viewport').boundingBox();
  if(rect&&rect.width>200&&rect.height>200){
@@ -32,6 +41,7 @@ try{
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-HOUSE-TWO-TIMBERS-3D.jpg',type:'jpeg',quality:90,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-VERTICAL-BOARDS-REAL-WEBGL.jpg',type:'jpeg',quality:91,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-APR10-94MM-FINAL.jpg',type:'jpeg',quality:92,timeout:65000});
+  await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-FINAL-NO-SELECTION.jpg',type:'jpeg',quality:92,timeout:65000});
  }
  const result=await page.evaluate(async()=>({
   title:document.title,ready:window.FORMA_3D_READY,
