@@ -63,9 +63,23 @@ jobs:
               print("Applied 11 approved new gallery images from assets-update.zip")
               archive.unlink()  # Exclude the upload archive from the public Pages artifact.
           else:
-              import subprocess
-              subprocess.run([sys.executable,"neiro-studiya/tools/build_2k_cards.py"],check=True)
-              print("No V21 update ZIP found; original gallery used")
+              # Retain approved native asset pixels: re-encoding every deploy
+              # would unnecessarily alter and degrade the V21 artwork.
+              valid=True
+              for name in names:
+                  path=root/"assets"/name
+                  try:
+                      with Image.open(path) as image:
+                          if image.size!=(2048,1152) or image.format!="WEBP":
+                              valid=False
+                  except (FileNotFoundError, OSError):
+                      valid=False
+              if valid:
+                  print("Using 11 committed V21 2K WebP images unchanged")
+              else:
+                  import subprocess
+                  subprocess.run([sys.executable,"neiro-studiya/tools/build_2k_cards.py"],check=True)
+                  print("Fallback: regenerated missing or old gallery artwork")
           for name in names:
               with Image.open(root/"assets"/name) as image:
                   assert image.size==(2048,1152) and image.format=="WEBP",name
