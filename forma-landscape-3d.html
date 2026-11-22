@@ -476,6 +476,9 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
 <div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
  <span id="selectedObjectName"></span>
+ <button id="selectedObjectMove" type="button" aria-pressed="false" title="Перетащить выбранный объект пальцем">↔ Переместить</button>
+ <button id="selectedObjectRotate" type="button" title="Повернуть объект на 15 градусов">⟳ 15°</button>
+ <button id="selectedObjectDuplicate" type="button" title="Создать копию">＋ Копия</button>
  <button id="selectedObjectDelete" type="button">Удалить объект</button>
 </div>
 <div class="scene-quick-actions" id="sceneQuickTools" role="toolbar" aria-label="Быстрые инструменты 3D-редактора"><button data-quick-tool="select" class="active" type="button" aria-pressed="true">Выбор</button><button data-quick-tool="plant" type="button" aria-pressed="false">Озеленение</button><button data-quick-tool="terrain" type="button" aria-pressed="false">Рельеф</button><button data-quick-tool="surface" type="button" aria-pressed="false">Покрытия</button></div>
@@ -700,7 +703,7 @@ window.addEventListener('forma-house-pbr-ready',()=>{
  renderGate.invalidate();
  requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
 });
-const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,down:null,building:null};
+const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
@@ -1855,6 +1858,8 @@ function syncSelectedObjectDock(ref,label){
  dock.hidden=!valid;
  if(!valid)return;
  title.textContent=String(label||'Выбранный объект');
+ const move=$('#selectedObjectMove');
+ if(move){move.setAttribute('aria-pressed',String(!!state.mobileMoveMode));move.classList.toggle('active',!!state.mobileMoveMode);}
  del.disabled=ref.type==='house';
  del.title=ref.type==='house'?'Главный дом защищён от удаления':'Удалить объект (Ctrl+Z для отмены)';
  del.textContent=ref.type==='house'?'Главный дом защищён':'Удалить объект';
@@ -2995,8 +3000,23 @@ function addEvents(){
  }
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
  if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
- // Touch selection finishes on release; opening the panel during pointerdown
- // caused Android to lose the gesture and prevented editing.
+ // An explicit mobile Move mode prevents one-finger camera orbit from
+ // fighting object translation. A normal tap still just selects the object.
+ if(state.tool==='select'&&state.mobileMoveMode&&(e.pointerType==='touch'||e.pointerType==='pen')){
+  const picked=hitTreeOnMobile(e);
+  const item=selectable(state.selected)?.obj;
+  if(picked!==state.selected||!item){status('Коснитесь выделенного объекта, затем перемещайте пальцем.');return}
+  const anchor=hitGround(e);
+  if(!anchor){status('Наведите камеру на участок, чтобы переместить объект.');return}
+  state.drag=true;state.draggingMoved=false;
+  state.dragAnchor=fromWorld(anchor);
+  state.dragPoints=Array.isArray(item.points)?item.points.map(p=>({...p})):null;
+  controls.enabled=false;
+  canvas.setPointerCapture?.(e.pointerId);
+  e.preventDefault();
+  return;
+ }
+ // Normal touch gestures are kept for camera; a tap selects the object.
  if(state.tool==='select'&&(e.pointerType==='touch'||e.pointerType==='pen'))return;
  const key=state.tool==='select'?hitTreeOnMobile(e):hitObj(e);
  if(state.tool==='select'&&key){
@@ -3084,8 +3104,9 @@ const up=e=>{
  if(state.drag){
   const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;
   state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk';
-  if(moved){save();rebuild()}
+  if(moved){save();rebuild();status('Объект перемещён и сохранён. ↶ отменит изменение.');}
   else if(selectable(state.selected)?.obj?.catalogId==='pine')showSelectedPineControls();
+  if(state.mobileMoveMode){state.mobileMoveMode=false;syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');}
   state.down=null;return;
  }
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
@@ -3105,7 +3126,7 @@ const up=e=>{
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',()=>{if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;controls.enabled=state.view!=='walk'});
+ canvas.addEventListener('pointercancel',()=>{if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -3153,6 +3174,16 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#resizePlot').onclick=()=>{let w=Number($('#plotW').value),h=Number($('#plotH').value);if(w<5||h<5||w>500||h>500)return status('Размеры: от 5 до 500 м');push();doc.site.width=w;doc.site.height=h;save();rebuild();setView(state.view)};
  $('#selectMainHouse').onclick=()=>{state.selected='house:main';renderProps();renderHouseLibrary();revealSelectedInspector();status('Главный дом выбран — параметры открыты справа. Каталог типов домов находится ниже.')};
  $('#selectedObjectDelete').onclick=deleteSelectedObject;
+ $('#selectedObjectMove').onclick=()=>{
+  if(!selectable(state.selected)?.obj){status('Сначала выберите объект.');return}
+  if(state.tool!=='select')chooseTool('select');
+  state.mobileMoveMode=!state.mobileMoveMode;
+  if(window.innerWidth<=850)activateMobilePanel('scene');
+  syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
+  status(state.mobileMoveMode?'РЕЖИМ ПЕРЕМЕЩЕНИЯ: удерживайте объект и ведите пальцем по участку. Отпустите для сохранения.':'Режим перемещения выключен.');
+ };
+ $('#selectedObjectRotate').onclick=()=>rotateSelected(15);
+ $('#selectedObjectDuplicate').onclick=()=>duplicateSelected();
  $('#alphaSceneButton').onclick=()=>$('#alphaQuickSelect').click();
  // Prominent, one-tap access to the ALFA reference house. Reuse exactly
  // the ordinary preset handler to retain undo and preserve scene coordinates.
