@@ -571,6 +571,7 @@ import {premiumIcon} from './forma-premium-icons.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {Sky} from 'three/addons/objects/Sky.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=weather-intensity-v1-20261122';
@@ -594,6 +595,7 @@ import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-
 import {duplicateLandscapeObject,rotatedLandscapeObject,validatedLandscapeProps} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
+import {CREATURE_ASSETS,creatureById,isCreatureId} from './forma-landscape-3d-creatures.js?v=creatures-v1-20261122';
 import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
 import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js';
@@ -707,6 +709,7 @@ function updateModelHealth(){
   retry.forEach(id=>id==='pine'?loadMatureScotsPine():(MATURE_TREE_MODELS[id]||SHRUB_3D_MODELS[id]||POLY_HAVEN_TREE_MODELS[id])?loadCuratedAdultTree(id):loadBundledLandscapeModel(id));updateModelHealth();
  };
 }
+const creatureSources=new Map(),creatureLoading=new Set(),creatureFailures=new Set();
 const MODEL_FAVORITES_KEY='forma-3d-model-favorites-v1',MODEL_RECENT_KEY='forma-3d-model-recent-v1';
 function readModelList(key){try{const val=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(val)?val.filter(id=>typeof id==='string'&&Boolean(realModelById(id))):[]}catch{return []}}
 function saveModelList(key,ids){try{localStorage.setItem(key,JSON.stringify(ids))}catch{}}
@@ -714,7 +717,7 @@ const toolList=[
  ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
  ['landscape','Элементы','⬡'],['small','Малые формы','⌘'],['furniture','Уличная мебель','▧'],
- ['transport','Транспорт','▱'],['light','Освещение','☼'],['models40','3D-каталог · 24','◆']
+ ['transport','Транспорт','▱'],['light','Освещение','☼'],['creatures','Персонажи и животные','♟'],['models40','3D-каталог · 24','◆']
 ];
 const choices={
  site:[['rect','Прямоугольный участок'],['outline','Свободный контур (точки)']],
@@ -728,6 +731,7 @@ const choices={
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол'],['outdoor-dining','Уличный стол и 2 стула'],['picnic-table','Пикниковый стол со скамьями']],
  transport:[['car','Автомобиль']],
+ creatures:CREATURE_ASSETS.map(c=>[c.id,c.name]),
  light:CATALOG.filter(x=>x.group==='lights').map(x=>[x.id,x.name]),
  models40:[...REAL_3D_NON_BOTANICAL].sort((a,b)=>Object.keys(REAL_3D_CATEGORIES).indexOf(a.group)-Object.keys(REAL_3D_CATEGORIES).indexOf(b.group)).map(x=>[x.id,x.name])
 };
@@ -1145,6 +1149,50 @@ function loadCuratedAdultTree(species){
   if(root&&renderer&&doc)rebuild();
  }).finally(()=>{ktx2.dispose();bundledModelLoading.delete(species);updateModelHealth()});
 }
+function loadCreatureModel(id){
+ const entry=creatureById(id);
+ if(!entry||creatureSources.has(id)||creatureLoading.has(id)||creatureFailures.has(id))return;
+ creatureLoading.add(id);
+ const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+ // Native GLBs are proxied from fixed CC0 URLs by our own domain, avoiding
+ // 3rd-party CORS failures, unsigned redirects and unlicensed uploads.
+ loader.loadAsync(entry.modelPath).then(gltf=>{
+  if(!gltf?.scene)throw Error('Пустой GLB');
+  let meshCount=0;gltf.scene.traverse(node=>{if(node.isMesh)meshCount++});
+  if(meshCount===0)throw Error('Нет 3D-сетки');
+  creatureSources.set(id,gltf.scene);creatureFailures.delete(id);
+  if(root&&renderer&&doc)rebuild();
+  status('Загружена CC0-модель: '+entry.name+' · '+meshCount+' мешей');
+ }).catch(e=>{
+  creatureFailures.add(id);
+  status('GLB '+entry.name+' недоступна. Проверьте соединение или источник.');
+  console.warn('Creature CC0 GLB load failed',id,e?.message||e);
+ }).finally(()=>creatureLoading.delete(id));
+}
+function createPlacedCreature(entry,source,instance){
+ const p=pos(instance.x||0,instance.y||0),group=new THREE.Group();
+ const copy=cloneRig(source);
+ const bounds=new THREE.Box3().setFromObject(copy);
+ if(bounds.isEmpty())throw Error('Пустая 3D-модель '+entry.id);
+ const size=bounds.getSize(new THREE.Vector3());
+ if(size.y<.01)throw Error('Некорректная высота модели');
+ const targetHeight=Math.max(.1,Math.min(3,Number(instance.height)||entry.height));
+ const scale=targetHeight/size.y;
+ copy.scale.multiplyScalar(scale);
+ copy.position.y=-bounds.min.y*scale;
+ copy.traverse(node=>{
+  if(node.isMesh){node.castShadow=true;node.receiveShadow=true;
+   for(const mat of (Array.isArray(node.material)?node.material:[node.material]))
+    if(mat&&mat.side!==undefined)mat.needsUpdate=true;
+  }
+ });
+ group.add(copy);
+ group.userData.creatureId=entry.id;
+ group.userData.photoSpecies=entry.species;
+ group.position.set(p.x,terrainAt(p.x,p.z),p.z);
+ group.rotation.y=(instance.rotation||0)*Math.PI/180;
+ return group;
+}
 function loadGeologicalScan(id){
  const path=ROCK_SCAN_SOURCES[id];
  if(!path||geologicalRockLoading.has(id)||geologicalRockSources.has(id)||geologicalRockFailures.has(id))return;
@@ -1287,6 +1335,15 @@ function drawArea(o,entry,key){
  mark(g,key);root.add(g);
 }
 function drawExtra(o){
+ if(isCreatureId(o.type)){
+  const entry=creatureById(o.type),source=creatureSources.get(entry.id);
+  if(!source){loadCreatureModel(entry.id);return;}
+  try{
+   const placed=createPlacedCreature(entry,source,o);
+   mark(placed,'extra:'+o.id);root.add(placed);
+  }catch(error){console.warn('GLB creature placement failed',entry.id,error?.message)}
+  return;
+ }
  // Legacy projects can contain these three stock GLB plant IDs in "extra".
  // Display new self-authored 3D forms at the SAME saved position and scale.
  if(['fern','periwinkle','wild-shrub'].includes(o.type)){
@@ -1727,6 +1784,7 @@ function renderProps(){
  const o=ref.obj, fields=['pine','spruce'].includes(o.catalogId)?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
  else if('diameter'in o&&!['pine','spruce'].includes(o.catalogId))fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
+ else if(ref.type==='extra'&&isCreatureId(o.type))fields.push(['height','Рост / высота, м',o.height||creatureById(o.type).height]);
  else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
  const isPine=ref.type==='object'&&o.catalogId==='pine';
  const isSpruce=ref.type==='object'&&o.catalogId==='spruce';
@@ -2333,6 +2391,15 @@ function place(world){
   pointMode.push(point);refreshDraft();status('Точек контура: '+pointMode.length+'. Нажмите «Завершить контур» после последней.');return;
 
  }
+ if(tool==='creatures'){
+  const creature=creatureById(state.placing);
+  if(!creature){status('Выберите человека или животное из каталога.');return;}
+  push();extra.push({id:id(),type:creature.id,x:point.x,y:point.y,
+   height:creature.height,rotation:0});
+  save();rebuild();
+  status('Добавлен '+creature.name+'. GLB загружается по требованию. Координаты сохранены.');
+  return;
+ }
  if(tool==='models40'){
   const model=realModelById(state.placing);
   if(!model){status('Модель отсутствует в библиотеке.');return}
@@ -2694,7 +2761,7 @@ function addEvents(){
  if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
  // Selecting a placed object takes priority over placing another model
  // on top of it; Shift+click still allows intentional overlap.
- if(!e.shiftKey&&['plant','light','build','landscape','models40'].includes(state.tool)){
+ if(!e.shiftKey&&['plant','light','build','landscape','models40','creatures'].includes(state.tool)){
   const existing=hitTreeOnMobile(e);
   if(existing&&selectable(existing)?.obj){
    e.preventDefault();chooseTool('select');state.selected=existing;
