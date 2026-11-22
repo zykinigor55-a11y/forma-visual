@@ -5,6 +5,22 @@
  * Deterministic. No network or third-party image dependency. Low GPU cost.
  */
 const atlasCache=new WeakMap();
+const photographedNormalCache=new WeakMap();
+// This 1K photographic wood-grain normal is already self-hosted and used by
+// the Scandinavian home. Layer it subtly beneath the texel-scale seam bump.
+function photographicNormal(T){
+ if(!T.TextureLoader)return null;
+ let t=photographedNormalCache.get(T);
+ if(!t){
+  t=new T.TextureLoader().load('/assets/house-pbr/wood-nor_gl-1k.jpg');
+  t.wrapS=t.wrapT=T.RepeatWrapping;
+  t.anisotropy=8;
+  t.center.set(.5,.5);
+  t.rotation=-Math.PI/2;
+  photographedNormalCache.set(T,t);
+ }
+ return t;
+}
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function rng(seed){
  let n=seed>>>0;
@@ -92,15 +108,17 @@ export function alphaGraphitePBR(T,width=7.5){
   color:atlas?'#FFFFFF':'#42494C',
   map:atlas?.colorMap||null,
   bumpMap:atlas?.bumpMap||null,
-  bumpScale:.0105,
+  bumpScale:.009,
   roughnessMap:atlas?.roughnessMap||null,
+  normalMap:photographicNormal(T),
+  normalScale:T.Vector2?new T.Vector2(.14,.14):null,
   roughness:.91,metalness:.018,
   side:T.DoubleSide
  });
  mat.userData.alphaCladding={
   method:'UV-mapped graphite wood PBR; NO individual board meshes',
   atlasBoards:boards,boardPitchMeters:width/boards,
-  colorMap:!!atlas,roughnessMap:!!atlas,bumpMap:!!atlas
+  colorMap:!!atlas,roughnessMap:!!atlas,bumpMap:!!atlas,photoNormal:!!mat.normalMap
  };
  return mat;
 }
