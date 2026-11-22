@@ -1,56 +1,56 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Нейро студия — AI Creative & Technology</title>
-<meta name="description" content="Нейро студия: AI-контент, приложения, сайты, автоматизация, визуализация.">
-<style>
-:root {color-scheme:dark;--bg:#06080c;--text:#f0f2f5;--mute:#8b929e}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif}
-nav{height:82px;display:flex;justify-content:space-between;align-items:center;padding:0 clamp(24px,5vw,90px);position:absolute;top:0;width:100%;z-index:3}
-.brand{font-weight:700;letter-spacing:-.045em;font-size:26px}.brand span{font-weight:300;color:#9da4af}
-.links{display:flex;align-items:center;gap:32px}a{color:inherit;text-decoration:none;font-size:14px}
-button,.cta{font:inherit;cursor:pointer;border:1px solid #525962;background:transparent;color:#f6f6fa;border-radius:99px;padding:13px 22px;transition:background .2s}
-button:hover,.cta:hover{background:#ffffff22}
-.hero{min-height:100svh;display:grid;grid-template-columns:minmax(260px,1fr) 1.25fr;align-items:center;max-width:1700px;margin:auto;padding:110px clamp(24px,5vw,90px) 70px;gap:4vw}
-.eyebrow{letter-spacing:.24em;text-transform:uppercase;color:#9aa3b0;font-size:11px}
-h1{font-size:clamp(46px,6.8vw,115px);line-height:.98;letter-spacing:-.075em;font-weight:500;margin:30px 0}
-p{color:var(--mute);line-height:1.65;font-size:clamp(15px,1.25vw,19px);max-width:460px}
-.actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:42px}
-.primary{background:#e5e8ec;color:#090b0f;border:0}.primary:hover{background:white}
-.stage{position:relative;isolation:isolate;min-height:540px;display:grid;place-items:center}
-.stage::before{content:"";position:absolute;inset:12%;background:radial-gradient(circle,#0e1b28 0,transparent 65%);z-index:-1}
-video,.placeholder{width:100%;max-width:840px;aspect-ratio:16/9;object-fit:contain;border:0}
-.placeholder{display:grid;place-items:center;color:#717784;text-align:center;font-size:14px;padding:34px;line-height:1.8}
-.video-caption{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:12px;color:#707887;white-space:nowrap}
-section.services{border-top:1px solid #282c35;margin:0 auto;padding:85px clamp(24px,5vw,90px) 120px;max-width:1700px}
-section.services h2{font-weight:400;font-size:clamp(32px,4vw,65px);letter-spacing:-.05em}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:60px}
-article{border-top:1px solid #6a7280;padding-top:20px}article h3{font-size:24px;font-weight:450;margin:14px 0}
-footer{border-top:1px solid #262b31;padding:32px clamp(24px,5vw,90px);display:flex;justify-content:space-between;color:#727987;font-size:13px}
-@media(max-width:800px){.hero{grid-template-columns:1fr;gap:0;padding-top:140px}.stage{min-height:340px;grid-row:1}.links a:not(.cta){display:none}.cards{grid-template-columns:1fr}.hero h1{margin-top:16px}footer{gap:20px;flex-wrap:wrap}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-</style>
-</head><body>
-<nav><div class="brand">НЕЙРО<span> СТУДИЯ</span></div><div class="links"><a href="#services">Услуги</a><a href="#contact" class="cta">Обсудить проект ↗</a></div></nav>
-<main class="hero">
-<div><div class="eyebrow">Creative × Technology × Intelligence</div>
-<h1>Идеи<br>становятся<br>реальностью.</h1>
-<p>Креативная и технологическая AI-студия полного цикла. Разработка приложений, визуальный контент и интеллектуальные решения для бизнеса.</p>
-<div class="actions"><a href="#contact" class="cta primary">Обсудить проект ↗</a><button type="button" id="sound" aria-pressed="false" aria-label="Включить звук">Звук: выкл.</button></div></div>
-<div class="stage"><video id="reactor" autoplay loop muted playsinline preload="metadata" poster="./assets/quantum-cover.jpg">
-<source src="./assets/neiro-studiya-v14.mp4" type="video/mp4">
-</video><div class="video-caption">Quantum Kinetic — 8 sec loop</div></div>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07080c">
+<meta name="description" content="Нейро студия — AI-видео, 3D, цифровые продукты, сайты и приложения. Творчество встречает технологии.">
+<title>Нейро студия — Creative × Technology × Intelligence</title>
+<link rel="preload" href="assets/quantum-cover.webp" as="image" type="image/webp">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">К содержимому</a>
+<header class="site-header" id="top">
+  <a class="brand" href="#top" aria-label="Нейро студия — наверх"><span class="brand-mark" aria-hidden="true"><span></span></span>НЕЙРО<span class="brand-light">СТУДИЯ</span><span class="brand-dot">.</span></a>
+  <nav class="top-nav" aria-label="Навигация"><a href="#spiral">Подход</a><a href="#services">Направления</a><a href="#contact" class="nav-action">О проекте <span aria-hidden="true">↗</span></a></nav>
+</header>
+<main id="main">
+<section class="hero" aria-labelledby="hero-heading">
+ <div class="hero-glow" aria-hidden="true"></div>
+ <div class="hero-copy">
+   <div class="eyebrow"><span class="shortline"></span> ЦИФРОВЫЕ МИРЫ. РЕАЛЬНЫЕ РЕШЕНИЯ.</div>
+   <h1 id="hero-heading">Будущее<br>принимает<br><em>форму.</em></h1>
+   <p>Создаём визуальные истории, цифровые продукты и интеллектуальные системы. От первой идеи до результата, который работает.</p>
+   <div class="hero-actions"><a href="#services" class="button button-light">Направления студии <span aria-hidden="true">↗</span></a><a href="#spiral" class="button button-ghost">Смотреть подход <span aria-hidden="true">↓</span></a></div>
+ </div>
+ <figure class="reactor-stage" aria-label="Титановый квантовый реактор Нейро студии">
+    <video id="quantum-video" autoplay muted loop playsinline preload="metadata" poster="assets/quantum-cover.webp" width="1920" height="1080">
+       <source src="assets/neiro-studiya-v14.mp4" type="video/mp4">
+    </video>
+    <div class="reactor-info"><span class="live-dot"></span><span>QUANTUM KINETIC / V14</span><span class="reactor-duration">08:00 LOOP</span></div>
+    <button id="sound-toggle" class="sound-toggle" type="button" aria-label="Включить звук реактора" aria-pressed="false"><span class="sound-icon" aria-hidden="true">◖</span><span class="sound-label">Звук выкл.</span></button>
+    <div id="video-error" class="video-error" role="status" hidden>Видеофайл не найден. Проверьте папку assets.</div>
+ </figure>
+ <a class="scroll-prompt" href="#spiral">SCROLL TO EXPLORE <span aria-hidden="true">↓</span></a>
+</section>
+<section class="spiral-section" id="spiral" aria-labelledby="spiral-title">
+ <div class="section-heading"><div class="eyebrow"><span class="shortline"></span> 01 — ФИЛОСОФИЯ</div><h2 id="spiral-title">Сложное.<br><em>Сделано простым.</em></h2><p>Технология должна быть точной. Движение — осмысленным. Каждая система собирается из деталей, которые работают как единое целое.</p><div class="spiral-key"><span class="ring-dot"></span> TITANIUM SPIRAL <span class="key-muted">/ ИНТЕРАКТИВНЫЙ 3D-ОБЪЕКТ</span></div></div>
+ <div class="spiral-visual" id="spiral-visual">
+    <canvas id="spiral-canvas" role="img" aria-label="Две переплетённые титановые спирали с холодным энергетическим свечением"></canvas>
+    <svg class="spiral-fallback" id="spiral-fallback" viewBox="0 0 600 600" aria-hidden="true"><defs><linearGradient id="sm" x1="0" x2="1"><stop stop-color="#273039"/><stop offset=".38" stop-color="#d5dce2"/><stop offset=".55" stop-color="#667783"/><stop offset=".85" stop-color="#e6eef4"/><stop offset="1" stop-color="#343d49"/></linearGradient><filter id="gl"><feGaussianBlur stdDeviation="7"/></filter></defs><g transform="translate(300 300) rotate(-24)"><path d="M-15 -250 C220 -170 -180 -80 0 0 C180 80 -220 170 15 250" fill="none" stroke="url(#sm)" stroke-width="33" stroke-linecap="round"/><path d="M15 -250 C-220 -170 180 -80 0 0 C-180 80 220 170 -15 250" fill="none" stroke="url(#sm)" stroke-width="26" stroke-linecap="round"/><path d="M0 -247 C150 -150 -135 -60 0 0 C135 60 -150 150 0 247" stroke="#71cad9" stroke-opacity=".5" stroke-width="9" fill="none" filter="url(#gl)"/></g></svg>
+    <div class="spiral-overlay" aria-hidden="true"><span class="spiral-num">02 / 03</span><span>ROTATE · REACT · TRANSFORM</span></div>
+ </div>
+</section>
+<section class="services-section" id="services" aria-labelledby="services-title"><div class="eyebrow"><span class="shortline"></span> 02 — ВОЗМОЖНОСТИ</div><div class="service-header"><h2 id="services-title">Одна студия.<br><em>Любые горизонты.</em></h2><p>Объединяем креатив, инженерное мышление и возможности искусственного интеллекта.</p></div><div class="services">
+ <article class="service"><span class="service-num">01 / CREATIVE</span><h3>AI & CG<br>Production</h3><p>AI-видео, рекламные кампании, предметный CGI, архитектурная визуализация и анимация.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+ <article class="service"><span class="service-num">02 / DEVELOPMENT</span><h3>Digital<br>Products</h3><p>Сайты, мобильные приложения, сложные интерфейсы и веб-платформы под ключ.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+ <article class="service"><span class="service-num">03 / INTELLIGENCE</span><h3>AI Systems<br>& Automation</h3><p>AI-агенты, чат-боты, интеграции, автоматизация процессов и умные сервисы.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+ </div></section>
+<section class="end-section" id="contact"><div class="eyebrow"><span class="shortline"></span> НА СТЫКЕ ИДЕИ И ТЕХНОЛОГИИ</div><h2>Больше, чем<br><em>возможное.</em></h2><p>Нейро студия / FORMA AI</p><a class="backtop" href="#top">Наверх ↑</a></section>
 </main>
-<section class="services" id="services"><div class="eyebrow">What we do</div><h2>Технологии под ключ.</h2>
-<div class="cards"><article><div class="eyebrow">01 / Creative</div><h3>AI-видео и 3D</h3><p>Кино, визуализация, CGI, брендинг и рекламный контент.</p></article>
-<article><div class="eyebrow">02 / Development</div><h3>Сайты и приложения</h3><p>Мобильные приложения iOS и Android, веб-продукты и цифровые платформы.</p></article>
-<article><div class="eyebrow">03 / Intelligence</div><h3>AI и автоматизация</h3><p>Интеллектуальные агенты, боты, интеграции и автоматизация бизнеса.</p></article></div></section>
-<footer id="contact"><span>© Нейро студия · FORMA AI</span><span>Проект на стадии разработки · Контакты подключаются при запуске</span></footer>
-<script>
-const video=document.getElementById('reactor'), button=document.getElementById('sound');
-button.onclick=async()=>{video.muted=!video.muted;button.setAttribute('aria-pressed',String(!video.muted));button.textContent='Звук: '+(video.muted?'выкл.':'вкл.');try{await video.play()}catch(err){console.warn('Нажмите воспроизведение',err)}};
-video.addEventListener('error',()=>{video.style.display='none';const p=document.createElement('div');p.className='placeholder';p.textContent='Quantum Kinetic V14 · Добавьте MP4 в папку assets, чтобы запустить анимацию.';video.parentNode.insertBefore(p,video);});
-if(matchMedia('(prefers-reduced-motion: reduce)').matches){video.pause();video.controls=true}
-</script>
-</body></html>
+<footer><span>© 2026 НЕЙРО СТУДИЯ</span><span>FORMA AI · Creative + Development + Intelligence</span><span>Спроектировано с вниманием к деталям.</span></footer>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module" src="site.js"></script>
+</body>
+</html>
