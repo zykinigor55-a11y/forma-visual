@@ -119,3 +119,33 @@
 @media(prefers-reduced-motion:reduce){
   #tools,#library{scroll-behavior:auto}
 }
+
+/* Selected 3D asset: real thumb-safe move/rotate/copy controls on Android. */
+@media(max-width:850px){
+ #selectedObjectDock:not([hidden]){
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  gap:5px;max-width:calc(100vw - 16px);padding:8px;
+  background:#24272ef5;border:1px solid #666b71;border-radius:13px;z-index:12;
+  box-shadow:0 10px 30px #0009;
+ }
+ #selectedObjectDock #selectedObjectName{
+  flex:1 1 100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;text-align:center;font-size:11px;color:#e2e2e2;
+ }
+ #selectedObjectDock button{
+  flex:1 1 68px;min-width:0;min-height:44px;border-radius:8px;
+  padding:7px 4px;font-size:10px;line-height:1.1;
+  background:#353a41;color:#f5e4cb;border:1px solid #686e76;
+ }
+ #selectedObjectDock #selectedObjectMove[aria-pressed="true"]{
+  background:#d4bd99;color:#212730;border-color:#e5cbaa;font-weight:750;
+ }
+ #selectedObjectDock #selectedObjectDelete{color:#ffc9bd}
+ body[data-mobile-panel="scene"]:has(#selectedObjectDock:not([hidden])) #status{
+  bottom:calc(182px + env(safe-area-inset-bottom,0px));
+ }
+ #selectedObjectDock[hidden]{display:none!important}
+}
+@media(max-width:360px){
+ #selectedObjectDock button{font-size:9px;padding:7px 2px}
+}
