@@ -6,7 +6,7 @@
  * Four real holes in the metal roof accommodate flush roof windows.
  */
 import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js';
-import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-windows-v2-20261122';
+import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-windows-v3-20261122';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function finish(T,color,roughness=.76,metalness=0){
