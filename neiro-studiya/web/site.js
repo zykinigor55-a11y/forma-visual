@@ -1,4 +1,4 @@
-// FORMA AI Black Cinema — retained original V14 video and new two-band Möbius kinetic study.
+// FORMA AI Black Cinema V23 — V14 video preserved; cinematic dual Möbius with physically brushed metal and restrained motion.
 const video = document.getElementById('quantum-video');
 const sound = document.getElementById('sound-toggle');
 let audioEnabled = false;
@@ -41,12 +41,22 @@ async function initMobius() {
   scene.add(new THREE.HemisphereLight(0xcdd6e4,0x12151c,1));
   const key = new THREE.DirectionalLight(0xf0f3f8,3);key.position.set(-3,4.5,6);scene.add(key);
   const rim = new THREE.DirectionalLight(0xb3cada,2.9);rim.position.set(4,-1,-5);scene.add(rim);
-  const warm = new THREE.PointLight(0xe3a46b,14,7);warm.position.set(2,-3,2);scene.add(warm);
+  const warm = new THREE.PointLight(0xdbad84,5.5,6);warm.position.set(2,-2.5,2);scene.add(warm);
+  const studioSweep=new THREE.DirectionalLight(0xe6eff5,1.1);studioSweep.position.set(4,1.8,6);scene.add(studioSweep);
   try {const pmrem = new THREE.PMREMGenerator(renderer);const env=pmrem.fromScene(new RoomEnvironment(),.05);scene.environment=env.texture;pmrem.dispose();} catch(e){}
-  const polished = new THREE.MeshPhysicalMaterial({color:0xd4d9df,metalness:.95,roughness:.19,envMapIntensity:1.6,side:THREE.DoubleSide});
-  const dark = new THREE.MeshPhysicalMaterial({color:0x78818c,metalness:.95,roughness:.29,envMapIntensity:1.6,side:THREE.DoubleSide});
+  // Procedural satin-brushed titanium. No extra asset or network request.
+  const brushCanvas=document.createElement('canvas');brushCanvas.width=256;brushCanvas.height=128;
+  const brushCtx=brushCanvas.getContext('2d');
+  if(brushCtx){brushCtx.fillStyle='#c4c4c4';brushCtx.fillRect(0,0,256,128);
+    for(let y=0;y<128;y++){const shade=174+Math.round(20*Math.sin(y*.79)+11*Math.sin(y*2.15));
+      brushCtx.fillStyle='rgb('+shade+','+shade+','+shade+')';brushCtx.fillRect(0,y,256,1);}
+  }
+  const brushed=new THREE.CanvasTexture(brushCanvas);brushed.wrapS=brushed.wrapT=THREE.RepeatWrapping;
+  brushed.repeat.set(3,1);brushed.colorSpace=THREE.NoColorSpace;brushed.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+  const polished = new THREE.MeshPhysicalMaterial({color:0xaeb7bf,metalness:.98,roughness:.30,roughnessMap:brushed,clearcoat:.08,clearcoatRoughness:.26,envMapIntensity:1.7,side:THREE.DoubleSide});
+  const dark = new THREE.MeshPhysicalMaterial({color:0x66727d,metalness:.98,roughness:.36,roughnessMap:brushed,clearcoat:.06,clearcoatRoughness:.30,envMapIntensity:1.6,side:THREE.DoubleSide});
   const edge = new THREE.MeshStandardMaterial({color:0xcad9e4,metalness:.86,roughness:.15});
-  const energy = [new THREE.MeshBasicMaterial({color:0x80baca,transparent:true,opacity:.68,blending:THREE.AdditiveBlending,depthWrite:false}),new THREE.MeshBasicMaterial({color:0xd29d66,transparent:true,opacity:.56,blending:THREE.AdditiveBlending,depthWrite:false})];
+  const energy = [new THREE.MeshBasicMaterial({color:0x80baca,transparent:true,opacity:.38,blending:THREE.AdditiveBlending,depthWrite:false}),new THREE.MeshBasicMaterial({color:0xd29d66,transparent:true,opacity:.30,blending:THREE.AdditiveBlending,depthWrite:false})];
   const TAU=2*Math.PI,seg=240,sides=20,radius=1.23,width=.39,thick=.051;
   const paths=[];
   function band(height,rot,material,light) {
@@ -58,7 +68,7 @@ async function initMobius() {
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();group.add(new THREE.Mesh(geo,material));
     const points=[],lights=[];for(let k=0;k<440;k++){const u=k/440*TAU*2,{c,a,n}=frame(u);points.push(c.clone().addScaledVector(a,width+.008));lights.push(c.clone().addScaledVector(a,width+.025).addScaledVector(n,.011));}
     const path=new THREE.CatmullRomCurve3(points,true),strip=new THREE.CatmullRomCurve3(lights,true);
-    group.add(new THREE.Mesh(new THREE.TubeGeometry(path,520,.011,6,true),edge));group.add(new THREE.Mesh(new THREE.TubeGeometry(strip,520,.012,6,true),light));paths.push({group,strip,light});
+    group.add(new THREE.Mesh(new THREE.TubeGeometry(path,520,.011,6,true),edge));group.add(new THREE.Mesh(new THREE.TubeGeometry(strip,520,.012,6,true),light));paths.push({group,strip,light,restY:rot});
   }
   band(.98,.18,polished,energy[0]);band(-.98,-.28,dark,energy[1]);
   const coreMat=new THREE.MeshPhysicalMaterial({color:0x7d8995,metalness:.95,roughness:.26,envMapIntensity:1.7});
@@ -69,10 +79,41 @@ async function initMobius() {
   const nucleus=new THREE.Mesh(new THREE.IcosahedronGeometry(.18,2),new THREE.MeshPhysicalMaterial({color:0x98cbd4,metalness:.5,roughness:.13}));rotor.add(nucleus);
   const pulseLight=new THREE.PointLight(0x8acbda,1.2,3);sculpture.add(pulseLight);
   const dotGeo=new THREE.SphereGeometry(.021,6,6),dummy=new THREE.Object3D();
-  const dots=paths.map((path,i)=>{const m=new THREE.InstancedMesh(dotGeo,energy[i].clone(),8);m.frustumCulled=false;path.group.add(m);return m;});
+  const dots=paths.map((path,i)=>{const m=new THREE.InstancedMesh(dotGeo,energy[i].clone(),4);m.frustumCulled=false;path.group.add(m);return m;});
   let running=false,visible=false,frameId=0,last=0,time=0,drag=0,dragStart=0,dragPointer=-1,scroll=0,px=0,py=0,tx=0,ty=0;
-  function draw(dt){const moving=!motion.matches;if(moving)time+=dt;px+=(tx-px)*.06;py+=(ty-py)*.06;const goal=.26+drag+scroll*.68+px*.18+(moving?time*.05:0);sculpture.rotation.y+=(goal-sculpture.rotation.y)*.052;sculpture.rotation.x+=(-.08-py*.08-sculpture.rotation.x)*.052;rotor.rotation.y=moving?-time*.25:0;pulseLight.intensity=1.1+(moving?Math.pow(Math.max(0,Math.sin(time*4.3)),10)*.75:0);
-   paths.forEach((path,j)=>{for(let i=0;i<8;i++){const u=((i/8+time*(j?-.056:.07))%1+1)%1;dummy.position.copy(path.strip.getPointAt(u));dummy.scale.setScalar(.72+.2*Math.sin(time*1.4+i));dummy.updateMatrix();dots[j].setMatrixAt(i,dummy.matrix);}dots[j].instanceMatrix.needsUpdate=true;});renderer.render(scene,camera);
+  function draw(dt){
+    const moving=!motion.matches;
+    if(moving)time+=dt;
+    px+=(tx-px)*.055;py+=(ty-py)*.055;
+    const phase=time*Math.PI*2/18;
+    const goal=.26+drag+scroll*.60+px*.14+(moving?time*.031:0);
+    sculpture.rotation.y+=(goal-sculpture.rotation.y)*.038;
+    sculpture.rotation.x+=(-.075-py*.065-sculpture.rotation.x)*.040;
+    rotor.rotation.y=moving?-time*.16:0;
+    rotor.rotation.z=moving?Math.sin(phase)*.08:0;
+    studioSweep.position.set(4+2.1*Math.sin(phase-.7),1.9+.5*Math.cos(phase),6);
+    studioSweep.intensity=1.0+.28*Math.max(0,Math.sin(phase-.8));
+    const pulsePhase=time%7.6;
+    const beat=Math.exp(-Math.pow((pulsePhase-3.25)/.15,2))+
+      .52*Math.exp(-Math.pow((pulsePhase-3.70)/.19,2));
+    pulseLight.intensity=.65+(moving?.52*beat:0);
+    warm.intensity=5.2+(moving?.55*beat:0);
+    nucleus.scale.setScalar(1+(moving?.035*beat:0));
+    energy[0].opacity=.36+(moving?.065*beat:0);
+    energy[1].opacity=.29+(moving?.055*beat:0);
+    paths.forEach((path,j)=>{
+      path.group.rotation.y=path.restY+(moving?(j?-1:1)*.020*Math.sin(phase):0);
+      path.group.rotation.z=.18+(moving?(j?-1:1)*.012*Math.sin(phase+.6):0);
+      for(let i=0;i<4;i++){
+        const u=((i/4+time*(j?-.026:.031))%1+1)%1;
+        dummy.position.copy(path.strip.getPointAt(u));
+        dummy.scale.setScalar(.51+.11*Math.sin(time*.75+i));
+        dummy.updateMatrix();
+        dots[j].setMatrixAt(i,dummy.matrix);
+      }
+      dots[j].instanceMatrix.needsUpdate=true;
+    });
+    renderer.render(scene,camera);
   }
   function frame(t){if(!running)return;const dt=last?Math.min((t-last)/1000,.05):0;last=t;draw(dt);frameId=requestAnimationFrame(frame);}
   const stop=()=>{running=false;cancelAnimationFrame(frameId);last=0;};
