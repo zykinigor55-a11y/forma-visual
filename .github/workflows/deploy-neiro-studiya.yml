@@ -91,6 +91,9 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: neiro-studiya/web
+      # Artifact upload can finish before the Pages API lists the artifact.
+      - name: Allow Pages artifact metadata to propagate
+        run: sleep 18
       - name: Deploy site
         id: deploy
         uses: actions/deploy-pages@v4
