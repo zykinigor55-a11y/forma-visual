@@ -22,14 +22,14 @@ body::before{position:fixed;inset:0;content:'';z-index:15;pointer-events:none;op
 /* FORMA AI V19 — Kinetic Luxury: image-aware lighting and accessible fallback. */
 .hero-art .hero-kinetic-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none;opacity:0;filter:contrast(1.07) saturate(.93) brightness(.95);transition:opacity 1.1s ease}
 .hero-art.kinetic-ready .hero-kinetic-canvas{opacity:1}
-.hero-art:not(.kinetic-ready):not(.kinetic-low-data)>img{animation:luxury-lens 15s ease-in-out infinite;transform-origin:73% 51%}
+.hero-art:not(.kinetic-ready):not(.kinetic-low-data)>img{animation:luxury-lens 18s ease-in-out infinite;transform-origin:73% 51%}
 .hero-art:not(.kinetic-ready):not(.kinetic-low-data)::before,
 .hero-art:not(.kinetic-ready):not(.kinetic-low-data)::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;clip-path:polygon(36% 0,100% 0,100% 100%,36% 100%)}
-.hero-art:not(.kinetic-ready):not(.kinetic-low-data)::before{z-index:2;background:radial-gradient(ellipse 20% 31% at 76% 54%,rgba(241,165,78,.25),transparent 72%);opacity:.09;animation:luxury-beat 15s ease-in-out infinite}
-.hero-art:not(.kinetic-ready):not(.kinetic-low-data)::after{z-index:3;background:linear-gradient(108deg,transparent 38%,rgba(235,244,252,.03) 46%,rgba(247,249,252,.20) 50%,rgba(233,240,245,.035) 54%,transparent 65%);opacity:.26;animation:luxury-glint 15s ease-in-out infinite}
-@keyframes luxury-lens{0%,100%{transform:scale(1) translate3d(0,0,0)}50%{transform:scale(1.010) translate3d(-.12%,.08%,0)}}
-@keyframes luxury-glint{0%,100%{transform:translateX(-35%);opacity:0}24%{opacity:.30}52%{transform:translateX(32%);opacity:.18}70%,95%{opacity:0}}
-@keyframes luxury-beat{0%,49%,60%,100%{opacity:.09}51.2%,54.1%{opacity:.21}52%,55.2%{opacity:.11}}
+.hero-art:not(.kinetic-ready):not(.kinetic-low-data)::before{z-index:2;background:radial-gradient(ellipse 20% 31% at 76% 54%,rgba(241,165,78,.25),transparent 72%);opacity:.09;animation:luxury-beat 18s ease-in-out infinite}
+.hero-art:not(.kinetic-ready):not(.kinetic-low-data)::after{z-index:3;background:linear-gradient(108deg,transparent 38%,rgba(235,244,252,.03) 46%,rgba(247,249,252,.20) 50%,rgba(233,240,245,.035) 54%,transparent 65%);opacity:.26;animation:luxury-glint 18s ease-in-out infinite}
+@keyframes luxury-lens{0%,100%{transform:scale(1) translate3d(0,0,0)}50%{transform:scale(1.008) translate3d(-.08%,.06%,0)}}
+@keyframes luxury-glint{0%,100%{transform:translateX(-30%);opacity:0}27%{opacity:.21}52%{transform:translateX(30%);opacity:.13}72%,95%{opacity:0}}
+@keyframes luxury-beat{0%,44%,54%,100%{opacity:.06}46.2%,48.4%{opacity:.16}47.1%,49.5%{opacity:.09}}
 @media(prefers-reduced-motion:reduce){.hero-art .hero-kinetic-canvas{display:none!important}.hero-art{transition:none!important;transform:none!important}.hero-art::before,.hero-art::after,.hero-art>img{animation:none!important}}
 
 
@@ -205,3 +205,21 @@ body::before{position:fixed;inset:0;content:'';z-index:15;pointer-events:none;op
   .web-showcase__headline{font-size:21px}
 }
 @media(prefers-reduced-motion:reduce){.web-showcase::before{animation:none}.web-showcase__frame{transition:none}}
+
+/* V23 – extra-fine cinematic light; original hero geometry stays fully visible on phones. */
+.hero-art.kinetic-ready .hero-kinetic-canvas{transition:opacity 1.5s cubic-bezier(.22,1,.36,1)}
+.hero-art:not(.kinetic-ready):not(.kinetic-low-data)::before{background:
+  radial-gradient(ellipse 20% 30% at 75% 54%,rgba(207,143,79,.19),transparent 74%)}
+.hero-art:not(.kinetic-ready):not(.kinetic-low-data)::after{background:
+  linear-gradient(108deg,transparent 38%,rgba(236,242,247,.018) 46%,rgba(243,247,251,.12) 50%,rgba(233,240,245,.025) 54%,transparent 65%)}
+.technology-section{background:radial-gradient(ellipse at 73% 43%,#20242b78,transparent 40%),#030405}
+.spiral-visual::before{background:radial-gradient(ellipse,#87929f1d,transparent 66%)}
+@media(max-width:620px){
+  .hero-art:not(.kinetic-ready):not(.kinetic-low-data)::after{opacity:.10}
+  .technology-section{overflow:hidden}
+  .spiral-visual{max-width:calc(100vw - 12px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-art:not(.kinetic-ready):not(.kinetic-low-data)::after,
+  .hero-art:not(.kinetic-ready):not(.kinetic-low-data)::before{animation:none!important}
+}
