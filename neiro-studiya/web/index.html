@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preload" href="assets/hero-mobius.webp" as="image" type="image/webp" fetchpriority="high">
-  <link rel="stylesheet" href="styles.css?v=22">
-  <script src="hero-kinetic.js?v=22" defer></script>
+  <link rel="stylesheet" href="styles.css?v=23">
+  <script src="hero-kinetic.js?v=23" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -27,23 +27,23 @@
       <span class="wordmark-sub">Н Е Й Р О &nbsp; С Т У Д И Я</span>
     </a>
     <nav class="desktop-nav" aria-label="Главная навигация">
-      <a href="#work">Проекты</a><a href="#services">Услуги</a><a href="#technology">Технологии</a><a href="#about">О студии</a><a href="#contact">Контакты</a>
+      <a href="#work">Проекты</a><a href="#service-websites">Сайты</a><a href="#service-apps">Приложения</a><a href="#service-avatars">ИИ-аватары</a><a href="#services">Все услуги</a><a href="#contact">Контакты</a>
     </nav>
     <div class="header-end"><span class="locale">RU <span aria-hidden="true">⌄</span></span>
       <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню"><span></span><span></span></button>
     </div>
   </header>
   <nav class="mobile-nav" id="mobile-nav" aria-label="Мобильная навигация" inert>
-    <a href="#work">Проекты <span>01</span></a><a href="#services">Услуги <span>02</span></a><a href="#technology">Технологии <span>03</span></a><a href="#about">О студии <span>04</span></a><a href="#contact">Контакты <span>05</span></a>
+    <a href="#work">Проекты <span>01</span></a><a href="#service-websites">Разработка сайтов <span>02</span></a><a href="#service-apps">Разработка приложений <span>03</span></a><a href="#service-avatars">ИИ-аватары <span>04</span></a><a href="#services">Все услуги <span>05</span></a><a href="#technology">Технологии <span>06</span></a><a href="#about">О студии <span>07</span></a><a href="#contact">Контакты <span>08</span></a>
   </nav>
   <main id="main">
     <section class="hero" id="hero" aria-labelledby="hero-title">
       <div class="hero-art" aria-hidden="true"><img src="assets/hero-mobius.webp" alt="" width="2048" height="1152" fetchpriority="high"><canvas id="hero-kinetic-canvas" class="hero-kinetic-canvas"></canvas></div>
       <div class="hero-shade" aria-hidden="true"></div>
       <div class="hero-copy">
-        <p class="kicker">AI FILM / CGI / 3D / APPS<br>DIGITAL EXPERIENCE</p>
+        <p class="kicker">WEB / APPS / AI AVATARS / CGI<br>DIGITAL EXPERIENCE</p>
         <h1 id="hero-title">СОЗДАЁМ ТО,<br>ЧЕГО <em>ЕЩЁ НЕТ.</em></h1>
-        <p class="hero-description">Полный цикл AI-производства: от идеи и 3D-модели до приложения, фильма или интерактивного мира.</p>
+        <p class="hero-description">Создаём премиальные сайты, приложения, ИИ-аватаров, фильмы и интерактивные 3D-миры — от идеи до запуска.</p>
         <div class="hero-buttons">
           <button type="button" class="button button-primary" data-open-showreel><span class="play-ring" aria-hidden="true">▶</span>Смотреть шоу-рил</button>
           <a class="button button-outline" href="#contact">Обсудить проект <span aria-hidden="true">↗</span></a>
@@ -55,24 +55,33 @@
     </section>
 
     <section class="service-strip" aria-label="Направления студии">
-      <a href="#services" data-highlight="film"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="9" width="18" height="15" rx="2"/><path d="m21 13 8-5v17l-8-5"/><path d="M9 9V5h6v4"/></svg><span>AI ФИЛЬМЫ<br>И СЕРИАЛЫ</span></a>
-      <a href="#services" data-highlight="cgi"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 3 13 7-13 7L3 10 16 3ZM3 16l13 7 13-7M3 22l13 7 13-7"/></svg><span>CGI &amp; 3D<br>ПРОДАКШН</span></a>
-      <a href="#services" data-highlight="apps" class="strip-active"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="10" width="17" height="18" rx="2"/><path d="M11 6h16v16M8 14h17"/></svg><span>РАЗРАБОТКА<br>ПРИЛОЖЕНИЙ</span></a>
-      <a href="#services" data-highlight="photogrammetry"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 2 13 7v14l-13 7L3 23V9L16 2Z M3 9l13 7 13-7M16 16v14"/></svg><span>3D-МОДЕЛИ<br>ПО ФОТО</span></a>
-      <a href="#services" data-highlight="architecture"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" rx="2"/><circle cx="11" cy="12" r="2"/><path d="m3 25 10-9 6 5 4-5 6 5"/></svg><span>ВИЗУАЛИЗАЦИЯ<br>АРХИТЕКТУРЫ</span></a>
-      <a href="#services" data-highlight="worlds"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="11" stroke-dasharray="2 4"/><circle cx="16" cy="16" r="4"/><path d="M16 1v5M16 26v5M1 16h5M26 16h5"/></svg><span>ИНТЕРАКТИВНЫЕ<br>МИРЫ</span></a>
+      <a href="#service-websites" data-highlight="websites" class="strip-active"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" rx="3"/><path d="M3 12h26M9 9h.2M14 9h.2M19 9h.2M10 19l3 3 8-8"/></svg><span>РАЗРАБОТКА<br>САЙТОВ</span></a>
+      <a href="#service-apps" data-highlight="apps"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="7" y="2" width="18" height="28" rx="4"/><path d="M12 6h8M14 26h4M11 11h10v11H11z"/></svg><span>РАЗРАБОТКА<br>ПРИЛОЖЕНИЙ</span></a>
+      <a href="#service-avatars" data-highlight="avatars"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 10a6 6 0 0 1 12 0c0 4-3 5-3 9h-6c0-4-3-5-3-9Z"/><path d="M8 27c0-5 4-8 8-8s8 3 8 8M16 1v3M3 11h4M25 11h4"/></svg><span>ИИ-АВАТАРЫ<br>И ПЕРСОНАЖИ</span></a>
+      <a href="#service-photogrammetry" data-highlight="photogrammetry"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 2 13 7v14l-13 7L3 23V9L16 2Z M3 9l13 7 13-7M16 16v14"/></svg><span>3D-МОДЕЛИ<br>ПО ФОТО</span></a>
+      <a href="#service-film" data-highlight="film"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="9" width="18" height="15" rx="2"/><path d="m21 13 8-5v17l-8-5M9 9V5h6v4"/></svg><span>AI-ВИДЕО<br>И КИНО</span></a>
+      <a href="#service-cgi" data-highlight="cgi"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 3 13 7-13 7L3 10 16 3ZM3 16l13 7 13-7M3 22l13 7 13-7"/></svg><span>CGI &amp; 3D<br>ПРОДАКШН</span></a>
+      <a href="#service-architecture" data-highlight="architecture"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" rx="2"/><circle cx="11" cy="12" r="2"/><path d="m3 25 10-9 6 5 4-5 6 5"/></svg><span>АРХИТЕКТУРНАЯ<br>ВИЗУАЛИЗАЦИЯ</span></a>
+      <a href="#service-worlds" data-highlight="worlds"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="11" stroke-dasharray="2 4"/><circle cx="16" cy="16" r="4"/><path d="M16 1v5M16 26v5M1 16h5M26 16h5"/></svg><span>ИНТЕРАКТИВНЫЕ<br>МИРЫ</span></a>
     </section>
 
     <section class="section services-section" id="services" aria-labelledby="services-title">
       <div class="section-top" data-reveal><span class="section-id"><i></i> ОСНОВНЫЕ НАПРАВЛЕНИЯ</span><span class="section-index">01 / НАШИ УСЛУГИ</span></div>
       <div class="section-intro" data-reveal><h2 id="services-title">Технологии, которые<br><em>становятся искусством.</em></h2><p>Объединяем художественное мышление, инженерную точность и новейшие инструменты AI.</p></div>
       <div class="service-grid">
-        <a href="#contact" class="service-card" data-service="Разработка приложений" data-key="apps" data-reveal><img src="assets/service-apps.webp" alt="Два интерфейса мобильных приложений в темной премиальной стилистике" loading="lazy" width="2048" height="1152"><span class="service-n">01 / DIGITAL</span><span class="service-content"><strong>Разработка приложений</strong><small>Веб-, мобильные приложения и AI-сервисы под ключ</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
-        <a href="#contact" class="service-card" data-service="3D-модели по фото" data-key="photogrammetry" data-reveal><img src="assets/service-photogrammetry.webp" alt="Фотореалистичный автомобиль с разделением на модель и визуализацию" loading="lazy" width="2048" height="1152"><span class="service-n">02 / MODELING</span><span class="service-content"><strong>3D-модели по фото</strong><small>Воссоздание объектов и предметов по фотографиям</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
-        <a href="#contact" class="service-card" data-service="Архитектурная визуализация" data-key="architecture" data-reveal><img src="assets/service-architecture.webp" alt="Современный загородный дом среди хвойного леса" loading="lazy" width="2048" height="1152"><span class="service-n">03 / ARCHVIZ</span><span class="service-content"><strong>Архитектурная визуализация</strong><small>Экстерьеры, интерьеры, ландшафт и 3D-проекты</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
-        <a href="#contact" class="service-card" data-service="AI-видео и кино" data-key="film" data-reveal><img src="assets/service-film.webp" alt="Кинематографическая камера с оранжевыми отражениями" loading="lazy" width="2048" height="1152"><span class="service-n">04 / MOTION</span><span class="service-content"><strong>AI-видео и кино</strong><small>Трейлеры, короткий метр, реклама и видеосерии</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
-        <a href="#contact" class="service-card" data-service="Создание 3D-контента" data-key="cgi" data-reveal><img src="assets/service-cgi.webp" alt="Кинематографичный CGI-портрет с металлическими деталями" loading="lazy" width="2048" height="1152"><span class="service-n">05 / CGI</span><span class="service-content"><strong>Создание 3D-контента</strong><small>Персонажи, окружение, материалы и визуальные эффекты</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
-        <a href="#contact" class="service-card" data-service="Интерактивные миры" data-key="worlds" data-reveal><img src="assets/service-worlds.webp" alt="Футуристический светящийся портал среди гор" loading="lazy" width="2048" height="1152"><span class="service-n">06 / EXPERIENCE</span><span class="service-content"><strong>Интерактивные миры</strong><small>WebGL-сцены, XR, виртуальные презентации</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" id="service-apps" class="service-card" data-service="Разработка приложений" data-key="apps" data-reveal><img src="assets/service-apps.webp" alt="Два интерфейса мобильных приложений в темной премиальной стилистике" loading="lazy" width="2048" height="1152"><span class="service-n">01 / DIGITAL</span><span class="service-content"><strong>Разработка приложений</strong><small>Веб-, мобильные приложения и AI-сервисы под ключ</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" id="service-websites" class="service-card service-card--website" data-service="Разработка сайтов" data-key="websites" data-reveal>
+          <div class="web-showcase" aria-hidden="true"><div class="web-showcase__frame">
+            <div class="web-showcase__top"><span class="web-showcase__dots">•••</span><span>FORMA / DIGITAL</span><span>↗</span></div>
+            <div class="web-showcase__view"><span class="web-showcase__eyebrow">INDEPENDENT DIGITAL DESIGN</span><div class="web-showcase__sculpture"></div><span class="web-showcase__headline">BEYOND<br>THE EXPECTED.</span><span class="web-showcase__footer">CRAFTED FOR IMPACT <span>01—04</span></span></div>
+          </div></div><span class="service-n">02 / WEB</span><span class="service-content"><strong>Разработка сайтов</strong><small>Премиальные сайты, веб-дизайн, интерфейсы и анимация</small></span><span class="circle-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a href="#contact" id="service-avatars" class="service-card service-card--avatar" data-service="ИИ-аватары" data-key="avatars" data-reveal><img src="assets/about-cyborg.webp" alt="Кинематографичный биомеханический персонаж для интерактивного AI-аватара" loading="lazy" width="2048" height="1152"><span class="service-n">03 / AI AVATARS</span><span class="service-content"><strong>ИИ-аватары</strong><small>Цифровые персонажи, голос, мимика и виртуальные ведущие</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" id="service-photogrammetry" class="service-card" data-service="3D-модели по фото" data-key="photogrammetry" data-reveal><img src="assets/service-photogrammetry.webp" alt="Фотореалистичный автомобиль с разделением на модель и визуализацию" loading="lazy" width="2048" height="1152"><span class="service-n">04 / MODELING</span><span class="service-content"><strong>3D-модели по фото</strong><small>Воссоздание объектов и предметов по фотографиям</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" id="service-architecture" class="service-card" data-service="Архитектурная визуализация" data-key="architecture" data-reveal><img src="assets/service-architecture.webp" alt="Современный загородный дом среди хвойного леса" loading="lazy" width="2048" height="1152"><span class="service-n">05 / ARCHVIZ</span><span class="service-content"><strong>Архитектурная визуализация</strong><small>Экстерьеры, интерьеры, ландшафт и 3D-проекты</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" id="service-film" class="service-card" data-service="AI-видео и кино" data-key="film" data-reveal><img src="assets/service-film.webp" alt="Кинематографическая камера с оранжевыми отражениями" loading="lazy" width="2048" height="1152"><span class="service-n">06 / MOTION</span><span class="service-content"><strong>AI-видео и кино</strong><small>Трейлеры, короткий метр, реклама и видеосерии</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" id="service-cgi" class="service-card" data-service="Создание 3D-контента" data-key="cgi" data-reveal><img src="assets/service-cgi.webp" alt="Кинематографичный CGI-портрет с металлическими деталями" loading="lazy" width="2048" height="1152"><span class="service-n">07 / CGI</span><span class="service-content"><strong>Создание 3D-контента</strong><small>Персонажи, окружение, материалы и визуальные эффекты</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
+        <a href="#contact" id="service-worlds" class="service-card" data-service="Интерактивные миры" data-key="worlds" data-reveal><img src="assets/service-worlds.webp" alt="Футуристический светящийся портал среди гор" loading="lazy" width="2048" height="1152"><span class="service-n">08 / EXPERIENCE</span><span class="service-content"><strong>Интерактивные миры</strong><small>WebGL-сцены, XR, виртуальные презентации</small></span><span class="circle-arrow" aria-hidden="true">↗</span></a>
       </div>
     </section>
 
@@ -99,7 +108,7 @@
     <section class="principles" aria-label="Наши подходы"><div><strong>01 / IDEA</strong><span>Понимаем задачу</span></div><div><strong>02 / DESIGN</strong><span>Создаём форму</span></div><div><strong>03 / BUILD</strong><span>Разрабатываем</span></div><div><strong>04 / DELIVER</strong><span>Доводим результат</span></div></section>
 
     <section class="contact-section section" id="contact" aria-labelledby="contact-title"><div class="contact-intro" data-reveal><span class="section-id"><i></i> НАЧНЁМ С ИДЕИ</span><h2 id="contact-title">Есть идея?<br><em>Придадим ей форму.</em></h2><p>Опишите задачу, и мы подготовим краткий бриф. Пока прямой канал отправки не подключён, текст можно скопировать.</p></div>
-      <form class="brief-form" id="brief-form" data-reveal><label for="brief-name">Как к вам обращаться</label><input id="brief-name" name="name" autocomplete="name" maxlength="100" placeholder="Имя или название команды" required><label for="brief-service">Направление</label><select id="brief-service" name="service" required><option value="">Выберите услугу</option><option>Разработка приложений</option><option>3D-модели по фото</option><option>Архитектурная визуализация</option><option>AI-видео и кино</option><option>Создание 3D-контента</option><option>Интерактивные миры</option><option>Другое</option></select><label for="brief-description">Расскажите о проекте</label><textarea id="brief-description" name="description" rows="3" maxlength="2500" placeholder="Что нужно создать? Есть ли сроки, референсы, фотографии?" required></textarea><button class="button button-primary brief-button" type="submit"><span class="copy-icon" aria-hidden="true">↗</span>Скопировать бриф</button><p class="brief-status" id="brief-status" role="status" aria-live="polite"></p></form>
+      <form class="brief-form" id="brief-form" data-reveal><label for="brief-name">Как к вам обращаться</label><input id="brief-name" name="name" autocomplete="name" maxlength="100" placeholder="Имя или название команды" required><label for="brief-service">Направление</label><select id="brief-service" name="service" required><option value="">Выберите услугу</option><option>Разработка приложений</option><option>Разработка сайтов</option><option>ИИ-аватары</option><option>3D-модели по фото</option><option>Архитектурная визуализация</option><option>AI-видео и кино</option><option>Создание 3D-контента</option><option>Интерактивные миры</option><option>Другое</option></select><label for="brief-description">Расскажите о проекте</label><textarea id="brief-description" name="description" rows="3" maxlength="2500" placeholder="Что нужно создать? Есть ли сроки, референсы, фотографии?" required></textarea><button class="button button-primary brief-button" type="submit"><span class="copy-icon" aria-hidden="true">↗</span>Скопировать бриф</button><p class="brief-status" id="brief-status" role="status" aria-live="polite"></p></form>
     </section>
   </main>
   <footer class="site-footer"><a href="#top" class="footer-wordmark">FORMA <span>AI</span><sup>®</sup></a><p>НЕЙРО СТУДИЯ · CREATIVE × TECHNOLOGY</p><a href="#top">НАВЕРХ ↑</a><small>© <span id="copyright-year">2026</span> FORMA AI</small></footer>
@@ -109,7 +118,7 @@
 <dialog id="project-dialog" class="modal project-modal" aria-labelledby="project-dialog-title"><div class="modal-head"><strong>FORMA AI / PROJECT</strong><button type="button" class="close-modal" data-close-dialog aria-label="Закрыть проект">×</button></div><img id="project-dialog-image" src="assets/project-achron.webp" alt="" width="2048" height="1152"><span id="project-dialog-tag" class="modal-tag"></span><h2 id="project-dialog-title"></h2><p id="project-dialog-text"></p><a class="button button-outline" href="#contact" id="project-dialog-contact">Обсудить похожий проект ↗</a></dialog>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
-<script type="module" src="site.js"></script>
-<script src="experience.js" defer></script>
+<script type="module" src="site.js?v=23"></script>
+<script src="experience.js?v=23" defer></script>
 </body>
 </html>
