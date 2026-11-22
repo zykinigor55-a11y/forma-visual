@@ -749,8 +749,12 @@ function initialize(){
   save();
  }
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
- if(deepLinkAlpha){
-  focusHouseCamera();
+ // On a narrow device an already saved ALFA must also open with the
+ // building visible, even if the URL has no explicit ?house=alpha.
+ const openAlphaScene=deepLinkAlpha||
+  (window.innerWidth<=850&&doc.house.archStyle==='alpha'&&!doc.house.modelKey);
+ if(openAlphaScene){
+  focusHouseCamera('overview');
   if(window.innerWidth<=850)activateMobilePanel('scene');
   status('Дом АЛЬФА открыт целиком. Композиция и координаты сохранены.');
  }
