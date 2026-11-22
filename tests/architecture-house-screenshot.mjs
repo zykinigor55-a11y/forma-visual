@@ -30,11 +30,13 @@ try{
  if(rect&&rect.width>200&&rect.height>200){
   await page.locator('#viewport').screenshot({path:dir+'/FORMA-HOUSE-VIEWPORT-ACTUAL.jpg',type:'jpeg',quality:90,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-HOUSE-TWO-TIMBERS-3D.jpg',type:'jpeg',quality:90,timeout:65000});
+  await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-VERTICAL-BOARDS-REAL-WEBGL.jpg',type:'jpeg',quality:91,timeout:65000});
  }
  const result=await page.evaluate(()=>({
   title:document.title,ready:window.FORMA_3D_READY,
   style:document.querySelector('[data-house-preset="scandi"]')?.getAttribute('aria-pressed'),
   canvas:!!document.querySelector('#viewport'),
+  ref:'Mocopinus Oldenburg silbergrau grey vertical wood + black windows',
   status:document.querySelector('#status')?.textContent?.slice(0,200),
   build:document.querySelector('#buildInfo')?.textContent?.slice(0,200)
  }));
