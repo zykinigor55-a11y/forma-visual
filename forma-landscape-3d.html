@@ -1782,6 +1782,77 @@ function renderProps(){
  $('#deleteObject').onclick=deleteSelectedObject;
  if(pinePanel&&(isPine||isShrub))pinePanel.scrollTop=priorScroll;
 }
+const QUICK_CLIMATE_LINKS=[
+ ['quickSunAzimuth','sunAzimuth','°'],['quickSunElevation','sunElevation','°'],
+ ['quickSunStrength','sunStrength','%'],['quickSunSoftness','sunSoftness',''],
+ ['quickCloudCover','cloudCover','%'],['quickGlobalFill','globalFill','%'],
+ ['quickAerialHaze','aerialHaze','%']
+];
+function syncQuickClimateControls(){
+ if(!doc?.atmosphere)return;
+ const sceneValues={
+  quickTime:doc.atmosphere.time||'day',
+  quickSeason:doc.atmosphere.season||'summer',
+  quickWeather:doc.atmosphere.weather||'sunny'
+ };
+ for(const [id,value] of Object.entries(sceneValues)){
+  const el=$('#'+id);if(el)el.value=value;
+ }
+ const solarValues={
+  sunAzimuth:solarSettings.azimuth,sunElevation:solarSettings.elevation,
+  sunStrength:Math.round(solarSettings.strength*100),sunSoftness:solarSettings.softness
+ };
+ const atmosphereValues={
+  cloudCover:sceneAtmosphere.clouds,globalFill:sceneAtmosphere.globalFill,
+  aerialHaze:sceneAtmosphere.haze
+ };
+ for(const [quickId,sourceId,suffix] of QUICK_CLIMATE_LINKS){
+  const target=$('#'+quickId),label=$('#'+quickId+'Value'),base=$('#'+sourceId);
+  const value=sourceId in solarValues?solarValues[sourceId]:atmosphereValues[sourceId];
+  if(target)target.value=String(base?.value??value);
+  if(label)label.textContent=(sourceId==='sunSoftness'?Number(value).toFixed(1):Math.round(value))+suffix;
+ }
+}
+function setSceneClimateOpen(open){
+ const panel=$('#sceneClimatePanel');
+ if(!panel)return;
+ panel.hidden=!open;
+ $('#sceneClimateButton')?.setAttribute('aria-expanded',String(!!open));
+ if(open)syncQuickClimateControls();
+}
+function setupSceneClimateControls(){
+ $('#sceneClimateButton').onclick=()=>setSceneClimateOpen($('#sceneClimatePanel').hidden);
+ $('#sceneClimateClose').onclick=()=>setSceneClimateOpen(false);
+ $('#sceneClimateSunReset').onclick=()=>{
+  $('#sunReset').click();syncQuickClimateControls();
+ };
+ $('#sceneClimateAll').onclick=()=>{
+  setSceneClimateOpen(false);
+  activateMobilePanel('details');
+  requestAnimationFrame(()=>$('#time')?.scrollIntoView({behavior:'smooth',block:'start'}));
+ };
+ for(const [quickId,baseId] of [
+  ['quickTime','time'],['quickSeason','season'],['quickWeather','weather']
+ ]){
+  $('#'+quickId).addEventListener('change',event=>{
+   const base=$('#'+baseId);
+   base.value=event.currentTarget.value;
+   // Reuse the original editor handler: project persistence, Undo, rebuild,
+   // exact sun and weather settings, and the same AI prompt state.
+   base.dispatchEvent(new Event('change',{bubbles:true}));
+   syncQuickClimateControls();
+  });
+ }
+ for(const [quickId,baseId] of QUICK_CLIMATE_LINKS){
+  $('#'+quickId).addEventListener('input',event=>{
+   const base=$('#'+baseId);
+   base.value=event.currentTarget.value;
+   // Reuse the editor's live physical sun and atmosphere pipeline.
+   base.dispatchEvent(new Event('input',{bubbles:true}));
+   syncQuickClimateControls();
+  });
+ }
+}
 function syncSolarControls(){
  for(const [id,key,suffix,scale] of [['sunAzimuth','azimuth','°',1],['sunElevation','elevation','°',1],['sunStrength','strength','%',100],['sunSoftness','softness','',1]]){
   const el=$('#'+id),out=$('#'+id+'Value');
@@ -2636,6 +2707,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  };
  $('#focusHouse').onclick=()=>focusHouseCamera('overview');
  $('#sceneCameraCycle').onclick=cycleSceneCamera;
+ setupSceneClimateControls();
  $('#focusSelected').onclick=focusSelectedPlant;
  $('#pineInspectorShortcut').onclick=showSelectedPineControls;
  $('#fit3dScene').onclick=()=>{setView('3d');houseCameraStage=2;syncSceneCameraButton();};
