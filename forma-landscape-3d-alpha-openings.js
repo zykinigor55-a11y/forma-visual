@@ -86,10 +86,10 @@ export function addAlphaFrontWallVolume(T,g,opts,createPanel){
  quadMesh(T,g,external,exposed,'alpha-wall-240mm-extruded-outside-perimeter');
  const segments=doorAndTriangleEdges(opts);
  const frontReturns=[],interiorReturns=[];
- for(const [a,b] of [...segments.door,...segments.triangle]){
-  ribbon(frontReturns,a,b,zOuter,zFrameFront);
+ for(const [a,b] of [...segments.door.slice(0,3),...segments.triangle])
+  ribbon(frontReturns,a,b,zOuter-ALFA_OPENING_DETAIL.claddingThickness-ALFA_OPENING_DETAIL.ventGap,zFrameFront);
+ for(const [a,b] of [...segments.door,...segments.triangle])
   ribbon(interiorReturns,a,b,zFrameBack,zInner);
- }
  quadMesh(T,g,frontReturns,exposed,'alpha-front-reveals-140mm-inset');
  quadMesh(T,g,interiorReturns,backReveal,'alpha-interior-return-after-window-frame');
  // Ventilation/cladding edges are exposed only in narrow cross-section
@@ -97,7 +97,7 @@ export function addAlphaFrontWallVolume(T,g,opts,createPanel){
  const depth1=zOuter-ALFA_OPENING_DETAIL.claddingThickness;
  const depth2=depth1-ALFA_OPENING_DETAIL.ventGap;
  const strips=[],seams=[];
- for(const [a,b] of [...segments.door,...segments.triangle]){
+ for(const [a,b] of [...segments.door.slice(0,3),...segments.triangle]){
   ribbon(strips,a,b,zOuter,depth1);
   ribbon(seams,a,b,depth1,depth2);
  }
