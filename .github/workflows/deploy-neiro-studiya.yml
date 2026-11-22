@@ -1,0 +1,39 @@
+name: Publish Neiro Studiya
+on:
+  push:
+    branches: [neiro-studiya]
+    paths:
+      - 'neiro-studiya/web/**'
+      - '.github/workflows/deploy-neiro-studiya.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: neiro-studiya-pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate site and video
+        run: |
+          test -s neiro-studiya/web/index.html
+          test -s neiro-studiya/web/site.js
+          test -s neiro-studiya/web/styles.css
+          test -s neiro-studiya/web/assets/neiro-studiya-v14.mp4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: neiro-studiya/web
+      - name: Deploy site
+        id: deploy
+        uses: actions/deploy-pages@v4
