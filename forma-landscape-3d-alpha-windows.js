@@ -9,7 +9,10 @@ function finish(T,color,roughness=.6,metalness=0){
 }
 function addBox(T,g,size,at,mat,part){
  const m=new T.Mesh(new T.BoxGeometry(...size),mat);
- m.position.set(...at);m.castShadow=!String(part).includes('glass');
+ m.position.set(...at);
+ // Glass layers must NEVER cast opaque GPU shadow-map silhouettes over
+ // the room behind them; three.js transparent PBR panes are visual only.
+ m.castShadow=!(/glass|pane|glaz/i.test(String(part)));
  m.receiveShadow=true;m.userData.architecturePart=part;g.add(m);return m;
 }
 function addBeam(T,g,a,b,profile,mat,part){
