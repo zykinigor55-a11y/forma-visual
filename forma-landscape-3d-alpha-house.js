@@ -221,7 +221,7 @@ function addFacades(T,g,{w,d,eave,rise,half},night){
  // Window and door openings remain real cutouts, not opaque blue decals.
  alphaFacadePanel(T,g,{
   half,base:.49,peak:peak-.070,z:front+.006,width:w,front:true,
-  material:cladding,doorHalf:doorW*.5,doorBottom:doorBottom-.006,
+  material:cladding,doorHalf:doorW*.5,doorBottom:doorBottom+.008,
   doorTop:doorTop+.016,
   glassHalf,glassBase:glassBase-.012,glassTop:top+.003
  });
