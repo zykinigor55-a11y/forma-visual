@@ -187,7 +187,8 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
   bottom:calc(min(65dvh,640px) + 72px)}
  }
 #draftActions{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;padding:10px;border-top:1px solid #485449}
-#draftActions[hidden]{display:none}
+#draftActions[hidden],#mobilePondFinish[hidden]{display:none!important}
+#mobilePondFinish{min-height:44px;padding:8px;font-size:11px}
 #draftActions button{font-size:11px;padding:10px 7px}
 #draftActions small{grid-column:1/-1;color:#b8c7be;font-size:10px;line-height:1.5}
 #right{width:330px}
@@ -537,7 +538,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <button type="button" id="mobilePineSelect" aria-label="Выбрать посаженное дерево и открыть его параметры" hidden>🌲 Дерево</button>
  <button type="button" id="mobileHouseSelect" aria-label="Открыть настройки дома, гирлянд и внутреннего освещения">🏠 Дом</button>
 </div>
-<div id="mobilePlacementHint" role="status" hidden><span id="mobilePlacementLabel"></span><button id="mobilePlacementCancel" type="button" aria-label="Отменить размещение и вернуть выбор">Отмена</button></div>
+<div id="mobilePlacementHint" role="status" hidden><span id="mobilePlacementLabel" aria-live="polite"></span><button id="mobilePondFinish" class="primary" type="button" hidden disabled>Готово</button><button id="mobilePlacementCancel" type="button" aria-label="Отменить размещение и вернуть выбор">Отмена</button></div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
  <div id="mobileObjectEditorHeader" hidden><strong id="mobileObjectEditorTitle">Объект</strong><button id="mobileObjectMove" type="button" title="Переместить выделенный объект пальцем">↔ Двигать</button><button id="mobileObjectClose" type="button" aria-label="Свернуть редактор и открыть сцену">×</button></div>
@@ -858,7 +859,7 @@ const choices={
  build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['carport','Навес для автомобиля'],['gazebo','Беседка'],['greenhouse','Теплица'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
  plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
- water:[['formal-pond','Водоём (контур)']],
+ water:CATALOG.filter(x=>x.group==='ponds').map(x=>[x.id,x.name]),
  landscape:[...CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name])],
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол'],['outdoor-dining','Уличный стол и 2 стула'],['picnic-table','Пикниковый стол со скамьями']],
@@ -946,12 +947,16 @@ function selectNextPine(){
 function syncMobilePlacementHint(){
  const hint=$('#mobilePlacementHint'),label=$('#mobilePlacementLabel');
  if(!hint||!label)return;
+ const water=state.tool==='water';
+ const finish=$('#mobilePondFinish');
+ finish.hidden=!water;finish.disabled=pointMode.length<3;
  const active=window.innerWidth<=850&&state.tool!=='select'&&!!state.placing&&
-  ['light','plant','landscape','models40','creatures','build','furniture'].includes(state.tool);
+  ['light','plant','landscape','models40','creatures','build','furniture','water'].includes(state.tool);
  hint.hidden=!active;
  if(!active)return;
  const entry=catalog(state.placing)||realModelById(state.placing)||creatureById(state.placing);
- label.textContent='＋ '+(entry?.name||'Объект')+' · коснитесь земли для установки';
+ label.textContent=water?(pointMode.length<3?'Отметьте 3 точки берега · '+pointMode.length+'/3':'Точек: '+pointMode.length+' · добавьте ещё или нажмите «Готово»'):
+  '＋ '+(entry?.name||'Объект')+' · коснитесь земли для установки';
 }
 function activateMobilePanel(name){
  if(name!=='scene')setSceneClimateOpen(false);
@@ -995,6 +1000,7 @@ function initialize(){
   renderProps();revealSelectedInspector();
   status('Дом выбран. Настройки гирлянд и интерьера находятся здесь.');
  };
+ $('#mobilePondFinish').onclick=finishContour;
  $('#mobilePlacementCancel').onclick=()=>{
   chooseTool('select');state.placing=null;activateMobilePanel('scene');
   status('Размещение отменено. Камера доступна.');
@@ -3041,16 +3047,19 @@ function modifyTerrain(world){
  scheduleBrushRebuild();
 }
 function refreshDraft(){
+ syncMobilePlacementHint();renderGate.invalidate();
  if(!root)return;
  const last=root.getObjectByName('preview-contour');
  if(last){root.remove(last);last.geometry.dispose();last.material.dispose()}
  if(!pointMode.length)return;
  const pts=pointMode.map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.3,v.z)});
- const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xffd49c,depthTest:false}));
+ const ShapeLine=state.tool==='water'&&pts.length>=3?THREE.LineLoop:THREE.Line;
+ const line=new ShapeLine(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xffd49c,depthTest:false}));
  line.name='preview-contour';line.renderOrder=10;root.add(line);
 }
 function finishContour(){
  const tool=state.tool,type=catalog(state.placing)?.group;
+ if(tool==='water'&&type!=='ponds')return;
  const min=tool==='fence'||(tool==='surface'&&type==='pavers')?2:3;
  if(pointMode.length<min){status('Для контура необходимо минимум '+min+' точки.');return}
  if(tool==='site'&&state.placing==='outline'){
@@ -3061,7 +3070,9 @@ function finishContour(){
   if(!catalog(state.placing)){status('Выберите покрытие или водоём.');return}
   push();doc.objects.push({id:id(),catalogId:state.placing,type:type||'ponds',points:pointMode.map(p=>({...p})),width:1.5});
  }else{status('Выберите инструмент рисования.');return}
- pointMode=[];save();rebuild();status('Контур сохранён. Остальные объекты не затронуты.');
+ pointMode=[];
+ if(tool==='water'&&window.innerWidth<=850)chooseTool('select');
+ save();rebuild();status(tool==='water'?'Водоём добавлен.':'Контур сохранён. Остальные объекты не затронуты.');
 }
 function place(world){
  const point=fromWorld(world),tool=state.tool,entry=catalog(state.placing),type=entry?.group;
