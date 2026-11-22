@@ -5,6 +5,10 @@
  */
 const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
 const finite=(n,fallback)=>Number.isFinite(Number(n))?Number(n):fallback;
+export function scandiRoofOverhang(width=8,depth=7){
+ const span=Math.min(Math.max(2,finite(width,8)),Math.max(2,finite(depth,7)));
+ return Math.min(.72,Math.max(.50,span*.075));
+}
 export const NEW_HOUSE_STYLES=Object.freeze(['modular','logcabin','bungalow','duplex','panoramic','tiny']);
 
 export function buildingHeights({archStyle='barn',type='house',width=8,roofRise=null}={}){
@@ -38,7 +42,7 @@ export function validateMeasuredBuilding({width,height,roofRise=null}={}){
 export function facadeOpeningSchedule({width=8,depth=7,height=3.5,style='barn',type='house'}={}){
  const w=Math.max(2,finite(width,8)),d=Math.max(2,finite(depth,7));
  const maxTop=Math.max(2.35,finite(height,3.5)-.16),floor=.48;
- const largeGlazing=['barn','modern','japandi','panoramic','modular','hightech'].includes(style);
+ const largeGlazing=['barn','modern','japandi','panoramic','modular','hightech','scandi'].includes(style);
  const doorWidth=clamp(w*.135,.80,1.15),doorX=w>=5?w*.29:w*.22;
  const doorHeight=Math.min(2.15,maxTop-floor-.10);
  const door=(x)=>({kind:'door',x,width:doorWidth,bottom:floor,height:doorHeight});
@@ -59,6 +63,21 @@ export function facadeOpeningSchedule({width=8,depth=7,height=3.5,style='barn',t
                     window(w*.28,Math.min(w*.18,1.55),upperY,1.30,false));
   result.rear.push(window(-w*.26,Math.min(w*.22,1.65),1.3,1.55,false),
                    window(w*.26,Math.min(w*.22,1.65),1.3,1.55,false));
+ }else if(style==='scandi'&&type==='house'&&w>=6){
+  // The user's actual Scandinavian photo references: genuinely tall black
+  // window portals, large insulated sliding panes, one recessed entrance.
+  // Plan keeps its original house footprint and 190mm structural wall.
+  result.front.push(door(doorX));
+  const tallBottom=.59,tallHeight=Math.min(2.56,maxTop-tallBottom-.20);
+  if(w>=9.0){
+   result.front.push(window(-w*.31,Math.min(2.74,w*.245),tallBottom,tallHeight,true));
+   result.front.push(window(-w*.055,Math.min(2.58,w*.218),tallBottom,tallHeight,true));
+  }else{
+   result.front.push(window(-w*.25,Math.min(2.5,w*.38),tallBottom,tallHeight,true));
+  }
+  const rearWidth=Math.min(w*.37,3.05);
+  result.rear.push(window(-w*.16,rearWidth,.59,tallHeight,true));
+  if(w>9.5)result.rear.push(window(w*.25,Math.min(1.36,w*.12),.86,Math.min(1.92,tallHeight),false));
  }else{
   result.front.push(door(doorX));
   if(style==='panoramic'){
@@ -73,10 +92,12 @@ export function facadeOpeningSchedule({width=8,depth=7,height=3.5,style='barn',t
   result.rear.push(window(-w*.12,Math.min(largeGlazing?2.1:1.4,w*.26),winBottom,winHeight));
  }
  if(d>4){
-  const sideH=Math.min(largeGlazing?2:1.4,maxTop-1.30);
+  const sideH=style==='scandi'?Math.min(2.46,maxTop-.80):Math.min(largeGlazing?2:1.4,maxTop-1.30);
   for(const side of ['left','right'])
-   result[side].push(window(-d*.08,Math.min(style==='panoramic'?d*.52:1.4,d*.26),
-    largeGlazing?.82:1.3,sideH,largeGlazing));
+   result[side].push(window(-d*.08,
+    Math.min(style==='scandi'?2.68:style==='panoramic'?d*.52:1.4,
+      style==='scandi'?d*.39:d*.26),
+    style==='scandi'?.61:largeGlazing?.82:1.3,sideH,largeGlazing));
  }
  // Clamp and reject openings that would break load-bearing corner piers.
  for(const [side,openings] of Object.entries(result)){
@@ -124,7 +145,7 @@ export function wallPatches(width,baseY,topY,openings=[]){
  */
 export function rainwaterDrainPlan({width=8,depth=7,roof='gable',style='barn'}={}){
  const w=Math.max(2,finite(width,8)),d=Math.max(2,finite(depth,7));
- const overhang=style==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
+ const overhang=style==='scandi'?scandiRoofOverhang(w,d):style==='chalet'?Math.min(1.2,Math.min(w,d)*.16):
   style==='cottage'?Math.min(.75,Math.min(w,d)*.09):
   Math.min(.42,Math.max(.22,Math.min(w,d)*.055));
  const gutterRadius=.115;
