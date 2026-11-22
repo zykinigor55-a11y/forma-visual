@@ -322,6 +322,15 @@ export function addScandiEntrance(T,group,{door,width,depth}={}){
  const landingCenter=z+(landingStart+landingEnd)*.5;
  addBox(group,T,w,.442,plan.landingDepth,x,.221,landingCenter,structure,'entry-landing-core');
  addBox(group,T,w,.035,plan.landingDepth,x,.4625,landingCenter,wood,'entry-landing-deck');
+ // 4mm recessed expansion gaps create individually legible landing boards.
+ // Cosmetic detail only: preserves the structural deck and measured footprint.
+ const deckJoint=finishMaterial(T,'#343D3F');
+ const deckCount=Math.max(3,Math.floor(w/.145));
+ for(let j=1;j<deckCount;j++){
+  const sx=x-w*.5+j*w/deckCount;
+  addBox(group,T,.004,.0018,plan.landingDepth-.09,
+   sx,.481,landingCenter,deckJoint,'entry-deck-expansion-joint');
+ }
  for(const side of [-1,1]){
   addBox(group,T,.035,.405,plan.landingDepth,
    x+side*(w*.5-.027),.222,z+(landingStart+landingEnd)*.5,trim,'entry-landing-side-fascia');
@@ -340,6 +349,12 @@ export function addScandiEntrance(T,group,{door,width,depth}={}){
    x,level-.0185,center+.009,tread,'entry-stair-tread');
   addBox(group,T,w+.023,.012,.015,
    x,level-.031,center+plan.going*.5+.015,trim,'entry-tread-nosing');
+  // Two flush anti-slip inlays on each projecting tread, aligned to its nose.
+  for(let j=0;j<2;j++){
+   addBox(group,T,w-.10,.0018,.009,
+    x,level+.001,center+plan.going*.5-.050-j*.026,
+    deckJoint,'entry-tread-anti-slip-inlay');
+  }
   // Thin continuous side fascia conceals concrete riser and supports
   // timber treads; never leave floating steps.
   for(const side of [-1,1])
