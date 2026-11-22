@@ -157,3 +157,44 @@
  body[data-mobile-panel="details"][data-object-inspector="true"] #roofGarlandSettings{
   margin-top:10px;padding:12px 10px}
 }
+
+/* Mobile no-surprises placement UX: selected item only, clean viewport. */
+@media(max-width:850px){
+ #mobileWorkspaceTabs{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ #mobileWorkspaceTabs #mobilePineSelect{display:none!important}
+ #mobileWorkspaceTabs #mobileHouseSelect{
+  display:block;min-width:0;min-height:46px;font-size:12px;
+  background:#36383d;color:#e9dbbf;border:1px solid #777168;
+  border-radius:10px;padding:6px 3px
+ }
+ #mobilePlacementHint[hidden]{display:none!important}
+ #mobilePlacementHint:not([hidden]){
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  position:absolute;z-index:8;left:8px;right:8px;
+  bottom:calc(77px + env(safe-area-inset-bottom,0px));
+  min-height:50px;max-height:68px;padding:7px 10px;
+  border-radius:12px;background:rgba(31,34,38,.94);
+  border:1px solid #b59e7c;box-shadow:0 6px 24px #03040588;
+  color:#f4e9d8;pointer-events:auto
+ }
+ #mobilePlacementLabel{flex:1;min-width:0;font:600 11px/1.35 system-ui,sans-serif;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+ #mobilePlacementCancel{min-width:70px;min-height:44px;padding:8px;
+  border:1px solid #777981;border-radius:9px;background:#34383f;
+  font-size:11px;color:#f2ece2}
+ body[data-mobile-panel="tools"] #mobilePlacementHint,
+ body[data-mobile-panel="details"] #mobilePlacementHint{display:none!important}
+ /* Object editing happens solely inside the object-specific parameters sheet. */
+ body[data-mobile-panel="scene"] #selectedObjectDock[hidden]{display:none!important}
+ body[data-mobile-panel="scene"] #selectedObjectDock:not([hidden]){
+  max-height:min(188px,32dvh)!important;
+  bottom:calc(77px + env(safe-area-inset-bottom,0px))!important
+ }
+ body[data-mobile-panel="scene"] #selectedObjectDock:not([hidden]) :is(
+  #selectedObjectDuplicate,#selectedObjectDelete,#selectedObjectEdit,#selectedObjectRotate,
+  #selectedObjectPosition){display:none!important}
+}
+@media(max-width:370px){
+ #mobileWorkspaceTabs #mobileHouseSelect{font-size:11px}
+ #mobilePlacementLabel{font-size:10px}
+}
