@@ -6,7 +6,7 @@
  * Four real holes in the metal roof accommodate flush roof windows.
  */
 import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js?v=alpha-wall-240-v1-20261122';
-import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-wall-240-v1-20261122';
+import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-smoke-v1-20261122';
 import {addAlphaFrontWallVolume,addAlphaRearWallVolume,addAlphaRoofCassetteEnds} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -69,10 +69,11 @@ function addRoof(T,g,profile){
  const trim=finish(T,'#252F32',.46,.59);
  const gasket=finish(T,'#141B1D',.94,.02);
  const glass=new T.MeshPhysicalMaterial({
-  color:'#C4D1CD',roughness:.077,metalness:0,
-  transparent:true,opacity:.23,depthWrite:false,
-  ior:1.52,clearcoat:.56,clearcoatRoughness:.08,side:T.DoubleSide,
-  envMapIntensity:1.04
+  // Rooflights match smoked graphite facade glazing.
+  color:'#2D393D',roughness:.065,metalness:0,
+  transparent:true,opacity:.66,depthWrite:false,
+  ior:1.52,clearcoat:.71,clearcoatRoughness:.055,side:T.DoubleSide,
+  envMapIntensity:1.26
  });
  const windowLength=clamp(slope*.23,1.35,1.85);
  const windowWidth=clamp(depth*.057,.38,.57);
