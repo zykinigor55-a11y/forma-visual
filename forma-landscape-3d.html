@@ -403,8 +403,8 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <hr><button class="action" id="screenshot">↓ Снимок текущего 3D-ракурса</button>
   <label for="aiRenderModel">Качество фоторендера</label>
  <select id="aiRenderModel" aria-label="Выбрать нейросеть 3D-рендера">
-  <option value="nano-banana-2.1">Высокое качество · фотореализм</option>
-  <option value="gpt-image-2.6">Сбалансированное качество · точность деталей</option>
+  <option value="nano-banana-2.1">Nano Banana 2.1 · фотографический рендер</option>
+  <option value="gpt-image-2.6">GPT Image 2.6 · альтернативный рендер</option>
  </select>
  <button class="action primary" id="renderAi">✦ Фотореалистичный AI-рендер</button>
  <div class="pair"><div><label for="pdfPaper">Альбом PDF</label><select id="pdfPaper"><option value="A4">A4</option><option value="A3">A3</option></select></div><div><label>&nbsp;</label><button class="action" id="export3dPdf">↓ Скачать PDF</button></div></div>
@@ -2127,7 +2127,16 @@ function captureHighQuality3dReference(){
  const prevBotanicalTiers=botanicalGroups.map(g=>[g,g.userData.botanicalCurrentLod]);
  const logicalWidth=Math.max(1,canvas.clientWidth),logicalHeight=Math.max(1,canvas.clientHeight);
  const highestDim=Math.max(logicalWidth,logicalHeight);
- const photoRatio=Math.max(.75,Math.min(2,Math.max(1.5,window.devicePixelRatio||1),2800/highestDim));
+ // Android WebGL can leave incomplete/white frame strips when forced to
+ // reallocate an oversized GPU drawing buffer. Keep paid source captures
+ // within a deterministic pixel budget; AI then reconstructs photo detail.
+ const mobile=window.innerWidth<=850;
+ const maxLongEdge=mobile?2048:2800,maxPixels=mobile?2.5e6:5e6;
+ const pixelBudgetRatio=Math.sqrt(maxPixels/(logicalWidth*logicalHeight));
+ const maxGpuDimension=Math.max(1024,Number(renderer.capabilities?.maxTextureSize)||4096);
+ const photoRatio=Math.max(.65,Math.min(mobile?1.6:2,
+  Math.max(1,window.devicePixelRatio||1),
+  maxLongEdge/highestDim,pixelBudgetRatio,(maxGpuDimension-64)/highestDim));
  try{
   renderer.setPixelRatio(photoRatio);
   renderer.shadowMap.enabled=true;
