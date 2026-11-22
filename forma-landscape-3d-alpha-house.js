@@ -8,6 +8,7 @@
 import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js?v=alpha-wall-240-v1-20261122';
 import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-night-v1-20261122';
 import {addAlphaFrontWallVolume,addAlphaRearWallVolume,addAlphaRoofCassetteEnds} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
+import {normalizeNightInterior,interiorLightColor} from './forma-landscape-3d-night-interior.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function finish(T,color,roughness=.76,metalness=0){
@@ -87,7 +88,7 @@ function roofMesh(T,g,side,profile,holes,material,offset,part){
  mesh.receiveShadow=mesh.castShadow=true;mesh.userData.architecturePart=part;
  g.add(mesh);return mesh;
 }
-function addRoof(T,g,profile){
+function addRoof(T,g,profile,{night=false,interior=null}={}){
  const {slope,depth,half,rise,eave}=profile;
  const roof=finish(T,'#1C282B',.41,.66);
  roof.side=T.DoubleSide;
@@ -96,12 +97,17 @@ function addRoof(T,g,profile){
  const seam=finish(T,'#3E4B4C',.39,.64);
  const trim=finish(T,'#252F32',.46,.59);
  const gasket=finish(T,'#141B1D',.94,.02);
+ const indoor=normalizeNightInterior(interior),
+  lighted=night&&indoor.lightsEnabled&&indoor.brightness>0&&indoor.visibility!=='off';
  const glass=new T.MeshPhysicalMaterial({
-  // Rooflights match smoked graphite facade glazing.
+  // Rooflights stay dark smoked; only actual authored indoor light can
+  // warm them. Existing measured roof openings remain unchanged.
   color:'#2D393D',roughness:.065,metalness:0,
-  transparent:true,opacity:.66,depthWrite:false,
-  ior:1.52,clearcoat:.71,clearcoatRoughness:.055,side:T.DoubleSide,
-  envMapIntensity:1.26
+  transparent:true,opacity:lighted?(indoor.visibility==='full'?.42:.55):.66,
+  depthWrite:false,ior:1.52,clearcoat:.71,clearcoatRoughness:.055,
+  side:T.DoubleSide,envMapIntensity:1.26,
+  emissive:interiorLightColor(indoor.temperature),
+  emissiveIntensity:lighted?indoor.windowGlow/100*.055:0
  });
  const windowLength=clamp(slope*.23,1.35,1.85);
  const windowWidth=clamp(depth*.057,.38,.57);
@@ -300,7 +306,7 @@ export function addAlphaReferenceHouse(T,g,b,{width=7.5,depth=9.5,night=false,in
  // Order does not change the existing house footprint or local origin.
  addAlphaVisibleInterior(T,group,{w,d,eave,rise,half,night,interior});
  addFacades(T,group,{w,d,eave,rise,half},night,interior);
- addRoof(T,group,profile);
+ addRoof(T,group,profile,{night,interior});
  addDeck(T,group,w,d);
  group.userData.alphaReference={
   basedOn:'user supplied A-frame screenshot 7.5 × 9.5m',
