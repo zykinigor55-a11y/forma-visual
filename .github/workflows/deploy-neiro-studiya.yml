@@ -30,6 +30,8 @@ jobs:
           test -s neiro-studiya/web/assets/neiro-studiya-v14.mp4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
