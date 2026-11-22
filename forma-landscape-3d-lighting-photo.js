@@ -26,9 +26,10 @@ export function photoLightingContract(input){
   'Solar angles not provided: infer only from shadows in image 1. ';
  const sunVector=d?'Existing scene sun vector X='+f(v.x,2)+' Y='+f(v.y,2)+
   ' Z='+f(v.z,2)+' scene units. ':'';
- const noSolar=l.time==='night';
+ const noSolar=['night','blue-hour'].includes(input?.atmosphere?.time||l.time);
  return [
-  'AUTHORITATIVE SCENE LIGHTING CONTRACT — CAMERA AND LIGHTING ARE ALREADY APPROVED. Reproduce the actual existing scene illumination, not the pretty default sunshine. Time '+time+'; weather '+weather+'; season '+season+'. If the preset description conflicts with explicit azimuth/elevation, the numeric solar control wins. No invented sunrise direction or extra sun.',
+  'AUTHORITATIVE SCENE LIGHTING CONTRACT — CAMERA AND LIGHTING ARE ALREADY APPROVED. Reproduce the actual existing scene illumination, not the pretty default sunshine. Time '+time+'; weather '+weather+'; season '+season+'. When direct sunlight is visible, explicit azimuth and elevation define its direction. Weather still controls diffusion. No invented sunrise direction or extra sun.',
+  noSolar?'SUN: Below horizon. No solar disk, direct solar rays or directional solar shadows.':
   'SUN: '+exactDirection+sunVector+
    'SUN LIGHT THREE.JS RELATIVE INTENSITY '+measure(sun.intensity,'',3)+
    '; authored solar strength multiplier '+measure(sun.strength,'×',2)+
@@ -66,8 +67,8 @@ export function photoLightingContract(input){
    ', water ripple strength '+measure(a.ripples,'%',0)+
    '. Honor the current existing aerial perspective/contrast and wetness; do not invent a different season or weather.',
   'LIGHT PRIORITY AND ABSOLUTE PHOTOGRAPHIC RULE: '+(noSolar?
-   'NIGHT selected: no visible daylight sunlight or sunlight shadows. Use only existing sky/starlight glow and the actually installed luminaires; no invented fixtures.':
+   'Sun below horizon. Preserve diffuse twilight or night sky glow as selected and light only from existing enabled luminaires.':
    'Use exactly ONE source-consistent sun direction, the existing fill and authored weather; never move the light merely to make an attractive render.')+
-   ' No extra shadows, bloom blobs, lens flares, duplicated sun, random cinematic spotlights or changed window exposure. Preserve night versus day, measured geometry, tree species and source framing.'
+   ' No extra shadows, heavy bloom, lens flare streaks, duplicated sun, random cinematic spotlights or changed window exposure. Preserve night versus day, measured geometry, tree species and source framing.'
  ].join('\n\n');
 }
