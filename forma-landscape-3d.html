@@ -476,6 +476,8 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
 <div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
  <span id="selectedObjectName"></span><small id="selectedObjectPosition" aria-live="off"></small>
+ <button id="selectedObjectEdit" type="button" aria-label="Открыть параметры выбранного объекта">⚙ Параметры</button>
+ <button id="selectedObjectDismiss" type="button" aria-label="Свернуть меню объекта">×</button>
  <button id="selectedObjectMove" type="button" aria-pressed="false" title="Перетащить выбранный объект пальцем">↔ Переместить</button>
  <button id="selectedObjectRotate" type="button" title="Повернуть объект на 15 градусов">⟳ 15°</button>
  <div class="mobile-nudge" role="group" aria-label="Точное смещение объекта">
@@ -501,6 +503,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
+ <div id="mobileObjectEditorHeader" hidden><strong id="mobileObjectEditorTitle">Объект</strong><button id="mobileObjectMove" type="button" title="Переместить выделенный объект пальцем">↔ Двигать</button><button id="mobileObjectClose" type="button" aria-label="Свернуть редактор и открыть сцену">×</button></div>
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
  </div><div class="camera-focus"><button type="button" id="focusHouse">К дому</button><button type="button" id="focusSelected">К растению</button><button type="button" id="fit3dScene">Весь участок</button></div>
@@ -714,7 +717,7 @@ window.addEventListener('forma-house-pbr-ready',()=>{
  renderGate.invalidate();
  requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
 });
-const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
+const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
 const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
@@ -846,9 +849,7 @@ function showSelectedPineControls(){
  if(state.selected?.startsWith('object:')!==true||
     selectable(state.selected)?.obj?.catalogId!=='pine')return;
  if(window.innerWidth<=850){
-  document.body.dataset.mobilePine='true';
-  activateMobilePanel('details');
-  requestAnimationFrame(()=>{scrollToSelectedPine();requestAnimationFrame(scrollToSelectedPine)});
+  revealSelectedInspector();
   return;
  }
  // On desktop the inspector is after the (long) 18-house catalogue,
@@ -871,7 +872,13 @@ function showSelectedPineControls(){
 function revealSelectedInspector(){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return;
- if(window.innerWidth<=850){activateMobilePanel('details');return;}
+ if(window.innerWidth<=850){
+  state.mobileObjectCollapsed=false;
+  state.mobileMoveMode=false;
+  activateMobilePanel('details');
+  requestAnimationFrame(()=>{const panel=$('#right');if(panel)panel.scrollTop=0;});
+  return;
+ }
  const panel=$('#right'),dock=$('#objectInspectorDock');
  if(!panel||!dock)return;
  const reveal=()=>{
@@ -886,7 +893,7 @@ function selectPineById(id){
  if(!pine)return false;
  if(state.tool!=='select')chooseTool('select');
  state.selected='object:'+pine.id;state.drag=false;state.draggingMoved=false;
- renderProps();showSelectedPineControls();
+ renderProps();if(window.innerWidth<=850)revealSelectedInspector();else showSelectedPineControls();
  status((pine.catalogId==='pine'?'Сосна':pine.catalogId==='spruce'?'Ель':'Берёза')+' выбрана. Открыты параметры дерева.');
  return true;
 }
