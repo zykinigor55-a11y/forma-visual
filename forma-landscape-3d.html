@@ -1384,6 +1384,7 @@ function renderHouseLibrary(){
   push();house.archStyle=preset.id;house.modelKey=null;
   house.roof=house.type==='greenhouse'?'gable':house.type==='carport'?'flat':preset.roof;
   house.roofRise=house.roof==='flat'?.40:
+   preset.id==='alpha'?Math.max(4.2,Math.min(8,(house.width||8)*.79)):
    preset.id==='aframe'?Math.max(4.2,Math.min(6,(house.width||8)*.70)):
    Math.min(2.1,Math.max(.6,(house.width||8)*.22));
   state.housePreset=preset.id;save();rebuild();renderHouseLibrary();
