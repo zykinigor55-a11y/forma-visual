@@ -36,11 +36,11 @@ export function interiorLightLevels(raw){
  const g=Math.pow(c.windowGlow/100,1.08);
  return {
   enabled,
-  pointIntensity:enabled?0.5+17*b:0,
-  fixtureEmission:enabled?0.15+4.9*b:0,
-  windowEmission:enabled?(0.035+0.65*b)*(0.12+0.88*g):0,
-  floorEmission:enabled?0.035+0.21*b:0,
-  glassClarity:enabled?Math.min(.25,.15*b):0
+  pointIntensity:enabled?0.6+19*b:0,
+  fixtureEmission:enabled?0.18+5.8*b:0,
+  windowEmission:enabled?(0.045+1.35*b)*(0.08+0.92*g):0,
+  floorEmission:enabled?0.045+0.46*b:0,
+  glassClarity:enabled?Math.min(.40,.34*b):0
  };
 }
 export function nightInteriorPhotoContract(input){
