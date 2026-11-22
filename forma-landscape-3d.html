@@ -2166,12 +2166,22 @@ function setupWeatherIntensityControls(){
     if(!weatherGestureSaved){push();weatherGestureSaved=true}
     doc.atmosphere.effects=normalizeWeatherEffects({...doc.atmosphere.effects,[key]:el.value});
     // Source of truth is the same normalized project for all tabs, 3D and AI.
-    save();syncWeatherIntensityControls();queueWeatherSceneUpdate(false);
+    save();syncWeatherIntensityControls();
+    if(key==='snowTrees'){
+     // Instant foliage material/instance-colour update: no expensive GLB
+     // reconstruction while sliding; mobile foreground AND distant trees.
+     refreshAllTreeSnowPreview(root,doc.atmosphere);
+     renderGate.invalidate();
+    }else queueWeatherSceneUpdate(false);
    });
    el.addEventListener('change',()=>{
     if(!weatherGestureSaved)push();
     doc.atmosphere.effects=normalizeWeatherEffects({...doc.atmosphere.effects,[key]:el.value});
-    save();syncWeatherIntensityControls();queueWeatherSceneUpdate(true);
+    save();syncWeatherIntensityControls();
+    if(key==='snowTrees'){
+     refreshAllTreeSnowPreview(root,doc.atmosphere);
+     renderGate.invalidate();
+    }else queueWeatherSceneUpdate(true);
     weatherGestureSaved=false;
    });
   }
