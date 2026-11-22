@@ -114,6 +114,16 @@ function addRoof(T,g,profile){
  // through BOTH upper metal and lower soffit layers.
  for(const h of holeList){
   const side=-1,{u,v,du,dv}=h;
+  // Close the roof cassette around the punched aperture instead of leaving
+  // a paper-thin edge between the metal and the underlay.
+  for(const edgeU of [u,u+du])
+   beam(T,g,roofPoint(side,edgeU,v,-.040),
+    roofPoint(side,edgeU,v+dv,-.040),.057,.17,gasket,
+    'alpha-rooflight-insulated-side-reveal');
+  for(const edgeV of [v,v+dv])
+   beam(T,g,roofPoint(side,u,edgeV,-.040),
+    roofPoint(side,u+du,edgeV,-.040),.057,.17,gasket,
+    'alpha-rooflight-insulated-end-reveal');
   const windowShape=new T.Shape();
   windowShape.moveTo(u+.043,v+.042);
   windowShape.lineTo(u+du-.043,v+.042);
