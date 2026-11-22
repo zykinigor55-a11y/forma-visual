@@ -38,6 +38,8 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
   if(centre)viewCentre={x:clamp(centre.x,0,doc.site.width),y:clamp(centre.y,0,doc.site.height)};
   if(viewScale===1)viewCentre=null;
   applyCameraBox();
+  const labels=$('#lpPlanCallouts',modal);
+  if(labels)labels.outerHTML=planDimensions(doc.site.boundary||rectBoundary(doc.site.width,doc.site.height),planFontSize(),false);
  }
  function focusObject(){
   const obj=selected==='house'?doc.house:selected?.startsWith('building:')?doc.buildings.find(b=>b.id===selected.slice(9)):doc.objects.find(x=>x.id===selected);
@@ -91,25 +93,41 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
   }
   return null;
  }
- function planDimensions(bound,fs){
-  const size=fs*.68,boxes=[];
-  const dimText=(x,y,value)=>{
-   const lines=Array.isArray(value)?value:[value];
-   const width=Math.max(...lines.map(line=>[...line].length))*size*.59+size*.8;
-   const height=(lines.length*1.22+.4)*size;
-   const clampX=v=>clamp(v,width/2,Math.max(width/2,doc.site.width-width/2));
-   const clampY=v=>clamp(v,height/2,Math.max(height/2,doc.site.height-height/2));
-   const anchorX=x,anchorY=y;
-   const offsets=[[0,0],[0,-height],[0,height],[-width,0],[width,0],[0,2*height],[0,-2*height]];
-   for(const [dx,dy] of offsets){
-    x=clampX(anchorX+dx);y=clampY(anchorY+dy);
-    if(boxes.every(b=>Math.abs(x-b.x)>(width+b.width)/2+.1||Math.abs(y-b.y)>(height+b.height)/2+.1))break;
+ const planFontSize=()=>Math.max(.4,Math.min(doc.site.width,doc.site.height)*.027);
+ function planDimensions(bound,fs,full){
+  const view=full?{x:0,y:0,width:doc.site.width,height:doc.site.height}:cameraBox();
+  const canvas=!full&&$('#lpMap',modal),toolbar=canvas&&$('.lp-zoom-tools',modal);
+  const pixels=canvas?Math.min(canvas.clientWidth/view.width,canvas.clientHeight/view.height):0;
+  const size=pixels?clamp(fs*.68,11/pixels,14/pixels):fs*.68;
+  const boxes=[];
+  if(toolbar&&pixels){
+   const frame=canvas.getBoundingClientRect(),hud=toolbar.getBoundingClientRect();
+   const left=frame.left+(frame.width-view.width*pixels)/2,top=frame.top+(frame.height-view.height*pixels)/2;
+   boxes.push({x:view.x+(hud.left+hud.width/2-left)/pixels,
+    y:view.y+(hud.top+hud.height/2-top)/pixels,width:hud.width/pixels,height:hud.height/pixels});
+  }
+  const dimText=(anchorX,anchorY,value,details=value,itemId=null)=>{
+   if(anchorX<view.x||anchorX>view.x+view.width||anchorY<view.y||anchorY>view.y+view.height){
+    if(itemId||(!full&&viewScale>1))return '';
    }
-   boxes.push({x,y,width,height});
-   const guide=Math.hypot(anchorX-x,anchorY-y)>size
-    ?`<path d="M${anchorX} ${anchorY}L${x} ${y}" fill="none" stroke="#66756b" stroke-width=".045"/>`:'';
-   return guide+`<rect x="${x-width/2}" y="${y-height/2}" width="${width}" height="${height}" rx="${size*.22}" fill="#fffdf7" stroke="#938f7d" stroke-width=".035"/>`+
-    lines.map((line,i)=>`<text x="${x}" y="${y+(i-(lines.length-1)/2)*size*1.22}" text-anchor="middle" dominant-baseline="central" fill="#27352c" style="font:${size}px Arial,sans-serif;letter-spacing:normal;word-spacing:normal;stroke:none">${esc(line)}</text>`).join('');
+   const lines=Array.isArray(value)?value:[value];
+   const width=Math.max(...lines.map(line=>[...line].length))*size*.68+size;
+   const height=(lines.length*1.22+.48)*size,gap=size*.22;
+   if(width+2*gap>view.width||height+2*gap>view.height)return '';
+   const stepX=Math.min(width+gap,size*4),stepY=height+gap;
+   for(let ring=0;ring<=4;ring++)for(let row=-ring;row<=ring;row++)for(let col=-ring;col<=ring;col++){
+    if(Math.max(Math.abs(row),Math.abs(col))!==ring)continue;
+    const x=clamp(anchorX+col*stepX,view.x+width/2+gap,view.x+view.width-width/2-gap);
+    const y=clamp(anchorY+row*stepY,view.y+height/2+gap,view.y+view.height-height/2-gap);
+    if(boxes.some(b=>Math.abs(x-b.x)<(width+b.width)/2+gap&&Math.abs(y-b.y)<(height+b.height)/2+gap))continue;
+    boxes.push({x,y,width,height});
+    const guide=Math.abs(anchorX-x)>width/2||Math.abs(anchorY-y)>height/2
+     ?`<path d="M${anchorX} ${anchorY}L${x} ${y}" fill="none" stroke="#66756b" stroke-width="${size*.085}"/>`:'';
+    const hit=itemId&&!full&&mode==='select'?` data-object="${esc(itemId)}" pointer-events="all" style="cursor:pointer"`:'';
+    return guide+`<g${hit}><title>${esc([details].flat().join(' · '))}</title><rect x="${x-width/2}" y="${y-height/2}" width="${width}" height="${height}" rx="${size*.22}" fill="#fffdf7" stroke="#938f7d" stroke-width="${size*.07}"/>`+
+     lines.map((line,i)=>`<text x="${x}" y="${y+(i-(lines.length-1)/2)*size*1.22}" text-anchor="middle" dominant-baseline="central" fill="#27352c" style="font:${size}px Arial,sans-serif;letter-spacing:normal;word-spacing:normal;stroke:none">${esc(line)}</text>`).join('')+'</g>';
+   }
+   return '';
   };
   const metricValue=value=>num(value).replace('.',',');
   const measure=(a,b,caption,offset=fs*.46)=>{
@@ -119,34 +137,42 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
     dimText((a.x+b.x)/2+dx,(a.y+b.y)/2+dy,caption||metricValue(length)+' м');
   };
   const points=polygonArea(bound)>0&&bound.reduce((sum,p,i)=>{const q=bound[(i+1)%bound.length];return sum+p.x*q.y-q.x*p.y},0)>0?[...bound].reverse():bound;
-  let content=points.map((p,i)=>measure(p,points[(i+1)%points.length])).join('');
-  for(const b of [doc.house,...doc.buildings]){
+  let content=showDimensions?points.map((p,i)=>measure(p,points[(i+1)%points.length])).join(''):'';
+  if(showDimensions)for(const b of [doc.house,...doc.buildings]){
    const x=b.width/2,y=b.height/2;
    const radians=b.rotation*Math.PI/180;
    const point=(u,v)=>({x:b.x+u*Math.cos(radians)-v*Math.sin(radians),y:b.y+u*Math.sin(radians)+v*Math.cos(radians)});
    content+=measure(point(x,-y),point(-x,-y),metricValue(b.width)+' м',-fs*.55)+
     measure(point(x,y),point(x,-y),metricValue(b.height)+' м',-fs*.55);
   }
-  for(const [index,item] of doc.objects.entries()){
-   const entry=byId(item.catalogId);if(!entry)continue;
+  const objects=[...doc.objects.entries()];
+  if(selected){const index=objects.findIndex(([,item])=>item.id===selected);if(index>0)objects.unshift(...objects.splice(index,1));}
+  for(const [index,item] of objects){
+   const entry=byId(item.catalogId);if(!entry||(!full&&hiddenPlanLayers.has(entry.group)))continue;
    const name=(index+1)+'. '+entry.name;
+   const labelAt=(p,values)=>{
+    const details=showDimensions?[name,...values]:[name];
+    const compact=String(index+1);
+    const detailed=item.id===selected||full;
+    return (detailed?dimText(p.x,p.y,details,details,item.id):'')||dimText(p.x,p.y,compact,details,item.id);
+   };
    if(item.points?.length){
     const p=planLabelPoint(item,entry.group);if(!p)continue;
     const values=entry.group==='pavers'||item.geometry==='strip'
      ?['Длина '+metricValue(lineLength(item.points))+' м','Ширина '+metricValue(item.width)+' м']
      :['Площадь '+metricValue(areaFor(doc,item))+' м²'];
-    content+=dimText(p.x,p.y,[name,...values]);
+    content+=labelAt(p,values);
    }else{
-    const lines=[name];
+    const lines=[];
     if(Number(item.diameter)>0)lines.push((['trees','shrubs'].includes(entry.group)?'Крона ':'Диаметр ')+metricValue(item.diameter)+' м');
     if(Number(item.height)>0)lines.push('Высота '+metricValue(item.height)+' м');
-    content+=dimText(item.x,item.y,lines);
+    content+=labelAt(item,lines);
    }
   }
-  return '<g font-family="Arial,sans-serif" pointer-events="none">'+content+'</g>';
+  return '<g id="lpPlanCallouts" font-family="Arial,sans-serif" pointer-events="none">'+content+'</g>';
  }
  function drawSvg(full=false,finished=false){
-  const w=doc.site.width,h=doc.site.height,max=Math.max(w,h),fs=Math.max(.4,Math.min(w,h)*.027),bound=doc.site.boundary||rectBoundary(w,h);
+  const w=doc.site.width,h=doc.site.height,max=Math.max(w,h),fs=planFontSize(),bound=doc.site.boundary||rectBoundary(w,h);
   const planIcon=finished?fallbackIconURL:iconURL;
   const buildingName=b=>({house:'Дом',bath:'Баня',garage:'Гараж',gazebo:'Беседка',
    outbuilding:'Хозпостройка',greenhouse:'Теплица',carport:'Навес'})[b.type]||'Постройка';
@@ -210,17 +236,6 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
   const house=doc.house,w2=house.width/2,h2=house.height/2;
   if(finished){
    shapes+=[house,...doc.buildings].map(footprint).join('');
-   if(!showDimensions)for(const item of doc.objects){
-    const entry=byId(item.catalogId);if(!entry)continue;
-    if(item.points?.length){
-     const centre=planLabelPoint(item,entry.group);
-     if(centre)shapes+=annotation(centre.x,centre.y,entry.name);
-    }else{
-     const edge=item.y+(Number(item.diameter)||.5)/2;
-     const y=edge+fs*.42<h?edge+fs*.42:item.y-(Number(item.diameter)||.5)/2-fs*.42;
-     shapes+=annotation(item.x,clamp(y,fs*.45,h-fs*.45),entry.name);
-    }
-   }
    const scale=[1,2,5,10,20,50,100].filter(m=>m<=w*.22).at(-1)||1;
    const x=w*.045,y=h*.96;
    shapes+='<g font-family="Georgia,serif" fill="#34372d"><path d="M'+x+' '+y+'h'+scale+'" stroke="#fffdf6" stroke-width=".24"/><path d="M'+x+' '+y+'h'+scale/2+'" stroke="#34372d" stroke-width=".24"/><text x="'+(x+scale/2)+'" y="'+(y-.21)+'" text-anchor="middle" font-size="'+fs*.64+'" stroke="#fffdf6" stroke-width=".08" paint-order="stroke">'+scale+' м</text></g>';
@@ -237,7 +252,7 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
    }
   shapes+=`<text x="${house.x}" y="${house.y}" font-size="${fs*.65}" fill="#fff7dc" stroke="#201b18" stroke-width=".1" paint-order="stroke" text-anchor="middle" font-weight="700">${({house:'ДОМ',bath:'БАНЯ',garage:'ГАРАЖ',gazebo:'БЕСЕДКА',outbuilding:'ПОСТРОЙКА'})[house.type]}</text>`;
   }
-  if(!finished&&(!preview||!photoVisible))shapes+=`<g fill="#3e5544" font-size="${fs*.7}" font-family="Arial,sans-serif"><text x="${w*.5}" y="${h*.02+fs*.8}" text-anchor="middle">${num(w)} м</text><text x="${fs*.6}" y="${h*.5}" text-anchor="middle" transform="rotate(-90 ${fs*.6} ${h*.5})">${num(h)} м</text></g>`;
+  if(!showDimensions&&!finished&&(!preview||!photoVisible))shapes+=`<g fill="#3e5544" font-size="${fs*.7}" font-family="Arial,sans-serif"><text x="${w*.5}" y="${h*.02+fs*.8}" text-anchor="middle">${num(w)} м</text><text x="${fs*.6}" y="${h*.5}" text-anchor="middle" transform="rotate(-90 ${fs*.6} ${h*.5})">${num(h)} м</text></g>`;
   if(!preview||!photoVisible)shapes+=`<g transform="translate(${w*.92} ${h*.1}) rotate(${doc.north})"><path d="M0 -1L-.22 .6L0 .3L.22 .6Z" fill="#263a2a"/><text y="-1.3" text-anchor="middle" font-size="${fs*.7}" fill="#263a2a">С</text></g>`;
   if(preview&&photoVisible){
    shapes+=`<g data-house="yes" transform="translate(${house.x} ${house.y}) rotate(${house.rotation})"><rect x="${-w2}" y="${-h2}" width="${house.width}" height="${house.height}" fill="transparent" stroke="${selected==='house'?'#f5c27d':'transparent'}" stroke-width=".12" pointer-events="all"/></g>`;
@@ -266,7 +281,7 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
    for(const p of points)shapes+='<circle cx="'+p.x+'" cy="'+p.y+'" r=".18" fill="#fff0c5" stroke="#a46e35" stroke-width=".06" pointer-events="none"/>';
   }
   if(!finished)shapes+=atmosphereOverlay();
-  if(showDimensions&&(finished||!preview||!photoVisible))shapes+=planDimensions(bound,fs);
+  if(finished||(showDimensions&&(!preview||!photoVisible)))shapes+=planDimensions(bound,fs,full);
   return `<svg id="lpSvg" xmlns="http://www.w3.org/2000/svg" width="1400" height="1400" viewBox="${full?"0 0 "+w+" "+h:Object.values(cameraBox()).join(" ")}" preserveAspectRatio="xMidYMid meet">${shapes}</svg>`;
  }
  function position(e){
@@ -496,6 +511,7 @@ function drawMap(){
   selected=node?.dataset.object||(aux?'building:'+aux.dataset.building:house?'house':null);
   if(!selected){draw();return}
   const obj=selected==='house'?doc.house:selected.startsWith('building:')?doc.buildings.find(b=>b.id===selected.slice(9)):doc.objects.find(x=>x.id===selected),control=e.target.closest('[data-vertex]');
+  if(node?.tagName==='g'&&node.firstElementChild?.tagName==='title'){draw();return;}
   drag={pointer:e.pointerId,id:selected,index:control?Number(control.dataset.vertex):null,start:p,client:{x:e.clientX,y:e.clientY},didMove:false,original:JSON.parse(JSON.stringify(obj))};
   try{$('#lpSvg',modal).setPointerCapture(e.pointerId)}catch{}drawInspector();syncPlanTouchDock();
  }
