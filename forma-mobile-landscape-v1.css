@@ -19,7 +19,7 @@
     border-radius:17px 17px 12px 12px;background:rgba(35,37,42,.975);
     border:1px solid #66686c;box-shadow:0 12px 55px #090a0dbb;
     scrollbar-width:thin;overscroll-behavior:contain}
-  body[data-mobile-panel="tools"] #left,
+  body[data-mobile-panel="tools"] #left{display:flex}
   body[data-mobile-panel="details"] #right{display:flex;height:min(48dvh,440px)}
   #left{min-width:0;overflow:hidden}
   #left>.heading:first-child{padding:11px 13px 3px;font-size:10px;letter-spacing:.07em}
