@@ -224,6 +224,10 @@ export function addScandiGableCladding(T,group,{
    }else v.push([x,(top+bottom)*.5,w,top-bottom]);
   }
   segmentBoards(T,facade,v,plank,'scandi-gable-vertical-boards',.137);
+  // Structural eave-level head closes the 90mm joint between the measured
+  // ground-floor wall and the real ventilated gable weather membrane.
+  addBox(facade,T,width,.092,.095,0,bodyHeight-.040,.098,
+   backer,'scandi-gable-structural-header');
   addBox(facade,T,width,.012,.012,0,bodyHeight+.025,.110,
    backer,'gable-timber-starter');
   if(windowed){
