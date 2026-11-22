@@ -190,3 +190,49 @@ body :is(input,select,textarea,button):focus-visible{
 html[data-forma-theme="dark"] body:not(:has(#shell #viewport)){
  background-color:#15161a!important;color:#eeedf1;
 }
+
+
+/* FORMA 3D | premium mobile scene controls: quiet neutral graphite,
+   keep the architecture in focus, no green chrome over the image. */
+body:has(#shell #viewport) #sceneCameraCycle{
+ background:#22252BEC!important;color:#ECEAE5!important;border-color:#686C73!important;
+ box-shadow:0 5px 17px #0006!important;
+}
+body:has(#shell #viewport) #selectedObjectDock{
+ background:#24262CEC!important;border-color:#666870!important;
+ box-shadow:0 5px 18px #0008!important;
+}
+body:has(#shell #viewport) #selectedObjectDelete{
+ background:#493639!important;border-color:#96777C!important;color:#FAEFEC!important;
+}
+body:has(#shell #viewport) #sceneQuickTools{
+ background:#202228E8!important;border-color:#51555E!important;
+ box-shadow:0 5px 17px #0005!important;
+}
+body:has(#shell #viewport) #sceneQuickTools button{
+ background:#2B2E35!important;border-color:#50525A!important;
+ color:#D9DADE!important;
+}
+body:has(#shell #viewport) #sceneQuickTools button.active{
+ background:#575044!important;border-color:#B3A284!important;color:#FFF4E2!important;
+}
+body:has(#shell #viewport) #mobileWorkspaceTabs button.active{
+ background:#D0C7B7!important;color:#242428!important;border-color:#AC9879!important;
+}
+@media(max-width:850px){
+ body:has(#shell #viewport)[data-mobile-panel="scene"] .scene-quick-actions{
+  top:7px;gap:3px;padding:4px;border-radius:11px;
+ }
+ body:has(#shell #viewport)[data-mobile-panel="scene"] .scene-quick-actions button{
+  font-size:10px;min-height:35px;padding:5px 7px;
+ }
+ body:has(#shell #viewport)[data-mobile-panel="scene"] .scene-quick-actions button svg{
+  width:19px!important;height:19px!important;
+ }
+ body:has(#shell #viewport)[data-mobile-panel="scene"] #mobileWorkspaceTabs{
+  box-shadow:0 5px 18px #0007;
+ }
+ body:has(#shell #viewport) .panel{
+  box-shadow:0 10px 36px #05050880;
+ }
+}
