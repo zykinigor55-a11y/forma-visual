@@ -388,7 +388,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
 <link rel="stylesheet" href="forma-graphite-unified-v2.css?v=graphite-universal-20261119">
 <link rel="stylesheet" href="forma-graphite-only-v3.css?v=graphite-polish-9-20261122">
-<link rel="stylesheet" href="forma-mobile-landscape-v1.css?v=touch-first-20261122">
+<link rel="stylesheet" href="forma-mobile-landscape-v1.css?v=touch-first-compact-v2-20261122">
 </head>
 <body>
 <div id="shell">
@@ -650,7 +650,7 @@ import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=snow-night-project-v1-20261122';
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
-import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=alpha-snow-night-v1-20261122';
+import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=night-window-switch-v2-20261122';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -687,7 +687,7 @@ import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terra
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
 import {addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
-import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape-3d-snow-canopy.js?v=snow-canopy-v1-20261122';
+import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape-3d-snow-canopy.js?v=snow-canopy-opaque-glb-v2-20261122';
 import {normalizeNightInterior,nightInteriorMode} from './forma-landscape-3d-night-interior.js?v=night-interior-v1-20261122';
 import {createOutdoorReflectionMap,updateOutdoorReflectionMap} from './forma-landscape-3d-environment.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
