@@ -13,6 +13,7 @@ import {createReadStream} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {apiMarketEdit} from './api-market.mjs';
 import {createRenderJobQueue} from './forma-render-jobs.mjs';
+import {creatureById} from './forma-landscape-3d-creatures.js';
 import {createEnhancementPrompt} from './forma-enhancement-prompt.js';
 import {landscapePrompt,atmospherePrompt,normalizeAtmosphere,materialTextPrompt,materialCropPrompt} from './forma-art-direction-core.js';
 import {imageTaskPrompt,normalizeImageTask,assertSeriesSource} from './forma-image-workflows.js';
@@ -432,7 +433,44 @@ async function serveStatic(req,res){let pathname;try{pathname=decodeURIComponent
 const planVision=createPlanVision({json,readJSON,sameOrigin});
 const wanVideo=createWanVideo({json,readJSON,sameOrigin,imageBlob});
 const wan3Video=createWan3Video({json,readJSON,sameOrigin,imageBlob});
+// Same-origin, allowlisted proxy: never arbitrary URLs, never external user input.
+const creatureCache=new Map(),MAX_CREATURE_FILE=8*1024*1024;
+async function serveCreatureGLB(req,res){
+ const match=req.url?.match(/^\/api\/creatures\/(creature-[a-z-]+)\.glb$/);
+ const item=match&&creatureById(match[1]);
+ if(!item)return json(res,404,{error:'3D-персонаж не найден'});
+ if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Метод запрещён'});
+ try{
+  let bytes=creatureCache.get(item.id);
+  if(!bytes){
+   const controller=new AbortController();
+   const timeout=setTimeout(()=>controller.abort(),25000);
+   try{
+    const upstream=await fetch(item.nativeGLB,{signal:controller.signal,headers:{Accept:'model/gltf-binary,application/octet-stream'}});
+    if(!upstream.ok)throw Error('Источник GLB вернул HTTP '+upstream.status);
+    if(Number(upstream.headers.get('content-length')||0)>MAX_CREATURE_FILE)
+     throw Error('Файл превышает бюджет памяти');
+    const buffer=await upstream.arrayBuffer();
+    bytes=Buffer.from(buffer);
+    if(bytes.length>MAX_CREATURE_FILE||bytes.length<20||bytes.toString('ascii',0,4)!=='glTF')
+     throw Error('Источник не вернул валидный GLB до 8 МБ');
+    if(creatureCache.size>=4)creatureCache.delete(creatureCache.keys().next().value);
+    creatureCache.set(item.id,bytes);
+   }finally{clearTimeout(timeout)}
+  }
+  res.writeHead(200,{'Content-Type':'model/gltf-binary','Content-Length':bytes.length,
+   'X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=86400',
+   'Referrer-Policy':'no-referrer'});
+  if(req.method==='HEAD')return res.end();
+  return res.end(bytes);
+ }catch(error){
+  console.warn('[CREATURE-GLB]',item.id,error?.message||error);
+  return json(res,502,{error:'Проверенный CC0 GLB временно недоступен. Объект не заменён подделкой.',
+   model:item.id});
+ }
+}
 const server=http.createServer(async(req,res)=>{
+ if(req.url?.startsWith('/api/creatures/'))return serveCreatureGLB(req,res);
  if(req.url?.startsWith('/api/wan3/'))return wan3Video.handle(req,res);
  if(req.url?.startsWith('/api/wan/'))return wanVideo.handle(req,res);
  // Public non-secret release identity, so designers can distinguish
