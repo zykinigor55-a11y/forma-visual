@@ -173,3 +173,27 @@
 @media(min-width:851px){
  #selectedObjectDock .mobile-nudge,#selectedObjectDock #selectedObjectDone{display:none}
 }
+
+/* Mobile precision tools: preserve the viewport above the translucent dock. */
+@media(max-width:850px){
+ #selectedObjectDock #selectedObjectPosition{
+  flex:1 1 100%;display:block;text-align:center;color:#bdbdbb;font-size:11px;
+  font-variant-numeric:tabular-nums;padding-bottom:3px;
+ }
+ #selectedObjectDock .mobile-move-settings{
+  width:100%;display:grid;grid-template-columns:1fr 1fr;gap:6px;
+ }
+ #selectedObjectDock .mobile-move-settings button{
+  min-height:44px;font-size:11px;padding:7px 3px;
+ }
+ #selectedObjectDock #selectedObjectMagnet[aria-pressed="true"]{
+  background:#625b4d;color:#f2e2c2;border-color:#b49c78;
+ }
+ #selectedObjectDock:not([hidden]){max-height:min(340px,calc(100dvh - 150px))}
+ body[data-mobile-panel="scene"]:has(#selectedObjectDock:not([hidden])) #status{
+  bottom:calc(315px + env(safe-area-inset-bottom,0px));
+ }
+}
+@media(min-width:851px){
+ #selectedObjectDock .mobile-move-settings,#selectedObjectDock #selectedObjectPosition{display:none}
+}
