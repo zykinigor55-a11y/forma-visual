@@ -7,7 +7,7 @@
 export const SCANDI_DETAIL=Object.freeze({
  // Two distinct real vertical timber finishes: silver-weathered ash-grey
  // and deeply smoked graphite. Never replace the siding with stucco.
- mainWood:'#919897',accentWood:'#50585B',
+ mainWood:'#7E8789',accentWood:'#42494D',
  // The APR 10 reference profile is 21.5 × 94 mm with 84 mm cover.
  // Upright boards and a ~10mm shadow joint, ventilated behind the boards.
  boardWidth:.084,boardPitch:.094,boardDepth:.0215,ventilationCavity:.029,
@@ -18,7 +18,9 @@ export function scandiEntranceBand(frontOpenings=[],width=8){
  const door=frontOpenings.find(o=>o.kind==='door');
  if(!door)return null;
  const w=Math.max(2,Number(width)||8);
- const band=Math.max(1.36,Math.min(2.26,door.width+.96,w*.42));
+ // A distinctly readable second timber plane frames the entrance, with
+ // the same 94mm upright profile. Measured apertures are never filled.
+ const band=Math.max(2.35,Math.min(3.7,door.width+2.00,w*.38));
  return {left:Math.max(-w*.5+.10,door.x-band*.5),
   right:Math.min(w*.5-.10,door.x+band*.5),doorX:door.x};
 }
