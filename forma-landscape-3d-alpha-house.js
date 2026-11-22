@@ -165,6 +165,7 @@ function addFacades(T,g,{w,d,eave,rise,half},night){
  const cladding=alphaGraphitePBR(T,w);
  const frame=finish(T,'#262D30',.39,.21);
  const doorW=Math.min(w*.67,Math.max(2.3,w-1.1));
+ const doorBottom=.49;
  const doorTop=Math.min(glassBase-.11,2.61);
  const glassHalf=half*(1-(glassBase-eave)/rise)-.12;
  const top=peak-.34;
