@@ -1,3 +1,4 @@
+import {alphaOpeningPlanes,ALFA_OPENING_DETAIL} from './forma-landscape-3d-alpha-openings.js';
 /* FORMA / ALFA: transparent architectural window assembly.
  * Architectural visualization only, not manufacturer shop drawings.
  * Units: metres; facade front is local +Z.
@@ -43,89 +44,119 @@ function glassMaterial(T,{night=false,inner=false}={}){
   envMapIntensity:inner?.62:1.22
  });
 }
-export function addAlphaGlazedFacade(T,g,{w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night=false}){
- const frame=finish(T,'#262D30',.32,.25),sash=finish(T,'#30393B',.4,.13);
- const seal=finish(T,'#151C1D',.92,.015),spacer=finish(T,'#555A55',.55,.26);
- const innerWood=finish(T,'#786D5F',.77,.015);
- const outerGlass=glassMaterial(T,{night}),innerGlass=glassMaterial(T,{night,inner:true});
- const topW=Math.max(0,top-glassBase),frameDepth=.082;
- const doorBottom=.49,doorH=doorTop-doorBottom,midY=(doorTop+doorBottom)*.5;
- const doorZ=front+.037,leafW=doorW/4;
- // Two separate transparent glass leaves in the true gable void,
- // not a solid tinted polygon that completely hides the house.
- addTriangle(T,g,glassHalf,top,glassBase,front+.040,innerGlass,'alpha-gable-glass-interior-leaf');
- addTriangle(T,g,glassHalf,top,glassBase,front+.083,outerGlass,'alpha-gable-glass-exterior-leaf');
+export function addAlphaGlazedFacade(T,g,{
+ w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night=false
+}){
+ const planes=alphaOpeningPlanes(front),{zOuter,zInner,zFrameFront,zFrameBack,
+  zGlassOuter,zGlassInner}=planes;
+ const thickness=ALFA_OPENING_DETAIL.frameDepth;
+ // ALL profiles, seals, glazing, tracks and handles use the same cassette.
+ // The old front + 0.0xx offsets made the window appear glued ON the facade.
+ const zFrameCenter=(zFrameFront+zFrameBack)*.5;
+ const frame=finish(T,'#252D30',.37,.22),
+  sash=finish(T,'#30383B',.42,.15),
+  seal=finish(T,'#171D1F',.96,.02),
+  spacer=finish(T,'#4A504D',.58,.18),
+  wood=finish(T,'#82705D',.79,.01),
+  trackMat=finish(T,'#636965',.48,.31);
+ const outerGlass=glassMaterial(T,{night}),
+  innerGlass=glassMaterial(T,{night,inner:true});
+ const doorBottom=.49,doorHeight=doorTop-doorBottom,
+  midY=(doorBottom+doorTop)*.5,leafW=doorW/4,doorHalf=doorW*.5;
+ // The triangular IG glazing is installed 140mm behind the PBR cladding.
+ // A 6-20-6 mm unit has two real thin glass shells 26mm apart.
+ addTriangle(T,g,glassHalf,top,glassBase,zGlassInner,
+  innerGlass,'alpha-gable-glass-interior-leaf');
+ addTriangle(T,g,glassHalf,top,glassBase,zGlassOuter,
+  outerGlass,'alpha-gable-glass-exterior-leaf');
  for(const side of [-1,1]){
-  addBeam(T,g,[side*glassHalf,glassBase,front+.095],[0,top,front+.095],
-   .074,frame,'alpha-triangle-exterior-frame');
-  addBeam(T,g,[side*(glassHalf-.022),glassBase+.028,front+.119],
-   [0,top-.058,front+.119],.012,seal,'alpha-triangle-glazing-gasket');
-  // Interior warm timber frame is visible through transparent glass,
-  // recessed 170 mm behind the aluminium outer frame.
-  addBeam(T,g,[side*glassHalf,glassBase,front-.170],
-   [0,top,front-.170],.115,innerWood,'alpha-interior-glazed-rafter');
+  addBeam(T,g,[side*glassHalf,glassBase,zFrameCenter],
+   [0,top,zFrameCenter],.075,frame,'alpha-triangle-exterior-frame');
+  addBeam(T,g,[side*(glassHalf-.02),glassBase+.028,zFrameFront-.011],
+   [0,top-.046,zFrameFront-.011],.012,seal,'alpha-triangle-glazing-gasket');
+  // All interior wood lies BEHIND the inner wall, never across glass.
+  addBeam(T,g,[side*glassHalf,glassBase,zInner-.08],
+   [0,top,zInner-.08],.106,wood,'alpha-interior-glazed-rafter');
  }
- addBox(T,g,[glassHalf*2,.069,.104],[0,glassBase,front+.090],frame,'alpha-triangle-base-profile');
- addBox(T,g,[glassHalf*2-.06,.012,.015],[0,glassBase+.045,front+.143],seal,'alpha-triangle-base-gasket');
+ addBox(T,g,[glassHalf*2,.080,thickness],
+  [0,glassBase,zFrameCenter],frame,'alpha-triangle-base-profile');
+ addBox(T,g,[glassHalf*2-.075,.011,.013],
+  [0,glassBase+.041,zFrameFront-.011],seal,'alpha-triangle-base-gasket');
+ const height=top-glassBase;
  for(const fraction of [.35,.67]){
-  const y=glassBase+topW*fraction,span=glassHalf*(1-fraction);
-  addBox(T,g,[span*2,.057,.077],[0,y,front+.106],frame,'alpha-triangle-horizontal-transom');
-  addBox(T,g,[span*2-.06,.010,.013],[0,y+.029,front+.153],seal,'alpha-triangle-transom-gasket');
+  const y=glassBase+height*fraction,span=glassHalf*(1-fraction);
+  addBox(T,g,[span*2,.055,thickness],
+   [0,y,zFrameCenter],frame,'alpha-triangle-horizontal-transom');
+  addBox(T,g,[span*2-.065,.009,.012],
+   [0,y+.031,zFrameFront-.014],seal,'alpha-triangle-transom-gasket');
  }
- // Separate slender mullions follow their triangular top intersections.
  for(const x of [-glassHalf*.51,0,glassHalf*.51]){
-  const stop=top-topW*Math.abs(x)/glassHalf;
-  addBox(T,g,[.064,stop-glassBase,.077],[x,(stop+glassBase)*.5,front+.109],
-   frame,'alpha-gable-full-height-mullion');
+  const stop=top-height*Math.abs(x)/glassHalf;
+  addBox(T,g,[.056,stop-glassBase,thickness],
+   [x,(stop+glassBase)*.5,zFrameCenter],frame,'alpha-gable-full-height-mullion');
  }
- // The actual uppermost ventilation apex is timber, not glass.
+ // Small warm timber apex, separate from the glazed triangular void.
+ // The z offset is deliberately 5mm above facade to avoid Z-fighting.
  const apexW=half*(1-(top-eave)/rise)-.10;
- addTriangle(T,g,apexW,eave+rise-.10,top,front+.006,
-  innerWood,'alpha-apex-sealed-timber-infill');
- // Continuous drained four-panel sliding glass door at the reference opening.
- addBox(T,g,[doorW+.125,.073,.123],[0,doorTop,doorZ],frame,'alpha-sliding-head-profile');
- addBox(T,g,[doorW+.125,.054,.113],[0,doorBottom,doorZ],frame,'alpha-sliding-thermal-threshold');
- for(const x of [-doorW*.5,doorW*.5]){
-  addBox(T,g,[.072,doorH+.075,.111],[x,midY,doorZ],frame,'alpha-sliding-exterior-jamb');
+ addTriangle(T,g,apexW,eave+rise-.10,top,zOuter+.005,
+  wood,'alpha-apex-sealed-timber-infill');
+ // Sliding aperture's opening remains exactly the same; the actual window
+ // frame lives INSIDE the 240mm-thick wall, not on the exterior.
+ addBox(T,g,[doorW+.075,.081,thickness],
+  [0,doorTop-.017,zFrameCenter],frame,'alpha-sliding-head-profile');
+ addBox(T,g,[doorW+.075,.068,thickness],
+  [0,doorBottom+.018,zFrameCenter],frame,'alpha-sliding-thermal-threshold');
+ for(const x of [-doorHalf+.035,doorHalf-.035]){
+  addBox(T,g,[.069,doorHeight-.05,thickness],
+   [x,midY,zFrameCenter],frame,'alpha-sliding-exterior-jamb');
+  addBox(T,g,[.013,doorHeight-.10,.011],
+   [x,midY,zFrameFront-.009],seal,'alpha-sliding-jamb-gasket');
  }
- // Four distinct insulated glass units; fine near-black seals remain
- // visible without turning each window into a thick solid panel.
+ // Four independent double glazing units at the same 140mm reveal depth.
  for(let i=0;i<4;i++){
-  const center=-doorW/2+(i+.5)*leafW;
-  const revealWidth=leafW-.087,revealHeight=doorH-.123;
-  addBox(T,g,[revealWidth,revealHeight,.0035],
-   [center,midY,front+.052],outerGlass,'alpha-sliding-low-iron-exterior-pane');
-  addBox(T,g,[revealWidth,revealHeight,.0035],
-   [center,midY,front-.013],innerGlass,'alpha-sliding-low-iron-interior-pane');
-  // A dark warm-edge spacer visible within the glazing cavity.
+  const x=-doorHalf+(i+.5)*leafW;
+  const glassW=leafW-.099,glassH=doorHeight-.16;
+  const atY=midY;
+  addBox(T,g,[glassW,glassH,ALFA_OPENING_DETAIL.paneThickness],
+   [x,atY,zGlassOuter],outerGlass,'alpha-sliding-low-iron-exterior-pane');
+  addBox(T,g,[glassW,glassH,ALFA_OPENING_DETAIL.paneThickness],
+   [x,atY,zGlassInner],innerGlass,'alpha-sliding-low-iron-interior-pane');
   for(const side of [-1,1]){
-   addBox(T,g,[.008,revealHeight,.010],
-    [center+side*(revealWidth/2-.013),midY,front+.022],
+   addBox(T,g,[.008,glassH,.010],
+    [x+side*(glassW*.5-.015),atY,(zGlassOuter+zGlassInner)*.5],
     spacer,'alpha-sliding-glass-spacer-vertical');
-   addBox(T,g,[revealWidth,.008,.010],
-    [center,midY+side*(revealHeight/2-.014),front+.022],
+   addBox(T,g,[glassW,.008,.010],
+    [x,atY+side*(glassH*.5-.015),(zGlassOuter+zGlassInner)*.5],
     spacer,'alpha-sliding-glass-spacer-horizontal');
   }
  }
  for(let i=1;i<4;i++){
-  const x=-doorW*.5+i*leafW;
-  addBox(T,g,[.053,doorH,.09],[x,midY,front+.070],sash,'alpha-sliding-slim-sash');
-  addBox(T,g,[.014,doorH-.10,.016],[x,midY,front+.128],seal,'alpha-sliding-mullion-rubber-gasket');
+  const x=-doorHalf+i*leafW;
+  addBox(T,g,[.056,doorHeight-.05,thickness],
+   [x,midY,zFrameCenter],sash,'alpha-sliding-slim-sash');
+  addBox(T,g,[.012,doorHeight-.13,.015],
+   [x,midY,zFrameFront-.011],seal,'alpha-sliding-mullion-rubber-gasket');
  }
- const track=finish(T,'#585E5A',.43,.28);
- for(const x of [-.042,.042])
-  addBox(T,g,[doorW-.12,.007,.014],[0,doorBottom+.028,front+x],
-   track,'alpha-drained-dual-rail');
- const handle=finish(T,'#A8A9A2',.36,.35);
- for(const x of [-.079,.079]){
-  addBox(T,g,[.016,.176,.020],[x,1.41,front+.135],handle,'alpha-sliding-recessed-pull');
-  addBox(T,g,[.022,.031,.027],[x,1.41,front+.133],seal,'alpha-sliding-handle-mount');
+ // Both rail grooves belong to the thermally drained sill, not the deck.
+ for(const zz of [zFrameFront-.020,zFrameFront-.058]){
+  addBox(T,g,[doorW-.17,.006,.013],
+   [0,doorBottom+.041,zz],trackMat,'alpha-drained-dual-rail');
+ }
+ const handle=finish(T,'#9EA29E',.34,.38);
+ for(const x of [-.068,.068]){
+  addBox(T,g,[.020,.17,.017],
+   [x,1.42,zFrameFront-.013],handle,'alpha-sliding-recessed-pull');
+  addBox(T,g,[.028,.034,.020],
+   [x,1.42,zFrameFront-.019],seal,'alpha-sliding-handle-mount');
  }
  g.userData.alphaFenestration={
-  gable:'two lightly transparent panes, aluminium mullions and timber rafters',
-  entry:'four low-iron double-pane sliding leaves',
-  doubleGlazed:true,glazingTransparent:true,
-  visualSpecificationOnly:true
+  gable:'recessed 6-20-6 IG assembly and 240mm jamb wall',
+  entry:'four recessed low-iron insulated sliding leaves',
+  doubleGlazed:true,glazingTransparent:true,visualSpecificationOnly:true,
+  outerFacadeZ:zOuter,innerWallZ:zInner,windowFrontZ:zFrameFront,
+  glassOuterZ:zGlassOuter,glassInnerZ:zGlassInner,
+  wallThicknessM:ALFA_OPENING_DETAIL.wallThickness,
+  frameRecessM:ALFA_OPENING_DETAIL.frameRecess
  };
 }
 export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false}){
