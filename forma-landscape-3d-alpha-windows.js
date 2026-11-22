@@ -1,5 +1,5 @@
 import {alphaOpeningPlanes,ALFA_OPENING_DETAIL} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
-import {normalizeNightInterior,interiorLightColor} from './forma-landscape-3d-night-interior.js';
+import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js';
 /* FORMA / ALFA: transparent architectural window assembly.
  * Architectural visualization only, not manufacturer shop drawings.
  * Units: metres; facade front is local +Z.
@@ -34,14 +34,14 @@ function addTriangle(T,g,x,yTop,yBase,z,mat,part){
  m.userData.architecturePart=part;g.add(m);return m;
 }
 function glassMaterial(T,{night=false,inner=false,interior=null}={}){
- const cfg=normalizeNightInterior(interior);
- const lit=night&&cfg.lightsEnabled&&cfg.brightness>0,
+ const cfg=normalizeNightInterior(interior),levels=interiorLightLevels(cfg);
+ const lit=night&&levels.enabled,
   visible=lit&&cfg.visibility!=='off',
   clarity=cfg.visibility==='full'?1:cfg.visibility==='partial'?.55:0;
  // Source geometry, glazed area, two pane depths and 140mm installation
  // are untouched. Only authored translucency and indoor light change.
  const baseOpacity=inner?.20:night?.69:.76;
- const opacity=visible?inner?.12:Math.max(.37,.69-.21*clarity):
+ const opacity=visible?(inner?.10:Math.max(.25,.69-.21*clarity-levels.glassClarity)):
   night?(inner?.22:.81):baseOpacity;
  const temp=interiorLightColor(cfg.temperature);
  const m=new T.MeshPhysicalMaterial({
@@ -50,7 +50,7 @@ function glassMaterial(T,{night=false,inner=false,interior=null}={}){
   transparent:true,opacity,depthWrite:false,side:T.DoubleSide,ior:1.52,
   clearcoat:.76,clearcoatRoughness:.055,envMapIntensity:inner?.40:1.38,
   emissive:temp,
-  emissiveIntensity:visible?cfg.windowGlow/100*(inner?.015:.055):0
+  emissiveIntensity:visible?levels.windowEmission*(inner?.24:1):0
  });
  m.userData.alphaSmokedGlass={
   tinted:true,tint:'graphite-smoke',isInnerLeaf:inner,
@@ -174,8 +174,8 @@ export function addAlphaGlazedFacade(T,g,{
  };
 }
 export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false,interior=null}){
- const cfg=normalizeNightInterior(interior),
-  lit=night&&cfg.lightsEnabled&&cfg.brightness>0,
+ const cfg=normalizeNightInterior(interior),levels=interiorLightLevels(cfg),
+  lit=night&&levels.enabled,
   readable=!night||lit&&cfg.visibility!=='off';
  const indoorGroup=new T.Group();indoorGroup.name='alpha-furnished-interior';
  g.add(indoorGroup);
@@ -186,6 +186,13 @@ export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false,inte
  const wood=finish(T,'#6A5B4E',.89,0),timber=finish(T,'#86725E',.76,.01);
  const dark=finish(T,'#373C39',.95),warm=finish(T,'#B3A086',.92);
  const metal=finish(T,'#353738',.59,.19);
+ // Real oak floor and timber pick up subtle indirect warm bounce from indoor fixtures.
+ if(lit){
+  const hue=interiorLightColor(cfg.temperature);
+  for(const [surface,amount] of [[wood,levels.floorEmission],[timber,levels.floorEmission*.45],[warm,levels.floorEmission*.7]]){
+   surface.emissive.set(hue);surface.emissiveIntensity=amount;
+  }
+ }
  const zBack=-d/2+.48,depth=d-.90;
  // Visible timber floor recedes from transparent entrance to back wall.
  addBox(T,g,[w-.70,.065,depth],[0,.505,(zBack+d/2-.42)/2],
@@ -226,16 +233,16 @@ export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false,inte
  // outside without making the facade an unrealistic backlit billboard.
  const lamp=new T.MeshStandardMaterial({
   color:'#C4A986',roughness:.42,emissive:interiorLightColor(cfg.temperature),
-  emissiveIntensity:lit?.45+cfg.brightness/100*1.65:.005
+  emissiveIntensity:lit?levels.fixtureEmission:.005
  });
- const lights=lit?Math.max(.1,cfg.brightness/100):0;
+ const lights=lit?levels.pointIntensity:0;
  for(const z of [zBack+2.6,zBack+5.0]){
   const fixture=addBox(T,g,[.85,.026,.041],[0,3.05,z],lamp,
    'alpha-interior-warm-luminaire');
   fixture.visible=lit;
   if(lit&&typeof T.PointLight==='function'){
    const bulb=new T.PointLight(interiorLightColor(cfg.temperature),
-    2.2*lights,Math.min(10,d*.82),2);
+    lights,Math.min(13,d*1.15),2);
    bulb.position.set(0,2.86,z);bulb.castShadow=false;
    bulb.userData.architecturePart='alpha-interior-artificial-light';
    g.add(bulb);
@@ -243,7 +250,7 @@ export function addAlphaVisibleInterior(T,g,{w,d,eave,rise,half,night=false,inte
  }
  if(lit&&typeof T.PointLight==='function'){
   const entryLight=new T.PointLight(interiorLightColor(cfg.temperature),
-   1.65*lights,Math.min(7,d*.7),2);
+   lights*.72,Math.min(10,d*.95),2);
   entryLight.position.set(-.45,2.36,d/2-1.5);
   entryLight.castShadow=false;
   entryLight.userData.architecturePart='alpha-interior-entrance-light';
