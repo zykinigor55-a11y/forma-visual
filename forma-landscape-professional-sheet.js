@@ -19,6 +19,14 @@ export function professionalPlanPrompt(input={}){
  const counts={};
  for(const item of objects){const catalog=byId(item.catalogId);if(catalog)counts[catalog.name]=(counts[catalog.name]||0)+1;}
  const schedule=Object.entries(counts).slice(0,90).map(([name,count])=>name+' ×'+count).join('; ')||'no planted features';
+ const pavingRoutes=objects.filter(o=>byId(o.catalogId)?.group==='pavers')
+  .map((o,i)=>{
+   const asset=byId(o.catalogId),v=Array.isArray(o.points)?o.points:[];
+   return 'Path '+(i+1)+' / '+asset.id+' / '+asset.name+
+    ' / line width '+Number(o.width||1.2).toFixed(2)+' m / measured vertices '+
+    v.slice(0,48).map(p=>'('+Number(p.x||0).toFixed(2)+','+Number(p.y||0).toFixed(2)+')').join('→');
+  }).join('; ')||'no paved paths';
+
  const style={
   presentation:'premium editorial landscape architecture presentation board; nuanced watercolour-tinted architectural plan illustration, finely textured organic tree canopy symbols, realistic low-saturation grass and paving material swatches, slight coherent shadows, quiet cream-paper aesthetic, controlled sage green palette, thin graphite outlines',
   planting:'professional planting plan for landscape architects, clean botanical top-view silhouettes with distinct crowns and real species arrangement, botanical group labels, restrained greens, accurate plant grouping, clear paths, sharp legible plant symbols and faint hatching',
@@ -31,6 +39,7 @@ export function professionalPlanPrompt(input={}){
   'GEOMETRY LOCK (NON-NEGOTIABLE): retain the exact parcel silhouette, measured site '+Number(site.width).toFixed(2)+'m × '+Number(site.height).toFixed(2)+'m, main house footprint '+Number(house.width).toFixed(2)+'m × '+Number(house.height).toFixed(2)+'m, building orientation, count and placement of all paths, paved zones, planting beds, all tree and shrub centres, respective crown diameters, lawn, gravel, bark, water, stones and luminaires. Never add new features, trees or contours; do not crop, perspective-tilt, beautify by rearranging or create fictional planting masses.',
   'EXISTING PLANT SCHEDULE: '+schedule+'. This list is a locked inventory, not a suggestion to add further objects.',
   'Render every grass, stone, paving and mulch type visually distinct and at human scale; planting symbols are species-specific and readable. Preserve empty unplanted zones and any deliberately erased polygons.',
+  'EXACT PAVING MATERIAL BY INDIVIDUAL PATH: '+pavingRoutes+'. Do not render all paths as one repeated concrete slab pattern. Keep the same named paving material, color family and joint direction for EACH measured polyline; do not exchange materials between paths.',
   'Use subtle scale-aware canopy shadows and natural colours ONLY for existing planting. Keep roof graphics clean. Draw as genuine landscape architecture masterplan, NOT 3D aerial photograph or isometric building render.',
   'KEEP TEXT OUT OF THE AI-RENDERED SITE IMAGE. The application adds the exact north arrow, measured graphic scale, title block, plant inventory and legend in a deterministic editable vector layer; never hallucinate illegible captions, fake measurement labels, legends, scale ratios or a second border inside the project frame.',
   'Background should remain continuous, very high visual clarity, clean anti-aliasing, no brand logos, no cropped portion of the lot, no misleading new geometry. The measured project remains the sole source of truth.'
