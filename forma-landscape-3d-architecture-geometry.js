@@ -155,12 +155,12 @@ export function rainwaterDrainPlan({width=8,depth=7,roof='gable',style='barn'}={
  * Modern: narrow powder-coated aluminum. Classic/timber: substantial casing.
  */
 export function windowTrimProfile(style='barn'){
- const understated=['modern','hightech','panoramic','modular','barn','japandi'].includes(style);
+ const understated=['modern','hightech','panoramic','modular','barn','japandi','scandi'].includes(style);
  const timber=['scandi','timber','logcabin','chalet','tiny','bungalow'].includes(style);
  return {
   width:understated?.042:timber?.090:.112,
   depth:understated?.030:.046,
-  material:understated?'#333E42':timber?'#9B856D':'#C3BCB0',
+  material:understated?(style==='scandi'?'#2D3437':'#333E42'):timber?'#9B856D':'#C3BCB0',
   recessedWindowMm:110,
   revealDepth:.16,
   sillProjection:.062,
