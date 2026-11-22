@@ -258,6 +258,8 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #aiResult,#aiProgress{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
 #aiProgress{z-index:7;backdrop-filter:blur(10px)}
 #aiProgress[hidden]{display:none}
+main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) > :is(#mobileWorkspaceTabs,#mobilePlacementHint,#selectedObjectDock,#sceneQuickTools,#sceneCameraCycle,#sceneClimateButton,#sceneClimatePanel,#left,#right,#status){display:none!important}
+#aiProgress,#aiResult{z-index:30;overflow:auto}
 .ai-progress-card{width:min(94vw,680px);padding:25px;border-radius:17px;background:#222729;border:1px solid #89765b;box-shadow:0 18px 80px #000b;display:flex;flex-direction:column;gap:13px}
 .ai-progress-eyebrow{color:#d9c1a0;letter-spacing:.12em;font-size:11px;font-weight:800}
 .ai-progress-card h3{font-size:21px;margin:0;color:#f3ede5}
@@ -410,7 +412,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <section id="sceneClimatePanel" class="scene-climate-panel" role="region" aria-label="Настройки солнца и погоды" hidden>
  <div class="scene-climate-heading"><strong>☀ СОЛНЦЕ · ПОГОДА</strong><button type="button" id="sceneClimateClose" aria-label="Закрыть настройки погоды">✕</button></div>
  <div class="scene-climate-grid">
-  <label for="quickTime">Время суток</label><select id="quickTime"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
+  <label for="quickTime">Время суток</label><select id="quickTime"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Закат</option><option value="blue-hour">Синий час</option><option value="night">Ночь</option></select>
   <label for="quickSeason">Сезон</label><select id="quickSeason"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label for="quickWeather">Погода</label><select id="quickWeather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
  </div>
@@ -542,7 +544,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <option value="code">CODE 3D · облегчённая геометрия</option>
  </select>
  <p class="muted" id="botanicalLodStatus">Кроны обновляются по расстоянию до камеры. Вблизи — настоящая 3D-листва, вдали — облегчённые кластеры.</p>
- <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Вечер</option><option value="night">Ночь</option></select>
+ <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Закат</option><option value="blue-hour">Синий час</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
 <section id="desktopWeatherSNOW" class="weather-strength-section" data-weather-section="snow" hidden>
@@ -1427,7 +1429,7 @@ function drawObject(o,entry,key){
  }
  else if(group==='lights'){
   const time=doc.atmosphere.time,weather=doc.atmosphere.weather;
-  g=createGardenLight(THREE,o,{night:['evening','night'].includes(time)});
+  g=createGardenLight(THREE,o,{night:nightInteriorMode(time)});
   const enabled=gardenLightingState(o.catalogId,{time,weather});
   const shadows=enabled?.visible&&shadowedGardenLights<(window.innerWidth<=720?1:2);
   const emission=addRealGardenEmission(THREE,g,o,{time,weather,shadow:shadows});
@@ -2540,12 +2542,12 @@ function updateSun(){
  renderGate.invalidate();
  const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
- const cfg={day:3,morning:1.75,evening:1.3,night:.15};
+ const cfg={day:3,morning:1.75,evening:1.3,'blue-hour':0,night:.15};
  const solarPosition=solarVector(solarSettings);
  sun.position.set(solarPosition.x,solarPosition.y,solarPosition.z);
  sun.shadow.radius=solarSettings.softness;
  if(atmosphereSky){
-  atmosphereSky.visible=val!=='night'&&state.view!=='2d';
+  atmosphereSky.visible=!['night','blue-hour'].includes(val)&&state.view!=='2d';
   const uniforms=atmosphereSky.material.uniforms;
   uniforms.sunPosition.value.copy(sun.position).normalize();
   uniforms.turbidity.value=['overcast','rain','fog','snow'].includes(doc.atmosphere.weather)?9.2:val==='evening'?5.8:3.4;
@@ -2556,7 +2558,7 @@ function updateSun(){
  if(outdoorReflectionMap){
   updateOutdoorReflectionMap(outdoorReflectionMap,{time:val,weather,
    azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,clouds:sceneAtmosphere.clouds});
-  scene.environmentIntensity=val==='night'?.47:val==='evening'?.62:.72;
+  scene.environmentIntensity=val==='blue-hour'?.55:val==='night'?.47:val==='evening'?.62:.72;
  }
  sun.intensity=(val==='night'?.025:cfg[val]*factor*solarSettings.strength);
  sun.color.set(val==='evening'?'#ffb87b':val==='morning'?'#ffe1be':'#fff2db');
@@ -2565,7 +2567,7 @@ function updateSun(){
   sky.intensity=atmosphereLighting({
    time:val,weather,siteSize:Math.max(doc.site.width,doc.site.height),settings:sceneAtmosphere
   }).skyFillIntensity;
-  sky.color.set(val==='night'?'#71899e':val==='evening'?'#ffe2c2':'#e6eef6');
+  sky.color.set(val==='blue-hour'?'#9fb8e1':val==='night'?'#71899e':val==='evening'?'#ffe2c2':'#e6eef6');
   sky.groundColor.set(val==='night'?'#17212a':'#5b6954');
  }
  const atmosphere=atmosphereLighting({
@@ -2578,7 +2580,7 @@ function updateSun(){
   cloudLayer.visible=state.view!=='2d'&&atmosphere.clouds>.01;
   cloudLayer.material.uniforms.coverage.value=atmosphere.clouds;
   cloudLayer.material.uniforms.opacity.value=val==='night'?.49:.60;
-  cloudLayer.material.uniforms.cloudColor.value.set(val==='night'?'#7899BC':val==='evening'?'#f3e1cb':'#f5f6f1');
+  cloudLayer.material.uniforms.cloudColor.value.set(val==='blue-hour'?'#91A6CD':val==='night'?'#7899BC':val==='evening'?'#f3e1cb':'#f5f6f1');
  }
  renderer.toneMappingExposure=atmosphere.exposure;
  scene.background=new THREE.Color(atmosphere.background);

@@ -20,7 +20,7 @@ export const GROUPS=Object.freeze([
 ]);
 export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18,poplar:24,'ph-fir-sapling':3,'ph-pine-sapling':2.8,'ph-quiver-01':4.5,'ph-quiver-02':3.7});
 export const SCENE_OPTIONS=Object.freeze({
- time:[['morning','Утро'],['day','День'],['evening','Вечер'],['night','Ночь']],
+ time:[['morning','Утро'],['day','День'],['evening','Закат'],['blue-hour','Синий час'],['night','Ночь']],
  season:[['spring','Весна'],['summer','Лето'],['autumn','Осень'],['winter','Зима']],
  weather:[['sunny','Солнечно'],['overcast','Пасмурно'],['after-rain','После дождя'],['rain','Дождь'],['fog','Туман'],['snow','Снег']]
 });

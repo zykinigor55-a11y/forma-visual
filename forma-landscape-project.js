@@ -47,7 +47,7 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
  }
 
  function sunSettings(){
-  const a=doc.atmosphere||{},t={morning:[105,26],day:[182,62],evening:[258,20],night:[0,0]}[a.time]||[182,62],w={sunny:1,overcast:.17,'after-rain':.64,rain:.08,fog:.035,snow:.14};
+  const a=doc.atmosphere||{},t={morning:[105,26],day:[182,62],evening:[258,6],'blue-hour':[258,0],night:[0,0]}[a.time]||[182,62],w={sunny:1,overcast:.17,'after-rain':.64,rain:.08,fog:.035,snow:.14};
   return {az:t[0],el:t[1],strength:(w[a.weather]??1)*(t[1]>0?1:0),season:a.season||'summer',time:a.time||'day',weather:a.weather||'sunny'};
  }
  function treeShadow(item,entry,d){
@@ -68,7 +68,7 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
   return v.season==='spring'?'saturate(1.1) brightness(1.04)':'none';
  }
  function atmosphereOverlay(){
-  const v=sunSettings(),t={morning:['#f6dab1',.065],day:['#fff',0],evening:['#eca75e',.12],night:['#102c48',.44]}[v.time],s={spring:['#d4ecc7',.025],summer:['#fff',0],autumn:['#ce995c',.065],winter:['#d8eefa',.13]}[v.season],w={sunny:['#fff',0],overcast:['#91a8b7',.09],'after-rain':['#9cbab2',.08],rain:['#64809b',.21],fog:['#e1e2df',.22],snow:['#e1e9f4',.18]}[v.weather];
+  const v=sunSettings(),t={morning:['#f6dab1',.065],day:['#fff',0],evening:['#eca75e',.12],'blue-hour':['#557bb5',.27],night:['#102c48',.44]}[v.time],s={spring:['#d4ecc7',.025],summer:['#fff',0],autumn:['#ce995c',.065],winter:['#d8eefa',.13]}[v.season],w={sunny:['#fff',0],overcast:['#91a8b7',.09],'after-rain':['#9cbab2',.08],rain:['#64809b',.21],fog:['#e1e2df',.22],snow:['#e1e9f4',.18]}[v.weather];
   return [t,s,w].filter(x=>x&&x[1]>.005).map(([color,opacity])=>'<rect width="'+doc.site.width+'" height="'+doc.site.height+'" fill="'+color+'" opacity="'+opacity+'" pointer-events="none"/>').join('');
  }
  function drawSvg(full=false){

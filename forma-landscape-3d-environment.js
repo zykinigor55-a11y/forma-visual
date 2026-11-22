@@ -6,6 +6,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function outdoorReflectionPalette(time='day',weather='sunny'){
  const wet=['rain','fog','snow','overcast'].includes(weather);
  if(time==='night')return {zenith:'#10233b',horizon:'#405c77',ground:'#1f2f35',disk:'#abbccf',diskAlpha:.23};
+ if(time==='blue-hour')return {zenith:'#293e69',horizon:'#7c91b8',ground:'#394759',disk:'#fff',diskAlpha:0};
  if(time==='evening')return {zenith:'#405980',horizon:'#d6ad90',ground:'#60655a',disk:'#ffe1b2',diskAlpha:wet?.22:.60};
  if(time==='morning')return {zenith:'#759cb5',horizon:'#e8c7a2',ground:'#656954',disk:'#ffecce',diskAlpha:wet?.18:.65};
  return {zenith:wet?'#91a8b6':'#7399ae',horizon:wet?'#cbd7d9':'#c9e1ed',

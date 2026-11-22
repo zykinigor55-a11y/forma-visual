@@ -21,7 +21,7 @@ export const gardenLightTemperatures=Object.freeze({
 });
 export function gardenLightingState(id,{time='day',weather='sunny',height=null,brightness=1,kelvin=2700}={}){
  const source=gardenLightingSpec[id];if(!source)return null;
- const factor=time==='night'?1:time==='evening'?.43:time==='morning'?.05:0;
+ const factor=time==='night'?1:time==='blue-hour'?.78:time==='evening'?.43:time==='morning'?.05:0;
  const power=factor*(weather==='fog'?.82:weather==='rain'?.90:1);
  const actual=Number(height);
  // Old projects wrote 1.2 metres for every light. Preserve original scale.

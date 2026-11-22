@@ -7,7 +7,7 @@ const f=(v,n=2)=>v===null||v===undefined||v===''?null:(Number.isFinite(Number(v)
 const safe=(v)=>String(v??'').replace(/[\r\n<>]/g,' ').slice(0,120);
 const measure=(v,unit='',n=2)=>{const q=f(v,n);return q===null?'not supplied':q+unit};
 const bool=v=>typeof v==='boolean'?(v?'enabled':'disabled'):'not supplied';
-const friendlyTime={day:'daylight',morning:'morning',evening:'evening',night:'night'};
+const friendlyTime={day:'daylight',morning:'morning',evening:'sunset','blue-hour':'blue hour',night:'night'};
 const friendlyWeather={sunny:'clear sunny sky',overcast:'overcast sky','after-rain':'after rain',rain:'rain',fog:'fog',snow:'snow'};
 const validColor=v=>typeof v==='string'&&/^#[0-9a-fA-F]{6}$/.test(v)?v.toUpperCase():'not supplied';
 export function photoLightingContract(input){

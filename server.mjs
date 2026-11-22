@@ -359,7 +359,11 @@ async function performRender(p,requestId){
  const landscapeModel=needsLandscape&&p.landscapeMasterplan?.cameraMode==='3d-perspective'&&p.landscapeModel==='nano-banana-2.1'?MODEL:LANDSCAPE_IMAGE_MODEL;
  if(needsPlan&&!PLAN_IMAGE_MODEL)fail('Модель GPT Image 2.6 для планов не настроена на сервере. Укажите PLAN_IMAGE_MODEL=gpt-image-2.6-sunburst в Render. Nano Banana для этого раздела не используется.',503,'plan_model_missing');
  if(['room','view'].includes(task?.kind)&&!reference)fail('Сначала утвердите главный кадр или визуализацию плана.',400);
- const prompt=task?imageTaskPrompt(task):createPrompt(p);
+ const basePrompt=task?imageTaskPrompt(task):createPrompt(p);
+ const measuredPlan=(p.landscapeMasterplan&&p.landscapeMasterplan.cameraMode!=='3d-perspective')||
+  p.roofTopView||['plan','plan2d'].includes(task?.kind);
+ const optics='ARCHITECTURAL CINEMATOGRAPHY: keep the approved geometry, camera framing and field of view. Use the optical character of premium corrected full-frame lenses with natural depth of field, approximately f/8 for wide architectural views. Keep the entire main building or room, structural edges and principal materials sharp. Only gently soften truly distant or very near peripheral planes when physically justified. Use neutral editorial color with protected material hues, gentle highlight roll-off, open shadows and restrained microcontrast. A tiny highlight glow is permissible around actual bright sources, with no visible flare streaks, heavy vignetting, distortion, color fringing, artificial HDR, aggressive teal-orange grading or portrait bokeh. Preserve requested weather, time and local edits.';
+ const prompt=measuredPlan?basePrompt:basePrompt+'\n\n'+optics;
  const selectedModel=needsLandscape?landscapeModel:needsPlan?PLAN_IMAGE_MODEL:MODEL;
  console.info('[AI]',requestId,'начинаем оплачиваемую генерацию; модель:',selectedModel,
   'режим:',p.landscapeMasterplan?.cameraMode||'default',

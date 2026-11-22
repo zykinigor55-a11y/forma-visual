@@ -15,13 +15,13 @@ export function normalizeSceneAtmosphere(v={}){
 /** Physically modest upper hemisphere and indirect bounce approximation.
  * At night the sky stays visible and gently illuminates exterior materials. */
 export function atmosphereLighting({time='day',weather='sunny',siteSize=40,settings={}}={}){
- const v=normalizeSceneAtmosphere(settings),night=time==='night',evening=time==='evening',morning=time==='morning';
+ const v=normalizeSceneAtmosphere(settings),night=time==='night',blue=time==='blue-hour',evening=time==='evening',morning=time==='morning';
  const cloudWeather=['overcast','rain','snow','fog'].includes(weather);
  const cloudCover=Math.min(1,(v.clouds/100)*(cloudWeather?1.0:.78)+(cloudWeather?.17:0));
  const fill=v.globalFill/100;
  const nightAmount=night?.55+v.nightGlow*.006:1;
  // Retain contrast in foliage and plaster when reflection lighting is enabled.
- const base=night?.54:evening?1.12:morning?1.38:weather==='overcast'?1.60:1.72;
+ const base=night?.54:blue?.85:evening?1.12:morning?1.38:weather==='overcast'?1.60:1.72;
  const extent=Math.max(10,Number(siteSize)||40),haze=v.haze/100;
  const weatherFog=weather==='fog',wetFog=['rain','snow'].includes(weather);
  const fogFactor=1-haze*.38;
@@ -29,12 +29,12 @@ export function atmosphereLighting({time='day',weather='sunny',siteSize=40,setti
  const fogFar=(weatherFog?Math.max(110,extent*3):wetFog?Math.max(145,extent*3.7):Math.max(230,extent*5))*(1-haze*.23);
  return {
   skyFillIntensity:base*fill*nightAmount,
-  bouncedFillIntensity:(night?.25:evening?.32:.40)*fill*(night?.35+v.nightGlow*.008:1),
+  bouncedFillIntensity:(night?.25:blue?.29:evening?.32:.40)*fill*(night?.35+v.nightGlow*.008:1),
   clouds:cloudCover,
   haze,fogNear,fogFar:Math.max(fogNear+30,fogFar),
-  background:night?'#344657':evening?'#a4a597':'#b8c7c4',
-  fogColor:night?'#405466':evening?'#aeaea3':'#bcc9c7',
-  exposure:night?1.20:evening?1.03:morning?1.05:1.13,
+  background:night?'#344657':blue?'#536f9c':evening?'#a4a597':'#b8c7c4',
+  fogColor:night?'#405466':blue?'#60799c':evening?'#aeaea3':'#bcc9c7',
+  exposure:night?1.20:blue?1.12:evening?1.03:morning?1.05:1.13,
   nightClouds:night
  };
 }
