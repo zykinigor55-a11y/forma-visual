@@ -15,7 +15,7 @@ test('Scandinavian house retains vertical natural timber throughout and a darker
  assert.equal(spec.roof,'gable');
  assert.equal(spec.roofFinish,'standing');
  assert.match(spec.subtitle,/Серый вертикальный планкен/);
- assert.equal(SCANDI_DETAIL.boardPitch,.132);
+ assert.equal(SCANDI_DETAIL.boardPitch,.094);
  assert.ok(SCANDI_DETAIL.boardWidth<SCANDI_DETAIL.boardPitch);
  assert.notEqual(SCANDI_DETAIL.mainWood,SCANDI_DETAIL.accentWood);
  assert.match(scandi,/new T\.InstancedMesh\(/);
@@ -24,7 +24,7 @@ test('Scandinavian house retains vertical natural timber throughout and a darker
  assert.match(scandi,/scandi-gable-vertical-boards/);
  assert.match(scandi,/scandi-second-wood-backing/);
  assert.match(scandi,/scandi-vertical-cladding-main',\.135/);
- assert.match(scandi,/measuredAirGapFromWallFace:\.030/);
+ assert.match(scandi,/measuredAirGapFromWallFace:\.02925/);
  assert.match(house,/style==='scandi'&&\(type==='house'\|\|!type\)/);
 });
 
