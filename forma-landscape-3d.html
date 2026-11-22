@@ -1410,7 +1410,8 @@ async function makeHouseThumbnails(){
   base.rotation.x=-Math.PI/2;base.receiveShadow=true;previewScene.add(base);
   const cam=new THREE.OrthographicCamera(-9.5,9.5,5.9,-5.9,.1,100);cam.position.set(13,11,16);cam.lookAt(0,2.1,0);
   for(const [index,p] of HOUSE_PRESETS.entries()){
-   const model=createArchitecturalBuilding(THREE,{width:10,height:7,archStyle:p.id,roof:p.roof,roofColor:'#E2E4E3',roofRise:p.id==='aframe'?6:1.65});
+   const referenceAlpha=p.id==='alpha';
+   const model=createArchitecturalBuilding(THREE,{width:referenceAlpha?7.5:10,height:referenceAlpha?9.5:7,archStyle:p.id,roof:p.roof,roofColor:'#E2E4E3',roofRise:referenceAlpha?5.93:p.id==='aframe'?6:1.65});
    previewScene.add(model);rendererThumb.render(previewScene,cam);
    houseThumbs.set(p.id,tempCanvas.toDataURL('image/jpeg',.86));previewScene.remove(model);
    model.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
