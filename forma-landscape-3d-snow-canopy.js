@@ -96,7 +96,7 @@ export function updateTreeSnowPreview(info,atmosphere){
     // 20% => roughly one fifth of real branchlet foliage gets snow.
     // 100% => nearly every foliage needle/leaf becomes white.
     // Selection never touches trunk or branch geometry.
-    const coat=clamp((strength-random+.10)*6);
+    const coat=strength===0?0:clamp((strength-random+.10)*6);
     const amount=coat*(.78+.20*strength);
     dst[m]=src[m]+(white.r-src[m])*amount;
     dst[m+1]=src[m+1]+(white.g-src[m+1])*amount;
