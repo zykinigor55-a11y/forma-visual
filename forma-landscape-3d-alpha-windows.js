@@ -33,16 +33,24 @@ function addTriangle(T,g,x,yTop,yBase,z,mat,part){
  m.userData.architecturePart=part;g.add(m);return m;
 }
 function glassMaterial(T,{night=false,inner=false}={}){
- // Deliberately neutral and lightly transparent. Outside reflection is
- // provided by scene.environment; the interior is physically visible behind.
- return new T.MeshPhysicalMaterial({
-  color:night?'#D1D3CC':'#D5E0DB',
-  roughness:inner?.095:.058,metalness:0,
-  transparent:true,opacity:inner?.075:.16,
+ // Smoked graphite privacy glazing. Day: about 81% combined effective
+ // two-leaf opacity, so the lounge is a faint silhouette rather than
+ // a fully exposed showroom. At night the glass stays smoked but lets
+ // a little warm internal illumination read from the approach.
+ // Environment reflections remain present across the outer glass surface.
+ const m=new T.MeshPhysicalMaterial({
+  color:inner?'#344148':night?'#3B484C':'#29373D',
+  roughness:inner?.075:.055,metalness:0,
+  transparent:true,opacity:inner?.20:night?.69:.76,
   depthWrite:false,side:T.DoubleSide,ior:1.52,
-  clearcoat:.47,clearcoatRoughness:.065,
-  envMapIntensity:inner?.62:1.22
+  clearcoat:.76,clearcoatRoughness:.055,
+  envMapIntensity:inner?.40:1.38
  });
+ m.userData.alphaSmokedGlass={
+  tinted:true,tint:'graphite-smoke',isInnerLeaf:inner,
+  privacyTint:true,privacyVsPrevious:'stronger interior concealment'
+ };
+ return m;
 }
 export function addAlphaGlazedFacade(T,g,{
  w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night=false
