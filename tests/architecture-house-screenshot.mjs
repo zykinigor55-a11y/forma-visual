@@ -33,7 +33,7 @@ try{
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-VERTICAL-BOARDS-REAL-WEBGL.jpg',type:'jpeg',quality:91,timeout:65000});
   await page.locator('#viewport').screenshot({path:dir+'/SCANDI-GREY-APR10-94MM-FINAL.jpg',type:'jpeg',quality:92,timeout:65000});
  }
- const result=await page.evaluate(()=>({
+ const result=await page.evaluate(async()=>({
   title:document.title,ready:window.FORMA_3D_READY,
   style:document.querySelector('[data-house-preset="scandi"]')?.getAttribute('aria-pressed'),
   canvas:!!document.querySelector('#viewport'),
