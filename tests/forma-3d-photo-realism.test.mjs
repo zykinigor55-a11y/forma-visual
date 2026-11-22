@@ -94,7 +94,7 @@ test('full lighting passport preserves author-set sun and all chosen atmospheric
   'author haze 37%','global fill 112%',
   'Hemisphere skylight colour #E6EEF6','bounced directional fill colour #C6D8E3',
   'exposure 1.050','fog near 120.00m','fog far 250.00m',
-  'colour #FFE1BE','author-selected shadow'
+  'RGB #FFE1BE','author-selected shadow'
  ])assert.ok(full.includes(token),'Missing selected lighting attribute: '+token);
  assert.match(full,/numeric solar control wins/);
  assert.match(full,/NOT geographic true solar time/);
