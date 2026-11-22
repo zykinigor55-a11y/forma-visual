@@ -8,7 +8,7 @@
 import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js?v=alpha-wall-240-v1-20261122';
 import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-night-v1-20261122';
 import {addAlphaFrontWallVolume,addAlphaRearWallVolume,addAlphaRoofCassetteEnds} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
-import {normalizeNightInterior,interiorLightColor} from './forma-landscape-3d-night-interior.js';
+import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function finish(T,color,roughness=.76,metalness=0){
@@ -97,8 +97,8 @@ function addRoof(T,g,profile,{night=false,interior=null}={}){
  const seam=finish(T,'#3E4B4C',.39,.64);
  const trim=finish(T,'#252F32',.46,.59);
  const gasket=finish(T,'#141B1D',.94,.02);
- const indoor=normalizeNightInterior(interior),
-  lighted=night&&indoor.lightsEnabled&&indoor.brightness>0&&indoor.visibility!=='off';
+ const indoor=normalizeNightInterior(interior),levels=interiorLightLevels(indoor),
+  lighted=night&&levels.enabled&&indoor.visibility!=='off';
  const glass=new T.MeshPhysicalMaterial({
   // Rooflights stay dark smoked; only actual authored indoor light can
   // warm them. Existing measured roof openings remain unchanged.
@@ -107,7 +107,7 @@ function addRoof(T,g,profile,{night=false,interior=null}={}){
   depthWrite:false,ior:1.52,clearcoat:.71,clearcoatRoughness:.055,
   side:T.DoubleSide,envMapIntensity:1.26,
   emissive:interiorLightColor(indoor.temperature),
-  emissiveIntensity:lighted?indoor.windowGlow/100*.055:0
+  emissiveIntensity:lighted?levels.windowEmission*.55:0
  });
  const windowLength=clamp(slope*.23,1.35,1.85);
  const windowWidth=clamp(depth*.057,.38,.57);
