@@ -48,7 +48,7 @@ try{
   title:document.title,ready:window.FORMA_3D_READY,
   style:document.querySelector('[data-house-preset="scandi"]')?.getAttribute('aria-pressed'),
   canvas:!!document.querySelector('#viewport'),
-  ref:'Mocopinus Oldenburg silbergrau grey vertical wood + black windows',
+  ref:'user-supplied Scandinavian photographs: grey board, black glass, snow guards, terrace',
   referenceProfile:'APR 10 · 21.5 × 94 (84) mm',
   palette:await import('/forma-landscape-3d-scandinavian-detail.js').then(mod=>({
    main:mod.SCANDI_DETAIL.mainWood,accent:mod.SCANDI_DETAIL.accentWood,
