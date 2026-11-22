@@ -1,4 +1,4 @@
-// FORMA AI · Kinetic Luxury V22. Fifteen-second, mobile-optimized, subtle cinematic material/light loop.
+// FORMA AI · Kinetic Luxury V23. Eighteen-second photographic titanium light choreography; responsive and motion-safe.
 // The approved photograph stays intact; independent 3D motion requires real geometry.
 (() => {
   const hero=document.querySelector('#hero'), art=hero?.querySelector('.hero-art');
@@ -16,20 +16,20 @@
     'vec2 cover(vec2 uv){float c=uCanvas.x/uCanvas.y;float i=uSize.x/uSize.y;if(c<i)uv.x=(uv.x-.5)*c/i+.5;else uv.y=(uv.y-.5)*i/c+.5;return uv;}',
     'float beat(float t,float at,float w){return exp(-pow((t-at)/w,2.));}',
     'void main(){',
-    'float a=6.2831853*uTime/15.;float right=smoothstep(.33,.57,vUv.x);',
-    'vec2 drift=vec2((.0017*sin(a)+uPointer.x*.0013)*right,(.0012*sin(a+.52)+uPointer.y*.0009)*right);',
+    'float a=6.2831853*uTime/18.;float right=smoothstep(.31,.56,vUv.x);',
+    'vec2 drift=vec2((.0019*sin(a)+uPointer.x*.0010)*right,(.0011*sin(a+.52)+uPointer.y*.0008)*right);',
     'vec3 src=texture2D(uImage,clamp(cover(vUv+drift),vec2(.001),vec2(.999))).rgb;',
     'float luminosity=dot(src,vec3(.2126,.7152,.0722));',
     'float saturation=max(src.r,max(src.g,src.b))-min(src.r,min(src.g,src.b));',
     'float metallic=smoothstep(.14,.46,luminosity)*(1.-smoothstep(.13,.34,saturation))*right;',
     'float amber=smoothstep(.055,.22,src.r-src.b)*smoothstep(.10,.31,src.r)*right;',
-    'float stripe=vUv.x+.43*vUv.y-(.82+.24*sin(a-.67));',
-    'float glint=metallic*(.058*exp(-pow(stripe/.092,2.))+.105*exp(-pow((stripe-.018)/.021,2.)));',
-    'float doubleBeat=beat(uTime,7.20,.12)+.53*beat(uTime,7.58,.17);',
+    'float stripe=vUv.x+.41*vUv.y-(.88+.24*sin(a-1.12));',
+    'float glint=metallic*(.030*exp(-pow(stripe/.14,2.))+.087*exp(-pow((stripe-.018)/.023,2.)));',
+    'float doubleBeat=beat(uTime,8.2,.14)+.48*beat(uTime,8.68,.18);',
     'float current=.5+.5*sin(a+vUv.x*9.4-vUv.y*6.3);',
-    'float energy=amber*(.016*current+.078*doubleBeat);',
+    'float energy=amber*(.012*current+.069*doubleBeat);',
     'float hub=exp(-pow((vUv.x-.72)/.20,2.)-pow((vUv.y-.52)/.31,2.));',
-    'vec3 result=src+vec3(.91,.94,.97)*glint+vec3(.96,.51,.15)*energy+vec3(.35,.53,.72)*metallic*hub*(.008+.010*sin(a+1.2));',
+    'float atelierShimmer=metallic*hub*(.006+.007*sin(a+1.1));vec3 result=src+vec3(.87,.92,.96)*glint+vec3(.97,.58,.24)*energy+vec3(.30,.45,.56)*atelierShimmer;',
     'gl_FragColor=vec4(min(result,vec3(1.)),1.);',
     '}'
   ].join('\n');
@@ -62,7 +62,7 @@
   let elapsed=0,last=0,lastPaint=0,request=0,visible=false,active=true;
   const current=[0,0],target=[0,0];
   const frameInterval=matchMedia('(max-width:900px)').matches?1000/22:1000/30;
-  const render=()=>{gl.useProgram(program);gl.uniform1f(uTime,elapsed%15);gl.uniform2f(uPointer,current[0],current[1]);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);};
+  const render=()=>{gl.useProgram(program);gl.uniform1f(uTime,elapsed%18);gl.uniform2f(uPointer,current[0],current[1]);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);};
   const resize=()=>{
     if(!active)return;
     const rect=art.getBoundingClientRect();if(!rect.width||!rect.height)return;
@@ -74,7 +74,7 @@
   };
   const tick=now=>{
     if(!active||!visible||document.hidden||reduced.matches){request=0;return;}
-    const dt=last?Math.min((now-last)/1000,.05):0;last=now;elapsed=(elapsed+dt)%15;
+    const dt=last?Math.min((now-last)/1000,.05):0;last=now;elapsed=(elapsed+dt)%18;
     const smoothing=Math.min(1,dt*3.5+.025);
     current[0]+=(target[0]-current[0])*smoothing;current[1]+=(target[1]-current[1])*smoothing;
     if(!lastPaint||now-lastPaint>=frameInterval){render();lastPaint=now;}
