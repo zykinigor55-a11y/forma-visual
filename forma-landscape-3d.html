@@ -910,7 +910,6 @@ function activateMobilePanel(name){
  const ref=state.selected?selectable(state.selected):null;
  if(window.innerWidth<=850){
   if(name==='scene'&&!state.mobileMoveMode)state.mobileObjectCollapsed=true;
-  if(name==='details'&&ref?.obj)state.mobileObjectCollapsed=false;
  }
  document.body.dataset.mobilePanel=name;
  const contextual=window.innerWidth<=850&&name==='details'&&!!ref?.obj&&!state.mobileObjectCollapsed;
@@ -936,7 +935,10 @@ function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc
 function initialize(){
  // On a phone the 3D canvas, not a tiny library drawer, is the starting point.
  activateMobilePanel(window.innerWidth<=850?'scene':'tools');
- document.querySelectorAll('#mobileWorkspaceTabs [data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>activateMobilePanel(button.dataset.mobilePanel)));
+ document.querySelectorAll('#mobileWorkspaceTabs [data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>{
+  const name=button.dataset.mobilePanel;
+  activateMobilePanel(document.body.dataset.mobilePanel===name&&name!=='scene'?'scene':name);
+ }));
  $('#mobilePineSelect').addEventListener('click',selectNextPine);
  // Tap an asset in the catalog, then place it immediately on the visible site.
  // Delay the sheet transition until the existing asset-selection handler runs.
@@ -2327,6 +2329,7 @@ function setupSceneClimateControls(){
  };
  $('#sceneClimateAll').onclick=()=>{
   setSceneClimateOpen(false);
+  state.mobileObjectCollapsed=true;
   activateMobilePanel('details');
   requestAnimationFrame(()=>$('#time')?.scrollIntoView({behavior:'smooth',block:'start'}));
  };
@@ -3224,7 +3227,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  controls.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;
 
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
- document.querySelectorAll('[data-quick-tool]').forEach(button=>{button.insertAdjacentHTML('afterbegin',premiumIcon(button.dataset.quickTool));button.onclick=()=>{chooseTool(button.dataset.quickTool);if(window.innerWidth<=850)activateMobilePanel('tools')}});
+ document.querySelectorAll('[data-quick-tool]').forEach(button=>{button.insertAdjacentHTML('afterbegin',premiumIcon(button.dataset.quickTool));button.onclick=()=>{chooseTool(button.dataset.quickTool);if(window.innerWidth<=850)activateMobilePanel(button.dataset.quickTool==='select'?'scene':'tools')}});
  [['focusHouse','build'],['focusSelected','trees'],['fit3dScene','site']].forEach(([id,icon])=>document.getElementById(id)?.insertAdjacentHTML('afterbegin',premiumIcon(icon)));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
  $('#treeSource3d').value=treeSourceChoice();
