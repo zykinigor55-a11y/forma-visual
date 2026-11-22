@@ -58,6 +58,7 @@ class ShapeGeometry {
 }
 class BufferGeometry {
  setAttribute(name,value){this[name]=value}
+ getAttribute(name){return this[name]}
  computeVertexNormals(){}
 }
 const T={
