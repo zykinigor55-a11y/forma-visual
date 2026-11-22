@@ -149,3 +149,27 @@
 @media(max-width:360px){
  #selectedObjectDock button{font-size:9px;padding:7px 2px}
 }
+
+/* Fine positioning: the scene stays visible and controls remain thumb-sized. */
+@media(max-width:850px){
+ #selectedObjectDock .mobile-nudge{
+  flex:1 1 100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;
+ }
+ #selectedObjectDock .mobile-nudge button{
+  min-height:44px;min-width:0;font-size:19px;font-weight:700;
+  background:#30353b;border-color:#686e76;color:#eee5d6;
+ }
+ #selectedObjectDock #selectedObjectDone{
+  flex:1 1 100%;background:#d2b993;color:#20262a;font-weight:750;font-size:12px;
+ }
+ body[data-mobile-panel="scene"]:has(#selectedObjectDock:not([hidden])) #status{
+  bottom:calc(275px + env(safe-area-inset-bottom,0px));
+ }
+ #selectedObjectDock:not([hidden]){
+  width:min(390px,calc(100% - 16px));max-height:min(290px,calc(100dvh - 175px));
+  overflow-y:auto;overscroll-behavior:contain;
+ }
+}
+@media(min-width:851px){
+ #selectedObjectDock .mobile-nudge,#selectedObjectDock #selectedObjectDone{display:none}
+}
