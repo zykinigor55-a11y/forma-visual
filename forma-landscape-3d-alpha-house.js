@@ -6,7 +6,7 @@
  * Four real holes in the metal roof accommodate flush roof windows.
  */
 import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js?v=alpha-wall-240-v1-20261122';
-import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-smoke-v1-20261122';
+import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-night-v1-20261122';
 import {addAlphaFrontWallVolume,addAlphaRearWallVolume,addAlphaRoofCassetteEnds} from './forma-landscape-3d-alpha-openings.js?v=alpha-wall-240-v1-20261122';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -189,7 +189,7 @@ function addRoof(T,g,profile){
  g.userData.alphaRoof={roofType:'folded standing seam',skylights:holeList.length,
   actualCutouts:true,rise,metalFinish:'graphite'};
 }
-function addFacades(T,g,{w,d,eave,rise,half},night){
+function addFacades(T,g,{w,d,eave,rise,half},night,interior=null){
  const peak=eave+rise,glassBase=eave+rise*.347;
  const front=d/2+.058,rear=-d/2-.061;
  // One seamless UV-mapped PBR facade per end, not hundreds of slat meshes.
@@ -203,7 +203,7 @@ function addFacades(T,g,{w,d,eave,rise,half},night){
  // Ultra-light transparent insulated glass reveals a real recessed interior;
  // thin aluminium profiles, gaskets, drainage and timber A-rafters stay 3D.
  addAlphaGlazedFacade(T,g,{
-  w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night
+  w,d,eave,rise,half,front,glassBase,top,glassHalf,doorTop,doorW,night,interior
  });
  // Flat UV-mapped PBR cladding, only TWO facade meshes in the A-frame.
  // Window and door openings remain real cutouts, not opaque blue decals.
@@ -286,7 +286,7 @@ function addDeck(T,g,w,d){
  g.userData.alphaTerrace={supported:true,level:.48,depth,width:span,
   stairPosition:'left'};
 }
-export function addAlphaReferenceHouse(T,g,b,{width=7.5,depth=9.5,night=false}={}){
+export function addAlphaReferenceHouse(T,g,b,{width=7.5,depth=9.5,night=false,interior=null}={}){
  const w=Math.max(2,Number(width)||7.5),d=Math.max(2,Number(depth)||9.5);
  // Clamp after conversion, including explicit 0/invalid roofRise.
  const reqRise=Number(b?.roofRise);
@@ -298,8 +298,8 @@ export function addAlphaReferenceHouse(T,g,b,{width=7.5,depth=9.5,night=false}={
  g.add(group);
  // Real interior geometry must sit behind transparent glass in +Z front.
  // Order does not change the existing house footprint or local origin.
- addAlphaVisibleInterior(T,group,{w,d,eave,rise,half,night});
- addFacades(T,group,{w,d,eave,rise,half},night);
+ addAlphaVisibleInterior(T,group,{w,d,eave,rise,half,night,interior});
+ addFacades(T,group,{w,d,eave,rise,half},night,interior);
  addRoof(T,group,profile);
  addDeck(T,group,w,d);
  group.userData.alphaReference={
