@@ -6,7 +6,8 @@
  * Four real holes in the metal roof accommodate flush roof windows.
  */
 import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js';
-import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-windows-v3-20261122';
+import {addAlphaGlazedFacade,addAlphaVisibleInterior} from './forma-landscape-3d-alpha-windows.js?v=alpha-windows-v4-20261122';
+import {addAlphaFrontWallVolume,addAlphaRearWallVolume,addAlphaRoofCassetteEnds} from './forma-landscape-3d-alpha-openings.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function finish(T,color,roughness=.76,metalness=0){
@@ -89,7 +90,7 @@ function addRoof(T,g,profile){
  for(const side of [-1,1]){
   const holes=side===-1?holeList:[];
   roofMesh(T,g,side,profile,holes,roof,.04,'alpha-standing-seam-roof-with-openings');
-  roofMesh(T,g,side,profile,holes,underside,-.13,'alpha-roof-underlay-with-openings');
+  roofMesh(T,g,side,profile,holes,underside,-.18,'alpha-roof-underlay-with-openings');
   // Continuous seam ribs follow the full slope, and stop at rooflights.
   for(let v=.26;v<depth-.20;v+=.58){
    const blocked=holes.filter(h=>v>h.v-.03&&v<h.v+h.dv+.03)
@@ -119,12 +120,12 @@ function addRoof(T,g,profile){
   // Close the roof cassette around the punched aperture instead of leaving
   // a paper-thin edge between the metal and the underlay.
   for(const edgeU of [u,u+du])
-   beam(T,g,roofPoint(side,edgeU,v,-.040),
-    roofPoint(side,edgeU,v+dv,-.040),.057,.17,gasket,
+   beam(T,g,roofPoint(side,edgeU,v,-.070),
+    roofPoint(side,edgeU,v+dv,-.070),.057,.22,gasket,
     'alpha-rooflight-insulated-side-reveal');
   for(const edgeV of [v,v+dv])
-   beam(T,g,roofPoint(side,u,edgeV,-.040),
-    roofPoint(side,u+du,edgeV,-.040),.057,.17,gasket,
+   beam(T,g,roofPoint(side,u,edgeV,-.070),
+    roofPoint(side,u+du,edgeV,-.070),.057,.22,gasket,
     'alpha-rooflight-insulated-end-reveal');
   const windowShape=new T.Shape();
   windowShape.moveTo(u+.043,v+.042);
@@ -155,6 +156,7 @@ function addRoof(T,g,profile){
   beam(T,g,roofPoint(side,u+du*.5,v,.072),roofPoint(side,u+du*.5,v+dv,.072),
    .025,.026,trim,'alpha-rooflight-central-sash');
  }
+ addAlphaRoofCassetteEnds(T,g,profile,{outerOffset:.04,underlayOffset:-.18});
  g.userData.alphaRoof={roofType:'folded standing seam',skylights:holeList.length,
   actualCutouts:true,rise,metalFinish:'graphite'};
 }
@@ -163,7 +165,6 @@ function addFacades(T,g,{w,d,eave,rise,half},night){
  const front=d/2+.058,rear=-d/2-.061;
  // One seamless UV-mapped PBR facade per end, not hundreds of slat meshes.
  const cladding=alphaGraphitePBR(T,w);
- const frame=finish(T,'#262D30',.39,.21);
  const doorW=Math.min(w*.67,Math.max(2.3,w-1.1));
  const doorBottom=.49;
  const doorTop=Math.min(glassBase-.11,2.61);
@@ -187,14 +188,26 @@ function addFacades(T,g,{w,d,eave,rise,half},night){
   half,base:.49,peak:peak-.070,z:rear-.010,width:w,front:false,
   material:cladding
  });
+ // 240mm volumetric front and rear wall cassettes. Never shift the outer
+ // footprint, facade PBR UVs or the existing main-house scene transform.
+ const outline={
+  half,base:.49,peak:peak-.070,width:w,
+  doorHalf:doorW*.5,doorBottom:doorBottom+.008,doorTop:doorTop+.016,
+  glassHalf,glassBase:glassBase-.012,glassTop:top+.003
+ };
+ addAlphaFrontWallVolume(T,g,{...outline,front},alphaFacadePanel);
+ addAlphaRearWallVolume(T,g,{
+  half,base:.49,peak:peak-.070,width:w,rear,
+  createPanel:alphaFacadePanel
+ });
  // Folded weathering drip along the base of the textured rainscreen.
  const apron=finish(T,'#41494B',.51,.53);
  box(T,g,w+.035,.024,.075,0,.491,front+.038,apron,
   'alpha-front-textured-facade-bottom-flashing');
  box(T,g,w+.035,.024,.075,0,.491,rear-.038,apron,
   'alpha-rear-textured-facade-bottom-flashing');
- // Front threshold remains accessible from the terrace at level 0.48 m.
- box(T,g,doorW+.16,.022,.21,0,.484,front+.115,frame,'alpha-sliding-door-drained-threshold');
+ // Sliding threshold, sill slope and water-drip are now placed correctly
+ // INSIDE the reveal by ALFA_OPENING_DETAIL rather than in front of cladding.
  g.userData.alphaGlazing={upperTriangle:true,lowerSlidingLeaves:4,
   exteriorFinish:'single UV-mapped graphite PBR texture; no individual 3D boards'};
 }
