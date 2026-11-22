@@ -2115,6 +2115,22 @@ function renderProps(){
   el.insertAdjacentHTML('afterbegin',roofGarlandMarkup(o));
   wireRoofGarlandEditor(el,o);
  }
+ if(ref.type==='object'&&catalog(o.catalogId)?.group==='pavers'){
+  const pathMaterial=document.createElement('section');
+  pathMaterial.id='selectedPaverMaterial';pathMaterial.className='roof-garland-editor';
+  pathMaterial.innerHTML='<strong>ПОКРЫТИЕ ВЫБРАННОЙ ДОРОЖКИ</strong>'+
+   '<label for="selectedPaverType">Материал · рендер и 3D</label>'+
+   '<select id="selectedPaverType">'+CATALOG.filter(a=>a.group==='pavers').map(a=>
+    '<option value="'+a.id+'"'+(a.id===o.catalogId?' selected':'')+'>'+a.name+'</option>').join('')+'</select>'+
+   '<small>Материал меняется только у этой дорожки. Траектория и ширина не меняются.</small>';
+  el.prepend(pathMaterial);
+  $('#selectedPaverType',el)?.addEventListener('change',event=>{
+   const next=catalog(event.target.value);
+   if(next?.group!=='pavers'||next.id===o.catalogId)return;
+   push();o.catalogId=next.id;save();rebuild();renderProps();
+   status('Материал дорожки обновлён: '+next.name+'. Точная геометрия сохранена.');
+  });
+ }
  $('#applyProps').onclick=()=>{
   const fields=Object.fromEntries([...el.querySelectorAll('[data-prop]')].map(n=>[n.dataset.prop,n.value]));
   const updated=validatedLandscapeProps(o,fields,{plot:doc.site,kind:ref.type,model:Boolean(real),contains:p=>inParcel(p,doc.site)});
