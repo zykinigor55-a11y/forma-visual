@@ -46,7 +46,7 @@ export function composeProfessionalPlanSheet(sourceSvg,documentModel,requestedMo
  const metrics=report(doc),catalogue={};
  for(const obj of Array.isArray(doc.objects)?doc.objects:[]){
   const item=byId(obj.catalogId);if(!item)continue;
-  if(!catalogue[item.id])catalogue[item.id]={name:item.name,latin:item.latin||'',count:0,color:item.color||'#748875',group:item.group};
+  if(!catalogue[item.id])catalogue[item.id]={id:item.id,name:item.name,latin:item.latin||'',count:0,color:item.color||'#748875',group:item.group};
   catalogue[item.id].count++;
  }
  const all=Object.values(catalogue).sort((a,b)=>a.group.localeCompare(b.group)||a.name.localeCompare(b.name));
