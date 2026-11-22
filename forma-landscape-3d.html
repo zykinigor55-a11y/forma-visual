@@ -232,7 +232,13 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 .ai-progress-card h3{font-size:21px;margin:0;color:#f3ede5}
 .ai-progress-card p{color:#bdc5bd;font-size:13px;margin:0;line-height:1.6}
 .ai-progress-track{height:9px;overflow:hidden;border-radius:99px;background:#354039;border:1px solid #60665b;position:relative}
-.ai-progress-track:after{content:'';position:absolute;inset:0 auto 0 -40%;width:40%;background:linear-gradient(90deg,transparent,#c6a77c,#eddbbc,transparent);animation:forma-render-progress 1.7s ease-in-out infinite}
+.ai-progress-fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:inherit;
+ background:linear-gradient(90deg,#8D7960,#C4A77F,#E8D8B8);transition:width .45s ease}
+.ai-progress-track:after{content:'';position:absolute;inset:0 auto 0 -40%;width:40%;background:linear-gradient(90deg,transparent,#FFF8E677,transparent);animation:forma-render-progress 2s ease-in-out infinite}
+.ai-progress-track[aria-valuenow="100"]:after{animation:none;display:none}
+.ai-progress-metrics{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:-5px}
+#aiProgressPercent{font-size:30px;font-weight:850;letter-spacing:-.04em;color:#EBD6B8;font-variant-numeric:tabular-nums}
+#aiProgressEstimateLabel{font-size:11px;color:#CBD0D0}
 @keyframes forma-render-progress{to{left:105%}}
 @media(prefers-reduced-motion:reduce){.ai-progress-track:after{animation-duration:4s}}
 .ai-progress-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -544,9 +550,10 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <span class="ai-progress-eyebrow">FORMA · ФОТОРЕАЛИСТИЧНЫЙ РЕНДЕР</span>
   <h3 id="aiProgressTitle">Создаём фотографию из 3D-сцены</h3>
   <p id="aiProgressDetail" role="status" aria-live="polite">Подготавливаем точный ракурс и материалы…</p>
-  <div class="ai-progress-track" role="progressbar" aria-label="Рендер выполняется. Точный процент не предоставляется моделью"></div>
+  <div class="ai-progress-metrics"><strong id="aiProgressPercent">0%</strong><small id="aiProgressEstimateLabel">Подготовка</small></div>
+  <div id="aiProgressTrack" class="ai-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Приблизительный прогресс AI-рендера"><div class="ai-progress-fill" id="aiProgressFill"></div></div>
   <p>Фотореалистичные материалы, естественное солнце, ботанически достоверные деревья и кустарники. Геометрия участка и положение камеры сохраняются.</p>
-  <div class="ai-progress-actions"><small>Полоса показывает работу процесса, а не выдуманный процент выполнения.</small><button id="aiProgressHide" type="button">Скрыть окно</button></div>
+  <div class="ai-progress-actions"><small>≈ Проценты оценочные: AI не сообщает точную готовность. 100% — после получения файла.</small><button id="aiProgressHide" type="button">Скрыть окно</button></div>
  </div>
 </div>
 <div id="aiResult" hidden role="dialog" aria-label="Фотореалистичный AI-результат">
@@ -2392,10 +2399,36 @@ async function export3dPdf(){
  finally{button.disabled=false}
 }
 let aiRenderActive=false;
+let aiProgressPercent=0,aiProgressPhase='idle',aiProgressStarted=0,aiProgressTicker=null;
+function showAiPercent(value,{estimated=true}={}){
+ const next=Math.max(0,Math.min(100,Math.round(value)));
+ aiProgressPercent=next;
+ $('#aiProgressTrack').setAttribute('aria-valuenow',String(next));
+ $('#aiProgressFill').style.width=next+'%';
+ $('#aiProgressPercent').textContent=(estimated&&next>0&&next<100?'≈':'')+next+'%';
+ $('#aiProgressEstimateLabel').textContent=next===100?'Готово':
+  estimated?'Оценка по этапам · не прогресс модели':'Подготовка';
+}
+function resetAiProgress(){
+ if(aiProgressTicker!==null)clearInterval(aiProgressTicker);
+ aiProgressPhase='preparing';aiProgressStarted=performance.now();
+ showAiPercent(0,{estimated:false});
+ aiProgressTicker=setInterval(()=>{
+  if(!aiRenderActive||aiProgressPhase!=='running')return;
+  const elapsed=Math.max(0,(performance.now()-aiProgressStarted)/1000);
+  // Provider sends ONLY queued/running/completed; cap the estimate below 100.
+  const estimate=Math.min(90,40+Math.round(49*(1-Math.exp(-elapsed/70))));
+  if(estimate>aiProgressPercent)showAiPercent(estimate);
+ },1000);
+}
 function setAiProgress(stage,message){
- const modal=$('#aiProgress');
- modal.dataset.stage=stage;
+ $('#aiProgress').dataset.stage=stage;
  $('#aiProgressDetail').textContent=message;
+ aiProgressPhase=stage;
+ const stages={preparing:8,capturing:14,queued:27,running:40,recovering:50,completed:96};
+ const estimate=stages[stage];
+ if(Number.isFinite(estimate)&&estimate>aiProgressPercent)showAiPercent(estimate);
+ if(stage==='failed')$('#aiProgressEstimateLabel').textContent='Ошибка генерации';
 }
 document.addEventListener('forma:render-job-status',event=>{
  if(!aiRenderActive)return;
@@ -2446,10 +2479,11 @@ async function renderAi(){
  if(aiRenderActive||btn.disabled||!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Высокое качество':'Сбалансированное качество')+'? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.'))return;
  aiRenderActive=true;btn.disabled=true;
  $('#aiResult').hidden=true;$('#aiProgress').hidden=false;
- setAiProgress('queued','Готовим фотореалистичный рендер текущего ракурса…');
+ resetAiProgress();
+ setAiProgress('preparing','Готовим фотореалистичный рендер текущего ракурса…');
  status('AI-рендер: подготовка исходной 3D-сцены и запрос в очередь…');
  try{
-  setAiProgress('running','Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
+  setAiProgress('capturing','Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
   const image=captureHighQuality3dReference();
   const inputQuality=await inspectRenderDataURL(image,{season:doc.atmosphere.season});
   if(inputQuality.whiteFraction>.91||inputQuality.transparentFraction>.60)
@@ -2526,13 +2560,16 @@ async function renderAi(){
    (incomplete?'ВНИМАНИЕ: AI вернул неполный/пустой низ кадра. Автоматический платный повтор отключён.':
     'Результат AI; размеры и координаты — только из 3D-модели.');
   setAiProgress('completed',incomplete?'Получен кадр с возможным дефектом композиции. Повторный платный запрос не запускался.':'Фотографический рендер получен от '+modelName+'.');
+  showAiPercent(100,{estimated:false});
   $('#aiResultImage').src=url;$('#downloadAiResult').href=url;
   $('#aiProgress').hidden=true;$('#aiResult').hidden=false;
   status(incomplete?'Внимание: нижняя часть результата выглядит неполной. Проверьте PNG перед скачиванием.':'AI-изображение получено через '+modelName+'. Исходная 3D-геометрия не изменена.');
  }catch(error){
   const message='Ошибка AI: '+(error?.message||'Неизвестная ошибка');
   setAiProgress('failed',message);$('#aiProgress').hidden=false;status(message);
- }finally{aiRenderActive=false;btn.disabled=false}
+ }finally{aiRenderActive=false;btn.disabled=false;
+  if(aiProgressTicker!==null){clearInterval(aiProgressTicker);aiProgressTicker=null}
+ }
 }
 function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
 
