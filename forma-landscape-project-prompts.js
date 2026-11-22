@@ -3,6 +3,7 @@ import {botanicalPhotoProfile} from './forma-landscape-3d-plant-materials.js';
 import {treeInstancePhotoDetail} from './forma-landscape-tree-photo-identity.js';
 import {photoLightingContract} from './forma-landscape-3d-lighting-photo.js';
 import {weatherPhotoContract} from './forma-landscape-weather-effects.js';
+import {creaturePhotoDescription} from './forma-landscape-3d-creatures.js';
 /** FORMA / plan illustration via GPT Image 2.6.
  * Exact geometric SVG masterplan is the legal/source plan; AI output is
  * presentation-only and may NOT be used to calculate dimensions.
@@ -161,12 +162,15 @@ export function perspectiveLandscapePrompt(input){
  const extraSchedule=extra3d.map(o=>{
   const label=clean(o.catalogName||o.type||'existing 3D object');
   const species=clean(o.speciesLatin||'');
-  const photoRole=o.group==='plants'?
+  const photoRole=['people','animals'].includes(o.group)?
+   ' REAL LIVING SUBJECT. '+(creaturePhotoDescription(o.type,o.height)||label+' '+species)+
+   ' Preserve physical height, position and individual count; photographically correct fur/hair/skin/clothes and anatomy, never a low-poly silhouette or stone statue.':
+   o.group==='plants'?
    ' REAL BOTANICAL SUBJECT (not a 3D asset screenshot); botanical identity '+(species||label)+
    '; irregular physical bark and branch hierarchy, authentic foliage translucency and natural crown density; do not copy stylized mesh polygon edges':
    ' real photographed architectural/landscape material and physical object identity';
   const value=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'unknown';
-  return label+' (existing '+clean(o.group||'3D asset')+') at X='+value(o.x)+'m Y='+value(o.y)+'m width='+value(o.width)+'m yaw='+value(o.rotation)+' degrees;'+photoRole;
+  return label+' (existing '+clean(o.group||'3D asset')+') at X='+value(o.x)+'m Y='+value(o.y)+'m width='+value(o.width)+'m height='+value(o.height)+'m yaw='+value(o.rotation)+' degrees;'+photoRole;
  });
  // Imported 3D plants are real, existing plants: do not mistake them for
  // invented objects merely because they are stored outside doc.objects.
