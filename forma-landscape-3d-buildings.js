@@ -348,7 +348,7 @@ function addMeasuredFacades(g,T,{width:w,depth:d,height:h,style,type,material,ni
     box(part,T,opening.width+.10,.08,.15,0,opening.height/2,.068,frameMat);
    }else if(opening.kind==='door'){
     part=doorGroup(T,opening.width,opening.height,
-     ['modern','hightech','japandi','panoramic','modular'].includes(style));
+     ['modern','hightech','japandi','panoramic','modular','scandi'].includes(style));
    }else{
     part=windowGroup(T,opening.width,opening.height,night,opening.panoramic,style==='scandi');
    }
@@ -572,7 +572,7 @@ function roundPipeBetween(g,T,a,b,radius,material,part){
  * and window/door voids remain unchanged. */
 function addFacadeFinish(g,T,{width,depth,height,roof,style}){
  const w=width,d=depth,y=height;
- const metal=mat(T,'#586468',.43,.68),stone=mat(T,'#565B59',.93,.05);
+ const metal=mat(T,style==='scandi'?'#343D41':'#586468',.43,.68),stone=mat(T,'#565B59',.93,.05);
  // Exposed 480mm plinth, continuous along all four surveyed elevations.
  for(const z of [-1,1])box(g,T,w,.18,.06,0,.49,z*(d*.5+.034),stone);
  for(const x of [-1,1])box(g,T,.06,.18,d,x*(w*.5+.034),.49,0,stone);
