@@ -647,9 +647,9 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
-import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=weather-intensity-v1-20261122';
+import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=snow-night-project-v1-20261122';
 import {heightAt, inParcel, terrainTriangles} from './forma-landscape-3d-geometry.js';
-import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=alpha-polish-9-v1-20261122';
+import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=alpha-snow-night-v1-20261122';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -685,7 +685,9 @@ import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-la
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
-import {addSnowToPlant,addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
+import {addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
+import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape-3d-snow-canopy.js?v=snow-canopy-v1-20261122';
+import {normalizeNightInterior,nightInteriorMode} from './forma-landscape-3d-night-interior.js?v=night-interior-v1-20261122';
 import {createOutdoorReflectionMap,updateOutdoorReflectionMap} from './forma-landscape-3d-environment.js';
 import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
@@ -1098,7 +1100,7 @@ function rebuild(){
 }
 function buildingGroup(b){
  const model=b.modelKey&&importedHouseModels.get(b.modelKey);
- if(!model)return createArchitecturalBuilding(THREE,b,{night:doc.atmosphere.time==='night'});
+ if(!model)return createArchitecturalBuilding(THREE,b,{night:nightInteriorMode(doc.atmosphere.time),interior:doc.atmosphere.interior});
  // Clone geometry/material, so subsequent edits can safely dispose rebuilt
  // scene resources without destroying the locally stored source asset.
  const content=model.clone(true);
@@ -1364,7 +1366,7 @@ function drawObject(o,entry,key){
  const groundH=terrainAt(p.x,p.z);
  g.position.set(p.x,groundH,p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
  if(['trees','shrubs'].includes(group)&&g.children.length)
-  addSnowToPlant(THREE,g,o,doc.atmosphere);
+  attachTreeSnowPreview(THREE,g,o,doc.atmosphere);
  mark(g,key);root.add(g);
  if(g.userData?.botanicalLod)botanicalGroups.push(g);
 }
@@ -1428,7 +1430,7 @@ function drawExtra(o){
   },{season:doc.atmosphere.season,quality:currentPlantQuality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
   g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
-  if(g.children.length)addSnowToPlant(THREE,g,{...o,catalogId:o.type,
+  if(g.children.length)attachTreeSnowPreview(THREE,g,{...o,catalogId:o.type,
    height:Number(o.height)||SHRUB_HEIGHT_M[o.type]||.85,
    diameter:Number(o.width)||PROP_WIDTH_M[o.type]||1.2},doc.atmosphere);
   mark(g,'extra:'+o.id);root.add(g);botanicalGroups.push(g);return;
@@ -1443,7 +1445,7 @@ function drawExtra(o){
    // Imported/extra distant pine or spruce gets the SAME selected snow
    // as foreground species, without altering this GLB mesh or its transform.
    if(/pine|spruce|fir|thuja|juniper|cedar/i.test(o.type)&&g.children.length)
-    addSnowToPlant(THREE,g,{id:o.id,catalogId:o.type,
+    attachTreeSnowPreview(THREE,g,{id:o.id,catalogId:o.type,
      height:Number(o.height)||width*2,diameter:width},doc.atmosphere);
    mark(g,'extra:'+o.id);root.add(g);return;
   }
