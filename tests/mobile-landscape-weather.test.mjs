@@ -107,7 +107,7 @@ test('mobile editor starts with the 3D canvas and uses accessible, tappable shee
  assert.match(html,/role="group" aria-label="Мобильные панели редактора"/);
  assert.match(html,/setAttribute\('aria-pressed',String\(active\)\)/);
  assert.match(html,/forma-mobile-landscape-v1\.css/);
- assert.match(css,/body\[data-mobile-panel="details"\] #right\{height:min\(48dvh,440px\)\}/);
+ assert.match(css,/body\[data-mobile-panel="details"\] #right\{[^}]*height:min\(48dvh,440px\)\}/);
  assert.match(css,/#mobileWorkspaceTabs button\{min-width:0;min-height:44px/);
  assert.match(html,/id="quickWeatherSnowTrees"/);
  assert.match(html,/id="quickInteriorLights"/);
