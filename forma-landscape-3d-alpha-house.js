@@ -5,7 +5,7 @@
  * All sizes are metres. Never changes the authored footprint or placement.
  * Four real holes in the metal roof accommodate flush roof windows.
  */
-import {scandiTimberMaterial} from './forma-landscape-3d-scandinavian-detail.js';
+import {alphaGraphitePBR,alphaFacadePanel} from './forma-landscape-3d-alpha-cladding-pbr.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function finish(T,color,roughness=.76,metalness=0){
@@ -159,21 +159,18 @@ function addRoof(T,g,profile){
 function addFacades(T,g,{w,d,eave,rise,half},night){
  const peak=eave+rise,glassBase=eave+rise*.347;
  const front=d/2+.058,rear=-d/2-.061;
- const cladding=scandiTimberMaterial(T,'#3A4347');
- const alternate=scandiTimberMaterial(T,'#444C50');
- const backing=finish(T,'#242B2D',.92,.02);
+ // One seamless UV-mapped PBR facade per end, not hundreds of slat meshes.
+ const cladding=alphaGraphitePBR(T,w);
  const timber=finish(T,'#7B6D5F',.80,.01);
  const frame=finish(T,'#222B2F',.47,.35);
  const glass=new T.MeshPhysicalMaterial({
-  color:night?'#8C9B96':'#789195',metalness:0,roughness:.09,
-  ior:1.51,transparent:true,opacity:.69,depthWrite:false,
-  clearcoat:.56,clearcoatRoughness:.10,side:T.DoubleSide
+  // Light smoke-grey neutral glazing rather than milky cyan solid planes.
+  color:night?'#979C95':'#768481',metalness:.04,roughness:.105,
+  ior:1.52,transparent:true,opacity:.43,depthWrite:false,
+  clearcoat:.78,clearcoatRoughness:.075,side:T.DoubleSide
  });
- const roofY=x=>eave+rise*(1-Math.abs(x)/half);
  const widest=Math.min(w*.67,Math.max(2.3,w-1.1));
  const doorTop=Math.min(glassBase-.11,2.61);
- const boardPitch=.123,boardW=.111;
- const frontBoardCount=Math.ceil(w/boardPitch);
  // Thermal corner jambs and upper-glazing frame are inset from the roof.
  const glassHalf=half*(1-(glassBase-eave)/rise)-.12;
  const top=peak-.34;
@@ -220,33 +217,28 @@ function addFacades(T,g,{w,d,eave,rise,half},night){
  const handle=finish(T,'#969B98',.37,.45);
  for(const sx of [-1,1])
   box(T,g,.019,.22,.025,sx*.034,1.39,doorZ+.07,handle,'alpha-sliding-hardware-handle');
- // 3D vertical boards; no board is ever drawn across a door pane or the
- // high triangular glazing. Roof pitch trims every single outer board.
- for(let i=0;i<frontBoardCount;i++){
-  const x=-w*.5+(i+.5)*w/frontBoardCount;
-  const yLimit=Math.min(glassBase-.045,roofY(x)-.105);
-  const dark=(i%11===0)?alternate:cladding;
-  const segments=Math.abs(x)<doorW/2+.035
-   ?[[doorTop+.10,yLimit]]:[[.49,yLimit]];
-  for(const [a,b] of segments)if(b-a>.045)
-   box(T,g,Math.min(boardW,w/frontBoardCount*.89),b-a,.024,
-    x,(a+b)/2,front+.019,dark,'alpha-front-graphite-vertical-timber-board');
- }
- // Rear is a sealed A-shaped graphite facade with vertical 110 mm boards.
- triangle(T,g,[-half,eave,rear,half,eave,rear,0,peak-.07,rear],
-  backing,'alpha-rear-thermal-triangle-backing');
- for(let i=0;i<frontBoardCount;i++){
-  const x=-w*.5+(i+.5)*w/frontBoardCount;
-  const maxY=roofY(x)-.12;
-  if(maxY<=.49)continue;
-  box(T,g,Math.min(boardW,w/frontBoardCount*.89),maxY-.49,.026,
-   x,(maxY+.49)/2,rear-.024,i%12===0?alternate:cladding,
-   'alpha-rear-graphite-vertical-timber-board');
- }
+ // Flat UV-mapped PBR cladding, only TWO facade meshes in the A-frame.
+ // Window and door openings remain real cutouts, not opaque blue decals.
+ alphaFacadePanel(T,g,{
+  half,base:.49,peak:peak-.070,z:front+.006,width:w,front:true,
+  material:cladding,doorHalf:doorW*.5,doorBottom:doorBottom-.006,
+  doorTop:doorTop+.016,
+  glassHalf,glassBase:glassBase-.012,glassTop:top+.003
+ });
+ alphaFacadePanel(T,g,{
+  half,base:.49,peak:peak-.070,z:rear-.010,width:w,front:false,
+  material:cladding
+ });
+ // Folded weathering drip along the base of the textured rainscreen.
+ const apron=finish(T,'#41494B',.51,.53);
+ box(T,g,w+.035,.024,.075,0,.491,front+.038,apron,
+  'alpha-front-textured-facade-bottom-flashing');
+ box(T,g,w+.035,.024,.075,0,.491,rear-.038,apron,
+  'alpha-rear-textured-facade-bottom-flashing');
  // Front threshold remains accessible from the terrace at level 0.48 m.
  box(T,g,doorW+.16,.022,.21,0,.484,front+.115,frame,'alpha-sliding-door-drained-threshold');
  g.userData.alphaGlazing={upperTriangle:true,lowerSlidingLeaves:4,
-  exteriorFinish:'two-tone graphite 110mm vertical timber'};
+  exteriorFinish:'single UV-mapped graphite PBR texture; no individual 3D boards'};
 }
 function addDeck(T,g,w,d){
  const near=d*.5+.065,depth=Math.min(2.1,Math.max(1.65,d*.235));
