@@ -270,9 +270,9 @@
     sculpture.rotation.y+=(rotationY-sculpture.rotation.y)*.065;
     sculpture.rotation.x+=(rotationX-sculpture.rotation.x)*.065;
     sculpture.rotation.z+=(rotationZ-sculpture.rotation.z)*.065;
-    coreRotor.rotation.z=-time*.105;
-    sideGears[0].rotation.z=time*.12;
-    sideGears[1].rotation.z=-time*.095;
+    coreRotor.rotation.z=-TAU*time/duration;
+    sideGears[0].rotation.z=TAU*time/duration*2;
+    sideGears[1].rotation.z=-TAU*time/duration*2;
     sweep.position.set(5*Math.sin(phase-.9),1.6+.9*Math.cos(phase),6.4);
     sweep.intensity=1.22+.25*Math.max(0,Math.sin(phase+.15));
     const p1=Math.exp(-Math.pow((time-8.1)/.15,2));
@@ -290,9 +290,8 @@
   }
   function animate(now){
     if(!active||!visible||document.hidden){frameId=0;return;}
-    const dt=last?Math.min(.06,(now-last)/1000):0;
-    last=now;
     if(!lastPaint||now-lastPaint>=frameInterval){
+      const dt=lastPaint?Math.min(.12,(now-lastPaint)/1000):0;
       paint(dt);lastPaint=now;
     }
     frameId=requestAnimationFrame(animate);
