@@ -70,6 +70,13 @@ hr{border:0;border-top:1px solid #36473d;width:100%;margin:8px 0}#library{paddin
  border-radius:999px;font-size:12px;font-weight:750;white-space:nowrap}
 #alphaSceneButton:focus-visible{outline:2px solid #dfc4a3;outline-offset:3px}
 #alphaSceneButton[hidden]{display:none!important}
+#sceneCameraCycle{display:none;position:absolute;z-index:6;top:78px;left:12px;
+ min-width:116px;min-height:40px;padding:9px 12px;text-align:center;
+ font-size:11px;font-weight:800;letter-spacing:.015em;border:1px solid #7C8589;
+ border-radius:11px;background:#24292DEB;color:#F2F0E9;
+ box-shadow:0 5px 18px #0005;backdrop-filter:blur(10px)}
+#sceneCameraCycle:hover{background:#343B40;border-color:#A1A8AA}
+#sceneCameraCycle:focus-visible{outline:2px solid #D9C3A1;outline-offset:3px}
 #selectedObjectDock{position:absolute;z-index:5;top:111px;left:50%;
  transform:translateX(-50%);display:flex;align-items:center;gap:12px;
  min-width:240px;max-width:calc(100% - 28px);padding:8px 9px 8px 14px;
@@ -223,6 +230,11 @@ body[data-mobile-pine="true"] .pine-growth-editor{margin-bottom:18px}
 .pine-object-list small{font-size:11px;color:#c1cfc2}
 body[data-mobile-panel="scene"] #status{bottom:67px}
 body[data-mobile-panel="scene"] #left,body[data-mobile-panel="scene"] #right{display:none}
+body[data-mobile-panel="scene"] #sceneCameraCycle{display:block}
+@media(max-width:390px){
+ body[data-mobile-panel="scene"] #sceneCameraCycle{
+  top:75px;left:8px;min-width:105px;min-height:36px;padding:7px 9px}
+}
 #mobileWorkspaceTabs button[data-mobile-panel="scene"]{background:#324439;color:#dfecd9}
 #mobileWorkspaceTabs button[data-mobile-panel="scene"].active{background:#d9dfca;color:#1c2d22}
 .panel{bottom:8px;top:auto;height:min(29dvh,250px);border-radius:14px}
@@ -299,6 +311,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </header>
 <main>
 <canvas id="viewport"></canvas>
+<button type="button" id="sceneCameraCycle" aria-label="Ракурсы камеры: общий дом, ближе, весь участок" title="Один тап — дом, второй — ближе, третий — весь участок">⌖ К дому</button>
 <button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
 <div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
  <span id="selectedObjectName"></span>
@@ -1859,33 +1872,55 @@ function focusSelectedPlant(){
  camera.lookAt(controls.target);controls.update();
  status('Камера показывает выбранное растение. Его измеряемая геометрия не изменена.');
 }
-function focusHouseCamera(){
+let houseCameraStage=2;
+function syncSceneCameraButton(){
+ const button=$('#sceneCameraCycle');if(!button)return;
+ button.textContent=['＋ Ближе','▤ Весь участок','⌖ К дому'][houseCameraStage];
+ button.setAttribute('aria-label',
+  ['Приблизить камеру к дому','Показать весь участок','Показать дом целиком'][houseCameraStage]);
+}
+function cycleSceneCamera(){
+ const next=(houseCameraStage+1)%3;
+ if(next===2){
+  setView('3d');
+  houseCameraStage=2;syncSceneCameraButton();
+  status('Камера: общий вид участка. Следующее нажатие — к дому.');
+  return;
+ }
+ focusHouseCamera(next===1?'detail':'overview');
+}
+function focusHouseCamera(mode='overview'){
  if(state.view!=='3d')setView('3d');
  const b=activeHouseTarget(),p=pos(b.x,b.y);
  const ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));
+ const detail=mode==='detail';
  if(b.archStyle==='alpha'&&!b.modelKey){
-  // Mobile architectural 3/4 view. The original generic zoom cropped
-  // the A-frame into a giant, textureless, cyan glass rectangle.
+  // The camera uses CURRENT vertical/horizontal FOV and actual building
+  // dimensions, not a fixed distance that clips the facade on Android.
   const rise=Math.max(4.2,Math.min(8,Number(b.roofRise)||(b.width||7.5)*.79));
   const peak=.65+rise;
-  const horizontalFov=Math.atan(Math.tan(50*Math.PI/360)*ratio);
-  const widthDistance=(Number(b.width)||7.5)/(2*Math.max(.12,Math.tan(horizontalFov)))*1.43;
-  const far=Math.max((Number(b.height)||9.5)*1.65,widthDistance);
+  const fov=(Number(camera.fov)||50)*Math.PI/180;
+  const horizontalFov=Math.atan(Math.tan(fov/2)*ratio);
+  const widthDistance=(Number(b.width)||7.5)/(2*Math.max(.11,Math.tan(horizontalFov)))*1.46;
+  const far=Math.max((Number(b.height)||9.5)*1.62,widthDistance);
   const ground=terrainAt(p.x,p.z);
   const yaw=-(Number(b.rotation)||0)*Math.PI/180;
-  const offset=new THREE.Vector3(-far*.22,peak*.66,far)
-   .applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
+  const scale=detail?.76:1;
+  const offset=new THREE.Vector3(-far*.22,peak*.59,far)
+   .multiplyScalar(scale).applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
   controls.target.set(p.x,ground+peak*.47,p.z);
   camera.position.set(p.x+offset.x,ground+peak*.47+offset.y,p.z+offset.z);
   camera.lookAt(controls.target);controls.update();renderGate.invalidate();
-  status('Весь дом АЛЬФА в кадре. Размеры и расположение сохранены.');
+  houseCameraStage=detail?1:0;syncSceneCameraButton();
+  status(detail?'Камера: крупный 3/4 ракурс дома.':'Камера: дом целиком, фронтальный 3/4 ракурс.');
   return;
  }
- const range=Math.max(b.width,b.height,7)*1.35*Math.min(2.15,Math.max(1,.90/ratio));
+ const range=Math.max(b.width,b.height,7)*1.35*Math.min(2.15,Math.max(1,.90/ratio))*(detail?.76:1);
  controls.target.set(p.x,1.6,p.z);
  camera.position.set(p.x+range*.83,Math.max(9,range*.86),p.z+range*1.15);
- camera.lookAt(controls.target);controls.update();
- status('Камера приближена к выбранному дому. Размеры проекта не изменились.');
+ camera.lookAt(controls.target);controls.update();renderGate.invalidate();
+ houseCameraStage=detail?1:0;syncSceneCameraButton();
+ status('Камера показывает выбранный дом. Размеры проекта не изменились.');
 }
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
 function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
@@ -2462,10 +2497,11 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   else catalog?.scrollIntoView({behavior:'smooth',block:'nearest'});
   status('АЛЬФА · A-frame выбрана. Откройте «Дома / параметры» для настроек.');
  };
- $('#focusHouse').onclick=focusHouseCamera;
+ $('#focusHouse').onclick=()=>focusHouseCamera('overview');
+ $('#sceneCameraCycle').onclick=cycleSceneCamera;
  $('#focusSelected').onclick=focusSelectedPlant;
  $('#pineInspectorShortcut').onclick=showSelectedPineControls;
- $('#fit3dScene').onclick=()=>setView('3d');
+ $('#fit3dScene').onclick=()=>{setView('3d');houseCameraStage=2;syncSceneCameraButton();};
  $('#cameraHeight').oninput=()=>setOrbitCameraHeight($('#cameraHeight').value);
  $('#cameraEyeLevel').onclick=()=>{if(state.view!=='3d')setView('3d');setOrbitCameraHeight(WALK_EYE_HEIGHT);status('Камера опущена к уровню глаз: 1,7 м над рельефом.')};
  $('#customHouseGlb').onchange=e=>importHouseGlb(e.target.files?.[0]);
