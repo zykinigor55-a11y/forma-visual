@@ -693,7 +693,7 @@ import {CREATURE_ASSETS,creatureById,isCreatureId} from './forma-landscape-3d-cr
 import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
 import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js';
-import {surfaceMaterial,surfacePreviewURL} from './forma-landscape-3d-surfaces.js';
+import {surfaceMaterial,surfacePreviewURL,pavingPathMaterial} from './forma-landscape-3d-surfaces.js?v=paving-identity-v2-20261122';
 import {inspectRenderDataURL} from './forma-landscape-ai-photo-quality.js?v=fullframe-v1-20261122';
  // The editor is demand-rendered: update the frame after streamed PBR arrives.
  window.addEventListener('forma-surface-texture-ready',()=>{
@@ -1468,7 +1468,7 @@ function drawArea(o,entry,key){
    a.y=terrainAt(a.x,a.z)+.09;b.y=terrainAt(b.x,b.z)+.09;
    const delta=b.clone().sub(a),l=delta.length();if(l<.001)continue;
    const isGreen=entry.group==='lawns';
-   const board=mesh(new THREE.BoxGeometry(o.width||1.2,isGreen?.027:.065,l),surfaceMaterial(THREE,o.catalogId,isGreen?'#78965d':entry.color||'#a8a99f'));
+   const board=mesh(new THREE.BoxGeometry(o.width||1.2,isGreen?.027:.065,l),pavingPathMaterial(THREE,o.catalogId,o.width||1.2,l,entry.color||'#a8a99f'));
    board.position.copy(a.add(b).multiplyScalar(.5));
    if(isGreen)board.position.y-=.024;
    board.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),delta.normalize());g.add(board);
