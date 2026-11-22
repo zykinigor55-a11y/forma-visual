@@ -1,4 +1,4 @@
-import {GROUPS,CATALOG,TREE_HEIGHT_M,SCENE_OPTIONS,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=area-union-v3-20261117';
+import {GROUPS,CATALOG,TREE_HEIGHT_M,SCENE_OPTIONS,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside} from './forma-landscape-project-core.js?v=north-verified-v4-20261122';
 import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=tree-atlas-generated-png-v8-20261117';
 import {brushPolygon} from './forma-landscape-brush.js';
 import {premiumIcon, premiumIcon as categoryIcon} from './forma-premium-icons.js';
@@ -636,7 +636,7 @@ function drawMap(){
    const png=b.dataset.proPng!==undefined;
    const originalSelection=selected;let cleanSource;
    try{selected=null;cleanSource=drawSvg(true)}finally{selected=originalSelection}
-   Promise.all([import('./forma-landscape-professional-sheet.js?v=pro-board-v1-20261122'),Promise.resolve(cleanSource)]).then(async([module,src])=>{
+   Promise.all([import('./forma-landscape-professional-sheet.js?v=measured-schedule-v2-20261122'),Promise.resolve(cleanSource)]).then(async([module,src])=>{
     const authored=module.composeProfessionalPlanSheet(src,doc,presentationMode);
     const svg=await inlineSVGAssets(authored);
     if(!png){download(title()+'-professional-genplan.svg',svg,'image/svg+xml');say('Профессиональный SVG-лист готов: план, легенда, шкала в метрах, север.');return;}
