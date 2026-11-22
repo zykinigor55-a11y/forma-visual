@@ -1167,7 +1167,9 @@ function loadCreatureModel(id){
  const entry=creatureById(id);
  if(!entry||creatureSources.has(id)||creatureLoading.has(id)||creatureFailures.has(id))return;
  creatureLoading.add(id);
- const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+ const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ ktx2.detectSupport(renderer);
+ const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
  // Native GLBs are proxied from fixed CC0 URLs by our own domain, avoiding
  // 3rd-party CORS failures, unsigned redirects and unlicensed uploads.
  loader.loadAsync(entry.modelPath).then(gltf=>{
@@ -1181,7 +1183,7 @@ function loadCreatureModel(id){
   creatureFailures.add(id);
   status('GLB '+entry.name+' недоступна. Проверьте соединение или источник.');
   console.warn('Creature CC0 GLB load failed',id,e?.message||e);
- }).finally(()=>creatureLoading.delete(id));
+ }).finally(()=>{creatureLoading.delete(id);ktx2.dispose()});
 }
 function createPlacedCreature(entry,source,instance){
  const p=pos(instance.x||0,instance.y||0),group=new THREE.Group();
