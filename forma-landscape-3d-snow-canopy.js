@@ -7,7 +7,7 @@
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js';
 
 const conifer=/pine|spruce|fir|thuja|juniper|cedar|cypress|hemlock|yew/i;
-const foliage=/foliage|leaf|leaves|needle|spruce|pine_crown|green|branchleaves|frond|pine_leaf/i;
+const foliage=/foliage|leaf|leaves|needle|spruce|pine_crown|green|branchleaves|frond|pine_leaf|canopy|crown|conifer|needles|pineleaf|spruceleaf|pinebranchlets/i;
 const woody=/trunk|stem|bark|wood|twig|branch|root|bole/i;
 const clamp=n=>Math.max(0,Math.min(1,n));
 const noise=(i,seed)=>{let x=(i*1664525+seed*1013904223)>>>0;
@@ -19,14 +19,18 @@ function isFoliage(mesh){
  if(['micro','volume','sprays','leaves','foliage'].includes(layer))return true;
  if(['branches','bark','trunk'].includes(layer))return false;
  const mats=Array.isArray(mesh.material)?mesh.material:[mesh.material];
- const label=[mesh.name,...mats.map(m=>m?.name||'')].join(' ').toLowerCase();
+ const label=[mesh.name,...mats.map(m=>m?.name||''),...mats.map(m=>m?.map?.name||'')].join(' ').toLowerCase();
  if(woody.test(label)&&!foliage.test(label))return false;
  if(foliage.test(label))return true;
+ if(mesh.userData?.isFoliage===true||mesh.userData?.formaLeaf===true)return true;
  return mats.some(m=>m&&(
   Number(m.alphaTest)>0.02||
-  m.transparent===true&&!!m.map||
-  m.map&&/green|leaf|needle|foliage/i.test(m.map.name||'')
- ));
+  !!m.alphaMap||
+  (m.transparent===true&&!!m.map)||
+  (m.map&&/green|leaf|needle|foliage|crown|pine|spruce/i.test(m.map.name||''))||
+  // Anonymous opaque GLB crown geometry often has green-tinted PBR material.
+  (m.color&&m.color.g>m.color.r*1.13&&m.color.g>m.color.b*.91&&m.color.g>.06)
+  ));
 }
 function detachMaterials(mesh,entries){
  const originals=Array.isArray(mesh.material)?mesh.material:[mesh.material],unique=new Map();
@@ -62,9 +66,38 @@ export function attachTreeSnowPreview(T,group,plant,atmosphere){
       Math.floor(color.array.length/3))});
   }
  });
+ // Some CC0 models have only generic Mesh_001 names and opaque foliage.
+ // Fallback: snow-coat only broad, textured geometry, never slender trunks.
+ if(!eligible){
+  group.traverse(node=>{
+   if(!node.isMesh||node.userData?.formaWeatherPreview||!node.material)return;
+   const mats=Array.isArray(node.material)?node.material:[node.material];
+   const label=[node.name,...mats.map(m=>m?.name||'')].join(' ').toLowerCase();
+   if(woody.test(label)&&!foliage.test(label))return;
+   const g=node.geometry;
+   if(!g?.boundingBox&&typeof g?.computeBoundingBox==='function')g.computeBoundingBox();
+   const box=g?.boundingBox;
+   if(!box)return;
+   const horizontal=Math.max(box.max.x-box.min.x,box.max.z-box.min.z);
+   const vertical=Math.max(.001,box.max.y-box.min.y);
+   const broadCanopy=horizontal>=vertical*.50;
+   const textured=mats.some(m=>!!(m?.map||m?.alphaMap));
+   if(!broadCanopy||!textured)return;
+   eligible++;detachMaterials(node,entries);
+   const color=node.instanceColor;
+   if(node.isInstancedMesh&&color?.array?.length>=3){
+    entries.push({kind:'instance',target:color,original:color.array.slice(),
+     seed:seed+eligible*1597,count:Math.min(node.count||color.array.length/3,color.array.length/3)});
+   }
+  });
+ }
  if(!eligible)return null;
+ const hasInstanceColors=new Set();
+ // Instance colours provide per-needle patchiness; avoid global white wash.
+ if(entries.some(e=>e.kind==='instance'))
+  for(const e of entries)if(e.kind==='material')hasInstanceColors.add(e.target);
  const info={species,seed,entries,eligibleMeshes:eligible,
-  strength:-1,white,group};
+  strength:-1,white,group,hasInstanceColors};
  group.userData.formaSnowPreview=info;
  updateTreeSnowPreview(info,atmosphere);
  return info;
@@ -76,10 +109,11 @@ export function updateTreeSnowPreview(info,atmosphere){
  const strength=snow?clamp(effects.snowTrees/100):0;
  if(info.strength===strength)return false;
  info.strength=strength;
- const white=info.white,lighten=.95*strength;
+ const white=info.white;
  for(const e of info.entries){
   if(e.kind==='material'){
    const mat=e.target;
+   const lighten=(info.hasInstanceColors?.has(mat)?strength*.15:strength*.95);
    if(e.color&&mat.color){
     mat.color.copy(e.color).lerp(white,lighten);
    }
