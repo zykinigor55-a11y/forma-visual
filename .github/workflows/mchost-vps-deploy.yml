@@ -1,0 +1,44 @@
+name: DOM.RENDER - deploy to MCHost VPS (manual first)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dom-render-mchost-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/dom-render-nanobanana'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check required secrets
+        env:
+          HOST: ${{ secrets.DOM_VPS_HOST }}
+          USER: ${{ secrets.DOM_VPS_USER }}
+          KEY: ${{ secrets.DOM_VPS_SSH_PRIVATE_KEY }}
+          KNOWN: ${{ secrets.DOM_VPS_KNOWN_HOSTS }}
+        run: |
+          test -n "$HOST" && test -n "$USER" && test -n "$KEY" && test -n "$KNOWN"
+      - name: Configure SSH with pinned known_hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DOM_VPS_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DOM_VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Deploy verified SHA
+        env:
+          HOST: ${{ secrets.DOM_VPS_HOST }}
+          USER: ${{ secrets.DOM_VPS_USER }}
+          PORT: ${{ secrets.DOM_VPS_PORT }}
+          RELEASE: ${{ github.sha }}
+        run: |
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -p "${PORT:-22}" "$USER@$HOST" sudo -n /usr/local/sbin/forma-deploy "$RELEASE"
