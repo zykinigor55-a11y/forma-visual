@@ -1,0 +1,23 @@
+[Unit]
+Description=FORMA VISUAL DOM.RENDER Node service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=forma
+Group=forma
+WorkingDirectory=/srv/forma-visual/app
+EnvironmentFile=/etc/forma-visual.env
+ExecStart=/usr/bin/node /srv/forma-visual/app/server.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/forma-visual
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
