@@ -1,8 +1,8 @@
 /* FORMA 3D / measured high-density relief.
- * Saved terrain from old 48x48 projects is interpolated, never discarded.
+ * Saved terrain from old 48x48 and 96x96 projects is interpolated, never discarded.
  * Vertex normals use sampled slope rather than per-triangle flat normals.
  */
-export const TERRAIN_GRID=96;
+export const TERRAIN_GRID=192;
 export function inferTerrainGrid(values){
  if(!Array.isArray(values))return null;
  const side=Math.sqrt(values.length);
