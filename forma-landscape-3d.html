@@ -419,6 +419,13 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  body[data-mobile-panel="scene"] #mobileWorkspaceTabs{grid-template-columns:repeat(auto-fit,minmax(50px,1fr));}
  body[data-mobile-panel="scene"] #sceneQuickTools button{min-height:44px}
  body:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) :is(#mobileTerrainDock,#mobileWalkToggle,#mobileWalkDock){display:none!important}
+ body[data-active-tool='terrain'][data-mobile-panel='scene'] :is(#sceneCameraCycle,#sceneClimateButton,#mobileWalkToggle,#alphaSceneButton,#openComposition){display:none!important}
+ body[data-active-tool='terrain'][data-mobile-panel='scene'] #status{max-width:76%;padding:6px 10px;font-size:10px;bottom:calc(183px + env(safe-area-inset-bottom,0px))}
+ body[data-active-tool='terrain'][data-mobile-panel='scene'] #mobileTerrainDock{gap:3px;padding:5px}
+ body[data-active-tool='terrain'][data-mobile-panel='scene'] #mobileTerrainDock button{min-height:40px}
+ body[data-active-tool='terrain'][data-mobile-panel='scene'] #mobileTerrainDock .mt-options{gap:4px}
+ body[data-active-tool='terrain'][data-mobile-panel='scene'] #sceneQuickTools{max-width:calc(100% - 12px);left:6px;right:6px;transform:none;justify-content:center}
+ body[data-active-tool='terrain'][data-mobile-panel='scene'] #sceneQuickTools button{flex:1 1 auto;min-width:0;padding:4px;font-size:10px}
 }
 </style>
 <link rel="stylesheet" href="./forma-landscape-pine-sizing.css">
@@ -1138,8 +1145,14 @@ function groundPhotoTexture(){
  // Use the actual close-up photo asset rather than a synthetic gray noise grid.
  // The same centimetre-scale photographed turf is used in the 2D catalog.
  window.FORMA_TERRAIN_TEXTURE_READY=false;
- const pixel=document.createElement('canvas');pixel.width=pixel.height=2;
- const ctx=pixel.getContext('2d');ctx.fillStyle='#748453';ctx.fillRect(0,0,2,2);
+ const pixel=document.createElement('canvas');pixel.width=pixel.height=256;
+ const ctx=pixel.getContext('2d');ctx.fillStyle='#627344';ctx.fillRect(0,0,256,256);
+ let seed=1947;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<18000;i++){
+  const x=random()*256,y=random()*256,a=random(),tone=58+Math.round(random()*49);
+  ctx.strokeStyle='rgb('+Math.round(tone*.76)+','+Math.round(tone*1.16)+','+Math.round(tone*.49)+')';
+  ctx.lineWidth=.6+random()*.8;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(a-.5)*5,y-1-random()*5);ctx.stroke();
+ }
  const t=new THREE.CanvasTexture(pixel);
  new THREE.ImageLoader().load(new URL('./assets/landscape-photo/universal.jpg',document.baseURI).href,image=>{
   t.image=image;t.needsUpdate=true;
@@ -1154,7 +1167,7 @@ function groundPhotoTexture(){
   window.FORMA_TERRAIN_TEXTURE_READY=false;
   renderGate.invalidate();
  });
- t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;
+ t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;
  cachedGroundTexture=t;return t;
 }
 // Deterministic, non-repeating-looking loam grain, independent of network assets.
@@ -1188,12 +1201,14 @@ function applyRaisedSoilMaterial(mat){
    .replace('#include <map_fragment>',`#include <map_fragment>
     vec2 soilUV=vFormaGroundPosition.xz/1.45;
     float soilVariation=texture2D(formaSoilMap,soilUV*0.42).r;
-    float raisedSoil=smoothstep(0.12,0.95,vFormaGroundPosition.y+(soilVariation-0.18)*0.35);
+    float raisedSoil=smoothstep(0.025,0.42,vFormaGroundPosition.y+(soilVariation-0.13)*0.10);
     vec3 soilColor=texture2D(formaSoilMap,soilUV).rgb;
+    vec3 coarseGrass=texture2D(map,vMapUv*0.23).rgb;
+    diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*coarseGrass,0.22);
     diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*soilColor,raisedSoil);
    `);
  };
- mat.customProgramCacheKey=()=>'forma-raised-soil-v1';
+ mat.customProgramCacheKey=()=>'forma-raised-soil-v2';
 }
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
@@ -1231,6 +1246,63 @@ function mark(group,key){
  }
  return group;
 }
+// Indexed surface: shared vertices, local updates, stable normals, no scene rebuild during a stroke.
+let terrainDirty=null,terrainUpdateFrame=0;
+function makeEditableGroundGeometry(side){
+ const mobile=window.innerWidth<=850;
+ const steps=mobile?160:256, stride=steps+1, count=stride*stride;
+ const positions=new Float32Array(count*3),normals=new Float32Array(count*3),uv=new Float32Array(count*2);
+ const indices=new (count>65535?Uint32Array:Uint16Array)(steps*steps*6);
+ let q=0;
+ for(let j=0;j<=steps;j++)for(let i=0;i<=steps;i++){
+  const k=j*stride+i,x=(i/steps-.5)*side,z=(j/steps-.5)*side;
+  positions[k*3]=x;positions[k*3+2]=z;uv[k*2]=i/steps;uv[k*2+1]=j/steps;
+  if(i<steps&&j<steps){indices[q++]=k;indices[q++]=k+stride;indices[q++]=k+1;indices[q++]=k+1;indices[q++]=k+stride;indices[q++]=k+stride+1;}
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.BufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage));
+ geo.setAttribute('normal',new THREE.BufferAttribute(normals,3).setUsage(THREE.DynamicDrawUsage));
+ geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(new THREE.BufferAttribute(indices,1));
+ geo.userData.terrain={steps,side};updateGroundRegion(geo,null);
+ // Height brush is restricted to -4..5 m; fixed bounds avoid scanning on each stroke.
+ geo.boundingBox=new THREE.Box3(new THREE.Vector3(-side/2,-4,-side/2),new THREE.Vector3(side/2,5,side/2));
+ geo.boundingSphere=new THREE.Sphere(new THREE.Vector3(),Math.hypot(side/2,side/2,5));
+ return geo;
+}
+function updateGroundRegion(geo,dirty){
+ const {steps,side}=geo.userData.terrain,step=side/steps,stride=steps+1;
+ const pos=geo.attributes.position,norm=geo.attributes.normal;
+ const pad=step*2+Math.max(doc.site.width,doc.site.height)/GRID*2;
+ const clampIndex=n=>Math.max(0,Math.min(steps,n));
+ const lo=v=>clampIndex(Math.floor((v/side+.5)*steps)),hi=v=>clampIndex(Math.ceil((v/side+.5)*steps));
+ const x0=dirty?lo(dirty.x0-pad):0,x1=dirty?hi(dirty.x1+pad):steps;
+ const z0=dirty?lo(dirty.z0-pad):0,z1=dirty?hi(dirty.z1+pad):steps;
+ const e=Math.max(step*.8,Math.min(doc.site.width,doc.site.height)/GRID);
+ for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){
+  const k=j*stride+i,x=pos.getX(k),z=pos.getZ(k);
+  const sx=(terrainAt(x+e,z)-terrainAt(x-e,z))/(2*e),sz=(terrainAt(x,z+e)-terrainAt(x,z-e))/(2*e);
+  const inv=1/Math.hypot(sx,1,sz);pos.setY(k,terrainAt(x,z));norm.setXYZ(k,-sx*inv,inv,-sz*inv);
+ }
+ pos.needsUpdate=true;norm.needsUpdate=true;
+}
+function flushTerrainPreview(){
+ terrainUpdateFrame=0;
+ if(!terrainDirty||!terrainMesh?.geometry?.userData?.terrain)return;
+ const dirty=terrainDirty;terrainDirty=null;updateGroundRegion(terrainMesh.geometry,dirty);
+ if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
+ if(terrainBrushPreview)drawLocalTerrainBrush(terrainBrushPreview.x,terrainBrushPreview.z);
+ renderGate.invalidate();
+}
+function scheduleTerrainPreview(world,radius){
+ const b={x0:world.x-radius,x1:world.x+radius,z0:world.z-radius,z1:world.z+radius};
+ if(terrainDirty){terrainDirty.x0=Math.min(terrainDirty.x0,b.x0);terrainDirty.x1=Math.max(terrainDirty.x1,b.x1);terrainDirty.z0=Math.min(terrainDirty.z0,b.z0);terrainDirty.z1=Math.max(terrainDirty.z1,b.z1);}
+ else terrainDirty=b;
+ if(!terrainUpdateFrame)terrainUpdateFrame=requestAnimationFrame(flushTerrainPreview);
+}
+function finishTerrainPreview(){
+ if(terrainUpdateFrame)cancelAnimationFrame(terrainUpdateFrame);
+ flushTerrainPreview();
+}
 function rebuild(){
  renderGate.invalidate();
  waterSurfaces.length=0;
@@ -1242,18 +1314,12 @@ function rebuild(){
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();for(const mat of (Array.isArray(n.material)?n.material:[n.material]))mat?.dispose?.()})}
  pickables=[];botanicalGroups.length=0;lastBotanicalLodAt=0;shadowedGardenLights=0;
- const w=doc.site.width,h=doc.site.height,geo=new THREE.BufferGeometry();
+ const w=doc.site.width,h=doc.site.height;
  // The ground is an unbroken square around the measured parcel. An irregular
  // user boundary remains a separate outline and never cuts holes in the scene.
  const groundSide=squareTerrainSide(doc.site);
- const vertices=squareTerrainTriangles(doc.site,heightmap,GRID),uvs=new Float32Array(vertices.length/3*2);
- for(let i=0;i<vertices.length;i+=3){const j=i/3*2;uvs[j]=vertices[i]/groundSide+.5;uvs[j+1]=vertices[i+2]/groundSide+.5}
- geo.setAttribute('position',new THREE.BufferAttribute(vertices,3));
- geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));
- // Smooth shared gradients instead of hard, faceted per-triangle normals.
- geo.setAttribute('normal',new THREE.BufferAttribute(
-  sampledTerrainNormals(vertices,groundSide,groundSide,(x,z)=>terrainAt(x,z)),3));
- const grass=groundPhotoTexture();grass.repeat.set(groundSide/3.2,groundSide/3.2);
+ const geo=makeEditableGroundGeometry(groundSide);
+ const grass=groundPhotoTexture();grass.repeat.set(groundSide/4.2,groundSide/4.2);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
  applyRaisedSoilMaterial(groundMat);
@@ -1742,7 +1808,7 @@ function syncMobileTerrainDock(){
  const radius=$('#brushRadius');if(radius){$('#mtRadius').value=radius.value;$('#mtRadiusValue').textContent=radius.value+' м'}
 }
 function chooseTool(t){
- hideLocalTerrainBrush();state.tool=t;state.placing=null;pointMode=[];refreshDraft();
+ hideLocalTerrainBrush();state.tool=t;document.body.dataset.activeTool=t;state.placing=null;pointMode=[];refreshDraft();
  if(controls)controls.touches.ONE=t==='terrain'?null:THREE.TOUCH.ROTATE;
  syncMobileTerrainDock();
  if(scene?.getObjectByName('sun'))updateSun();
@@ -2673,7 +2739,7 @@ function updateSun(){
  const shadowCam=sun.shadow.camera;
  shadowCam.left=-half;shadowCam.right=half;shadowCam.top=half;shadowCam.bottom=-half;
  shadowCam.near=.1;shadowCam.far=Math.max(220,85+half*2);shadowCam.updateProjectionMatrix();
- sun.shadow.normalBias=.012;
+ sun.shadow.normalBias=Math.max(.035,half/(window.innerWidth<720?1024:2048)*1.1);sun.shadow.bias=-.00035;
  sun.shadow.radius=modellingLight?Math.min(1.8,solarSettings.softness):solarSettings.softness;
  if(atmosphereSky){
   atmosphereSky.visible=!['night','blue-hour'].includes(val)&&state.view!=='2d';
@@ -3060,7 +3126,18 @@ function setupComposition(){
 }
 
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
-function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
+function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);if(state.tool==='terrain')return hitTerrainHeightfield(raycaster.ray);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
+function hitTerrainHeightfield(ray){
+ const side=squareTerrainSide(doc.site),half=side/2,box=new THREE.Box3(new THREE.Vector3(-half,-4.02,-half),new THREE.Vector3(half,5.02,half));
+ const first=ray.intersectBox(box,new THREE.Vector3());if(!first)return null;
+ let lo=box.containsPoint(ray.origin)?0:first.distanceTo(ray.origin),hi=Infinity;
+ for(const axis of ['x','y','z']){const d=ray.direction[axis];if(Math.abs(d)>1e-8)hi=Math.min(hi,((d>0?box.max[axis]:box.min[axis])-ray.origin[axis])/d)}
+ if(!Number.isFinite(hi)||hi<lo)return null;
+ const point=new THREE.Vector3(),f=t=>{ray.at(t,point);return point.y-terrainAt(point.x,point.z)};
+ const count=Math.max(16,Math.min(192,Math.ceil((hi-lo)/.18)));let prev=lo,pv=f(lo);
+ for(let i=1;i<=count;i++){const t=lo+(hi-lo)*i/count,v=f(t);if(pv>=0&&v<=0){let a=prev,b=t;for(let j=0;j<12;j++){const m=(a+b)/2;if(f(m)>0)a=m;else b=m}return ray.at((a+b)/2,new THREE.Vector3())}prev=t;pv=v;}
+ return null;
+}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,true)[0];if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
 function hitTreeOnMobile(e){
  // Branch/needle GLB alpha cards can miss a geometric raycast on BOTH mouse
@@ -3145,8 +3222,8 @@ function modifyTerrain(world){
   softness:Number($('#brushSoftness')?.value??92),shape:$('#brushShape')?.value||'circle',
   contains:(x,y)=>inParcel({x,y},doc.site)});
  const elevation=terrainAt(world.x,world.z);
- status('Рельеф: '+(elevation>=0?'+':'')+elevation.toFixed(2)+' м · удерживайте кисть для изменения высоты.');
- scheduleBrushRebuild();
+ status('Рельеф: '+(elevation>=0?'+':'')+elevation.toFixed(2)+' м');
+ scheduleTerrainPreview(world,Number($('#brushRadius')?.value||3));
 }
 function refreshDraft(){
  syncMobilePlacementHint();renderGate.invalidate();
@@ -3453,8 +3530,8 @@ function drawLocalTerrainBrush(x,z){
   terrainBrushGrid=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xe7d0a5,transparent:true,opacity:.58,depthWrite:false,depthTest:true}));
   terrainBrushGrid.renderOrder=48;terrainBrushGrid.frustumCulled=false;scene.add(terrainBrushGrid);
  }
- const lines=[],step=radius/5,sub=Math.min(step/3,.18);
- const valid=(a,b)=>inParcel(fromWorld({x:a,z:b}),doc.site);
+ const lines=[],step=radius/5,sub=Math.max(.12,Math.min(step/3,.3));
+ const valid=(a,b)=>inParcel({x:a+doc.site.width/2,y:b+doc.site.height/2},doc.site);
  const append=(a,b,c,d)=>{
   if(!valid(a,b)||!valid(c,d))return;
   lines.push(a,terrainAt(a,b)+.045,b,c,terrainAt(c,d)+.045,d);
@@ -3634,7 +3711,7 @@ function addEvents(){
   }
  }
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
- if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);drawLocalTerrainBrush(p.x,p.z);startTerrainHold(p);return}
+ if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p||!inParcel({x:p.x+doc.site.width/2,y:p.z+doc.site.height/2},doc.site))return status('Коснитесь земли внутри участка.');state.painting=true;controls.enabled=false;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);drawLocalTerrainBrush(p.x,p.z);startTerrainHold(p);return}
  // An explicit mobile Move mode prevents one-finger camera orbit from
  // fighting object translation. A normal tap still just selects the object.
  if(state.tool==='select'&&state.mobileMoveMode&&(e.pointerType==='touch'||e.pointerType==='pen')){
@@ -3672,7 +3749,7 @@ const move=e=>{
  if(e.pointerId===state.activePointer&&state.down&&
   Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y)>(e.pointerType==='mouse'?5:10))
   tapCancelled=true;
- renderGate.invalidate();updateBrushCursor(e);
+ renderGate.invalidate();if(!(state.painting&&state.tool==='terrain'))updateBrushCursor(e);
  if(state.view==='walk'){
   const locked=document.pointerLockElement===canvas,mobile=e.pointerType==='touch'&&state.down;
   if(locked||mobile){
@@ -3688,12 +3765,13 @@ const move=e=>{
   if(e.pointerType==='mouse'&&((e.buttons&1)===0||(e.buttons&2)!==0))return;
   if(brushStroke){advanceBrush(hitGround(e));return}
   const p=hitGround(e);
-   if(p){
-    terrainHoldPoint=p;terrainHoldMotion=performance.now();
+   if(p&&inParcel({x:p.x+doc.site.width/2,y:p.z+doc.site.height/2},doc.site)){
+    terrainBrushPreview={x:p.x,z:p.z};terrainHoldPoint=p;terrainHoldMotion=performance.now();
     const spacing=Math.max(.25,Math.min(.85,Number($('#brushRadius')?.value||3)*.18));
     const samples=terrainStrokeLast?terrainStrokeSamples(terrainStrokeLast,p,spacing):[p];
     for(const sample of samples){modifyTerrain(sample);terrainStrokeLast={x:sample.x,z:sample.z}}
-   }
+    if(!terrainUpdateFrame)drawLocalTerrainBrush(p.x,p.z);
+   }else{terrainHoldPoint=null;hideLocalTerrainBrush()}
    return;
  }
  if(!state.drag||!state.selected||!state.down)return;
@@ -3748,7 +3826,7 @@ const up=e=>{
   else{
     const end=hitGround(e),radius=Number($('#brushRadius')?.value||3),threshold=Math.max(.18,Math.min(.85,radius*.18)*.45);
     if(end&&terrainStrokeLast&&Math.hypot(end.x-terrainStrokeLast.x,end.z-terrainStrokeLast.z)>=threshold)modifyTerrain(end);
-    stopTerrainHold();terrainStrokeLast=null;state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();
+    stopTerrainHold();finishTerrainPreview();terrainStrokeLast=null;state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();
    }
   state.down=null;return
  }
@@ -3775,7 +3853,7 @@ const up=e=>{
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{finishTerrainPreview();save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;hideLocalTerrainBrush();renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -3964,7 +4042,8 @@ function animate(now=0){
  const preferred=window.innerWidth<=720?1000/30:1000/50;
  // Never starve clicks if software WebGL needs hundreds of milliseconds
  // for one physically shaded frame (high-detail vegetation and water).
- const interval=Math.max(preferred,Math.min(900,lastRenderCost*3.7));
+ const sculpting=state.painting&&state.tool==='terrain';
+ const interval=Math.max(preferred,Math.min(sculpting?150:900,lastRenderCost*(sculpting?1.4:3.7)));
  if(now-lastRenderMs<interval)return;
  lastRenderMs=now;
  const frameSeconds=lastWalkFrame?Math.min(.1,(now-lastWalkFrame)/1000):0;
