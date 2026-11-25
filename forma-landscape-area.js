@@ -29,7 +29,7 @@ function regionsFromProject(project){
   const layer=LAYERS[o.type];
   if(layer===undefined)return;
   const points=ring(o.points);
-  if(o.type==='pavers'||(o.type==='fills'&&o.geometry==='strip')){
+  if((o.type==='pavers'&&o.geometry!=='paving-polygon')||(o.type==='fills'&&o.geometry==='strip')){
    for(let j=1;j<points.length;j++){
     const a=points[j-1],b=points[j];
     if(Math.hypot(b.x-a.x,b.y-a.y)<EPS)continue;
