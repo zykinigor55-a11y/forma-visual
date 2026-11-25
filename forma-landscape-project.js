@@ -443,7 +443,7 @@ function drawMap(){
   $$('.lp-assets img',target).forEach(img=>{img.addEventListener('error',()=>{const entry=byId(img.closest('[data-asset]')?.dataset.asset);if(entry&&!img.dataset.fallback){img.dataset.fallback='true';img.src=iconURL(entry);}else if(entry&&img.dataset.fallback==='true'&&!img.dataset.svgFallback){img.dataset.svgFallback='true';img.src=fallbackIconURL(entry);}})});
   $$('[data-quick-category]',modal).forEach(b=>{const active=b.dataset.quickCategory===category;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
   modal.querySelectorAll('.lp-tools button[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===mode&&(mode!=='path'||pathInput==='points')));
-  const brushTool=$('[data-new-path-brush]',modal);if(brushTool){const on=mode==='path'&&pathInput==='brush';brushTool.classList.toggle('active',on);brushTool.setAttribute('aria-pressed',String(on));}
+  modal.querySelectorAll('[data-new-path-brush]').forEach(brushTool=>{const on=mode==='path'&&pathInput==='brush';brushTool.classList.toggle('active',on);brushTool.setAttribute('aria-pressed',String(on));});
   $('#lpFinish',modal).disabled=(mode==='path'&&pathInput==='brush')?!!pathStroke:points.length<(['path','strip'].includes(mode)?2:3);
   $('#lpCancel',modal).disabled=!points.length&&mode==='select';
   const t=$('#lpToolName',modal);if(t)t.textContent=({select:'Выбор и перемещение',corner:'Кисть скругления',place:'Размещение объекта',strip:'Отсыпка · полоса заданной ширины',path:'Дорожка · '+pathShapeLabel(),area:'Область · '+(areaTool==='brush'?'Кисть':'Полигональное лассо'),boundary:'Границы участка'})[mode]||mode;
@@ -1329,6 +1329,78 @@ function drawMap(){
     #faLandscapeMasterplan #lpPathFinishDock button{min-height:48px!important;font-size:12px!important}
     #faLandscapeMasterplan #lpPathFinishDock #lpPathFinishNow{font-weight:750;background:#d0b894!important;color:#24272b!important}
     #faLandscapeMasterplan:has(.lp-render-overlay:not([hidden])) #lpPathFinishDock{display:none!important}
+   }
+
+   @media(max-width:760px){
+    #faLandscapeMasterplan{--lp-mobile-dock:66px;--lp-sheet-height:min(68dvh,540px);--lp-sheet-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
+    #faLandscapeMasterplan .lp-shell{height:100%;padding-bottom:calc(var(--lp-mobile-dock) + 17px + env(safe-area-inset-bottom,0px));overflow:hidden}
+    #faLandscapeMasterplan .lp-head{height:52px!important;min-height:52px!important;padding:5px 8px!important;gap:4px}
+    #faLandscapeMasterplan .lp-head>div:last-child{gap:4px!important}
+    #faLandscapeMasterplan .lp-brand{gap:3px}
+    #faLandscapeMasterplan .lp-brand b{font-size:15px!important}
+    #faLandscapeMasterplan .lp-head .lp-launch-3d{max-width:62px!important;min-height:38px!important;justify-content:center;padding:5px!important}
+    #faLandscapeMasterplan .lp-head .lp-launch-3d span{display:none}
+    #faLandscapeMasterplan .lp-head .lp-launch-3d:after{content:'3D';font-size:12px}
+    #faLandscapeMasterplan .lp-head .lp-launch-3d svg{width:18px!important;height:18px!important}
+    #faLandscapeMasterplan .lp-head [data-close]{min-height:38px!important;width:38px!important;flex-basis:38px!important}
+    #faLandscapeMasterplan .lp-mobile-history{display:flex;gap:3px}
+    #faLandscapeMasterplan .lp-mobile-history button{min-height:38px;min-width:36px;border:1px solid #555961;border-radius:8px;background:#292c32;color:#e9dfd0;font-size:19px}
+    #faLandscapeMasterplan .lp-layout{display:flex!important;flex:1!important;min-height:0!important;height:auto!important;overflow:hidden!important;padding:0!important}
+    #faLandscapeMasterplan .lp-work{display:flex!important;flex:1!important;height:auto!important;min-height:0!important;overflow:hidden!important}
+    #faLandscapeMasterplan .lp-work .lp-tools,#faLandscapeMasterplan .lp-category-shortcuts,#faLandscapeMasterplan .lp-work-foot,#faLandscapeMasterplan #lpAtmoQuick{display:none!important}
+    #faLandscapeMasterplan .lp-mobile-tools{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:5px 6px;flex:none;background:#1c1e23}
+    #faLandscapeMasterplan .lp-mobile-tools button{min-width:0;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px;border:1px solid #4f5157;border-radius:8px;background:#292c32;color:#e9e0d3;font:600 10px/1.15 system-ui,sans-serif;white-space:normal}
+    #faLandscapeMasterplan .lp-mobile-tools button[aria-pressed=true]{background:#51483b;border-color:#c0a47d;color:#fff0d8}
+    #faLandscapeMasterplan .lp-mobile-tools button :is(svg,img){width:22px!important;height:22px!important;max-width:22px;max-height:22px}
+    #faLandscapeMasterplan .lp-work .lp-canvas{height:auto!important;min-height:0!important;flex:1!important;position:relative;padding:3px 5px!important}
+    #faLandscapeMasterplan #lpMap,#faLandscapeMasterplan #lpSvg{min-height:0!important;width:100%!important;height:100%!important}
+    #faLandscapeMasterplan .lp-zoom-tools{gap:3px!important;padding:3px!important;max-width:calc(100% - 12px);top:6px!important;right:6px!important}
+    #faLandscapeMasterplan .lp-zoom-tools button{min-height:34px!important;padding:3px 5px!important;font-size:10px!important}
+    #faLandscapeMasterplan .lp-mobile-jump{grid-template-columns:repeat(4,minmax(0,1fr));max-height:45dvh;overflow:auto;gap:4px!important;padding:5px!important;z-index:1100!important}
+    #faLandscapeMasterplan .lp-mobile-jump button{min-height:44px!important}
+    #faLandscapeMasterplan .lp-mobile-jump[data-path-state="drawing"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+    #faLandscapeMasterplan .lp-mobile-jump[data-path-state="drawing"]>#lpMobileDrawMaterial{display:block!important;grid-column:1/-1;grid-row:4;min-height:32px!important;font-size:11px}
+    #faLandscapeMasterplan .lp-mobile-jump[data-path-state="selected"] .lp-mobile-path-cards{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible!important;gap:4px}
+    #faLandscapeMasterplan .lp-mobile-jump[data-path-state="selected"] .lp-mobile-path-cards button{min-width:0;min-height:55px!important;font-size:9px}
+    #faLandscapeMasterplan .lp-mobile-jump[data-path-state="selected"] .lp-mobile-path-cards img{height:31px!important}
+    #faLandscapeMasterplan #lpMobileContext:not([hidden]){display:grid!important;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:4px}
+    #faLandscapeMasterplan #lpMobileContextDone{background:#d0bd9f;color:#25282d}
+    #faLandscapeMasterplan :is(.lp-sidebar,.lp-properties,.lp-path-controls,#lpLayers,#lpMobileMore){display:none!important}
+    #faLandscapeMasterplan[data-mobile-sheet="assets"] .lp-sidebar,
+    #faLandscapeMasterplan[data-mobile-sheet="settings"] .lp-properties,
+    #faLandscapeMasterplan[data-mobile-sheet="layers"] #lpLayers,
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] .lp-path-controls,
+    #faLandscapeMasterplan[data-mobile-sheet="more"] #lpMobileMore{
+      display:block!important;position:fixed!important;z-index:2100!important;left:7px!important;right:7px!important;bottom:var(--lp-sheet-bottom)!important;height:var(--lp-sheet-height)!important;max-height:var(--lp-sheet-height)!important;min-height:0!important;width:auto!important;overflow:auto!important;overscroll-behavior:contain;background:#25282e!important;border:1px solid #5c5b5b!important;border-radius:14px!important;padding:49px 8px 12px!important;box-shadow:0 10px 35px #0008!important}
+    #faLandscapeMasterplan #lpMobileSheetShade:not([hidden]){display:block!important;position:fixed;inset:0;z-index:2099;background:#090a0c95;border:0;border-radius:0;width:100%;height:100%}
+    #faLandscapeMasterplan #lpMobileSheetBar:not([hidden]){display:flex!important;position:fixed;left:8px;right:8px;bottom:calc(var(--lp-sheet-bottom) + var(--lp-sheet-height) - 46px);height:45px;align-items:center;justify-content:space-between;z-index:2101;padding:4px 10px;background:#2d3036;border-radius:13px 13px 0 0;border-bottom:1px solid #4e5057;font-size:14px}
+    #faLandscapeMasterplan #lpMobileSheetBar button{background:#383b42;color:#f4e9d6;border:1px solid #666;border-radius:8px;width:38px;min-height:36px;font-size:21px}
+    #faLandscapeMasterplan .lp-sidebar-head{display:none!important}
+    #faLandscapeMasterplan .lp-groups{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;padding:0 0 8px!important}
+    #faLandscapeMasterplan .lp-groups button{min-height:59px!important;height:auto!important;padding:4px!important;align-items:center!important;justify-content:center!important;text-align:center!important}
+    #faLandscapeMasterplan .lp-groups .lp-category-icon{width:25px!important;height:25px!important;min-height:0!important}
+    #faLandscapeMasterplan .lp-groups .lp-category-icon :is(svg,img){width:24px!important;height:24px!important}
+    #faLandscapeMasterplan .lp-groups .lp-category-name{font-size:10px!important}
+    #faLandscapeMasterplan .lp-groups small{display:none!important}
+    #faLandscapeMasterplan .lp-assets{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;padding:0!important}
+    #faLandscapeMasterplan .lp-assets button{min-height:88px!important;padding:4px!important}
+    #faLandscapeMasterplan .lp-assets button img{height:62px!important;aspect-ratio:auto!important;object-fit:cover}
+    #faLandscapeMasterplan .lp-assets button span{font-size:10px!important;min-height:0!important;margin-top:3px!important}
+    #faLandscapeMasterplan .lp-assets .lp-asset-detail{display:none!important}
+    #faLandscapeMasterplan #lpLayers summary{display:none!important}
+    #faLandscapeMasterplan #lpLayers .lp-layer-toggles{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+    #faLandscapeMasterplan #lpLayers label{min-height:44px;display:flex;align-items:center;gap:7px;font-size:13px}
+    #faLandscapeMasterplan .lp-mobile-more-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+    #faLandscapeMasterplan .lp-mobile-more-grid button{min-height:48px;border:1px solid #575a60;border-radius:9px;background:#34373e;color:#f0e6d6;font:600 12px system-ui,sans-serif;padding:5px}
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] .lp-path-controls>*{margin:5px 0}
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] .lp-path-controls>button:is([data-finished-plan],[data-plan-dimensions],[data-top-photo],#lpPhotoToggle){display:none!important}
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] .lp-path-controls #lpDesktopPathDrawControls{display:none!important}
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] :is(#lpPathMaterials,#lpAreaMaterials){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;overflow:visible!important}
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] :is(#lpPathControls,#lpAreaControls,#lpSurfaceModes,#lpWidthLabel,#lpStripControls)[hidden]{display:none!important}
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] .lp-path-controls input[type=number]{min-height:42px;width:76px!important;font-size:16px}
+    #faLandscapeMasterplan[data-mobile-sheet="tools"] #lpToolName{display:block!important}
+    #faLandscapeMasterplan .lp-mobile-selection:not([hidden]){bottom:calc(var(--lp-mobile-dock) + 17px + env(safe-area-inset-bottom,0px))!important;z-index:1101!important}
+    #faLandscapeMasterplan:has(.lp-render-overlay:not([hidden])) :is(.lp-mobile-jump,.lp-mobile-selection,#lpMobileSheetBar,#lpMobileSheetShade){display:none!important}
    }
   `;
   modal.append(pathDockStyle);
