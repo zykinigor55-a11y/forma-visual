@@ -1066,7 +1066,7 @@ function initialize(){
   // Budget costly shadows first; never sacrifice fine KTX2 leaf details
   // merely because another tree was added to the mobile landscape.
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?1.18:1.30));
-  renderer.shadowMap.enabled=false;
+  renderer.shadowMap.enabled=true; // Keep relief and building shadows in auto mode.
  }
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
@@ -1218,7 +1218,7 @@ function rebuild(){
  const grass=groundPhotoTexture();grass.repeat.set(groundSide/3.2,groundSide/3.2);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
- terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=false;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
+ terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
   for(let i=0;i<verts.length;i+=3){uv.push(verts[i]/w+.5,1-(verts[i+2]/h+.5));verts[i+1]+=.032}
@@ -1706,6 +1706,7 @@ function chooseTool(t){
  state.tool=t;state.placing=null;pointMode=[];refreshDraft();
  if(controls)controls.touches.ONE=t==='terrain'?null:THREE.TOUCH.ROTATE;
  syncMobileTerrainDock();
+ if(scene?.getObjectByName('sun'))updateSun();
  if(window.innerWidth<=850){state.mobileMoveMode=false;state.mobileObjectCollapsed=true;}
  syncMobilePlacementHint();
  const draft=$('#draftActions');if(draft)draft.hidden=!['site','surface','water','fence'].includes(t);
@@ -1727,7 +1728,7 @@ function chooseTool(t){
    '<span>'+c[1]+(photo&&diameter?'<small class="asset-size">'+diameter+'</small>':'')+
    '</span><b class="asset-add">＋</b></button>'+(t==='models40'?'<button type="button" class="model-favorite" data-favorite-id="'+c[0]+'" aria-label="Добавить '+c[1]+' в избранное" aria-pressed="'+readModelList(MODEL_FAVORITES_KEY).includes(c[0])+'">'+(readModelList(MODEL_FAVORITES_KEY).includes(c[0])?'★':'☆')+'</button></div>':'')
  }).join('')+(t==='site'?'<p>Свободный контур: щёлкайте точки, Enter — завершить.</p>':'')+
- (t==='terrain'?'<div class="brush-panel"><label for="brushRadius">Радиус кисти · 0.5—12 м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label for="brushStrength">Сила изменения высоты</label><input id="brushStrength" type="range" min=".02" max=".8" step=".02" value=".12"><label for="brushSoftness">Плавность края · 0—100%</label><input id="brushSoftness" type="range" min="0" max="100" step="2" value="92"><label for="brushShape">Форма кисти</label><select id="brushShape"><option value="circle">● Круглая</option><option value="square">■ Квадратная</option></select><p class="hint">Плавно рисуйте ЛКМ. ПКМ вращает камеру, не затрагивая рельеф.</p></div>':'')+
+ (t==='terrain'?'<div class="brush-panel"><label for="brushRadius">Радиус кисти · 0.5—12 м</label><input id="brushRadius" type="range" min=".5" max="12" step=".5" value="3"><label for="brushStrength">Сила изменения высоты</label><input id="brushStrength" type="range" min=".02" max=".8" step=".02" value=".32"><label for="brushSoftness">Плавность края · 0—100%</label><input id="brushSoftness" type="range" min="0" max="100" step="2" value="92"><label for="brushShape">Форма кисти</label><select id="brushShape"><option value="circle">● Круглая</option><option value="square">■ Квадратная</option></select><p class="hint">Плавно рисуйте ЛКМ. ПКМ вращает камеру, не затрагивая рельеф.</p></div>':'')+
  (t==='plant'?'<div class="real-flora-upload"><strong>ПРОФЕССИОНАЛЬНАЯ 3D-МОДЕЛЬ</strong><p>Выберите вид растения выше, затем загрузите детализированную GLB-модель этого вида. Она заменит процедурные экземпляры, но сохранит их размеры и расположение.</p><input id="vegetationGlb" type="file" accept=".glb,model/gltf-binary"><button id="removePlantGlb" type="button">Вернуть встроенную 3D-модель</button><small id="floraModelStatus">Выберите дерево или кустарник.</small><div class="tree-source-links" id="treeSourceLinks" hidden></div></div>':'');
  const search=$('#catalogSearch');let category='all';
  const filterCatalog=()=>{const query=(search?.value||'').toLocaleLowerCase('ru').trim();$('#library').querySelectorAll('[data-item]').forEach(el=>{const name=el.textContent.toLocaleLowerCase('ru');const group=t==='models40'?realModelById(el.dataset.item)?.group:catalog(el.dataset.item)?.group;const matches=t==='plant'?(category==='all'||(category==='trees'?group==='trees':group==='shrubs')):t==='surface'?(category==='all'||category===group):t==='models40'?(category==='all'||category===group||(category==='favorites'&&readModelList(MODEL_FAVORITES_KEY).includes(el.dataset.item))||(category==='recent'&&readModelList(MODEL_RECENT_KEY).includes(el.dataset.item))):true;const hide=Boolean(query&&!name.includes(query))||!matches;el.hidden=hide;if(t==='models40'&&el.parentElement?.classList.contains('model-row'))el.parentElement.hidden=hide});$('#library').querySelectorAll('.asset-group-heading').forEach(el=>{el.hidden=Boolean(query)||category!=='all'})};
@@ -2621,9 +2622,20 @@ function updateSun(){
  const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  const cfg={day:3,morning:1.75,evening:1.3,'blue-hour':0,night:.15};
- const solarPosition=solarVector(solarSettings);
+ // Temporary modelling light: make small changes in height legible.
+ // Never persist this override or change the user's selected solar settings.
+ const sculpt=state.tool==='terrain'&&state.view!=='walk';
+ const daylight=['day','morning','evening'].includes(val);
+ const modellingLight=sculpt&&daylight;
+ const solarPosition=solarVector(modellingLight?{...solarSettings,elevation:Math.min(35,solarSettings.elevation)}:solarSettings);
  sun.position.set(solarPosition.x,solarPosition.y,solarPosition.z);
- sun.shadow.radius=solarSettings.softness;
+ if(renderer?.shadowMap)renderer.shadowMap.enabled=renderQuality!=='speed'||sculpt;
+ const half=Math.max(12,Math.hypot(doc.site.width,doc.site.height)*.60+5);
+ const shadowCam=sun.shadow.camera;
+ shadowCam.left=-half;shadowCam.right=half;shadowCam.top=half;shadowCam.bottom=-half;
+ shadowCam.near=.1;shadowCam.far=Math.max(220,85+half*2);shadowCam.updateProjectionMatrix();
+ sun.shadow.normalBias=.012;
+ sun.shadow.radius=modellingLight?Math.min(1.8,solarSettings.softness):solarSettings.softness;
  if(atmosphereSky){
   atmosphereSky.visible=!['night','blue-hour'].includes(val)&&state.view!=='2d';
   const uniforms=atmosphereSky.material.uniforms;
@@ -2644,7 +2656,7 @@ function updateSun(){
  if(sky){
   sky.intensity=atmosphereLighting({
    time:val,weather,siteSize:Math.max(doc.site.width,doc.site.height),settings:sceneAtmosphere
-  }).skyFillIntensity;
+  }).skyFillIntensity*(modellingLight?.66:1);
   sky.color.set(val==='blue-hour'?'#9fb8e1':val==='night'?'#71899e':val==='evening'?'#ffe2c2':'#e6eef6');
   sky.groundColor.set(val==='night'?'#17212a':'#5b6954');
  }
@@ -2652,7 +2664,7 @@ function updateSun(){
   time:val,weather,siteSize:Math.max(doc.site.width,doc.site.height),settings:sceneAtmosphere
  });
  const bounced=scene.getObjectByName('forma-bounced-fill');
- if(bounced){bounced.intensity=atmosphere.bouncedFillIntensity;
+ if(bounced){bounced.intensity=atmosphere.bouncedFillIntensity*(modellingLight?.65:1);
   bounced.color.set(val==='night'?'#9bb8d6':val==='evening'?'#f0d8b8':'#c6d8e3')}
  if(cloudLayer){
   cloudLayer.visible=state.view!=='2d'&&atmosphere.clouds>.01;
@@ -2735,7 +2747,7 @@ function setView(view){
   camera.up.set(0,1,0);controls.object=camera;
   controls.target.set(0,aimY,0);controls.enableRotate=true;
  }
- resize();if(view==='3d')syncCameraHeight();
+ updateSun();resize();if(view==='3d')syncCameraHeight();
  status(view==='walk'?'Walk: W A S D — непрерывная прогулка по земле · мышь — осмотр · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
 }
 function focusSelectedPlant(){
@@ -3078,12 +3090,23 @@ function scheduleBrushRebuild(){
  };
  brushRefreshFrame=requestAnimationFrame(refresh);
 }
+let terrainHoldTimer=0,terrainHoldPoint=null,terrainHoldMotion=0;
+function stopTerrainHold(){clearInterval(terrainHoldTimer);terrainHoldTimer=0;terrainHoldPoint=null;}
+function startTerrainHold(p){
+ stopTerrainHold();terrainHoldPoint=p;terrainHoldMotion=performance.now();
+ terrainHoldTimer=setInterval(()=>{
+  if(!state.painting||state.tool!=='terrain'){stopTerrainHold();return;}
+  if(terrainHoldPoint&&performance.now()-terrainHoldMotion>=140&&['raise','lower','smooth'].includes(state.placing))modifyTerrain(terrainHoldPoint);
+ },160);
+}
 function modifyTerrain(world){
  heightmap=applyTerrainBrush({heights:heightmap,grid:GRID,width:doc.site.width,length:doc.site.height,world,
   mode:state.placing||'raise',
-  radius:Number($('#brushRadius')?.value||3),strength:Number($('#brushStrength')?.value||.12),
+  radius:Number($('#brushRadius')?.value||3),strength:Number($('#brushStrength')?.value||.32),
   softness:Number($('#brushSoftness')?.value??92),shape:$('#brushShape')?.value||'circle',
   contains:(x,y)=>inParcel({x,y},doc.site)});
+ const elevation=terrainAt(world.x,world.z);
+ status('Рельеф: '+(elevation>=0?'+':'')+elevation.toFixed(2)+' м · удерживайте кисть для изменения высоты.');
  scheduleBrushRebuild();
 }
 function refreshDraft(){
@@ -3531,7 +3554,7 @@ function addEvents(){
   }
  }
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
- if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: рисуйте пальцем или ЛКМ; кнопка «Камера» для поворота');return}
+ if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);startTerrainHold(p);return}
  // An explicit mobile Move mode prevents one-finger camera orbit from
  // fighting object translation. A normal tap still just selects the object.
  if(state.tool==='select'&&state.mobileMoveMode&&(e.pointerType==='touch'||e.pointerType==='pen')){
@@ -3586,6 +3609,7 @@ const move=e=>{
   if(brushStroke){advanceBrush(hitGround(e));return}
   const p=hitGround(e);
    if(p){
+    terrainHoldPoint=p;terrainHoldMotion=performance.now();
     const spacing=Math.max(.25,Math.min(.85,Number($('#brushRadius')?.value||3)*.18));
     const samples=terrainStrokeLast?terrainStrokeSamples(terrainStrokeLast,p,spacing):[p];
     for(const sample of samples){modifyTerrain(sample);terrainStrokeLast={x:sample.x,z:sample.z}}
@@ -3644,7 +3668,7 @@ const up=e=>{
   else{
     const end=hitGround(e),radius=Number($('#brushRadius')?.value||3),threshold=Math.max(.18,Math.min(.85,radius*.18)*.45);
     if(end&&terrainStrokeLast&&Math.hypot(end.x-terrainStrokeLast.x,end.z-terrainStrokeLast.z)>=threshold)modifyTerrain(end);
-    terrainStrokeLast=null;state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();
+    stopTerrainHold();terrainStrokeLast=null;state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();
    }
   state.down=null;return
  }
@@ -3671,7 +3695,7 @@ const up=e=>{
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;state.down=null;if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -3706,7 +3730,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   status(choice==='code'?'Сосна и берёза теперь строятся как настоящая 3D-геометрия в коде.':'Включены исходные GLB сосны и берёзы для сравнения.');
  };
  $('#quality3d').onchange=()=>{renderQuality=$('#quality3d').value;autoReduced=false;slowFrameStreak=0;
-  const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy;
+  const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy||state.tool==='terrain';
   resize();rebuild();status(economy?'Облегчённый просмотр для плавной работы. Размеры проекта сохранены.':'Высокая детализация 3D восстановлена.')};
  $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();save();rebuild();syncNightHomeControls()};
  const onSolarInput=()=>{
@@ -3833,8 +3857,8 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
  });
  window.addEventListener('keyup',e=>heldWalkKeys.delete(e.key.toLowerCase()));
- window.addEventListener('blur',()=>heldWalkKeys.clear());
- document.addEventListener('visibilitychange',()=>{if(document.hidden)heldWalkKeys.clear()});
+ window.addEventListener('blur',()=>{heldWalkKeys.clear();stopTerrainHold()});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){heldWalkKeys.clear();stopTerrainHold()}});
  window.addEventListener('resize',resize);
  canvas.addEventListener('webglcontextlost',e=>{
   e.preventDefault();window.FORMA_3D_READY=false;
@@ -3923,7 +3947,7 @@ function animate(now=0){
    if(slowFrameStreak>=3){
     autoReduced=true;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?1.08:1.20));
-    renderer.shadowMap.enabled=false;
+    renderer.shadowMap.enabled=true; // Reduce pixel cost, not relief visibility.
     resize();scheduleBrushRebuild();
     status('Автокачество: облегчённое 3D для плавного вращения и работы с посадками.');
    }
