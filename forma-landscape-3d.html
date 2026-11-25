@@ -438,7 +438,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R12</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -771,7 +771,7 @@ import {inspectRenderDataURL} from './forma-landscape-ai-photo-quality.js?v=full
  });
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
-import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js';
+import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js?v=local-20261126';
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
 import {addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
@@ -1154,8 +1154,8 @@ function groundPhotoTexture(){
   ctx.lineWidth=.6+random()*.8;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(a-.5)*5,y-1-random()*5);ctx.stroke();
  }
  const t=new THREE.CanvasTexture(pixel);
- new THREE.ImageLoader().load(new URL('./assets/landscape-photo/universal.jpg',document.baseURI).href,image=>{
-  t.image=image;t.needsUpdate=true;
+ new THREE.ImageLoader().load(new URL('./assets/landscape-photo/universal.jpg?v=turf-photo-20261126',document.baseURI).href,image=>{
+  pixel.width=pixel.height=512;ctx.drawImage(image,0,0,512,512);t.needsUpdate=true;
   // First frame can render before async turf JPEG arrives. Force a paint
   // after the actual photograph is on the GPU; otherwise demand rendering
   // leaves a black ground until the user changes camera/tool.
@@ -1195,20 +1195,21 @@ function applyRaisedSoilMaterial(mat){
  const soil=soilPhotoTexture();
  mat.onBeforeCompile=shader=>{
   shader.uniforms.formaSoilMap={value:soil};
-  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vFormaGroundPosition;')
-   .replace('#include <begin_vertex>','#include <begin_vertex>\nvFormaGroundPosition=position;');
-  shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D formaSoilMap; varying vec3 vFormaGroundPosition;')
+  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vFormaGroundPosition; varying float vFormaSlope;')
+   .replace('#include <begin_vertex>','#include <begin_vertex>\nvFormaGroundPosition=position; vFormaSlope=1.0-clamp(normal.y,0.0,1.0);');
+  shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D formaSoilMap; varying vec3 vFormaGroundPosition; varying float vFormaSlope;')
    .replace('#include <map_fragment>',`#include <map_fragment>
     vec2 soilUV=vFormaGroundPosition.xz/1.45;
     float soilVariation=texture2D(formaSoilMap,soilUV*0.42).r;
-    float raisedSoil=smoothstep(0.025,0.42,vFormaGroundPosition.y+(soilVariation-0.13)*0.10);
+    float steepness=vFormaSlope+(soilVariation-0.14)*0.09;
+    float raisedSoil=smoothstep(0.12,0.40,steepness);
     vec3 soilColor=texture2D(formaSoilMap,soilUV).rgb;
     vec3 coarseGrass=texture2D(map,vMapUv*0.23).rgb;
-    diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*coarseGrass,0.22);
+    diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*coarseGrass,0.34);
     diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*soilColor,raisedSoil);
    `);
  };
- mat.customProgramCacheKey=()=>'forma-raised-soil-v2';
+ mat.customProgramCacheKey=()=>'forma-slope-soil-v3';
 }
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
@@ -1247,10 +1248,10 @@ function mark(group,key){
  return group;
 }
 // Indexed surface: shared vertices, local updates, stable normals, no scene rebuild during a stroke.
-let terrainDirty=null,terrainUpdateFrame=0;
+let terrainDirty=null,terrainUpdateFrame=0,lastTerrainShadow=0;
 function makeEditableGroundGeometry(side){
  const mobile=window.innerWidth<=850;
- const steps=mobile?160:256, stride=steps+1, count=stride*stride;
+ const steps=mobile?144:256, stride=steps+1, count=stride*stride;
  const positions=new Float32Array(count*3),normals=new Float32Array(count*3),uv=new Float32Array(count*2);
  const indices=new (count>65535?Uint32Array:Uint16Array)(steps*steps*6);
  let q=0;
@@ -1283,13 +1284,17 @@ function updateGroundRegion(geo,dirty){
   const sx=(terrainAt(x+e,z)-terrainAt(x-e,z))/(2*e),sz=(terrainAt(x,z+e)-terrainAt(x,z-e))/(2*e);
   const inv=1/Math.hypot(sx,1,sz);pos.setY(k,terrainAt(x,z));norm.setXYZ(k,-sx*inv,inv,-sz*inv);
  }
+ if(dirty){
+  pos.clearUpdateRanges();norm.clearUpdateRanges();
+  for(let j=z0;j<=z1;j++){const start=(j*stride+x0)*3,count=(x1-x0+1)*3;pos.addUpdateRange(start,count);norm.addUpdateRange(start,count);}
+ }else{pos.clearUpdateRanges();norm.clearUpdateRanges();}
  pos.needsUpdate=true;norm.needsUpdate=true;
 }
 function flushTerrainPreview(){
  terrainUpdateFrame=0;
  if(!terrainDirty||!terrainMesh?.geometry?.userData?.terrain)return;
  const dirty=terrainDirty;terrainDirty=null;updateGroundRegion(terrainMesh.geometry,dirty);
- if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
+ if(renderer?.shadowMap&&(!state.painting||performance.now()-lastTerrainShadow>300)){renderer.shadowMap.needsUpdate=true;lastTerrainShadow=performance.now();}
  if(terrainBrushPreview)drawLocalTerrainBrush(terrainBrushPreview.x,terrainBrushPreview.z);
  renderGate.invalidate();
 }
@@ -1301,7 +1306,16 @@ function scheduleTerrainPreview(world,radius){
 }
 function finishTerrainPreview(){
  if(terrainUpdateFrame)cancelAnimationFrame(terrainUpdateFrame);
- flushTerrainPreview();
+ flushTerrainPreview();if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;renderGate.invalidate();
+}
+function commitTerrainStroke(){
+ finishTerrainPreview();save();
+ const hasAreas=doc.objects.some(o=>Array.isArray(o.points)&&o.points.length>=2)||extra.some(o=>Array.isArray(o.points)&&o.points.length>=2)||!!underlayTexture?.image||['rain','snow','after-rain'].includes(doc.atmosphere.weather);
+ if(hasAreas){rebuild();return;}
+ // Point objects need only vertical repositioning, never GLB reconstruction.
+ for(const node of pickables){const item=selectable(node.userData.key)?.obj;if(item&&Number.isFinite(Number(item.x))&&Number.isFinite(Number(item.y))){const p=pos(item.x,item.y);node.position.y=terrainAt(p.x,p.z);}}
+ const line=root.getObjectByName('forma-parcel-outline');if(line){const p=line.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,terrainAt(p.getX(i),p.getZ(i))+.14);p.needsUpdate=true;line.geometry.computeBoundingSphere();}
+ if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;renderGate.invalidate();
 }
 function rebuild(){
  renderGate.invalidate();
@@ -1319,9 +1333,10 @@ function rebuild(){
  // user boundary remains a separate outline and never cuts holes in the scene.
  const groundSide=squareTerrainSide(doc.site);
  const geo=makeEditableGroundGeometry(groundSide);
- const grass=groundPhotoTexture();grass.repeat.set(groundSide/4.2,groundSide/4.2);
+ const grass=groundPhotoTexture();grass.repeat.set(groundSide/2.8,groundSide/2.8);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
- groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
+ groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.FrontSide;groundMat.shadowSide=THREE.FrontSide;
+ groundMat.envMapIntensity=.35;
  applyRaisedSoilMaterial(groundMat);
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
@@ -1335,7 +1350,7 @@ function rebuild(){
  const outlinePoints=(doc.site.boundary?.length>=3?doc.site.boundary:[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}])
   .map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.14,v.z)});
  outlinePoints.push(outlinePoints[0].clone());
- root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'})));
+ const parcelLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'}));parcelLine.name='forma-parcel-outline';root.add(parcelLine);
  buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
@@ -2739,7 +2754,7 @@ function updateSun(){
  const shadowCam=sun.shadow.camera;
  shadowCam.left=-half;shadowCam.right=half;shadowCam.top=half;shadowCam.bottom=-half;
  shadowCam.near=.1;shadowCam.far=Math.max(220,85+half*2);shadowCam.updateProjectionMatrix();
- sun.shadow.normalBias=Math.max(.035,half/(window.innerWidth<720?1024:2048)*1.1);sun.shadow.bias=-.00035;
+ sun.shadow.normalBias=Math.max(.055,half/(window.innerWidth<720?1024:2048)*1.6);sun.shadow.bias=-.00055;
  sun.shadow.radius=modellingLight?Math.min(1.8,solarSettings.softness):solarSettings.softness;
  if(atmosphereSky){
   atmosphereSky.visible=!['night','blue-hour'].includes(val)&&state.view!=='2d';
@@ -3212,8 +3227,8 @@ function startTerrainHold(p){
  stopTerrainHold();terrainHoldPoint=p;terrainHoldMotion=performance.now();
  terrainHoldTimer=setInterval(()=>{
   if(!state.painting||state.tool!=='terrain'){stopTerrainHold();return;}
-  if(terrainHoldPoint&&performance.now()-terrainHoldMotion>=140&&['raise','lower','smooth'].includes(state.placing))modifyTerrain(terrainHoldPoint);
- },160);
+  if(terrainHoldPoint&&performance.now()-terrainHoldMotion>=180&&['raise','lower','smooth'].includes(state.placing))modifyTerrain(terrainHoldPoint);
+ },200);
 }
 function modifyTerrain(world){
  heightmap=applyTerrainBrush({heights:heightmap,grid:GRID,width:doc.site.width,length:doc.site.height,world,
@@ -3769,7 +3784,8 @@ const move=e=>{
     terrainBrushPreview={x:p.x,z:p.z};terrainHoldPoint=p;terrainHoldMotion=performance.now();
     const spacing=Math.max(.25,Math.min(.85,Number($('#brushRadius')?.value||3)*.18));
     const samples=terrainStrokeLast?terrainStrokeSamples(terrainStrokeLast,p,spacing):[p];
-    for(const sample of samples){modifyTerrain(sample);terrainStrokeLast={x:sample.x,z:sample.z}}
+    const stride=Math.max(1,Math.ceil(samples.length/8));
+    for(let i=0;i<samples.length;i+=stride){const sample=samples[Math.min(i+stride-1,samples.length-1)];modifyTerrain(sample);terrainStrokeLast={x:sample.x,z:sample.z}}
     if(!terrainUpdateFrame)drawLocalTerrainBrush(p.x,p.z);
    }else{terrainHoldPoint=null;hideLocalTerrainBrush()}
    return;
@@ -3826,7 +3842,7 @@ const up=e=>{
   else{
     const end=hitGround(e),radius=Number($('#brushRadius')?.value||3),threshold=Math.max(.18,Math.min(.85,radius*.18)*.45);
     if(end&&terrainStrokeLast&&Math.hypot(end.x-terrainStrokeLast.x,end.z-terrainStrokeLast.z)>=threshold)modifyTerrain(end);
-    stopTerrainHold();finishTerrainPreview();terrainStrokeLast=null;state.painting=false;controls.enabled=state.view!=='walk';save();rebuild();
+    stopTerrainHold();terrainStrokeLast=null;state.painting=false;controls.enabled=state.view!=='walk';commitTerrainStroke();
    }
   state.down=null;return
  }
@@ -3853,7 +3869,7 @@ const up=e=>{
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{finishTerrainPreview();save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;hideLocalTerrainBrush();renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -4043,7 +4059,7 @@ function animate(now=0){
  // Never starve clicks if software WebGL needs hundreds of milliseconds
  // for one physically shaded frame (high-detail vegetation and water).
  const sculpting=state.painting&&state.tool==='terrain';
- const interval=Math.max(preferred,Math.min(sculpting?150:900,lastRenderCost*(sculpting?1.4:3.7)));
+ const interval=Math.max(preferred,Math.min(sculpting?220:900,lastRenderCost*(sculpting?1.8:3.7)));
  if(now-lastRenderMs<interval)return;
  lastRenderMs=now;
  const frameSeconds=lastWalkFrame?Math.min(.1,(now-lastWalkFrame)/1000):0;
