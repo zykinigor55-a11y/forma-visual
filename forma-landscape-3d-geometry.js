@@ -79,7 +79,7 @@ export function squareTerrainTriangles(site,values,grid=48){
  const depth=Math.max(1,Number(site?.height)||40);
  const sourceGrid=Math.max(2,Math.floor(Number(grid)||48));
  // Tessellate the visible surface independently of the editable height grid.
- const steps=Math.max(2,Math.min(192,sourceGrid*2));
+ const steps=Math.max(2,Math.min(256,Math.ceil(sourceGrid*8/3)));
  const side=squareTerrainSide(site),half=side*.5,size=side/steps;
  const triangles=new Float32Array(steps*steps*18);
  let n=0;
