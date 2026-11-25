@@ -499,7 +499,7 @@ function drawMap(){
  function mobileSheet(name='plan',group){
   if(!modal||!mobilePlan())return;
   if(group){category=group;drawPalette();}
-  const active=name==='plan'?'':name;modal.dataset.mobileSheet=active;
+  const active=name==='plan'?'':name;const previous=modal.dataset.mobileSheet;if(previous==='assets'&&active!=='assets'&&itemCatalog()?.group&&category!==itemCatalog().group){category=itemCatalog().group;drawPalette();}modal.dataset.mobileSheet=active;
   const layers=$('#lpLayers',modal);if(layers)layers.open=active==='layers';
   const bar=$('#lpMobileSheetBar',modal);if(bar){bar.hidden=!active;$('#lpMobileSheetTitle',bar).textContent=({assets:'Каталог объектов',layers:'Видимость слоёв',settings:'Настройки проекта',more:'Инструменты и экспорт',tools:'Настройки инструмента'})[active]||'';}
   const shade=$('#lpMobileSheetShade',modal);if(shade)shade.hidden=!active;
@@ -1254,7 +1254,7 @@ function drawMap(){
   pathDock.innerHTML='<div id="lpPathDraftInfo" aria-live="polite"></div><div class="lp-path-finish-actions"><button type="button" id="lpPathUndoPoint" aria-label="Убрать последнюю точку">↶ Точка</button><button type="button" id="lpPathCancelNow">✕ Отмена</button><button type="button" id="lpPathFinishNow">✓ Завершить дорожку</button></div>';
   const pathDockStyle=document.createElement('style');
   pathDockStyle.textContent=`
-   #faLandscapeMasterplan :is(.lp-mobile-tools,.lp-mobile-history,#lpMobileMore,#lpMobileSheetBar,#lpMobileSheetShade,#lpMobileDrawMaterial,#lpMobileContext){display:none}
+   #faLandscapeMasterplan :where(.lp-mobile-tools,.lp-mobile-history,#lpMobileMore,#lpMobileSheetBar,#lpMobileSheetShade,#lpMobileDrawMaterial,#lpMobileContext){display:none}
 
    #faLandscapeMasterplan #lpClearOverlay[hidden]{display:none!important}
    #faLandscapeMasterplan #lpClearOverlay{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:#101115b8;padding:12px;box-sizing:border-box;overscroll-behavior:contain}
@@ -1343,7 +1343,7 @@ function drawMap(){
     #faLandscapeMasterplan .lp-head .lp-launch-3d:after{content:'3D';font-size:12px}
     #faLandscapeMasterplan .lp-head .lp-launch-3d svg{width:18px!important;height:18px!important}
     #faLandscapeMasterplan .lp-head [data-close]{min-height:38px!important;width:38px!important;flex-basis:38px!important}
-    #faLandscapeMasterplan .lp-mobile-history{display:flex;gap:3px}
+    #faLandscapeMasterplan .lp-mobile-history{display:flex!important;gap:3px}
     #faLandscapeMasterplan .lp-mobile-history button{min-height:38px;min-width:36px;border:1px solid #555961;border-radius:8px;background:#292c32;color:#e9dfd0;font-size:19px}
     #faLandscapeMasterplan .lp-layout{display:flex!important;flex:1!important;min-height:0!important;height:auto!important;overflow:hidden!important;padding:0!important}
     #faLandscapeMasterplan .lp-work{display:flex!important;flex:1!important;height:auto!important;min-height:0!important;overflow:hidden!important}
@@ -1365,7 +1365,7 @@ function drawMap(){
     #faLandscapeMasterplan .lp-mobile-jump[data-path-state="selected"] .lp-mobile-path-cards img{height:31px!important}
     #faLandscapeMasterplan #lpMobileContext:not([hidden]){display:grid!important;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:4px}
     #faLandscapeMasterplan #lpMobileContextDone{background:#d0bd9f;color:#25282d}
-    #faLandscapeMasterplan :is(.lp-sidebar,.lp-properties,.lp-path-controls,#lpLayers,#lpMobileMore){display:none!important}
+    #faLandscapeMasterplan .lp-sidebar,#faLandscapeMasterplan .lp-properties,#faLandscapeMasterplan .lp-path-controls,#faLandscapeMasterplan #lpLayers,#faLandscapeMasterplan #lpMobileMore{display:none!important}
     #faLandscapeMasterplan[data-mobile-sheet="assets"] .lp-sidebar,
     #faLandscapeMasterplan[data-mobile-sheet="settings"] .lp-properties,
     #faLandscapeMasterplan[data-mobile-sheet="layers"] #lpLayers,
