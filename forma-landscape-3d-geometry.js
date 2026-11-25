@@ -77,13 +77,15 @@ export function squareTerrainSide(site){
 export function squareTerrainTriangles(site,values,grid=48){
  const width=Math.max(1,Number(site?.width)||30);
  const depth=Math.max(1,Number(site?.height)||40);
- const steps=Math.max(2,Math.min(192,Math.floor(Number(grid)||48)));
+ const sourceGrid=Math.max(2,Math.floor(Number(grid)||48));
+ // Tessellate the visible surface independently of the editable height grid.
+ const steps=Math.max(2,Math.min(192,sourceGrid*2));
  const side=squareTerrainSide(site),half=side*.5,size=side/steps;
  const triangles=new Float32Array(steps*steps*18);
  let n=0;
  const point=(x,z)=>{
   triangles[n++]=x;
-  triangles[n++]=heightAt(values,steps,width,depth,x,z);
+  triangles[n++]=heightAt(values,sourceGrid,width,depth,x,z);
   triangles[n++]=z;
  };
  for(let iz=0;iz<steps;iz++)for(let ix=0;ix<steps;ix++){
