@@ -304,11 +304,20 @@ const PLAN_LAYERS=[['trees','Деревья'],['shrubs','Кусты'],['pavers',
   $('#lpTouchSelectedName',dock).textContent=name+' · X '+centre.x.toFixed(2)+' / Y '+centre.y.toFixed(2)+' м';
   dock.querySelectorAll('[data-mobile-copy],[data-mobile-delete]').forEach(el=>el.hidden=selected==='house');
 }
+function syncPathFinishDock(){
+ const dock=$('#lpPathFinishDock',modal);if(!dock)return;
+ dock.hidden=mode!=='path';
+ if(dock.hidden)return;
+ const length=points.length>=2?lineLength(points):0;
+ $('#lpPathDraftInfo',dock).textContent=points.length<2?'Поставьте '+(points.length?'ещё одну точку':'начальную точку'):'Длина '+num(length,1)+' м · '+points.length+' точек';
+ $('#lpPathFinishNow',dock).disabled=points.length<2;
+ $('#lpPathUndoPoint',dock).disabled=!points.length;
+}
 function drawMap(){
   const canvas=$('#lpMap',modal);if(!canvas)return;
   canvas.innerHTML=drawSvg();$('#lpSvg',modal).addEventListener('pointerdown',startPointer);
   $('#lpSvg',modal).addEventListener('pointermove',movePointer);$('#lpSvg',modal).addEventListener('pointerup',endPointer);$('#lpSvg',modal).addEventListener('pointercancel',endPointer);
-  syncPlanTouchDock();
+  syncPlanTouchDock();syncPathFinishDock();
   const zoomValue=$('#lpZoomValue',modal);if(zoomValue)zoomValue.textContent=Math.round(viewScale*100)+'%';
   for(const control of $$('[data-plan-dimensions]',modal)){
    control.textContent=showDimensions?'Скрыть размеры':'Показать размеры';
@@ -439,7 +448,7 @@ function drawMap(){
   if(v==='area')say(itemCatalog()?.group==='ponds'?'Пруд: ведите кистью по участку. Полная зона воды появляется сразу без точек. Несколько мазков дополняют водоём.':'Заливка: рисуйте кистью или замкните контур лассо, чтобы заполнить всю площадь.');
   if(v==='path')say('Выберите брусчатку и ширину. Параллельно, 45° или свободная форма. Нажмите «Завершить».');
  }
- function endDrawing(){points=[];mode='select';draw();say('Рисование прервано. Уже созданные объекты не изменены.');}
+ function endDrawing(){points=[];brush=null;drag=null;mode='select';draw();say('Рисование завершено без сохранения черновика. Уже созданные объекты не изменены.');}
  function pathPoint(p){
   if(mode!=='path'||pathShape==='free'||!points.length)return p;
   return snapPathPoint(points.at(-1),p,pathShape,doc.site);
@@ -456,7 +465,7 @@ function drawMap(){
    const width=clamp(Number($('#lpWidth',modal)?.value)||1.2,.4,10);
    const obj={id:uid(),catalogId:entry.id,type:entry.group,points:points.map(p=>({...p})),width,...(mode==='strip'?{geometry:'strip'}:{})};
    doc.objects.push(obj);selected=obj.id;
-   say(mode==='strip'?'Полоса '+num(lineLength(points),1)+' м × '+num(width,2)+' м сохранена.':'Площадь '+num(polygonArea(points),1)+' м² залита материалом без разрывов.');
+   say(mode==='path'?'Дорожка '+num(lineLength(points),1)+' м сохранена. Режим выбора активен.':mode==='strip'?'Полоса '+num(lineLength(points),1)+' м × '+num(width,2)+' м сохранена.':'Площадь '+num(polygonArea(points),1)+' м² залита материалом без разрывов.');
   }
   points=[];mode='select';syncAutoLawn();save();draw();revealCanvas();
  }
@@ -779,8 +788,9 @@ function drawMap(){
   if(b.dataset.zoom==='fit'){zoomTo(1);say('Весь участок в кадре.');return}
   if(b.dataset.zoom==='focus'){focusObject();return}
   if(b.id==='lpPhotoToggle'){if(preview){if(previewModel!==JSON.stringify(doc)){photoVisible=false;drawMap();say('План изменён. Создайте новый фотореалистичный генплан, чтобы увидеть обновлённое размещение.');return}}photoVisible=!photoVisible;drawMap();return}
-  if(b.id==='lpFinish'){finish();return}
-  if(b.id==='lpCancel'){endDrawing();return}
+  if(b.id==='lpFinish'||b.id==='lpPathFinishNow'){finish();return}
+  if(b.id==='lpCancel'||b.id==='lpPathCancelNow'){endDrawing();return}
+  if(b.id==='lpPathUndoPoint'){if(mode==='path'&&points.length){points.pop();drawMap();drawPalette();}return}
   if(b.dataset.undo!==undefined){reverse('undo');return}
   if(b.dataset.redo!==undefined){reverse('redo');return}
   if(b.dataset.planDone!==undefined){selected=null;drag=null;draw();say('Объект сохранён. Можно выбрать другой.');return}
@@ -932,6 +942,24 @@ function drawMap(){
    '<button type="button" data-delete data-mobile-delete aria-label="Удалить объект">⌫</button>'+
    '<button type="button" data-plan-done class="lp-touch-done">✓ Готово</button></div>';
   modal.append(touchDock);
+  const pathDock=document.createElement('section');
+  pathDock.id='lpPathFinishDock';pathDock.hidden=true;
+  pathDock.setAttribute('aria-label','Завершение рисования дорожки');
+  pathDock.innerHTML='<div id="lpPathDraftInfo" aria-live="polite"></div><div class="lp-path-finish-actions"><button type="button" id="lpPathUndoPoint" aria-label="Убрать последнюю точку">↶ Точка</button><button type="button" id="lpPathCancelNow">✕ Отмена</button><button type="button" id="lpPathFinishNow">✓ Завершить дорожку</button></div>';
+  const pathDockStyle=document.createElement('style');
+  pathDockStyle.textContent=`
+   #faLandscapeMasterplan #lpPathFinishDock[hidden]{display:none!important}
+   #faLandscapeMasterplan #lpPathFinishDock{position:absolute;z-index:12;bottom:10px;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 20px));box-sizing:border-box;display:grid;gap:5px;padding:8px;border:1px solid #797269;border-radius:12px;background:#26292ef5;color:#eee6d8;box-shadow:0 6px 20px #0006;font:12px/1.3 system-ui,sans-serif}
+   #faLandscapeMasterplan #lpPathDraftInfo{text-align:center}
+   #faLandscapeMasterplan .lp-path-finish-actions{display:grid;grid-template-columns:.8fr .85fr 1.6fr;gap:5px}
+   #faLandscapeMasterplan .lp-path-finish-actions button{min-width:0;min-height:44px;border:1px solid #676b72;background:#363940;color:#f4ede1;border-radius:8px;padding:5px;font:600 11px/1.2 system-ui,sans-serif}
+   #faLandscapeMasterplan #lpPathFinishNow{background:#d0b894;color:#24272b;border-color:#d0b894}
+   #faLandscapeMasterplan .lp-path-finish-actions button:disabled{opacity:.4}
+   @media(max-width:760px){
+    #faLandscapeMasterplan #lpPathFinishDock{position:fixed;z-index:17;bottom:calc(82px + env(safe-area-inset-bottom,0px));left:8px;right:8px;transform:none;width:auto;max-width:470px;margin:auto}
+   }
+  `;
+  modal.append(pathDockStyle);$('.lp-canvas',modal).append(pathDock);
   modal.append(mobileJump);
   mobileJump.addEventListener('click',event=>{
    const button=event.target.closest('[data-lp-jump]');
