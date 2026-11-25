@@ -16,7 +16,8 @@ export const GROUPS=Object.freeze([
  {id:'lights',name:'Светильники',qty:11,symbol:'☼'},
  {id:'lawns',name:'Газоны',qty:4,symbol:'≋'},
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
- {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
+ {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'},
+ {id:'pools',name:'Бассейны',qty:3,symbol:'≈'}
 ]);
 export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18,poplar:24,'ph-fir-sapling':3,'ph-pine-sapling':2.8,'ph-quiver-01':4.5,'ph-quiver-02':3.7});
 export const SCENE_OPTIONS=Object.freeze({
@@ -25,6 +26,9 @@ export const SCENE_OPTIONS=Object.freeze({
  weather:[['sunny','Солнечно'],['overcast','Пасмурно'],['after-rain','После дождя'],['rain','Дождь'],['fog','Туман'],['snow','Снег']]
 });
 export const CATALOG=Object.freeze([
+ {id:'pool-frame',group:'pools',name:'Каркасный бассейн',color:'#929da0',diameter:3.05,height:1},
+ {id:'pool-inflatable',group:'pools',name:'Надувной бассейн',color:'#367ab0',diameter:3.05,height:.76},
+ {id:'pool-inground',group:'pools',name:'Встроенный бассейн',color:'#609eac',diameter:6,width:3,height:1.5},
  ...[
  ['juniper','Можжевельник горизонтальный','#647d6b',1.8,'Juniperus horizontalis'],
  ['hydrangea','Гортензия метельчатая','#96a773',1.6,'Hydrangea paniculata'],
@@ -149,7 +153,7 @@ export function normalizeProject(raw){
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
     r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
-  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:legacyNinebark?.87:finite(item.diameter,.1,30,entry.diameter||1),height:legacyNinebark?.76:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs','boulders'].includes(entry.group)?{variant:finite(item.variant,1,entry.group==='boulders'?4:3,1)}:{}),
+  }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:legacyNinebark?.87:finite(item.diameter,.1,30,entry.diameter||1),height:legacyNinebark?.76:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):entry.height||.9),...(entry.id==='pool-inground'?{width:finite(item.width,2,10,3)}:{}),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs','boulders'].includes(entry.group)?{variant:finite(item.variant,1,entry.group==='boulders'?4:3,1)}:{}),
     ...(entry.group==='boulders'?{burial:finite(item.burial,0,.36,.12)}:{}),
     ...(entry.group==='lights'?{brightness:finite(item.brightness,0,2,1),kelvin:[2200,2700,3000,4000].includes(Number(item.kelvin))?Number(item.kelvin):2700,...(entry.id==='globe'?{variant:finite(item.variant,1,4,1)}:{})}:{}),
     ...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{}),

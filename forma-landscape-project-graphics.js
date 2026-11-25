@@ -140,6 +140,7 @@ export function assetGraphic(entry){
  if(entry.group==='trees'||entry.group==='shrubs')return foliage(entry);
  if(entry.group==='boulders')return stone(entry);
  if(entry.group==='lights')return light(entry);
+ if(entry.group==='pools')return entry.id==='pool-inground'?'<rect x="5" y="5" width="150" height="150" rx="2" fill="#d5d0c1"/><rect x="10" y="10" width="140" height="140" fill="#63a4b6"/>':'<circle cx="80" cy="80" r="75" fill="'+(entry.id==='pool-frame'?'#a9afb0':'#2465a6')+'"/><circle cx="80" cy="80" r="'+(entry.id==='pool-frame'?70:61)+'" fill="#73acbf"/>';
  return floorSample(entry);
 }
 export function assetSVG(entry,{size=1080,transparent=false}={}){
