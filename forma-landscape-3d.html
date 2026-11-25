@@ -438,7 +438,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R14</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R15</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -736,7 +736,7 @@ import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
-import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingRibbonRows, lineLength} from './forma-landscape-project-core.js?v=path-brush-P21';
+import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength} from './forma-landscape-project-core.js?v=path-segments-P22';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=night-paving-fix-v4-20261122';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=understory-mobile-v1';
@@ -1652,8 +1652,8 @@ function polygon(points,y,color,water=false,materialId='universal'){
  if(water){o.userData.formaWater=true;o.receiveShadow=false;waterSurfaces.push(o)}
  return o;
 }
-function drawPavingRibbon(o,entry){
- const rows=pavingRibbonRows(o,Math.max(.45,lineLength(o.points)/2400));if(rows.length<2)return null;
+function drawPavingRibbon(o,entry,rows){
+ if(rows.length<2)return null;
  const cols=Math.max(2,Math.min(16,Math.ceil((o.width||1.2)/.45))),stride=cols+1;
  const positions=[],uvs=[],indices=[];
  const tile=({'concrete-pavers':2.4,'granite-setts':1.8,'clinker-herringbone':1.55,'slate-pavers':1.8,'radial-setts':1.65,'grass-grid':1.8})[o.catalogId]||1.8;
@@ -1677,7 +1677,7 @@ function drawArea(o,entry,key){
   const swept=strokeRibbon(pts,o.width||1.2);
   if(swept.length>=3)g.add(polygon(swept,entry.group==='fills'?.078:.052,entry.color||'#78965d',false,o.catalogId));
  }else if(isPath){
-  const surface=drawPavingRibbon(o,entry);if(surface)g.add(surface);
+  for(const part of pavingSegments(o,Math.max(.45,lineLength(o.points)/2400))){const material=CATALOG.find(x=>x.id===part.catalogId)||entry;const surface=drawPavingRibbon(part,material,part.rows);if(surface)g.add(surface);}
  }else if(pts.length>=3)g.add(polygon(pts,entry.group==='fills'?.078:entry.group==='lawns'?.052:.055,entry.color||'#6d9874',entry.group==='ponds',o.catalogId));
  if(['pavers','fills','lawns'].includes(entry.group))
   g.traverse(n=>{if(n.isMesh)n.userData.formaWeatherableSurface=true});
