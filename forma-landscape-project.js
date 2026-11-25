@@ -366,7 +366,7 @@ function syncMobilePathActions(){
  const widthPanel=$('#lpMobilePathWidthPanel',nav),widthInput=$('#lpMobilePathWidth',nav),widthValue=$('#lpMobilePathWidthValue',nav);
  if(widthPanel){widthPanel.hidden=!pathSelected;widthPanel.dataset.object=pathSelected?obj.id:'';if(pathSelected&&widthInput){widthInput.value=String(obj.width);widthValue.textContent=num(obj.width,2)+' м';}}
  const roundingPanel=$('#lpMobilePathRoundingPanel',nav);
- if(roundingPanel){roundingPanel.hidden=!pathSelected;if(pathSelected){roundingPanel.innerHTML=cornerControls();roundingPanel.dataset.active=String(mode==='corner');}}
+ if(roundingPanel){roundingPanel.hidden=!pathSelected;if(pathSelected){roundingPanel.innerHTML='<div class="lp-material-header"><strong>Кисть скругления</strong></div>'+cornerControls();roundingPanel.dataset.active=String(mode==='corner');}}
  if(widthPanel)widthPanel.hidden=!pathSelected||mode==='corner';
  const materials=$('#lpMobilePathMaterials',nav);
  if(materials){
@@ -420,7 +420,7 @@ function drawMap(){
   $$('.lp-tools button[data-tool]',modal).forEach(b=>b.classList.toggle('active',b.dataset.tool===mode));
   $('#lpFinish',modal).disabled=points.length<(['path','strip'].includes(mode)?2:3);
   $('#lpCancel',modal).disabled=!points.length&&mode==='select';
-  const t=$('#lpToolName',modal);if(t)t.textContent=({select:'Выбор и перемещение',place:'Размещение объекта',strip:'Отсыпка · полоса заданной ширины',path:'Дорожка · '+(pathShape==='free'?'свободная форма':pathShape==='diagonal'?'диагонали · 45°':'параллельно границе · 90°'),area:'Область · '+(areaTool==='brush'?'Кисть':'Полигональное лассо'),boundary:'Границы участка'})[mode]||mode;
+  const t=$('#lpToolName',modal);if(t)t.textContent=({select:'Выбор и перемещение',corner:'Кисть скругления',place:'Размещение объекта',strip:'Отсыпка · полоса заданной ширины',path:'Дорожка · '+(pathShape==='free'?'свободная форма':pathShape==='diagonal'?'диагонали · 45°':'параллельно границе · 90°'),area:'Область · '+(areaTool==='brush'?'Кисть':'Полигональное лассо'),boundary:'Границы участка'})[mode]||mode;
   const pathPanel=$('#lpPathControls',modal);if(pathPanel)pathPanel.hidden=mode!=='path';
   $$('[data-path-shape]',modal).forEach(b=>{b.classList.toggle('active',b.dataset.pathShape===pathShape);b.setAttribute('aria-pressed',String(b.dataset.pathShape===pathShape));});
   const selection=$('#lpSelectedMaterial',modal);if(selection){selection.textContent=byId(chosen)?.name||'Выберите брусчатку';}
@@ -455,7 +455,7 @@ function drawMap(){
    if(selected&&selected!=='house'&&!selected.startsWith('building:')){
    const obj=doc.objects.find(x=>x.id===selected),entry=byId(obj?.catalogId);
    if(obj&&entry){html+=`<section class="lp-selected"><strong>${esc(entry.name)}</strong>`;
-    if(obj.points){html+=entry.group==='pavers'?'<label>Тип брусчатки<select data-field="object.catalogId">'+CATALOG.filter(x=>x.group==='pavers').map(x=>'<option value="'+x.id+'" '+(x.id===obj.catalogId?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>'+field('object.width','Ширина дорожки · м',obj.width,.4,10)+'<div class="lp-corner-desktop"><strong>Кисть скругления</strong>'+cornerControls()+'</div>':'';
+    if(obj.points){html+=entry.group==='pavers'?'<label>Тип брусчатки<select data-field="object.catalogId">'+CATALOG.filter(x=>x.group==='pavers').map(x=>'<option value="'+x.id+'" '+(x.id===obj.catalogId?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>'+field('object.width','Ширина дорожки · м',obj.width,.4,10)+'<div class="lp-corner-desktop"><strong>Кисть скругления</strong>'+cornerControls()+(mode==='corner'?'<button type="button" data-corner-done>✓ Завершить кисть</button>':'')+'</div>':'';
      html+=`<p>${entry.group==='pavers'?'Длина '+num(lineLength(obj.points))+' м, площадь приблиз. '+num(areaFor(doc,obj))+' м²':'Площадь '+num(polygonArea(obj.points))+' м²'}</p><div class="lp-vertices">${obj.points.map((p,i)=>`<div><span>${i+1}</span><input data-vertex="${i}" data-axis="x" type="number" step=".05" value="${p.x}"><input data-vertex="${i}" data-axis="y" type="number" step=".05" value="${p.y}"></div>`).join('')}</div>`;
     }else{html+=`<div class="lp-two">${field('object.x','X м',obj.x,0,500)}${field('object.y','Y м',obj.y,0,500)}</div>${field('object.diameter','Диаметр кроны/объекта м',obj.diameter,.1,30)}${entry.group==='trees'?field('object.height','Высота дерева · м',obj.height,.5,40,.5):''}${field('object.rotation','Поворот °',obj.rotation,-360,360,1)}`;}
     html+='<button type="button" data-delete>Удалить выбранное</button></section>';
@@ -867,6 +867,7 @@ function drawMap(){
   if(b.id==='lpCancel'||b.id==='lpPathCancelNow'||b.id==='lpMobilePathCancel'){endDrawing();return}
   if(b.id==='lpPathUndoPoint'||b.id==='lpMobilePathBack'){if(mode==='path'&&points.length){points.pop();drawMap();drawPalette();}return}
   if(b.dataset.cornerBrush){startCornerTool(b.dataset.cornerBrush);return}
+  if(b.dataset.cornerDone!==undefined){cancelCornerStroke();mode='select';draw();return}
   if(b.id==='lpMobilePathDelete'){if(['select','corner'].includes(mode)&&selectedPlanObject()?.type==='pavers'&&confirm('Удалить выбранную дорожку?')){cancelCornerStroke();mode='select';deleteSelected();}return}
   if(b.id==='lpMobilePathDeselect'){if(mode==='corner'){cancelCornerStroke();mode='select';draw();return}selected=null;drag=null;draw();return}
   if(b.dataset.existingPathMaterial){const obj=selectedPlanObject(),entry=byId(b.dataset.existingPathMaterial);if(mode!=='select'||obj?.type!=='pavers'||entry?.group!=='pavers')return;if(obj.catalogId!==entry.id){checkpoint();obj.catalogId=entry.id;save();draw();say('Материал дорожки изменён. Геометрия и ширина сохранены.');}return}
@@ -968,6 +969,7 @@ function drawMap(){
  }
  function deleteSelected(){
   if(busy||!selected||selected==='house')return;
+  cancelCornerStroke();if(mode==='corner')mode='select';
   checkpoint();photoVisible=false;
   if(selected.startsWith('building:')){const id=selected.slice(9);doc.buildings=doc.buildings.filter(x=>x.id!==id);roofArts.delete(id)}
   else doc.objects=doc.objects.filter(x=>x.id!==selected);
