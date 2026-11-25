@@ -438,7 +438,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R12</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R13</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -1201,15 +1201,18 @@ function applyRaisedSoilMaterial(mat){
    .replace('#include <map_fragment>',`#include <map_fragment>
     vec2 soilUV=vFormaGroundPosition.xz/1.45;
     float soilVariation=texture2D(formaSoilMap,soilUV*0.42).r;
+    // Preserve turf on crests and gentle slopes. Only steep elevated sides expose soil.
     float steepness=vFormaSlope+(soilVariation-0.14)*0.09;
-    float raisedSoil=smoothstep(0.12,0.40,steepness);
+    float heightFactor=smoothstep(0.60,0.90,max(vFormaGroundPosition.y,0.0));
+    float slopeFactor=smoothstep(0.18,0.42,steepness);
+    float raisedSoil=heightFactor*slopeFactor;
     vec3 soilColor=texture2D(formaSoilMap,soilUV).rgb;
     vec3 coarseGrass=texture2D(map,vMapUv*0.23).rgb;
     diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*coarseGrass,0.34);
     diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*soilColor,raisedSoil);
    `);
  };
- mat.customProgramCacheKey=()=>'forma-slope-soil-v3';
+ mat.customProgramCacheKey=()=>'forma-slope-soil-v4';
 }
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
