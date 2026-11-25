@@ -20,13 +20,13 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const pbrAsset=(slug,channel)=>'https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/'+slug+'/'+slug+'_'+channel+'_1k.jpg';
 export function surfacePreviewURL(id){
  const source=GROUND_PBR_SOURCES[id];
- return source?'https://cdn.polyhaven.com/asset_img/thumbs/'+source.slug+'.png':'/assets/landscape-photo/'+id+'.jpg';
+ return source?'https://cdn.polyhaven.com/asset_img/thumbs/'+source.slug+'.png':'./assets/landscape-photo/'+id+'.jpg';
 }
 export function surfaceTexture(T,id){
  if(GROUND_PBR_SOURCES[id])return terrainPBR(T,id).diffuse;
  if(!SURFACE_PHOTO_IDS.includes(id))return null;
  if(textureCache.has(id))return textureCache.get(id);
- const t=new T.TextureLoader().load('/assets/landscape-photo/'+id+'.jpg');
+ const t=new T.TextureLoader().load('./assets/landscape-photo/'+id+'.jpg');
  t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;
  t.repeat.set(id==='concrete-pavers'?.58:id==='granite-setts'?1.1:
   id==='pine-bark'||id==='river-pebble'?1.5:
@@ -60,7 +60,7 @@ function terrainPBR(T,id){
    if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('forma-surface-texture-ready',{detail:{id,channel}}));
   },undefined,()=>{
    if(channel!=='diff')return; // Neutral normal and white roughness survive.
-   loader.load('/assets/landscape-photo/'+data.fallback+'.jpg',image=>{
+   loader.load('./assets/landscape-photo/'+data.fallback+'.jpg',image=>{
     out.image=image.image;out.needsUpdate=true;
     if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('forma-surface-texture-ready',{detail:{id,channel:'fallback'}}));
    },undefined,()=>console.warn('FORMA surface image unavailable:',id));
