@@ -148,7 +148,7 @@ export function normalizeProject(raw){
    if(points.length<(entry.group==='pavers'||strip?2:3))continue;
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
-    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(entry.group==='pavers'&&['corners','ends','all'].includes(item.rounding)?{rounding:item.rounding}:{}),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
+    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(entry.group==='pavers'?{cornerRounds:normalizeCornerRounds(item.cornerRounds,points.length)}:{}),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
   }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:legacyNinebark?.87:finite(item.diameter,.1,30,entry.diameter||1),height:legacyNinebark?.76:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs','boulders'].includes(entry.group)?{variant:finite(item.variant,1,entry.group==='boulders'?4:3,1)}:{}),
     ...(entry.group==='boulders'?{burial:finite(item.burial,0,.36,.12)}:{}),
     ...(entry.group==='lights'?{brightness:finite(item.brightness,0,2,1),kelvin:[2200,2700,3000,4000].includes(Number(item.kelvin))?Number(item.kelvin):2700,...(entry.id==='globe'?{variant:finite(item.variant,1,4,1)}:{})}:{}),
@@ -164,6 +164,47 @@ export function normalizeProject(raw){
   r.buildings.push({id:/^[a-z0-9-]{1,48}$/i.test(b.id||'')?b.id:'b-'+Math.random().toString(36).slice(2,10),x:finite(b.x,0,width,width*.7),y:finite(b.y,0,height,height*.7),width:finite(b.width,2,60,6),height:finite(b.height,2,60,4),rotation:finite(b.rotation,-360,360,0),type:['bath','garage','carport','greenhouse','gazebo','outbuilding','house'].includes(b.type)?b.type:'bath',roof:['gable','hip','flat'].includes(b.roof)?b.roof:'gable',archStyle:housePresetIds.includes(b.archStyle)?b.archStyle:'scandi',modelKey:/^[a-z0-9-]{1,48}$/i.test(b.modelKey||'')?b.modelKey:null,roofRise:finite(b.roofRise,.4,8,1.2),roofColor:/^#[a-f0-9]{6}$/i.test(b.roofColor||'')?b.roofColor:'#454543',photo:safePhoto(b.photo),garland:normalizeRoofGarland(b.garland)});
  }
  return r;
+}
+// Each value is a local tangent trim in metres; end vertices are never rounded.
+export function normalizeCornerRounds(raw,count){
+ return Array.from({length:count},(_,i)=>i>0&&i<count-1?finite(Array.isArray(raw)?raw[i]:0,0,5,0):0);
+}
+export function roundedPavingCenterline(item){
+ const p=item?.points||[],r=normalizeCornerRounds(item?.cornerRounds,p.length),out=[];
+ const push=q=>{if(!out.length||Math.hypot(q.x-out.at(-1).x,q.y-out.at(-1).y)>1e-6)out.push({x:q.x,y:q.y})};
+ if(!p.length)return out;push(p[0]);
+ for(let i=1;i<p.length-1;i++){
+  const a=p[i-1],b=p[i],c=p[i+1],la=Math.hypot(a.x-b.x,a.y-b.y),lb=Math.hypot(c.x-b.x,c.y-b.y);
+  const d=Math.min(r[i],la*.45,lb*.45);
+  if(d<.015||la<1e-5||lb<1e-5){push(b);continue}
+  const ax=(a.x-b.x)/la,ay=(a.y-b.y)/la,bx=(c.x-b.x)/lb,by=(c.y-b.y)/lb;
+  const cross=ax*by-ay*bx;
+  if(Math.abs(cross)<.015){push(b);continue}
+  const q={x:b.x+ax*d,y:b.y+ay*d},s={x:b.x+bx*d,y:b.y+by*d};
+  const n=Math.max(6,Math.min(32,Math.ceil(d*9)));
+  for(let k=0;k<=n;k++){const t=k/n,u=1-t;push({x:u*u*q.x+2*u*t*b.x+t*t*s.x,y:u*u*q.y+2*u*t*b.y+t*t*s.y})}
+ }
+ if(p.length>1)push(p.at(-1));return out;
+}
+// Shared 2D/3D ribbon. Ends use perpendicular cuts; joins use bounded mitres.
+export function pavingRibbonRows(item,maxStep=Infinity){
+ const src=roundedPavingCenterline(item),p=[];
+ if(src.length<2)return [];
+ p.push(src[0]);
+ for(let i=1;i<src.length;i++){const a=src[i-1],b=src[i],n=Math.max(1,Math.min(2048,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/maxStep)));
+  for(let j=1;j<=n;j++)p.push({x:a.x+(b.x-a.x)*j/n,y:a.y+(b.y-a.y)*j/n})}
+ const half=finite(item.width,.4,10,1.2)/2;
+ const dir=(a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1;return {x:dx/l,y:dy/l}};
+ return p.map((q,i)=>{
+  const a=dir(p[Math.max(0,i-1)],p[i===0?1:i]),b=dir(p[i===p.length-1?i-1:i],p[Math.min(i+1,p.length-1)]);
+  const na={x:-a.y,y:a.x},nb={x:-b.y,y:b.x};
+  let nx=na.x+nb.x,ny=na.y+nb.y,len=Math.hypot(nx,ny);if(len<1e-6){nx=nb.x;ny=nb.y;len=1}
+  nx/=len;ny/=len;const m=half/Math.max(.25,nx*nb.x+ny*nb.y);
+  return {left:{x:q.x+nx*m,y:q.y+ny*m},right:{x:q.x-nx*m,y:q.y-ny*m}};
+ });
+}
+export function pavingRibbonPolygon(item){
+ const rows=pavingRibbonRows(item);return rows.map(r=>r.left).concat(rows.slice().reverse().map(r=>r.right));
 }
 export const segmentLength=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y);
 export const lineLength=pts=>pts.slice(1).reduce((s,p,i)=>s+segmentLength(pts[i],p),0);
