@@ -3,7 +3,7 @@ import {WEATHER_EFFECT_DEFAULTS,normalizeWeatherEffects} from './forma-landscape
 import {INTERIOR_NIGHT_DEFAULTS,normalizeNightInterior} from './forma-landscape-3d-night-interior.js';
 import {ROOF_GARLAND_DEFAULTS,normalizeRoofGarland} from './forma-landscape-roof-garlands.js';
 import {sprucePromptStage} from './forma-landscape-tree-photo-identity.js';
-import {visibleSurfaceAreas} from './forma-landscape-area.js?v=overlap-union-v1';
+import {visibleSurfaceAreas} from './forma-landscape-area.js?v=paving-segments-P22';
 import {housePresetIds} from './forma-landscape-3d-buildings.js';
 /* FORMA Landscape Project — real-world geometry is authoritative.
    Units are metres. AI is never trusted for measurements or object coordinates.
@@ -148,7 +148,7 @@ export function normalizeProject(raw){
    if(points.length<(entry.group==='pavers'||strip?2:3))continue;
    const holes=['fills','lawns','ponds'].includes(entry.group)&&Array.isArray(item.holes)
      ?item.holes.slice(0,128).filter(poly=>Array.isArray(poly)&&poly.length>=3&&poly.length<=180).map(poly=>poly.map(p=>({x:finite(p?.x,0,width,0),y:finite(p?.y,0,height,0)}))):[];
-    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(entry.group==='pavers'?{cornerRounds:normalizeCornerRounds(item.cornerRounds,points.length)}:{}),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
+    r.objects.push({id,catalogId:entry.id,type:entry.group,points,width:finite(item.width,.4,10,1.2),...(entry.group==='pavers'?{cornerRounds:normalizeCornerRounds(item.cornerRounds,points.length),segments:normalizePavingSegments({...item,points,catalogId:entry.id})}:{}),...(strip?{geometry:'strip'}:paintedPond?{geometry:'paint'}:{}),...(holes.length?{holes}:{}),...(entry.group==='lawns'&&item.autoFill===true?{autoFill:true}:{})});
   }else r.objects.push({id,catalogId:entry.id,type:entry.group,x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),diameter:legacyNinebark?.87:finite(item.diameter,.1,30,entry.diameter||1),height:legacyNinebark?.76:finite(item.height,.15,40,entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9),rotation:finite(item.rotation,-360,360,0),...(['trees','shrubs','boulders'].includes(entry.group)?{variant:finite(item.variant,1,entry.group==='boulders'?4:3,1)}:{}),
     ...(entry.group==='boulders'?{burial:finite(item.burial,0,.36,.12)}:{}),
     ...(entry.group==='lights'?{brightness:finite(item.brightness,0,2,1),kelvin:[2200,2700,3000,4000].includes(Number(item.kelvin))?Number(item.kelvin):2700,...(entry.id==='globe'?{variant:finite(item.variant,1,4,1)}:{})}:{}),
@@ -206,19 +206,63 @@ export function pavingRibbonRows(item,maxStep=Infinity){
 export function pavingRibbonPolygon(item){
  const rows=pavingRibbonRows(item);return rows.map(r=>r.left).concat(rows.slice().reverse().map(r=>r.right));
 }
+export function normalizePavingSegments(item){
+ const baseWidth=finite(item?.width,.4,10,1.2),baseId=byId(item?.catalogId)?.group==='pavers'?item.catalogId:'concrete-pavers';
+ return Array.from({length:Math.max(0,(item?.points?.length||0)-1)},(_,i)=>{
+  const raw=item.segments?.[i];return {width:finite(raw?.width,.4,10,baseWidth),catalogId:byId(raw?.catalogId)?.group==='pavers'?raw.catalogId:baseId};
+ });
+}
+// Partition the shared centerline at the midpoint of each rounded turn.
+// Each side uses the same boundary direction, so unequal widths meet without a gap.
+export function pavingSegments(item,maxStep=Infinity){
+ const p=item?.points||[],rounds=normalizeCornerRounds(item?.cornerRounds,p.length),settings=normalizePavingSegments(item);
+ if(p.length<2)return [];
+ const corners=p.map((b,i)=>{
+  if(i===0||i===p.length-1)return [b];
+  const a=p[i-1],c=p[i+1],la=Math.hypot(a.x-b.x,a.y-b.y),lb=Math.hypot(c.x-b.x,c.y-b.y),d=Math.min(rounds[i],la*.45,lb*.45);
+  if(d<.015||la<1e-6||lb<1e-6)return [b];
+  const ax=(a.x-b.x)/la,ay=(a.y-b.y)/la,bx=(c.x-b.x)/lb,by=(c.y-b.y)/lb;
+  if(Math.abs(ax*by-ay*bx)<.015)return [b];
+  const q={x:b.x+ax*d,y:b.y+ay*d},s={x:b.x+bx*d,y:b.y+by*d};
+  const n=2*Math.max(3,Math.min(16,Math.ceil(d*4.5)));
+  return Array.from({length:n+1},(_,k)=>{const t=k/n,u=1-t;return {x:u*u*q.x+2*u*t*b.x+t*t*s.x,y:u*u*q.y+2*u*t*b.y+t*t*s.y}});
+ });
+ const center=[],spans=[];
+ const push=q=>{if(!center.length||Math.hypot(q.x-center.at(-1).x,q.y-center.at(-1).y)>1e-7)center.push(q)};
+ for(let i=0;i<p.length-1;i++){
+  const a=corners[i],b=corners[i+1],src=a.slice(Math.floor(a.length/2)).concat(b.slice(0,Math.floor(b.length/2)+1));
+  push(src[0]);const start=center.length-1;
+  for(let j=1;j<src.length;j++){const u=src[j-1],v=src[j],n=Math.max(1,Math.min(2048,Math.ceil(Math.hypot(v.x-u.x,v.y-u.y)/maxStep)));for(let k=1;k<=n;k++)push({x:u.x+(v.x-u.x)*k/n,y:u.y+(v.y-u.y)*k/n});}
+  spans.push([start,center.length-1]);
+ }
+ const dir=(a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1;return {x:dx/l,y:dy/l}};
+ const normals=center.map((q,i)=>{
+  const a=dir(center[Math.max(0,i-1)],center[i===0?Math.min(1,center.length-1):i]),b=dir(center[i===center.length-1?Math.max(0,i-1):i],center[Math.min(i+1,center.length-1)]);
+  let nx=-a.y-b.y,ny=a.x+b.x,l=Math.hypot(nx,ny);if(l<1e-6){nx=-b.y;ny=b.x;l=1}
+  nx/=l;ny/=l;const m=1/Math.max(.25,-nx*b.y+ny*b.x);return {x:nx*m,y:ny*m};
+ });
+ return spans.map(([start,end],index)=>{
+  const cfg=settings[index],half=cfg.width/2,rows=[];
+  for(let j=start;j<=end;j++){const q=center[j],n=normals[j];rows.push({left:{x:q.x+n.x*half,y:q.y+n.y*half},right:{x:q.x-n.x*half,y:q.y-n.y*half}})}
+  const polygon=rows.map(r=>r.left).concat(rows.slice().reverse().map(r=>r.right));
+  let length=0;for(let j=start+1;j<=end;j++)length+=Math.hypot(center[j].x-center[j-1].x,center[j].y-center[j-1].y);
+  return {...cfg,index,rows,polygon,length};
+ }).filter(s=>s.rows.length>=2&&s.length>1e-6);
+}
 export const segmentLength=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y);
 export const lineLength=pts=>pts.slice(1).reduce((s,p,i)=>s+segmentLength(pts[i],p),0);
 export const polygonArea=pts=>pts.length<3?0:Math.abs(pts.reduce((s,p,i)=>s+p.x*pts[(i+1)%pts.length].y-pts[(i+1)%pts.length].x*p.y,0))/2;
 export const areaFor=(doc,item)=>{
  const group=byId(item.catalogId)?.group;
- if(group==='pavers'||(['fills','lawns'].includes(group)&&item.geometry==='strip'))return lineLength(item.points)*item.width;
+ if(group==='pavers')return pavingSegments(item).reduce((n,s)=>n+polygonArea(s.polygon),0);
+ if(['fills','lawns'].includes(group)&&item.geometry==='strip')return lineLength(item.points)*item.width;
  if(!['fills','lawns','ponds'].includes(group))return 0;
  const raw=Math.max(0,polygonArea(item.points)-(item.holes||[]).reduce((sum,shape)=>sum+polygonArea(shape),0));
  if(item.autoFill&&group==='lawns'){
   // Background lawn appears only where the site has no explicit covering
   // or building. Gross areas can overlap, so these quantities remain estimates.
   const other=(doc.objects||[]).filter(x=>x.id!==item.id&&['pavers','fills','lawns','ponds'].includes(byId(x.catalogId)?.group))
-   .reduce((n,x)=>n+Math.max(0,(x.type==='pavers'||(x.type==='fills'&&x.geometry==='strip'))?lineLength(x.points)*x.width:polygonArea(x.points)-(x.holes||[]).reduce((h,v)=>h+polygonArea(v),0)),0);
+   .reduce((n,x)=>n+Math.max(0,x.type==='pavers'?areaFor(doc,x):(x.type==='fills'&&x.geometry==='strip')?lineLength(x.points)*x.width:polygonArea(x.points)-(x.holes||[]).reduce((h,v)=>h+polygonArea(v),0)),0);
   const building=(doc.house?.width||0)*(doc.house?.height||0)+(doc.buildings||[]).reduce((n,b)=>n+b.width*b.height,0);
   return Math.max(0,raw-other-building);
  }
@@ -238,7 +282,7 @@ export function report(doc){
  // Authoritative material quantities are based on the actual visible union,
  // clipped to the site and masked by other surfaces and building footprints.
  // This prevents the historical 14 m² sum for 11 m² of overlapping ponds.
- const visible=visibleSurfaceAreas(d);
+ const visible=visibleSurfaceAreas({...d,objects:d.objects.flatMap(o=>o.type==='pavers'?pavingSegments(o).map(s=>({...o,id:o.id+'-'+s.index,catalogId:s.catalogId,points:s.polygon,geometry:'paving-polygon'})):[o])});
  const areas=Object.fromEntries(Object.entries(visible.areas).map(([id,m2])=>[id,round(m2,2)]));
  const approximate=visible.precision!=='polygon';
  return {siteArea:round(polygonArea(boundary),2),sitePerimeter:round(perimeter(boundary),2),
