@@ -1285,8 +1285,9 @@ function updateGroundRegion(geo,dirty){
   const inv=1/Math.hypot(sx,1,sz);pos.setY(k,terrainAt(x,z));norm.setXYZ(k,-sx*inv,inv,-sz*inv);
  }
  if(dirty){
-  pos.clearUpdateRanges();norm.clearUpdateRanges();
-  for(let j=z0;j<=z1;j++){const start=(j*stride+x0)*3,count=(x1-x0+1)*3;pos.addUpdateRange(start,count);norm.addUpdateRange(start,count);}
+  // Keep queued GPU ranges until Three.js uploads them, even if several brush frames precede a render.
+  const start=(z0*stride+x0)*3,count=((z1-z0)*stride+x1-x0+1)*3;
+  pos.addUpdateRange(start,count);norm.addUpdateRange(start,count);
  }else{pos.clearUpdateRanges();norm.clearUpdateRanges();}
  pos.needsUpdate=true;norm.needsUpdate=true;
 }
