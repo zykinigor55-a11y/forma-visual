@@ -9,7 +9,7 @@ import {premiumIcon, premiumIcon as categoryIcon} from './forma-premium-icons.js
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const uid=()=>'o-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
  let modal=null,doc=freshProject(),pid='',mode='select',category='trees',chosen='pine',points=[],selected=null,drag=null,undo=[],redo=[],busy=false,preview=null,roofArt=null,roofArts=new Map(),snap=true,pathShape='orthogonal',generationStarted=0,progressTicker=null,progressListener=null,photoVisible=true;
- let pathInput='points',pathStroke=null,pathFrame=0;
+ let pathInput='points',pathStroke=null,pathFrame=0,pathDraftSource=null;
  let lastFocus=null,previewModel=null,previewKind=null,renderOutput=null,areaTool='brush',brush=null;
  let viewScale=1,viewCentre=null,pinch=null,placementCount=0,presentationMode='presentation',showDimensions=false;
 const hiddenPlanLayers=new Set();
@@ -368,9 +368,9 @@ function syncMobilePathActions(){
  nav.dataset.pathState=drawing?'drawing':pathSelected?'selected':'normal';
  const done=$('#lpMobilePathDone',nav),back=$('#lpMobilePathBack',nav);
  if(done)done.disabled=points.length<2||!!pathStroke;if(back){back.disabled=!points.length||!!pathStroke;back.textContent=pathInput==='brush'?'↶ Назад':'↶ Точка';}
- const drawControls=$('#lpMobilePathDrawControls',nav);if(drawControls){drawControls.hidden=!drawing;if(drawing&&!pathStroke)drawControls.innerHTML=pathDrawControls();}
+ const drawControls=$('#lpMobilePathDrawControls',nav);if(drawControls){drawControls.hidden=!drawing;if(drawing&&!pathStroke){const markup=pathDrawControls();if(drawControls.dataset.markup!==markup){drawControls.innerHTML=markup;drawControls.dataset.markup=markup;}}}
  const info=$('#lpMobilePathInfo',nav);
- if(info)info.textContent=drawing?(points.length<2?(pathInput==='brush'?'Проведите пальцем по плану':'Дорожка · поставьте '+(points.length?'конечную':'начальную')+' точку'):'Дорожка · '+num(lineLength(points),1)+' м · '+pathShapeLabel()):pathSelected?(mode==='corner'?'Кисть: обработайте нужный угол · ': '')+'Участок '+(segmentIndex(obj)+1)+' из '+(obj.points.length-1)+' · '+byId(segment.catalogId)?.name+' · '+num(lineLength(obj.points.slice(segmentIndex(obj),segmentIndex(obj)+2)),1)+' м × '+num(segment.width,2)+' м':'';
+ if(info)info.textContent=drawing?(pathShapeLabel()+' · '+(points.length<2?(pathInput==='brush'?'Проведите пальцем по плану':'Дорожка · поставьте '+(points.length?'конечную':'начальную')+' точку'):'Дорожка · '+num(lineLength(points),1)+' м')):pathSelected?(mode==='corner'?'Кисть: обработайте нужный угол · ': '')+'Участок '+(segmentIndex(obj)+1)+' из '+(obj.points.length-1)+' · '+byId(segment.catalogId)?.name+' · '+num(lineLength(obj.points.slice(segmentIndex(obj),segmentIndex(obj)+2)),1)+' м × '+num(segment.width,2)+' м':'';
  const widthPanel=$('#lpMobilePathWidthPanel',nav),widthInput=$('#lpMobilePathWidth',nav),widthValue=$('#lpMobilePathWidthValue',nav);
  if(widthPanel){widthPanel.hidden=!pathSelected;widthPanel.dataset.object=pathSelected?obj.id:'';if(pathSelected&&widthInput){widthInput.value=String(segment.width);widthValue.textContent=num(segment.width,2)+' м';}}
  const roundingPanel=$('#lpMobilePathRoundingPanel',nav);
@@ -517,7 +517,7 @@ function drawMap(){
  }
  function setMode(v){
   cancelPathStroke();cancelCornerStroke();const wasArea=mode==='area',group=itemCatalog()?.group;
-  mode=v;points=[];selected=null;selectedSegmentIndex=0;brush=null;
+  mode=v;points=[];pathDraftSource=null;selected=null;selectedSegmentIndex=0;brush=null;
   if(v==='strip'&&group!=='fills'){category='fills';chosen='pine-bark'}
   if(v==='area'&&!['lawns','fills','ponds'].includes(group)){category='fills';chosen='pine-bark'}
   if(v==='area'&&(!wasArea||group==='ponds'||group==='fills'))areaTool=(group==='ponds'||group==='lawns')?'brush':'polygon';
@@ -528,7 +528,7 @@ function drawMap(){
   if(v==='area')say(itemCatalog()?.group==='ponds'?'Пруд: ведите кистью по участку. Полная зона воды появляется сразу без точек. Несколько мазков дополняют водоём.':'Заливка: рисуйте кистью или замкните контур лассо, чтобы заполнить всю площадь.');
   if(v==='path')say('Выберите брусчатку и ширину. Параллельно, 45° или свободная форма. Нажмите «Завершить».');
  }
- function endDrawing(){cancelPathStroke();if(mode==='corner'){cancelCornerStroke();mode='select';draw();return}points=[];brush=null;drag=null;mode='select';draw();say('Рисование завершено без сохранения черновика. Уже созданные объекты не изменены.');}
+ function endDrawing(){cancelPathStroke();pathDraftSource=null;if(mode==='corner'){cancelCornerStroke();mode='select';draw();return}points=[];brush=null;drag=null;mode='select';draw();say('Рисование завершено без сохранения черновика. Уже созданные объекты не изменены.');}
  const PATH_SHAPES=[['smooth','Плавная'],['free','Прямые'],['orthogonal','Магнит 90°'],['diagonal','Магнит 45°']];
  const pathShapeLabel=()=>PATH_SHAPES.find(([id])=>id===pathShape)?.[1]||'Прямые';
  function pathDrawControls(){
@@ -552,6 +552,20 @@ function drawMap(){
   for(let i=out.length-2;i>0;i--){const a=out[i-1],b=out[i],d=out[i+1],ux=b.x-a.x,uy=b.y-a.y,vx=d.x-b.x,vy=d.y-b.y,len=Math.hypot(ux,uy)*Math.hypot(vx,vy);if(len&&Math.abs(ux*vy-uy*vx)/len<.025&&ux*vx+uy*vy>0)out.splice(i,1);}
   return out;
  }
+ function reprojectPathDraft(raw,shape,site){
+  if(!raw.length)return [];
+  if(!['orthogonal','diagonal'].includes(shape))return raw.map(p=>({...p}));
+  const out=[{...raw[0]}];for(let i=1;i<raw.length;i++){const p=snapPathPoint(out.at(-1),raw[i],shape,site);if(Math.hypot(p.x-out.at(-1).x,p.y-out.at(-1).y)>.03)out.push(p);}
+  return out;
+ }
+ function switchPathShape(shape){
+  if(!PATH_SHAPES.some(([id])=>id===shape))return;
+  if(pathStroke){say('Отпустите кисть, чтобы изменить форму маршрута.');return;}
+  if(!points.length)pathDraftSource=null;else if(!pathDraftSource)pathDraftSource={raw:points.map(p=>({...p})),kind:'points'};
+  pathShape=shape;
+  if(pathDraftSource){points=pathDraftSource.kind==='brush'?resolvePathStroke(pathDraftSource.raw):reprojectPathDraft(pathDraftSource.raw,shape,doc.site);}
+  drawMap();drawPalette();say('Активный режим: '+pathShapeLabel()+'. '+(['orthogonal','diagonal'].includes(shape)?'Магнитная привязка включена.':'Свободное направление.'));
+ }
  function cancelPathStroke(){if(pathFrame)cancelAnimationFrame(pathFrame);pathFrame=0;if(pathStroke){points=pathStroke.before;pathStroke=null;}}
  function updatePathStroke(){pathFrame=0;if(!pathStroke)return;points=resolvePathStroke(pathStroke.raw);drawMapBrush();syncPathFinishDock();}
  function samplePathStroke(p){const raw=pathStroke.raw,last=raw.at(-1);if(Math.hypot(last.x-p.x,last.y-p.y)<.085)return;raw.push(p);if(raw.length>1200)pathStroke.raw=raw.filter((_,i)=>i%2===0||i===raw.length-1);if(!pathFrame)pathFrame=requestAnimationFrame(updatePathStroke);}
@@ -574,7 +588,7 @@ function drawMap(){
    doc.objects.push(obj);selected=obj.id;selectedSegmentIndex=0;
    say(mode==='path'?'Дорожка '+num(lineLength(points),1)+' м сохранена. Режим выбора активен.':mode==='strip'?'Полоса '+num(lineLength(points),1)+' м × '+num(width,2)+' м сохранена.':'Площадь '+num(polygonArea(points),1)+' м² залита материалом без разрывов.');
   }
-  points=[];mode='select';syncAutoLawn();save();draw();revealCanvas();
+  points=[];pathDraftSource=null;mode='select';syncAutoLawn();save();draw();revealCanvas();
  }
  function selectedPlanObject(){return selected==='house'?doc.house:selected?.startsWith('building:')?doc.buildings.find(b=>b.id===selected.slice(9)):doc.objects.find(o=>o.id===selected)}
  function nudgeSelected(direction,step=.5){
@@ -610,7 +624,7 @@ function drawMap(){
  }
  function startPointer(e){
   if(busy||e.button!==0||e.isPrimary===false)return;const p=position(e);if(!p)return;
-  if(mode==='path'&&pathInput==='brush'){if(points.length>=2){say('Нажмите «Готово» или «Назад», чтобы начать новый мазок.');return}pathStroke={pointer:e.pointerId,before:points.slice(),raw:[p]};points=[p];try{$('#lpSvg',modal).setPointerCapture(e.pointerId)}catch{}drawMapBrush();e.preventDefault();return;}
+  if(mode==='path'&&pathInput==='brush'){if(points.length>=2){say('Нажмите «Готово» или «Назад», чтобы начать новый мазок.');return}pathDraftSource=null;pathStroke={pointer:e.pointerId,before:points.slice(),raw:[p]};points=[p];try{$('#lpSvg',modal).setPointerCapture(e.pointerId)}catch{}drawMapBrush();e.preventDefault();return;}
   if(mode==='corner'){const obj=selectedPlanObject();if(obj?.type!=='pavers')return;obj.cornerRounds=normalizeCornerRounds(obj.cornerRounds,obj.points.length);cornerStroke={id:obj.id,pointer:e.pointerId,before:obj.cornerRounds.slice(),last:p,touched:new Set(),changed:false};try{$('#lpSvg',modal).setPointerCapture(e.pointerId)}catch{}stampCorner(p);e.preventDefault();return;}
   if(mode==='area'&&['brush','eraser'].includes(areaTool)){
    if(areaTool!=='eraser'&&!['lawns','fills','ponds'].includes(itemCatalog()?.group))return;
@@ -623,6 +637,10 @@ function drawMap(){
    if(mode==='area'&&areaTool==='polygon'&&points.length>=3&&Math.hypot(q.x-points[0].x,q.y-points[0].y)<Math.max(.35,Math.min(doc.site.width,doc.site.height)*.015)){finish();return}
    if(points.length&&Math.hypot(q.x-points.at(-1).x,q.y-points.at(-1).y)<.03)return;
    if(points.length>=110){say('Максимум 110 точек на один контур. Завершите фигуру.');return}
+   if(mode==='path'){
+    if(!points.length||pathDraftSource?.kind!=='points')pathDraftSource={raw:points.map(v=>({...v})),kind:'points'};
+    pathDraftSource.raw.push({...p});
+   }
    points.push(q);drawMap();drawPalette();e.preventDefault();return
   }
   if(mode==='place'){addObject(p);e.preventDefault();return}
@@ -663,7 +681,7 @@ function drawMap(){
   const markup=drawSvg();svg.innerHTML=markup.slice(markup.indexOf('>')+1,markup.lastIndexOf('</svg>'));
  }
  function endPointer(e){
-  if(pathStroke?.pointer===e.pointerId){if(e.type==='pointercancel'){cancelPathStroke();drawMap();return}const p=position(e);if(p)samplePathStroke(p);if(pathFrame)cancelAnimationFrame(pathFrame);pathFrame=0;points=resolvePathStroke(pathStroke.raw);pathStroke=null;if(points.length<2)points=[];drawMap();drawPalette();say(points.length>=2?'Маршрут готов. Нажмите «Готово» для сохранения.':'Проведите пальцем по плану.');return;}
+  if(pathStroke?.pointer===e.pointerId){if(e.type==='pointercancel'){cancelPathStroke();drawMap();return}const p=position(e);if(p)samplePathStroke(p);if(pathFrame)cancelAnimationFrame(pathFrame);pathFrame=0;pathDraftSource={raw:pathStroke.raw.map(p=>({...p})),kind:'brush'};points=resolvePathStroke(pathDraftSource.raw);pathStroke=null;if(points.length<2){points=[];pathDraftSource=null;}drawMap();drawPalette();say(points.length>=2?'Маршрут готов. Нажмите «Готово» для сохранения.':'Проведите пальцем по плану.');return;}
   if(cornerStroke?.pointer===e.pointerId){finishCornerStroke(e.type==='pointercancel');return}
   if(brush&&brush.pointer===e.pointerId){
    const stroke=brush;brush=null;
@@ -871,7 +889,7 @@ function drawMap(){
     const material=byId(b.dataset.pathMaterial);
     if(material?.group!=='pavers')return;
     const selectedPath=doc.objects.find(o=>o.id===selected&&o.type==='pavers');
-    chosen=material.id;category='pavers';points=[];
+    chosen=material.id;category='pavers';points=[];pathDraftSource=null;
     if(selectedPath){
      // Changing a selected path is a material replacement, not the creation
      // of another overlapping copy with the default concrete texture.
@@ -898,7 +916,7 @@ function drawMap(){
   if(b.dataset.eraser!==undefined){mode='area';areaTool='eraser';points=[];brush=null;draw();revealCanvas();say('Ластик: проведите пальцем по части газона, отсыпки или пруда.');return}
    if(b.dataset.tool){setMode(b.dataset.tool);return}
   if(b.dataset.pathInput){if(pathStroke||points.length){say('Сначала завершите или отмените текущий маршрут.');return}pathInput=b.dataset.pathInput;drawMap();drawPalette();say(pathInput==='brush'?'Ведите пальцем по плану.':'Ставьте точки маршрута.');return}
-  if(b.dataset.pathShape){if(pathStroke||points.length||!PATH_SHAPES.some(([id])=>id===b.dataset.pathShape)){say('Выберите форму до начала рисования.');return}pathShape=b.dataset.pathShape;drawMap();drawPalette();return}
+  if(b.dataset.pathShape){switchPathShape(b.dataset.pathShape);return}
   if(b.dataset.quickCategory){category=b.dataset.quickCategory;chosen=category==='ponds'?'natural':CATALOG.find(x=>x.group===category)?.id||chosen;if(category==='lawns'){autoFillLawn();return}setMode(category==='pavers'?'path':['fills','ponds'].includes(category)?'area':'place');return}
   if(b.dataset.zoom==='in'){zoomTo(viewScale*1.5);return}
   if(b.dataset.zoom==='out'){zoomTo(viewScale/1.5);return}
@@ -907,7 +925,7 @@ function drawMap(){
   if(b.id==='lpPhotoToggle'){if(preview){if(previewModel!==JSON.stringify(doc)){photoVisible=false;drawMap();say('План изменён. Создайте новый фотореалистичный генплан, чтобы увидеть обновлённое размещение.');return}}photoVisible=!photoVisible;drawMap();return}
   if(b.id==='lpFinish'||b.id==='lpPathFinishNow'||b.id==='lpMobilePathDone'){finish();return}
   if(b.id==='lpCancel'||b.id==='lpPathCancelNow'||b.id==='lpMobilePathCancel'){endDrawing();return}
-  if(b.id==='lpPathUndoPoint'||b.id==='lpMobilePathBack'){if(mode==='path'&&points.length&&!pathStroke){if(pathInput==='brush')points=[];else points.pop();drawMap();drawPalette();}return}
+  if(b.id==='lpPathUndoPoint'||b.id==='lpMobilePathBack'){if(mode==='path'&&points.length&&!pathStroke){if(pathInput==='brush'){points=[];pathDraftSource=null;}else{points.pop();pathDraftSource=points.length?{raw:points.map(p=>({...p})),kind:'points'}:null;}drawMap();drawPalette();}return}
   if(b.dataset.cornerBrush){startCornerTool(b.dataset.cornerBrush);return}
   if(b.dataset.cornerDone!==undefined){cancelCornerStroke();mode='select';draw();return}
   if(b.id==='lpMobilePathDelete'){if(['select','corner'].includes(mode)&&selectedPlanObject()?.type==='pavers'&&confirm('Удалить только выбранный участок дорожки?')){cancelCornerStroke();mode='select';deleteSelected();}return}
@@ -1026,13 +1044,13 @@ function drawMap(){
   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
   if((e.key==='Delete'||e.key==='Backspace')&&selected&&!points.length){e.preventDefault();deleteSelected();return}
   if(e.key==='Enter'&&points.length){e.preventDefault();finish()}
-  if(e.key==='Backspace'&&points.length){e.preventDefault();points.pop();drawMap();drawPalette()}
+  if(e.key==='Backspace'&&points.length){e.preventDefault();if(mode==='path'&&pathInput==='brush')points=[];else points.pop();pathDraftSource=null;drawMap();drawPalette()}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();reverse(e.shiftKey?'redo':'undo')}
  }
  async function open(){
   if(modal?.open)return;
   lastFocus=document.activeElement;pid=activeProject();try{doc=normalizeProject(JSON.parse(localStorage.getItem(siteKey())||'null'))}catch{doc=freshProject()}
-  cancelPathStroke();pathInput='points';cancelCornerStroke();selectedSegmentIndex=0;mode='select';chosen='pine';category='trees';selected=null;points=[];brush=null;areaTool='brush';viewScale=1;viewCentre=null;pinch=null;placementCount=0;presentationMode=readPresentationMode();
+  cancelPathStroke();pathDraftSource=null;pathInput='points';cancelCornerStroke();selectedSegmentIndex=0;mode='select';chosen='pine';category='trees';selected=null;points=[];brush=null;areaTool='brush';viewScale=1;viewCentre=null;pinch=null;placementCount=0;presentationMode=readPresentationMode();
   try{showDimensions=localStorage.getItem(styleKey()+'-dimensions')==='true'}catch{showDimensions=false}
   hiddenPlanLayers.clear();undo=[];redo=[];preview=null;roofArt=null;roofArts=new Map();pathShape='orthogonal';photoVisible=true;
   modal=document.createElement('dialog');modal.id='faLandscapeMasterplan';modal.className='fa-landscape-masterplan';
@@ -1044,7 +1062,7 @@ function drawMap(){
    }
   modal.innerHTML=`<div class="lp-shell"><header class="lp-head"><div class="lp-brand"><b>FORMA</b><span>ЛАНДШАФТНЫЙ ПРОЕКТ · ВИД СВЕРХУ</span></div><div><span id="lpSourceState"></span><a class="lp-launch-3d" href="forma-landscape-3d.html" title="Перейти в настоящий 3D-конструктор участка">${premiumIcon('world')}<span>3D-КОНСТРУКТОР</span></a><button type="button" data-close aria-label="Закрыть">×</button></div></header><div class="lp-layout"><aside class="lp-sidebar"><div class="lp-sidebar-head"><b>БИБЛИОТЕКА</b><small>46 объектов · 8 категорий</small></div><div id="lpPalette"></div><button type="button" data-icon class="lp-export-icon">Экспорт · SVG 1080</button><button type="button" data-icon-png class="lp-export-icon">Экспорт карточки · PNG/JPG 1080</button></aside><section class="lp-work"><div class="lp-tools"><button type="button" data-tool="select">${premiumIcon('select')}<span>Переместить</span></button><button type="button" data-delete title="Удалить выбранный объект · Delete">${premiumIcon('delete')}<span>Удалить</span></button><button type="button" data-eraser title="Стирать часть газона, отсыпки или пруда">${premiumIcon('eraser')}<span>Ластик</span></button><button type="button" data-tool="boundary">${premiumIcon('site')}<span>Граница</span></button><button type="button" data-tool="path">${premiumIcon('pavers')}<span>Дорожка</span></button><button type="button" data-tool="area">${premiumIcon('fills')}<span>Область</span></button><button type="button" data-atmo-toggle aria-expanded="false" aria-controls="lpAtmoQuick">${premiumIcon('atmosphere')}<span>Атмосфера</span></button><button type="button" data-clear-landscape class="lp-clear-all" title="Удалить всё кроме дома и дорожек · можно отменить">${premiumIcon('delete')}<span>Очистить участок</span></button><button type="button" data-undo>↶</button><button type="button" data-redo>↷</button></div><div class="lp-path-controls"><button type="button" data-finished-plan>Готовый генплан</button><button type="button" data-plan-dimensions aria-pressed="false">Показать размеры</button><button type="button" data-top-photo>Вид сверху · летний день</button><button type="button" data-top-photo="night">Вид сверху · ночь</button><button type="button" id="lpPhotoToggle" title="Переключение между точным чертежом и фотореалистичным рендером">▣ Фото-рендер</button><span id="lpToolName">Выбор</span><div class="lp-path-mode" id="lpPathControls" hidden><span id="lpSelectedMaterial">Брусчатка</span><div id="lpDesktopPathDrawControls"></div><div id="lpPathMaterials" class="lp-material-choices"></div></div><div id="lpSurfaceModes" class="lp-surface-modes" hidden><b>ОТСЫПКА · СПОСОБ НАНЕСЕНИЯ</b><div class="lp-surface-choices"><button type="button" data-surface-mode="strip" aria-pressed="false"><strong>〰 Полоса</strong><small>Вдоль дорожек и посадок · ширина в метрах</small></button><button type="button" data-surface-mode="area" aria-pressed="true"><strong>▣ Область</strong><small>Замкнутый контур · заливка всей площади</small></button></div></div><div id="lpStripControls" class="lp-strip-explain" hidden>Поставьте несколько точек вдоль полосы. Материал сразу покажется с реальной шириной. Кнопка «Создать полосу» сохранит отсыпку.</div><div id="lpAreaControls" class="lp-area-controls" hidden><div class="lp-area-modes"><button type="button" data-area-tool="brush">✎ Рисовать пальцем</button><button type="button" data-area-tool="polygon">⬠ Лассо</button><button type="button" data-area-tool="eraser">⌫ Ластик</button><button id="lpAutoFillLawn" type="button" data-auto-fill-lawn hidden>▣ Залить весь газон</button><label>Диаметр <input id="lpBrushSize" type="range" min=".5" max="12" step=".25" value="1.5"> <span id="lpBrushLabel">1.5 м</span></label></div><div id="lpAreaMaterials" class="lp-area-materials"></div></div><label id="lpWidthLabel" hidden>Ширина дорожки <input id="lpWidth" type="number" min=".4" max="10" step=".05" value="1.2"> м</label><label><input id="lpSnap" type="checkbox" checked> Шаг 5 см</label><button id="lpFinish" type="button" disabled>✓ Завершить</button><button id="lpCancel" type="button" disabled>✕ Прервать</button></div><div id="lpAtmoQuick" class="lp-atmo-quick" hidden><strong>☀ АТМОСФЕРА СЦЕНЫ</strong><div class="lp-atmo-quick-fields"><label>Время дня<select data-atmo="time">${SCENE_OPTIONS.time.map(([v,n])=>'<option value="'+v+'">'+n+'</option>').join('')}</select></label><label>Сезон<select data-atmo="season">${SCENE_OPTIONS.season.map(([v,n])=>'<option value="'+v+'">'+n+'</option>').join('')}</select></label><label>Погода<select data-atmo="weather">${SCENE_OPTIONS.weather.map(([v,n])=>'<option value="'+v+'">'+n+'</option>').join('')}</select></label></div><small>Реальные высотные тени · геометрия остаётся прежней</small></div><div class="lp-category-shortcuts"><button type="button" data-quick-category="pavers" class="lp-quick-category" title="Дорожки"><span class="lp-quick-icon">${categoryIcon('pavers')}</span><span>Дорожки</span></button><button type="button" data-quick-category="lawns" class="lp-quick-category" title="Газоны"><span class="lp-quick-icon">${categoryIcon('lawns')}</span><span>Газоны</span></button><button type="button" data-quick-category="lights" class="lp-quick-category" title="Светильники"><span class="lp-quick-icon">${categoryIcon('lights')}</span><span>Светильники</span></button><button type="button" data-quick-category="trees" class="lp-quick-category" title="Деревья"><span class="lp-quick-icon">${categoryIcon('trees')}</span><span>Деревья</span></button><button type="button" data-quick-category="shrubs" class="lp-quick-category" title="Кустарники"><span class="lp-quick-icon">${categoryIcon('shrubs')}</span><span>Кустарники</span></button><button type="button" data-quick-category="ponds" class="lp-quick-category" title="Водоёмы"><span class="lp-quick-icon">${categoryIcon('ponds')}</span><span>Водоёмы</span></button><button type="button" data-quick-category="fills" class="lp-quick-category" title="Отсыпки"><span class="lp-quick-icon">${categoryIcon('fills')}</span><span>Отсыпки</span></button></div><details id="lpLayers" class="lp-layers"><summary>▦ Слои генплана · видимость</summary><div class="lp-layer-toggles">${PLAN_LAYERS.map(([id,name])=>'<label><input type="checkbox" data-plan-layer="'+id+'" checked>'+name+'</label>').join('')}</div><small>Скрытие слоя влияет только на просмотр. AI и экспорт содержат все объекты.</small></details><div class="lp-canvas"><div class="lp-zoom-tools"><button type="button" data-zoom="out" aria-label="Отдалить">−</button><span id="lpZoomValue">100%</span><button type="button" data-zoom="in" aria-label="Приблизить">＋</button><button type="button" data-zoom="focus" title="Приблизить выбранный объект">◎ К объекту</button><button type="button" data-zoom="fit" title="Весь участок">⤢ Весь</button></div><div id="lpMap"></div><div class="lp-draft-summary" id="lpDraftSummary" aria-live="polite" hidden></div></div><footer class="lp-work-foot"><span id="lpStatus" role="status">План строится в метрах. Отсыпка: полоса или залитая область. Водоём: замкнутый контур.</span><button type="button" data-concept>Подобрать ландшафт автоматически</button></footer></section><aside class="lp-properties"><div id="lpInspector"></div><section class="lp-outputs"><label>Набросок / схема<input id="lpUnderlay" type="file" accept="image/png,image/jpeg,image/webp"></label><label class="lp-plan-style">СТИЛЬ ЛАНДШАФТНОГО ГЕНПЛАНА<select id="lpPresentationMode" aria-label="Стиль профессионального генплана"><option value="presentation">Презентационный · премиальный</option><option value="planting">Посадочный · растения</option><option value="technical">Технический · чертёж</option></select></label><button type="button" id="lpAi" data-ai>AI · Профессиональный генплан</button><small>AI меняет только графическую подачу, не изменяя геометрию. Генерация платная; SVG экспортируется без AI.</small><div><button type="button" data-svg>SVG</button><button type="button" data-pro-sheet class="lp-pro-sheet">▤ Лист генплана · SVG</button><button type="button" data-pro-png class="lp-pro-sheet">▧ Лист генплана · PNG</button><button type="button" data-png>PNG 2K</button><button type="button" data-csv>Ведомость CSV</button><label class="lp-pdf-size">Альбом <select id="lpPdfFormat" aria-label="Формат листа PDF"><option value="A4">A4</option><option value="A3">A3</option></select></label><button type="button" data-pdf class="lp-export-album">▣ PDF-альбом проекта</button><button type="button" data-json>Модель JSON</button></div></section></aside></div><div id="lpRenderOverlay" class="lp-render-overlay" hidden role="dialog" aria-modal="true" aria-label="Ход генерации ландшафта"><div class="lp-render-panel"><header class="lp-render-header"><div class="lp-render-brand">FORMA <span>LANDSCAPE STUDIO</span></div><div class="lp-render-live"><span class="lp-render-dot"></span> RENDER ENGINE</div></header><div class="lp-render-preview" id="lpRenderImageArea"><img id="lpRenderSourceImage" alt="Исходный измеряемый генплан" hidden><div id="lpRenderOrbit" class="lp-render-orbit"><span></span><span></span><span></span><i>F</i></div><img id="lpRenderOutputImage" alt="Фотореалистичный ландшафтный генплан" hidden/></div><div class="lp-render-content"><div class="lp-render-eyebrow">ЛАНДШАФТНАЯ ВИЗУАЛИЗАЦИЯ</div><h2 id="lpRenderTitle">Создаём ваш ландшафт</h2><p id="lpRenderDesc">Подготавливаем план, материалы и окружение.</p><div class="lp-render-timeline"><div data-render-step="prepare"><b>01</b><span>Подготовка геометрии<small>Сверяем план и покрытия</small></span></div><div data-render-step="running"><b>02</b><span>Фотореалистичная визуализация<small>Растительность, фактуры, свет</small></span></div><div data-render-step="save"><b>03</b><span>Результат<small>Сохранение в проект</small></span></div></div><div class="lp-render-bottom"><span id="lpRenderElapsed">Прошло 00:00</span><span id="lpRenderQueue" aria-live="polite">Продолжительность зависит от сервера</span></div><div class="lp-render-result-actions" id="lpRenderActions" hidden><button type="button" data-plan-dimensions id="lpResultDimensions" aria-pressed="false" hidden>Показать размеры</button><button type="button" data-top-photo id="lpResultTopPhoto" hidden>Вид сверху · летний день</button><button type="button" data-top-photo="night" id="lpResultNightPhoto" hidden>Вид сверху · ночь</button><button type="button" data-render-download>↓ Сохранить изображение</button><button type="button" data-render-close>Вернуться к плану</button></div><p class="lp-render-note">Процент готовности модель не сообщает. Повторное нажатие не требуется.</p></div></div></div></div>`;
   document.body.append(modal);modal.addEventListener('click',click);
-  const planBuild=document.createElement('small');planBuild.textContent='P23';planBuild.style.cssText='display:inline!important;font-size:9px;color:#b4a896;margin-left:5px;';$('.lp-brand',modal).append(planBuild);
+  const planBuild=document.createElement('small');planBuild.textContent='P24';planBuild.style.cssText='display:inline!important;font-size:9px;color:#b4a896;margin-left:5px;';$('.lp-brand',modal).append(planBuild);
   const modeSelect=$('#lpPresentationMode',modal);if(modeSelect)modeSelect.value=presentationMode;
   // Mobile: access the measured plan, asset catalog and inspector with one tap.
   // Only scroll existing panels; never change site geometry or object coordinates.
@@ -1104,7 +1122,7 @@ function drawMap(){
    #faLandscapeMasterplan .lp-corner-settings input{width:100%;min-width:0;min-height:35px;accent-color:#d0bd9f;touch-action:pan-x}
     #faLandscapeMasterplan .lp-path-inputs,#faLandscapeMasterplan .lp-path-shapes{display:grid;gap:4px;grid-template-columns:repeat(2,minmax(0,1fr));margin:3px 0}
    #faLandscapeMasterplan .lp-path-shapes{grid-template-columns:repeat(4,minmax(0,1fr))}
-   #faLandscapeMasterplan :is(.lp-path-inputs,.lp-path-shapes) button{min-width:0;min-height:36px;padding:4px 2px;font-size:11px;white-space:normal}
+   #faLandscapeMasterplan :is(.lp-path-inputs,.lp-path-shapes) button{min-width:0;min-height:44px;padding:4px 2px;font-size:12px;white-space:normal;pointer-events:auto;touch-action:manipulation}
    #faLandscapeMasterplan :is(.lp-path-inputs,.lp-path-shapes) button[aria-pressed="true"]{background:#d0bd9f!important;color:#26282e!important}
    @media(max-width:760px){
     #faLandscapeMasterplan #lpMobilePathDrawControls:not([hidden]){display:block!important;grid-column:1/-1;grid-row:1;padding:1px}
