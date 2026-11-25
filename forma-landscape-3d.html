@@ -861,7 +861,7 @@ const choices={
  fence:[['fence','Ограждение · линия']],
  plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
  water:CATALOG.filter(x=>x.group==='ponds').map(x=>[x.id,x.name]),
- landscape:[...CATALOG.filter(x=>['boulders','pools'].includes(x.group)).map(x=>[x.id,x.name])],
+ landscape:[...CATALOG.filter(x=>x.group==='boulders'),...CATALOG.filter(x=>x.group==='pools')].map(x=>[x.id,x.name]),
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол'],['outdoor-dining','Уличный стол и 2 стула'],['picnic-table','Пикниковый стол со скамьями']],
  transport:[['car','Автомобиль']],
@@ -1103,6 +1103,7 @@ function initialize(){
  const previousDrawing=localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);
  window.FORMA_3D_READY=true;$('#loadError').style.display='none';readBuildInfo();
+ if(new URLSearchParams(location.search).get('poolQA')==='1')window.FORMA_POOL_QA=(id)=>{const o=doc.objects.find(x=>x.catalogId===id);if(!o)throw Error('Pool absent');const p=pos(o.x,o.y),ground=terrainAt(p.x,p.z),r=Math.max(o.diameter,o.width||0);const group=pickables.find(x=>x.userData.key==='object:'+o.id);if(!group||group.userData.formaPool!==id)throw Error('Pool mesh missing');controls.target.set(p.x,ground+.15,p.z);camera.position.set(p.x+r*1.35,ground+r*.95,p.z+r*1.4);controls.update();renderer.render(scene,camera);return {id,meshes:group.children.length,diameter:o.diameter,width:o.width,height:o.height,groundHole:id==='pool-inground'?new THREE.Raycaster(new THREE.Vector3(p.x,ground+5,p.z),new THREE.Vector3(0,-1,0)).intersectObject(terrainMesh).length===0:null}};
  status(window.innerWidth<=850?'3D готов. Откройте «Каталог», выберите объект и нажмите на участок.':'3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
@@ -2242,6 +2243,7 @@ function renderProps(){
   const updated=validatedLandscapeProps(o,fields,{plot:doc.site,kind:ref.type,model:Boolean(real),contains:p=>inParcel(p,doc.site)});
   if(!updated)return status('Проверьте значения: размеры должны быть положительными, координаты внутри участка.');
   if(Object.keys(fields).every(key=>o[key]===updated[key]))return status('Значения уже сохранены.');
+  if(catalog(o.catalogId)?.group==='pools'&&(updated.diameter<2||updated.diameter>10||updated.height<.3||updated.height>2.5||(o.catalogId==='pool-inground'&&(updated.width<2||updated.width>10))))return status('Бассейн: длина/диаметр 2–10 м, ширина 2–10 м, высота/глубина 0,3–2,5 м.');
   if(isPine&&(Number(fields.height)<2||Number(fields.height)>40||Number(fields.diameter)<.5||Number(fields.diameter)>30))return status('Для сосны: высота 2–40 м, крона 0,5–30 м.');
   push();Object.assign(o,updated);save();rebuild();renderProps();
  };

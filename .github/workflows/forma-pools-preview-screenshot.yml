@@ -1,0 +1,42 @@
+name: FORMA pools - WebGL preview QA
+on:
+  push:
+    branches: [forma-pools-preview]
+    paths:
+      - 'forma-landscape-pools.js'
+      - 'forma-landscape-3d.html'
+      - 'tools/capture_forma_pools.mjs'
+      - '.github/workflows/forma-pools-preview-screenshot.yml'
+permissions:
+  contents: write
+jobs:
+  screenshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - run: |
+          PORT=3000 HOST=127.0.0.1 node server.mjs > /tmp/forma-editor-server.log 2>&1 &
+          for i in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:3000/forma-landscape-3d.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/forma-landscape-3d.html >/dev/null
+      - run: node tools/capture_forma_pools.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-pools-real-webgl
+          path: assets/landscape-screenshots/pools-preview/
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f assets/landscape-screenshots/pools-preview/
+          git commit -m 'docs: verified pool screenshots from actual editor'
+          git push origin HEAD:forma-pools-preview

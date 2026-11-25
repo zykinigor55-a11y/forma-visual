@@ -187,6 +187,7 @@ export function perspectiveLandscapePrompt(input){
  const entries=(Array.isArray(input.objects)?input.objects:[]).slice(0,500),groups=new Set();
  const plantSchedule=[];
  for(const o of entries){const cat=byId(o.catalogId);if(!cat)continue;groups.add(cat.group);
+  if(cat.group==='pools'){plantSchedule.push(cat.name+' at X='+Number(o.x).toFixed(2)+' m Y='+Number(o.y).toFixed(2)+' m rotation '+Number(o.rotation||0)+' degrees; '+(cat.id==='pool-inground'?'RECTANGULAR IN-GROUND swimming pool, ground cut out, coping at grade, lawn directly surrounds coping, water below ground level, exact length '+Number(o.diameter)+' m width '+Number(o.width)+' m depth '+Number(o.height)+' m. Never above ground.':(cat.id==='pool-frame'?'Round above-ground gray PVC liner with real metal legs and upper rail. ':'Round above-ground blue PVC with a thick inflatable top ring. ')+'Diameter '+Number(o.diameter)+' m height '+Number(o.height)+' m.')+' Keep exact placement, size and static water.');continue;}
   const plant=['trees','shrubs'].includes(cat.group)?botanicalPhotoProfile(cat.id):null;
   const botanical=plant?' [BOTANY: '+(cat.latin||plant.latin)+'; silhouette '+plant.crown+
    '; fixed planted height '+(Number(o.height)||0).toFixed(2)+'m; measured crown '+(Number(o.diameter)||0).toFixed(2)+'m'+
