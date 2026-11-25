@@ -1132,7 +1132,7 @@ function initialize(){
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
 function terrainAt(x,z){return heightAt(heightmap,GRID,doc.site.width,doc.site.height,x,z)}
-let cachedGroundTexture=null;
+let cachedGroundTexture=null,cachedSoilTexture=null,terrainBrushGrid=null,terrainBrushPreview=null;
 function groundPhotoTexture(){
  if(cachedGroundTexture)return cachedGroundTexture;
  // Use the actual close-up photo asset rather than a synthetic gray noise grid.
@@ -1156,6 +1156,44 @@ function groundPhotoTexture(){
  });
  t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;
  cachedGroundTexture=t;return t;
+}
+// Deterministic, non-repeating-looking loam grain, independent of network assets.
+function soilPhotoTexture(){
+ if(cachedSoilTexture)return cachedSoilTexture;
+ const size=256,canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+ const ctx=canvas.getContext('2d'),image=ctx.createImageData(size,size);
+ const hash=(x,y)=>{let n=Math.imul(x,374761393)^Math.imul(y,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
+ const noise=(x,y,scale)=>{
+  const count=size/scale,ix=Math.floor(x/scale),iy=Math.floor(y/scale);
+  let u=x/scale-ix,v=y/scale-iy;u=u*u*(3-2*u);v=v*v*(3-2*v);
+  const h=(a,b)=>hash((a+count)%count,(b+count)%count);
+  return (1-v)*((1-u)*h(ix,iy)+u*h(ix+1,iy))+v*((1-u)*h(ix,iy+1)+u*h(ix+1,iy+1));
+ };
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const n=.38*noise(x,y,32)+.29*noise(x,y,8)+.20*noise(x,y,2)+.13*hash(x,y);
+  const grit=hash(x+719,y+431)>.975?13:0,k=(y*size+x)*4;
+  image.data[k]=72+n*67+grit;image.data[k+1]=54+n*55+grit;image.data[k+2]=37+n*45+grit;image.data[k+3]=255;
+ }
+ ctx.putImageData(image,0,0);
+ const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.anisotropy=4;
+ cachedSoilTexture=tex;return tex;
+}
+function applyRaisedSoilMaterial(mat){
+ const soil=soilPhotoTexture();
+ mat.onBeforeCompile=shader=>{
+  shader.uniforms.formaSoilMap={value:soil};
+  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vFormaGroundPosition;')
+   .replace('#include <begin_vertex>','#include <begin_vertex>\nvFormaGroundPosition=position;');
+  shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D formaSoilMap; varying vec3 vFormaGroundPosition;')
+   .replace('#include <map_fragment>',`#include <map_fragment>
+    vec2 soilUV=vFormaGroundPosition.xz/1.45;
+    float soilVariation=texture2D(formaSoilMap,soilUV*0.42).r;
+    float raisedSoil=smoothstep(0.12,0.95,vFormaGroundPosition.y+(soilVariation-0.18)*0.35);
+    vec3 soilColor=texture2D(formaSoilMap,soilUV).rgb;
+    diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*soilColor,raisedSoil);
+   `);
+ };
+ mat.customProgramCacheKey=()=>'forma-raised-soil-v1';
 }
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
@@ -1218,6 +1256,7 @@ function rebuild(){
  const grass=groundPhotoTexture();grass.repeat.set(groundSide/3.2,groundSide/3.2);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.DoubleSide;
+ applyRaisedSoilMaterial(groundMat);
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
@@ -1238,7 +1277,7 @@ function rebuild(){
  // never changes planted coordinates, path edges, buildings or terrain.
  addWeatherSceneVisuals(THREE,root,terrainMesh,doc,terrainAt);
  applyWetMaterialResponse(root,doc.atmosphere);
- refreshDraft();updateSun();renderProps();updateModelHealth();renderer.render(scene,camera);
+ refreshDraft();updateSun();renderProps();updateModelHealth();if(terrainBrushPreview&&state.tool==='terrain')drawLocalTerrainBrush(terrainBrushPreview.x,terrainBrushPreview.z);renderer.render(scene,camera);
 }
 function buildingGroup(b){
  const model=b.modelKey&&importedHouseModels.get(b.modelKey);
@@ -1703,7 +1742,7 @@ function syncMobileTerrainDock(){
  const radius=$('#brushRadius');if(radius){$('#mtRadius').value=radius.value;$('#mtRadiusValue').textContent=radius.value+' м'}
 }
 function chooseTool(t){
- state.tool=t;state.placing=null;pointMode=[];refreshDraft();
+ hideLocalTerrainBrush();state.tool=t;state.placing=null;pointMode=[];refreshDraft();
  if(controls)controls.touches.ONE=t==='terrain'?null:THREE.TOUCH.ROTATE;
  syncMobileTerrainDock();
  if(scene?.getObjectByName('sun'))updateSun();
@@ -2722,7 +2761,7 @@ function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
  heldWalkKeys.clear();lastWalkFrame=0;
- state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&sceneAtmosphere.clouds>0;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ state.view=view;if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&sceneAtmosphere.clouds>0;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  $('#mobileWalkDock').hidden=view!=='walk';$('#mobileWalkToggle').textContent=view==='walk'?'Выйти из прогулки':'Прогулка';syncMobileTerrainDock();
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';
  const W=doc.site.width,H=doc.site.height;
@@ -3402,6 +3441,45 @@ async function renderAi(series=null){
 }
 function saveScreenshot(){renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob){status('Не удалось получить PNG');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FORMA-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);status('PNG-снимок сохранён. Его можно передать AI как строгий референс сцены.')},'image/png')}
 
+function hideLocalTerrainBrush(){
+ terrainBrushPreview=null;if(terrainBrushGrid)terrainBrushGrid.visible=false;
+}
+function drawLocalTerrainBrush(x,z){
+ if(state.tool!=='terrain'||!state.placing||state.view==='walk'||!inParcel(fromWorld({x,z}),doc.site)){hideLocalTerrainBrush();return}
+ const radius=Math.max(.5,Number($('#brushRadius')?.value||3));
+ const square=$('#brushShape')?.value==='square';
+ terrainBrushPreview={x,z};
+ if(!terrainBrushGrid){
+  terrainBrushGrid=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xe7d0a5,transparent:true,opacity:.58,depthWrite:false,depthTest:true}));
+  terrainBrushGrid.renderOrder=48;terrainBrushGrid.frustumCulled=false;scene.add(terrainBrushGrid);
+ }
+ const lines=[],step=radius/5,sub=Math.min(step/3,.18);
+ const valid=(a,b)=>inParcel(fromWorld({x:a,z:b}),doc.site);
+ const append=(a,b,c,d)=>{
+  if(!valid(a,b)||!valid(c,d))return;
+  lines.push(a,terrainAt(a,b)+.045,b,c,terrainAt(c,d)+.045,d);
+ };
+ const edge=(a,b,c,d)=>{
+  const n=Math.max(1,Math.ceil(Math.hypot(c-a,d-b)/sub));
+  for(let i=0;i<n;i++){
+   const t=i/n,u=(i+1)/n;append(a+(c-a)*t,b+(d-b)*t,a+(c-a)*u,b+(d-b)*u);
+  }
+ };
+ for(let i=-4;i<=4;i++){
+  const offset=i*step,span=square?radius:Math.sqrt(Math.max(0,radius*radius-offset*offset));
+  edge(x-span,z+offset,x+span,z+offset);
+  edge(x+offset,z-span,x+offset,z+span);
+ }
+ if(square){
+  edge(x-radius,z-radius,x+radius,z-radius);edge(x+radius,z-radius,x+radius,z+radius);
+  edge(x+radius,z+radius,x-radius,z+radius);edge(x-radius,z+radius,x-radius,z-radius);
+ }else for(let i=0;i<64;i++){
+  const a=i*Math.PI/32,b=(i+1)*Math.PI/32;
+  append(x+radius*Math.cos(a),z+radius*Math.sin(a),x+radius*Math.cos(b),z+radius*Math.sin(b));
+ }
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(lines,3));
+ terrainBrushGrid.geometry.dispose();terrainBrushGrid.geometry=g;terrainBrushGrid.visible=lines.length>0;
+}
 function updateBrushCursor(event){
  renderGate.invalidate();
  if(!brushCursor)return;
@@ -3409,7 +3487,9 @@ function updateBrushCursor(event){
  (state.tool==='terrain'||brushEnabled())&&
  !!state.placing&&!(event.pointerType==='mouse'&&(event.buttons&2));
  const ground=active?hitGround(event):null;
- if(!ground){brushCursor.visible=false;return}
+ if(!ground){brushCursor.visible=false;hideLocalTerrainBrush();return}
+ if(state.tool==='terrain'){brushCursor.visible=false;drawLocalTerrainBrush(ground.x,ground.z);return}
+ hideLocalTerrainBrush();
  const radius=state.tool==='terrain'?Math.max(.5,Number($('#brushRadius')?.value||3)):
  state.tool==='plant'?Math.max(.25,brushDiameter()/2):
  Math.max(.25,brushDiameter()/2);
@@ -3554,7 +3634,7 @@ function addEvents(){
   }
  }
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
- if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);startTerrainHold(p);return}
+ if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);drawLocalTerrainBrush(p.x,p.z);startTerrainHold(p);return}
  // An explicit mobile Move mode prevents one-finger camera orbit from
  // fighting object translation. A normal tap still just selects the object.
  if(state.tool==='select'&&state.mobileMoveMode&&(e.pointerType==='touch'||e.pointerType==='pen')){
@@ -3697,7 +3777,7 @@ const up=e=>{
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
  canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{save();rebuild()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.mobileMoveMode=false;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
- canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;renderGate.invalidate()});
+ canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;hideLocalTerrainBrush();renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
  // as orbit. Right-drag and wheel remain available even during an active brush.
  controls.mouseButtons.LEFT=null;
@@ -3710,7 +3790,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  if(window.innerWidth<=850){if(tool==='terrain'){$('#library [data-item="raise"]')?.click();syncMobileTerrainDock();activateMobilePanel('scene')}else activateMobilePanel(tool==='select'?'scene':'tools')}
  }});
  $('#mobileTerrainDock').querySelectorAll('[data-mt-mode]').forEach(b=>b.onclick=()=>{$('#library [data-item="'+b.dataset.mtMode+'"]')?.click();syncMobileTerrainDock()});
- $('#mtRadius').oninput=()=>{const radius=$('#brushRadius');if(radius)radius.value=$('#mtRadius').value;syncMobileTerrainDock();renderGate.invalidate()};
+ $('#mtRadius').oninput=()=>{const radius=$('#brushRadius');if(radius)radius.value=$('#mtRadius').value;syncMobileTerrainDock();if(terrainBrushPreview)drawLocalTerrainBrush(terrainBrushPreview.x,terrainBrushPreview.z);renderGate.invalidate()};
  $('#mtSettings').onclick=()=>activateMobilePanel('tools');
  $('#mtDone').onclick=()=>{chooseTool('select');activateMobilePanel('scene')};
  $('#mobileWalkToggle').onclick=()=>{const next=state.view==='walk'?'3d':'walk';chooseTool('select');activateMobilePanel('scene');setView(next)};
