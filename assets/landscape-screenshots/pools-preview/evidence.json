@@ -1,0 +1,28 @@
+{
+  "source": "Actual FORMA editor WebGL",
+  "proof": [
+    {
+      "id": "pool-frame",
+      "meshes": 36,
+      "diameter": 3.05,
+      "height": 1,
+      "groundHole": null
+    },
+    {
+      "id": "pool-inflatable",
+      "meshes": 5,
+      "diameter": 3.05,
+      "height": 0.76,
+      "groundHole": null
+    },
+    {
+      "id": "pool-inground",
+      "meshes": 10,
+      "diameter": 6,
+      "width": 3,
+      "height": 1.5,
+      "groundHole": true
+    }
+  ],
+  "errors": []
+}
