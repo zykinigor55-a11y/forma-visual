@@ -6,7 +6,7 @@
 export const SHRUB_3D_MODELS=Object.freeze({
  hydrangea:Object.freeze({
   name:'Гортензия цветущая · PBR 3D (основа для метельчатой)',
-  path:'/assets/landscape-models/hydrangea-flowering-innerscene-cc0.glb',
+  path:'./assets/landscape-models/hydrangea-flowering-innerscene-cc0.glb',
   sourcePage:'https://www.innerscene.com/tools/library/3d-parts/flowering-hydrangea-shrub-af2da5d3',
   license:'CC0 1.0',
   season:'summer',
@@ -14,7 +14,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  spirea:Object.freeze({
   name:'Спирея · цветущий куст с розовыми цветами (стилизованный GLB)',
-  path:'/assets/landscape-models/spirea-flowering-grab3d-cc0.glb',
+  path:'./assets/landscape-models/spirea-flowering-grab3d-cc0.glb',
   sourcePage:'https://grab3d.com/models/nature/bush/',
   license:'CC0 1.0',
   season:'summer',
@@ -23,7 +23,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  barberry:Object.freeze({
   name:'Барбарис Тунберга «Атропурпуреа» · авторская 3D-модель FORMA',
-  path:'/assets/landscape-models/barberry-thunberg-forma-original.glb',
+  path:'./assets/landscape-models/barberry-thunberg-forma-original.glb',
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_barberry_thunbergii.py',
   license:'FORMA original authorship; no external source models',
   season:'summer',
@@ -32,7 +32,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  'thuja-globe':Object.freeze({
   name:'Туя западная «Даника» · оригинальная GLB-модель FORMA, 3 формы',
-  path:'/assets/landscape-models/thuja-danica-forma-original.glb',
+  path:'./assets/landscape-models/thuja-danica-forma-original.glb',
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_thuja_danica.py',
   license:'Original FORMA procedural geometry and procedural PBR foliage textures',
   season:'evergreen',
@@ -42,7 +42,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  boxwood:Object.freeze({
   name:'Самшит вечнозелёный · оригинальная PBR-модель FORMA, три кроны',
-  path:'/assets/landscape-models/boxwood-sempervirens-forma-original.glb',
+  path:'./assets/landscape-models/boxwood-sempervirens-forma-original.glb',
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_boxwood_sempervirens.py',
   license:'Original independently authored FORMA mesh and PBR materials',
   season:'evergreen',
@@ -52,7 +52,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  fern:Object.freeze({
   name:'Папоротник 01 · Poly Haven Fern 02 · отдельный PBR-куст',
-  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  path:'./assets/landscape-models/polyhaven-fern-02-source.glb',
   sourcePage:'https://polyhaven.com/a/fern_02',
   license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
   season:'summer',
@@ -62,7 +62,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  'fern-02':Object.freeze({
   name:'Папоротник 02 · Poly Haven Fern 02 · отдельный PBR-куст',
-  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  path:'./assets/landscape-models/polyhaven-fern-02-source.glb',
   sourcePage:'https://polyhaven.com/a/fern_02',
   license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
   season:'summer',
@@ -72,7 +72,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  'fern-03':Object.freeze({
   name:'Папоротник 03 · Poly Haven Fern 02 · отдельный PBR-куст',
-  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  path:'./assets/landscape-models/polyhaven-fern-02-source.glb',
   sourcePage:'https://polyhaven.com/a/fern_02',
   license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
   season:'summer',
@@ -82,7 +82,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  'fern-04':Object.freeze({
   name:'Папоротник 04 · Poly Haven Fern 02 · отдельный PBR-куст',
-  path:'/assets/landscape-models/polyhaven-fern-02-source.glb',
+  path:'./assets/landscape-models/polyhaven-fern-02-source.glb',
   sourcePage:'https://polyhaven.com/a/fern_02',
   license:'CC0 1.0 Universal · Rob Tuytel, Rico Cilliers · Poly Haven',
   season:'summer',
@@ -92,7 +92,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  'fern-original':Object.freeze({
   name:'Щитовник мужской · оригинальная PBR 3D-модель FORMA, 3 формы',
-  path:'/assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb',
+  path:'./assets/landscape-models/fern-dryopteris-filix-mas-forma-original.glb',
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_fern_dryopteris.py',
   license:'FORMA original self-authored botanical geometry, albedo and tangent normal maps',
   season:'summer',
@@ -102,7 +102,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  pennisetum:Object.freeze({
   name:'Пеннисетум лисохвостный «Hameln» · пушистый декоративный злак FORMA',
-  path:'/assets/landscape-models/pennisetum-hameln-forma-original.glb',
+  path:'./assets/landscape-models/pennisetum-hameln-forma-original.glb',
   sourcePage:'https://www.rhs.org.uk/plants/43921/pennisetum-alopecuroides-hameln/details',
   license:'Original FORMA procedural 3D geometry; botanical reference RHS and UF IFAS; no copied meshes or photographs',
   season:'summer',
@@ -112,7 +112,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  lavender:Object.freeze({
   name:'Лаванда узколистная · оригинальная PBR 3D-модель FORMA',
-  path:'/assets/landscape-models/lavender-angustifolia-forma-original.glb',
+  path:'./assets/landscape-models/lavender-angustifolia-forma-original.glb',
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_lavender_angustifolia.py',
   license:'Original FORMA procedural geometry, no third-party meshes or textures',
   season:'summer',
@@ -122,7 +122,7 @@ export const SHRUB_3D_MODELS=Object.freeze({
  }),
  dogwood:Object.freeze({
   name:'Дёрен белый «Элегантиссима» · три оригинальных PBR 3D-формы FORMA',
-  path:'/assets/landscape-models/dogwood-elegantissima-forma-original.glb',
+  path:'./assets/landscape-models/dogwood-elegantissima-forma-original.glb',
   sourcePage:'https://github.com/zykinigor55-a11y/forma-visual/blob/dom-render-nanobanana/tools/generate_dogwood_elegantissima.py',
   license:'Original FORMA geometry and textures; no 3DDD model files used',
   season:'summer',
