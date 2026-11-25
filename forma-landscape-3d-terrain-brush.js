@@ -21,11 +21,13 @@ export function applyTerrainBrush({heights,grid,width,length,world,mode='raise',
  // Deliberately restrained sculpting: dense cursor events must not create
  // vertical spikes. A 0.5-strength stroke adds only 0.11m at its centre.
  const deltaGain=.22;
- const start=heights.slice(),end=start.slice(),sample=(i,j)=>start[clamp(i,0,N)*(N+1)+clamp(j,0,N)]||0;
+ const start=heights,end=heights.slice(),sample=(i,j)=>start[clamp(i,0,N)*(N+1)+clamp(j,0,N)]||0;
  const ci=clamp(Math.round((world.z/L+.5)*N),0,N),cj=clamp(Math.round((world.x/W+.5)*N),0,N),level=sample(ci,cj);
- for(let i=0;i<=N;i++){
+ const i0=clamp(Math.floor(((world.z-r)/L+.5)*N),0,N),i1=clamp(Math.ceil(((world.z+r)/L+.5)*N),0,N);
+ const j0=clamp(Math.floor(((world.x-r)/W+.5)*N),0,N),j1=clamp(Math.ceil(((world.x+r)/W+.5)*N),0,N);
+ for(let i=i0;i<=i1;i++){
   const z=(i/N-.5)*L;if(Math.abs(z-world.z)>=r)continue;
-  for(let j=0;j<=N;j++){
+  for(let j=j0;j<=j1;j++){
    const x=(j/N-.5)*W;if(Math.abs(x-world.x)>=r)continue;
    const factor=terrainBrushFalloff(x-world.x,z-world.z,r,softness,shape);
    if(factor<.001)continue;
