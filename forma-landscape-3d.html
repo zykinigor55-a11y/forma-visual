@@ -401,6 +401,25 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 .pine-object-list [data-select-pine]{width:100%;text-align:left;line-height:1.35;font-size:11px;border-color:#8b795f;background:#27372c}
 @media(max-width:850px){#tools{padding:8px 6px 11px;gap:6px}#tools button{min-height:77px;padding:5px 2px;font-size:9px;gap:3px}#tools button .glyph{width:min(44px,100%);height:44px}}
 
+#mobileTerrainDock,#mobileWalkToggle,#mobileWalkDock{display:none}
+@media(max-width:850px){
+ body[data-mobile-panel="scene"] #mobileTerrainDock:not([hidden]){display:grid;gap:5px;position:absolute;left:8px;right:8px;bottom:calc(77px + env(safe-area-inset-bottom,0px));z-index:13;padding:8px;background:#25282ef5;border:1px solid #686b70;border-radius:14px;box-shadow:0 6px 24px #0007}
+ #mobileTerrainDock .mt-modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ #mobileTerrainDock .mt-options{display:grid;grid-template-columns:auto minmax(36px,1fr) auto auto;gap:6px;align-items:center}
+ #mobileTerrainDock button{min-height:44px;padding:5px 3px;font-size:11px;white-space:nowrap}
+ #mobileTerrainDock button.active{background:#d2c3ad;color:#24272c}
+ #mobileTerrainDock label{font-size:11px;white-space:nowrap}
+ #mobileTerrainDock input{width:100%;min-width:0;min-height:40px;touch-action:pan-x}
+ body[data-mobile-panel="scene"]:has(#mobileTerrainDock:not([hidden])) #status{bottom:calc(198px + env(safe-area-inset-bottom,0px))}
+ body[data-mobile-panel="scene"] #mobileWalkToggle{display:block;position:absolute;right:8px;top:128px;min-height:44px;z-index:8;padding:8px 12px;background:#282b31ed;border:1px solid #777;border-radius:10px;font-size:12px}
+ body[data-mobile-panel="scene"] #mobileWalkDock:not([hidden]){display:grid;justify-items:center;gap:5px;position:absolute;left:10px;bottom:calc(102px + env(safe-area-inset-bottom,0px));z-index:14;touch-action:none}
+ #mobileWalkDock>div{display:flex;gap:5px}
+ #mobileWalkDock button{width:52px;height:52px;font-size:23px;background:#282b31ed;border:1px solid #777;border-radius:12px;touch-action:none;user-select:none}
+ #mobileWalkDock button:active{background:#d2c3ad;color:#24272c}
+ body[data-mobile-panel="scene"] #mobileWorkspaceTabs{grid-template-columns:repeat(auto-fit,minmax(50px,1fr));}
+ body[data-mobile-panel="scene"] #sceneQuickTools button{min-height:44px}
+ body:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) :is(#mobileTerrainDock,#mobileWalkToggle,#mobileWalkDock){display:none!important}
+}
 </style>
 <link rel="stylesheet" href="./forma-landscape-pine-sizing.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script>
@@ -423,6 +442,12 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </header>
 <main>
 <canvas id="viewport"></canvas>
+<div id="mobileTerrainDock" hidden role="toolbar" aria-label="Кисть рельефа">
+ <div class="mt-modes"><button type="button" data-mt-mode="raise">＋ Поднять</button><button type="button" data-mt-mode="lower">− Опустить</button><button type="button" data-mt-mode="smooth">Сгладить</button><button type="button" data-mt-mode="flatten">Ровно</button></div>
+ <div class="mt-options"><label for="mtRadius">Радиус <output id="mtRadiusValue">3 м</output></label><input id="mtRadius" type="range" min=".5" max="12" step=".5" value="3"><button type="button" id="mtSettings">Кисть ⚙</button><button type="button" id="mtDone">Камера</button></div>
+</div>
+<button type="button" id="mobileWalkToggle">Прогулка</button>
+<div id="mobileWalkDock" hidden role="group" aria-label="Движение камеры"><button type="button" data-walk-key="w" aria-label="Вперёд">↑</button><div><button type="button" data-walk-key="a" aria-label="Влево">←</button><button type="button" data-walk-key="s" aria-label="Назад">↓</button><button type="button" data-walk-key="d" aria-label="Вправо">→</button></div></div>
 <button id="openComposition" type="button">Идеальная композиция</button>
 <section id="compositionPanel" hidden aria-label="Идеальная композиция">
  <div class="composition-controls">
@@ -705,7 +730,7 @@ import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary} from './forma-landscape-project-core.js?v=roof-garland-project-v2-20261122';
-import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v1-20261122';
+import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=night-paving-fix-v4-20261122';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=understory-mobile-v1';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
@@ -747,7 +772,7 @@ import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape
 import {normalizeNightInterior,nightInteriorMode} from './forma-landscape-3d-night-interior.js?v=bright-night-v2-20261122';
 import {normalizeRoofGarland} from './forma-landscape-roof-garlands.js';
 import {createOutdoorReflectionMap,updateOutdoorReflectionMap} from './forma-landscape-3d-environment.js';
-import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js';
+import {TERRAIN_GRID,resampleTerrainGrid,sampledTerrainNormals} from './forma-landscape-3d-terrain-grid.js?v=grid192-20261126';
 import {walkStep,walkMovementKey,walkCanOccupy,WALK_EYE_HEIGHT} from './forma-landscape-3d-walk.js';
 const $=s=>document.querySelector(s);
 const renderGate=createFrameGate();
@@ -1113,7 +1138,11 @@ function groundPhotoTexture(){
  // Use the actual close-up photo asset rather than a synthetic gray noise grid.
  // The same centimetre-scale photographed turf is used in the 2D catalog.
  window.FORMA_TERRAIN_TEXTURE_READY=false;
- const t=new THREE.TextureLoader().load('/assets/landscape-photo/universal.jpg',()=>{
+ const pixel=document.createElement('canvas');pixel.width=pixel.height=2;
+ const ctx=pixel.getContext('2d');ctx.fillStyle='#748453';ctx.fillRect(0,0,2,2);
+ const t=new THREE.CanvasTexture(pixel);
+ new THREE.ImageLoader().load(new URL('./assets/landscape-photo/universal.jpg',document.baseURI).href,image=>{
+  t.image=image;t.needsUpdate=true;
   // First frame can render before async turf JPEG arrives. Force a paint
   // after the actual photograph is on the GPU; otherwise demand rendering
   // leaves a black ground until the user changes camera/tool.
@@ -1123,6 +1152,7 @@ function groundPhotoTexture(){
  },undefined,error=>{
   console.warn('Terrain photo did not load',error);
   window.FORMA_TERRAIN_TEXTURE_READY=false;
+  renderGate.invalidate();
  });
  t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;
  cachedGroundTexture=t;return t;
@@ -1258,14 +1288,14 @@ function loadBundledLandscapeModel(catalogId){
 /* CC0 adult Pinus sylvestris from tevy, bundled on our own Render host.
  * 46,910 triangles, embedded bark/foliage PBR textures and alpha needle cutouts.
  * Preserve user geometry and never block scene construction if unavailable. */
-const MATURE_SCOTS_PINE_GLB='/assets/landscape-models/pine-mature-cc0.glb';
+const MATURE_SCOTS_PINE_GLB='./assets/landscape-models/pine-mature-cc0.glb';
 function loadMatureScotsPine(){
  const species='pine';
  if(treeSourceChoice()==='code')return;
  if(importedPlantModels.has(species)||bundledModelSources.has(species)||
   bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
  bundledModelLoading.add(species);updateModelHealth();
- const pineKtx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ const pineKtx2=new KTX2Loader().setTranscoderPath('./assets/three-basis/').setWorkerLimit(2);
  pineKtx2.detectSupport(renderer);
  new GLTFLoader().setKTX2Loader(pineKtx2).setMeshoptDecoder(MeshoptDecoder).loadAsync(MATURE_SCOTS_PINE_GLB).then(result=>{
   if(!result?.scene)throw Error('GLB не содержит 3D-сцену');
@@ -1305,7 +1335,7 @@ function loadCuratedAdultTree(species){
  if(!entry||importedPlantModels.has(species)||bundledModelSources.has(species)||
     bundledModelLoading.has(species)||bundledModelFailures.has(species))return;
  bundledModelLoading.add(species);updateModelHealth();
- const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ const ktx2=new KTX2Loader().setTranscoderPath('./assets/three-basis/').setWorkerLimit(2);
  try{ktx2.detectSupport(renderer)}catch(error){
   bundledModelLoading.delete(species);bundledModelFailures.add(species);updateModelHealth();
   console.warn('CC0 tree KTX2 unavailable:',species,error?.message);return;
@@ -1340,7 +1370,7 @@ function loadCreatureModel(id){
  const entry=creatureById(id);
  if(!entry||creatureSources.has(id)||creatureLoading.has(id)||creatureFailures.has(id))return;
  creatureLoading.add(id);
- const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ const ktx2=new KTX2Loader().setTranscoderPath('./assets/three-basis/').setWorkerLimit(2);
  ktx2.detectSupport(renderer);
  const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
  // Native GLBs are proxied from fixed CC0 URLs by our own domain, avoiding
@@ -1666,8 +1696,16 @@ function renderCreatureCatalog(){
   status('Выбран '+item.name+'. Коснитесь участка для размещения. Рост '+item.height+' м.');
  });
 }
+function syncMobileTerrainDock(){
+ const dock=$('#mobileTerrainDock');if(!dock)return;
+ dock.hidden=state.tool!=='terrain'||state.view==='walk';
+ dock.querySelectorAll('[data-mt-mode]').forEach(b=>{const active=b.dataset.mtMode===state.placing;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
+ const radius=$('#brushRadius');if(radius){$('#mtRadius').value=radius.value;$('#mtRadiusValue').textContent=radius.value+' м'}
+}
 function chooseTool(t){
  state.tool=t;state.placing=null;pointMode=[];refreshDraft();
+ if(controls)controls.touches.ONE=t==='terrain'?null:THREE.TOUCH.ROTATE;
+ syncMobileTerrainDock();
  if(window.innerWidth<=850){state.mobileMoveMode=false;state.mobileObjectCollapsed=true;}
  syncMobilePlacementHint();
  const draft=$('#draftActions');if(draft)draft.hidden=!['site','surface','water','fence'].includes(t);
@@ -1680,8 +1718,8 @@ function chooseTool(t){
  doc.objects.filter(o=>['pine','spruce','birch'].includes(o.catalogId)).map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
  (!doc.objects.some(o=>['pine','spruce','birch'].includes(o.catalogId))?'<small>Посаженных деревьев пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · '+CATALOG.filter(x=>x.group==='trees'||x.group==='shrubs').length+'</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 19</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
   const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&(['landscape','furniture','models40'].includes(t)||(t==='plant'&&['fern','fern-02','fern-03','fern-04'].includes(c[0]))),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
-  const uri=modelPreview?'/assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?(POLY_HAVEN_TREE_MODELS[c[0]]?.thumbnail||(['pennisetum','hosta','ornamental-grass','fern','fern-02','fern-03','fern-04'].includes(c[0])?fallbackIconURL(asset):'/assets/landscape-photo/'+c[0]+'.png')):
-    t==='light'?iconURL(asset):t==='landscape'?'/assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?surfacePreviewURL(c[0]):'';
+  const uri=modelPreview?'./assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?(POLY_HAVEN_TREE_MODELS[c[0]]?.thumbnail||(['pennisetum','hosta','ornamental-grass','fern','fern-02','fern-03','fern-04'].includes(c[0])?fallbackIconURL(asset):'./assets/landscape-photo/'+c[0]+'.png')):
+    t==='light'?iconURL(asset):t==='landscape'?'./assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?surfacePreviewURL(c[0]):'';
   const diameter=t==='light'&&asset?'Высота '+Number(asset.height).toFixed(2)+' м · корпус '+Number(asset.diameter).toFixed(2)+' м':t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
   const header=t==='light'&&ci===0?'<div class="asset-group-heading">САДОВОЕ ОСВЕЩЕНИЕ · 11 РАЗНЫХ 3D-МОДЕЛЕЙ</div>':t==='plant'&&(ci===0||catalog(c[0])?.group!==catalog(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · '+CATALOG.filter(x=>x.group==='trees').length+' ВИДОВ':'КУСТАРНИКИ · '+CATALOG.filter(x=>x.group==='shrubs').length+' ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===15)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 9 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':t==='models40'&&(ci===0||real?.group!==realModelById(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+REAL_3D_CATEGORIES[real.group]+' · '+REAL_3D_OBJECTS.filter(x=>x.group===real.group).length+' МОДЕЛЕЙ</div>':'';
   return header+(t==='models40'?'<div class="model-row">':'')+'<button class="choice'+(photo?' has-preview':'')+(t==='light'?' light-choice':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
@@ -1705,6 +1743,7 @@ function chooseTool(t){
  });
  $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{
   state.placing=b.dataset.item;
+  syncMobileTerrainDock();
   if(t==='light'){
    const choice=catalog(b.dataset.item);
    const lightStatus=$('#lightPickerStatus');
@@ -1829,7 +1868,7 @@ async function restoreHouseGlbs(){
  if(list.length){rebuild();renderHouseLibrary();}
 }
 async function parseImportedGlb(bytes){
- const ktx2=new KTX2Loader().setTranscoderPath('/assets/three-basis/').setWorkerLimit(2);
+ const ktx2=new KTX2Loader().setTranscoderPath('./assets/three-basis/').setWorkerLimit(2);
  try{
   ktx2.detectSupport(renderer);
   return await new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes,'');
@@ -2672,6 +2711,7 @@ function setView(view){
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
  heldWalkKeys.clear();lastWalkFrame=0;
  state.view=view;if(atmosphereSky)atmosphereSky.visible=view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&sceneAtmosphere.clouds>0;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ $('#mobileWalkDock').hidden=view!=='walk';$('#mobileWalkToggle').textContent=view==='walk'?'Выйти из прогулки':'Прогулка';syncMobileTerrainDock();
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';
  const W=doc.site.width,H=doc.site.height;
  controls.enabled=view!=='walk';
@@ -3491,7 +3531,7 @@ function addEvents(){
   }
  }
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
- if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: ЛКМ меняет высоту, ПКМ вращает камеру');return}
+ if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p)return status('Курсор вне 3D-участка. Поверните камеру или приблизьте землю.');state.painting=true;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);status('Кисть рельефа: рисуйте пальцем или ЛКМ; кнопка «Камера» для поворота');return}
  // An explicit mobile Move mode prevents one-finger camera orbit from
  // fighting object translation. A normal tap still just selects the object.
  if(state.tool==='select'&&state.mobileMoveMode&&(e.pointerType==='touch'||e.pointerType==='pen')){
@@ -3641,7 +3681,20 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  controls.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;
 
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
- document.querySelectorAll('[data-quick-tool]').forEach(button=>{button.insertAdjacentHTML('afterbegin',premiumIcon(button.dataset.quickTool));button.onclick=()=>{chooseTool(button.dataset.quickTool);if(window.innerWidth<=850)activateMobilePanel(button.dataset.quickTool==='select'?'scene':'tools')}});
+ document.querySelectorAll('[data-quick-tool]').forEach(button=>{button.insertAdjacentHTML('afterbegin',premiumIcon(button.dataset.quickTool));button.onclick=()=>{
+ const tool=button.dataset.quickTool;chooseTool(tool);
+ if(window.innerWidth<=850){if(tool==='terrain'){$('#library [data-item="raise"]')?.click();syncMobileTerrainDock();activateMobilePanel('scene')}else activateMobilePanel(tool==='select'?'scene':'tools')}
+ }});
+ $('#mobileTerrainDock').querySelectorAll('[data-mt-mode]').forEach(b=>b.onclick=()=>{$('#library [data-item="'+b.dataset.mtMode+'"]')?.click();syncMobileTerrainDock()});
+ $('#mtRadius').oninput=()=>{const radius=$('#brushRadius');if(radius)radius.value=$('#mtRadius').value;syncMobileTerrainDock();renderGate.invalidate()};
+ $('#mtSettings').onclick=()=>activateMobilePanel('tools');
+ $('#mtDone').onclick=()=>{chooseTool('select');activateMobilePanel('scene')};
+ $('#mobileWalkToggle').onclick=()=>{const next=state.view==='walk'?'3d':'walk';chooseTool('select');activateMobilePanel('scene');setView(next)};
+ $('#mobileWalkDock').querySelectorAll('[data-walk-key]').forEach(b=>{
+ const release=()=>heldWalkKeys.delete(b.dataset.walkKey);
+ b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);heldWalkKeys.add(b.dataset.walkKey);renderGate.invalidate()});
+ for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,release);
+ });
  [['focusHouse','build'],['focusSelected','trees'],['fit3dScene','site']].forEach(([id,icon])=>document.getElementById(id)?.insertAdjacentHTML('afterbegin',premiumIcon(icon)));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
  $('#treeSource3d').value=treeSourceChoice();
