@@ -174,15 +174,15 @@ const CARD_PHOTO_IDS=new Set(['bollard','ground','spot','low-post','deck-light',
 const PHOTO_PLANT_CARD_IDS=new Set(['birch','oak','maple','juniper','hydrangea','barberry','lavender','pine']);
 const availableCardPhotos=new Set();
 export const cardPhotoCount=()=>availableCardPhotos.size;
-export const cardPhotoURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):PHOTO_PLANT_CARD_IDS.has(entry?.id)?'/assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry?.id)?'/assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
+export const cardPhotoURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id):PHOTO_PLANT_CARD_IDS.has(entry?.id)?'./assets/landscape/items/'+entry.id+'.webp?v=photographic-picker-20261117':availableCardPhotos.has(entry?.id)?'./assets/landscape-card-photo/'+entry.id+'.jpg?v=forma-premium-card-v1':iconURL(entry);
 export const hasPhotographicCard=(entry)=>Boolean(entry&&((entry.group==='trees'&&treeCanopyPNG(entry.id))||PHOTO_PLANT_CARD_IDS.has(entry.id)||availableCardPhotos.has(entry.id)||(availablePhotos.has(entry.id)&&PHOTO_ASSETS[entry.id]?.endsWith('.jpg'))));
 
-const photoUrl=(entry)=>'/assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-18-staged-v2';
+const photoUrl=(entry)=>'./assets/landscape-photo/'+PHOTO_ASSETS[entry.id]+'?v=photo-1080-18-staged-v2';
 export const photographicAssetCount=()=>[...availablePhotos].filter(id=>PHOTO_ASSETS[id]?.endsWith('.jpg')).length;
 export const photographicIconURL=(entry)=>PHOTO_ASSETS[entry.id]?photoUrl(entry):null;
 export const fallbackIconURL=(entry)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(assetSVG(entry,{size:1080,transparent:true}));
 export const premiumIconURL=(entry)=>PREMIUM_PLAN_ASSETS.has(entry.id)
- ?'/assets/landscape-premium/'+encodeURIComponent(entry.id)+'.png?v=1080-png-realgrass-v2'
+ ?'./assets/landscape-premium/'+encodeURIComponent(entry.id)+'.png?v=1080-png-realgrass-v2'
  :fallbackIconURL(entry);
 export const iconURL=(entry)=>entry?.group==='trees'&&treeCanopyPNG(entry.id)?treeCanopyPNG(entry.id)
  :availablePhotos.has(entry.id)?photoUrl(entry):premiumIconURL(entry);
@@ -193,7 +193,7 @@ export async function enablePremiumAssets(){
  // A missing 1080 file must never break plant placement, previews or AI exports.
  await Promise.all(Object.entries(PHOTO_ASSETS).map(async([id,ext])=>{
   try{
-   const url='/assets/landscape-photo/'+ext+'?v=photo-1080-18-staged-v2';
+   const url='./assets/landscape-photo/'+ext+'?v=photo-1080-18-staged-v2';
    const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
    const mime=(r.headers.get('Content-Type')||'').toLowerCase();
    if(r.ok&&(mime.startsWith('image/png')||mime.startsWith('image/jpeg')||!mime)){
@@ -205,7 +205,7 @@ export async function enablePremiumAssets(){
  // For lamps, ponds and boulders a garden photograph belongs on the card only.
  await Promise.all([...CARD_PHOTO_IDS].map(async id=>{
    try{
-     const url='/assets/landscape-card-photo/'+id+'.jpg?v=forma-premium-card-v1';
+     const url='./assets/landscape-card-photo/'+id+'.jpg?v=forma-premium-card-v1';
      const r=await fetch(url,{method:'HEAD',cache:'no-cache'});
      if(r.ok&&(r.headers.get('Content-Type')||'').toLowerCase().startsWith('image/jpeg'))availableCardPhotos.add(id);
      else availableCardPhotos.delete(id);
