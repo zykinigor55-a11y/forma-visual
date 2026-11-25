@@ -275,8 +275,9 @@ export function report(doc){
  const counts={},lengths={};
  for(const item of d.objects){
   const entry=byId(item.catalogId);if(!entry)continue;
+  if(entry.group==='pavers'){for(const s of pavingSegments(item)){counts[s.catalogId]=(counts[s.catalogId]||0)+1;lengths[s.catalogId]=round((lengths[s.catalogId]||0)+s.length,2);}continue;}
   counts[item.catalogId]=(counts[item.catalogId]||0)+1;
-  if(entry.group==='pavers'||(entry.group==='fills'&&item.geometry==='strip'))
+  if(entry.group==='fills'&&item.geometry==='strip')
    lengths[item.catalogId]=round((lengths[item.catalogId]||0)+lineLength(item.points),2);
  }
  // Authoritative material quantities are based on the actual visible union,
