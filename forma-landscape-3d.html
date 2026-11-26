@@ -1208,7 +1208,7 @@ function initialize(){
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
 function terrainAt(x,z){return heightAt(heightmap,GRID,doc.site.width,doc.site.height,x,z)}
-let cachedGroundTexture=null,cachedSoilTexture=null,terrainBrushGrid=null,terrainBrushPreview=null;
+let cachedGroundTexture=null,cachedSoilTexture=null,cachedContactTexture=null,terrainBrushGrid=null,terrainBrushPreview=null;
 function groundPhotoTexture(){
  if(cachedGroundTexture)return cachedGroundTexture;
  // Use the actual close-up photo asset rather than a synthetic gray noise grid.
@@ -1260,13 +1260,24 @@ function soilPhotoTexture(){
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.anisotropy=4;
  cachedSoilTexture=tex;return tex;
 }
-function applyRaisedSoilMaterial(mat){
- const soil=soilPhotoTexture();
+function groundContactTexture(side){
+ const size=512;
+ if(!cachedContactTexture){const canvas=document.createElement('canvas');canvas.width=canvas.height=size;cachedContactTexture=new THREE.CanvasTexture(canvas);cachedContactTexture.flipY=false;cachedContactTexture.wrapS=cachedContactTexture.wrapT=THREE.ClampToEdgeWrapping;cachedContactTexture.colorSpace=THREE.NoColorSpace;}
+ const ctx=cachedContactTexture.image.getContext('2d'),scale=size/side;
+ ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);
+ const toPixel=(x,y)=>[(x-doc.site.width/2+side/2)*scale,(y-doc.site.height/2+side/2)*scale];
+ const shade=(x,y,r,alpha)=>{const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba(0,0,0,'+alpha+')');g.addColorStop(.35,'rgba(0,0,0,'+(alpha*.55)+')');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);};
+ for(const o of doc.objects){const group=catalog(o.catalogId)?.group;if(!['trees','shrubs','boulders'].includes(group))continue;const [x,y]=toPixel(o.x,o.y);const d=Math.max(.3,Number(o.diameter)||1);if(group==='trees'){if(!importedPlantModels.has(o.catalogId)&&!bundledModelSources.has(o.catalogId)&&MATURE_TREE_MODELS[o.catalogId])continue;shade(x,y,Math.max(.48,Math.min(1.35,d*.19))*scale,.29);shade(x,y,d*.48*scale,.10);}else shade(x,y,Math.max(.35,d*.67)*scale,.22);}
+ for(const b of [doc.house,...doc.buildings]){const [x,y]=toPixel(b.x,b.y);const w=Math.max(1,Number(b.width)||8)*scale,h=Math.max(1,Number(b.height)||7)*scale;ctx.save();ctx.translate(x,y);ctx.rotate(-(Number(b.rotation)||0)*Math.PI/180);ctx.shadowColor='rgba(0,0,0,.32)';ctx.shadowBlur=Math.max(2,scale*.7);ctx.fillStyle='rgba(0,0,0,.16)';ctx.fillRect(-w/2,-h/2,w,h);ctx.restore();}
+ cachedContactTexture.needsUpdate=true;return cachedContactTexture;
+}
+function applyRaisedSoilMaterial(mat,groundSide){
+ const soil=soilPhotoTexture(),contact=groundContactTexture(groundSide);
  mat.onBeforeCompile=shader=>{
-  shader.uniforms.formaSoilMap={value:soil};
+  shader.uniforms.formaSoilMap={value:soil};shader.uniforms.formaContactMap={value:contact};shader.uniforms.formaGroundSide={value:groundSide};
   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vFormaGroundPosition; varying float vFormaSlope;')
    .replace('#include <begin_vertex>','#include <begin_vertex>\nvFormaGroundPosition=position; vFormaSlope=1.0-clamp(normal.y,0.0,1.0);');
-  shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D formaSoilMap; varying vec3 vFormaGroundPosition; varying float vFormaSlope;')
+  shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D formaSoilMap; uniform sampler2D formaContactMap; uniform float formaGroundSide; varying vec3 vFormaGroundPosition; varying float vFormaSlope;')
    .replace('#include <map_fragment>',`#include <map_fragment>
     vec2 soilUV=vFormaGroundPosition.xz/1.45;
     float soilVariation=texture2D(formaSoilMap,soilUV*0.42).r;
@@ -1282,9 +1293,11 @@ function applyRaisedSoilMaterial(mat){
     diffuseColor.rgb=mix(diffuseColor.rgb,vec3(grassLuma),.12);
     diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*coarseGrass,.22)*(0.92+0.065*turfMacro);
     diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*soilColor,raisedSoil);
+    float formaContact=texture2D(formaContactMap,vFormaGroundPosition.xz/formaGroundSide+.5).r;
+    diffuseColor.rgb*=mix(.72,1.0,formaContact);
    `);
  };
- mat.customProgramCacheKey=()=>'forma-slope-soil-v5-r19';
+ mat.customProgramCacheKey=()=>'forma-slope-soil-v6-r19';
 }
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
@@ -1447,7 +1460,7 @@ function rebuild(){
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.bumpMap=grass;groundMat.bumpScale=.025;groundMat.roughness=.96;groundMat.side=THREE.FrontSide;groundMat.shadowSide=THREE.FrontSide;
  groundMat.envMapIntensity=.21;
- applyRaisedSoilMaterial(groundMat);
+ applyRaisedSoilMaterial(groundMat,groundSide);
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
@@ -3046,7 +3059,7 @@ function syncSceneCameraButton(){
   ['Приблизить камеру к дому','Показать весь участок','Показать дом целиком'][houseCameraStage]);
 }
 function setPresentationMode(on){
- if(on&&(state.painting||state.drag||state.tool!=='select'||pointMode.length)){status('Завершите текущий инструмент и включите «Выбор».');return;}
+ if(on&&(state.painting||state.drag||state.down||state.tool!=='select'||pointMode.length)){status('Завершите текущий инструмент и включите «Выбор».');return;}
  if(on){if(state.view!=='3d')setView('3d');setSceneClimateOpen(false);activateMobilePanel('scene');state.selected=null;renderProps();}
  document.body.dataset.presentation=String(on);
  $('#formaPresentationBar').hidden=!on;
