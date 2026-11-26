@@ -552,11 +552,20 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 #library .choice.has-preview.active{background:#35453e;border-color:#829b8c}
 #catalogSearch{box-sizing:border-box;width:100%;max-width:100%;background:#282d2f;border-color:#515d5a}
 }
+</style><style id="forma-tools-r168">
+@media(min-width:851px){
+#tools{gap:6px;padding:10px 8px 13px}
+#tools button{height:86px;min-height:86px;gap:5px;background:linear-gradient(155deg,#343a3d,#282d30 80%)!important;border-color:#424b4d!important;box-shadow:inset 0 1px 0 #ffffff09!important;transition:background .16s,border-color .16s}
+#tools button .glyph{width:44px!important;height:44px!important;flex-basis:44px!important;overflow:hidden!important}
+#tools button .glyph svg{width:44px!important;height:44px!important;max-width:100%!important;filter:none!important}
+#tools button.active{background:linear-gradient(155deg,#45584f,#303e38)!important;border-color:#829d8e!important}
+#tools button .tool-name{font-size:10px;font-weight:550;letter-spacing:0;max-width:100%;line-height:1.2}
+}
 </style></head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R167</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R168</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -2619,25 +2628,28 @@ function drawExtra(o){
 }
 function safeToolIcon(tool){
  if(window.innerWidth<=850)return premiumIcon(tool);
- const light='#c6cdce',mid='#899698',dark='#536065',edge='#d2d8d8';
+ const k='forma168-'+tool, A='url(#'+k+'a)', B='url(#'+k+'b)', C='url(#'+k+'c)', G='url(#'+k+'g)', W='url(#'+k+'w)';
+ const face=(d,f)=>'<path d="'+d+'" fill="'+f+'" stroke="#e3e9e7" stroke-opacity=".18" stroke-width=".55" stroke-linejoin="round"/>';
+ const line=(d,c='#e6ece8',w=1)=>'<path d="'+d+'" fill="none" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round"/>';
+ const cube=(x,y)=>'<g transform="translate('+x+' '+y+')">'+face('M0 7 12 0 24 7 12 14Z',A)+face('M0 7 12 14 12 28 0 21Z',B)+face('M12 14 24 7 24 21 12 28Z',C)+'</g>';
  const shapes={
- select:'<path d="M11 5 35 29 24 28 18 41 11 5Z" fill="'+light+'"/><path d="m24 28 7 10-5 3-7-11" fill="'+mid+'"/>',
- site:'<path d="M6 16 24 7 42 16 24 25Z" fill="'+light+'"/><path d="M6 16 24 25V41L6 32Z" fill="'+mid+'"/><path d="M24 25 42 16V32L24 41Z" fill="'+dark+'"/>',
- surface:'<path d="M5 20 23 10 43 20 25 30Z" fill="'+light+'"/><path d="m5 20 20 10v8L5 28Z" fill="'+mid+'"/><path d="m25 30 18-10v8L25 38Z" fill="'+dark+'"/><path d="m14 15 20 10m-19 0 18-10" fill="none" stroke="'+dark+'"/>',
- terrain:'<path d="M4 36 16 17 23 25 32 8 44 36Z" fill="'+mid+'"/><path d="m32 8-2 28h14Z" fill="'+dark+'"/><path d="m16 17 7 8-8 11H4Z" fill="'+light+'"/>',
- build:'<path d="M9 21 24 13 39 21v19H9Z" fill="'+mid+'"/><path d="M24 21 39 21v19H24Z" fill="'+dark+'"/><path d="M5 22 24 6 43 22 24 27Z" fill="'+light+'"/><path d="M17 28h7v12h-7Z" fill="#394346"/>',
- fence:'<path d="M6 18 42 12v5L6 23Zm0 13 36-6v5L6 36Z" fill="'+dark+'"/><path d="M7 10h5v31H7Zm15-3h5v31h-5Zm15-3h5v31h-5Z" fill="'+light+'"/>',
- plant:'<path d="M22 23h5v18h-5Z" fill="'+mid+'"/><path d="M11 31C1 27 7 16 14 16 12 5 29 2 32 14 45 13 48 30 35 33Z" fill="#899e91"/><path d="M24 7c14 0 10 12 17 14 5 11-9 14-17 12Z" fill="#657b6e"/>',
- water:'<path d="M5 23C9 9 21 11 25 15 36 8 48 23 40 32 32 43 8 41 5 23Z" fill="#718f96"/><path d="M10 24q7-5 14 0t14 0M12 31q7-4 13 0t12-1" fill="none" stroke="#c1d3d3" stroke-width="1.5"/>',
- landscape:'<path d="m5 33 9-19 14-6 13 14 3 14-23 6Z" fill="'+mid+'"/><path d="m14 14 8 18-17 1Z" fill="'+light+'"/><path d="m28 8-6 24 22 4-3-14Z" fill="'+dark+'"/>',
- small:'<path d="M9 23v18m30-18v18M24 28v14" stroke="'+mid+'" stroke-width="4"/><path d="M4 22 24 8 44 22 24 33Z" fill="'+light+'"/><path d="M24 8 44 22 24 33Z" fill="'+mid+'"/>',
- furniture:'<path d="M8 12h32v19H8Z" fill="'+mid+'"/><path d="m5 29 5-7h28l5 7v6H5Z" fill="'+light+'"/><path d="M8 35v7m32-7v7" stroke="'+dark+'" stroke-width="4"/>',
- transport:'<path d="m5 26 7-4 6-11h17l8 15v9H5Z" fill="'+mid+'"/><path d="m18 14-5 10h25l-5-10Z" fill="#3d4a50"/><circle cx="13" cy="35" r="5" fill="#40484b"/><circle cx="35" cy="35" r="5" fill="#40484b"/>',
- light:'<path d="M22 17h4v25h-4Z" fill="'+mid+'"/><path d="M13 8h22l-5 11H18Z" fill="'+light+'"/><path d="M16 21l-5 6m21-6 5 6" stroke="#c7cebf" stroke-width="1.6"/>',
- creatures:'<circle cx="18" cy="10" r="6" fill="'+light+'"/><path d="M10 20q8-7 16 0l2 10h-6v12h-8V30H8Z" fill="'+mid+'"/><path d="M28 29q7-8 13-3l3 8-4 2v6h-4v-7h-5v7h-4v-9Z" fill="'+light+'"/>',
- models40:'<path d="m5 16 19-10 19 10-19 11Z" fill="'+light+'"/><path d="M5 16l19 11v16L5 32Z" fill="'+mid+'"/><path d="m24 27 19-11v16L24 43Z" fill="'+dark+'"/>'
+ select:face('M13 5 38 27 26 28 20 42 16 40Z',A)+face('M26 28 34 39 29 42 22 32Z',B)+line('M16 10 32 25','#fff',.8),
+ site:face('M4 21 25 8 44 19 23 32Z',A)+face('M4 21 23 32 23 39 4 28Z',B)+face('M23 32 44 19 44 26 23 39Z',C)+face('M10 21 25 12 37 19 22 28Z',G)+line('M10 21 25 12 37 19 22 28 10 21','#e2e9d9',.75),
+ surface:face('M5 19 25 8 44 19 24 30Z',A)+face('M5 19 24 30 24 39 5 28Z',B)+face('M24 30 44 19 44 28 24 39Z',C)+line('M11 16 30 27 M18 12 37 23 M11 23 31 12 M17 27 37 16','#667477',1),
+ terrain:face('M4 31 24 19 44 31 24 43Z',B)+face('M4 31 15 16 22 24 33 6 44 31 24 39Z',G)+face('M33 6 31 26 44 31Z',C)+line('M9 30 17 24 23 31 31 21 40 30','#bac8bb',.85)+line('M9 34 24 41 40 33','#87968b',.7),
+ build:face('M9 22 24 13 39 22 39 39 24 44 9 35Z',B)+face('M24 27 39 22 39 39 24 44Z',C)+face('M5 22 17 9 31 5 43 19 26 29Z',A)+face('M17 9 26 29 43 19 31 5Z',B)+face('M13 27 20 31 20 41 13 37Z','#34474b')+face('M29 28 35 25 35 34 29 37Z','#75979f')+line('M17 9 31 5 43 19','#eff3f0',.9),
+ fence:face('M6 18 39 9 41 13 8 22Z',B)+face('M6 30 39 21 41 25 8 34Z',C)+[0,1,2].map(i=>'<g transform="translate('+i*14+' '+(-i*4)+')">'+face('M7 12 11 9 15 11 11 14Z',A)+face('M7 12 11 14 11 42 7 40Z',B)+face('M11 14 15 11 15 39 11 42Z',C)+'</g>').join(''),
+ plant:face('M21 24 26 24 27 42 21 43Z','#8e877a')+'<ellipse cx="24" cy="22" rx="18" ry="14" fill="'+G+'"/><ellipse cx="16" cy="15" rx="10" ry="11" fill="'+G+'"/><ellipse cx="28" cy="12" rx="12" ry="10" fill="'+G+'"/><ellipse cx="33" cy="23" rx="11" ry="10" fill="'+G+'"/>'+line('M24 40 24 28 17 23 M24 32 32 25','#a0afa0',.8),
+ water:face('M4 25 11 15 24 10 39 15 44 25 36 34 20 39 7 34Z',B)+face('M4 25 7 34 20 39 36 34 44 25 44 30 36 39 20 44 7 39Z',C)+face('M7 25Q12 12 25 13T41 25Q32 36 20 36T7 25Z',W)+line('M12 23q6-4 12 0t12 0 M13 29q5-3 10 0t12-1','#d1e2df',1),
+ landscape:face('M5 32 12 15 26 7 38 15 44 31 28 42 10 39Z',B)+face('M12 15 26 7 23 27 5 32Z',A)+face('M26 7 38 15 44 31 23 27Z',C)+face('M23 27 44 31 28 42 10 39Z',B)+line('M12 15 23 27 28 42','#c4cdca',.65),
+ small:face('M8 24 12 22 12 41 8 43Z',B)+face('M36 22 40 24 40 40 36 42Z',C)+face('M22 29 26 27 26 43 22 45Z',B)+face('M4 22 24 6 44 22 24 33Z',A)+face('M24 6 44 22 24 33Z',B)+line('M4 22 24 33 44 22','#e6ece8',.8),
+ furniture:face('M10 11 28 7 40 14 40 30 22 36 10 28Z',B)+face('M13 15 28 11 36 16 36 25 22 29 13 23Z',A)+face('M6 26 23 20 42 29 24 38Z',A)+face('M6 26 24 38 24 42 6 30Z',B)+face('M24 38 42 29 42 34 24 42Z',C)+line('M9 32v8 M38 36v6','#aab8b5',2),
+ transport:face('M4 26 13 19 19 10 33 10 42 22 44 32 30 40 5 34Z',B)+face('M13 19 19 10 33 10 40 20 27 26Z',A)+face('M19 13 32 13 37 20 27 24 15 19Z','#49636a')+face('M27 26 42 22 44 32 30 40Z',C)+'<ellipse cx="13" cy="34" rx="4" ry="6" fill="#293337"/><ellipse cx="35" cy="35" rx="4" ry="6" fill="#293337"/>'+line('M7 27 12 29 M37 26 42 24','#e5e9db',1.4),
+ light:face('M21 18 25 17 27 39 23 42Z',B)+face('M14 8 25 4 36 9 33 20 23 24 15 19Z',A)+face('M16 16 24 19 32 15 30 21 24 23Z','#c8ceb7')+face('M15 39 25 35 34 40 24 45Z',B)+line('M24 23 24 38','#d3dcd8',1),
+ creatures:'<circle cx="18" cy="10" r="6" fill="'+A+'"/>'+face('M11 19Q18 15 25 19L28 29 23 30 23 43 17 43 17 31 15 43 10 43 11 29 7 29Z',B)+'<circle cx="36" cy="26" r="4" fill="'+A+'"/>'+face('M27 32 36 30 43 34 41 39 40 43 36 43 36 38 31 38 31 43 27 43Z',A),
+ models40:cube(5,10)+cube(19,15)+'<g transform="translate(12 -4) scale(.8)">'+cube(0,0)+'</g>'
  };
- return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="40" height="40" aria-hidden="true" stroke="'+edge+'" stroke-width=".55" stroke-linejoin="round">'+(shapes[tool]||shapes.site)+'</svg>';
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="44" height="44" aria-hidden="true"><defs><linearGradient id="'+k+'a" x2=".8" y2="1"><stop stop-color="#edf0ed"/><stop offset=".55" stop-color="#c2cecc"/><stop offset="1" stop-color="#8e9e9f"/></linearGradient><linearGradient id="'+k+'b" x2="1" y2="1"><stop stop-color="#a7b5b3"/><stop offset="1" stop-color="#657477"/></linearGradient><linearGradient id="'+k+'c" x2="1" y2="1"><stop stop-color="#708184"/><stop offset="1" stop-color="#3d4b50"/></linearGradient><radialGradient id="'+k+'g" cx=".3" cy=".2" r=".85"><stop stop-color="#c3d0bb"/><stop offset=".5" stop-color="#8ca391"/><stop offset="1" stop-color="#516b5d"/></radialGradient><linearGradient id="'+k+'w" x2="1" y2="1"><stop stop-color="#c6d7d5"/><stop offset=".45" stop-color="#839fa1"/><stop offset="1" stop-color="#506d74"/></linearGradient></defs><ellipse cx="24" cy="43" rx="17" ry="2.5" fill="#101719" opacity=".28"/>'+(shapes[tool]||shapes.site)+'</svg>';
 }
 function drawTools(){
  $('#tools').innerHTML=toolList.map(a=>'<button type="button" data-tool="'+a[0]+'" title="'+a[1]+'" aria-label="'+a[1]+'"><span class="glyph" aria-hidden="true">'+safeToolIcon(a[0])+'</span><span class="tool-name">'+(window.innerWidth>850?({creatures:'Персонажи',models40:'3D-каталог',furniture:'Мебель'}[a[0]]||a[1]):a[1])+'</span></button>').join('');
