@@ -67,7 +67,7 @@ function bladeMaps(T){
 function herbGeometry(T,kind){
  const p=[],c=[],uv=[],idx=[];
  function leaf(a,bx,by,bz,len,width,rise,kind){
-  const dx=Math.cos(a),dz=Math.sin(a),sx=-dz,sz=dx,first=p.length/3,rows=6;
+  const dx=Math.cos(a),dz=Math.sin(a),sx=-dz,sz=dx,first=p.length/3,rows=4;
   for(let j=0;j<=rows;j++){
    const t=j/rows;
    const shape=kind==='clover'?Math.pow(Math.sin(Math.PI*t),.65)*(1+.20*t):Math.pow(Math.sin(Math.PI*t),.82);
@@ -93,7 +93,7 @@ function herbGeometry(T,kind){
 function addHerbs(T,root,{profile,focus,mobile,low,terrainAt,contains}){
  if(!profile.herbs)return;
  const kinds=profile.herbs==='clover'?['clover']:['plantain','sedge','clover'];
- const radius=mobile?5.5:8,step=profile.herbs==='clover'?(mobile?.105:.085):(mobile?.20:.16),rows=kinds.map(()=>[]);
+ const radius=mobile?3.3:5.0,step=profile.herbs==='clover'?(mobile?.12:.10):(mobile?.20:.16),rows=kinds.map(()=>[]);
  for(let iz=Math.floor((focus.z-radius)/step);iz<=Math.ceil((focus.z+radius)/step);iz++)for(let ix=Math.floor((focus.x-radius)/step);ix<=Math.ceil((focus.x+radius)/step);ix++){
   const x=(ix+hash(ix,iz,60))*step,z=(iz+hash(ix,iz,61))*step,d=Math.hypot(x-focus.x,z-focus.z);
   if(d>radius||!contains(x,z))continue;
@@ -102,9 +102,9 @@ function addHerbs(T,root,{profile,focus,mobile,low,terrainAt,contains}){
   const k=Math.min(kinds.length-1,Math.floor(hash(ix,iz,64)*kinds.length));rows[k].push([x,terrainAt(x,z),z,hash(ix,iz,65),hash(ix,iz,66)]);
  }
  const mat=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.68,metalness:0,envMapIntensity:.28});
- const dummy=new T.Object3D(),color=new T.Color();
+ const dummy=new T.Object3D(),color=new T.Color(),dark=new T.Color('#3d5b35');
  for(let k=0;k<kinds.length;k++){if(!rows[k].length)continue;const g=herbGeometry(T,kinds[k]),m=new T.InstancedMesh(g,mat,rows[k].length);
-  rows[k].forEach(([x,y,z,a,b],i)=>{dummy.position.set(x,y,z);dummy.rotation.set(0,a*6.283185,0);dummy.scale.setScalar(.72+b*.58);dummy.updateMatrix();m.setMatrixAt(i,dummy.matrix);color.set('#64834d').lerp(new T.Color('#3d5b35'),b*.65);m.setColorAt(i,color);});
+  rows[k].forEach(([x,y,z,a,b],i)=>{dummy.position.set(x,y,z);dummy.rotation.set(0,a*6.283185,0);dummy.scale.setScalar(.72+b*.58);dummy.updateMatrix();m.setMatrixAt(i,dummy.matrix);color.set('#64834d').lerp(dark,b*.65);m.setColorAt(i,color);});
   m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.receiveShadow=true;m.raycast=()=>{};m.name='forma-lawn-herb-'+kinds[k];root.add(m);
  }
  root.userData.herbMaterial=mat;
