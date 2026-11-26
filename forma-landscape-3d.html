@@ -508,14 +508,14 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R76</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R77</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
 <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза</a>
-<a href="forma-landscape-3d.html?scene=oak-r76&v=76" title="Отдельная тестовая сцена дуба">Дуб</a>
+<a href="forma-landscape-3d.html?scene=oak-r76&v=76" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r77&v=77">Газон</a>
 <a href="forma-preview.html?tool=landscape-project">← К плану</a></nav></details>
  </div>
 </header>
@@ -795,6 +795,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <script defer src="./forma-render-queue-client.js"></script>
 <script type="module">
 import * as THREE from 'three';
+import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r77.js?v=R77';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R70';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
 import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R75';
@@ -881,8 +882,9 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const treeTestScene=new URLSearchParams(location.search).get('scene');
 const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55','birch-r56'].includes(treeTestScene);
 const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76'].includes(treeTestScene);
-const treeLineupMode=oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
-const pid=oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
+const lawnTestMode=treeTestScene==='lawn-r77'||treeTestScene==='lawn-test';let lawnTypeR77='universal';
+const treeLineupMode=lawnTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
+const pid=lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
@@ -1122,10 +1124,27 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();d.title=oakTestMode?'FORMA · Дуб черешчатый · R76':birchTestMode?'FORMA · Берёза повислая · R56':'FORMA · Ива плакучая · R51';
+ const d=freshProject();if(lawnTestMode){d.title='FORMA · Газон · R77';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
+ d.title=oakTestMode?'FORMA · Дуб черешчатый · R76':birchTestMode?'FORMA · Берёза повислая · R56':'FORMA · Ива плакучая · R51';
  d.site={width:32,height:32,orientation:0,boundary:null};
  d.objects=oakTestMode?[{id:'oak-test',catalogId:'oak',type:'trees',x:16,y:16,height:17,diameter:15,rotation:0,variant:1,oak:{age:60}}]:birchTestMode?[{id:'birch-test',catalogId:'birch',type:'trees',x:16,y:16,height:16,diameter:9,rotation:0,variant:1,birch:{age:35}}]:[{id:'willow-test',catalogId:'willow',type:'trees',x:16,y:16,height:11,diameter:11,rotation:0,variant:1,willow:{age:35}}];
  d.buildings=[];const normalized=normalizeProject(d);if(birchTestMode)normalized.objects[0].birch={age:35};if(oakTestMode)normalized.objects[0].oak={age:60};return normalized;
+}
+function setupLawnPreviewR77(){
+ const panel=document.createElement('div');panel.style.cssText='position:absolute;z-index:16;bottom:76px;left:50%;transform:translateX(-50%);width:min(390px,94%);padding:10px;display:grid;gap:6px;background:#24282df5;border:1px solid #777;border-radius:10px;color:#eee';
+ const title=document.createElement('button');title.textContent='ГАЗОН · R77 ▾';title.type='button';title.style.cssText='min-height:34px;font-weight:600';
+ const body=document.createElement('div');body.style.cssText='display:grid;gap:6px';
+ const options=document.createElement('div');options.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:5px';
+ const desc=document.createElement('small');desc.style.cssText='text-align:center;color:#c9c9c9';
+ const views=document.createElement('div');views.style.cssText='display:flex;gap:6px;justify-content:center';
+ function view(close=false){if(state.view!=='3d')setView('3d');controls.target.set(0,0,0);camera.position.set(close?.65:3.7,close?.38:3.5,close?1.25:5.4);camera.lookAt(controls.target);controls.update();updateSun();invalidateTurfDetail();updateTurfDetail();renderGate.invalidate();renderPhotoFrame();}
+ function sync(){desc.textContent=LAWN_PROFILES[lawnTypeR77].description;for(const b of options.children){const active=b.dataset.lawn===lawnTypeR77;b.setAttribute('aria-pressed',String(active));b.style.background=active?'#514839':'';b.style.borderColor=active?'#c9ae85':'';}}
+ for(const [id,p] of Object.entries(LAWN_PROFILES)){const b=document.createElement('button');b.type='button';b.dataset.lawn=id;b.textContent=p.name;b.style.minHeight='42px';b.onclick=()=>{if(lawnTypeR77===id)return;lawnTypeR77=id;const old=cachedGroundTexture;cachedGroundTexture=null;rebuild();old?.dispose();sync();updateTurfDetail();renderGate.invalidate();};options.append(b);}
+ for(const [label,close] of [['Общий вид',false],['Макро',true]]){const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='flex:1;min-height:38px';b.onclick=()=>view(close);views.append(b);}
+ title.onclick=()=>{body.hidden=!body.hidden;body.style.display=body.hidden?'none':'grid';title.textContent='ГАЗОН · R77 '+(body.hidden?'▴':'▾');};
+ body.append(options,desc,views);panel.append(title,body);document.querySelector('main').append(panel);
+ for(const id of ['mobileHouseSelect','sceneCameraCycle','focusHouse','renderComposition']){const b=$('#'+id);if(b)b.style.setProperty('display','none','important');}
+ sync();view(false);
 }
 function setupLineupNavigation(){
  const panel=document.createElement('div');
@@ -1238,7 +1257,7 @@ function initialize(){
  });
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
- if(treeLineupMode){doc=makeTreeLineup();extra=[];if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R76';}
+ if(treeLineupMode){doc=makeTreeLineup();extra=[];if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R76';if(lawnTestMode)$('#terrainBuildTag').textContent='R77';}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
  // Existing 48x48 saved projects are bilinearly remapped to 96x96.
@@ -1327,13 +1346,14 @@ function initialize(){
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
  const previousDrawing=treeLineupMode?null:localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);
- if(treeLineupMode)setupLineupNavigation();
+ if(lawnTestMode)setupLawnPreviewR77();else if(treeLineupMode)setupLineupNavigation();
  window.FORMA_3D_READY=true;$('#loadError').style.display='none';readBuildInfo();
  status(window.innerWidth<=850?'3D готов. Откройте «Каталог», выберите объект и нажмите на участок.':'3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
 function terrainAt(x,z){return heightAt(heightmap,GRID,doc.site.width,doc.site.height,x,z)}
+let lawnTextureRequestR77=0;
 let cachedGroundTexture=null,cachedSoilTexture=null,cachedContactTexture=null,terrainBrushGrid=null,terrainBrushPreview=null;
 function groundPhotoTexture(){
  if(cachedGroundTexture)return cachedGroundTexture;
@@ -1349,7 +1369,9 @@ function groundPhotoTexture(){
   ctx.lineWidth=.6+random()*.8;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(a-.5)*5,y-1-random()*5);ctx.stroke();
  }
  const t=new THREE.CanvasTexture(pixel);
- new THREE.ImageLoader().load(new URL('./assets/landscape-photo/universal.jpg?v=turf-photo-20261126',document.baseURI).href,image=>{
+ const request=++lawnTextureRequestR77;const photoType=lawnTestMode?lawnTypeR77:'universal';
+ new THREE.ImageLoader().load(new URL('./assets/landscape-photo/'+photoType+'.jpg?v=R77',document.baseURI).href,image=>{
+  if(request!==lawnTextureRequestR77)return;
   pixel.width=pixel.height=1024;ctx.filter='saturate(0.84)';ctx.drawImage(image,0,0,1024,1024);ctx.filter='none';t.needsUpdate=true;
   // First frame can render before async turf JPEG arrives. Force a paint
   // after the actual photograph is on the GPU; otherwise demand rendering
@@ -1619,19 +1641,20 @@ function updateTurfDetail(){
  const ground=terrainAt(camera.position.x,camera.position.z);
  const mobile=window.innerWidth<=850;
  const show=state.view!=='2d'&&!state.painting&&state.tool!=='terrain'&&
-  doc.atmosphere.season!=='winter'&&(camera.position.y-ground<8||(pbrR63Enabled&&oakTestMode));
+  doc.atmosphere.season!=='winter'&&(camera.position.y-ground<8||(pbrR63Enabled&&oakTestMode)||lawnTestMode);
  if(!show){if(turfDetail?.visible){turfDetail.visible=false;renderGate.invalidate()}return;}
  const specimen=pbrR63Enabled&&oakTestMode?doc.objects.find(o=>o.catalogId==='oak'):null;
- const focus=specimen&&camera.position.y-ground>=8?pos(specimen.x,specimen.y):camera.position;
+ const focus=lawnTestMode?controls.target:specimen&&camera.position.y-ground>=8?pos(specimen.x,specimen.y):camera.position;
+ const profile=lawnTestMode?LAWN_PROFILES[lawnTypeR77]:null;
  const cx=Math.floor(focus.x/3),cz=Math.floor(focus.z/3);
- const key=cx+':'+cz+':'+doc.atmosphere.season+':'+mobile;
+ const key=cx+':'+cz+':'+doc.atmosphere.season+':'+mobile+':'+(profile?lawnTypeR77:'default');
  if(turfCell===key&&turfDetail){if(!turfDetail.visible){turfDetail.visible=true;renderGate.invalidate()}return;}
  if(turfDetail){root.remove(turfDetail);turfDetail.geometry.dispose();turfDetail.material.dispose();turfDetail=null;}
  turfCell=key;turfMask=turfMask||turfMasks();
- const positions=[],colors=[],radius=specimen?(mobile?9:13):(mobile?6.5:9),step=mobile?.115:.095;
+ const positions=[],colors=[],radius=profile?(mobile?3.6:5.0):specimen?(mobile?9:13):(mobile?6.5:9),step=profile?(mobile?.073:.058)/Math.sqrt(profile.density):mobile?.115:.095;
  const mx=cx*3+1.5,mz=cz*3+1.5;
  const autumn=doc.atmosphere.season==='autumn';
- const palette=(autumn?['#777547','#73774b','#8a8150','#606b42']:['#626e43','#778254','#81905f','#4f613b']).map(c=>new THREE.Color(c));
+ const palette=(profile?profile.palette:autumn?['#777547','#73774b','#8a8150','#606b42']:['#626e43','#778254','#81905f','#4f613b']).map(c=>new THREE.Color(c));
  const add=(x,y,z,c,k)=>{positions.push(x,y,z);colors.push(c.r*k,c.g*k,c.b*k)};
  for(let iz=Math.floor((mz-radius)/step);iz<=Math.ceil((mz+radius)/step);iz++)for(let ix=Math.floor((mx-radius)/step);ix<=Math.ceil((mx+radius)/step);ix++){
   const x=(ix+turfRandom(ix,iz,1))*step,z=(iz+turfRandom(ix,iz,2))*step;
@@ -1644,13 +1667,14 @@ function updateTurfDetail(){
   const y=terrainAt(x,z)+(lawn?.055:.007);
   if(Math.max(Math.abs(terrainAt(x+.12,z)-terrainAt(x-.12,z)),Math.abs(terrainAt(x,z+.12)-terrainAt(x,z-.12)))>.11)continue;
   const distance=Math.hypot(x-focus.x,z-focus.z);
-  const blades=distance<3.4?(mobile?8:10):(mobile?4:6);
+  const blades=profile?(mobile?7:10):distance<3.4?(mobile?8:10):(mobile?4:6);
   for(let n=0;n<blades;n++){
    const r=turfRandom(ix,iz,10+n),a=r*Math.PI*2;
    const bx=x+(turfRandom(ix,iz,30+n)-.5)*step,bz=z+(turfRandom(ix,iz,40+n)-.5)*step;
    const patch=.65+.35*Math.sin(x*.48+Math.sin(z*.7))*Math.cos(z*.51);
-   const h=(.035+turfRandom(ix,iz,50+n)*.065)*patch,w=.002+r*.0028;
-   const dx=Math.cos(a)*w,dz=Math.sin(a)*w,lean=.005+r*.016;
+   const blade=profile?lawnBlade(profile,x,z,r,turfRandom(ix,iz,50+n)):null;
+   const h=blade?blade.height:(.035+turfRandom(ix,iz,50+n)*.065)*patch,w=blade?blade.width:.002+r*.0028;
+   const dx=Math.cos(a)*w,dz=Math.sin(a)*w,lean=blade?blade.lean:.005+r*.016;
    const c=palette[Math.min(3,Math.floor(turfRandom(ix,iz,60+n)*4))];
    const mx=bx+Math.sin(a)*lean*.28,mz=bz-Math.cos(a)*lean*.28,my=y+h*.57;
    add(bx-dx,y,bz-dz,c,.84);add(bx+dx,y,bz+dz,c,.88);add(mx+dx*.55,my,mz+dz*.55,c,.98);
@@ -1680,7 +1704,7 @@ function rebuild(){
  // user boundary remains a separate outline and never cuts holes in the scene.
  const groundSide=squareTerrainSide(doc.site);
  const geo=makeEditableGroundGeometry(groundSide);cutPoolOpenings(geo);
- const grass=groundPhotoTexture();grass.repeat.set(groundSide/1.05,groundSide/1.05);
+ const grass=groundPhotoTexture(),tile=lawnTestMode?LAWN_PROFILES[lawnTypeR77].tile:1.05;grass.repeat.set(groundSide/tile,groundSide/tile);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.bumpMap=grass;groundMat.bumpScale=.012;groundMat.roughness=.96;groundMat.side=THREE.DoubleSide;groundMat.shadowSide=THREE.FrontSide;
  groundMat.envMapIntensity=.21;if(pbrR63Enabled&&doc.atmosphere.season!=='winter')groundMat.color.multiply(new THREE.Color('#e5e7da'));
@@ -1692,7 +1716,7 @@ function rebuild(){
   groundMat.aoMap=contact;groundMat.aoMapIntensity=.66;
  }
  if(pbrR63Enabled&&doc.atmosphere.season!=='winter')applyTurfVariation(groundMat);
- if(pbrR63Enabled&&oakTestMode){const meadow=createPreviewMeadow(THREE,grass,groundSide);meadow.visible=state.view!=='2d';root.add(meadow);}
+ if(pbrR63Enabled&&(oakTestMode||lawnTestMode)){const meadow=createPreviewMeadow(THREE,grass,groundSide);meadow.visible=state.view!=='2d';root.add(meadow);}
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
@@ -1705,7 +1729,7 @@ function rebuild(){
  const outlinePoints=(doc.site.boundary?.length>=3?doc.site.boundary:[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}])
   .map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.14,v.z)});
  outlinePoints.push(outlinePoints[0].clone());
- const parcelLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'}));parcelLine.name='forma-parcel-outline';parcelLine.visible=(!pbrR63Enabled||!oakTestMode)&&document.body.dataset.presentation!=='true';root.add(parcelLine);
+ const parcelLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'}));parcelLine.name='forma-parcel-outline';parcelLine.visible=(!pbrR63Enabled||(!oakTestMode&&!lawnTestMode))&&document.body.dataset.presentation!=='true';root.add(parcelLine);
  if(!treeLineupMode){buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);}
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
