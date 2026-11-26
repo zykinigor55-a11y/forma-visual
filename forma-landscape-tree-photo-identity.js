@@ -78,9 +78,9 @@ export function treeInstancePhotoDetail(o,asset){
  }
  if(asset.id==='birch'){
   const age=bounded(o?.birch?.age,3,200);
-  return 'SPECIES Betula pendula (silver birch, NOT aspen), '+stageFromBirch(o?.birch?.stage??o?.treeStage)+
-   (age===null?'':'; author-selected age '+Math.round(age)+' years')+
-   '; small translucent deciduous leaves, gracefully hanging fine twigs, white bark with black scars. '+fixed+identity;
+  const m=o?.photoTreeModel, trunk=bounded(m?.trunkDiameterM,.01,4),leaves=bounded(m?.leafCards,0,1000000),limbs=bounded(m?.primaryBranches,1,100);
+  const stage=age===null?stageFromBirch(o?.birch?.stage??o?.treeStage):age<=10?'young slender birch':age>=75?'old broad irregular birch':'adult airy silver birch';
+  return 'SPECIES Betula pendula (silver birch, NOT aspen), '+stage+(age===null?'':'; selected design age '+Math.round(age)+' years')+'. '+fixed+identity+(m?.revision==='R56'?'APPROVED FORMA BIRCH R56: retain the exact curved tapering trunk, irregular curved structural branches, thin secondary shoots, drooping branch tips and existing airy canopy with dense individual serrated leaves. Preserve all visible forks and branch attachments. Pale grey-white bark with irregular enlarged horizontal black lenticels and dark scars, fine relief and darker root flare; do not reduce markings to dots or use vertical stripes. Small individual leaves with source scale, muted natural greens, no boosted saturation. ':'Small translucent deciduous leaves, hanging twigs, white bark with dark scars. ')+(trunk===null?'':'Nominal source trunk diameter '+trunk.toFixed(2)+'m. ')+(limbs===null?'':'Source primary limbs '+Math.round(limbs)+'. ')+(leaves===null?'':'Source leaf instances '+Math.round(leaves)+' are a coverage cue; preserve existing gaps and density, not a literal photo leaf count. ');
  }
  const latin=asset.latin||asset.name;
  return 'SPECIES '+latin+', reproduce this exact planted botanical species, its reference growth habit, leaf shape, bark and canopy. '+fixed+identity;
