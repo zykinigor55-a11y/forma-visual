@@ -1,3 +1,4 @@
+import {bakeCloudEnvironment} from './forma-photographic-environment-r71.js?v=R130';
 /* FORMA R73 — optional actual WebGL GPU path tracing snapshot.
  * three-gpu-pathtracer 0.0.23 + three-mesh-bvh 0.8.3; no mutation of editor scene.
  * Shader-only effects are not representable by the physical tracer.
@@ -13,7 +14,8 @@ function makeSky(T,source,atmosphere={}){
  for(let y=0;y<h;y++){const a=Math.sin(((y+.5)/h-.5)*Math.PI);c.copy(hor).lerp(a>0?zen:ground,Math.pow(Math.abs(a),.55));for(let x=0;x<w;x++){const k=(y*w+x)*4;data[k]=c.r;data[k+1]=c.g;data[k+2]=c.b;data[k+3]=1;}}
  const t=new T.DataTexture(data,w,h,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;return t;
 }
-async function loadSkyR73(T,source,atmosphere={}){
+async function loadSkyR73(T,source,atmosphere={},renderer,profile){
+ if(renderer&&atmosphere.cloudSettings){try{return bakeCloudEnvironment(T,renderer,{sun:source.getObjectByName('sun'),time:atmosphere.time,weather:atmosphere.weather,settings:atmosphere.cloudSettings,high:profile==='high'&&!isMobile(),mobile:isMobile()});}catch(e){console.warn('FORMA cloud HDR fallback',e);}}
  const sun=source.getObjectByName('sun'),time=atmosphere.time||'day',weather=atmosphere.weather||'sunny';
  const diffuse=['overcast','rain','fog','snow'].includes(weather);
  if(!sun||sun.intensity<.3||time!=='day'||diffuse)return {texture:makeSky(T,source,atmosphere),label:'Небо по времени суток и погоде',photographic:false};
@@ -50,7 +52,7 @@ function bakeInstances(T,o,keep=o.count,src=o.geometry){
 // R125: a render-only proxy for the exact R121/R122 compound leaf layout.
  // Preserve every instance and the alpha silhouette; replace dense leaflet
  // tessellation with four gently folded triangles per leaflet.
-function rowanLeafProxy(T,src){
+function rowanLeafProxy(T,src,curved=false){
  const p=src.attributes.position,uv=src.attributes.uv,c=src.attributes.color;
  if(!p||!uv||p.count!==13*21+4)return null;
  const pos=[],tex=[],col=[],idx=[],V=i=>new T.Vector3().fromBufferAttribute(p,i);
@@ -59,7 +61,7 @@ function rowanLeafProxy(T,src){
   const o=k*21,a=V(o+1),b=V(o+19),mid=V(o+10),span=V(o+11).sub(V(o+9)).multiplyScalar(.5),base=pos.length/3;
   add(a.clone().sub(span),0,0,o+1);add(a.clone().add(span),1,0,o+1);
   add(b.clone().sub(span),0,1,o+19);add(b.clone().add(span),1,1,o+19);add(mid,.5,.5,o+10);
-  idx.push(base,base+4,base+1,base+1,base+4,base+3,base+3,base+4,base+2,base+2,base+4,base);
+  if(curved){add(V(o+9),uv.getX(o+9),.5,o+9);add(V(o+11),uv.getX(o+11),.5,o+11);idx.push(base,base+4,base+1,base,base+5,base+4,base+1,base+4,base+6,base+5,base+2,base+4,base+4,base+2,base+3,base+4,base+3,base+6);}else idx.push(base,base+4,base+1,base+1,base+4,base+3,base+3,base+4,base+2,base+2,base+4,base);
  }
  const q=pos.length/3;for(let i=p.count-4;i<p.count;i++)add(V(i),uv.getX(i),uv.getY(i),i);idx.push(q,q+1,q+2,q+1,q+3,q+2);
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(tex,2));g.setAttribute('color',new T.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();return g;
@@ -177,6 +179,39 @@ function bumpToNormal(T,source,strength){
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const dx=(get(x+1,y)-get(x-1,y))*strength,dy=(get(x,y+1)-get(x,y-1))*strength,l=Math.hypot(dx,dy,1),i=(y*w+x)*4;rgba.set([128-127*dx/l,128+(source.flipY?-1:1)*127*dy/l,128+127/l,255],i);}
  const t=new T.DataTexture(rgba,w,h,T.RGBAFormat);t.colorSpace=T.NoColorSpace;t.wrapS=source.wrapS;t.wrapT=source.wrapT;t.repeat.copy(source.repeat);t.offset.copy(source.offset);t.center.copy(source.center);t.rotation=source.rotation;t.matrixAutoUpdate=source.matrixAutoUpdate;t.matrix.copy(source.matrix);t.flipY=source.flipY;t.channel=source.channel;t.magFilter=T.LinearFilter;t.minFilter=T.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;
 }
+// General height-map displacement for suitable opaque, single-material meshes.
+ // Respect the triangle budget and existing UV mapping; leave transparent sheets,
+ // instanced assets and unsupported image formats to their normal maps.
+function surfaceDisplacement(T,o,level){
+ const g=o.geometry,m=o.material,role=m?.userData?.formaPBRRoleR63||'';
+ if(Array.isArray(m)||!m||o.userData?.ground||m.transparent||m.alphaTest>0||m.transmission>0||/leaf|needle|water|glass|metal|plant-other/.test(role))return null;
+ const map=m.displacementMap||m.bumpMap,explicit=!!m.displacementMap;
+ const scale=explicit?Number(m.displacementScale):Math.min(.018,Math.abs(m.bumpScale||0));
+ if(!map||!scale||!g.attributes.uv||!g.attributes.normal||g.groups.length>1)return null;
+ const im=map.image,w=im?.width,h=im?.height;if(!w||!h||w*h>16777216)return null;
+ let data=im.data;
+ if(!data){try{const cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.drawImage(im,0,0,w,h);data=ctx.getImageData(0,0,w,h).data;}catch{return null;}}
+ if(data.length!==w*h*4||!(data instanceof Uint8Array||data instanceof Uint8ClampedArray))return null;
+ map.updateMatrix();const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv,c=g.attributes.color,ix=g.index;
+ const pos=[],norm=[],tex=[],col=[],idx=[],vec=new T.Vector3(),v2=new T.Vector2(),localScale=o.getWorldScale(new T.Vector3()),maxScale=Math.max(.001,Math.abs(localScale.x),Math.abs(localScale.y),Math.abs(localScale.z));
+ const amount=Math.min(Math.abs(scale),.025/maxScale)*Math.sign(scale);
+ const sample=(u,v)=>{v2.set(u,v);map.transformUv(v2);const x=Math.min(w-1,Math.max(0,Math.round(v2.x*(w-1)))),y=Math.min(h-1,Math.max(0,Math.round(v2.y*(h-1))));return data[(y*w+x)*4]/255;};
+ const total=(ix?.count||p.count);
+ for(let k=0;k<total;k+=3){
+  const ids=[0,1,2].map(i=>ix?ix.getX(k+i):k+i),rows=[];
+  const nn=ids.map(i=>new T.Vector3(n.getX(i),n.getY(i),n.getZ(i)));
+  // Do not shift triangle borders: adjacent UV islands and hard corners
+  // stay welded visually; small texture features remain in normal maps.
+  for(let i=0;i<=level;i++){const row=[];for(let j=0;j<=level-i;j++){
+   const b=i/level,d=j/level,a=1-b-d,weights=[a,b,d],blend=(at,ch)=>ids.reduce((v,id,q)=>v+weights[q]*at.array[id*at.itemSize+ch],0);
+   const u=blend(uv,0),v=blend(uv,1);vec.set(blend(n,0),blend(n,1),blend(n,2)).normalize();
+   const edge=Math.min(1,Math.min(a,b,d)*level*1.5),height=(sample(u,v)-.5)*amount*edge;
+   const id=pos.length/3;pos.push(blend(p,0)+vec.x*height,blend(p,1)+vec.y*height,blend(p,2)+vec.z*height);norm.push(vec.x,vec.y,vec.z);tex.push(u,v);if(c)for(let ch=0;ch<c.itemSize;ch++)col.push(blend(c,ch));row.push(id);
+  }rows.push(row);}
+  for(let i=0;i<level;i++)for(let j=0;j<level-i;j++){idx.push(rows[i][j],rows[i+1][j],rows[i][j+1]);if(j<level-i-1)idx.push(rows[i+1][j],rows[i+1][j+1],rows[i][j+1]);}
+ }
+ const out=new T.BufferGeometry();out.setAttribute('position',new T.Float32BufferAttribute(pos,3));out.setAttribute('normal',new T.Float32BufferAttribute(norm,3));out.setAttribute('uv',new T.Float32BufferAttribute(tex,2));if(c)out.setAttribute('color',new T.Float32BufferAttribute(col,c.itemSize));out.setIndex(idx);out.computeBoundingSphere();return out;
+}
 function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  source.updateMatrixWorld(true);camera.updateMatrixWorld(true);
  const scene=new T.Scene(),geometries=[],materials=[],ownedTextures=[],materialCache=new Map();
@@ -198,7 +233,7 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  const proxies=new Map(),ownedProxies=[],keepCounts=new Map();
  const grass=o=>o.isInstancedMesh&&/grass|turf|lawn|dry-ears|forma-flower/i.test(o.name+' '+(o.parent?.name||''));
  const costs=o=>{const g=proxies.get(o)||o.geometry;return (g.index?.count||g.attributes.position.count)/3;};
- let simplified=0,used=0,grassCost=0,displacedWood=0;
+ let simplified=0,used=0,grassCost=0,displacedWood=0,displacedSurfaces=0;
  for(const o of meshes){
   if(o.isInstancedMesh&&o.name==='rowan-pinnate-foliage'){
    const g=rowanLeafProxy(T,o.geometry);if(g){proxies.set(o,g);ownedProxies.push(g);simplified+=o.count;}
@@ -207,7 +242,9 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
   }
   const cost=costs(o)*(o.isInstancedMesh?o.count:1);if(grass(o))grassCost+=cost;else used+=cost;
  }
+ if(!isMobile()&&profile==='high')for(const o of meshes){if(o.name!=='rowan-pinnate-foliage'||!proxies.has(o))continue;const g=rowanLeafProxy(T,o.geometry,true);if(!g)continue;const extra=(g.index.count/3-costs(o))*o.count;if(used+extra+(lawn?360000:0)>limit){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;}
  if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||o.name!=='rowan-bark-trunk-branches')continue;const available=limit-used-(lawn?260000:0);if(available<15000)continue;for(const level of (profile==='high'?[6,4,2]:[3,2])){const result=barkDisplacement(T,o,level);if(!result)break;const extra=result.geometry.index.count/3-costs(o);if(extra>available){result.geometry.dispose();continue;}proxies.set(o,result.geometry);ownedProxies.push(result.geometry);used+=extra;displacedWood+=result.displaced;break;}}
+ if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||proxies.has(o))continue;const base=costs(o),available=Math.min(120000,limit-used-(lawn?280000:0));if(available<base*8||base>12000)continue;const level=profile==='high'&&base*35<=available?6:3;const g=surfaceDisplacement(T,o,level);if(!g)continue;const extra=g.index.count/3-base;if(extra>available){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;displacedSurfaces++;}
  if(used>limit){for(const g of ownedProxies)g.dispose();throw Error('Для сохранения всей кроны и объектов нужно '+Math.round(used/1000)+' тыс. треугольников. Лимит режима '+Math.round(limit/1000)+' тыс. Выберите высокое качество или уменьшите число деревьев.');}
  const lawnBudget=lawn?Math.min(profile==='high'?780000:360000,Math.floor(Math.max(0,limit-used)*.82)):0;
  const existingBudget=limit-lawnBudget;
@@ -218,9 +255,12 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  const cloneMat=(m,instanced)=>{
   const key=m.uuid+'|'+instanced;if(materialCache.has(key))return materialCache.get(key);
   let p=m.isMeshStandardMaterial?m.clone():new T.MeshStandardMaterial({color:m.color,map:m.map,roughness:1,alphaTest:m.alphaTest,transparent:m.transparent,opacity:m.opacity,side:m.side});
+  const role=m.userData?.formaPBRRoleR63||'';
+  if(['leaf','needle','glass','water'].includes(role)&&!p.isMeshPhysicalMaterial){const physical=new T.MeshPhysicalMaterial();for(const k of ['color','map','normalMap','normalScale','roughness','roughnessMap','metalness','metalnessMap','alphaMap','alphaTest','opacity','transparent','side','vertexColors','bumpMap','bumpScale','emissive','emissiveMap','emissiveIntensity','userData']){const v=p[k];if(v!==undefined){if(v?.isColor||v?.isVector2)physical[k].copy(v);else physical[k]=v;}}p.dispose();p=physical;}
   if(instanced)p.vertexColors=true;
+  if(p.isMeshPhysicalMaterial){if(role==='leaf'||role==='needle'){p.transmission=role==='needle'?.15:.27;p.thickness=0;p.ior=1.43;p.specularIntensity=.35;p.clearcoat=0;p.metalness=0;}else if(role==='water'||role==='glass'){p.transmission=role==='water'?.94:.92;p.thickness=0;p.ior=role==='water'?1.333:1.5;p.metalness=0;p.transparent=false;p.opacity=1;p.roughness=Math.max(.025,Math.min(.20,p.roughness));}else if(['bark','ground','mineral','metal'].includes(role)){p.transmission=0;}}
   // Thin-film BSDF is a colored transmission approximation, not full botanical SSS.
-  if(m.userData?.formaRowanPBR&&p.isMeshPhysicalMaterial){p.transmission=m.userData.formaRowanPBR.pathTransmission??.34;p.thickness=0;p.attenuationDistance=Infinity;p.ior=1.42;p.roughness=.76;p.specularIntensity=.48;p.clearcoat=.02;p.normalScale.multiplyScalar(.82);}
+  if(m.userData?.formaRowanPBR&&p.isMeshPhysicalMaterial){p.transmission=m.userData.formaRowanPBR.pathTransmission??.34;p.thickness=0;p.attenuationDistance=Infinity;p.ior=1.43;p.roughness=.88;p.specularIntensity=.30;p.clearcoat=0;p.normalScale.multiplyScalar(.82);}
   if(!p.normalMap&&p.bumpMap&&p.bumpScale){const strength=Math.min(8,Math.max(.5,Math.abs(p.bumpScale)*250)),key=p.bumpMap.uuid+'|'+strength;let t=bumpCache.get(key);if(!t){t=bumpToNormal(T,p.bumpMap,strength);if(t){bumpCache.set(key,t);ownedTextures.push(t);}}if(t){p.normalMap=t;p.normalScale.set(.75,.75);}}
   p.displacementMap=null;p.displacementScale=0;p.onBeforeCompile=()=>{};p.customProgramCacheKey=()=>'';materials.push(p);materialCache.set(key,p);return p;
  };
@@ -260,13 +300,13 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
    const target=o.target.getWorldPosition(new T.Vector3()),dir=o.getWorldPosition(new T.Vector3()).sub(target).normalize();
    const u=new T.Vector3(0,1,0).cross(dir);if(u.lengthSq()<1e-6)u.set(1,0,0);else u.normalize();const v=dir.clone().cross(u).normalize();
    const radius=Math.tan(T.MathUtils.degToRad(Math.max(.27,Math.min(.9,(atmosphere.solarSoftness||3)*.14))));
-   const n=9;for(let i=0;i<n;i++){const a=i*2.399963,r=radius*Math.sqrt((i+.5)/n),d=dir.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r).normalize();const l=new T.DirectionalLight(o.color,o.intensity/n);l.position.copy(target).addScaledVector(d,100);l.target.position.copy(target);scene.add(l,l.target);}return;
+   const n=9;for(let i=0;i<n;i++){const a=i*2.399963,r=radius*Math.sqrt((i+.5)/n),d=dir.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r).normalize();const l=new T.DirectionalLight(o.color,o.intensity*(sky.solarTransmission??1)/n);l.position.copy(target).addScaledVector(d,100);l.target.position.copy(target);scene.add(l,l.target);}return;
   }
   const l=o.clone();l.position.setFromMatrixPosition(o.matrixWorld);l.quaternion.copy(o.getWorldQuaternion(new T.Quaternion()));
   if(o.target){l.target=new T.Object3D();l.target.position.setFromMatrixPosition(o.target.matrixWorld);scene.add(l.target);}
   // Retain the user's solar strength and colour; cloudy weather already lowers
   // editor sun intensity. Further attenuate the direct component for diffuse sky.
-  if(o.name==='sun'&&o.isDirectionalLight)l.intensity*=cloudy?.35:1.0;
+  if(o.name==='sun'&&o.isDirectionalLight)l.intensity*=(cloudy?.55:1.0)*(sky.solarTransmission??1);
   scene.add(l);
  });
  const env=sky.texture;scene.environment=env;scene.background=env;
@@ -276,7 +316,7 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
  for(const g of ownedProxies)g.dispose();ownedProxies.length=0;
- return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,lawnTufts,displacedWood,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();env.dispose();}};
+ return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,lawnTufts,displacedWood,displacedSurfaces,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();env.dispose();}};
  }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();throw e;}
 }
 export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},lawn=null,onClose=()=>{},onFailure=()=>{}}){
@@ -294,13 +334,13 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R129.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R129',e);const reason=e?.message||String(e);close();onFailure(reason);}
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R130.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R130',e);const reason=e?.message||String(e);close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
   const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
-  msg.textContent='Загрузка фотографического HDRI…';sky=await loadSkyR73(T,scene,atmosphere);if(!alive){sky.texture.dispose();return;}
+  msg.textContent='Подготовка HDR неба и облаков…';sky=await loadSkyR73(T,scene,atmosphere,renderer,profile);if(!alive){sky.texture.dispose();return;}
   msg.textContent='Подготовка полигонов и материалов…';await nextFrame();if(!alive)return;
   snap=snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn);
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
@@ -311,7 +351,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
-   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
+   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
    if(n>=target){if(profile==='high'){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
