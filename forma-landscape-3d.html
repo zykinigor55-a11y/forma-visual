@@ -259,7 +259,7 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #aiResult,#aiProgress{position:absolute;inset:0;z-index:6;background:#121718ed;display:grid;place-items:center;padding:20px}
 #aiProgress{z-index:7;backdrop-filter:blur(10px)}
 #aiProgress[hidden]{display:none}
-#openComposition{position:absolute;right:12px;top:12px;z-index:6}
+#openComposition{position:absolute;right:12px;top:12px;z-index:6;display:none} #cameraComposition{width:100%;margin:0 0 10px;min-height:36px;text-align:center} @media(max-width:850px){body[data-mobile-panel=scene] #openComposition{display:block}}
 #compositionPanel{position:absolute;z-index:12;bottom:14px;left:50%;transform:translateX(-50%);width:min(780px,calc(100% - 24px));max-height:55%;overflow:auto;padding:12px;background:#23262c;border:1px solid #595b61;border-radius:14px}
 #compositionPanel[hidden]{display:none}
 .composition-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -511,14 +511,14 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R134</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R135</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
 <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза</a>
-<a href="forma-landscape-3d.html?scene=oak-r134&v=134" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
+<a href="forma-landscape-3d.html?scene=oak-r135&v=135" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
 <a href="forma-preview.html?tool=landscape-project">← К плану</a></nav></details>
  </div>
 </header>
@@ -662,8 +662,9 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  <div id="mobileGeneralSettingsHeader"><strong>Параметры сцены</strong><button type="button" id="mobileGeneralSettingsClose" aria-label="Закрыть параметры сцены">×</button></div>
  <div id="mobileObjectEditorHeader" hidden><strong id="mobileObjectEditorTitle">Объект</strong><button id="mobileObjectMove" type="button" title="Переместить выделенный объект пальцем">↔ Двигать</button><button id="mobileObjectClose" type="button" aria-label="Свернуть редактор и открыть сцену">×</button></div>
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
-  <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
+  <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk" type="button">Прогулка</button>
  </div><div class="camera-focus"><button type="button" id="focusHouse">К дому</button><button type="button" id="focusSelected">К растению</button><button type="button" id="fit3dScene">Весь участок</button></div>
+ <button type="button" id="cameraComposition">Идеальная композиция</button>
  <button type="button" id="alphaQuickSelect" aria-label="Применить модель АЛЬФА к главному дому">◆ АЛЬФА · A-frame — показать дом</button>
  <button type="button" id="pineInspectorShortcut" hidden>🌲 Открыть настройки выбранной сосны</button>
  <section id="objectInspectorDock" aria-label="Параметры выбранного 3D-объекта">
@@ -675,7 +676,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
   <input id="cameraHeight" type="range" min=".8" max="80" step=".2" value="30">
   <button id="cameraEyeLevel" type="button">◎ Камера на уровне глаз · 1,7 м</button>
  </div>
- <div class="walk-instructions" id="walkInstructions" hidden role="status">Прогулка: <strong>W / S</strong> вперёд / назад, <strong>A / D</strong> влево / вправо, <strong>Shift</strong> быстрее. Клик в сцене — мышь осматривает; <strong>Esc</strong> — курсор. Камера всегда в 1,7 м от земли.</div>
+ <div class="walk-instructions" id="walkInstructions" hidden role="status">Прогулка: <strong>W / S</strong> вперёд / назад, <strong>A / D</strong> влево / вправо, <strong>Shift</strong> быстрее. Клик в сцене — свободный обзор мышью (вверх, вниз, по сторонам); <strong>Esc</strong> — курсор. Камера всегда в 1,7 м от земли.</div>
  <section class="house-preset-section">
  <div class="house-preset-heading"><button type="button" id="selectMainHouse">Выбрать главный дом</button></div>
  <details id="houseCatalog"><summary>АРХИТЕКТУРА · 19 ТИПОВ ДОМОВ <span>Показать каталог</span></summary>
@@ -906,10 +907,10 @@ window.addEventListener('forma-house-pbr-ready',()=>{
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
 const treeTestScene=new URLSearchParams(location.search).get('scene');
 const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55','birch-r56'].includes(treeTestScene);
-const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76','oak-r132','oak-r133','oak-r134'].includes(treeTestScene);
+const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76','oak-r132','oak-r133','oak-r134','oak-r135'].includes(treeTestScene);
 const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-r83','lawn-r84','lawn-r85','lawn-r86','lawn-r87','lawn-r88','lawn-r89','lawn-r90','lawn-r91','lawn-r92','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal',lawnFlowersR88=75,lawnWheatHeightR88=76,lawnHeightR90=100,lawnDensityR90=100,lawnPressedR90=45,lawnPanelR90=null,lawnPanelSyncR90=null;
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
-const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134'].includes(treeTestScene);
+const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135'].includes(treeTestScene);
 const treeLineupMode=rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -919,7 +920,10 @@ let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushS
 let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),cloudLayer=null,waterRippleTexture=null,outdoorReflectionMap=null;
 const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
-let lastWalkFrame=0;
+let lastWalkFrame=0,walkDrag=null,walkLookDirty=false;
+const walkKey=e=>({KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d',ShiftLeft:'shift',ShiftRight:'shift'}[e.code]||String(e.key||'').toLowerCase());
+function walkLook(dx,dy){if(state.view!=='walk'||!camera)return;walkYaw-=dx*.0028;walkPitch=Math.max(-Math.PI/2+.035,Math.min(Math.PI/2-.035,walkPitch-dy*.0028));camera.rotation.set(walkPitch,walkYaw,0,'YXZ');walkLookDirty=true;renderGate.invalidate();}
+function requestWalkLook(){if(state.view!=='walk'||document.pointerLockElement===canvas)return;canvas.tabIndex=0;canvas.focus({preventScroll:true});try{const p=canvas.requestPointerLock?.();p?.catch?.(()=>status('Прогулка: удерживайте ЛКМ и двигайте мышь для обзора. WASD — движение.'));}catch{status('Прогулка: удерживайте ЛКМ для обзора. WASD — движение.');}}
 let currentPlantCount=0,currentPlantQuality=1;const renderQuality='high';let autoReduced=false,slowFrameStreak=0;
 let graphicsChoiceR105='auto';try{graphicsChoiceR105=localStorage.getItem('forma-graphics-r105')||'auto'}catch{}
 // Always prefer the original high-detail botanical assets.
@@ -1296,6 +1300,7 @@ function openCyclesR105(){
 
 function openRenderMenuR75(reason=''){
  if(pathTraceR72?.active||gpuMenuR75)return;
+ heldWalkKeys.clear();walkDrag=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();
  if(typeof reason!=='string')reason='';
  const p=gpuProfileR75(),overlay=document.createElement('div');gpuMenuR75=overlay;
  overlay.style.cssText='position:fixed;inset:0;z-index:100001;background:#101216b8;display:grid;place-items:center;padding:16px';
@@ -3590,7 +3595,7 @@ function walkStructureObstacles(){
 function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
- heldWalkKeys.clear();lastWalkFrame=0;
+ heldWalkKeys.clear();lastWalkFrame=0;walkDrag=null;walkLookDirty=false;
  state.view=view;if(lawnIntegratedR90){root?.children.forEach(n=>{if(n.userData.formaAutoLawnR90)n.visible=view==='2d';});if(view==='2d'&&lawnPanelR90)lawnPanelR90.style.display='none';}if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=!pbrR63Enabled&&view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&(pbrR63Enabled||sceneAtmosphere.clouds>0);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  $('#mobileWalkDock').hidden=view!=='walk';$('#mobileWalkToggle').textContent=view==='walk'?'Выйти из прогулки':'Прогулка';syncMobileTerrainDock();
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';
@@ -3618,7 +3623,7 @@ function setView(view){
   if(!treeLineupMode)controls.target.set(0,aimY,0);controls.enableRotate=true;
  }
  updateSun();resize();if(view==='3d')syncCameraHeight();
- status(view==='walk'?'Walk: W A S D — непрерывная прогулка по земле · мышь — осмотр · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
+ status(view==='walk'?'Прогулка: WASD — движение · мышь — обзор вверх, вниз и по сторонам · Esc — курсор. Клик по сцене — снова обзор.':'Режим '+view.toUpperCase()+' активен.');
 }
 function focusSelectedPlant(){
  const ref=state.selected?selectable(state.selected):null;
@@ -3886,7 +3891,9 @@ function setupComposition(){
   try{await action()}catch(error){message.textContent=error.message}
   finally{compositionBusy=false;drawCompositionList()}
  };
- $('#openComposition').onclick=()=>{
+ $('#openComposition').onclick=$('#cameraComposition').onclick=()=>{
+  if(document.pointerLockElement===canvas)document.exitPointerLock?.();
+  if(state.view==='walk')setView('3d');
   panel.hidden=!panel.hidden;
   if(!panel.hidden&&(!compositionSeries.length||compositionSignature!==compositionSource()))run(findComposition);
  };
@@ -4507,7 +4514,7 @@ function addEvents(){
  if(state.painting)return;
  if(e.pointerType==='mouse'&&e.button!==0)return; // Right drag is reserved for camera orbit.
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
- if(state.view==='walk'){if(e.pointerType==='mouse')canvas.requestPointerLock?.();return}
+ if(state.view==='walk'){if(e.pointerType==='mouse'){walkDrag={id:e.pointerId,x:e.clientX,y:e.clientY};requestWalkLook();}else{canvas.setPointerCapture?.(e.pointerId);}return}
  // Selecting a placed object takes priority over placing another model
  // on top of it; Shift+click still allows intentional overlap.
  if(e.pointerType==='mouse'&&!e.shiftKey&&['plant','light','build','landscape','models40','creatures'].includes(state.tool)){
@@ -4576,17 +4583,14 @@ const move=e=>{
  if(e.pointerId===state.activePointer&&state.down&&
   Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y)>(e.pointerType==='mouse'?5:14))
   tapCancelled=true;
- renderGate.invalidate();if(!(state.painting&&state.tool==='terrain'))updateBrushCursor(e);
+ renderGate.invalidate();
  if(state.view==='walk'){
-  const locked=document.pointerLockElement===canvas,mobile=e.pointerType==='touch'&&state.down;
-  if(locked||mobile){
-   const dx=locked?e.movementX:e.clientX-state.down.x,dy=locked?e.movementY:e.clientY-state.down.y;
-   walkYaw-=dx*.0035;walkPitch=Math.max(-1.25,Math.min(1.25,walkPitch-dy*.0035));
-   camera.rotation.set(walkPitch,walkYaw,0,'YXZ');
-   if(mobile)state.down={x:e.clientX,y:e.clientY};
-  }
+  if(document.pointerLockElement===canvas)return; // document mousemove handles locked look
+  if(e.pointerType!=='mouse'&&state.down&&e.pointerId===state.activePointer){walkLook(e.clientX-state.down.x,e.clientY-state.down.y);state.down={x:e.clientX,y:e.clientY};}
+  else if(walkDrag&&e.pointerId===walkDrag.id&&(e.buttons&1)){walkLook(e.clientX-walkDrag.x,e.clientY-walkDrag.y);walkDrag.x=e.clientX;walkDrag.y=e.clientY;}
   return;
  }
+ if(!(state.painting&&state.tool==='terrain'))updateBrushCursor(e);
  if(state.painting){
   if(e.pointerId!==state.activePointer)return;
   if(e.pointerType==='mouse'&&((e.buttons&1)===0||(e.buttons&2)!==0))return;
@@ -4646,7 +4650,7 @@ const up=e=>{
  if(document.body.dataset.presentation==='true')return;
  touchPointers.delete(e.pointerId);
  if(e.pointerId!==state.activePointer||!state.down)return;
- if(state.view==='walk'){if(state.tool==='select'&&lawnIntegratedR90&&!tapCancelled&&e.pointerType!=='mouse'&&hitLawnR92(e))openLawnPanelR90();state.down=null;return}
+ if(state.view==='walk'){walkDrag=null;state.down=null;return}
  if(state.painting&&e.pointerId!==state.activePointer)return;
  if(state.painting){
   if(brushStroke?.mode==='surface'&&!brushStroke.eraseSurface){
@@ -4693,7 +4697,11 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  controls.mouseButtons.RIGHT=THREE.MOUSE.ROTATE;
  controls.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;
 
- document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+ document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const v=b.dataset.view;if(v!==state.view)setView(v);if(v==='walk'&&!mobileDeviceR106())requestWalkLook();});
+ document.addEventListener('mousemove',e=>{if(state.view==='walk'&&document.pointerLockElement===canvas&&!pathTraceR72?.active&&!gpuMenuR75)walkLook(e.movementX,e.movementY);});
+ document.addEventListener('pointerlockchange',()=>{heldWalkKeys.clear();walkDrag=null;if(state.view==='walk')status(document.pointerLockElement===canvas?'Прогулка: WASD · мышь · Esc — освободить курсор.':'Кликните по сцене для обзора мышью. WASD — движение.');});
+ document.addEventListener('pointerlockerror',()=>{if(state.view==='walk')status('Удерживайте ЛКМ и двигайте мышь для обзора. WASD — движение.');});
+ window.addEventListener('pointerup',()=>{walkDrag=null;});
  document.querySelectorAll('[data-quick-tool]').forEach(button=>{button.insertAdjacentHTML('afterbegin',premiumIcon(button.dataset.quickTool));button.onclick=()=>{
  const tool=button.dataset.quickTool;chooseTool(tool);
  if(window.innerWidth<=850){if(tool==='terrain'){$('#library [data-item="raise"]')?.click();syncMobileTerrainDock();activateMobilePanel('scene')}else activateMobilePanel(tool==='select'?'scene':'tools')}
@@ -4824,8 +4832,9 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   if((e.ctrlKey||e.metaKey)&&key==='z'){e.preventDefault();restore(e.shiftKey?redo:undo,e.shiftKey?undo:redo);return}
   if((e.ctrlKey||e.metaKey)&&key==='y'){e.preventDefault();restore(redo,undo);return}
   if(state.view==='walk'){
-   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&(walkMovementKey(key)||key==='shift')){
-    e.preventDefault();heldWalkKeys.add(key);renderGate.invalidate();
+   const wk=walkKey(e);
+   if(!gpuMenuR75&&!pathTraceR72?.active&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&(walkMovementKey(wk)||wk==='shift')){
+    e.preventDefault();heldWalkKeys.add(wk);renderGate.invalidate();
    }
    return; // D strafe must never duplicate objects while walking.
   }
@@ -4839,7 +4848,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   if(e.key==='Enter'&&pointMode.length){e.preventDefault();finishContour()}
   if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
  });
- window.addEventListener('keyup',e=>heldWalkKeys.delete(e.key.toLowerCase()));
+ window.addEventListener('keyup',e=>heldWalkKeys.delete(walkKey(e)));
  window.addEventListener('blur',()=>{heldWalkKeys.clear();stopTerrainHold()});
  document.addEventListener('visibilitychange',()=>{if(document.hidden){heldWalkKeys.clear();stopTerrainHold()}});
  window.addEventListener('resize',resize);
@@ -4896,7 +4905,7 @@ function animate(now=0){
   }
  }
  // Orbit controls own 2D/3D; walk mode is a separate ground-locked camera.
- const cameraMoved=walked||Boolean(controls?.enabled&&controls.update());if(cameraMoved)lastCameraMotionR106=now;
+ const cameraMoved=walked||walkLookDirty||Boolean(controls?.enabled&&controls.update());walkLookDirty=false;if(cameraMoved)lastCameraMotionR106=now;
  if(!document.hidden&&now-lastTurfDetailAt>(phone?1400:350)&&(!phone||!turfDetail||now-lastCameraMotionR106>280||state.view==='walk'&&now-lastTurfDetailAt>2400)){lastTurfDetailAt=now;try{updateTurfDetail()}catch(error){invalidateTurfDetail();console.warn("Close turf detail unavailable",error)}}
  // Atmosphere never forces expensive continuous drawing on slow GPUs.
  // On stronger hardware both waves and clouds keep their gentle motion.
