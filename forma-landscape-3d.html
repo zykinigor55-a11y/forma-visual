@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R29</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R30</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -802,6 +802,7 @@ import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTria
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
 import {createDetailedFir,woodTexture,adoptFirPhotoMaps} from './forma-landscape-3d-fir-r25.js?v=R28';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
+import {createNaturalMaple} from './forma-landscape-3d-maple-r30.js?v=R30';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js?v=R23';
@@ -891,7 +892,7 @@ function treeAssetInfo(o){
   triangles+=Math.floor(count/3)*(n.isInstancedMesh?n.count:1);
   if((Array.isArray(n.material)?n.material:[n.material]).some(m=>m&&(m.alphaTest>0||m.transparent)))foliageMeshes++;
  });
- const status=real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
+ const status=group?.userData?.nativeMapleR30?'FORMA · клён R30 · '+group.userData.leafCount+' листьев':real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
  const file=real?(source?'Импортированная пользователем GLB':bundled?.userData?.formaAssetPath||'Путь не зарегистрирован'):'—';
  return {species,name:catalog(species)?.name||species,status,file,meshes,triangles,foliageMeshes};
 }
@@ -934,7 +935,7 @@ window.FORMA_SHRUB_MODEL_DIAGNOSTICS=()=>doc?.objects.filter(o=>catalog(o.catalo
 })||[];
 function updateModelHealth(){
  const el=$('#modelHealth');if(!el||!doc)return;
- const ids=[...new Set([...extra.filter(o=>!isLegacyFirExtra(o.type)).map(o=>o.type),...doc.objects.filter(o=>o.catalogId!=='ph-fir-sapling'||importedPlantModels.has(o.catalogId)).map(o=>o.catalogId)].filter(x=>modelPath(x)||MATURE_TREE_MODELS[x]||SHRUB_3D_MODELS[x]||POLY_HAVEN_TREE_MODELS[x]||x==='pine'))];
+ const ids=[...new Set([...extra.filter(o=>!isLegacyFirExtra(o.type)).map(o=>o.type),...doc.objects.filter(o=>!['ph-fir-sapling','maple'].includes(o.catalogId)||importedPlantModels.has(o.catalogId)).map(o=>o.catalogId)].filter(x=>modelPath(x)||MATURE_TREE_MODELS[x]||SHRUB_3D_MODELS[x]||POLY_HAVEN_TREE_MODELS[x]||x==='pine'))];
  const loaded=ids.filter(x=>bundledModelSources.has(x)).length;
  const loading=ids.filter(x=>bundledModelLoading.has(x)).length;
  const failed=ids.filter(x=>bundledModelFailures.has(x)).length;
@@ -1833,7 +1834,7 @@ function drawObject(o,entry,key){
     (SHRUB_3D_MODELS[o.catalogId]&&doc.atmosphere.season!=='summer'&&!['thuja-globe','boxwood'].includes(o.catalogId));
   // Keep the original asset at every planting density; adapt framebuffer cost instead.
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
-  if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
+  if(o.catalogId!=='maple'&&MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
   if(POLY_HAVEN_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
    if(o.catalogId!=='spirea'&&SHRUB_3D_MODELS[o.catalogId]&&!imported&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'))loadCuratedAdultTree(o.catalogId);
   // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
@@ -1842,11 +1843,12 @@ function drawObject(o,entry,key){
   const bundledAdult=(MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId])&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
   // The catalogue explicitly labels the stock spirea GLB as stylized, not botanically verified. Prefer the native finer twig/leaf construction unless the user imported a model.
   const nativeFir=o.catalogId==='ph-fir-sapling'&&!imported;
-  const source=imported||bundledPine||((o.catalogId==='spirea'||nativeFir)?null:bundledAdult)||null;
-  const waitingForReal=!nativeFir&&o.catalogId!=='spirea'&&!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
+  const nativeMaple=o.catalogId==='maple'&&!imported;
+  const source=imported||bundledPine||((o.catalogId==='spirea'||nativeFir||nativeMaple)?null:bundledAdult)||null;
+  const waitingForReal=!nativeFir&&!nativeMaple&&o.catalogId!=='spirea'&&!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
   // While the GLB loads retain the metric pickable. On confirmed failure use
   // a temporary native preview where available, without replacing the saved GLB reference.
-  g=nativeFir?createDetailedFir(THREE,o):source?makeRealVegetation(THREE,source,o,{
+  g=nativeMaple?createNaturalMaple(THREE,o,{season:doc.atmosphere.season}):nativeFir?createDetailedFir(THREE,o):source?makeRealVegetation(THREE,source,o,{
    shareGeometry:!!(bundledPine||bundledAdult)&&!imported,
    canopyCopies:0,
    pineGrowth:o.catalogId==='pine'?normalizePineGrowth(o.pine):null,
