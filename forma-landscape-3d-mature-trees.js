@@ -1,4 +1,4 @@
-import {POLY_HAVEN_TREE_MODELS} from './forma-landscape-3d-polyhaven-trees.js';
+import {POLY_HAVEN_TREE_MODELS} from './forma-landscape-3d-polyhaven-trees.js?v=visual-R19';
 /* Licensed source pages, reviewed 19 Nov 2026. Runtime loads bundled local GLBs only.
  * The model importer accepts any user-owned species-matching GLB with priority.
  */
