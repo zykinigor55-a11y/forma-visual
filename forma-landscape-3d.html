@@ -799,7 +799,7 @@ import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
-import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=R49';
+import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=R58';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
 import {createDetailedFir,woodTexture,adoptFirPhotoMaps} from './forma-landscape-3d-fir-r25.js?v=R28';
@@ -1863,7 +1863,7 @@ function drawObject(o,entry,key){
   // accurate crown diameter and height, all 18 species from shared catalog.
   const quality=currentPlantQuality;
   const imported=importedPlantModels.get(o.catalogId);
-  const nativeBirch=birchTestMode&&o.catalogId==='birch';
+  const nativeBirch=o.catalogId==='birch'&&!imported;
   // Keep summer-only broadleaf GLBs out of autumn/winter; use seasonal
   // species-aware 3D branches instead. Flowering cherry is spring-only.
   const seasonalNative=(doc.atmosphere.season==='winter'&&
@@ -1885,7 +1885,7 @@ function drawObject(o,entry,key){
   const nativeMaple=o.catalogId==='maple'&&!imported;
   const nativeWillow=o.catalogId==='willow'&&!imported;
   const source=imported||bundledPine||((o.catalogId==='spirea'||nativeFir||nativeMaple||nativeWillow)?null:bundledAdult)||null;
-  const waitingForReal=!nativeFir&&!nativeMaple&&!nativeWillow&&o.catalogId!=='spirea'&&!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
+  const waitingForReal=!nativeBirch&&!nativeFir&&!nativeMaple&&!nativeWillow&&o.catalogId!=='spirea'&&!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
   // While the GLB loads retain the metric pickable. On confirmed failure use
   // a temporary native preview where available, without replacing the saved GLB reference.
   g=nativeBirch?createNaturalBirch(THREE,o,{season:doc.atmosphere.season}):nativeWillow?createNaturalWillow(THREE,o,{season:doc.atmosphere.season}):nativeMaple?createNaturalMaple(THREE,o,{season:doc.atmosphere.season}):nativeFir?createDetailedFir(THREE,o):source?makeRealVegetation(THREE,source,o,{
@@ -2685,7 +2685,8 @@ function renderProps(){
  const isSpruce=ref.type==='object'&&o.catalogId==='spruce';
  const isMaple=ref.type==='object'&&o.catalogId==='maple'&&!importedPlantModels.has('maple');
  const isWillow=ref.type==='object'&&o.catalogId==='willow'&&!importedPlantModels.has('willow');
- const isTreeEditor=isPine||isSpruce||isMaple||isWillow;
+ const isBirch=ref.type==='object'&&o.catalogId==='birch'&&!importedPlantModels.has('birch');
+ const isTreeEditor=isPine||isSpruce||isMaple||isWillow||isBirch;
  const isShrub=ref.type==='object'&&catalog(o.catalogId)?.group==='shrubs';
  const isLight=ref.type==='object'&&catalog(o.catalogId)?.group==='lights';
  const isBoulder=ref.type==='object'&&catalog(o.catalogId)?.group==='boulders';
@@ -2711,7 +2712,7 @@ function renderProps(){
  syncSelectedObjectDock(ref,label);
  el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+
  (creature?'<p class="hint">Настоящая лицензированная GLB · CC0 · '+creature.species+
- ' · <a href="'+creature.source+'" target="_blank" rel="noopener noreferrer">Источник модели</a>. Рост, координаты, ориентация и фотопривязка сохраняются.</p>':'')+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):isMaple?mapleGrowthMarkup(o):isWillow?willowGrowthMarkup(o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
+ ' · <a href="'+creature.source+'" target="_blank" rel="noopener noreferrer">Источник модели</a>. Рост, координаты, ориентация и фотопривязка сохраняются.</p>':'')+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):isMaple?mapleGrowthMarkup(o):isWillow?willowGrowthMarkup(o):isBirch?('<div class="hint">Берёза R56 · возраст</div><div style="display:flex;gap:5px;flex-wrap:wrap">'+[[10,'Молодая'],[35,'Взрослая'],[75,'Старая']].map(([age,label])=>'<button type="button" data-birch-age="'+age+'" aria-pressed="'+(birchStage(o.birch?.age).age===age)+'" style="flex:1;'+(birchStage(o.birch?.age).age===age?'border-color:#c9ae85;background:#514839':'')+'">'+label+'</button>').join('')+'</div>'):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
  (isBoulder?'<div class="light-physical-inspector"><strong>КАМЕНЬ · НАТУРАЛЬНАЯ 3D-ФОРМА</strong><label for="rockShapeVariant">Вариант формы</label><select id="rockShapeVariant">'+[[1,'01 · природный'],[2,'02 · другой ракурс'],[3,'03 · природная вариация'],[4,'04 · природная вариация']].map(([v,name])=>'<option value="'+v+'"'+(rockVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><label for="rockBurial">Заглубление <output id="rockBurialValue">'+rockBurial+'%</output></label><input type="range" min="0" max="36" step="2" value="'+rockBurial+'" id="rockBurial"><small>Настоящая сканированная CC0-модель с PBR-текстурами. Диаметр, высота и угол задаются выше. Координаты не меняются.</small></div>':'')+
  (isLight?'<div class="light-physical-inspector"><strong>СВЕТ · РЕАЛЬНЫЙ 3D-КОРПУС</strong><label for="lampBrightness">Яркость <output id="lampBrightnessValue">'+Math.round(lightBrightness*100)+'%</output></label><input type="range" min="0" max="200" step="5" id="lampBrightness" value="'+Math.round(lightBrightness*100)+'"><label for="lampKelvin">Цветовая температура</label><select id="lampKelvin">'+[[2200,'2200 K · янтарный'],[2700,'2700 K · тёплый'],[3000,'3000 K · нейтрально-тёплый'],[4000,'4000 K · нейтральный']].map(([k,n])=>'<option value="'+k+'"'+(lightKelvin===k?' selected':'')+'>'+n+'</option>').join('')+'</select><small>Реальный источник внутри модели. Ночью свет влияет на растения и поверхности. Положение лампы не меняется.</small></div>':'')+(isLight&&o.catalogId==='globe'?'<div class="light-physical-inspector"><label for="lampGlobeSize">Диаметр светильника-шара</label><select id="lampGlobeSize">'+[[1,'40 см · стандартный'],[2,'25 см · малый'],[3,'60 см · большой'],[4,'80 см · XL']].map(([v,name])=>'<option value="'+v+'"'+(globeVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><small>4 размера по вашему референсу. Сохраняем координаты каждого шара.</small></div>':'')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
@@ -2798,6 +2799,7 @@ function renderProps(){
  if(isSpruce)mountSpruceGrowth(el,o,{onCommit:value=>commitSelectedSpruceGrowth(o,value)});
  if(isMaple)mountMapleGrowth(el,o,value=>commitSelectedMapleGrowth(o,value));
  if(isWillow)mountWillowGrowth(el,o,value=>commitSelectedWillowGrowth(o,value));
+ if(isBirch)el.querySelectorAll('[data-birch-age]').forEach(b=>b.onclick=()=>{const p=birchStage(Number(b.dataset.birchAge));push();o.birch={age:p.age};o.height=p.height;o.diameter=p.diameter;save();rebuild();renderProps();});
  if(isShrub){
   el.querySelectorAll('[data-shrub-variant]').forEach(button=>button.onclick=()=>{
    const choice=Number(button.dataset.shrubVariant);
@@ -3904,6 +3906,7 @@ async function renderAi(series=null){
   // Use measurements of the rendered individual, not default age dimensions.
   const photoObjects=measuredPlan.objects.map(o=>{
    const m=sceneTrees.get(o.id);
+   if(o.catalogId==='birch'&&m?.nativeBirchR56){const p=birchStage(m.birchAge);return {...o,birch:{age:p.age},photoTreeModel:{revision:'R56',trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount,primaryBranches:p.limbs}};}
    if(o.catalogId==='willow'&&m?.nativeWillowR49)return {...o,willow:{age:m.willowAge},photoTreeModel:{trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount}};
    if(o.catalogId!=='maple'||!m?.nativeMapleR39)return o;
    return {...o,maple:{age:m.mapleAge},photoTreeModel:{trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount}};
