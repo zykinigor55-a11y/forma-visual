@@ -480,7 +480,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R17</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R18</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -851,6 +851,28 @@ function readBuildInfo(){
    'ВНИМАНИЕ: Render запущен из ветки «'+branch+'», а редактор обновляется в dom-render-nanobanana. Проверьте источник сервиса.';
  }).catch(()=>{el.textContent='Версию Render определить не удалось. Проверьте публикацию.'});
 }
+function treeAssetInfo(o){
+ const species=o.catalogId,group=pickables.find(g=>g.userData.key==='object:'+o.id);
+ const source=importedPlantModels.get(species),bundled=bundledModelSources.get(species);
+ const real=!!group?.userData?.realGlb;
+ let meshes=0,triangles=0,foliageMeshes=0;
+ group?.traverse(n=>{
+  if(!n.isMesh||!n.geometry||n.userData.selectionProxy||n.name==='forma-tree-click-volume'||n.userData.selectionRing)return;
+  meshes++;const count=n.geometry.index?.count??n.geometry.attributes.position?.count??0;
+  triangles+=Math.floor(count/3)*(n.isInstancedMesh?n.count:1);
+  if((Array.isArray(n.material)?n.material:[n.material]).some(m=>m&&(m.alphaTest>0||m.transparent)))foliageMeshes++;
+ });
+ const status=real?'GLB':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
+ const file=real?(source?'Импортированная пользователем GLB':bundled?.userData?.formaAssetPath||'Путь не зарегистрирован'):'—';
+ return {species,name:catalog(species)?.name||species,status,file,meshes,triangles,foliageMeshes};
+}
+function appendTreeAssetInfo(el,o){
+ const info=treeAssetInfo(o),card=document.createElement('section');card.className='roof-garland-editor';card.style.cssText='margin:0 0 8px;padding:8px;overflow-wrap:anywhere;font-size:12px';
+ const title=document.createElement('strong');title.textContent='МОДЕЛЬ · '+info.name;card.append(title);
+ const body=document.createElement('div');body.textContent=info.species+' · '+info.status+' · '+info.triangles.toLocaleString('ru-RU')+' треуг.';card.append(body);
+ const file=document.createElement('small');file.textContent=info.file;card.append(file);
+ el.prepend(card);
+}
 function treeModelDiagnostics(){
  // Read-only scene health to catch PBR-to-procedural substitutions on Android.
  // Avoid exposing stored project names, tokens or model binary data.
@@ -867,7 +889,7 @@ function treeModelDiagnostics(){
    const foliage=materials.filter(m=>m&&m.alphaTest>0);
    if(foliage.length){foliageMeshes++;foliageMaterials+=foliage.length}
   });
-  return {species:o.catalogId,status:state,foliageMeshes,foliageMaterials,
+  return {...treeAssetInfo(o),species:o.catalogId,status:state,foliageMeshes,foliageMaterials,
    height:Number(o.height)||0,diameter:Number(o.diameter)||0};
  })||[];
 }
@@ -1492,6 +1514,7 @@ function loadMatureScotsPine(){
   });
   if(meshes.length<2||!foliage.length||!trunks.length)
    throw Error('Модель должна содержать геометрию ствола и прозрачную хвою');
+  result.scene.userData.formaAssetPath=MATURE_SCOTS_PINE_GLB;
   bundledModelSources.set(species,result.scene);
   if(root&&renderer&&doc)rebuild();
   refreshPlantAssetStatus();updateModelHealth();
@@ -1522,11 +1545,11 @@ function loadCuratedAdultTree(species){
  // A failed preferred GLB stays selectable, but will NOT silently show the
  // obsolete sparse backup spruce/birch. The user sees a retry prompt instead.
  (async()=>{
-  try{return await matureTreeLoader.loadAsync(entry.path)}
+  try{const result=await matureTreeLoader.loadAsync(entry.path);result.scene.userData.formaAssetPath=entry.path;return result;}
   catch(error){
    if(!entry.remoteFallbackPath)throw error;
    console.warn('Local CC0 tree model unavailable, using pinned source:',species,error?.message||error);
-   return matureTreeLoader.loadAsync(entry.remoteFallbackPath);
+   const result=await matureTreeLoader.loadAsync(entry.remoteFallbackPath);result.scene.userData.formaAssetPath=entry.remoteFallbackPath;return result;
   }
  })().then(result=>{
   if(!result?.scene)throw Error('GLB has no scene');
@@ -2444,6 +2467,7 @@ function renderProps(){
  (isLight?'<div class="light-physical-inspector"><strong>СВЕТ · РЕАЛЬНЫЙ 3D-КОРПУС</strong><label for="lampBrightness">Яркость <output id="lampBrightnessValue">'+Math.round(lightBrightness*100)+'%</output></label><input type="range" min="0" max="200" step="5" id="lampBrightness" value="'+Math.round(lightBrightness*100)+'"><label for="lampKelvin">Цветовая температура</label><select id="lampKelvin">'+[[2200,'2200 K · янтарный'],[2700,'2700 K · тёплый'],[3000,'3000 K · нейтрально-тёплый'],[4000,'4000 K · нейтральный']].map(([k,n])=>'<option value="'+k+'"'+(lightKelvin===k?' selected':'')+'>'+n+'</option>').join('')+'</select><small>Реальный источник внутри модели. Ночью свет влияет на растения и поверхности. Положение лампы не меняется.</small></div>':'')+(isLight&&o.catalogId==='globe'?'<div class="light-physical-inspector"><label for="lampGlobeSize">Диаметр светильника-шара</label><select id="lampGlobeSize">'+[[1,'40 см · стандартный'],[2,'25 см · малый'],[3,'60 см · большой'],[4,'80 см · XL']].map(([v,name])=>'<option value="'+v+'"'+(globeVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><small>4 размера по вашему референсу. Сохраняем координаты каждого шара.</small></div>':'')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
   '<small>Сохранены родные материалы ветвей и хвои.</small>'):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
+ if(ref.type==='object'&&catalog(o.catalogId)?.group==='trees')appendTreeAssetInfo(el,o);
  if(ref.type==='house'||ref.type==='building'){
   if(ref.type==='house'){
    el.insertAdjacentHTML('afterbegin',houseInteriorMarkup());
