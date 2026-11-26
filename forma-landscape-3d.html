@@ -799,7 +799,7 @@ import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
-import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=night-paving-fix-v4-20261122';
+import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=visual-R19';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=understory-mobile-v1';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -807,8 +807,8 @@ import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliag
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js?v=visual-R19';
 import {pineGrowthMarkup,mountPineGrowth,normalizePineGrowth,pineGrowthEquals,pineDimensions} from './forma-landscape-pine-growth.js';
 import {spruceGrowthMarkup,mountSpruceGrowth,normalizeSpruceGrowth,spruceDimensions} from './forma-landscape-spruce-growth.js';
-import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from './forma-landscape-3d-mature-trees.js';
-import {POLY_HAVEN_TREE_MODELS} from './forma-landscape-3d-polyhaven-trees.js';
+import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from './forma-landscape-3d-mature-trees.js?v=visual-R19';
+import {POLY_HAVEN_TREE_MODELS} from './forma-landscape-3d-polyhaven-trees.js?v=visual-R19';
 import {SHRUB_3D_MODELS} from './forma-landscape-3d-shrub-models.js';
 import {shrubEditorMarkup,shrubSizePreset} from './forma-landscape-shrub-editor.js';
 
@@ -3062,6 +3062,7 @@ function setPresentationMode(on){
  if(on&&(state.painting||state.drag||state.down||state.tool!=='select'||pointMode.length)){status('Завершите текущий инструмент и включите «Выбор».');return;}
  if(on){if(state.view!=='3d')setView('3d');setSceneClimateOpen(false);activateMobilePanel('scene');state.selected=null;renderProps();}
  document.body.dataset.presentation=String(on);
+ controls.mouseButtons.LEFT=on?THREE.MOUSE.ROTATE:null;
  $('#formaPresentationBar').hidden=!on;
  const outline=root.getObjectByName('forma-parcel-outline');if(outline)outline.visible=!on;
  renderGate.invalidate();requestAnimationFrame(resize);
