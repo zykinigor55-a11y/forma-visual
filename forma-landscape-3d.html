@@ -511,7 +511,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R129</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R130</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -611,6 +611,12 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
   <label for="quickSunStrength" data-climate-group="sun">Яркость солнца <output id="quickSunStrengthValue">100%</output></label><input id="quickSunStrength" data-climate-group="sun" type="range" min="30" max="170" step="5">
   <label for="quickSunSoftness" data-climate-group="shadows">Мягкость теней <output id="quickSunSoftnessValue">2.6</output></label><input id="quickSunSoftness" data-climate-group="shadows" type="range" min="1" max="5" step=".2">
   <label for="quickCloudCover" data-climate-group="atmosphere">Облачность <output id="quickCloudCoverValue">35%</output></label><input id="quickCloudCover" data-climate-group="atmosphere" type="range" min="0" max="100" step="5">
+  <label for="quickCloudDensity" data-climate-group="atmosphere">Плотность облаков <output id="quickCloudDensityValue">65%</output></label><input id="quickCloudDensity" data-climate-group="atmosphere" type="range" min="15" max="100" step="5" value="65">
+  <label for="quickCloudScale" data-climate-group="atmosphere">Размер облаков <output id="quickCloudScaleValue">100%</output></label><input id="quickCloudScale" data-climate-group="atmosphere" type="range" min="40" max="200" step="5" value="100">
+  <label for="quickCloudHeight" data-climate-group="atmosphere">Высота облачного слоя <output id="quickCloudHeightValue">100%</output></label><input id="quickCloudHeight" data-climate-group="atmosphere" type="range" min="40" max="220" step="5" value="100">
+  <label for="quickCloudThickness" data-climate-group="atmosphere">Толщина облачного слоя <output id="quickCloudThicknessValue">100%</output></label><input id="quickCloudThickness" data-climate-group="atmosphere" type="range" min="25" max="200" step="5" value="100">
+  <label for="quickCloudTransmission" data-climate-group="atmosphere">Светопропускание облаков <output id="quickCloudTransmissionValue">65%</output></label><input id="quickCloudTransmission" data-climate-group="atmosphere" type="range" min="0" max="100" step="5" value="65">
+  <label for="quickCloudDetail" data-climate-group="atmosphere">Детализация облаков <output id="quickCloudDetailValue">75%</output></label><input id="quickCloudDetail" data-climate-group="atmosphere" type="range" min="20" max="100" step="5" value="75">
   <label for="quickGlobalFill" data-climate-group="shadows">Заполняющий свет <output id="quickGlobalFillValue">110%</output></label><input id="quickGlobalFill" data-climate-group="shadows" type="range" min="30" max="180" step="5">
   <label for="quickAerialHaze" data-climate-group="atmosphere">Дымка <output id="quickAerialHazeValue">30%</output></label><input id="quickAerialHaze" data-climate-group="atmosphere" type="range" min="0" max="100" step="5">
  </div>
@@ -733,6 +739,18 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
   <input id="globalFill" type="range" min="30" max="180" value="110" step="5">
   <label for="cloudCover">Облачность <output id="cloudCoverValue">35%</output></label>
   <input id="cloudCover" type="range" min="0" max="100" value="35" step="5">
+  <label for="cloudDensity">Плотность облаков <output id="cloudDensityValue">65%</output></label>
+  <input id="cloudDensity" type="range" min="15" max="100" value="65" step="5">
+  <label for="cloudScale">Размер облаков <output id="cloudScaleValue">100%</output></label>
+  <input id="cloudScale" type="range" min="40" max="200" value="100" step="5">
+  <label for="cloudHeight">Высота облачного слоя <output id="cloudHeightValue">100%</output></label>
+  <input id="cloudHeight" type="range" min="40" max="220" value="100" step="5">
+  <label for="cloudThickness">Толщина облачного слоя <output id="cloudThicknessValue">100%</output></label>
+  <input id="cloudThickness" type="range" min="25" max="200" value="100" step="5">
+  <label for="cloudTransmission">Светопропускание облаков <output id="cloudTransmissionValue">65%</output></label>
+  <input id="cloudTransmission" type="range" min="0" max="100" value="65" step="5">
+  <label for="cloudDetail">Детализация облаков <output id="cloudDetailValue">75%</output></label>
+  <input id="cloudDetail" type="range" min="20" max="100" value="75" step="5">
   <label for="aerialHaze">Воздушная перспектива <output id="aerialHazeValue">30%</output></label>
   <input id="aerialHaze" type="range" min="0" max="100" value="30" step="5">
   <label for="nightGlow">Свечение ночного неба <output id="nightGlowValue">75%</output></label>
@@ -803,14 +821,14 @@ import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r89.js?v=R89';
 import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R118';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R122';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
-import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R129';
+import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R130';
 import {exportCyclesJob,CYclesPresets} from './forma-cycles-export-r107.js?v=R123';
 import {createWindSystem,windRipple} from './forma-wind-r91.js?v=R113';
 const windR74=createWindSystem(THREE);let windAmountR74=window.innerWidth<=850?15:25;try{const v=localStorage.getItem('forma-wind-r75');if(v!==null)windAmountR74=Math.max(0,Math.min(100,Number(v)||0));}catch{}
 let pathTraceR72=null,gpuLostR75=false,gpuMenuR75=null;
 import {updateHDRSky} from './forma-pbr-sky-r64.js?v=R64';
 import {photographicHDR} from './forma-photo-assets-r73.js?v=R73';
-import {makePhotographicSky,updatePhotographicSky,photographicFog} from './forma-photographic-environment-r71.js?v=R71';
+import {makePhotographicSky,updatePhotographicSky,photographicFog} from './forma-photographic-environment-r71.js?v=R130';
 import {installSoftPenumbra,renderPhotorealFrame,applyTurfVariation,createPreviewMeadow,releasePhotorealPipeline} from './forma-photoreal-render-r88.js?v=R88';
 const pbrR63Enabled=new URLSearchParams(location.search).get('pbr')!=='off';
 const r66AOEnabled=pbrR63Enabled&&new URLSearchParams(location.search).get('ao')!=='off';
@@ -830,7 +848,7 @@ import {createDetailedFir,woodTexture,adoptFirPhotoMaps,firStage} from './forma-
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
-import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R129';
+import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R130';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
 import {createNaturalOak,oakStage} from './forma-landscape-3d-oak-r74.js?v=R74';
 import {normalizeWillowGrowth,willowDimensions,willowGrowthMarkup,mountWillowGrowth} from './forma-landscape-willow-growth.js?v=R50';
@@ -868,7 +886,7 @@ import {inspectRenderDataURL} from './forma-landscape-ai-photo-quality.js?v=full
 import {appendBrushPoint,strokeSample,plantScatterPositions,strokeDistance,strokeRibbon} from './forma-landscape-3d-strokes.js';
 import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-landscape-3d-surface-brush.js';
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js?v=local-20261126';
-import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js';
+import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js?v=R130';
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
 import {addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
 import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape-3d-snow-canopy.js?v=snow-canopy-opaque-glb-v2-20261122';
@@ -891,7 +909,7 @@ const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55
 const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76'].includes(treeTestScene);
 const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-r83','lawn-r84','lawn-r85','lawn-r86','lawn-r87','lawn-r88','lawn-r89','lawn-r90','lawn-r91','lawn-r92','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal',lawnFlowersR88=75,lawnWheatHeightR88=76,lawnHeightR90=100,lawnDensityR90=100,lawnPressedR90=45,lawnPanelR90=null,lawnPanelSyncR90=null;
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
-const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129'].includes(treeTestScene);
+const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130'].includes(treeTestScene);
 const treeLineupMode=rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -1136,7 +1154,7 @@ function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;readLawnSettingsR90();const old=cachedGroundTexture;cachedGroundTexture=null;save();rebuild();old?.dispose();lawnPanelSyncR90?.();renderHouseLibrary()}
 function makeTreeLineup(){
  const d=freshProject();if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
- if(rowanTestMode){const p=rowanStage(35);d.title='FORMA · Рябина обыкновенная · R129';d.site={width:32,height:32,orientation:0,boundary:null};d.objects=[{id:'rowan-test',catalogId:'rowan',type:'trees',x:16,y:16,height:p.height,diameter:p.diameter,rotation:0,variant:1}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};const n=normalizeProject(d);n.objects[0].rowan={age:p.age};return n;}
+ if(rowanTestMode){const p=rowanStage(35);d.title='FORMA · Рябина обыкновенная · R130';d.site={width:32,height:32,orientation:0,boundary:null};d.objects=[{id:'rowan-test',catalogId:'rowan',type:'trees',x:16,y:16,height:p.height,diameter:p.diameter,rotation:0,variant:1}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};const n=normalizeProject(d);n.objects[0].rowan={age:p.age};return n;}
  if(firTestMode){const p=firStage(45);d.title='FORMA · Пихта · R107';d.site={width:40,height:40,orientation:0,boundary:null};d.objects=[{id:'fir-test',catalogId:'ph-fir-sapling',type:'trees',x:20,y:20,height:p.height,diameter:p.diameter,rotation:0,variant:1,fir:{age:p.age}}];d.buildings=[];return normalizeProject(d);}
  d.title=oakTestMode?'FORMA · Дуб черешчатый · R76':birchTestMode?'FORMA · Берёза повислая · R56':'FORMA · Ива плакучая · R51';
  d.site={width:32,height:32,orientation:0,boundary:null};
@@ -1191,7 +1209,7 @@ function setupLineupNavigation(){
  const panel=document.createElement('div');
  panel.style.cssText='position:absolute;z-index:15;bottom:76px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;width:min(380px,94%);max-width:94%;padding:9px;background:#24282df5;border:1px solid #777;border-radius:9px;color:#eee';
  panel.innerHTML='<div style="width:100%;font-size:10px;letter-spacing:1.5px;text-align:center;color:#bfc1c2">ВОЗРАСТ ИВЫ · R51</div><div style="width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px"><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="10">Молодая</button><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="35">Взрослая</button><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="75">Старая</button></div><a href="./forma-landscape-3d.html" style="color:#e8d1a9;padding:6px">Проект</a>';
- if(rowanTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','РЯБИНА ОБЫКНОВЕННАЯ · R129');
+ if(rowanTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','РЯБИНА ОБЫКНОВЕННАЯ · R130');
  if(firTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','ПИХТА · R107').replace('data-test-age="35"','data-test-age="45"').replace('data-test-age="75"','data-test-age="100"');
  if(birchTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','БЕРЁЗА ПОВИСЛАЯ · R56');
  if(oakTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','ДУБ ЧЕРЕШЧАТЫЙ · R76').replace('data-test-age="10">Молодая','data-test-age="15">Молодой').replace('data-test-age="35">Взрослая','data-test-age="60">Взрослый').replace('data-test-age="75">Старая','data-test-age="150">Вековой');
@@ -1324,7 +1342,7 @@ function startPathTraceR72(profile='balanced'){
   focus:lawnFocusR104(camera,controls,doc.site,terrainAt(camera.position.x,camera.position.z),state.view),
   contains:lawnAllowedR90,terrainAt:lawnSurfaceAtR90,horizon:rowanTestMode
  }:null;
- pathTraceR72=createPathTraceMode(THREE,{renderer,scene,root,camera,canvas,profile,lawn,atmosphere:{...doc.atmosphere,solarSoftness:solarSettings.softness},onClose:()=>{pathTraceR72=null;if(!gpuLostR75&&!renderer.getContext().isContextLost()){resize();renderGate.invalidate();}},onFailure:reason=>{if(!gpuLostR75)openRenderMenuR75('GPU-рендер остановлен: '+reason+'. Выберите облегчённый режим.');}});
+ pathTraceR72=createPathTraceMode(THREE,{renderer,scene,root,camera,canvas,profile,lawn,atmosphere:{...doc.atmosphere,solarSoftness:solarSettings.softness,cloudSettings:{...sceneAtmosphere}},onClose:()=>{pathTraceR72=null;if(!gpuLostR75&&!renderer.getContext().isContextLost()){resize();renderGate.invalidate();}},onFailure:reason=>{if(!gpuLostR75)openRenderMenuR75('GPU-рендер остановлен: '+reason+'. Выберите облегчённый режим.');}});
 }
 function initialize(){
  $('#pathTraceR72Button').onclick=openRenderMenuR75;
@@ -3228,7 +3246,8 @@ function setupNightHomeControls(){
 const QUICK_CLIMATE_LINKS=[
  ['quickSunAzimuth','sunAzimuth','°'],['quickSunElevation','sunElevation','°'],
  ['quickSunStrength','sunStrength','%'],['quickSunSoftness','sunSoftness',''],
- ['quickCloudCover','cloudCover','%'],['quickGlobalFill','globalFill','%'],
+ ['quickCloudCover','cloudCover','%'],
+ ['quickCloudDensity','cloudDensity','%'],['quickCloudScale','cloudScale','%'],['quickCloudHeight','cloudHeight','%'],['quickCloudThickness','cloudThickness','%'],['quickCloudTransmission','cloudTransmission','%'],['quickCloudDetail','cloudDetail','%'],['quickGlobalFill','globalFill','%'],
  ['quickAerialHaze','aerialHaze','%']
 ];
 const WEATHER_INTENSITY_KEYS=[
@@ -3318,6 +3337,7 @@ function syncQuickClimateControls(){
  };
  const atmosphereValues={
   cloudCover:sceneAtmosphere.clouds,globalFill:sceneAtmosphere.globalFill,
+  cloudDensity:sceneAtmosphere.cloudDensity,cloudScale:sceneAtmosphere.cloudScale,cloudHeight:sceneAtmosphere.cloudHeight,cloudThickness:sceneAtmosphere.cloudThickness,cloudTransmission:sceneAtmosphere.cloudTransmission,cloudDetail:sceneAtmosphere.cloudDetail,
   aerialHaze:sceneAtmosphere.haze
  };
  for(const [quickId,sourceId,suffix] of QUICK_CLIMATE_LINKS){
@@ -3402,6 +3422,7 @@ function saveSolarSettings(){
 }
 function syncAtmosphereControls(){
  const values={globalFill:sceneAtmosphere.globalFill,cloudCover:sceneAtmosphere.clouds,
+  cloudDensity:sceneAtmosphere.cloudDensity,cloudScale:sceneAtmosphere.cloudScale,cloudHeight:sceneAtmosphere.cloudHeight,cloudThickness:sceneAtmosphere.cloudThickness,cloudTransmission:sceneAtmosphere.cloudTransmission,cloudDetail:sceneAtmosphere.cloudDetail,
   aerialHaze:sceneAtmosphere.haze,nightGlow:sceneAtmosphere.nightGlow,waterRipples:sceneAtmosphere.ripples};
  for(const [id,value] of Object.entries(values)){
   const node=$('#'+id),label=$('#'+id+'Value');
@@ -3415,6 +3436,7 @@ function saveAtmosphereControls(){
 function applyAtmosphereControls(){
  sceneAtmosphere=normalizeSceneAtmosphere({
   globalFill:$('#globalFill').value,clouds:$('#cloudCover').value,
+  cloudDensity:$('#cloudDensity').value,cloudScale:$('#cloudScale').value,cloudHeight:$('#cloudHeight').value,cloudThickness:$('#cloudThickness').value,cloudTransmission:$('#cloudTransmission').value,cloudDetail:$('#cloudDetail').value,
   haze:$('#aerialHaze').value,nightGlow:$('#nightGlow').value,ripples:$('#waterRipples').value
  });
  syncAtmosphereControls();saveAtmosphereControls();updateSun();
@@ -3479,7 +3501,7 @@ function updateSun(){
  balanceOutdoorPBR(THREE,{scene,sun,sky,bounce:bounced,weather,time:val,modelling:modellingLight,enabled:pbrR63Enabled});
  // R69: one calibrated light profile replaces the previous stacked intensity multipliers.
  if(cloudLayer&&pbrR63Enabled){
-  updatePhotographicSky(cloudLayer,{time:val,weather,sun,coverage:atmosphere.clouds,haze:atmosphere.haze,view:state.view});
+  updatePhotographicSky(cloudLayer,{time:val,weather,sun,coverage:atmosphere.clouds,haze:atmosphere.haze,view:state.view,settings:sceneAtmosphere});
  }else if(cloudLayer){
   cloudLayer.visible=state.view!=='2d'&&atmosphere.clouds>.01;
   cloudLayer.material.uniforms.coverage.value=atmosphere.clouds;
@@ -4686,7 +4708,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   $('#'+id).addEventListener('change',onSolarInput);
  }
  $('#sunReset').onclick=()=>{solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();updateSun();renderPhotoFrame();status('Солнце возвращено к пресету '+$('#time').selectedOptions[0]?.textContent+'.')};
- for(const id of ['globalFill','cloudCover','aerialHaze','nightGlow','waterRipples'])
+ for(const id of ['globalFill','cloudCover','aerialHaze','nightGlow','waterRipples','cloudDensity','cloudScale','cloudHeight','cloudThickness','cloudTransmission','cloudDetail'])
   $('#'+id).addEventListener('input',applyAtmosphereControls);
  $('#atmosphereReset').onclick=()=>{
   sceneAtmosphere=normalizeSceneAtmosphere(ATMOSPHERE_DEFAULTS);
