@@ -6,7 +6,7 @@
 (() => {
  'use strict';
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const TIME={loaderEnd:900,logo:0,name:1050,descriptor:1350,minShow:reduced?1500:2600,recovery:14000};
+ const TIME={loaderEnd:680,logo:380,name:900,descriptor:1120,minShow:reduced?1000:2150,recovery:14000};
  const root=document.documentElement;
  const screen=document.getElementById('forma-intro');
  if(!screen)return;
@@ -102,7 +102,7 @@
     if(lastFocus?.isConnected&&lastFocus!==document.body)lastFocus.focus({preventScroll:true});
     else document.querySelector('.forma-hero-primary')?.focus({preventScroll:true});
    }
-  },850);
+  },650);
  }
  function checkReadiness(){
   if(!active||closing||!minimumPassed)return;
