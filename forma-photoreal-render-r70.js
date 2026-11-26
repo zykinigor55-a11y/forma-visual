@@ -49,7 +49,7 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  void main(){float z=texture2D(depth,vUv).r;if(z>.99999){gl_FragColor=vec4(0.);return;}vec3 p=pos(vUv,z);vec3 a=at(vUv+vec2(pixel.x,0.))-p,b=p-at(vUv-vec2(pixel.x,0.)),c=at(vUv+vec2(0.,pixel.y))-p,d=p-at(vUv-vec2(0.,pixel.y));vec3 n=normalize(cross(length(a)<length(b)?a:b,length(c)<length(d)?c:d));if(dot(n,-p)<0.)n=-n;
  vec3 bounce=vec3(0.);float total=0.;float rot=fract(sin(dot(floor(vUv/pixel*.5),vec2(12.9898,78.233)))*43758.5453)*6.28318;
  for(int i=0;i<GI_SAMPLES;i++){float fi=float(i),ang=rot+fi*2.39996;float radius=(.35+fi/float(GI_SAMPLES))*.085/max(1.,-p.z*.12);vec2 uv=vUv+vec2(cos(ang),sin(ang))*radius*vec2(pixel.x/pixel.y,1.);if(any(lessThan(uv,vec2(.002)))||any(greaterThan(uv,vec2(.998))))continue;float dz=texture2D(depth,uv).r;if(dz>.99999)continue;vec3 q=pos(uv,dz),v=q-p;float dist=length(v);if(dist<.04||dist>3.5)continue;float cosine=max(0.,dot(n,v/dist));float weight=cosine*exp(-dist*.65);vec3 light=min(texture2D(beauty,uv).rgb,vec3(1.6));bounce+=light*weight;total+=weight;}
- gl_FragColor=vec4(bounce/max(2.5,total),z);}`});
+ gl_FragColor=vec4(bounce/max(2.5,total),-p.z);}`});
  const giScene=new T.Scene(),giCamera=new T.Camera(),giQuad=new T.Mesh(new T.PlaneGeometry(2,2),giMat);giQuad.frustumCulled=false;giScene.add(giQuad);
  const mat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:true,uniforms:{beauty:{value:target.texture},ambient:{value:ao.pdRenderTarget.texture},depth:{value:target.depthTexture},strength:{value:.52},aoTexel:{value:new T.Vector2(2/w,2/h)},cameraNear:{value:camera.near},cameraFar:{value:camera.far},gi:{value:giTarget.texture},giStrength:{value:.16},inverseProjection:{value:camera.projectionMatrixInverse.clone()},cameraWorld:{value:camera.matrixWorld.clone()},fogColor:{value:new T.Color('#c4d3df')},fogDensity:{value:.002},fogStart:{value:20},pixel:{value:new T.Vector2(1/w,1/h)}},
  vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,
@@ -69,7 +69,7 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  if(z<.99999){
  c.rgb*=mix(1.,occ,weight);
  vec3 indirect=vec3(0.);float gw=0.;
- for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec2 u=clamp(vUv+vec2(float(i),float(j))*aoTexel*.65,vec2(.0),vec2(1.));vec4 g=texture2D(gi,u);float k=exp(-abs(linearDepth(g.a)-center)/max(.12,center*.012));indirect+=g.rgb*k;gw+=k;}
+ for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec2 u=clamp(vUv+vec2(float(i),float(j))*aoTexel*.65,vec2(.0),vec2(1.));vec4 g=texture2D(gi,u);float k=g.a>0.0?exp(-abs(g.a-center)/max(.12,center*.012)):0.0;indirect+=g.rgb*k;gw+=k;}
  c.rgb+=indirect/max(gw,.001)*giStrength*clamp(1.-dot(c.rgb,vec3(.2126,.7152,.0722))*.45,.25,1.);
  vec4 vp=inverseProjection*vec4(vUv*2.-1.,z*2.-1.,1.);vec3 world=(cameraWorld*vec4(vp.xyz/vp.w,1.)).xyz;
  float path=max(0.,length(vp.xyz/vp.w)-fogStart);
