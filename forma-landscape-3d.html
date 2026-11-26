@@ -508,14 +508,14 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R81</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R82</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
 <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза</a>
-<a href="forma-landscape-3d.html?scene=oak-r76&v=76" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r81&v=81">Газон</a>
+<a href="forma-landscape-3d.html?scene=oak-r76&v=76" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r82&v=82">Газон</a>
 <a href="forma-preview.html?tool=landscape-project">← К плану</a></nav></details>
  </div>
 </header>
@@ -796,7 +796,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <script type="module">
 import * as THREE from 'three';
 import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r77.js?v=R77';
-import {createDenseLawn,tickDenseLawn} from './forma-dense-lawn-r81.js?v=R81';
+import {createDenseLawn,tickDenseLawn,lawnTerrainMicro} from './forma-dense-lawn-r82.js?v=R82';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R70';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
 import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R75';
@@ -883,7 +883,7 @@ const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:n
 const treeTestScene=new URLSearchParams(location.search).get('scene');
 const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55','birch-r56'].includes(treeTestScene);
 const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76'].includes(treeTestScene);
-const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal';
+const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal';
 const treeLineupMode=lawnTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const pid=lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
@@ -1125,7 +1125,7 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();if(lawnTestMode){d.title='FORMA · Газон · R81';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
+ const d=freshProject();if(lawnTestMode){d.title='FORMA · Газон · R82';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
  d.title=oakTestMode?'FORMA · Дуб черешчатый · R76':birchTestMode?'FORMA · Берёза повислая · R56':'FORMA · Ива плакучая · R51';
  d.site={width:32,height:32,orientation:0,boundary:null};
  d.objects=oakTestMode?[{id:'oak-test',catalogId:'oak',type:'trees',x:16,y:16,height:17,diameter:15,rotation:0,variant:1,oak:{age:60}}]:birchTestMode?[{id:'birch-test',catalogId:'birch',type:'trees',x:16,y:16,height:16,diameter:9,rotation:0,variant:1,birch:{age:35}}]:[{id:'willow-test',catalogId:'willow',type:'trees',x:16,y:16,height:11,diameter:11,rotation:0,variant:1,willow:{age:35}}];
@@ -1133,16 +1133,16 @@ function makeTreeLineup(){
 }
 function setupLawnPreviewR77(){
  const panel=document.createElement('div');panel.style.cssText='position:absolute;z-index:16;bottom:76px;left:50%;transform:translateX(-50%);width:min(390px,94%);padding:10px;display:grid;gap:6px;background:#24282df5;border:1px solid #777;border-radius:10px;color:#eee';
- const title=document.createElement('button');title.textContent='ГАЗОН · R81 ▾';title.type='button';title.style.cssText='min-height:34px;font-weight:600';
+ const title=document.createElement('button');title.textContent='ГАЗОН · R82 ▾';title.type='button';title.style.cssText='min-height:34px;font-weight:600';
  const body=document.createElement('div');body.style.cssText='display:grid;gap:6px';
  const options=document.createElement('div');options.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:5px';
  const desc=document.createElement('small');desc.style.cssText='text-align:center;color:#c9c9c9';
  const views=document.createElement('div');views.style.cssText='display:flex;gap:6px;justify-content:center';
  function view(close=false){if(state.view!=='3d')setView('3d');controls.target.set(0,0,0);camera.position.set(close?.65:3.7,close?.38:3.5,close?1.25:5.4);camera.lookAt(controls.target);controls.update();updateSun();invalidateTurfDetail();updateTurfDetail();renderGate.invalidate();renderPhotoFrame();}
- function sync(){desc.textContent=LAWN_PROFILES[lawnTypeR77].description+' · 3D-покров, мягкое затенение';for(const b of options.children){const active=b.dataset.lawn===lawnTypeR77;b.setAttribute('aria-pressed',String(active));b.style.background=active?'#514839':'';b.style.borderColor=active?'#c9ae85':'';}}
+ function sync(){desc.textContent=LAWN_PROFILES[lawnTypeR77].description+' · разная высота, примятые участки';for(const b of options.children){const active=b.dataset.lawn===lawnTypeR77;b.setAttribute('aria-pressed',String(active));b.style.background=active?'#514839':'';b.style.borderColor=active?'#c9ae85':'';}}
  for(const [id,p] of Object.entries(LAWN_PROFILES)){const b=document.createElement('button');b.type='button';b.dataset.lawn=id;b.textContent=p.name;b.style.minHeight='42px';b.onclick=()=>{if(lawnTypeR77===id)return;lawnTypeR77=id;const old=cachedGroundTexture;cachedGroundTexture=null;rebuild();old?.dispose();sync();updateTurfDetail();renderGate.invalidate();};options.append(b);}
  for(const [label,close] of [['Общий вид',false],['Макро',true]]){const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='flex:1;min-height:38px';b.onclick=()=>view(close);views.append(b);}
- title.onclick=()=>{body.hidden=!body.hidden;body.style.display=body.hidden?'none':'grid';title.textContent='ГАЗОН · R81 '+(body.hidden?'▴':'▾');};
+ title.onclick=()=>{body.hidden=!body.hidden;body.style.display=body.hidden?'none':'grid';title.textContent='ГАЗОН · R82 '+(body.hidden?'▴':'▾');};
  body.append(options,desc,views);panel.append(title,body);document.querySelector('main').append(panel);
  for(const id of ['mobileHouseSelect','sceneCameraCycle','focusHouse','renderComposition','alphaSceneButton']){const b=$('#'+id);if(b)b.style.setProperty('display','none','important');}
  sync();view(true);
@@ -1258,7 +1258,7 @@ function initialize(){
  });
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
- if(treeLineupMode){doc=makeTreeLineup();extra=[];if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R76';if(lawnTestMode)$('#terrainBuildTag').textContent='R81';}
+ if(treeLineupMode){doc=makeTreeLineup();extra=[];if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R76';if(lawnTestMode)$('#terrainBuildTag').textContent='R82';}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
  // Existing 48x48 saved projects are bilinearly remapped to 96x96.
@@ -1353,7 +1353,7 @@ function initialize(){
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
-function terrainAt(x,z){return heightAt(heightmap,GRID,doc.site.width,doc.site.height,x,z)}
+function terrainAt(x,z){return heightAt(heightmap,GRID,doc.site.width,doc.site.height,x,z)+(lawnTestMode?lawnTerrainMicro(x,z):0)}
 let lawnTextureRequestR77=0;
 let cachedGroundTexture=null,cachedSoilTexture=null,cachedContactTexture=null,terrainBrushGrid=null,terrainBrushPreview=null;
 function groundPhotoTexture(){
@@ -1362,7 +1362,7 @@ function groundPhotoTexture(){
  // The same centimetre-scale photographed turf is used in the 2D catalog.
  window.FORMA_TERRAIN_TEXTURE_READY=false;
  const pixel=document.createElement('canvas');pixel.width=pixel.height=256;
- const ctx=pixel.getContext('2d');ctx.fillStyle='#627344';ctx.fillRect(0,0,256,256);
+ const ctx=pixel.getContext('2d');ctx.fillStyle=lawnTestMode?'#5e5038':'#627344';ctx.fillRect(0,0,256,256);
  let seed=1947;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
  for(let i=0;i<18000;i++){
   const x=random()*256,y=random()*256,a=random(),tone=58+Math.round(random()*49);
@@ -1378,9 +1378,15 @@ function groundPhotoTexture(){
    // Centimetre-scale basal leaf litter and contact occlusion between clumps.
    let seed=8291;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
    const shades=LAWN_PROFILES[lawnTypeR77].palette;
+   // Expose loam beneath living blades, with fine organic particles and dead thatch.
+   ctx.globalAlpha=.67;ctx.drawImage(soilPhotoTexture().image,0,0,1024,1024);ctx.globalAlpha=1;
+   for(let i=0;i<32000;i++){const x=rnd()*1024,y=rnd()*1024,r=.45+rnd()*2.1;
+    ctx.globalAlpha=.2+rnd()*.35;ctx.fillStyle=['#352d24','#6c5c43','#887454','#4b4432'][i%4];
+    ctx.beginPath();ctx.ellipse(x,y,r,r*(.45+rnd()*.55),rnd()*Math.PI,0,Math.PI*2);ctx.fill();
+   }ctx.globalAlpha=1;
    ctx.lineCap='round';
    for(let i=0;i<44000;i++){const x=rnd()*1024,y=rnd()*1024,a=rnd()*Math.PI*2,l=3+rnd()*12;
-    ctx.globalAlpha=.12+rnd()*.24;ctx.strokeStyle=i%5===0?'#303b24':shades[i%shades.length];ctx.lineWidth=.8+rnd()*2.2;
+    ctx.globalAlpha=.12+rnd()*.24;ctx.strokeStyle=i%7===0?'#89764e':i%5===0?'#403b29':shades[i%shades.length];ctx.lineWidth=.8+rnd()*2.2;
     ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+Math.cos(a)*l*.45+1,y+Math.sin(a)*l*.45,x+Math.cos(a)*l,y+Math.sin(a)*l);ctx.stroke();
    }ctx.globalAlpha=1;
   }t.needsUpdate=true;
@@ -1532,7 +1538,7 @@ let terrainDirty=null,terrainUpdateFrame=0,lastTerrainShadow=0;
  }
  function makeEditableGroundGeometry(side){
  const mobile=window.innerWidth<=850;
- const steps=mobile?144:256, stride=steps+1, count=stride*stride;
+ const steps=lawnTestMode?(mobile?240:320):(mobile?144:256), stride=steps+1, count=stride*stride;
  const positions=new Float32Array(count*3),normals=new Float32Array(count*3),uv=new Float32Array(count*2);
  const indices=new (count>65535?Uint32Array:Uint16Array)(steps*steps*6);
  let q=0;
@@ -1728,7 +1734,7 @@ function rebuild(){
   const contact=groundContactTexture(groundSide);contact.channel=0;
   groundMat.aoMap=contact;groundMat.aoMapIntensity=.66;
  }
- if(lawnTestMode){groundMat.color.multiply(new THREE.Color({formal:'#b1b7a0',universal:'#b4bca8',shade:'#abb5a1',meadow:'#b7b49e'}[lawnTypeR77]||'#a8ad95'));groundMat.bumpScale=.019;}
+ if(lawnTestMode){groundMat.color.multiply(new THREE.Color({formal:'#b1b7a0',universal:'#b4bca8',shade:'#abb5a1',meadow:'#b7b49e'}[lawnTypeR77]||'#a8ad95'));groundMat.bumpScale=.010;}
  if(pbrR63Enabled&&doc.atmosphere.season!=='winter')applyTurfVariation(groundMat);
  if(pbrR63Enabled&&(oakTestMode||lawnTestMode)){const meadow=createPreviewMeadow(THREE,grass,groundSide);meadow.visible=state.view!=='2d';root.add(meadow);}
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
