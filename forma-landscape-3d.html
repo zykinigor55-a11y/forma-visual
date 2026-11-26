@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R27</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R28</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -800,7 +800,7 @@ import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composi
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
-import {createDetailedFir,woodTexture} from './forma-landscape-3d-fir-r25.js?v=R27';
+import {createDetailedFir,woodTexture,adoptFirPhotoMaps} from './forma-landscape-3d-fir-r25.js?v=R28';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R23';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -903,7 +903,7 @@ function appendTreeAssetInfo(el,o){
  el.prepend(card);
 }
 // Report actual rendered meshes for both historical storage paths.
-window.FORMA_FIR_DIAGNOSTICS=()=>pickables.filter(g=>{const ref=selectable(g.userData.key);return ref?.obj&&(ref.obj.catalogId==='ph-fir-sapling'||ref.type==='extra'&&isLegacyFirExtra(ref.obj.type))}).map(g=>{let triangles=0;g.traverse(n=>{if(n.isMesh&&!n.userData.selectionProxy)triangles+=Math.floor((n.geometry.index?.count??n.geometry.attributes.position?.count??0)/3)*(n.isInstancedMesh?n.count:1)});return {key:g.userData.key,model:g.userData.firNativeR26?'FORMA detailed fir R26':g.userData.realGlb?'GLB':'unknown',triangles,height:g.userData.physicalHeight,diameter:g.userData.crownDiameter};});
+window.FORMA_FIR_DIAGNOSTICS=()=>pickables.filter(g=>{const ref=selectable(g.userData.key);return ref?.obj&&(ref.obj.catalogId==='ph-fir-sapling'||ref.type==='extra'&&isLegacyFirExtra(ref.obj.type))}).map(g=>{let triangles=0;g.traverse(n=>{if(n.isMesh&&!n.userData.selectionProxy)triangles+=Math.floor((n.geometry.index?.count??n.geometry.attributes.position?.count??0)/3)*(n.isInstancedMesh?n.count:1)});return {key:g.userData.key,model:g.userData.firHybridR28?'FORMA hybrid fir R28':g.userData.firNativeR26?'FORMA detailed fir R26':g.userData.realGlb?'GLB':'unknown',triangles,height:g.userData.physicalHeight,diameter:g.userData.crownDiameter};});
 function treeModelDiagnostics(){
  // Read-only scene health to catch PBR-to-procedural substitutions on Android.
  // Avoid exposing stored project names, tokens or model binary data.
@@ -1228,7 +1228,7 @@ function groundPhotoTexture(){
  }
  const t=new THREE.CanvasTexture(pixel);
  new THREE.ImageLoader().load(new URL('./assets/landscape-photo/universal.jpg?v=turf-photo-20261126',document.baseURI).href,image=>{
-  pixel.width=pixel.height=512;ctx.drawImage(image,0,0,512,512);t.needsUpdate=true;
+  pixel.width=pixel.height=1024;ctx.filter='saturate(0.84)';ctx.drawImage(image,0,0,1024,1024);ctx.filter='none';t.needsUpdate=true;
   // First frame can render before async turf JPEG arrives. Force a paint
   // after the actual photograph is on the GPU; otherwise demand rendering
   // leaves a black ground until the user changes camera/tool.
@@ -1504,10 +1504,10 @@ function updateTurfDetail(){
  if(turfCell===key&&turfDetail){if(!turfDetail.visible){turfDetail.visible=true;renderGate.invalidate()}return;}
  if(turfDetail){root.remove(turfDetail);turfDetail.geometry.dispose();turfDetail.material.dispose();turfDetail=null;}
  turfCell=key;turfMask=turfMask||turfMasks();
- const positions=[],colors=[],radius=mobile?8:12,step=mobile?.29:.22;
+ const positions=[],colors=[],radius=mobile?6.5:9,step=mobile?.105:.088;
  const mx=cx*3+1.5,mz=cz*3+1.5;
  const autumn=doc.atmosphere.season==='autumn';
- const palette=(autumn?['#777547','#73774b','#8a8150','#606b42']:['#52643a','#667744','#75854b','#435735']).map(c=>new THREE.Color(c));
+ const palette=(autumn?['#777547','#73774b','#8a8150','#606b42']:['#53683c','#667b48','#73814b','#4c6039']).map(c=>new THREE.Color(c));
  const add=(x,y,z,c,k)=>{positions.push(x,y,z);colors.push(c.r*k,c.g*k,c.b*k)};
  for(let iz=Math.floor((mz-radius)/step);iz<=Math.ceil((mz+radius)/step);iz++)for(let ix=Math.floor((mx-radius)/step);ix<=Math.ceil((mx+radius)/step);ix++){
   const x=(ix+turfRandom(ix,iz,1))*step,z=(iz+turfRandom(ix,iz,2))*step;
@@ -1519,15 +1519,18 @@ function updateTurfDetail(){
   if(blocked)continue;
   const y=terrainAt(x,z)+(lawn?.055:.007);
   if(Math.max(Math.abs(terrainAt(x+.12,z)-terrainAt(x-.12,z)),Math.abs(terrainAt(x,z+.12)-terrainAt(x,z-.12)))>.11)continue;
-  const blades=mobile?3:5;
+  const distance=Math.hypot(x-camera.position.x,z-camera.position.z);
+  const blades=distance<3.4?(mobile?8:10):(mobile?4:6);
   for(let n=0;n<blades;n++){
    const r=turfRandom(ix,iz,10+n),a=r*Math.PI*2;
-   const bx=x+(turfRandom(ix,iz,30+n)-.5)*.09,bz=z+(turfRandom(ix,iz,40+n)-.5)*.09;
-   const h=.033+turfRandom(ix,iz,50+n)*.065,w=.0045+r*.006;
-   const dx=Math.cos(a)*w,dz=Math.sin(a)*w,lean=.014+r*.024;
+   const bx=x+(turfRandom(ix,iz,30+n)-.5)*step,bz=z+(turfRandom(ix,iz,40+n)-.5)*step;
+   const h=.022+turfRandom(ix,iz,50+n)*.032,w=.0014+r*.0018;
+   const dx=Math.cos(a)*w,dz=Math.sin(a)*w,lean=.005+r*.016;
    const c=palette[Math.min(3,Math.floor(turfRandom(ix,iz,60+n)*4))];
-   add(bx-dx,y,bz-dz,c,.69);add(bx+dx,y,bz+dz,c,.76);
-   add(bx+Math.sin(a)*lean,y+h,bz-Math.cos(a)*lean,c,1);
+   const mx=bx+Math.sin(a)*lean*.28,mz=bz-Math.cos(a)*lean*.28,my=y+h*.57;
+   add(bx-dx,y,bz-dz,c,.84);add(bx+dx,y,bz+dz,c,.88);add(mx+dx*.55,my,mz+dz*.55,c,.98);
+   add(bx-dx,y,bz-dz,c,.84);add(mx+dx*.55,my,mz+dz*.55,c,.98);add(mx-dx*.55,my,mz-dz*.55,c,.97);
+   add(mx-dx*.55,my,mz-dz*.55,c,.97);add(mx+dx*.55,my,mz+dz*.55,c,.98);add(bx+Math.sin(a)*lean,y+h,bz-Math.cos(a)*lean,c,1.08);
   }
  }
  if(!positions.length){renderGate.invalidate();return;}
@@ -1552,9 +1555,9 @@ function rebuild(){
  // user boundary remains a separate outline and never cuts holes in the scene.
  const groundSide=squareTerrainSide(doc.site);
  const geo=makeEditableGroundGeometry(groundSide);cutPoolOpenings(geo);
- const grass=groundPhotoTexture();grass.repeat.set(groundSide/1.75,groundSide/1.75);
+ const grass=groundPhotoTexture();grass.repeat.set(groundSide/1.05,groundSide/1.05);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
- groundMat.map=grass;groundMat.bumpMap=grass;groundMat.bumpScale=.025;groundMat.roughness=.96;groundMat.side=THREE.DoubleSide;groundMat.shadowSide=THREE.FrontSide;
+ groundMat.map=grass;groundMat.bumpMap=grass;groundMat.bumpScale=.012;groundMat.roughness=.96;groundMat.side=THREE.DoubleSide;groundMat.shadowSide=THREE.FrontSide;
  groundMat.envMapIntensity=.21;
  // R20: stock PBR on phones avoids custom terrain shader failures. Keep the actual turf image and surveyed terrain.
  if(window.innerWidth>850)applyRaisedSoilMaterial(groundMat,groundSide);
@@ -1702,6 +1705,7 @@ function loadCuratedAdultTree(species){
   result.scene.traverse(node=>{if(node.isMesh&&node.geometry?.attributes?.position)meshes++});
   if(!meshes)throw Error('GLB tree has no geometry');
   bundledModelSources.set(species,result.scene);
+  if(species==='ph-fir-sapling'){adoptFirPhotoMaps(THREE,result.scene);return;}
   if(root&&renderer&&doc)rebuild();
   refreshPlantAssetStatus();updateModelHealth();
   status('CC0 3D-модель растения загружена: '+entry.name+' · '+meshes+' мешей');
@@ -1830,7 +1834,7 @@ function drawObject(o,entry,key){
   // Keep the original asset at every planting density; adapt framebuffer cost instead.
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
-  if(o.catalogId!=='ph-fir-sapling'&&POLY_HAVEN_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
+  if(POLY_HAVEN_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
    if(o.catalogId!=='spirea'&&SHRUB_3D_MODELS[o.catalogId]&&!imported&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'))loadCuratedAdultTree(o.catalogId);
   // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
   const bundledPine=o.catalogId==='pine'?
@@ -1941,6 +1945,7 @@ function drawArea(o,entry,key){
 function isLegacyFirExtra(type){return ['spruce','ph-fir-sapling','fir_sapling','fir-sapling','fir'].includes(type)}
 function drawExtra(o){
  if(isLegacyFirExtra(o.type)){
+  loadCuratedAdultTree('ph-fir-sapling');
   const width=Number(o.width)||Number(o.diameter)||realModelById(o.type)?.width||2;
   const height=Number(o.height)||width*1.5;
   const p=pos(o.x||0,o.y||0),g=createDetailedFir(THREE,{...o,catalogId:'ph-fir-sapling',diameter:width,height});
@@ -2655,7 +2660,7 @@ function renderProps(){
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
   '<small>Сохранены родные материалы ветвей и хвои.</small>'):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
  if(ref.type==='object'&&catalog(o.catalogId)?.group==='trees')appendTreeAssetInfo(el,o);
-  if(ref.type==='extra'&&isLegacyFirExtra(o.type)){const card=document.createElement('div');card.className='roof-garland-editor';card.textContent='Модель: FORMA · детальная пихта R26 (старый каталог обновлён)';el.prepend(card);}
+  if(ref.type==='extra'&&isLegacyFirExtra(o.type)){const card=document.createElement('div');card.className='roof-garland-editor';card.textContent='Модель: FORMA · гибридная пихта R28';el.prepend(card);}
  if(ref.type==='house'||ref.type==='building'){
   if(ref.type==='house'){
    el.insertAdjacentHTML('afterbegin',houseInteriorMarkup());
