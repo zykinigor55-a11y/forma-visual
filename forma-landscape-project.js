@@ -519,6 +519,7 @@ function drawMap(){
   nav.dataset.mobileContext=active?mode:'';
   const panel=$('#lpMobileContext',nav);if(panel){panel.hidden=!active||mode==='path';const done=$('#lpMobileContextDone',panel);if(done){done.textContent=mode==='area'&&areaTool==='polygon'?'Залить область':mode==='strip'?'Создать полосу':mode==='boundary'?'Сохранить границу':'Готово';done.disabled=(mode==='area'&&areaTool==='polygon'&&points.length<3)||(mode==='strip'&&points.length<2)||(mode==='boundary'&&points.length<3);}}
   $$('[data-mobile-main-tool]',modal).forEach(b=>{const k=b.dataset.mobileMainTool,on=k==='select'?mode==='select':k==='path'?mode==='path'&&pathInput==='points':k==='brush'?mode==='path'&&pathInput==='brush':k==='area'?['area','strip'].includes(mode):false;b.setAttribute('aria-pressed',String(on));});
+  const poolSettings=$('#lpMobilePoolSettings',nav);if(poolSettings)poolSettings.hidden=!(mode==='select'&&selectedPlanObject()?.type==='pools');
   const material=$('#lpMobileDrawMaterial',nav);if(material)material.textContent=(itemCatalog()?.name||'Материал')+' · настройки';
  }
  function syncAutoLawn(){
@@ -645,7 +646,7 @@ function drawMap(){
   if(mode!=='path'||pathInput==='brush'||['free','smooth'].includes(pathShape)||!points.length)return p;
   return snapPathPoint(points.at(-1),p,pathShape,doc.site);
  }
- function addObject(p){const entry=itemCatalog();if(!entry)return;checkpoint();const obj={id:uid(),catalogId:entry.id,type:entry.group,x:p.x,y:p.y,diameter:entry.diameter||1,height:entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9,rotation:0,...(entry.group==='pools'?poolDimensions({catalogId:entry.id}):{})};if(entry.group==='pools'&&!poolFootprint(obj,.2).every(p=>isInside(p,doc.site))){undo.pop();say('Чаша должна целиком помещаться внутри участка.');return;}doc.objects.push(obj);selected=obj.id;placementCount++;save();draw();say('Добавлено: '+placementCount+' · '+entry.name+'. Нажимайте снова для следующих экземпляров. Для изменения положения выберите «Переместить».');}
+ function addObject(p){const entry=itemCatalog();if(!entry)return;const obj={id:uid(),catalogId:entry.id,type:entry.group,x:p.x,y:p.y,diameter:entry.diameter||1,height:entry.group==='trees'?(TREE_HEIGHT_M[entry.id]||12):.9,rotation:0,...(entry.group==='pools'?poolDimensions({catalogId:entry.id}):{})};if(entry.group==='pools'&&!poolFootprint(obj,.2).every(p=>isInside(p,doc.site.boundary||rectBoundary(doc.site.width,doc.site.height)))){say('Чаша должна целиком помещаться внутри участка.');return;}checkpoint();doc.objects.push(obj);selected=obj.id;placementCount++;if(entry.group==='pools'){mode='select';}save();draw();if(entry.group==='pools'&&mobilePlan()){mobileSheet('settings');requestAnimationFrame(()=>$('.lp-selected',modal)?.scrollIntoView({block:'start'}));}say('Добавлено: '+placementCount+' · '+entry.name+'. Нажимайте снова для следующих экземпляров. Для изменения положения выберите «Переместить».');}
  function finish(){
   if(pathStroke||pointGesture)return;cancelPointGesture();
   if(mode==='path'&&pathInput==='brush'){points=[];pathDraftSource=null;selected=null;mode='select';pathInput='points';pathShape=pointPathShape;draw();say('Кисть выключена. Все нарисованные дорожки сохранены.');return;}
@@ -822,7 +823,7 @@ function drawMap(){
   else if(field.startsWith('site.')){doc.site[field.slice(5)]=clamp(v,5,500);doc.verified=false;}
   else if(field.startsWith('house.')){const k=field.slice(6);doc.house[k]=['type','roof'].includes(k)?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArt=null;}
   else if(field.startsWith('aux.')){const b=doc.buildings.find(x=>x.id===selected.slice(9));if(b){const k=field.slice(4);b[k]=k==='roof'?v:k==='rotation'?clamp(v,-360,360):['x','y'].includes(k)?clamp(v,0,k==='x'?doc.site.width:doc.site.height):clamp(v,2,60);roofArts.delete(b.id)}}
-   else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);if(obj.type==='pavers'&&['catalogId','width'].includes(k)){if(k==='width')setSegmentSettings(obj,{width:clamp(v,.4,10)});else if(byId(v)?.group==='pavers')setSegmentSettings(obj,{catalogId:v});}else obj[k]=k==='catalogId'?(byId(v)?.group===obj.type?v:obj.catalogId):k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,.4,10):k==='diameter'?clamp(v,.1,30):k==='height'?clamp(v,.15,40):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
+   else if(field.startsWith('object.')){const obj=doc.objects.find(x=>x.id===selected);if(obj){const k=field.slice(7);if(obj.type==='pavers'&&['catalogId','width'].includes(k)){if(k==='width')setSegmentSettings(obj,{width:clamp(v,.4,10)});else if(byId(v)?.group==='pavers')setSegmentSettings(obj,{catalogId:v});}else obj[k]=k==='catalogId'?(byId(v)?.group===obj.type?v:obj.catalogId):k==='rotation'?clamp(v,-360,360):k==='width'?clamp(v,obj.type==='pools'?1.5:.4,10):k==='diameter'?clamp(v,.1,30):k==='height'?clamp(v,.15,40):clamp(v,0,k==='x'?doc.site.width:doc.site.height)}}
   doc=normalizeProject(doc);syncAutoLawn();save();draw();
  }
  async function uploadPhoto(file,kind){
@@ -1020,7 +1021,7 @@ function drawMap(){
  }
  function click(e){
   const b=e.target.closest('button');if(!b||busy)return;
-  if(b.dataset.mobileSheet!==undefined){mobileSheet(b.dataset.mobileSheet,b.dataset.mobileGroup);return}
+  if(b.dataset.mobileSheet!==undefined){mobileSheet(b.dataset.mobileSheet,b.dataset.mobileGroup);if(b.id==='lpMobilePoolSettings')requestAnimationFrame(()=>$('.lp-selected',modal)?.scrollIntoView({block:'start'}));return}
   if(b.id==='lpMobileContextDone'){if(mode==='place'||(mode==='area'&&areaTool!=='polygon'))endDrawing();else finish();return}
   if(b.dataset.mobileMoreAction!==undefined){const target=b.dataset.mobileMoreAction;mobileSheet('plan');const original=$(target,modal);if(original)original.click();return}
   if(mobilePlan()&&modal.dataset.mobileSheet==='assets'&&b.dataset.category){if(!mobileCatalogGroups||mobileCatalogGroups.includes(b.dataset.category)){category=b.dataset.category;drawPalette();}return}
@@ -1238,6 +1239,7 @@ function drawMap(){
    '<div id="lpMobilePathInfo" aria-live="polite"></div>'+
    '<section id="lpMobilePathDrawControls" hidden></section>'+
    '<button type="button" id="lpMobileDrawMaterial" data-mobile-sheet="tools">Материал · настройки</button>'+
+   '<button type="button" id="lpMobilePoolSettings" data-mobile-sheet="settings" hidden>Размеры бассейна</button>'+
    '<section id="lpMobileContext" hidden><button type="button" data-mobile-sheet="tools">Настройки инструмента</button><button type="button" id="lpMobileContextDone">Готово</button></section>'+
    '<button type="button" id="lpMobilePathCancel" class="lp-path-draw-action">✕ Отмена</button>'+
    '<button type="button" id="lpMobilePathBack" class="lp-path-draw-action">↶ Точка</button>'+
@@ -1258,7 +1260,7 @@ function drawMap(){
   pathDock.innerHTML='<div id="lpPathDraftInfo" aria-live="polite"></div><div class="lp-path-finish-actions"><button type="button" id="lpPathUndoPoint" aria-label="Убрать последнюю точку">↶ Точка</button><button type="button" id="lpPathCancelNow">✕ Отмена</button><button type="button" id="lpPathFinishNow">✓ Завершить дорожку</button></div>';
   const pathDockStyle=document.createElement('style');
   pathDockStyle.textContent=`
-   #faLandscapeMasterplan :where(.lp-mobile-tools,.lp-mobile-history,#lpMobileMore,#lpMobileSheetBar,#lpMobileSheetShade,#lpMobileDrawMaterial,#lpMobileContext){display:none}
+   #faLandscapeMasterplan :where(.lp-mobile-tools,.lp-mobile-history,#lpMobileMore,#lpMobileSheetBar,#lpMobileSheetShade,#lpMobileDrawMaterial,#lpMobileContext,#lpMobilePoolSettings){display:none}
 
    #faLandscapeMasterplan #lpClearOverlay[hidden]{display:none!important}
    #faLandscapeMasterplan #lpClearOverlay{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:#101115b8;padding:12px;box-sizing:border-box;overscroll-behavior:contain}
@@ -1368,6 +1370,7 @@ function drawMap(){
     #faLandscapeMasterplan .lp-mobile-jump[data-path-state="selected"] .lp-mobile-path-cards button{min-width:0;min-height:55px!important;font-size:9px}
     #faLandscapeMasterplan .lp-mobile-jump[data-path-state="selected"] .lp-mobile-path-cards img{height:31px!important}
     #faLandscapeMasterplan #lpMobileContext:not([hidden]){display:grid!important;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:4px}
+    #faLandscapeMasterplan #lpMobilePoolSettings:not([hidden]){display:block!important;grid-column:1/-1;background:#d0bd9f;color:#25282d}
     #faLandscapeMasterplan #lpMobileContextDone{background:#d0bd9f;color:#25282d}
     #faLandscapeMasterplan .lp-sidebar,#faLandscapeMasterplan .lp-properties,#faLandscapeMasterplan .lp-path-controls,#faLandscapeMasterplan #lpLayers,#faLandscapeMasterplan #lpMobileMore{display:none!important}
     #faLandscapeMasterplan[data-mobile-sheet="assets"] .lp-sidebar,
