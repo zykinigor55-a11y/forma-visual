@@ -4895,7 +4895,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  const onSolarInput=()=>{
   solarSettings=normalizeSolarSettings({azimuth:Number($('#sunAzimuth').value),elevation:Number($('#sunElevation').value),
    strength:Number($('#sunStrength').value)/100,softness:Number($('#sunSoftness').value)},doc.atmosphere.time);
-  syncSolarControls();syncQuickClimateControls();saveSolarSettings();updateSun();if(renderer&&scene&&camera)renderPhotoFrame(true);
+  syncSolarControls();syncQuickClimateControls();saveSolarSettings();updateSun();if(renderer&&scene&&camera)renderPhotoFrame();
  };
  for(const id of ['sunAzimuth','sunElevation','sunStrength','sunSoftness']){
   $('#'+id).addEventListener('input',onSolarInput);
