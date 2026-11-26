@@ -50,7 +50,7 @@ export function treeInstancePhotoDetail(o,asset){
   const tiers=bounded(m?.tiers,1,40);
   return 'FIR / ABIES (NOT spruce or pine), FORMA selected growth template: '+stage+'. '+fixed+identity+
    (tiers===null?'':'Source modeled tier count '+Math.round(tiers)+'; keep visible tier spacing and gaps. ')+
-   'Preserve flat individual fir needles at their small physical scale, subtle pale underside, fine curved branchlets, muted green mature needles and lighter existing fresh growth, grey-brown bark appropriate to the source age. Only retain upright seed cones where visible in Image 1. Do not add or remove crowns, needles in bulk, or change the existing branch architecture. '+(m?.revision==='R94'?'Source geometry FORMA R94. ':'');
+   'Preserve flat individual fir needles at their small physical scale, subtle pale underside, fine curved branchlets, muted green mature needles and lighter existing fresh growth, grey-brown bark appropriate to the source age. Only retain upright seed cones where visible in Image 1. Do not add or remove crowns, needles in bulk, or change the existing branch architecture. '+(m?.revision==='R96'?'Source FORMA R96: continuous tapered trunk with root flare and curved tapered branch paths; keep these exact silhouettes. ':m?.revision==='R94'?'Source geometry FORMA R94. ':'');
  }
  if(asset.id==='oak'){
   const age=bounded(o?.oak?.age,1,350);
