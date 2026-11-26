@@ -22,7 +22,7 @@ function hook(T,m,u,leaf){
    float fwBend=fwFlex*min(formaWindHeight*.023,.31)*formaWindStrength*fwGust;
    float fwWave=sin(formaWindTime*.78+fwP.y*.15+fwP.x*.31+fwP.z*.27);
    vec3 fwDelta=vec3(fwBend*(.55+fwWave*.45),0.,fwBend*.30*sin(formaWindTime*.61+fwP.z*.33));
-   ${leaf?'fwDelta+=vec3(sin(formaWindTime*3.4+fwP.x*2.1+fwP.z*1.9),sin(formaWindTime*4.1+fwP.y*2.2),cos(formaWindTime*3.1+fwP.z*2.1))*.035*formaWindStrength*max(fwFlex,smoothstep(.14,.65,fwH)*.45);':''}
+   ${leaf?'fwDelta+=vec3(sin(formaWindTime*3.4+fwP.x*2.1+fwP.z*1.9),sin(formaWindTime*4.1+fwP.y*2.2),cos(formaWindTime*3.1+fwP.z*2.1))*.019*formaWindStrength*max(fwFlex,smoothstep(.14,.65,fwH)*.45);':''}
    mat3 fwLinear=mat3(fwMatrix);
    transformed+=inverse(fwLinear)*fwDelta;
    #include <project_vertex>
@@ -32,7 +32,7 @@ function hook(T,m,u,leaf){
 }
 export function createWindSystem(T){
  let plants=[],depths=[],owners=new WeakMap(),time=0,last=0;
- function clear(){for(const m of depths)m.dispose();depths=[];plants=[];owners=new WeakMap();}
+ function clear(){last=0;for(const m of depths)m.dispose();depths=[];plants=[];owners=new WeakMap();}
  function add(group,height){
   const u={formaWindTime:{value:time},formaWindStrength:{value:0},formaWindBase:{value:group.position.y},formaWindX:{value:group.position.x},formaWindZ:{value:group.position.z},formaWindHeight:{value:Math.max(.2,Number(height)||2)}};
   let count=0;const replacements=new Map();
@@ -57,7 +57,7 @@ export function createWindSystem(T){
   });
   if(count)plants.push({group,u,count});
  }
- function tick(now,strength,active=true){if(!active||now-last<55)return false;last=now;time=now*.001;
+ function tick(now,strength,active=true){if(!active)return false;const dt=last?Math.min(.075,Math.max(0,(now-last)*.001)):0;last=now;time+=dt;
   for(const {group,u} of plants){u.formaWindTime.value=time;u.formaWindStrength.value=clamp(strength,0,1.6);u.formaWindBase.value=group.position.y;u.formaWindX.value=group.position.x;u.formaWindZ.value=group.position.z;}
   return plants.length>0;
  }
