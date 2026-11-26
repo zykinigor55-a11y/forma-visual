@@ -24,7 +24,7 @@ function alphaNordicDeckMaterial(T){
  if(!maps){
   const loader=new T.TextureLoader();
   const load=(channel)=>{
-   const map=loader.load('/assets/house-pbr/wood-'+channel+'-1k.jpg',
+   const map=loader.load('./assets/house-pbr/wood-'+channel+'-1k.jpg',
     ()=>window.dispatchEvent(new Event('forma-house-pbr-ready')));
    map.wrapS=map.wrapT=T.RepeatWrapping;
    map.repeat.set(3.2,1.4);
