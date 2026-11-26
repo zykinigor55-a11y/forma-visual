@@ -15,7 +15,7 @@ function makeSky(T,source,atmosphere={}){
  const t=new T.DataTexture(data,w,h,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;return t;
 }
 async function loadSkyR73(T,source,atmosphere={},renderer,profile,isAlive,onProgress){
- if(renderer&&atmosphere.cloudSettings){try{return await bakeCloudEnvironment(T,renderer,{sun:source.getObjectByName('sun'),time:atmosphere.time,weather:atmosphere.weather,settings:atmosphere.cloudSettings,high:profile==='high'&&!isMobile(),mobile:isMobile(),isAlive,onProgress});}catch(e){if(!isAlive()||renderer.getContext().isContextLost())throw e;console.warn('FORMA cloud HDR fallback',e);}}
+ if(renderer&&atmosphere.cloudSettings&&atmosphere.renderClouds==='volume'){try{return await bakeCloudEnvironment(T,renderer,{sun:source.getObjectByName('sun'),time:atmosphere.time,weather:atmosphere.weather,settings:atmosphere.cloudSettings,high:profile==='high'&&!isMobile(),mobile:isMobile(),isAlive,onProgress});}catch(e){if(!isAlive()||renderer.getContext().isContextLost())throw e;console.warn('FORMA cloud HDR fallback',e);}}
  const sun=source.getObjectByName('sun'),time=atmosphere.time||'day',weather=atmosphere.weather||'sunny';
  const diffuse=['overcast','rain','fog','snow'].includes(weather);
  if(!sun||sun.intensity<.3||time!=='day'||diffuse)return {texture:makeSky(T,source,atmosphere),label:'Небо по времени суток и погоде',photographic:false};
@@ -240,11 +240,20 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
   }else if(o.isInstancedMesh&&o.name==='rowan-fruit-berries'&&o.geometry.attributes.position.count>50){
    const g=new T.SphereGeometry(1,6,4);proxies.set(o,g);ownedProxies.push(g);simplified+=o.count;
   }
+  if(o.isInstancedMesh&&/^Oak .*botanical leaf maps/i.test(o.name)){
+   const g=new T.PlaneGeometry(1,1,1,2),p=g.attributes.position;
+   for(let i=0;i<p.count;i++){const y=p.getY(i);p.setZ(i,.035-.14*y*y);}
+   g.computeVertexNormals();proxies.set(o,g);ownedProxies.push(g);simplified+=o.count;
+  }
   const cost=costs(o)*(o.isInstancedMesh?o.count:1);if(grass(o))grassCost+=cost;else used+=cost;
  }
  if(!isMobile()&&profile==='high')for(const o of meshes){if(o.name!=='rowan-pinnate-foliage'||!proxies.has(o))continue;const g=rowanLeafProxy(T,o.geometry,true);if(!g)continue;const extra=(g.index.count/3-costs(o))*o.count;if(used+extra+(lawn?360000:0)>limit){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;}
  if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||o.name!=='rowan-bark-trunk-branches')continue;const available=limit-used-(lawn?260000:0);if(available<15000)continue;for(const level of (profile==='high'?[6,4,2]:[3,2])){const result=barkDisplacement(T,o,level);if(!result)break;const extra=result.geometry.index.count/3-costs(o);if(extra>available){result.geometry.dispose();continue;}proxies.set(o,result.geometry);ownedProxies.push(result.geometry);used+=extra;displacedWood+=result.displaced;break;}}
  if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||proxies.has(o))continue;const base=costs(o),available=Math.min(120000,limit-used-(lawn?280000:0));if(available<base*8||base>12000)continue;const level=profile==='high'&&base*35<=available?6:3;const g=surfaceDisplacement(T,o,level);if(!g)continue;const extra=g.index.count/3-base;if(extra>available){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;displacedSurfaces++;}
+ let reducedOak=0;
+ const oakLeaves=meshes.filter(o=>o.isInstancedMesh&&/^Oak .*botanical leaf maps/i.test(o.name));
+ const oakCost=oakLeaves.reduce((a,o)=>a+costs(o)*o.count,0),reserve=lawn?Math.min(400000,Math.floor(limit*.15)):0;
+ if(oakCost&&used>limit-reserve){const remaining=Math.max(0,limit-reserve-(used-oakCost)),factor=Math.min(1,remaining/oakCost);for(const o of oakLeaves){const n=Math.max(0,Math.floor(o.count*factor));keepCounts.set(o,n);used-=(o.count-n)*costs(o);reducedOak+=o.count-n;}}
  if(used>limit){for(const g of ownedProxies)g.dispose();throw Error('Для сохранения всей кроны и объектов нужно '+Math.round(used/1000)+' тыс. треугольников. Лимит режима '+Math.round(limit/1000)+' тыс. Выберите высокое качество или уменьшите число деревьев.');}
  const lawnBudget=lawn?Math.min(profile==='high'?780000:360000,Math.floor(Math.max(0,limit-used)*.82)):0;
  const existingBudget=limit-lawnBudget;
@@ -316,11 +325,11 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
  for(const g of ownedProxies)g.dispose();ownedProxies.length=0;
- return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,lawnTufts,displacedWood,displacedSurfaces,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();env.dispose();}};
+ return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,lawnTufts,displacedWood,displacedSurfaces,reducedOak,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();env.dispose();}};
  }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();throw e;}
 }
 export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},lawn=null,onClose=()=>{},onFailure=()=>{}}){
- let alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null;
+ let stage='Инициализация',alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null;
  const oldRatio=renderer.getPixelRatio(),oldTone=renderer.toneMapping,oldExposure=renderer.toneMappingExposure;
  const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
  const panel=document.createElement('div');panel.style.cssText='width:min(440px,96vw);background:#22262df5;color:#eee;border:1px solid #777;border-radius:12px;padding:12px;font:13px system-ui;box-shadow:0 10px 45px #0005;';
@@ -334,24 +343,24 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R131.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R131',e);const reason=e?.message||String(e);close();onFailure(reason);}
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R133.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R133',e);const reason=stage+': '+(e?.message||String(e));try{sessionStorage.setItem('forma-gpu-last-error',reason);}catch{}close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
-  const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
-  msg.textContent='Подготовка HDR неба и облаков…';await nextFrame();if(!alive)return;sky=await loadSkyR73(T,scene,atmosphere,renderer,profile,()=>alive,p=>{msg.textContent='Подготовка облаков: '+p+'%';});if(!alive){sky.texture.dispose();return;}
-  msg.textContent='Подготовка полигонов и материалов…';await nextFrame();if(!alive)return;
+  stage='Загрузка библиотеки трассировки';msg.textContent=stage+'…';const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
+  stage='Подготовка HDR неба';msg.textContent=stage+'…';await nextFrame();if(!alive)return;sky=await loadSkyR73(T,scene,atmosphere,renderer,profile,()=>alive,p=>{msg.textContent='Подготовка облаков: '+p+'%';});if(!alive){sky.texture.dispose();return;}
+  stage='Подготовка полигонов и материалов';msg.textContent=stage+'…';await nextFrame();if(!alive)return;
   snap=snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn);
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
-  building=true;
-  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;pt.tiles.set(2,2);pt.renderScale=profile==='high'?1:.55;pt.textureSize.set(profile==='high'?1024:512,profile==='high'?1024:512);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
+  stage='Построение BVH и загрузка текстур';building=true;
+  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;pt.tiles.set(profile==='high'?4:3,profile==='high'?4:3);pt.renderScale=profile==='high'?.85:.55;pt.textureSize.set(profile==='high'?1024:512,profile==='high'?1024:512);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
   renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
-  renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
+  stage='Трассировка GPU';renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
-   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
+   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reducedOak?' · упрощено листьев дуба: '+snap.reducedOak.toLocaleString('ru-RU'):'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
    if(n>=target){if(profile==='high'){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
