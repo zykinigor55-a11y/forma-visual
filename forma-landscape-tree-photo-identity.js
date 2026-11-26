@@ -44,6 +44,18 @@ export function treeInstancePhotoDetail(o,asset){
   '; no species substitution, no extra trees, no resizing, no tree relocation.';
  const rotation=bounded(o?.rotation,-360,360),variant=bounded(o?.variant,1,3);
  const identity=' Keep the individual reference trunk path, major forks, branch directions, crown lobes, silhouette, internal gaps and foliage coverage; no generic replacement. '+(rotation===null?'':'Authored yaw '+rotation.toFixed(1)+' degrees. ')+(variant===null?'':'Individual shape variant '+variant+'. ');
+ if(asset.id==='ph-fir-sapling'){
+  const age=bounded(o?.fir?.age,10,100),m=o?.photoTreeModel;
+  const stage=age===10?'young 10-year form: low compact tapered crown, slim leader, low whorls':age===100?'old 100-year form: heavier trunk, elevated irregular crown base, drooping lower branches and broader upper crown':'adult 45-year form: regular but asymmetric layered conical crown with developed lateral branchlets';
+  const tiers=bounded(m?.tiers,1,40);
+  return 'FIR / ABIES (NOT spruce or pine), FORMA selected growth template: '+stage+'. '+fixed+identity+
+   (tiers===null?'':'Source modeled tier count '+Math.round(tiers)+'; keep visible tier spacing and gaps. ')+
+   'Preserve flat individual fir needles at their small physical scale, subtle pale underside, fine curved branchlets, muted green mature needles and lighter existing fresh growth, grey-brown bark appropriate to the source age. Only retain upright seed cones where visible in Image 1. Do not add or remove crowns, needles in bulk, or change the existing branch architecture. '+(m?.revision==='R94'?'Source geometry FORMA R94. ':'');
+ }
+ if(asset.id==='oak'){
+  const age=bounded(o?.oak?.age,1,350);
+  return 'SPECIES Quercus robur, '+(age===null?'source-selected age':age+'-year selected template')+'. '+fixed+identity+' Preserve the existing irregular woody branching and lobed leaf scale, mature bark and source canopy coverage. No generic stock oak substitution.';
+ }
  if(asset.id==='willow'){
   const age=bounded(o?.willow?.age,5,100),stage=age===null?'source-selected stage':age<22?'young':age<55?'adult':'old',trunk=bounded(o?.photoTreeModel?.trunkDiameterM,.01,4),leaves=bounded(o?.photoTreeModel?.leafCards,0,1000000);
   return 'SPECIES Salix babylonica (weeping willow), '+stage+(age===null?'':'; selected design age '+Math.round(age)+' years')+'. Rounded asymmetric crown with individual arching woody limbs and irregular hanging curtains of narrow lanceolate leaves; preserve existing open gaps and exact lengths of drooping branchlets. '+fixed+identity+(trunk===null?'':'Measured nominal trunk diameter '+trunk.toFixed(2)+'m. ')+(leaves===null?'':'Source leaf-card count '+Math.round(leaves)+' is a coverage cue, not literal biological leaf count. ')+' Natural subdued leaf greens, grey-brown bark; do not substitute a rectangular curtain, broadleaf foliage or a different age.';
