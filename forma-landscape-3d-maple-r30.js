@@ -88,12 +88,12 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
   const c1=a.clone().lerp(b,.29).addScaledVector(side,bulge);
   const c2=a.clone().lerp(b,.71).addScaledVector(side,-bulge*.47);
   c1.y+=bend-length*(sides>=12?.115:.065);c2.y+=bend*.45+length*.12;
-  const curve=new T.CubicBezierCurve3(a,c1,c2,b),pts=curve.getPoints(sides>=12?24:sides>=8?14:6);
-  tube(pts,pts.map((_,i)=>width*Math.max(.025,Math.pow(1-i/(pts.length-1),1.12))),sides>=12?20:sides>=8?12:6,r());
+  const curve=new T.CubicBezierCurve3(a,c1,c2,b),pts=curve.getPoints(sides>=12?24:sides>=8?14:mobile?4:6);
+  tube(pts,pts.map((_,i)=>width*Math.max(.025,Math.pow(1-i/(pts.length-1),1.12))),sides>=12?20:sides>=8?12:mobile?5:6,r());
   return curve;
  }
- function leafyTwig(a,b,width,count=mobile?7:10){
-  const q=curve(a,b,width,h*.002,5);
+ function leafyTwig(a,b,width,count=mobile?7:10,existing=null){
+  const q=existing||curve(a,b,width,h*.002,5);
   for(let j=0;j<count;j++){
    const t=(j+.5)/count,p=q.getPoint(t),axis=q.getTangent(t),side=new T.Vector3().crossVectors(axis,V(0,1,0)).normalize();
    for(const sign of [-1,1]){
@@ -142,7 +142,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
      leafyTwig(v,finish,Math.max(.0013,trunkR*.012),mobile?5:7);
     }
     // Terminal cluster continues the supporting branch rather than floating.
-    leafyTwig(shoot.getPoint(.68),e,Math.max(.0012,trunkR*.009),mobile?3:4);
+    leafyTwig(q,e,Math.max(.0012,trunkR*.009),mobile?3:4,shoot);
    }
   }
  }
