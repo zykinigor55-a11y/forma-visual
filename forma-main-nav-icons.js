@@ -3,6 +3,7 @@
  * one self-contained SVG per button; no remote sprites, fonts or bitmaps.
  */
 const PATHS=Object.freeze({
+ plan:'<path d="M9 10h30v28H9z" fill="none" stroke="#e6c598" stroke-width="1.7"/><path d="M12 13h11v10H12zM26 13h10v22H26zM12 26h11v9H12z" fill="url(#METAL)" stroke="#e6c598" stroke-width=".8"/><path d="M5 10v28M9 5h30" fill="none" stroke="#c9a780" stroke-width=".9"/>',
  project:'<path d="M9 17h12l4 4h14v16H9z" fill="url(#METAL)" stroke="#f1ddba" stroke-width="1.6"/><path d="M9 17v-5h13l4 5M13 25h22" fill="none" stroke="#ffebc8" stroke-width="1.65"/>',
  build:'<path d="M8 22l16-12 16 12-16 10z" fill="url(#METAL)" stroke="#f1d9b2" stroke-width="1.65"/><path d="M12 24v12l12 6V31l12-7v12l-12 6" fill="url(#METAL)" stroke="#e8caa1" stroke-width="1.5"/><path d="M28 32l5-3v7l-5 2z" fill="#252b29" stroke="#d9bc91" stroke-width="1.15"/>',
  interior:'<path d="M11 9h26v28H11z" fill="none" stroke="#e6c598" stroke-width="2"/><path d="M12 24l12 6 12-6M24 30v7" fill="none" stroke="#f5dfbe" stroke-width="1.5"/><path d="M14 26h12v6H14zM26 29h8v5h-8z" fill="url(#METAL)" stroke="#f0d0a2" stroke-width="1.3"/><path d="M18 18h12" stroke="#b9a082" stroke-width="2"/>',
@@ -16,7 +17,7 @@ const PATHS=Object.freeze({
  tools:'<path d="M28 9a9 9 0 0 0-9 12L8 32a6 6 0 0 0 8 8l11-11a9 9 0 0 0 12-12l-8 7-7-7z" fill="url(#METAL)" stroke="#f0d5ad" stroke-width="1.6"/><circle cx="13" cy="35" r="2.3" fill="#292e2c" stroke="#ffe5b8" stroke-width="1.1"/>',
  check:'<path d="M24 7 39 14v12c0 9-7 14-15 17C16 40 9 35 9 26V14z" fill="url(#METAL)" stroke="#efdbb5" stroke-width="1.7"/><path d="m16 25 6 6 12-13" fill="none" stroke="#292e2b" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>'
 });
-const ALIASES=Object.freeze({render:'build',environment:'build',landscape:'trees',plant:'trees','landscape-project':'trees',variants:'gallery',frames:'gallery',parameters:'settings',scenario:'nodes',scenarios:'nodes',workflow:'nodes',pro:'tools',models:'tools',plan:'gallery',preview:'atmosphere',image3d:'build'});
+const ALIASES=Object.freeze({render:'build',environment:'build',landscape:'trees',plant:'trees','landscape-project':'trees',variants:'gallery',frames:'gallery',parameters:'settings',scenario:'nodes',scenarios:'nodes',workflow:'nodes',pro:'tools',models:'tools',plan:'plan',preview:'atmosphere',image3d:'build'});
 let instance=0;
 export function mainNavIcon(name){
  const key=ALIASES[name]||name;
