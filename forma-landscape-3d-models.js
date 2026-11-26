@@ -1,3 +1,5 @@
+import {barkTexture} from './forma-landscape-3d-vegetation.js?v=R28';
+import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R28';
 import {reshapeNativePine} from './forma-landscape-pine-native.js';
 import {reshapeNativeSpruce} from './forma-landscape-spruce-native.js';
 import {refineNativeBirch} from './forma-landscape-birch-native.js';
@@ -180,6 +182,26 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   // Avoid dark, incorrect self-shadow from crossed paper-thin spruce/birch
   // foliage: both sides retain the ORIGINAL Tevy leaf color.
   const materials=Array.isArray(node.material)?node.material:[node.material];
+  if(shareGeometry&&node.geometry?.attributes?.uv){
+   for(const m of materials){
+    if(!m?.isMeshStandardMaterial)continue;
+    const name=(String(m.name||'')+' '+String(node.name||'')).toLowerCase();
+    const bark=/bark|trunk|wood|ствол|кора/.test(name)&&!(/leaf|leav|folia|needle/.test(name)||m.alphaTest>0);
+    if(bark){
+     if(!m.map){m.map=barkTexture(T,instance.catalogId);m.color.set('#ffffff');}
+     if(!m.normalMap&&!m.bumpMap&&m.map){m.bumpMap=m.map;m.bumpScale=.018;}
+     m.roughness=Math.max(.88,m.roughness);m.metalness=0;m.needsUpdate=true;
+    }
+    // Original UV and authored mask always win. Only explicit untextured
+    // branch/leaf card meshes get the project's existing cutout photo atlas.
+    if(!m.map&&/leaf.?card|foliage.?card|leaf.?plane|spray.?card/.test(name)){
+     const photo=createPhotoFoliageTexture(T,instance.catalogId);if(photo){
+      m.map=photo;m.alphaTest=.32;m.transparent=false;m.depthWrite=true;m.side=T.DoubleSide;m.color.set('#ffffff');m.needsUpdate=true;
+     }
+    }
+    if(m.alphaTest>0){m.roughness=Math.max(.78,m.roughness);m.metalness=0;m.depthWrite=true;m.transparent=false;m.needsUpdate=true;}
+   }
+  }
   const masked=materials.some(m=>m&&m.alphaTest>0);
   node.receiveShadow=!(masked&&['pine','spruce','birch','aspen'].includes(instance.catalogId));
  });
