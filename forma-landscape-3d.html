@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R38</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R39</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -797,12 +797,13 @@ import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
-import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
+import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=R39';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
 import {createDetailedFir,woodTexture,adoptFirPhotoMaps} from './forma-landscape-3d-fir-r25.js?v=R28';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
-import {createNaturalMaple} from './forma-landscape-3d-maple-r30.js?v=R38';
+import {createNaturalMaple} from './forma-landscape-3d-maple-r30.js?v=R39';
+import {normalizeMapleGrowth,mapleDimensions,mapleGrowthMarkup,mountMapleGrowth} from './forma-landscape-maple-growth.js?v=R39';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js?v=R23';
@@ -892,7 +893,7 @@ function treeAssetInfo(o){
   triangles+=Math.floor(count/3)*(n.isInstancedMesh?n.count:1);
   if((Array.isArray(n.material)?n.material:[n.material]).some(m=>m&&(m.alphaTest>0||m.transparent)))foliageMeshes++;
  });
- const status=group?.userData?.nativeMapleR38?'FORMA · клён R38 · '+group.userData.leafCount+' листьев · '+(group.userData.fusedWood?'Объединённая геометрия: '+group.userData.fusedPaths+' стволов/ветвей':'Резервная геометрия')+' · кора: '+(group.children.find(n=>n.name==='FORMA maple continuous textured forks')?.material?.map?.userData?.formaBarkSource||'не определена'):real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
+ const status=group?.userData?.nativeMapleR39?'FORMA · клён R39 · '+group.userData.mapleAge+' лет · '+group.userData.leafCount+' листьев · '+(group.userData.fusedWood?'Объединённая геометрия: '+group.userData.fusedPaths+' стволов/ветвей':'Резервная геометрия')+' · кора: '+(group.children.find(n=>n.name==='FORMA maple continuous textured forks')?.material?.map?.userData?.formaBarkSource||'не определена'):real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
  const file=real?(source?'Импортированная пользователем GLB':bundled?.userData?.formaAssetPath||'Путь не зарегистрирован'):'—';
  return {species,name:catalog(species)?.name||species,status,file,meshes,triangles,foliageMeshes};
 }
@@ -2505,6 +2506,13 @@ function rotateSelected(degrees){
  if(!result)return;
  push();ref.obj.rotation=result.rotation;save();rebuild();
 }
+function commitSelectedMapleGrowth(o,value){
+ const next=normalizeMapleGrowth(value),dims=mapleDimensions(next);
+ if(normalizeMapleGrowth(o.maple).age===next.age&&Number(o.height)===dims.height&&Number(o.diameter)===dims.diameter)return;
+ push();o.maple=next;o.height=dims.height;o.diameter=dims.diameter;
+ save();rebuild();renderProps();
+ status('Клён: '+next.age+' лет · '+dims.height+' м. Изменены пропорции ствола, ветвей и кроны.');
+}
 function commitSelectedPineGrowth(o,{pine,height}){
  const next=normalizePineGrowth(pine),dims=pineDimensions(height,next.age,next.pineType);
  if(pineGrowthEquals(o.pine,next)&&Number(o.height)===dims.height&&Number(o.diameter)===dims.diameter)return;
@@ -2630,7 +2638,8 @@ function renderProps(){
  else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
  const isPine=ref.type==='object'&&o.catalogId==='pine';
  const isSpruce=ref.type==='object'&&o.catalogId==='spruce';
- const isTreeEditor=isPine||isSpruce;
+ const isMaple=ref.type==='object'&&o.catalogId==='maple'&&!importedPlantModels.has('maple');
+ const isTreeEditor=isPine||isSpruce||isMaple;
  const isShrub=ref.type==='object'&&catalog(o.catalogId)?.group==='shrubs';
  const isLight=ref.type==='object'&&catalog(o.catalogId)?.group==='lights';
  const isBoulder=ref.type==='object'&&catalog(o.catalogId)?.group==='boulders';
@@ -2656,7 +2665,7 @@ function renderProps(){
  syncSelectedObjectDock(ref,label);
  el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+
  (creature?'<p class="hint">Настоящая лицензированная GLB · CC0 · '+creature.species+
- ' · <a href="'+creature.source+'" target="_blank" rel="noopener noreferrer">Источник модели</a>. Рост, координаты, ориентация и фотопривязка сохраняются.</p>':'')+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
+ ' · <a href="'+creature.source+'" target="_blank" rel="noopener noreferrer">Источник модели</a>. Рост, координаты, ориентация и фотопривязка сохраняются.</p>':'')+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):isMaple?mapleGrowthMarkup(o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
  (isBoulder?'<div class="light-physical-inspector"><strong>КАМЕНЬ · НАТУРАЛЬНАЯ 3D-ФОРМА</strong><label for="rockShapeVariant">Вариант формы</label><select id="rockShapeVariant">'+[[1,'01 · природный'],[2,'02 · другой ракурс'],[3,'03 · природная вариация'],[4,'04 · природная вариация']].map(([v,name])=>'<option value="'+v+'"'+(rockVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><label for="rockBurial">Заглубление <output id="rockBurialValue">'+rockBurial+'%</output></label><input type="range" min="0" max="36" step="2" value="'+rockBurial+'" id="rockBurial"><small>Настоящая сканированная CC0-модель с PBR-текстурами. Диаметр, высота и угол задаются выше. Координаты не меняются.</small></div>':'')+
  (isLight?'<div class="light-physical-inspector"><strong>СВЕТ · РЕАЛЬНЫЙ 3D-КОРПУС</strong><label for="lampBrightness">Яркость <output id="lampBrightnessValue">'+Math.round(lightBrightness*100)+'%</output></label><input type="range" min="0" max="200" step="5" id="lampBrightness" value="'+Math.round(lightBrightness*100)+'"><label for="lampKelvin">Цветовая температура</label><select id="lampKelvin">'+[[2200,'2200 K · янтарный'],[2700,'2700 K · тёплый'],[3000,'3000 K · нейтрально-тёплый'],[4000,'4000 K · нейтральный']].map(([k,n])=>'<option value="'+k+'"'+(lightKelvin===k?' selected':'')+'>'+n+'</option>').join('')+'</select><small>Реальный источник внутри модели. Ночью свет влияет на растения и поверхности. Положение лампы не меняется.</small></div>':'')+(isLight&&o.catalogId==='globe'?'<div class="light-physical-inspector"><label for="lampGlobeSize">Диаметр светильника-шара</label><select id="lampGlobeSize">'+[[1,'40 см · стандартный'],[2,'25 см · малый'],[3,'60 см · большой'],[4,'80 см · XL']].map(([v,name])=>'<option value="'+v+'"'+(globeVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><small>4 размера по вашему референсу. Сохраняем координаты каждого шара.</small></div>':'')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
@@ -2741,6 +2750,7 @@ function renderProps(){
  });}
  if(isPine)mountPineGrowth(el,o,{onCommit:value=>commitSelectedPineGrowth(o,value)});
  if(isSpruce)mountSpruceGrowth(el,o,{onCommit:value=>commitSelectedSpruceGrowth(o,value)});
+ if(isMaple)mountMapleGrowth(el,o,value=>commitSelectedMapleGrowth(o,value));
  if(isShrub){
   el.querySelectorAll('[data-shrub-variant]').forEach(button=>button.onclick=()=>{
    const choice=Number(button.dataset.shrubVariant);
