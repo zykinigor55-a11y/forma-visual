@@ -530,7 +530,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R141</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R142</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -845,10 +845,10 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <script type="module">
 import * as THREE from 'three';
 import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r89.js?v=R89';
-import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R118';
+import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R142';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R122';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
-import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R141';
+import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R142';
 import {exportCyclesJob,CYclesPresets} from './forma-cycles-export-r107.js?v=R123';
 import {createWindSystem,windRipple} from './forma-wind-r91.js?v=R113';
 const windR74=createWindSystem(THREE);let windAmountR74=window.innerWidth<=850?15:25;try{const v=localStorage.getItem('forma-wind-r75');if(v!==null)windAmountR74=Math.max(0,Math.min(100,Number(v)||0));}catch{}
@@ -882,7 +882,7 @@ import {normalizeWillowGrowth,willowDimensions,willowGrowthMarkup,mountWillowGro
 import {normalizeMapleGrowth,mapleDimensions,mapleGrowthMarkup,mountMapleGrowth} from './forma-landscape-maple-growth.js?v=R39';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
-import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js?v=R23';
+import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js?v=R142';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js?v=R29';
 import {pineGrowthMarkup,mountPineGrowth,normalizePineGrowth,pineGrowthEquals,pineDimensions} from './forma-landscape-pine-growth.js';
 import {spruceGrowthMarkup,mountSpruceGrowth,normalizeSpruceGrowth,spruceDimensions} from './forma-landscape-spruce-growth.js';
@@ -959,7 +959,7 @@ let currentPlantCount=0,currentPlantQuality=1;const renderQuality='high';let aut
 let graphicsChoiceR105='auto';try{graphicsChoiceR105=localStorage.getItem('forma-graphics-r105')||'auto'}catch{}
 // Always prefer the original high-detail botanical assets.
 function treeSourceChoice(){return 'glb';}
-const botanicalGroups=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
+const botanicalGroups=[],adaptivePlantGroupsR142=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
 const geologicalRockSources=new Map(),geologicalRockLoading=new Set(),geologicalRockFailures=new Set();
 const gardenLightPreviewCache=new Map();let gardenLightPreviewBusy=false;
@@ -1426,13 +1426,16 @@ function startPathTraceR72(profile='balanced',renderClouds='stable',geometryMode
  if(!renderer||!camera||!root||gpuLostR75){openRenderMenuR75('3D-сцена или GPU ещё недоступны.');return;}
  const p=gpuProfileR75();if(p.software||!p.capable){openRenderMenuR75('Трассировка недоступна: требуется аппаратный WebGL2 с HDR-буферами.');return;}
  if(state.view==='2d')setView('3d');releasePhotorealPipeline(renderer);
+ syncPlantVisibilityR142(geometryMode==='full');
+ const renderFocusR142=lawnFocusR104(camera,controls,doc.site,terrainAt(camera.position.x,camera.position.z),state.view);
+ const renderViewR142=grassViewR142(camera,state.view,renderFocusR142);
  // The final render is independent of viewport grass LOD and camera height.
  const sourceLawn=LAWN_PROFILES[lawnTypeR77]||LAWN_PROFILES.universal;
  const lawn=doc.atmosphere.season!=='winter'&&!sourceLawn.crop?{
   profile:{...sourceLawn,height:sourceLawn.height*lawnHeightR90/100,density:sourceLawn.density*lawnDensityR90/100},
   bounds:{x0:-doc.site.width/2,x1:doc.site.width/2,z0:-doc.site.height/2,z1:doc.site.height/2},
-  focus:lawnFocusR104(camera,controls,doc.site,terrainAt(camera.position.x,camera.position.z),state.view),
-  contains:lawnAllowedR90,terrainAt:lawnSurfaceAtR90,horizon:rowanTestMode
+  focus:renderFocusR142,
+  contains:(x,z)=>lawnAllowedR90(x,z),visible:renderViewR142.contains,terrainAt:lawnSurfaceAtR90,horizon:rowanTestMode
  }:null;
  pathTraceR72=createPathTraceMode(THREE,{renderer,scene,root,camera,canvas,profile,lawn,atmosphere:{...doc.atmosphere,solarSoftness:solarSettings.softness,cloudSettings:{...sceneAtmosphere},renderClouds,geometryMode,traceRecovery},onClose:()=>{pathTraceR72=null;if(!gpuLostR75&&!renderer.getContext().isContextLost()){resize();renderGate.invalidate();}},onFailure:reason=>{fallbackGpuR140(reason);}});
 }
@@ -1879,11 +1882,52 @@ function lawnSurfaceAtR90(x,z){
  return terrainAt(x,z)+(turfMask.some(mask=>mask.lawn&&turfContains(mask,px,pz))?.053:0);
 }
 // Detail the visible foreground, even when the orbit target is high in a tree.
+// A padded camera sector, quantized to avoid churning GPU buffers on tiny rotations.
+function grassViewR142(camera,view,focus){
+ const dir=camera.getWorldDirection(new THREE.Vector3()),horizontal=Math.hypot(dir.x,dir.z);
+ if(view==='2d'||horizontal<.30||dir.y<-.86)return {key:'all',contains:()=>true};
+ const bucket=Math.round(Math.atan2(dir.x,dir.z)/(Math.PI/18)),angle=bucket*Math.PI/18;
+ const dx=Math.sin(angle),dz=Math.cos(angle);
+ const half=Math.atan(Math.tan((camera.fov||50)*Math.PI/360)*Math.max(.35,camera.aspect||1))+.48;
+ const cos=Math.cos(Math.min(Math.PI*.95,half)),x=camera.position.x,z=camera.position.z;
+ return {key:String(bucket),contains:(px,pz)=>{const a=px-x,b=pz-z,d=Math.hypot(a,b);return d<2.5||(a*dx+b*dz)>=d*cos-2.5;}};
+}
+function plantInViewR142(group,frustum){
+ const dim=group.userData.formaPlantBoundsR142;
+ if(!dim)return true;
+ const center=group.getWorldPosition(new THREE.Vector3());center.y+=dim.height*.5;
+ const radius=Math.hypot(dim.height*.5,dim.diameter*.6)+2;
+ return frustum.intersectsSphere(new THREE.Sphere(center,radius));
+}
+function paddedPlantFrustumR142(){
+ camera.updateMatrixWorld();const proj=camera.projectionMatrix.clone();
+ if(camera.isPerspectiveCamera){proj.elements[0]*=.72;proj.elements[5]*=.72;}
+ return new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(proj,camera.matrixWorldInverse));
+}
+function syncPlantVisibilityR142(force=false){
+ if(!camera||!root)return;
+ root.updateMatrixWorld(true);const frustum=paddedPlantFrustumR142();
+ for(const group of adaptivePlantGroupsR142){
+  const visible=force||state.view==='2d'||plantInViewR142(group,frustum);
+  const previous=group.userData.formaOffscreenR142===true;
+  group.userData.formaOffscreenR142=!visible;
+  if(group.userData.botanicalLod){
+   if(!visible)setFoliageTier(group,'far');else updateBotanicalLod(group,camera,canvas.clientHeight,force?'premium':null);
+  }else if(previous!==!visible){
+   group.traverse(node=>{
+    if(!node.isInstancedMesh||!(/leaf|leaves|foliage|needle|spray|berry|berries/i.test(node.name)||['leaf','needle'].includes(node.material?.userData?.formaPBRRoleR63)))return;
+    if(node.userData.formaViewportCountR142===undefined)node.userData.formaViewportCountR142=node.count;
+    node.count=visible?node.userData.formaViewportCountR142:Math.max(1,Math.ceil(node.userData.formaViewportCountR142*.25));
+   });
+  }
+  if(previous!==!visible){shadowBudgetDirty=true;renderGate.invalidate();}
+ }
+}
 function lawnFocusR104(camera,controls,site,ground,view){
  const p=camera.position.clone(),t=controls.target;
  const height=Math.max(0,p.y-ground),dx=t.x-p.x,dz=t.z-p.z;
  const length=Math.hypot(dx,dz);
- if(view!=='walk'&&length>.001){const advance=Math.min(length*.8,Math.max(1.1,height*.85));p.x+=dx/length*advance;p.z+=dz/length*advance;}
+ if(view==='walk'){const d=camera.getWorldDirection(new THREE.Vector3());const n=Math.hypot(d.x,d.z);if(n>.1){p.x+=d.x/n*1.7;p.z+=d.z/n*1.7;}}else if(length>.001){const advance=Math.min(length*.8,Math.max(1.1,height*.85));p.x+=dx/length*advance;p.z+=dz/length*advance;}
  p.x=Math.max(-site.width/2,Math.min(site.width/2,p.x));p.z=Math.max(-site.height/2,Math.min(site.height/2,p.z));p.y=0;return p;
 }
 function updateTurfDetail(){
@@ -1893,18 +1937,18 @@ function updateTurfDetail(){
  const mobile=['eco','standard'].includes(window.FORMA_GRAPHICS_R105||'standard');
  const show=state.view!=='2d'&&(lawnEnabledR90||(!state.painting&&state.tool!=='terrain'))&&
   doc.atmosphere.season!=='winter'&&(camera.position.y-ground<8||(pbrR63Enabled&&oakTestMode)||lawnTestMode||lawnIntegratedR90);
- if(!show){if(turfDetail?.visible){turfDetail.visible=false;renderGate.invalidate()}return;}
+ if(!show){if(turfDetail){disposeTurfDetail();turfCell='';renderGate.invalidate()}return;}
  if(lawnEnabledR90&&state.painting&&turfDetail){turfDetail.visible=true;return;}
  const specimen=pbrR63Enabled&&oakTestMode?doc.objects.find(o=>o.catalogId==='oak'):null;
  const focus=lawnEnabledR90?lawnFocusR104(camera,controls,doc.site,ground,state.view):specimen&&camera.position.y-ground>=8?pos(specimen.x,specimen.y):camera.position;
  const source=LAWN_PROFILES[lawnTypeR77]||LAWN_PROFILES.universal;
  const profile=lawnEnabledR90?{...source,integrated:lawnIntegratedR90,season:doc.atmosphere.season,height:source.crop?lawnWheatHeightR88/100:source.height*lawnHeightR90/100,density:source.density*lawnDensityR90/100,pressedAmount:lawnPressedR90,flowerAmount:lawnFlowersR88}:null;
  const cx=Math.floor(focus.x/3),cz=Math.floor(focus.z/3);
- const dense=!!profile;const cellR106=mobile?(window.FORMA_GRAPHICS_R105==='eco'?2.2:1.8):(lawnIntegratedR90?1.2:.6);const key=(dense?Math.round(focus.x/cellR106)+':'+Math.round(focus.z/cellR106)+':'+autoReduced:cx+':'+cz)+':'+doc.atmosphere.season+':'+mobile+':'+(profile?lawnTypeR77:'default');
+ const viewR142=grassViewR142(camera,state.view,focus);const dense=!!profile;const cellR106=mobile?(window.FORMA_GRAPHICS_R105==='eco'?2.2:1.8):(lawnIntegratedR90?1.2:.6);const key=(dense?Math.round(focus.x/cellR106)+':'+Math.round(focus.z/cellR106)+':'+autoReduced:cx+':'+cz)+':'+doc.atmosphere.season+':'+mobile+':'+(profile?lawnTypeR77:'default')+':'+viewR142.key;
  if(turfCell===key&&turfDetail){if(!turfDetail.visible){turfDetail.visible=true;renderGate.invalidate()}return;}
  disposeTurfDetail();
  turfCell=key;turfMask=turfMask||turfMasks();
- if(dense){turfDetail=createDenseLawn(THREE,{profile,focus,mobile,low:window.FORMA_GRAPHICS_R105==='eco'||autoReduced,terrainAt:lawnSurfaceAtR90,contains:lawnAllowedR90,bounds:{x0:-doc.site.width/2,x1:doc.site.width/2,z0:-doc.site.height/2,z1:doc.site.height/2}});root.add(turfDetail);renderGate.invalidate();return;}
+ if(dense){turfDetail=createDenseLawn(THREE,{profile,focus,mobile,low:window.FORMA_GRAPHICS_R105==='eco'||autoReduced,terrainAt:lawnSurfaceAtR90,contains:(x,z)=>viewR142.contains(x,z)&&lawnAllowedR90(x,z),bounds:{x0:-doc.site.width/2,x1:doc.site.width/2,z0:-doc.site.height/2,z1:doc.site.height/2}});root.add(turfDetail);renderGate.invalidate();return;}
  const positions=[],colors=[],radius=profile?(mobile?3.6:5.0):specimen?(mobile?9:13):(mobile?6.5:9),step=profile?(mobile?.073:.058)/Math.sqrt(profile.density):mobile?.115:.095;
  const mx=cx*3+1.5,mz=cz*3+1.5;
  const autumn=doc.atmosphere.season==='autumn';
@@ -1912,7 +1956,7 @@ function updateTurfDetail(){
  const add=(x,y,z,c,k)=>{positions.push(x,y,z);colors.push(c.r*k,c.g*k,c.b*k)};
  for(let iz=Math.floor((mz-radius)/step);iz<=Math.ceil((mz+radius)/step);iz++)for(let ix=Math.floor((mx-radius)/step);ix<=Math.ceil((mx+radius)/step);ix++){
   const x=(ix+turfRandom(ix,iz,1))*step,z=(iz+turfRandom(ix,iz,2))*step;
-  if(Math.hypot(x-mx,z-mz)>radius-0.6)continue;
+  if(Math.hypot(x-mx,z-mz)>radius-0.6||!viewR142.contains(x,z))continue;
   const px=x+doc.site.width/2,pz=z+doc.site.height/2;
   if(!inParcel({x:px,y:pz},doc.site))continue;
   let blocked=false,lawn=false;
@@ -1952,7 +1996,7 @@ function rebuild(){
  currentPlantQuality=Math.max(currentPlantCount<=14?.85:.65,adaptive);
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();for(const mat of (Array.isArray(n.material)?n.material:[n.material]))mat?.dispose?.()})}
- pickables=[];botanicalGroups.length=0;lastBotanicalLodAt=0;shadowedGardenLights=0;
+ pickables=[];botanicalGroups.length=0;adaptivePlantGroupsR142.length=0;lastBotanicalLodAt=0;shadowedGardenLights=0;
  const w=doc.site.width,h=doc.site.height;
  // The ground is an unbroken square around the measured parcel. An irregular
  // user boundary remains a separate outline and never cuts holes in the scene.
@@ -2345,6 +2389,7 @@ function drawObject(o,entry,key){
  if(['trees','shrubs'].includes(group)&&g.children.length)
   attachTreeSnowPreview(THREE,g,o,doc.atmosphere);
  mark(g,key);root.add(g);
+ if(['trees','shrubs'].includes(group)){g.userData.formaPlantBoundsR142={height:Math.max(.5,Number(o.height)||3),diameter:Math.max(.5,Number(o.diameter)||3)};adaptivePlantGroupsR142.push(g);}
  if(g.userData?.botanicalLod)botanicalGroups.push(g);
 }
 function polygon(points,y,color,water=false,materialId='universal'){
@@ -4310,6 +4355,7 @@ function captureHighQuality3dReference(){
  const previousRatio=renderer.getPixelRatio();
  const previousShadows=renderer.shadowMap.enabled;
  const prevBotanicalTiers=botanicalGroups.map(g=>[g,g.userData.botanicalCurrentLod]);
+ syncPlantVisibilityR142(true);
  const logicalWidth=Math.max(1,canvas.clientWidth),logicalHeight=Math.max(1,canvas.clientHeight);
  const highestDim=Math.max(logicalWidth,logicalHeight);
  // Android WebGL can leave incomplete/white frame strips when forced to
@@ -4332,6 +4378,7 @@ function captureHighQuality3dReference(){
   return renderer.domElement.toDataURL('image/png');
  }finally{
   for(const [group,tier] of prevBotanicalTiers)setFoliageTier(group,tier);
+ syncPlantVisibilityR142();
   renderer.setPixelRatio(previousRatio);
   renderer.shadowMap.enabled=previousShadows;
   renderer.shadowMap.needsUpdate=true;
@@ -5047,10 +5094,11 @@ function animate(now=0){
  const activeWalk=state.view==='walk'&&walked;
  // Pixel-space selection, not a fixed world distance. Hysteresis avoids
  // foliage popping during strolls; update at most ~4 times per second.
- if(botanicalGroups.length&&camera&&(cameraMoved||now-lastBotanicalLodAt>420)&&
+ if((botanicalGroups.length||adaptivePlantGroupsR142.length)&&camera&&(cameraMoved||now-lastBotanicalLodAt>420)&&
    now-lastBotanicalLodAt>245){
-  lastBotanicalLodAt=now;root.updateMatrixWorld(true);camera.updateMatrixWorld();
+  lastBotanicalLodAt=now;syncPlantVisibilityR142();root.updateMatrixWorld(true);camera.updateMatrixWorld();
   for(const model of botanicalGroups){
+   if(model.userData.formaOffscreenR142)continue;
    const previous=model.userData.botanicalCurrentLod;
    const current=updateBotanicalLod(model,camera,canvas.clientHeight);
    if(current!==previous){renderGate.invalidate();shadowBudgetDirty=true}
