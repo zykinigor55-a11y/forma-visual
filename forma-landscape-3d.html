@@ -1912,7 +1912,9 @@ function syncPlantVisibilityR142(force=false){
   const previous=group.userData.formaOffscreenR142===true;
   group.userData.formaOffscreenR142=!visible;
   if(group.userData.botanicalLod){
-   if(!visible)setFoliageTier(group,'far');else updateBotanicalLod(group,camera,canvas.clientHeight,force?'premium':null);
+   const tierBefore=group.userData.botanicalCurrentLod;
+   const tierAfter=!visible?setFoliageTier(group,'far'):updateBotanicalLod(group,camera,canvas.clientHeight,force?'premium':null);
+   if(tierBefore!==tierAfter){shadowBudgetDirty=true;renderGate.invalidate();}
   }else if(previous!==!visible){
    group.traverse(node=>{
     if(!node.isInstancedMesh||!(/leaf|leaves|foliage|needle|spray|berry|berries/i.test(node.name)||['leaf','needle'].includes(node.material?.userData?.formaPBRRoleR63)))return;
