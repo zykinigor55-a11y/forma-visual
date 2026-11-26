@@ -142,6 +142,29 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
 }
 </style>
 <style id="forma-r177-preview-clean">#formaPreviewNotice{display:none!important}</style>
+<style id="forma-home-intro-r178">
+/* Same compact desktop navigation SVGs on both layouts; no image banners. */
+#formaStudioHome .fa-studio-task>svg.forma-main-nav-icon{width:43px!important;height:43px!important;max-width:43px!important;flex:0 0 43px!important;overflow:hidden!important;filter:none!important;margin:0 0 5px!important}
+#formaStudioHome .fa-studio-task:before{display:none!important}
+@media(max-width:760px){#formaStudioHome .fa-studio-task>svg.forma-main-nav-icon{width:40px!important;height:40px!important;max-width:40px!important;flex-basis:40px!important}#formaStudioHome .fa-studio-task{min-height:130px!important}}
+/* Precision reveal: original FA emblem, drafting guides, no video or heavy media. */
+#forma-intro.forma-intro{transition:opacity .65s cubic-bezier(.22,1,.36,1),visibility .65s}
+#forma-intro .forma-intro-geometry-ring{stroke:#777b7e;stroke-width:.65;stroke-dasharray:376;stroke-dashoffset:376;opacity:.65;animation:forma-r178-trace .8s ease-out both;transform:none}
+#forma-intro .forma-intro-geometry-ring-inner{stroke:#565a5d;stroke-width:.5;stroke-dasharray:none;opacity:.5}
+#forma-intro .forma-intro-geometry-axis{stroke:#73777b;stroke-width:.5;opacity:.35}
+#forma-intro .forma-intro-geometry-draw{stroke:#d5d9db;stroke-width:1.15;stroke-dasharray:132;stroke-dashoffset:132;animation:forma-r178-trace .85s .12s ease-out both}
+#forma-intro .forma-intro-geometry-center{fill:#b3b8ba;opacity:.6}
+#forma-intro.is-loader-complete .forma-intro-geometry{opacity:.28;transition:opacity .6s;animation:none!important;stroke-dashoffset:0}
+#forma-intro.is-loader-complete .forma-intro-geometry-ring,#forma-intro.is-loader-complete .forma-intro-geometry-draw{stroke-dashoffset:0;animation:none}
+#forma-intro .forma-intro-measure>.forma-intro-mark{clip-path:inset(0 100% 0 0);transition:clip-path .7s cubic-bezier(.2,.8,.2,1),opacity .35s,visibility 0s}
+#forma-intro.is-logo-visible .forma-intro-measure>.forma-intro-mark{clip-path:inset(0 0 0 0);transition:clip-path .7s cubic-bezier(.2,.8,.2,1),opacity .35s,visibility 0s}
+#forma-intro .forma-intro-lockup .forma-intro-name{font-weight:430;letter-spacing:.26em;padding-left:.26em;font-size:clamp(36px,7vw,60px);color:#f4f4f2}
+#forma-intro .forma-intro-lockup .forma-intro-descriptor{color:#b8babb;letter-spacing:.13em;font-weight:500}
+#forma-intro .forma-intro-loader-overline,#forma-intro .forma-intro-loader-bottom,#forma-intro .forma-intro-wait{color:#aeb0b2}
+#forma-intro .forma-intro-loader-dot{background:#c6c9ca;box-shadow:none}
+@keyframes forma-r178-trace{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){#forma-intro .forma-intro-geometry-ring,#forma-intro .forma-intro-geometry-draw{animation:none;stroke-dashoffset:0}#forma-intro .forma-intro-measure>.forma-intro-mark{clip-path:none;transition:none}}
+</style>
 </head>
 <body>
 <div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Загрузка студии FORMA" aria-hidden="false">
@@ -151,11 +174,11 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
     <span class="forma-intro-loader-overline">АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</span>
     <span class="forma-intro-measure" aria-hidden="true">
      <svg class="forma-intro-geometry" viewBox="0 0 132 132" aria-hidden="true">
-      <circle cx="66" cy="66" r="48" class="forma-intro-geometry-ring"/>
-      <circle cx="66" cy="66" r="27" class="forma-intro-geometry-ring-inner"/>
-      <path d="M66 10 V122 M10 66 H122" class="forma-intro-geometry-axis"/>
-      <path d="M38 94 L66 38 L94 94 M48 75 H84" class="forma-intro-geometry-draw"/>
-      <circle cx="66" cy="66" r="3" class="forma-intro-geometry-center"/>
+      <rect x="19" y="19" width="94" height="94" class="forma-intro-geometry-ring"/>
+      <path d="M19 42H113M19 90H113M42 19V113M90 19V113" class="forma-intro-geometry-ring-inner"/>
+      <path d="M66 5V127M5 66H127" class="forma-intro-geometry-axis"/>
+      <path d="M19 35V19H35M97 19H113V35M113 97V113H97M35 113H19V97" class="forma-intro-geometry-draw"/>
+      <circle cx="66" cy="66" r="1.5" class="forma-intro-geometry-center"/>
      </svg>
      <img class="forma-intro-mark" src="assets/brand/forma-fa-intro-mark.svg" width="120" height="118" alt="" decoding="async">
     </span>
@@ -171,7 +194,7 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
   <button id="formaIntroRecover" class="forma-intro-recover" type="button" hidden>Открыть студию</button>
  </div>
 </div>
-<script src="forma-intro-signature.js?v=studio-ready-gate-20261117"></script>
+<script src="forma-intro-signature.js?v=R178-precision-reveal"></script>
 
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
@@ -933,7 +956,7 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
 <script type="module" src="forma-landscape-atmosphere.js?v=благоустройство-premium-v1-20261117-3d-icons-v4"></script>
 <script type="module" src="forma-landscape-project.js?v=R90"></script>
 <script type="module" src="forma-studio-shell.js?v=direct-masterplan-v6-20261117"></script>
-<script type="module" src="forma-site-premium-icons.js?v=neutral-gray-compact-v4"></script>
+<script type="module" src="forma-site-premium-icons.js?v=R178-desktop-icons"></script>
 <script type="module" src="forma-image-workspace.js?v=five-plan-concepts-v3-20261117"></script>
 <script defer src="forma-workflow-ux.js?v=camera-orbit-20261117"></script>
 <script defer src="forma-cinema-workspace.js?v=20261116-2"></script>
