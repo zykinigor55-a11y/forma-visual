@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R33</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R34</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -802,7 +802,7 @@ import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTria
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
 import {createDetailedFir,woodTexture,adoptFirPhotoMaps} from './forma-landscape-3d-fir-r25.js?v=R28';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
-import {createNaturalMaple} from './forma-landscape-3d-maple-r30.js?v=R33';
+import {createNaturalMaple} from './forma-landscape-3d-maple-r30.js?v=R34';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js?v=R23';
@@ -892,7 +892,7 @@ function treeAssetInfo(o){
   triangles+=Math.floor(count/3)*(n.isInstancedMesh?n.count:1);
   if((Array.isArray(n.material)?n.material:[n.material]).some(m=>m&&(m.alphaTest>0||m.transparent)))foliageMeshes++;
  });
- const status=group?.userData?.nativeMapleR33?'FORMA · клён R33 · '+group.userData.leafCount+' листьев':real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
+ const status=group?.userData?.nativeMapleR34?'FORMA · клён R34 · '+group.userData.leafCount+' листьев':real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
  const file=real?(source?'Импортированная пользователем GLB':bundled?.userData?.formaAssetPath||'Путь не зарегистрирован'):'—';
  return {species,name:catalog(species)?.name||species,status,file,meshes,triangles,foliageMeshes};
 }
