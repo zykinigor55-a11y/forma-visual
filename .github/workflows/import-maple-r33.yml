@@ -1,0 +1,60 @@
+name: Import R33 maple photographic textures
+on:
+  push:
+    branches: [dom-render-nanobanana]
+    paths: ['.github/workflows/import-maple-r33.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: maple-photo-r33
+  cancel-in-progress: false
+jobs:
+  import:
+    if: github.ref == 'refs/heads/dom-render-nanobanana'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dom-render-nanobanana
+          fetch-depth: 0
+      - name: Download CC0 originals and validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          export MAPLE_TMP="$tmp"
+          base=https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/trident_maple_bark/trident_maple_bark_
+          for channel in diff nor_gl rough; do
+            curl --fail --location --retry 2 --max-time 60 "${base}${channel}_1k.jpg" -o "$tmp/$channel.jpg"
+          done
+          curl --fail --location --retry 2 --max-time 60 'https://opengameart.org/sites/default/files/vegetation_leaf_maple_01.png' -o "$tmp/leaf.png"
+          python -m pip install --quiet Pillow
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import os
+          p=Path(os.environ["MAPLE_TMP"])
+          for channel in ("diff","nor_gl","rough"):
+              im=Image.open(p/(channel+".jpg"))
+              assert im.format=="JPEG" and min(im.size)>=512
+              im.load()
+          im=Image.open(p/"leaf.png")
+          assert im.format=="PNG" and "A" in im.convert("RGBA").getbands()
+          alpha=im.convert("RGBA").getchannel("A")
+          assert alpha.getextrema()[0]<40 and alpha.getextrema()[1]>180, "Missing leaf cutout alpha"
+          im=im.convert("RGBA")
+          im.thumbnail((1024,1024),Image.Resampling.LANCZOS)
+          im.save(p/"leaf.png",optimize=True)
+          PY
+          dest=assets/landscape-photo/maple-r33
+          mkdir -p "$dest"
+          cp "$tmp"/{diff.jpg,nor_gl.jpg,rough.jpg,leaf.png} "$dest/"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$dest"
+          git diff --cached --quiet && exit 0
+          git commit -m 'assets(maple): vendor CC0 photographic bark and transparent leaf'
+          git pull --rebase origin dom-render-nanobanana
+          git push origin HEAD:dom-render-nanobanana
