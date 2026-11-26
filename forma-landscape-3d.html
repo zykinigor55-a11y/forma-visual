@@ -480,7 +480,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R16</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R17</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -643,17 +643,6 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <input type="file" id="customHouseGlb" accept=".glb,model/gltf-binary">
   <button type="button" class="action" id="clearCustomHouse">Вернуться к выбранному стилю</button>
   <p class="muted">GLB сохраняется локально в этом браузере. Масштаб пропорционально вписывается в выбранные размеры дома без растяжения.</p></details></section>
- <label for="quality3d">Качество 3D-сцены</label><select id="quality3d">
- <option value="speed">Быстрый · лёгкие модели</option>
- <option value="auto" selected>Стандарт · реалистичная 3D-сцена</option>
- <option value="high">Премиум / фотореализм · детальная ботаника и PBR</option>
- </select>
- <label for="treeSource3d">Сосна и берёза · источник 3D-модели</label>
- <select id="treeSource3d" aria-label="Способ построения сосны и берёзы">
-  <option value="glb" selected>GLB · реалистичные деревья (рекомендуется)</option>
-  <option value="code">CODE 3D · облегчённая геометрия</option>
- </select>
- <p class="muted" id="botanicalLodStatus">Кроны обновляются по расстоянию до камеры. Вблизи — настоящая 3D-листва, вдали — облегчённые кластеры.</p>
  <label>Время суток</label><select id="time"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Закат</option><option value="blue-hour">Синий час</option><option value="night">Ночь</option></select>
  <label>Сезон</label><select id="season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label>Погода</label><select id="weather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
@@ -795,7 +784,7 @@ import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from './forma-landscape-3d-m
 import {POLY_HAVEN_TREE_MODELS} from './forma-landscape-3d-polyhaven-trees.js';
 import {SHRUB_3D_MODELS} from './forma-landscape-3d-shrub-models.js';
 import {shrubEditorMarkup,shrubSizePreset} from './forma-landscape-shrub-editor.js';
-import {createCodeTree} from './forma-code-3d-trees.js';
+
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
 import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-3d-sun.js';
@@ -843,22 +832,9 @@ let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),
 const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
 let lastWalkFrame=0;
-let currentPlantCount=0,currentPlantQuality=1,renderQuality='auto',autoReduced=false,slowFrameStreak=0;
-// 'code' rebuilds pine/birch as authored geometry, 'glb' restores original
-// self-hosted CC0 assets. User GLB imports always take priority.
-const CODE_TREE_KEY='forma-botanical-code3d-source-v1';
-function treeSourceChoice(){
- // Legacy scenes silently defaulted to procedural trees. Prefer our
- // CC0 GLBs once, then let a deliberate CODE selection persist.
- try{
-  const flag='forma-prefer-real-glb-trees-v2';
-  if(localStorage.getItem(flag)!=='1'){
-   localStorage.setItem(CODE_TREE_KEY,'glb');
-   localStorage.setItem(flag,'1');
-  }
-  return localStorage.getItem(CODE_TREE_KEY)==='code'?'code':'glb';
- }catch{return 'glb'}
-}
+let currentPlantCount=0,currentPlantQuality=1;const renderQuality='high';let autoReduced=false,slowFrameStreak=0;
+// Always prefer the original high-detail botanical assets.
+function treeSourceChoice(){return 'glb';}
 const botanicalGroups=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
 const bundledModelSources=new Map(),bundledModelLoading=new Set(),bundledModelFailures=new Set();
 const geologicalRockSources=new Map(),geologicalRockLoading=new Set(),geologicalRockFailures=new Set();
@@ -1108,10 +1084,9 @@ function initialize(){
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  // Dense planting must remain responsive even in software WebGL (Playwright,
- // old laptops and mid-range phones). The user can override this in settings.
+ // old laptops and mid-range phones), without substituting plant geometry.
  const initialPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
- // In crowded landscapes automatically budget the preview before the first
- // expensive framebuffer. Manual 'Премиум' still restores full PBR quality.
+ // Budget framebuffer cost before the first render; keep original PBR assets.
  const crowdedPreview=initialPlantCount>8||(window.innerWidth<=720&&initialPlantCount>4);
  if(crowdedPreview){
   autoReduced=true;
@@ -1407,8 +1382,7 @@ function rebuild(){
  shadowBudgetDirty=true;
  currentPlantCount=doc.objects.filter(o=>['trees','shrubs'].includes(catalog(o.catalogId)?.group)).length+extra.filter(o=>realModelById(o.type)?.group==='plants').length;
  const adaptive=vegetationQuality(window.innerWidth,currentPlantCount,state.view);
- currentPlantQuality=renderQuality==='high'?Math.max(currentPlantCount<=14?.72:.47,adaptive):
-  adaptive*(renderQuality==='speed'||autoReduced ? .60 : 1);
+ currentPlantQuality=Math.max(currentPlantCount<=14?.85:.65,adaptive);
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  while(root.children.length){const o=root.children[0];root.remove(o);(o.userData?.textures||[]).forEach(t=>t.dispose());o.traverse(n=>{if(n.userData?.textures)n.userData.textures.forEach(t=>t.dispose());if(n.geometry&&!n.userData?.bundledSharedGeometry)n.geometry.dispose();for(const mat of (Array.isArray(n.material)?n.material:[n.material]))mat?.dispose?.()})}
  pickables=[];botanicalGroups.length=0;lastBotanicalLodAt=0;shadowedGardenLights=0;
@@ -1682,37 +1656,20 @@ function drawObject(o,entry,key){
    (doc.atmosphere.season==='winter'&&o.catalogId==='ash')||
    (o.catalogId==='sakura'&&doc.atmosphere.season!=='spring')||
     (SHRUB_3D_MODELS[o.catalogId]&&doc.atmosphere.season!=='summer'&&!['thuja-globe','boxwood'].includes(o.catalogId));
-  // Detailed CC0 broadleaves can have hundreds of meshes; on crowded
-  // phones prefer instanced botanical native trees to prevent freezes.
-  // Keep self-hosted Scots pine, aspen, spruce and birch PBR GLBs
-  // on phones even after planting more trees or automatic quality reduction.
-  const denseMobileTree=window.innerWidth<=720&&!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&
-   (['oak','maple','linden'].includes(o.catalogId)?currentPlantCount>2:currentPlantCount>6);
-  const performanceFallback=!['pine','aspen','spruce','birch'].includes(o.catalogId)&&o.catalogId!=='ash'&&o.catalogId!=='oak'&&window.innerWidth<=850&&
-   (((renderQuality==='speed'||autoReduced)&&currentPlantCount>9)||denseMobileTree);
+  // Keep the original asset at every planting density; adapt framebuffer cost instead.
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
   if(POLY_HAVEN_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
    if(SHRUB_3D_MODELS[o.catalogId]&&!imported&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'))loadCuratedAdultTree(o.catalogId);
   // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
-  // Fast mode on very crowded mobile plots preserves lightweight geometry.
-  const bundledPine=o.catalogId==='pine'&&!performanceFallback?
+  const bundledPine=o.catalogId==='pine'?
    bundledModelSources.get('pine'):null;
-  const bundledAdult=(MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId])&&(!performanceFallback||POLY_HAVEN_TREE_MODELS[o.catalogId])&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
+  const bundledAdult=(MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId])&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
   const source=imported||bundledPine||bundledAdult||null;
-  // An actual, editable Three.js mesh is built from authored geometry.
-  // Never discard an explicitly imported user-owned GLB.
-  const codeRebuilt=!imported&&treeSourceChoice()==='code'&&
-   (o.catalogId==='pine'||(o.catalogId==='birch'&&doc.atmosphere.season!=='winter'));
-  const importantRealTree=['pine','spruce','birch','aspen'].includes(o.catalogId)||o.catalogId==='ash'||o.catalogId==='oak';
-  const waitingForReal=!source&&(POLY_HAVEN_TREE_MODELS[o.catalogId]||!seasonalNative&&!performanceFallback)&&
-   (o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId])&&
-   (importantRealTree||POLY_HAVEN_TREE_MODELS[o.catalogId]||!bundledModelFailures.has(o.catalogId));
+  const waitingForReal=!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
   // NEVER flash a fake procedural tree while a verified original GLB loads.
   // The target retains an invisible metric pickable and selection ring.
-  g=codeRebuilt?createCodeTree(THREE,o,{
-   quality:renderQuality==='high'?'high':renderQuality==='speed'||autoReduced?'speed':'standard'
-  }):source?makeRealVegetation(THREE,source,o,{
+  g=source?makeRealVegetation(THREE,source,o,{
    shareGeometry:!!(bundledPine||bundledAdult)&&!imported,
    canopyCopies:0,
    pineGrowth:o.catalogId==='pine'?normalizePineGrowth(o.pine):null,
@@ -3300,7 +3257,7 @@ function hitTreeOnMobile(e){
  // Branch/needle GLB alpha cards can miss a geometric raycast on BOTH mouse
  // and touch. Pick from the projected crown volume, not a fake 3D billboard.
  const direct=hitObj(e);
- if(direct&&(['pine','spruce','birch'].includes(selectable(direct)?.obj?.catalogId)||catalog(selectable(direct)?.obj?.catalogId)?.group==='shrubs'))return direct;
+ if(direct&&['trees','shrubs'].includes(catalog(selectable(direct)?.obj?.catalogId)?.group))return direct;
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
  const rect=canvas.getBoundingClientRect();
  if(!rect.width||!rect.height)return direct;
@@ -3308,7 +3265,7 @@ function hitTreeOnMobile(e){
  camera.updateMatrixWorld();camera.updateProjectionMatrix();
  let closest=null,best=Infinity;
  for(const o of doc.objects){
-  if(!['pine','spruce','birch'].includes(o.catalogId)&&catalog(o.catalogId)?.group!=='shrubs')continue;
+  if(!['trees','shrubs'].includes(catalog(o.catalogId)?.group))continue;
   const point=pos(o.x,o.y),floor=terrainAt(point.x,point.z);
   const shrub=catalog(o.catalogId)?.group==='shrubs';
    const H=Number(o.height)||(shrub?1:14),D=Number(o.diameter)||(shrub?1:7);
@@ -4042,17 +3999,6 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  });
  [['focusHouse','build'],['focusSelected','trees'],['fit3dScene','site']].forEach(([id,icon])=>document.getElementById(id)?.insertAdjacentHTML('afterbegin',premiumIcon(icon)));
  $('#save').onclick=save;$('#undo').onclick=()=>restore(undo,redo);$('#redo').onclick=()=>restore(redo,undo);
- $('#treeSource3d').value=treeSourceChoice();
- $('#treeSource3d').onchange=()=>{
-  const choice=$('#treeSource3d').value;
-  try{localStorage.setItem(CODE_TREE_KEY,choice)}catch(e){console.warn('Code tree mode persistence unavailable',e)}
-  if(choice==='glb'){bundledModelFailures.delete('pine');bundledModelFailures.delete('birch')}
-  rebuild();updateModelHealth();
-  status(choice==='code'?'Сосна и берёза теперь строятся как настоящая 3D-геометрия в коде.':'Включены исходные GLB сосны и берёзы для сравнения.');
- };
- $('#quality3d').onchange=()=>{renderQuality=$('#quality3d').value;autoReduced=false;slowFrameStreak=0;
-  const economy=renderQuality==='speed';renderer.setPixelRatio(economy?.8:Math.min(window.devicePixelRatio||1,1.8));renderer.shadowMap.enabled=!economy||state.tool==='terrain';
-  resize();rebuild();status(economy?'Облегчённый просмотр для плавной работы. Размеры проекта сохранены.':'Высокая детализация 3D восстановлена.')};
  $('#time').onchange=()=>{push();doc.atmosphere.time=$('#time').value;solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();save();rebuild();syncNightHomeControls()};
  const onSolarInput=()=>{
   solarSettings=normalizeSolarSettings({azimuth:Number($('#sunAzimuth').value),elevation:Number($('#sunElevation').value),
@@ -4264,14 +4210,13 @@ function animate(now=0){
   lastRenderCost=performance.now()-start;
   // After sustained frame lag, protect editing and mobile interactions.
   // Surveyed coordinates and plant sizes are never changed by this preview.
-  if(renderQuality==='auto'&&!autoReduced){
+  if(!autoReduced){
    slowFrameStreak=lastRenderCost>140?slowFrameStreak+1:Math.max(0,slowFrameStreak-1);
    if(slowFrameStreak>=3){
     autoReduced=true;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?1.08:1.20));
     renderer.shadowMap.enabled=true; // Reduce pixel cost, not relief visibility.
-    resize();scheduleBrushRebuild();
-    status('Автокачество: облегчённое 3D для плавного вращения и работы с посадками.');
+    resize();renderGate.invalidate();
    }
   }
  }
