@@ -4,13 +4,13 @@ export function rowanStage(age=35){
  return a<=15?{age:10,height:3.8,diameter:2.25}:a<=50?{age:35,height:7.8,diameter:5.4}:{age:75,height:11.2,diameter:9.0};
 }
 export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
- const root=new T.Group();root.name='forma-rowan-r122';
+ const root=new T.Group();root.name='forma-rowan-r129';
  const h=Math.max(.8,Number(o.height)||7.8),r=Math.max(.4,Number(o.diameter)||5)/2;
  const age=Number(o.rowan?.age)||(h<5?10:h>9?75:35),old=age>=60,young=age<=15;
  let seed=(Number(o.variant)||1)*17431+Math.round(h*100);let fruitSeed=(seed^0x9e3779b9)>>>0;const fr=()=>{fruitSeed=(Math.imul(fruitSeed,1664525)+1013904223)>>>0;return fruitSeed/4294967296;};
  const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
  const V=(x,y,z)=>new T.Vector3(x,y,z),up=V(0,1,0),tau=Math.PI*2;
- const bp=[],bc=[],bi=[],bu=[],seams=[],leafRows=[],fruitRows=[],calyxRows=[];let clusters=0;
+ const bp=[],bc=[],bi=[],bu=[],woodRanges=[],seams=[],leafRows=[],fruitRows=[],calyxRows=[];let clusters=0;
  const bark=new T.Color(old?'#827c70':young?'#a49d91':'#989389'),dark=new T.Color(old?'#58564f':'#716b62');
  const barkRand=(i,k)=>.5+.5*Math.sin(i*19.73+k*4.71);
  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -19,13 +19,14 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
  function along(points,t){const d=t*(points.length-1),i=Math.min(points.length-2,Math.floor(d));return points[i].clone().lerp(points[i+1],d-i);}
  function crownLimit(p){const v=Math.max(-.99,Math.min(.99,(p.y/h-(old?.60:young?.64:.62))/(old?.39:.37)));const width=r*(young?1.03:1.04)*Math.pow(1-v*v,young?.61:.47),radial=Math.hypot(p.x,p.z);if(radial>width&&radial>0){p.x*=width/radial;p.z*=width/radial;}return p;}
  function tube(points,radii,sides){
-  const base=bp.length/3,stride=sides+1;let distance=0;
+  const base=bp.length/3,stride=sides+1,indexStart=bi.length;let distance=0;
   points.forEach((p,i)=>{if(i)distance+=p.distanceTo(points[i-1]);
    const dir=points[Math.min(i+1,points.length-1)].clone().sub(points[Math.max(0,i-1)]).normalize();
    const x=V(1,0,0).cross(dir);if(x.lengthSq()<.01)x.set(0,0,1).cross(dir);x.normalize();const z=dir.clone().cross(x);if(sides>=8)seams.push([base+i*stride,base+i*stride+sides]);
    for(let k=0;k<=sides;k++){const j=k%sides,a=j*tau/sides,rr=radii[i]*(1+.065*Math.sin(j*3.1+i*.8)+(i===0?.12*Math.sin(j*2.4):0));const q=p.clone().addScaledVector(x,Math.cos(a)*rr).addScaledVector(z,Math.sin(a)*rr);bp.push(q.x,q.y,q.z);bu.push(k/sides,(points[0].y+distance)*1.7);const c=bark.clone().lerp(dark,.045+.025*barkRand(i,j));bc.push(c.r,c.g,c.b);}
   });
   for(let i=0;i<points.length-1;i++)for(let k=0;k<sides;k++){const a=base+i*stride+k,b=a+1;bi.push(a,b,a+stride,b,b+stride,a+stride);}
+  if(sides>=8)woodRanges.push({start:indexStart,end:bi.length,base,stride,radii:radii.slice()});
  }
  const trunk=[];for(let i=0;i<=26;i++){const t=i/26;trunk.push(V(Math.sin(t*4.1)*h*(old?.055:young?.012:.024)*t+(old?h*.012*Math.sin(t*10)*t:0),h*t*.98,Math.sin(t*5.1)*h*(old?.045:young?.009:.019)*t));}
  const trunkR=h*(old?.030:young?.014:.019);
@@ -73,11 +74,11 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
    }
   }
  }
- const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(bp,3));geo.setAttribute('color',new T.Float32BufferAttribute(bc,3));geo.setAttribute('uv',new T.Float32BufferAttribute(bu,2));geo.setIndex(bi);geo.computeVertexNormals();
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(bp,3));geo.setAttribute('color',new T.Float32BufferAttribute(bc,3));geo.setAttribute('uv',new T.Float32BufferAttribute(bu,2));geo.setIndex(bi);geo.computeVertexNormals();geo.userData.formaWoodRanges=woodRanges;
  const gn=geo.attributes.normal;for(const [a,b] of seams){const n=V(gn.getX(a)+gn.getX(b),gn.getY(a)+gn.getY(b),gn.getZ(a)+gn.getZ(b)).normalize();gn.setXYZ(a,n.x,n.y,n.z);gn.setXYZ(b,n.x,n.y,n.z);}gn.needsUpdate=true;
  // Age-specific bark: non-periodic cellular lenticels, lichen islands, pores
  // and fine vertical fissures. Shared texture coordinates remain metric along the stem.
- const tw=512,th=1024,pixels=new Uint8Array(tw*th*4),relief=new Float32Array(tw*th),barkNormals=new Uint8Array(tw*th*4),barkRough=new Uint8Array(tw*th*4);
+ const tw=512,th=1024,pixels=new Uint8Array(tw*th*4),relief=new Float32Array(tw*th),barkNormals=new Uint8Array(tw*th*4),barkRough=new Uint8Array(tw*th*4),barkHeight=new Uint8Array(tw*th*4);
  for(let y=0;y<th;y++)for(let x=0;x<tw;x++){
   const u=x/tw,v=y/th,i=y*tw+x,k=i*4;
   const broad=noise(u*8,v*12,41,8),fine=noise(u*64,v*96,42,64),grain=hash(x,y,43)-.5;
@@ -96,6 +97,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
   const tone=clamp(226+26*(broad-.5)+20*(fine-.5)+grain*12-79*lenticel-55*cracks+22*lichen,65,251);
   pixels.set([tone,clamp(tone+5*lichen-2,0,255),clamp(tone-5+10*lichen,0,255),255],k);
   relief[i]=.5+.13*(fine-.5)+.055*grain-.34*lenticel-.32*cracks+.12*lichen;
+  const height=clamp(Math.round((.5+.19*(broad-.5)+.22*(fine-.5)-.38*lenticel-.55*cracks+.14*lichen)*255),0,255);barkHeight.set([height,height,height,255],k);
   const rough=clamp((young?189:old?231:214)+18*(fine-.5)+17*cracks+11*lichen,155,250);barkRough.set([rough,rough,rough,255],k);
  }
  for(let y=0;y<th;y++)for(let x=0;x<tw;x++){
@@ -103,13 +105,13 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
   barkNormals.set([128-127*dx/l,128-127*dy/l,128+127/l,255],i);
  }
  const barkTex=(data,srgb=false)=>{const t=new T.DataTexture(data,tw,th,T.RGBAFormat);t.colorSpace=srgb?T.SRGBColorSpace:T.NoColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.magFilter=T.LinearFilter;t.minFilter=T.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=4;t.needsUpdate=true;return t;};
- const barkMap=barkTex(pixels,true),normal=barkTex(barkNormals),roughMap=barkTex(barkRough);
- const wood=new T.Mesh(geo,new T.MeshStandardMaterial({map:barkMap,normalMap:normal,roughnessMap:roughMap,normalScale:new T.Vector2(old?.95:young?.40:.68,old?.95:young?.40:.68),vertexColors:true,roughness:1,metalness:0}));wood.name='rowan-bark-trunk-branches';wood.castShadow=true;wood.receiveShadow=true;root.add(wood);
+ const barkMap=barkTex(pixels,true),normal=barkTex(barkNormals),roughMap=barkTex(barkRough),heightMap=barkTex(barkHeight);heightMap.name='rowan-bark-height';
+ const wood=new T.Mesh(geo,new T.MeshStandardMaterial({map:barkMap,normalMap:normal,roughnessMap:roughMap,normalScale:new T.Vector2(old?.95:young?.40:.68,old?.95:young?.40:.68),vertexColors:true,roughness:1,metalness:0}));wood.name='rowan-bark-trunk-branches';wood.material.displacementMap=heightMap;wood.material.displacementScale=0;wood.material.userData.formaDisplacement={scale:old?.018:young?.004:.009,mid:.5};wood.userData.textures=[heightMap];wood.castShadow=true;wood.receiveShadow=true;root.add(wood);
  if(season!=='winter'&&leafRows.length){
   // One compound leaf with 13 narrow tapered leaflets on a shared rachis.
   const p=[],c=[],uv=[],idx=[];
   // A shared low-resolution alpha/vein atlas preserves a serrated outline on mobile.
-  const lw=256,lh=512,rgba=new Uint8Array(lw*lh*4),norm=new Uint8Array(lw*lh*4),rough=new Uint8Array(lw*lh*4),heights=new Float32Array(lw*lh);
+  const lw=256,lh=512,rgba=new Uint8Array(lw*lh*4),norm=new Uint8Array(lw*lh*4),rough=new Uint8Array(lw*lh*4),trans=new Uint8Array(lw*lh*4),heights=new Float32Array(lw*lh);
   for(let y=0;y<lh;y++)for(let x=0;x<lw;x++){
    const t=y/(lh-1),side=(x/(lw-1)-.5)*2,d=Math.abs(side);
    const serration=.94+.052*Math.sin(t*126+.36*Math.sin(t*31));const outline=Math.pow(Math.sin(Math.PI*t),.70)*serration;
@@ -119,6 +121,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
    const v=clamp(229+24*mid+15*veins+7*fine-10*d+8*grain+17*(cells-.5)+11*(blotch-.5),165,255);
    const i=y*lw+x,alpha=clamp((outline-d)*lw*.5+.5,0,1)*255;rgba.set([v,clamp(v+3*mid,0,255),Math.round(v*.97),alpha],i*4);
    heights[i]=.40*mid+.22*veins+.075*fine+.025*grain+.04*(cells-.5)-.06*d*d;
+   const tr=clamp(Math.round(213-115*mid-76*veins-25*fine+16*(cells-.5)),55,240);trans.set([tr,tr,tr,255],i*4);
    const rv=clamp(196+24*d-39*mid-23*veins+12*grain+15*(cells-.5),115,250);rough.set([rv,rv,rv,255],i*4);
   }
   for(let y=0;y<lh;y++)for(let x=0;x<lw;x++){
@@ -127,7 +130,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
    const len=Math.hypot(dx,dy,1);norm.set([128-127*dx/len,128-127*dy/len,128+127/len,255],(y*lw+x)*4);
   }
   const tex=(data,srgb=false)=>{const t=new T.DataTexture(data,lw,lh,T.RGBAFormat);t.colorSpace=srgb?T.SRGBColorSpace:T.NoColorSpace;t.magFilter=T.LinearFilter;t.minFilter=T.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=4;t.needsUpdate=true;return t;};
-  const leafMap=tex(rgba,true),leafNormal=tex(norm),leafRough=tex(rough);
+  const leafMap=tex(rgba,true),leafNormal=tex(norm),leafRough=tex(rough),leafTrans=tex(trans);leafTrans.name='rowan-leaf-transmission';
   function leaflet(x,z,angle,L,W){
    const dx=Math.cos(angle),dz=Math.sin(angle),sx=-dz,sz=dx,base=p.length/3,rows=6;
    if(mobile){
@@ -153,8 +156,8 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
    if(chunk&&needle.test(chunk))shader.fragmentShader=shader.fragmentShader.replace('#include <lights_physical_pars_fragment>',chunk.replace(needle,m=>m+`\n reflectedLight.directDiffuse+= directLight.color*BRDF_Lambert(material.diffuseColor)*max(0.0,dot(-geometryNormal,directLight.direction))*.23;\n`));
   };
   mat.customProgramCacheKey=()=> 'forma-rowan-leaf-r122';
-  mat.userData.formaRowanPBR={transmission:.42,roughness:.83};
-  const mesh=new T.InstancedMesh(g,mat,leafRows.length);mesh.name='rowan-pinnate-foliage';mesh.castShadow=!mobile;mesh.receiveShadow=true;
+  mat.userData.formaRowanPBR={transmission:.42,roughness:.83,pathTransmission:young?.40:.34};mat.transmissionMap=leafTrans;mat.transmission=0;
+  const mesh=new T.InstancedMesh(g,mat,leafRows.length);mesh.name='rowan-pinnate-foliage';mesh.userData.textures=[leafTrans];mesh.castShadow=!mobile;mesh.receiveShadow=true;
   const obj=new T.Object3D(),color=new T.Color(),palette=(season==='autumn'?['#aa743d','#bd9a48','#9a633a','#777a42']:(young?['#60794b','#718454','#6b8053','#81905f','#627951']:['#536b46','#637a4e','#6a8055','#778b60','#5b724d'])).map(x=>new T.Color(x));
   leafRows.forEach(([p,d,s,t],i)=>{obj.position.copy(p);obj.quaternion.setFromUnitVectors(V(0,0,1),d);obj.rotateZ((t-.5)*1.85);obj.scale.setScalar(s);obj.updateMatrix();mesh.setMatrixAt(i,obj.matrix);mesh.setColorAt(i,color.copy(palette[Math.floor(t*palette.length)]).multiplyScalar((.97+t*.12)*(.96+.04*Math.min(1,Math.hypot(p.x,p.z)/Math.max(.2,r*.75)))));});mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();root.add(mesh);
  }
