@@ -154,6 +154,14 @@ export function mapleLeafMask(T){
  const grad=ctx.createLinearGradient(20,40,220,200);grad.addColorStop(0,'#7b9554');grad.addColorStop(.55,'#4d703c');grad.addColorStop(1,'#375739');ctx.fillStyle=grad;ctx.beginPath();outline.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();
  ctx.save();ctx.clip();ctx.strokeStyle='rgba(190,203,142,.55)';ctx.lineWidth=1.5;
  for(const [x,y] of [[128,20],[177,48],[226,80],[236,158],[20,158],[30,80],[79,48]]){ctx.beginPath();ctx.moveTo(128,180);ctx.quadraticCurveTo(128+(x-128)*.5,y+42,x,y);ctx.stroke();}ctx.restore();
+ // Secondary fine venation and leaf surface granularity within the cutout.
+ ctx.save();ctx.beginPath();outline.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();
+ let seed=41621;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<11;i++){const y=58+i*11;for(const sign of [-1,1]){
+  ctx.strokeStyle='rgba(194,211,155,.30)';ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(128,y+22);ctx.quadraticCurveTo(128+sign*21,y+3,128+sign*(36+rand()*37),y-13);ctx.stroke();
+ }}
+ for(let i=0;i<9000;i++){ctx.fillStyle=rand()>.5?'rgba(234,235,205,.08)':'rgba(23,39,19,.07)';ctx.fillRect(rand()*256,rand()*256,1,1);}
+ ctx.restore();
  mapleLeaf=new T.CanvasTexture(c);mapleLeaf.colorSpace=T.SRGBColorSpace;mapleLeaf.anisotropy=4;mapleLeaf.userData.source='local botanical fallback';
  const img=new Image();img.crossOrigin='anonymous';img.decoding='async';
  img.onload=()=>{try{
