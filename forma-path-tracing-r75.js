@@ -72,34 +72,62 @@ function renderLawn(T,cfg,budget){
  const width=b.x1-b.x0,depth=b.z1-b.z0,area=width*depth;
  if(!(area>0))return null;
  const pal=(p.palette||['#626e43','#778254','#81905f','#4f613b']).map(x=>new T.Color(x));
- const positions=[],colors=[],indices=[];let count=0,seed=1987;
+ let seed=1987,count=0,tufts=0;
  const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
- const radius=Math.min(7,Math.sqrt(area)*.36),density=Math.max(.35,Math.min(2,p.density||1));
- const add=(x,z,near)=>{
-  if(!contains(x,z))return;
-  const y=terrainAt(x,z);if(!Number.isFinite(y))return;
-  const a=rand()*Math.PI*2,h=(p.height||.055)*(.68+.64*rand()),w=(p.width||.0024)*(.8+.65*rand()),dx=Math.cos(a)*w,dz=Math.sin(a)*w;
-  const lean=h*(p.lean||.3)*(.5+rand()),lx=-Math.sin(a)*lean,lz=Math.cos(a)*lean;
-  const c=pal[Math.floor(rand()*pal.length)],shade=.85+.25*rand(),k=positions.length/3;
-  const v=(xx,yy,zz,t)=>{positions.push(xx,yy,zz);colors.push(c.r*shade*t,c.g*shade*t,c.b*shade*t,1);};
-  v(x-dx,y+.002,z-dz,.77);v(x+dx,y+.002,z+dz,.82);
-  if(near){v(x+lx*.32-dx*.55,y+h*.55,z+lz*.32-dz*.55,.97);v(x+lx*.32+dx*.55,y+h*.55,z+lz*.32+dz*.55,1);v(x+lx,y+h,z+lz,1.08);indices.push(k,k+1,k+2,k+1,k+3,k+2,k+2,k+3,k+4);}
-  else{v(x+lx,y+h,z+lz,1.05);indices.push(k,k+1,k+2);}
-  count++;
+ const density=Math.max(.35,Math.min(2.7,p.density||1));
+ const h0=Math.max(.015,p.height||.055),w0=p.width||.0024;
+ // Shared alpha-cutout atlas: many curved, individually shaded blades per card.
+ // Canvas-backed texture is directly supported by the path tracer's texture atlas.
+ const atlas=document.createElement('canvas');atlas.width=256;atlas.height=128;
+ const ctx=atlas.getContext('2d');
+ if(!ctx)throw Error('Не удалось создать текстуру травы');
+ const perCard=20;
+ for(let i=0;i<perCard;i++){
+  const x=9+(i+.3+rand()*.4)*(238/perCard),top=8+rand()*47,lean=(rand()-.5)*40,w=2.5+rand()*3;
+  const g=ctx.createLinearGradient(x,126,x+lean,top);
+  g.addColorStop(0,'rgb(145,145,141)');g.addColorStop(.5,'rgb(214,216,206)');g.addColorStop(1,'rgb(250,250,240)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-w,127);ctx.quadraticCurveTo(x+lean*.15-w,65,x+lean,top);ctx.quadraticCurveTo(x+lean*.25+w,77,x+w,127);ctx.closePath();ctx.fill();
+ }
+ const map=new T.CanvasTexture(atlas);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;
+ const cp=[],cc=[],cu=[],ci=[],bp=[],bc=[],bi=[];
+ const addCard=(x,y,z,a,h,half,c)=>{
+  const dx=Math.cos(a)*half,dz=Math.sin(a)*half,k=cp.length/3;
+  cp.push(x-dx,y,z-dz,x+dx,y,z+dz,x-dx,y+h,z-dz,x+dx,y+h,z+dz);cu.push(0,0,1,0,0,1,1,1);
+  for(let j=0;j<4;j++)cc.push(c.r,c.g,c.b,1);
+  ci.push(k,k+1,k+2,k+1,k+3,k+2);
  };
- // A distributed base layer plus a denser foreground. No uniform visible grid.
- const base=Math.floor(budget*.48*Math.min(1,density)),nx=Math.max(1,Math.round(Math.sqrt(base*width/depth))),nz=Math.max(1,Math.floor(base/nx));
- for(let j=0;j<nz;j++)for(let i=0;i<nx;i++)add(b.x0+(i+rand())*width/nx,b.z0+(j+rand())*depth/nz,false);
- const close=Math.max(0,Math.floor((budget-indices.length/3)/3));
- for(let i=0;i<close;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand());const x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1)add(x,z,true);}
- if(!count)return null;
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('color',new T.Float32BufferAttribute(colors,4));g.setIndex(indices);g.computeVertexNormals();g.setAttribute('uv',new T.BufferAttribute(new Float32Array(positions.length/3*2),2));
- const m=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.87,metalness:0});
- const mesh=new T.Mesh(g,m);mesh.name='forma-final-render-grass-r127';return {mesh,count,triangles:indices.length/3};
+ const addTuft=(x,z)=>{
+  if(!contains(x,z))return;const y=terrainAt(x,z);if(!Number.isFinite(y))return;
+  const patch=.82+.18*Math.sin(x*1.9+Math.sin(z*.72))*Math.cos(z*1.5);
+  const h=h0*(.75+.60*rand())*patch,a=rand()*Math.PI,c=pal[Math.floor(rand()*pal.length)].clone().multiplyScalar(.93+.16*rand());
+  const half=Math.max(.045,Math.min(.14,h*.92+Math.sqrt(area/Math.max(1,desired))*.27));
+  addCard(x,y+.001,z,a,h,half,c);addCard(x,y+.001,z,a+Math.PI/2,h*.94,half,c);tufts++;
+ };
+ const addBlade=(x,z)=>{
+  if(!contains(x,z))return;const y=terrainAt(x,z);if(!Number.isFinite(y))return;
+  const a=rand()*Math.PI*2,h=h0*(.72+.58*rand()),w=w0*(.8+.65*rand()),dx=Math.cos(a)*w,dz=Math.sin(a)*w;
+  const lean=h*(p.lean||.3)*(.5+rand()),lx=-Math.sin(a)*lean,lz=Math.cos(a)*lean,c=pal[Math.floor(rand()*pal.length)],k=bp.length/3;
+  const v=(xx,yy,zz,t)=>{bp.push(xx,yy,zz);bc.push(c.r*t,c.g*t,c.b*t,1);};
+  v(x-dx,y+.002,z-dz,.78);v(x+dx,y+.002,z+dz,.83);v(x+lx*.32-dx*.55,y+h*.55,z+lz*.32-dz*.55,.98);v(x+lx*.32+dx*.55,y+h*.55,z+lz*.32+dz*.55,1);v(x+lx,y+h,z+lz,1.08);
+  bi.push(k,k+1,k+2,k+1,k+3,k+2,k+2,k+3,k+4);count++;
+ };
+ const desired=Math.max(1,Math.floor(budget*.78/4*Math.min(1,density/1.25)));
+ const nx=Math.max(1,Math.floor(Math.sqrt(desired*width/depth))),nz=Math.max(1,Math.floor(desired/nx));
+ for(let j=0;j<nz;j++)for(let i=0;i<nx;i++)addTuft(b.x0+(i+rand())*width/nx,b.z0+(j+rand())*depth/nz);
+ const radius=Math.min(7,Math.sqrt(area)*.36),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.15)));
+ for(let i=0;i<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1)addBlade(x,z);}
+ const meshes=[];
+ const build=(pos,col,idx,uv,mat,name)=>{
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('color',new T.Float32BufferAttribute(col,4));g.setAttribute('uv',new T.Float32BufferAttribute(uv||new Float32Array(pos.length/3*2),2));g.setIndex(idx);g.computeVertexNormals();
+  const mesh=new T.Mesh(g,mat);mesh.name=name;meshes.push(mesh);
+ };
+ if(tufts)build(cp,cc,ci,cu,new T.MeshStandardMaterial({map,alphaTest:.42,vertexColors:true,side:T.DoubleSide,roughness:.9,metalness:0}),'forma-render-turf-cards-r128');else map.dispose();
+ if(count)build(bp,bc,bi,null,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.87,metalness:0}),'forma-render-grass-blades-r128');
+ return meshes.length?{meshes,count,tufts,triangles:(ci.length+bi.length)/3,textures:tufts?[map]:[]}:null;
 }
 function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  source.updateMatrixWorld(true);camera.updateMatrixWorld(true);
- const scene=new T.Scene(),geometries=[],materials=[],materialCache=new Map();
+ const scene=new T.Scene(),geometries=[],materials=[],ownedTextures=[],materialCache=new Map();
  let triangles=0,skipped=0,instances=0,reduced=0;
  const meshes=[];root.traverseVisible(o=>{
   if(!o.isMesh||!o.geometry?.attributes.position)return;
@@ -148,8 +176,8 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
   const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh)):cloneMat(o.material,!!o.isInstancedMesh);
   const mesh=new T.Mesh(g,m);mesh.matrixAutoUpdate=false;mesh.matrix.copy(o.matrixWorld);mesh.name=o.name;scene.add(mesh);
  }
- let lawnBlades=0;
- if(lawnBudget){const detail=renderLawn(T,lawn,lawnBudget);if(detail){scene.add(detail.mesh);geometries.push(detail.mesh.geometry);materials.push(detail.mesh.material);triangles+=detail.triangles;lawnBlades=detail.count;}}
+ let lawnBlades=0,lawnTufts=0;
+ if(lawnBudget){const detail=renderLawn(T,lawn,lawnBudget);if(detail){for(const mesh of detail.meshes){scene.add(mesh);geometries.push(mesh.geometry);materials.push(mesh.material);}ownedTextures.push(...detail.textures);triangles+=detail.triangles;lawnBlades=detail.count;lawnTufts=detail.tufts;}}
  // An isolated specimen should sit in a continuous meadow, not a floating tile.
  if(lawn?.horizon){
   const ground=meshes.find(o=>o.userData?.ground);
@@ -190,8 +218,8 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
  for(const g of ownedProxies)g.dispose();ownedProxies.length=0;
- return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();env.dispose();}};
- }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();throw e;}
+ return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,lawnTufts,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();env.dispose();}};
+ }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();throw e;}
 }
 export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},lawn=null,onClose=()=>{},onFailure=()=>{}}){
  let alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null;
@@ -208,8 +236,8 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R127.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R127',e);const reason=e?.message||String(e);close();onFailure(reason);}
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R128.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R128',e);const reason=e?.message||String(e);close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
@@ -225,7 +253,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
-   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.lawnBlades?' · травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
+   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
    if(n>=target){if(profile==='high'){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
