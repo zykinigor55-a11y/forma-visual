@@ -107,7 +107,7 @@ export function createPhotogrammetryBoulder(T,source,instance){
    const authored=Number(copy.roughness);
    copy.roughness=Number.isFinite(authored)?Math.max(.82,Math.min(1,authored)):profile.roughness;
   }
-  if(!Number.isFinite(copy.envMapIntensity))copy.envMapIntensity=1;
+  copy.envMapIntensity=Math.min(.48,Number.isFinite(copy.envMapIntensity)?copy.envMapIntensity:.48);
   copy.needsUpdate=true;
   materialCache.set(material,copy);
   return copy;
@@ -115,6 +115,7 @@ export function createPhotogrammetryBoulder(T,source,instance){
  scan.traverse(node=>{
   if(!node.isMesh)return;
   node.castShadow=true;node.receiveShadow=true;
+  node.userData.bundledSharedGeometry=true; // cached scan geometry must survive scene rebuilds
   node.material=Array.isArray(node.material)?node.material.map(keepSourcePBR):keepSourcePBR(node.material);
  });
  rock.add(scan);
@@ -148,13 +149,48 @@ function fractal(x,y,z,s){
  }
  return sum/norm;
 }
+// Local mineral albedo and independent height maps: no network or custom GLSL.
+const mineralMaps=new Map();
+function rockMineralMaps(T,id){
+ if(mineralMaps.has(id))return mineralMaps.get(id);
+ if(typeof document==='undefined')return {};
+ const n=512,a=document.createElement('canvas'),b=document.createElement('canvas');
+ a.width=a.height=b.width=b.height=n;
+ const ac=a.getContext('2d'),bc=b.getContext('2d'),rgb=ac.createImageData(n,n),rel=bc.createImageData(n,n);
+ const seed=seedHash(id),slate=id==='slate-boulder',sand=id==='sandstone-boulder',lime=id==='limestone-boulder';
+ const tone=slate?[99,105,106]:sand?[173,150,117]:lime?[174,172,151]:[143,148,145];
+ // Periodic lattice noise, so the mineral atlas tiles without obvious seams.
+ const noise=(u,v,k,offset)=>{
+  const x=u*k,y=v*k,X=Math.floor(x),Y=Math.floor(y),fx=x-X,fy=y-Y;
+  const t=fx*fx*(3-2*fx),w=fy*fy*(3-2*fy),mod=q=>(q%k+k)%k;
+  const q=(i,j)=>lattice(mod(i),mod(j),offset,seed);
+  return (q(X,Y)*(1-t)+q(X+1,Y)*t)*(1-w)+(q(X,Y+1)*(1-t)+q(X+1,Y+1)*t)*w;
+ };
+ for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+  const u=x/n,v=y/n,coarse=noise(u,v,5,1),mid=noise(u,v,19,2),fine=noise(u,v,71,3),grain=lattice(x,y,4,seed);
+  const layer=(slate||sand)?Math.sin(Math.PI*2*(v*(slate?23:37)+coarse*.35+mid*.07)):0;
+  const seam=(slate||sand)?Math.pow(Math.max(0,layer),15):Math.max(0,1-Math.abs(mid-.47)*38)*.5;
+  const mica=!slate&&!sand&&!lime&&grain>.965?35:0;
+  const pore=lime&&fine<.26?Math.pow((.26-fine)/.26,2)*32:0;
+  const val=(coarse-.5)*28+(mid-.5)*29+(fine-.5)*(sand?18:32)+(grain-.5)*18-seam*(slate?31:17)+mica-pore;
+  const h=128+(mid-.5)*48+(fine-.5)*58+(grain-.5)*24-seam*47-pore;
+  const k=(y*n+x)*4;
+  for(let c=0;c<3;c++){rgb.data[k+c]=Math.max(0,Math.min(255,tone[c]+val));rel.data[k+c]=Math.max(0,Math.min(255,h))}
+  rgb.data[k+3]=rel.data[k+3]=255;
+ }
+ ac.putImageData(rgb,0,0);bc.putImageData(rel,0,0);
+ const map=new T.CanvasTexture(a),bumpMap=new T.CanvasTexture(b);
+ map.colorSpace=T.SRGBColorSpace;bumpMap.colorSpace=T.NoColorSpace;
+ for(const t of [map,bumpMap]){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,1);t.anisotropy=4;}
+ const result={map,bumpMap};mineralMaps.set(id,result);return result;
+}
 export function createGeologicalFallbackBoulder(T,instance){
  // Geometry fallback is deterministic even with no GLB/data connection.
  // It has large natural asymmetries and true 3D stratified fractures.
  const {diameter,height,burial,profile,variant}=landscapeRockSize(instance);
  const id=instance.catalogId||'granite-boulder',seed=seedHash(instance.id||id)+variant*1987;
  const g=new T.Group();g.name='FORMA-GEOLOGICAL-BOULDER-'+id;
- g.userData.scannedCC0=false;g.userData.modelVersion='geological-rock-geom-v1';
+ g.userData.scannedCC0=false;g.userData.modelVersion='geological-rock-mineral-pbr-v2';
  const geo=new T.SphereGeometry(1,84,60);
  const pos=geo.getAttribute('position'),col=[];
  const base=new T.Color(profile.tint);
@@ -181,8 +217,10 @@ export function createGeologicalFallbackBoulder(T,instance){
  }
  geo.setAttribute('color',new T.Float32BufferAttribute(col,3));
  pos.needsUpdate=true;geo.computeVertexNormals();
- const mesh=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,roughness:profile.roughness,
-  metalness:0,flatShading:false,side:T.FrontSide}));
+ const maps=rockMineralMaps(T,id);
+ const mesh=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:false,color:'#ffffff',...maps,
+  bumpScale:slate?.032:sand?.016:.025,roughness:profile.roughness,
+  envMapIntensity:.32,metalness:0,flatShading:false,side:T.FrontSide}));
  mesh.castShadow=true;mesh.receiveShadow=true;mesh.userData.geologicalFallback=true;
  g.add(mesh);
  g.userData.measuredDiameter=diameter;
