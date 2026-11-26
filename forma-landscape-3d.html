@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R23</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R24</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -799,7 +799,7 @@ import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
-import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=visual-R19';
+import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R23';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -3039,7 +3039,7 @@ function updateSun(){
  const shadowCam=sun.shadow.camera;
  shadowCam.left=-half;shadowCam.right=half;shadowCam.top=half;shadowCam.bottom=-half;
  shadowCam.near=.1;shadowCam.far=Math.max(220,85+half*2);shadowCam.updateProjectionMatrix();
- sun.shadow.normalBias=Math.max(.018,half/sun.shadow.mapSize.x*.85);sun.shadow.bias=-.00025;
+ sun.shadow.normalBias=Math.max(.012,half/sun.shadow.mapSize.x*.43);sun.shadow.bias=-.00018;
  sun.shadow.radius=modellingLight?Math.min(1.8,solarSettings.softness):solarSettings.softness;
  if(atmosphereSky){
   atmosphereSky.visible=!['night','blue-hour'].includes(val)&&state.view!=='2d';
