@@ -1,12 +1,18 @@
 /* FORMA / Lightweight perceptual atmosphere. Retains measured terrain,
  * house and water geometry. This is realtime sky-fill, not path-traced GI. */
 const clamp=(v,min,max,fallback)=>{const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback};
-export const ATMOSPHERE_DEFAULTS=Object.freeze({globalFill:110,clouds:35,haze:30,nightGlow:75,ripples:30});
+export const ATMOSPHERE_DEFAULTS=Object.freeze({globalFill:110,clouds:35,cloudDensity:65,cloudScale:100,cloudHeight:100,cloudThickness:100,cloudTransmission:65,cloudDetail:75,haze:30,nightGlow:75,ripples:30});
 export function normalizeSceneAtmosphere(v={}){
  const raw=v&&typeof v==='object'?v:{};
  return {
   globalFill:clamp(raw.globalFill,30,180,ATMOSPHERE_DEFAULTS.globalFill),
   clouds:clamp(raw.clouds,0,100,ATMOSPHERE_DEFAULTS.clouds),
+  cloudDensity:clamp(raw.cloudDensity,15,100,65),
+  cloudScale:clamp(raw.cloudScale,40,200,100),
+  cloudHeight:clamp(raw.cloudHeight,40,220,100),
+  cloudThickness:clamp(raw.cloudThickness,25,200,100),
+  cloudTransmission:clamp(raw.cloudTransmission,0,100,65),
+  cloudDetail:clamp(raw.cloudDetail,20,100,75),
   haze:clamp(raw.haze,0,100,ATMOSPHERE_DEFAULTS.haze),
   nightGlow:clamp(raw.nightGlow,0,100,ATMOSPHERE_DEFAULTS.nightGlow),
   ripples:clamp(raw.ripples,0,100,ATMOSPHERE_DEFAULTS.ripples)
