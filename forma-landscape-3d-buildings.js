@@ -2,11 +2,11 @@
  * systems and real roof planes. These are editable, procedural Three.js models.
  * Presets do not infer unknown details from a user's architectural photograph. */
 import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile,scandiRoofOverhang} from './forma-landscape-3d-architecture-geometry.js';
-import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js';
+import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js?v=visual-R19';
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
-import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=alpha-interior-glow-v2-20261122';
+import {addAlphaReferenceHouse} from './forma-landscape-3d-alpha-house.js?v=visual-R19';
 import {normalizeNightInterior,interiorLightColor,interiorLightLevels} from './forma-landscape-3d-night-interior.js?v=bright-night-v2-20261122';
 import {addRoofGarland} from './forma-landscape-roof-garlands.js';
 export const HOUSE_PRESETS=Object.freeze([
