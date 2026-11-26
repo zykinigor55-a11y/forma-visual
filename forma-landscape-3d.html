@@ -505,12 +505,12 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R45</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R46</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button>
-  <a href="forma-landscape-3d.html?scene=trees-r45" title="Все актуальные деревья в один ряд, не меняя проект">🌲 Деревья в ряд</a>
+  <a href="forma-landscape-3d.html?scene=trees-r46" title="Деревья для дальнейшего улучшения, не меняя проект">🌲 Деревья в ряд</a>
   <a href="forma-preview.html?tool=landscape-project">← К плану</a>
  </div>
 </header>
@@ -855,7 +855,7 @@ window.addEventListener('forma-house-pbr-ready',()=>{
  requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
 });
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
-const treeLineupMode=new URLSearchParams(location.search).get('scene')==='trees-r45';
+const treeLineupMode=['trees-r45','trees-r46'].includes(new URLSearchParams(location.search).get('scene'));
 const pid=treeLineupMode?'forma-tree-lineup-r45':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
@@ -1097,12 +1097,8 @@ function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function makeTreeLineup(){
  const d=freshProject(),specs=[];
- for(const cat of CATALOG.filter(c=>c.group==='trees')){
-  if(cat.id==='maple'){
-   for(const age of [18,45,110])specs.push({catalogId:cat.id,maple:{age},...mapleDimensions({age})});
-  }else if(cat.id==='pine'){
-   for(const [age,height] of [[12,5],[40,14],[110,25]])specs.push({catalogId:cat.id,pine:normalizePineGrowth({age,pineType:'solitary'}),...pineDimensions(height,age,'solitary')});
-  }else if(cat.id==='spruce'){
+ for(const cat of CATALOG.filter(c=>c.group==='trees'&&!['maple','pine','ph-pine-sapling'].includes(c.id))){
+  if(cat.id==='spruce'){
    for(const [type,age,height] of [['young',12,5],['ordinary',48,16],['century',115,28]])specs.push({catalogId:cat.id,spruce:{type,age},...spruceDimensions(height,type)});
   }else specs.push({catalogId:cat.id,height:TREE_HEIGHT_M[cat.id]||12,diameter:cat.diameter||5});
  }
