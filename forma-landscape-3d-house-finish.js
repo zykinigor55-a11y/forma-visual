@@ -33,7 +33,7 @@ const photos=new Map();
 function originalPhoto(T,name,channel){
  const key=name+':'+channel;
  if(photos.has(key))return photos.get(key);
- const path='/assets/house-pbr/'+name+'-'+channel+'-1k.jpg';
+ const path='./assets/house-pbr/'+name+'-'+channel+'-1k.jpg';
  const task=new Promise(resolve=>{
   new T.TextureLoader().load(path,texture=>{
    texture.wrapS=texture.wrapT=T.RepeatWrapping;
