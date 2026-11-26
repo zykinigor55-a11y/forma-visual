@@ -66,7 +66,7 @@ export async function parseImageReply(reply, opts={}){
 }
 
 /** one edit per paid request; never send additional image prompt-only */
-export async function apiMarketEdit({apiKey,source,material,reference,mask,prompt,quality='high',model=API_MARKET_MODEL,fetchImpl=fetch,timeoutMs=165000}){
+export async function apiMarketEdit({apiKey,source,material,reference,mask,prompt,quality='high',model=API_MARKET_MODEL,outputResolution,outputAspect,fetchImpl=fetch,timeoutMs=165000}){
   if(!apiKey)throw new Error('Не настроен API_MARKET_KEY.');
   if(!source)throw new Error('Исходный скриншот не задан.');
   const form=new FormData();
@@ -81,6 +81,7 @@ export async function apiMarketEdit({apiKey,source,material,reference,mask,promp
     form.append('size','auto');
     form.append('resolution','2K');
   }
+  if(model===API_MARKET_MODEL){if(['1K','2K','4K'].includes(outputResolution))form.append('resolution',outputResolution);if(['1:1','4:3','3:4','3:2','2:3','16:9','9:16','4:5','5:4','21:9'].includes(outputAspect))form.append('aspect_ratio',outputAspect);}
   form.append('response_format','b64_json');
   form.append('n','1');
   // File extensions must match the actual Blob MIME type (JPEG is common here).
