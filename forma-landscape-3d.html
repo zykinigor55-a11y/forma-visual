@@ -508,7 +508,7 @@ body[data-active-tool]:not([data-active-tool=select]) #lawnShortcutR92,body[data
 #formaPresentationBar[hidden]{display:none!important}
 #formaPresentationBar{position:absolute;z-index:30;left:8px;right:8px;bottom:calc(9px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:5px;pointer-events:none}
 #formaPresentationBar button{min-height:44px;padding:6px 12px;border:1px solid #77736c;border-radius:9px;background:#26292eea;color:#e9dfd0;pointer-events:auto;font-size:12px}
-body[data-presentation=true] main>:is(#left,#right,#sceneQuickTools,#mobileWorkspaceTabs,#sceneCameraCycle,#sceneClimateButton,#sceneClimatePanel,#mobileWalkToggle,#mobileWalkDock,#mobileTerrainDock,#alphaSceneButton,#openComposition,#compositionPanel,#status,#selectedObjectDock,#mobilePlacementHint,#formaPresentationOpen){display:none!important}
+body[data-presentation=true] main>:is(#mobileMotionR172,#left,#right,#sceneQuickTools,#mobileWorkspaceTabs,#sceneCameraCycle,#sceneClimateButton,#sceneClimatePanel,#mobileWalkToggle,#mobileWalkDock,#mobileTerrainDock,#alphaSceneButton,#openComposition,#compositionPanel,#status,#selectedObjectDock,#mobilePlacementHint,#formaPresentationOpen){display:none!important}
 body[data-presentation=true] main #viewport{width:100%!important;height:100%!important}
 main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOpen{display:none!important}
 @media(max-width:850px){
@@ -531,7 +531,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <style>
 #motionPanelR156{position:fixed;right:16px;bottom:18px;z-index:90;width:min(360px,calc(100vw - 32px));max-height:82dvh;overflow:auto;background:#202924f7;border:1px solid #708578;border-radius:14px;box-shadow:0 14px 54px #0007;padding:15px;color:#e9eee9;display:grid;gap:10px;font:13px system-ui}
 #motionPanelR156[hidden],#motionPanelR156 [hidden]{display:none!important}#motionPanelR156 label{display:grid;gap:4px}#motionPanelR156 select,#motionPanelR156 input{width:100%;min-width:0}#motionPanelR156 small{color:#aebdb3;line-height:1.5}#motionPanelR156 video{width:100%;max-height:170px;background:#111;border-radius:8px}#motionPanelR156 button{min-height:34px}#motionPanelR156 progress{width:100%;height:8px;accent-color:#8eba9f}#motionPanelR156 .motion-row{display:flex;gap:6px;align-items:center}#motionPanelR156 .motion-row>*{flex:1;min-width:0}#motionPanelR156 .motion-record{background:#863c38;color:white;border-color:#bc7770}#motionPanelR156[data-recording=true] .motion-config{display:none}#motionPanelR156[data-recording=true]{width:min(290px,calc(100vw - 32px))}
-@media(max-width:850px){#motionOpenR156,#motionPanelR156{display:none!important}}
+@media(max-width:850px){#motionOpenR156{display:none!important}#motionPanelR156:not([hidden]){display:grid!important;bottom:12px;right:8px;width:calc(100vw - 16px);box-sizing:border-box;max-height:70dvh}#mobileMotionR172{display:block!important}}
 </style>
 <style id="forma-matte-tools-r165">
 @media(min-width:851px){
@@ -572,7 +572,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R171</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R172</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню">← Главное меню</a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -589,7 +589,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  <div class="mt-modes"><button type="button" data-mt-mode="raise">＋ Поднять</button><button type="button" data-mt-mode="lower">− Опустить</button><button type="button" data-mt-mode="smooth">Сгладить</button><button type="button" data-mt-mode="flatten">Ровно</button></div>
  <div class="mt-options"><label for="mtRadius">Радиус <output id="mtRadiusValue">3 м</output></label><input id="mtRadius" type="range" min=".5" max="12" step=".5" value="3"><button type="button" id="mtSettings">Кисть ⚙</button><button type="button" id="mtDone">Камера</button></div>
 </div>
-<button type="button" id="mobileWalkToggle">Прогулка</button>
+<button type="button" id="mobileWalkToggle">Прогулка</button><button id="mobileMotionR172" type="button" style="display:none;position:absolute;right:7px;top:194px;z-index:10;min-height:36px;background:#314e42;border-color:#7da48e;color:#e8f4ed">▶ Motion</button>
 <div id="mobileWalkDock" hidden role="group" aria-label="Движение камеры"><button type="button" data-walk-key="w" aria-label="Вперёд">↑</button><div><button type="button" data-walk-key="a" aria-label="Влево">←</button><button type="button" data-walk-key="s" aria-label="Назад">↓</button><button type="button" data-walk-key="d" aria-label="Вправо">→</button></div><div><button type="button" data-walk-turn="-15" aria-label="Камера влево на 15 градусов" style="font-size:14px">↶15°</button><button type="button" data-walk-turn="15" aria-label="Камера вправо на 15 градусов" style="font-size:14px">15°↷</button></div></div>
 <button id="openComposition" type="button">Идеальная композиция</button>
 <section id="compositionPanel" hidden aria-label="Идеальная композиция">
@@ -1421,9 +1421,9 @@ function openRenderMenuR75(reason=''){
  overlay.style.cssText='position:fixed;inset:0;z-index:100001;background:#101216b8;display:grid;place-items:center;padding:16px';
  const card=document.createElement('section');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','AI-рендер');
  card.style.cssText='box-sizing:border-box;width:min(400px,100%);max-height:90dvh;overflow:auto;background:#24282a;color:#edf0ef;border:1px solid #505b56;border-radius:14px;padding:20px;display:grid;gap:12px;box-shadow:0 20px 80px #0006';
- card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:20px">Рендер</strong><button data-close aria-label="Закрыть">✕</button></div><small style="color:#b6c0bc">Текущий ракурс · FORMA AI</small><button data-ai class="primary" style="min-height:48px">Фотореалистичный рендер</button><small>Фотография по текущему кадру, материалам и настройкам сцены.</small><button data-precision disabled style="min-height:48px">FORMA Precision</button><small>Точный режим с картой глубины и объектов · клиентская часть ещё не подключена.</small><small data-info style="color:#b6c0bc"></small>';
+ card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:20px">Рендер</strong><button data-close aria-label="Закрыть">✕</button></div><small style="color:#b6c0bc">Текущий ракурс · FORMA AI</small><button data-ai class="primary" style="min-height:48px">Фотореалистичный рендер</button><small>Фотография по текущему кадру, материалам и настройкам сцены.</small><button data-precision style="min-height:48px">FORMA Precision · точный рендер</button><small>Исходный кадр + глубина + карта объектов. Повышенная точность композиции.</small><small data-info style="color:#b6c0bc"></small>';
  const unavailable=!renderer||gpuLostR75||!!renderer.getContext().isContextLost();
- card.querySelector('[data-ai]').disabled=unavailable||aiRenderActive;
+ card.querySelector('[data-ai]').disabled=unavailable||aiRenderActive;card.querySelector('[data-precision]').disabled=unavailable||aiRenderActive;card.querySelector('[data-precision]').onclick=()=>{closeRenderMenuR75();renderAi(null,true);};
  card.querySelector('[data-info]').textContent=unavailable?'3D-сцена недоступна. Восстановите редактор перед рендером.':'Платный запрос отправляется только после подтверждения.';
  card.querySelector('[data-close]').onclick=closeRenderMenuR75;
  card.querySelector('[data-ai]').onclick=()=>{$('#aiRenderModel').value='nano-banana-2.1';closeRenderMenuR75();renderAi();};
@@ -1509,8 +1509,8 @@ function setupMotionR156(){
  const panel=document.createElement('section');panel.id='motionPanelR156';panel.hidden=true;panel.setAttribute('aria-label','FORMA MOTION');panel.innerHTML='<div class="motion-row"><div style="flex:3"><small>FORMA / CINEMA TOOLS</small><strong style="display:block;font-size:19px">MOTION</strong></div><button data-close type="button" style="flex:0 0 36px">✕</button></div><small>Из 3D-модели — в архитектурный фильм. Запишите движение камеры и передайте аниматик в Seedance.</small><div class="motion-config" style="display:grid;gap:9px"><label>01 · Как снимаем<select data-mode><option value="walk">Ручная прогулка · WASD + мышь</option><option value="path">Плавный пролёт · по точкам камеры</option></select></label><button data-walk type="button">Перейти в прогулку / настроить ракурс</button><div data-points hidden><small>Выставьте камеру в редакторе и сохраните 2–5 последовательных ракурсов.</small><div class="motion-row"><button data-add type="button">+ Точка камеры</button><button data-reset type="button">Очистить</button></div><div data-point-list style="display:grid;gap:4px;margin-top:5px"></div></div><div class="motion-row"><label>02 · Длительность<select data-duration><option>5</option><option selected>8</option><option>10</option><option>15</option></select></label><label>Формат<select data-aspect><option value="landscape">16:9 · 720p</option><option value="portrait">9:16 · 720p</option></select></label></div><small>До 30 кадров/с. Реальная частота зависит от GPU. Запись чистого 3D-кадра, без интерфейса.</small><button data-start type="button" class="motion-record">● 03 · Начать запись</button></div><div data-record hidden><div class="motion-row"><strong style="color:#ff9b93">● REC</strong><span data-time style="text-align:right">0.0 с</span></div><progress max="1" value="0"></progress><button data-stop type="button" style="width:100%">■ Остановить запись</button></div><div data-result hidden style="display:grid;gap:8px"><strong>04 · Просмотр и экспорт</strong><video controls playsinline></video><div class="motion-row"><button data-video type="button">Видео</button><button data-zip class="primary" type="button">Комплект Seedance</button></div><label>Фотореалистичные референсы (необязательно)<input data-refs type="file" accept="image/png,image/jpeg,image/webp" multiple></label><small>Добавьте до 3 готовых фото в порядке начало / середина / конец. Без них экспортируются только кадры чернового аниматика. Генерация Seedance выполняется вручную.</small></div><small data-status role="status">Выберите способ съёмки.</small>';
  document.body.append(panel);const q=s=>panel.querySelector(s),m=motionR156;m.panel=panel;m.q=q;
  const refresh=()=>{q('[data-points]').hidden=q('[data-mode]').value!=='path';q('[data-walk]').hidden=q('[data-mode]').value==='path';q('[data-point-list]').replaceChildren();m.points.forEach((p,i)=>{const row=document.createElement('div');row.className='motion-row';const name=document.createElement('span');name.textContent='Точка '+(i+1)+' · '+Math.round(p.focal)+' мм';const del=document.createElement('button');del.type='button';del.textContent='Удалить';del.onclick=()=>{m.points.splice(i,1);refresh()};row.append(name,del);q('[data-point-list]').append(row);});};
- m.open=()=>{if(innerWidth<=850){status('MOTION доступен на компьютере.');return;}if(pathTraceR72?.active){status('Сначала завершите рендер.');return;}panel.hidden=false;refresh();};
- $('#motionOpenR156').onclick=m.open;q('[data-close]').onclick=()=>{if(m.active)stopMotionR156();panel.hidden=true;};q('[data-mode]').onchange=refresh;q('[data-walk]').onclick=()=>{if(state.view!=='walk')setView('walk');chooseTool('select');};q('[data-add]').onclick=()=>{if(!camera?.isPerspectiveCamera){q('[data-status]').textContent='Перейдите в 3D или прогулку.';return;}if(m.points.length>=5){q('[data-status]').textContent='Максимум 5 точек.';return;}if(state.view==='walk')freezeWalkLook();camera.updateMatrixWorld(true);m.points.push({position:camera.position.clone(),rotation:camera.quaternion.clone(),fov:camera.fov,focal:camera.getFocalLength()});refresh();q('[data-status]').textContent='Точка сохранена. Выставьте следующий ракурс.';};q('[data-reset]').onclick=()=>{m.points=[];refresh()};q('[data-start]').onclick=startMotionR156;q('[data-stop]').onclick=stopMotionR156;q('[data-video]').onclick=()=>{if(m.result)motionDownloadR156(m.result.blob,'FORMA-animatic.'+m.result.ext)};q('[data-zip]').onclick=exportMotionR156;
+ m.open=()=>{if(pathTraceR72?.active){status('Сначала завершите рендер.');return;}panel.hidden=false;refresh();};
+ $('#motionOpenR156').onclick=m.open;$('#mobileMotionR172').onclick=m.open;q('[data-close]').onclick=()=>{if(m.active)stopMotionR156();panel.hidden=true;};q('[data-mode]').onchange=refresh;q('[data-walk]').onclick=()=>{if(state.view!=='walk')setView('walk');chooseTool('select');};q('[data-add]').onclick=()=>{if(!camera?.isPerspectiveCamera){q('[data-status]').textContent='Перейдите в 3D или прогулку.';return;}if(m.points.length>=5){q('[data-status]').textContent='Максимум 5 точек.';return;}if(state.view==='walk')freezeWalkLook();camera.updateMatrixWorld(true);m.points.push({position:camera.position.clone(),rotation:camera.quaternion.clone(),fov:camera.fov,focal:camera.getFocalLength()});refresh();q('[data-status]').textContent='Точка сохранена. Выставьте следующий ракурс.';};q('[data-reset]').onclick=()=>{m.points=[];refresh()};q('[data-start]').onclick=startMotionR156;q('[data-stop]').onclick=stopMotionR156;q('[data-video]').onclick=()=>{if(m.result)motionDownloadR156(m.result.blob,'FORMA-animatic.'+m.result.ext)};q('[data-zip]').onclick=exportMotionR156;
  if(new URLSearchParams(location.search).get('motion')==='1')m.open();
 }
 function motionDownloadR156(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
@@ -4548,7 +4548,29 @@ document.addEventListener('forma:render-job-status',event=>{
  * mode. Do not send an auto-reduced no-shadow preview to the image provider.
  * Restore the interactive renderer even if capture fails.
  */
-function captureHighQuality3dReference(){
+function capturePrecisionGuidesR172(){
+ const size=renderer.getDrawingBufferSize(new THREE.Vector2()),w=size.x,h=size.y;
+ const target=new THREE.WebGLRenderTarget(w,h,{depthBuffer:true,stencilBuffer:false});
+ const oldTarget=renderer.getRenderTarget(),oldBg=scene.background,oldFog=scene.fog,oldOverride=scene.overrideMaterial,oldTone=renderer.toneMapping,oldClear=renderer.getClearColor(new THREE.Color()),oldAlpha=renderer.getClearAlpha(),oldAuto=renderer.autoClear,oldShadowAuto=renderer.shadowMap.autoUpdate;
+ const changed=[],hidden=[],materials=[],legend=[],cache=new Map(),depthCache=new Map();
+ const exclude=n=>n===groundGizmoR171||n===atmosphereSky||n===cloudLayer||n.name==='forma-parcel-outline'||n.userData?.editorOnly;
+ function keyFor(n){let p=n;while(p){if(p.userData?.key)return p.userData.key;p=p.parent;}return 'environment:'+ (n===terrainMesh?'terrain':n.parent?.name||n.name||'ground');}
+ function mapId(key){if(!cache.has(key)){const i=cache.size+1;const rgb=[48+(i*73)%192,48+(i*131)%192,48+(i*167)%192];cache.set(key,rgb);legend.push({key,rgb});}return cache.get(key);}
+ function make(m,key,depth){
+  const cut=m?.alphaTest>0||!!m?.alphaMap,opts={side:m?.side??THREE.FrontSide,alphaTest:cut?Math.max(.05,m.alphaTest||0):0,map:cut?m.map:null,alphaMap:cut?m.alphaMap:null};
+  const mat=depth?new THREE.MeshDepthMaterial({...opts,depthPacking:THREE.BasicDepthPacking}):new THREE.MeshBasicMaterial({...opts,color:new THREE.Color().setRGB(...mapId(key).map(v=>v/255),THREE.SRGBColorSpace),toneMapped:false,fog:false});
+  if(!depth&&opts.map)mat.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\n diffuseColor.a *= texture2D(map,vMapUv).a;\n#endif');};
+  materials.push(mat);return mat;
+ }
+ function png(){const pixels=new Uint8Array(w*h*4);renderer.readRenderTargetPixels(target,0,0,w,h,pixels);const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d'),im=ctx.createImageData(w,h);for(let y=0;y<h;y++)im.data.set(pixels.subarray((h-y-1)*w*4,(h-y)*w*4),y*w*4);ctx.putImageData(im,0,0);return c.toDataURL('image/png');}
+ try{
+  scene.background=new THREE.Color(0);scene.fog=null;scene.overrideMaterial=null;renderer.toneMapping=THREE.NoToneMapping;renderer.autoClear=true;renderer.shadowMap.autoUpdate=false;renderer.setClearColor(0,1);
+  scene.traverse(n=>{if(exclude(n)||n.isLine||n.isPoints||n.isSprite||(n.isMesh&&(Array.isArray(n.material)?n.material.every(m=>m.colorWrite===false):n.material?.colorWrite===false))){hidden.push([n,n.visible]);n.visible=false;return;}if(n.isMesh&&n.material){changed.push([n,n.material]);}});
+  const pass=depth=>{for(const [n,orig] of changed){const get=m=>{const key=keyFor(n),id=depth?m.uuid:m.uuid+'|'+key;const store=depth?depthCache:pass.ids;if(!store.has(id))store.set(id,make(m,key,depth));return store.get(id);};n.material=Array.isArray(orig)?orig.map(get):get(orig);}renderer.setRenderTarget(target);renderer.clear(true,true,true);renderer.render(scene,camera);return png();};pass.ids=new Map();
+  const depth=pass(true),objectIds=pass(false);return {depth,objectIds,legend};
+ }finally{for(const [n,m] of changed)n.material=m;for(const [n,v] of hidden)n.visible=v;scene.background=oldBg;scene.fog=oldFog;scene.overrideMaterial=oldOverride;renderer.toneMapping=oldTone;renderer.autoClear=oldAuto;renderer.shadowMap.autoUpdate=oldShadowAuto;renderer.setClearColor(oldClear,oldAlpha);renderer.setRenderTarget(oldTarget);for(const m of materials)m.dispose();target.dispose();}
+}
+function captureHighQuality3dReference(precision=false){
  if(groundGizmoR171)groundGizmoR171.visible=false;
 
  const previousRatio=renderer.getPixelRatio();
@@ -4574,7 +4596,7 @@ function captureHighQuality3dReference(){
   for(const group of botanicalGroups)updateBotanicalLod(group,camera,canvas.clientHeight,'premium');
   renderer.shadowMap.needsUpdate=true;
   if(autoReduced){releasePhotorealPipeline(renderer);renderer.render(scene,camera);}else renderPhotoFrame(true);
-  return renderer.domElement.toDataURL('image/png');
+  const image=renderer.domElement.toDataURL('image/png');return precision?{image,...capturePrecisionGuidesR172()}:image;
  }finally{
   for(const [group,tier] of prevBotanicalTiers)setFoliageTier(group,tier);
  syncPlantVisibilityR142();
@@ -4586,9 +4608,9 @@ function captureHighQuality3dReference(){
  }
 }
 
-async function renderAi(series=null){
+async function renderAi(series=null,precision=false){
  const btn=$('#renderAi');
- const model=series?.model||$('#aiRenderModel').value;
+ const model=precision?'nano-banana-2.1':series?.model||$('#aiRenderModel').value;
  if(aiRenderActive||btn.disabled||(!series&&!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Фотографический':'Сбалансированный')+'? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.')))return;
  aiRenderActive=true;btn.disabled=true;
  $('#aiResult').hidden=true;$('#aiProgress').hidden=false;
@@ -4597,7 +4619,8 @@ async function renderAi(series=null){
  status('AI-рендер: подготовка исходной 3D-сцены и запрос в очередь…');
  try{
   setAiProgress('capturing',series?'Снимаем кадр '+series.label:'Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
-  const image=captureHighQuality3dReference();
+  if(precision&&!camera.isPerspectiveCamera)throw Error('Для точного рендера выберите 3D или Прогулку.');
+  const captured=captureHighQuality3dReference(precision),image=precision?captured.image:captured;
   const inputQuality=await inspectRenderDataURL(image,{season:doc.atmosphere.season});
   if(inputQuality.whiteFraction>.91||inputQuality.transparentFraction>.60)
    throw Error('Исходный 3D-кадр захвачен не полностью: '+inputQuality.reason+
@@ -4672,7 +4695,8 @@ async function renderAi(series=null){
     catalogName:creatureById(o.type)?.name||realModelById(o.type)?.name||o.type,
     group:creatureById(o.type)?.group||realModelById(o.type)?.group||'structures',
     speciesLatin:creatureById(o.type)?.species||CATALOG.find(a=>a.id===o.type)?.latin||null}))};
-  const payload=JSON.stringify({image,landscapeMasterplan:sceneInfo,landscapeModel:model,quality:'high',quantity:1});
+  if(precision){sceneInfo.cameraQuaternion=camera.quaternion.toArray();sceneInfo.cameraAspect=camera.aspect;sceneInfo.cameraNear=camera.near;sceneInfo.cameraFar=camera.far;sceneInfo.precisionObjectLegend=captured.legend;}
+  const payload=JSON.stringify({image,landscapeMasterplan:sceneInfo,landscapeModel:model,quality:'high',quantity:1,...(precision?{precision:true,material:captured.depth,reference:captured.objectIds}:{})});
   const transport=window.FORMA_RENDER_QUEUE?.fetch||fetch;
   const response=await transport('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:payload});
   const data=await response.json().catch(()=>({}));
