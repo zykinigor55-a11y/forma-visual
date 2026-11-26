@@ -1,4 +1,4 @@
-// FORMA Cycles R108: package a local Cycles job without uploading the scene.
+// FORMA Cycles R123: normalize procedural texture pixels before GLTF export.
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {zipSync,strToU8} from 'three/addons/libs/fflate.module.js';
 export const CYclesPresets={draft:{width:1280,samples:32,bounces:4},standard:{width:1920,samples:128,bounces:6},high:{width:2560,samples:256,bounces:8},ultra:{width:3840,samples:1024,bounces:12}};
@@ -9,7 +9,32 @@ export async function exportCyclesJob(T,{scene,root,camera,quality='high',device
  const M=new T.Matrix4(),W=new T.Matrix4(),v=new T.Vector3(),q=new T.Quaternion(),scale=new T.Vector3(),color=new T.Color();
  const skip=o=>o.userData?.selectionProxy||o.userData?.formaWeatherPreview||/selection|preview.*cursor|brush|gizmo|underlay|proxy/i.test(o.name);
  let id=0,instances=0;
- function copyMat(m){const c=m.clone();c.onBeforeCompile=()=>{};c.customProgramCacheKey=()=>'';materials.push(c);return c}
+ const textureCache=new Map(),exportTextures=[];
+ // GLTFExporter combines metalness and roughness with drawImage. DataTexture
+ // images are raw pixel buffers rather than drawable browser images.
+ function exportTexture(t){
+  if(!t?.isDataTexture)return t;
+  if(textureCache.has(t))return textureCache.get(t);
+  const {data,width,height}=t.image||{};
+  if(!data||!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1)throw Error('Некорректная процедурная текстура: '+(t.name||t.uuid));
+  const channels=t.format===T.RGBAFormat?4:t.format===T.RGBFormat?3:t.format===T.RGFormat?2:t.format===T.RedFormat?1:0;
+  if(!channels||data.length!==width*height*channels)throw Error('Неподдерживаемый формат процедурной текстуры: '+(t.name||t.uuid));
+  const byte=t.type===T.UnsignedByteType,flt=t.type===T.FloatType,half=t.type===T.HalfFloatType;
+  if(!byte&&!flt&&!half)throw Error('Неподдерживаемый тип данных текстуры: '+(t.name||t.uuid));
+  const value=n=>byte?n:Math.round(Math.max(0,Math.min(1,half?T.DataUtils.fromHalfFloat(n):n))*255);
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Не удалось создать холст для текстуры');
+  const image=ctx.createImageData(width,height),out=image.data;
+  for(let i=0,j=0;i<data.length;i+=channels,j+=4){
+   out[j]=value(data[i]);out[j+1]=channels>1?value(data[i+1]):0;out[j+2]=channels>2?value(data[i+2]):0;out[j+3]=channels===4?value(data[i+3]):255;
+  }
+  ctx.putImageData(image,0,0);
+  const c=new T.CanvasTexture(canvas);
+  for(const k of ['name','mapping','channel','wrapS','wrapT','magFilter','minFilter','anisotropy','colorSpace','flipY','generateMipmaps','premultiplyAlpha','matrixAutoUpdate'])c[k]=t[k];
+  c.offset.copy(t.offset);c.repeat.copy(t.repeat);c.center.copy(t.center);c.rotation=t.rotation;c.matrix.copy(t.matrix);
+  c.needsUpdate=true;textureCache.set(t,c);exportTextures.push(c);return c;
+ }
+ function copyMat(m){const c=m.clone();materials.push(c);c.onBeforeCompile=()=>{};c.customProgramCacheKey=()=>'';for(const k of Object.keys(c))if(c[k]?.isDataTexture)c[k]=exportTexture(c[k]);return c}
  function visit(o,forced=false){
   if((!forced&&!o.visible)||skip(o))return;
   if(o.isLOD&&/fir-spatial-lod/.test(o.name)){
@@ -43,6 +68,8 @@ export async function exportCyclesJob(T,{scene,root,camera,quality='high',device
   }
   for(const ch of o.children)visit(ch,forced);
  }
+ try{
+ onProgress('Подготовка процедурных текстур и геометрии…');
  visit(root);exportScene.updateMatrixWorld(true);
  const lights=[];let sun=null;
  scene.traverseVisible(o=>{
@@ -54,17 +81,16 @@ export async function exportCyclesJob(T,{scene,root,camera,quality='high',device
  });
  const aspect=camera.isOrthographicCamera?(camera.right-camera.left)/(camera.top-camera.bottom):camera.aspect||16/9;
  const height=Math.max(2,Math.round(preset.width/aspect/2)*2);
- const job={version:108,device,atmosphere,exposure:Math.max(-2,Math.min(2,Number(exposure)||0)),objects,render:{...preset,height},camera:{position:camera.getWorldPosition(new T.Vector3()).toArray(),quaternion:camera.getWorldQuaternion(new T.Quaternion()).toArray(),fov:camera.getEffectiveFOV?.()||45,near:camera.near,far:camera.far,ortho:!!camera.isOrthographicCamera,orthoWidth:camera.isOrthographicCamera?(camera.right-camera.left)/camera.zoom:0},sun,lights,batches,warnings};
- try{
+ const job={version:123,device,atmosphere,exposure:Math.max(-2,Math.min(2,Number(exposure)||0)),objects,render:{...preset,height},camera:{position:camera.getWorldPosition(new T.Vector3()).toArray(),quaternion:camera.getWorldQuaternion(new T.Quaternion()).toArray(),fov:camera.getEffectiveFOV?.()||45,near:camera.near,far:camera.far,ortho:!!camera.isOrthographicCamera,orthoWidth:camera.isOrthographicCamera?(camera.right-camera.left)/camera.zoom:0},sun,lights,batches,warnings};
   onProgress('Экспорт геометрии и текстур: '+instances+' инстансов…');
   const glb=await new GLTFExporter().parseAsync(exportScene,{binary:true,onlyVisible:true,maxTextureSize:['high','ultra'].includes(quality)?4096:2048});
   const response=await fetch(new URL('./forma-cycles-r107.py?v=R108',import.meta.url));if(!response.ok)throw Error('Скрипт Cycles недоступен: '+response.status);
   const script=await response.text();
   const bat='@echo off\r\ncd /d "%~dp0"\r\nset "BLENDER=blender.exe"\r\nwhere blender.exe >nul 2>nul\r\nif errorlevel 1 (\r\n for /d %%D in ("%ProgramFiles%\\Blender Foundation\\Blender*") do if exist "%%~fD\\blender.exe" set "BLENDER=%%~fD\\blender.exe"\r\n)\r\n"%BLENDER%" --background --factory-startup --python-exit-code 1 --python "%~dp0forma-cycles-r107.py"\r\nif errorlevel 1 echo Render failed. Check console and Blender installation.\r\npause\r\n';
-  const readme='FORMA Cycles R108 - experimental local architectural render.\nInstall Blender 4.5 LTS or newer from https://www.blender.org/download/. Extract ALL files into one folder. Windows: run RENDER-WINDOWS.bat. macOS/Linux: blender --background --factory-startup --python-exit-code 1 --python forma-cycles-r107.py. Output: FORMA-render.png, FORMA-scene.blend. No upload or paid API. GPU auto detection, CPU fallback. Physical Cycles material reconstruction for classified water, glazing, plants and bark; individual plant colors quantized into tint groups; masked translucent foliage and higher transparent bounce budget. Cloudy skies reduce direct sun; natural AgX daytime contrast. Static scene, procedural physical sky or optional local HDRI (place environment.hdr beside the BAT file). Custom WebGL shaders, weather particles, some materials and skinned meshes are not fully reproduced. Check console for GPU backend and errors.\n';
+  const readme='FORMA Cycles R123 - experimental local architectural render. Procedural maps converted to export-safe images.\nInstall Blender 4.5 LTS or newer from https://www.blender.org/download/. Extract ALL files into one folder. Windows: run RENDER-WINDOWS.bat. macOS/Linux: blender --background --factory-startup --python-exit-code 1 --python forma-cycles-r107.py. Output: FORMA-render.png, FORMA-scene.blend. No upload or paid API. GPU auto detection, CPU fallback. Physical Cycles material reconstruction for classified water, glazing, plants and bark; individual plant colors quantized into tint groups; masked translucent foliage and higher transparent bounce budget. Cloudy skies reduce direct sun; natural AgX daytime contrast. Static scene, procedural physical sky or optional local HDRI (place environment.hdr beside the BAT file). Custom WebGL shaders, weather particles, some materials and skinned meshes are not fully reproduced. Check console for GPU backend and errors.\n';
   onProgress('Упаковка локального проекта…');
   const zip=zipSync({'scene.glb':new Uint8Array(glb),'job.json':strToU8(JSON.stringify(job)),'forma-cycles-r107.py':strToU8(script),'RENDER-WINDOWS.bat':strToU8(bat),'README.txt':strToU8(readme)},{level:1});
-  const url=URL.createObjectURL(new Blob([zip],{type:'application/zip'})),a=document.createElement('a');a.href=url;a.download='FORMA-Cycles-R108.zip';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const url=URL.createObjectURL(new Blob([zip],{type:'application/zip'})),a=document.createElement('a');a.href=url;a.download='FORMA-Cycles-R123.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   return {instances,meshes:id,warnings};
- }finally{for(const m of materials)m.dispose()}
+ }finally{for(const m of materials)m.dispose();for(const t of exportTextures)t.dispose()}
 }
