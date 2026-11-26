@@ -12,7 +12,7 @@ function makeSky(T,source,atmosphere={}){
  const zen=new T.Color(!day?'#26374f':cloudy?'#a2adb6':'#7297bf'),hor=new T.Color(!day?'#586a80':cloudy?'#c0c5c7':time==='evening'?'#e1c5a9':'#d3e0e7'),ground=new T.Color(day?'#777b67':'#303b32');
  const c=new T.Color();
  for(let y=0;y<h;y++){const a=Math.sin(((y+.5)/h-.5)*Math.PI);c.copy(hor).lerp(a>0?zen:ground,Math.pow(Math.abs(a),.55));for(let x=0;x<w;x++){const k=(y*w+x)*4;data[k]=c.r;data[k+1]=c.g;data[k+2]=c.b;data[k+3]=1;}}
- const t=new T.DataTexture(data,w,h,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;return t;
+ const half=new Uint16Array(data.length);for(let i=0;i<data.length;i++)half[i]=T.DataUtils.toHalfFloat(data[i]);const t=new T.DataTexture(half,w,h,T.RGBAFormat,T.HalfFloatType);t.mapping=T.EquirectangularReflectionMapping;t.minFilter=T.LinearFilter;t.magFilter=T.LinearFilter;t.wrapS=T.RepeatWrapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;return t;
 }
 async function loadSkyR73(T,source,atmosphere={},renderer,profile,isAlive,onProgress){
  if(renderer&&atmosphere.cloudSettings&&atmosphere.renderClouds==='volume'){try{return await bakeCloudEnvironment(T,renderer,{sun:source.getObjectByName('sun'),time:atmosphere.time,weather:atmosphere.weather,settings:atmosphere.cloudSettings,high:profile==='high'&&!isMobile(),mobile:isMobile(),isAlive,onProgress});}catch(e){if(!isAlive()||renderer.getContext().isContextLost())throw e;console.warn('FORMA cloud HDR fallback',e);}}
@@ -22,8 +22,8 @@ async function loadSkyR73(T,source,atmosphere={},renderer,profile,isAlive,onProg
  if(!sun||sun.intensity<.3||time!=='day'||diffuse)return {texture:makeSky(T,source,atmosphere),label:'Небо по времени суток и погоде',photographic:false};
  const id='kloppenheim_03_puresky',res=isMobile()?'1k':'2k',file=id+'_'+res+'.hdr';
  try{
-  const {RGBELoader}=await import('three/addons/loaders/RGBELoader.js');
-  const loader=new RGBELoader().setDataType(T.FloatType);
+  const {HDRLoader}=await import('three/addons/loaders/HDRLoader.js');
+  const loader=new HDRLoader().setDataType(T.FloatType);
   let t;try{t=await loader.loadAsync(new URL('./assets/landscape-photo/r67/'+file,document.baseURI).href);}catch{t=await loader.loadAsync('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/'+res+'/'+file);}
   const d=t.image.data;let avg=0,count=0;
   for(let i=0;i<d.length;i+=4){const y=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];if(Number.isFinite(y)&&y>0&&y<25){avg+=y;count++;}}
@@ -31,8 +31,8 @@ async function loadSkyR73(T,source,atmosphere={},renderer,profile,isAlive,onProg
   const gain=.76/Math.max(.04,avg/count);
   // Preserve cloud radiance contrast; limit direct solar hotspots because a separate area light supplies direct sunlight.
   for(let i=0;i<d.length;i+=4){const y=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])*gain;const scale=gain*Math.min(1,2.4/Math.max(.00001,y));for(let j=0;j<3;j++)d[i+j]=Math.max(0,Number.isFinite(d[i+j])?d[i+j]*scale:0);d[i+3]=1;}
-  t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;
-  return {texture:t,label:'Poly Haven HDRI '+res,photographic:true};
+  const half=new Uint16Array(d.length);for(let i=0;i<d.length;i++)half[i]=T.DataUtils.toHalfFloat(d[i]);const filtered=new T.DataTexture(half,t.image.width,t.image.height,T.RGBAFormat,T.HalfFloatType);filtered.flipY=t.flipY;filtered.mapping=T.EquirectangularReflectionMapping;filtered.minFilter=T.LinearFilter;filtered.magFilter=T.LinearFilter;filtered.wrapS=T.RepeatWrapping;filtered.colorSpace=T.LinearSRGBColorSpace;filtered.needsUpdate=true;t.dispose();
+  return {texture:filtered,label:'Poly Haven HDRI '+res,photographic:true};
  }catch(e){console.warn('R73 HDRI fallback',e);return {texture:makeSky(T,source,atmosphere),label:'Процедурное HDRI (резерв)',photographic:false};}
 }
 function bakeInstances(T,o,keep=o.count,src=o.geometry){
@@ -355,7 +355,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  });
  const env=sky.texture;scene.environment=env;scene.background=env;
  // Decouple visible sky brightness from irradiance to avoid washing out surfaces.
- scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?.85:.42;
+ scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?.85:.85;
  scene.backgroundIntensity=sky.photographic?.87:night?.85:1.0;
  scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
@@ -378,7 +378,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  const expRow=document.createElement('label');expRow.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0';expRow.innerHTML='Экспозиция <input type="range" min="-3" max="8" value="0" step=".25" style="flex:1"><output>0 EV</output>';warning.after(expRow);
  const evInput=expRow.querySelector('input'),evOut=expRow.querySelector('output');
  evInput.oninput=()=>{exposureEV=Number(evInput.value);evOut.textContent=exposureEV.toFixed(2)+' EV';if(pt&&displayQuad&&pt.samples>=1&&!renderer.getContext().isContextLost())showTrace();};
- let target=profile==='high'?96:40;bar.max=target;
+ const diagnostic=atmosphere.traceDiagnostic===true;let target=diagnostic?8:profile==='high'?96:40;bar.max=target;
  const started=performance.now(),probe=document.createElement('canvas');probe.width=32;probe.height=18;const probeCtx=probe.getContext('2d',{willReadFrequently:true});
  function daylightDark(){if(!probeCtx||!['day','morning','evening'].includes(atmosphere.time||'day'))return false;try{probeCtx.drawImage(canvas,0,0,32,18);const d=probeCtx.getImageData(0,0,32,18).data;let mean=0,bright=0;for(let i=0;i<d.length;i+=4){const y=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];mean+=y;if(y>25)bright++;}return mean/(d.length/4)<8&&bright/(d.length/4)<.08;}catch{return false;}}
  function showTrace(texture=pt?.target?.texture){if(!texture||!displayQuad)return;renderer.setRenderTarget(null);renderer.setScissorTest(false);const size=renderer.getSize(new T.Vector2());renderer.setViewport(0,0,size.x,size.y);displayMat.uniforms.frame.value=texture;displayMat.uniforms.gain.value=Math.pow(2,exposureEV);displayMat.uniforms.tileGrid.value.copy(pt.tiles);displayMat.uniforms.coverage.value=Math.min(1,pt.samples);displayMat.uniforms.bufferSize.value.set(pt.target.width,pt.target.height);renderer.clear(true,true,true);displayQuad.render(renderer);}
@@ -390,7 +390,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building){try{cleanup()}catch(e){console.warn('GPU cleanup',e)}}renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;renderer.autoClear=oldAutoClear;renderer.debug.onShaderError=oldShaderError;renderer.debug.checkShaderErrors=oldCheckShader;if(finalImageUrl)URL.revokeObjectURL(finalImageUrl);if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R147.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R148.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
  function error(e){if(!alive)return;loading=false;finished=true;console.error('FORMA GPU R134',e);const reason=stage+': '+(e?.message||String(e));try{sessionStorage.setItem('forma-gpu-last-error',reason);}catch{}close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
@@ -398,15 +398,15 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   stage='Загрузка библиотеки трассировки';msg.textContent=stage+'…';const {WebGLPathTracer}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
   stage='Подготовка HDR неба';msg.textContent=stage+'…';await nextFrame();if(!alive)return;sky=await loadSkyR73(T,scene,atmosphere,renderer,profile,()=>alive,p=>{msg.textContent='Подготовка облаков: '+p+'%';});if(!alive){sky.texture.dispose();return;}
   stage='Подготовка полигонов и материалов';msg.textContent=stage+'…';await nextFrame();if(!alive)return;
-  snap=await snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn,()=>alive,(n,total)=>{msg.textContent='Подготовка геометрии: '+n+' / '+total+' объектов';});if(!alive){snap.dispose();return;}
+  if(diagnostic){const test=new T.Scene(),geos=[],mats=[];const add=(g,m,x,y,z)=>{geos.push(g);mats.push(m);const o=new T.Mesh(g,m);o.position.set(x,y,z);test.add(o);return o;};const floor=add(new T.PlaneGeometry(20,20),new T.MeshStandardMaterial({color:0x9c9c9c,roughness:.8}),0,0,0);floor.rotation.x=-Math.PI/2;add(new T.SphereGeometry(1,32,24),new T.MeshStandardMaterial({color:0xb45f36,roughness:.35}),-1.3,1,0);add(new T.BoxGeometry(1.5,1.5,1.5),new T.MeshStandardMaterial({color:0xe3e3e3,roughness:.7}),1.2,.75,0);const sun=new T.DirectionalLight(0xffefd9,3);sun.position.set(-4,7,3);test.add(sun,sun.target);test.background=new T.Color(0x9bb7d0);test.environment=sky.texture;test.environmentIntensity=1;const cam=new T.PerspectiveCamera(46,camera.aspect||16/9,.1,100);cam.position.set(5,3.2,7);cam.lookAt(0,.8,0);cam.updateMatrixWorld(true);test.updateMatrixWorld(true);snap={scene:test,cam,triangles:1560,instances:0,dispose(){geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());sky.texture.dispose();}};}else snap=await snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn,()=>alive,(n,total)=>{msg.textContent='Подготовка геометрии: '+n+' / '+total+' объектов';});if(!alive){snap.dispose();return;}
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   stage='Построение BVH и загрузка текстур';building=true;
   renderer.setRenderTarget(null);renderer.setScissorTest(false);renderer.autoClear=true;renderer.debug.checkShaderErrors=true;renderer.debug.onShaderError=(gl,program,vertex,fragment)=>{shaderError=[gl.getProgramInfoLog(program),gl.getShaderInfoLog(vertex),gl.getShaderInfoLog(fragment)].filter(Boolean).join('\n').slice(0,1500)||'Ошибка компиляции GPU-шейдера';console.error('FORMA shader:',shaderError);};
   pt=new WebGLPathTracer(renderer);const heavy=snap.triangles>2000000,veryHeavy=snap.triangles>5000000;const recover=atmosphere.traceRecovery===true;
-  target=recover?24:heavy?(profile==='high'?48:24):(profile==='high'?64:32);bar.max=target;
+  target=diagnostic?8:recover?24:heavy?(profile==='high'?48:24):(profile==='high'?64:32);bar.max=target;
   pt.bounces=heavy||recover?4:profile==='high'?6:4;pt.transmissiveBounces=heavy||recover?8:12;pt.multipleImportanceSampling=true;
-  const tile=veryHeavy||recover?6:4;pt.tiles.set(tile,tile);pt.renderScale=recover?.35:veryHeavy?.40:heavy?.55:profile==='high'?.80:.60;const atlas=recover?128:heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.renderToCanvas=false;pt.filterGlossyFactor=.4;
-  renderer.setPixelRatio(Math.min(oldRatio,recover?.55:profile==='high'?1:0.85,(recover?960:1600)/Math.max(1,canvas.clientWidth,canvas.clientHeight)));pt.setScene(snap.scene,snap.cam);
+  const tile=veryHeavy||recover?6:4;pt.tiles.set(tile,tile);pt.renderScale=diagnostic?.4:recover?.35:veryHeavy?.40:heavy?.55:profile==='high'?.80:.60;const atlas=recover?128:heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.renderToCanvas=false;pt.filterGlossyFactor=.4;
+  renderer.setPixelRatio(Math.min(oldRatio,recover?.55:profile==='high'?1:0.85,(recover?960:1600)/Math.max(1,canvas.clientWidth,canvas.clientHeight)));renderer.toneMapping=T.NoToneMapping;renderer.toneMappingExposure=1;pt.setScene(snap.scene,snap.cam);
   displayMat=new T.ShaderMaterial({uniforms:{frame:{value:null},gain:{value:1},tileGrid:{value:new T.Vector2(1,1)},bufferSize:{value:new T.Vector2(1,1)},coverage:{value:0}},depthTest:false,depthWrite:false,toneMapped:false,vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'uniform sampler2D frame;uniform float gain;uniform vec2 tileGrid;uniform vec2 bufferSize;uniform float coverage;varying vec2 vUv;void main(){vec2 tileSize=ceil(bufferSize/tileGrid);vec2 tile=min(floor(vUv*bufferSize/tileSize),tileGrid-1.);float order=(tileGrid.y-1.-tile.y)*tileGrid.x+tile.x;if(coverage<.99999&&order>=floor(coverage*tileGrid.x*tileGrid.y+.01)){gl_FragColor=vec4(.075,.082,.095,1.);return;}vec3 c=max(texture2D(frame,vUv).rgb*gain,vec3(0.));c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.);c=mix(12.92*c,1.055*pow(c,vec3(1.0/2.4))-.055,step(vec3(.0031308),c));gl_FragColor=vec4(c,1.);}'});
   displayQuad=new FullScreenQuad(displayMat);
   building=false;
@@ -417,7 +417,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
    const elapsed=performance.now()-traceStart;const percent=Math.min(100,100*pt.samples/target);
    details.textContent=percent.toFixed(1)+'% · прошло '+fmtTime(performance.now()-started)+(pt.samples>=1?' · осталось ≈ '+fmtTime(elapsed*Math.max(0,target-pt.samples)/pt.samples):'');
    if(pt.samples>0&&(pt.samples<1||n!==lastShown||performance.now()-lastDrawAt>180)){lastShown=n;lastDrawAt=performance.now();showTrace();preview.hidden=true;preview.style.display='none';}
-   if(n>=2&&n!==lastChecked&&n<=4){lastChecked=n;if(daylightDark()){darkWarning=true;warning.textContent='Кадр тёмный. Трассировка продолжается; экспозицию можно изменить.';}else{darkWarning=false;warning.textContent='';}}
+   if(n>=1&&n!==lastChecked&&n<=3){lastChecked=n;let stats='';try{const rt=pt.target,px=new Float32Array(4);let max=0,mean=0,valid=0;for(let j=1;j<=3;j++)for(let i=1;i<=3;i++){renderer.readRenderTargetPixels(rt,Math.floor(rt.width*i/4),Math.floor(rt.height*j/4),1,1,px);if([px[0],px[1],px[2]].every(Number.isFinite)){const y=.2126*px[0]+.7152*px[1]+.0722*px[2];max=Math.max(max,y);mean+=y;valid++;}}stats=' · HDR среднее '+(mean/Math.max(1,valid)).toFixed(4)+' · макс '+max.toFixed(4)+' · '+valid+'/9 валидных';}catch(e){stats=' · HDR-буфер не прочитан';}if(daylightDark()){darkWarning=true;warning.textContent='Кадр тёмный'+stats+' · трассировка продолжается.';}else{darkWarning=false;warning.textContent=diagnostic?'Контрольный кадр'+stats:stats.slice(3);}}
    save.disabled=n<1;
    msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':pt.samples<1?'Первый проход · '+Math.round(pt.samples*100)+'% участков · трассировка лучей':'GPU · Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reducedOak?' · упрощено листьев дуба: '+snap.reducedOak.toLocaleString('ru-RU'):'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'')+(snap.reducedFoliage?' · адаптивный LOD листвы: '+snap.reducedFoliage.toLocaleString('ru-RU'):'');
    if(n>=target){showTrace();finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;finalImageUrl=URL.createObjectURL(b);const image=document.createElement('img');image.src=finalImageUrl;image.style.cssText='width:100%;height:100%;object-fit:contain';preview.replaceChildren(image);preview.style.display='grid';preview.hidden=false;cleanup();pt=null;snap=null;save.disabled=false;details.textContent='100% · готово за '+fmtTime(performance.now()-started);msg.textContent+=' · готово, память освобождена';evInput.disabled=true;},'image/png');return;}raf=requestAnimationFrame(tick);
