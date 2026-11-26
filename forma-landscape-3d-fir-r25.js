@@ -21,7 +21,7 @@ export function createDetailedFir(T,instance){
  const variant=clamp(Math.round(Number(instance.variant)||1),1,3),key=h.toFixed(3)+'|'+d.toFixed(3)+'|'+variant;
  const cached=firCache.get(key);if(cached){const copy=cached.clone(true);copy.traverse(n=>{if(n.isMesh)n.material=n.material.clone()});return copy;}
  const r=rng('fir|'+variant),g=new T.Group();
- const branches=[],vertices=[],colors=[];
+ const branches=[],vertices=[],colors=[],indices=[];
  const shades=['#263e2b','#37543a','#466445','#5c7853','#38563f'].map(c=>new T.Color(c));
  const V=(x,y,z)=>new T.Vector3(x,y,z);
  function branch(a,b,w){branches.push([a,b,w])}
@@ -29,9 +29,9 @@ export function createDetailedFir(T,instance){
   const tip=base.clone().addScaledVector(dir,len),mid=base.clone().addScaledVector(dir,len*.45);
   const left=mid.clone().addScaledVector(side,width),right=mid.clone().addScaledVector(side,-width);
   const ridge=mid.clone().add(V(0,width*.27,0));
-  for(const v of [base,left,ridge,left,tip,ridge,base,ridge,right,ridge,tip,right]){
-   vertices.push(v.x,v.y,v.z);colors.push(c.r,c.g,c.b);
-  }
+  const i=vertices.length/3;
+  for(const v of [base,left,ridge,tip,right]){vertices.push(v.x,v.y,v.z);colors.push(c.r,c.g,c.b);}
+  indices.push(i,i+1,i+2,i+1,i+3,i+2,i,i+2,i+4,i+2,i+3,i+4);
  }
  function shoot(a,b,angle,young,extra=false){
   branch(a,b,Math.max(.0007,h*.00065));
@@ -81,12 +81,12 @@ export function createDetailedFir(T,instance){
  const stem=new T.InstancedMesh(new T.CylinderGeometry(.55,1,1,7),bm,branches.length),o=new T.Object3D(),up=V(0,1,0);
  branches.forEach(([a,b,w],i)=>{const delta=b.clone().sub(a);o.position.copy(a).addScaledVector(delta,.5);o.quaternion.setFromUnitVectors(up,delta.clone().normalize());o.scale.set(w,delta.length(),w);o.updateMatrix();stem.setMatrixAt(i,o.matrix)});
  stem.instanceMatrix.needsUpdate=true;stem.castShadow=true;stem.receiveShadow=true;stem.computeBoundingSphere();g.add(stem);
- const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.computeVertexNormals();geo.computeBoundingSphere();
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.setIndex(indices);geo.computeVertexNormals();geo.computeBoundingSphere();
  const leaves=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.82,metalness:0,envMapIntensity:.24}));leaves.castShadow=true;leaves.receiveShadow=false;g.add(leaves);
  // Fit the actual mesh (including individual needles) to the saved dimensions.
  geo.computeBoundingBox();const b=geo.boundingBox,actual=Math.max(b.max.x-b.min.x,b.max.z-b.min.z);if(actual>0)g.scale.set(d/actual,1,d/actual);
  g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=true;});
- g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.name='FORMA detailed young fir';
- if(firCache.size<32){const template=g.clone(true);template.traverse(n=>{if(n.isMesh)n.material=n.material.clone()});firCache.set(key,template);}else g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=false;});
+ g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.name='FORMA detailed young fir';
+ if(firCache.size<4){const template=g.clone(true);template.traverse(n=>{if(n.isMesh)n.material=n.material.clone()});firCache.set(key,template);}else g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=false;});
  return g;
 }
