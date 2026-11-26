@@ -13,7 +13,7 @@ export function lawnTerrainMicro(x,z){
  return (field(x,z,1.35,41)-.5)*.018+(field(x,z,2.3,43)-.5)*.006;
 }
 // Each instanced clump contains several separately curved, folded leaves.
-function tuftGeometry(T,profile,variant,detail,mobile=false){
+export function tuftGeometry(T,profile,variant,detail,mobile=false){
  const pos=[],uv=[],col=[],idx=[];
  const count=detail===7?5:detail===6?5:detail===5?3:detail===0?9:detail===1?7:detail===2?6:5;
  const rows=detail===6?2:detail>=4?1:detail===0?7:detail===1?4:3;
@@ -50,7 +50,7 @@ function tuftGeometry(T,profile,variant,detail,mobile=false){
  }
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();const normals=g.getAttribute('normal');for(let i=0;i<normals.count;i++){const x=normals.getX(i)*.65,y=normals.getY(i)*.65+.35,z=normals.getZ(i)*.65,l=Math.hypot(x,y,z)||1;normals.setXYZ(i,x/l,y/l,z/l);}return g;
 }
-function bladeMaps(T){
+export function bladeMaps(T){
  const w=256,h=512,albedo=new Uint8Array(w*h*4),normal=new Uint8Array(w*h*4),rough=new Uint8Array(w*h*4);
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
   const u=x/(w-1),v=y/(h-1),vein=Math.exp(-Math.pow((u-.5)*30,2)),fine=Math.sin(u*91+v*.9)*.55+Math.sin(u*173)*.25,grain=hash(x,y,8)-.5;
