@@ -736,7 +736,7 @@ import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
-import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength} from './forma-landscape-project-core.js?v=path-segments-P22';
+import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=night-paving-fix-v4-20261122';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=understory-mobile-v1';
@@ -760,7 +760,7 @@ import {REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_CATEGORIES,REAL_3D_TOTAL,r
 import {CREATURE_ASSETS,creatureById,isCreatureId} from './forma-landscape-3d-creatures.js?v=creatures-v1-20261122';
 import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
-import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js?v=plant-plan-assets-v1';
+import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js?v=pools-P32';
 import {surfaceMaterial,surfacePreviewURL,pavingPathMaterial} from './forma-landscape-3d-surfaces.js?v=paving-identity-v2-20261122';
 import {inspectRenderDataURL} from './forma-landscape-ai-photo-quality.js?v=fullframe-v1-20261122';
  // The editor is demand-rendered: update the frame after streamed PBR arrives.
@@ -891,7 +891,7 @@ const choices={
  build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['carport','Навес для автомобиля'],['gazebo','Беседка'],['greenhouse','Теплица'],['outbuilding','Хозблок']],
  fence:[['fence','Ограждение · линия']],
  plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
- water:CATALOG.filter(x=>x.group==='ponds').map(x=>[x.id,x.name]),
+ water:CATALOG.filter(x=>['pools','ponds'].includes(x.group)).map(x=>[x.id,x.name]),
  landscape:[...CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name])],
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол'],['outdoor-dining','Уличный стол и 2 стула'],['picnic-table','Пикниковый стол со скамьями']],
@@ -979,8 +979,8 @@ function selectNextPine(){
 function syncMobilePlacementHint(){
  const hint=$('#mobilePlacementHint'),label=$('#mobilePlacementLabel');
  if(!hint||!label)return;
- const water=state.tool==='water';
- const finish=$('#mobilePondFinish');
+ const water=state.tool==='water'&&catalog(state.placing)?.group!=='pools';
+ const finish=$('#mobilePondFinish');const draft=$('#draftActions');if(draft&&state.tool==='water')draft.hidden=!water;
  finish.hidden=!water;finish.disabled=pointMode.length<3;
  const active=window.innerWidth<=850&&state.tool!=='select'&&!!state.placing&&
   ['light','plant','landscape','models40','creatures','build','furniture','water'].includes(state.tool);
@@ -1252,7 +1252,41 @@ function mark(group,key){
 }
 // Indexed surface: shared vertices, local updates, stable normals, no scene rebuild during a stroke.
 let terrainDirty=null,terrainUpdateFrame=0,lastTerrainShadow=0;
-function makeEditableGroundGeometry(side){
+// Subtract convex pool openings from triangles in XZ. Preserve original grid,
+ // exact boundary vertices and UVs; the saved terrain heightmap is never changed.
+ function subtractPoolPoly(poly,cut){
+  let inside=poly,outer=[];
+  for(let i=0;i<cut.length&&inside.length>=3;i++){
+   const a=cut[i],b=cut[(i+1)%cut.length],side=p=>(b.x-a.x)*(p[2]-a.z)-(b.z-a.z)*(p[0]-a.x);
+   const left=[],right=[];
+   for(let j=0;j<inside.length;j++){
+    const p=inside[j],q=inside[(j+1)%inside.length],dp=side(p),dq=side(q);
+    if(dp>=-1e-8)left.push(p);if(dp< -1e-8)right.push(p);
+    if((dp>=-1e-8)!==(dq>=-1e-8)){const t=dp/(dp-dq),v=p.map((x,k)=>x+(q[k]-x)*t);left.push(v);right.push(v);}
+   }
+   if(right.length>=3)outer.push(right);inside=left;
+  }
+  return outer;
+ }
+ function cutPoolOpenings(geo){
+  const cuts=doc.objects.filter(o=>o.catalogId==='pool-fixed').map(o=>{const points=poolFootprint(o).map(p=>pos(p.x,p.y));return {points,x0:Math.min(...points.map(p=>p.x)),x1:Math.max(...points.map(p=>p.x)),z0:Math.min(...points.map(p=>p.z)),z1:Math.max(...points.map(p=>p.z))};});
+  if(!cuts.length)return geo;
+  const p=geo.attributes.position,n=geo.attributes.normal,u=geo.attributes.uv;if(!p||!n||!u)return geo;
+  const pp=Array.from(p.array),nn=Array.from(n.array),uu=Array.from(u.array),out=[],index=geo.index?.array,count=index?.length||p.count;
+  const vertex=i=>[p.getX(i),p.getY(i),p.getZ(i),n.getX(i),n.getY(i),n.getZ(i),u.getX(i),u.getY(i)];
+  const append=v=>{const i=pp.length/3;pp.push(...v.slice(0,3));nn.push(...v.slice(3,6));uu.push(...v.slice(6,8));return i;};
+  for(let i=0;i<count;i+=3){
+   const ids=[index?index[i]:i,index?index[i+1]:i+1,index?index[i+2]:i+2],tri=ids.map(vertex),xs=tri.map(v=>v[0]),zs=tri.map(v=>v[2]),near=cuts.filter(k=>Math.max(...xs)>k.x0&&Math.min(...xs)<k.x1&&Math.max(...zs)>k.z0&&Math.min(...zs)<k.z1);
+   if(!near.length){out.push(...ids);continue}
+   let parts=[tri];for(const k of near)parts=parts.flatMap(poly=>subtractPoolPoly(poly,k.points));
+   for(const poly of parts){const ids=poly.map(append);for(let j=1;j+1<ids.length;j++){const a=poly[0],b=poly[j],d=poly[j+1];if(Math.abs((b[0]-a[0])*(d[2]-a[2])-(b[2]-a[2])*(d[0]-a[0]))>1e-9)out.push(ids[0],ids[j],ids[j+1]);}}
+  }
+  if(geo.userData.terrain)geo.userData.poolCutStart=p.count;
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(pp,3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(nn,3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('uv',new THREE.Float32BufferAttribute(uu,2));geo.setIndex(out);return geo;
+ }
+ function makeEditableGroundGeometry(side){
  const mobile=window.innerWidth<=850;
  const steps=mobile?144:256, stride=steps+1, count=stride*stride;
  const positions=new Float32Array(count*3),normals=new Float32Array(count*3),uv=new Float32Array(count*2);
@@ -1292,6 +1326,7 @@ function updateGroundRegion(geo,dirty){
   const start=(z0*stride+x0)*3,count=((z1-z0)*stride+x1-x0+1)*3;
   pos.addUpdateRange(start,count);norm.addUpdateRange(start,count);
  }else{pos.clearUpdateRanges();norm.clearUpdateRanges();}
+ if(geo.userData.poolCutStart!=null){for(let k=geo.userData.poolCutStart;k<pos.count;k++){const x=pos.getX(k),z=pos.getZ(k);if(dirty&&(x<dirty.x0-pad||x>dirty.x1+pad||z<dirty.z0-pad||z>dirty.z1+pad))continue;const sx=(terrainAt(x+e,z)-terrainAt(x-e,z))/(2*e),sz=(terrainAt(x,z+e)-terrainAt(x,z-e))/(2*e),inv=1/Math.hypot(sx,1,sz);pos.setY(k,terrainAt(x,z));norm.setXYZ(k,-sx*inv,inv,-sz*inv);}pos.clearUpdateRanges();norm.clearUpdateRanges();}
  pos.needsUpdate=true;norm.needsUpdate=true;
 }
 function flushTerrainPreview(){
@@ -1314,7 +1349,7 @@ function finishTerrainPreview(){
 }
 function commitTerrainStroke(){
  finishTerrainPreview();save();
- const hasAreas=doc.objects.some(o=>Array.isArray(o.points)&&o.points.length>=2)||extra.some(o=>Array.isArray(o.points)&&o.points.length>=2)||!!underlayTexture?.image||['rain','snow','after-rain'].includes(doc.atmosphere.weather);
+ const hasAreas=doc.objects.some(o=>o.type==='pools'||Array.isArray(o.points)&&o.points.length>=2)||extra.some(o=>Array.isArray(o.points)&&o.points.length>=2)||!!underlayTexture?.image||['rain','snow','after-rain'].includes(doc.atmosphere.weather);
  if(hasAreas){rebuild();return;}
  // Point objects need only vertical repositioning, never GLB reconstruction.
  for(const node of pickables){const item=selectable(node.userData.key)?.obj;if(item&&Number.isFinite(Number(item.x))&&Number.isFinite(Number(item.y))){const p=pos(item.x,item.y);node.position.y=terrainAt(p.x,p.z);}}
@@ -1336,7 +1371,7 @@ function rebuild(){
  // The ground is an unbroken square around the measured parcel. An irregular
  // user boundary remains a separate outline and never cuts holes in the scene.
  const groundSide=squareTerrainSide(doc.site);
- const geo=makeEditableGroundGeometry(groundSide);
+ const geo=makeEditableGroundGeometry(groundSide);cutPoolOpenings(geo);
  const grass=groundPhotoTexture();grass.repeat.set(groundSide/2.8,groundSide/2.8);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
  groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.FrontSide;groundMat.shadowSide=THREE.FrontSide;
@@ -1347,7 +1382,7 @@ function rebuild(){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
   for(let i=0;i<verts.length;i+=3){uv.push(verts[i]/w+.5,1-(verts[i+2]/h+.5));verts[i+1]+=.032}
   drawingGeo.setAttribute('position',new THREE.BufferAttribute(verts,3));
-  drawingGeo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));drawingGeo.computeVertexNormals();
+  drawingGeo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));drawingGeo.computeVertexNormals();cutPoolOpenings(drawingGeo);
   const drawing=new THREE.Mesh(drawingGeo,new THREE.MeshBasicMaterial({map:underlayTexture,transparent:true,opacity:Number($('#underlayOpacity')?.value||.5),side:THREE.DoubleSide,depthWrite:false}));
   drawing.renderOrder=1;root.add(drawing);
  }
@@ -1557,11 +1592,39 @@ function loadGeologicalScan(id){
   if(renderer&&root&&doc)rebuild();
  }).finally(()=>geologicalRockLoading.delete(id));
 }
+function drawPool(o,key){
+ const d=poolDimensions(o),g=new THREE.Group(),p=pos(o.x,o.y),fixed=o.catalogId==='pool-fixed',frame=o.catalogId==='pool-frame',N=window.innerWidth<=850?48:72;
+ const liner=material('#79b7c8',.35),edge=material(fixed?'#d4cfc1':frame?'#c8cdd0':'#77b9e1',.38,frame?.45:0),shell=material(frame?'#7c929e':'#5498c6',.48),steel=material('#a7b0b6',.32,.65);
+ const add=(geo,mat,x,y,z)=>{const m=mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m;};
+ const box=(w,h,l,mat,x,y,z)=>add(new THREE.BoxGeometry(w,h,l),mat,x,y,z);
+ const torus=(radius,tube,y,mat)=>{const m=add(new THREE.TorusGeometry(radius,tube,10,N),mat,0,y,0);m.rotation.x=Math.PI/2;return m;};
+ const water=(geo,y)=>{const m=add(geo,new THREE.MeshPhysicalMaterial({color:'#438da4',roughness:.15,metalness:.03,transparent:true,opacity:.75,depthWrite:false,clearcoat:.8,clearcoatRoughness:.1,side:THREE.DoubleSide,bumpMap:waterRippleTexture,bumpScale:sceneAtmosphere.ripples*.00023,envMapIntensity:1}),0,y,0);m.rotation.x=-Math.PI/2;m.castShadow=false;m.receiveShadow=false;m.userData.formaWater=true;waterSurfaces.push(m);return m;};
+ let base=terrainAt(p.x,p.z);
+ if(fixed){
+  const L=d.diameter,W=d.width,H=d.height,t=.16;
+  const perimeter=poolFootprint(o,.18).map(q=>pos(q.x,q.y));base=Math.max(base,...perimeter.map(q=>terrainAt(q.x,q.z)))+.055;
+  box(L+.32,.12,W+.32,liner,0,-H-.06,0);
+  for(const s of [-1,1]){box(t,H,W+2*t,liner,s*(L/2+t/2),-H/2,0);box(L,H,t,liner,0,-H/2,s*(W/2+t/2));box(.30,.13,W+.60,edge,s*(L/2+.15),.025,0);box(L,.13,.30,edge,0,.025,s*(W/2+.15));}
+  const steps=Math.min(4,Math.floor(H/.2)),run=Math.min(.31,L/(steps+2)),sw=Math.min(W*.7,2.2);
+  for(let i=0;i<steps;i++){const sh=H-(i+1)*H/(steps+1);box(run,sh,sw,liner,-L/2+run*(i+.5),-H+sh/2,0);}
+  water(new THREE.PlaneGeometry(L-.025,W-.025),-.12);
+ }else{
+  const R=d.diameter/2,H=d.height,T=Math.min(.12,R*.09,H*.13),inner=R-T;
+  const wall=(rt,rb,h,y,mat)=>{const m=add(new THREE.CylinderGeometry(rt,rb,h,N,1,true),mat,0,y,0);m.material.side=THREE.DoubleSide;return m;};
+  add(new THREE.CylinderGeometry(inner,inner,.06,N),liner,0,.03,0);
+  if(frame){wall(R-T*.4,R-T*.4,H-.045,H/2,shell);wall(inner,inner,H-.06,H/2,liner);torus(R-T*.45,T*.36,H,steel);
+   const count=Math.max(8,Math.min(20,Math.round(d.diameter*3)));for(let i=0;i<count;i++){const a=i*Math.PI*2/count,x=Math.cos(a),z=Math.sin(a);addCylinderBetween(g,[x*(R+.05),.04,z*(R+.05)],[x*R,H,z*R],.032,'#b8c0c5');box(.16,.035,.16,steel,x*(R+.05),.02,z*(R+.05));}
+  }else{wall(R-T,R-T*.55,H-.06,H/2,shell);wall(inner,inner,H-.06,H/2,liner);const count=H>.7?3:2;for(let i=0;i<count;i++)torus(R-T,Math.min(T,H/(count*2.8)),(i+.5)*H/count,edge);torus(R-T,Math.min(T,H*.16),H-T*.45,edge);}
+  water(new THREE.CircleGeometry(inner-.015,N),Math.max(.10,H-Math.min(.12,H*.22)));
+ }
+ g.position.set(p.x,base,p.z);g.rotation.y=-(o.rotation||0)*Math.PI/180;mark(g,key);root.add(g);
+}
 function drawObject(o,entry,key){
  const p=pos(o.x,o.y),group=entry.group;
  // Licensed nursery-sapling GLBs are not used automatically for mature trees.
  // The native species library is authoritative even for short young specimens.
  let g;
+ if(group==='pools'){drawPool(o,key);return;}
  if(group==='trees'||group==='shrubs'){
   // Species-specific instanced botanical 3D meshes; real trunk, 3D foliage,
   // accurate crown diameter and height, all 18 species from shared catalog.
@@ -1642,7 +1705,7 @@ function polygon(points,y,color,water=false,materialId='universal'){
  const verts=geo.attributes.position;
  const waterLevel=water?Math.min(...points.map(p=>{const v=pos(p.x,p.y);return terrainAt(v.x,v.z)}))+.09:0;
  for(let i=0;i<verts.count;i++){const x=verts.getX(i),z=verts.getZ(i);verts.setY(i,water?waterLevel:terrainAt(x,z)+y)}
- geo.computeVertexNormals();
+ geo.computeVertexNormals();cutPoolOpenings(geo);
  const m=water?new THREE.MeshPhysicalMaterial({
   color:'#467F8C',roughness:.17,metalness:.08,transparent:true,opacity:.95,
   clearcoat:.62,clearcoatRoughness:.13,side:THREE.DoubleSide,
@@ -1665,7 +1728,7 @@ function drawPavingRibbon(o,entry,rows){
    if(i<rows.length-1&&j<cols){const a=i*stride+j,b=a+stride;indices.push(a,b,a+1,a+1,b,b+1);}
   }
  }
- const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();cutPoolOpenings(geo);
  const mat=surfaceMaterial(THREE,o.catalogId,entry.color||'#a8a99f');
  if(mat.map){mat.map=mat.map.clone();mat.map.repeat.set(1,1);mat.map.needsUpdate=true;}
  const surface=mesh(geo,mat);surface.castShadow=false;surface.receiveShadow=true;return surface;
@@ -1848,10 +1911,10 @@ function chooseTool(t){
  $('#library').innerHTML=t==='select'?'<p>Коснитесь дерева в сцене или выберите его из списка.</p><div class="pine-object-list"><strong>ДЕРЕВЬЯ НА УЧАСТКЕ</strong>'+
  doc.objects.filter(o=>['pine','spruce','birch'].includes(o.catalogId)).map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
  (!doc.objects.some(o=>['pine','spruce','birch'].includes(o.catalogId))?'<small>Посаженных деревьев пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · '+CATALOG.filter(x=>x.group==='trees'||x.group==='shrubs').length+'</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 19</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
-  const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&(['landscape','furniture','models40'].includes(t)||(t==='plant'&&['fern','fern-02','fern-03','fern-04'].includes(c[0]))),photo=['plant','light','surface'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
+  const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&(['landscape','furniture','models40'].includes(t)||(t==='plant'&&['fern','fern-02','fern-03','fern-04'].includes(c[0]))),photo=['plant','light','surface','water'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
   const uri=modelPreview?'./assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?(POLY_HAVEN_TREE_MODELS[c[0]]?.thumbnail||(['pennisetum','hosta','ornamental-grass','fern','fern-02','fern-03','fern-04'].includes(c[0])?fallbackIconURL(asset):'./assets/landscape-photo/'+c[0]+'.png')):
-    t==='light'?iconURL(asset):t==='landscape'?'./assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?surfacePreviewURL(c[0]):'';
-  const diameter=t==='light'&&asset?'Высота '+Number(asset.height).toFixed(2)+' м · корпус '+Number(asset.diameter).toFixed(2)+' м':t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
+    t==='light'?iconURL(asset):t==='landscape'?'./assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?surfacePreviewURL(c[0]):t==='water'?fallbackIconURL(asset):'';
+  const diameter=t==='light'&&asset?'Высота '+Number(asset.height).toFixed(2)+' м · корпус '+Number(asset.diameter).toFixed(2)+' м':t==='models40'&&real?'3D · CC0 · ≈ '+real.width.toFixed(2)+' м':t==='water'&&asset?.group==='pools'?'Параметрическая 3D-модель':asset?.diameter?('Крона '+Number(asset.diameter).toFixed(1)+' м'+((TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]])?' · высота '+Number(TREE_HEIGHT_M[c[0]]||SHRUB_HEIGHT_M[c[0]]).toFixed(1)+' м':'')):'';
   const header=t==='light'&&ci===0?'<div class="asset-group-heading">САДОВОЕ ОСВЕЩЕНИЕ · 11 РАЗНЫХ 3D-МОДЕЛЕЙ</div>':t==='plant'&&(ci===0||catalog(c[0])?.group!==catalog(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+(ci===0?'ДЕРЕВЬЯ · '+CATALOG.filter(x=>x.group==='trees').length+' ВИДОВ':'КУСТАРНИКИ · '+CATALOG.filter(x=>x.group==='shrubs').length+' ВИДОВ')+'</div>':t==='surface'&&(ci===0||ci===6||ci===15)?'<div class="asset-group-heading">'+(ci===0?'БРУСЧАТКА · 6 ВИДОВ':ci===6?'ОТСЫПКИ · 9 ВИДОВ':'ГАЗОНЫ · 4 ВИДА')+'</div>':t==='landscape'&&ci===4?'<div class="asset-group-heading">ПРИРОДНЫЕ РАСТЕНИЯ · 3 ВИДА</div>':t==='models40'&&(ci===0||real?.group!==realModelById(arr[ci-1]?.[0])?.group)?'<div class="asset-group-heading">'+REAL_3D_CATEGORIES[real.group]+' · '+REAL_3D_OBJECTS.filter(x=>x.group===real.group).length+' МОДЕЛЕЙ</div>':'';
   return header+(t==='models40'?'<div class="model-row">':'')+'<button class="choice'+(photo?' has-preview':'')+(t==='light'?' light-choice':'')+'"'+(t==='surface'?' data-surface="true"':'')+' data-item="'+c[0]+'">'+
    (photo?'<img src="'+uri+'" alt="'+(t==='light'?'Точная модель: '+c[1]:'')+'" loading="lazy" decoding="async">':'')+
@@ -2341,6 +2404,7 @@ function renderProps(){
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj, fields=['pine','spruce'].includes(o.catalogId)?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
+ else if(o.type==='pools'){const fixed=o.catalogId==='pool-fixed';fields.push(['diameter',fixed?'Длина, м':'Диаметр, м',o.diameter],['height',fixed?'Глубина, м':'Высота, м',o.height]);if(fixed)fields.push(['width','Ширина, м',o.width]);}
  else if('diameter'in o&&!['pine','spruce'].includes(o.catalogId))fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
  else if(ref.type==='extra'&&isCreatureId(o.type))fields.push(['height','Рост / высота, м',o.height||creatureById(o.type).height]);
  else if(ref.type==='extra'&&realModelById(o.type))fields.push(['width','Ширина модели, м',o.width||realModelById(o.type).width]);
@@ -2406,6 +2470,7 @@ function renderProps(){
   const fields=Object.fromEntries([...el.querySelectorAll('[data-prop]')].map(n=>[n.dataset.prop,n.value]));
   const updated=validatedLandscapeProps(o,fields,{plot:doc.site,kind:ref.type,model:Boolean(real),contains:p=>inParcel(p,doc.site)});
   if(!updated)return status('Проверьте значения: размеры должны быть положительными, координаты внутри участка.');
+  if(o.type==='pools'){Object.assign(updated,poolDimensions(updated));if(!poolFootprint(updated,.2).every(p=>inParcel(p,doc.site)))return status('Вся чаша должна помещаться внутри участка.');}
   if(Object.keys(fields).every(key=>o[key]===updated[key]))return status('Значения уже сохранены.');
   if(isPine&&(Number(fields.height)<2||Number(fields.height)>40||Number(fields.diameter)<.5||Number(fields.diameter)>30))return status('Для сосны: высота 2–40 м, крона 0,5–30 м.');
   push();Object.assign(o,updated);save();rebuild();renderProps();
@@ -3286,6 +3351,11 @@ function place(world){
   pointMode.push(point);refreshDraft();status('Граница: '+pointMode.length+' точек. Enter или кнопка завершения.');return;
  }
  if(!inParcel(point,doc.site)){status('Точка вне границ участка. Размещение запрещено.');return}
+ if(tool==='water'&&type==='pools'){
+  const o={id:id(),catalogId:entry.id,type:'pools',x:point.x,y:point.y,rotation:0,...poolDimensions({catalogId:entry.id})};
+  if(!poolFootprint(o,.2).every(p=>inParcel(p,doc.site)))return status('Вся чаша должна помещаться внутри участка.');
+  push();doc.objects.push(o);chooseTool('select');state.selected='object:'+o.id;save();rebuild();renderProps();revealSelectedInspector();status('Бассейн установлен. Настройте его размеры.');return;
+ }
  if(tool==='surface'||tool==='water'||tool==='fence'){
   const last=pointMode.at(-1);if(last&&Math.hypot(point.x-last.x,point.y-last.y)<.05)return;
   pointMode.push(point);refreshDraft();status('Точек контура: '+pointMode.length+'. Нажмите «Завершить контур» после последней.');return;
