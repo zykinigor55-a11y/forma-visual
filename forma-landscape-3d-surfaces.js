@@ -26,7 +26,19 @@ export function surfaceTexture(T,id){
  if(GROUND_PBR_SOURCES[id])return terrainPBR(T,id).diffuse;
  if(!SURFACE_PHOTO_IDS.includes(id))return null;
  if(textureCache.has(id))return textureCache.get(id);
- const t=new T.TextureLoader().load('./assets/landscape-photo/'+id+'.jpg');
+ // Always give the GPU a valid local texel, even during download or on 404.
+ const pixel=document.createElement('canvas');pixel.width=pixel.height=64;
+ const ctx=pixel.getContext('2d'),lawns=['formal','universal','shade','meadow'].includes(id);
+ const base=lawns?'#68764d':id==='pine-bark'?'#79624a':id==='slate-chips'||id==='slate-pavers'?'#777d7c':'#aaa79c';
+ ctx.fillStyle=base;ctx.fillRect(0,0,64,64);
+ let seed=1337;for(const c of id)seed=Math.imul(seed^c.charCodeAt(0),16777619);
+ for(let i=0;i<1300;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const x=seed%64,y=(seed>>>8)%64;ctx.fillStyle=(seed&1)?'rgba(255,255,255,.12)':'rgba(0,0,0,.13)';ctx.fillRect(x,y,1+(seed%3),1);}
+ const t=new T.CanvasTexture(pixel);
+ new T.ImageLoader().load(new URL('./assets/landscape-photo/'+id+'.jpg',import.meta.url).href,image=>{
+  // Update the shared Source rather than swapping out clones independently.
+  t.image=image;t.needsUpdate=true;
+  if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('forma-surface-texture-ready',{detail:{id,channel:'diff'}}));
+ },undefined,()=>console.warn('FORMA local surface unavailable:',id));
  t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;
  t.repeat.set(id==='concrete-pavers'?.58:id==='granite-setts'?1.1:
   id==='pine-bark'||id==='river-pebble'?1.5:
@@ -88,7 +100,10 @@ export function surfaceMaterial(T,id,color='#888888'){
  }
  const tex=surfaceTexture(T,id);
  if(!tex)return new T.MeshStandardMaterial({color,roughness:.96,metalness:0,side:T.DoubleSide});
- return new T.MeshStandardMaterial({map:tex,color:'#ffffff',roughness:.92,metalness:0,side:T.DoubleSide});
+ const lawn=['formal','universal','shade','meadow'].includes(id);
+ const depth=({'granite-setts':.018,'concrete-pavers':.012,'clinker-herringbone':.014,'slate-pavers':.018,'radial-setts':.013,'grass-grid':.025,'marble-chips':.033,'granite-chips':.035,'river-pebble':.026,'slate-chips':.035,'pine-bark':.04})[id]||.017;
+ return new T.MeshStandardMaterial({map:tex,bumpMap:tex,bumpScale:depth,color:'#ffffff',
+  roughness:lawn?.97:.92,envMapIntensity:lawn?.16:.3,metalness:0,side:T.DoubleSide});
 }
 
 /** A path is a measured ribbon, not a flat 1x1 UV swatch. Distinct selected
