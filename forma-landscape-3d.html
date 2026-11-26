@@ -572,7 +572,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R174</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R175</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -1421,13 +1421,14 @@ function openRenderMenuR75(reason=''){
  overlay.style.cssText='position:fixed;inset:0;z-index:100001;background:#101216b8;display:grid;place-items:center;padding:16px';
  const card=document.createElement('section');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','AI-рендер');
  card.style.cssText='box-sizing:border-box;width:min(400px,100%);max-height:90dvh;overflow:auto;background:#24282a;color:#edf0ef;border:1px solid #505b56;border-radius:14px;padding:20px;display:grid;gap:12px;box-shadow:0 20px 80px #0006';
- card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:20px">Рендер</strong><button data-close aria-label="Закрыть">✕</button></div><small style="color:#b6c0bc">Текущий ракурс · FORMA AI</small><button data-ai class="primary" style="min-height:48px">Фотореалистичный рендер</button><small>Фотография по текущему кадру, материалам и настройкам сцены.</small><small>Автоматический контроль глубины и контуров в перспективе.</small><small data-info style="color:#b6c0bc"></small>';
+ card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:20px">Рендер</strong><button data-close aria-label="Закрыть">✕</button></div><small style="color:#b6c0bc">Текущий ракурс · FORMA AI</small><label>Режим<select data-mode style="width:100%;margin-top:5px;padding:10px"><option value="precision" selected>FORMA Precision · точный</option><option value="photo">Фотореалистичный · стандарт</option></select></label><small data-mode-info></small><label>Пропорции кадра<select data-aspect style="width:100%;margin-top:5px;padding:10px"><option value="auto">Как в текущем ракурсе</option><option value="16:9">16:9 · широкий</option><option value="3:2">3:2 · фотография</option><option value="4:3">4:3 · классический</option><option value="1:1">1:1 · квадрат</option><option value="4:5">4:5 · портрет</option><option value="3:4">3:4 · портрет</option><option value="2:3">2:3 · портрет</option><option value="9:16">9:16 · вертикальный</option><option value="21:9">21:9 · панорама</option></select></label><small data-crop-info>При смене пропорций кадр обрезается по центру без растяжения.</small><label>Разрешение результата<select data-resolution style="width:100%;margin-top:5px;padding:10px"><option value="1K">1K · быстрый</option><option value="2K" selected>2K · стандарт</option><option value="4K">4K · максимальное</option></select></label><label>Файл<select data-file style="width:100%;margin-top:5px;padding:10px"><option value="png">PNG</option><option value="jpeg">JPEG · 95%</option></select></label><button data-ai class="primary" style="min-height:48px">Создать рендер</button><small data-info style="color:#b6c0bc"></small>';
  const unavailable=!renderer||gpuLostR75||!!renderer.getContext().isContextLost();
+ const mode=card.querySelector('[data-mode]');if(!camera?.isPerspectiveCamera){mode.value='photo';mode.options[0].disabled=true;}const syncMode=()=>{card.querySelector('[data-mode-info]').textContent=mode.value==='precision'?'Исходный кадр + карта глубины + технические контуры.':'Один исходный кадр без дополнительных технических карт.';};mode.onchange=syncMode;syncMode();
  card.querySelector('[data-ai]').disabled=unavailable||aiRenderActive;
  if(new URLSearchParams(location.search).get('precisionDebug')==='1'){const b=document.createElement('button');b.textContent='Проверить карты · без API';b.disabled=unavailable||aiRenderActive;b.onclick=()=>{closeRenderMenuR75();try{const data=captureHighQuality3dReference(true);const d=document.createElement('dialog');d.style.cssText='width:min(95vw,900px);max-height:85vh;overflow:auto;background:#24282a;color:#fff;border:1px solid #555';const close=document.createElement('button');close.textContent='Закрыть';close.onclick=()=>d.close();d.append(close);for(const [name,url] of [['Кадр',data.image],['Глубина',data.depth],['Контуры',data.edges]]){const a=document.createElement('a');a.href=url;a.download=name+'.png';a.textContent='↓ '+name;const img=document.createElement('img');img.src=url;img.alt=name;img.style.cssText='width:100%;display:block;margin:8px 0 16px';d.append(a,img);}d.addEventListener('close',()=>d.remove());document.body.append(d);d.showModal();}catch(e){status(e.message);}};card.append(b);}
  card.querySelector('[data-info]').textContent=unavailable?'3D-сцена недоступна. Восстановите редактор перед рендером.':'Платный запрос отправляется только после подтверждения.';
  card.querySelector('[data-close]').onclick=closeRenderMenuR75;
- card.querySelector('[data-ai]').onclick=()=>{$('#aiRenderModel').value='nano-banana-2.1';closeRenderMenuR75();renderAi();};
+ card.querySelector('[data-ai]').onclick=()=>{const settings={resolution:card.querySelector('[data-resolution]').value,aspect:card.querySelector('[data-aspect]').value,file:card.querySelector('[data-file]').value};const precise=mode.value==='precision';$('#aiRenderModel').value='nano-banana-2.1';closeRenderMenuR75();renderAi(null,precise,settings);};
  overlay.onclick=e=>{if(e.target===overlay)closeRenderMenuR75();};overlay.append(card);document.body.append(overlay);
 }
 function renderSafeGPU75(reason=''){
@@ -4639,11 +4640,16 @@ function captureHighQuality3dReference(precision=false){
  }
 }
 
-async function renderAi(series=null,precision=null){
+async function renderOutputImageR175(url,aspect='auto',file='png',guide=false){
+ const img=new Image();img.src=url;await img.decode();const w=img.naturalWidth,h=img.naturalHeight;
+ let cw=w,ch=h;if(aspect!=='auto'){const [a,b]=aspect.split(':').map(Number),r=a/b;if(w/h>r)cw=Math.max(1,Math.round(h*r));else ch=Math.max(1,Math.round(w/r));}
+ const c=document.createElement('canvas');c.width=cw;c.height=ch;const ctx=c.getContext('2d');if(!ctx)throw Error('Не удалось подготовить формат кадра');ctx.imageSmoothingEnabled=!guide;ctx.drawImage(img,Math.floor((w-cw)/2),Math.floor((h-ch)/2),cw,ch,0,0,cw,ch);return {url:c.toDataURL(file==='jpeg'?'image/jpeg':'image/png',.95),width:cw,height:ch,originalWidth:w,originalHeight:h};
+}
+async function renderAi(series=null,precision=null,settings=null){
  const btn=$('#renderAi');
  const model=precision===true?'nano-banana-2.1':series?.model||$('#aiRenderModel').value;
  precision=precision??(model==='nano-banana-2.1'&&!!camera?.isPerspectiveCamera);
- if(aiRenderActive||btn.disabled||(!series&&!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Фотографический':'Сбалансированный')+'? Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.')))return;
+ if(aiRenderActive||btn.disabled||(!series&&!confirm('Создать фотореалистичный рендер именно этого 3D-ракурса через '+(model==='nano-banana-2.1'?'Фотографический':'Сбалансированный')+'? '+(settings?'Разрешение '+settings.resolution+' · формат '+settings.aspect+' · '+(precision?'точный':'стандартный')+'. ':'')+'Один запуск расходует платный запрос API Market. Геометрия и исходная 3D-модель не изменятся.')))return;
  aiRenderActive=true;btn.disabled=true;
  $('#aiResult').hidden=true;$('#aiProgress').hidden=false;
  resetAiProgress();
@@ -4652,7 +4658,8 @@ async function renderAi(series=null,precision=null){
  try{
   setAiProgress('capturing',series?'Снимаем кадр '+series.label:'Снимаем 3D-кадр в повышенном качестве с солнечными тенями…');
   if(precision&&!camera.isPerspectiveCamera)throw Error('Для точного рендера выберите 3D или Прогулку.');
-  const captured=captureHighQuality3dReference(precision),image=precision?captured.image:captured;
+  const captured=captureHighQuality3dReference(precision);let image=precision?captured.image:captured;
+  if(settings?.aspect&&settings.aspect!=='auto'){image=(await renderOutputImageR175(image,settings.aspect)).url;if(precision){const d=await renderOutputImageR175(captured.depth,settings.aspect,'png',true),e=await renderOutputImageR175(captured.edges,settings.aspect,'png',true);captured.depth=d.url;captured.edges=e.url;captured.guideSize=[d.width,d.height];}}
   const inputQuality=await inspectRenderDataURL(image,{season:doc.atmosphere.season});
   if(inputQuality.whiteFraction>.91||inputQuality.transparentFraction>.60)
    throw Error('Исходный 3D-кадр захвачен не полностью: '+inputQuality.reason+
@@ -4728,23 +4735,25 @@ async function renderAi(series=null,precision=null){
     group:creatureById(o.type)?.group||realModelById(o.type)?.group||'structures',
     speciesLatin:creatureById(o.type)?.species||CATALOG.find(a=>a.id===o.type)?.latin||null}))};
   if(precision){sceneInfo.cameraQuaternion=camera.quaternion.toArray();sceneInfo.cameraAspect=camera.aspect;sceneInfo.cameraNear=camera.near;sceneInfo.cameraFar=camera.far;sceneInfo.precisionGuideSize=captured.guideSize;sceneInfo.precisionDepthRangeM=captured.depthRangeM;}
-  const payload=JSON.stringify({image,landscapeMasterplan:sceneInfo,landscapeModel:model,quality:'high',quantity:1,...(precision?{precision:true,precisionGuideVersion:2,material:captured.depth,reference:captured.edges}:{})});
+  if(settings)sceneInfo.outputCropAspect=settings.aspect;
+  const payload=JSON.stringify({image,landscapeMasterplan:sceneInfo,landscapeModel:model,quality:'high',quantity:1,...(settings?{outputResolution:settings.resolution,outputAspect:settings.aspect}:{}),...(precision?{precision:true,precisionGuideVersion:2,material:captured.depth,reference:captured.edges}:{})});
   const transport=window.FORMA_RENDER_QUEUE?.fetch||fetch;
   const response=await transport('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:payload});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.images?.[0])throw Error(data.error||'Сервер не вернул изображение. Повторный платный запрос не запускался.');
-  const url='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
+  let url='data:'+(data.mimes?.[0]||'image/png')+';base64,'+data.images[0];
+  const resultFile=settings?await renderOutputImageR175(url,'auto',settings.file):null;if(resultFile)url=resultFile.url;
   const outputQuality=await inspectRenderDataURL(url,{season:doc.atmosphere.season});
   const incomplete=outputQuality.whiteFraction>.91||outputQuality.transparentFraction>.60;
   const actualModel=String(data.model||model);
   const modelName=actualModel.startsWith('nano-banana')?'Фотографический':actualModel.startsWith('gpt-image-2.6')?'Сбалансированный':'AI-рендер';
   const resultMeta=$('#aiResultMeta');
-  if(resultMeta)resultMeta.textContent=modelName+' · FORMA AI · '+
+  if(resultMeta)resultMeta.textContent=(precision?'FORMA Precision':modelName)+' · '+(resultFile?resultFile.width+' × '+resultFile.height+' px · запрошено '+settings.resolution+' · ':'')+
    (incomplete?'ВНИМАНИЕ: AI вернул неполный/пустой низ кадра. Автоматический платный повтор отключён.':
     'Результат AI; размеры и координаты — только из 3D-модели.');
   setAiProgress('completed',incomplete?'Получен кадр с возможным дефектом композиции. Повторный платный запрос не запускался.':'Фотографический рендер получен от '+modelName+'.');
   showAiPercent(100,{estimated:false});
-  $('#aiResultImage').src=url;$('#downloadAiResult').href=url;
+  $('#aiResultImage').src=url;$('#downloadAiResult').href=url;$('#downloadAiResult').download='FORMA-landscape-3d-ai.'+(url.startsWith('data:image/jpeg')?'jpg':url.startsWith('data:image/webp')?'webp':'png');
   $('#aiProgress').hidden=true;
   if(series)return {url,incomplete};
   $('#aiResult').hidden=false;
