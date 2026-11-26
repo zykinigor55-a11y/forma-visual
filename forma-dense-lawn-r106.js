@@ -326,7 +326,7 @@ function createDryField(T,{profile,focus,mobile,low,terrainAt,contains,bounds}){
    m.name='forma-dry-ears-lod'+b.d;m.receiveShadow=true;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.raycast=()=>{};root.add(m);total+=rows.length;
   }
  }
- root.userData={bladeCount:total,wind,dispose(){for(const o of root.children)o.geometry.dispose();mat.dispose();}};return root;
+ root.userData={bladeCount:total,wind,dispose(){for(const o of root.children){o.dispose?.();o.geometry.dispose();}mat.dispose();}};return root;
 }
 
 
@@ -445,7 +445,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
  for(const m of (root.userData.herbMaterials||[]))botanicalWind(m,u,2.0);
  if(profile.herbs==='clover'||profile.flowers)addFlowerField(T,root,{focus,mobile,low,terrainAt,contains,wind:u,flowerAmount:profile.flowerAmount??65,kind:profile.flowers||'clover'});
  const herbMaterials=root.userData.herbMaterials||[],herbTextures=root.userData.herbTextures||[];
- root.userData={bladeCount:total,triangles,wind:u,dispose(){for(const o of root.children)o.geometry.dispose();mat.dispose();for(const m of herbMaterials)m.dispose();for(const t of herbTextures)t.dispose();for(const t of Object.values(maps))t.dispose();}};
+ root.userData={bladeCount:total,triangles,wind:u,dispose(){for(const o of root.children){o.dispose?.();o.geometry.dispose();}mat.dispose();for(const m of herbMaterials)m.dispose();for(const t of herbTextures)t.dispose();for(const t of Object.values(maps))t.dispose();}};
  return root;
 }
 export function tickDenseLawn(root,now,strength){const u=root?.userData?.wind;if(!u)return false;u.t.value=now*.001;u.wind.value=clamp(strength,0,1);return true;}
