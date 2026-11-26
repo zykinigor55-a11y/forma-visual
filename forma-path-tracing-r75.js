@@ -111,10 +111,10 @@ function renderLawn(T,cfg,budget){
   v(x-dx,y+.002,z-dz,.78);v(x+dx,y+.002,z+dz,.83);v(x+lx*.32-dx*.55,y+h*.55,z+lz*.32-dz*.55,.98);v(x+lx*.32+dx*.55,y+h*.55,z+lz*.32+dz*.55,1);v(x+lx,y+h,z+lz,1.08);
   bi.push(k,k+1,k+2,k+1,k+3,k+2,k+2,k+3,k+4);count++;
  };
- const desired=Math.max(1,Math.floor(budget*.78/4*Math.min(1,density/1.25)));
+ const desired=Math.max(1,Math.floor(budget*.78/4*Math.min(1,density/1.85)));
  const nx=Math.max(1,Math.floor(Math.sqrt(desired*width/depth))),nz=Math.max(1,Math.floor(desired/nx));
  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++)addTuft(b.x0+(i+rand())*width/nx,b.z0+(j+rand())*depth/nz);
- const radius=Math.min(7,Math.sqrt(area)*.36),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.15)));
+ const radius=Math.min(7,Math.sqrt(area)*.36),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
  for(let i=0;i<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1)addBlade(x,z);}
  const meshes=[];
  const build=(pos,col,idx,uv,mat,name)=>{
@@ -179,7 +179,7 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  let lawnBlades=0,lawnTufts=0;
  if(lawnBudget){const detail=renderLawn(T,lawn,lawnBudget);if(detail){for(const mesh of detail.meshes){scene.add(mesh);geometries.push(mesh.geometry);materials.push(mesh.material);}ownedTextures.push(...detail.textures);triangles+=detail.triangles;lawnBlades=detail.count;lawnTufts=detail.tufts;}}
  // An isolated specimen should sit in a continuous meadow, not a floating tile.
- if(lawn?.horizon){
+ if(lawn?.horizon&&!meshes.some(o=>o.name==='forma-preview-horizon-meadow-r66')){
   const ground=meshes.find(o=>o.userData?.ground);
   if(ground&&!Array.isArray(ground.material)){
    const box=new T.Box3().setFromObject(ground),size=box.getSize(new T.Vector3()),span=Math.max(300,size.x*10,size.z*10);
