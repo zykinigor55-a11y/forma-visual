@@ -3510,6 +3510,9 @@ function updateSun(){
  }
  renderer.toneMappingExposure=atmosphere.exposure*(daylight?.91:1);
  applyPhysicalLight(THREE,{scene,renderer,sun,sky,bounce:bounced,atmosphere,settings:sceneAtmosphere,solarSettings,time:val,weather,modelling:modellingLight,enabled:pbrR63Enabled});
+ // Editor approximation of cloud extinction; the final HDR render uses actual directional transmittance instead.
+ sun.userData.formaUncloudedIntensity=sun.intensity;
+ if(daylight&&!modellingLight)sun.intensity*=Math.exp(-atmosphere.clouds*(sceneAtmosphere.cloudDensity/100)*(sceneAtmosphere.cloudThickness/100)*(2.5-1.5*sceneAtmosphere.cloudTransmission/100)*.65);
  scene.background=new THREE.Color(atmosphere.background);
  scene.fog.color.set(atmosphere.fogColor);
  const extent=Math.max(doc.site.width,doc.site.height);
