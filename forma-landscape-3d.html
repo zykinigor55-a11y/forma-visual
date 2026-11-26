@@ -567,14 +567,14 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 #formaMainMenuExit{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:36px;padding:6px 10px;box-sizing:border-box;border:1px solid #596764;border-radius:8px;background:#30393a;color:#e2e8e5;font-size:11px;font-weight:600;white-space:nowrap;text-decoration:none}
 #formaMainMenuExit:hover{background:#414e4b;border-color:#82968a}
 }
-@media(max-width:850px){#formaMainMenuExit{display:none}}
+@media(max-width:850px){#formaMainMenuExit{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:36px;border:1px solid #596764;border-radius:8px;background:#30393a;color:#e2e8e5;text-decoration:none}#formaMainMenuExit .menu-label{display:none}#formaMainMenuExit svg{width:19px;height:19px}header .header-right{gap:3px!important}header .header-right button{padding-inline:5px!important}}
 </style></head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R172</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R173</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
- <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню">← Главное меню</a>
+ <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button><button id="motionOpenR156" type="button" title="Запишите движение камеры и подготовьте референсы для Seedance" style="background:#314e42;border-color:#7da48e;color:#e8f4ed">▶ MOTION · Анимация</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
