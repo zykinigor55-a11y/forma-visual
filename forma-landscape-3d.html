@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R26</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R27</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -800,7 +800,7 @@ import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composi
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
-import {createDetailedFir,woodTexture} from './forma-landscape-3d-fir-r25.js?v=R26';
+import {createDetailedFir,woodTexture} from './forma-landscape-3d-fir-r25.js?v=R27';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R23';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -902,6 +902,8 @@ function appendTreeAssetInfo(el,o){
  const file=document.createElement('small');file.textContent=info.file;card.append(file);
  el.prepend(card);
 }
+// Report actual rendered meshes for both historical storage paths.
+window.FORMA_FIR_DIAGNOSTICS=()=>pickables.filter(g=>{const ref=selectable(g.userData.key);return ref?.obj&&(ref.obj.catalogId==='ph-fir-sapling'||ref.type==='extra'&&isLegacyFirExtra(ref.obj.type))}).map(g=>{let triangles=0;g.traverse(n=>{if(n.isMesh&&!n.userData.selectionProxy)triangles+=Math.floor((n.geometry.index?.count??n.geometry.attributes.position?.count??0)/3)*(n.isInstancedMesh?n.count:1)});return {key:g.userData.key,model:g.userData.firNativeR26?'FORMA detailed fir R26':g.userData.realGlb?'GLB':'unknown',triangles,height:g.userData.physicalHeight,diameter:g.userData.crownDiameter};});
 function treeModelDiagnostics(){
  // Read-only scene health to catch PBR-to-procedural substitutions on Android.
  // Avoid exposing stored project names, tokens or model binary data.
@@ -932,7 +934,7 @@ window.FORMA_SHRUB_MODEL_DIAGNOSTICS=()=>doc?.objects.filter(o=>catalog(o.catalo
 })||[];
 function updateModelHealth(){
  const el=$('#modelHealth');if(!el||!doc)return;
- const ids=[...new Set([...extra.map(o=>o.type),...doc.objects.map(o=>o.catalogId)].filter(x=>modelPath(x)||MATURE_TREE_MODELS[x]||SHRUB_3D_MODELS[x]||POLY_HAVEN_TREE_MODELS[x]||x==='pine'))];
+ const ids=[...new Set([...extra.filter(o=>!isLegacyFirExtra(o.type)).map(o=>o.type),...doc.objects.filter(o=>o.catalogId!=='ph-fir-sapling'||importedPlantModels.has(o.catalogId)).map(o=>o.catalogId)].filter(x=>modelPath(x)||MATURE_TREE_MODELS[x]||SHRUB_3D_MODELS[x]||POLY_HAVEN_TREE_MODELS[x]||x==='pine'))];
  const loaded=ids.filter(x=>bundledModelSources.has(x)).length;
  const loading=ids.filter(x=>bundledModelLoading.has(x)).length;
  const failed=ids.filter(x=>bundledModelFailures.has(x)).length;
@@ -1935,7 +1937,17 @@ function drawArea(o,entry,key){
   g.traverse(n=>{if(n.isMesh)n.userData.formaWeatherableSurface=true});
  mark(g,key);root.add(g);
 }
+// Legacy 3D-catalogue spruce was actually the same Poly Haven fir_sapling asset.
+function isLegacyFirExtra(type){return ['spruce','ph-fir-sapling','fir_sapling','fir-sapling','fir'].includes(type)}
 function drawExtra(o){
+ if(isLegacyFirExtra(o.type)){
+  const width=Number(o.width)||Number(o.diameter)||realModelById(o.type)?.width||2;
+  const height=Number(o.height)||width*1.5;
+  const p=pos(o.x||0,o.y||0),g=createDetailedFir(THREE,{...o,catalogId:'ph-fir-sapling',diameter:width,height});
+  g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
+  attachTreeSnowPreview(THREE,g,{...o,catalogId:'ph-fir-sapling',diameter:width,height},doc.atmosphere);
+  mark(g,'extra:'+o.id);root.add(g);return;
+ }
  if(isCreatureId(o.type)){
   const entry=creatureById(o.type),source=creatureSources.get(entry.id);
   if(!source){loadCreatureModel(entry.id);return;}
@@ -2643,6 +2655,7 @@ function renderProps(){
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
   '<small>Сохранены родные материалы ветвей и хвои.</small>'):'')+'<div class="object-actions"><button id="rotateLeft" type="button" title="Повернуть Q">↶ Повернуть −15°</button><button id="rotateRight" type="button" title="Повернуть E">↷ Повернуть +15°</button></div><button class="action primary" id="applyProps">Применить</button><button class="action" id="duplicateObject" title="Быстрая копия · D">Дублировать объект</button><button class="action" id="deleteObject" title="Удалить выделенный · Delete">Удалить объект · Delete</button><p class="hint">Delete или Backspace — удалить, Q/E — поворот 15°, Shift+Q/E — 5°, D — копия. Ctrl+Z — вернуть удалённое. Координаты сохраняются в метрах.</p>';
  if(ref.type==='object'&&catalog(o.catalogId)?.group==='trees')appendTreeAssetInfo(el,o);
+  if(ref.type==='extra'&&isLegacyFirExtra(o.type)){const card=document.createElement('div');card.className='roof-garland-editor';card.textContent='Модель: FORMA · детальная пихта R26 (старый каталог обновлён)';el.prepend(card);}
  if(ref.type==='house'||ref.type==='building'){
   if(ref.type==='house'){
    el.insertAdjacentHTML('afterbegin',houseInteriorMarkup());
