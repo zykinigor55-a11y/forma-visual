@@ -169,9 +169,11 @@ export function mapleLeafMask(T){
   const scale=240/Math.max(img.width,img.height),w=img.width*scale,h=img.height*scale;t.drawImage(img,(256-w)/2,(256-h)/2,w,h);
   const data=t.getImageData(0,0,256,256).data;let visible=0,clear=0;for(let i=3;i<data.length;i+=4){if(data[i]>180)visible++;if(data[i]<40)clear++;}
   if(visible<2000||clear<3000)return;
-  ctx.clearRect(0,0,256,256);ctx.drawImage(temp,0,0);mapleLeaf.needsUpdate=true;mapleLeaf.userData.source='OpenGameArt CC0 vegetation_leaf_maple_01.png';window.dispatchEvent(new Event('forma-foliage-texture-ready'));
+  ctx.clearRect(0,0,256,256);ctx.drawImage(temp,0,0);mapleLeaf.needsUpdate=true;mapleLeaf.userData.source='OpenGameArt CC0 vegetation_leaf_maple_01.png';mapleLeaf.userData.photoState='ready';window.dispatchEvent(new Event('forma-foliage-texture-ready'));
  }catch{}};
- img.onerror=()=>{};img.src='https://opengameart.org/sites/default/files/vegetation_leaf_maple_01.png';
+ const remote='https://opengameart.org/sites/default/files/vegetation_leaf_maple_01.png';
+ img.onerror=()=>{if(img.src!==remote)img.src=remote;else mapleLeaf.userData.photoState='unavailable';};
+ img.src=new URL('./assets/landscape-photo/maple-r33/leaf.png',import.meta.url).href;
  return mapleLeaf;
 }
 export function createPhotoFoliageTexture(T,id,{fallback=null}={}){
