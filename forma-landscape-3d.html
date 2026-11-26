@@ -528,15 +528,20 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  body[data-presentation=true] main>:is(#sceneQuickTools,#mobileWorkspaceTabs){display:none!important}
 }
 </style>
+<style>
+#motionPanelR156{position:fixed;right:16px;bottom:18px;z-index:90;width:min(360px,calc(100vw - 32px));max-height:82dvh;overflow:auto;background:#202924f7;border:1px solid #708578;border-radius:14px;box-shadow:0 14px 54px #0007;padding:15px;color:#e9eee9;display:grid;gap:10px;font:13px system-ui}
+#motionPanelR156[hidden],#motionPanelR156 [hidden]{display:none!important}#motionPanelR156 label{display:grid;gap:4px}#motionPanelR156 select,#motionPanelR156 input{width:100%;min-width:0}#motionPanelR156 small{color:#aebdb3;line-height:1.5}#motionPanelR156 video{width:100%;max-height:170px;background:#111;border-radius:8px}#motionPanelR156 button{min-height:34px}#motionPanelR156 progress{width:100%;height:8px;accent-color:#8eba9f}#motionPanelR156 .motion-row{display:flex;gap:6px;align-items:center}#motionPanelR156 .motion-row>*{flex:1;min-width:0}#motionPanelR156 .motion-record{background:#863c38;color:white;border-color:#bc7770}#motionPanelR156[data-recording=true] .motion-config{display:none}#motionPanelR156[data-recording=true]{width:min(290px,calc(100vw - 32px))}
+@media(max-width:850px){#motionOpenR156,#motionPanelR156{display:none!important}}
+</style>
 </head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R155</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R156</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
-  <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
+  <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button><button id="motionOpenR156" type="button" title="Запишите движение камеры и подготовьте референсы для Seedance" style="background:#314e42;border-color:#7da48e;color:#e8f4ed">▶ MOTION · Анимация</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
 <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза</a>
 <a href="forma-landscape-3d.html?scene=oak-r139&v=139" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
@@ -1446,9 +1451,47 @@ function startPathTraceR72(profile='balanced',renderClouds='stable',geometryMode
  }:null;
  pathTraceR72=createPathTraceMode(THREE,{renderer,scene,root,camera,canvas,profile,lawn,atmosphere:{...doc.atmosphere,solarSoftness:solarSettings.softness,cloudSettings:{...sceneAtmosphere},renderClouds,geometryMode,traceRecovery,traceDiagnostic,traceResolution,traceSamples,traceSceneTest},onClose:()=>{pathTraceR72=null;if(!gpuLostR75&&!renderer.getContext().isContextLost()){resize();renderGate.invalidate();}},onFailure:reason=>{fallbackGpuR140(reason);}});
 }
+let motionR156={points:[],active:false,stopping:false,url:'',result:null};
+function setupMotionR156(){
+ const panel=document.createElement('section');panel.id='motionPanelR156';panel.hidden=true;panel.setAttribute('aria-label','FORMA MOTION');panel.innerHTML='<div class="motion-row"><div style="flex:3"><small>FORMA / CINEMA TOOLS</small><strong style="display:block;font-size:19px">MOTION</strong></div><button data-close type="button" style="flex:0 0 36px">✕</button></div><small>Из 3D-модели — в архитектурный фильм. Запишите движение камеры и передайте аниматик в Seedance.</small><div class="motion-config" style="display:grid;gap:9px"><label>01 · Как снимаем<select data-mode><option value="walk">Ручная прогулка · WASD + мышь</option><option value="path">Плавный пролёт · по точкам камеры</option></select></label><button data-walk type="button">Перейти в прогулку / настроить ракурс</button><div data-points hidden><small>Выставьте камеру в редакторе и сохраните 2–5 последовательных ракурсов.</small><div class="motion-row"><button data-add type="button">+ Точка камеры</button><button data-reset type="button">Очистить</button></div><div data-point-list style="display:grid;gap:4px;margin-top:5px"></div></div><div class="motion-row"><label>02 · Длительность<select data-duration><option>5</option><option selected>8</option><option>10</option><option>15</option></select></label><label>Формат<select data-aspect><option value="landscape">16:9 · 720p</option><option value="portrait">9:16 · 720p</option></select></label></div><small>До 30 кадров/с. Реальная частота зависит от GPU. Запись чистого 3D-кадра, без интерфейса.</small><button data-start type="button" class="motion-record">● 03 · Начать запись</button></div><div data-record hidden><div class="motion-row"><strong style="color:#ff9b93">● REC</strong><span data-time style="text-align:right">0.0 с</span></div><progress max="1" value="0"></progress><button data-stop type="button" style="width:100%">■ Остановить запись</button></div><div data-result hidden style="display:grid;gap:8px"><strong>04 · Просмотр и экспорт</strong><video controls playsinline></video><div class="motion-row"><button data-video type="button">Видео</button><button data-zip class="primary" type="button">Комплект Seedance</button></div><label>Фотореалистичные референсы (необязательно)<input data-refs type="file" accept="image/png,image/jpeg,image/webp" multiple></label><small>Добавьте до 3 готовых фото в порядке начало / середина / конец. Без них экспортируются только кадры чернового аниматика. Генерация Seedance выполняется вручную.</small></div><small data-status role="status">Выберите способ съёмки.</small>';
+ document.body.append(panel);const q=s=>panel.querySelector(s),m=motionR156;m.panel=panel;m.q=q;
+ const refresh=()=>{q('[data-points]').hidden=q('[data-mode]').value!=='path';q('[data-walk]').hidden=q('[data-mode]').value==='path';q('[data-point-list]').replaceChildren();m.points.forEach((p,i)=>{const row=document.createElement('div');row.className='motion-row';const name=document.createElement('span');name.textContent='Точка '+(i+1)+' · '+Math.round(p.focal)+' мм';const del=document.createElement('button');del.type='button';del.textContent='Удалить';del.onclick=()=>{m.points.splice(i,1);refresh()};row.append(name,del);q('[data-point-list]').append(row);});};
+ m.open=()=>{if(innerWidth<=850){status('MOTION доступен на компьютере.');return;}if(pathTraceR72?.active){status('Сначала завершите рендер.');return;}panel.hidden=false;refresh();};
+ $('#motionOpenR156').onclick=m.open;q('[data-close]').onclick=()=>{if(m.active)stopMotionR156();panel.hidden=true;};q('[data-mode]').onchange=refresh;q('[data-walk]').onclick=()=>{if(state.view!=='walk')setView('walk');chooseTool('select');};q('[data-add]').onclick=()=>{if(!camera?.isPerspectiveCamera){q('[data-status]').textContent='Перейдите в 3D или прогулку.';return;}if(m.points.length>=5){q('[data-status]').textContent='Максимум 5 точек.';return;}if(state.view==='walk')freezeWalkLook();camera.updateMatrixWorld(true);m.points.push({position:camera.position.clone(),rotation:camera.quaternion.clone(),fov:camera.fov,focal:camera.getFocalLength()});refresh();q('[data-status]').textContent='Точка сохранена. Выставьте следующий ракурс.';};q('[data-reset]').onclick=()=>{m.points=[];refresh()};q('[data-start]').onclick=startMotionR156;q('[data-stop]').onclick=stopMotionR156;q('[data-video]').onclick=()=>{if(m.result)motionDownloadR156(m.result.blob,'FORMA-animatic.'+m.result.ext)};q('[data-zip]').onclick=exportMotionR156;
+ if(new URLSearchParams(location.search).get('motion')==='1')m.open();
+}
+function motionDownloadR156(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function startMotionR156(){
+ const m=motionR156,q=m.q;if(m.active||m.stopping)return;
+ if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){q('[data-status]').textContent='Запись недоступна в этом браузере. Попробуйте Chrome или Edge.';return;}
+ if(pathTraceR72?.active||gpuLostR75){q('[data-status]').textContent='Сначала завершите рендер или восстановите GPU.';return;}
+ const mode=q('[data-mode]').value;if(mode==='path'&&m.points.length<2){q('[data-status]').textContent='Сохраните минимум две точки камеры.';return;}
+ if(mode==='walk'&&state.view!=='walk')setView('walk');if(!camera?.isPerspectiveCamera){q('[data-status]').textContent='Нужна перспективная 3D-камера.';return;}
+ freezeWalkLook();chooseTool('select');m.mode=mode;m.view=state.view;m.originalControls=controls.enabled;m.duration=Number(q('[data-duration]').value)*1000;m.start=null;m.frames=0;m.keys=[];m.stills=[];m.chunks=[];m.result=null;q('[data-result]').hidden=true;q('[data-record]').hidden=false;m.panel.dataset.recording='true';
+ try{
+  const c=document.createElement('canvas');const portrait=q('[data-aspect]').value==='portrait';c.width=portrait?720:1280;c.height=portrait?1280:720;m.capture=c;m.ctx=c.getContext('2d',{alpha:false});m.stream=c.captureStream(30);
+  const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4','video/webm'].find(x=>MediaRecorder.isTypeSupported(x));m.recorder=new MediaRecorder(m.stream,mime?{mimeType:mime,videoBitsPerSecond:8000000}:{videoBitsPerSecond:8000000});m.recorder.ondataavailable=e=>{if(e.data.size)m.chunks.push(e.data)};m.recorder.onerror=e=>{q('[data-status]').textContent='Ошибка записи: '+(e.error?.message||'MediaRecorder');stopMotionR156()};m.recorder.onstop=()=>{m.stream?.getTracks().forEach(t=>t.stop());m.stopping=false;const type=m.recorder.mimeType||m.chunks[0]?.type||'video/webm',blob=new Blob(m.chunks,{type});if(!blob.size||!m.frames){q('[data-status]').textContent='Запись не получилась. Повторите попытку.';return;}if(m.url)URL.revokeObjectURL(m.url);m.url=URL.createObjectURL(blob);m.result={blob,ext:type.includes('mp4')?'mp4':'webm',stills:m.stills.slice(),keys:m.keys.slice(),width:c.width,height:c.height,duration:m.elapsed,frames:m.frames,mode:m.mode};q('video').src=m.url;q('[data-result]').hidden=false;q('[data-status]').textContent='Готово · '+(m.elapsed/1000).toFixed(1)+' с · ≈ '+(m.frames/Math.max(.1,m.elapsed/1000)).toFixed(1)+' кадров/с. Проверьте видео перед экспортом.';};
+  m.active=true;if(mode==='path')controls.enabled=false;q('[data-status]').textContent=mode==='walk'?'Кликните по сцене, управляйте WASD и мышью. Esc фиксирует ракурс.':'Камера движется по заданным точкам.';renderGate.invalidate();
+ }catch(e){m.active=false;m.stream?.getTracks().forEach(t=>t.stop());m.panel.dataset.recording='false';q('[data-record]').hidden=true;controls.enabled=m.originalControls;q('[data-status]').textContent='Не удалось начать запись: '+e.message;}
+}
+function motionTickR156(now){
+ const m=motionR156;if(!m.active)return;if(gpuLostR75||state.view!==m.view){stopMotionR156();return;}if(m.mode==='path'){const t=Math.max(0,Math.min(1,m.start===null?0:(now-m.start)/m.duration)),s=t*(m.points.length-1),i=Math.min(m.points.length-2,Math.floor(s)),f=s-i,u=f*f*(3-2*f),a=m.points[i],b=m.points[i+1];camera.position.copy(a.position).lerp(b.position,u);camera.quaternion.copy(a.rotation).slerp(b.rotation,u);camera.fov=THREE.MathUtils.lerp(a.fov,b.fov,u);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);}
+ renderGate.invalidate();
+}
+function motionCaptureR156(now){
+ const m=motionR156;if(!m.active)return;try{if(m.start===null){m.start=performance.now();}const c=m.capture,aspect=c.width/c.height,w=canvas.width,h=canvas.height;if(!w||!h)return;let sw=w,sh=h;if(w/h>aspect)sw=h*aspect;else sh=w/aspect;m.ctx.drawImage(canvas,(w-sw)/2,(h-sh)/2,sw,sh,0,0,c.width,c.height);if(m.recorder.state==='inactive')m.recorder.start(250);
+ m.elapsed=Math.min(m.duration,Math.max(0,performance.now()-m.start));m.frames++;if(m.frames===1||!m.stills[1]&&m.elapsed>=m.duration/2){const idx=m.frames===1?0:1;m.stills[idx]=c.toDataURL('image/png');}if(!m.keys.length||m.elapsed-m.keys[m.keys.length-1].t>=100)m.keys.push({t:Math.round(m.elapsed),position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov});m.q('[data-time]').textContent=(m.elapsed/1000).toFixed(1)+' / '+(m.duration/1000)+' с';m.q('progress').value=m.elapsed/m.duration;if(m.elapsed>=m.duration)stopMotionR156();
+ }catch(e){m.q('[data-status]').textContent='Не удалось записать кадр: '+e.message;stopMotionR156();}
+}
+function stopMotionR156(){
+ const m=motionR156;if(!m.active)return;m.active=false;m.stopping=true;try{if(m.frames){m.stills[2]=m.capture.toDataURL('image/png');m.keys.push({t:Math.round(m.elapsed),position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov});}}catch{}if(state.view==='walk'){const e=new THREE.Euler().setFromQuaternion(camera.quaternion,'YXZ');walkYaw=e.y;walkPitch=e.x;freezeWalkLook();}else if(m.mode==='path'){const d=camera.getWorldDirection(new THREE.Vector3());controls.target.copy(camera.position).addScaledVector(d,10);controls.update();}controls.enabled=state.view!=='walk'&&m.originalControls;m.panel.dataset.recording='false';m.q('[data-record]').hidden=true;if(m.recorder?.state!=='inactive'){setTimeout(()=>{if(m.recorder.state!=='inactive')m.recorder.stop();},120);}else{m.stream?.getTracks().forEach(t=>t.stop());m.stopping=false;}renderGate.invalidate();
+}
+async function exportMotionR156(){
+ const m=motionR156,r=m.result,q=m.q;if(!r)return;const button=q('[data-zip]');button.disabled=true;try{q('[data-status]').textContent='Упаковка комплекта…';const {zipSync,strToU8}=await import('https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js');const files={};files['01-animatic.'+r.ext]=new Uint8Array(await r.blob.arrayBuffer());for(let i=0;i<r.stills.length;i++)if(r.stills[i])files['02-draft-'+['start','middle','end'][i]+'.png']=new Uint8Array(await (await fetch(r.stills[i])).arrayBuffer());const refs=Array.from(q('[data-refs]').files).slice(0,3);for(let i=0;i<refs.length;i++){const f=refs[i],ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg';files['03-photo-reference-'+(i+1)+'.'+ext]=new Uint8Array(await f.arrayBuffer());}files['04-camera.json']=strToU8(JSON.stringify({width:r.width,height:r.height,durationMs:r.duration,recordedFrames:r.frames,mode:r.mode,camera:r.keys},null,2));files['05-seedance-prompt.txt']=strToU8('Use the uploaded animatic as the camera movement reference. Use the supplied photorealistic image references as the appearance reference, if provided. Preserve the building geometry, facade materials, windows, roof, landscape layout, tree positions and proportions. Follow the camera movement, framing and lens perspective. Physically plausible light, restrained natural colors, subtle wind. No new objects, deformation, cuts or architecture changes. The draft frames are geometry references, not final photographic images.');files['README.txt']=strToU8('FORMA MOTION / Seedance\n1. Upload 01-animatic as motion reference in a supported reference-to-video mode.\n2. Upload optional 03-photo-reference images as appearance references. If absent, generate a photorealistic image from 02-draft-start first.\n3. Use 05-seedance-prompt. 04-camera.json is for your archive; do not upload as video reference.\nAI output may change geometry. Review the result. This package does not call the paid Seedance API. Video format depends on browser support; convert WebM to MP4 if the provider requires it.');motionDownloadR156(new Blob([zipSync(files,{level:0})],{type:'application/zip'}),'FORMA-MOTION-Seedance.zip');q('[data-status]').textContent='Комплект подготовлен.';}catch(e){q('[data-status]').textContent='Не удалось создать ZIP: '+e.message+'. Видео можно скачать отдельно.';}finally{button.disabled=false;}
+}
 function initialize(){
  setupDesktopInspectorR137();
- $('#pathTraceR72Button').onclick=openRenderMenuR75;
+ $('#pathTraceR72Button').onclick=()=>{if(motionR156.active){status('Сначала остановите запись MOTION.');return;}openRenderMenuR75();};
  $('#graphicsR105').onclick=openGraphicsR105;
  const windInput=$('#windR74'),windLabel=$('#windR74Value'),quickWind=$('#quickWindR91'),quickLabel=$('#quickWindR91Value');const setWind=v=>{windAmountR74=Math.max(0,Math.min(100,Number(v)||0));windInput.value=quickWind.value=String(windAmountR74);windLabel.textContent=quickLabel.textContent=windAmountR74+'%';try{localStorage.setItem('forma-wind-r75',String(windAmountR74))}catch{}renderGate.invalidate();};windInput.oninput=()=>setWind(windInput.value);quickWind.oninput=()=>setWind(quickWind.value);setWind(windAmountR74);
  // On a phone the 3D canvas, not a tiny library drawer, is the starting point.
@@ -5059,7 +5102,7 @@ function resize(){if(gpuLostR75||pathTraceR72?.active)return;renderGate.invalida
 let lastRenderMs=0,lastRenderCost=0,lastShadowBudgetAt=0,lastTurfDetailAt=0,shadowBudgetDirty=true;
 function animate(now=0){
  requestAnimationFrame(animate);
- if(gpuLostR75||pathTraceR72?.active)return;
+ if(gpuLostR75||pathTraceR72?.active){if(motionR156.active)stopMotionR156();return;}
  // On hardware-accelerated browsers retain 50fps/30fps. When WebGL falls
  // back to a software renderer, yield the main thread rather than starving
  // taps and tool selection with an unbroken loop of costly draw calls.
@@ -5071,10 +5114,11 @@ function animate(now=0){
  const interval=Math.max(preferred,Math.min(sculpting?160:phone?180:500,lastRenderCost*(sculpting?1.4:phone?1.55:2.2)));
  if(now-lastRenderMs<interval)return;
  lastRenderMs=now;
+ motionTickR156(now);
  const frameSeconds=lastWalkFrame?Math.min(.1,(now-lastWalkFrame)/1000):0;
  lastWalkFrame=now;
  let walked=false;
- if(state.view==='walk'&&camera?.isPerspectiveCamera){
+ if(state.view==='walk'&&camera?.isPerspectiveCamera&&!(motionR156.active&&motionR156.mode==='path')){
   const step=walkStep({
    x:camera.position.x,z:camera.position.z,yaw:walkYaw,keys:heldWalkKeys,
    dt:frameSeconds,sprint:heldWalkKeys.has('shift'),
@@ -5125,9 +5169,10 @@ function animate(now=0){
   lastShadowBudgetAt=now;shadowBudgetDirty=false;
   if(changed){if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;renderGate.invalidate()}
  }
- if(renderer&&scene&&camera&&renderGate.allow(now,{cameraMoved,walking:activeWalk,interval})){
+ if(renderer&&scene&&camera&&(motionR156.active||renderGate.allow(now,{cameraMoved,walking:activeWalk,interval}))){
   const start=performance.now();
   renderPhotoFrame();
+  motionCaptureR156(now);
   lastRenderCost=performance.now()-start;
   // After sustained frame lag, protect editing and mobile interactions.
   // Surveyed coordinates and plant sizes are never changed by this preview.
@@ -5143,7 +5188,7 @@ function animate(now=0){
   if(phone&&autoReduced&&graphicsChoiceR105==='auto'&&!graphicsAutoLimitR106&&window.FORMA_GRAPHICS_R105!=='eco'&&now-lastCameraMotionR106>450&&!state.painting){graphicsAutoLimitR106=true;applyGraphicsR105();}
  }
 }
-try{initialize()}catch(err){console.error(err);window.FORMA_3D_READY=false;$('#loadError').style.display='flex';$('#loadError p').textContent=err.message;$('#status').textContent='Ошибка запуска 3D. Проект не удалён.'}
+try{initialize();setupMotionR156()}catch(err){console.error(err);window.FORMA_3D_READY=false;$('#loadError').style.display='flex';$('#loadError p').textContent=err.message;$('#status').textContent='Ошибка запуска 3D. Проект не удалён.'}
 </script>
 <script>
 /* Show an actionable message if the 3D module or its CDN imports never start.
