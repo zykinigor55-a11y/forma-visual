@@ -1,5 +1,5 @@
-import {barkTexture} from './forma-landscape-3d-vegetation.js?v=R28';
-import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R28';
+import {barkTexture} from './forma-landscape-3d-vegetation.js?v=R29';
+import {createPhotoFoliageTexture,mapleLeafMask} from './forma-landscape-3d-photo-foliage.js?v=R29';
 import {reshapeNativePine} from './forma-landscape-pine-native.js';
 import {reshapeNativeSpruce} from './forma-landscape-spruce-native.js';
 import {refineNativeBirch} from './forma-landscape-birch-native.js';
@@ -129,7 +129,7 @@ function barkUV(T,geometry){
 }
 function maplePhotoBark(T){
  if(mapleMaps.has(T))return mapleMaps.get(T);
- const map=barkTexture(T,'maple'),normal=new T.Texture();
+ const map=barkTexture(T,'maple');
  const result={map,normal:null,ready:false,materials:new Set()};mapleMaps.set(T,result);
  const base='https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/trident_maple_bark/trident_maple_bark_';
  // Keep local procedural bark until the photographic files actually decode.
@@ -153,6 +153,44 @@ function classifyBotanicalMaterial(m,node){
  const brown=c&&c.r>c.b*1.18&&c.g>c.b*1.05&&c.r>=c.g*.97;
  const leaf=m.alphaTest>0||/leaf|leav|folia|canop|needle|лист/.test(name)||green;
  return {leaf,bark:!leaf&&(/bark|trunk|branch|wood|ствол|кор[аы]/.test(name)||brown)};
+}
+function addMapleLeafDetail(T,group,clone,fit){
+ // Sample existing foliage, never the trunk or the empty interior of a crown.
+ group.updateMatrixWorld(true);
+ const sources=[];
+ clone.traverse(n=>{
+  if(!n.isMesh||n.isInstancedMesh||!n.geometry?.attributes?.position)return;
+  const mats=Array.isArray(n.material)?n.material:[n.material];
+  if(mats.length===1&&mats.some(m=>m&&classifyBotanicalMaterial(m,n).leaf&&!m.map))sources.push(n);
+ });
+ if(!sources.length)return;
+ const mobile=window.innerWidth<=850,max=mobile?1600:3000,points=[];
+ let seed=12381;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ const temp=new T.Vector3();
+ for(const n of sources){
+  const p=n.geometry.attributes.position,index=n.geometry.index,triangles=Math.floor((index?.count||p.count)/3);
+  const count=Math.min(triangles,Math.max(1,Math.round(max/sources.length)));
+  if(!triangles)continue;
+  for(let i=0;i<count;i++){
+   const k=Math.min(triangles-1,Math.floor((i+rnd())*triangles/count))*3;
+   const a=index?index.getX(k):k,b=index?index.getX(k+1):k+1,c=index?index.getX(k+2):k+2;
+   temp.set((p.getX(a)+p.getX(b)+p.getX(c))/3,(p.getY(a)+p.getY(b)+p.getY(c))/3,(p.getZ(a)+p.getZ(b)+p.getZ(c))/3).applyMatrix4(n.matrixWorld);
+   points.push(temp.clone());
+  }
+ }
+ if(!points.length)return;
+ const map=mapleLeafMask(T);
+ const m=new T.MeshStandardMaterial({map,alphaTest:.32,side:T.DoubleSide,roughness:.81,metalness:0,depthWrite:true,envMapIntensity:.23});
+ const detail=new T.InstancedMesh(new T.PlaneGeometry(1,1),m,points.length),o=new T.Object3D();
+ const colors=['#d2d7bc','#aabf92','#e2e1c9','#b4c2a3'].map(c=>new T.Color(c));
+ for(let i=0;i<points.length;i++){
+  o.position.copy(points[i]);o.rotation.set(rnd()*6.283,rnd()*6.283,rnd()*6.283);
+  const size=Math.min(.24,Math.max(.065,fit.physicalHeight*.013))*(.7+rnd()*.5);
+  o.scale.set(size,size,1);o.updateMatrix();detail.setMatrixAt(i,o.matrix);detail.setColorAt(i,colors[Math.floor(rnd()*colors.length)]);
+ }
+ detail.instanceMatrix.needsUpdate=true;detail.instanceColor.needsUpdate=true;detail.computeBoundingSphere();
+ detail.castShadow=false;detail.receiveShadow=false;detail.name='FORMA maple photo leaf detail';group.add(detail);
+ group.userData.mapleLeafDetailCount=points.length;
 }
 const boundsCache=new WeakMap();
 export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null,birchRefinement='original'}={}){
@@ -275,6 +313,7 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
  }
  clone.position.set(-centre.x*fit.scaleXZ,-placementBounds.min.y*fit.scaleY,-centre.z*fit.scaleXZ);
  group.add(clone);
+ if(shareGeometry&&instance.catalogId==='maple')addMapleLeafDetail(T,group,clone,fit);
  // The CC0 adult Scots pine has authentic bark and PBR needle cutouts, but
  // only three very thin foliage tiers. Reuse the same original needle meshes
  // with rotated offsets around the trunk: natural crown volume without
