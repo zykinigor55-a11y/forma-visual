@@ -50,7 +50,7 @@ export const CATALOG=Object.freeze([
  ...[
  ['pine','Сосна обыкновенная','#6a8160',7,'Pinus sylvestris','pine'],
  ['spruce','Ель обыкновенная','#4b695a',5,'Picea abies','conifer'],
- ['birch','Берёза повислая','#b2c49b',6,'Betula pendula','birch'],
+ ['birch','Берёза повислая','#b2c49b',9,'Betula pendula','birch'],
  ['oak','Дуб черешчатый','#64854d',10,'Quercus robur','broadleaf'],
  ['maple','Клён остролистный','#829b49',8,'Acer platanoides','broadleaf'],
  ['linden','Липа мелколистная','#93ae62',8,'Tilia cordata','broadleaf'],
@@ -173,6 +173,7 @@ export function normalizeProject(raw){
     ...(entry.group==='boulders'?{burial:finite(item.burial,0,.36,.12)}:{}),
     ...(entry.group==='lights'?{brightness:finite(item.brightness,0,2,1),kelvin:[2200,2700,3000,4000].includes(Number(item.kelvin))?Number(item.kelvin):2700,...(entry.id==='globe'?{variant:finite(item.variant,1,4,1)}:{})}:{}),
     ...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{}),
+    ...(entry.id==='birch'?{birch:{age:[10,35,75].includes(Number(item.birch?.age))?Number(item.birch.age):35}}:{}),
     ...(entry.id==='maple'?{maple:normalizeMapleGrowth(item.maple)}:{}),
     ...(entry.id==='willow'?{willow:normalizeWillowGrowth(item.willow)}:{}),
     ...(entry.id==='spruce'?{spruce:{
