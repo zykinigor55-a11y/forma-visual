@@ -173,12 +173,13 @@ export function createPhotoFoliageTexture(T,id,{fallback=null}={}){
    if(!cutout){texture.userData.photoState='fallback';return}
    stampPhotographicTwigs(canvas,cutout,id);
    texture.needsUpdate=true;texture.userData.photoState='ready';
+   if(typeof window!=='undefined')window.dispatchEvent(new Event('forma-foliage-texture-ready'));
   }catch(err){
    texture.userData.photoState='fallback';
    console.warn('FORMA photo foliage fallback:',id,err?.message||err);
   }
  };
  img.onerror=()=>{texture.userData.photoState='fallback'};
- img.src=FOLIAGE_SIDE_REFERENCE[id]||'/assets/landscape-photo/'+source+'.png';
+ img.src=new URL((FOLIAGE_SIDE_REFERENCE[id]||'/assets/landscape-photo/'+source+'.png').replace(/^\//,'./'),import.meta.url).href;
  return texture;
 }
