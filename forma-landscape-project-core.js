@@ -139,6 +139,11 @@ export function poolFootprint(o,margin=0){
  const local=o.catalogId==='pool-fixed'?[[-d.diameter/2-margin,-d.width/2-margin],[d.diameter/2+margin,-d.width/2-margin],[d.diameter/2+margin,d.width/2+margin],[-d.diameter/2-margin,d.width/2+margin]]:Array.from({length:48},(_,i)=>{const t=i*Math.PI/24;return [(d.diameter/2+margin)*Math.cos(t),(d.diameter/2+margin)*Math.sin(t)]});
  return local.map(([u,v])=>({x:x+u*cs-v*sn,y:y+u*sn+v*cs}));
 }
+const LAWN_R90_IDS=['formal','universal','shade','meadow','striped','forest','clover','wheat','dandelion','dandelionPuff'];
+export function normalizeLawnR90(raw){
+ const v=raw&&typeof raw==='object'?raw:{};
+ return {profile:LAWN_R90_IDS.includes(v.profile)?v.profile:'universal',height:finite(v.height,50,180,100),density:finite(v.density,45,160,100),pressed:finite(v.pressed,0,100,45),flowers:finite(v.flowers,0,100,75),wheatHeight:finite(v.wheatHeight,35,140,76)};
+}
 export function normalizeProject(raw){
  const obj=raw&&typeof raw==='object'?raw:{},base=freshProject(),site=obj.site||{},house=obj.house||{};
  const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
@@ -146,7 +151,7 @@ export function normalizeProject(raw){
  const r={version:1,title:String(obj.title||base.title).slice(0,75),site:{width,height,orientation:finite(site.orientation,-360,360,0),boundary},
  house:{x:finite(house.x,0,width,width/2),y:finite(house.y,0,height,height*.4),width:finite(house.width,2,60,12),height:finite(house.height,2,60,8),rotation:finite(house.rotation,-360,360,0),type:['house','bath','garage','carport','greenhouse','gazebo','outbuilding'].includes(house.type)?house.type:'house',
  roof:['gable','hip','flat'].includes(house.roof)?house.roof:'gable',archStyle:housePresetIds.includes(house.archStyle)?house.archStyle:'barn',modelKey:/^[a-z0-9-]{1,48}$/i.test(house.modelKey||'')?house.modelKey:null,roofRise:finite(house.roofRise,.4,8,1.4),roofColor:/^#[a-f0-9]{6}$/i.test(house.roofColor||'')?house.roofColor:'#393c3e',ridge:finite(house.ridge,0,360,0),entry:['north','south','east','west'].includes(house.entry)?house.entry:'south',photo:safePhoto(house.photo),garland:normalizeRoofGarland(house.garland)},
- objects:[],buildings:[],underlay:safePhoto(obj.underlay),
+ objects:[],buildings:[],lawn:normalizeLawnR90(obj.lawn),underlay:safePhoto(obj.underlay),
  underlayOpacity:finite(obj.underlayOpacity,0,1,.25),north:finite(obj.north,0,360,0),northVerified:obj.northVerified===true,
  verified:obj.verified===true,style:['natural','modern','architectural'].includes(obj.style)?obj.style:'natural',
  atmosphere:{
