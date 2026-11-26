@@ -3,7 +3,7 @@
  * are same graphite/bronze SVG system as Landscape Project.
  */
 import {premiumIcon} from './forma-premium-icons.js';
-import {mainNavIcon} from './forma-main-nav-icons.js';
+import {mainNavIcon} from './forma-main-nav-icons.js?v=R178';
 const NAV_IDS=Object.freeze({
  project:'project',environment:'build',materials:'materials',
  animation:'animation',variants:'gallery',parameters:'settings'
@@ -89,7 +89,7 @@ export function applyPremiumSiteIcons(){
  // Main screen tools are created asynchronously by forma-studio-shell.js.
  // Never rely on their being present at DOMContentLoaded.
  document.querySelectorAll('#formaStudioHome .fa-studio-task[data-studio-tool]').forEach(button=>
-  upgradeButton(button,TASK_ICONS[button.dataset.studioTool]||button.dataset.studioTool));
+  upgradeCompactRail(button,TASK_ICONS[button.dataset.studioTool]||button.dataset.studioTool));
  document.querySelectorAll('#formaStudioHome .fa-studio-utilities button[data-studio-tool]').forEach(button=>
   upgradeButton(button,button.dataset.studioTool));
  document.querySelectorAll('.fa-home-tool[data-tool-id]').forEach(button=>{
