@@ -7,7 +7,7 @@ import {ashCompoundLeafGeometry} from './forma-landscape-ash-leaves.js';
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
 import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js?v=R23';
-import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R22';
+import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R28';
 import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity,constrainCrownRadius,specimenCrownVariation} from './forma-landscape-3d-reference-canopies.js';
 import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js?v=R23';
 export const VEGETATION_SPECIES=Object.freeze({
@@ -113,7 +113,7 @@ export function barkPalette(id){
  if(['oak','apple','rowan'].includes(id))return {base:'#6C5C4E',dark:'#37352F',light:'#90806D',cross:false};
  return {base:'#83715D',dark:'#4D4339',light:'#A9997C',cross:false};
 }
-function barkTexture(T,id){
+export function barkTexture(T,id){
  if(barkTextureCache.has(id))return barkTextureCache.get(id);
  const c=document.createElement('canvas');c.width=256;c.height=512;
  const ctx=c.getContext('2d'),palette=barkPalette(id),random=rng(hash('bark|'+id));
