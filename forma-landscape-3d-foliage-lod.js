@@ -52,6 +52,7 @@ export function setFoliageTier(group,tier){
    (layer==='micro'&&next==='near')||
    (layer==='volume'&&(next==='near'||next==='middle'))||
    layer==='sprays';
+  if(node.userData.formaExclusiveNativeLayer)node.visible=layer===(next==='near'?'micro':next==='middle'?'volume':'sprays');
   const original=node.userData.botanicalOriginalCount;
   if(node.isInstancedMesh&&Number.isInteger(original)){
    // The far crown keeps its botanical silhouette; only real expensive
