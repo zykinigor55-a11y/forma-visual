@@ -84,11 +84,11 @@ function renderLawn(T,cfg,budget){
  const atlas=document.createElement('canvas');atlas.width=256;atlas.height=128;
  const ctx=atlas.getContext('2d');
  if(!ctx)throw Error('Не удалось создать текстуру травы');
- const perCard=20;
+ const perCard=30;
  for(let i=0;i<perCard;i++){
   const x=9+(i+.3+rand()*.4)*(238/perCard),top=8+rand()*47,lean=(rand()-.5)*40,w=2.5+rand()*3;
   const g=ctx.createLinearGradient(x,126,x+lean,top);
-  g.addColorStop(0,'rgb(145,145,141)');g.addColorStop(.5,'rgb(214,216,206)');g.addColorStop(1,'rgb(250,250,240)');
+  g.addColorStop(0,'rgb(190,190,186)');g.addColorStop(.5,'rgb(232,233,225)');g.addColorStop(1,'rgb(250,250,240)');
   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-w,127);ctx.quadraticCurveTo(x+lean*.15-w,65,x+lean,top);ctx.quadraticCurveTo(x+lean*.25+w,77,x+w,127);ctx.closePath();ctx.fill();
  }
  const map=new T.CanvasTexture(atlas);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;
@@ -103,7 +103,7 @@ function renderLawn(T,cfg,budget){
   if(!contains(x,z))return;const y=terrainAt(x,z);if(!Number.isFinite(y))return;
   const patch=.82+.18*Math.sin(x*1.9+Math.sin(z*.72))*Math.cos(z*1.5);
   const h=h0*(.75+.60*rand())*patch,a=rand()*Math.PI,c=pal[Math.floor(rand()*pal.length)].clone().multiplyScalar(.93+.16*rand());
-  const half=Math.max(.045,Math.min(.14,h*.92+Math.sqrt(area/Math.max(1,desired))*.27));
+  const half=Math.max(.055,Math.min(.22,h*1.12+Math.sqrt(area/Math.max(1,desired))*.42));
   addCard(x,y+.001,z,a,h,half,c);addCard(x,y+.001,z,a+Math.PI/2,h*.94,half,c);tufts++;
  };
  const addBlade=(x,z)=>{
@@ -118,8 +118,8 @@ function renderLawn(T,cfg,budget){
  const probe=16;let hits=0;for(let j=0;j<probe;j++)for(let i=0;i<probe;i++)if(visible(b.x0+(i+.5)*width/probe,b.z0+(j+.5)*depth/probe))hits++;
  const share=Math.max(.12,hits/(probe*probe));
  const grid=Math.ceil(desired/(share+(1-share)*.12));
- const nx=Math.max(1,Math.floor(Math.sqrt(grid*width/depth))),nz=Math.max(1,Math.floor(grid/nx));
- for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const x=b.x0+(i+rand())*width/nx,z=b.z0+(j+rand())*depth/nz;if(tufts>=desired)break;if(visible(x,z)||rand()<.12)addTuft(x,z);}
+ // Randomized coverage across the entire camera sector instead of truncating rows.
+ for(let i=0;i<grid*3&&tufts<desired;i++){const x=b.x0+rand()*width,z=b.z0+rand()*depth;if(visible(x,z)||rand()<.12)addTuft(x,z);}
  const radius=Math.min(7,Math.sqrt(area)*.36),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
  for(let i=0;i<near*5&&count<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1&&visible(x,z))addBlade(x,z);}
  const meshes=[];
@@ -127,7 +127,7 @@ function renderLawn(T,cfg,budget){
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('color',new T.Float32BufferAttribute(col,4));g.setAttribute('uv',new T.Float32BufferAttribute(uv||new Float32Array(pos.length/3*2),2));g.setIndex(idx);g.computeVertexNormals();
   const mesh=new T.Mesh(g,mat);mesh.name=name;meshes.push(mesh);
  };
- if(tufts)build(cp,cc,ci,cu,new T.MeshStandardMaterial({map,alphaTest:.42,vertexColors:true,side:T.DoubleSide,roughness:.9,metalness:0}),'forma-render-turf-cards-r128');else map.dispose();
+ if(tufts)build(cp,cc,ci,cu,new T.MeshPhysicalMaterial({map,alphaTest:.30,vertexColors:true,side:T.DoubleSide,roughness:.92,metalness:0,transmission:.18,thickness:0,ior:1.42,specularIntensity:.25}),'forma-render-turf-cards-r128');else map.dispose();
  if(count)build(bp,bc,bi,null,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.87,metalness:0}),'forma-render-grass-blades-r128');
  return meshes.length?{meshes,count,tufts,triangles:(ci.length+bi.length)/3,textures:tufts?[map]:[]}:null;
 }
@@ -278,7 +278,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
   }
  }
  // No triangle-count rejection. Try actual path tracing with the resulting geometry.
- const lawnReserve=lawn?(isMobile()||recovery?35000:estimate>budget*.55?60000:profile==='high'?450000:220000):0;
+ const lawnReserve=lawn?(isMobile()||recovery?35000:estimate>budget*.55?(profile==='high'?280000:160000):profile==='high'?520000:280000):0;
  limit=Math.max(Math.min(softLimit,used+grassCost+lawnReserve+180000),used+grassCost+lawnReserve+(isMobile()||estimate>budget*.55?0:90000));
  if(!isMobile()&&profile==='high'&&estimate<budget*.55)for(const o of meshes){if(o.name!=='rowan-pinnate-foliage'||!proxies.has(o))continue;const g=rowanLeafProxy(T,o.geometry,true);if(!g)continue;const extra=(g.index.count/3-costs(o))*o.count;if(used+extra+(lawn?360000:0)>limit){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;}
  if(!full&&!isMobile()&&estimate<budget*.55)for(const o of meshes){if(o.isInstancedMesh||o.name!=='rowan-bark-trunk-branches')continue;const available=limit-used-(lawn?260000:0);if(available<15000)continue;for(const level of (profile==='high'?[6,4,2]:[3,2])){const result=barkDisplacement(T,o,level);if(!result)break;const extra=result.geometry.index.count/3-costs(o);if(extra>available){result.geometry.dispose();continue;}proxies.set(o,result.geometry);ownedProxies.push(result.geometry);used+=extra;displacedWood+=result.displaced;break;}}
@@ -287,7 +287,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  // No leaf-instance deletion or abort for heavy scenes. Optional grass and
  // micro-displacement budgets remain adaptive; actual device limits still apply.
  limit=Math.max(limit,used+grassCost+lawnReserve);
- const lawnBudget=lawn?Math.min(lawnReserve,Math.floor(Math.max(0,limit-used)*.82)):0;
+ const lawnBudget=lawn?Math.min(lawnReserve,Math.floor(Math.max(0,limit-used)*.94)):0;
  const existingBudget=limit-lawnBudget;
  const factor=Math.min(1,Math.max(0,(existingBudget-used)/Math.max(1,grassCost)));
  for(const o of meshes){if(!grass(o))continue;const maxKeep=keepCounts.get(o)??o.count;const keep=Math.min(maxKeep,Math.floor(maxKeep*factor),Math.floor(Math.max(0,existingBudget-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
@@ -299,11 +299,11 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
   const role=m.userData?.formaPBRRoleR63||'';
   if(['leaf','needle','glass','water'].includes(role)&&!p.isMeshPhysicalMaterial){const physical=new T.MeshPhysicalMaterial();for(const k of ['color','map','normalMap','normalScale','roughness','roughnessMap','metalness','metalnessMap','alphaMap','alphaTest','opacity','transparent','side','vertexColors','bumpMap','bumpScale','emissive','emissiveMap','emissiveIntensity','userData']){const v=p[k];if(v!==undefined){if(v?.isColor||v?.isVector2)physical[k].copy(v);else physical[k]=v;}}p.dispose();p=physical;}
   if(instanced)p.vertexColors=true;
-  if(p.isMeshPhysicalMaterial){if(role==='leaf'||role==='needle'){p.transmission=role==='needle'?.15:.27;p.thickness=0;p.ior=1.43;p.specularIntensity=.35;p.clearcoat=0;p.metalness=0;}else if(role==='water'||role==='glass'){p.transmission=role==='water'?.94:.92;p.thickness=0;p.ior=role==='water'?1.333:1.5;p.metalness=0;p.transparent=false;p.opacity=1;p.roughness=Math.max(.025,Math.min(.20,p.roughness));}else if(['bark','ground','mineral','metal'].includes(role)){p.transmission=0;}}
+  if(p.isMeshPhysicalMaterial){if(role==='leaf'||role==='needle'){p.transmission=role==='needle'?.24:.30;p.thickness=0;p.ior=1.43;p.specularIntensity=.32;p.clearcoat=0;p.metalness=0;p.side=T.DoubleSide;p.roughness=Math.max(.76,p.roughness);if(role==='needle')p.color.lerp(new T.Color(0xffffff),.10);}else if(role==='water'||role==='glass'){p.transmission=role==='water'?.94:.92;p.thickness=0;p.ior=role==='water'?1.333:1.5;p.metalness=0;p.transparent=false;p.opacity=1;p.roughness=Math.max(.025,Math.min(.20,p.roughness));}else if(['bark','ground','mineral','metal'].includes(role)){p.transmission=0;}}
   // Thin-film BSDF is a colored transmission approximation, not full botanical SSS.
   if(m.userData?.formaRowanPBR&&p.isMeshPhysicalMaterial){p.transmission=m.userData.formaRowanPBR.pathTransmission??.34;p.thickness=0;p.attenuationDistance=Infinity;p.ior=1.43;p.roughness=.88;p.specularIntensity=.30;p.clearcoat=0;p.normalScale.multiplyScalar(.82);}
   if(!p.normalMap&&p.bumpMap&&p.bumpScale){const strength=Math.min(8,Math.max(.5,Math.abs(p.bumpScale)*250)),key=p.bumpMap.uuid+'|'+strength;let t=bumpCache.get(key);if(!t){t=bumpToNormal(T,p.bumpMap,strength);if(t){bumpCache.set(key,t);ownedTextures.push(t);}}if(t){p.normalMap=t;p.normalScale.set(.75,.75);}}
-  p.displacementMap=null;p.displacementScale=0;p.envMap=null;p.bumpMap=null;p.aoMap=null;p.lightMap=null;if(atmosphere.traceSceneTest==='no-normal'){p.normalMap=null;if(p.isMeshPhysicalMaterial)p.clearcoatNormalMap=null;}p.onBeforeCompile=()=>{};p.customProgramCacheKey=()=>'';materials.push(p);materialCache.set(key,p);return p;
+  if(role==='bark'&&p.normalScale)p.normalScale.multiplyScalar(.65);p.displacementMap=null;p.displacementScale=0;p.envMap=null;p.bumpMap=null;p.aoMap=null;p.lightMap=null;if(atmosphere.traceSceneTest==='no-normal'){p.normalMap=null;if(p.isMeshPhysicalMaterial)p.clearcoatNormalMap=null;}p.onBeforeCompile=()=>{};p.customProgramCacheKey=()=>'';materials.push(p);materialCache.set(key,p);return p;
  };
  try{
  let processed=0;
@@ -372,7 +372,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  });
  const env=sky.texture;scene.environment=env;scene.background=['sky','clay','no-normal'].includes(atmosphere.traceSceneTest)?new T.Color(night?0x26374f:0x9bb7d0):env;
  // Decouple visible sky brightness from irradiance to avoid washing out surfaces.
- scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1:sky.photographic?.95:1.04;
+ scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1.35:sky.photographic?1.40:1.35;
  scene.backgroundIntensity=sky.photographic?.87:night?.85:1.0;
  scene.updateMatrixWorld(true);
  if(atmosphere.traceSceneTest==='clay'){const clay=new T.MeshStandardMaterial({color:0xbababa,roughness:.8,metalness:0,side:T.DoubleSide});materials.push(clay);scene.traverse(o=>{if(o.isMesh)o.material=clay;});}
