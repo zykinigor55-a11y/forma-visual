@@ -4,7 +4,7 @@
  * asset. Every species has a deterministic seed and physically rooted stems.
  */
 import {foliageMaterial,normalizeFoliagePalette} from './forma-landscape-3d-plant-materials.js';
-import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
+import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js?v=R23';
 import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R22';
 
 export const NATIVE_UNDERSTORY=Object.freeze({
