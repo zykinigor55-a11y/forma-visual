@@ -2,7 +2,7 @@
  * systems and real roof planes. These are editable, procedural Three.js models.
  * Presets do not infer unknown details from a user's architectural photograph. */
 import {buildingHeights,facadeOpeningSchedule,wallPatches,rainwaterDrainPlan,windowTrimProfile,scandiRoofOverhang} from './forma-landscape-3d-architecture-geometry.js';
-import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js?v=visual-R19';
+import {measuredFacadePatchGeometry,applyArchitecturalPBR} from './forma-landscape-3d-house-finish.js?v=R24';
 import {addOpenEaveGutter} from './forma-landscape-3d-roof-drainage.js';
 import {addScandiRoofSnowGuards,addScandiTerrace} from './forma-landscape-3d-scandi-reference-extras.js';
 import {SCANDI_DETAIL,scandiTimberMaterial,addScandinavianVerticalCladding,addScandiGableCladding,addScandiRoofEdgeDetails,addScandiCornerDetails,addScandiEntrance} from './forma-landscape-3d-scandinavian-detail.js';
@@ -99,8 +99,8 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
  const g=new T.Group();
  const frame=mat(T,tripleGlazed?SCANDI_DETAIL.windowFrame:'#181E20',tripleGlazed?.40:.52,tripleGlazed?0:.5),recess=mat(T,'#121A1C',.91,.02),glass=new T.MeshPhysicalMaterial({
   // Photographic architectural glazing reflects its environment rather than glowing cyan.
-  color:lightsOn?'#AAB9B1':'#6C888B',metalness:0,roughness:.19,transparent:true,opacity:lightsOn&&cfg.visibility==='full'?.45:lightsOn&&cfg.visibility==='partial'?.62:.88,
-  ior:1.46,clearcoat:.48,clearcoatRoughness:.16,side:T.FrontSide,depthWrite:true,
+  color:lightsOn?'#D3D4CB':'#A6B0B1',metalness:0,roughness:.105,transparent:true,opacity:lightsOn&&cfg.visibility==='full'?.32:lightsOn&&cfg.visibility==='partial'?.47:.55,
+  ior:1.50,clearcoat:.26,clearcoatRoughness:.09,side:T.FrontSide,depthWrite:false,envMapIntensity:1.05,
   emissive:lightsOn?interiorLightColor(cfg.temperature):'#000000',emissiveIntensity:glowStrength
  });
  const w=Math.max(.45,width),h=Math.max(.6,height),edge=.084;
@@ -112,15 +112,15 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
   // Three separate transparent 4mm leaves, dual cavities and visible
   // warm-edge spacers. The frame is uPVC (no metallic reflective finish).
   const pane=new T.MeshPhysicalMaterial({
-   color:lightsOn?'#E0CBB3':'#99B6BD',metalness:0,roughness:.058,
+   color:lightsOn?'#D8D1C4':'#C2CACB',metalness:0,roughness:.07,
    emissive:lightsOn?interiorLightColor(cfg.temperature):'#000000',emissiveIntensity:glowStrength*.19,
-   ior:1.52,transparent:true,opacity:.28,depthWrite:false,
+   ior:1.52,transparent:true,opacity:.18,depthWrite:false,envMapIntensity:1.1,
    side:T.DoubleSide,clearcoat:.15,clearcoatRoughness:.07
   });
   for(const [i,z] of [.053,.073,.093].entries()){
    const glassLeaf=box(g,T,w-edge*2,h-edge*2,.004,0,0,z,pane);
    glassLeaf.userData.architecturePart=['ig-unit-outer-pane','ig-unit-middle-pane','ig-unit-inner-pane'][i];
-   glassLeaf.userData.glassThicknessMm=4;
+   glassLeaf.userData.glassThicknessMm=4;glassLeaf.castShadow=false;
   }
   const spacer=mat(T,'#383D3B',.82,.06);
   for(const z of [.063,.083]){
@@ -153,7 +153,7 @@ function windowGroup(T,width,height,night=false,panoramic=false,tripleGlazed=fal
   }
   g.userData.windowSystem={frame:'uPVC 76mm',unit:'triple glazed 4-16-4-16-4',
    panes:3,spacer:'warm-edge',nominalPaneThicknessMm:4};
- }else box(g,T,w,h,.022,0,0,.095,glass);
+ }else {const pane=box(g,T,w,h,.022,0,0,.095,glass);pane.castShadow=false;pane.userData.architecturePart='insulated-window-glass';}
  for(const side of [-1,1])box(g,T,edge,h+edge*2,tripleGlazed?.076:.16,side*(w+edge)/2,0,tripleGlazed?.089:.065,frame);
  for(const side of [-1,1])box(g,T,w+edge*2,edge,tripleGlazed?.076:.16,0,side*(h+edge)/2,tripleGlazed?.089:.065,frame);
  const mullion=panoramic?2:1;
@@ -674,7 +674,7 @@ export function createArchitecturalBuilding(THREE,building,{night=false,interior
  const wallTex=texture(THREE,preset.wall,walls).clone(),roofKey=preset.roofFinish==='tile'?'tile':'standing';
  const roofTex=texture(THREE,roofKey,roofTint).clone();
  wallTex.needsUpdate=true;roofTex.needsUpdate=true;
- const wallMaterial=mat(THREE,'#FFFFFF',.86,.02,wallTex);
+ const wallMaterial=mat(THREE,'#FFFFFF',.89,0,wallTex);wallMaterial.envMapIntensity=.32;
  wallMaterial.userData.tileMetres=preset.wall==='brick'?1.24:
   ['plaster','stone'].includes(preset.wall)?2.1:1.8;
  // Source-authored canvas relief: subtle fiber and mortar variation in grazing light,
@@ -684,7 +684,8 @@ export function createArchitecturalBuilding(THREE,building,{night=false,interior
  const roofColor=new THREE.Color(b.roofColor||'#394348');
  roofColor.lerp(new THREE.Color('#FAFAFA'),.12); // Keep user-selected dark roof appearance.
  const roofMaterial=mat(THREE,roofColor,preset.roofFinish==='standing'?.36:.69,
-  preset.roofFinish==='standing'?.76:preset.roofFinish==='tile'?.05:.14,roofTex);
+  preset.roofFinish==='standing'?.48:preset.roofFinish==='tile'?.02:.06,roofTex);
+ roofMaterial.envMapIntensity=preset.roofFinish==='standing'?.62:.25;
  roofMaterial.bumpMap=roofTex;roofMaterial.bumpScale=preset.roofFinish==='tile'?.012:.003;
  // UV coordinates now flow uninterrupted across real window/door openings.
  wallTex.repeat.set(1,1);
@@ -696,7 +697,8 @@ export function createArchitecturalBuilding(THREE,building,{night=false,interior
   ownedTextures:ownedHouseTextures});
  // Exact footprint is represented by the house body. Decorative overhang is not
  // included in measured area, and never shifts parcel coordinates.
- const foundation=mat(THREE,'#373B3C',.92,.05,texture(THREE,'stone','#777D80'));
+ const foundation=mat(THREE,'#656662',.96,0,texture(THREE,'stone','#777D80'));
+ foundation.bumpMap=foundation.map;foundation.bumpScale=.016;foundation.envMapIntensity=.23;
  box(g,THREE,w,.48,d,0,.24,0,foundation);
  // A separate reference-accurate A-frame: built-in roof apertures and a
  // full-height triangular facade. Never fall back to ordinary house walls.
