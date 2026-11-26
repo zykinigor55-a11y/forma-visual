@@ -511,11 +511,11 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R104</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R105</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
-  <button id="save" class="primary">Сохранить 3D</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
+  <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
 <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза</a>
 <a href="forma-landscape-3d.html?scene=oak-r76&v=76" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
@@ -804,6 +804,7 @@ import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setClov
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R70';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
 import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R75';
+import {exportCyclesJob,CYclesPresets} from './forma-cycles-export-r105.js?v=R105';
 import {createWindSystem,windRipple} from './forma-wind-r91.js?v=R91';
 const windR74=createWindSystem(THREE);let windAmountR74=window.innerWidth<=850?15:25;try{const v=localStorage.getItem('forma-wind-r75');if(v!==null)windAmountR74=Math.max(0,Math.min(100,Number(v)||0));}catch{}
 let pathTraceR72=null,gpuLostR75=false,gpuMenuR75=null;
@@ -825,7 +826,7 @@ import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composi
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, normalizeLawnR90, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=R93';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
-import {createDetailedFir,woodTexture,adoptFirPhotoMaps,firStage} from './forma-landscape-3d-fir-r104.js?v=R104';
+import {createDetailedFir,woodTexture,adoptFirPhotoMaps,firStage} from './forma-landscape-3d-fir-r105.js?v=R105';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
@@ -888,7 +889,7 @@ const treeTestScene=new URLSearchParams(location.search).get('scene');
 const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55','birch-r56'].includes(treeTestScene);
 const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76'].includes(treeTestScene);
 const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-r83','lawn-r84','lawn-r85','lawn-r86','lawn-r87','lawn-r88','lawn-r89','lawn-r90','lawn-r91','lawn-r92','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal',lawnFlowersR88=75,lawnWheatHeightR88=76,lawnHeightR90=100,lawnDensityR90=100,lawnPressedR90=45,lawnPanelR90=null,lawnPanelSyncR90=null;
-const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104'].includes(treeTestScene);
+const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105'].includes(treeTestScene);
 const treeLineupMode=lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -900,6 +901,7 @@ const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
 let lastWalkFrame=0;
 let currentPlantCount=0,currentPlantQuality=1;const renderQuality='high';let autoReduced=false,slowFrameStreak=0;
+let graphicsChoiceR105='auto';try{graphicsChoiceR105=localStorage.getItem('forma-graphics-r105')||'auto'}catch{}
 // Always prefer the original high-detail botanical assets.
 function treeSourceChoice(){return 'glb';}
 const botanicalGroups=[];let lastBotanicalLodAt=0;const GRID=TERRAIN_GRID;const houseThumbs=new Map(),importedHouseModels=new Map(),importedPlantModels=new Map();
@@ -941,7 +943,7 @@ function appendTreeAssetInfo(el,o){
  el.prepend(card);
 }
 // Report actual rendered meshes for both historical storage paths.
-window.FORMA_FIR_DIAGNOSTICS=()=>pickables.filter(g=>{const ref=selectable(g.userData.key);return ref?.obj&&(ref.obj.catalogId==='ph-fir-sapling'||ref.type==='extra'&&isLegacyFirExtra(ref.obj.type))}).map(g=>{let triangles=0;g.traverse(n=>{if(n.isMesh&&!n.userData.selectionProxy)triangles+=Math.floor((n.geometry.index?.count??n.geometry.attributes.position?.count??0)/3)*(n.isInstancedMesh?n.count:1)});return {key:g.userData.key,model:g.userData.firR104?'FORMA fir R104':g.userData.firR103?'FORMA coverage fir R103':g.userData.firR102?'FORMA adaptive fir R102':g.userData.firR101?'FORMA textured cone fir R101':g.userData.firR100?'FORMA dense needle fir R100':g.userData.firR99?'FORMA all geometry fir R99':g.userData.firR98?'FORMA volumetric fir R98':g.userData.firR97?'FORMA dense fir R97':g.userData.firR96?'FORMA continuous fir R96':g.userData.firHybridR28?'FORMA hybrid fir R28':g.userData.firNativeR26?'FORMA detailed fir R26':g.userData.realGlb?'GLB':'unknown',triangles,height:g.userData.physicalHeight,diameter:g.userData.crownDiameter};});
+window.FORMA_FIR_DIAGNOSTICS=()=>pickables.filter(g=>{const ref=selectable(g.userData.key);return ref?.obj&&(ref.obj.catalogId==='ph-fir-sapling'||ref.type==='extra'&&isLegacyFirExtra(ref.obj.type))}).map(g=>{let triangles=0;g.traverse(n=>{if(n.isMesh&&!n.userData.selectionProxy)triangles+=Math.floor((n.geometry.index?.count??n.geometry.attributes.position?.count??0)/3)*(n.isInstancedMesh?n.count:1)});return {key:g.userData.key,model:g.userData.firR105?'FORMA adaptive fir R105':g.userData.firR104?'FORMA fir R104':g.userData.firR103?'FORMA coverage fir R103':g.userData.firR102?'FORMA adaptive fir R102':g.userData.firR101?'FORMA textured cone fir R101':g.userData.firR100?'FORMA dense needle fir R100':g.userData.firR99?'FORMA all geometry fir R99':g.userData.firR98?'FORMA volumetric fir R98':g.userData.firR97?'FORMA dense fir R97':g.userData.firR96?'FORMA continuous fir R96':g.userData.firHybridR28?'FORMA hybrid fir R28':g.userData.firNativeR26?'FORMA detailed fir R26':g.userData.realGlb?'GLB':'unknown',triangles,height:g.userData.physicalHeight,diameter:g.userData.crownDiameter};});
 function treeModelDiagnostics(){
  // Read-only scene health to catch PBR-to-procedural substitutions on Android.
  // Avoid exposing stored project names, tokens or model binary data.
@@ -1132,7 +1134,7 @@ function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;readLawnSettingsR90();const old=cachedGroundTexture;cachedGroundTexture=null;save();rebuild();old?.dispose();lawnPanelSyncR90?.();renderHouseLibrary()}
 function makeTreeLineup(){
  const d=freshProject();if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
- if(firTestMode){const p=firStage(45);d.title='FORMA · Пихта · R104';d.site={width:40,height:40,orientation:0,boundary:null};d.objects=[{id:'fir-test',catalogId:'ph-fir-sapling',type:'trees',x:20,y:20,height:p.height,diameter:p.diameter,rotation:0,variant:1,fir:{age:p.age}}];d.buildings=[];return normalizeProject(d);}
+ if(firTestMode){const p=firStage(45);d.title='FORMA · Пихта · R105';d.site={width:40,height:40,orientation:0,boundary:null};d.objects=[{id:'fir-test',catalogId:'ph-fir-sapling',type:'trees',x:20,y:20,height:p.height,diameter:p.diameter,rotation:0,variant:1,fir:{age:p.age}}];d.buildings=[];return normalizeProject(d);}
  d.title=oakTestMode?'FORMA · Дуб черешчатый · R76':birchTestMode?'FORMA · Берёза повислая · R56':'FORMA · Ива плакучая · R51';
  d.site={width:32,height:32,orientation:0,boundary:null};
  d.objects=oakTestMode?[{id:'oak-test',catalogId:'oak',type:'trees',x:16,y:16,height:17,diameter:15,rotation:0,variant:1,oak:{age:60}}]:birchTestMode?[{id:'birch-test',catalogId:'birch',type:'trees',x:16,y:16,height:16,diameter:9,rotation:0,variant:1,birch:{age:35}}]:[{id:'willow-test',catalogId:'willow',type:'trees',x:16,y:16,height:11,diameter:11,rotation:0,variant:1,willow:{age:35}}];
@@ -1152,7 +1154,7 @@ function openLawnPanelR90(){
 function setupLawnPreviewR77(){
  if(lawnPanelR90)return;const panel=document.createElement('div');lawnPanelR90=panel;panel.id='lawnSettingsR92';panel.setAttribute('aria-label','Настройки газона');
  panel.style.cssText='position:absolute;z-index:26;bottom:76px;left:50%;transform:translateX(-50%);width:min(390px,94%);padding:10px;display:grid;gap:6px;background:#24282df5;border:1px solid #777;border-radius:10px;color:#eee;max-height:65dvh;overflow:auto';
- const title=document.createElement('button');title.textContent='ГАЗОН · R104 ▾';title.type='button';title.style.cssText='min-height:34px;font-weight:600';
+ const title=document.createElement('button');title.textContent='ГАЗОН · R105 ▾';title.type='button';title.style.cssText='min-height:34px;font-weight:600';
  const body=document.createElement('div');body.style.cssText='display:grid;gap:6px';
  const options=document.createElement('div');options.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:25dvh;overflow:auto';
  const desc=document.createElement('small');desc.style.cssText='text-align:center;color:#c9c9c9';
@@ -1173,12 +1175,12 @@ function setupLawnPreviewR77(){
  const wheatRow=range('Высота колосьев',35,140,()=>lawnWheatHeightR88,' см',n=>{lawnWheatHeightR88=n;},regen);
  const views=document.createElement('div');views.style.cssText='display:flex;gap:6px;justify-content:center';
  function view(close=false){if(state.view!=='3d')setView('3d');controls.target.set(0,0,0);camera.position.set(close?.65:3.7,close?.38:3.5,close?1.25:5.4);camera.lookAt(controls.target);controls.update();updateSun();invalidateTurfDetail();updateTurfDetail();renderGate.invalidate();renderPhotoFrame();}
- function sync(expand=false){if(expand){body.hidden=false;body.style.display='grid';title.textContent='ГАЗОН · R104 ▾';}const source=LAWN_PROFILES[lawnTypeR77];flowerRow.style.display=(source.herbs==='clover'||source.flowers)?'grid':'none';flowerRow.firstElementChild.textContent=lawnTypeR77==='clover'?'Количество белых цветов':lawnTypeR77==='dandelionPuff'?'Количество пушистых головок':'Количество жёлтых цветов';wheatRow.style.display=source.crop?'grid':'none';heightRow.style.display=pressedRow.style.display=source.crop?'none':'grid';desc.textContent=source.description+(lawnIntegratedR90?' · весь участок':' · тестовая сцена');sliders.forEach(fn=>fn());for(const b of options.children){const active=b.dataset.lawn===lawnTypeR77;b.setAttribute('aria-pressed',String(active));b.style.background=active?'#514839':'';b.style.borderColor=active?'#c9ae85':'';}}
+ function sync(expand=false){if(expand){body.hidden=false;body.style.display='grid';title.textContent='ГАЗОН · R105 ▾';}const source=LAWN_PROFILES[lawnTypeR77];flowerRow.style.display=(source.herbs==='clover'||source.flowers)?'grid':'none';flowerRow.firstElementChild.textContent=lawnTypeR77==='clover'?'Количество белых цветов':lawnTypeR77==='dandelionPuff'?'Количество пушистых головок':'Количество жёлтых цветов';wheatRow.style.display=source.crop?'grid':'none';heightRow.style.display=pressedRow.style.display=source.crop?'none':'grid';desc.textContent=source.description+(lawnIntegratedR90?' · весь участок':' · тестовая сцена');sliders.forEach(fn=>fn());for(const b of options.children){const active=b.dataset.lawn===lawnTypeR77;b.setAttribute('aria-pressed',String(active));b.style.background=active?'#514839':'';b.style.borderColor=active?'#c9ae85':'';}}
  lawnPanelSyncR90=sync;
  for(const [id,p] of Object.entries(LAWN_PROFILES)){const b=document.createElement('button');b.type='button';b.dataset.lawn=id;b.textContent=p.name;b.style.cssText='min-height:38px;font-size:12px;white-space:normal';b.onclick=()=>{if(lawnTypeR77===id)return;lawnTypeR77=id;commitLawnR90();const old=cachedGroundTexture;cachedGroundTexture=null;rebuild();old?.dispose();sync();updateTurfDetail();renderGate.invalidate();};options.append(b);}
  if(lawnTestMode)for(const [label,close] of [['Общий вид',false],['Макро',true]]){const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='flex:1;min-height:38px';b.onclick=()=>view(close);views.append(b);}
  if(lawnIntegratedR90){const close=document.createElement('button');close.type='button';close.textContent='Закрыть настройки';close.style.cssText='flex:1;min-height:36px';close.onclick=()=>{panel.style.display='none';if(firTestMode){const tree=$('#forma-lineup-panel-r74');if(tree)tree.style.display='flex';}};views.append(close);}
- title.onclick=()=>{body.hidden=!body.hidden;body.style.display=body.hidden?'none':'grid';title.textContent='ГАЗОН · R104 '+(body.hidden?'▴':'▾');};
+ title.onclick=()=>{body.hidden=!body.hidden;body.style.display=body.hidden?'none':'grid';title.textContent='ГАЗОН · R105 '+(body.hidden?'▴':'▾');};
  body.append(options,desc,settings,views);panel.append(title,body);document.querySelector('main').append(panel);
  if(lawnTestMode){for(const id of ['mobileHouseSelect','sceneCameraCycle','focusHouse','renderComposition','alphaSceneButton']){const b=$('#'+id);if(b)b.style.setProperty('display','none','important');}sync();view(true);}else{sync();panel.style.display='none';const shortcut=document.createElement('button');shortcut.id='lawnShortcutR92';shortcut.type='button';shortcut.textContent='Газон';shortcut.setAttribute('aria-label','Открыть настройки газона');shortcut.onclick=()=>{if(state.tool!=='select')chooseTool('select');openLawnPanelR90();};document.querySelector('main').append(shortcut);}
 }
@@ -1186,7 +1188,7 @@ function setupLineupNavigation(){
  const panel=document.createElement('div');
  panel.style.cssText='position:absolute;z-index:15;bottom:76px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;width:min(380px,94%);max-width:94%;padding:9px;background:#24282df5;border:1px solid #777;border-radius:9px;color:#eee';
  panel.innerHTML='<div style="width:100%;font-size:10px;letter-spacing:1.5px;text-align:center;color:#bfc1c2">ВОЗРАСТ ИВЫ · R51</div><div style="width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px"><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="10">Молодая</button><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="35">Взрослая</button><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="75">Старая</button></div><a href="./forma-landscape-3d.html" style="color:#e8d1a9;padding:6px">Проект</a>';
- if(firTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','ПИХТА · R104').replace('data-test-age="35"','data-test-age="45"').replace('data-test-age="75"','data-test-age="100"');
+ if(firTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','ПИХТА · R105').replace('data-test-age="35"','data-test-age="45"').replace('data-test-age="75"','data-test-age="100"');
  if(birchTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','БЕРЁЗА ПОВИСЛАЯ · R56');
  if(oakTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','ДУБ ЧЕРЕШЧАТЫЙ · R76').replace('data-test-age="10">Молодая','data-test-age="15">Молодой').replace('data-test-age="35">Взрослая','data-test-age="60">Взрослый').replace('data-test-age="75">Старая','data-test-age="150">Вековой');
  if(oakTestMode){const b=document.createElement('button');b.type='button';b.textContent='Рендер';b.style.cssText='width:100%;min-height:40px;background:#d8c3a0;color:#211e19;font-weight:600;border-radius:8px';b.onclick=openRenderMenuR75;panel.append(b);const d=document.createElement('div');d.id='forma-r71-render-status';d.style.cssText='width:100%;font-size:10px;text-align:center;color:#c5c5c5';d.textContent='Проверка проходов рендера';panel.append(d);}
@@ -1227,14 +1229,53 @@ function gpuProfileR75(){
  return {mobile,weak,capable,level:weak||!capable?'safe':memory>=8&&cores>=8?'high':'balanced'};
 }
 function closeRenderMenuR75(){gpuMenuR75?.remove();gpuMenuR75=null;}
+// R105 viewport quality is separate from final render quality.
+const GRAPHICS_R105={eco:{label:'Эконом',ratio:.85,shadow:1024},standard:{label:'Стандарт',ratio:1.15,shadow:2048},high:{label:'Высокое',ratio:1.65,shadow:4096},ultra:{label:'Ультра',ratio:2,shadow:4096}};
+function chooseGraphicsR105(){
+ if(GRAPHICS_R105[graphicsChoiceR105])return graphicsChoiceR105;
+ const p=gpuProfileR75(),gl=renderer?.getContext(),ext=gl?.getExtension('WEBGL_debug_renderer_info'),name=ext?String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||''):'';
+ if(/swiftshader|llvmpipe|software/i.test(name))return 'eco';
+ if(p.mobile)return p.weak?'standard':'high';
+ if(/RTX|Radeon RX|Intel.*Arc/i.test(name)&&!p.weak)return 'high';
+ return p.weak?'eco':'standard';
+}
+function applyGraphicsR105(rebuildNow=true){
+ const level=chooseGraphicsR105(),q=GRAPHICS_R105[level];window.FORMA_GRAPHICS_R105=level;
+ const initialReduced=autoReduced;autoReduced=level==='eco'||(graphicsChoiceR105==='auto'&&initialReduced);
+ slowFrameStreak=0;
+ if(renderer){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,q.ratio));renderer.shadowMap.enabled=true;renderer.shadowMap.needsUpdate=true;}
+ const sun=scene?.getObjectByName('sun');if(sun){const n=Math.min(renderer.capabilities.maxTextureSize,q.shadow);if(sun.shadow.mapSize.x!==n){sun.shadow.map?.dispose();sun.shadow.map=null;sun.shadow.mapSize.set(n,n);}sun.shadow.needsUpdate=true;}
+ if(rebuildNow&&root){invalidateTurfDetail();rebuild();resize();updateSun();renderGate.invalidate();}
+ return level;
+}
+function openGraphicsR105(){
+ if(gpuMenuR75||pathTraceR72?.active)return;
+ const overlay=document.createElement('div');gpuMenuR75=overlay;overlay.style.cssText='position:fixed;inset:0;z-index:100001;background:#101216b8;display:grid;place-items:center;padding:16px';
+ const card=document.createElement('section');card.style.cssText='width:min(420px,100%);background:#24272d;color:#eee;border:1px solid #5e6066;border-radius:14px;padding:18px;display:grid;gap:12px;max-height:90dvh;overflow:auto';
+ card.innerHTML='<strong style="font-size:19px">Качество 3D-графики</strong><small>Детализация редактора, не финального рендера.</small><select data-graphics style="padding:12px"><option value="auto">Автоматически</option><option value="eco">Эконом · слабые устройства</option><option value="standard">Стандарт</option><option value="high">Высокое</option><option value="ultra">Ультра · мощная видеокарта</option></select><small data-spec></small><button data-apply class="primary">Применить</button><button data-close>Закрыть</button>';
+ const sel=card.querySelector('[data-graphics]');sel.value=graphicsChoiceR105;
+ const show=()=>{const n=sel.value==='auto'?chooseGraphicsR105():sel.value,q=GRAPHICS_R105[n];card.querySelector('[data-spec]').textContent=q.label+' · тени '+q.shadow+'² · масштаб пикселей до '+q.ratio+'×. При перегрузке разрешение может снижаться.';};sel.onchange=show;show();
+ card.querySelector('[data-apply]').onclick=()=>{graphicsChoiceR105=sel.value;try{localStorage.setItem('forma-graphics-r105',graphicsChoiceR105)}catch{}closeRenderMenuR75();const level=applyGraphicsR105();status('Графика: '+GRAPHICS_R105[level].label);};
+ card.querySelector('[data-close]').onclick=closeRenderMenuR75;overlay.onclick=e=>{if(e.target===overlay)closeRenderMenuR75()};overlay.append(card);document.body.append(overlay);
+}
+function openCyclesR105(){
+ if(gpuMenuR75||pathTraceR72?.active)return;
+ const overlay=document.createElement('div');gpuMenuR75=overlay;overlay.style.cssText='position:fixed;inset:0;z-index:100001;background:#101216b8;display:grid;place-items:center;padding:16px';
+ const card=document.createElement('section');card.style.cssText='width:min(420px,100%);max-height:90dvh;overflow:auto;background:#24272d;color:#eee;border:1px solid #5e6066;border-radius:14px;padding:18px;display:grid;gap:10px';
+ card.innerHTML='<strong style="font-size:19px">FORMA PRO · Cycles</strong><small>Локальный рендер · экспериментальная интеграция. Нужен установленный Blender 4.5 LTS или новее.</small><label>Качество финального кадра</label><select data-quality style="padding:10px"><option value="draft">Черновик · 1280 px · 32 сэмпла</option><option value="standard">Full HD · 128 сэмплов</option><option value="high" selected>2K · 256 сэмплов</option><option value="ultra">4K · 512 сэмплов</option></select><label>Вычислительное устройство</label><select data-device style="padding:10px"><option value="AUTO">Автоматически</option><option value="OPTIX">NVIDIA RTX · OptiX</option><option value="CUDA">NVIDIA · CUDA</option><option value="HIP">AMD · HIP</option><option value="ONEAPI">Intel · oneAPI</option><option value="METAL">Apple · Metal</option><option value="CPU">Процессор</option></select><small data-info>Распакуйте ZIP и запустите RENDER-WINDOWS.bat. PNG и BLEND сохранятся в той же папке. При недоступности выбранного GPU скрипт использует CPU.</small><button data-export class="primary">Экспорт проекта Cycles (ZIP)</button><a href="https://www.blender.org/download/" target="_blank" rel="noopener">Установить Blender бесплатно</a><button data-close>Назад</button>';
+ const button=card.querySelector('[data-export]'),info=card.querySelector('[data-info]');card.querySelector('[data-close]').onclick=()=>{closeRenderMenuR75();openRenderMenuR75()};
+ button.onclick=async()=>{button.disabled=true;try{if(state.view==='2d')setView('3d');const result=await exportCyclesJob(THREE,{scene,root,camera,quality:card.querySelector('[data-quality]').value,device:card.querySelector('[data-device]').value,onProgress:m=>info.textContent=m});info.textContent='ZIP сформирован. Объектов: '+result.meshes+', инстансов: '+result.instances+'. Распакуйте и запустите BAT. '+(result.warnings.length?'Пропущено анимированных объектов: '+result.warnings.length+'.':'');}catch(err){info.textContent='Ошибка экспорта: '+err.message;}finally{button.disabled=false}};
+ overlay.append(card);document.body.append(overlay);
+}
+
 function openRenderMenuR75(reason=''){
  if(pathTraceR72?.active||gpuMenuR75)return;
  if(typeof reason!=='string')reason='';
  const p=gpuProfileR75(),overlay=document.createElement('div');gpuMenuR75=overlay;
  overlay.style.cssText='position:fixed;inset:0;z-index:100001;background:#101216b8;display:grid;place-items:center;padding:16px';
  const card=document.createElement('section');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Способ рендера');
- card.style.cssText='width:min(420px,100%);background:#24272d;color:#eee;border:1px solid #5e6066;border-radius:14px;padding:18px;display:grid;gap:10px;box-shadow:0 20px 80px #0006';
- card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:19px">Рендер</strong><button data-close aria-label="Закрыть">✕</button></div><small data-info style="color:#c6c8cc"></small><label style="font-weight:600">AI-рендер</label><select data-model style="padding:10px;border-radius:8px"><option value="nano-banana-2.1">Фотографический</option><option value="gpt-image-2.6">Сбалансированный</option></select><button data-ai class="primary" style="min-height:46px">Создать AI-рендер</button><small>Снимок текущего ракурса отправляется в существующий AI-сервис. Платный запрос только после подтверждения.</small><hr style="width:100%;opacity:.25"><label style="font-weight:600">Рендер видеокартой</label><select data-quality style="padding:10px;border-radius:8px"><option value="auto">Автоматическое качество</option><option value="safe">Облегчённый PBR · без трассировки</option><option value="balanced">Трассировка · стандарт</option><option value="high">Трассировка · высокое качество</option></select><button data-gpu style="min-height:46px">Рендер видеокартой</button><small data-hint style="color:#bfc2c8"></small>';
+ card.style.cssText='width:min(420px,100%);max-height:90dvh;overflow:auto;background:#24272d;color:#eee;border:1px solid #5e6066;border-radius:14px;padding:18px;display:grid;gap:10px;box-shadow:0 20px 80px #0006';
+ card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:19px">Рендер</strong><button data-close aria-label="Закрыть">✕</button></div><small data-info style="color:#c6c8cc"></small><label style="font-weight:600">AI-рендер</label><select data-model style="padding:10px;border-radius:8px"><option value="nano-banana-2.1">Фотографический</option><option value="gpt-image-2.6">Сбалансированный</option></select><button data-ai class="primary" style="min-height:46px">Создать AI-рендер</button><small>Снимок текущего ракурса отправляется в существующий AI-сервис. Платный запрос только после подтверждения.</small><hr style="width:100%;opacity:.25"><label style="font-weight:600">Рендер видеокартой</label><select data-quality style="padding:10px;border-radius:8px"><option value="auto">Автоматическое качество</option><option value="safe">Облегчённый PBR · без трассировки</option><option value="balanced">Трассировка · стандарт</option><option value="high">Трассировка · высокое качество</option></select><button data-gpu style="min-height:46px">Рендер видеокартой</button><small data-hint style="color:#bfc2c8"></small><hr style="width:100%;opacity:.25"><button data-cycles style="min-height:46px">FORMA PRO · Blender Cycles</button><small>Локальный аппаратный рендер · экспорт ZIP</small>';
  card.querySelector('[data-info]').textContent=reason||(!p.capable?'WebGL сейчас недоступен. Сначала восстановите 3D-сцену.':p.weak?'Рекомендуется AI или облегчённый GPU-режим.':'Доступно автоматическое качество GPU.');
  const model=card.querySelector('[data-model]');model.value=$('#aiRenderModel').value;
  const quality=card.querySelector('[data-quality]');for(const opt of quality.options)if(['balanced','high'].includes(opt.value))opt.disabled=p.weak||!p.capable;
@@ -1242,6 +1283,7 @@ function openRenderMenuR75(reason=''){
  card.querySelector('[data-ai]').disabled=gpuLostR75||!renderer||!!renderer.getContext().isContextLost();
  card.querySelector('[data-gpu]').disabled=gpuLostR75||!renderer||!!renderer.getContext().isContextLost();
  card.querySelector('[data-close]').onclick=closeRenderMenuR75;
+ card.querySelector('[data-cycles]').onclick=()=>{closeRenderMenuR75();openCyclesR105()};
  card.querySelector('[data-ai]').onclick=()=>{$('#aiRenderModel').value=model.value;closeRenderMenuR75();renderAi();};
  card.querySelector('[data-gpu]').onclick=()=>{const level=quality.value==='auto'?p.level:quality.value;closeRenderMenuR75();if(level==='safe')renderSafeGPU75();else startPathTraceR72(level);};
  overlay.onclick=e=>{if(e.target===overlay)closeRenderMenuR75();};overlay.append(card);document.body.append(overlay);
@@ -1269,6 +1311,7 @@ function startPathTraceR72(profile='balanced'){
 }
 function initialize(){
  $('#pathTraceR72Button').onclick=openRenderMenuR75;
+ $('#graphicsR105').onclick=openGraphicsR105;
  const windInput=$('#windR74'),windLabel=$('#windR74Value'),quickWind=$('#quickWindR91'),quickLabel=$('#quickWindR91Value');const setWind=v=>{windAmountR74=Math.max(0,Math.min(100,Number(v)||0));windInput.value=quickWind.value=String(windAmountR74);windLabel.textContent=quickLabel.textContent=windAmountR74+'%';try{localStorage.setItem('forma-wind-r75',String(windAmountR74))}catch{}renderGate.invalidate();};windInput.oninput=()=>setWind(windInput.value);quickWind.oninput=()=>setWind(quickWind.value);setWind(windAmountR74);
  // On a phone the 3D canvas, not a tiny library drawer, is the starting point.
  activateMobilePanel(window.innerWidth<=850?'scene':'tools');
@@ -1296,7 +1339,7 @@ function initialize(){
  });
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
- if(treeLineupMode){doc=makeTreeLineup();extra=[];if(firTestMode)$('#terrainBuildTag').textContent='R104';if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R76';if(lawnTestMode)$('#terrainBuildTag').textContent='R104';}
+ if(treeLineupMode){doc=makeTreeLineup();extra=[];if(firTestMode)$('#terrainBuildTag').textContent='R105';if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R76';if(lawnTestMode)$('#terrainBuildTag').textContent='R105';}
  readLawnSettingsR90();
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
@@ -1312,7 +1355,7 @@ function initialize(){
  syncSolarControls();
  try{sceneAtmosphere=normalizeSceneAtmosphere(JSON.parse(localStorage.getItem(ATMO)||'null'))}catch{sceneAtmosphere=normalizeSceneAtmosphere()}
  syncAtmosphereControls();
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lawnTestMode?2.0:1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap; // This filter respects adjustable shadow radius.
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -1358,7 +1401,7 @@ function initialize(){
   doc.house.roofRise=Math.max(4.2,Math.min(8,(Number(doc.house.width)||8)*.79));
   save();
  }
- state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
+ state.housePreset=doc.house.archStyle||'barn';drawTools();applyGraphicsR105(false);rebuild();resize();addEvents();setView('3d');animate();
  // On a narrow device an already saved ALFA must also open with the
  // building visible, even if the URL has no explicit ?house=alpha.
  const openAlphaScene=!treeLineupMode&&(deepLinkAlpha||
@@ -1718,7 +1761,7 @@ function updateTurfDetail(){
  if(!root||!camera||!doc||!terrainMesh)return;
  // No geometry generation during terrain edits or when the overview is far away.
  const ground=terrainAt(camera.position.x,camera.position.z);
- const mobile=window.innerWidth<=850;
+ const mobile=['eco','standard'].includes(window.FORMA_GRAPHICS_R105||'standard');
  const show=state.view!=='2d'&&(lawnEnabledR90||(!state.painting&&state.tool!=='terrain'))&&
   doc.atmosphere.season!=='winter'&&(camera.position.y-ground<8||(pbrR63Enabled&&oakTestMode)||lawnTestMode||lawnIntegratedR90);
  if(!show){if(turfDetail?.visible){turfDetail.visible=false;renderGate.invalidate()}return;}
@@ -1732,7 +1775,7 @@ function updateTurfDetail(){
  if(turfCell===key&&turfDetail){if(!turfDetail.visible){turfDetail.visible=true;renderGate.invalidate()}return;}
  disposeTurfDetail();
  turfCell=key;turfMask=turfMask||turfMasks();
- if(dense){turfDetail=createDenseLawn(THREE,{profile,focus,mobile,low:autoReduced,terrainAt:lawnSurfaceAtR90,contains:lawnAllowedR90,bounds:{x0:-doc.site.width/2,x1:doc.site.width/2,z0:-doc.site.height/2,z1:doc.site.height/2}});root.add(turfDetail);renderGate.invalidate();return;}
+ if(dense){turfDetail=createDenseLawn(THREE,{profile,focus,mobile,low:window.FORMA_GRAPHICS_R105==='eco'||autoReduced,terrainAt:lawnSurfaceAtR90,contains:lawnAllowedR90,bounds:{x0:-doc.site.width/2,x1:doc.site.width/2,z0:-doc.site.height/2,z1:doc.site.height/2}});root.add(turfDetail);renderGate.invalidate();return;}
  const positions=[],colors=[],radius=profile?(mobile?3.6:5.0):specimen?(mobile?9:13):(mobile?6.5:9),step=profile?(mobile?.073:.058)/Math.sqrt(profile.density):mobile?.115:.095;
  const mx=cx*3+1.5,mz=cz*3+1.5;
  const autumn=doc.atmosphere.season==='autumn';
@@ -4193,7 +4236,7 @@ async function renderAi(series=null){
   // Use measurements of the rendered individual, not default age dimensions.
   const photoObjects=measuredPlan.objects.map(o=>{
    const m=sceneTrees.get(o.id);
-   if(o.catalogId==='ph-fir-sapling'){const p=firStage(o.fir?.age??(Number(o.height)<6?10:45));return {...o,fir:{age:p.age},photoTreeModel:{revision:'R104',tiers:p.tiers,needleCount:m?.needleCount??null,continuousTrunk:true,coneCount:m?.coneCount??null}};}
+   if(o.catalogId==='ph-fir-sapling'){const p=firStage(o.fir?.age??(Number(o.height)<6?10:45));return {...o,fir:{age:p.age},photoTreeModel:{revision:'R105',tiers:p.tiers,needleCount:m?.needleCount??null,continuousTrunk:true,coneCount:m?.coneCount??null}};}
    if(o.catalogId==='birch'&&m?.nativeBirchR56){const p=birchStage(m.birchAge);return {...o,birch:{age:p.age},photoTreeModel:{revision:'R56',trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount,primaryBranches:p.limbs}};}
    if(o.catalogId==='willow'&&m?.nativeWillowR49)return {...o,willow:{age:m.willowAge},photoTreeModel:{trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount}};
    if(o.catalogId!=='maple'||!m?.nativeMapleR39)return o;
@@ -4759,7 +4802,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   }catch(e){console.error('WebGL recovery',e);status('Не удалось восстановить WebGL — используйте кнопку перезапуска.')}
  });
 }
-function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;const ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
+function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;const ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&window.FORMA_GRAPHICS_R105!=='eco'&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
 function resize(){if(gpuLostR75||pathTraceR72?.active)return;renderGate.invalidate();const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
 let lastRenderMs=0,lastRenderCost=0,lastShadowBudgetAt=0,lastTurfDetailAt=0,shadowBudgetDirty=true;
 function animate(now=0){
