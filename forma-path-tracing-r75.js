@@ -212,7 +212,7 @@ function surfaceDisplacement(T,o,level){
  }
  const out=new T.BufferGeometry();out.setAttribute('position',new T.Float32BufferAttribute(pos,3));out.setAttribute('normal',new T.Float32BufferAttribute(norm,3));out.setAttribute('uv',new T.Float32BufferAttribute(tex,2));if(c)out.setAttribute('color',new T.Float32BufferAttribute(col,c.itemSize));out.setIndex(idx);out.computeBoundingSphere();return out;
 }
-function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
+async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null,isAlive=()=>true,onProgress=()=>{}){
  source.updateMatrixWorld(true);camera.updateMatrixWorld(true);
  const scene=new T.Scene(),geometries=[],materials=[],ownedTextures=[],materialCache=new Map();
  let triangles=0,skipped=0,instances=0,reduced=0;
@@ -229,32 +229,38 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  });
  // Keep all trees and fruit instances. Budget reduction first replaces
  // costly repeated meshes with coverage-preserving proxies, then reduces grass.
- const limit=isMobile()?650000:profile==='high'?4000000:2500000;
+ const full=atmosphere.geometryMode==='full';
+ const softLimit=isMobile()?650000:profile==='high'?4000000:2500000;
+ let limit=softLimit;
  const proxies=new Map(),ownedProxies=[],keepCounts=new Map();
  const grass=o=>o.isInstancedMesh&&/grass|turf|lawn|dry-ears|forma-flower/i.test(o.name+' '+(o.parent?.name||''));
  const costs=o=>{const g=proxies.get(o)||o.geometry;return (g.index?.count||g.attributes.position.count)/3;};
  let simplified=0,used=0,grassCost=0,displacedWood=0,displacedSurfaces=0;
  for(const o of meshes){
-  if(o.isInstancedMesh&&o.name==='rowan-pinnate-foliage'){
+  if(!full&&o.isInstancedMesh&&o.name==='rowan-pinnate-foliage'){
    const g=rowanLeafProxy(T,o.geometry);if(g){proxies.set(o,g);ownedProxies.push(g);simplified+=o.count;}
-  }else if(o.isInstancedMesh&&o.name==='rowan-fruit-berries'&&o.geometry.attributes.position.count>50){
+  }else if(!full&&o.isInstancedMesh&&o.name==='rowan-fruit-berries'&&o.geometry.attributes.position.count>50){
    const g=new T.SphereGeometry(1,6,4);proxies.set(o,g);ownedProxies.push(g);simplified+=o.count;
   }
-  if(o.isInstancedMesh&&/^Oak .*botanical leaf maps/i.test(o.name)){
+  if(!full&&o.isInstancedMesh&&/^Oak .*botanical leaf maps/i.test(o.name)){
    const g=new T.PlaneGeometry(1,1,1,2),p=g.attributes.position;
    for(let i=0;i<p.count;i++){const y=p.getY(i);p.setZ(i,.035-.14*y*y);}
    g.computeVertexNormals();proxies.set(o,g);ownedProxies.push(g);simplified+=o.count;
   }
   const cost=costs(o)*(o.isInstancedMesh?o.count:1);if(grass(o))grassCost+=cost;else used+=cost;
  }
+ // The base scene is never rejected due to an arbitrary triangle count.
+ // Increase the working budget to include all existing objects, leaving
+ // a separate allowance for render-only turf and optional microgeometry.
+ const lawnReserve=lawn?(isMobile()?100000:profile==='high'?780000:360000):0;
+ limit=Math.max(softLimit,used+grassCost+lawnReserve+(isMobile()?0:180000));
  if(!isMobile()&&profile==='high')for(const o of meshes){if(o.name!=='rowan-pinnate-foliage'||!proxies.has(o))continue;const g=rowanLeafProxy(T,o.geometry,true);if(!g)continue;const extra=(g.index.count/3-costs(o))*o.count;if(used+extra+(lawn?360000:0)>limit){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;}
  if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||o.name!=='rowan-bark-trunk-branches')continue;const available=limit-used-(lawn?260000:0);if(available<15000)continue;for(const level of (profile==='high'?[6,4,2]:[3,2])){const result=barkDisplacement(T,o,level);if(!result)break;const extra=result.geometry.index.count/3-costs(o);if(extra>available){result.geometry.dispose();continue;}proxies.set(o,result.geometry);ownedProxies.push(result.geometry);used+=extra;displacedWood+=result.displaced;break;}}
  if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||proxies.has(o))continue;const base=costs(o),available=Math.min(120000,limit-used-(lawn?280000:0));if(available<base*8||base>12000)continue;const level=profile==='high'&&base*35<=available?6:3;const g=surfaceDisplacement(T,o,level);if(!g)continue;const extra=g.index.count/3-base;if(extra>available){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;displacedSurfaces++;}
- let reducedOak=0;
- const oakLeaves=meshes.filter(o=>o.isInstancedMesh&&/^Oak .*botanical leaf maps/i.test(o.name));
- const oakCost=oakLeaves.reduce((a,o)=>a+costs(o)*o.count,0),reserve=lawn?Math.min(400000,Math.floor(limit*.15)):0;
- if(oakCost&&used>limit-reserve){const remaining=Math.max(0,limit-reserve-(used-oakCost)),factor=Math.min(1,remaining/oakCost);for(const o of oakLeaves){const n=Math.max(0,Math.floor(o.count*factor));keepCounts.set(o,n);used-=(o.count-n)*costs(o);reducedOak+=o.count-n;}}
- if(used>limit){for(const g of ownedProxies)g.dispose();throw Error('Для сохранения всей кроны и объектов нужно '+Math.round(used/1000)+' тыс. треугольников. Лимит режима '+Math.round(limit/1000)+' тыс. Выберите высокое качество или уменьшите число деревьев.');}
+ const reducedOak=0;
+ // No leaf-instance deletion or abort for heavy scenes. Optional grass and
+ // micro-displacement budgets remain adaptive; actual device limits still apply.
+ limit=Math.max(limit,used+grassCost+lawnReserve);
  const lawnBudget=lawn?Math.min(profile==='high'?780000:360000,Math.floor(Math.max(0,limit-used)*.82)):0;
  const existingBudget=limit-lawnBudget;
  const factor=Math.min(1,Math.max(0,(existingBudget-used)/Math.max(1,grassCost)));
@@ -274,7 +280,10 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
   p.displacementMap=null;p.displacementScale=0;p.onBeforeCompile=()=>{};p.customProgramCacheKey=()=>'';materials.push(p);materialCache.set(key,p);return p;
  };
  try{
+ let processed=0;
  for(const o of meshes){
+  if(!isAlive())throw Error('Подготовка сцены отменена');
+  if(processed++%4===0){onProgress(processed,meshes.length);await nextFrame();if(!isAlive())throw Error('Подготовка сцены отменена');}
   const keep=keepCounts.get(o)??(o.isInstancedMesh?o.count:1);if(!keep)continue;
   const g=o.isInstancedMesh?bakeInstances(T,o,keep,proxies.get(o)||o.geometry):(proxies.get(o)||o.geometry).clone();geometries.push(g);
   if(o.isInstancedMesh)instances+=keep;
@@ -343,18 +352,18 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R133.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R133',e);const reason=stage+': '+(e?.message||String(e));try{sessionStorage.setItem('forma-gpu-last-error',reason);}catch{}close();onFailure(reason);}
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R134.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R134',e);const reason=stage+': '+(e?.message||String(e));try{sessionStorage.setItem('forma-gpu-last-error',reason);}catch{}close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
   stage='Загрузка библиотеки трассировки';msg.textContent=stage+'…';const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
   stage='Подготовка HDR неба';msg.textContent=stage+'…';await nextFrame();if(!alive)return;sky=await loadSkyR73(T,scene,atmosphere,renderer,profile,()=>alive,p=>{msg.textContent='Подготовка облаков: '+p+'%';});if(!alive){sky.texture.dispose();return;}
   stage='Подготовка полигонов и материалов';msg.textContent=stage+'…';await nextFrame();if(!alive)return;
-  snap=snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn);
+  snap=await snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn,()=>alive,(n,total)=>{msg.textContent='Подготовка геометрии: '+n+' / '+total+' объектов';});if(!alive){snap.dispose();return;}
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   stage='Построение BVH и загрузка текстур';building=true;
-  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;pt.tiles.set(profile==='high'?4:3,profile==='high'?4:3);pt.renderScale=profile==='high'?.85:.55;pt.textureSize.set(profile==='high'?1024:512,profile==='high'?1024:512);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
+  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;const heavy=snap.triangles>4000000,veryHeavy=snap.triangles>8000000;const tile=veryHeavy?8:heavy?6:profile==='high'?4:3;pt.tiles.set(tile,tile);pt.renderScale=veryHeavy?.45:heavy?.65:profile==='high'?.85:.55;const atlas=heavy?512:profile==='high'?1024:512;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
   renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
   stage='Трассировка GPU';renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
