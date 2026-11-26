@@ -4,7 +4,7 @@ export function rowanStage(age=35){
  return a<=15?{age:10,height:3.8,diameter:2.2}:a<=50?{age:35,height:7.8,diameter:5.0}:{age:75,height:11.2,diameter:7.8};
 }
 export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
- const root=new T.Group();root.name='forma-rowan-r114';
+ const root=new T.Group();root.name='forma-rowan-r115';
  const h=Math.max(.8,Number(o.height)||7.8),r=Math.max(.4,Number(o.diameter)||5)/2;
  const age=Number(o.rowan?.age)||(h<5?10:h>9?75:35),old=age>=60;
  let seed=(Number(o.variant)||1)*17431+Math.round(h*100);
@@ -50,7 +50,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
     p.addScaledVector(direction,.025+rand()*.045);
     leafRows.push([p,direction,.90+rand()*.59,rand()]);
     // Secondary leafy shoots populate the crown volume, not just a single branch line.
-    const spread=Math.min(.39,r*.15)*(.44+.56*u)*(.66+.62*rand());
+    const spread=Math.min(.36,r*.15)*(.44+.56*u)*(.45+.80*rand());
     for(let m=0;m<(mobile?2:3);m++){
       const aa=a2+m*2.399963+rand()*1.6,dir=V(Math.cos(aa),-.65+rand()*1.12,Math.sin(aa)).normalize();
       const pp=p.clone().add(V(Math.cos(aa)*spread*(.55+.45*rand()),(rand()-.4)*spread,Math.sin(aa)*spread*(.55+.45*rand())));
@@ -59,43 +59,62 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
     }
    }
    if(age>=15&&(season==='summer'||season==='autumn')&&f>.48&&rand()<(mobile?.44:.52)){
-    const outward=V(Math.cos(ang),0,Math.sin(ang)),center=tip.clone().addScaledVector(outward,.065).add(V(0,-.095,0)),count=mobile?24:38;
+    const outward=V(Math.cos(ang),0,Math.sin(ang)),center=tip.clone().addScaledVector(outward,.105).add(V(0,-.135,0)),count=mobile?34:52;
     tube([tip,center],[.0025,.0015],4);
-    for(let k=0;k<count;k++){const a3=k*2.399963,rr=.041*Math.sqrt(rand()),p=center.clone().add(V(Math.cos(a3)*rr,-.011-.034*rand()-.020*(1-rr/.041),Math.sin(a3)*rr)),sz=.0045+.0016*rand();fruitRows.push([p,sz,rand()]);if(!mobile){calyxRows.push([p.clone().add(V(0,-sz*.86,0)),sz*.27]);}if(k%5===0)tube([center,p],[.0009,.0005],3);}
+    for(let k=0;k<count;k++){const a3=k*2.399963,rr=.054*Math.sqrt(rand()),p=center.clone().add(V(Math.cos(a3)*rr,-.011-.034*rand()-.020*(1-rr/.054),Math.sin(a3)*rr)),sz=.0045+.0016*rand();fruitRows.push([p,sz,rand()]);if(!mobile){calyxRows.push([p.clone().add(V(0,-sz*.86,0)),sz*.27]);}if(k%5===0)tube([center,p],[.0009,.0005],3);}
    }
   }
  }
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(bp,3));geo.setAttribute('color',new T.Float32BufferAttribute(bc,3));geo.setAttribute('uv',new T.Float32BufferAttribute(bu,2));geo.setIndex(bi);geo.computeVertexNormals();
  // Small repeatable bark map with horizontal lenticels and fine weathered pores.
- const tw=128,th=256,pixels=new Uint8Array(tw*th*4);
+ const tw=256,th=512,pixels=new Uint8Array(tw*th*4),relief=new Uint8Array(tw*th*4);
  for(let y=0;y<th;y++)for(let x=0;x<tw;x++){
-  const k=(y*tw+x)*4,grain=(rand()-.5)*18,streak=5*Math.sin(x*.22)+3*Math.sin(x*.81);
-  const band=y%19,cell=Math.floor(y/19),cx=(cell*47)%tw,dx=Math.min(Math.abs(x-cx),tw-Math.abs(x-cx));
-  const lenticel=band<2&&dx<5+(cell%4)*4?51:0;
-  const v=Math.max(80,Math.min(245,216+grain+streak-lenticel));
-  pixels.set([v,v,v,255],k);
+  const k=(y*tw+x)*4,grain=(rand()-.5)*13;
+  const warp=x+3*Math.sin(y*.033+x*.02),ridges=Math.pow(.5+.5*Math.sin(warp*.18+Math.sin(y*.018)),8);
+  const mottling=9*Math.sin(x*.043+y*.031)+6*Math.sin(x*.09-y*.018);
+  const cell=Math.floor(y/37),cx=(cell*97)%tw,dx=Math.min(Math.abs(x-cx),tw-Math.abs(x-cx)),dy=y%37-9-2*Math.sin(x*.14);
+  const lens=Math.exp(-Math.pow(dx/(9+cell%5*3),4)-Math.pow(dy/1.6,2));
+  const fissure=old?ridges*(.6+.4*Math.sin(y*.075)**2):ridges*.21;
+  const v=Math.max(85,Math.min(245,210+grain+mottling-44*lens-27*fissure));
+  pixels.set([v,Math.min(255,v*1.006),v*.98,255],k);
+  const b=Math.max(0,Math.min(255,160+grain*.55-75*lens-60*fissure));relief.set([b,b,b,255],k);
  }
  const barkMap=new T.DataTexture(pixels,tw,th,T.RGBAFormat);barkMap.colorSpace=T.SRGBColorSpace;barkMap.wrapS=barkMap.wrapT=T.RepeatWrapping;barkMap.magFilter=T.LinearFilter;barkMap.minFilter=T.LinearMipmapLinearFilter;barkMap.generateMipmaps=true;barkMap.needsUpdate=true;
- const wood=new T.Mesh(geo,new T.MeshStandardMaterial({map:barkMap,bumpMap:barkMap,bumpScale:old?.012:.004,vertexColors:true,roughness:.86,metalness:0}));wood.name='rowan-bark-trunk-branches';wood.castShadow=true;wood.receiveShadow=true;root.add(wood);
+ const bump=new T.DataTexture(relief,tw,th,T.RGBAFormat);bump.wrapS=bump.wrapT=T.RepeatWrapping;bump.magFilter=T.LinearFilter;bump.minFilter=T.LinearMipmapLinearFilter;bump.generateMipmaps=true;bump.needsUpdate=true;
+ const wood=new T.Mesh(geo,new T.MeshStandardMaterial({map:barkMap,bumpMap:bump,bumpScale:old?.017:.007,vertexColors:true,roughness:.88,metalness:0}));wood.name='rowan-bark-trunk-branches';wood.castShadow=true;wood.receiveShadow=true;root.add(wood);
  if(season!=='winter'&&leafRows.length){
   // One compound leaf with 13 narrow tapered leaflets on a shared rachis.
-  const p=[],c=[],idx=[];
+  const p=[],c=[],uv=[],idx=[];
+  // A shared low-resolution alpha/vein atlas preserves a serrated outline on mobile.
+  const lw=64,lh=128,rgba=new Uint8Array(lw*lh*4);
+  for(let y=0;y<lh;y++)for(let x=0;x<lw;x++){
+   const t=y/(lh-1),side=(x/(lw-1)-.5)*2,d=Math.abs(side);
+   const outline=Math.pow(Math.sin(Math.PI*t),.72)*(.94+.045*Math.sin(t*118));
+   const mid=Math.exp(-d*d*520),veins=Math.pow(Math.max(0,Math.cos((t-d*.16)*Math.PI*19)),20)*(1-d*.55);
+   const v= Math.max(150,Math.min(247,213+20*mid+9*veins-12*d+5*Math.sin(x*.68+y*.16)));
+   rgba.set([v,v,Math.round(v*.97),d<=outline?255:0],(y*lw+x)*4);
+  }
+  const leafMap=new T.DataTexture(rgba,lw,lh,T.RGBAFormat);leafMap.colorSpace=T.SRGBColorSpace;leafMap.magFilter=T.LinearFilter;leafMap.minFilter=T.LinearMipmapLinearFilter;leafMap.generateMipmaps=true;leafMap.needsUpdate=true;
   function leaflet(x,z,angle,L,W){
    const dx=Math.cos(angle),dz=Math.sin(angle),sx=-dz,sz=dx,base=p.length/3,rows=3;
-   if(mobile){p.push(x,0,z,x+dx*L*.47+sx*W,.003,z+dz*L*.47+sz*W,x+dx*L*.47-sx*W,.003,z+dz*L*.47-sz*W,x+dx*L,0,z+dz*L);c.push(.85,.85,.85,1,1,1,.96,.96,.96,.9,.9,.9);idx.push(base,base+1,base+2,base+1,base+3,base+2);return;}
-   for(let j=0;j<=rows;j++){const t=j/rows,w=W*Math.pow(Math.sin(Math.PI*t),.7)*(j%2?.95:1);for(const k of [-1,0,1]){if(mobile&&k===0)continue;p.push(x+dx*L*t+sx*w*k,.004*Math.sin(t*Math.PI)-Math.abs(k)*w*.24,z+dz*L*t+sz*w*k);const tone=(k===0?1:.88)*(.91+.09*Math.sin(t*Math.PI));c.push(tone,tone,tone);}}
+   if(mobile){
+    // Four vertices plus alpha mask: sharper outline without extra leaf triangles.
+    for(const t of [0,1])for(const k of [-1,1]){p.push(x+dx*L*t+sx*W*k,.003*Math.sin(t*Math.PI),z+dz*L*t+sz*W*k);uv.push((k+1)/2,t);const tone=.94+.04*t;c.push(tone,tone,tone);}
+    idx.push(base,base+2,base+1,base+1,base+2,base+3);return;
+   }
+   for(let j=0;j<=rows;j++){const t=j/rows,w=W*Math.pow(Math.sin(Math.PI*t),.7)*(j%2?.95:1);for(const k of [-1,0,1]){if(mobile&&k===0)continue;p.push(x+dx*L*t+sx*w*k,.004*Math.sin(t*Math.PI)-Math.abs(k)*w*.24,z+dz*L*t+sz*w*k);uv.push(.5+k*w/(2*W),t);const tone=(k===0?1:.88)*(.91+.09*Math.sin(t*Math.PI));c.push(tone,tone,tone);}}
    const cols=mobile?2:3;for(let j=0;j<rows;j++)for(let k=0;k<cols-1;k++){const a=base+j*cols+k,b=a+cols;idx.push(a,b,a+1,a+1,b,b+1);}
   }
   for(let i=0;i<6;i++){const z=.028+i*.027,L=.059*(1-.055*i);leaflet(0,z,.48,L,.010);leaflet(0,z,Math.PI-.48,L,.010);}
   leaflet(0,.178,Math.PI/2,.043,.008);
-  const q=p.length/3;p.push(-.0008,0,0,.0008,0,0,-.0005,0,.195,.0005,0,.195);c.push(.6,.66,.48,.6,.66,.48,.6,.66,.48,.6,.66,.48);idx.push(q,q+1,q+2,q+1,q+3,q+2);
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('color',new T.Float32BufferAttribute(c,3));g.setIndex(idx);g.computeVertexNormals();
-  const mat=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.84,envMapIntensity:.25});
+  const q=p.length/3;p.push(-.0008,0,0,.0008,0,0,-.0005,0,.195,.0005,0,.195);c.push(.6,.66,.48,.6,.66,.48,.6,.66,.48,.6,.66,.48);uv.push(.49,.35,.51,.35,.49,.65,.51,.65);idx.push(q,q+1,q+2,q+1,q+3,q+2);
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('color',new T.Float32BufferAttribute(c,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+  const mat=new T.MeshStandardMaterial({map:leafMap,alphaTest:.42,vertexColors:true,side:T.DoubleSide,roughness:.8,envMapIntensity:.20});
   const mesh=new T.InstancedMesh(g,mat,leafRows.length);mesh.name='rowan-pinnate-foliage';mesh.castShadow=!mobile;mesh.receiveShadow=true;
   const obj=new T.Object3D(),color=new T.Color(),palette=(season==='autumn'?['#aa743d','#bd9a48','#9a633a','#777a42']:['#3d5834','#506b3d','#5b7346','#6a8250','#455e39']).map(x=>new T.Color(x));
-  leafRows.forEach(([p,d,s,t],i)=>{obj.position.copy(p);obj.quaternion.setFromUnitVectors(V(0,0,1),d);obj.rotateZ((t-.5)*2.55);obj.scale.setScalar(s);obj.updateMatrix();mesh.setMatrixAt(i,obj.matrix);mesh.setColorAt(i,color.copy(palette[Math.floor(t*palette.length)]).multiplyScalar(.86+t*.23));});mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();root.add(mesh);
+  leafRows.forEach(([p,d,s,t],i)=>{obj.position.copy(p);obj.quaternion.setFromUnitVectors(V(0,0,1),d);obj.rotateZ((t-.5)*2.55);obj.scale.setScalar(s);obj.updateMatrix();mesh.setMatrixAt(i,obj.matrix);mesh.setColorAt(i,color.copy(palette[Math.floor(t*palette.length)]).multiplyScalar((.86+t*.23)*(.76+.24*Math.min(1,Math.hypot(p.x,p.z)/Math.max(.2,r*.75)))));});mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();root.add(mesh);
  }
- if(fruitRows.length){const g=new T.SphereGeometry(1,mobile?5:8,mobile?4:6),mat=new T.MeshStandardMaterial({roughness:.53,metalness:0}),m=new T.InstancedMesh(g,mat,fruitRows.length),obj=new T.Object3D(),a=new T.Color('#a92f19'),b=new T.Color('#d96927'),c=new T.Color();m.name='rowan-fruit-berries';fruitRows.forEach(([p,s,t],i)=>{obj.position.copy(p);obj.scale.setScalar(s);obj.updateMatrix();m.setMatrixAt(i,obj.matrix);m.setColorAt(i,c.copy(a).lerp(b,t));});m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();root.add(m);}
+ if(fruitRows.length){const g=new T.SphereGeometry(1,mobile?5:8,mobile?4:6),mat=new T.MeshStandardMaterial({roughness:.46,metalness:0}),m=new T.InstancedMesh(g,mat,fruitRows.length),obj=new T.Object3D(),a=new T.Color('#a92f19'),b=new T.Color('#d96927'),c=new T.Color();m.name='rowan-fruit-berries';fruitRows.forEach(([p,s,t],i)=>{obj.position.copy(p);obj.scale.setScalar(s);obj.updateMatrix();m.setMatrixAt(i,obj.matrix);m.setColorAt(i,c.copy(a).lerp(b,t));});m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();root.add(m);}
  if(calyxRows.length){const g=new T.SphereGeometry(1,5,3),m=new T.InstancedMesh(g,new T.MeshStandardMaterial({color:'#57382b',roughness:.93}),calyxRows.length),ob=new T.Object3D();m.name='rowan-fruit-calyx';calyxRows.forEach(([p,r],i)=>{ob.position.copy(p);ob.scale.set(r,r*.5,r);ob.updateMatrix();m.setMatrixAt(i,ob.matrix);});m.instanceMatrix.needsUpdate=true;m.computeBoundingSphere();root.add(m);}
  root.userData.formaRowanStats={age,compoundLeaves:leafRows.length,berries:fruitRows.length,mobile};
  return root;
