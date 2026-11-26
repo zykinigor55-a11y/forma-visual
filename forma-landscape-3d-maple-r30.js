@@ -51,6 +51,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const pos=[],uv=[],idx=[],leafPoints=[],seamPairs=[];
  const leafRng=random('maple foliage detail R32|'+instance.id+'|'+instance.variant);
  const bendRng=random('maple branch curvature R33|'+instance.id+'|'+instance.variant);
+ const crownRng=random('maple spatial crown R35|'+instance.id+'|'+instance.variant);
  const trunkR=clamp(h*.022,.035,.46),mobile=window.innerWidth<=850;
  function tube(points,radii,sides,seed){
   let first=pos.length/3,dist=0,prevU=null;const phase=seed*6.283;
@@ -91,15 +92,14 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
   tube(pts,pts.map((_,i)=>width*Math.max(.025,Math.pow(1-i/(pts.length-1),1.12))),sides>=12?20:sides>=8?12:6,r());
   return curve;
  }
- function leafyTwig(a,b,width){
-  const q=curve(a,b,width,h*.003,5);
-  const count=mobile?10:14;
+ function leafyTwig(a,b,width,count=mobile?7:10){
+  const q=curve(a,b,width,h*.002,5);
   for(let j=0;j<count;j++){
    const t=(j+.5)/count,p=q.getPoint(t),axis=q.getTangent(t),side=new T.Vector3().crossVectors(axis,V(0,1,0)).normalize();
    for(const sign of [-1,1]){
-    const reach=clamp(h*.008,.035,.10)*(.6+r()*.75);
+    const reach=clamp(h*.009,.035,.115)*(.6+r()*.75);
     const leaf=p.clone().addScaledVector(side,sign*reach).add(V(0,(r()-.4)*reach,0));
-    const mainLeaf={p:leaf,yaw:r()*6.283,pitch:(r()-.5)*1.5,roll:(r()-.5)*2.4,size:clamp(h*.012,.07,.185)*(.67+r()*.65)};
+    const mainLeaf={p:leaf,yaw:r()*6.283,pitch:(r()-.5)*2.15,roll:(r()-.5)*2.65,size:clamp(h*.012,.07,.185)*(.67+r()*.65)};
     leafPoints.push(mainLeaf);
     // Independent deterministic stream: the actual R31 woody skeleton remains
     // identical. Extra leaves are attached beside the existing twig, not a sphere.
@@ -117,21 +117,32 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  for(let i=0;i<18;i++){
   const t=i/17,az=i*2.399+(r()-.5)*.85,y=h*(.28+t*.53+(r()-.5)*.032);
   const base=trunk[Math.min(20,Math.round(y/(h*.96)*20))].clone();
-  const len=rad*(.43+.52*Math.sin(Math.PI*(.12+t*.85)))*(.78+r()*.22);
-  const tip=V(Math.cos(az)*len,Math.min(h*.94,y+h*(.12+.09*r())),Math.sin(az)*len);
+  const len=rad*(.49+.48*Math.sin(Math.PI*(.20+t*.70)))*(.83+r()*.17);
+  const tip=V(Math.cos(az)*len,Math.min(h*.95,y+h*(.055+.125*r())),Math.sin(az)*len);
   const main=curve(base,tip,trunkR*(.38-.17*t),-h*.025,14);
   const forks=7+Math.floor(r()*5);
   for(let k=0;k<forks;k++){
    const f=.26+(k+.5)/forks*.70,p=main.getPoint(f),side=k%2?1:-1,a=az+side*(.42+r()*.95);
-   const span=rad*(.20+.15*r())*(1-f*.5);
-   let end=p.clone().add(V(Math.cos(a)*span,h*(.045+r()*.06),Math.sin(a)*span));
+   const span=rad*(.22+.19*r())*(1-f*.38);
+   const lift=h*(.025+.085*crownRng())*(crownRng()<.19?-.55:1);
+   let end=p.clone().add(V(Math.cos(a)*span,lift,Math.sin(a)*span));
    const limit=rad*(.97-.12*t),rr=Math.hypot(end.x,end.z);if(rr>limit){end.x*=limit/rr;end.z*=limit/rr;}end.y=Math.min(h*.985,end.y);
    const secondary=curve(p,end,trunkR*.10*(1-f*.5),h*.009,8);
-   for(let j=0;j<6;j++){
-    const q=secondary.getPoint(.20+(j+.5)*.125),angle=a+(j%2?1:-1)*(.6+r()*.75),s=clamp(rad*.105,.12,.55)*(.7+r()*.4);
-    const e=q.clone().add(V(Math.cos(angle)*s,h*(.008+r()*.018),Math.sin(angle)*s));
-    const radius=Math.hypot(e.x,e.z);if(radius>rad*.98){e.x*=rad*.98/radius;e.z*=rad*.98/radius;}e.y=Math.min(h*.99,e.y);
-    leafyTwig(q,e,Math.max(.0015,trunkR*.015));
+   // A third order of branching fills three-dimensional crown lobes,
+   // instead of laying all leaves along six narrow, ascending stripes.
+   const constrain=p=>{const radius=Math.hypot(p.x,p.z);if(radius>rad*.97){p.x*=rad*.97/radius;p.z*=rad*.97/radius;}p.y=clamp(p.y,h*.25,h*.985);return p;};
+   for(let j=0;j<5;j++){
+    const q=secondary.getPoint(.18+(j+.5)*.155),angle=a+(j%2?1:-1)*(.52+r()*.95),span=clamp(rad*.14,.14,.78)*(.75+r()*.5);
+    const lift=h*(.008+crownRng()*.027)*(crownRng()<.31?-1:1);
+    const e=constrain(q.clone().add(V(Math.cos(angle)*span,lift,Math.sin(angle)*span)));
+    const shoot=curve(q,e,Math.max(.002,trunkR*.023),h*.004,5);
+    for(let k2=0;k2<2;k2++){
+     const v=shoot.getPoint(.38+k2*.48),turn=angle+(k2?1:-1)*(.48+crownRng()*.86),L=span*(.41+crownRng()*.32);
+     const finish=constrain(v.clone().add(V(Math.cos(turn)*L,h*(crownRng()-.36)*.035,Math.sin(turn)*L)));
+     leafyTwig(v,finish,Math.max(.0013,trunkR*.012),mobile?5:7);
+    }
+    // Terminal cluster continues the supporting branch rather than floating.
+    leafyTwig(shoot.getPoint(.68),e,Math.max(.0012,trunkR*.009),mobile?3:4);
    }
   }
  }
@@ -153,9 +164,9 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const mesh=new T.InstancedMesh(leafGeo,leaf,leafPoints.length),o=new T.Object3D();
   const palette=(season==='autumn'?['#cfad73','#c28c50','#d9c18a','#a6a16f']:['#d5dccc','#b5c0b2','#dce1cf','#bacbb9','#c6d2be']).map(c=>new T.Color(c));
   leafPoints.forEach((l,i)=>{o.position.copy(l.p);o.rotation.set(l.pitch,l.yaw,l.roll);o.scale.set(l.size,l.size*.95,1);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);mesh.setColorAt(i,palette[Math.floor(r()*palette.length)]);});
-  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple natural foliage R34';
+  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple spatial crown R35';
  g.userData.leafTriangles=leafGeo.index.count/3*leafPoints.length;g.add(mesh);
  }
- g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.woodTriangles=geo.index.count/3;g.userData.leafCount=season==='winter'?0:leafPoints.length;
+ g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.woodTriangles=geo.index.count/3;g.userData.leafCount=season==='winter'?0:leafPoints.length;
  return g;
 }
