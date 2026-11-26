@@ -511,7 +511,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R109</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R110</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -800,7 +800,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <script type="module">
 import * as THREE from 'three';
 import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r89.js?v=R89';
-import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R106';
+import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R110';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R70';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
 import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R75';
@@ -1774,7 +1774,7 @@ function updateTurfDetail(){
  const source=LAWN_PROFILES[lawnTypeR77]||LAWN_PROFILES.universal;
  const profile=lawnEnabledR90?{...source,integrated:lawnIntegratedR90,season:doc.atmosphere.season,height:source.crop?lawnWheatHeightR88/100:source.height*lawnHeightR90/100,density:source.density*lawnDensityR90/100,pressedAmount:lawnPressedR90,flowerAmount:lawnFlowersR88}:null;
  const cx=Math.floor(focus.x/3),cz=Math.floor(focus.z/3);
- const dense=!!profile;const cellR106=mobile?(window.FORMA_GRAPHICS_R105==='eco'?4:3):(lawnIntegratedR90?1.2:.6);const key=(dense?Math.round(focus.x/cellR106)+':'+Math.round(focus.z/cellR106)+':'+autoReduced:cx+':'+cz)+':'+doc.atmosphere.season+':'+mobile+':'+(profile?lawnTypeR77:'default');
+ const dense=!!profile;const cellR106=mobile?(window.FORMA_GRAPHICS_R105==='eco'?2.2:1.8):(lawnIntegratedR90?1.2:.6);const key=(dense?Math.round(focus.x/cellR106)+':'+Math.round(focus.z/cellR106)+':'+autoReduced:cx+':'+cz)+':'+doc.atmosphere.season+':'+mobile+':'+(profile?lawnTypeR77:'default');
  if(turfCell===key&&turfDetail){if(!turfDetail.visible){turfDetail.visible=true;renderGate.invalidate()}return;}
  disposeTurfDetail();
  turfCell=key;turfMask=turfMask||turfMasks();
