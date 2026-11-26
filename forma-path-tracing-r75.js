@@ -17,6 +17,7 @@ function makeSky(T,source,atmosphere={}){
 async function loadSkyR73(T,source,atmosphere={},renderer,profile,isAlive,onProgress){
  if(renderer&&atmosphere.cloudSettings&&atmosphere.renderClouds==='volume'){try{return await bakeCloudEnvironment(T,renderer,{sun:source.getObjectByName('sun'),time:atmosphere.time,weather:atmosphere.weather,settings:atmosphere.cloudSettings,high:profile==='high'&&!isMobile(),mobile:isMobile(),isAlive,onProgress});}catch(e){if(!isAlive()||renderer.getContext().isContextLost())throw e;console.warn('FORMA cloud HDR fallback',e);}}
  const sun=source.getObjectByName('sun'),time=atmosphere.time||'day',weather=atmosphere.weather||'sunny';
+ if(atmosphere.renderClouds!=='photo-hdri')return {texture:makeSky(T,source,atmosphere),label:'Небо FORMA · рассеянный свет',photographic:false};
  const diffuse=['overcast','rain','fog','snow'].includes(weather);
  if(!sun||sun.intensity<.3||time!=='day'||diffuse)return {texture:makeSky(T,source,atmosphere),label:'Небо по времени суток и погоде',photographic:false};
  const id='kloppenheim_03_puresky',res=isMobile()?'1k':'2k',file=id+'_'+res+'.hdr';
@@ -342,8 +343,8 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
   if(o.name==='sun'&&o.isDirectionalLight&&!cloudy&&o.intensity>0){
    const target=o.target.getWorldPosition(new T.Vector3()),dir=o.getWorldPosition(new T.Vector3()).sub(target).normalize();
    const u=new T.Vector3(0,1,0).cross(dir);if(u.lengthSq()<1e-6)u.set(1,0,0);else u.normalize();const v=dir.clone().cross(u).normalize();
-   const radius=Math.tan(T.MathUtils.degToRad(Math.max(.27,Math.min(.9,(atmosphere.solarSoftness||3)*.14))));
-   const n=9;for(let i=0;i<n;i++){const a=i*2.399963,r=radius*Math.sqrt((i+.5)/n),d=dir.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r).normalize();const l=new T.DirectionalLight(o.color,(o.userData.formaUncloudedIntensity??o.intensity)*(sky.solarTransmission??1)/n);l.position.copy(target).addScaledVector(d,100);l.target.position.copy(target);scene.add(l,l.target);}return;
+   const radius=Math.tan(T.MathUtils.degToRad(.13+1.65*Math.pow(T.MathUtils.clamp(((atmosphere.solarSoftness||3)-1)/4,0,1),1.5)));
+   const n=(atmosphere.solarSoftness||3)<1.5?1:5;for(let i=0;i<n;i++){const a=i*2.399963,r=n===1?0:radius*Math.sqrt((i+.5)/n),d=dir.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r).normalize();const l=new T.DirectionalLight(o.color,(o.userData.formaUncloudedIntensity??o.intensity)*(sky.solarTransmission??1)/n);l.position.copy(target).addScaledVector(d,100);l.target.position.copy(target);scene.add(l,l.target);}return;
   }
   const l=o.clone();l.position.setFromMatrixPosition(o.matrixWorld);l.quaternion.copy(o.getWorldQuaternion(new T.Quaternion()));
   if(o.target){l.target=new T.Object3D();l.target.position.setFromMatrixPosition(o.target.matrixWorld);scene.add(l.target);}
@@ -354,7 +355,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  });
  const env=sky.texture;scene.environment=env;scene.background=env;
  // Decouple visible sky brightness from irradiance to avoid washing out surfaces.
- scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1.0:sky.photographic?.95:1.04;
+ scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?.85:.42;
  scene.backgroundIntensity=sky.photographic?.87:night?.85:1.0;
  scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
@@ -363,7 +364,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();throw e;}
 }
 export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},lawn=null,onClose=()=>{},onFailure=()=>{}}){
- let stage='Инициализация',alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null,backupSky=null,retriedSky=false,lastChecked=0,traceStart=0;
+ let stage='Инициализация',alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null,backupSky=null,retriedSky=false,lastChecked=0,traceStart=0,displayMat=null,displayQuad=null,exposureEV=0,darkWarning=false;
  const oldRatio=renderer.getPixelRatio(),oldTone=renderer.toneMapping,oldExposure=renderer.toneMappingExposure;
  let previewUrl='';try{previewUrl=canvas.toDataURL('image/jpeg',.82)}catch{}
  const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
@@ -373,14 +374,19 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  if(previewUrl){const image=document.createElement('img');image.src=previewUrl;image.style.cssText='width:100%;height:100%;object-fit:contain;opacity:.86';preview.append(image);}
  const previewLabel=document.createElement('span');previewLabel.textContent='Предпросмотр сцены · подготовка трассировки';previewLabel.style.cssText='position:absolute;top:60px;left:50%;transform:translateX(-50%);padding:8px 14px;background:#22262de8;color:white;border-radius:8px;font:13px system-ui';preview.append(previewLabel);ui.style.isolation='isolate';ui.append(preview,panel);document.body.append(ui);const msg=panel.querySelector('[data-msg]'),bar=panel.querySelector('progress'),save=panel.querySelector('[data-save]');
  const details=document.createElement('small');details.style.cssText='display:block;color:#bfc5ce;margin:5px 0 0';bar.after(details);
+ const warning=document.createElement('small');warning.style.cssText='display:block;color:#e4cba1;margin:5px 0';details.after(warning);
+ const expRow=document.createElement('label');expRow.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0';expRow.innerHTML='Экспозиция <input type="range" min="-3" max="8" value="0" step=".25" style="flex:1"><output>0 EV</output>';warning.after(expRow);
+ const evInput=expRow.querySelector('input'),evOut=expRow.querySelector('output');
+ evInput.oninput=()=>{exposureEV=Number(evInput.value);evOut.textContent=exposureEV.toFixed(2)+' EV';if(pt&&displayQuad&&pt.samples>=1&&!renderer.getContext().isContextLost())showTrace();};
  let target=profile==='high'?96:40;bar.max=target;
  const started=performance.now(),probe=document.createElement('canvas');probe.width=32;probe.height=18;const probeCtx=probe.getContext('2d',{willReadFrequently:true});
  function daylightDark(){if(!probeCtx||!['day','morning','evening'].includes(atmosphere.time||'day'))return false;try{probeCtx.drawImage(canvas,0,0,32,18);const d=probeCtx.getImageData(0,0,32,18).data;let mean=0,bright=0;for(let i=0;i<d.length;i+=4){const y=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];mean+=y;if(y>25)bright++;}return mean/(d.length/4)<8&&bright/(d.length/4)<.08;}catch{return false;}}
+ function showTrace(texture=pt?.target?.texture){if(!texture||!displayQuad)return;renderer.setRenderTarget(null);renderer.setScissorTest(false);const size=renderer.getSize(new T.Vector2());renderer.setViewport(0,0,size.x,size.y);displayMat.uniforms.frame.value=texture;displayMat.uniforms.gain.value=Math.pow(2,exposureEV);renderer.clear(true,true,true);displayQuad.render(renderer);}
  function fmtTime(ms){const n=Math.max(0,Math.floor(ms/1000));return Math.floor(n/60)+' мин '+String(n%60).padStart(2,'0')+' с';}
  function cleanup(){if(cleaned)return;cleaned=true;
   // v0.0.23 public dispose has a legacy quad name; release the real resources.
   if(pt){try{pt.dispose()}catch{try{pt._quad?.material?.dispose();pt._quad?.dispose();pt._pathTracer?.dispose();}catch{}}try{pt._lowResPathTracer?.dispose();}catch{}}
-  denoise?.dispose();denoiseQuad?.dispose();backupSky?.dispose();if(snap)snap.dispose();else sky?.texture?.dispose();
+  denoise?.dispose();denoiseQuad?.dispose();displayMat?.dispose();displayQuad?.dispose();backupSky?.dispose();if(snap)snap.dispose();else sky?.texture?.dispose();
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building){try{cleanup()}catch(e){console.warn('GPU cleanup',e)}}renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
@@ -398,22 +404,22 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   pt=new WebGLPathTracer(renderer);const heavy=snap.triangles>2000000,veryHeavy=snap.triangles>5000000;const recover=atmosphere.traceRecovery===true;
   target=recover?32:heavy?(profile==='high'?64:32):(profile==='high'?96:40);bar.max=target;
   pt.bounces=heavy||recover?4:profile==='high'?6:4;pt.transmissiveBounces=heavy||recover?8:12;pt.multipleImportanceSampling=true;
-  const tile=veryHeavy||recover?4:3;pt.tiles.set(tile,tile);pt.renderScale=recover?.35:veryHeavy?.40:heavy?.50:profile==='high'?.80:.60;const atlas=recover?128:heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.4;
-  renderer.setPixelRatio(Math.min(oldRatio,recover?.55:profile==='high'?1:0.85,(recover?960:1600)/Math.max(1,canvas.clientWidth,canvas.clientHeight)));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
+  const tile=veryHeavy||recover?4:3;pt.tiles.set(tile,tile);pt.renderScale=recover?.35:veryHeavy?.40:heavy?.50:profile==='high'?.80:.60;const atlas=recover?128:heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.renderToCanvas=false;pt.filterGlossyFactor=.4;
+  renderer.setPixelRatio(Math.min(oldRatio,recover?.55:profile==='high'?1:0.85,(recover?960:1600)/Math.max(1,canvas.clientWidth,canvas.clientHeight)));pt.setScene(snap.scene,snap.cam);
+  displayMat=new T.ShaderMaterial({uniforms:{frame:{value:null},gain:{value:1}},depthTest:false,depthWrite:false,toneMapped:false,vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'uniform sampler2D frame;uniform float gain;varying vec2 vUv;void main(){vec3 c=max(texture2D(frame,vUv).rgb*gain,vec3(0.));c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.);c=mix(12.92*c,1.055*pow(c,vec3(1.0/2.4))-.055,step(vec3(.0031308),c));gl_FragColor=vec4(c,1.);}'});
+  displayQuad=new FullScreenQuad(displayMat);
+  denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
   stage='Трассировка GPU';renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.8,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.18)));loading=false;traceStart=performance.now();
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples+1e-6);bar.value=pt.samples;
    const elapsed=performance.now()-traceStart;const percent=Math.min(100,100*pt.samples/target);
    details.textContent=percent.toFixed(1)+'% · прошло '+fmtTime(performance.now()-started)+(pt.samples>=1?' · осталось ≈ '+fmtTime(elapsed*Math.max(0,target-pt.samples)/pt.samples):'');
-   if(n>=1&&n!==lastChecked&&n<=3){lastChecked=n;const dark=daylightDark();
-    if(!dark){preview.hidden=true;preview.style.display='none';}
-    else if(n>=2&&!retriedSky){retriedSky=true;backupSky=makeSky(T,scene,atmosphere);snap.scene.environment=backupSky;snap.scene.background=backupSky;snap.scene.environmentIntensity=1.2;snap.scene.backgroundIntensity=1;pt.updateEnvironment();lastChecked=0;traceStart=performance.now();bar.value=0;previewLabel.textContent='Дневной кадр слишком тёмный · повтор с резервным HDR-небом';msg.textContent='Перезапуск трассировки с резервным HDRI…';raf=requestAnimationFrame(tick);return;}
-    else if(n>=3&&retriedSky){error(Error('Дневной кадр остался почти чёрным после повторной трассировки. Проверьте GPU и освещение.'));return;}
-   }
-   save.disabled=n<1||preview.style.display!=='none';
+   if(n>=1){showTrace();preview.hidden=true;preview.style.display='none';}
+   if(n>=2&&n!==lastChecked&&n<=4){lastChecked=n;if(daylightDark()){darkWarning=true;warning.textContent='Кадр тёмный. Трассировка продолжается; экспозицию можно изменить.';}else{darkWarning=false;warning.textContent='';}}
+   save.disabled=n<1;
    msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reducedOak?' · упрощено листьев дуба: '+snap.reducedOak.toLocaleString('ru-RU'):'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'')+(snap.reducedFoliage?' · адаптивный LOD листвы: '+snap.reducedFoliage.toLocaleString('ru-RU'):'');
-   if(n>=target){if(profile==='high'||heavy||recover){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;details.textContent='100% · готово за '+fmtTime(performance.now()-started);msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
+   if(n>=target){showTrace();finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;details.textContent='100% · готово за '+fmtTime(performance.now()-started);msg.textContent+=' · готово, память освобождена';evInput.disabled=true;},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
  }catch(e){building=false;if(!alive){cleanup();return;}error(e);}})();
