@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#202124"><meta name="description" content="ФОРМА — архитектурная лаборатория визуализации и проектирования. Экстерьеры и интерьеры из скетча, материалы, анимация, нодовые сценарии и контроль геометрии.">
-<title>ФОРМА · Архитектурная лаборатория</title>
+<title>FORMA · Архитектурная лаборатория</title>
 <script>/* Theme applied before paint; default is dark. */
 try{document.documentElement.dataset.formaTheme=localStorage.getItem('forma-signature-theme-v1')==='light'?'light':'dark'}catch{document.documentElement.dataset.formaTheme='dark'}
 </script>
@@ -102,6 +102,45 @@ html.forma-studio-booting .mobile-nav{visibility:hidden!important}
 <link rel="stylesheet" href="forma-graphite-unified-v2.css?v=graphite-universal-20261119">
 <link rel="stylesheet" href="forma-graphite-only-v3.css?v=graphite-only-20261119-v3">
 <link rel="stylesheet" href="forma-mobile-landscape-2d-v1.css?v=touch-first-20261122">
+<style id="forma-home-theme-r176">
+/* Main studio appearance is scoped to the home screen; images and editors are unchanged. */
+html[data-forma-theme="light"] body.fa-unified-studio{
+ --fs-bg:#f4f3f0;--fs-panel:#ffffff;--fs-raised:#eae8e4;--fs-line:#d6d3cd;--fs-text:#25282b;--fs-muted:#62666a;--fs-ink:#222528;--fs-accent:#a98b66;--fs-accent-text:#775b3d;
+ --fa-back:#f4f3f0;--fa-panel:#ffffff;--fa-card:#ffffff;--fa-canvas:#f0efec;--fa-elev:#ebe9e5;--fa-field:#ffffff;--fa-ink:#25282b;--fa-muted:#62666a;--fa-line:#d6d3cd;--fa-side:#f8f7f4;--fa-active:#e8ded0;--fa-hover:#efede8;--fa-accent:#a98b66;--fa-accent-text:#775b3d;
+ --bg:#f4f3f0;--paper:#ffffff;--ink:#25282b;--muted:#62666a;--hair:#d6d3cd;--soft:#edeae5;--soft2:#f8f7f4;
+ background:#f4f3f0!important;color:#25282b!important;color-scheme:light;
+}
+html[data-forma-theme="light"] body.fa-unified-studio :is(.app,#workspace,#formaStudioHome,.rail,.mobile-nav){
+ background:#f4f3f0!important;background-image:none!important;color:#25282b!important;border-color:#d6d3cd!important;
+}
+html[data-forma-theme="light"] body.fa-unified-studio :is(.mobile-header,.topline){
+ background:#faf9f6!important;background-image:none!important;color:#25282b!important;border-color:#d6d3cd!important;
+}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome .fa-studio-home-heading h1{color:#25282b!important;opacity:1!important}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome .fa-studio-home-heading :is(p,small){color:#62666a!important;opacity:1!important}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome .fa-studio-task{
+ background:linear-gradient(145deg,#fff,#f7f6f3)!important;border-color:#d7d3cc!important;color:#25282b!important;box-shadow:0 5px 18px #27231b0b!important;
+}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome .fa-studio-task:is(:hover,:focus-visible){background:#f0ece5!important;border-color:#ab9273!important}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome .fa-studio-task>strong{color:#25282b!important}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome .fa-studio-task>small{color:#62666a!important}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome :is(.fa-studio-section-title h2,.fa-studio-utilities button){color:#25282b!important}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome :is(.fa-studio-section-title button,.fa-studio-utilities span){color:#62666a!important}
+html[data-forma-theme="light"] body.fa-unified-studio #formaStudioHome :is(.fa-studio-recent,.fa-home-recent,.fa-studio-home-recent){background:#fff!important;border-color:#d6d3cd!important;color:#25282b!important}
+html[data-forma-theme="light"] body.fa-unified-studio :is(.rail-btn,.mobile-nav button){background:#f4f3f0!important;color:#45494d!important;border-color:#d6d3cd!important}
+html[data-forma-theme="light"] body.fa-unified-studio :is(.rail-btn.active,.mobile-nav button.active){background:#e8ded0!important;color:#453827!important;border-color:#bfa78a!important}
+html[data-forma-theme="dark"] body .mobile-header .forma-brand-mobile-name,html[data-forma-theme="dark"] body .studio-wordmark strong{color:#f1f0ed!important;opacity:1!important}
+html[data-forma-theme="light"] body .mobile-header .forma-brand-mobile-name,html[data-forma-theme="light"] body .studio-wordmark strong{color:#25282b!important;opacity:1!important}
+html[data-forma-theme] body .mobile-header .forma-brand-mobile-name small,html[data-forma-theme] body .studio-wordmark small{display:block!important;visibility:visible!important;opacity:1!important;font-weight:550!important;line-height:1.25!important;letter-spacing:.025em!important;text-transform:uppercase}
+html[data-forma-theme="dark"] body :is(.mobile-header .forma-brand-mobile-name small,.studio-wordmark small){color:#c5b9a8!important}
+html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name small,.studio-wordmark small){color:#6d6459!important}
+@media(max-width:850px){
+ html[data-forma-theme] body .mobile-header .mobile-brand{flex:1 1 auto;min-width:0;gap:7px!important}
+ html[data-forma-theme] body .mobile-header .forma-brand-mobile-name{font-size:14px!important;line-height:1.1!important;gap:3px!important;min-width:0}
+ html[data-forma-theme] body .mobile-header .forma-brand-mobile-name small{font-size:7px!important;white-space:normal!important;max-width:120px;letter-spacing:.015em!important}
+ html[data-forma-theme] body .mobile-header .mobile-header-actions{flex:0 0 auto;gap:5px!important}
+}
+</style>
 </head>
 <body>
 <div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Загрузка студии ФОРМА" aria-hidden="false">
@@ -168,7 +207,7 @@ html.forma-studio-booting .mobile-nav{visibility:hidden!important}
  <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4"/></symbol>
  <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 3h13l4 4v14H3V3h1Zm3 0v7h10V3M7 21v-8h10v8"/></symbol>
 </svg>
-<header class="mobile-header"><div class="mobile-brand"><img class="forma-brand-mobile-logo" src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="Логотип FA" width="43" height="43"><b class="forma-brand-mobile-name">ФОРМА <small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></b></div><div class="mobile-header-actions"><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
+<header class="mobile-header"><div class="mobile-brand"><img class="forma-brand-mobile-logo" src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="Логотип FA" width="43" height="43"><b class="forma-brand-mobile-name">FORMA <small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></b></div><div class="mobile-header-actions"><button class="mobile-account-btn" type="button" data-open-cabinet="account" aria-label="Личный кабинет" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg></button><button class="btn btn-outline btn-sm" id="mobileAdd"><svg class="ico"><use href="#i-plus"/></svg>Проект</button></div></header>
 <div class="app" id="app">
 <aside class="rail" aria-label="Основная навигация">
  <div class="brand-mark brand-sign" title="ФОРМА — архитектурная лаборатория" aria-label="ФОРМА"><span class="brand-roof"></span><span class="brand-letters">FA</span></div>
@@ -183,7 +222,7 @@ html.forma-studio-booting .mobile-nav{visibility:hidden!important}
  <div class="rail-bottom"><button class="rail-btn" id="helpBtn" title="Как работает сервис" aria-label="Помощь"><svg class="ico"><use href="#i-info"/></svg></button><span class="rail-monogram"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="22" height="22"></span><span class="build-version" title="Архитектурная лаборатория · обновлённые инструменты">v3.3</span></div>
 </aside>
 <main class="workspace" id="workspace">
- <div class="topline"><div class="studio-wordmark" aria-label="ФОРМА · Архитектурная лаборатория"><span class="studio-wordmark-icon"><img class="forma-ui-mark" src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="28" height="28"></span><span><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></span></div><div class="breadcrumbs"><span>ФОРМА</span><span class="crumb-slash">/</span><b id="breadcrumbName">Резиденция 01</b></div><div class="top-actions"><button type="button" class="header-account" data-open-cabinet="account" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span></button><button class="btn btn-outline btn-sm" id="newProjectBtn"><svg class="ico"><use href="#i-plus"/></svg><span>Новый проект</span></button></div></div>
+ <div class="topline"><div class="studio-wordmark" aria-label="FORMA · Архитектурная лаборатория"><span class="studio-wordmark-icon"><img class="forma-ui-mark" src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="28" height="28"></span><span><strong>FORMA</strong><small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></span></div><div class="breadcrumbs"><span>ФОРМА</span><span class="crumb-slash">/</span><b id="breadcrumbName">Резиденция 01</b></div><div class="top-actions"><button type="button" class="header-account" data-open-cabinet="account" title="Личный кабинет"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span></button><button class="btn btn-outline btn-sm" id="newProjectBtn"><svg class="ico"><use href="#i-plus"/></svg><span>Новый проект</span></button></div></div>
  <div class="page-intro forma-hero" aria-label="ФОРМА — архитектурная лаборатория">
   <div class="forma-hero-content">
    <p class="eyebrow">ФОРМА <span class="forma-hero-rule"></span> АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</p>
@@ -191,7 +230,7 @@ html.forma-studio-booting .mobile-nav{visibility:hidden!important}
    <p class="subtitle">Из архитектурной модели — в выразительную фотографию.<br>Экстерьеры, интерьеры, материалы, свет и анимация в одной студии.</p>
    <div class="forma-hero-actions"><button type="button" class="forma-hero-primary" data-studio-action="upload"><svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg>Загрузить модель <span>↗</span></button><button type="button" class="forma-hero-secondary" data-studio-action="interior">Интерьеры <span aria-hidden="true">↗</span></button></div>
   </div>
-  <div class="forma-hero-emblem" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" loading="eager" width="185" height="185"><strong>ФОРМА</strong><span>АРХИТЕКТУРНАЯ<br>ВИЗУАЛИЗАЦИЯ</span></div>
+  <div class="forma-hero-emblem" aria-hidden="true"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" loading="eager" width="185" height="185"><strong>FORMA</strong><span>АРХИТЕКТУРНАЯ<br>ВИЗУАЛИЗАЦИЯ</span></div>
  </div>
  <section class="forma-direction-catalog" aria-label="Главное меню профессиональных инструментов FORMA">
   <header class="forma-direction-head"><div><span class="forma-direction-kicker">FORMA / ПРОФЕССИОНАЛЬНЫЕ ИНСТРУМЕНТЫ</span><h2>Инструменты студии</h2><p>Шесть направлений работы — от архитектурной модели до фотореалистичного кадра, света и анимации.</p></div><span class="forma-direction-index">01—06 <i>СТУДИЯ</i></span></header>
@@ -258,7 +297,7 @@ html.forma-studio-booting .mobile-nav{visibility:hidden!important}
    <div class="render-progress" id="renderProgress" role="dialog" aria-modal="false" aria-labelledby="renderProgressTitle" hidden>
     <div class="render-progress-panel">
      <header class="render-progress-top">
-      <div class="render-progress-brand"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="32" height="32"><span><strong>ФОРМА</strong><small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></span></div>
+      <div class="render-progress-brand"><img src="assets/brand/forma-fa-mark.svg?v=ivory-logo-20261117" alt="" width="32" height="32"><span><strong>FORMA</strong><small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></span></div>
       <button type="button" id="renderProgressMinimize" class="render-progress-minimize" aria-label="Свернуть ход генерации">Свернуть <span aria-hidden="true">↗</span></button>
      </header>
      <div class="render-progress-canvas">
