@@ -252,16 +252,28 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  // The base scene is never rejected due to an arbitrary triangle count.
  // Increase the working budget to include all existing objects, leaving
  // a separate allowance for render-only turf and optional microgeometry.
- const lawnReserve=lawn?(isMobile()?100000:profile==='high'?780000:360000):0;
- limit=Math.max(softLimit,used+grassCost+lawnReserve+(isMobile()?0:180000));
- if(!isMobile()&&profile==='high')for(const o of meshes){if(o.name!=='rowan-pinnate-foliage'||!proxies.has(o))continue;const g=rowanLeafProxy(T,o.geometry,true);if(!g)continue;const extra=(g.index.count/3-costs(o))*o.count;if(used+extra+(lawn?360000:0)>limit){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;}
- if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||o.name!=='rowan-bark-trunk-branches')continue;const available=limit-used-(lawn?260000:0);if(available<15000)continue;for(const level of (profile==='high'?[6,4,2]:[3,2])){const result=barkDisplacement(T,o,level);if(!result)break;const extra=result.geometry.index.count/3-costs(o);if(extra>available){result.geometry.dispose();continue;}proxies.set(o,result.geometry);ownedProxies.push(result.geometry);used+=extra;displacedWood+=result.displaced;break;}}
- if(!isMobile())for(const o of meshes){if(o.isInstancedMesh||proxies.has(o))continue;const base=costs(o),available=Math.min(120000,limit-used-(lawn?280000:0));if(available<base*8||base>12000)continue;const level=profile==='high'&&base*35<=available?6:3;const g=surfaceDisplacement(T,o,level);if(!g)continue;const extra=g.index.count/3-base;if(extra>available){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;displacedSurfaces++;}
+ // Estimate memory for expanded instances before allocating geometry and BVH.
+ // deviceMemory reports system RAM, not VRAM; use a conservative heuristic.
+ const ram=Number(navigator.deviceMemory)||4;
+ const budget=(isMobile()?96:ram<=4?192:384)*1024*1024;
+ const estimate=meshes.reduce((sum,o)=>{
+  const g=proxies.get(o)||o.geometry,n=o.isInstancedMesh?o.count:1;
+  return sum+n*(g.attributes.position.count*112+(g.index?.count||g.attributes.position.count)*20);
+ },0);
+ if(estimate>budget){
+  for(const g of ownedProxies)g.dispose();
+  throw Error('Оценка памяти трассировки '+Math.round(estimate/1048576)+' МБ превышает безопасный бюджет '+Math.round(budget/1048576)+' МБ');
+ }
+ const lawnReserve=lawn?(isMobile()?60000:estimate>budget*.55?90000:profile==='high'?450000:220000):0;
+ limit=Math.max(Math.min(softLimit,used+grassCost+lawnReserve+180000),used+grassCost+lawnReserve+(isMobile()||estimate>budget*.55?0:90000));
+ if(!isMobile()&&profile==='high'&&estimate<budget*.55)for(const o of meshes){if(o.name!=='rowan-pinnate-foliage'||!proxies.has(o))continue;const g=rowanLeafProxy(T,o.geometry,true);if(!g)continue;const extra=(g.index.count/3-costs(o))*o.count;if(used+extra+(lawn?360000:0)>limit){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;}
+ if(!full&&!isMobile()&&estimate<budget*.55)for(const o of meshes){if(o.isInstancedMesh||o.name!=='rowan-bark-trunk-branches')continue;const available=limit-used-(lawn?260000:0);if(available<15000)continue;for(const level of (profile==='high'?[6,4,2]:[3,2])){const result=barkDisplacement(T,o,level);if(!result)break;const extra=result.geometry.index.count/3-costs(o);if(extra>available){result.geometry.dispose();continue;}proxies.set(o,result.geometry);ownedProxies.push(result.geometry);used+=extra;displacedWood+=result.displaced;break;}}
+ if(!full&&!isMobile()&&estimate<budget*.55)for(const o of meshes){if(o.isInstancedMesh||proxies.has(o))continue;const base=costs(o),available=Math.min(120000,limit-used-(lawn?280000:0));if(available<base*8||base>12000)continue;const level=profile==='high'&&base*35<=available?6:3;const g=surfaceDisplacement(T,o,level);if(!g)continue;const extra=g.index.count/3-base;if(extra>available){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;displacedSurfaces++;}
  const reducedOak=0;
  // No leaf-instance deletion or abort for heavy scenes. Optional grass and
  // micro-displacement budgets remain adaptive; actual device limits still apply.
  limit=Math.max(limit,used+grassCost+lawnReserve);
- const lawnBudget=lawn?Math.min(profile==='high'?780000:360000,Math.floor(Math.max(0,limit-used)*.82)):0;
+ const lawnBudget=lawn?Math.min(lawnReserve,Math.floor(Math.max(0,limit-used)*.82)):0;
  const existingBudget=limit-lawnBudget;
  const factor=Math.min(1,Math.max(0,(existingBudget-used)/Math.max(1,grassCost)));
  for(const o of meshes){if(!grass(o))continue;const keep=Math.min(o.count,Math.floor(o.count*factor),Math.floor(Math.max(0,existingBudget-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
@@ -350,10 +362,10 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   if(pt){try{pt.dispose()}catch{try{pt._quad?.material?.dispose();pt._quad?.dispose();pt._pathTracer?.dispose();}catch{}}try{pt._lowResPathTracer?.dispose();}catch{}}
   denoise?.dispose();denoiseQuad?.dispose();if(snap)snap.dispose();else sky?.texture?.dispose();
  }
- function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
+ function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building){try{cleanup()}catch(e){console.warn('GPU cleanup',e)}}renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
  save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R134.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R134',e);const reason=stage+': '+(e?.message||String(e));try{sessionStorage.setItem('forma-gpu-last-error',reason);}catch{}close();onFailure(reason);}
+ function error(e){if(!alive)return;loading=false;finished=true;console.error('FORMA GPU R134',e);const reason=stage+': '+(e?.message||String(e));try{sessionStorage.setItem('forma-gpu-last-error',reason);}catch{}close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
@@ -363,8 +375,8 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   snap=await snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn,()=>alive,(n,total)=>{msg.textContent='Подготовка геометрии: '+n+' / '+total+' объектов';});if(!alive){snap.dispose();return;}
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   stage='Построение BVH и загрузка текстур';building=true;
-  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;const heavy=snap.triangles>4000000,veryHeavy=snap.triangles>8000000;const tile=veryHeavy?8:heavy?6:profile==='high'?4:3;pt.tiles.set(tile,tile);pt.renderScale=veryHeavy?.45:heavy?.65:profile==='high'?.85:.55;const atlas=heavy?512:profile==='high'?1024:512;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
-  renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
+  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;const heavy=snap.triangles>4000000,veryHeavy=snap.triangles>8000000;const tile=veryHeavy?8:heavy?6:profile==='high'?4:3;pt.tiles.set(tile,tile);pt.renderScale=veryHeavy?.45:heavy?.65:profile==='high'?.85:.55;const atlas=heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
+  renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85,1600/Math.max(1,canvas.clientWidth,canvas.clientHeight)));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
   stage='Трассировка GPU';renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
   function tick(){if(!alive||finished)return;try{
