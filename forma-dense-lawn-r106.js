@@ -15,7 +15,7 @@ export function lawnTerrainMicro(x,z){
 // Each instanced clump contains several separately curved, folded leaves.
 function tuftGeometry(T,profile,variant,detail,mobile=false){
  const pos=[],uv=[],col=[],idx=[];
- const count=detail===6?4:detail===5?3:detail===0?9:detail===1?7:detail===2?6:5;
+ const count=detail===7?5:detail===6?5:detail===5?3:detail===0?9:detail===1?7:detail===2?6:5;
  const rows=detail===6?2:detail>=4?1:detail===0?7:detail===1?4:3;
  const stride=detail===0?3:2;
  const ratio=profile.width/profile.height;
@@ -23,12 +23,12 @@ function tuftGeometry(T,profile,variant,detail,mobile=false){
   const seed=variant*31+n*7;
   const r=k=>hash(seed,n,k);
   const a=n*2.399963+variant*.83+r(1)*.8,dx=Math.cos(a),dz=Math.sin(a),sx=-dz,sz=dx;
-  const base=detail>=4?.08+r(2)*.48:.025+r(2)*.10,ox=dx*base,oz=dz*base;
+  const base=detail===7?.12+r(2)*.55:detail>=4?.08+r(2)*.48:.025+r(2)*.10,ox=dx*base,oz=dz*base;
   const basal=n>=count-Math.min(4,Math.floor(count*.45));
   const h=(basal?.36:.72)+r(3)*(basal?.29:.42);
   const lean=(basal?.65:.16)+r(4)*(basal?.33:.65);
   const bend=lean*clamp(profile.lean/.30,.65,1.45);
-  const half=ratio*(.43+r(5)*.29)*(mobile?(detail===5?1.05:detail===6?1.15:1.05):(detail===5?3.5:detail===4?3.0:detail===3?2.7:detail===2?1.6:detail===1?1.25:1.0));
+  const half=ratio*(.43+r(5)*.29)*(mobile?(detail===7?1.10:detail===5?1.05:detail===6?1.10:1.05):(detail===5?3.5:detail===4?3.0:detail===3?2.7:detail===2?1.6:detail===1?1.25:1.0));
   const first=pos.length/3,twist=(r(8)-.5)*1.5,curve=(r(9)-.5)*.20,age=r(10);
   for(let j=0;j<rows;j++){
    const t=j/rows,w=half*(.73+.32*Math.sin(t*Math.PI))*Math.pow(1-t,.65);
@@ -333,11 +333,11 @@ function createDryField(T,{profile,focus,mobile,low,terrainAt,contains,bounds}){
 // Broad, inexpensive three-leaf clusters beyond the camera-centered detailed carpet.
 function addDistantTurf(T,root,{profile,focus,bounds,horizon,mobile,low,terrainAt,contains,mat,palette}){
  const area=Math.max(1,(bounds.x1-bounds.x0)*(bounds.z1-bounds.z0));
- const step=Math.max(mobile?.20:.09,Math.sqrt(area/(mobile?(low?11000:22000):145000)))/Math.sqrt(Math.max(.65,Math.min(mobile?1.1:1.4,profile.density)));
- const rows=[],geo=tuftGeometry(T,profile,1,mobile?5:4,mobile),dummy=new T.Object3D(),color=new T.Color(),fall=new T.Color('#a69a59');
+ const step=Math.max(mobile?.16:.09,Math.sqrt(area/(mobile?(low?15000:26000):145000)))/Math.sqrt(Math.max(.65,Math.min(mobile?1.35:1.4,profile.density)));
+ const rows=[],geo=tuftGeometry(T,profile,1,mobile?7:4,mobile),dummy=new T.Object3D(),color=new T.Color(),fall=new T.Color('#a69a59');
  for(let iz=Math.floor(bounds.z0/step);iz<=Math.ceil(bounds.z1/step);iz++)for(let ix=Math.floor(bounds.x0/step);ix<=Math.ceil(bounds.x1/step);ix++){
   const x=(ix+hash(ix,iz,181))*step,z=(iz+hash(ix,iz,182))*step,d=Math.hypot(x-focus.x,z-focus.z);
-  if((mobile?d<(low?3.1:4.6):d<horizon-6)||!contains(x,z))continue;
+  if((mobile?d<(low?3.6:4.9):d<horizon-6)||!contains(x,z))continue;
   if(!mobile&&hash(ix,iz,183)>smooth(clamp((d-horizon+6)/4,0,1)))continue;
   rows.push([x,z,hash(ix,iz,184),hash(ix,iz,185)]);
  }
@@ -346,7 +346,7 @@ function addDistantTurf(T,root,{profile,focus,bounds,horizon,mobile,low,terrainA
  rows.forEach(([x,z,v,a],i)=>{const h=profile.height*(.85+.36*v),w=mobile?h*(.95+.20*v):Math.max(h,step*.96);
   dummy.position.set(x,terrainAt(x,z)+.006,z);dummy.rotation.set(0,a*6.283185,0);dummy.scale.set(w,h,w);dummy.updateMatrix();m.setMatrixAt(i,dummy.matrix);color.copy(palette[Math.min(palette.length-1,Math.floor(v*palette.length))]);if(profile.season==='autumn')color.lerp(fall,.35+.45*field(x,z,.45,190));m.setColorAt(i,color);
  });
- m.name='forma-parcel-distant-turf-r104';m.receiveShadow=true;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.raycast=()=>{};root.add(m);return rows.length*(mobile?3:5);
+ m.name='forma-parcel-distant-turf-r104';m.receiveShadow=true;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.raycast=()=>{};root.add(m);return rows.length*5;
 }
 
 export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains=()=>true,low=false,bounds=null}){
@@ -385,11 +385,11 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
   `);
 
  };
- mat.customProgramCacheKey=()=> 'forma-grass-r110';
+ mat.customProgramCacheKey=()=> 'forma-grass-r118';
  const pressedColor=new T.Color('#746c47'),color=new T.Color(),palette=profile.palette.map(c=>new T.Color(c).lerp(new T.Color('#46603b'),.12)),dummy=new T.Object3D();const autumnColors=['#7b824c','#a29b56','#b3a15a','#997c43','#806a42','#65794a'].map(c=>new T.Color(c));
  const cx=Math.round(focus.x/.6)*.6,cz=Math.round(focus.z/.6)*.6;
  const integrated=!!profile.integrated;const near=mobile?(integrated?1.05:1.15):1.55,mid=mobile?(integrated?3.0:3.2):4.0,far=mobile?7.5:9.2,horizon=mobile?14:19;
- const bands=mobile?[{min:0,max:low?1.8:2.2,step:low?.053:.045,detail:2},{min:low?1.4:1.8,max:low?4:5.5,step:low?.105:.085,detail:6}]:[{min:0,max:near+.24,step:.020,detail:0},{min:near-.24,max:mid+.36,step:.028,detail:1},{min:mid-.36,max:far+1.2,step:.048,detail:2},{min:far-1.2,max:horizon,step:.065,detail:3}];
+ const bands=mobile?[{min:0,max:low?2.1:2.5,step:low?.046:.039,detail:2},{min:low?1.7:2.1,max:low?4.6:6.0,step:low?.088:.073,detail:6}]:[{min:0,max:near+.24,step:.020,detail:0},{min:near-.24,max:mid+.36,step:.028,detail:1},{min:mid-.36,max:far+1.2,step:.048,detail:2},{min:far-1.2,max:horizon,step:.065,detail:3}];
  const slopeCache=new Map(),up=new T.Vector3(0,1,0),normal=new T.Vector3(),axis=new T.Vector3(1,0,0),qYaw=new T.Quaternion(),qTilt=new T.Quaternion();
  function slope(x,z){
   const ix=Math.round(x/.18),iz=Math.round(z/.18),key=ix+':'+iz;
@@ -407,9 +407,9 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
  }
  let total=0,triangles=0;
  for(const [bandIndex,b] of bands.entries()){
-  const step=b.step/Math.sqrt(mobile?Math.min(1.15,profile.density):profile.density)*(low&&bandIndex<2?1.12:1)*(mobile?1:bandIndex===0?.81:bandIndex===1?.90:1),groups=[[],[],[]];
+  const step=b.step/Math.sqrt(mobile?Math.min(1.35,profile.density):profile.density)*(low&&bandIndex<2?1.06:1)*(mobile?1:bandIndex===0?.81:bandIndex===1?.90:1),groups=[[],[],[]];
   for(let iz=Math.floor((cz-b.max)/step);iz<=Math.ceil((cz+b.max)/step);iz++)for(let ix=Math.floor((cx-b.max)/step);ix<=Math.ceil((cx+b.max)/step);ix++){
-   const x=(ix+hash(ix,iz,1))*step,z=(iz+hash(ix,iz,2))*step,d=Math.hypot(x-cx,z-cz);
+   const x=(ix+hash(ix,iz,1)+(mobile?(hash(ix,iz,91)-.5)*.65:0))*step,z=(iz+hash(ix,iz,2)+(mobile?(hash(ix,iz,92)-.5)*.65:0))*step,d=Math.hypot(x-cx,z-cz);
    if(d<b.min||d>b.max||!contains(x,z))continue;
    const fadeIn=bandIndex===0?1:smooth(clamp((d-b.min)/(bandIndex===1?.48:bandIndex===2?.72:2.4),0,1)),fadeOut=smooth(clamp((b.max-d)/(bandIndex===0?.48:bandIndex===1?.72:bandIndex===2?2.4:5.0),0,1));
    if(hash(ix,iz,11)>Math.min(1,Math.max(.18,fadeIn*fadeOut)))continue;
@@ -436,7 +436,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
     color.copy(palette[Math.min(palette.length-1,Math.floor(shade*palette.length))]).multiplyScalar(.94+.12*shade+.10*patch).lerp(pressedColor,pressed*.12).multiplyScalar(profile.stripes?(stripe?.86:1.07):1);if(profile.season==='autumn'){const a=field(x,z,.37,170)*.65+field(x,z,2.0,171)*.35;const k=Math.min(5,Math.floor(a*6));color.lerp(autumnColors[k],.38+.45*field(x,z,1.3,172));}mesh.setColorAt(i,color);
    }
    mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=false;mesh.receiveShadow=true;mesh.raycast=()=>{};root.add(mesh);
-   total+=rows.length*(b.detail===6?4:b.detail===0?9:b.detail===1?7:b.detail===2?6:5);triangles+=rows.length*geo.index.count/3;
+   total+=rows.length*(b.detail===6?5:b.detail===0?9:b.detail===1?7:b.detail===2?6:5);triangles+=rows.length*geo.index.count/3;
   }
  }
  if(bounds)total+=addDistantTurf(T,root,{profile,focus:{x:cx,z:cz},bounds,horizon,mobile,low,terrainAt,contains,mat,palette});
