@@ -511,7 +511,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R125</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R126</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -803,7 +803,7 @@ import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r89.js?v=R89';
 import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R118';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R122';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
-import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R125';
+import {createPathTraceMode} from './forma-path-tracing-r75.js?v=R126';
 import {exportCyclesJob,CYclesPresets} from './forma-cycles-export-r107.js?v=R123';
 import {createWindSystem,windRipple} from './forma-wind-r91.js?v=R113';
 const windR74=createWindSystem(THREE);let windAmountR74=window.innerWidth<=850?15:25;try{const v=localStorage.getItem('forma-wind-r75');if(v!==null)windAmountR74=Math.max(0,Math.min(100,Number(v)||0));}catch{}
@@ -891,7 +891,7 @@ const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55
 const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76'].includes(treeTestScene);
 const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-r83','lawn-r84','lawn-r85','lawn-r86','lawn-r87','lawn-r88','lawn-r89','lawn-r90','lawn-r91','lawn-r92','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal',lawnFlowersR88=75,lawnWheatHeightR88=76,lawnHeightR90=100,lawnDensityR90=100,lawnPressedR90=45,lawnPanelR90=null,lawnPanelSyncR90=null;
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
-const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125'].includes(treeTestScene);
+const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126'].includes(treeTestScene);
 const treeLineupMode=rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -1316,7 +1316,7 @@ function startPathTraceR72(profile='balanced'){
  if(!renderer||!camera||!root||gpuLostR75){openRenderMenuR75('3D-сцена или GPU ещё недоступны.');return;}
  const p=gpuProfileR75();if(p.software||!p.capable){openRenderMenuR75('Трассировка недоступна: требуется аппаратный WebGL2 с HDR-буферами.');return;}
  if(state.view==='2d')setView('3d');releasePhotorealPipeline(renderer);
- pathTraceR72=createPathTraceMode(THREE,{renderer,scene,root,camera,canvas,profile,onClose:()=>{pathTraceR72=null;if(!gpuLostR75&&!renderer.getContext().isContextLost()){resize();renderGate.invalidate();}},onFailure:reason=>{if(!gpuLostR75)openRenderMenuR75('GPU-рендер остановлен: '+reason+'. Выберите облегчённый режим.');}});
+ pathTraceR72=createPathTraceMode(THREE,{renderer,scene,root,camera,canvas,profile,atmosphere:{...doc.atmosphere},onClose:()=>{pathTraceR72=null;if(!gpuLostR75&&!renderer.getContext().isContextLost()){resize();renderGate.invalidate();}},onFailure:reason=>{if(!gpuLostR75)openRenderMenuR75('GPU-рендер остановлен: '+reason+'. Выберите облегчённый режим.');}});
 }
 function initialize(){
  $('#pathTraceR72Button').onclick=openRenderMenuR75;
