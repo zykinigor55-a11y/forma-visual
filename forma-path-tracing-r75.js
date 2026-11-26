@@ -300,13 +300,13 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
    const target=o.target.getWorldPosition(new T.Vector3()),dir=o.getWorldPosition(new T.Vector3()).sub(target).normalize();
    const u=new T.Vector3(0,1,0).cross(dir);if(u.lengthSq()<1e-6)u.set(1,0,0);else u.normalize();const v=dir.clone().cross(u).normalize();
    const radius=Math.tan(T.MathUtils.degToRad(Math.max(.27,Math.min(.9,(atmosphere.solarSoftness||3)*.14))));
-   const n=9;for(let i=0;i<n;i++){const a=i*2.399963,r=radius*Math.sqrt((i+.5)/n),d=dir.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r).normalize();const l=new T.DirectionalLight(o.color,o.intensity*(sky.solarTransmission??1)/n);l.position.copy(target).addScaledVector(d,100);l.target.position.copy(target);scene.add(l,l.target);}return;
+   const n=9;for(let i=0;i<n;i++){const a=i*2.399963,r=radius*Math.sqrt((i+.5)/n),d=dir.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r).normalize();const l=new T.DirectionalLight(o.color,(o.userData.formaUncloudedIntensity??o.intensity)*(sky.solarTransmission??1)/n);l.position.copy(target).addScaledVector(d,100);l.target.position.copy(target);scene.add(l,l.target);}return;
   }
   const l=o.clone();l.position.setFromMatrixPosition(o.matrixWorld);l.quaternion.copy(o.getWorldQuaternion(new T.Quaternion()));
   if(o.target){l.target=new T.Object3D();l.target.position.setFromMatrixPosition(o.target.matrixWorld);scene.add(l.target);}
   // Retain the user's solar strength and colour; cloudy weather already lowers
   // editor sun intensity. Further attenuate the direct component for diffuse sky.
-  if(o.name==='sun'&&o.isDirectionalLight)l.intensity*=(cloudy?.55:1.0)*(sky.solarTransmission??1);
+  if(o.name==='sun'&&o.isDirectionalLight)l.intensity=(o.userData.formaUncloudedIntensity??o.intensity)*(cloudy?.55:1.0)*(sky.solarTransmission??1);
   scene.add(l);
  });
  const env=sky.texture;scene.environment=env;scene.background=env;
