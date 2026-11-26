@@ -572,7 +572,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R169</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R170</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню">← Главное меню</a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -4830,7 +4830,7 @@ function addEvents(){
   }else{state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;canvas.setPointerCapture?.(e.pointerId);}
   return;
  }
- if(e.pointerType==='mouse'&&e.button!==0)return; // Right drag is reserved for camera orbit.
+ if(e.pointerType==='mouse'&&e.button!==0)return; // Right drag remains available for orbit while using tools.
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
  // Selecting a placed object takes priority over placing another model
  // on top of it; Shift+click still allows intentional overlap.
@@ -4882,6 +4882,7 @@ function addEvents(){
  }
  // Normal touch gestures are kept for camera; a tap selects the object.
  if(state.tool==='select'&&(e.pointerType==='touch'||e.pointerType==='pen'))return;
+ if(state.tool==='select'&&state.view==='3d'&&e.pointerType==='mouse'&&window.innerWidth>850&&!hitTreeOnMobile(e)){state.down.orbit=true;state.down.lastX=e.clientX;state.down.lastY=e.clientY;canvas.setPointerCapture?.(e.pointerId);return;}
  if(state.tool==='select'&&lawnIntegratedR90&&!(window.innerWidth>850&&hitTreeOnMobile(e))&&hitLawnR92(e)){openLawnPanelR90();state.down=null;return;}
  const key=state.tool==='select'?hitTreeOnMobile(e):hitObj(e);
  if(state.tool==='select'&&key){
@@ -4915,6 +4916,7 @@ const move=e=>{
   }
   return;
  }
+ if(state.down?.orbit&&e.pointerId===state.activePointer){if(!(e.buttons&1)){state.down=null;return;}if(!tapCancelled)return;const dx=e.clientX-state.down.lastX,dy=e.clientY-state.down.lastY;state.down.lastX=e.clientX;state.down.lastY=e.clientY;const offset=camera.position.clone().sub(controls.target),sphere=new THREE.Spherical().setFromVector3(offset),scale=2*Math.PI/Math.max(1,canvas.clientHeight);sphere.theta-=dx*scale;sphere.phi=THREE.MathUtils.clamp(sphere.phi-dy*scale,.02,controls.maxPolarAngle);camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sphere));camera.lookAt(controls.target);controls.update();renderGate.invalidate();return;}
  if(!(state.painting&&state.tool==='terrain'))updateBrushCursor(e);
  if(state.painting){
   if(e.pointerId!==state.activePointer)return;
@@ -5002,6 +5004,7 @@ const up=e=>{
    }
   state.down=null;return
  }
+ if(state.down?.orbit&&canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);
  const movement=state.down?Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y):0;
  if(state.drag){
   const moved=state.draggingMoved;state.drag=false;state.draggingMoved=false;
