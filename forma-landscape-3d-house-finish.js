@@ -33,7 +33,7 @@ const photos=new Map();
 function originalPhoto(T,name,channel){
  const key=name+':'+channel;
  if(photos.has(key))return photos.get(key);
- const path='./assets/house-pbr/'+name+'-'+channel+'-1k.jpg';
+ const path=new URL('./assets/house-pbr/'+name+'-'+channel+'-1k.jpg',import.meta.url).href;
  const task=new Promise(resolve=>{
   new T.TextureLoader().load(path,texture=>{
    texture.wrapS=texture.wrapT=T.RepeatWrapping;
@@ -50,7 +50,7 @@ function materialReady(){
  window.dispatchEvent(new Event('forma-house-pbr-ready'));
 }
 function applyPhotoChannel(material,channel,photo,owned,T,scale,photoColor=false){
- if(!photo||!material)return;
+ if(!photo||!material||material.userData?.formaDisposed)return;
  // Each building owns its UV scaling, never mutating the shared cached photo.
  const texture=photo.clone();
  texture.wrapS=texture.wrapT=T.RepeatWrapping;
@@ -65,7 +65,7 @@ function applyPhotoChannel(material,channel,photo,owned,T,scale,photoColor=false
  }else if(channel==='nor_gl'){
   material.normalMap=texture;
   material.normalScale=new T.Vector2(.52,.52);
-  material.bumpScale*=.35; // keep the tested original bump map, reduce double relief
+  material.bumpScale*=.25; // restrained residual joint relief; avoid double relief
  }else if(channel==='rough'){
   material.roughnessMap=texture;
   material.roughness=Math.max(.76,material.roughness||0);
@@ -76,9 +76,11 @@ function applyPhotoChannel(material,channel,photo,owned,T,scale,photoColor=false
 // Painting style/preset remains authoritative: wood colors and user roof color
 // are preserved. Genuine stone/brick/stucco color is restored from photo maps.
 export function applyArchitecturalPBR(T,{wall,roofFinish,wallMaterial,roofMaterial,roofScale=[1,1],ownedTextures=[]}){
+ // Stone keeps its masonry relief; a stucco photo normal would erase the joints.
  const wallKey=wall==='brick'?'brick':wall==='plaster'?'stucco':
-  wall==='stone'?'stucco':['darkwood','lightwood','walnut','cedar'].includes(wall)?'wood':null;
+  ['darkwood','lightwood','walnut','cedar'].includes(wall)?'wood':null;
  const isPhotoColor=wall==='brick'||wall==='plaster';
+ for(const m of [wallMaterial,roofMaterial])if(m&&!m.userData.formaDisposeGuard){m.userData.formaDisposeGuard=true;m.addEventListener('dispose',()=>{m.userData.formaDisposed=true});}
  if(wallKey)for(const channel of ['diff','nor_gl','rough']){
   if(channel==='diff'&&!isPhotoColor)continue;
   originalPhoto(T,wallKey,channel).then(photo=>{
