@@ -140,6 +140,11 @@ export function assetGraphic(entry){
  if(entry.group==='trees'||entry.group==='shrubs')return foliage(entry);
  if(entry.group==='boulders')return stone(entry);
  if(entry.group==='lights')return light(entry);
+ if(entry.group==='pools'){
+  const fixed=entry.id==='pool-fixed',frame=entry.id==='pool-frame';
+  const body=fixed?'<rect x="13" y="37" width="134" height="86" rx="2" fill="#d3cdc0" stroke="#817d72" stroke-width="2"/><rect x="21" y="45" width="118" height="70" fill="#559caf" stroke="#d7e5e5" stroke-width="2"/><path d="M24 51 H44 V109 H24 M30 51 V109 M37 51 V109" fill="none" stroke="#b0d8e0" stroke-width="2"/>':'<circle cx="80" cy="80" r="62" fill="'+(frame?'#828b92':'#6aa8d3')+'" stroke="#d3dce1" stroke-width="2"/><circle cx="80" cy="80" r="'+(frame?55:49)+'" fill="#559caf" stroke="#bddae4" stroke-width="2"/>'+(frame?Array.from({length:12},(_,i)=>'<path d="M80 15 V25" stroke="#d5d7d7" stroke-width="4" transform="rotate('+(i*30)+' 80 80)"/>').join(''):'<circle cx="80" cy="80" r="55" fill="none" stroke="#a9d8ef" stroke-width="4"/>');
+  return body+'<path d="M48 68 Q63 64 78 68 T108 68 M50 82 Q65 78 80 82 T110 82 M48 96 Q63 92 78 96 T108 96" stroke="#d7f0ed" stroke-width="1.5" opacity=".55" fill="none"/>';
+ }
  return floorSample(entry);
 }
 export function assetSVG(entry,{size=1080,transparent=false}={}){
