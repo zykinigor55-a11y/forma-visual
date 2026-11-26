@@ -556,7 +556,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R165</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R166</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -2292,7 +2292,7 @@ function loadCreatureModel(id){
  const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
  // Native GLBs are proxied from fixed CC0 URLs by our own domain, avoiding
  // 3rd-party CORS failures, unsigned redirects and unlicensed uploads.
- loader.loadAsync(entry.modelPath).then(gltf=>{
+ loader.loadAsync(location.hostname.endsWith('github.io')?entry.nativeGLB:entry.modelPath).catch(error=>{if(location.hostname.endsWith('github.io'))throw error;return loader.loadAsync(entry.nativeGLB);}).then(gltf=>{
   if(!gltf?.scene)throw Error('Пустой GLB');
   let meshCount=0;gltf.scene.traverse(node=>{if(node.isMesh)meshCount++});
   if(meshCount===0)throw Error('Нет 3D-сетки');
@@ -2724,7 +2724,7 @@ function renderCreatureCatalog(){
   state.placing=button.dataset.creatureId;
   target.querySelectorAll('[data-creature-id]').forEach(b=>b.classList.toggle('active',b===button));
   const item=creatureById(state.placing);
-  loadCreatureModel(item.id);
+  creatureFailures.delete(item.id);loadCreatureModel(item.id);syncMobilePlacementHint();
   status('Выбран '+item.name+'. Коснитесь участка для размещения. Рост '+item.height+' м.');
  });
 }
@@ -3092,11 +3092,11 @@ function snapMobileObjectPosition(raw,moving){
 }
 function walkMoveRefR164(ref=selectable(state.selected)){
  if(state.view!=='walk'||window.innerWidth<=850||!ref?.obj||ref.type==='house'||Array.isArray(ref.obj.points)||!Number.isFinite(Number(ref.obj.x))||!Number.isFinite(Number(ref.obj.y)))return null;
- const group=catalog(ref.obj.catalogId)?.group;return ['trees','shrubs'].includes(group)||ref.type==='extra'&&/fir|tree|pine|spruce|birch|rowan|oak|willow|maple/i.test(ref.obj.type||'')?ref:null;
+ const group=catalog(ref.obj.catalogId)?.group;return ['trees','shrubs'].includes(group)||ref.type==='extra'&&(isCreatureId(ref.obj.type)||/fir|tree|pine|spruce|birch|rowan|oak|willow|maple/i.test(ref.obj.type||''))?ref:null;
 }
 let walkMoveDragR164=null;
 function syncWalkMoveR164(ref,label){
- const dock=$('#walkMoveDockR164');if(!dock)return;const valid=walkMoveRefR164(ref);dock.hidden=!valid;if(!valid)return;dock.querySelector('[data-title]').textContent=label||catalog(valid.obj.catalogId)?.name||'Растение';
+ const dock=$('#walkMoveDockR164');if(!dock)return;const valid=walkMoveRefR164(ref);dock.hidden=!valid;if(!valid)return;dock.querySelector('[data-title]').textContent=label||catalog(valid.obj.catalogId)?.name||creatureById(valid.obj.type)?.name||'Объект';
  for(const axis of ['x','y']){const input=dock.querySelector('[data-coordinate="'+axis+'"]');if(document.activeElement!==input)input.value=Number(valid.obj[axis]).toFixed(2);input.min=0;input.max=axis==='x'?doc.site.width:doc.site.height;}
 }
 function applyWalkMoveR164(ref,x,y){
@@ -4832,7 +4832,7 @@ function addEvents(){
  state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;
  // Selecting a placed object takes priority over placing another model
  // on top of it; Shift+click still allows intentional overlap.
- if(e.pointerType==='mouse'&&!e.shiftKey&&['plant','light','build','landscape','models40','creatures'].includes(state.tool)){
+ if(e.pointerType==='mouse'&&!e.shiftKey&&['plant','light','build','landscape','models40'].includes(state.tool)){
   const existing=hitTreeOnMobile(e);
   if(existing&&selectable(existing)?.obj){
    e.preventDefault();chooseTool('select');state.selected=existing;
@@ -4978,6 +4978,7 @@ const up=e=>{
   const start=state.down;walkDrag=null;state.down=null;
   if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);
   if(e.pointerType==='mouse'&&start.button===0&&e.button===0&&!tapCancelled&&!walkLookEnabled&&!motionR156.active&&Math.hypot(e.clientX-start.x,e.clientY-start.y)<5){
+   if(state.tool==='creatures'&&state.placing){const p=hitGround(e);if(p)place(p);else status('Наведите камеру на землю внутри участка.');return;}
    const direct=hitObj(e);chooseTool('select');
    if(lawnIntegratedR90&&(!direct||catalog(selectable(direct)?.obj?.catalogId)?.group==='lawns')&&hitLawnR92(e)){state.selected=null;renderProps();openLawnPanelR90();status('Газон выбран · настройки справа.');return;}
    const key=direct||hitTreeOnMobile(e);state.selected=key||null;state.mobileMoveMode=false;state.mobileObjectCollapsed=!key;renderProps();
