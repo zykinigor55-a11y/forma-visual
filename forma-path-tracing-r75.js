@@ -37,13 +37,13 @@ async function loadSkyR73(T,source,atmosphere={},renderer,profile,isAlive,onProg
 }
 function bakeInstances(T,o,keep=o.count,src=o.geometry){
  const p=src.attributes.position,n=src.attributes.normal,uv=src.attributes.uv,col=src.attributes.color;
- const count=p.count,N=count*keep,index=src.index,ic=index?.count||count;
+ const count=p.count,N=count*keep,index=src.index,ic=index?.count||count;const conifer=/fir-real-needle|spruce.*needle|pine.*needle/i.test(o.name);
  const pos=new Float32Array(N*3),normal=new Float32Array(N*3),tex=new Float32Array(N*2),colors=new Float32Array(N*4),idx=new Uint32Array(ic*keep);
  const M=new T.Matrix4(),NM=new T.Matrix3(),v=new T.Vector3(),c=new T.Color();
  for(let i=0;i<keep;i++){
   const sourceIndex=Math.min(o.count-1,Math.floor((i+.5)*o.count/keep));o.getMatrixAt(sourceIndex,M);NM.getNormalMatrix(M);c.setRGB(1,1,1);if(o.instanceColor)o.getColorAt(sourceIndex,c);
   for(let j=0;j<count;j++){let k=i*count+j;v.fromBufferAttribute(p,j).applyMatrix4(M);pos.set([v.x,v.y,v.z],k*3);if(n){v.fromBufferAttribute(n,j).applyNormalMatrix(NM);normal.set([v.x,v.y,v.z],k*3);}if(uv)tex.set([uv.getX(j),uv.getY(j)],k*2);
-   colors.set([c.r*(col?col.getX(j):1),c.g*(col?col.getY(j):1),c.b*(col?col.getZ(j):1),col?.itemSize===4?col.getW(j):1],k*4);
+   let r=c.r*(col?col.getX(j):1),g=c.g*(col?col.getY(j):1),b=c.b*(col?col.getZ(j):1);if(conifer){const y=.2126*r+.7152*g+.0722*b;const gain=Math.min(3.2,Math.max(1,.115/Math.max(.025,y)));r=Math.min(.7,(r*.82+y*.18)*gain);g=Math.min(.7,(g*.82+y*.18)*gain);b=Math.min(.7,(b*.82+y*.18)*gain);}colors.set([r,g,b,col?.itemSize===4?col.getW(j):1],k*4);
   }
   for(let j=0;j<ic;j++)idx[i*ic+j]=i*count+(index?index.getX(j):j);
  }
@@ -74,7 +74,7 @@ function renderLawn(T,cfg,budget){
  const {bounds:b,contains,terrainAt,focus,profile:p,visible=()=>true}=cfg;
  const width=b.x1-b.x0,depth=b.z1-b.z0,area=width*depth;
  if(!(area>0))return null;
- const pal=(p.palette||['#626e43','#778254','#81905f','#4f613b']).map(x=>new T.Color(x));
+ const pal=(p.palette||['#626e43','#778254','#81905f','#4f613b']).map(x=>{const c=new T.Color(x),y=.2126*c.r+.7152*c.g+.0722*c.b;return c.lerp(new T.Color().setRGB(y,y,y),.18);});
  let seed=1987,count=0,tufts=0;
  const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  const density=Math.max(.35,Math.min(2.7,p.density||1));
@@ -101,8 +101,8 @@ function renderLawn(T,cfg,budget){
  };
  const addTuft=(x,z)=>{
   if(!contains(x,z))return;const y=terrainAt(x,z);if(!Number.isFinite(y))return;
-  const patch=.82+.18*Math.sin(x*1.9+Math.sin(z*.72))*Math.cos(z*1.5);
-  const h=h0*(.75+.60*rand())*patch,a=rand()*Math.PI,c=pal[Math.floor(rand()*pal.length)].clone().multiplyScalar(.93+.16*rand());
+  const patch=.96+.04*Math.sin(x*1.9+Math.sin(z*.72))*Math.cos(z*1.5);
+  const h=h0*(.86+.28*rand())*patch,a=rand()*Math.PI,c=pal[Math.floor(rand()*pal.length)].clone().multiplyScalar(.96+.08*rand());
   const half=Math.max(.055,Math.min(.22,h*1.12+Math.sqrt(area/Math.max(1,desired))*.42));
   addCard(x,y+.001,z,a,h,half,c);addCard(x,y+.001,z,a+Math.PI/2,h*.94,half,c);tufts++;
  };
@@ -120,14 +120,14 @@ function renderLawn(T,cfg,budget){
  const grid=Math.ceil(desired/(share+(1-share)*.12));
  // Randomized coverage across the entire camera sector instead of truncating rows.
  for(let i=0;i<grid*3&&tufts<desired;i++){const x=b.x0+rand()*width,z=b.z0+rand()*depth;if(visible(x,z)||rand()<.12)addTuft(x,z);}
- const radius=Math.min(7,Math.sqrt(area)*.36),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
+ const radius=Math.min(12,Math.sqrt(area)*.48),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
  for(let i=0;i<near*5&&count<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1&&visible(x,z))addBlade(x,z);}
  const meshes=[];
  const build=(pos,col,idx,uv,mat,name)=>{
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('color',new T.Float32BufferAttribute(col,4));g.setAttribute('uv',new T.Float32BufferAttribute(uv||new Float32Array(pos.length/3*2),2));g.setIndex(idx);g.computeVertexNormals();
   const mesh=new T.Mesh(g,mat);mesh.name=name;meshes.push(mesh);
  };
- if(tufts)build(cp,cc,ci,cu,new T.MeshPhysicalMaterial({map,alphaTest:.30,vertexColors:true,side:T.DoubleSide,roughness:.92,metalness:0,transmission:.18,thickness:0,ior:1.42,specularIntensity:.25}),'forma-render-turf-cards-r128');else map.dispose();
+ if(tufts)build(cp,cc,ci,cu,new T.MeshPhysicalMaterial({map,alphaTest:.30,vertexColors:true,side:T.DoubleSide,roughness:.92,metalness:0,transmission:.08,thickness:0,ior:1.42,specularIntensity:.35}),'forma-render-turf-cards-r128');else map.dispose();
  if(count)build(bp,bc,bi,null,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.87,metalness:0}),'forma-render-grass-blades-r128');
  return meshes.length?{meshes,count,tufts,triangles:(ci.length+bi.length)/3,textures:tufts?[map]:[]}:null;
 }
@@ -293,13 +293,13 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  for(const o of meshes){if(!grass(o))continue;const maxKeep=keepCounts.get(o)??o.count;const keep=Math.min(maxKeep,Math.floor(maxKeep*factor),Math.floor(Math.max(0,existingBudget-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
  triangles=used;
  const bumpCache=new Map();
- const cloneMat=(m,instanced)=>{
-  const key=m.uuid+'|'+instanced;if(materialCache.has(key))return materialCache.get(key);
+ const cloneMat=(m,instanced,name='')=>{
+  const needle=/fir-real-needle|spruce.*needle|pine.*needle/i.test(name);const key=m.uuid+'|'+instanced+'|'+needle;if(materialCache.has(key))return materialCache.get(key);
   let p=m.isMeshStandardMaterial?m.clone():new T.MeshStandardMaterial({color:m.color,map:m.map,roughness:1,alphaTest:m.alphaTest,transparent:m.transparent,opacity:m.opacity,side:m.side});
-  const role=m.userData?.formaPBRRoleR63||'';
+  const role=needle?'needle':m.userData?.formaPBRRoleR63||(/glass|glaz|pane/i.test(name+' '+m.name)?'glass':'');
   if(['leaf','needle','glass','water'].includes(role)&&!p.isMeshPhysicalMaterial){const physical=new T.MeshPhysicalMaterial();for(const k of ['color','map','normalMap','normalScale','roughness','roughnessMap','metalness','metalnessMap','alphaMap','alphaTest','opacity','transparent','side','vertexColors','bumpMap','bumpScale','emissive','emissiveMap','emissiveIntensity','userData']){const v=p[k];if(v!==undefined){if(v?.isColor||v?.isVector2)physical[k].copy(v);else physical[k]=v;}}p.dispose();p=physical;}
   if(instanced)p.vertexColors=true;
-  if(p.isMeshPhysicalMaterial){if(role==='leaf'||role==='needle'){p.transmission=role==='needle'?.24:.30;p.thickness=0;p.ior=1.43;p.specularIntensity=.32;p.clearcoat=0;p.metalness=0;p.side=T.DoubleSide;p.roughness=Math.max(.76,p.roughness);if(role==='needle')p.color.lerp(new T.Color(0xffffff),.10);}else if(role==='water'||role==='glass'){p.transmission=role==='water'?.94:.92;p.thickness=0;p.ior=role==='water'?1.333:1.5;p.metalness=0;p.transparent=false;p.opacity=1;p.roughness=Math.max(.025,Math.min(.20,p.roughness));}else if(['bark','ground','mineral','metal'].includes(role)){p.transmission=0;}}
+  if(p.isMeshPhysicalMaterial){if(role==='leaf'||role==='needle'){p.transmission=role==='needle'?.12:.30;p.thickness=0;p.ior=1.43;p.specularIntensity=.32;p.clearcoat=0;p.metalness=0;p.side=T.DoubleSide;p.roughness=role==='needle'?.65:Math.max(.70,p.roughness);}else if(role==='water'||role==='glass'){p.transmission=role==='water'?.94:.82;p.thickness=0;p.ior=role==='water'?1.333:1.52;p.metalness=0;p.transparent=false;p.opacity=1;p.roughness=role==='glass'?.045:Math.max(.025,Math.min(.14,p.roughness));p.specularIntensity=1;if(role==='glass'){p.clearcoat=.25;p.clearcoatRoughness=.035;}}else if(['bark','ground','mineral','metal'].includes(role)){p.transmission=0;}}
   // Thin-film BSDF is a colored transmission approximation, not full botanical SSS.
   if(m.userData?.formaRowanPBR&&p.isMeshPhysicalMaterial){p.transmission=m.userData.formaRowanPBR.pathTransmission??.34;p.thickness=0;p.attenuationDistance=Infinity;p.ior=1.43;p.roughness=.88;p.specularIntensity=.30;p.clearcoat=0;p.normalScale.multiplyScalar(.82);}
   if(!p.normalMap&&p.bumpMap&&p.bumpScale){const strength=Math.min(8,Math.max(.5,Math.abs(p.bumpScale)*250)),key=p.bumpMap.uuid+'|'+strength;let t=bumpCache.get(key);if(!t){t=bumpToNormal(T,p.bumpMap,strength);if(t){bumpCache.set(key,t);ownedTextures.push(t);}}if(t){p.normalMap=t;p.normalScale.set(.75,.75);}}
@@ -326,7 +326,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
   if(!normals||broken){g.computeVertexNormals();normals=g.attributes.normal;for(let i=0;i<normals.count;i++){const x=normals.getX(i),y=normals.getY(i),z=normals.getZ(i),len=x*x+y*y+z*z;if(!Number.isFinite(len)||len<1e-12)normals.setXYZ(i,0,1,0);}}
   const uv=g.attributes.uv;if(uv)for(let i=0;i<uv.count;i++)if(!Number.isFinite(uv.getX(i))||!Number.isFinite(uv.getY(i)))uv.setXY(i,0,0);
   const tangent=g.attributes.tangent;if(tangent)for(let i=0;i<tangent.count;i++){const x=tangent.getX(i),y=tangent.getY(i),z=tangent.getZ(i),w=tangent.getW(i),dot=x*normals.getX(i)+y*normals.getY(i)+z*normals.getZ(i),len=x*x+y*y+z*z;if(!Number.isFinite(len+dot+w)||len<1e-12||Math.abs(w)<.5||dot*dot>=len*.999)tangent.setXYZW(i,0,0,0,1);}
-  const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh)):cloneMat(o.material,!!o.isInstancedMesh);
+  const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh,o.name)):cloneMat(o.material,!!o.isInstancedMesh,o.name);
   const add=(geometry,material,name)=>{const mesh=new T.Mesh(geometry,material);mesh.matrixAutoUpdate=false;mesh.matrix.copy(o.matrixWorld);mesh.name=name;scene.add(mesh);};
   if(Array.isArray(m)&&g.groups.length){
    const byMaterial=new Map(),total=g.index?.count||g.attributes.position.count;
@@ -372,7 +372,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  });
  const env=sky.texture;scene.environment=env;scene.background=['sky','clay','no-normal'].includes(atmosphere.traceSceneTest)?new T.Color(night?0x26374f:0x9bb7d0):env;
  // Decouple visible sky brightness from irradiance to avoid washing out surfaces.
- scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1.35:sky.photographic?1.40:1.35;
+ scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1.55:sky.photographic?1.65:1.55;
  scene.backgroundIntensity=sky.photographic?.87:night?.85:1.0;
  scene.updateMatrixWorld(true);
  if(atmosphere.traceSceneTest==='clay'){const clay=new T.MeshStandardMaterial({color:0xbababa,roughness:.8,metalness:0,side:T.DoubleSide});materials.push(clay);scene.traverse(o=>{if(o.isMesh)o.material=clay;});}
