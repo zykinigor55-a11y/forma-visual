@@ -40,7 +40,7 @@ export function createWindSystem(T){
     if(replacements.has(m))return replacements.get(m);
     let p=m;if(owners.has(m)&&owners.get(m)!==group){p=m.clone();p.onBeforeCompile=m.onBeforeCompile;p.customProgramCacheKey=m.customProgramCacheKey;}
     // Store original hooks before adding wind, so shared materials are not patched twice.
-    const old=installed.get(m);if(old&&p!==m){p.onBeforeCompile=old.compile;p.customProgramCacheKey=old.key;}
+    const old=installed.get(m);if(old){p.onBeforeCompile=old.compile;p.customProgramCacheKey=old.key;}
     const leaf=/leaf|leav|folia|needle|grass|canop|turf/i.test(n.name+' '+m.name)||m.alphaTest>0;
     installed.set(p,{compile:p.onBeforeCompile,key:p.customProgramCacheKey});hook(T,p,u,leaf);owners.set(p,group);replacements.set(m,p);return p;
    });
