@@ -2,7 +2,7 @@
  * three-gpu-pathtracer 0.0.23 + three-mesh-bvh 0.8.3; no mutation of editor scene.
  * Shader-only effects are not representable by the physical tracer.
  */
-const isMobile=()=>window.innerWidth<=850;
+const isMobile=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const nextFrame=()=>new Promise(r=>requestAnimationFrame(r));
 function makeSky(T,source){
  const w=512,h=256,data=new Float32Array(w*h*4);
@@ -30,13 +30,13 @@ async function loadSkyR73(T,source){
   return {texture:t,label:'Poly Haven HDRI '+res};
  }catch(e){console.warn('R73 HDRI fallback',e);return {texture:makeSky(T,source),label:'Процедурное HDRI (резерв)'};}
 }
-function bakeInstances(T,o){
+function bakeInstances(T,o,keep=o.count){
  const src=o.geometry,p=src.attributes.position,n=src.attributes.normal,uv=src.attributes.uv,col=src.attributes.color;
- const count=p.count,N=count*o.count,index=src.index,ic=index?.count||count;
- const pos=new Float32Array(N*3),normal=new Float32Array(N*3),tex=new Float32Array(N*2),colors=new Float32Array(N*4),idx=new Uint32Array(ic*o.count);
+ const count=p.count,N=count*keep,index=src.index,ic=index?.count||count;
+ const pos=new Float32Array(N*3),normal=new Float32Array(N*3),tex=new Float32Array(N*2),colors=new Float32Array(N*4),idx=new Uint32Array(ic*keep);
  const M=new T.Matrix4(),NM=new T.Matrix3(),v=new T.Vector3(),c=new T.Color();
- for(let i=0;i<o.count;i++){
-  o.getMatrixAt(i,M);NM.getNormalMatrix(M);c.setRGB(1,1,1);if(o.instanceColor)o.getColorAt(i,c);
+ for(let i=0;i<keep;i++){
+  const sourceIndex=Math.min(o.count-1,Math.floor((i+.5)*o.count/keep));o.getMatrixAt(sourceIndex,M);NM.getNormalMatrix(M);c.setRGB(1,1,1);if(o.instanceColor)o.getColorAt(sourceIndex,c);
   for(let j=0;j<count;j++){let k=i*count+j;v.fromBufferAttribute(p,j).applyMatrix4(M);pos.set([v.x,v.y,v.z],k*3);if(n){v.fromBufferAttribute(n,j).applyNormalMatrix(NM);normal.set([v.x,v.y,v.z],k*3);}if(uv)tex.set([uv.getX(j),uv.getY(j)],k*2);
    colors.set([c.r*(col?col.getX(j):1),c.g*(col?col.getY(j):1),c.b*(col?col.getZ(j):1),col?.itemSize===4?col.getW(j):1],k*4);
   }
@@ -45,10 +45,10 @@ function bakeInstances(T,o){
  const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));g.setAttribute('normal',new T.BufferAttribute(normal,3));g.setAttribute('uv',new T.BufferAttribute(tex,2));g.setAttribute('color',new T.BufferAttribute(colors,4));g.setIndex(new T.BufferAttribute(idx,1));if(!n)g.computeVertexNormals();
  return g;
 }
-function snapshot(T,source,root,camera,sky){
+function snapshot(T,source,root,camera,sky,profile){
  source.updateMatrixWorld(true);camera.updateMatrixWorld(true);
  const scene=new T.Scene(),geometries=[],materials=[],materialCache=new Map();
- let triangles=0,skipped=0,instances=0;
+ let triangles=0,skipped=0,instances=0,reduced=0;
  const meshes=[];root.traverseVisible(o=>{
   if(!o.isMesh||!o.geometry?.attributes.position)return;
   if(o.userData?.selectionProxy||o.userData?.formaWeatherPreview||/selection|preview.*cursor|brush|gizmo|underlay/i.test(o.name))return;
@@ -59,8 +59,15 @@ function snapshot(T,source,root,camera,sky){
   const g=o.geometry;triangles+=(g.index?.count||g.attributes.position.count)/3*(o.isInstancedMesh?o.count:1);
   meshes.push(o);
  });
- const limit=isMobile()?250000:1250000;
- if(triangles>limit)throw Error('Сцена слишком тяжёлая для текущего режима: '+Math.round(triangles/1000)+' тыс. треугольников. Для первого теста оставьте один дуб.');
+ const limit=isMobile()?250000:profile==='high'?2000000:1250000;
+ const costs=o=>(o.geometry.index?.count||o.geometry.attributes.position.count)/3;
+ const reducible=o=>o.isInstancedMesh&&/grass|turf|lawn|leaf|leaves|foliage|needle|berries|fruit|calyx|crown/i.test(o.name+' '+(o.parent?.name||''));
+ const fixed=meshes.filter(o=>!reducible(o)).reduce((n,o)=>n+costs(o)*(o.isInstancedMesh?o.count:1),0);
+ if(fixed>limit)throw Error('Геометрия без листвы и газона превышает лимит: '+Math.round(fixed/1000)+' тыс. треугольников. Уменьшите количество объектов.');
+ const factor=Math.min(1,Math.max(0,(limit-fixed)/Math.max(1,triangles-fixed)));
+ const keepCounts=new Map();let used=fixed;
+ for(const o of meshes){if(!reducible(o))continue;const keep=Math.min(o.count,Math.floor(o.count*factor),Math.floor(Math.max(0,limit-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
+ triangles=used;
  const cloneMat=(m,instanced)=>{
   const key=m.uuid+'|'+instanced;if(materialCache.has(key))return materialCache.get(key);
   let p=m.isMeshStandardMaterial?m.clone():new T.MeshStandardMaterial({color:m.color,map:m.map,roughness:1,alphaTest:m.alphaTest,transparent:m.transparent,opacity:m.opacity,side:m.side});
@@ -68,8 +75,9 @@ function snapshot(T,source,root,camera,sky){
  };
  try{
  for(const o of meshes){
-  const g=o.isInstancedMesh?bakeInstances(T,o):o.geometry.clone();geometries.push(g);
-  if(o.isInstancedMesh)instances+=o.count;
+  const keep=keepCounts.get(o)??(o.isInstancedMesh?o.count:1);if(!keep)continue;
+  const g=o.isInstancedMesh?bakeInstances(T,o,keep):o.geometry.clone();geometries.push(g);
+  if(o.isInstancedMesh)instances+=keep;
   const c=g.attributes.color;
   if(c&&c.itemSize===3){const a=new Float32Array(c.count*4);for(let i=0;i<c.count;i++)a.set([c.getX(i),c.getY(i),c.getZ(i),1],i*4);g.setAttribute('color',new T.BufferAttribute(a,4));}
   const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh)):cloneMat(o.material,!!o.isInstancedMesh);
@@ -81,7 +89,7 @@ function snapshot(T,source,root,camera,sky){
  });
  const env=sky.texture;scene.environment=env;scene.background=env;scene.environmentIntensity=.82;scene.backgroundIntensity=1;
  const cam=camera.clone();cam.updateMatrixWorld(true);
- return {scene,cam,triangles,instances,skipped,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();env.dispose();}};
+ return {scene,cam,triangles,instances,skipped,reduced,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();env.dispose();}};
  }catch(e){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();throw e;}
 }
 export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',onClose=()=>{},onFailure=()=>{}}){
@@ -100,14 +108,14 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
  save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R75.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.warn('FORMA GPU R75',e);const reason=e?.message||String(e);close();onFailure(reason);}
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R124',e);const reason=e?.message||String(e);close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
   const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
   msg.textContent='Загрузка фотографического HDRI…';sky=await loadSkyR73(T,scene);if(!alive){sky.texture.dispose();return;}
   msg.textContent='Подготовка полигонов и материалов…';await nextFrame();if(!alive)return;
-  snap=snapshot(T,scene,root,camera,sky);
+  snap=snapshot(T,scene,root,camera,sky,profile);
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   building=true;
   pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?5:3;pt.transmissiveBounces=3;pt.multipleImportanceSampling=true;pt.tiles.set(2,2);pt.renderScale=profile==='high'?.75:.45;pt.textureSize.set(profile==='high'?1024:512,profile==='high'?1024:512);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
@@ -116,7 +124,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   renderer.toneMapping=T.ACESFilmicToneMapping;loading=false;
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
-   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'');
+   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.reduced?' · облегчено инстансов растительности: '+snap.reduced:'');
    if(n>=target){if(profile==='high'){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
