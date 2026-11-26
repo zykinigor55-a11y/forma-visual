@@ -1,3 +1,4 @@
+import {tuftGeometry,bladeMaps} from './forma-dense-lawn-r106.js?v=R161';
 import {bakeCloudEnvironment} from './forma-photographic-environment-r71.js?v=R131';
 /* FORMA R73 — optional actual WebGL GPU path tracing snapshot.
  * three-gpu-pathtracer 0.0.23 + three-mesh-bvh 0.8.3; no mutation of editor scene.
@@ -114,7 +115,7 @@ function renderLawn(T,cfg,budget){
   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-w,127);ctx.quadraticCurveTo(x+lean*.15-w,65,x+lean,top);ctx.quadraticCurveTo(x+lean*.25+w,77,x+w,127);ctx.closePath();ctx.fill();
  }
  const map=new T.CanvasTexture(atlas);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;
- const cp=[],cc=[],cu=[],ci=[],bp=[],bc=[],bi=[];
+ const cp=[],cc=[],cu=[],ci=[],bp=[],bc=[],bi=[],bu=[],bn=[];const shared=Array.from({length:3},(_,i)=>tuftGeometry(T,{...p,height:h0,width:w0,lean:p.lean||.3},i,4,false));const sharedMaps=bladeMaps(T),sharedTri=shared[0].index.count/3;const nearRadius=Math.min(7,Math.sqrt(area)*.48);
  const addCard=(x,y,z,a,h,half,c)=>{
   const dx=Math.cos(a)*half,dz=Math.sin(a)*half,k=cp.length/3;
   cp.push(x-dx,y,z-dz,x+dx,y,z+dz,x-dx,y+h,z-dz,x+dx,y+h,z+dz);cu.push(0,0,1,0,0,1,1,1);
@@ -125,33 +126,30 @@ function renderLawn(T,cfg,budget){
   if(!contains(x,z))return;const y=terrainAt(x,z);if(!Number.isFinite(y))return;
   const patch=.96+.04*Math.sin(x*1.9+Math.sin(z*.72))*Math.cos(z*1.5);
   const h=h0*(.86+.28*rand())*patch,a=rand()*Math.PI,c=pal[Math.floor(rand()*pal.length)].clone().multiplyScalar(.96+.08*rand());
-  const half=Math.max(.055,Math.min(.22,h*1.12+Math.sqrt(area/Math.max(1,desired))*.42));
+  const half=Math.max(.045,Math.min(.15,h*.85+Math.sqrt(area/Math.max(1,desired))*.31));
   addCard(x,y+.001,z,a,h,half,c);addCard(x,y+.001,z,a+Math.PI/2,h*.94,half,c);tufts++;
  };
  const addBlade=(x,z)=>{
   if(!contains(x,z))return;const y=terrainAt(x,z);if(!Number.isFinite(y))return;
-  const a=rand()*Math.PI*2,h=h0*(.72+.58*rand()),w=w0*(.8+.65*rand()),dx=Math.cos(a)*w,dz=Math.sin(a)*w;
-  const lean=h*(p.lean||.3)*(.5+rand()),lx=-Math.sin(a)*lean,lz=Math.cos(a)*lean,c=pal[Math.floor(rand()*pal.length)],k=bp.length/3;
-  const v=(xx,yy,zz,t)=>{bp.push(xx,yy,zz);bc.push(c.r*t,c.g*t,c.b*t,1);};
-  v(x-dx,y+.002,z-dz,.82);v(x+dx,y+.002,z+dz,.86);v(x+lx*.32-dx*.55,y+h*.55,z+lz*.32-dz*.55,.99);v(x+lx*.32+dx*.55,y+h*.55,z+lz*.32+dz*.55,1);v(x+lx,y+h,z+lz,1.06);
-  bi.push(k,k+1,k+2,k+1,k+3,k+2,k+2,k+3,k+4);count++;
+  const a=rand()*Math.PI*2,h=h0*(.86+.28*rand()),w=h*(.95+.22*rand()),c=pal[Math.floor(rand()*pal.length)],g=shared[Math.floor(rand()*shared.length)],k=bp.length/3,cos=Math.cos(a),sin=Math.sin(a),P=g.attributes.position,N=g.attributes.normal,C=g.attributes.color,U=g.attributes.uv;
+  for(let i=0;i<P.count;i++){const px=P.getX(i)*w,pz=P.getZ(i)*w;bp.push(x+px*cos-pz*sin,y+.002+P.getY(i)*h,z+px*sin+pz*cos);const nx=N.getX(i)/w,ny=N.getY(i)/h,nz=N.getZ(i)/w,l=Math.hypot(nx,ny,nz)||1;bn.push((nx*cos-nz*sin)/l,ny/l,(nx*sin+nz*cos)/l);bc.push(c.r*C.getX(i),c.g*C.getY(i),c.b*C.getZ(i),1);bu.push(U.getX(i),U.getY(i));}
+  for(let i=0;i<g.index.count;i++)bi.push(k+g.index.getX(i));count+=5;
  };
- const desired=Math.max(1,Math.floor(budget*.65/4*Math.min(1,density/1.85)));
+ const desired=Math.max(1,Math.floor(budget*.48/4*Math.min(1,density/1.85)));
  const probe=16;let hits=0;for(let j=0;j<probe;j++)for(let i=0;i<probe;i++)if(visible(b.x0+(i+.5)*width/probe,b.z0+(j+.5)*depth/probe))hits++;
  const share=Math.max(.12,hits/(probe*probe));
  const grid=Math.ceil(desired/(share+(1-share)*.12));
  // Randomized coverage across the entire camera sector instead of truncating rows.
  const nx=Math.max(1,Math.ceil(Math.sqrt(grid*width/depth))),nz=Math.max(1,Math.ceil(grid/nx)),cells=nx*nz;let start=Math.floor(rand()*cells);let stride=Math.max(1,Math.floor(cells*.618));const gcd=(a,b)=>b?gcd(b,a%b):a;while(gcd(stride,cells)!==1)stride++;for(let i=0;i<cells&&tufts<desired;i++){const k=(start+i*stride)%cells,x=b.x0+((k%nx)+.15+rand()*.7)*width/nx,z=b.z0+(Math.floor(k/nx)+.15+rand()*.7)*depth/nz;if(visible(x,z)||rand()<.12)addTuft(x,z);}if(tufts<desired)for(let i=0;i<grid*2&&tufts<desired;i++){const x=b.x0+rand()*width,z=b.z0+rand()*depth;if(visible(x,z))addTuft(x,z);}
- const radius=Math.min(9,Math.sqrt(area)*.48),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
- for(let i=0;i<near*5&&count<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1&&visible(x,z))addBlade(x,z);}
+ const near=Math.max(0,Math.floor((budget-ci.length/3)/sharedTri*Math.min(1,density/1.85)));const side=Math.max(1,Math.ceil(Math.sqrt(near*3))),step=2*nearRadius/side;for(let j=0;j<side&&count<near*5;j++)for(let i=0;i<side&&count<near*5;i++){const x=focus.x-nearRadius+(i+rand())*step,z=focus.z-nearRadius+(j+rand())*step;if(Math.hypot(x-focus.x,z-focus.z)<=nearRadius&&x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1&&visible(x,z))addBlade(x,z);}shared.forEach(g=>g.dispose());
  const meshes=[];
- const build=(pos,col,idx,uv,mat,name)=>{
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('color',new T.Float32BufferAttribute(col,4));g.setAttribute('uv',new T.Float32BufferAttribute(uv||new Float32Array(pos.length/3*2),2));g.setIndex(idx);g.computeVertexNormals();
+ const build=(pos,col,idx,uv,mat,name,normals)=>{
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('color',new T.Float32BufferAttribute(col,4));g.setAttribute('uv',new T.Float32BufferAttribute(uv||new Float32Array(pos.length/3*2),2));g.setIndex(idx);if(normals)g.setAttribute('normal',new T.Float32BufferAttribute(normals,3));else g.computeVertexNormals();
   const mesh=new T.Mesh(g,mat);mesh.name=name;meshes.push(mesh);
  };
  if(tufts)build(cp,cc,ci,cu,new T.MeshPhysicalMaterial({map,alphaTest:.30,vertexColors:true,side:T.DoubleSide,roughness:.92,metalness:0,transmission:.08,thickness:0,ior:1.42,specularIntensity:.35}),'forma-render-turf-cards-r128');else map.dispose();
- if(count)build(bp,bc,bi,null,new T.MeshPhysicalMaterial({vertexColors:true,side:T.DoubleSide,roughness:.64,metalness:0,ior:1.43,transmission:.15,thickness:0,specularIntensity:.5}),'forma-render-grass-blades-r128');
- return meshes.length?{meshes,count,tufts,triangles:(ci.length+bi.length)/3,textures:tufts?[map]:[]}:null;
+ if(count)build(bp,bc,bi,bu,new T.MeshPhysicalMaterial({...sharedMaps,vertexColors:true,side:T.DoubleSide,roughness:.9,metalness:0,ior:1.43,transmission:.12,thickness:0,specularIntensity:.3,normalScale:new T.Vector2(.12,.10)}),'forma-render-webgl-grass-r161',bn);else Object.values(sharedMaps).forEach(t=>t.dispose());
+ return meshes.length?{meshes,count,tufts,triangles:(ci.length+bi.length)/3,textures:[...(tufts?[map]:[]),...(count?Object.values(sharedMaps):[])]}:null;
 }
 // Bake displacement into actual triangles before BVH construction. Only
 // authored thick wood tubes are tessellated; small twigs remain untouched.
@@ -420,12 +418,12 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  const oldSize=renderer.getSize(new T.Vector2());
  const oldRatio=renderer.getPixelRatio(),oldTone=renderer.toneMapping,oldExposure=renderer.toneMappingExposure,oldAutoClear=renderer.autoClear,oldShaderError=renderer.debug.onShaderError,oldCheckShader=renderer.debug.checkShaderErrors;
  let previewUrl='';try{previewUrl=canvas.toDataURL('image/jpeg',.82)}catch{}
- const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
- const panel=document.createElement('div');panel.style.cssText='width:min(440px,96vw);background:#22262df5;color:#eee;border:1px solid #777;border-radius:12px;padding:12px;font:13px system-ui;box-shadow:0 10px 45px #0005;';
+ const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:#14171b;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
+ const panel=document.createElement('div');panel.style.cssText='z-index:1;width:min(440px,96vw);background:#22262df5;color:#eee;border:1px solid #777;border-radius:12px;padding:12px;font:13px system-ui;box-shadow:0 10px 45px #0005;';
  panel.innerHTML='<strong style="font-size:15px">FORMA · РЕНДЕР ВИДЕОКАРТОЙ</strong><div data-msg style="margin:8px 0">Подготовка сцены…</div><progress value="0" max="64" style="width:100%;height:8px"></progress><div style="display:flex;gap:8px;margin-top:10px"><button data-close style="flex:1;padding:12px">В редактор</button><button data-save disabled style="flex:1;padding:12px">Сохранить PNG</button></div><small style="display:block;margin-top:8px;color:#bbb">Настоящая трассировка лучей · накопление сэмплов</small>';
- const preview=document.createElement('div');preview.style.cssText='position:absolute;inset:0;display:grid;place-items:center;background:#14171b;pointer-events:none;z-index:-1';
+ const preview=document.createElement('div');preview.style.cssText='position:absolute;inset:0;display:grid;place-items:center;background:#14171b;pointer-events:none;z-index:0;overflow:hidden';
  if(previewUrl){const image=document.createElement('img');image.src=previewUrl;image.style.cssText='width:100%;height:100%;object-fit:contain;opacity:.86';preview.append(image);}
- const previewLabel=document.createElement('span');previewLabel.textContent='Предпросмотр сцены · подготовка трассировки';previewLabel.style.cssText='position:absolute;top:60px;left:50%;transform:translateX(-50%);padding:8px 14px;background:#22262de8;color:white;border-radius:8px;font:13px system-ui';preview.append(previewLabel);ui.style.isolation='isolate';ui.append(preview,panel);document.body.append(ui);const msg=panel.querySelector('[data-msg]'),bar=panel.querySelector('progress'),save=panel.querySelector('[data-save]');
+ const renderView=document.createElement('canvas');renderView.style.cssText='width:100%;height:100%;object-fit:contain;display:block;min-width:0;min-height:0';const renderViewCtx=renderView.getContext('2d',{alpha:false});const previewLabel=document.createElement('span');previewLabel.textContent='Предпросмотр сцены · подготовка трассировки';previewLabel.style.cssText='position:absolute;top:60px;left:50%;transform:translateX(-50%);padding:8px 14px;background:#22262de8;color:white;border-radius:8px;font:13px system-ui';preview.append(previewLabel);ui.style.isolation='isolate';ui.append(preview,panel);document.body.append(ui);const msg=panel.querySelector('[data-msg]'),bar=panel.querySelector('progress'),save=panel.querySelector('[data-save]');
  const details=document.createElement('small');details.style.cssText='display:block;color:#bfc5ce;margin:5px 0 0';bar.after(details);
  const warning=document.createElement('small');warning.style.cssText='display:block;color:#e4cba1;margin:5px 0';details.after(warning);
  const expRow=document.createElement('label');expRow.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0';expRow.innerHTML='Экспозиция <input type="range" min="-3" max="8" value="0" step=".25" style="flex:1"><output>0 EV</output>';warning.after(expRow);
@@ -440,7 +438,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  const diagnostic=atmosphere.traceDiagnostic===true;const sizes={hd:[1280,720],fhd:[1920,1080],qhd:[2560,1440],uhd:[3840,2160]};const [frameW,frameH]=diagnostic?[640,360]:(sizes[atmosphere.traceResolution]||sizes.fhd);const requestedSamples=[16,32,64,128,256].includes(Number(atmosphere.traceSamples))?Number(atmosphere.traceSamples):64;let target=diagnostic?8:requestedSamples;bar.max=target;
  const started=performance.now(),probe=document.createElement('canvas');probe.width=32;probe.height=18;const probeCtx=probe.getContext('2d',{willReadFrequently:true});
  function daylightDark(){if(!probeCtx||!['day','morning','evening'].includes(atmosphere.time||'day'))return false;try{probeCtx.drawImage(canvas,0,0,32,18);const d=probeCtx.getImageData(0,0,32,18).data;let mean=0,bright=0;for(let i=0;i<d.length;i+=4){const y=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];mean+=y;if(y>25)bright++;}return mean/(d.length/4)<8&&bright/(d.length/4)<.08;}catch{return false;}}
- function showTrace(texture=pt?.target?.texture){if(!texture||!displayQuad)return;renderer.setRenderTarget(null);renderer.setScissorTest(false);const size=renderer.getSize(new T.Vector2());renderer.setViewport(0,0,size.x,size.y);displayMat.uniforms.frame.value=texture;displayMat.uniforms.gain.value=Math.pow(2,exposureEV);displayMat.uniforms.whiteBalance.value.copy(wb);displayMat.uniforms.smoothAmount.value=finished&&smoothFinal&&!diagnostic?1:0;displayMat.uniforms.tileGrid.value.copy(pt.tiles);displayMat.uniforms.coverage.value=Math.min(1,pt.samples);displayMat.uniforms.bufferSize.value.set(pt.target.width,pt.target.height);renderer.clear(true,true,true);displayQuad.render(renderer);}
+ function showTrace(texture=pt?.target?.texture){if(!texture||!displayQuad)return;renderer.setRenderTarget(null);renderer.setScissorTest(false);const size=renderer.getSize(new T.Vector2());renderer.setViewport(0,0,size.x,size.y);displayMat.uniforms.frame.value=texture;displayMat.uniforms.gain.value=Math.pow(2,exposureEV);displayMat.uniforms.whiteBalance.value.copy(wb);displayMat.uniforms.smoothAmount.value=finished&&smoothFinal&&!diagnostic?1:0;displayMat.uniforms.tileGrid.value.copy(pt.tiles);displayMat.uniforms.coverage.value=Math.min(1,pt.samples);displayMat.uniforms.bufferSize.value.set(pt.target.width,pt.target.height);renderer.clear(true,true,true);displayQuad.render(renderer);if(renderViewCtx){if(renderView.width!==canvas.width||renderView.height!==canvas.height){renderView.width=canvas.width;renderView.height=canvas.height;}renderViewCtx.drawImage(canvas,0,0);if(renderView.parentNode!==preview)preview.replaceChildren(renderView);preview.hidden=false;preview.style.display='grid';}}
  function fmtTime(ms){const n=Math.max(0,Math.floor(ms/1000));return Math.floor(n/60)+' мин '+String(n%60).padStart(2,'0')+' с';}
  function cleanup(){if(cleaned)return;cleaned=true;
   // v0.0.23 public dispose has a legacy quad name; release the real resources.
@@ -479,7 +477,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');if(shaderError)throw Error(shaderError);renderer.setRenderTarget(null);renderer.setScissorTest(false);pt.renderSample();if(shaderError)throw Error(shaderError);if(pt.samples<=1||Math.floor(pt.samples+1e-6)!==lastChecked&&pt.samples<4){const errors=gpuErrors();if(errors.length)throw Error('WebGL при трассировке: '+errors.join(', '));}const n=Math.floor(pt.samples+1e-6);bar.value=pt.samples;
    const elapsed=performance.now()-traceStart;const percent=Math.min(100,100*pt.samples/target);
    details.textContent=pt.target.width+' × '+pt.target.height+' px · '+percent.toFixed(1)+'% · прошло '+fmtTime(performance.now()-started)+(pt.samples>=1?' · осталось ≈ '+fmtTime(elapsed*Math.max(0,target-pt.samples)/pt.samples):'');
-   if(pt.samples>0&&(pt.samples<1||n!==lastShown||performance.now()-lastDrawAt>180)){lastShown=n;lastDrawAt=performance.now();showTrace();preview.hidden=true;preview.style.display='none';}
+   if(pt.samples>0&&(pt.samples<1||n!==lastShown||performance.now()-lastDrawAt>180)){lastShown=n;lastDrawAt=performance.now();showTrace();}
    if(n>=1&&n!==lastChecked&&n<=3){lastChecked=n;let stats='';try{const rt=pt.target,px=new Float32Array(4);let max=0,mean=0,valid=0;for(let j=1;j<=3;j++)for(let i=1;i<=3;i++){renderer.readRenderTargetPixels(rt,Math.floor(rt.width*i/4),Math.floor(rt.height*j/4),1,1,px);if([px[0],px[1],px[2]].every(Number.isFinite)){const y=.2126*px[0]+.7152*px[1]+.0722*px[2];max=Math.max(max,y);mean+=y;valid++;}}stats=' · HDR среднее '+(mean/Math.max(1,valid)).toFixed(4)+' · макс '+max.toFixed(4)+' · '+valid+'/9 валидных · текстур '+textureSources.size+'/'+maxLayers+' · материалов '+materialIds.size+' · BVH '+bvhMB+' МБ · буферы '+packedMB+' МБ';}catch(e){stats=' · HDR-буфер не прочитан';}if(daylightDark()){darkWarning=true;warning.textContent='Кадр тёмный'+stats+' · трассировка продолжается.';}else{darkWarning=false;warning.textContent=diagnostic?'Контрольный кадр'+stats:stats.slice(3);}}
    save.disabled=n<1;
    msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':pt.samples<1?'Первый проход · '+Math.round(pt.samples*100)+'% участков · трассировка лучей':'GPU · Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reducedOak?' · упрощено листьев дуба: '+snap.reducedOak.toLocaleString('ru-RU'):'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'')+(snap.reducedFoliage?' · адаптивный LOD листвы: '+snap.reducedFoliage.toLocaleString('ru-RU'):'');
