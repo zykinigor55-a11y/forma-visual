@@ -144,8 +144,8 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
   const delta=b.clone().sub(a),length=a.distanceTo(b),side=V(-delta.z,0,delta.x).normalize();
   const sign=bendRng()<.5?-1:1,bulge=length*(sides>=12?.23:sides>=8?.17:.10)*sign*growth.curve;
   const direction=delta.clone().normalize();
-  const growth=parentAxis?parentAxis.clone().multiplyScalar(.46).addScaledVector(direction,.70).normalize():direction.clone();
-  const c1=a.clone().addScaledVector(growth,length*.30).addScaledVector(side,bulge*.60);
+  const growthDirection=parentAxis?parentAxis.clone().multiplyScalar(.46).addScaledVector(direction,.70).normalize():direction.clone();
+  const c1=a.clone().addScaledVector(growthDirection,length*.30).addScaledVector(side,bulge*.60);
   const c2=a.clone().lerp(b,.71).addScaledVector(side,-bulge*.57);
   c1.y+=bend*.35;c2.y+=bend*.35+length*.065;
   const bezier=new T.CubicBezierCurve3(a,c1,c2,b);
