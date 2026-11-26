@@ -178,6 +178,7 @@ export function normalizeProject(raw){
     ...(entry.group==='boulders'?{burial:finite(item.burial,0,.36,.12)}:{}),
     ...(entry.group==='lights'?{brightness:finite(item.brightness,0,2,1),kelvin:[2200,2700,3000,4000].includes(Number(item.kelvin))?Number(item.kelvin):2700,...(entry.id==='globe'?{variant:finite(item.variant,1,4,1)}:{})}:{}),
     ...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{}),
+    ...(entry.id==='ph-fir-sapling'?{fir:{age:[10,45,100].includes(Number(item.fir?.age))?Number(item.fir.age):(Number(item.height)<6?10:45)}}:{}),
     ...(entry.id==='birch'?{birch:{age:[10,35,75].includes(Number(item.birch?.age))?Number(item.birch.age):35}}:{}),
     ...(entry.id==='maple'?{maple:normalizeMapleGrowth(item.maple)}:{}),
     ...(entry.id==='willow'?{willow:normalizeWillowGrowth(item.willow)}:{}),
