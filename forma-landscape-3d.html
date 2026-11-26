@@ -433,6 +433,24 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 #lawnShortcutR92{position:absolute;right:8px;bottom:132px;z-index:27;min-height:38px;padding:6px 11px;background:#282b31ed;color:#eee;border:1px solid #777;border-radius:9px;font-size:12px}
 body[data-active-tool]:not([data-active-tool=select]) #lawnShortcutR92,body[data-presentation=true] #lawnShortcutR92,body[data-presentation=true] #lawnSettingsR92{display:none!important}
 @media(max-width:850px){body:not([data-mobile-panel=scene]) #lawnShortcutR92{display:none!important}#lawnShortcutR92{bottom:calc(128px + env(safe-area-inset-bottom,0px))}}
+
+#desktopInspectorNav,#desktopLawnHost{display:none}
+@media(min-width:851px){
+ #right{width:330px;scrollbar-gutter:stable;overflow-y:auto}
+ #right>[data-desktop-inactive="true"]{display:none!important}
+ #right[data-desktop-ready="true"]>hr{display:none}
+ #desktopInspectorNav{display:block;position:sticky;top:-16px;z-index:4;background:#272b30;padding:12px 0 10px;margin:-12px 0 12px;border-bottom:1px solid #53565b}
+ .desktop-inspector-label{font-size:10px;color:#c8b496;letter-spacing:.12em;margin-bottom:10px}
+ #desktopInspectorTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ #desktopInspectorTabs button{display:flex;align-items:center;gap:7px;min-height:37px;text-align:left;padding:6px 8px;font-size:11px;white-space:normal;background:#30343a;border:1px solid #55585e;border-radius:7px;color:#e9e9e7}
+ #desktopInspectorTabs button[aria-pressed="true"]{background:#d8c3a0;color:#24231f;border-color:#d8c3a0;font-weight:650}
+ #desktopInspectorTabs .desktop-tab-icon{font-size:13px;min-width:15px;text-align:center;opacity:.8}
+ #desktopInspectorTitle{font-size:12px;font-weight:600;color:#e8d4b7;padding:10px 2px 0}
+ #right #objectInspectorDock{margin:0 0 8px;padding:11px;background:#292e31;border-color:#6a6357}
+ #right #desktopLawnHost{display:block;margin-top:10px}
+ #desktopOpenLawn{width:100%;min-height:36px;margin-bottom:8px}
+ #desktopLawnHost #lawnSettingsR92{position:relative!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%!important;max-height:none!important;overflow:visible!important;box-sizing:border-box;background:#292e31!important;border-color:#6a6357!important}
+}
 </style>
 <link rel="stylesheet" href="./forma-landscape-pine-sizing.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/","three/":"https://cdn.jsdelivr.net/npm/three@0.179.1/","three-gpu-pathtracer":"https://cdn.jsdelivr.net/npm/three-gpu-pathtracer@0.0.23/src/index.js","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.8.3/src/index.js"}}</script>
@@ -511,14 +529,14 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R136</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R137</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
 <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза</a>
-<a href="forma-landscape-3d.html?scene=oak-r136&v=136" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
+<a href="forma-landscape-3d.html?scene=oak-r137&v=137" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
 <a href="forma-preview.html?tool=landscape-project">← К плану</a></nav></details>
  </div>
 </header>
@@ -658,6 +676,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <div id="mobilePlacementHint" role="status" hidden><span id="mobilePlacementLabel" aria-live="polite"></span><button id="mobilePondFinish" class="primary" type="button" hidden disabled>Готово</button><button id="mobilePlacementCancel" type="button" aria-label="Отменить размещение и вернуть выбор">Отмена</button></div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
+ <nav id="desktopInspectorNav" aria-label="Разделы параметров"><div class="desktop-inspector-label">ПАРАМЕТРЫ СЦЕНЫ</div><div id="desktopInspectorTabs"></div><div id="desktopInspectorTitle"></div></nav>
  <div id="mobileGeneralSettingsHeader"><strong>Параметры сцены</strong><button type="button" id="mobileGeneralSettingsClose" aria-label="Закрыть параметры сцены">×</button></div>
  <div id="mobileObjectEditorHeader" hidden><strong id="mobileObjectEditorTitle">Объект</strong><button id="mobileObjectMove" type="button" title="Переместить выделенный объект пальцем">↔ Двигать</button><button id="mobileObjectClose" type="button" aria-label="Свернуть редактор и открыть сцену">×</button></div>
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
@@ -798,6 +817,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  <div class="pair"><div><label for="pdfPaper">Альбом PDF</label><select id="pdfPaper"><option value="A4">A4</option><option value="A3">A3</option></select></div><div><label>&nbsp;</label><button class="action" id="export3dPdf">↓ Скачать PDF</button></div></div>
   <button class="action" id="exportJSON">Экспорт модели JSON</button>
  <p class="muted">Геометрия создаётся в 3D. AI-фоторендер использует выбранный ракурс и настройки сцены.</p>
+ <div id="desktopLawnHost" data-desktop-section="site"><button type="button" id="desktopOpenLawn">Настройки газона</button></div>
 </div>
 <div id="hint">ЛКМ — кисть или выбор объекта · ПКМ — вращение камеры · колесо — масштаб. Рельеф и озеленение сохраняются в метрах.</div>
 <div id="status">3D-модель загружается…</div>
@@ -912,10 +932,10 @@ window.addEventListener('forma-house-pbr-ready',()=>{
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
 const treeTestScene=new URLSearchParams(location.search).get('scene');
 const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55','birch-r56'].includes(treeTestScene);
-const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76','oak-r132','oak-r133','oak-r134','oak-r135','oak-r136'].includes(treeTestScene);
+const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76','oak-r132','oak-r133','oak-r134','oak-r135','oak-r136','oak-r137'].includes(treeTestScene);
 const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-r83','lawn-r84','lawn-r85','lawn-r86','lawn-r87','lawn-r88','lawn-r89','lawn-r90','lawn-r91','lawn-r92','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal',lawnFlowersR88=75,lawnWheatHeightR88=76,lawnHeightR90=100,lawnDensityR90=100,lawnPressedR90=45,lawnPanelR90=null,lawnPanelSyncR90=null;
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
-const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136'].includes(treeTestScene);
+const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137'].includes(treeTestScene);
 const treeLineupMode=rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -1089,6 +1109,44 @@ function showSelectedPineControls(){
  reveal();
  requestAnimationFrame(reveal);
 }
+const desktopSectionsR137=[
+ ['camera','Камера','◎'],['object','Объект','◇'],['house','Архитектура','⌂'],
+ ['weather','Погода и небо','☁'],['sun','Солнце и свет','☀'],['site','Участок и газон','▱'],['render','Рендер и экспорт','▣']
+];
+let desktopSectionR137='camera';
+function showDesktopSectionR137(key,reset=true){
+ if(window.innerWidth<=850)return;
+ const panel=$('#right');if(!panel||!desktopSectionsR137.some(x=>x[0]===key))return;
+ desktopSectionR137=key;
+ panel.querySelectorAll(':scope > [data-desktop-section]').forEach(n=>n.dataset.desktopInactive=String(n.dataset.desktopSection!==key));
+ $('#desktopInspectorTabs')?.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.section===key)));
+ const title=$('#desktopInspectorTitle');if(title)title.textContent=desktopSectionsR137.find(x=>x[0]===key)[1];
+ if(reset)panel.scrollTop=0;
+}
+function dockDesktopLawnR137(){
+ if(!lawnPanelR90)return;
+ const parent=window.innerWidth>850?$('#desktopLawnHost'):document.querySelector('main');
+ if(parent&&lawnPanelR90.parentElement!==parent)parent.append(lawnPanelR90);
+}
+function setupDesktopInspectorR137(){
+ const panel=$('#right'),tabs=$('#desktopInspectorTabs');if(!panel||!tabs)return;
+ const tag=(node,key)=>{if(node&&node.parentElement===panel)node.dataset.desktopSection=key;};
+ const range=(start,end,key)=>{for(let n=start;n;n=n.nextElementSibling){tag(n,key);if(n===end)break;}};
+ const cameraHeading=Array.from(panel.children).find(n=>n.classList.contains('heading')&&n.textContent.trim()==='КАМЕРА');
+ range(cameraHeading,$('#cameraComposition'),'camera');tag($('#cameraElevationPanel'),'camera');
+ tag($('#alphaQuickSelect'),'house');tag(panel.querySelector('.house-preset-section'),'house');tag($('#desktopNightHome'),'sun');
+ tag($('#pineInspectorShortcut'),'object');tag($('#objectInspectorDock'),'object');
+ range($('#time').previousElementSibling,$('#desktopWeatherRAIN'),'weather');tag(panel.querySelector('[aria-label="Небо и атмосфера"]'),'weather');tag(panel.querySelector('[aria-label="Физическое солнце"]'),'sun');
+ tag($('#modelHealth'),'object');tag($('#buildInfo'),'render');
+ range($('#plotW').closest('.pair'),$('#removeDrawing').nextElementSibling,'site');
+ range($('#screenshot'),$('#exportJSON').nextElementSibling,'render');tag($('#desktopLawnHost'),'site');
+ tabs.innerHTML=desktopSectionsR137.map(([id,label,icon])=>'<button type="button" data-section="'+id+'" aria-pressed="false"><span class="desktop-tab-icon" aria-hidden="true">'+icon+'</span>'+label+'</button>').join('');
+ tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{showDesktopSectionR137(b.dataset.section);if(b.dataset.section==='site')dockDesktopLawnR137();});
+ $('#desktopOpenLawn').onclick=()=>{if(window.innerWidth>850)openLawnPanelR90();};
+ panel.dataset.desktopReady='true';showDesktopSectionR137(desktopSectionR137);
+ const media=window.matchMedia('(min-width:851px)');
+ media.addEventListener('change',()=>{dockDesktopLawnR137();if(media.matches)showDesktopSectionR137(desktopSectionR137,false);});
+}
 function revealSelectedInspector(){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return;
@@ -1099,14 +1157,8 @@ function revealSelectedInspector(){
   requestAnimationFrame(()=>{const panel=$('#right');if(panel)panel.scrollTop=0;});
   return;
  }
- const panel=$('#right'),dock=$('#objectInspectorDock');
- if(!panel||!dock)return;
- const reveal=()=>{
-  if(!selectable(state.selected)?.obj)return;
-  const distance=dock.getBoundingClientRect().top-panel.getBoundingClientRect().top;
-  if(Math.abs(distance)>8)panel.scrollTop+=distance-9;
- };
- reveal();requestAnimationFrame(reveal);
+ showDesktopSectionR137('object');
+
 }
 function selectPineById(id){
  const pine=doc.objects.find(o=>o.id===id&&catalog(o.catalogId)?.group==='trees');
@@ -1183,6 +1235,7 @@ function commitLawnR90(){
 }
 function openLawnPanelR90(){
  if(!lawnPanelR90&&lawnEnabledR90)setupLawnPreviewR77();if(!lawnPanelR90)return;
+ if(window.innerWidth>850){dockDesktopLawnR137();showDesktopSectionR137('site');}
  if(lawnIntegratedR90){state.selected=null;state.mobileMoveMode=false;state.mobileObjectCollapsed=true;syncSelectedObjectDock(null);setSceneClimateOpen(false);if(window.innerWidth<=850)activateMobilePanel('scene');}
  if(firTestMode||rowanTestMode){const tree=$('#forma-lineup-panel-r74');if(tree)tree.style.display='none';}lawnPanelR90.hidden=false;lawnPanelR90.style.display='grid';lawnPanelSyncR90?.(true);renderGate.invalidate();
 }
@@ -1368,6 +1421,7 @@ function startPathTraceR72(profile='balanced',renderClouds='stable',geometryMode
  pathTraceR72=createPathTraceMode(THREE,{renderer,scene,root,camera,canvas,profile,lawn,atmosphere:{...doc.atmosphere,solarSoftness:solarSettings.softness,cloudSettings:{...sceneAtmosphere},renderClouds,geometryMode},onClose:()=>{pathTraceR72=null;if(!gpuLostR75&&!renderer.getContext().isContextLost()){resize();renderGate.invalidate();}},onFailure:reason=>{if(!gpuLostR75)openRenderMenuR75('GPU-рендер остановлен: '+reason+'. Выберите облегчённый режим.');}});
 }
 function initialize(){
+ setupDesktopInspectorR137();
  $('#pathTraceR72Button').onclick=openRenderMenuR75;
  $('#graphicsR105').onclick=openGraphicsR105;
  const windInput=$('#windR74'),windLabel=$('#windR74Value'),quickWind=$('#quickWindR91'),quickLabel=$('#quickWindR91Value');const setWind=v=>{windAmountR74=Math.max(0,Math.min(100,Number(v)||0));windInput.value=quickWind.value=String(windAmountR74);windLabel.textContent=quickLabel.textContent=windAmountR74+'%';try{localStorage.setItem('forma-wind-r75',String(windAmountR74))}catch{}renderGate.invalidate();};windInput.oninput=()=>setWind(windInput.value);quickWind.oninput=()=>setWind(quickWind.value);setWind(windAmountR74);
@@ -4685,8 +4739,9 @@ const up=e=>{
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
  if(!tapCancelled&&movement<(finger?14:5)){
   if(state.tool==='select'){
-   if(lawnIntegratedR90&&hitLawnR92(e)){openLawnPanelR90();status('Настройки газона участка.');state.down=null;return;}
-   const key=hitTreeOnMobile(e);
+   const desktopHit=window.innerWidth>850?hitObj(e):null;
+   if(!desktopHit&&lawnIntegratedR90&&hitLawnR92(e)){openLawnPanelR90();status('Настройки газона участка.');state.down=null;return;}
+   const key=desktopHit||hitTreeOnMobile(e);
    state.selected=key;
    state.mobileMoveMode=false;
    state.mobileObjectCollapsed=!key;
