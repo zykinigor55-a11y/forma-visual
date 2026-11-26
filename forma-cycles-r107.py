@@ -190,13 +190,15 @@ for light in job["lights"]:
     ob.location=vec(light["position"]); ld.color=light["color"]
     # Reduce the direct component in diffuse weather rather than washing out
     # the shaded side of buildings with extra artificial fill.
-    sun_factor=.12 if cloudy else .65
+    sun_factor=1.0
     if time in ("blue-hour","night"): sun_factor=0.0
     ld.energy=light["energy"]*(sun_factor if typ=="SUN" and light["name"]=="sun" else 1.0)
     if typ in ("SUN","SPOT","AREA"):
         direction=vec(light["direction"])
         if direction.length>0: ob.rotation_euler=direction.to_track_quat("-Z","Y").to_euler()
-    if typ=="SUN": ld.angle=math.radians(25 if cloudy else .53)
+    if typ=="SUN":
+        softness=max(1,min(5,float(atm.get("solarSoftness",2.6))))
+        ld.angle=math.radians(25 if cloudy else .27+3.3*((softness-1)/4)**1.5)
     if typ in ("POINT","SPOT"): ld.shadow_soft_size=.045
     if typ=="SPOT": ld.spot_size=light.get("angle",.9); ld.spot_blend=.25
     if typ=="AREA": ld.shape="RECTANGLE";ld.size=light.get("width",1);ld.size_y=light.get("height",1)
@@ -222,7 +224,7 @@ settings=job["render"]
 scene.cycles.samples=settings["samples"]
 scene.cycles.use_denoising=True
 scene.cycles.use_adaptive_sampling=True
-scene.cycles.adaptive_threshold=.004 if settings["samples"]>=1024 else .008 if settings["samples"]>=256 else .025
+scene.cycles.adaptive_threshold=.008 if settings["samples"]>=256 else .018 if settings["samples"]>=128 else .035
 scene.cycles.adaptive_min_samples=64 if settings["samples"]>=256 else 8
 try:
     scene.cycles.denoiser="OPTIX" if chosen=="OPTIX" else "OPENIMAGEDENOISE"
@@ -232,7 +234,7 @@ scene.cycles.diffuse_bounces=min(6,settings["bounces"])
 scene.cycles.glossy_bounces=min(8,settings["bounces"])
 scene.cycles.transmission_bounces=min(12,settings["bounces"])
 # Dense overlapping cutout foliage needs its own bounce budget.
-scene.cycles.transparent_max_bounces=16 if settings["samples"]>=256 else 8
+scene.cycles.transparent_max_bounces=16 if settings["samples"]>=128 else 12
 scene.cycles.sample_clamp_indirect=8.0
 scene.cycles.blur_glossy=.35
 scene.render.resolution_x=settings["width"];scene.render.resolution_y=settings["height"]
@@ -248,4 +250,6 @@ try: scene.view_settings.look="AgX - Medium High Contrast" if time in ("blue-hou
 except Exception: pass
 bpy.ops.file.pack_all()
 bpy.ops.wm.save_as_mainfile(filepath=str(folder/"FORMA-scene.blend"))
+print('FORMA_RENDER_START',flush=True)
 bpy.ops.render.render(write_still=True)
+print('FORMA_RENDER_DONE',flush=True)
