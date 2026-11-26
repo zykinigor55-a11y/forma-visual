@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R22</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R23</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -800,10 +800,10 @@ import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composi
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=visual-R19';
-import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R22';
+import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R23';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
-import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js';
+import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js?v=R23';
 import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js?v=visual-R19';
 import {pineGrowthMarkup,mountPineGrowth,normalizePineGrowth,pineGrowthEquals,pineDimensions} from './forma-landscape-pine-growth.js';
 import {spruceGrowthMarkup,mountSpruceGrowth,normalizeSpruceGrowth,spruceDimensions} from './forma-landscape-spruce-growth.js';
@@ -822,7 +822,7 @@ import {CREATURE_ASSETS,creatureById,isCreatureId} from './forma-landscape-3d-cr
 import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
 import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js?v=pools-P32';
-import {surfaceMaterial,surfacePreviewURL,pavingPathMaterial} from './forma-landscape-3d-surfaces.js?v=paving-identity-v2-20261122';
+import {surfaceMaterial,surfacePreviewURL,pavingPathMaterial} from './forma-landscape-3d-surfaces.js?v=R23';
 import {inspectRenderDataURL} from './forma-landscape-ai-photo-quality.js?v=fullframe-v1-20261122';
  // The editor is demand-rendered: update the frame after streamed PBR arrives.
  window.addEventListener('forma-foliage-texture-ready',()=>{if(renderer&&scene&&camera){renderGate.invalidate();requestAnimationFrame(()=>renderer.render(scene,camera))}});
@@ -1886,6 +1886,10 @@ function polygon(points,y,color,water=false,materialId='universal'){
  const shape=new THREE.Shape();points.forEach((pt,i)=>{const p=pos(pt.x,pt.y);i?shape.lineTo(p.x,-p.z):shape.moveTo(p.x,-p.z)});shape.closePath();
  const geo=new THREE.ShapeGeometry(shape);geo.rotateX(-Math.PI/2);
  const verts=geo.attributes.position;
+ // Stable metre-based UVs; every patch shares the same world origin.
+ const uv=geo.attributes.uv;
+ const tile=({'formal':1.75,'universal':1.75,'shade':1.75,'meadow':2.1,'pine-bark':.85,'marble-chips':.7,'granite-chips':.7,'river-pebble':.9,'slate-chips':.85})[materialId]||1;
+ if(!water&&uv){for(let i=0;i<verts.count;i++)uv.setXY(i,verts.getX(i)/tile,verts.getZ(i)/tile);uv.needsUpdate=true;}
  const waterLevel=water?Math.min(...points.map(p=>{const v=pos(p.x,p.y);return terrainAt(v.x,v.z)}))+.09:0;
  for(let i=0;i<verts.count;i++){const x=verts.getX(i),z=verts.getZ(i);verts.setY(i,water?waterLevel:terrainAt(x,z)+y)}
  geo.computeVertexNormals();cutPoolOpenings(geo);
@@ -1913,7 +1917,7 @@ function drawPavingRibbon(o,entry,rows){
  }
  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();cutPoolOpenings(geo);
  const mat=surfaceMaterial(THREE,o.catalogId,entry.color||'#a8a99f');
- if(mat.map){mat.map=mat.map.clone();mat.map.repeat.set(1,1);mat.map.needsUpdate=true;}
+ if(mat.map){const original=mat.map;mat.map=original.clone();mat.map.repeat.set(1,1);mat.map.needsUpdate=true;if(mat.bumpMap===original)mat.bumpMap=mat.map;}
  const surface=mesh(geo,mat);surface.castShadow=false;surface.receiveShadow=true;return surface;
 }
 function drawArea(o,entry,key){
