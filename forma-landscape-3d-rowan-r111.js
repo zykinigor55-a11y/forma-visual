@@ -4,7 +4,7 @@ export function rowanStage(age=35){
  return a<=15?{age:10,height:3.8,diameter:2.25}:a<=50?{age:35,height:7.8,diameter:5.4}:{age:75,height:11.2,diameter:9.0};
 }
 export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
- const root=new T.Group();root.name='forma-rowan-r129';
+ const root=new T.Group();root.name='forma-rowan-r130';
  const h=Math.max(.8,Number(o.height)||7.8),r=Math.max(.4,Number(o.diameter)||5)/2;
  const age=Number(o.rowan?.age)||(h<5?10:h>9?75:35),old=age>=60,young=age<=15;
  let seed=(Number(o.variant)||1)*17431+Math.round(h*100);let fruitSeed=(seed^0x9e3779b9)>>>0;const fr=()=>{fruitSeed=(Math.imul(fruitSeed,1664525)+1013904223)>>>0;return fruitSeed/4294967296;};
@@ -132,21 +132,21 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
   const tex=(data,srgb=false)=>{const t=new T.DataTexture(data,lw,lh,T.RGBAFormat);t.colorSpace=srgb?T.SRGBColorSpace:T.NoColorSpace;t.magFilter=T.LinearFilter;t.minFilter=T.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=4;t.needsUpdate=true;return t;};
   const leafMap=tex(rgba,true),leafNormal=tex(norm),leafRough=tex(rough),leafTrans=tex(trans);leafTrans.name='rowan-leaf-transmission';
   function leaflet(x,z,angle,L,W){
-   const dx=Math.cos(angle),dz=Math.sin(angle),sx=-dz,sz=dx,base=p.length/3,rows=6;
+   const dx=Math.cos(angle),dz=Math.sin(angle),sx=-dz,sz=dx,base=p.length/3,rows=6;const twist=.38*Math.sin(z*91+angle*2),droop=.16+.11*(.5+.5*Math.cos(z*77+angle));
    if(mobile){
     // Six triangles per leaflet: continuous lengthwise bow, soft fold and curved tip.
-    const add=(t,k)=>{const bend=L*(.075*Math.sin(Math.PI*t)-.12*t*t),cup=(1-Math.abs(k))*W*.23*Math.sin(Math.PI*t);p.push(x+dx*L*t+sx*(W*k+W*.09*t*t),bend+cup,z+dz*L*t+sz*(W*k+W*.09*t*t));uv.push((k+1)/2,t);const tone=.95+.05*(1-Math.abs(k));c.push(tone,tone,tone);};
+    const add=(t,k)=>{const bend=L*(.13*Math.sin(Math.PI*t)-droop*t*t),cup=(1-Math.abs(k))*W*.31*Math.sin(Math.PI*t)+k*W*twist*Math.sin(Math.PI*t);p.push(x+dx*L*t+sx*(W*k+W*.09*t*t),bend+cup,z+dz*L*t+sz*(W*k+W*.09*t*t));uv.push((k+1)/2,t);const tone=.95+.05*(1-Math.abs(k));c.push(tone,tone,tone);};
     add(0,-1);add(0,1);add(.50,-1);add(.50,0);add(.50,1);add(1,-1);add(1,1);
     idx.push(base,base+3,base+1,base,base+2,base+3,base+1,base+3,base+4,base+2,base+5,base+3,base+3,base+5,base+6,base+3,base+6,base+4);return;
    }
-   for(let j=0;j<=rows;j++){const t=j/rows,w=W*Math.pow(Math.sin(Math.PI*t),.7)*(j%2?.95:1);for(const k of [-1,0,1]){if(mobile&&k===0)continue;p.push(x+dx*L*t+sx*w*k,L*.075*Math.sin(t*Math.PI)-L*.12*t*t-Math.abs(k)*w*.24,z+dz*L*t+sz*w*k);uv.push(.5+k*w/(2*W),t);const tone=(k===0?1:.88)*(.91+.09*Math.sin(t*Math.PI));c.push(tone,tone,tone);}}
+   for(let j=0;j<=rows;j++){const t=j/rows,w=W*Math.pow(Math.sin(Math.PI*t),.7)*(j%2?.95:1);for(const k of [-1,0,1]){if(mobile&&k===0)continue;p.push(x+dx*L*t+sx*w*k,L*.13*Math.sin(t*Math.PI)-L*droop*t*t-Math.abs(k)*w*.33+k*w*twist*Math.sin(Math.PI*t)+Math.abs(k)*w*.10*Math.sin(t*16+z*83),z+dz*L*t+sz*w*k);uv.push(.5+k*w/(2*W),t);const tone=(k===0?1:.88)*(.91+.09*Math.sin(t*Math.PI));c.push(tone,tone,tone);}}
    const cols=mobile?2:3;for(let j=0;j<rows;j++)for(let k=0;k<cols-1;k++){const a=base+j*cols+k,b=a+cols;idx.push(a,b,a+1,a+1,b,b+1);}
   }
   for(let i=0;i<6;i++){const z=.028+i*.027,L=.059*(1-.055*i);leaflet(0,z,.48,L,.010);leaflet(0,z,Math.PI-.48,L,.010);}
   leaflet(0,.178,Math.PI/2,.043,.008);
   const q=p.length/3;p.push(-.0008,0,0,.0008,0,0,-.0005,0,.195,.0005,0,.195);c.push(.6,.66,.48,.6,.66,.48,.6,.66,.48,.6,.66,.48);uv.push(.49,.35,.51,.35,.49,.65,.51,.65);idx.push(q,q+1,q+2,q+1,q+3,q+2);
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('color',new T.Float32BufferAttribute(c,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
-  const mat=new T.MeshPhysicalMaterial({map:leafMap,normalMap:leafNormal,normalScale:new T.Vector2(.53,.53),roughnessMap:leafRough,alphaTest:.46,vertexColors:true,side:T.DoubleSide,roughness:.83,metalness:0,ior:1.44,specularIntensity:.40,clearcoat:.015,clearcoatRoughness:.72,envMapIntensity:.40});
+  const mat=new T.MeshPhysicalMaterial({map:leafMap,normalMap:leafNormal,normalScale:new T.Vector2(.53,.53),roughnessMap:leafRough,alphaTest:.46,vertexColors:true,side:T.DoubleSide,roughness:.88,metalness:0,ior:1.43,specularIntensity:.29,clearcoat:0,clearcoatRoughness:.85,envMapIntensity:.40});
   // Subtle backlighting on the thin leaf surface. Keep the ordinary PBR material
   // as a fallback, including for GLB export.
   mat.onBeforeCompile=shader=>{
@@ -155,8 +155,8 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
    const needle=/reflectedLight\.directDiffuse\s*\+=\s*irradiance\s*\*\s*BRDF_Lambert\(\s*material\.diffuseColor\s*\)\s*;/;
    if(chunk&&needle.test(chunk))shader.fragmentShader=shader.fragmentShader.replace('#include <lights_physical_pars_fragment>',chunk.replace(needle,m=>m+`\n reflectedLight.directDiffuse+= directLight.color*BRDF_Lambert(material.diffuseColor)*max(0.0,dot(-geometryNormal,directLight.direction))*.23;\n`));
   };
-  mat.customProgramCacheKey=()=> 'forma-rowan-leaf-r122';
-  mat.userData.formaRowanPBR={transmission:.42,roughness:.83,pathTransmission:young?.40:.34};mat.transmissionMap=leafTrans;mat.transmission=0;
+  mat.customProgramCacheKey=()=> 'forma-rowan-leaf-r130';
+  mat.userData.formaRowanPBR={transmission:.46,roughness:.88,pathTransmission:young?.39:.32};mat.transmissionMap=leafTrans;mat.transmission=0;
   const mesh=new T.InstancedMesh(g,mat,leafRows.length);mesh.name='rowan-pinnate-foliage';mesh.userData.textures=[leafTrans];mesh.castShadow=!mobile;mesh.receiveShadow=true;
   const obj=new T.Object3D(),color=new T.Color(),palette=(season==='autumn'?['#aa743d','#bd9a48','#9a633a','#777a42']:(young?['#60794b','#718454','#6b8053','#81905f','#627951']:['#536b46','#637a4e','#6a8055','#778b60','#5b724d'])).map(x=>new T.Color(x));
   leafRows.forEach(([p,d,s,t],i)=>{obj.position.copy(p);obj.quaternion.setFromUnitVectors(V(0,0,1),d);obj.rotateZ((t-.5)*1.85);obj.scale.setScalar(s);obj.updateMatrix();mesh.setMatrixAt(i,obj.matrix);mesh.setColorAt(i,color.copy(palette[Math.floor(t*palette.length)]).multiplyScalar((.97+t*.12)*(.96+.04*Math.min(1,Math.hypot(p.x,p.z)/Math.max(.2,r*.75)))));});mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();root.add(mesh);
