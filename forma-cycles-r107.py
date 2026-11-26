@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# FORMA Cycles R107 - local, no network requests.
+# FORMA Cycles R108 - architectural lighting and foliage refinement; local only.
 import bpy, json, math, os
 from pathlib import Path
 from mathutils import Matrix, Quaternion, Vector
@@ -63,11 +63,23 @@ def upgrade(mat,kind):
             else: trans.inputs["Color"].default_value=base.default_value
             mix=nt.nodes.new("ShaderNodeMixShader");mix.inputs[0].default_value=.18
             nt.links.new(old,mix.inputs[1]);nt.links.new(trans.outputs[0],mix.inputs[2])
-            # Only opaque geometric foliage; avoid filling transparent leaf cards.
+            # Preserve cutout silhouette: mask the translucent lobe as well.
             alpha=p.inputs["Alpha"]
-            if not alpha.is_linked and alpha.default_value>.99:nt.links.new(mix.outputs[0],output.inputs["Surface"])
-    elif kind=="bark": bump_noise(nt,p,33,.014,.35,4)
-    elif kind=="ground": bump_noise(nt,p,45,.009,.23,3)
+            if alpha.is_linked or alpha.default_value<.99:
+                mask=nt.nodes.new("ShaderNodeMixShader")
+                transparent=nt.nodes.new("ShaderNodeBsdfTransparent")
+                nt.links.new(transparent.outputs[0],mask.inputs[1])
+                nt.links.new(trans.outputs[0],mask.inputs[2])
+                if alpha.is_linked: nt.links.new(alpha.links[0].from_socket,mask.inputs[0])
+                else: mask.inputs[0].default_value=alpha.default_value
+                nt.links.new(mask.outputs[0],mix.inputs[2])
+            nt.links.new(mix.outputs[0],output.inputs["Surface"])
+    elif kind=="bark":
+        bump_noise(nt,p,33,.014,.35,4)
+        bump_noise(nt,p,115,.002,.16,2)
+    elif kind=="ground":
+        bump_noise(nt,p,45,.009,.23,3)
+        bump_noise(nt,p,160,.0015,.12,2)
 
 # Detach shared GLB materials by semantic category so water cannot change walls.
 mat_cache={}
@@ -176,11 +188,16 @@ for light in job["lights"]:
     typ=light["type"]; ld=bpy.data.lights.new(light["name"],typ)
     ob=bpy.data.objects.new(light["name"],ld); scene.collection.objects.link(ob)
     ob.location=vec(light["position"]); ld.color=light["color"]
-    ld.energy=light["energy"]*(.65 if typ=="SUN" else 1.0)
+    # Reduce the direct component in diffuse weather rather than washing out
+    # the shaded side of buildings with extra artificial fill.
+    sun_factor=.12 if cloudy else .65
+    if time in ("blue-hour","night"): sun_factor=0.0
+    ld.energy=light["energy"]*(sun_factor if typ=="SUN" and light["name"]=="sun" else 1.0)
     if typ in ("SUN","SPOT","AREA"):
         direction=vec(light["direction"])
         if direction.length>0: ob.rotation_euler=direction.to_track_quat("-Z","Y").to_euler()
-    if typ=="SUN": ld.angle=math.radians(8 if cloudy else .65)
+    if typ=="SUN": ld.angle=math.radians(25 if cloudy else .53)
+    if typ in ("POINT","SPOT"): ld.shadow_soft_size=.045
     if typ=="SPOT": ld.spot_size=light.get("angle",.9); ld.spot_blend=.25
     if typ=="AREA": ld.shape="RECTANGLE";ld.size=light.get("width",1);ld.size_y=light.get("height",1)
 scene.render.engine="CYCLES"
@@ -205,14 +222,19 @@ settings=job["render"]
 scene.cycles.samples=settings["samples"]
 scene.cycles.use_denoising=True
 scene.cycles.use_adaptive_sampling=True
-scene.cycles.adaptive_threshold=.008 if settings["samples"]>=256 else .025
+scene.cycles.adaptive_threshold=.004 if settings["samples"]>=1024 else .008 if settings["samples"]>=256 else .025
+scene.cycles.adaptive_min_samples=64 if settings["samples"]>=256 else 8
 try:
     scene.cycles.denoiser="OPTIX" if chosen=="OPTIX" else "OPENIMAGEDENOISE"
 except Exception:pass
 scene.cycles.max_bounces=settings["bounces"]
 scene.cycles.diffuse_bounces=min(6,settings["bounces"])
 scene.cycles.glossy_bounces=min(8,settings["bounces"])
-scene.cycles.transmission_bounces=min(8,settings["bounces"])
+scene.cycles.transmission_bounces=min(12,settings["bounces"])
+# Dense overlapping cutout foliage needs its own bounce budget.
+scene.cycles.transparent_max_bounces=16 if settings["samples"]>=256 else 8
+scene.cycles.sample_clamp_indirect=8.0
+scene.cycles.blur_glossy=.35
 scene.render.resolution_x=settings["width"];scene.render.resolution_y=settings["height"]
 scene.render.resolution_percentage=100
 scene.render.image_settings.file_format="PNG"
@@ -222,7 +244,7 @@ scene.view_settings.exposure=job.get("exposure",0)
 scene.render.filepath=str(folder/"FORMA-render.png")
 try: scene.view_settings.view_transform="AgX"
 except: pass
-try: scene.view_settings.look="AgX - Medium High Contrast"
+try: scene.view_settings.look="AgX - Medium High Contrast" if time in ("blue-hour","night") else "AgX - Medium Low Contrast"
 except Exception: pass
 bpy.ops.file.pack_all()
 bpy.ops.wm.save_as_mainfile(filepath=str(folder/"FORMA-scene.blend"))
