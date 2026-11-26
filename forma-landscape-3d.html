@@ -505,12 +505,12 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R48</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R49</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button>
-  <a href="forma-landscape-3d.html?scene=willow-r48" title="Отдельная тестовая сцена ивы">Ива · тест</a>
+  <a href="forma-landscape-3d.html?scene=willow-r49" title="Отдельная тестовая сцена ивы">Ива · тест</a>
   <a href="forma-preview.html?tool=landscape-project">← К плану</a>
  </div>
 </header>
@@ -797,13 +797,14 @@ import {clone as cloneRig} from 'three/addons/utils/SkeletonUtils.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composition.js';
-import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=R39';
+import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=R49';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
 import {createDetailedFir,woodTexture,adoptFirPhotoMaps} from './forma-landscape-3d-fir-r25.js?v=R28';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
-import {createNaturalWillow} from './forma-landscape-3d-willow-r48.js?v=R48';
+import {createNaturalWillow} from './forma-landscape-3d-willow-r49.js?v=R49';
+import {normalizeWillowGrowth,willowDimensions,willowGrowthMarkup,mountWillowGrowth} from './forma-landscape-willow-growth.js?v=R49';
 import {normalizeMapleGrowth,mapleDimensions,mapleGrowthMarkup,mountMapleGrowth} from './forma-landscape-maple-growth.js?v=R39';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -856,7 +857,7 @@ window.addEventListener('forma-house-pbr-ready',()=>{
  requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
 });
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
-const treeLineupMode=['trees-r45','trees-r46','willow-r48'].includes(new URLSearchParams(location.search).get('scene'));
+const treeLineupMode=['trees-r45','trees-r46','willow-r48','willow-r49'].includes(new URLSearchParams(location.search).get('scene'));
 const pid=treeLineupMode?'forma-willow-test-r48':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
@@ -895,7 +896,7 @@ function treeAssetInfo(o){
   triangles+=Math.floor(count/3)*(n.isInstancedMesh?n.count:1);
   if((Array.isArray(n.material)?n.material:[n.material]).some(m=>m&&(m.alphaTest>0||m.transparent)))foliageMeshes++;
  });
- const status=group?.userData?.nativeWillowR48?'FORMA · ива R48 · '+group.userData.hangingShoots+' свисающих побегов · '+group.userData.leafCount+' листьев · кора: '+(group.children.find(n=>n.name==='FORMA Willow R48 curved wood')?.material?.map?.userData?.source||'не определена'):group?.userData?.nativeMapleR43?'FORMA · клён R43 · '+group.userData.mapleAge+' лет · '+group.userData.leafCount+' листьев · '+(group.userData.fusedWood?'Объединённая геометрия: '+group.userData.fusedPaths+' стволов/ветвей':'Резервная геометрия')+' · кора: '+(group.children.find(n=>n.name==='FORMA maple continuous textured forks')?.material?.map?.userData?.formaBarkSource||'не определена'):real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
+ const status=group?.userData?.nativeWillowR49?'FORMA · ива R49 · '+group.userData.willowAge+' лет · '+group.userData.hangingShoots+' свисающих побегов · '+group.userData.leafCount+' листьев · кора: '+(group.children.find(n=>n.name==='FORMA Willow R49 curved wood')?.material?.map?.userData?.source||'не определена'):group?.userData?.nativeMapleR43?'FORMA · клён R43 · '+group.userData.mapleAge+' лет · '+group.userData.leafCount+' листьев · '+(group.userData.fusedWood?'Объединённая геометрия: '+group.userData.fusedPaths+' стволов/ветвей':'Резервная геометрия')+' · кора: '+(group.children.find(n=>n.name==='FORMA maple continuous textured forks')?.material?.map?.userData?.formaBarkSource||'не определена'):real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
  const file=real?(source?'Импортированная пользователем GLB':bundled?.userData?.formaAssetPath||'Путь не зарегистрирован'):'—';
  return {species,name:catalog(species)?.name||species,status,file,meshes,triangles,foliageMeshes};
 }
@@ -1097,24 +1098,27 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();d.title='FORMA · Ива плакучая · R48';
+ const d=freshProject();d.title='FORMA · Ива плакучая · R49';
  d.site={width:32,height:32,orientation:0,boundary:null};
- d.objects=[{id:'willow-test',catalogId:'willow',type:'trees',x:16,y:16,height:11,diameter:9,rotation:0,variant:1}];
+ d.objects=[{id:'willow-test',catalogId:'willow',type:'trees',x:16,y:16,height:11,diameter:9,rotation:0,variant:1,willow:{age:35}}];
  d.buildings=[];return normalizeProject(d);
 }
 function setupLineupNavigation(){
  const panel=document.createElement('div');
- panel.style.cssText='position:absolute;z-index:15;bottom:110px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:5px;width:max-content;max-width:96%;padding:6px;background:#24282dee;border:1px solid #777;border-radius:9px;color:#eee';
- panel.innerHTML='<button type="button" data-willow-view="all">Общий</button><button type="button" data-willow-view="trunk">Ствол</button><button type="button" data-willow-view="crown">Крона</button><button type="button" data-willow-view="shoots">Побеги</button><a href="./forma-landscape-3d.html" style="color:#e8d1a9;padding:6px">Проект</a>';
+ panel.style.cssText='position:absolute;z-index:15;bottom:76px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:5px;width:max-content;max-width:96%;padding:6px;background:#24282dee;border:1px solid #777;border-radius:9px;color:#eee';
+ panel.innerHTML='<div style="width:100%;display:flex;justify-content:center;gap:4px"><button type="button" data-test-age="10">Молодая</button><button type="button" data-test-age="35">Взрослая</button><button type="button" data-test-age="75">Старая</button></div><button type="button" data-willow-view="all">Общий</button><button type="button" data-willow-view="trunk">Ствол</button><button type="button" data-willow-view="crown">Крона</button><button type="button" data-willow-view="shoots">Побеги</button><a href="./forma-landscape-3d.html" style="color:#e8d1a9;padding:6px">Проект</a>';
  document.querySelector('main').append(panel);
  function view(mode){
   const o=doc.objects.find(o=>o.catalogId==='willow');if(!o)return;
   if(state.view!=='3d')setView('3d');
+  if(window.innerWidth<=850)activateMobilePanel('scene');
   const p=pos(o.x,o.y),h=o.height,d=o.diameter,y=terrainAt(p.x,p.z),ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));
   const views={all:[0,h*.49,Math.max(h*1.1,d/(2*Math.tan(25*Math.PI/180)*ratio))*1.25],trunk:[0,h*.20,Math.max(2,h*.27)],crown:[0,h*.72,Math.max(h*.65,d/(2*Math.tan(25*Math.PI/180)*ratio))],shoots:[d*.33,h*.43,Math.max(1.5,h*.18)]};
   const [x,cy,z]=views[mode]||views.all;controls.target.set(p.x+x,y+cy,p.z);camera.position.set(p.x+x+z*.17,y+cy+z*.08,p.z+z);camera.lookAt(controls.target);controls.update();updateSun();renderGate.invalidate();renderer.render(scene,camera);
  }
  panel.querySelectorAll('[data-willow-view]').forEach(b=>b.onclick=()=>view(b.dataset.willowView));
+ const syncAges=()=>{const o=doc.objects.find(o=>o.catalogId==='willow');panel.querySelectorAll('[data-test-age]').forEach(b=>{const on=Number(b.dataset.testAge)===normalizeWillowGrowth(o?.willow).age;b.setAttribute('aria-pressed',String(on));b.style.borderColor=on?'#c9ae85':'';b.style.background=on?'#514839':'';});};
+ panel.querySelectorAll('[data-test-age]').forEach(b=>b.onclick=()=>{const o=doc.objects.find(o=>o.catalogId==='willow');if(o){commitSelectedWillowGrowth(o,{age:Number(b.dataset.testAge)});syncAges();view('all');}});syncAges();
  for(const id of ['mobileHouseSelect','sceneCameraCycle','focusHouse']){const b=$('#'+id);if(b)b.style.setProperty('display','none','important');}
  view('all');
 }
@@ -2533,6 +2537,12 @@ function rotateSelected(degrees){
  if(!result)return;
  push();ref.obj.rotation=result.rotation;save();rebuild();
 }
+function commitSelectedWillowGrowth(o,value){
+ const next=normalizeWillowGrowth(value),dims=willowDimensions(next);
+ if(normalizeWillowGrowth(o.willow).age===next.age&&Number(o.height)===dims.height&&Number(o.diameter)===dims.diameter)return;
+ push();o.willow=next;o.height=dims.height;o.diameter=dims.diameter;save();rebuild();renderProps();
+ status('Ива: '+next.age+' лет · '+dims.height+' м. Перестроены ствол, крона и побеги.');
+}
 function commitSelectedMapleGrowth(o,value){
  const next=normalizeMapleGrowth(value),dims=mapleDimensions(next);
  if(normalizeMapleGrowth(o.maple).age===next.age&&Number(o.height)===dims.height&&Number(o.diameter)===dims.diameter)return;
@@ -2666,7 +2676,8 @@ function renderProps(){
  const isPine=ref.type==='object'&&o.catalogId==='pine';
  const isSpruce=ref.type==='object'&&o.catalogId==='spruce';
  const isMaple=ref.type==='object'&&o.catalogId==='maple'&&!importedPlantModels.has('maple');
- const isTreeEditor=isPine||isSpruce||isMaple;
+ const isWillow=ref.type==='object'&&o.catalogId==='willow'&&!importedPlantModels.has('willow');
+ const isTreeEditor=isPine||isSpruce||isMaple||isWillow;
  const isShrub=ref.type==='object'&&catalog(o.catalogId)?.group==='shrubs';
  const isLight=ref.type==='object'&&catalog(o.catalogId)?.group==='lights';
  const isBoulder=ref.type==='object'&&catalog(o.catalogId)?.group==='boulders';
@@ -2692,7 +2703,7 @@ function renderProps(){
  syncSelectedObjectDock(ref,label);
  el.innerHTML='<p style="margin:0 0 8px"><strong>'+label+'</strong></p>'+
  (creature?'<p class="hint">Настоящая лицензированная GLB · CC0 · '+creature.species+
- ' · <a href="'+creature.source+'" target="_blank" rel="noopener noreferrer">Источник модели</a>. Рост, координаты, ориентация и фотопривязка сохраняются.</p>':'')+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):isMaple?mapleGrowthMarkup(o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
+ ' · <a href="'+creature.source+'" target="_blank" rel="noopener noreferrer">Источник модели</a>. Рост, координаты, ориентация и фотопривязка сохраняются.</p>':'')+(real?'<p class="hint">Настоящая PBR GLB-модель · CC0 · <a href="https://polyhaven.com/a/'+real.source+'" target="_blank" rel="noopener noreferrer">Poly Haven / источник</a>. Ширина в метрах; пропорции модели сохраняются.</p>':'')+(isPine?pineGrowthMarkup(o.pine,o):isSpruce?spruceGrowthMarkup(o.spruce,o):isMaple?mapleGrowthMarkup(o):isWillow?willowGrowthMarkup(o):'')+(isShrub?shrubEditorMarkup({id:catalog(o.catalogId)?.name,species:o.catalogId,variant:o.variant,real:importedPlantModels.has(o.catalogId)||bundledModelSources.has(o.catalogId)&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'),loading:bundledModelLoading.has(o.catalogId),failed:bundledModelFailures.has(o.catalogId),season:doc.atmosphere.season}):'')+fields.map(f=>'<label>'+f[1]+'</label><input data-prop="'+f[0]+'" type="number" step=".1"'+(real&&f[0]==='width'?' min=".1" max="30"':'')+' value="'+Number(f[2]||0)+'">').join('')+
  (isBoulder?'<div class="light-physical-inspector"><strong>КАМЕНЬ · НАТУРАЛЬНАЯ 3D-ФОРМА</strong><label for="rockShapeVariant">Вариант формы</label><select id="rockShapeVariant">'+[[1,'01 · природный'],[2,'02 · другой ракурс'],[3,'03 · природная вариация'],[4,'04 · природная вариация']].map(([v,name])=>'<option value="'+v+'"'+(rockVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><label for="rockBurial">Заглубление <output id="rockBurialValue">'+rockBurial+'%</output></label><input type="range" min="0" max="36" step="2" value="'+rockBurial+'" id="rockBurial"><small>Настоящая сканированная CC0-модель с PBR-текстурами. Диаметр, высота и угол задаются выше. Координаты не меняются.</small></div>':'')+
  (isLight?'<div class="light-physical-inspector"><strong>СВЕТ · РЕАЛЬНЫЙ 3D-КОРПУС</strong><label for="lampBrightness">Яркость <output id="lampBrightnessValue">'+Math.round(lightBrightness*100)+'%</output></label><input type="range" min="0" max="200" step="5" id="lampBrightness" value="'+Math.round(lightBrightness*100)+'"><label for="lampKelvin">Цветовая температура</label><select id="lampKelvin">'+[[2200,'2200 K · янтарный'],[2700,'2700 K · тёплый'],[3000,'3000 K · нейтрально-тёплый'],[4000,'4000 K · нейтральный']].map(([k,n])=>'<option value="'+k+'"'+(lightKelvin===k?' selected':'')+'>'+n+'</option>').join('')+'</select><small>Реальный источник внутри модели. Ночью свет влияет на растения и поверхности. Положение лампы не меняется.</small></div>':'')+(isLight&&o.catalogId==='globe'?'<div class="light-physical-inspector"><label for="lampGlobeSize">Диаметр светильника-шара</label><select id="lampGlobeSize">'+[[1,'40 см · стандартный'],[2,'25 см · малый'],[3,'60 см · большой'],[4,'80 см · XL']].map(([v,name])=>'<option value="'+v+'"'+(globeVariant===v?' selected':'')+'>'+name+'</option>').join('')+'</select><small>4 размера по вашему референсу. Сохраняем координаты каждого шара.</small></div>':'')+(isPine?('<div class="pine-real-status" role="status">'+pineAssetStatus+
   (bundledModelFailures.has('pine')?'<button type="button" id="pineRetryModel">Повторить загрузку GLB</button>':'')+'</div>'+
@@ -2778,6 +2789,7 @@ function renderProps(){
  if(isPine)mountPineGrowth(el,o,{onCommit:value=>commitSelectedPineGrowth(o,value)});
  if(isSpruce)mountSpruceGrowth(el,o,{onCommit:value=>commitSelectedSpruceGrowth(o,value)});
  if(isMaple)mountMapleGrowth(el,o,value=>commitSelectedMapleGrowth(o,value));
+ if(isWillow)mountWillowGrowth(el,o,value=>commitSelectedWillowGrowth(o,value));
  if(isShrub){
   el.querySelectorAll('[data-shrub-variant]').forEach(button=>button.onclick=()=>{
    const choice=Number(button.dataset.shrubVariant);
@@ -3884,6 +3896,7 @@ async function renderAi(series=null){
   // Use measurements of the rendered individual, not default age dimensions.
   const photoObjects=measuredPlan.objects.map(o=>{
    const m=sceneTrees.get(o.id);
+   if(o.catalogId==='willow'&&m?.nativeWillowR49)return {...o,willow:{age:m.willowAge},photoTreeModel:{trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount}};
    if(o.catalogId!=='maple'||!m?.nativeMapleR39)return o;
    return {...o,maple:{age:m.mapleAge},photoTreeModel:{trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount}};
   });
