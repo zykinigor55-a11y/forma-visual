@@ -254,17 +254,27 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  // a separate allowance for render-only turf and optional microgeometry.
  // Estimate memory for expanded instances before allocating geometry and BVH.
  // deviceMemory reports system RAM, not VRAM; use a conservative heuristic.
- const ram=Number(navigator.deviceMemory)||4;
- const budget=(isMobile()?96:ram<=4?192:384)*1024*1024;
- const estimate=meshes.reduce((sum,o)=>{
-  const g=proxies.get(o)||o.geometry,n=o.isInstancedMesh?o.count:1;
-  return sum+n*(g.attributes.position.count*112+(g.index?.count||g.attributes.position.count)*20);
- },0);
- if(estimate>budget){
-  for(const g of ownedProxies)g.dispose();
-  throw Error('Оценка памяти трассировки '+Math.round(estimate/1048576)+' МБ превышает безопасный бюджет '+Math.round(budget/1048576)+' МБ');
+ const ram=Number(navigator.deviceMemory)||8;
+ const recovery=atmosphere.traceRecovery===true;
+ const budget=(isMobile()?128:recovery?192:ram<=4?384:768)*1024*1024;
+ const bytesPer=o=>{const g=proxies.get(o)||o.geometry;return g.attributes.position.count*112+(g.index?.count||g.attributes.position.count)*20;};
+ const foliage=o=>o.isInstancedMesh&&(grass(o)||/leaf|leaves|foliage|needle|berry|berries|petal|blossom|flower/i.test(o.name+' '+(o.parent?.name||''))||['leaf','needle'].includes(o.material?.userData?.formaPBRRoleR63));
+ let estimate=meshes.reduce((sum,o)=>sum+bytesPer(o)*(o.isInstancedMesh?o.count:1),0);
+ let reducedFoliage=0;
+ if(!full&&(estimate>budget*.72||recovery)){
+  const adjustable=meshes.filter(foliage);
+  const adjustableBytes=adjustable.reduce((sum,o)=>sum+bytesPer(o)*o.count,0);
+  const baseBytes=estimate-adjustableBytes;
+  const fraction=Math.min(recovery?.38:1,Math.max(.015,(budget*.72-baseBytes)/Math.max(1,adjustableBytes)));
+  for(const o of adjustable){
+   const keep=Math.min(o.count,Math.max(1,Math.floor(o.count*fraction)));
+   keepCounts.set(o,keep);const cut=o.count-keep;
+   if(grass(o))grassCost-=cut*costs(o);else{used-=cut*costs(o);reducedFoliage+=cut;}
+   estimate-=cut*bytesPer(o);
+  }
  }
- const lawnReserve=lawn?(isMobile()?60000:estimate>budget*.55?90000:profile==='high'?450000:220000):0;
+ // No triangle-count rejection. Try actual path tracing with the resulting geometry.
+ const lawnReserve=lawn?(isMobile()||recovery?35000:estimate>budget*.55?60000:profile==='high'?450000:220000):0;
  limit=Math.max(Math.min(softLimit,used+grassCost+lawnReserve+180000),used+grassCost+lawnReserve+(isMobile()||estimate>budget*.55?0:90000));
  if(!isMobile()&&profile==='high'&&estimate<budget*.55)for(const o of meshes){if(o.name!=='rowan-pinnate-foliage'||!proxies.has(o))continue;const g=rowanLeafProxy(T,o.geometry,true);if(!g)continue;const extra=(g.index.count/3-costs(o))*o.count;if(used+extra+(lawn?360000:0)>limit){g.dispose();continue;}proxies.set(o,g);ownedProxies.push(g);used+=extra;}
  if(!full&&!isMobile()&&estimate<budget*.55)for(const o of meshes){if(o.isInstancedMesh||o.name!=='rowan-bark-trunk-branches')continue;const available=limit-used-(lawn?260000:0);if(available<15000)continue;for(const level of (profile==='high'?[6,4,2]:[3,2])){const result=barkDisplacement(T,o,level);if(!result)break;const extra=result.geometry.index.count/3-costs(o);if(extra>available){result.geometry.dispose();continue;}proxies.set(o,result.geometry);ownedProxies.push(result.geometry);used+=extra;displacedWood+=result.displaced;break;}}
@@ -276,7 +286,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  const lawnBudget=lawn?Math.min(lawnReserve,Math.floor(Math.max(0,limit-used)*.82)):0;
  const existingBudget=limit-lawnBudget;
  const factor=Math.min(1,Math.max(0,(existingBudget-used)/Math.max(1,grassCost)));
- for(const o of meshes){if(!grass(o))continue;const keep=Math.min(o.count,Math.floor(o.count*factor),Math.floor(Math.max(0,existingBudget-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
+ for(const o of meshes){if(!grass(o))continue;const maxKeep=keepCounts.get(o)??o.count;const keep=Math.min(maxKeep,Math.floor(maxKeep*factor),Math.floor(Math.max(0,existingBudget-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
  triangles=used;
  const bumpCache=new Map();
  const cloneMat=(m,instanced)=>{
@@ -346,7 +356,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
  for(const g of ownedProxies)g.dispose();ownedProxies.length=0;
- return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,lawnTufts,displacedWood,displacedSurfaces,reducedOak,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();env.dispose();}};
+ return {scene,cam,triangles,instances,skipped,reduced,reducedFoliage,simplified,lawnBlades,lawnTufts,displacedWood,displacedSurfaces,reducedOak,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();env.dispose();}};
  }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();throw e;}
 }
 export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},lawn=null,onClose=()=>{},onFailure=()=>{}}){
@@ -354,7 +364,7 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  const oldRatio=renderer.getPixelRatio(),oldTone=renderer.toneMapping,oldExposure=renderer.toneMappingExposure;
  const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
  const panel=document.createElement('div');panel.style.cssText='width:min(440px,96vw);background:#22262df5;color:#eee;border:1px solid #777;border-radius:12px;padding:12px;font:13px system-ui;box-shadow:0 10px 45px #0005;';
- panel.innerHTML='<strong style="font-size:15px">FORMA · РЕНДЕР ВИДЕОКАРТОЙ</strong><div data-msg style="margin:8px 0">Подготовка сцены…</div><progress value="0" max="64" style="width:100%;height:8px"></progress><div style="display:flex;gap:8px;margin-top:10px"><button data-close style="flex:1;padding:12px">В редактор</button><button data-save disabled style="flex:1;padding:12px">Сохранить PNG</button></div><small style="display:block;margin-top:8px;color:#bbb">Накопительный GPU-рендер · адаптивное качество</small>';
+ panel.innerHTML='<strong style="font-size:15px">FORMA · РЕНДЕР ВИДЕОКАРТОЙ</strong><div data-msg style="margin:8px 0">Подготовка сцены…</div><progress value="0" max="64" style="width:100%;height:8px"></progress><div style="display:flex;gap:8px;margin-top:10px"><button data-close style="flex:1;padding:12px">В редактор</button><button data-save disabled style="flex:1;padding:12px">Сохранить PNG</button></div><small style="display:block;margin-top:8px;color:#bbb">Настоящая трассировка лучей · накопление сэмплов</small>';
  ui.append(panel);document.body.append(ui);const msg=panel.querySelector('[data-msg]'),bar=panel.querySelector('progress'),save=panel.querySelector('[data-save]');
  const target=profile==='high'?192:64;bar.max=target;
  function cleanup(){if(cleaned)return;cleaned=true;
@@ -375,13 +385,13 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   snap=await snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn,()=>alive,(n,total)=>{msg.textContent='Подготовка геометрии: '+n+' / '+total+' объектов';});if(!alive){snap.dispose();return;}
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   stage='Построение BVH и загрузка текстур';building=true;
-  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;const heavy=snap.triangles>4000000,veryHeavy=snap.triangles>8000000;const tile=veryHeavy?8:heavy?6:profile==='high'?4:3;pt.tiles.set(tile,tile);pt.renderScale=veryHeavy?.45:heavy?.65:profile==='high'?.85:.55;const atlas=heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
-  renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85,1600/Math.max(1,canvas.clientWidth,canvas.clientHeight)));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
+  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;const heavy=snap.triangles>4000000,veryHeavy=snap.triangles>8000000;const recover=atmosphere.traceRecovery===true;const tile=recover?8:veryHeavy?8:heavy?6:profile==='high'?4:3;pt.tiles.set(tile,tile);pt.renderScale=recover?.35:veryHeavy?.45:heavy?.65:profile==='high'?.85:.55;const atlas=recover?128:heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
+  renderer.setPixelRatio(Math.min(oldRatio,recover?.55:profile==='high'?1:0.85,(recover?960:1600)/Math.max(1,canvas.clientWidth,canvas.clientHeight)));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
   stage='Трассировка GPU';renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
-   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reducedOak?' · упрощено листьев дуба: '+snap.reducedOak.toLocaleString('ru-RU'):'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
+   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reducedOak?' · упрощено листьев дуба: '+snap.reducedOak.toLocaleString('ru-RU'):'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'')+(snap.reducedFoliage?' · адаптивный LOD листвы: '+snap.reducedFoliage.toLocaleString('ru-RU'):'');
    if(n>=target){if(profile==='high'){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
