@@ -434,11 +434,53 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <link rel="stylesheet" href="forma-graphite-only-v3.css?v=graphite-polish-9-20261122">
 <link rel="stylesheet" href="forma-mobile-landscape-v1.css?v=touch-pro-mode-v4-20261122">
 <link rel="stylesheet" href="forma-mobile-object-editor-v1.css?v=mobile-light-house-editor-v3-20261122">
+
+<style id="forma-mobile-compact-R16">
+#sceneClimateTabs,.climate-grip,#mobileGeneralSettingsHeader{display:none}
+#sceneClimateBody{display:contents}
+@media(max-width:850px){
+ main #sceneClimatePanel:not([hidden]){
+  position:absolute!important;inset:auto 8px var(--climate-bottom,calc(76px + env(safe-area-inset-bottom,0px))) 8px!important;
+  width:auto!important;height:auto!important;max-height:min(35%,300px)!important;min-height:0!important;
+  display:flex!important;flex-direction:column;gap:0;overflow:hidden!important;padding:0!important;
+  border-radius:14px;background:#25282ef8;z-index:20!important;
+ }
+ #sceneClimatePanel .scene-climate-heading{position:relative;flex:0 0 auto;min-height:42px;margin:0!important;padding:5px 7px 4px 11px;border-bottom:1px solid #4d5056;letter-spacing:0;font-size:12px;touch-action:none;user-select:none}
+ #sceneClimatePanel .climate-grip{display:block;position:absolute;top:4px;left:calc(50% - 15px);width:30px;height:3px;border-radius:4px;background:#85868b;pointer-events:none}
+ #sceneClimatePanel #sceneClimateClose{flex:none;width:44px;min-width:44px;min-height:40px!important;height:40px;padding:0!important;font-size:19px;line-height:1;touch-action:manipulation}
+ #sceneClimatePanel #sceneClimateTabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px 7px;flex:none;background:#25282e}
+ #sceneClimatePanel #sceneClimateTabs button{min-height:35px!important;padding:4px 2px!important;font-size:11px;line-height:1.15;white-space:normal;touch-action:manipulation}
+ #sceneClimatePanel #sceneClimateTabs button[aria-pressed=true]{background:#d0bd9f!important;color:#25282e!important;border-color:#d0bd9f!important}
+ #sceneClimatePanel #sceneClimateBody{display:block;min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain;padding:3px 10px 7px;scrollbar-width:thin;touch-action:pan-y}
+ #sceneClimatePanel[data-climate-tab=sun] [data-climate-group]:not([data-climate-group=sun]),
+ #sceneClimatePanel[data-climate-tab=atmosphere] [data-climate-group]:not([data-climate-group=atmosphere]),
+ #sceneClimatePanel[data-climate-tab=shadows] [data-climate-group]:not([data-climate-group=shadows]){display:none!important}
+ #sceneClimatePanel .scene-climate-sliders{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:2px 9px}
+ #sceneClimatePanel .scene-climate-sliders label{margin:0!important;min-height:32px;align-items:center;gap:4px;font-size:11px!important}
+ #sceneClimatePanel .scene-climate-sliders output{font-size:11px;flex:none}
+ #sceneClimatePanel input[type=range]{height:32px;min-height:32px!important;margin:0!important;touch-action:pan-x}
+ #sceneClimatePanel .scene-climate-grid{margin:0 0 5px!important;gap:4px 8px;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}
+ #sceneClimatePanel select{min-height:36px!important;padding:4px 6px!important;font-size:13px!important}
+ #sceneClimatePanel .scene-climate-actions{gap:5px;margin:5px 0!important}
+ #sceneClimatePanel .scene-climate-actions button{min-height:34px!important;font-size:10px;padding:4px!important}
+ #sceneClimatePanel .weather-strength-section,#sceneClimatePanel .night-interior-section{padding:6px!important;margin:6px 0!important}
+ #sceneClimatePanel #sceneClimateBody>small{font-size:10px;line-height:1.3}
+ body[data-climate-open=true] #status{visibility:hidden}
+ body[data-climate-open=true] #selectedObjectDock{display:none!important}
+ body[data-mobile-panel=details] #right,body[data-mobile-panel=details][data-object-inspector=true] #right,body[data-mobile-pine=true][data-mobile-panel=details] #right{height:min(38dvh,340px)!important;max-height:calc(100dvh - 120px)!important}
+ body[data-mobile-panel=details] #mobileWorkspaceTabs,body[data-mobile-panel=details][data-object-inspector=true] #mobileWorkspaceTabs,body[data-mobile-pine=true][data-mobile-panel=details] #mobileWorkspaceTabs{bottom:calc(min(38dvh,340px) + 16px + env(safe-area-inset-bottom,0px))!important}
+ body[data-mobile-panel=details] #status{display:none!important}
+ body[data-mobile-panel=details]:not([data-object-inspector=true]) #mobileGeneralSettingsHeader{position:sticky;top:0;z-index:5;display:flex!important;flex:none;align-items:center;justify-content:space-between;background:#25282e;border-bottom:1px solid #5b5d63;margin:-2px 0 8px;padding:3px 0 6px;color:#e9d6b9;font-size:13px}
+ #mobileGeneralSettingsClose{min-width:44px;min-height:40px!important;font-size:22px;padding:0!important}
+ body[data-mobile-panel=details][data-object-inspector=true] #mobileObjectEditorHeader:not([hidden]){padding:4px 1px!important}
+}
+@media(max-width:850px) and (max-height:540px){main #sceneClimatePanel:not([hidden]){max-height:45%!important}}
+</style>
 </head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R15</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R16</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -474,14 +516,15 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 </section>
 <button type="button" id="sceneCameraCycle" aria-label="Ракурсы камеры: общий дом, ближе, весь участок" title="Один тап — дом, второй — ближе, третий — весь участок">⌖ К дому</button>
 <button type="button" id="sceneClimateButton" aria-controls="sceneClimatePanel" aria-expanded="false" aria-label="Открыть настройки солнца, времени суток и погоды">☀ Солнце и погода</button>
-<section id="sceneClimatePanel" class="scene-climate-panel" role="region" aria-label="Настройки солнца и погоды" hidden>
- <div class="scene-climate-heading"><strong>☀ СОЛНЦЕ · ПОГОДА</strong><button type="button" id="sceneClimateClose" aria-label="Закрыть настройки погоды">✕</button></div>
- <div class="scene-climate-grid">
+<section id="sceneClimatePanel" class="scene-climate-panel" data-climate-tab="sun" role="region" aria-label="Настройки солнца и погоды" hidden>
+ <div class="scene-climate-heading"><strong>☀ Солнце и погода</strong><span class="climate-grip" aria-hidden="true"></span><button type="button" id="sceneClimateClose" aria-label="Закрыть настройки погоды">✕</button></div>
+ <div id="sceneClimateTabs" role="group" aria-label="Разделы настроек"><button type="button" data-climate-tab="sun" aria-pressed="true">Солнце</button><button type="button" data-climate-tab="atmosphere" aria-pressed="false">Атмосфера</button><button type="button" data-climate-tab="shadows" aria-pressed="false">Тени</button></div>
+ <div id="sceneClimateBody"><div class="scene-climate-grid" data-climate-group="atmosphere">
   <label for="quickTime">Время суток</label><select id="quickTime"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Закат</option><option value="blue-hour">Синий час</option><option value="night">Ночь</option></select>
   <label for="quickSeason">Сезон</label><select id="quickSeason"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label for="quickWeather">Погода</label><select id="quickWeather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
  </div>
- <section id="quickWeatherSNOW" class="weather-strength-section" data-weather-section="snow" hidden>
+ <section id="quickWeatherSNOW" data-climate-group="atmosphere" class="weather-strength-section" data-weather-section="snow" hidden>
  <strong>❄ СНЕГ · СИЛА ЭФФЕКТА</strong>
  <div class="weather-strength-sliders"><label for="quickWeatherSnowTrees">Снег на деревьях <output id="quickWeatherSnowTreesValue">22%</output></label>
   <input id="quickWeatherSnowTrees" type="range" min="0" max="100" step="5" value="22" data-weather-effect="snowTrees">
@@ -493,7 +536,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <input id="quickWeatherWinterHaze" type="range" min="0" max="100" step="5" value="18" data-weather-effect="winterHaze"></div>
  <small>Дальний план тоже учитывается. 0% снега на деревьях — ветви без снега.</small>
  </section>
-<section id="quickWeatherRAIN" class="weather-strength-section" data-weather-section="rain" hidden>
+<section id="quickWeatherRAIN" data-climate-group="atmosphere" class="weather-strength-section" data-weather-section="rain" hidden>
  <strong>☔ ДОЖДЬ · СИЛА ЭФФЕКТА</strong>
  <div class="weather-strength-sliders"><label for="quickWeatherRainIntensity">Сила дождя <output id="quickWeatherRainIntensityValue">42%</output></label>
   <input id="quickWeatherRainIntensity" type="range" min="0" max="100" step="5" value="42" data-weather-effect="rainIntensity">
@@ -505,7 +548,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
   <input id="quickWeatherRainMist" type="range" min="0" max="100" step="5" value="25" data-weather-effect="rainMist"></div>
  <small>Режим «После дождя» не показывает падающие капли, но сохраняет мокрые материалы.</small>
  </section>
-<section id="quickNightHome" class="night-interior-section" aria-label="Ночной дом" hidden>
+<section id="quickNightHome" data-climate-group="atmosphere" class="night-interior-section" aria-label="Ночной дом" hidden>
  <strong>☾ НОЧНОЙ ДОМ · ОСВЕЩЕНИЕ</strong>
  <label for="quickInteriorLights"><input type="checkbox" id="quickInteriorLights"> Включить свет в доме</label>
  <label for="quickInteriorVisibility">Видимость интерьера</label>
@@ -527,19 +570,20 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <small>Свет работает внутри существующего дома. Рамы, стены и положение мебели не меняются. При AI-рендере сохраняются выбранные значения.</small>
 </section>
  <div class="scene-climate-sliders">
-  <label for="quickSunAzimuth">Азимут солнца <output id="quickSunAzimuthValue">311°</output></label><input id="quickSunAzimuth" type="range" min="0" max="359" step="1">
-  <label for="quickSunElevation">Высота солнца <output id="quickSunElevationValue">67°</output></label><input id="quickSunElevation" type="range" min="2" max="85" step="1">
-  <label for="quickSunStrength">Яркость солнца <output id="quickSunStrengthValue">100%</output></label><input id="quickSunStrength" type="range" min="30" max="170" step="5">
-  <label for="quickSunSoftness">Мягкость теней <output id="quickSunSoftnessValue">2.6</output></label><input id="quickSunSoftness" type="range" min="1" max="5" step=".2">
-  <label for="quickCloudCover">Облачность <output id="quickCloudCoverValue">35%</output></label><input id="quickCloudCover" type="range" min="0" max="100" step="5">
-  <label for="quickGlobalFill">Заполняющий свет <output id="quickGlobalFillValue">110%</output></label><input id="quickGlobalFill" type="range" min="30" max="180" step="5">
-  <label for="quickAerialHaze">Дымка <output id="quickAerialHazeValue">30%</output></label><input id="quickAerialHaze" type="range" min="0" max="100" step="5">
+  <label for="quickSunAzimuth" data-climate-group="sun">Азимут солнца <output id="quickSunAzimuthValue">311°</output></label><input id="quickSunAzimuth" data-climate-group="sun" type="range" min="0" max="359" step="1">
+  <label for="quickSunElevation" data-climate-group="sun">Высота солнца <output id="quickSunElevationValue">67°</output></label><input id="quickSunElevation" data-climate-group="sun" type="range" min="2" max="85" step="1">
+  <label for="quickSunStrength" data-climate-group="sun">Яркость солнца <output id="quickSunStrengthValue">100%</output></label><input id="quickSunStrength" data-climate-group="sun" type="range" min="30" max="170" step="5">
+  <label for="quickSunSoftness" data-climate-group="shadows">Мягкость теней <output id="quickSunSoftnessValue">2.6</output></label><input id="quickSunSoftness" data-climate-group="shadows" type="range" min="1" max="5" step=".2">
+  <label for="quickCloudCover" data-climate-group="atmosphere">Облачность <output id="quickCloudCoverValue">35%</output></label><input id="quickCloudCover" data-climate-group="atmosphere" type="range" min="0" max="100" step="5">
+  <label for="quickGlobalFill" data-climate-group="shadows">Заполняющий свет <output id="quickGlobalFillValue">110%</output></label><input id="quickGlobalFill" data-climate-group="shadows" type="range" min="30" max="180" step="5">
+  <label for="quickAerialHaze" data-climate-group="atmosphere">Дымка <output id="quickAerialHazeValue">30%</output></label><input id="quickAerialHaze" data-climate-group="atmosphere" type="range" min="0" max="100" step="5">
  </div>
  <div class="scene-climate-actions">
-  <button type="button" id="sceneClimateSunReset">↺ Сброс солнца</button>
+  <button type="button" id="sceneClimateSunReset" data-climate-group="sun">↺ Сброс солнца</button>
   <button type="button" id="sceneClimateAll">Все параметры</button>
  </div>
  <small>Сцена обновляется при изменении. Те же значения используются при AI-фоторендере. Положение дома и растений не меняется.</small>
+ </div>
 </section>
 <button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
 <div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
@@ -573,6 +617,7 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 <div id="mobilePlacementHint" role="status" hidden><span id="mobilePlacementLabel" aria-live="polite"></span><button id="mobilePondFinish" class="primary" type="button" hidden disabled>Готово</button><button id="mobilePlacementCancel" type="button" aria-label="Отменить размещение и вернуть выбор">Отмена</button></div>
 <div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
+ <div id="mobileGeneralSettingsHeader"><strong>Параметры сцены</strong><button type="button" id="mobileGeneralSettingsClose" aria-label="Закрыть параметры сцены">×</button></div>
  <div id="mobileObjectEditorHeader" hidden><strong id="mobileObjectEditorTitle">Объект</strong><button id="mobileObjectMove" type="button" title="Переместить выделенный объект пальцем">↔ Двигать</button><button id="mobileObjectClose" type="button" aria-label="Свернуть редактор и открыть сцену">×</button></div>
  <div class="heading" style="padding:0 0 10px">КАМЕРА</div><div class="buttons">
   <button data-view="2d">2D</button><button data-view="3d" class="active">3D</button><button data-view="walk">Walk</button>
@@ -1896,6 +1941,7 @@ function syncMobileTerrainDock(){
  const radius=$('#brushRadius');if(radius){$('#mtRadius').value=radius.value;$('#mtRadiusValue').textContent=radius.value+' м'}
 }
 function chooseTool(t){
+ if(window.innerWidth<=850&&t!=='select')setSceneClimateOpen(false);
  hideLocalTerrainBrush();state.tool=t;document.body.dataset.activeTool=t;state.placing=null;pointMode=[];refreshDraft();
  if(controls)controls.touches.ONE=t==='terrain'?null:THREE.TOUCH.ROTATE;
  syncMobileTerrainDock();
@@ -2739,16 +2785,37 @@ function syncQuickClimateControls(){
   if(label)label.textContent=(sourceId==='sunSoftness'?Number(value).toFixed(1):Math.round(value))+suffix;
  }
 }
+function positionClimatePanel(){
+ const panel=$('#sceneClimatePanel'),tabs=$('#mobileWorkspaceTabs'),main=panel?.parentElement;
+ if(!panel||!tabs||!main||panel.hidden||window.innerWidth>850)return;
+ const bottom=Math.max(0,main.getBoundingClientRect().bottom-tabs.getBoundingClientRect().top+7);
+ panel.style.setProperty('--climate-bottom',Math.ceil(bottom)+'px');
+}
+function setSceneClimateTab(tab){
+ if(!['sun','atmosphere','shadows'].includes(tab))return;
+ const panel=$('#sceneClimatePanel');panel.dataset.climateTab=tab;
+ panel.querySelectorAll('[data-climate-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.climateTab===tab)));
+ $('#sceneClimateBody').scrollTop=0;
+}
 function setSceneClimateOpen(open){
  const panel=$('#sceneClimatePanel');
  if(!panel)return;
- panel.hidden=!open;
+ panel.hidden=!open;document.body.dataset.climateOpen=String(!!open);
  $('#sceneClimateButton')?.setAttribute('aria-expanded',String(!!open));
- if(open)syncQuickClimateControls();
+ if(open){syncQuickClimateControls();positionClimatePanel();requestAnimationFrame(positionClimatePanel);}
 }
 function setupSceneClimateControls(){
  $('#sceneClimateButton').onclick=()=>setSceneClimateOpen($('#sceneClimatePanel').hidden);
  $('#sceneClimateClose').onclick=()=>setSceneClimateOpen(false);
+ $('#mobileGeneralSettingsClose').onclick=()=>activateMobilePanel('scene');
+ $('#sceneClimateTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>setSceneClimateTab(b.dataset.climateTab));
+ const heading=$('#sceneClimatePanel .scene-climate-heading');let swipe=null;
+ heading.addEventListener('pointerdown',e=>{if(window.innerWidth>850||e.target.closest('button')||e.button!==0)return;swipe={id:e.pointerId,x:e.clientX,y:e.clientY};heading.setPointerCapture?.(e.pointerId);});
+ heading.addEventListener('pointerup',e=>{if(swipe?.id!==e.pointerId)return;const dy=e.clientY-swipe.y,dx=e.clientX-swipe.x;swipe=null;if(dy>38&&dy>Math.abs(dx))setSceneClimateOpen(false);});
+ heading.addEventListener('pointercancel',()=>{swipe=null;});
+ window.addEventListener('resize',positionClimatePanel);
+ if(typeof ResizeObserver==='function')new ResizeObserver(positionClimatePanel).observe($('#mobileWorkspaceTabs'));
+ window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sceneClimatePanel').hidden){e.preventDefault();setSceneClimateOpen(false);}},true);
  $('#sceneClimateSunReset').onclick=()=>{
   $('#sunReset').click();syncQuickClimateControls();
  };
