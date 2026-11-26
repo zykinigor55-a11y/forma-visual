@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R43</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R44</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -3851,7 +3851,15 @@ async function renderAi(series=null){
     background:cssColor(scene.background)
    }
   };
-  const sceneInfo={...coordinateSummary(doc),cameraMode:'3d-perspective',cameraView:state.view,
+  const measuredPlan=coordinateSummary(doc);
+  const sceneTrees=new Map(pickables.filter(g=>g.userData.key?.startsWith('object:')).map(g=>[g.userData.key.slice(7),g.userData]));
+  // Use measurements of the rendered individual, not default age dimensions.
+  const photoObjects=measuredPlan.objects.map(o=>{
+   const m=sceneTrees.get(o.id);
+   if(o.catalogId!=='maple'||!m?.nativeMapleR39)return o;
+   return {...o,maple:{age:m.mapleAge},photoTreeModel:{trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount}};
+  });
+  const sceneInfo={...measuredPlan,objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
