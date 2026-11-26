@@ -180,6 +180,7 @@ export function normalizeProject(raw){
     ...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{}),
     ...(entry.id==='ph-fir-sapling'?{fir:{age:[10,45,100].includes(Number(item.fir?.age))?Number(item.fir.age):(Number(item.height)<6?10:45)}}:{}),
     ...(entry.id==='birch'?{birch:{age:[10,35,75].includes(Number(item.birch?.age))?Number(item.birch.age):35}}:{}),
+    ...(entry.id==='oak'?{oak:{age:[15,60,150].includes(Number(item.oak?.age))?Number(item.oak.age):(Number(item.height)>0&&Number(item.height)<12?15:Number(item.height)>21?150:60)}}:{}),
     ...(entry.id==='rowan'?{rowan:{age:[10,35,75].includes(Number(item.rowan?.age))?Number(item.rowan.age):(Number(item.height)>0&&Number(item.height)<5?10:Number(item.height)>9?75:35)}}:{}),
     ...(entry.id==='maple'?{maple:normalizeMapleGrowth(item.maple)}:{}),
     ...(entry.id==='willow'?{willow:normalizeWillowGrowth(item.willow)}:{}),
