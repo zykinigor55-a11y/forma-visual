@@ -84,8 +84,8 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const crownRng=random('maple spatial crown R35|'+instance.id+'|'+instance.variant);
  const ageProfile=mapleProfile(instance.maple),trunkR=clamp(h*ageProfile.trunk,.035,1.30),mobile=window.innerWidth<=850;
  const fusionStep=Math.max(.007,trunkR*(mobile?.17:.135)),fusionPaths=[],replacedRanges=[];
- // Extra foliage is independent of the woody skeleton and its random stream.
- const oldCrown=clamp((ageProfile.age-55)/55,0,1),oldLeafRng=random('maple mature crown R42|'+instance.id+'|'+instance.variant),oldLeaves=[];
+ // All ages get extra foliage, increasing smoothly with age. Independent of wood RNG; century profile unchanged.
+ const oldCrown=ageProfile.age<=18?.65+.20*clamp((ageProfile.age-5)/13,0,1):ageProfile.age<=45?.85+.10*(ageProfile.age-18)/27:.95+.05*clamp((ageProfile.age-45)/65,0,1),oldLeafRng=random('maple mature crown R42|'+instance.id+'|'+instance.variant),oldLeaves=[];
  function tube(points,radii,sides,seed,collar=0,parentAxis=null){
   let first=pos.length/3,dist=0,prevU=null;const phase=seed*6.283;
   const indexStart=idx.length;
@@ -257,6 +257,6 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple spatial crown R35';
  g.userData.leafTriangles=leafGeo.index.count/3*leafPoints.length;g.add(mesh);
  }
- g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.nativeMapleR38=true;g.userData.nativeMapleR39=true;g.userData.nativeMapleR42=true;g.userData.mapleAge=ageProfile.age;g.userData.extraMatureLeaves=season==='winter'?0:leafPoints.length-baseLeafCount;g.userData.trunkDiameter=trunkR*2;g.userData.fusedWood=Boolean(union);g.userData.fusedPaths=union?fusionPaths.length:0;g.userData.woodTriangles=geo.index.count/3+(union?union.attributes.position.count/3:0);g.userData.leafCount=season==='winter'?0:leafPoints.length;
+ g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.nativeMapleR38=true;g.userData.nativeMapleR39=true;g.userData.nativeMapleR42=true;g.userData.nativeMapleR43=true;g.userData.mapleAge=ageProfile.age;g.userData.extraMatureLeaves=season==='winter'?0:leafPoints.length-baseLeafCount;g.userData.trunkDiameter=trunkR*2;g.userData.fusedWood=Boolean(union);g.userData.fusedPaths=union?fusionPaths.length:0;g.userData.woodTriangles=geo.index.count/3+(union?union.attributes.position.count/3:0);g.userData.leafCount=season==='winter'?0:leafPoints.length;
  return g;
 }
