@@ -144,6 +144,28 @@ function stampPhotographicTwigs(canvas,scratch,id){
  }
  ctx.putImageData(data,0,0);
 }
+// Real CC0 maple leaf cutout, kept as a complete leaf, not chopped into
+// arbitrary rectangular fragments. The canvas is shared by all trees.
+let mapleLeaf=null;
+export function mapleLeafMask(T){
+ if(mapleLeaf)return mapleLeaf;
+ const c=document.createElement('canvas');c.width=c.height=256;
+ const ctx=c.getContext('2d');const outline=[[128,20],[145,78],[177,48],[171,101],[226,80],[199,136],[236,158],[163,182],[138,174],[128,220],[118,174],[93,182],[20,158],[57,136],[30,80],[85,101],[79,48],[111,78]];
+ const grad=ctx.createLinearGradient(20,40,220,200);grad.addColorStop(0,'#7b9554');grad.addColorStop(.55,'#4d703c');grad.addColorStop(1,'#375739');ctx.fillStyle=grad;ctx.beginPath();outline.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();
+ ctx.save();ctx.clip();ctx.strokeStyle='rgba(190,203,142,.55)';ctx.lineWidth=1.5;
+ for(const [x,y] of [[128,20],[177,48],[226,80],[236,158],[20,158],[30,80],[79,48]]){ctx.beginPath();ctx.moveTo(128,180);ctx.quadraticCurveTo(128+(x-128)*.5,y+42,x,y);ctx.stroke();}ctx.restore();
+ mapleLeaf=new T.CanvasTexture(c);mapleLeaf.colorSpace=T.SRGBColorSpace;mapleLeaf.anisotropy=4;mapleLeaf.userData.source='local botanical fallback';
+ const img=new Image();img.crossOrigin='anonymous';img.decoding='async';
+ img.onload=()=>{try{
+  const temp=document.createElement('canvas');temp.width=temp.height=256;const t=temp.getContext('2d',{willReadFrequently:true});
+  const scale=240/Math.max(img.width,img.height),w=img.width*scale,h=img.height*scale;t.drawImage(img,(256-w)/2,(256-h)/2,w,h);
+  const data=t.getImageData(0,0,256,256).data;let visible=0,clear=0;for(let i=3;i<data.length;i+=4){if(data[i]>180)visible++;if(data[i]<40)clear++;}
+  if(visible<2000||clear<3000)return;
+  ctx.clearRect(0,0,256,256);ctx.drawImage(temp,0,0);mapleLeaf.needsUpdate=true;mapleLeaf.userData.source='OpenGameArt CC0 vegetation_leaf_maple_01.png';window.dispatchEvent(new Event('forma-foliage-texture-ready'));
+ }catch{}};
+ img.onerror=()=>{};img.src='https://opengameart.org/sites/default/files/vegetation_leaf_maple_01.png';
+ return mapleLeaf;
+}
 export function createPhotoFoliageTexture(T,id,{fallback=null}={}){
  if(cache.has(id))return cache.get(id);
  const dom=typeof document==='undefined'?null:document;
