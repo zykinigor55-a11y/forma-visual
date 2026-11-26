@@ -85,8 +85,8 @@ export function createNaturalWillow(T,o,{season='summer'}={}){
     const e=limit(q.clone().add(polar(theta,span2,h*(.03+r()*.035))),.98);
     const twig=bez(q,limit(q.clone().add(polar(theta,span2*.4,h*.05))),limit(e.clone().add(V(0,h*.02,0))),e);
     tube(twig,12,7,.009,.0025);
-    for(let k2=0;k2<3;k2++){
-     const v=twig.getPoint(.28+k2*.33),a2=theta+(k2-1)*.9+r()*.35,drop=h*(.22+r()*.29)*( .76+.24*f);
+    for(let k2=0;k2<(mobile?2:3);k2++){
+     const v=twig.getPoint(.23+k2*(mobile?.62:.33)),a2=theta+(k2-1)*.9+r()*.35,drop=h*(.22+r()*.29)*( .76+.24*f);
      hanging(v,a2,drop,R*(.045+r()*.12));
     }
    }
@@ -96,12 +96,12 @@ export function createNaturalWillow(T,o,{season='summer'}={}){
  const mat=new T.MeshStandardMaterial({color:'#dfdbcb',map:wood.bark,normalMap:wood.normal,roughnessMap:wood.rough,bumpMap:wood.normal?null:wood.bark,bumpScale:.045,roughness:.93,metalness:0,side:T.DoubleSide});wood.materials.add(mat);mat.addEventListener('dispose',()=>wood.materials.delete(mat));
  const mesh=new T.Mesh(geo,mat);mesh.name='FORMA Willow R47 curved wood';mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);
  if(leafData.length){
-  const leafGeo=new T.PlaneGeometry(1,1,2,4),lp=leafGeo.attributes.position;for(let i=0;i<lp.count;i++){const x=lp.getX(i),y=lp.getY(i);lp.setZ(i,.13*(1-Math.abs(x)*2)-.13*y*y+.06*y*x);}
+  const leafGeo=new T.PlaneGeometry(1,1,mobile?1:2,mobile?2:4),lp=leafGeo.attributes.position;for(let i=0;i<lp.count;i++){const x=lp.getX(i),y=lp.getY(i);lp.setZ(i,.13*(1-Math.abs(x)*2)-.13*y*y+.06*y*x);}
   leafGeo.computeVertexNormals();
   const lm=new T.MeshStandardMaterial({map:wood.leaf,color:'#dedfca',side:T.DoubleSide,alphaTest:.34,roughness:.82,metalness:0,emissive:'#889b66',emissiveIntensity:.035});
   const leaves=new T.InstancedMesh(leafGeo,lm,leafData.length),tmp=new T.Object3D(),Y=V(0,1,0);
   const palette=(season==='autumn'?['#c6ad6c','#b4a270','#d2bd80']:['#c4ccae','#aebda0','#d0d3b9','#b5c2a2']).map(c=>new T.Color(c));
-  leafData.forEach((l,i)=>{tmp.position.copy(l.origin).addScaledVector(l.dir,l.size*.43);tmp.quaternion.setFromUnitVectors(Y,l.dir);tmp.rotateY(l.roll);tmp.scale.set(l.size*.20,l.size,1);tmp.updateMatrix();leaves.setMatrixAt(i,tmp.matrix);leaves.setColorAt(i,palette[Math.min(palette.length-1,Math.floor(l.shade*palette.length))]);});leaves.instanceMatrix.needsUpdate=true;leaves.instanceColor.needsUpdate=true;leaves.computeBoundingSphere();leaves.castShadow=true;leaves.receiveShadow=true;leaves.name='FORMA Willow R47 individual lanceolate leaves';g.add(leaves);
+  leafData.forEach((l,i)=>{tmp.position.copy(l.origin).addScaledVector(l.dir,l.size*.43);tmp.quaternion.setFromUnitVectors(Y,l.dir);tmp.rotateY(l.roll);tmp.scale.set(l.size*.20,l.size,l.size*.20);tmp.updateMatrix();leaves.setMatrixAt(i,tmp.matrix);leaves.setColorAt(i,palette[Math.min(palette.length-1,Math.floor(l.shade*palette.length))]);});leaves.instanceMatrix.needsUpdate=true;leaves.instanceColor.needsUpdate=true;leaves.computeBoundingSphere();leaves.castShadow=true;leaves.receiveShadow=true;leaves.name='FORMA Willow R47 individual lanceolate leaves';g.add(leaves);
  }
  g.userData.nativeWillowR47=true;g.userData.species='willow';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.trunkDiameter=tr*2;g.userData.woodTriangles=ix.length/3;g.userData.leafCount=leafData.length;g.userData.branchCount=branchCount;g.userData.hangingShoots=shootCount;
  return g;
