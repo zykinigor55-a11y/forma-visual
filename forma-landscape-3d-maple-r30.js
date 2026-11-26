@@ -1,6 +1,5 @@
 /* FORMA R30 maple: a continuous textured trunk, tapered forks and individually
  * oriented leaf masks, no reliance on the old low-poly catalogue GLB. */
-import {barkTexture} from './forma-landscape-3d-vegetation.js?v=R29';
 import {mapleLeafMask} from './forma-landscape-3d-photo-foliage.js?v=R31';
 function random(s){let n=2166136261;for(const ch of String(s))n=Math.imul(n^ch.charCodeAt(0),16777619);return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -117,13 +116,14 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  if(season!=='winter'&&leafPoints.length){
   const leaf=new T.MeshStandardMaterial({map:mapleLeafMask(T),alphaTest:.32,side:T.DoubleSide,roughness:.84,metalness:0,depthWrite:true,envMapIntensity:.26});
   // A folded leaf surface with UVs, not a perfectly flat billboard.
- const leafGeo=new T.PlaneGeometry(1,1,4,4),lp=leafGeo.attributes.position;
+ const leafGeo=new T.PlaneGeometry(1,1,2,mobile?2:3),lp=leafGeo.attributes.position;
  for(let i=0;i<lp.count;i++){const x=lp.getX(i),y=lp.getY(i);lp.setZ(i,.115*(1-Math.abs(x)*2)-.10*y*y+.035*Math.sin(y*5+x*4));}
  leafGeo.computeVertexNormals();
  const mesh=new T.InstancedMesh(leafGeo,leaf,leafPoints.length),o=new T.Object3D();
   const palette=(season==='autumn'?['#cfad73','#c28c50','#d9c18a','#a6a16f']:['#ced5b9','#b3c0a1','#e1e0c8','#a9b59a']).map(c=>new T.Color(c));
   leafPoints.forEach((l,i)=>{o.position.copy(l.p);o.rotation.set(l.pitch,l.yaw,l.roll);o.scale.set(l.size,l.size*.95,1);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);mesh.setColorAt(i,palette[Math.floor(r()*palette.length)]);});
-  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple curved alpha leaves R31';g.add(mesh);
+  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple curved alpha leaves R31';
+ g.userData.leafTriangles=leafGeo.index.count/3*leafPoints.length;g.add(mesh);
  }
  g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.leafCount=season==='winter'?0:leafPoints.length;
  return g;
