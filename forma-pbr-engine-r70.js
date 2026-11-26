@@ -58,11 +58,12 @@ export function calibrateScenePBR(T,root,{classify=()=>'',enabled=true}={}){
     m.userData=m.userData||{};m.userData.formaPBRRoleR63=role;
     // Never replace albedo, normal, UVs, maps or authored alpha.
     if(role==='leaf'||role==='needle'){
-     m.metalness=0;m.roughness=clamp(m.roughness,role==='needle'?.58:.48,role==='needle'?.78:.73);
+     const rowanProfile=m.userData.formaRowanPBR;
+     m.metalness=0;m.roughness=rowanProfile?clamp(rowanProfile.roughness,.6,1):clamp(m.roughness,role==='needle'?.58:.48,role==='needle'?.78:.73);
      m.envMapIntensity=clamp(m.envMapIntensity??1,.32,.72);
      if(m.alphaTest>0){m.side=T.DoubleSide;m.depthWrite=true;node.castShadow=true;node.receiveShadow=true;}
      if(m.emissiveIntensity>0&&m.emissive&&m.emissive.getHex()!==0)m.emissiveIntensity=Math.min(m.emissiveIntensity,.025);
-     leafTransmission(T,m,role==='needle'?.23:.64);
+     leafTransmission(T,m,rowanProfile?clamp(rowanProfile.transmission,0,.64):role==='needle'?.23:.64);
      if(m.userData.formaThinTransmissionR63)stats.leafTransmission++;
     }else if(role==='bark'){
      m.metalness=0;m.roughness=clamp(m.roughness,.78,1);m.envMapIntensity=clamp(m.envMapIntensity??1,.15,.48);
