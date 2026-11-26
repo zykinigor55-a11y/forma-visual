@@ -45,6 +45,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const h=clamp(Number(instance.height)||13,.25,40),d=clamp(Number(instance.diameter)||8,.2,30),rad=d*.5;
  const r=random('maple|'+instance.id+'|'+instance.variant),g=new T.Group(),V=(x,y,z)=>new T.Vector3(x,y,z);
  const pos=[],uv=[],idx=[],leafPoints=[];
+ const leafRng=random('maple foliage detail R32|'+instance.id+'|'+instance.variant);
  const trunkR=clamp(h*.022,.035,.46),mobile=window.innerWidth<=850;
  function tube(points,radii,sides,seed){
   let first=pos.length/3,dist=0;const phase=seed*6.283;
@@ -82,7 +83,16 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
    for(const sign of [-1,1]){
     const reach=clamp(h*.008,.035,.10)*(.6+r()*.75);
     const leaf=p.clone().addScaledVector(side,sign*reach).add(V(0,(r()-.4)*reach,0));
-    leafPoints.push({p:leaf,yaw:r()*6.283,pitch:(r()-.5)*1.5,roll:(r()-.5)*2.4,size:clamp(h*.012,.07,.185)*(.67+r()*.65)});
+    const mainLeaf={p:leaf,yaw:r()*6.283,pitch:(r()-.5)*1.5,roll:(r()-.5)*2.4,size:clamp(h*.012,.07,.185)*(.67+r()*.65)};
+    leafPoints.push(mainLeaf);
+    // Independent deterministic stream: the actual R31 woody skeleton remains
+    // identical. Extra leaves are attached beside the existing twig, not a sphere.
+    if(leafRng()<.36){
+     const offset=reach*(.55+leafRng()*.45),q2=p.clone().addScaledVector(axis,(leafRng()-.5)*.06).addScaledVector(side,sign*offset);
+     q2.y+=(leafRng()-.35)*reach*.8;
+     const radius=Math.hypot(q2.x,q2.z);if(radius>rad){q2.x*=rad/radius;q2.z*=rad/radius;}q2.y=Math.min(h,q2.y);
+     leafPoints.push({p:q2,yaw:mainLeaf.yaw+(leafRng()-.5)*2.4,pitch:(leafRng()-.5)*2,roll:(leafRng()-.5)*2.8,size:mainLeaf.size*(.58+leafRng()*.25)});
+    }
    }
   }
  }
@@ -114,17 +124,20 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  maps.materials.add(bark);bark.addEventListener('dispose',()=>maps.materials.delete(bark));
  const stem=new T.Mesh(geo,bark);stem.castShadow=true;stem.receiveShadow=true;stem.name='FORMA maple continuous textured forks';g.add(stem);
  if(season!=='winter'&&leafPoints.length){
-  const leaf=new T.MeshStandardMaterial({map:mapleLeafMask(T),alphaTest:.32,side:T.DoubleSide,roughness:.84,metalness:0,depthWrite:true,envMapIntensity:.26});
+  const mask=mapleLeafMask(T);
+  // Restrained diffuse fill approximates scattered light through thin leaves.
+  // Stock PBR material avoids mobile custom shader incompatibilities.
+  const leaf=new T.MeshStandardMaterial({map:mask,emissiveMap:mask,emissive:season==='autumn'?'#e6d0a3':'#d3e5c5',emissiveIntensity:.14,alphaTest:.29,side:T.DoubleSide,roughness:.81,metalness:0,depthWrite:true,envMapIntensity:.34});
   // A folded leaf surface with UVs, not a perfectly flat billboard.
- const leafGeo=new T.PlaneGeometry(1,1,2,mobile?2:3),lp=leafGeo.attributes.position;
- for(let i=0;i<lp.count;i++){const x=lp.getX(i),y=lp.getY(i);lp.setZ(i,.115*(1-Math.abs(x)*2)-.10*y*y+.035*Math.sin(y*5+x*4));}
+ const leafGeo=new T.PlaneGeometry(1,1,mobile?1:2,mobile?2:3),lp=leafGeo.attributes.position;
+ for(let i=0;i<lp.count;i++){const x=lp.getX(i),y=lp.getY(i);lp.setZ(i,.10*(1-Math.abs(x)*2)-.13*y*y+.045*Math.sin(y*5+x*4));}
  leafGeo.computeVertexNormals();
  const mesh=new T.InstancedMesh(leafGeo,leaf,leafPoints.length),o=new T.Object3D();
-  const palette=(season==='autumn'?['#cfad73','#c28c50','#d9c18a','#a6a16f']:['#ced5b9','#b3c0a1','#e1e0c8','#a9b59a']).map(c=>new T.Color(c));
+  const palette=(season==='autumn'?['#cfad73','#c28c50','#d9c18a','#a6a16f']:['#e0e1cc','#c6cfb1','#f0ebd2','#b6c4a5','#d4dbc0']).map(c=>new T.Color(c));
   leafPoints.forEach((l,i)=>{o.position.copy(l.p);o.rotation.set(l.pitch,l.yaw,l.roll);o.scale.set(l.size,l.size*.95,1);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);mesh.setColorAt(i,palette[Math.floor(r()*palette.length)]);});
-  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple curved alpha leaves R31';
+  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple natural foliage R32';
  g.userData.leafTriangles=leafGeo.index.count/3*leafPoints.length;g.add(mesh);
  }
- g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.leafCount=season==='winter'?0:leafPoints.length;
+ g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.leafCount=season==='winter'?0:leafPoints.length;
  return g;
 }
