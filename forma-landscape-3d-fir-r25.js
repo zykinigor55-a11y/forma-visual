@@ -1,6 +1,49 @@
 /* Original FORMA young fir: tiered woody branches and individually folded
  * flat needles. No billboard, external dependency, or change of saved dimensions. */
 const cache=new Map(),firCache=new Map();
+let firAtlas=null,firBarkSource=null;
+function redraw(){window.dispatchEvent(new Event('forma-foliage-texture-ready'))}
+function needleAtlas(T){
+ if(firAtlas)return firAtlas;
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=512;
+ const c=canvas.getContext('2d'),r=rng('abies-alpha-v28');
+ c.lineCap='round';c.strokeStyle='#665c46';c.lineWidth=4;c.beginPath();c.moveTo(256,485);c.quadraticCurveTo(246,255,256,24);c.stroke();
+ for(let i=0;i<60;i++){
+  const t=(i+.5)/60,y=478-t*438,x=256+Math.sin(t*5)*7;
+  for(const side of [-1,1]){
+   const len=(42+95*Math.pow(Math.sin(Math.PI*t),.65))*(.75+r()*.25);
+   const dx=side*len,dy=-len*(.24+r()*.26);
+   const green=75+Math.round(r()*28),grad=c.createLinearGradient(x,y,x+dx,y+dy);
+   grad.addColorStop(0,'#354d35');grad.addColorStop(.65,'rgb('+Math.round(green*.73)+','+green+','+Math.round(green*.68)+')');grad.addColorStop(1,'#71865a');
+   c.fillStyle=grad;c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+dx*.48,y+dy*.42-4,x+dx,y+dy);
+   c.quadraticCurveTo(x+dx*.53,y+dy*.52+4,x,y+3);c.fill();
+  }
+ }
+ firAtlas=new T.CanvasTexture(canvas);firAtlas.colorSpace=T.SRGBColorSpace;firAtlas.anisotropy=4;
+ firAtlas.userData.source='local drawn Abies needle alpha';return firAtlas;
+}
+// Recover original photographic alpha and bark from the existing local CC0 GLB.
+// Readable RGBA images only: compressed or unsuitable atlases retain safe local texture.
+export function adoptFirPhotoMaps(T,source){
+ const atlas=needleAtlas(T),canvas=atlas.image;
+ let foliage=null,bark=null;
+ source.traverse(n=>{if(!n.isMesh)return;for(const m of Array.isArray(n.material)?n.material:[n.material]){
+  if(!m?.map)continue;if(m.alphaTest>0&&!foliage)foliage=m;
+  else if(!m.alphaTest&&!m.transparent&&/bark|branch|trunk|wood/i.test((m.name||'')+' '+(n.name||'')))bark=m;
+ }});
+ if(bark){const image=bark.map.image;try{const dst=woodTexture(T,'fir').image,ctx=dst.getContext('2d');ctx.drawImage(image,0,0,dst.width,dst.height);woodTexture(T,'fir').needsUpdate=true;firBarkSource='Poly Haven fir GLB';}catch{}}
+ if(foliage){try{
+  const src=foliage.map.image,w=src.width,h=src.height;if(!w||!h)throw Error('no readable photo');
+  const tmp=document.createElement('canvas');tmp.width=tmp.height=512;const cx=tmp.getContext('2d',{willReadFrequently:true});cx.drawImage(src,0,0,512,512);
+  if(foliage.alphaMap?.image){const mask=document.createElement('canvas');mask.width=mask.height=512;const mc=mask.getContext('2d');mc.drawImage(foliage.alphaMap.image,0,0,512,512);const a=mc.getImageData(0,0,512,512),p=cx.getImageData(0,0,512,512);for(let i=0;i<p.data.length;i+=4)p.data[i+3]=Math.round(p.data[i+3]*a.data[i+1]/255);cx.putImageData(p,0,0)}
+  const p=cx.getImageData(0,0,512,512).data;let transparent=0,opaque=0;for(let i=3;i<p.length;i+=4){if(p[i]<40)transparent++;if(p[i]>180)opaque++;}
+  if(transparent<512*512*.08||opaque<512*512*.04)throw Error('no usable alpha');
+  // Only use the original atlas when it actually contains transparency.
+  canvas.getContext('2d').clearRect(0,0,512,512);canvas.getContext('2d').drawImage(tmp,0,0);atlas.needsUpdate=true;atlas.userData.source='Poly Haven fir GLB alpha';
+ }catch{}}
+ redraw();
+}
+
 function rng(s){let x=2166136261;for(const c of String(s)){x=Math.imul(x^c.charCodeAt(0),16777619)}return()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296}}
 function clamp(x,a,b){return Math.min(b,Math.max(a,x))}
 export function woodTexture(T,type='fir'){
@@ -21,7 +64,7 @@ export function createDetailedFir(T,instance){
  const variant=clamp(Math.round(Number(instance.variant)||1),1,3),key=h.toFixed(3)+'|'+d.toFixed(3)+'|'+variant;
  const cached=firCache.get(key);if(cached){const copy=cached.clone(true);copy.traverse(n=>{if(n.isMesh)n.material=n.material.clone()});return copy;}
  const r=rng('fir|'+variant),g=new T.Group();
- const branches=[],vertices=[],colors=[],indices=[];
+ const branches=[],vertices=[],colors=[],indices=[],cards=[];
  const shades=['#263e2b','#37543a','#466445','#5c7853','#38563f'].map(c=>new T.Color(c));
  const V=(x,y,z)=>new T.Vector3(x,y,z);
  function branch(a,b,w){branches.push([a,b,w])}
@@ -37,7 +80,8 @@ export function createDetailedFir(T,instance){
   branch(a,b,Math.max(.0007,h*.00065));
   const axis=b.clone().sub(a),len=axis.length();if(len<.0001)return;axis.normalize();
   const lateral=V(-Math.sin(angle),.03,Math.cos(angle)).normalize();
-  const n=Math.max(8,Math.min(28,Math.round(len/Math.max(.009,h*.0045))));
+  if(len>h*.025&&!extra)cards.push({a:a.clone(),b:b.clone(),angle,young});
+  const n=Math.max(5,Math.min(18,Math.round(len/Math.max(.013,h*.0065))));
   for(let i=0;i<n;i++){const t=(i+.4)/n,p=a.clone().lerp(b,t);
    for(const sign of [-1,1]){
     const nd=axis.clone().multiplyScalar(.33+r()*.2).addScaledVector(lateral,sign*(.72+r()*.23)).add(V(0,.12+r()*.48,0)).normalize();
@@ -82,11 +126,21 @@ export function createDetailedFir(T,instance){
  branches.forEach(([a,b,w],i)=>{const delta=b.clone().sub(a);o.position.copy(a).addScaledVector(delta,.5);o.quaternion.setFromUnitVectors(up,delta.clone().normalize());o.scale.set(w,delta.length(),w);o.updateMatrix();stem.setMatrixAt(i,o.matrix)});
  stem.instanceMatrix.needsUpdate=true;stem.castShadow=true;stem.receiveShadow=true;stem.computeBoundingSphere();g.add(stem);
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.setIndex(indices);geo.computeVertexNormals();geo.computeBoundingSphere();
- const leaves=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.82,metalness:0,envMapIntensity:.24}));leaves.castShadow=true;leaves.receiveShadow=false;g.add(leaves);
+ const leaves=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.82,metalness:0,envMapIntensity:.24}));leaves.castShadow=false;leaves.receiveShadow=false;g.add(leaves);
+ const atlas=needleAtlas(T),cardMat=new T.MeshStandardMaterial({map:atlas,alphaTest:.30,side:T.DoubleSide,roughness:.85,metalness:0,envMapIntensity:.22,depthWrite:true});
+ const sprays=new T.InstancedMesh(new T.PlaneGeometry(1,1),cardMat,cards.length*2),dummy=new T.Object3D(),axis=V(0,1,0);
+ let i=0;for(const card of cards){
+  const v=card.b.clone().sub(card.a),length=v.length();
+  dummy.position.copy(card.a).addScaledVector(v,.5);dummy.quaternion.setFromUnitVectors(axis,v.normalize());
+  dummy.scale.set(Math.max(h*.035,length*.54),length*1.2,1);
+  dummy.rotateY(card.angle);dummy.updateMatrix();sprays.setMatrixAt(i++,dummy.matrix);
+  dummy.rotateY(Math.PI*.46);dummy.updateMatrix();sprays.setMatrixAt(i++,dummy.matrix);
+ }
+ sprays.instanceMatrix.needsUpdate=true;sprays.computeBoundingSphere();sprays.castShadow=true;sprays.receiveShadow=false;g.add(sprays);
  // Fit the actual mesh (including individual needles) to the saved dimensions.
  geo.computeBoundingBox();const b=geo.boundingBox,actual=Math.max(b.max.x-b.min.x,b.max.z-b.min.z);if(actual>0)g.scale.set(d/actual,1,d/actual);
  g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=true;});
- g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.name='FORMA detailed young fir';
+ g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.userData.firHybridR28=true;g.name='FORMA detailed young fir';
  if(firCache.size<4){const template=g.clone(true);template.traverse(n=>{if(n.isMesh)n.material=n.material.clone()});firCache.set(key,template);}else g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=false;});
  return g;
 }
