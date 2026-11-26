@@ -530,14 +530,14 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R138</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R139</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
 <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза</a>
-<a href="forma-landscape-3d.html?scene=oak-r138&v=138" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
+<a href="forma-landscape-3d.html?scene=oak-r139&v=139" title="Отдельная тестовая сцена дуба">Дуб</a><a href="forma-landscape-3d.html?scene=lawn-r92&v=92">Газон</a>
 <a href="forma-preview.html?tool=landscape-project">← К плану</a></nav></details>
  </div>
 </header>
@@ -933,10 +933,10 @@ window.addEventListener('forma-house-pbr-ready',()=>{
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
 const treeTestScene=new URLSearchParams(location.search).get('scene');
 const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55','birch-r56'].includes(treeTestScene);
-const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76','oak-r132','oak-r133','oak-r134','oak-r135','oak-r136','oak-r137','oak-r138'].includes(treeTestScene);
+const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68','oak-r69','oak-r70','oak-r71','oak-r72','oak-r73','oak-r74','oak-r75','oak-r76','oak-r132','oak-r133','oak-r134','oak-r135','oak-r136','oak-r137','oak-r138','oak-r139'].includes(treeTestScene);
 const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-r83','lawn-r84','lawn-r85','lawn-r86','lawn-r87','lawn-r88','lawn-r89','lawn-r90','lawn-r91','lawn-r92','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal',lawnFlowersR88=75,lawnWheatHeightR88=76,lawnHeightR90=100,lawnDensityR90=100,lawnPressedR90=45,lawnPanelR90=null,lawnPanelSyncR90=null;
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
-const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137','rowan-r138'].includes(treeTestScene);
+const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137','rowan-r138','rowan-r139'].includes(treeTestScene);
 const treeLineupMode=rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -1181,7 +1181,7 @@ function syncMobilePlacementHint(){
  const hint=$('#mobilePlacementHint'),label=$('#mobilePlacementLabel');
  if(!hint||!label)return;
  const water=state.tool==='water'&&catalog(state.placing)?.group!=='pools';
- const finish=$('#mobilePondFinish');const draft=$('#draftActions');if(draft&&state.tool==='water')draft.hidden=!water;
+ const finish=$('#mobilePondFinish');const draft=$('#draftActions');if(draft&&state.tool==='water')draft.hidden=window.innerWidth>850?(!desktopPondR139()||pondModeR139!=='polygon'):!water;
  finish.hidden=!water;finish.disabled=pointMode.length<3;
  const active=window.innerWidth<=850&&state.tool!=='select'&&!!state.placing&&
   ['light','plant','landscape','models40','creatures','build','furniture','water'].includes(state.tool);
@@ -2554,7 +2554,11 @@ function syncMobileTerrainDock(){
  dock.querySelectorAll('[data-mt-mode]').forEach(b=>{const active=b.dataset.mtMode===state.placing;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  const radius=$('#brushRadius');if(radius){$('#mtRadius').value=radius.value;$('#mtRadiusValue').textContent=radius.value+' м'}
 }
+let pondModeR139='lasso',pondGestureR139=null;
+function desktopPondR139(){return window.innerWidth>850&&state.tool==='water'&&catalog(state.placing)?.group==='ponds';}
+function syncPondToolsR139(){const panel=$('#pondToolsR139');if(!panel)return;panel.hidden=!desktopPondR139();if(panel.hidden)return;panel.querySelectorAll('[data-pond-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.pondMode===pondModeR139);b.setAttribute('aria-pressed',String(b.dataset.pondMode===pondModeR139));});$('#pondWidthRowR139').hidden=pondModeR139!=='brush';$('#pondModeHintR139').textContent=pondModeR139==='lasso'?'Зажмите ЛКМ и обведите берег. Отпустите кнопку — контур замкнётся.':pondModeR139==='brush'?'Зажмите ЛКМ и рисуйте водную область. Отпустите для создания.':'Щёлкайте точки берега. Enter, двойной клик или «Завершить» замыкают контур.';const draft=$('#draftActions');if(draft)draft.hidden=pondModeR139!=='polygon';}
 function chooseTool(t){
+ if(pondGestureR139)cancelPondGestureR139();
  if(t!=='select'&&lawnIntegratedR90&&lawnPanelR90){lawnPanelR90.style.display='none';if((firTestMode||rowanTestMode)&&$('#forma-lineup-panel-r74'))$('#forma-lineup-panel-r74').style.display='flex';}
  if(window.innerWidth<=850&&t!=='select')setSceneClimateOpen(false);
  hideLocalTerrainBrush();state.tool=t;document.body.dataset.activeTool=t;state.placing=null;pointMode=[];refreshDraft();
@@ -2610,6 +2614,7 @@ function chooseTool(t){
   if(t==='plant'&&state.placing==='pine')loadMatureScotsPine();
   if(t==='plant')refreshPlantAssetStatus();
   if(t==='surface')syncSurfacePaintMode();
+  if(t==='water'&&window.innerWidth>850){pointMode=[];refreshDraft();syncPondToolsR139();if(desktopPondR139()){status($('#pondModeHintR139').textContent);return;}}
   status('Выбрано: '+b.textContent.trim()+'. Нажмите на участок.');
   syncMobilePlacementHint();
  });
@@ -2643,6 +2648,12 @@ function chooseTool(t){
   }
  }
 
+ if(t==='water'&&window.innerWidth>850){
+  const panel=document.createElement('section');panel.id='pondToolsR139';panel.className='brush-panel';panel.hidden=true;panel.innerHTML='<strong>ФОРМА ВОДОЁМА</strong><div class="paint-mode-tabs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:8px 0"><button type="button" data-pond-mode="lasso">Лассо</button><button type="button" data-pond-mode="polygon">Полигон</button><button type="button" data-pond-mode="brush">Кисть</button></div><div id="pondWidthRowR139" hidden><label for="pondWidthR139">Диаметр кисти <output id="pondWidthValueR139">3 м</output></label><input id="pondWidthR139" type="range" min="0.5" max="10" step="0.5" value="3"></div><p class="hint" id="pondModeHintR139"></p><button type="button" id="pondTopR139">Вид сверху · рисовать берег</button>';
+  const lib=$('#library');const first=lib.querySelector('[data-item]');if(first)lib.insertBefore(panel,first);else lib.append(panel);
+  panel.querySelectorAll('[data-pond-mode]').forEach(b=>b.onclick=()=>{if(pondGestureR139)cancelPondGestureR139();pondModeR139=b.dataset.pondMode;pointMode=[];refreshDraft();syncPondToolsR139();status($('#pondModeHintR139').textContent);});
+  $('#pondWidthR139').oninput=e=>$('#pondWidthValueR139').textContent=e.target.value+' м';$('#pondTopR139').onclick=()=>{if(state.view!=='2d')setView('2d');};syncPondToolsR139();
+ }
  if(desktopSurface)filterCatalog();
  if(t==='select')status('Выбирайте объекты щелчком, перетаскивайте мышью, редактируйте размеры справа.');
 }
@@ -3984,7 +3995,7 @@ function setupComposition(){
 }
 
 function mousePosition(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1)}
-function hitGround(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);if(state.tool==='terrain')return hitTerrainHeightfield(raycaster.ray);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||null}
+function hitGround(e){mousePosition(e);camera.updateMatrixWorld();raycaster.setFromCamera(mouse,camera);if(state.tool==='terrain')return hitTerrainHeightfield(raycaster.ray);const hit=raycaster.intersectObject(terrainMesh,false)[0];return hit?.point||(desktopPondR139()?hitTerrainHeightfield(raycaster.ray):null)}
 function hitTerrainHeightfield(ray){
  const side=squareTerrainSide(doc.site),half=side/2,box=new THREE.Box3(new THREE.Vector3(-half,-4.02,-half),new THREE.Vector3(half,5.02,half));
  const first=ray.intersectBox(box,new THREE.Vector3());if(!first)return null;
@@ -4103,6 +4114,20 @@ function modifyTerrain(world){
  status('Рельеф: '+(elevation>=0?'+':'')+elevation.toFixed(2)+' м');
  scheduleTerrainPreview(world,Number($('#brushRadius')?.value||3));
 }
+function pondOutlineR139(){
+ const g=pondGestureR139;if(!g)return pointMode;
+ if(g.mode==='lasso')return g.points;
+ const path=simplifyPaintStroke(g.points,180),width=g.width;
+ if(path.length<2){const p=g.points[0],r=width/2;return Array.from({length:40},(_,i)=>({x:p.x+Math.cos(i*Math.PI/20)*r,y:p.y+Math.sin(i*Math.PI/20)*r}));}
+ return strokeRibbon(smoothPaintPath(path),width);
+}
+function cancelPondGestureR139(){pondGestureR139=null;pointMode=[];state.down=null;if(controls)controls.enabled=state.view!=='walk';refreshDraft();}
+function startPondGestureR139(e){const p=hitGround(e);if(!p||!inParcel(fromWorld(p),doc.site)){status('Начните рисование внутри участка.');state.down=null;return;}pondGestureR139={id:e.pointerId,mode:pondModeR139,width:Number($('#pondWidthR139')?.value||3),points:[fromWorld(p)]};pointMode=pondOutlineR139();controls.enabled=false;canvas.setPointerCapture?.(e.pointerId);e.preventDefault();refreshDraft();}
+function updatePondGestureR139(e){const g=pondGestureR139;if(!g||e.pointerId!==g.id)return;const p=hitGround(e);if(!p)return;const pt=fromWorld(p);if(!inParcel(pt,doc.site))return;if(appendBrushPoint(g.points,pt,.10)){if(g.points.length>420)g.points=simplifyPaintStroke(g.points,280);pointMode=pondOutlineR139();refreshDraft();}}
+function pondValidR139(pts){if(pts.length<3||pts.some(p=>!inParcel(p,doc.site)))return false;let area=0;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];area+=a.x*b.y-b.x*a.y;}return Math.abs(area)>.04;}
+function finishPondGestureR139(e){const g=pondGestureR139;if(!g||e.pointerId!==g.id)return;updatePondGestureR139(e);let pts=pondOutlineR139();pts=simplifyPaintStroke(pts,500);if(pts.length>3&&strokeDistance(pts[0],pts.at(-1))<.08)pts.pop();pondGestureR139=null;controls.enabled=state.view!=='walk';state.down=null;pointMode=pts;
+ if(!pondValidR139(pts)){pointMode=[];refreshDraft();status('Нужен замкнутый берег внутри участка. Попробуйте ещё раз.');return;}
+ finishContour();syncPondToolsR139();}
 function refreshDraft(){
  syncMobilePlacementHint();renderGate.invalidate();
  if(!root)return;
@@ -4117,6 +4142,7 @@ function refreshDraft(){
 function finishContour(){
  const tool=state.tool,type=catalog(state.placing)?.group;
  if(tool==='water'&&type!=='ponds')return;
+ if(desktopPondR139()&&!pondValidR139(pointMode)){status('Нарисуйте водоём площадью больше 0,02 м² внутри участка.');return;}
  const min=tool==='fence'||(tool==='surface'&&type==='pavers')?2:3;
  if(pointMode.length<min){status('Для контура необходимо минимум '+min+' точки.');return}
  if(tool==='site'&&state.placing==='outline'){
@@ -4125,11 +4151,11 @@ function finishContour(){
   push();extra.push({id:id(),type:'fence',points:pointMode.map(p=>({...p})),x:pointMode[0].x,y:pointMode[0].y,rotation:0});
  }else if(tool==='water'||tool==='surface'){
   if(!catalog(state.placing)){status('Выберите покрытие или водоём.');return}
-  push();doc.objects.push({id:id(),catalogId:state.placing,type:type||'ponds',points:pointMode.map(p=>({...p})),width:1.5});
+  push();doc.objects.push({id:id(),catalogId:state.placing,type:type||'ponds',points:pointMode.map(p=>({...p})),width:1.5,...(desktopPondR139()&&pondModeR139==='brush'?{geometry:'paint'}:{})});
  }else{status('Выберите инструмент рисования.');return}
  pointMode=[];
  if(tool==='water'&&window.innerWidth<=850)chooseTool('select');
- save();rebuild();status(tool==='water'?'Водоём добавлен.':'Контур сохранён. Остальные объекты не затронуты.');
+ save();rebuild();if(desktopPondR139())syncPondToolsR139();status(tool==='water'?'Водоём добавлен.':'Контур сохранён. Остальные объекты не затронуты.');
 }
 function place(world){
  const point=fromWorld(world),tool=state.tool,entry=catalog(state.placing),type=entry?.group;
@@ -4607,6 +4633,7 @@ function addEvents(){
    status('Выбран куст. Редактор открыт справа.');return;
   }
  }
+ if(desktopPondR139()&&pondModeR139!=='polygon'){startPondGestureR139(e);return;}
  if(window.innerWidth>850&&state.tool==='surface'&&!state.placing&&lawnIntegratedR90&&hitLawnR92(e)){chooseTool('select');openLawnPanelR90();state.down=null;return;}
  if(brushEnabled()){if(beginBrush(hitGround(e))){status('Кисть активна. Рисуйте ЛКМ, вращайте камеру ПКМ.');return;}}
  if(state.tool==='terrain'&&state.placing){const p=hitGround(e);if(!p||!inParcel({x:p.x+doc.site.width/2,y:p.z+doc.site.height/2},doc.site))return status('Коснитесь земли внутри участка.');state.painting=true;controls.enabled=false;terrainStrokeLast={x:p.x,z:p.z};push();canvas.setPointerCapture?.(e.pointerId);modifyTerrain(p);drawLocalTerrainBrush(p.x,p.z);startTerrainHold(p);return}
@@ -4648,6 +4675,7 @@ function addEvents(){
 };
 const move=e=>{
  if(document.body.dataset.presentation==='true'){renderGate.invalidate();return;}
+ if(pondGestureR139){updatePondGestureR139(e);return;}
  if(e.pointerId===state.activePointer&&state.down&&
   Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y)>(e.pointerType==='mouse'?5:14))
   tapCancelled=true;
@@ -4717,6 +4745,7 @@ const move=e=>{
 const up=e=>{
  if(document.body.dataset.presentation==='true')return;
  touchPointers.delete(e.pointerId);
+ if(pondGestureR139){finishPondGestureR139(e);return;}
  if(e.pointerId!==state.activePointer||!state.down)return;
  if(state.view==='walk'){if(e.pointerType!=='mouse'||!walkLookEnabled)walkDrag=null;state.down=null;return}
  if(state.painting&&e.pointerId!==state.activePointer)return;
@@ -4757,7 +4786,8 @@ const up=e=>{
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;if(state.drag&&state.draggingMoved)save();state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('dblclick',e=>{if(desktopPondR139()&&pondModeR139==='polygon'&&pointMode.length>=3){e.preventDefault();finishContour();}});
+ canvas.addEventListener('pointercancel',e=>{if(pondGestureR139?.id===e.pointerId)cancelPondGestureR139();touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;if(state.drag&&state.draggingMoved)save();state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(document.pointerLockElement!==canvas)walkDrag=null;if(brushCursor)brushCursor.visible=false;hideLocalTerrainBrush();renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -4892,7 +4922,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  $('#underlayOpacity').onchange=()=>{if(underlayTexture)rebuild()};
  $('#removeDrawing').onclick=()=>{localStorage.removeItem(UNDERLAY);underlayTexture?.dispose();underlayTexture=null;rebuild();status('Чертёж убран. Геометрия проекта не изменена.');};
  $('#finishContour').onclick=finishContour;
- $('#cancelContour').onclick=()=>{pointMode=[];refreshDraft();status('Черновой контур отменён.');};
+ $('#cancelContour').onclick=()=>{if(pondGestureR139)cancelPondGestureR139();pointMode=[];refreshDraft();status('Черновой контур отменён.');};
  $('#exportJSON').onclick=()=>{const data=JSON.stringify({schema:'FORMA-landscape-3d-v1',project:doc,extra,terrain:{grid:GRID,values:heightmap}},null,2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='FORMA-landscape-3d.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
  window.addEventListener('keydown',e=>{
   // Never move the camera or remove objects while editing text/numeric inputs.
@@ -4917,6 +4947,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
    if(key==='q'||key==='e'){e.preventDefault();rotateSelected((key==='q'?-1:1)*(e.shiftKey?5:15));return}
   }
   if(e.key==='Enter'&&pointMode.length){e.preventDefault();finishContour()}
+  if(e.key==='Escape'&&pondGestureR139){cancelPondGestureR139();return;}
   if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
  });
  window.addEventListener('keyup',e=>heldWalkKeys.delete(walkKey(e)));
