@@ -25,7 +25,7 @@ async function loadSkyR73(T,source,atmosphere={}){
   const d=t.image.data;let avg=0,count=0;
   for(let i=0;i<d.length;i+=4){const y=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];if(Number.isFinite(y)&&y>0&&y<25){avg+=y;count++;}}
   if(!count)throw Error('HDRI has no valid radiance');
-  const gain=.52/Math.max(.04,avg/count);
+  const gain=.76/Math.max(.04,avg/count);
   // Preserve cloud radiance contrast; limit direct solar hotspots because a separate area light supplies direct sunlight.
   for(let i=0;i<d.length;i+=4){const y=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])*gain;const scale=gain*Math.min(1,2.4/Math.max(.00001,y));for(let j=0;j<3;j++)d[i+j]=Math.max(0,Number.isFinite(d[i+j])?d[i+j]*scale:0);d[i+3]=1;}
   t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;
@@ -64,7 +64,40 @@ function rowanLeafProxy(T,src){
  const q=pos.length/3;for(let i=p.count-4;i<p.count;i++)add(V(i),uv.getX(i),uv.getY(i),i);idx.push(q,q+1,q+2,q+1,q+3,q+2);
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(tex,2));g.setAttribute('color',new T.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();return g;
 }
-function snapshot(T,source,root,camera,sky,profile,atmosphere={}){
+// Render-only lawn: deterministic, terrain-aware, budgeted blade geometry.
+// Preserve paths, water, buildings and authored grass height.
+function renderLawn(T,cfg,budget){
+ if(!cfg||budget<3000)return null;
+ const {bounds:b,contains,terrainAt,focus,profile:p}=cfg;
+ const width=b.x1-b.x0,depth=b.z1-b.z0,area=width*depth;
+ if(!(area>0))return null;
+ const pal=(p.palette||['#626e43','#778254','#81905f','#4f613b']).map(x=>new T.Color(x));
+ const positions=[],colors=[],indices=[];let count=0,seed=1987;
+ const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const radius=Math.min(7,Math.sqrt(area)*.36),density=Math.max(.35,Math.min(2,p.density||1));
+ const add=(x,z,near)=>{
+  if(!contains(x,z))return;
+  const y=terrainAt(x,z);if(!Number.isFinite(y))return;
+  const a=rand()*Math.PI*2,h=(p.height||.055)*(.68+.64*rand()),w=(p.width||.0024)*(.8+.65*rand()),dx=Math.cos(a)*w,dz=Math.sin(a)*w;
+  const lean=h*(p.lean||.3)*(.5+rand()),lx=-Math.sin(a)*lean,lz=Math.cos(a)*lean;
+  const c=pal[Math.floor(rand()*pal.length)],shade=.85+.25*rand(),k=positions.length/3;
+  const v=(xx,yy,zz,t)=>{positions.push(xx,yy,zz);colors.push(c.r*shade*t,c.g*shade*t,c.b*shade*t,1);};
+  v(x-dx,y+.002,z-dz,.77);v(x+dx,y+.002,z+dz,.82);
+  if(near){v(x+lx*.32-dx*.55,y+h*.55,z+lz*.32-dz*.55,.97);v(x+lx*.32+dx*.55,y+h*.55,z+lz*.32+dz*.55,1);v(x+lx,y+h,z+lz,1.08);indices.push(k,k+1,k+2,k+1,k+3,k+2,k+2,k+3,k+4);}
+  else{v(x+lx,y+h,z+lz,1.05);indices.push(k,k+1,k+2);}
+  count++;
+ };
+ // A distributed base layer plus a denser foreground. No uniform visible grid.
+ const base=Math.floor(budget*.48*Math.min(1,density)),nx=Math.max(1,Math.round(Math.sqrt(base*width/depth))),nz=Math.max(1,Math.floor(base/nx));
+ for(let j=0;j<nz;j++)for(let i=0;i<nx;i++)add(b.x0+(i+rand())*width/nx,b.z0+(j+rand())*depth/nz,false);
+ const close=Math.max(0,Math.floor((budget-indices.length/3)/3));
+ for(let i=0;i<close;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand());const x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1)add(x,z,true);}
+ if(!count)return null;
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('color',new T.Float32BufferAttribute(colors,4));g.setIndex(indices);g.computeVertexNormals();g.setAttribute('uv',new T.BufferAttribute(new Float32Array(positions.length/3*2),2));
+ const m=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.87,metalness:0});
+ const mesh=new T.Mesh(g,m);mesh.name='forma-final-render-grass-r127';return {mesh,count,triangles:indices.length/3};
+}
+function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null){
  source.updateMatrixWorld(true);camera.updateMatrixWorld(true);
  const scene=new T.Scene(),geometries=[],materials=[],materialCache=new Map();
  let triangles=0,skipped=0,instances=0,reduced=0;
@@ -74,6 +107,7 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={}){
   const ms=Array.isArray(o.material)?o.material:[o.material];
   if(ms.some(m=>!m?.isMeshStandardMaterial&&!m?.isMeshBasicMaterial)){skipped++;return;}
   if(o.isSkinnedMesh){skipped++;return;}
+  if(lawn&&/forma-(?:close-turf-detail|grass-blades|basal-turf|parcel-distant-turf)/i.test(o.name))return;
   if(o.isInstancedMesh&&ms.length>1){skipped++;return;}
   const g=o.geometry;triangles+=(g.index?.count||g.attributes.position.count)/3*(o.isInstancedMesh?o.count:1);
   meshes.push(o);
@@ -94,8 +128,10 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={}){
   const cost=costs(o)*(o.isInstancedMesh?o.count:1);if(grass(o))grassCost+=cost;else used+=cost;
  }
  if(used>limit){for(const g of ownedProxies)g.dispose();throw Error('Для сохранения всей кроны и объектов нужно '+Math.round(used/1000)+' тыс. треугольников. Лимит режима '+Math.round(limit/1000)+' тыс. Выберите высокое качество или уменьшите число деревьев.');}
- const factor=Math.min(1,Math.max(0,(limit-used)/Math.max(1,grassCost)));
- for(const o of meshes){if(!grass(o))continue;const keep=Math.min(o.count,Math.floor(o.count*factor),Math.floor(Math.max(0,limit-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
+ const lawnBudget=lawn?Math.min(profile==='high'?780000:360000,Math.floor(Math.max(0,limit-used)*.82)):0;
+ const existingBudget=limit-lawnBudget;
+ const factor=Math.min(1,Math.max(0,(existingBudget-used)/Math.max(1,grassCost)));
+ for(const o of meshes){if(!grass(o))continue;const keep=Math.min(o.count,Math.floor(o.count*factor),Math.floor(Math.max(0,existingBudget-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
  triangles=used;
  const cloneMat=(m,instanced)=>{
   const key=m.uuid+'|'+instanced;if(materialCache.has(key))return materialCache.get(key);
@@ -112,6 +148,19 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={}){
   const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh)):cloneMat(o.material,!!o.isInstancedMesh);
   const mesh=new T.Mesh(g,m);mesh.matrixAutoUpdate=false;mesh.matrix.copy(o.matrixWorld);mesh.name=o.name;scene.add(mesh);
  }
+ let lawnBlades=0;
+ if(lawnBudget){const detail=renderLawn(T,lawn,lawnBudget);if(detail){scene.add(detail.mesh);geometries.push(detail.mesh.geometry);materials.push(detail.mesh.material);triangles+=detail.triangles;lawnBlades=detail.count;}}
+ // An isolated specimen should sit in a continuous meadow, not a floating tile.
+ if(lawn?.horizon){
+  const ground=meshes.find(o=>o.userData?.ground);
+  if(ground&&!Array.isArray(ground.material)){
+   const box=new T.Box3().setFromObject(ground),size=box.getSize(new T.Vector3()),span=Math.max(300,size.x*10,size.z*10);
+   const g=new T.PlaneGeometry(span,span);g.rotateX(-Math.PI/2);const uv=g.attributes.uv;
+   for(let i=0;i<uv.count;i++)uv.setXY(i,(uv.getX(i)-.5)*span/Math.max(1,size.x)+.5,(uv.getY(i)-.5)*span/Math.max(1,size.z)+.5);
+   const m=cloneMat(ground.material,false).clone();m.aoMap=null;m.bumpMap=null;m.side=T.DoubleSide;materials.push(m);geometries.push(g);
+   const meadow=new T.Mesh(g,m);meadow.position.y=box.min.y-.12;scene.add(meadow);triangles+=2;
+  }
+ }
  // Use the authored world-space sun direction. The tracer supports directional
  // lights directly, so there is no arbitrary finite-distance area-light surrogate.
  // Do not duplicate viewport fill: GI and the environment already provide bounce.
@@ -121,6 +170,12 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={}){
   if(!o.isDirectionalLight&&!o.isPointLight&&!o.isSpotLight&&!o.isRectAreaLight)return;
   if(/forma-(sky|bounced)-fill/i.test(o.name))return;
   if(o.name==='sun'&&o.isDirectionalLight&&night)return;
+  if(o.name==='sun'&&o.isDirectionalLight&&!cloudy&&o.intensity>0){
+   const target=o.target.getWorldPosition(new T.Vector3()),dir=o.getWorldPosition(new T.Vector3()).sub(target).normalize();
+   const u=new T.Vector3(0,1,0).cross(dir);if(u.lengthSq()<1e-6)u.set(1,0,0);else u.normalize();const v=dir.clone().cross(u).normalize();
+   const radius=Math.tan(T.MathUtils.degToRad(Math.max(.27,Math.min(.9,(atmosphere.solarSoftness||3)*.14))));
+   const n=9;for(let i=0;i<n;i++){const a=i*2.399963,r=radius*Math.sqrt((i+.5)/n),d=dir.clone().addScaledVector(u,Math.cos(a)*r).addScaledVector(v,Math.sin(a)*r).normalize();const l=new T.DirectionalLight(o.color,o.intensity/n);l.position.copy(target).addScaledVector(d,100);l.target.position.copy(target);scene.add(l,l.target);}return;
+  }
   const l=o.clone();l.position.setFromMatrixPosition(o.matrixWorld);l.quaternion.copy(o.getWorldQuaternion(new T.Quaternion()));
   if(o.target){l.target=new T.Object3D();l.target.position.setFromMatrixPosition(o.target.matrixWorld);scene.add(l.target);}
   // Retain the user's solar strength and colour; cloudy weather already lowers
@@ -130,15 +185,15 @@ function snapshot(T,source,root,camera,sky,profile,atmosphere={}){
  });
  const env=sky.texture;scene.environment=env;scene.background=env;
  // Decouple visible sky brightness from irradiance to avoid washing out surfaces.
- scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1.0:sky.photographic?.68:.82;
- scene.backgroundIntensity=sky.photographic?1.25:night?.85:1.0;
+ scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1.0:sky.photographic?.95:1.04;
+ scene.backgroundIntensity=sky.photographic?.87:night?.85:1.0;
  scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
  for(const g of ownedProxies)g.dispose();ownedProxies.length=0;
- return {scene,cam,triangles,instances,skipped,reduced,simplified,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();env.dispose();}};
+ return {scene,cam,triangles,instances,skipped,reduced,simplified,lawnBlades,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();env.dispose();}};
  }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();throw e;}
 }
-export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},onClose=()=>{},onFailure=()=>{}}){
+export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},lawn=null,onClose=()=>{},onFailure=()=>{}}){
  let alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null;
  const oldRatio=renderer.getPixelRatio(),oldTone=renderer.toneMapping,oldExposure=renderer.toneMappingExposure;
  const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
@@ -153,24 +208,24 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R126.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R126',e);const reason=e?.message||String(e);close();onFailure(reason);}
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R127.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R127',e);const reason=e?.message||String(e);close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
   const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
   msg.textContent='Загрузка фотографического HDRI…';sky=await loadSkyR73(T,scene,atmosphere);if(!alive){sky.texture.dispose();return;}
   msg.textContent='Подготовка полигонов и материалов…';await nextFrame();if(!alive)return;
-  snap=snapshot(T,scene,root,camera,sky,profile,atmosphere);
+  snap=snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn);
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   building=true;
   pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?6:4;pt.transmissiveBounces=profile==='high'?12:8;pt.multipleImportanceSampling=true;pt.tiles.set(2,2);pt.renderScale=profile==='high'?1:.55;pt.textureSize.set(profile==='high'?1024:512,profile==='high'?1024:512);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
   renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
-  renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.65,Math.min(1.35,oldExposure||1));loading=false;
+  renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
-   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
+   msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.lawnBlades?' · травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
    if(n>=target){if(profile==='high'){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
