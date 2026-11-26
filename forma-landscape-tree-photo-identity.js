@@ -44,6 +44,10 @@ export function treeInstancePhotoDetail(o,asset){
   '; no species substitution, no extra trees, no resizing, no tree relocation.';
  const rotation=bounded(o?.rotation,-360,360),variant=bounded(o?.variant,1,3);
  const identity=' Keep the individual reference trunk path, major forks, branch directions, crown lobes, silhouette, internal gaps and foliage coverage; no generic replacement. '+(rotation===null?'':'Authored yaw '+rotation.toFixed(1)+' degrees. ')+(variant===null?'':'Individual shape variant '+variant+'. ');
+ if(asset.id==='willow'){
+  const age=bounded(o?.willow?.age,5,100),stage=age===null?'source-selected stage':age<22?'young':age<55?'adult':'old',trunk=bounded(o?.photoTreeModel?.trunkDiameterM,.01,4),leaves=bounded(o?.photoTreeModel?.leafCards,0,1000000);
+  return 'SPECIES Salix babylonica (weeping willow), '+stage+(age===null?'':'; selected design age '+Math.round(age)+' years')+'. Rounded asymmetric crown with individual arching woody limbs and irregular hanging curtains of narrow lanceolate leaves; preserve existing open gaps and exact lengths of drooping branchlets. '+fixed+identity+(trunk===null?'':'Measured nominal trunk diameter '+trunk.toFixed(2)+'m. ')+(leaves===null?'':'Source leaf-card count '+Math.round(leaves)+' is a coverage cue, not literal biological leaf count. ')+' Natural subdued leaf greens, grey-brown bark; do not substitute a rectangular curtain, broadleaf foliage or a different age.';
+ }
  if(asset.id==='maple'){
   const age=bounded(o?.maple?.age,5,110),model=o?.photoTreeModel;
   const stage=age===null?'source-selected age':age<30?'young':age<85?'adult':'century-old';
