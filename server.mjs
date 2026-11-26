@@ -372,6 +372,9 @@ async function performRender(p,requestId){
  const precisionPrompt=precision?'FORMA PRECISION: IMAGE 1 is the only photographic composition and material authority. IMAGE 2 is a grayscale camera depth guide (white near, black far); '+(guideVersion===2?'IMAGE 3 is a white-on-black technical contour map derived from object boundaries and depth discontinuities.':'IMAGE 3 is a false-color object identity map, not a material reference.')+' All three use the same projection and crop. Guide resolution may be lower; align using normalized image coordinates. Do not introduce contour lines in the final photograph. Do not copy guide colors or grayscale into the output. Use guides to preserve silhouettes, foreground occlusion, exact image-edge intersections, projected positions and scale. Preserve every clipped twig, leaf and branch even if its parent tree is outside the frame. Do not expand, remove or reposition edge foliage. Never invent visible objects from off-screen scene metadata. Improve only photographic texture and lighting. Return the same aspect ratio and framing. Guides are advisory, not output images.':'';
  const prompt=(measuredPlan?basePrompt:basePrompt+'\n\n'+optics)+(precision?'\n\n'+precisionPrompt:'');
  const selectedModel=needsLandscape?landscapeModel:needsPlan?PLAN_IMAGE_MODEL:MODEL;
+ const outputResolution=p.outputResolution,outputAspect=p.outputAspect;
+ if(outputResolution!==undefined&&!['1K','2K','4K'].includes(outputResolution))fail('Недопустимое разрешение.',400,'invalid_resolution');
+ if(outputAspect!==undefined&&!['auto','1:1','4:3','3:4','3:2','2:3','16:9','9:16','4:5','5:4','21:9'].includes(outputAspect))fail('Недопустимый формат кадра.',400,'invalid_aspect');
  console.info('[AI]',requestId,'начинаем оплачиваемую генерацию; модель:',selectedModel,
   'режим:',p.landscapeMasterplan?.cameraMode||'default',
   'осталось:',DAILY_CAP-dailyCount,'кадров:',n);
@@ -380,7 +383,7 @@ async function performRender(p,requestId){
   // Count BEFORE the external request: even a timeout may be billed by the provider.
   dailyCount++;
   try{
-   const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:selectedModel,prompt:n>1?prompt+'\\nCreate variation '+(i+1)+' of '+n+' with the same architecture and camera.':prompt,quality:p.quality});
+   const result=await apiMarketEdit({apiKey:API_KEY,source:primary,material,reference,mask,model:selectedModel,prompt:n>1?prompt+'\\nCreate variation '+(i+1)+' of '+n+' with the same architecture and camera.':prompt,quality:p.quality,outputResolution,outputAspect});
    images.push(result.b64);mimes.push(result.mimeType);
   }catch(error){
    if(!images.length)throw error;
