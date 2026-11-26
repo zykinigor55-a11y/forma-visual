@@ -1673,6 +1673,7 @@ function turfMasks(){
   const group=catalog(o.catalogId)?.group;
   if(group==='pools'){try{add(poolFootprint(o,.14))}catch{};continue;}
   if(!['pavers','fills','lawns','ponds'].includes(group)||!Array.isArray(o.points)||o.points.length<2)continue;
+  if(lawnIntegratedR90&&group==='lawns'&&o.autoFill)continue;
   if(group==='pavers'){
    try{for(const part of pavingSegments(o,Math.max(.45,lineLength(o.points)/2400))){
     const rows=part.rows||[];add([...rows.map(r=>r.left),...rows.slice().reverse().map(r=>r.right)]);
@@ -1700,7 +1701,7 @@ function updateTurfDetail(){
  const ground=terrainAt(camera.position.x,camera.position.z);
  const mobile=window.innerWidth<=850;
  const show=state.view!=='2d'&&(lawnEnabledR90||(!state.painting&&state.tool!=='terrain'))&&
-  doc.atmosphere.season!=='winter'&&(camera.position.y-ground<8||(pbrR63Enabled&&oakTestMode)||lawnTestMode);
+  doc.atmosphere.season!=='winter'&&(camera.position.y-ground<8||(pbrR63Enabled&&oakTestMode)||lawnTestMode||lawnIntegratedR90);
  if(!show){if(turfDetail?.visible){turfDetail.visible=false;renderGate.invalidate()}return;}
  if(lawnEnabledR90&&state.painting&&turfDetail){turfDetail.visible=true;return;}
  const specimen=pbrR63Enabled&&oakTestMode?doc.objects.find(o=>o.catalogId==='oak'):null;
@@ -2167,6 +2168,7 @@ function drawArea(o,entry,key){
  }else if(isPath){
   for(const part of pavingSegments(o,Math.max(.45,lineLength(o.points)/2400))){const material=CATALOG.find(x=>x.id===part.catalogId)||entry;const surface=drawPavingRibbon(part,material,part.rows);if(surface)g.add(surface);}
  }else if(pts.length>=3)g.add(polygon(pts,entry.group==='fills'?.078:entry.group==='lawns'?.052:.055,entry.color||'#6d9874',entry.group==='ponds',o.catalogId));
+ if(lawnIntegratedR90&&entry.group==='lawns'&&o.autoFill){g.userData.formaAutoLawnR90=true;g.visible=state.view==='2d';}
  if(['pavers','fills','lawns'].includes(entry.group))
   g.traverse(n=>{if(n.isMesh)n.userData.formaWeatherableSurface=true});
  mark(g,key);root.add(g);
@@ -2357,7 +2359,7 @@ function chooseTool(t){
  const arr=choices[t]||[];
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
  if(t==='creatures'){renderCreatureCatalog();return}
- $('#library').innerHTML=t==='select'?'<p>Коснитесь дерева в сцене или выберите его из списка.</p><div class="pine-object-list"><strong>ДЕРЕВЬЯ НА УЧАСТКЕ</strong>'+
+ $('#library').innerHTML=t==='select'?'<p>Коснитесь газона для настройки покрытия или выберите дерево из списка.</p><div class="pine-object-list"><strong>ДЕРЕВЬЯ НА УЧАСТКЕ</strong>'+
  doc.objects.filter(o=>catalog(o.catalogId)?.group==='trees').map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
  (!doc.objects.some(o=>catalog(o.catalogId)?.group==='trees')?'<small>Посаженных деревьев пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · '+CATALOG.filter(x=>x.group==='trees'||x.group==='shrubs').length+'</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 19</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
   const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&(['landscape','furniture','models40'].includes(t)||(t==='plant'&&['fern','fern-02','fern-03','fern-04'].includes(c[0]))),photo=['plant','light','surface','water'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
@@ -3438,7 +3440,7 @@ function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
  heldWalkKeys.clear();lastWalkFrame=0;
- state.view=view;if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=!pbrR63Enabled&&view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&(pbrR63Enabled||sceneAtmosphere.clouds>0);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ state.view=view;if(lawnIntegratedR90){root?.children.forEach(n=>{if(n.userData.formaAutoLawnR90)n.visible=view==='2d';});if(view==='2d'&&lawnPanelR90)lawnPanelR90.style.display='none';}if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=!pbrR63Enabled&&view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&(pbrR63Enabled||sceneAtmosphere.clouds>0);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  $('#mobileWalkDock').hidden=view!=='walk';$('#mobileWalkToggle').textContent=view==='walk'?'Выйти из прогулки':'Прогулка';syncMobileTerrainDock();
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';
  const W=doc.site.width,H=doc.site.height;
