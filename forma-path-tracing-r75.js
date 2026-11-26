@@ -1,4 +1,4 @@
-import {bakeCloudEnvironment} from './forma-photographic-environment-r71.js?v=R130';
+import {bakeCloudEnvironment} from './forma-photographic-environment-r71.js?v=R131';
 /* FORMA R73 — optional actual WebGL GPU path tracing snapshot.
  * three-gpu-pathtracer 0.0.23 + three-mesh-bvh 0.8.3; no mutation of editor scene.
  * Shader-only effects are not representable by the physical tracer.
@@ -14,8 +14,8 @@ function makeSky(T,source,atmosphere={}){
  for(let y=0;y<h;y++){const a=Math.sin(((y+.5)/h-.5)*Math.PI);c.copy(hor).lerp(a>0?zen:ground,Math.pow(Math.abs(a),.55));for(let x=0;x<w;x++){const k=(y*w+x)*4;data[k]=c.r;data[k+1]=c.g;data[k+2]=c.b;data[k+3]=1;}}
  const t=new T.DataTexture(data,w,h,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;return t;
 }
-async function loadSkyR73(T,source,atmosphere={},renderer,profile){
- if(renderer&&atmosphere.cloudSettings){try{return bakeCloudEnvironment(T,renderer,{sun:source.getObjectByName('sun'),time:atmosphere.time,weather:atmosphere.weather,settings:atmosphere.cloudSettings,high:profile==='high'&&!isMobile(),mobile:isMobile()});}catch(e){console.warn('FORMA cloud HDR fallback',e);}}
+async function loadSkyR73(T,source,atmosphere={},renderer,profile,isAlive,onProgress){
+ if(renderer&&atmosphere.cloudSettings){try{return await bakeCloudEnvironment(T,renderer,{sun:source.getObjectByName('sun'),time:atmosphere.time,weather:atmosphere.weather,settings:atmosphere.cloudSettings,high:profile==='high'&&!isMobile(),mobile:isMobile(),isAlive,onProgress});}catch(e){if(!isAlive()||renderer.getContext().isContextLost())throw e;console.warn('FORMA cloud HDR fallback',e);}}
  const sun=source.getObjectByName('sun'),time=atmosphere.time||'day',weather=atmosphere.weather||'sunny';
  const diffuse=['overcast','rain','fog','snow'].includes(weather);
  if(!sun||sun.intensity<.3||time!=='day'||diffuse)return {texture:makeSky(T,source,atmosphere),label:'Небо по времени суток и погоде',photographic:false};
@@ -334,13 +334,13 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R130.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R130',e);const reason=e?.message||String(e);close();onFailure(reason);}
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R131.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R131',e);const reason=e?.message||String(e);close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
   const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
-  msg.textContent='Подготовка HDR неба и облаков…';sky=await loadSkyR73(T,scene,atmosphere,renderer,profile);if(!alive){sky.texture.dispose();return;}
+  msg.textContent='Подготовка HDR неба и облаков…';await nextFrame();if(!alive)return;sky=await loadSkyR73(T,scene,atmosphere,renderer,profile,()=>alive,p=>{msg.textContent='Подготовка облаков: '+p+'%';});if(!alive){sky.texture.dispose();return;}
   msg.textContent='Подготовка полигонов и материалов…';await nextFrame();if(!alive)return;
   snap=snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn);
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
