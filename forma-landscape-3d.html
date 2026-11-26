@@ -537,7 +537,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R162</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R163</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -694,7 +694,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  <div id="walkLookStatus" role="status" aria-live="polite">Ракурс зафиксирован</div>
  <div style="display:flex;gap:5px;margin:7px 0"><button type="button" data-walk-turn="-15" style="flex:1">↶ 15°</button><button type="button" data-walk-turn="15" style="flex:1">15° ↷</button></div>
  <button type="button" id="walkLookToggle" aria-pressed="false" style="width:100%;margin-bottom:6px">Включить обзор</button>
- WASD — движение, Shift — быстрее. ЛКМ — выделить объект, удерживать ПКМ — обзор, Delete — удалить. Отпустите ПКМ для фиксации кадра. Свободный обзор включается отдельной кнопкой. Высота камеры 1,7 м.
+ WASD — движение, Shift — быстрее. Клик ЛКМ — выбрать объект или газон. Зажать и потянуть ЛКМ — поворот камеры. Отпустить ЛКМ — зафиксировать ракурс. Delete — удалить объект. Высота камеры 1,7 м.
  <div id="walkLensControls"><label for="walkFocalLength">Объектив · 35 мм формат <output id="walkFocalValue">24 мм</output></label><input type="range" id="walkFocalLength" min="14" max="85" step="1" value="24"><div class="lens-presets"><button type="button" data-walk-lens="16">16 мм</button><button type="button" data-walk-lens="24">24 мм</button><button type="button" data-walk-lens="35">35 мм</button><button type="button" data-walk-lens="50">50 мм</button></div><small id="walkLensAngle">Горизонтальный угол обзора</small></div>
  </div>
  <button type="button" id="cameraComposition">Идеальная композиция</button>
@@ -960,8 +960,8 @@ function applyWalkLens(){if(state.view!=='walk'||!camera?.isPerspectiveCamera||w
 function setWalkLens(mm){walkFocalLength=THREE.MathUtils.clamp(Math.round(Number(mm)||24),14,85);try{localStorage.setItem('forma-walk-focal-mm',String(walkFocalLength))}catch{}applyWalkLens();}
 const walkKey=e=>({KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d',ShiftLeft:'shift',ShiftRight:'shift'}[e.code]||String(e.key||'').toLowerCase());
 function walkLook(dx,dy){if(state.view!=='walk'||!camera)return;walkYaw-=dx*.0028;walkPitch=Math.max(-Math.PI/2+.035,Math.min(Math.PI/2-.035,walkPitch-dy*.0028));camera.rotation.set(walkPitch,walkYaw,0,'YXZ');walkLookDirty=true;renderGate.invalidate();}
-function syncWalkLook(){const b=$('#walkLookToggle'),l=$('#walkLookStatus');if(b){b.textContent=walkLookEnabled?'Зафиксировать ракурс':'Включить обзор';b.setAttribute('aria-pressed',String(walkLookEnabled));}if(l)l.textContent=walkLookEnabled?'Свободный обзор включён':'Ракурс зафиксирован';}
-function freezeWalkLook(){walkLookEnabled=false;walkDrag=null;heldWalkKeys.clear();if(document.pointerLockElement===canvas)document.exitPointerLock?.();syncWalkLook();if(state.view==='walk')status('Ракурс зафиксирован. ЛКМ — выбор объекта, ПКМ — обзор.');}
+function syncWalkLook(){const b=$('#walkLookToggle'),l=$('#walkLookStatus');if(b){b.textContent=window.innerWidth>850?'Как вращать камеру':walkLookEnabled?'Зафиксировать ракурс':'Включить обзор';b.setAttribute('aria-pressed',String(walkLookEnabled));}if(l)l.textContent=walkLookEnabled?'Свободный обзор включён':'Ракурс зафиксирован';}
+function freezeWalkLook(){walkLookEnabled=false;walkDrag=null;heldWalkKeys.clear();if(document.pointerLockElement===canvas)document.exitPointerLock?.();syncWalkLook();if(state.view==='walk')status('Ракурс зафиксирован. Клик ЛКМ — выбор, перетаскивание ЛКМ — обзор.');}
 function requestWalkLook(){if(state.view!=='walk'||walkLookEnabled)return;walkLookEnabled=true;walkDrag=null;syncWalkLook();canvas.tabIndex=0;canvas.focus({preventScroll:true});if(document.pointerLockElement===canvas)return;try{const p=canvas.requestPointerLock?.();p?.catch?.(()=>status('Обзор мышью в пределах сцены. Клик — зафиксировать ракурс.'));}catch{status('Обзор мышью в пределах сцены. Клик — зафиксировать ракурс.');}}
 function toggleWalkLook(){if(walkLookEnabled||document.pointerLockElement===canvas)freezeWalkLook();else requestWalkLook();}
 function turnWalk(deg){if(state.view!=='walk'||!camera)return;freezeWalkLook();walkYaw-=THREE.MathUtils.degToRad(deg);camera.rotation.set(walkPitch,walkYaw,0,'YXZ');walkLookDirty=true;renderGate.invalidate();}
@@ -1501,7 +1501,7 @@ function startMotionR156(){
  try{
   const c=document.createElement('canvas');const portrait=q('[data-aspect]').value==='portrait';c.width=portrait?720:1280;c.height=portrait?1280:720;m.capture=c;m.ctx=c.getContext('2d',{alpha:false});m.stream=c.captureStream(30);
   const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4','video/webm'].find(x=>MediaRecorder.isTypeSupported(x));m.recorder=new MediaRecorder(m.stream,mime?{mimeType:mime,videoBitsPerSecond:8000000}:{videoBitsPerSecond:8000000});m.recorder.ondataavailable=e=>{if(e.data.size)m.chunks.push(e.data)};m.recorder.onerror=e=>{q('[data-status]').textContent='Ошибка записи: '+(e.error?.message||'MediaRecorder');stopMotionR156()};m.recorder.onstop=()=>{m.stream?.getTracks().forEach(t=>t.stop());m.stopping=false;const type=m.recorder.mimeType||m.chunks[0]?.type||'video/webm',blob=new Blob(m.chunks,{type});if(!blob.size||!m.frames){q('[data-status]').textContent='Запись не получилась. Повторите попытку.';return;}if(m.url)URL.revokeObjectURL(m.url);m.url=URL.createObjectURL(blob);m.result={blob,ext:type.includes('mp4')?'mp4':'webm',stills:m.stills.slice(),keys:m.keys.slice(),width:c.width,height:c.height,duration:m.elapsed,frames:m.frames,mode:m.mode};q('video').src=m.url;q('[data-result]').hidden=false;q('[data-status]').textContent='Готово · '+(m.elapsed/1000).toFixed(1)+' с · ≈ '+(m.frames/Math.max(.1,m.elapsed/1000)).toFixed(1)+' кадров/с. Проверьте видео перед экспортом.';};
-  m.active=true;if(mode==='path')controls.enabled=false;q('[data-status]').textContent=mode==='walk'?'WASD — движение, удерживайте ПКМ для поворота камеры.':'Камера движется по заданным точкам.';renderGate.invalidate();
+  m.active=true;if(mode==='path')controls.enabled=false;q('[data-status]').textContent=mode==='walk'?'WASD — движение, удерживайте ЛКМ и двигайте мышью для поворота камеры.':'Камера движется по заданным точкам.';renderGate.invalidate();
  }catch(e){m.active=false;m.stream?.getTracks().forEach(t=>t.stop());m.panel.dataset.recording='false';q('[data-record]').hidden=true;controls.enabled=m.originalControls;q('[data-status]').textContent='Не удалось начать запись: '+e.message;}
 }
 function motionTickR156(now){
@@ -3850,7 +3850,7 @@ function setView(view){
   if(!treeLineupMode)controls.target.set(0,aimY,0);controls.enableRotate=true;
  }
  updateSun();resize();if(view==='3d')syncCameraHeight();
- status(view==='walk'?'Прогулка: WASD — движение · ЛКМ — выбор · ПКМ — обзор · Delete — удалить.':'Режим '+view.toUpperCase()+' активен.');
+ status(view==='walk'?'Прогулка: WASD — движение · клик ЛКМ — выбор · удержание ЛКМ — обзор · Delete — удалить.':'Режим '+view.toUpperCase()+' активен.');
 }
 function focusSelectedPlant(){
  const ref=state.selected?selectable(state.selected):null;
@@ -4763,7 +4763,7 @@ function addEvents(){
    e.preventDefault();canvas.tabIndex=0;canvas.focus({preventScroll:true});
    if(document.pointerLockElement===canvas||walkLookEnabled){if(e.button===0)freezeWalkLook();state.down=null;return;}
    state.down={x:e.clientX,y:e.clientY,button:e.button};state.activePointer=e.pointerId;
-   if(e.button===2){walkDrag={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture?.(e.pointerId);}
+   walkDrag={id:e.pointerId,x:e.clientX,y:e.clientY,started:false,button:e.button};canvas.setPointerCapture?.(e.pointerId);
   }else{state.down={x:e.clientX,y:e.clientY};state.activePointer=e.pointerId;canvas.setPointerCapture?.(e.pointerId);}
   return;
  }
@@ -4844,7 +4844,12 @@ const move=e=>{
  if(state.view==='walk'){
   if(document.pointerLockElement===canvas)return; // document mousemove handles locked look
   if(e.pointerType!=='mouse'&&state.down&&e.pointerId===state.activePointer){walkLook(e.clientX-state.down.x,e.clientY-state.down.y);state.down={x:e.clientX,y:e.clientY};}
-  else if(e.pointerType==='mouse'&&(walkLookEnabled||(walkDrag&&e.pointerId===walkDrag.id&&(e.buttons&2)))){if(walkDrag)walkLook(e.clientX-walkDrag.x,e.clientY-walkDrag.y);walkDrag={id:e.pointerId,x:e.clientX,y:e.clientY};}
+  else if(e.pointerType==='mouse'&&walkDrag&&e.pointerId===walkDrag.id){
+   const mask=walkDrag.button===2?2:1;
+   if(!(e.buttons&mask)){walkDrag=null;state.down=null;return;}
+   if(!walkDrag.started&&state.down&&Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y)>=5){walkDrag.started=true;tapCancelled=true;}
+   if(walkDrag.started){walkLook(e.clientX-walkDrag.x,e.clientY-walkDrag.y);walkDrag.x=e.clientX;walkDrag.y=e.clientY;}
+  }
   return;
  }
  if(!(state.painting&&state.tool==='terrain'))updateBrushCursor(e);
@@ -4912,9 +4917,11 @@ const up=e=>{
   const start=state.down;walkDrag=null;state.down=null;
   if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);
   if(e.pointerType==='mouse'&&start.button===0&&e.button===0&&!tapCancelled&&!walkLookEnabled&&!motionR156.active&&Math.hypot(e.clientX-start.x,e.clientY-start.y)<5){
-   const key=hitObj(e)||hitTreeOnMobile(e);chooseTool('select');state.selected=key||null;state.mobileMoveMode=false;state.mobileObjectCollapsed=!key;renderProps();
-   if(key){if(lawnPanelR90)lawnPanelR90.style.display='none';revealSelectedInspector();status('Объект выбран · Delete — удалить · ПКМ — обзор');}
-   else status('Выделение снято. ПКМ — обзор камеры.');
+   const direct=hitObj(e);chooseTool('select');
+   if(lawnIntegratedR90&&(!direct||catalog(selectable(direct)?.obj?.catalogId)?.group==='lawns')&&hitLawnR92(e)){state.selected=null;renderProps();openLawnPanelR90();status('Газон выбран · настройки справа.');return;}
+   const key=direct||hitTreeOnMobile(e);state.selected=key||null;state.mobileMoveMode=false;state.mobileObjectCollapsed=!key;renderProps();
+   if(key){if(lawnIntegratedR90&&catalog(selectable(key)?.obj?.catalogId)?.group==='lawns'){openLawnPanelR90();status('Газон выбран · настройки справа.');}else{if(lawnPanelR90)lawnPanelR90.style.display='none';revealSelectedInspector();status('Объект выбран · Delete — удалить');}}
+   else {if(lawnPanelR90)lawnPanelR90.style.display='none';status('Выделение снято. Удерживайте ЛКМ для обзора.');}
   }
   return;
  }
@@ -4957,7 +4964,8 @@ const up=e=>{
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
  canvas.addEventListener('dblclick',e=>{if(desktopPondR139()&&pondModeR139==='polygon'&&pointMode.length>=3){e.preventDefault();finishContour();}});
- canvas.addEventListener('pointercancel',e=>{if(pondGestureR139?.id===e.pointerId)cancelPondGestureR139();touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;if(state.drag&&state.draggingMoved)save();state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('lostpointercapture',e=>{if(state.view==='walk'&&e.pointerType==='mouse'&&walkDrag?.id===e.pointerId){walkDrag=null;state.down=null;}});
+ canvas.addEventListener('pointercancel',e=>{if(state.view==='walk'&&walkDrag?.id===e.pointerId)walkDrag=null;if(pondGestureR139?.id===e.pointerId)cancelPondGestureR139();touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;if(state.drag&&state.draggingMoved)save();state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(document.pointerLockElement!==canvas)walkDrag=null;if(brushCursor)brushCursor.visible=false;hideLocalTerrainBrush();renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -4967,7 +4975,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  controls.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;
 
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const v=b.dataset.view;if(v!==state.view)setView(v);});
- $('#walkLookToggle').onclick=toggleWalkLook;
+ $('#walkLookToggle').onclick=()=>{if(window.innerWidth>850){freezeWalkLook();status('Удерживайте ЛКМ и двигайте мышью. Отпустите кнопку для фиксации.');}else toggleWalkLook();};
  $('#walkFocalLength').oninput=e=>setWalkLens(e.target.value);document.querySelectorAll('[data-walk-lens]').forEach(b=>b.onclick=()=>setWalkLens(b.dataset.walkLens));
  document.querySelectorAll('[data-walk-turn]').forEach(b=>b.onclick=()=>turnWalk(Number(b.dataset.walkTurn)));
  document.addEventListener('mousemove',e=>{if(state.view==='walk'&&walkLookEnabled&&document.pointerLockElement===canvas&&!pathTraceR72?.active&&!gpuMenuR75)walkLook(e.movementX,e.movementY);});
