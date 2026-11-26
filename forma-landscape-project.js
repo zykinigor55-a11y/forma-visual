@@ -1,4 +1,4 @@
-import {GROUPS,CATALOG,TREE_HEIGHT_M,SCENE_OPTIONS,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside,normalizeCornerRounds,pavingRibbonPolygon,normalizePavingSegments,pavingSegments,roundedPavingCenterline,poolDimensions,poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
+import {GROUPS,CATALOG,TREE_HEIGHT_M,SCENE_OPTIONS,byId,freshProject,normalizeProject,report,lineLength,polygonArea,areaFor,rectBoundary,coordinateSummary,snapPathPoint,translatePoints,isInside,normalizeCornerRounds,pavingRibbonPolygon,normalizePavingSegments,pavingSegments,roundedPavingCenterline,poolDimensions,poolFootprint} from './forma-landscape-project-core.js?v=R90';
 import {assetSVG,iconURL,roofingSVG,enablePremiumAssets,fallbackIconURL,premiumIconURL,photographicAssetCount,isPhotographic,cardPhotoURL,hasPhotographicCard,cardPhotoCount} from './forma-landscape-project-graphics.js?v=pools-P32';
 import {proposeLandscape} from './forma-landscape-auto-layout.js';
 import {brushPolygon} from './forma-landscape-brush.js';
