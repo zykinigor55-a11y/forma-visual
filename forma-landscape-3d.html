@@ -531,7 +531,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R143</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R144</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -3618,7 +3618,13 @@ function updateSun(){
  shadowCam.left=-half;shadowCam.right=half;shadowCam.top=half;shadowCam.bottom=-half;
  shadowCam.near=.1;shadowCam.far=Math.max(220,85+half*2);shadowCam.updateProjectionMatrix();
  sun.shadow.normalBias=pbrR63Enabled&&oakTestMode?Math.max(.007,half/sun.shadow.mapSize.x*.32):Math.max(.012,half/sun.shadow.mapSize.x*.43);sun.shadow.bias=-.00018;
- sun.shadow.radius=modellingLight?Math.min(1.8,solarSettings.softness):pbrR63Enabled?Math.max(4.6,solarSettings.softness):solarSettings.softness;
+ // R144: map slider to world-space penumbra rather than a fixed texel radius.
+ // PCFShadowMap honors radius; compensate for plot extent and map resolution.
+ const softness01=THREE.MathUtils.clamp((solarSettings.softness-1)/4,0,1);
+ const shadowTexel=2*half/Math.max(1,sun.shadow.mapSize.x);
+ const penumbraM=.008+.48*Math.pow(softness01,1.65);
+ sun.shadow.radius=THREE.MathUtils.clamp(penumbraM/shadowTexel,.25,32);
+ sun.shadow.needsUpdate=true;
  if(atmosphereSky){
   atmosphereSky.visible=!pbrR63Enabled&&!['night','blue-hour'].includes(val)&&state.view!=='2d';
   const uniforms=atmosphereSky.material.uniforms;
@@ -4889,7 +4895,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  const onSolarInput=()=>{
   solarSettings=normalizeSolarSettings({azimuth:Number($('#sunAzimuth').value),elevation:Number($('#sunElevation').value),
    strength:Number($('#sunStrength').value)/100,softness:Number($('#sunSoftness').value)},doc.atmosphere.time);
-  syncSolarControls();saveSolarSettings();updateSun();if(renderer&&scene&&camera)renderPhotoFrame();
+  syncSolarControls();syncQuickClimateControls();saveSolarSettings();updateSun();if(renderer&&scene&&camera)renderPhotoFrame(true);
  };
  for(const id of ['sunAzimuth','sunElevation','sunStrength','sunSoftness']){
   $('#'+id).addEventListener('input',onSolarInput);
