@@ -7,7 +7,7 @@ import {ashCompoundLeafGeometry} from './forma-landscape-ash-leaves.js';
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
 import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
-import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js';
+import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R22';
 import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity,constrainCrownRadius,specimenCrownVariation} from './forma-landscape-3d-reference-canopies.js';
 import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js?v=understory-mobile-v1';
 export const VEGETATION_SPECIES=Object.freeze({
@@ -296,7 +296,7 @@ function addFoliageVolume(g,T,points,id,diameter,season,seed,quality,height){
   // Terminal needle shoots are longer, but individual needles stay narrow.
   // Preserve the measured crown envelope by limiting sprig radius.
   const mass=needle?(id==='spruce'?.56:id==='pine'?.49:.52):id==='birch'?.37:id==='oak'?.43:id==='ash'?.41:.33;
-  const scale=mass*crown*(.70+r()*.54)*(growth?.leafClusterScale||1);
+  const scale=mass*crown*(.70+r()*.54)*(growth?.leafClusterScale||1)*(shrub?.62:1);
   d.scale.set(scale,scale*(needle?1.07:.9),scale);
   d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
@@ -439,7 +439,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
   // Conifer sprigs keep a natural mostly vertical plane and variable yaw.
   d.rotation.set(sprucePine?(r()-.5)*.86:r()*6.283,r()*6.283,
    sprucePine?(r()-.5)*.75:r()*6.283);
-  const w=foliageSprayWidth(id,diameter)*(sprucePine?.57:1)*(.78+r()*.52);
+  const w=foliageSprayWidth(id,diameter)*(sprucePine?.57:shrub?.67:1)*(.72+r()*.64);
   d.scale.set(w,w,1);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
   const shade=foliageDepthTone(id,p.y/Math.max(.25,height),Math.hypot(p.x,p.z)/Math.max(.1,diameter*.5));
   const colour=shadeColor.clone().lerp(sunColor,.10+r()*.79).multiplyScalar(shade);
@@ -672,7 +672,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
     tip=[twigX,clamp(mid[1]+actual*(isSpike?.035:.08)*(r()-.33),.04,actual),twigZ];
    branches.push([mid,tip,Math.max(.0025,radiusStem*.32)]);
    points.push({x:tip[0],y:tip[1],z:tip[2],s:
-    id==='spirea'?.045+r()*.065:evergreen?.09+r()*.10:.095+r()*.12});
+    id==='spirea'?.032+r()*.048:evergreen?.05+r()*.065:.055+r()*.085});
    // Secondary terminal shoots add low and side foliage without detaching
    // leaves from branches. They stay inside the measured crown footprint.
    if(k%3===0&&!isSpike){
@@ -687,7 +687,7 @@ function generateShrub(T,g,id,height,diameter,season,r,quality){
    }
   }
  }
- const total=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)),140,1900);
+ const total=clamp(Math.round(c.density*quality*referenceFoliageDensity(id,quality)*1.65),220,3000);
  while(points.length<total){
   const p=points[Math.floor(r()*points.length)];
   // Small jitter only around already-connected twig tips.
