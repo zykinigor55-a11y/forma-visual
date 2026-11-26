@@ -1,3 +1,4 @@
+import {normalizeMapleGrowth} from './forma-landscape-maple-growth.js?v=R39';
 import {normalizePineGrowth} from './forma-landscape-pine-growth.js';
 import {WEATHER_EFFECT_DEFAULTS,normalizeWeatherEffects} from './forma-landscape-weather-effects.js';
 import {INTERIOR_NIGHT_DEFAULTS,normalizeNightInterior} from './forma-landscape-3d-night-interior.js';
@@ -171,6 +172,7 @@ export function normalizeProject(raw){
     ...(entry.group==='boulders'?{burial:finite(item.burial,0,.36,.12)}:{}),
     ...(entry.group==='lights'?{brightness:finite(item.brightness,0,2,1),kelvin:[2200,2700,3000,4000].includes(Number(item.kelvin))?Number(item.kelvin):2700,...(entry.id==='globe'?{variant:finite(item.variant,1,4,1)}:{})}:{}),
     ...(entry.id==='pine'?{pine:normalizePineGrowth(item.pine)}:{}),
+    ...(entry.id==='maple'?{maple:normalizeMapleGrowth(item.maple)}:{}),
     ...(entry.id==='spruce'?{spruce:{
       type:sprucePromptStage(item),
       ...(Number.isFinite(Number(item.spruce?.age))&&Number(item.spruce.age)>=3&&Number(item.spruce.age)<=350
