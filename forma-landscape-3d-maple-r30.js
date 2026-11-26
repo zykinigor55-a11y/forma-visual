@@ -2,6 +2,7 @@
  * oriented leaf masks, no reliance on the old low-poly catalogue GLB. */
 import {mapleLeafMask} from './forma-landscape-3d-photo-foliage.js?v=R34';
 import {fuseWood} from './forma-landscape-3d-wood-union.js?v=R38';
+import {mapleProfile} from './forma-landscape-maple-growth.js?v=R39';
 function random(s){let n=2166136261;for(const ch of String(s))n=Math.imul(n^ch.charCodeAt(0),16777619);return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const barkCache=new WeakMap();
@@ -81,7 +82,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const leafRng=random('maple foliage detail R32|'+instance.id+'|'+instance.variant);
  const bendRng=random('maple branch curvature R33|'+instance.id+'|'+instance.variant);
  const crownRng=random('maple spatial crown R35|'+instance.id+'|'+instance.variant);
- const trunkR=clamp(h*.022,.035,.46),mobile=window.innerWidth<=850;
+ const growth=mapleProfile(instance.maple),trunkR=clamp(h*growth.trunk,.035,1.30),mobile=window.innerWidth<=850;
  const fusionStep=Math.max(.007,trunkR*(mobile?.17:.135)),fusionPaths=[],replacedRanges=[];
  function tube(points,radii,sides,seed,collar=0,parentAxis=null){
   let first=pos.length/3,dist=0,prevU=null;const phase=seed*6.283;
@@ -131,7 +132,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
   }
  }
  const trunk=[];
- for(let i=0;i<=20;i++){const t=i/20;trunk.push(V(h*.029*Math.sin(t*5.7)*t,h*t*.96,h*.021*Math.sin(t*8.1)*t));}
+ for(let i=0;i<=20;i++){const t=i/20;trunk.push(V(h*.029*growth.curve*Math.sin(t*5.7)*t,h*t*.96,h*.021*growth.curve*Math.sin(t*8.1)*t));}
  const trunkSmooth=new T.CatmullRomCurve3(trunk,false,'centripetal').getPoints(60);
  const trunkRadiusAt=t=>trunkR*(Math.max(.045,Math.pow(1-t*20/21,1.36))+.50*Math.exp(-t*37));
  tube(trunkSmooth,trunkSmooth.map((_,i)=>trunkRadiusAt(i/60)),32,r());
@@ -141,7 +142,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  }
  function curve(a,b,width,bend,sides=8,parentAxis=null){
   const delta=b.clone().sub(a),length=a.distanceTo(b),side=V(-delta.z,0,delta.x).normalize();
-  const sign=bendRng()<.5?-1:1,bulge=length*(sides>=12?.23:sides>=8?.17:.10)*sign;
+  const sign=bendRng()<.5?-1:1,bulge=length*(sides>=12?.23:sides>=8?.17:.10)*sign*growth.curve;
   const direction=delta.clone().normalize();
   const growth=parentAxis?parentAxis.clone().multiplyScalar(.46).addScaledVector(direction,.70).normalize():direction.clone();
   const c1=a.clone().addScaledVector(growth,length*.30).addScaledVector(side,bulge*.60);
@@ -170,7 +171,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
     leafPoints.push(mainLeaf);
     // Independent deterministic stream: the actual R31 woody skeleton remains
     // identical. Extra leaves are attached beside the existing twig, not a sphere.
-    if(leafRng()<.36){
+    if(leafRng()<Math.min(.65,.36*growth.leafDensity)){
      const offset=reach*(.55+leafRng()*.45),q2=p.clone().addScaledVector(axis,(leafRng()-.5)*.06).addScaledVector(side,sign*offset);
      q2.y+=(leafRng()-.35)*reach*.8;
      const radius=Math.hypot(q2.x,q2.z);if(radius>rad){q2.x*=rad/radius;q2.z*=rad/radius;}q2.y=Math.min(h,q2.y);
@@ -181,16 +182,16 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  }
  // Branches follow a rounded, asymmetrical deciduous crown: lower limbs spread
  // outwards, upper forks rise. No horizontal conifer whorls or leaf spheres.
- for(let i=0;i<18;i++){
-  const t=i/17,az=i*2.399+(r()-.5)*.85,y=h*(.28+t*.53+(r()-.5)*.032);
+ for(let i=0;i<growth.branches;i++){
+  const t=i/Math.max(1,growth.branches-1),az=i*2.399+(r()-.5)*.85,y=h*((.28-(growth.spread-1)*.10)+t*.53+(r()-.5)*.032);
   const base=trunk[Math.min(20,Math.round(y/(h*.96)*20))].clone();
   const len=rad*(.49+.48*Math.sin(Math.PI*(.20+t*.70)))*(.83+r()*.17);
-  const tip=V(Math.cos(az)*len,Math.min(h*.95,y+h*(.055+.125*r())),Math.sin(az)*len);
+  const tip=V(Math.cos(az)*len,Math.min(h*.95,y+h*(.055+.125*r())/growth.spread),Math.sin(az)*len);
   const main=curve(base,tip,trunkR*(.38-.17*t),-h*.013,14,V(0,1,0));
-  const forks=7+Math.floor(r()*5);
+  const forks=Math.max(4,Math.round((7+Math.floor(r()*5))*Math.sqrt(growth.leafDensity)));
   for(let k=0;k<forks;k++){
    const f=.26+(k+.5)/forks*.70,p=main.getPoint(f),side=k%2?1:-1,a=az+side*(.42+r()*.95);
-   const span=rad*(.22+.19*r())*(1-f*.38);
+   const span=rad*(.22+.19*r())*(1-f*.38)*growth.spread;
    const lift=h*(.025+.085*crownRng())*(crownRng()<.19?-.55:1);
    let end=p.clone().add(V(Math.cos(a)*span,lift,Math.sin(a)*span));
    const limit=rad*(.97-.12*t),rr=Math.hypot(end.x,end.z);if(rr>limit){end.x*=limit/rr;end.z*=limit/rr;}end.y=Math.min(h*.985,end.y);
@@ -206,10 +207,10 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
     for(let k2=0;k2<2;k2++){
      const v=shoot.getPoint(.38+k2*.48),turn=angle+(k2?1:-1)*(.48+crownRng()*.86),L=span*(.41+crownRng()*.32);
      const finish=constrain(v.clone().add(V(Math.cos(turn)*L,h*(crownRng()-.36)*.035,Math.sin(turn)*L)));
-     leafyTwig(v,finish,Math.max(.0013,trunkR*.012),mobile?5:7);
+     leafyTwig(v,finish,Math.max(.0013,trunkR*.012),Math.max(3,Math.round((mobile?5:7)*growth.leafDensity)));
     }
     // Terminal cluster continues the supporting branch rather than floating.
-    leafyTwig(q,e,Math.max(.0012,trunkR*.009),mobile?3:4,shoot);
+    leafyTwig(q,e,Math.max(.0012,trunkR*.009),Math.max(2,Math.round((mobile?3:4)*growth.leafDensity)),shoot);
    }
   }
  }
@@ -238,6 +239,6 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple spatial crown R35';
  g.userData.leafTriangles=leafGeo.index.count/3*leafPoints.length;g.add(mesh);
  }
- g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.nativeMapleR38=true;g.userData.fusedWood=Boolean(union);g.userData.fusedPaths=union?fusionPaths.length:0;g.userData.woodTriangles=geo.index.count/3+(union?union.attributes.position.count/3:0);g.userData.leafCount=season==='winter'?0:leafPoints.length;
+ g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.nativeMapleR38=true;g.userData.nativeMapleR39=true;g.userData.mapleAge=growth.age;g.userData.trunkDiameter=trunkR*2;g.userData.fusedWood=Boolean(union);g.userData.fusedPaths=union?fusionPaths.length:0;g.userData.woodTriangles=geo.index.count/3+(union?union.attributes.position.count/3:0);g.userData.leafCount=season==='winter'?0:leafPoints.length;
  return g;
 }
