@@ -533,11 +533,30 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 #motionPanelR156[hidden],#motionPanelR156 [hidden]{display:none!important}#motionPanelR156 label{display:grid;gap:4px}#motionPanelR156 select,#motionPanelR156 input{width:100%;min-width:0}#motionPanelR156 small{color:#aebdb3;line-height:1.5}#motionPanelR156 video{width:100%;max-height:170px;background:#111;border-radius:8px}#motionPanelR156 button{min-height:34px}#motionPanelR156 progress{width:100%;height:8px;accent-color:#8eba9f}#motionPanelR156 .motion-row{display:flex;gap:6px;align-items:center}#motionPanelR156 .motion-row>*{flex:1;min-width:0}#motionPanelR156 .motion-record{background:#863c38;color:white;border-color:#bc7770}#motionPanelR156[data-recording=true] .motion-config{display:none}#motionPanelR156[data-recording=true]{width:min(290px,calc(100vw - 32px))}
 @media(max-width:850px){#motionOpenR156,#motionPanelR156{display:none!important}}
 </style>
-</head>
+<style id="forma-matte-tools-r165">
+@media(min-width:851px){
+#tools{gap:7px;padding:10px 8px 13px}
+#tools button{box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;width:100%;height:82px;min-height:82px;padding:7px 3px!important;overflow:hidden;background:#2b2e30!important;border:1px solid #414649!important;border-radius:9px!important;box-shadow:none!important;transform:none!important;color:#dce0e1!important}
+#tools button::after,#tools button::before{display:none!important}
+#tools button:hover{background:#343a3b!important;border-color:#687674!important}
+#tools button.active{background:#35453e!important;border-color:#829b8c!important;color:#e2eee6!important}
+#tools button .glyph{width:40px!important;height:40px!important;max-width:100%;flex:0 0 40px;overflow:hidden;background:none!important;border:0!important;border-radius:0!important;margin:0!important}
+#tools button .glyph svg{display:block!important;width:40px!important;height:40px!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;filter:none!important}
+#tools button .tool-name{width:100%;font-size:10px;line-height:1.15;font-weight:550;text-align:center;overflow-wrap:normal;word-break:normal;white-space:normal;hyphens:none}
+#tools button:focus-visible{outline:2px solid #a4c0ae;outline-offset:-3px}
+#library .choice.has-preview{display:grid;grid-template-columns:44px minmax(0,1fr) 14px;gap:8px;padding:9px 7px;background:#2c3032;border:1px solid #414749;min-height:65px}
+#library .choice.has-preview img{width:44px;height:44px;max-width:100%;object-fit:contain;background:#303638}
+#library .choice.has-preview>span{font-size:12px;line-height:1.3;overflow-wrap:normal;word-break:normal}
+#library .choice.has-preview .asset-size{font-size:10px;color:#a8b0ad;overflow-wrap:normal}
+#library .choice.has-preview .asset-add{color:#b5c3bc;margin:0}
+#library .choice.has-preview.active{background:#35453e;border-color:#829b8c}
+#catalogSearch{box-sizing:border-box;width:100%;max-width:100%;background:#282d2f;border-color:#515d5a}
+}
+</style></head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R164</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R165</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -2616,16 +2635,29 @@ function drawExtra(o){
  if(o.type!=='fence'){g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;}mark(g,'extra:'+o.id);root.add(g);
 }
 function safeToolIcon(tool){
- // Fully inline SVGs, with a deterministic local fallback; never allow a
- // missing icon to blank the left-hand tool palette.
- try{
-  const svg=premiumIcon(tool);
-  if(typeof svg==='string'&&svg.includes('<svg')&&svg.includes('</svg>'))return svg;
- }catch(error){console.warn('FORMA icon fallback:',tool,error);}
- return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="4" y="4" width="40" height="40" rx="10" fill="#24332c" stroke="#bda47d"/><path d="M24 10L38 24 24 38 10 24Z" fill="#ac8c68" stroke="#e4cb9d" stroke-width="2"/></svg>';
+ if(window.innerWidth<=850)return premiumIcon(tool);
+ const light='#c6cdce',mid='#899698',dark='#536065',edge='#d2d8d8';
+ const shapes={
+ select:'<path d="M11 5 35 29 24 28 18 41 11 5Z" fill="'+light+'"/><path d="m24 28 7 10-5 3-7-11" fill="'+mid+'"/>',
+ site:'<path d="M6 16 24 7 42 16 24 25Z" fill="'+light+'"/><path d="M6 16 24 25V41L6 32Z" fill="'+mid+'"/><path d="M24 25 42 16V32L24 41Z" fill="'+dark+'"/>',
+ surface:'<path d="M5 20 23 10 43 20 25 30Z" fill="'+light+'"/><path d="m5 20 20 10v8L5 28Z" fill="'+mid+'"/><path d="m25 30 18-10v8L25 38Z" fill="'+dark+'"/><path d="m14 15 20 10m-19 0 18-10" fill="none" stroke="'+dark+'"/>',
+ terrain:'<path d="M4 36 16 17 23 25 32 8 44 36Z" fill="'+mid+'"/><path d="m32 8-2 28h14Z" fill="'+dark+'"/><path d="m16 17 7 8-8 11H4Z" fill="'+light+'"/>',
+ build:'<path d="M9 21 24 13 39 21v19H9Z" fill="'+mid+'"/><path d="M24 21 39 21v19H24Z" fill="'+dark+'"/><path d="M5 22 24 6 43 22 24 27Z" fill="'+light+'"/><path d="M17 28h7v12h-7Z" fill="#394346"/>',
+ fence:'<path d="M6 18 42 12v5L6 23Zm0 13 36-6v5L6 36Z" fill="'+dark+'"/><path d="M7 10h5v31H7Zm15-3h5v31h-5Zm15-3h5v31h-5Z" fill="'+light+'"/>',
+ plant:'<path d="M22 23h5v18h-5Z" fill="'+mid+'"/><path d="M11 31C1 27 7 16 14 16 12 5 29 2 32 14 45 13 48 30 35 33Z" fill="#899e91"/><path d="M24 7c14 0 10 12 17 14 5 11-9 14-17 12Z" fill="#657b6e"/>',
+ water:'<path d="M5 23C9 9 21 11 25 15 36 8 48 23 40 32 32 43 8 41 5 23Z" fill="#718f96"/><path d="M10 24q7-5 14 0t14 0M12 31q7-4 13 0t12-1" fill="none" stroke="#c1d3d3" stroke-width="1.5"/>',
+ landscape:'<path d="m5 33 9-19 14-6 13 14 3 14-23 6Z" fill="'+mid+'"/><path d="m14 14 8 18-17 1Z" fill="'+light+'"/><path d="m28 8-6 24 22 4-3-14Z" fill="'+dark+'"/>',
+ small:'<path d="M9 23v18m30-18v18M24 28v14" stroke="'+mid+'" stroke-width="4"/><path d="M4 22 24 8 44 22 24 33Z" fill="'+light+'"/><path d="M24 8 44 22 24 33Z" fill="'+mid+'"/>',
+ furniture:'<path d="M8 12h32v19H8Z" fill="'+mid+'"/><path d="m5 29 5-7h28l5 7v6H5Z" fill="'+light+'"/><path d="M8 35v7m32-7v7" stroke="'+dark+'" stroke-width="4"/>',
+ transport:'<path d="m5 26 7-4 6-11h17l8 15v9H5Z" fill="'+mid+'"/><path d="m18 14-5 10h25l-5-10Z" fill="#3d4a50"/><circle cx="13" cy="35" r="5" fill="#40484b"/><circle cx="35" cy="35" r="5" fill="#40484b"/>',
+ light:'<path d="M22 17h4v25h-4Z" fill="'+mid+'"/><path d="M13 8h22l-5 11H18Z" fill="'+light+'"/><path d="M16 21l-5 6m21-6 5 6" stroke="#c7cebf" stroke-width="1.6"/>',
+ creatures:'<circle cx="18" cy="10" r="6" fill="'+light+'"/><path d="M10 20q8-7 16 0l2 10h-6v12h-8V30H8Z" fill="'+mid+'"/><path d="M28 29q7-8 13-3l3 8-4 2v6h-4v-7h-5v7h-4v-9Z" fill="'+light+'"/>',
+ models40:'<path d="m5 16 19-10 19 10-19 11Z" fill="'+light+'"/><path d="M5 16l19 11v16L5 32Z" fill="'+mid+'"/><path d="m24 27 19-11v16L24 43Z" fill="'+dark+'"/>'
+ };
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="40" height="40" aria-hidden="true" stroke="'+edge+'" stroke-width=".55" stroke-linejoin="round">'+(shapes[tool]||shapes.site)+'</svg>';
 }
 function drawTools(){
- $('#tools').innerHTML=toolList.map(a=>'<button type="button" data-tool="'+a[0]+'" title="'+a[1]+'" aria-label="'+a[1]+'"><span class="glyph" aria-hidden="true">'+safeToolIcon(a[0])+'</span><span class="tool-name">'+a[1]+'</span></button>').join('');
+ $('#tools').innerHTML=toolList.map(a=>'<button type="button" data-tool="'+a[0]+'" title="'+a[1]+'" aria-label="'+a[1]+'"><span class="glyph" aria-hidden="true">'+safeToolIcon(a[0])+'</span><span class="tool-name">'+(window.innerWidth>850?({creatures:'Персонажи',models40:'3D-каталог',furniture:'Мебель'}[a[0]]||a[1]):a[1])+'</span></button>').join('');
  document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>chooseTool(b.dataset.tool));chooseTool('select');renderHouseLibrary();
 }
 function refreshGardenLightCatalogPreviews(){
