@@ -160,15 +160,16 @@ function firShootGeometry(T,variant,mobile,detail=0){
   const mid=root.clone().addScaledVector(dir,length*.54),tip=root.clone().addScaledVector(dir,length),normal=dir.clone().cross(side).normalize(),i=p.length/3;
   tip.addScaledVector(normal,length*.09);
   vert(root,col,.86);vert(mid.clone().addScaledVector(side,width),col,.97,side.clone().multiplyScalar(width));vert(mid.clone().addScaledVector(normal,width*.30),col,1.04);vert(mid.clone().addScaledVector(side,-width),col,.94,side.clone().multiplyScalar(-width));vert(tip,col,1.03);
-  if(mobile||detail>0)ix.push(i,i+1,i+4,i,i+4,i+3);
+  if(detail===2)ix.push(i,i+1,i+3,i+1,i+4,i+3);
+  else if(mobile||detail>0)ix.push(i,i+1,i+4,i,i+4,i+3);
   else ix.push(i,i+1,i+2,i+1,i+4,i+2,i,i+2,i+3,i+2,i+4,i+3);
   count++;
  }
  function twig(a,b,n,seed){
   const axis=b.clone().sub(a).normalize(),lateral=V(Math.abs(axis.x)>.90?0:1,Math.abs(axis.x)>.90?1:0,0).cross(axis).normalize(),other=axis.clone().cross(lateral).normalize();
   const wood=new T.Color('#586441'),first=p.length/3;
-  for(const [point,radius] of [[a,.00115],[b,.00020]])for(let k=0;k<4;k++){const q=k*Math.PI*.5;vert(point.clone().addScaledVector(lateral,Math.cos(q)*radius).addScaledVector(other,Math.sin(q)*radius),wood);}
-  for(let k=0;k<4;k++){const j=(k+1)%4;ix.push(first+k,first+j,first+4+k,first+j,first+4+j,first+4+k);}
+  if(detail!==2){for(const [point,radius] of [[a,.00115],[b,.00020]])for(let k=0;k<4;k++){const q=k*Math.PI*.5;vert(point.clone().addScaledVector(lateral,Math.cos(q)*radius).addScaledVector(other,Math.sin(q)*radius),wood);}
+  for(let k=0;k<4;k++){const j=(k+1)%4;ix.push(first+k,first+j,first+4+k,first+j,first+4+j,first+4+k);}}
   for(let j=0;j<n;j++){
    const t=(j+.5)/n,base=a.clone().lerp(b,t);
    for(const sign of [-1,1]){
@@ -176,18 +177,18 @@ function firShootGeometry(T,variant,mobile,detail=0){
     const side=lateral.clone().multiplyScalar(Math.cos(phase)*sign).addScaledVector(other,Math.sin(phase)*sign);
     const dir=axis.clone().multiplyScalar(.32+r()*.30).addScaledVector(side,.70+r()*.23).addScaledVector(other,.12+r()*.21).normalize();
     const across=axis.clone().cross(dir).normalize();
-    needle(base,dir,across,.014+r()*.008,.00095+r()*.00028,shades[Math.floor(r()*shades.length)]);
+    needle(base,dir,across,.014+r()*.008,(.00095+r()*.00028)*(detail===2?1.6:1),shades[Math.floor(r()*shades.length)]);
     if(detail===0||(detail===1&&j%2===0)){const upper=dir.clone().addScaledVector(other,.65).normalize(),ac=axis.clone().cross(upper).normalize();needle(base.clone().addScaledVector(axis,.001),upper,ac,.012+r()*.008,.00085+r()*.00025,shades[(j+variant)%shades.length]);}
    }
   }
  }
  const base=V(0,-.092,0),tip=V(.006,.092,.008);
- twig(base,tip,detail===2?10:detail===1?17:mobile?25:34,variant*.8);
- const lateralCount=detail===2?5:detail===1?7:9;
+ twig(base,tip,detail===2?7:detail===1?17:mobile?25:34,variant*.8);
+ const lateralCount=detail===2?4:detail===1?7:9;
  for(let j=0;j<lateralCount;j++){
   const t=.08+j*.88/lateralCount,root=base.clone().lerp(tip,t),a=(j%2?Math.PI:0)+j*.28+variant*.75,len=(.060+r()*.035)*(1-t*.38);
   const end=root.clone().add(V(Math.cos(a)*len,.020+r()*.028,Math.sin(a)*len));
-  twig(root,end,detail===2?5:detail===1?8:mobile?11:15,a);
+  twig(root,end,detail===2?4:detail===1?8:mobile?11:15,a);
  }
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(p,3));geo.setAttribute('color',new T.Float32BufferAttribute(c,3));geo.setAttribute('firAcross',new T.Float32BufferAttribute(acrossOffsets,3));geo.setIndex(ix);geo.computeVertexNormals();geo.computeBoundingSphere();geo.userData.needleCount=count;return geo;
 }
@@ -301,7 +302,7 @@ export function createDetailedFir(T,instance){
  // by a wildly different factor when a sparse geometry sample misses the tips.
  g.updateMatrixWorld(true);const box=new T.Box3().setFromObject(g),size=box.getSize(new T.Vector3()),actual=Math.max(size.x,size.z);if(actual>0)g.scale.set(d/actual,1,d/actual);
  g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=true;});
- g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.userData.firHybridR28=true;g.userData.firAge=stage.age;g.userData.firR93=true;g.userData.firR94=true;g.userData.firR96=true;g.userData.firR98=true;g.userData.firR99=true;g.userData.firR100=true;g.userData.firR101=true;g.userData.firR102=true;g.userData.foliageCards=0;g.userData.needleCount=detailedNeedles;g.userData.realNeedleInstances=detailedNeedles;g.userData.continuousTrunk=true;g.name='FORMA fir · '+stage.age;
+ g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.userData.firHybridR28=true;g.userData.firAge=stage.age;g.userData.firR93=true;g.userData.firR94=true;g.userData.firR96=true;g.userData.firR98=true;g.userData.firR99=true;g.userData.firR100=true;g.userData.firR101=true;g.userData.firR102=true;g.userData.foliageCards=0;g.userData.needleCount=detailedNeedles;g.userData.realNeedleInstances=detailedNeedles;g.userData.firAdaptiveLOD=true;g.userData.continuousTrunk=true;g.name='FORMA fir · '+stage.age;
  if(firCache.size<2){const template=g.clone(true);template.traverse(n=>{if(n.isMesh)n.material=cloneFirMaterial(n.material)});firCache.set(key,template);}else g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=false;});
  return g;
 }
