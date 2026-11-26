@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R19</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R20</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -1161,7 +1161,7 @@ function initialize(){
  const skyFill=new THREE.HemisphereLight(0xdceafa,0x334b3c,1.75);skyFill.name='forma-sky-fill';scene.add(skyFill);
  const bounced=new THREE.DirectionalLight(0xc6d8e3,.38);
  bounced.name='forma-bounced-fill';bounced.position.set(22,28,-29);bounced.castShadow=false;scene.add(bounced);
- const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(Math.min(renderer.capabilities.maxTextureSize,2048),Math.min(renderer.capabilities.maxTextureSize,2048));sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;sun.shadow.normalBias=.022;sun.shadow.radius=2.6;scene.add(sun);scene.add(sun.target);
+ const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;const shadowSize=Math.min(renderer.capabilities.maxTextureSize,window.innerWidth<=850?1024:2048);sun.shadow.mapSize.set(shadowSize,shadowSize);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;sun.shadow.normalBias=.022;sun.shadow.radius=2.6;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
  brushCursor=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xE7D0A5,transparent:true,opacity:.78,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
  brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
@@ -1458,9 +1458,10 @@ function rebuild(){
  const geo=makeEditableGroundGeometry(groundSide);cutPoolOpenings(geo);
  const grass=groundPhotoTexture();grass.repeat.set(groundSide/1.75,groundSide/1.75);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
- groundMat.map=grass;groundMat.bumpMap=grass;groundMat.bumpScale=.025;groundMat.roughness=.96;groundMat.side=THREE.FrontSide;groundMat.shadowSide=THREE.FrontSide;
+ groundMat.map=grass;groundMat.bumpMap=grass;groundMat.bumpScale=.025;groundMat.roughness=.96;groundMat.side=THREE.DoubleSide;groundMat.shadowSide=THREE.FrontSide;
  groundMat.envMapIntensity=.21;
- applyRaisedSoilMaterial(groundMat,groundSide);
+ // R20: stock PBR on phones avoids custom terrain shader failures. Keep the actual turf image and surveyed terrain.
+ if(window.innerWidth>850)applyRaisedSoilMaterial(groundMat,groundSide);
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
   const verts=terrainTriangles(doc.site,heightmap,GRID),drawingGeo=new THREE.BufferGeometry(),uv=[];
@@ -1606,7 +1607,7 @@ function loadCuratedAdultTree(species){
  }).catch(error=>{
   bundledModelFailures.add(species);
   console.warn('Adult tree GLB unavailable; using native model:',species,error?.message||error);
-  status('GLB '+entry.name+' не загрузилась. Повторите загрузку в настройках 3D-моделей.');
+  status('GLB '+entry.name+' не загрузилась. Временный вид, если доступен; повторите загрузку в настройках 3D-моделей.');
   if(root&&renderer&&doc)rebuild();
  }).finally(()=>{ktx2.dispose();bundledModelLoading.delete(species);updateModelHealth()});
 }
@@ -1733,16 +1734,28 @@ function drawObject(o,entry,key){
   const bundledAdult=(MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId])&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
   const source=imported||bundledPine||bundledAdult||null;
   const waitingForReal=!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
-  // NEVER flash a fake procedural tree while a verified original GLB loads.
-  // The target retains an invisible metric pickable and selection ring.
+  // While the GLB loads retain the metric pickable. On confirmed failure use
+  // a temporary native preview where available, without replacing the saved GLB reference.
   g=source?makeRealVegetation(THREE,source,o,{
    shareGeometry:!!(bundledPine||bundledAdult)&&!imported,
    canopyCopies:0,
    pineGrowth:o.catalogId==='pine'?normalizePineGrowth(o.pine):null,
    spruceGrowth:o.catalogId==='spruce'?normalizeSpruceGrowth(o.spruce):null
-  }):waitingForReal||!VEGETATION_SPECIES[o.catalogId]?new THREE.Group():
+  }):(waitingForReal&&!bundledModelFailures.has(o.catalogId))||!VEGETATION_SPECIES[o.catalogId]?new THREE.Group():
    createVegetation(THREE,o,{season:doc.atmosphere.season,quality,
     mode:renderQuality==='high'?'premium':normalizeBotanicalQuality(renderQuality)});
+  // Preserve the original GLB geometry, maps and alpha cutouts on mobile.
+  // Avoid the optional R19 broadleaf GLSL hook on Android-sized screens.
+  if(source&&window.innerWidth<=850)g.traverse(node=>{
+   if(!node.isMesh)return;
+   for(const mat of (Array.isArray(node.material)?node.material:[node.material])){
+    if(!mat?.customProgramCacheKey||!mat.customProgramCacheKey().includes('|forma-broadleaf-r19-'))continue;
+    mat.onBeforeCompile=THREE.Material.prototype.onBeforeCompile;
+    mat.customProgramCacheKey=THREE.Material.prototype.customProgramCacheKey;
+    mat.alphaToCoverage=false;mat.needsUpdate=true;
+   }
+  });
+  if(waitingForReal&&bundledModelFailures.has(o.catalogId))g.userData.formaTemporaryFallback=true;
  }else if(group==='boulders'){
   // Four actually scanned CC0 boulder assets, with preserved original PBR
   // colour/normal maps and true lithology-specific stone geometry.
@@ -2967,6 +2980,14 @@ function updateSun(){
  // Scale fog distance to the plot and orbit camera, not a fixed 25 metres.
  scene.fog.near=atmosphere.fogNear;
  scene.fog.far=atmosphere.fogFar;
+ // The wider portrait overview can sit beyond the ordinary clear-day fog
+ // range. Keep the complete parcel visible; retain deliberate weather haze.
+ if(!weatherFog&&!wetFog&&camera){
+  const viewDistance=camera.position.distanceTo(controls.target);
+  const parcelRadius=Math.hypot(doc.site.width,doc.site.height)*.5;
+  scene.fog.near=Math.max(scene.fog.near,viewDistance+parcelRadius);
+  scene.fog.far=Math.max(scene.fog.far,scene.fog.near+Math.max(40,extent*2));
+ }
  // Only the selected intensity sliders tune extra weather haze. No new fog
  // on clear days and no moving distant trees or changing terrain height.
  const weatherState=weatherEffectsVisible(doc.atmosphere);
