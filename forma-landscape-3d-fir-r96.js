@@ -133,7 +133,7 @@ export function createDetailedFir(T,instance){
  trunkMesh.tube(trunkPoints,trunkRadii,old?28:24,variant,old?.11:.045,1.4);
  for(let k=0;k<(old?7:4);k++){const a=k*2.399963,rr=trunkRadii[0];const p0=V(Math.cos(a)*rr*.42,rr*.8,Math.sin(a)*rr*.42),p1=V(Math.cos(a)*rr*1.35,rr*.16,Math.sin(a)*rr*1.35),p2=V(Math.cos(a)*rr*2.1,-.012,Math.sin(a)*rr*2.1);trunkMesh.tube([p0,p1,p2],[rr*.30,rr*.20,.006],10,k,.08,1.4);}
  function needle(base,dir,side,len,width,c){
-  if(needleCount>=(youngTree?68000:110000))return;
+  if(r()>(youngTree?.85:old?.43:.55)||needleCount>=130000)return;
   const normal=new T.Vector3().crossVectors(dir,side).normalize(),bend=(r()-.35)*len*.17;
   const i=vertices.length/3;
   // Two curved cross-sections and a narrow tip; true folded needle with underside.
@@ -193,7 +193,7 @@ export function createDetailedFir(T,instance){
    shoot(curve.getPoint(.84),tip,a,t>.72);
   }
  }
- for(let j=0;j<(old?7:5);j++){const a=j*2.399;shoot(V(0,h*(old?.89:.92),0),V(Math.cos(a)*rad*(old?.15:.065),h*(old?.96+r()*.035:.99),Math.sin(a)*rad*(old?.15:.065)),a,true)}
+ for(let j=0;j<(old?7:5);j++){const a=j*2.399;shoot(trunkAt(old?.89:.92),V(Math.cos(a)*rad*(old?.15:.065),h*(old?.96+r()*.035:.99),Math.sin(a)*rad*(old?.15:.065)),a,true)}
  const wood=ageBark(T,stage.age),bm=new T.MeshStandardMaterial({map:wood,bumpMap:wood,bumpScale:old?.032:youngTree?.004:.015,roughness:.93,metalness:0,envMapIntensity:.30});
  branches.forEach(([a,b,w],i)=>{const mid=a.clone().lerp(b,.5);mid.y-=a.distanceTo(b)*.035;woodMesh.tube([a,mid,b],[w,w*.57,Math.max(.00015,w*.06)],5,i,0,2);});
  const trunk=new T.Mesh(trunkMesh.geometry(),bm);trunk.name='fir-continuous-trunk';trunk.castShadow=true;trunk.receiveShadow=true;g.add(trunk);
@@ -202,7 +202,7 @@ export function createDetailedFir(T,instance){
  const leaves=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.78,metalness:0,envMapIntensity:.50}));firLight(T,leaves.material);leaves.name='fir-needle-leaves';leaves.castShadow=false;leaves.receiveShadow=false;g.add(leaves);
  const atlas=needleAtlas(T),cardMat=new T.MeshStandardMaterial({map:atlas,alphaTest:.37,side:T.DoubleSide,roughness:.84,metalness:0,envMapIntensity:.44,depthWrite:true});
  firLight(T,cardMat);
- const sprayGeo=new T.PlaneGeometry(1,1,4,4);const sp=sprayGeo.attributes.position;for(let j=0;j<sp.count;j++)sp.setZ(j,.15*Math.sin((sp.getY(j)+.5)*Math.PI)*Math.abs(sp.getX(j))*2);sprayGeo.computeVertexNormals();const sprays=new T.InstancedMesh(sprayGeo,cardMat,cards.length*2),dummy=new T.Object3D(),axis=V(0,1,0);
+ const sprayGeo=new T.PlaneGeometry(1,1,2,2);const sp=sprayGeo.attributes.position;for(let j=0;j<sp.count;j++)sp.setZ(j,.15*Math.sin((sp.getY(j)+.5)*Math.PI)*Math.abs(sp.getX(j))*2);sprayGeo.computeVertexNormals();const sprays=new T.InstancedMesh(sprayGeo,cardMat,cards.length*2),dummy=new T.Object3D(),axis=V(0,1,0);
  let i=0;for(const card of cards){
   const v=card.b.clone().sub(card.a),length=v.length();
   dummy.position.copy(card.a).addScaledVector(v,.5);dummy.quaternion.setFromUnitVectors(axis,v.normalize());
@@ -221,7 +221,7 @@ export function createDetailedFir(T,instance){
  // Fit the actual mesh (including individual needles) to the saved dimensions.
  geo.computeBoundingBox();const b=geo.boundingBox,actual=Math.max(b.max.x-b.min.x,b.max.z-b.min.z);if(actual>0)g.scale.set(d/actual,1,d/actual);
  g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=true;});
- g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.userData.firHybridR28=true;g.userData.firAge=stage.age;g.userData.firR93=true;g.userData.firR96=true;g.userData.needleCount=needleCount;g.userData.continuousTrunk=true;g.userData.firR96=true;g.name='FORMA fir · '+stage.age;
- if(firCache.size<4){const template=g.clone(true);template.traverse(n=>{if(n.isMesh)n.material=cloneFirMaterial(n.material)});firCache.set(key,template);}else g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=false;});
+ g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.userData.firHybridR28=true;g.userData.firAge=stage.age;g.userData.firR93=true;g.userData.firR94=true;g.userData.firR96=true;g.userData.needleCount=needleCount;g.userData.continuousTrunk=true;g.name='FORMA fir · '+stage.age;
+ if(firCache.size<2){const template=g.clone(true);template.traverse(n=>{if(n.isMesh)n.material=cloneFirMaterial(n.material)});firCache.set(key,template);}else g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=false;});
  return g;
 }
