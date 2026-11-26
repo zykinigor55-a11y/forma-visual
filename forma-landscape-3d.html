@@ -821,7 +821,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
-import {createNaturalOak,oakStage} from './forma-landscape-3d-oak-r73.js?v=R73';
+import {createNaturalOak,oakStage} from './forma-landscape-3d-oak-r74.js?v=R74';
 import {normalizeWillowGrowth,willowDimensions,willowGrowthMarkup,mountWillowGrowth} from './forma-landscape-willow-growth.js?v=R50';
 import {normalizeMapleGrowth,mapleDimensions,mapleGrowthMarkup,mountMapleGrowth} from './forma-landscape-maple-growth.js?v=R39';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
@@ -4367,7 +4367,7 @@ const up=e=>{
  state.down=null;
 };
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
- canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('pointercancel',e=>{touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;if(state.drag&&state.draggingMoved)save();state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(brushCursor)brushCursor.visible=false;hideLocalTerrainBrush();renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -4591,7 +4591,7 @@ function animate(now=0){
  }
  const windWeather=({sunny:1,overcast:1.05,'after-rain':1.18,rain:1.40,snow:.85,fog:.55})[doc.atmosphere.weather]||1;
  const windStrength=windAmountR74/100*windWeather*1.45;
- if(!document.hidden&&state.view!=='2d'&&now-(scene.userData.lastWindR74||0)>Math.max(65,Math.min(450,lastRenderCost*2))){scene.userData.lastWindR74=now;const moving=windR74.tick(now,windStrength);const waves=windRipple(THREE,waterSurfaces,waterRippleTexture,now,sceneAtmosphere.ripples,windStrength);if((moving&&windAmountR74>0)||waves&&sceneAtmosphere.ripples>0||scene.userData.previousWindR74!==windAmountR74){if(renderer?.shadowMap&&moving)renderer.shadowMap.needsUpdate=true;renderGate.invalidate();}scene.userData.previousWindR74=windAmountR74;}
+ if(scene&&!document.hidden&&state.view!=='2d'&&now-(scene.userData.lastWindR74||0)>Math.max(65,Math.min(450,lastRenderCost*2))){scene.userData.lastWindR74=now;const moving=windR74.tick(now,windStrength);const waves=windRipple(THREE,waterSurfaces,waterRippleTexture,now,sceneAtmosphere.ripples,windStrength);if((moving&&windAmountR74>0)||waves&&sceneAtmosphere.ripples>0||scene.userData.previousWindR74!==windAmountR74){if(renderer?.shadowMap&&moving)renderer.shadowMap.needsUpdate=true;renderGate.invalidate();}scene.userData.previousWindR74=windAmountR74;}
  const activeWalk=state.view==='walk'&&walked;
  // Pixel-space selection, not a fixed world distance. Hysteresis avoids
  // foliage popping during strolls; update at most ~4 times per second.
