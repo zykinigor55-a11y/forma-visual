@@ -572,7 +572,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R170</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R171</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню">← Главное меню</a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -3039,14 +3039,60 @@ async function makeHouseThumbnails(){
  finally{rendererThumb?.dispose();houseThumbBuildRunning=false}
 }
 function selectable(key){if(typeof key!=='string'||!key)return null;const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
+let directTreeGestureR171=null,groundGizmoR171=null;
+function treeRefR171(key){const ref=selectable(key);return ref?.obj&&['trees','shrubs'].includes(catalog(ref.obj.catalogId)?.group)?ref:null;}
+function syncGroundGizmoR171(){
+ if(!scene||!camera)return;
+ const ref=treeRefR171(state.selected),visible=window.innerWidth>850&&state.view!=='2d'&&state.tool==='select'&&!!ref&&document.body.dataset.presentation!=='true';
+ if(!groundGizmoR171){
+  const g=new THREE.Group();g.name='FORMA editor move gizmo';g.userData.editorOnly=true;
+  for(const [x,z,color] of [[1,0,0xd49b91],[-1,0,0xd49b91],[0,1,0x8cc5a4],[0,-1,0x8cc5a4]]){
+   const arrow=new THREE.ArrowHelper(new THREE.Vector3(x,0,z),new THREE.Vector3(),1.35,color,.32,.21);
+   arrow.traverse(n=>{if(n.material){n.material.depthTest=false;n.material.depthWrite=false;n.material.toneMapped=false;}n.renderOrder=999;});g.add(arrow);
+  }
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.20,.27,48),new THREE.MeshBasicMaterial({color:0xe5e9e4,side:THREE.DoubleSide,depthTest:false,depthWrite:false,toneMapped:false}));ring.rotation.x=-Math.PI/2;ring.renderOrder=1000;g.add(ring);scene.add(g);groundGizmoR171=g;
+ }
+ const g=groundGizmoR171;g.visible=visible;if(!visible)return;
+ const p=pos(ref.obj.x,ref.obj.y);g.position.set(p.x,terrainAt(p.x,p.z)+.13,p.z);
+ g.scale.setScalar(THREE.MathUtils.clamp(camera.position.distanceTo(g.position)*.065,.65,4));
+ g.updateMatrixWorld(true);
+}
+function gizmoHitR171(e){
+ if(!groundGizmoR171?.visible)return false;
+ mousePosition(e);raycaster.setFromCamera(mouse,camera);const p=raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-groundGizmoR171.position.y),new THREE.Vector3());
+ return !!p&&p.distanceTo(groundGizmoR171.position)<groundGizmoR171.scale.x*1.6;
+}
+function beginDirectTreeR171(e,key,mobile){
+ const ref=treeRefR171(key);if(!ref)return false;
+ const p=hitGround(e),base=p?fromWorld(p):{x:Number(ref.obj.x),y:Number(ref.obj.y)};
+ const d={id:e.pointerId,key,ref,mobile,sx:e.clientX,sy:e.clientY,x:Number(ref.obj.x),y:Number(ref.obj.y),base,ground:!!p,active:!mobile,moved:false,timer:null};
+ directTreeGestureR171=d;
+ const activate=()=>{if(directTreeGestureR171!==d)return;d.active=true;state.selected=key;state.mobileMoveMode=false;state.mobileObjectCollapsed=true;controls.enabled=false;state.drag=false;state.down=null;walkDrag=null;canvas.setPointerCapture?.(d.id);if(mobile){activateMobilePanel('scene');$('#selectedObjectDock').hidden=true;status('Двигайте дерево пальцем. Отпустите для сохранения.');}syncGroundGizmoR171();renderGate.invalidate();};
+ if(mobile){d.timer=setTimeout(activate,420);}else activate();
+ return true;
+}
+function moveDirectTreeR171(e){
+ const d=directTreeGestureR171;if(!d||d.id!==e.pointerId)return false;
+ if(!d.active){if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)>10){clearTimeout(d.timer);directTreeGestureR171=null;}return false;}
+ e.preventDefault();const p=hitGround(e);let x=d.x,y=d.y;
+ if(p&&d.ground){const q=fromWorld(p);x+=q.x-d.base.x;y+=q.y-d.base.y;}else{const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);right.y=0;right.normalize();const forward=camera.getWorldDirection(new THREE.Vector3());forward.y=0;if(forward.lengthSq()<.001)forward.set(0,0,-1);forward.normalize();const scale=Math.max(2,camera.position.distanceTo(pos(d.x,d.y)))*.0018;x+=(e.clientX-d.sx)*scale*right.x-(e.clientY-d.sy)*scale*forward.x;y+=(e.clientX-d.sx)*scale*right.z-(e.clientY-d.sy)*scale*forward.z;}
+ if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<3&&!d.moved)return true;
+ if(!inParcel({x,y},doc.site))return true;if(!d.moved){push();d.moved=true;}
+ applyWalkMoveR164(d.ref,x,y);syncGroundGizmoR171();return true;
+}
+function endDirectTreeR171(e){
+ const d=directTreeGestureR171;if(!d||d.id!==e.pointerId)return false;clearTimeout(d.timer);directTreeGestureR171=null;if(!d.active)return false;
+ state.down=null;state.drag=false;walkDrag=null;controls.enabled=state.view!=='walk';if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);
+ if(d.moved){save();rebuild();}renderProps();if(d.mobile){state.mobileMoveMode=false;state.mobileObjectCollapsed=true;activateMobilePanel('scene');$('#selectedObjectDock').hidden=true;}syncGroundGizmoR171();status(d.moved?'Дерево перемещено · отмена Ctrl+Z':'Дерево выбрано');return true;
+}
 function syncSelectedObjectDock(ref,label){
- syncWalkMoveR164(ref,label);
+ syncWalkMoveR164(ref,label);syncGroundGizmoR171();
  const dock=$('#selectedObjectDock'),title=$('#selectedObjectName'),del=$('#selectedObjectDelete');
  if(!dock||!title||!del)return;
  // Do not cover the main house with a huge 'protected' floating panel.
  const valid=Boolean(ref?.obj&&ref.type!=='house');
  // The large move pad must NEVER appear on tap-to-edit or while placing assets.
- dock.hidden=state.view==='walk'||!valid||state.r74LineupMove||(window.innerWidth<=850&&!state.mobileMoveMode);
+ dock.hidden=state.view==='walk'||!valid||state.r74LineupMove||(window.innerWidth<=850&&(!state.mobileMoveMode||!!treeRefR171(state.selected)));
  if(!ref?.obj)return;
  title.textContent=String(label||'Выбранный объект');
  const headerTitle=$('#mobileObjectEditorTitle');if(headerTitle)headerTitle.textContent=String(label||'Объект');
@@ -4503,6 +4549,8 @@ document.addEventListener('forma:render-job-status',event=>{
  * Restore the interactive renderer even if capture fails.
  */
 function captureHighQuality3dReference(){
+ if(groundGizmoR171)groundGizmoR171.visible=false;
+
  const previousRatio=renderer.getPixelRatio();
  const previousShadows=renderer.shadowMap.enabled;
  const prevBotanicalTiers=botanicalGroups.map(g=>[g,g.userData.botanicalCurrentLod]);
@@ -4815,10 +4863,11 @@ function addEvents(){
  if(document.body.dataset.presentation==='true')return;
  if(e.pointerType!=='mouse'){
   touchPointers.add(e.pointerId);
-  if(touchPointers.size>1){tapCancelled=true;return}
+  if(touchPointers.size>1){tapCancelled=true;if(directTreeGestureR171&&!directTreeGestureR171.active){clearTimeout(directTreeGestureR171.timer);directTreeGestureR171=null;}return}
  }
  tapCancelled=false;
  if(state.painting)return;
+ if(state.tool==='select'&&!motionR156.active&&!pathTraceR72?.active){if(e.pointerType==='mouse'&&e.button===0&&gizmoHitR171(e)&&beginDirectTreeR171(e,state.selected,false))return;if(e.pointerType!=='mouse'&&window.innerWidth<=850){const key=hitTreeOnMobile(e);if(treeRefR171(key))beginDirectTreeR171(e,key,true);}}
  if(state.view==='walk'){
   if(motionR156.active&&motionR156.mode==='path')return;
   if(e.pointerType==='mouse'){
@@ -4899,6 +4948,7 @@ function addEvents(){
  }
 };
 const move=e=>{
+ if(moveDirectTreeR171(e))return;
  if(document.body.dataset.presentation==='true'){renderGate.invalidate();return;}
  if(pondGestureR139){updatePondGestureR139(e);return;}
  if(e.pointerId===state.activePointer&&state.down&&
@@ -4976,6 +5026,7 @@ const move=e=>{
 const up=e=>{
  if(document.body.dataset.presentation==='true')return;
  touchPointers.delete(e.pointerId);
+ if(endDirectTreeR171(e))return;
  if(pondGestureR139){finishPondGestureR139(e);return;}
  if(e.pointerId!==state.activePointer||!state.down)return;
  if(state.view==='walk'){
@@ -5032,7 +5083,7 @@ const up=e=>{
 canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
  canvas.addEventListener('dblclick',e=>{if(desktopPondR139()&&pondModeR139==='polygon'&&pointMode.length>=3){e.preventDefault();finishContour();}});
  canvas.addEventListener('lostpointercapture',e=>{if(state.view==='walk'&&e.pointerType==='mouse'&&walkDrag?.id===e.pointerId){walkDrag=null;state.down=null;}});
- canvas.addEventListener('pointercancel',e=>{if(state.view==='walk'&&walkDrag?.id===e.pointerId)walkDrag=null;if(pondGestureR139?.id===e.pointerId)cancelPondGestureR139();touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;if(state.drag&&state.draggingMoved)save();state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
+ canvas.addEventListener('pointercancel',e=>{if(endDirectTreeR171(e)){touchPointers.delete(e.pointerId);return;}if(state.view==='walk'&&walkDrag?.id===e.pointerId)walkDrag=null;if(pondGestureR139?.id===e.pointerId)cancelPondGestureR139();touchPointers.delete(e.pointerId);tapCancelled=true;if(e.pointerId!==state.activePointer)return;stopTerrainHold();state.down=null;if(state.painting){if(brushStroke)finishBrush();else{state.painting=false;commitTerrainStroke()}}terrainStrokeLast=null;if(state.drag&&state.draggingMoved)save();state.drag=false;state.draggingMoved=false;state.painting=false;state.dragAnchor=null;state.dragPoints=null;state.dragOriginal=null;state.r74ScreenDrag=false;state.mobileMoveMode=false;window.FORMA_FINISH_TREE_MOVE_R74?.();controls.touches.ONE=state.tool==='terrain'?null:THREE.TOUCH.ROTATE;controls.enabled=state.view!=='walk';syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект')});
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerleave',()=>{if(document.pointerLockElement!==canvas)walkDrag=null;if(brushCursor)brushCursor.visible=false;hideLocalTerrainBrush();renderGate.invalidate()});
  // OrbitControls stays active while painting: it MUST NOT interpret left-drag
@@ -5260,7 +5311,7 @@ function animate(now=0){
   }
  }
  // Orbit controls own 2D/3D; walk mode is a separate ground-locked camera.
- const cameraMoved=walked||walkLookDirty||Boolean(controls?.enabled&&controls.update());walkLookDirty=false;if(cameraMoved)lastCameraMotionR106=now;
+ const cameraMoved=walked||walkLookDirty||Boolean(controls?.enabled&&controls.update());if(cameraMoved)syncGroundGizmoR171();walkLookDirty=false;if(cameraMoved)lastCameraMotionR106=now;
  if(!document.hidden&&now-lastTurfDetailAt>(phone?1400:350)&&(!phone||!turfDetail||now-lastCameraMotionR106>280||state.view==='walk'&&now-lastTurfDetailAt>2400)){lastTurfDetailAt=now;try{updateTurfDetail()}catch(error){invalidateTurfDetail();console.warn("Close turf detail unavailable",error)}}
  // Atmosphere never forces expensive continuous drawing on slow GPUs.
  // On stronger hardware both waves and clouds keep their gentle motion.
