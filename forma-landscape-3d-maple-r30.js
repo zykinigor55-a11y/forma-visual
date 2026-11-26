@@ -1,6 +1,7 @@
 /* FORMA R30 maple: a continuous textured trunk, tapered forks and individually
  * oriented leaf masks, no reliance on the old low-poly catalogue GLB. */
 import {mapleLeafMask} from './forma-landscape-3d-photo-foliage.js?v=R34';
+import {fuseWood} from './forma-landscape-3d-wood-union.js?v=R38';
 function random(s){let n=2166136261;for(const ch of String(s))n=Math.imul(n^ch.charCodeAt(0),16777619);return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const barkCache=new WeakMap();
@@ -81,8 +82,11 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const bendRng=random('maple branch curvature R33|'+instance.id+'|'+instance.variant);
  const crownRng=random('maple spatial crown R35|'+instance.id+'|'+instance.variant);
  const trunkR=clamp(h*.022,.035,.46),mobile=window.innerWidth<=850;
+ const fusionStep=Math.max(.007,trunkR*(mobile?.17:.135)),fusionPaths=[],replacedRanges=[];
  function tube(points,radii,sides,seed,collar=0,parentAxis=null){
   let first=pos.length/3,dist=0,prevU=null;const phase=seed*6.283;
+  const indexStart=idx.length;
+  let fuseEnd=0;
   for(let i=0;i<points.length;i++){
    const p=points[i],axis=points[Math.min(i+1,points.length-1)].clone().sub(points[Math.max(0,i-1)]).normalize();
    // Transport the frame along the curve: no sudden ring rotation when a limb bends past vertical.
@@ -111,6 +115,18 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
       if(parentRadial.lengthSq()>1e-8)junctionNormals.push({i:vi,n:parentRadial.normalize(),w:.62*(1-t/.16)**2});
     }
     if(i&&j<sides){const k=first+(i-1)*(sides+1)+j,l=k+sides+1;idx.push(k,k+1,l,k+1,l+1,l);}
+   }
+  }
+  // Only fuse sufficiently thick woody limbs. Keep detailed distal tubes and
+  // fine twigs, overlapping the taper below the visible fork.
+  if(sides>=12&&radii[0]>=fusionStep*1.6){
+   for(let i=1;i<points.length;i++){if(radii[i]<fusionStep*1.05)break;fuseEnd=i;}
+   if(fuseEnd>=3){
+    const fp=points.slice(0,fuseEnd+1),fr=radii.slice(0,fuseEnd+1).map((R,i)=>R*(1+collar*.65*Math.exp(-i/Math.max(1,points.length-1)*13)));
+    // A brief narrowing extension inside the original distal tube hides the cap.
+    if(fuseEnd+1<points.length){fp.push(points[fuseEnd+1]);fr.push(Math.max(fusionStep*.45,radii[fuseEnd+1]*.7));}
+    fusionPaths.push({points:fp,radii:fr,seed});
+    replacedRanges.push([indexStart,indexStart+Math.max(1,fuseEnd-1)*sides*6]);
    }
   }
  }
@@ -201,9 +217,12 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const normals=geo.attributes.normal;
  for(const j of junctionNormals){const n=V(normals.getX(j.i),normals.getY(j.i),normals.getZ(j.i)).lerp(j.n,j.w).normalize();normals.setXYZ(j.i,n.x,n.y,n.z);}
  for(const [a,b] of seamPairs){const n=V(normals.getX(a)+normals.getX(b),normals.getY(a)+normals.getY(b),normals.getZ(a)+normals.getZ(b)).normalize();normals.setXYZ(a,n.x,n.y,n.z);normals.setXYZ(b,n.x,n.y,n.z);}normals.needsUpdate=true;geo.computeBoundingSphere();
+ let union=null;try{union=fuseWood(T,fusionPaths,fusionStep);}catch(error){console.warn('FORMA R38 wood union fallback',error);}
+ if(union){const remaining=[];let cursor=0;for(const [a,b] of replacedRanges){for(let i=cursor;i<a;i++)remaining.push(idx[i]);cursor=b;}for(let i=cursor;i<idx.length;i++)remaining.push(idx[i]);geo.setIndex(remaining);}
  const maps=barkMaps(T),bark=new T.MeshStandardMaterial({vertexColors:true,map:maps.map,bumpMap:maps.normal?null:(maps.photoBump||maps.bump),normalMap:maps.normal,roughnessMap:maps.roughness||null,bumpScale:.019,normalScale:new T.Vector2(1.35,1.35),roughness:.91,metalness:0,envMapIntensity:.34});
  maps.materials.add(bark);bark.addEventListener('dispose',()=>maps.materials.delete(bark));
  const stem=new T.Mesh(geo,bark);stem.castShadow=true;stem.receiveShadow=true;stem.name='FORMA maple continuous textured forks';g.add(stem);
+ if(union){const fused=new T.Mesh(union,bark.clone());maps.materials.add(fused.material);fused.material.addEventListener('dispose',()=>maps.materials.delete(fused.material));fused.castShadow=true;fused.receiveShadow=true;fused.name='FORMA R38 fused woody skeleton';g.add(fused);}
  if(season!=='winter'&&leafPoints.length){
   const mask=mapleLeafMask(T);
   // Restrained diffuse fill approximates scattered light through thin leaves.
@@ -219,6 +238,6 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple spatial crown R35';
  g.userData.leafTriangles=leafGeo.index.count/3*leafPoints.length;g.add(mesh);
  }
- g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.woodTriangles=geo.index.count/3;g.userData.leafCount=season==='winter'?0:leafPoints.length;
+ g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.nativeMapleR38=true;g.userData.fusedWood=Boolean(union);g.userData.fusedPaths=union?fusionPaths.length:0;g.userData.woodTriangles=geo.index.count/3+(union?union.attributes.position.count/3:0);g.userData.leafCount=season==='winter'?0:leafPoints.length;
  return g;
 }
