@@ -70,7 +70,7 @@ function rowanLeafProxy(T,src,curved=false){
 // Preserve paths, water, buildings and authored grass height.
 function renderLawn(T,cfg,budget){
  if(!cfg||budget<3000)return null;
- const {bounds:b,contains,terrainAt,focus,profile:p}=cfg;
+ const {bounds:b,contains,terrainAt,focus,profile:p,visible=()=>true}=cfg;
  const width=b.x1-b.x0,depth=b.z1-b.z0,area=width*depth;
  if(!(area>0))return null;
  const pal=(p.palette||['#626e43','#778254','#81905f','#4f613b']).map(x=>new T.Color(x));
@@ -114,10 +114,13 @@ function renderLawn(T,cfg,budget){
   bi.push(k,k+1,k+2,k+1,k+3,k+2,k+2,k+3,k+4);count++;
  };
  const desired=Math.max(1,Math.floor(budget*.78/4*Math.min(1,density/1.85)));
- const nx=Math.max(1,Math.floor(Math.sqrt(desired*width/depth))),nz=Math.max(1,Math.floor(desired/nx));
- for(let j=0;j<nz;j++)for(let i=0;i<nx;i++)addTuft(b.x0+(i+rand())*width/nx,b.z0+(j+rand())*depth/nz);
+ const probe=16;let hits=0;for(let j=0;j<probe;j++)for(let i=0;i<probe;i++)if(visible(b.x0+(i+.5)*width/probe,b.z0+(j+.5)*depth/probe))hits++;
+ const share=Math.max(.12,hits/(probe*probe));
+ const grid=Math.ceil(desired/(share+(1-share)*.12));
+ const nx=Math.max(1,Math.floor(Math.sqrt(grid*width/depth))),nz=Math.max(1,Math.floor(grid/nx));
+ for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const x=b.x0+(i+rand())*width/nx,z=b.z0+(j+rand())*depth/nz;if(tufts>=desired)break;if(visible(x,z)||rand()<.12)addTuft(x,z);}
  const radius=Math.min(7,Math.sqrt(area)*.36),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
- for(let i=0;i<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1)addBlade(x,z);}
+ for(let i=0;i<near*5&&count<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1&&visible(x,z))addBlade(x,z);}
  const meshes=[];
  const build=(pos,col,idx,uv,mat,name)=>{
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('color',new T.Float32BufferAttribute(col,4));g.setAttribute('uv',new T.Float32BufferAttribute(uv||new Float32Array(pos.length/3*2),2));g.setIndex(idx);g.computeVertexNormals();
