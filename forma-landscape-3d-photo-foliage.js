@@ -151,7 +151,7 @@ export function mapleLeafMask(T){
  if(mapleLeaf)return mapleLeaf;
  const c=document.createElement('canvas');c.width=c.height=256;
  const ctx=c.getContext('2d');const outline=[[128,20],[145,78],[177,48],[171,101],[226,80],[199,136],[236,158],[163,182],[138,174],[128,220],[118,174],[93,182],[20,158],[57,136],[30,80],[85,101],[79,48],[111,78]];
- const grad=ctx.createLinearGradient(20,40,220,200);grad.addColorStop(0,'#7b9554');grad.addColorStop(.55,'#4d703c');grad.addColorStop(1,'#375739');ctx.fillStyle=grad;ctx.beginPath();outline.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();
+ const grad=ctx.createLinearGradient(20,40,220,200);grad.addColorStop(0,'#74865c');grad.addColorStop(.55,'#536b45');grad.addColorStop(1,'#3b5236');ctx.fillStyle=grad;ctx.beginPath();outline.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();
  ctx.save();ctx.clip();ctx.strokeStyle='rgba(190,203,142,.55)';ctx.lineWidth=1.5;
  for(const [x,y] of [[128,20],[177,48],[226,80],[236,158],[20,158],[30,80],[79,48]]){ctx.beginPath();ctx.moveTo(128,180);ctx.quadraticCurveTo(128+(x-128)*.5,y+42,x,y);ctx.stroke();}ctx.restore();
  // Secondary fine venation and leaf surface granularity within the cutout.
@@ -167,9 +167,20 @@ export function mapleLeafMask(T){
  img.onload=()=>{try{
   const temp=document.createElement('canvas');temp.width=temp.height=256;const t=temp.getContext('2d',{willReadFrequently:true});
   const scale=240/Math.max(img.width,img.height),w=img.width*scale,h=img.height*scale;t.drawImage(img,(256-w)/2,(256-h)/2,w,h);
-  const data=t.getImageData(0,0,256,256).data;let visible=0,clear=0;for(let i=3;i<data.length;i+=4){if(data[i]>180)visible++;if(data[i]<40)clear++;}
+  const pixels=t.getImageData(0,0,256,256),data=pixels.data;let visible=0,clear=0;for(let i=3;i<data.length;i+=4){if(data[i]>180)visible++;if(data[i]<40)clear++;}
   if(visible<2000||clear<3000)return;
-  ctx.clearRect(0,0,256,256);ctx.drawImage(temp,0,0);mapleLeaf.needsUpdate=true;mapleLeaf.userData.source='OpenGameArt CC0 vegetation_leaf_maple_01.png';mapleLeaf.userData.photoState='ready';window.dispatchEvent(new Event('forma-foliage-texture-ready'));
+  // Regrade the real leaf's RGB only. Retain every original alpha sample,
+  // photographed veins, blemishes and fine variations in luminance.
+  for(let i=0;i<data.length;i+=4){
+   if(data[i+3]===0)continue;
+   const R=data[i],G=data[i+1],B=data[i+2],L=.2126*R+.7152*G+.0722*B;
+   const natural=Math.max(18,Math.min(180,L*.88));
+   data[i]=natural*.81+(R-L)*.19;
+   data[i+1]=natural*1.04+(G-L)*.22;
+   data[i+2]=natural*.72+(B-L)*.17;
+  }
+  t.putImageData(pixels,0,0);
+  ctx.clearRect(0,0,256,256);ctx.drawImage(temp,0,0);mapleLeaf.needsUpdate=true;mapleLeaf.userData.source='OpenGameArt CC0 vegetation_leaf_maple_01.png · R34 neutral grade';mapleLeaf.userData.photoState='ready';window.dispatchEvent(new Event('forma-foliage-texture-ready'));
  }catch{}};
  const remote='https://opengameart.org/sites/default/files/vegetation_leaf_maple_01.png';
  img.onerror=()=>{if(img.src!==remote)img.src=remote;else mapleLeaf.userData.photoState='unavailable';};
