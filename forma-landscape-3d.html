@@ -561,13 +561,20 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 #tools button.active{background:linear-gradient(155deg,#45584f,#303e38)!important;border-color:#829d8e!important}
 #tools button .tool-name{font-size:10px;font-weight:550;letter-spacing:0;max-width:100%;line-height:1.2}
 }
+</style><style id="forma-navigation-r169">
+@media(min-width:851px){
+#formaPresentationOpen{right:14px;bottom:18px;z-index:10;font-size:11px;min-height:34px;padding:6px 10px;max-width:130px}
+#formaMainMenuExit{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:36px;padding:6px 10px;box-sizing:border-box;border:1px solid #596764;border-radius:8px;background:#30393a;color:#e2e8e5;font-size:11px;font-weight:600;white-space:nowrap;text-decoration:none}
+#formaMainMenuExit:hover{background:#414e4b;border-color:#82968a}
+}
+@media(max-width:850px){#formaMainMenuExit{display:none}}
 </style></head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R168</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R169</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
- <div class="header-right">
+ <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню">← Главное меню</a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button><button id="graphicsR105" type="button" title="Качество 3D-графики">Графика</button><button id="pathTraceR72Button" type="button" title="Выбрать способ рендера">Рендер</button><button id="motionOpenR156" type="button" title="Запишите движение камеры и подготовьте референсы для Seedance" style="background:#314e42;border-color:#7da48e;color:#e8f4ed">▶ MOTION · Анимация</button>
   <details id="moreR75" class="forma-more-r75"><summary aria-label="Дополнительные разделы">⋯</summary><nav><a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива</a>
@@ -602,7 +609,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  <div id="compositionDownloads"></div>
 </section>
 <div id="formaPresentationBar" hidden><button type="button" id="formaPhotoFrame">Ракурс</button><button type="button" id="formaPhotoSave">Фото PNG</button><button type="button" id="formaPresentationClose">✕ Редактор</button></div>
-<button type="button" id="formaPresentationOpen" aria-label="Чистый презентационный вид">Вид</button>
+<button type="button" id="formaPresentationOpen" aria-label="Чистый презентационный вид" title="Скрыть интерфейс и показать только 3D-сцену">Чистый вид</button>
 <button type="button" id="sceneCameraCycle" aria-label="Ракурсы камеры: общий дом, ближе, весь участок" title="Один тап — дом, второй — ближе, третий — весь участок">⌖ К дому</button>
 <button type="button" id="sceneClimateButton" aria-controls="sceneClimatePanel" aria-expanded="false" aria-label="Открыть настройки солнца, времени суток и погоды">☀ Солнце и погода</button>
 <section id="sceneClimatePanel" class="scene-climate-panel" data-climate-tab="sun" role="region" aria-label="Настройки солнца и погоды" hidden>
