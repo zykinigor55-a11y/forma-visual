@@ -505,14 +505,14 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R67</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R68</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button>
   <a href="forma-landscape-3d.html?scene=willow-r51&v=51" title="Отдельная тестовая сцена ивы">Ива · тест</a>
   <a href="forma-landscape-3d.html?scene=birch-r56&v=56" title="Отдельная тестовая сцена берёзы">Берёза · тест</a>
-  <a href="forma-landscape-3d.html?scene=oak-r67&v=67" title="Отдельная тестовая сцена дуба">Дуб · тест</a>
+  <a href="forma-landscape-3d.html?scene=oak-r68&v=68" title="Отдельная тестовая сцена дуба">Дуб · тест</a>
   <a href="forma-preview.html?tool=landscape-project">← К плану</a>
  </div>
 </header>
@@ -815,7 +815,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
-import {createNaturalOak,oakStage} from './forma-landscape-3d-oak-r67.js?v=R67';
+import {createNaturalOak,oakStage} from './forma-landscape-3d-oak-r68.js?v=R68';
 import {normalizeWillowGrowth,willowDimensions,willowGrowthMarkup,mountWillowGrowth} from './forma-landscape-willow-growth.js?v=R50';
 import {normalizeMapleGrowth,mapleDimensions,mapleGrowthMarkup,mountMapleGrowth} from './forma-landscape-maple-growth.js?v=R39';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
@@ -871,7 +871,7 @@ window.addEventListener('forma-house-pbr-ready',()=>{
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
 const treeTestScene=new URLSearchParams(location.search).get('scene');
 const birchTestMode=['birch-test','birch-r52','birch-r53','birch-r54','birch-r55','birch-r56'].includes(treeTestScene);
-const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67'].includes(treeTestScene);
+const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63','oak-r64','oak-r65','oak-r66','oak-r67','oak-r68'].includes(treeTestScene);
 const treeLineupMode=oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const pid=oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
@@ -1113,7 +1113,7 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();d.title=oakTestMode?'FORMA · Дуб черешчатый · R67':birchTestMode?'FORMA · Берёза повислая · R56':'FORMA · Ива плакучая · R51';
+ const d=freshProject();d.title=oakTestMode?'FORMA · Дуб черешчатый · R68':birchTestMode?'FORMA · Берёза повислая · R56':'FORMA · Ива плакучая · R51';
  d.site={width:32,height:32,orientation:0,boundary:null};
  d.objects=oakTestMode?[{id:'oak-test',catalogId:'oak',type:'trees',x:16,y:16,height:17,diameter:15,rotation:0,variant:1,oak:{age:60}}]:birchTestMode?[{id:'birch-test',catalogId:'birch',type:'trees',x:16,y:16,height:16,diameter:9,rotation:0,variant:1,birch:{age:35}}]:[{id:'willow-test',catalogId:'willow',type:'trees',x:16,y:16,height:11,diameter:11,rotation:0,variant:1,willow:{age:35}}];
  d.buildings=[];const normalized=normalizeProject(d);if(birchTestMode)normalized.objects[0].birch={age:35};if(oakTestMode)normalized.objects[0].oak={age:60};return normalized;
@@ -1123,7 +1123,7 @@ function setupLineupNavigation(){
  panel.style.cssText='position:absolute;z-index:15;bottom:76px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;width:min(380px,94%);max-width:94%;padding:9px;background:#24282df5;border:1px solid #777;border-radius:9px;color:#eee';
  panel.innerHTML='<div style="width:100%;font-size:10px;letter-spacing:1.5px;text-align:center;color:#bfc1c2">ВОЗРАСТ ИВЫ · R51</div><div style="width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px"><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="10">Молодая</button><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="35">Взрослая</button><button style="min-height:44px;padding:5px 2px;font-weight:600;border-radius:8px;white-space:nowrap" type="button" data-test-age="75">Старая</button></div><a href="./forma-landscape-3d.html" style="color:#e8d1a9;padding:6px">Проект</a>';
  if(birchTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','БЕРЁЗА ПОВИСЛАЯ · R56');
- if(oakTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','ДУБ ЧЕРЕШЧАТЫЙ · R67').replace('data-test-age="10">Молодая','data-test-age="15">Молодой').replace('data-test-age="35">Взрослая','data-test-age="60">Взрослый').replace('data-test-age="75">Старая','data-test-age="150">Вековой');
+ if(oakTestMode)panel.innerHTML=panel.innerHTML.replace('ВОЗРАСТ ИВЫ · R51','ДУБ ЧЕРЕШЧАТЫЙ · R68').replace('data-test-age="10">Молодая','data-test-age="15">Молодой').replace('data-test-age="35">Взрослая','data-test-age="60">Взрослый').replace('data-test-age="75">Старая','data-test-age="150">Вековой');
  document.querySelector('main').append(panel);
  function view(mode){
   const o=doc.objects.find(o=>o.catalogId===(oakTestMode?'oak':birchTestMode?'birch':'willow'));if(!o)return;
@@ -1165,7 +1165,7 @@ function initialize(){
  });
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
- if(treeLineupMode){doc=makeTreeLineup();extra=[];if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R67';}
+ if(treeLineupMode){doc=makeTreeLineup();extra=[];if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(oakTestMode)$('#terrainBuildTag').textContent='R68';}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
  // Existing 48x48 saved projects are bilinearly remapped to 96x96.
