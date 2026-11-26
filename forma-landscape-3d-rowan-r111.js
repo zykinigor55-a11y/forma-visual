@@ -34,7 +34,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
   const mid=start.clone().lerp(end,.48);mid.y-=h*(.008+.035*rand());mid.x+=Math.sin(ang)*r*(rand()-.5)*.12;mid.z-=Math.cos(ang)*r*(rand()-.5)*.12;
   const br=trunkR*(.13+.22*(1-t))*(.65+.6*rand());
   tube([start,mid,end],[br,br*.52,.004],mobile?6:9);
-  const shoots=mobile?13:20;
+  const shoots=mobile?12:17;
   for(let j=0;j<shoots;j++){
    const f=.28+.72*(j+.4)/shoots,anchor= f<.48?start.clone().lerp(mid,f/.48):mid.clone().lerp(end,(f-.48)/.52);
    const side=(j%2?1:-1),a=ang+side*(.40+.65*rand());
@@ -42,7 +42,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
    const tip=anchor.clone().add(V(Math.cos(a)*len,h*(.035+.055*rand()),Math.sin(a)*len));
    const elbow=anchor.clone().lerp(tip,.53);elbow.y-=len*.08;
    tube([anchor,elbow,tip],[br*.22,.006,.0018],mobile?4:6);
-   const n=mobile?12:19;
+   const n=mobile?11:16;
    for(let k=0;k<n;k++){
     const u=.16+.84*k/(n-1),p=anchor.clone().lerp(tip,u),a2=a+(k%2?1:-1)*(1.05+.55*rand());
     const direction=V(Math.cos(a2),-.10+.42*rand(),Math.sin(a2)).normalize();
@@ -50,7 +50,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
     leafRows.push([p,direction,1.04+rand()*.48,rand()]);
     // Secondary leafy shoots populate the crown volume, not just a single branch line.
     const spread=Math.min(.36,r*.14)*(.45+.55*u);
-    for(let m=0;m<(mobile?2:4);m++){
+    for(let m=0;m<(mobile?2:3);m++){
       const aa=a2+m*2.399963+rand()*.9,dir=V(Math.cos(aa),-.32+rand()*.68,Math.sin(aa)).normalize();
       const pp=p.clone().add(V(Math.cos(aa)*spread*(.55+.45*rand()),(rand()-.4)*spread,Math.sin(aa)*spread*(.55+.45*rand())));
       leafRows.push([pp,dir,.88+rand()*.57,rand()]);
@@ -80,7 +80,8 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
   // One compound leaf with 13 narrow tapered leaflets on a shared rachis.
   const p=[],c=[],idx=[];
   function leaflet(x,z,angle,L,W){
-   const dx=Math.cos(angle),dz=Math.sin(angle),sx=-dz,sz=dx,base=p.length/3,rows=mobile?2:4;
+   const dx=Math.cos(angle),dz=Math.sin(angle),sx=-dz,sz=dx,base=p.length/3,rows=3;
+   if(mobile){p.push(x,0,z,x+dx*L*.47+sx*W,.003,z+dz*L*.47+sz*W,x+dx*L*.47-sx*W,.003,z+dz*L*.47-sz*W,x+dx*L,0,z+dz*L);c.push(.85,.85,.85,1,1,1,.96,.96,.96,.9,.9,.9);idx.push(base,base+1,base+2,base+1,base+3,base+2);return;}
    for(let j=0;j<=rows;j++){const t=j/rows,w=W*Math.pow(Math.sin(Math.PI*t),.7)*(j%2?.95:1);for(const k of [-1,0,1]){if(mobile&&k===0)continue;p.push(x+dx*L*t+sx*w*k,.004*Math.sin(t*Math.PI)-Math.abs(k)*w*.24,z+dz*L*t+sz*w*k);const tone=k===0?1:.88;c.push(tone,tone,tone);}}
    const cols=mobile?2:3;for(let j=0;j<rows;j++)for(let k=0;k<cols-1;k++){const a=base+j*cols+k,b=a+cols;idx.push(a,b,a+1,a+1,b,b+1);}
   }
@@ -89,7 +90,7 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
   const q=p.length/3;p.push(-.0008,0,0,.0008,0,0,-.0005,0,.195,.0005,0,.195);c.push(.6,.66,.48,.6,.66,.48,.6,.66,.48,.6,.66,.48);idx.push(q,q+1,q+2,q+1,q+3,q+2);
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('color',new T.Float32BufferAttribute(c,3));g.setIndex(idx);g.computeVertexNormals();
   const mat=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.78,envMapIntensity:.35});
-  const mesh=new T.InstancedMesh(g,mat,leafRows.length);mesh.name='rowan-pinnate-foliage';mesh.castShadow=true;mesh.receiveShadow=true;
+  const mesh=new T.InstancedMesh(g,mat,leafRows.length);mesh.name='rowan-pinnate-foliage';mesh.castShadow=!mobile;mesh.receiveShadow=true;
   const obj=new T.Object3D(),color=new T.Color(),palette=(season==='autumn'?['#aa743d','#bd9a48','#9a633a','#777a42']:['#526b3f','#627c48','#46633a','#758b51']).map(x=>new T.Color(x));
   leafRows.forEach(([p,d,s,t],i)=>{obj.position.copy(p);obj.quaternion.setFromUnitVectors(V(0,0,1),d);obj.rotateZ((t-.5)*1.3);obj.scale.setScalar(s);obj.updateMatrix();mesh.setMatrixAt(i,obj.matrix);mesh.setColorAt(i,color.copy(palette[Math.floor(t*palette.length)]).multiplyScalar(.92+t*.16));});mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();root.add(mesh);
  }
