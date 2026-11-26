@@ -2,7 +2,7 @@
  * oriented leaf masks, no reliance on the old low-poly catalogue GLB. */
 import {mapleLeafMask} from './forma-landscape-3d-photo-foliage.js?v=R34';
 import {fuseWood} from './forma-landscape-3d-wood-union.js?v=R38';
-import {mapleProfile} from './forma-landscape-maple-ageProfile.js?v=R39';
+import {mapleProfile} from './forma-landscape-maple-growth.js?v=R39';
 function random(s){let n=2166136261;for(const ch of String(s))n=Math.imul(n^ch.charCodeAt(0),16777619);return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const barkCache=new WeakMap();
