@@ -4,17 +4,19 @@
  */
 const isMobile=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const nextFrame=()=>new Promise(r=>requestAnimationFrame(r));
-function makeSky(T,source){
+function makeSky(T,source,atmosphere={}){
  const w=512,h=256,data=new Float32Array(w*h*4);
- const sun=source.getObjectByName('sun'),day=(sun?.intensity||0)>.2;
- const zen=new T.Color(day?'#7297bf':'#26374f'),hor=new T.Color(day?'#d3e0e7':'#586a80'),ground=new T.Color(day?'#777b67':'#303b32');
+ const sun=source.getObjectByName('sun'),time=atmosphere.time||'day',weather=atmosphere.weather||'sunny';
+ const day=!['night','blue-hour'].includes(time),cloudy=['overcast','rain','fog','snow'].includes(weather);
+ const zen=new T.Color(!day?'#26374f':cloudy?'#a2adb6':'#7297bf'),hor=new T.Color(!day?'#586a80':cloudy?'#c0c5c7':time==='evening'?'#e1c5a9':'#d3e0e7'),ground=new T.Color(day?'#777b67':'#303b32');
  const c=new T.Color();
  for(let y=0;y<h;y++){const a=Math.sin(((y+.5)/h-.5)*Math.PI);c.copy(hor).lerp(a>0?zen:ground,Math.pow(Math.abs(a),.55));for(let x=0;x<w;x++){const k=(y*w+x)*4;data[k]=c.r;data[k+1]=c.g;data[k+2]=c.b;data[k+3]=1;}}
  const t=new T.DataTexture(data,w,h,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;return t;
 }
-async function loadSkyR73(T,source){
- const sun=source.getObjectByName('sun');
- if(!sun||sun.intensity<.3)return {texture:makeSky(T,source),label:'Процедурное небо (ночь)'};
+async function loadSkyR73(T,source,atmosphere={}){
+ const sun=source.getObjectByName('sun'),time=atmosphere.time||'day',weather=atmosphere.weather||'sunny';
+ const diffuse=['overcast','rain','fog','snow'].includes(weather);
+ if(!sun||sun.intensity<.3||time!=='day'||diffuse)return {texture:makeSky(T,source,atmosphere),label:'Небо по времени суток и погоде',photographic:false};
  const id='kloppenheim_03_puresky',res=isMobile()?'1k':'2k',file=id+'_'+res+'.hdr';
  try{
   const {RGBELoader}=await import('three/addons/loaders/RGBELoader.js');
@@ -23,12 +25,12 @@ async function loadSkyR73(T,source){
   const d=t.image.data;let avg=0,count=0;
   for(let i=0;i<d.length;i+=4){const y=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];if(Number.isFinite(y)&&y>0&&y<25){avg+=y;count++;}}
   if(!count)throw Error('HDRI has no valid radiance');
-  const gain=.72/Math.max(.04,avg/count);
+  const gain=.52/Math.max(.04,avg/count);
   // Preserve cloud radiance contrast; limit direct solar hotspots because a separate area light supplies direct sunlight.
-  for(let i=0;i<d.length;i+=4){const y=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])*gain;const scale=gain*Math.min(1,3.5/Math.max(.00001,y));for(let j=0;j<3;j++)d[i+j]=Math.max(0,Number.isFinite(d[i+j])?d[i+j]*scale:0);d[i+3]=1;}
+  for(let i=0;i<d.length;i+=4){const y=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])*gain;const scale=gain*Math.min(1,2.4/Math.max(.00001,y));for(let j=0;j<3;j++)d[i+j]=Math.max(0,Number.isFinite(d[i+j])?d[i+j]*scale:0);d[i+3]=1;}
   t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.needsUpdate=true;
-  return {texture:t,label:'Poly Haven HDRI '+res};
- }catch(e){console.warn('R73 HDRI fallback',e);return {texture:makeSky(T,source),label:'Процедурное HDRI (резерв)'};}
+  return {texture:t,label:'Poly Haven HDRI '+res,photographic:true};
+ }catch(e){console.warn('R73 HDRI fallback',e);return {texture:makeSky(T,source,atmosphere),label:'Процедурное HDRI (резерв)',photographic:false};}
 }
 function bakeInstances(T,o,keep=o.count,src=o.geometry){
  const p=src.attributes.position,n=src.attributes.normal,uv=src.attributes.uv,col=src.attributes.color;
@@ -62,7 +64,7 @@ function rowanLeafProxy(T,src){
  const q=pos.length/3;for(let i=p.count-4;i<p.count;i++)add(V(i),uv.getX(i),uv.getY(i),i);idx.push(q,q+1,q+2,q+1,q+3,q+2);
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(tex,2));g.setAttribute('color',new T.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();return g;
 }
-function snapshot(T,source,root,camera,sky,profile){
+function snapshot(T,source,root,camera,sky,profile,atmosphere={}){
  source.updateMatrixWorld(true);camera.updateMatrixWorld(true);
  const scene=new T.Scene(),geometries=[],materials=[],materialCache=new Map();
  let triangles=0,skipped=0,instances=0,reduced=0;
@@ -110,17 +112,33 @@ function snapshot(T,source,root,camera,sky,profile){
   const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh)):cloneMat(o.material,!!o.isInstancedMesh);
   const mesh=new T.Mesh(g,m);mesh.matrixAutoUpdate=false;mesh.matrix.copy(o.matrixWorld);mesh.name=o.name;scene.add(mesh);
  }
+ // Use the authored world-space sun direction. The tracer supports directional
+ // lights directly, so there is no arbitrary finite-distance area-light surrogate.
+ // Do not duplicate viewport fill: GI and the environment already provide bounce.
+ const time=atmosphere.time||'day',weather=atmosphere.weather||'sunny';
+ const cloudy=['overcast','rain','fog','snow'].includes(weather),night=['night','blue-hour'].includes(time);
  source.traverseVisible(o=>{
   if(!o.isDirectionalLight&&!o.isPointLight&&!o.isSpotLight&&!o.isRectAreaLight)return;
-  const l=o.name==='sun'&&o.isDirectionalLight&&o.intensity>.3?(()=>{const direction=o.position.clone().sub(o.target.position).normalize(),distance=70,size=2.8,light=new T.RectAreaLight(o.color,o.intensity*distance*distance/(size*size),size,size);light.position.copy(direction.multiplyScalar(distance)).add(o.target.position);light.lookAt(o.target.position);scene.add(light);return null;})():o.clone();if(!l)return;l.position.setFromMatrixPosition(o.matrixWorld);l.quaternion.copy(o.getWorldQuaternion(new T.Quaternion()));if(o.target){l.target=new T.Object3D();l.target.position.setFromMatrixPosition(o.target.matrixWorld);scene.add(l.target);}scene.add(l);
+  if(/forma-(sky|bounced)-fill/i.test(o.name))return;
+  if(o.name==='sun'&&o.isDirectionalLight&&night)return;
+  const l=o.clone();l.position.setFromMatrixPosition(o.matrixWorld);l.quaternion.copy(o.getWorldQuaternion(new T.Quaternion()));
+  if(o.target){l.target=new T.Object3D();l.target.position.setFromMatrixPosition(o.target.matrixWorld);scene.add(l.target);}
+  // Retain the user's solar strength and colour; cloudy weather already lowers
+  // editor sun intensity. Further attenuate the direct component for diffuse sky.
+  if(o.name==='sun'&&o.isDirectionalLight)l.intensity*=cloudy?.35:1.0;
+  scene.add(l);
  });
- const env=sky.texture;scene.environment=env;scene.background=env;scene.environmentIntensity=.82;scene.backgroundIntensity=1;
+ const env=sky.texture;scene.environment=env;scene.background=env;
+ // Decouple visible sky brightness from irradiance to avoid washing out surfaces.
+ scene.environmentIntensity=night?(time==='night'?.32:.62):cloudy?1.0:sky.photographic?.68:.82;
+ scene.backgroundIntensity=sky.photographic?1.25:night?.85:1.0;
+ scene.updateMatrixWorld(true);
  const cam=camera.clone();cam.updateMatrixWorld(true);
  for(const g of ownedProxies)g.dispose();ownedProxies.length=0;
  return {scene,cam,triangles,instances,skipped,reduced,simplified,dispose(){for(const g of geometries)g.dispose();for(const m of materials)m.dispose();env.dispose();}};
  }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();throw e;}
 }
-export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',onClose=()=>{},onFailure=()=>{}}){
+export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},onClose=()=>{},onFailure=()=>{}}){
  let alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null;
  const oldRatio=renderer.getPixelRatio(),oldTone=renderer.toneMapping,oldExposure=renderer.toneMappingExposure;
  const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
@@ -135,21 +153,21 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building)cleanup();renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
- save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R75.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
- function error(e){loading=false;finished=true;console.error('FORMA GPU R125',e);const reason=e?.message||String(e);close();onFailure(reason);}
+ save.onclick=()=>{const download=b=>{if(!b)return;const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='FORMA-GPU-R126.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);};if(resultBlob)download(resultBlob);else if(pt?.samples>=1&&!renderer.getContext().isContextLost())canvas.toBlob(download,'image/png');};
+ function error(e){loading=false;finished=true;console.error('FORMA GPU R126',e);const reason=e?.message||String(e);close();onFailure(reason);}
  const handle={close,get active(){return alive;},get samples(){return pt?.samples||0;}};
  (async()=>{try{
   if(!renderer.capabilities.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))throw Error('GPU не поддерживает необходимые WebGL2 HDR-буферы');
   const {WebGLPathTracer,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(!alive)return;
-  msg.textContent='Загрузка фотографического HDRI…';sky=await loadSkyR73(T,scene);if(!alive){sky.texture.dispose();return;}
+  msg.textContent='Загрузка фотографического HDRI…';sky=await loadSkyR73(T,scene,atmosphere);if(!alive){sky.texture.dispose();return;}
   msg.textContent='Подготовка полигонов и материалов…';await nextFrame();if(!alive)return;
-  snap=snapshot(T,scene,root,camera,sky,profile);
+  snap=snapshot(T,scene,root,camera,sky,profile,atmosphere);
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   building=true;
   pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?6:4;pt.transmissiveBounces=profile==='high'?12:8;pt.multipleImportanceSampling=true;pt.tiles.set(2,2);pt.renderScale=profile==='high'?1:.55;pt.textureSize.set(profile==='high'?1024:512,profile==='high'?1024:512);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
-  renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.5,threshold:.045,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
+  renderer.setPixelRatio(Math.min(oldRatio,profile==='high'?1:0.85));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
-  renderer.toneMapping=T.ACESFilmicToneMapping;loading=false;
+  renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.65,Math.min(1.35,oldExposure||1));loading=false;
   function tick(){if(!alive||finished)return;try{
    if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
    msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'');
