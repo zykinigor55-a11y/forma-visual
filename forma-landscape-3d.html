@@ -505,7 +505,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R24</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R25</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -800,6 +800,7 @@ import {COMPOSITION_ROLES,compositionCandidates} from './forma-landscape-composi
 import {CATALOG, TREE_HEIGHT_M, freshProject, normalizeProject, coordinateSummary, pavingSegments, lineLength, poolDimensions, poolFootprint} from './forma-landscape-project-core.js?v=pools-P32';
 import {heightAt, inParcel, terrainTriangles,squareTerrainSide,squareTerrainTriangles} from './forma-landscape-3d-geometry.js?v=square-ground-v2-20261126';
 import {HOUSE_PRESETS,housePreset,createArchitecturalBuilding} from './forma-landscape-3d-buildings.js?v=R24';
+import {createDetailedFir,woodTexture} from './forma-landscape-3d-fir-r25.js?v=R25';
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R23';
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js?v=R22';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
@@ -890,7 +891,7 @@ function treeAssetInfo(o){
   triangles+=Math.floor(count/3)*(n.isInstancedMesh?n.count:1);
   if((Array.isArray(n.material)?n.material:[n.material]).some(m=>m&&(m.alphaTest>0||m.transparent)))foliageMeshes++;
  });
- const status=real?'GLB':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
+ const status=real?'GLB':group?.userData?.firNativeR25?'Пихта · детальная 3D-геометрия':bundledModelFailures.has(species)?'Ошибка загрузки':bundledModelLoading.has(species)?'Загружается':meshes?'Процедурная геометрия':'Нет модели';
  const file=real?(source?'Импортированная пользователем GLB':bundled?.userData?.formaAssetPath||'Путь не зарегистрирован'):'—';
  return {species,name:catalog(species)?.name||species,status,file,meshes,triangles,foliageMeshes};
 }
@@ -907,7 +908,7 @@ function treeModelDiagnostics(){
  return doc?.objects.filter(o=>catalog(o.catalogId)?.group==='trees').map(o=>{
   const group=pickables.find(g=>g.userData.key==='object:'+o.id);
   const real=Boolean(group?.userData?.realGlb);
-  const state=real?'glb':bundledModelFailures.has(o.catalogId)?'glb-error':
+  const state=real?'glb':group?.userData?.firNativeR25?'native-fir':bundledModelFailures.has(o.catalogId)?'glb-error':
    bundledModelLoading.has(o.catalogId)?'glb-loading':
    group?.children.some(child=>child.isMesh&&!child.userData.selectionProxy)?'procedural':'empty';
   let foliageMeshes=0,foliageMaterials=0;
@@ -1827,18 +1828,19 @@ function drawObject(o,entry,key){
   // Keep the original asset at every planting density; adapt framebuffer cost instead.
   if(o.catalogId==='pine'&&!imported)loadMatureScotsPine();
   if(MATURE_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
-  if(POLY_HAVEN_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
+  if(o.catalogId!=='ph-fir-sapling'&&POLY_HAVEN_TREE_MODELS[o.catalogId]&&!imported)loadCuratedAdultTree(o.catalogId);
    if(o.catalogId!=='spirea'&&SHRUB_3D_MODELS[o.catalogId]&&!imported&&(['thuja-globe','boxwood'].includes(o.catalogId)||doc.atmosphere.season==='summer'))loadCuratedAdultTree(o.catalogId);
   // Adult CC0 pine replaces sparse procedural shoots; user GLB has priority.
   const bundledPine=o.catalogId==='pine'?
    bundledModelSources.get('pine'):null;
   const bundledAdult=(MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId])&&!seasonalNative?bundledModelSources.get(o.catalogId):null;
   // The catalogue explicitly labels the stock spirea GLB as stylized, not botanically verified. Prefer the native finer twig/leaf construction unless the user imported a model.
-  const source=imported||bundledPine||(o.catalogId==='spirea'?null:bundledAdult)||null;
-  const waitingForReal=o.catalogId!=='spirea'&&!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
+  const nativeFir=o.catalogId==='ph-fir-sapling'&&!imported;
+  const source=imported||bundledPine||((o.catalogId==='spirea'||nativeFir)?null:bundledAdult)||null;
+  const waitingForReal=!nativeFir&&o.catalogId!=='spirea'&&!source&&!seasonalNative&&Boolean(o.catalogId==='pine'||MATURE_TREE_MODELS[o.catalogId]||SHRUB_3D_MODELS[o.catalogId]||POLY_HAVEN_TREE_MODELS[o.catalogId]);
   // While the GLB loads retain the metric pickable. On confirmed failure use
   // a temporary native preview where available, without replacing the saved GLB reference.
-  g=source?makeRealVegetation(THREE,source,o,{
+  g=nativeFir?createDetailedFir(THREE,o):source?makeRealVegetation(THREE,source,o,{
    shareGeometry:!!(bundledPine||bundledAdult)&&!imported,
    canopyCopies:0,
    pineGrowth:o.catalogId==='pine'?normalizePineGrowth(o.pine):null,
@@ -1963,6 +1965,17 @@ function drawExtra(o){
   const source=bundledModelSources.get(o.type);
   if(source){
    const p=pos(o.x||0,o.y||0),g=makeRealProp(THREE,source,{width});
+   // Keep original PBR maps; repair only identifiable untextured wooden parts.
+   if(/table|outdoor-dining/i.test(o.type))g.traverse(node=>{
+    if(!node.isMesh||!node.geometry?.attributes?.uv)return;
+    for(const m of (Array.isArray(node.material)?node.material:[node.material])){
+     if(!m||m.map||!m.isMeshStandardMaterial||m.metalness>.3)continue;
+     const name=(String(m.name)+' '+String(node.name)).toLowerCase();
+     const c=m.color,woodlike=c&&c.r>c.b*1.25&&c.g>c.b*1.08;
+     if(!/wood|timber|oak|plank|teak|pine|walnut/.test(name)&&!woodlike)continue;
+     const map=woodTexture(THREE,'table');m.map=map;m.bumpMap=map;m.bumpScale=.004;m.color.set('#ffffff');m.roughness=.83;m.metalness=0;m.needsUpdate=true;
+    }
+   });
    g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;
    // Imported/extra distant pine or spruce gets the SAME selected snow
    // as foreground species, without altering this GLB mesh or its transform.
@@ -1990,7 +2003,7 @@ function drawExtra(o){
   if(o.type==='pergola'||o.type==='gazebo'){for(const x of [-1.4,1.4])for(const z of [-1.4,1.4]){const post=mesh(new THREE.BoxGeometry(.14,2.7,.14),material('#8a7155'));post.position.set(x,1.35,z);g.add(post)}const canopy=mesh(new THREE.BoxGeometry(3.2,.2,3.2),material('#987b61'));canopy.position.y=2.8;g.add(canopy)}
   else if(o.type==='bench'){const base=mesh(new THREE.BoxGeometry(1.9,.15,.65),material('#a08a70'));base.position.y=.55;g.add(base);const back=mesh(new THREE.BoxGeometry(1.9,.9,.14),material('#a08a70'));back.position.set(0,1,-.32);g.add(back)}
   else if(['fern','wild-shrub','periwinkle'].includes(o.type)){const d=PROP_WIDTH_M[o.type]||1,h=o.type==='wild-shrub'?1.4:o.type==='fern'?.9:.35;g.add(createVegetation(THREE,{catalogId:o.type==='fern'?'spirea':'boxwood',id:o.id,diameter:d,height:h},{quality:.25}));}
-  else if(o.type==='table'||o.type==='outdoor-dining'||o.type==='picnic-table'){const tabletop=mesh(new THREE.CylinderGeometry(.9,.9,.12,16),material('#ac947b'));tabletop.position.y=.82;g.add(tabletop);const stem=mesh(new THREE.CylinderGeometry(.14,.14,.82,10),material('#827360'));stem.position.y=.4;g.add(stem)}
+  else if(o.type==='table'||o.type==='outdoor-dining'||o.type==='picnic-table'){const tex=woodTexture(THREE,'table'),woodMat=new THREE.MeshStandardMaterial({map:tex,bumpMap:tex,bumpScale:.005,roughness:.83,metalness:0});const tabletop=mesh(new THREE.CylinderGeometry(.9,.9,.12,16),woodMat);tabletop.position.y=.82;g.add(tabletop);const stem=mesh(new THREE.CylinderGeometry(.14,.14,.82,10),material('#827360'));stem.position.y=.4;g.add(stem)}
   else if(o.type==='car'){const car=mesh(new THREE.BoxGeometry(1.8,1.2,4.2),material('#c1c8ca',.25,.2));car.position.y=.68;g.add(car);const roof=mesh(new THREE.BoxGeometry(1.45,.55,2.1),material('#53656d',.3,.3));roof.position.y=1.52;g.add(roof)}
  }
  if(o.type!=='fence'){g.position.set(p.x,terrainAt(p.x,p.z),p.z);g.rotation.y=(o.rotation||0)*Math.PI/180;}mark(g,'extra:'+o.id);root.add(g);
