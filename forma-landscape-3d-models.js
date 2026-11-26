@@ -110,6 +110,50 @@ export function calibrateBroadleafMaterial(T,m,species){
  m.customProgramCacheKey=()=>priorKey()+'|forma-broadleaf-r19-'+(leaf?'leaf':microBark?'bark-micro':'bark');
  m.needsUpdate=true;return m;
 }
+// R29: stock broadleaf assets can have only vertex colors and no UVs.
+const broadleafIds=new Set(['maple','oak','linden','ash','rowan','aspen','apple','poplar','willow','birch','sakura']);
+const barkUvCache=new WeakMap(),mapleMaps=new WeakMap();
+function barkUV(T,geometry){
+ if(geometry.attributes.uv)return geometry;
+ if(barkUvCache.has(geometry))return barkUvCache.get(geometry);
+ const g=geometry.clone();g.computeBoundingBox();
+ const b=g.boundingBox,p=g.attributes.position,n=g.attributes.normal,uv=[];
+ const dx=Math.max(.001,b.max.x-b.min.x),dy=Math.max(.001,b.max.y-b.min.y),dz=Math.max(.001,b.max.z-b.min.z);
+ for(let i=0;i<p.count;i++){
+  const x=(p.getX(i)-b.min.x)/dx,z=(p.getZ(i)-b.min.z)/dz,y=(p.getY(i)-b.min.y)/dy;
+  // Use the locally dominant horizontal normal for seamless vertical grain.
+  const along=n&&Math.abs(n.getX(i))>Math.abs(n.getZ(i))?z:x;
+  uv.push(along*3,y*6);
+ }
+ g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));barkUvCache.set(geometry,g);return g;
+}
+function maplePhotoBark(T){
+ if(mapleMaps.has(T))return mapleMaps.get(T);
+ const map=barkTexture(T,'maple'),normal=new T.Texture();
+ const result={map,normal:null,ready:false,materials:new Set()};mapleMaps.set(T,result);
+ const base='https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/trident_maple_bark/trident_maple_bark_';
+ // Keep local procedural bark until the photographic files actually decode.
+ const loader=new T.TextureLoader().setCrossOrigin('anonymous');
+ loader.load(base+'diff_1k.jpg',photo=>{
+  photo.colorSpace=T.SRGBColorSpace;photo.wrapS=photo.wrapT=T.RepeatWrapping;photo.anisotropy=4;
+  result.map=photo;result.ready=true;
+  for(const m of result.materials){m.map=photo;m.bumpMap=photo;m.needsUpdate=true;}
+  window.dispatchEvent(new Event('forma-foliage-texture-ready'));
+ },undefined,()=>{});
+ loader.load(base+'nor_gl_1k.jpg',photo=>{
+  photo.wrapS=photo.wrapT=T.RepeatWrapping;photo.anisotropy=4;result.normal=photo;
+  for(const m of result.materials){m.normalMap=photo;m.normalScale.set(.65,.65);m.bumpScale=.003;m.needsUpdate=true;}
+  window.dispatchEvent(new Event('forma-foliage-texture-ready'));
+ },undefined,()=>{});
+ return result;
+}
+function classifyBotanicalMaterial(m,node){
+ const name=(String(m.name||'')+' '+String(node.name||'')).toLowerCase();
+ const c=m.color,green=c&&c.g>c.r*1.10&&c.g>c.b*1.16;
+ const brown=c&&c.r>c.b*1.18&&c.g>c.b*1.05&&c.r>=c.g*.97;
+ const leaf=m.alphaTest>0||/leaf|leav|folia|canop|needle|лист/.test(name)||green;
+ return {leaf,bark:!leaf&&(/bark|trunk|branch|wood|ствол|кор[аы]/.test(name)||brown)};
+}
 const boundsCache=new WeakMap();
 export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopyCopies=0,pineGrowth=null,spruceGrowth=null,birchRefinement='original'}={}){
  if(!source?.isObject3D)throw Error('The GLB does not contain a valid 3D scene.');
@@ -182,23 +226,26 @@ export function makeRealVegetation(T,source,instance,{shareGeometry=false,canopy
   // Avoid dark, incorrect self-shadow from crossed paper-thin spruce/birch
   // foliage: both sides retain the ORIGINAL Tevy leaf color.
   const materials=Array.isArray(node.material)?node.material:[node.material];
-  if(shareGeometry&&node.geometry?.attributes?.uv){
+  if(shareGeometry&&node.geometry?.attributes?.position){
    for(const m of materials){
     if(!m?.isMeshStandardMaterial)continue;
     const name=(String(m.name||'')+' '+String(node.name||'')).toLowerCase();
-    const bark=/bark|trunk|wood|ствол|кора/.test(name)&&!(/leaf|leav|folia|needle/.test(name)||m.alphaTest>0);
+    const {leaf,bark}=classifyBotanicalMaterial(m,node);
     if(bark){
-     if(!m.map){m.map=barkTexture(T,instance.catalogId);m.color.set('#ffffff');}
-     if(!m.normalMap&&!m.bumpMap&&m.map){m.bumpMap=m.map;m.bumpScale=.018;}
+     if(!node.geometry.attributes.uv){node.geometry=barkUV(T,node.geometry);node.userData.bundledSharedGeometry=true;}
+     if(!m.map){m.map=barkTexture(T,instance.catalogId);m.color.set('#ffffff');m.vertexColors=false;}
+     if(!m.normalMap&&!m.bumpMap&&m.map){m.bumpMap=m.map;m.bumpScale=.023;}
+     if(instance.catalogId==='maple'&&!m.normalMap){const p=maplePhotoBark(T);p.materials.add(m);m.addEventListener('dispose',()=>p.materials.delete(m));m.map=p.map;m.bumpMap=p.map;m.color.set('#ffffff');m.vertexColors=false;if(p.normal){m.normalMap=p.normal;m.normalScale.set(.65,.65);m.bumpScale=.003;}}
      m.roughness=Math.max(.88,m.roughness);m.metalness=0;m.needsUpdate=true;
     }
     // Original UV and authored mask always win. Only explicit untextured
     // branch/leaf card meshes get the project's existing cutout photo atlas.
-    if(!m.map&&/leaf.?card|foliage.?card|leaf.?plane|spray.?card/.test(name)){
+    if(!m.map&&node.geometry.attributes.uv&&/leaf.?card|foliage.?card|leaf.?plane|spray.?card/.test(name)){
      const photo=createPhotoFoliageTexture(T,instance.catalogId);if(photo){
       m.map=photo;m.alphaTest=.32;m.transparent=false;m.depthWrite=true;m.side=T.DoubleSide;m.color.set('#ffffff');m.needsUpdate=true;
      }
     }
+    if(leaf&&broadleafIds.has(instance.catalogId)){m.roughness=Math.max(.76,m.roughness);m.metalness=0;m.envMapIntensity=.25;if(!m.map&&m.color){const lum=m.color.r*.2126+m.color.g*.7152+m.color.b*.0722;m.color.lerp(new T.Color().setRGB(lum,lum,lum),.23).multiplyScalar(.85);}m.needsUpdate=true;}
     if(m.alphaTest>0){m.roughness=Math.max(.78,m.roughness);m.metalness=0;m.depthWrite=true;m.transparent=false;m.needsUpdate=true;}
    }
   }
