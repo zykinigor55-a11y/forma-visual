@@ -133,16 +133,16 @@ function renderLawn(T,cfg,budget){
   const a=rand()*Math.PI*2,h=h0*(.72+.58*rand()),w=w0*(.8+.65*rand()),dx=Math.cos(a)*w,dz=Math.sin(a)*w;
   const lean=h*(p.lean||.3)*(.5+rand()),lx=-Math.sin(a)*lean,lz=Math.cos(a)*lean,c=pal[Math.floor(rand()*pal.length)],k=bp.length/3;
   const v=(xx,yy,zz,t)=>{bp.push(xx,yy,zz);bc.push(c.r*t,c.g*t,c.b*t,1);};
-  v(x-dx,y+.002,z-dz,.78);v(x+dx,y+.002,z+dz,.83);v(x+lx*.32-dx*.55,y+h*.55,z+lz*.32-dz*.55,.98);v(x+lx*.32+dx*.55,y+h*.55,z+lz*.32+dz*.55,1);v(x+lx,y+h,z+lz,1.08);
+  v(x-dx,y+.002,z-dz,.82);v(x+dx,y+.002,z+dz,.86);v(x+lx*.32-dx*.55,y+h*.55,z+lz*.32-dz*.55,.99);v(x+lx*.32+dx*.55,y+h*.55,z+lz*.32+dz*.55,1);v(x+lx,y+h,z+lz,1.06);
   bi.push(k,k+1,k+2,k+1,k+3,k+2,k+2,k+3,k+4);count++;
  };
- const desired=Math.max(1,Math.floor(budget*.78/4*Math.min(1,density/1.85)));
+ const desired=Math.max(1,Math.floor(budget*.65/4*Math.min(1,density/1.85)));
  const probe=16;let hits=0;for(let j=0;j<probe;j++)for(let i=0;i<probe;i++)if(visible(b.x0+(i+.5)*width/probe,b.z0+(j+.5)*depth/probe))hits++;
  const share=Math.max(.12,hits/(probe*probe));
  const grid=Math.ceil(desired/(share+(1-share)*.12));
  // Randomized coverage across the entire camera sector instead of truncating rows.
- for(let i=0;i<grid*3&&tufts<desired;i++){const x=b.x0+rand()*width,z=b.z0+rand()*depth;if(visible(x,z)||rand()<.12)addTuft(x,z);}
- const radius=Math.min(12,Math.sqrt(area)*.48),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
+ const nx=Math.max(1,Math.ceil(Math.sqrt(grid*width/depth))),nz=Math.max(1,Math.ceil(grid/nx)),cells=nx*nz;let start=Math.floor(rand()*cells);let stride=Math.max(1,Math.floor(cells*.618));const gcd=(a,b)=>b?gcd(b,a%b):a;while(gcd(stride,cells)!==1)stride++;for(let i=0;i<cells&&tufts<desired;i++){const k=(start+i*stride)%cells,x=b.x0+((k%nx)+.15+rand()*.7)*width/nx,z=b.z0+(Math.floor(k/nx)+.15+rand()*.7)*depth/nz;if(visible(x,z)||rand()<.12)addTuft(x,z);}if(tufts<desired)for(let i=0;i<grid*2&&tufts<desired;i++){const x=b.x0+rand()*width,z=b.z0+rand()*depth;if(visible(x,z))addTuft(x,z);}
+ const radius=Math.min(9,Math.sqrt(area)*.48),near=Math.max(0,Math.floor((budget-ci.length/3)/3*Math.min(1,density/1.85)));
  for(let i=0;i<near*5&&count<near;i++){const a=rand()*Math.PI*2,r=radius*Math.sqrt(rand()),x=focus.x+Math.cos(a)*r,z=focus.z+Math.sin(a)*r;if(x>=b.x0&&x<=b.x1&&z>=b.z0&&z<=b.z1&&visible(x,z))addBlade(x,z);}
  const meshes=[];
  const build=(pos,col,idx,uv,mat,name)=>{
@@ -150,7 +150,7 @@ function renderLawn(T,cfg,budget){
   const mesh=new T.Mesh(g,mat);mesh.name=name;meshes.push(mesh);
  };
  if(tufts)build(cp,cc,ci,cu,new T.MeshPhysicalMaterial({map,alphaTest:.30,vertexColors:true,side:T.DoubleSide,roughness:.92,metalness:0,transmission:.08,thickness:0,ior:1.42,specularIntensity:.35}),'forma-render-turf-cards-r128');else map.dispose();
- if(count)build(bp,bc,bi,null,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.87,metalness:0}),'forma-render-grass-blades-r128');
+ if(count)build(bp,bc,bi,null,new T.MeshPhysicalMaterial({vertexColors:true,side:T.DoubleSide,roughness:.64,metalness:0,ior:1.43,transmission:.15,thickness:0,specularIntensity:.5}),'forma-render-grass-blades-r128');
  return meshes.length?{meshes,count,tufts,triangles:(ci.length+bi.length)/3,textures:tufts?[map]:[]}:null;
 }
 // Bake displacement into actual triangles before BVH construction. Only
@@ -315,16 +315,28 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  for(const o of meshes){if(!grass(o))continue;const maxKeep=keepCounts.get(o)??o.count;const keep=Math.min(maxKeep,Math.floor(maxKeep*factor),Math.floor(Math.max(0,existingBudget-used)/costs(o)));keepCounts.set(o,keep);used+=keep*costs(o);reduced+=o.count-keep;}
  triangles=used;
  const bumpCache=new Map();
- const cloneMat=(m,instanced,name='')=>{
-  const needle=/fir-real-needle|spruce.*needle|pine.*needle/i.test(name);const key=m.uuid+'|'+instanced+'|'+needle;if(materialCache.has(key))return materialCache.get(key);
+ // Render-only material library. Prefer authored maps; never replace scene textures.
+ const physicalMaterials=atmosphere.traceMaterials!=='original',wet=physicalMaterials&&['rain','after-rain'].includes(atmosphere.weather);
+ const inferRole=(m,o)=>{const tag=[o?.name,o?.userData?.architecturePart,m.name,m.map?.name].filter(Boolean).join(' ').toLowerCase();if(o?.userData?.ground)return 'ground';if(/glass|glaz|ig-unit-.*pane|стекл/.test(tag))return 'glass';if(/water|pond|вода/.test(tag))return 'water';if(/needle|conifer|хво/.test(tag))return 'needle';if(/bark|trunk|fissur|ствол|кора/.test(tag))return 'bark';if(/leaf|folia|canopy|лист/.test(tag))return 'leaf';if(/brick|masonry|concrete|stone|кирпич|бетон|камень/.test(tag))return 'mineral';if(/metal|steel|alumin|сталь|металл/.test(tag)||m.metalness>.65)return 'metal';if(/timber|wood|cladding|дерево/.test(tag))return 'wood';return m.userData?.formaPBRRoleR63||'surface';};
+ const cloneMat=(m,instanced,o={})=>{
+  const name=o.name||'',needle=/fir-real-needle|spruce.*needle|pine.*needle/i.test(name),role=physicalMaterials?inferRole(m,o):needle?'needle':m.userData?.formaPBRRoleR63||(/glass|glaz|pane/i.test(name+' '+m.name)?'glass':'');const key=m.uuid+'|'+instanced+'|'+role;if(materialCache.has(key))return materialCache.get(key);
   let p=m.isMeshStandardMaterial?m.clone():new T.MeshStandardMaterial({color:m.color,map:m.map,roughness:1,alphaTest:m.alphaTest,transparent:m.transparent,opacity:m.opacity,side:m.side});
-  const role=needle?'needle':m.userData?.formaPBRRoleR63||(/glass|glaz|pane/i.test(name+' '+m.name)?'glass':'');
-  if(['leaf','needle','glass','water'].includes(role)&&!p.isMeshPhysicalMaterial){const physical=new T.MeshPhysicalMaterial();for(const k of ['color','map','normalMap','normalScale','roughness','roughnessMap','metalness','metalnessMap','alphaMap','alphaTest','opacity','transparent','side','vertexColors','bumpMap','bumpScale','emissive','emissiveMap','emissiveIntensity','userData']){const v=p[k];if(v!==undefined){if(v?.isColor||v?.isVector2)physical[k].copy(v);else physical[k]=v;}}p.dispose();p=physical;}
+  if((['leaf','needle','glass','water'].includes(role)||physicalMaterials&&['bark','ground','mineral','metal','wood'].includes(role))&&!p.isMeshPhysicalMaterial){const physical=new T.MeshPhysicalMaterial();for(const k of ['color','map','normalMap','normalScale','roughness','roughnessMap','metalness','metalnessMap','alphaMap','alphaTest','opacity','transparent','side','vertexColors','bumpMap','bumpScale','emissive','emissiveMap','emissiveIntensity','userData']){const v=p[k];if(v!==undefined){if(v?.isColor||v?.isVector2)physical[k].copy(v);else physical[k]=v;}}p.dispose();p=physical;}
   if(instanced)p.vertexColors=true;
   if(p.isMeshPhysicalMaterial){if(role==='leaf'||role==='needle'){p.transmission=role==='needle'?.12:.30;p.thickness=0;p.ior=1.43;p.specularIntensity=.32;p.clearcoat=0;p.metalness=0;p.side=T.DoubleSide;p.roughness=role==='needle'?.65:Math.max(.70,p.roughness);}else if(role==='water'||role==='glass'){p.transmission=role==='water'?.94:.82;p.thickness=0;p.ior=role==='water'?1.333:1.52;p.metalness=0;p.transparent=false;p.opacity=1;p.roughness=role==='glass'?.045:Math.max(.025,Math.min(.14,p.roughness));p.specularIntensity=1;if(role==='glass'){p.clearcoat=.25;p.clearcoatRoughness=.035;}}else if(['bark','ground','mineral','metal'].includes(role)){p.transmission=0;}}
   // Thin-film BSDF is a colored transmission approximation, not full botanical SSS.
   if(m.userData?.formaRowanPBR&&p.isMeshPhysicalMaterial){p.transmission=m.userData.formaRowanPBR.pathTransmission??.34;p.thickness=0;p.attenuationDistance=Infinity;p.ior=1.43;p.roughness=.88;p.specularIntensity=.30;p.clearcoat=0;p.normalScale.multiplyScalar(.82);}
   if(!p.normalMap&&p.bumpMap&&p.bumpScale){const strength=Math.min(8,Math.max(.5,Math.abs(p.bumpScale)*250)),key=p.bumpMap.uuid+'|'+strength;let t=bumpCache.get(key);if(!t){t=bumpToNormal(T,p.bumpMap,strength);if(t){bumpCache.set(key,t);ownedTextures.push(t);}}if(t){p.normalMap=t;p.normalScale.set(.75,.75);}}
+  if(physicalMaterials){
+   const clamp=T.MathUtils.clamp;
+   if(role==='leaf'||role==='needle'){p.roughness=role==='needle'?.56:.64;p.specularIntensity=role==='needle'?.65:.5;p.ior=1.44;p.transmission=role==='needle'?.18:clamp(p.transmission,.22,.48);p.sheen=.13;p.sheenColor.copy(p.color);p.sheenRoughness=.8;p.side=T.DoubleSide;}
+   if(role==='glass'){p.ior=1.52;p.transmission=1;p.roughness=clamp(m.roughness??.045,.025,.10);p.clearcoat=0;p.specularIntensity=1;p.thickness=0;p.attenuationDistance=Infinity;}
+   if(role==='water'){p.ior=1.333;p.transmission=1;p.roughness=clamp(m.roughness??.06,.035,.13);p.clearcoat=0;p.specularIntensity=1;}
+   if(role==='bark'||role==='wood'){p.metalness=0;p.roughness=clamp(m.roughness??.82,.65,.94);p.specularIntensity=.55;}
+   if(role==='ground'||role==='mineral'){p.metalness=0;p.roughness=clamp(m.roughness??.86,.67,.96);p.specularIntensity=.65;}
+   if(role==='metal'){p.metalness=clamp(m.metalness??.9,.72,1);p.roughness=clamp(m.roughness??.35,.18,.68);}
+   if(wet&&['ground','mineral','wood','bark'].includes(role)&&p.isMeshPhysicalMaterial){p.clearcoat=.45;p.clearcoatRoughness=.16;p.roughness=Math.max(.28,p.roughness*.7);p.color.multiplyScalar(.87);}
+  }
   if(role==='bark'&&p.normalScale)p.normalScale.multiplyScalar(.65);p.displacementMap=null;p.displacementScale=0;p.envMap=null;p.bumpMap=null;p.aoMap=null;p.lightMap=null;if(atmosphere.traceSceneTest==='no-normal'){p.normalMap=null;if(p.isMeshPhysicalMaterial)p.clearcoatNormalMap=null;}p.onBeforeCompile=()=>{};p.customProgramCacheKey=()=>'';materials.push(p);materialCache.set(key,p);return p;
  };
  try{
@@ -348,7 +360,7 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
   if(!normals||broken){g.computeVertexNormals();normals=g.attributes.normal;for(let i=0;i<normals.count;i++){const x=normals.getX(i),y=normals.getY(i),z=normals.getZ(i),len=x*x+y*y+z*z;if(!Number.isFinite(len)||len<1e-12)normals.setXYZ(i,0,1,0);}}
   const uv=g.attributes.uv;if(uv)for(let i=0;i<uv.count;i++)if(!Number.isFinite(uv.getX(i))||!Number.isFinite(uv.getY(i)))uv.setXY(i,0,0);
   const tangent=g.attributes.tangent;if(tangent)for(let i=0;i<tangent.count;i++){const x=tangent.getX(i),y=tangent.getY(i),z=tangent.getZ(i),w=tangent.getW(i),dot=x*normals.getX(i)+y*normals.getY(i)+z*normals.getZ(i),len=x*x+y*y+z*z;if(!Number.isFinite(len+dot+w)||len<1e-12||Math.abs(w)<.5||dot*dot>=len*.999)tangent.setXYZW(i,0,0,0,1);}
-  const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh,o.name)):cloneMat(o.material,!!o.isInstancedMesh,o.name);
+  const m=Array.isArray(o.material)?o.material.map(x=>cloneMat(x,!!o.isInstancedMesh,o)):cloneMat(o.material,!!o.isInstancedMesh,o);
   const add=(geometry,material,name)=>{const mesh=new T.Mesh(geometry,material);mesh.matrixAutoUpdate=false;mesh.matrix.copy(o.matrixWorld);mesh.name=name;scene.add(mesh);};
   if(Array.isArray(m)&&g.groups.length){
    const byMaterial=new Map(),total=g.index?.count||g.attributes.position.count;
