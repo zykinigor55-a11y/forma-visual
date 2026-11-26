@@ -7,7 +7,7 @@ import {ashCompoundLeafGeometry} from './forma-landscape-ash-leaves.js';
 import {naturalCrown,branchTipDrop,botanicalLeafScale,leafOutline,foliageSprayWidth,coniferNeedleProfile,foliageDepthTone} from './forma-landscape-3d-botany.js';
 import {botanicalPhotoProfile,normalizeFoliagePalette,foliageMaterial,barkReliefCanvas} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js?v=R23';
-import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R28';
+import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R29';
 import {referenceCanopy,speciesGrowthProfile,referenceBranchTips,referenceFoliageDensity,constrainCrownRadius,specimenCrownVariation} from './forma-landscape-3d-reference-canopies.js';
 import {createNativeUnderstory,NATIVE_UNDERSTORY} from './forma-landscape-3d-understory.js?v=R23';
 export const VEGETATION_SPECIES=Object.freeze({
@@ -92,19 +92,22 @@ function makeLeafGeometry(T,needle=false,id='oak'){
   const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pts,3));
   geo.computeVertexNormals();return geo;
  }
- const outline=leafOutline(id,20),pts=[];
+ const outline=leafOutline(id,20),pts=[],uvs=[];
+ const xx=Math.max(.01,...outline.map(p=>Math.abs(p[0]))),lo=Math.min(...outline.map(p=>p[1]),0),hi=Math.max(...outline.map(p=>p[1]),.01);
+ const uv=(x,y)=>[.5+x/(2*xx),(y-lo)/(hi-lo)];
  // Species-correct contour with a slight fold down the midrib.
  for(let i=0;i<outline.length;i++){
   const a=outline[i],b=outline[(i+1)%outline.length],za=.055*(1-a[0]*a[0]),zb=.055*(1-b[0]*b[0]);
-  pts.push(0,0,.07,a[0],a[1],za,b[0],b[1],zb);
+  pts.push(0,0,.07,a[0],a[1],za,b[0],b[1],zb);uvs.push(...uv(0,0),...uv(...a),...uv(...b));
  }
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pts,3));
- geo.computeVertexNormals();return geo;
+ geo.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));geo.computeVertexNormals();return geo;
 }
 /* Species-specific bark micro-material instead of a single flat brown cylinder.
  * Geometry stays native 3D, and no third-party photo is baked into the editor. */
 const barkTextureCache=new Map(),barkBumpCache=new Map();
 export function barkPalette(id){
+ if(id==='maple')return {base:'#777065',dark:'#423e37',light:'#a29a85',cross:false};
  if(id==='birch')return {base:'#D3D3C8',dark:'#444D4B',light:'#F0EFE6',cross:true};
  if(id==='pine')return {base:'#96613F',dark:'#563C30',light:'#C08B61',cross:false};
  if(id==='spruce')return {base:'#62534A',dark:'#302E2B',light:'#96826A',cross:false};
@@ -136,10 +139,10 @@ export function barkTexture(T,id){
   }
  }else{
   // Crack trajectories are irregular and follow the grain of real wood.
-  for(let i=0;i<180;i++){
+  for(let i=0;i<380;i++){
    const x=random()*256,y=random()*512,dy=9+random()*116;
    ctx.strokeStyle=random()>.64?palette.light:palette.dark;
-   ctx.globalAlpha=.11+random()*.35;ctx.lineWidth=.4+random()*2;
+   ctx.globalAlpha=.20+random()*.42;ctx.lineWidth=.55+random()*3;
    ctx.beginPath();ctx.moveTo(x,y);
    ctx.bezierCurveTo(x+(random()-.5)*13,y+dy*.30,x+(random()-.5)*15,y+dy*.72,x+(random()-.5)*11,y+dy);
    ctx.stroke();
@@ -175,9 +178,20 @@ function addBranch(g,T,segments,color,id){
  });branches.instanceMatrix.needsUpdate=true;branches.castShadow=true;branches.receiveShadow=true;
  branches.userData.botanicalLayer='branches';g.add(branches);
 }
+const leafDetailCache=new Map();
+function leafDetail(T,id){
+ if(leafDetailCache.has(id))return leafDetailCache.get(id);
+ const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d'),r=rng(hash('leaf-veins|'+id));
+ ctx.fillStyle='#c3c7b9';ctx.fillRect(0,0,256,256);
+ const vein=(x,y,X,Y,w)=>{ctx.strokeStyle='rgba(225,229,207,.65)';ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo((x+X)/2,(y+Y)/2-7,X,Y);ctx.stroke()};
+ vein(128,255,128,0,2.4);for(let i=0;i<12;i++){const y=22+i*19;vein(128,y+16,3+r()*18,y-14,1);vein(128,y+16,253-r()*18,y-14,1);}
+ for(let i=0;i<5500;i++){ctx.fillStyle=r()>.5?'rgba(255,255,255,.055)':'rgba(0,0,0,.075)';ctx.fillRect(r()*256,r()*256,1+r()*2,1+r()*2)}
+ const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;leafDetailCache.set(id,tex);return tex;
+}
 function addLeaves(g,T,items,color,needle,season,seed,id='oak'){
  if(!items.length)return;
  const mesh=new T.InstancedMesh(makeLeafGeometry(T,needle,id),foliageMaterial(T,id),items.length);
+ if(!needle){mesh.material.map=leafDetail(T,id);mesh.material.roughness=.79;mesh.material.envMapIntensity=.22;}
  const palette=normalizeFoliagePalette(id,season);
  const dark=new T.Color(palette.shade),sunlit=new T.Color(palette.sunlit);
  const fall=palette.fall?.map(hex=>new T.Color(hex));
@@ -423,7 +437,7 @@ function addFoliageSprays(g,T,points,id,season,seed,quality,diameter,height){
   (shrub?2150:sprucePine?4500:4200);
  const count=clamp(Math.round(points.length*(sprucePine?2.45:1.25+quality*1.55)),minimum,maximum);
  const texture=createPhotoFoliageTexture(T,id,{fallback:createSprayTexture(T,needle,id)});
- const material=new T.MeshStandardMaterial({map:texture,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide,roughness:.86,metalness:0,depthWrite:true});
+ const material=new T.MeshStandardMaterial({map:texture,alphaTest:.32,alphaToCoverage:false,side:T.DoubleSide,roughness:.86,metalness:0,depthWrite:true,envMapIntensity:.24});
  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),material,count),
   cross=new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count),
   third=id==='pine'?new T.InstancedMesh(new T.PlaneGeometry(1,1),material.clone(),count):null;
