@@ -341,7 +341,9 @@ async function performRender(p,requestId){
  if(p.enhanceOnly===true&&(p.mask||p.material||p.reference||p.imageTask||p.landscapeEdit||p.localCrop||p.atmosphereOnly||p.cameraOrbit))fail('Улучшение фотографии не совмещается с другими изменениями.',400);
  if(p.cameraOrbit&&(p.mask||p.material||p.localCrop||p.atmosphereOnly||p.landscapeEdit||p.imageTask||p.sceneVariation||p.furnitureEdit))fail('Новый ракурс создаётся отдельным запросом.',400);
  if(p.furnitureEdit&&(!p.mask||p.cameraOrbit||p.imageTask||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.sceneVariation||p.enhanceOnly||p.editMode||p.reference))fail('Замена мебели требует локальную PNG-маску и отдельный запрос.',400);
- if((p.landscapeMasterplan||p.roofTopView)&&(p.cameraOrbit||p.furnitureEdit||p.imageTask||p.mask||p.material||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.sceneVariation||p.enhanceOnly||p.editMode||p.batchShot||p.landscapeMasterplan&&p.roofTopView))fail('Фотореалистичный генплан и кровля создаются отдельными запросами без масок и смены ракурса.',400);
+ // Precision uses the material slot for camera depth, not a material edit. Keep other modes mutually exclusive.
+ const precisionDepthAllowed=p.precision===true&&p.landscapeMasterplan?.cameraMode==='3d-perspective'&&p.landscapeModel==='nano-banana-2.1'&&!p.roofTopView;
+ if((p.landscapeMasterplan||p.roofTopView)&&(p.cameraOrbit||p.furnitureEdit||p.imageTask||p.mask||(p.material&&!precisionDepthAllowed)||p.localCrop||p.landscapeEdit||p.atmosphereOnly||p.sceneVariation||p.enhanceOnly||p.editMode||p.batchShot||p.landscapeMasterplan&&p.roofTopView))fail('Фотореалистичный генплан и кровля создаются отдельными запросами без масок и смены ракурса.',400);
  const primary=imageBlob(p.image,'image'),mask=imageBlob(p.mask,'mask'),material=imageBlob(p.material,'material'),reference=imageBlob(p.reference,'reference');
  if(mask&&mask.type!=='image/png')fail('Маска должна быть PNG',400);
  const n=renderQuantity(p);
