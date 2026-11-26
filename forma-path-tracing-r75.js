@@ -363,17 +363,24 @@ async function snapshot(T,source,root,camera,sky,profile,atmosphere={},lawn=null
  }catch(e){for(const g of ownedProxies)g.dispose();for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of ownedTextures)t.dispose();throw e;}
 }
 export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile='balanced',atmosphere={},lawn=null,onClose=()=>{},onFailure=()=>{}}){
- let stage='Инициализация',alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null;
+ let stage='Инициализация',alive=true,pt=null,snap=null,sky=null,denoise=null,denoiseQuad=null,raf=0,loading=true,finished=false,building=false,cleaned=false,resultBlob=null,backupSky=null,retriedSky=false,lastChecked=0,traceStart=0;
  const oldRatio=renderer.getPixelRatio(),oldTone=renderer.toneMapping,oldExposure=renderer.toneMappingExposure;
+ let previewUrl='';try{previewUrl=canvas.toDataURL('image/jpeg',.82)}catch{}
  const ui=document.createElement('div');ui.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent;touch-action:none;display:flex;align-items:flex-end;justify-content:center;padding:12px;pointer-events:auto;';
  const panel=document.createElement('div');panel.style.cssText='width:min(440px,96vw);background:#22262df5;color:#eee;border:1px solid #777;border-radius:12px;padding:12px;font:13px system-ui;box-shadow:0 10px 45px #0005;';
  panel.innerHTML='<strong style="font-size:15px">FORMA · РЕНДЕР ВИДЕОКАРТОЙ</strong><div data-msg style="margin:8px 0">Подготовка сцены…</div><progress value="0" max="64" style="width:100%;height:8px"></progress><div style="display:flex;gap:8px;margin-top:10px"><button data-close style="flex:1;padding:12px">В редактор</button><button data-save disabled style="flex:1;padding:12px">Сохранить PNG</button></div><small style="display:block;margin-top:8px;color:#bbb">Настоящая трассировка лучей · накопление сэмплов</small>';
- ui.append(panel);document.body.append(ui);const msg=panel.querySelector('[data-msg]'),bar=panel.querySelector('progress'),save=panel.querySelector('[data-save]');
- const target=profile==='high'?192:64;bar.max=target;
+ const preview=document.createElement('div');preview.style.cssText='position:absolute;inset:0;display:grid;place-items:center;background:#14171b;pointer-events:none;z-index:-1';
+ if(previewUrl){const image=document.createElement('img');image.src=previewUrl;image.style.cssText='width:100%;height:100%;object-fit:contain;opacity:.86';preview.append(image);}
+ const previewLabel=document.createElement('span');previewLabel.textContent='Предпросмотр сцены · подготовка трассировки';previewLabel.style.cssText='position:absolute;top:60px;left:50%;transform:translateX(-50%);padding:8px 14px;background:#22262de8;color:white;border-radius:8px;font:13px system-ui';preview.append(previewLabel);ui.style.isolation='isolate';ui.append(preview,panel);document.body.append(ui);const msg=panel.querySelector('[data-msg]'),bar=panel.querySelector('progress'),save=panel.querySelector('[data-save]');
+ const details=document.createElement('small');details.style.cssText='display:block;color:#bfc5ce;margin:5px 0 0';bar.after(details);
+ let target=profile==='high'?96:40;bar.max=target;
+ const started=performance.now(),probe=document.createElement('canvas');probe.width=32;probe.height=18;const probeCtx=probe.getContext('2d',{willReadFrequently:true});
+ function daylightDark(){if(!probeCtx||!['day','morning','evening'].includes(atmosphere.time||'day'))return false;try{probeCtx.drawImage(canvas,0,0,32,18);const d=probeCtx.getImageData(0,0,32,18).data;let mean=0,bright=0;for(let i=0;i<d.length;i+=4){const y=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];mean+=y;if(y>25)bright++;}return mean/(d.length/4)<8&&bright/(d.length/4)<.08;}catch{return false;}}
+ function fmtTime(ms){const n=Math.max(0,Math.floor(ms/1000));return Math.floor(n/60)+' мин '+String(n%60).padStart(2,'0')+' с';}
  function cleanup(){if(cleaned)return;cleaned=true;
   // v0.0.23 public dispose has a legacy quad name; release the real resources.
   if(pt){try{pt.dispose()}catch{try{pt._quad?.material?.dispose();pt._quad?.dispose();pt._pathTracer?.dispose();}catch{}}try{pt._lowResPathTracer?.dispose();}catch{}}
-  denoise?.dispose();denoiseQuad?.dispose();if(snap)snap.dispose();else sky?.texture?.dispose();
+  denoise?.dispose();denoiseQuad?.dispose();backupSky?.dispose();if(snap)snap.dispose();else sky?.texture?.dispose();
  }
  function close(){if(!alive)return;alive=false;cancelAnimationFrame(raf);ui.remove();if(!building){try{cleanup()}catch(e){console.warn('GPU cleanup',e)}}renderer.toneMapping=oldTone;renderer.toneMappingExposure=oldExposure;if(!renderer.getContext().isContextLost())renderer.setPixelRatio(oldRatio);onClose();}
  panel.querySelector('[data-close]').onclick=close;
@@ -388,14 +395,25 @@ export function createPathTraceMode(T,{renderer,scene,root,camera,canvas,profile
   snap=await snapshot(T,scene,root,camera,sky,profile,atmosphere,lawn,()=>alive,(n,total)=>{msg.textContent='Подготовка геометрии: '+n+' / '+total+' объектов';});if(!alive){snap.dispose();return;}
   msg.textContent='Построение BVH: '+Math.round(snap.triangles/1000)+' тыс. треугольников…';await nextFrame();if(!alive)return;
   stage='Построение BVH и загрузка текстур';building=true;
-  pt=new WebGLPathTracer(renderer);pt.bounces=profile==='high'?8:5;pt.transmissiveBounces=profile==='high'?24:12;pt.multipleImportanceSampling=true;const heavy=snap.triangles>4000000,veryHeavy=snap.triangles>8000000;const recover=atmosphere.traceRecovery===true;const tile=recover?8:veryHeavy?8:heavy?6:profile==='high'?4:3;pt.tiles.set(tile,tile);pt.renderScale=recover?.35:veryHeavy?.45:heavy?.65:profile==='high'?.85:.55;const atlas=recover?128:heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.25;
+  pt=new WebGLPathTracer(renderer);const heavy=snap.triangles>2000000,veryHeavy=snap.triangles>5000000;const recover=atmosphere.traceRecovery===true;
+  target=recover?32:heavy?(profile==='high'?64:32):(profile==='high'?96:40);bar.max=target;
+  pt.bounces=heavy||recover?4:profile==='high'?6:4;pt.transmissiveBounces=heavy||recover?8:12;pt.multipleImportanceSampling=true;
+  const tile=veryHeavy||recover?4:3;pt.tiles.set(tile,tile);pt.renderScale=recover?.35:veryHeavy?.40:heavy?.50:profile==='high'?.80:.60;const atlas=recover?128:heavy?256:profile==='high'?512:256;pt.textureSize.set(atlas,atlas);pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.rasterizeScene=false;pt.filterGlossyFactor=.4;
   renderer.setPixelRatio(Math.min(oldRatio,recover?.55:profile==='high'?1:0.85,(recover?960:1600)/Math.max(1,canvas.clientWidth,canvas.clientHeight)));pt.setScene(snap.scene,snap.cam);denoise=new DenoiseMaterial({sigma:1.25,threshold:.035,kSigma:1.5});denoiseQuad=new FullScreenQuad(denoise);building=false;
   if(!alive){cleanup();return;}
-  stage='Трассировка GPU';renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.45,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.10)));loading=false;
+  stage='Трассировка GPU';renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=Math.max(.75,Math.min(1.8,(oldExposure||1)*(['night','blue-hour'].includes(atmosphere.time)?1:1.18)));loading=false;traceStart=performance.now();
   function tick(){if(!alive||finished)return;try{
-   if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples);bar.value=n;save.disabled=n<1;
+   if(renderer.getContext().isContextLost())throw Error('WebGL отключён');pt.renderSample();const n=Math.floor(pt.samples+1e-6);bar.value=pt.samples;
+   const elapsed=performance.now()-traceStart;const percent=Math.min(100,100*pt.samples/target);
+   details.textContent=percent.toFixed(1)+'% · прошло '+fmtTime(performance.now()-started)+(pt.samples>=1?' · осталось ≈ '+fmtTime(elapsed*Math.max(0,target-pt.samples)/pt.samples):'');
+   if(n>=1&&n!==lastChecked&&n<=3){lastChecked=n;const dark=daylightDark();
+    if(!dark){preview.hidden=true;preview.style.display='none';}
+    else if(n>=2&&!retriedSky){retriedSky=true;backupSky=makeSky(T,scene,atmosphere);snap.scene.environment=backupSky;snap.scene.background=backupSky;snap.scene.environmentIntensity=1.2;snap.scene.backgroundIntensity=1;pt.updateEnvironment();lastChecked=0;traceStart=performance.now();bar.value=0;previewLabel.textContent='Дневной кадр слишком тёмный · повтор с резервным HDR-небом';msg.textContent='Перезапуск трассировки с резервным HDRI…';raf=requestAnimationFrame(tick);return;}
+    else if(n>=3&&retriedSky){error(Error('Дневной кадр остался почти чёрным после повторной трассировки. Проверьте GPU и освещение.'));return;}
+   }
+   save.disabled=n<1||preview.style.display!=='none';
    msg.textContent=pt.isCompiling?'Компиляция GPU-шейдера…':'Сэмплы '+n+' / '+target+' · '+Math.round(snap.triangles/1000)+' тыс. треуг. · '+snap.instances+' инстансов · '+sky.label+(snap.skipped?' · пропущено спец. объектов: '+snap.skipped:'')+(snap.simplified?' · сохранено листьев/ягод с LOD: '+snap.simplified:'')+(snap.reducedOak?' · упрощено листьев дуба: '+snap.reducedOak.toLocaleString('ru-RU'):'')+(snap.displacedSurfaces?' · рельеф поверхностей: '+snap.displacedSurfaces:'')+(snap.displacedWood?' · рельеф коры: '+snap.displacedWood.toLocaleString('ru-RU')+' треуг.':'')+(snap.lawnTufts?' · пучков травы: '+snap.lawnTufts.toLocaleString('ru-RU'):'')+(snap.lawnBlades?' · объёмных травинок: '+snap.lawnBlades.toLocaleString('ru-RU'):'')+(snap.reduced?' · сокращено инстансов газона: '+snap.reduced:'')+(snap.reducedFoliage?' · адаптивный LOD листвы: '+snap.reducedFoliage.toLocaleString('ru-RU'):'');
-   if(n>=target){if(profile==='high'){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
+   if(n>=target){if(profile==='high'||heavy||recover){denoise.map=pt.target.texture;denoiseQuad.render(renderer);}finished=true;save.disabled=true;canvas.toBlob(b=>{if(!alive)return;if(!b||renderer.getContext().isContextLost()){error(Error('Не удалось сохранить кадр GPU'));return;}resultBlob=b;cleanup();pt=null;snap=null;save.disabled=false;details.textContent='100% · готово за '+fmtTime(performance.now()-started);msg.textContent+=' · готово, память освобождена';},'image/png');return;}raf=requestAnimationFrame(tick);
   }catch(e){error(e);}}
   raf=requestAnimationFrame(tick);
  }catch(e){building=false;if(!alive){cleanup();return;}error(e);}})();
