@@ -16,8 +16,7 @@ function leafTransmission(T,m,amount){
  const i=at+call.index+call[0].length;
  const addition=`
    // FORMA thin diffuse transmission, energy-limited and shadow-aware.
-   float formaTransR63=pow(max(0.0,-dot(geometryNormal,directLight.direction)),1.35);
-   reflectedLight.directDiffuse += diffuseColor.rgb * vec3(0.78,1.0,0.60) * directLight.color * (formaTransR63 * ${amount.toFixed(3)} * 0.318309886);
+   reflectedLight.directDiffuse += diffuseColor.rgb * vec3(0.78,1.0,0.60) * directLight.color * (pow(max(0.0,-dot(geometryNormal,directLight.direction)),1.35) * ${amount.toFixed(3)} * 0.318309886);
  `;
  const patched=chunk.slice(0,i)+addition+chunk.slice(i);
  const prior=m.onBeforeCompile,previousKey=m.customProgramCacheKey?.()||'';
