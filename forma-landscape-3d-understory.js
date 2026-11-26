@@ -5,7 +5,7 @@
  */
 import {foliageMaterial,normalizeFoliagePalette} from './forma-landscape-3d-plant-materials.js';
 import {enableBotanicalLod} from './forma-landscape-3d-foliage-lod.js';
-import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js';
+import {createPhotoFoliageTexture} from './forma-landscape-3d-photo-foliage.js?v=R22';
 
 export const NATIVE_UNDERSTORY=Object.freeze({
  fern:{latin:'Dryopteris filix-mas',form:'fronds',stems:22,leaves:24,height:.85,diameter:1.2},
@@ -93,6 +93,7 @@ function buildLeaves(T,items,id,form,season,quality){
  const palette=new T.Color(profile.shade),sun=new T.Color(profile.sunlit);
  const geometry=curvedLeaf(T,form);
  const material=foliageMaterial(T,id),randomHue=random(hash(id+'|'+season));
+ material.roughness=Math.max(.75,material.roughness);material.envMapIntensity=.30;material.clearcoat=.025;
  const make=(layer,step,relative)=>{
   const list=items.filter((_,i)=>i%step===0);
   if(!list.length)return;
@@ -102,7 +103,7 @@ function buildLeaves(T,items,id,form,season,quality){
     d.rotation.set(p.pitch,p.yaw,p.roll);
    d.scale.set(p.size*relative,p.size*relative*(form==='grass'?2.6:1),p.size*relative);
    d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
-   const color=palette.clone().lerp(sun,.15+randomHue()*.8);
+   const color=palette.clone().lerp(sun,.13+randomHue()*.72).multiplyScalar(.83+.17*Math.min(1,p.y/Math.max(.1,p.y+p.size)));
    if(profile.fall){const alt=profile.fall[Math.floor(randomHue()*profile.fall.length)];
     color.lerp(new T.Color(alt),.58+randomHue()*.34)}
    mesh.setColorAt(i,color);
@@ -111,7 +112,9 @@ function buildLeaves(T,items,id,form,season,quality){
   mesh.castShadow=layer==='micro'||layer==='volume';
   mesh.userData.botanicalLayer=layer;mesh.frustumCulled=false;g.add(mesh);
  };
- make('micro',1,1);make('volume',2,.95);make('sprays',4,1.15);
+ make('micro',1,1);make('volume',2,.95);make('sprays',4,1.0);
+ // The LOD controller selects one native leaf layer at a time.
+ g.traverse(node=>{if(node.isInstancedMesh)node.userData.formaExclusiveNativeLayer=true});
  return g;
 }
 /* All five native understory species use the same photo-alpha technique
@@ -193,7 +196,8 @@ export function createNativeUnderstory(T,instance,{season='summer',quality=1,mod
  }
  const group=new T.Group();group.add(twigSegments(T,stems,id));
  group.add(buildLeaves(T,leaves,id,spec.form,season,quality));
- const photoCards=makeUnderstoryPhotoCards(T,leaves,id,season,quality);
+ // Do not put generic leaf photo sprites over true grass blades, hosta leaves or fern fronds.
+ const photoCards=spec.form==='woodland'||spec.form==='creeping'?makeUnderstoryPhotoCards(T,leaves,id,season,quality):null;
  if(photoCards)group.add(photoCards);
  group.userData.species=id;group.userData.physicalHeight=height;
  group.userData.crownDiameter=diameter;group.userData.variant=instance.variant||1;
