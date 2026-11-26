@@ -33,6 +33,15 @@ function stripeBark(ctx,w,h){
  ctx.restore();
 }
 
+// Match opposite borders after every color/stripe operation, including the fallback.
+function seamlessBark(ctx,w,h){
+ const im=ctx.getImageData(0,0,w,h),a=im.data;
+ const blend=(i,j,t)=>{for(let k=0;k<3;k++){const x=a[i+k],y=a[j+k],m=(x+y)*.5;a[i+k]=x+(m-x)*t;a[j+k]=y+(m-y)*t;}};
+ const nx=Math.min(64,Math.floor(w/8)),ny=Math.min(96,Math.floor(h/8));
+ for(let y=0;y<h;y++)for(let x=0;x<nx;x++)blend((y*w+x)*4,(y*w+w-1-x)*4,.5+.5*Math.cos(Math.PI*x/nx));
+ for(let y=0;y<ny;y++)for(let x=0;x<w;x++)blend((y*w+x)*4,((h-1-y)*w+x)*4,.5+.5*Math.cos(Math.PI*y/ny));
+ ctx.putImageData(im,0,0);return im;
+}
 function textures(T){
  if(cache.has(T))return cache.get(T);
  const make=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
@@ -42,13 +51,13 @@ function textures(T){
  for(let i=0;i<490;i++){const a=r()*1024,b=r()*1024,w=4+r()*65,h=.8+r()*3.8;x.strokeStyle=i%3?'rgba(68,65,57,.55)':'rgba(104,100,84,.37)';x.lineWidth=h;x.beginPath();x.moveTo(a,b);x.quadraticCurveTo(a+w*.6,b+(r()-.5)*4,a+w,b+(r()-.5)*5);x.stroke();}
  for(let i=0;i<15;i++){const a=r()*1024,b=r()*1024,w=14+r()*100,h=8+r()*37;x.fillStyle=i%3?'#49463d':'#6e695b';x.beginPath();x.moveTo(a-w*.55,b);for(let j=0;j<13;j++){const t=j/12;x.lineTo(a-w*.55+w*t,b-h*Math.sin(t*Math.PI)*(.35+.65*r()));}for(let j=12;j>=0;j--){const t=j/12;x.lineTo(a-w*.55+w*t,b+h*Math.sin(t*Math.PI)*(.35+.65*r()));}x.closePath();x.fill();x.strokeStyle='rgba(40,37,32,.45)';x.lineWidth=1;for(let j=0;j<7;j++){x.beginPath();x.moveTo(a-w*.5+r()*w,b-h*.5+r()*h);x.lineTo(a-w*.5+r()*w,b+h*.4);x.stroke();}}
  for(let i=0;i<80;i++){const a=r()*1024,b=r()*1024,w=12+r()*50;x.fillStyle='rgba(117,112,96,.13)';x.fillRect(a,b,w,1+r()*3);x.fillStyle='rgba(255,255,249,.52)';x.fillRect(a,b+2,w*.8,1);}
- stripeBark(x,1024,1024);
+ stripeBark(x,1024,1024);seamlessBark(x,1024,1024);
  const bt=new T.CanvasTexture(bark);bt.colorSpace=T.SRGBColorSpace;bt.wrapS=bt.wrapT=T.RepeatWrapping;bt.anisotropy=8;
  const leaf=make(128,160),l=leaf.getContext('2d'),grad=l.createLinearGradient(15,0,110,160);
  grad.addColorStop(0,'#b7bc82');grad.addColorStop(.45,'#8f9f64');grad.addColorStop(1,'#75884d');l.fillStyle=grad;
  l.beginPath();l.moveTo(64,153);for(let i=0;i<=22;i++){const t=i/22,yy=145-137*t,ww=50*Math.pow(Math.sin(Math.PI*t),.72)*(1.12-.30*t);l.lineTo(64-ww*(i%2?.88:1),yy);}for(let i=22;i>=0;i--){const t=i/22,yy=145-137*t,ww=50*Math.pow(Math.sin(Math.PI*t),.72)*(1.12-.30*t);l.lineTo(64+ww*(i%2?.88:1),yy);}l.closePath();l.fill();l.strokeStyle='rgba(212,215,157,.8)';l.lineWidth=1.3;l.beginPath();l.moveTo(64,154);l.lineTo(64,11);l.stroke();l.lineWidth=.75;for(let i=0;i<8;i++){const t=(i+2)/12,y=145-137*t,w=42*Math.sin(Math.PI*t);for(const sign of [-1,1]){l.beginPath();l.moveTo(64,y+9);l.quadraticCurveTo(64+sign*w*.55,y,64+sign*w,y-14);l.stroke();}}
  const lt=new T.CanvasTexture(leaf);lt.colorSpace=T.SRGBColorSpace;lt.anisotropy=4;const out={bark:bt,leaf:lt,normal:null,rough:null,materials:new Set()};cache.set(T,out);
- bt.userData.source='R54 striped bark · procedural fallback';
+ bt.userData.source='R54 seamless striped bark · procedural fallback';
  // W.carter, Birch trunk with bark in Norrkila (Betula pendula), 2018, CC0.
  // https://commons.wikimedia.org/wiki/File:Birch_trunk_with_bark_in_Norrkila.jpg
  // Photo-derived albedo, approximate normal/roughness; not measured scan maps.
@@ -66,13 +75,13 @@ function textures(T){
   for(let y=0;y<h;y++)for(let x=0;x<48;x++)blend((y*w+x)*4,(y*w+w-1-x)*4,.5+.5*Math.cos(Math.PI*x/48));
   for(let y=0;y<64;y++)for(let x=0;x<w;x++)blend((y*w+x)*4,((h-1-y)*w+x)*4,.5+.5*Math.cos(Math.PI*y/64));
   ctx.putImageData(raw,0,0);stripeBark(ctx,w,h);
-  data.set(ctx.getImageData(0,0,w,h).data);
+  data.set(seamlessBark(ctx,w,h).data);
   const heights=new Float32Array(w*h);for(let i=0;i<heights.length;i++){const k=i*4;heights[i]=(.2126*data[k]+.7152*data[k+1]+.0722*data[k+2])/255;}
   const normal=make(w,h),rough=make(w,h),nc=normal.getContext('2d'),rc=rough.getContext('2d'),nm=nc.createImageData(w,h),rm=rc.createImageData(w,h);
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,k=i*4,dx=(heights[y*w+(x+1)%w]-heights[y*w+(x+w-1)%w])*1.65,dy=(heights[((y+1)%h)*w+x]-heights[((y+h-1)%h)*w+x])*1.65,n=Math.hypot(dx,dy,1);nm.data[k]=128-127*dx/n;nm.data[k+1]=128+127*dy/n;nm.data[k+2]=128+127/n;nm.data[k+3]=255;const R=clamp(176+60*(1-heights[i])+30*Math.min(1,Math.abs(dx)+Math.abs(dy)),0,255);rm.data[k]=rm.data[k+1]=rm.data[k+2]=R;rm.data[k+3]=255;}
   nc.putImageData(nm,0,0);rc.putImageData(rm,0,0);
   const map=(c)=>{const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=8;return t;};
-  bt.image=src;bt.needsUpdate=true;bt.userData.source='R54 · W.carter CC0 photo + irregular horizontal bark scars · 1024×2048';
+  bt.image=src;bt.needsUpdate=true;bt.userData.source='R54 · seamless W.carter CC0 photo + irregular horizontal bark scars · 1024×2048';
   out.normal=map(normal);out.rough=map(rough);
   for(const m of out.materials){m.normalMap=out.normal;m.roughnessMap=out.rough;m.bumpMap=null;m.roughness=1;m.needsUpdate=true;}
   window.dispatchEvent(new Event('forma-foliage-texture-ready'));
@@ -92,7 +101,7 @@ export function createNaturalBirch(T,o,{season='summer'}={}){
    U=U?U.clone().addScaledVector(axis,-U.dot(axis)):V(0,0,0).crossVectors(axis,ref);if(U.lengthSq()<1e-8)U.crossVectors(axis,ref);U.normalize();const W=V(0,0,0).crossVectors(axis,U).normalize();
    if(i)len+=c.distanceTo(pts[i-1]);const radius=(tip+(base-tip)*Math.pow(1-t,1.32))*(root?1+.32*Math.exp(-t*24):1);
    const rootTint=root?clamp((c.y/(h*(p.age===75?.20:.10)))+.28,.28,1):1;
-   for(let j=0;j<=sides;j++){const a=j/sides*Math.PI*2,rr=radius*(1+.06*Math.sin(a*5+phase+t*3));const q=c.clone().addScaledVector(U,rr*Math.cos(a)).addScaledVector(W,rr*Math.sin(a));b.pos.push(q.x,q.y,q.z);b.uv.push(j/sides*Math.max(.7,base*6.28/.65),len/.95);b.col.push(rootTint,rootTint*.99,rootTint*.96);if(i&&j<sides){const k=first+(i-1)*(sides+1)+j,n=k+sides+1;b.idx.push(k,k+1,n,k+1,n+1,n);}}
+   for(let j=0;j<=sides;j++){const a=j/sides*Math.PI*2,rr=radius*(1+.06*Math.sin(a*5+phase+t*3));const q=c.clone().addScaledVector(U,rr*Math.cos(a)).addScaledVector(W,rr*Math.sin(a));b.pos.push(q.x,q.y,q.z);b.uv.push(j/sides*Math.max(1,Math.round(base*6.28/.65)),len/.95);b.col.push(rootTint,rootTint*.99,rootTint*.96);if(i&&j<sides){const k=first+(i-1)*(sides+1)+j,n=k+sides+1;b.idx.push(k,k+1,n,k+1,n+1,n);}}
   }
  }
  const trunk=curve([V(0,-.04,0),V(-p.bend*.25,h*.18,p.bend*.1),V(p.bend*.35,h*.38,-p.bend*.15),V(p.bend*.75,h*.58,p.bend*.25),V(-p.bend*.20,h*.79,p.bend*.18),V(p.bend*.28,h*.97,0)]);
