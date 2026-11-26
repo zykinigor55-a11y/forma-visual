@@ -42,6 +42,19 @@ export function treeInstancePhotoDetail(o,asset){
  const height=metres(o?.height),diameter=metres(o?.diameter);
  const fixed='Measured, immutable single-tree height '+height+' and crown diameter '+diameter+
   '; no species substitution, no extra trees, no resizing, no tree relocation.';
+ const rotation=bounded(o?.rotation,-360,360),variant=bounded(o?.variant,1,3);
+ const identity=' Keep the individual reference trunk path, major forks, branch directions, crown lobes, silhouette, internal gaps and foliage coverage; no generic replacement. '+(rotation===null?'':'Authored yaw '+rotation.toFixed(1)+' degrees. ')+(variant===null?'':'Individual shape variant '+variant+'. ');
+ if(asset.id==='maple'){
+  const age=bounded(o?.maple?.age,5,110),model=o?.photoTreeModel;
+  const stage=age===null?'source-selected age':age<30?'young':age<85?'adult':'century-old';
+  const trunk=bounded(model?.trunkDiameterM,.01,4),leaves=bounded(model?.leafCards,0,1000000),limbs=bounded(model?.primaryBranches,1,100);
+  return 'SPECIES Acer platanoides (Norway maple), '+stage+(age===null?'':', selected design age '+Math.round(age)+' years')+
+   '; preserve the exact source maple individual, not a generic botanical stock tree. '+fixed+identity+
+   (trunk===null?'':'Nominal source trunk diameter '+trunk.toFixed(2)+'m; preserve taper and root flare. ')+
+   (limbs===null?'':'Source primary branch count '+Math.round(limbs)+'; preserve visible major forks and angles. ')+
+   (leaves===null?'':'Source foliage geometry contains '+Math.round(leaves)+' leaf cards (coverage cue, not literal photographic leaf count). Match the visual coverage, do not independently thicken or thin it. ')+
+   'Keep palmate maple leaf shape and source leaf scale, subdued natural green hues, photographic grey-brown bark, fine twig detail, and existing sunlight transmission. A young maple must stay slender; an adult or century-old maple must retain its own actual trunk thickness, branch architecture and crown spread as shown, without imposing idealized age proportions.';
+ }
  if(asset.id==='pine'){
   const growth=o?.pine&&typeof o.pine==='object'?o.pine:{};
   const form=pineForm[growth.pineType]||pineForm.solitary;
@@ -51,20 +64,20 @@ export function treeInstancePhotoDetail(o,asset){
    age<70?'adult Scots pine of the explicitly selected age':'old mature Scots pine of the explicitly selected age';
   return 'SPECIES Pinus sylvestris (Scots pine, NOT spruce), '+maturity+
    (age!==null?'; age '+Math.round(age)+' years':'')+
-   '; selected form '+form+'; retain original GLB needle color, pine bark and crown silhouette. '+fixed;
+   '; selected form '+form+'; retain original GLB needle color, pine bark and crown silhouette. '+fixed+identity;
  }
  if(asset.id==='spruce'){
   const stage=sprucePromptStage(o),age=bounded(o?.spruce?.age,3,350);
   return 'SPECIES Picea abies (Norway spruce, NOT Scots pine), selected TREE TYPE '+stage+
    '; '+spruceForm[stage]+(age===null?'':'; user-authored age '+Math.round(age)+' years')+
-   '; keep original evergreen needle color and authentic drooping branch structure. '+fixed;
+   '; keep original evergreen needle color and authentic drooping branch structure. '+fixed+identity;
  }
  if(asset.id==='birch'){
   const age=bounded(o?.birch?.age,3,200);
   return 'SPECIES Betula pendula (silver birch, NOT aspen), '+stageFromBirch(o?.birch?.stage??o?.treeStage)+
    (age===null?'':'; author-selected age '+Math.round(age)+' years')+
-   '; small translucent deciduous leaves, gracefully hanging fine twigs, white bark with black scars. '+fixed;
+   '; small translucent deciduous leaves, gracefully hanging fine twigs, white bark with black scars. '+fixed+identity;
  }
  const latin=asset.latin||asset.name;
- return 'SPECIES '+latin+', reproduce this exact planted botanical species, its reference growth habit, leaf shape, bark and canopy. '+fixed;
+ return 'SPECIES '+latin+', reproduce this exact planted botanical species, its reference growth habit, leaf shape, bark and canopy. '+fixed+identity;
 }
