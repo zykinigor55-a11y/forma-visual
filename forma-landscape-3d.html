@@ -476,11 +476,36 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
 }
 @media(max-width:850px) and (max-height:540px){main #sceneClimatePanel:not([hidden]){max-height:45%!important}}
 </style>
+<style id="forma-visual-r19">
+#formaPresentationOpen{position:absolute;right:12px;bottom:86px;z-index:9;min-height:42px;padding:7px 14px;background:#282b31ef;color:#e9d8bc;border:1px solid #77736c;border-radius:10px}
+#formaPresentationBar[hidden]{display:none!important}
+#formaPresentationBar{position:absolute;z-index:30;left:8px;right:8px;bottom:calc(9px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:5px;pointer-events:none}
+#formaPresentationBar button{min-height:44px;padding:6px 12px;border:1px solid #77736c;border-radius:9px;background:#26292eea;color:#e9dfd0;pointer-events:auto;font-size:12px}
+body[data-presentation=true] main>:is(#left,#right,#sceneQuickTools,#mobileWorkspaceTabs,#sceneCameraCycle,#sceneClimateButton,#sceneClimatePanel,#mobileWalkToggle,#mobileWalkDock,#mobileTerrainDock,#alphaSceneButton,#openComposition,#compositionPanel,#status,#selectedObjectDock,#mobilePlacementHint,#formaPresentationOpen){display:none!important}
+body[data-presentation=true] main #viewport{width:100%!important;height:100%!important}
+main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOpen{display:none!important}
+@media(max-width:850px){
+ #formaPresentationOpen{right:7px;top:103px;bottom:auto;min-height:40px;padding:5px 12px;font-size:11px}
+ body:not([data-mobile-panel=scene]) #formaPresentationOpen,body[data-active-tool]:not([data-active-tool=select]) #formaPresentationOpen{display:none!important}
+ body[data-mobile-panel=scene] #sceneQuickTools{top:5px!important;left:6px!important;right:6px!important;transform:none!important;display:flex!important;justify-content:space-between;padding:4px!important;gap:4px!important}
+ body[data-mobile-panel=scene] #sceneQuickTools button{flex:1 1 0;min-width:0!important;min-height:44px!important;padding:4px 3px!important;font-size:10px!important;gap:3px!important;justify-content:center}
+ body[data-mobile-panel=scene] #sceneQuickTools button svg{width:19px!important;height:19px!important;flex:0 0 19px!important}
+ body[data-mobile-panel=scene] :is(#sceneCameraCycle,#sceneClimateButton,#mobileWalkToggle,#openComposition,#alphaSceneButton){min-width:0!important;min-height:40px!important;padding:5px 9px!important;font-size:10px!important;box-shadow:none!important;border-radius:8px!important}
+ body[data-mobile-panel=scene] #sceneCameraCycle{left:7px!important;top:60px!important}
+ body[data-mobile-panel=scene] #sceneClimateButton{left:7px!important;top:103px!important}
+ body[data-mobile-panel=scene] #mobileWalkToggle{right:7px!important;top:146px!important}
+ body[data-mobile-panel=scene] #openComposition{left:7px!important;right:auto!important;top:146px!important}
+ body[data-mobile-panel=scene] #alphaSceneButton{right:7px!important;left:auto!important;top:60px!important;max-width:50vw!important;overflow:hidden;text-overflow:ellipsis}
+ body[data-mobile-panel=scene] #mobileWorkspaceTabs{padding:4px!important;gap:4px!important}
+ body[data-mobile-panel=scene] #mobileWorkspaceTabs button{min-height:43px!important;font-size:11px!important;padding:5px 3px!important}
+ body[data-presentation=true] main>:is(#sceneQuickTools,#mobileWorkspaceTabs){display:none!important}
+}
+</style>
 </head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R18</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R19</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -514,6 +539,8 @@ body[data-mobile-panel="tools"] #left,body[data-mobile-panel="details"] #right{d
  <div id="compositionStatus" role="status"></div>
  <div id="compositionDownloads"></div>
 </section>
+<div id="formaPresentationBar" hidden><button type="button" id="formaPhotoFrame">Ракурс</button><button type="button" id="formaPhotoSave">Фото PNG</button><button type="button" id="formaPresentationClose">✕ Редактор</button></div>
+<button type="button" id="formaPresentationOpen" aria-label="Чистый презентационный вид">Вид</button>
 <button type="button" id="sceneCameraCycle" aria-label="Ракурсы камеры: общий дом, ближе, весь участок" title="Один тап — дом, второй — ближе, третий — весь участок">⌖ К дому</button>
 <button type="button" id="sceneClimateButton" aria-controls="sceneClimatePanel" aria-expanded="false" aria-label="Открыть настройки солнца, времени суток и погоды">☀ Солнце и погода</button>
 <section id="sceneClimatePanel" class="scene-climate-panel" data-climate-tab="sun" role="region" aria-label="Настройки солнца и погоды" hidden>
@@ -777,7 +804,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {ROCK_SCAN_SOURCES,createPhotogrammetryBoulder,createGeologicalFallbackBoulder} from './forma-landscape-3d-rocks.js';
 import {SHRUB_HEIGHT_M,vegetationQuality,bundledPlantIsTrueScale} from './forma-landscape-3d-botany.js';
 import {BOTANICAL_QUALITY,normalizeBotanicalQuality,updateBotanicalLod,setFoliageTier} from './forma-landscape-3d-foliage-lod.js';
-import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js';
+import {makeRealVegetation,makeRealProp} from './forma-landscape-3d-models.js?v=visual-R19';
 import {pineGrowthMarkup,mountPineGrowth,normalizePineGrowth,pineGrowthEquals,pineDimensions} from './forma-landscape-pine-growth.js';
 import {spruceGrowthMarkup,mountSpruceGrowth,normalizeSpruceGrowth,spruceDimensions} from './forma-landscape-spruce-growth.js';
 import {MATURE_TREE_MODELS,TREE_MODEL_SOURCE_LINKS} from './forma-landscape-3d-mature-trees.js';
@@ -1004,16 +1031,16 @@ function revealSelectedInspector(){
  reveal();requestAnimationFrame(reveal);
 }
 function selectPineById(id){
- const pine=doc.objects.find(o=>o.id===id&&['pine','spruce','birch'].includes(o.catalogId));
+ const pine=doc.objects.find(o=>o.id===id&&catalog(o.catalogId)?.group==='trees');
  if(!pine)return false;
  if(state.tool!=='select')chooseTool('select');
  state.selected='object:'+pine.id;state.drag=false;state.draggingMoved=false;
- renderProps();if(window.innerWidth<=850)revealSelectedInspector();else showSelectedPineControls();
- status((pine.catalogId==='pine'?'Сосна':pine.catalogId==='spruce'?'Ель':'Берёза')+' выбрана. Открыты параметры дерева.');
+ renderProps();revealSelectedInspector();
+ status((catalog(pine.catalogId)?.name||'Дерево')+' · открыты параметры и данные модели.');
  return true;
 }
 function selectNextPine(){
- const pines=doc.objects.filter(o=>['pine','spruce','birch'].includes(o.catalogId));
+ const pines=doc.objects.filter(o=>catalog(o.catalogId)?.group==='trees');
  if(!pines.length){status('На участке пока нет деревьев. Добавьте их через «Озеленение».');return}
  const current=state.selected?.startsWith('object:')?state.selected.slice(7):null;
  const i=pines.findIndex(p=>p.id===current);
@@ -1117,7 +1144,7 @@ function initialize(){
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<=720?1.18:1.30));
   renderer.shadowMap.enabled=true; // Keep relief and building shadows in auto mode.
  }
- renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;
  scene=new THREE.Scene();scene.background=new THREE.Color('#b8c7c4');scene.fog=new THREE.Fog('#b8c7c4',75,180);
  outdoorReflectionMap=createOutdoorReflectionMap(THREE,document);
  scene.environment=outdoorReflectionMap;scene.environmentIntensity=.67;
@@ -1134,7 +1161,7 @@ function initialize(){
  const skyFill=new THREE.HemisphereLight(0xdceafa,0x334b3c,1.75);skyFill.name='forma-sky-fill';scene.add(skyFill);
  const bounced=new THREE.DirectionalLight(0xc6d8e3,.38);
  bounced.name='forma-bounced-fill';bounced.position.set(22,28,-29);bounced.castShadow=false;scene.add(bounced);
- const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(window.innerWidth<720?1024:2048,window.innerWidth<720?1024:2048);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;sun.shadow.normalBias=.022;sun.shadow.radius=2.6;scene.add(sun);scene.add(sun.target);
+ const sun=new THREE.DirectionalLight(0xfff2db,3);sun.name='sun';sun.position.set(-25,65,22);sun.castShadow=true;sun.shadow.mapSize.set(Math.min(renderer.capabilities.maxTextureSize,2048),Math.min(renderer.capabilities.maxTextureSize,2048));sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0002;sun.shadow.normalBias=.022;sun.shadow.radius=2.6;scene.add(sun);scene.add(sun.target);
  root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
  brushCursor=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xE7D0A5,transparent:true,opacity:.78,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
  brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
@@ -1249,12 +1276,15 @@ function applyRaisedSoilMaterial(mat){
     float slopeFactor=smoothstep(0.18,0.42,steepness);
     float raisedSoil=heightFactor*slopeFactor;
     vec3 soilColor=texture2D(formaSoilMap,soilUV).rgb;
-    vec3 coarseGrass=texture2D(map,vMapUv*0.23).rgb;
-    diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*coarseGrass,0.34);
+    vec3 coarseGrass=texture2D(map,vMapUv*0.173+vec2(.37,.19)).rgb;
+    float turfMacro=sin(vFormaGroundPosition.x*.71+sin(vFormaGroundPosition.z*.37))*sin(vFormaGroundPosition.z*.53-vFormaGroundPosition.x*.13);
+    float grassLuma=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));
+    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(grassLuma),.12);
+    diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*coarseGrass,.22)*(0.92+0.065*turfMacro);
     diffuseColor.rgb=mix(diffuseColor.rgb,diffuse*soilColor,raisedSoil);
    `);
  };
- mat.customProgramCacheKey=()=>'forma-slope-soil-v4';
+ mat.customProgramCacheKey=()=>'forma-slope-soil-v5-r19';
 }
 function material(color,roughness=1,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
 function mesh(geo,mat){const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;return m}
@@ -1413,10 +1443,10 @@ function rebuild(){
  // user boundary remains a separate outline and never cuts holes in the scene.
  const groundSide=squareTerrainSide(doc.site);
  const geo=makeEditableGroundGeometry(groundSide);cutPoolOpenings(geo);
- const grass=groundPhotoTexture();grass.repeat.set(groundSide/2.8,groundSide/2.8);
+ const grass=groundPhotoTexture();grass.repeat.set(groundSide/1.75,groundSide/1.75);
  const groundMat=material(doc.atmosphere.season==='winter'?'#A8ABA2':doc.atmosphere.season==='autumn'?'#bcb498':'#ffffff');
- groundMat.map=grass;groundMat.roughness=1;groundMat.side=THREE.FrontSide;groundMat.shadowSide=THREE.FrontSide;
- groundMat.envMapIntensity=.35;
+ groundMat.map=grass;groundMat.bumpMap=grass;groundMat.bumpScale=.025;groundMat.roughness=.96;groundMat.side=THREE.FrontSide;groundMat.shadowSide=THREE.FrontSide;
+ groundMat.envMapIntensity=.21;
  applyRaisedSoilMaterial(groundMat);
  terrainMesh=mesh(geo,groundMat);terrainMesh.castShadow=true;terrainMesh.receiveShadow=true;terrainMesh.userData.ground=true;terrainMesh.userData.presentationShape='square';root.add(terrainMesh);
  if(underlayTexture?.image){
@@ -1430,7 +1460,7 @@ function rebuild(){
  const outlinePoints=(doc.site.boundary?.length>=3?doc.site.boundary:[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}])
   .map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.14,v.z)});
  outlinePoints.push(outlinePoints[0].clone());
- const parcelLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'}));parcelLine.name='forma-parcel-outline';root.add(parcelLine);
+ const parcelLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'}));parcelLine.name='forma-parcel-outline';parcelLine.visible=document.body.dataset.presentation!=='true';root.add(parcelLine);
  buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
@@ -1935,8 +1965,8 @@ function chooseTool(t){
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
  if(t==='creatures'){renderCreatureCatalog();return}
  $('#library').innerHTML=t==='select'?'<p>Коснитесь дерева в сцене или выберите его из списка.</p><div class="pine-object-list"><strong>ДЕРЕВЬЯ НА УЧАСТКЕ</strong>'+
- doc.objects.filter(o=>['pine','spruce','birch'].includes(o.catalogId)).map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
- (!doc.objects.some(o=>['pine','spruce','birch'].includes(o.catalogId))?'<small>Посаженных деревьев пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · '+CATALOG.filter(x=>x.group==='trees'||x.group==='shrubs').length+'</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 19</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
+ doc.objects.filter(o=>catalog(o.catalogId)?.group==='trees').map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
+ (!doc.objects.some(o=>catalog(o.catalogId)?.group==='trees')?'<small>Посаженных деревьев пока нет.</small>':'')+'</div>':(arr.length>4?'<input id="catalogSearch" type="search" aria-label="Поиск по каталогу" placeholder="Поиск по каталогу…" autocomplete="off">':'')+(t==='light'?'<div class="real-model-intro" id="lightPickerStatus">11 разных архитектурных светильников · 10 популярных типов и светильник-шар. Выберите конкретный корпус, затем нажмите на участок.</div>':'')+(t==='plant'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · '+CATALOG.filter(x=>x.group==='trees'||x.group==='shrubs').length+'</button><button type="button" data-catalog-filter="trees">Деревья</button><button type="button" data-catalog-filter="shrubs">Кустарники</button></div>':t==='surface'?'<div class="catalog-filter"><button class="active" type="button" data-catalog-filter="all">Все · 19</button><button type="button" data-catalog-filter="pavers">Брусчатка</button><button type="button" data-catalog-filter="fills">Отсыпки</button><button type="button" data-catalog-filter="lawns">Газоны</button></div>':t==='models40'?'<div class="real-model-intro">24 настоящих GLB-модели архитектуры и малых форм с PBR-текстурами · CC0. Растительность теперь полностью своя 3D в «Озеленение». Выберите модель, затем нажмите на участок. Масштаб и поворот — справа.</div><div class="catalog-filter real-model-filters"><button class="active" type="button" data-catalog-filter="all">Все 3D-модели · '+REAL_3D_TOTAL+'</button><button type="button" data-catalog-filter="favorites">★ Избранное</button><button type="button" data-catalog-filter="recent">Недавние</button>'+Object.entries(REAL_3D_CATEGORIES).filter(([key])=>key!=='plants').map(([key,name])=>'<button type="button" data-catalog-filter="'+key+'">'+name+'</button>').join('')+'</div>':'')+arr.map((c,ci)=>{
   const asset=catalog(c[0]),real=realModelById(c[0]),modelPreview=Boolean(modelPath(c[0]))&&(['landscape','furniture','models40'].includes(t)||(t==='plant'&&['fern','fern-02','fern-03','fern-04'].includes(c[0]))),photo=['plant','light','surface','water'].includes(t)||(t==='landscape'&&Boolean(asset))||modelPreview;
   const uri=modelPreview?'./assets/landscape-models/thumbs/'+c[0]+'.webp':t==='plant'?(POLY_HAVEN_TREE_MODELS[c[0]]?.thumbnail||(['pennisetum','hosta','ornamental-grass','fern','fern-02','fern-03','fern-04'].includes(c[0])?fallbackIconURL(asset):'./assets/landscape-photo/'+c[0]+'.png')):
     t==='light'?iconURL(asset):t==='landscape'?'./assets/landscape-card-photo/'+c[0]+'.jpg':t==='surface'?surfacePreviewURL(c[0]):t==='water'?fallbackIconURL(asset):'';
@@ -2877,7 +2907,7 @@ function updateSun(){
  const shadowCam=sun.shadow.camera;
  shadowCam.left=-half;shadowCam.right=half;shadowCam.top=half;shadowCam.bottom=-half;
  shadowCam.near=.1;shadowCam.far=Math.max(220,85+half*2);shadowCam.updateProjectionMatrix();
- sun.shadow.normalBias=Math.max(.055,half/(window.innerWidth<720?1024:2048)*1.6);sun.shadow.bias=-.00055;
+ sun.shadow.normalBias=Math.max(.018,half/sun.shadow.mapSize.x*.85);sun.shadow.bias=-.00025;
  sun.shadow.radius=modellingLight?Math.min(1.8,solarSettings.softness):solarSettings.softness;
  if(atmosphereSky){
   atmosphereSky.visible=!['night','blue-hour'].includes(val)&&state.view!=='2d';
@@ -2891,23 +2921,23 @@ function updateSun(){
  if(outdoorReflectionMap){
   updateOutdoorReflectionMap(outdoorReflectionMap,{time:val,weather,
    azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,clouds:sceneAtmosphere.clouds});
-  scene.environmentIntensity=val==='blue-hour'?.55:val==='night'?.47:val==='evening'?.62:.72;
+  scene.environmentIntensity=val==='blue-hour'?.55:val==='night'?.47:val==='evening'?.55:.54;
  }
  sun.intensity=(val==='night'?.025:cfg[val]*factor*solarSettings.strength);
- sun.color.set(val==='evening'?'#ffb87b':val==='morning'?'#ffe1be':'#fff2db');
+ sun.color.set(val==='evening'?'#ffb87b':val==='morning'?'#ffe1be':'#fff4e5');
  const sky=scene.getObjectByName('forma-sky-fill');
  if(sky){
   sky.intensity=atmosphereLighting({
    time:val,weather,siteSize:Math.max(doc.site.width,doc.site.height),settings:sceneAtmosphere
-  }).skyFillIntensity*(modellingLight?.66:1);
+  }).skyFillIntensity*(modellingLight?.66:daylight?(weather==='sunny'?.70:.89):1);
   sky.color.set(val==='blue-hour'?'#9fb8e1':val==='night'?'#71899e':val==='evening'?'#ffe2c2':'#e6eef6');
-  sky.groundColor.set(val==='night'?'#17212a':'#5b6954');
+  sky.groundColor.set(val==='night'?'#17212a':'#4d5044');
  }
  const atmosphere=atmosphereLighting({
   time:val,weather,siteSize:Math.max(doc.site.width,doc.site.height),settings:sceneAtmosphere
  });
  const bounced=scene.getObjectByName('forma-bounced-fill');
- if(bounced){bounced.intensity=atmosphere.bouncedFillIntensity*(modellingLight?.65:1);
+ if(bounced){bounced.intensity=atmosphere.bouncedFillIntensity*(modellingLight?.65:daylight?.62:1);
   bounced.color.set(val==='night'?'#9bb8d6':val==='evening'?'#f0d8b8':'#c6d8e3')}
  if(cloudLayer){
   cloudLayer.visible=state.view!=='2d'&&atmosphere.clouds>.01;
@@ -2915,7 +2945,7 @@ function updateSun(){
   cloudLayer.material.uniforms.opacity.value=val==='night'?.49:.60;
   cloudLayer.material.uniforms.cloudColor.value.set(val==='blue-hour'?'#91A6CD':val==='night'?'#7899BC':val==='evening'?'#f3e1cb':'#f5f6f1');
  }
- renderer.toneMappingExposure=atmosphere.exposure;
+ renderer.toneMappingExposure=atmosphere.exposure*(daylight?.91:1);
  scene.background=new THREE.Color(atmosphere.background);
  scene.fog.color.set(atmosphere.fogColor);
  const extent=Math.max(doc.site.width,doc.site.height);
@@ -3014,6 +3044,24 @@ function syncSceneCameraButton(){
  button.textContent=['＋ Ближе','▤ Весь участок','⌖ К дому'][houseCameraStage];
  button.setAttribute('aria-label',
   ['Приблизить камеру к дому','Показать весь участок','Показать дом целиком'][houseCameraStage]);
+}
+function setPresentationMode(on){
+ if(on&&(state.painting||state.drag||state.tool!=='select'||pointMode.length)){status('Завершите текущий инструмент и включите «Выбор».');return;}
+ if(on){if(state.view!=='3d')setView('3d');setSceneClimateOpen(false);activateMobilePanel('scene');state.selected=null;renderProps();}
+ document.body.dataset.presentation=String(on);
+ $('#formaPresentationBar').hidden=!on;
+ const outline=root.getObjectByName('forma-parcel-outline');if(outline)outline.visible=!on;
+ renderGate.invalidate();requestAnimationFrame(resize);
+}
+function focusArchitecturalFrame(){
+ if(state.view!=='3d')setView('3d');
+ const b=activeHouseTarget(),p=pos(b.x,b.y),ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));
+ const range=Math.max(b.width,b.height,7)*Math.max(1.55,1.08/ratio);
+ const a=-(Number(b.rotation)||0)*Math.PI/180;
+ const offset=new THREE.Vector3(range*.56,0,range).applyAxisAngle(new THREE.Vector3(0,1,0),a);
+ const x=p.x+offset.x,z=p.z+offset.z,eye=terrainAt(x,z)+1.65;
+ controls.target.set(p.x,terrainAt(p.x,p.z)+1.65,p.z);
+ camera.position.set(x,eye,z);camera.lookAt(controls.target);controls.update();renderGate.invalidate();
 }
 function cycleSceneCamera(){
  const next=(houseCameraStage+1)%3;
@@ -3819,6 +3867,7 @@ function addEvents(){
  const touchPointers=new Set();
  let tapCancelled=false;
  const down=e=>{
+ if(document.body.dataset.presentation==='true')return;
  if(e.pointerType!=='mouse'){
   touchPointers.add(e.pointerId);
   if(touchPointers.size>1){tapCancelled=true;return}
@@ -3889,6 +3938,7 @@ function addEvents(){
  }
 };
 const move=e=>{
+ if(document.body.dataset.presentation==='true'){renderGate.invalidate();return;}
  if(e.pointerId===state.activePointer&&state.down&&
   Math.hypot(e.clientX-state.down.x,e.clientY-state.down.y)>(e.pointerType==='mouse'?5:10))
   tapCancelled=true;
@@ -3958,6 +4008,7 @@ const move=e=>{
   positionLabel.textContent='X '+Number(ref.obj.x).toFixed(2)+' м · Y '+Number(ref.obj.y).toFixed(2)+' м';
 };
 const up=e=>{
+ if(document.body.dataset.presentation==='true')return;
  touchPointers.delete(e.pointerId);
  if(e.pointerId!==state.activePointer||!state.down)return;
  if(state.view==='walk'){state.down=null;return}
@@ -4106,6 +4157,10 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  };
  $('#focusHouse').onclick=()=>focusHouseCamera('overview');
  $('#sceneCameraCycle').onclick=cycleSceneCamera;
+ $('#formaPresentationOpen').onclick=()=>setPresentationMode(true);
+ $('#formaPresentationClose').onclick=()=>setPresentationMode(false);
+ $('#formaPhotoFrame').onclick=focusArchitecturalFrame;
+ $('#formaPhotoSave').onclick=saveScreenshot;
  setupComposition();
  setupSceneClimateControls();
  setupWeatherIntensityControls();
@@ -4129,6 +4184,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   // Never move the camera or remove objects while editing text/numeric inputs.
   if(/input|select|textarea/i.test(e.target?.tagName||'')||e.target?.isContentEditable)return;
   const key=e.key.toLowerCase();
+  if(document.body.dataset.presentation==='true'){if(key==='escape'){e.preventDefault();setPresentationMode(false);}return;}
   if((e.ctrlKey||e.metaKey)&&key==='z'){e.preventDefault();restore(e.shiftKey?redo:undo,e.shiftKey?undo:redo);return}
   if((e.ctrlKey||e.metaKey)&&key==='y'){e.preventDefault();restore(redo,undo);return}
   if(state.view==='walk'){
