@@ -17,7 +17,7 @@ function makeSky(T,source,atmosphere={}){
 }
 // Spherical, single-scattering atmosphere. Distances in km; RGB Rayleigh
 // coefficients and aerosol extinction. Direct sun remains a separate light.
-function physicalSkyR159(T,source,atmosphere={}){
+export function physicalSkyR159(T,source,atmosphere={}){
  const w=256,h=128,R=6360,outer=6460,eye=R+.08,steps=14,sunSteps=8;
  const time=atmosphere.time||'day',weather=atmosphere.weather||'sunny',cloudy=['overcast','rain','fog','snow'].includes(weather);
  const sun=source.getObjectByName('sun'),dir=sun?sun.getWorldPosition(new T.Vector3()).sub(sun.target.getWorldPosition(new T.Vector3())).normalize():new T.Vector3(.4,.8,.3).normalize();
