@@ -2,7 +2,7 @@
  * and directional cloud shading. A realtime approximation, not ray marching. */
 export function makePhotographicSky(T){
  const uniforms={coverage:{value:.35},time:{value:0},opacity:{value:1},cloudColor:{value:new T.Color('#f5f6f1')},sunDirection:{value:new T.Vector3(.5,.7,.5)},zenith:{value:new T.Color('#759abb')},horizon:{value:new T.Color('#d9e1e5')},ground:{value:new T.Color('#9eaeb0')},cloudShade:{value:new T.Color('#a7b5c3')},haze:{value:.30},sunGlow:{value:.15},overcast:{value:0},cloudDensity:{value:.65},cloudScale:{value:1},cloudHeight:{value:1},cloudThickness:{value:1},cloudTransmission:{value:.65},cloudDetail:{value:.75}};
- const material=new T.ShaderMaterial({uniforms,defines:{CLOUD_STEPS:typeof window!=='undefined'&&window.innerWidth<=850?5:14},side:T.BackSide,depthWrite:false,depthTest:true,toneMapped:true,fog:false,
+ const material=new T.ShaderMaterial({uniforms,defines:{CLOUD_STEPS:typeof window!=='undefined'&&window.innerWidth<=850?5:8},side:T.BackSide,depthWrite:false,depthTest:true,toneMapped:true,fog:false,
  vertexShader:`varying vec3 vSky;
  void main(){vSky=position;vec4 p=projectionMatrix*vec4(mat3(viewMatrix)*position,1.0);gl_Position=p.xyww;}`,
  fragmentShader:`varying vec3 vSky;
@@ -73,22 +73,36 @@ export function photographicFog({time='day',weather='sunny',haze=.3,siteSize=40,
 
 /** Bake the same scattering approximation into a linear HDR environment for
  * the path tracer. Alpha stores direct solar transmittance before readback. */
-export function bakeCloudEnvironment(T,renderer,{sun,time='day',weather='sunny',settings={},high=false,mobile=false}={}){
- const width=high?2048:mobile?512:1024,height=width/2;
+export async function bakeCloudEnvironment(T,renderer,{sun,time='day',weather='sunny',settings={},high=false,mobile=false,isAlive=()=>true,onProgress=()=>{}}={}){
+ const width=high?1024:512,height=width/2;
  const dome=makePhotographicSky(T);updatePhotographicSky(dome,{sun,time,weather,settings,coverage:Math.min(1,(settings.clouds??35)/100*(weather==='sunny'?.78:1)+(['overcast','rain','fog','snow'].includes(weather)?.17:0)),haze:(settings.haze??30)/100});
- const mat=new T.ShaderMaterial({uniforms:dome.material.uniforms,defines:{CLOUD_STEPS:high?22:mobile?6:12},depthTest:false,depthWrite:false,toneMapped:false,
+ const mat=new T.ShaderMaterial({uniforms:dome.material.uniforms,defines:{CLOUD_STEPS:high?14:mobile?5:9},depthTest:false,depthWrite:false,toneMapped:false,
  vertexShader:'varying vec3 vSky; varying vec2 vUv; void main(){vUv=uv;vSky=vec3(0.);gl_Position=vec4(position.xy,0.,1.);}',
  fragmentShader:dome.material.fragmentShader.replace('varying vec3 vSky;','varying vec3 vSky; varying vec2 vUv;').replace('vec3 d=normalize(vSky);','float phi=(vUv.x-.5)*6.28318530718;float theta=(vUv.y-.5)*3.14159265359;vec3 d=vec3(cos(theta)*cos(phi),sin(theta),cos(theta)*sin(phi));').replace('gl_FragColor=vec4(color,1.);','gl_FragColor=vec4(color,sunTransmittance);').replace('#include <tonemapping_fragment>','').replace('#include <colorspace_fragment>','')});
  const rt=new T.WebGLRenderTarget(width,height,{type:T.FloatType,format:T.RGBAFormat,depthBuffer:false,stencilBuffer:false});
  const quad=new T.PlaneGeometry(2,2),scene=new T.Scene(),cam=new T.Camera();scene.add(new T.Mesh(quad,mat));
- const old=renderer.getRenderTarget(),vp=renderer.getViewport(new T.Vector4()),sc=renderer.getScissor(new T.Vector4()),test=renderer.getScissorTest(),data=new Float32Array(width*height*4);
+ const old=renderer.getRenderTarget(),vp=renderer.getViewport(new T.Vector4()),sc=renderer.getScissor(new T.Vector4()),test=renderer.getScissorTest(),auto=renderer.autoClear,data=new Float32Array(width*height*4);
  try{
-  renderer.setRenderTarget(rt);renderer.setScissorTest(false);renderer.render(scene,cam);renderer.readRenderTargetPixels(rt,0,0,width,height,data);
+  const gl=renderer.getContext();
+  // Render small strips and read each one back before submitting the next.
+  // This avoids one giant GPU command and yields to UI between strips.
+  renderer.autoClear=false;
+  for(let y=0;y<height;y+=16){
+   if(!isAlive())throw Error('Подготовка неба отменена');
+   if(gl.isContextLost())throw Error('WebGL отключён при подготовке неба');
+   const rows=Math.min(16,height-y),part=new Float32Array(width*rows*4);
+   rt.scissor.set(0,y,width,rows);rt.scissorTest=true;
+   renderer.setRenderTarget(rt);renderer.state.scissor(rt.scissor);renderer.state.setScissorTest(true);
+   renderer.render(scene,cam);renderer.readRenderTargetPixels(rt,0,y,width,rows,part);
+   data.set(part,y*width*4);renderer.setRenderTarget(old);
+   onProgress(Math.round((y+rows)/height*100));
+   await new Promise(resolve=>requestAnimationFrame(resolve));
+  }
   if(!data.some((v,i)=>i%4!==3&&v>.01))throw Error('HDR cloud readback failed');
   const d=sun?.position.clone().normalize()||new T.Vector3(.5,.7,.5).normalize(),x=Math.min(width-1,Math.max(0,Math.floor((Math.atan2(d.z,d.x)/(2*Math.PI)+.5)*width))),y=Math.min(height-1,Math.max(0,Math.floor((Math.asin(d.y)/Math.PI+.5)*height)));
   const direct=Math.max(.04,Math.min(1,data[(y*width+x)*4+3]));
   for(let i=3;i<data.length;i+=4)data[i]=1;
   const tex=new T.DataTexture(data,width,height,T.RGBAFormat,T.FloatType);tex.mapping=T.EquirectangularReflectionMapping;tex.colorSpace=T.LinearSRGBColorSpace;tex.needsUpdate=true;
-  return {texture:tex,label:'FORMA HDR · облака '+(high?'2K':'1K'),photographic:false,solarTransmission:direct};
- }finally{renderer.setRenderTarget(old);renderer.setViewport(vp);renderer.setScissor(sc);renderer.setScissorTest(test);rt.dispose();quad.dispose();mat.dispose();dome.geometry.dispose();dome.material.dispose();}
+  return {texture:tex,label:'FORMA HDR · облака '+(high?'1K':'512 px'),photographic:false,solarTransmission:direct};
+ }finally{renderer.autoClear=auto;renderer.setRenderTarget(old);renderer.setViewport(vp);renderer.setScissor(sc);renderer.setScissorTest(test);rt.dispose();quad.dispose();mat.dispose();dome.geometry.dispose();dome.material.dispose();}
 }
