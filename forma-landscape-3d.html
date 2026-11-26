@@ -505,12 +505,12 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R44</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R45</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
   <button id="save" class="primary">Сохранить 3D</button>
-  <a href="forma-tree-lineup.html" title="Посмотреть настоящие GLB-деревья в один ряд, не меняя проект">🌲 Деревья в ряд</a>
+  <a href="forma-landscape-3d.html?scene=trees-r45" title="Все актуальные деревья в один ряд, не меняя проект">🌲 Деревья в ряд</a>
   <a href="forma-preview.html?tool=landscape-project">← К плану</a>
  </div>
 </header>
@@ -855,7 +855,8 @@ window.addEventListener('forma-house-pbr-ready',()=>{
  requestAnimationFrame(()=>{if(renderer&&scene&&camera)renderer.render(scene,camera)});
 });
 const canvas=$('#viewport'),state={tool:'select',item:'pine',view:'3d',placing:null,selected:null,drag:false,draggingMoved:false,mobileMoveMode:false,mobileObjectCollapsed:true,mobileSnap:true,mobileNudgeStep:.1,down:null,building:null};
-const pid=(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
+const treeLineupMode=new URLSearchParams(location.search).get('scene')==='trees-r45';
+const pid=treeLineupMode?'forma-tree-lineup-r45':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
@@ -1094,6 +1095,37 @@ function save(){
 }
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;save();rebuild();renderHouseLibrary()}
+function makeTreeLineup(){
+ const d=freshProject(),specs=[];
+ for(const cat of CATALOG.filter(c=>c.group==='trees')){
+  if(cat.id==='maple'){
+   for(const age of [18,45,110])specs.push({catalogId:cat.id,maple:{age},...mapleDimensions({age})});
+  }else if(cat.id==='pine'){
+   for(const [age,height] of [[12,5],[40,14],[110,25]])specs.push({catalogId:cat.id,pine:normalizePineGrowth({age,pineType:'solitary'}),...pineDimensions(height,age,'solitary')});
+  }else if(cat.id==='spruce'){
+   for(const [type,age,height] of [['young',12,5],['ordinary',48,16],['century',115,28]])specs.push({catalogId:cat.id,spruce:{type,age},...spruceDimensions(height,type)});
+  }else specs.push({catalogId:cat.id,height:TREE_HEIGHT_M[cat.id]||12,diameter:cat.diameter||5});
+ }
+ const gap=3,margin=8,total=specs.reduce((n,o)=>n+o.diameter,0)+gap*(specs.length-1)+margin*2;
+ d.title='Деревья FORMA · сравнительный ряд';d.site={width:Math.ceil(total),height:64,orientation:0,boundary:null};
+ let x=margin;d.objects=specs.map((o,i)=>{x+=o.diameter/2;const item={...o,id:'lineup-'+(i+1),type:'trees',x,y:32,rotation:0,variant:1};x+=o.diameter/2+gap;return item;});
+ d.buildings=[];return normalizeProject(d);
+}
+function setupLineupNavigation(){
+ const panel=document.createElement('div');
+ panel.style.cssText='position:absolute;z-index:15;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:5px;max-width:96%;padding:6px;background:#24282dee;border:1px solid #777;border-radius:9px;color:#eee';
+ panel.innerHTML='<button type="button" id="lineupPrev">←</button><select id="lineupSelect" aria-label="Дерево в ряду" style="max-width:45vw;min-height:36px"></select><button type="button" id="lineupNext">→</button><button type="button" id="lineupAll">Все</button><a href="./forma-landscape-3d.html" style="color:#e8d1a9;padding:6px">Проект</a>';
+ document.querySelector('main').append(panel);
+ const select=panel.querySelector('select'),trees=doc.objects.filter(o=>catalog(o.catalogId)?.group==='trees');
+ for(const [i,o] of trees.entries()){
+  const option=document.createElement('option'),age=o.maple?.age??o.pine?.age??o.spruce?.age;
+  option.value=String(i);option.textContent=(i+1)+'. '+catalog(o.catalogId).name+(age?' · '+age+' лет':'');select.append(option);
+ }
+ function show(i){if(!trees.length)return;i=(i+trees.length)%trees.length;select.value=String(i);state.selected='object:'+trees[i].id;focusSelectedPlant();renderProps();}
+ select.onchange=()=>show(Number(select.value));panel.querySelector('#lineupPrev').onclick=()=>show(Number(select.value)-1);panel.querySelector('#lineupNext').onclick=()=>show(Number(select.value)+1);
+ panel.querySelector('#lineupAll').onclick=()=>{state.selected=null;setView('3d');renderProps();};
+ $('#mobileHouseSelect').hidden=true;$('#sceneCameraCycle').hidden=true;$('#focusHouse').hidden=true;
+}
 function initialize(){
  // On a phone the 3D canvas, not a tiny library drawer, is the starting point.
  activateMobilePanel(window.innerWidth<=850?'scene':'tools');
@@ -1121,10 +1153,11 @@ function initialize(){
  });
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
+ if(treeLineupMode){doc=makeTreeLineup();extra=[];}
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
  // Existing 48x48 saved projects are bilinearly remapped to 96x96.
- heightmap=resampleTerrainGrid(heightmap,GRID);
+ heightmap=resampleTerrainGrid(treeLineupMode?[]:heightmap,GRID);
  $('#projectName').value=doc.title;$('#plotW').value=doc.site.width;$('#plotH').value=doc.site.height;
  $('#time').value=doc.atmosphere.time;$('#season').value=doc.atmosphere.season;$('#weather').value=doc.atmosphere.weather||'sunny';
  try{
@@ -1163,7 +1196,7 @@ function initialize(){
  cloudLayer=makeCloudLayer(THREE);scene.add(cloudLayer);
  waterRippleTexture=makeWaterRippleTexture(THREE,document);
  camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
- controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.005;controls.minDistance=.8;controls.maxDistance=220;
+ controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.005;controls.minDistance=.8;controls.maxDistance=treeLineupMode?650:220;
  const skyFill=new THREE.HemisphereLight(0xdceafa,0x334b3c,1.75);skyFill.name='forma-sky-fill';scene.add(skyFill);
  const bounced=new THREE.DirectionalLight(0xc6d8e3,.38);
  bounced.name='forma-bounced-fill';bounced.position.set(22,28,-29);bounced.castShadow=false;scene.add(bounced);
@@ -1173,7 +1206,7 @@ function initialize(){
  brushCursor.rotation.x=-Math.PI/2;brushCursor.renderOrder=50;brushCursor.visible=false;scene.add(brushCursor);
  // Deep link applies ALFA to the existing main house without moving it,
  // affecting its dimensions or touching the rest of the site.
- const deepLinkAlpha=new URLSearchParams(window.location.search).get('house')==='alpha';
+ const deepLinkAlpha=!treeLineupMode&&new URLSearchParams(window.location.search).get('house')==='alpha';
  if(deepLinkAlpha&&doc.house.archStyle!=='alpha'){
   push();doc.house.archStyle='alpha';doc.house.modelKey=null;
   doc.house.roof='gable';
@@ -1183,8 +1216,8 @@ function initialize(){
  state.housePreset=doc.house.archStyle||'barn';drawTools();rebuild();resize();addEvents();setView('3d');animate();
  // On a narrow device an already saved ALFA must also open with the
  // building visible, even if the URL has no explicit ?house=alpha.
- const openAlphaScene=deepLinkAlpha||
-  (window.innerWidth<=850&&doc.house.archStyle==='alpha'&&!doc.house.modelKey);
+ const openAlphaScene=!treeLineupMode&&(deepLinkAlpha||
+  (window.innerWidth<=850&&doc.house.archStyle==='alpha'&&!doc.house.modelKey));
  if(openAlphaScene){
   focusHouseCamera('overview');
   if(window.innerWidth<=850)activateMobilePanel('scene');
@@ -1206,8 +1239,9 @@ function initialize(){
  }else requestAnimationFrame(()=>makeHouseThumbnails());
  restoreHouseGlbs().catch(e=>console.warn('Stored house GLB restore:',e));
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
- const previousDrawing=localStorage.getItem(UNDERLAY);
+ const previousDrawing=treeLineupMode?null:localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);
+ if(treeLineupMode)setupLineupNavigation();
  window.FORMA_3D_READY=true;$('#loadError').style.display='none';readBuildInfo();
  status(window.innerWidth<=850?'3D готов. Откройте «Каталог», выберите объект и нажмите на участок.':'3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
@@ -1274,7 +1308,7 @@ function groundContactTexture(side){
  const toPixel=(x,y)=>[(x-doc.site.width/2+side/2)*scale,(y-doc.site.height/2+side/2)*scale];
  const shade=(x,y,r,alpha)=>{const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba(0,0,0,'+alpha+')');g.addColorStop(.35,'rgba(0,0,0,'+(alpha*.55)+')');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);};
  for(const o of doc.objects){const group=catalog(o.catalogId)?.group;if(!['trees','shrubs','boulders'].includes(group))continue;const [x,y]=toPixel(o.x,o.y);const d=Math.max(.3,Number(o.diameter)||1);if(group==='trees'){if(!importedPlantModels.has(o.catalogId)&&!bundledModelSources.has(o.catalogId)&&MATURE_TREE_MODELS[o.catalogId])continue;shade(x,y,Math.max(.48,Math.min(1.35,d*.19))*scale,.29);shade(x,y,d*.48*scale,.10);}else shade(x,y,Math.max(.35,d*.67)*scale,.22);}
- for(const b of [doc.house,...doc.buildings]){const [x,y]=toPixel(b.x,b.y);const w=Math.max(1,Number(b.width)||8)*scale,h=Math.max(1,Number(b.height)||7)*scale;ctx.save();ctx.translate(x,y);ctx.rotate(-(Number(b.rotation)||0)*Math.PI/180);ctx.shadowColor='rgba(0,0,0,.32)';ctx.shadowBlur=Math.max(2,scale*.7);ctx.fillStyle='rgba(0,0,0,.16)';ctx.fillRect(-w/2,-h/2,w,h);ctx.restore();}
+ for(const b of (treeLineupMode?[]:[doc.house,...doc.buildings])){const [x,y]=toPixel(b.x,b.y);const w=Math.max(1,Number(b.width)||8)*scale,h=Math.max(1,Number(b.height)||7)*scale;ctx.save();ctx.translate(x,y);ctx.rotate(-(Number(b.rotation)||0)*Math.PI/180);ctx.shadowColor='rgba(0,0,0,.32)';ctx.shadowBlur=Math.max(2,scale*.7);ctx.fillStyle='rgba(0,0,0,.16)';ctx.fillRect(-w/2,-h/2,w,h);ctx.restore();}
  cachedContactTexture.needsUpdate=true;return cachedContactTexture;
 }
 function applyRaisedSoilMaterial(mat,groundSide){
@@ -1475,7 +1509,7 @@ function turfContains(p,x,z){
 function turfMasks(){
  const result=[];
  const add=(points,lawn=false)=>{const a=turfArea(points,lawn);if(a)result.push(a)};
- for(const b of [doc.house,...doc.buildings]){
+ for(const b of (treeLineupMode?[]:[doc.house,...doc.buildings])){
   if(!b)continue;
   const w=(Number(b.width)||8)/2+.24,h=(Number(b.height)||7)/2+.24,a=(Number(b.rotation)||0)*Math.PI/180;
   add([[-w,-h],[w,-h],[w,h],[-w,h]].map(([x,z])=>({x:b.x+x*Math.cos(a)-z*Math.sin(a),y:b.y+x*Math.sin(a)+z*Math.cos(a)})));
@@ -1581,7 +1615,7 @@ function rebuild(){
   .map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.14,v.z)});
  outlinePoints.push(outlinePoints[0].clone());
  const parcelLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'}));parcelLine.name='forma-parcel-outline';parcelLine.visible=document.body.dataset.presentation!=='true';root.add(parcelLine);
- buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);
+ if(!treeLineupMode){buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);}
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
  for(const o of extra)drawExtra(o);
  // The preview is a disposable overlay: never added to project objects,
@@ -2273,7 +2307,7 @@ async function importHouseGlb(file){
  finally{was.disabled=false;was.value=''}
 }
 async function restoreHouseGlbs(){
- const list=[doc.house,...doc.buildings].filter(b=>b.modelKey);
+ const list=(treeLineupMode?[]:[doc.house,...doc.buildings]).filter(b=>b.modelKey);
  for(const b of list){
   try{
    const bytes=await readGlb(b.modelKey);
@@ -2444,7 +2478,7 @@ function snapMobileObjectPosition(raw,moving){
    candidate(a.x+t*dx,a.y+t*dy);
   }
  }
- for(const house of [doc.house,...doc.buildings]){
+ for(const house of (treeLineupMode?[]:[doc.house,...doc.buildings])){
   if(!Number.isFinite(Number(house?.x))||!Number.isFinite(Number(house?.y)))continue;
   const angle=(Number(house.rotation)||0)*Math.PI/180,cs=Math.cos(angle),sn=Math.sin(angle);
   const x=raw.x-house.x,y=raw.y-house.y,lx=cs*x+sn*y,ly=-sn*x+cs*y;
@@ -3169,7 +3203,7 @@ function syncCameraHeight(){
  }
 }
 function walkStructureObstacles(){
- return [doc.house,...doc.buildings].filter(b=>b&&Number(b.width)>0&&Number(b.height)>0).map(b=>{
+ return (treeLineupMode?[]:[doc.house,...doc.buildings]).filter(b=>b&&Number(b.width)>0&&Number(b.height)>0).map(b=>{
   const point=pos(b.x,b.y);
   return {x:point.x,z:point.z,width:Number(b.width),depth:Number(b.height),rotation:Number(b.rotation)||0};
  });
@@ -3199,9 +3233,10 @@ function setView(view){
   const tallest=Math.max(7,...crowns.map(o=>Number(o.height)||0));
   const aimY=Math.max(2.5,Math.min(6,tallest*.29));
   camera=new THREE.PerspectiveCamera(50,1,.1,700);
-  camera.position.set(W*.9*portrait,Math.max(24,H*.8)*portrait+aimY,H*1.1*portrait);
+  if(treeLineupMode){const distance=Math.min(610,Math.max(W/2/(Math.tan(25*Math.PI/180)*ratio),tallest*1.4)*1.13);camera.position.set(0,tallest*.54+distance*.10,distance);controls.target.set(0,tallest*.46,0);}
+  else camera.position.set(W*.9*portrait,Math.max(24,H*.8)*portrait+aimY,H*1.1*portrait);
   camera.up.set(0,1,0);controls.object=camera;
-  controls.target.set(0,aimY,0);controls.enableRotate=true;
+  if(!treeLineupMode)controls.target.set(0,aimY,0);controls.enableRotate=true;
  }
  updateSun();resize();if(view==='3d')syncCameraHeight();
  status(view==='walk'?'Walk: W A S D — непрерывная прогулка по земле · мышь — осмотр · Esc — курсор. Телефон: свайп для поворота.':'Режим '+view.toUpperCase()+' активен.');
@@ -3859,7 +3894,7 @@ async function renderAi(series=null){
    if(o.catalogId!=='maple'||!m?.nativeMapleR39)return o;
    return {...o,maple:{age:m.mapleAge},photoTreeModel:{trunkDiameterM:m.trunkDiameter,leafCards:m.leafCount}};
   });
-  const sceneInfo={...measuredPlan,objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
+  const sceneInfo={...measuredPlan,...(treeLineupMode?{house:null,buildings:[]}:{}),objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
