@@ -84,6 +84,8 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  const crownRng=random('maple spatial crown R35|'+instance.id+'|'+instance.variant);
  const ageProfile=mapleProfile(instance.maple),trunkR=clamp(h*ageProfile.trunk,.035,1.30),mobile=window.innerWidth<=850;
  const fusionStep=Math.max(.007,trunkR*(mobile?.17:.135)),fusionPaths=[],replacedRanges=[];
+ // Extra foliage is independent of the woody skeleton and its random stream.
+ const oldCrown=clamp((ageProfile.age-55)/55,0,1),oldLeafRng=random('maple mature crown R42|'+instance.id+'|'+instance.variant),oldLeaves=[];
  function tube(points,radii,sides,seed,collar=0,parentAxis=null){
   let first=pos.length/3,dist=0,prevU=null;const phase=seed*6.283;
   const indexStart=idx.length;
@@ -169,6 +171,21 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
     const leaf=p.clone().addScaledVector(side,sign*reach).add(V(0,(r()-.4)*reach,0));
     const mainLeaf={p:leaf,yaw:r()*6.283,pitch:(r()-.5)*2.15,roll:(r()-.5)*2.65,size:clamp(h*.012,.07,.185)*(.67+r()*.65)};
     leafPoints.push(mainLeaf);
+    if(oldCrown>0&&season!=='winter'){
+     // More leaf pairs on each existing twig, dispersed in depth rather than
+     // placed in the same plane. Keep actual mature-leaf dimensions.
+     const extraCount=mobile?1:2;
+     for(let n=0;n<extraCount;n++){
+      if(oldLeafRng()>oldCrown*(n===0?1:.65))continue;
+      const tt=clamp(t+(oldLeafRng()-.5)*.8/count,0,1);
+      const center=q.getPoint(tt),tangent=q.getTangent(tt),lateral=new T.Vector3().crossVectors(tangent,V(0,1,0)).normalize();
+      const offset=reach*(.72+oldLeafRng()*.7);
+      const p2=center.clone().addScaledVector(lateral,sign*offset).add(V(0,(oldLeafRng()-.5)*reach*1.7,0));
+      const radius=Math.hypot(p2.x,p2.z);if(radius>rad){p2.x*=rad/radius;p2.z*=rad/radius;}
+      p2.y=Math.min(h,p2.y);
+      oldLeaves.push({p:p2,yaw:mainLeaf.yaw+(oldLeafRng()-.5)*3.4,pitch:(oldLeafRng()-.5)*2.5,roll:(oldLeafRng()-.5)*3.1,size:mainLeaf.size*(.88+oldLeafRng()*.25)});
+     }
+    }
     // Independent deterministic stream: the actual R31 woody skeleton remains
     // identical. Extra leaves are attached beside the existing twig, not a sphere.
     if(leafRng()<Math.min(.65,.36*ageProfile.leafDensity)){
@@ -224,6 +241,7 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  maps.materials.add(bark);bark.addEventListener('dispose',()=>maps.materials.delete(bark));
  const stem=new T.Mesh(geo,bark);stem.castShadow=true;stem.receiveShadow=true;stem.name='FORMA maple continuous textured forks';g.add(stem);
  if(union){const fused=new T.Mesh(union,bark.clone());maps.materials.add(fused.material);fused.material.addEventListener('dispose',()=>maps.materials.delete(fused.material));fused.castShadow=true;fused.receiveShadow=true;fused.name='FORMA R38 fused woody skeleton';g.add(fused);}
+ const baseLeafCount=leafPoints.length;for(const l of oldLeaves)leafPoints.push(l);
  if(season!=='winter'&&leafPoints.length){
   const mask=mapleLeafMask(T);
   // Restrained diffuse fill approximates scattered light through thin leaves.
@@ -235,10 +253,10 @@ export function createNaturalMaple(T,instance,{season='summer'}={}){
  leafGeo.computeVertexNormals();
  const mesh=new T.InstancedMesh(leafGeo,leaf,leafPoints.length),o=new T.Object3D();
   const palette=(season==='autumn'?['#cfad73','#c28c50','#d9c18a','#a6a16f']:['#d3d9c7','#aebca9','#e1e3ce','#b6c7b0','#c7d2ba']).map(c=>new T.Color(c));
-  leafPoints.forEach((l,i)=>{o.position.copy(l.p);o.rotation.set(l.pitch,l.yaw,l.roll);o.scale.set(l.size,l.size*.95,1);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);mesh.setColorAt(i,palette[Math.floor(r()*palette.length)]);});
+  leafPoints.forEach((l,i)=>{o.position.copy(l.p);o.rotation.set(l.pitch,l.yaw,l.roll);const size=l.size*(1+.10*oldCrown);o.scale.set(size,size*.95,1);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);mesh.setColorAt(i,palette[Math.floor(r()*palette.length)]);});
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=true;mesh.receiveShadow=true;mesh.name='FORMA maple spatial crown R35';
  g.userData.leafTriangles=leafGeo.index.count/3*leafPoints.length;g.add(mesh);
  }
- g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.nativeMapleR38=true;g.userData.nativeMapleR39=true;g.userData.mapleAge=ageProfile.age;g.userData.trunkDiameter=trunkR*2;g.userData.fusedWood=Boolean(union);g.userData.fusedPaths=union?fusionPaths.length:0;g.userData.woodTriangles=geo.index.count/3+(union?union.attributes.position.count/3:0);g.userData.leafCount=season==='winter'?0:leafPoints.length;
+ g.userData.species='maple';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.nativeMapleR30=true;g.userData.nativeMapleR31=true;g.userData.nativeMapleR32=true;g.userData.nativeMapleR33=true;g.userData.nativeMapleR34=true;g.userData.nativeMapleR35=true;g.userData.nativeMapleR36=true;g.userData.nativeMapleR37=true;g.userData.nativeMapleR38=true;g.userData.nativeMapleR39=true;g.userData.nativeMapleR42=true;g.userData.mapleAge=ageProfile.age;g.userData.extraMatureLeaves=season==='winter'?0:leafPoints.length-baseLeafCount;g.userData.trunkDiameter=trunkR*2;g.userData.fusedWood=Boolean(union);g.userData.fusedPaths=union?fusionPaths.length:0;g.userData.woodTriangles=geo.index.count/3+(union?union.attributes.position.count/3:0);g.userData.leafCount=season==='winter'?0:leafPoints.length;
  return g;
 }
