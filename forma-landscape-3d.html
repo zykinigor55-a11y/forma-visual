@@ -537,7 +537,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R163</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R164</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right">
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -654,6 +654,11 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  </div>
 </section>
 <button type="button" id="alphaSceneButton" aria-label="Показать дом АЛЬФА в графитовой доске">◆ Дом АЛЬФА · показать</button>
+<style>
+#walkMoveDockR164{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:38;display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #748278;border-radius:12px;background:#212925f5;color:#edf0eb;box-shadow:0 8px 28px #0006;font-size:12px;max-width:calc(100% - 32px)}
+#walkMoveDockR164[hidden]{display:none!important}#walkMoveDockR164 .walk-axis{display:grid;grid-template-columns:auto 76px;align-items:center;gap:5px}#walkMoveDockR164 input{width:76px;min-width:0;padding:6px 4px;font:12px system-ui;text-align:center;background:#171e1b;color:#f1f4ef;border:1px solid #697b70;border-radius:5px}#walkMoveDockR164 [data-axis]{cursor:ew-resize;touch-action:none;user-select:none;min-width:38px}#walkMoveDockR164 [data-pad]{cursor:move;touch-action:none;user-select:none;min-width:66px;min-height:38px}#walkMoveDockR164 button{white-space:nowrap}#walkMoveDockR164 .walk-move-label{display:grid;gap:3px;max-width:140px}#walkMoveDockR164 small{color:#b6c2b9;font-size:10px}#walkMoveDockR164 [data-axis=x]{color:#f2aaa1}#walkMoveDockR164 [data-axis=y]{color:#9ed5ac}body[data-presentation=true] #walkMoveDockR164{display:none!important}@media(max-width:850px){#walkMoveDockR164{display:none!important}}
+</style>
+<div id="walkMoveDockR164" hidden role="group" aria-label="Перемещение растения в прогулке"><div class="walk-move-label"><strong data-title>Перемещение</strong><small>Потяните X / Y или крест</small></div><div class="walk-axis"><button data-axis="x" title="Потяните влево или вправо, чтобы изменить X">↔ X</button><input data-coordinate="x" type="number" step=".1" aria-label="Координата X в метрах"></div><div class="walk-axis"><button data-axis="y" title="Потяните влево или вправо, чтобы изменить Y">↔ Y</button><input data-coordinate="y" type="number" step=".1" aria-label="Координата Y в метрах"></div><button data-pad title="Перетащите крест мышью: перемещение по земле относительно камеры">✥ Двигать</button><button data-done title="Снять выделение">✓</button></div>
 <div id="selectedObjectDock" role="group" aria-label="Действия с выбранным объектом" hidden>
  <span id="selectedObjectName"></span><small id="selectedObjectPosition" aria-live="off"></small>
  <button id="selectedObjectEdit" type="button" aria-label="Открыть параметры выбранного объекта">⚙ Параметры</button>
@@ -3001,6 +3006,7 @@ async function makeHouseThumbnails(){
 }
 function selectable(key){if(typeof key!=='string'||!key)return null;const [type,oid]=key.split(':');if(type==='house')return {type,obj:doc.house};if(type==='building')return {type,obj:doc.buildings.find(o=>o.id===oid)};if(type==='object')return {type,obj:doc.objects.find(o=>o.id===oid)};if(type==='extra')return {type,obj:extra.find(o=>o.id===oid)};return null}
 function syncSelectedObjectDock(ref,label){
+ syncWalkMoveR164(ref,label);
  const dock=$('#selectedObjectDock'),title=$('#selectedObjectName'),del=$('#selectedObjectDelete');
  if(!dock||!title||!del)return;
  // Do not cover the main house with a huge 'protected' floating panel.
@@ -3051,6 +3057,29 @@ function snapMobileObjectPosition(raw,moving){
  }
  if(best.d<.35)return {x:Math.round(best.x*100)/100,y:Math.round(best.y*100)/100};
  return {x:Math.round(raw.x*20)/20,y:Math.round(raw.y*20)/20};
+}
+function walkMoveRefR164(ref=selectable(state.selected)){
+ if(state.view!=='walk'||window.innerWidth<=850||!ref?.obj||ref.type==='house'||Array.isArray(ref.obj.points)||!Number.isFinite(Number(ref.obj.x))||!Number.isFinite(Number(ref.obj.y)))return null;
+ const group=catalog(ref.obj.catalogId)?.group;return ['trees','shrubs'].includes(group)||ref.type==='extra'&&/fir|tree|pine|spruce|birch|rowan|oak|willow|maple/i.test(ref.obj.type||'')?ref:null;
+}
+let walkMoveDragR164=null;
+function syncWalkMoveR164(ref,label){
+ const dock=$('#walkMoveDockR164');if(!dock)return;const valid=walkMoveRefR164(ref);dock.hidden=!valid;if(!valid)return;dock.querySelector('[data-title]').textContent=label||catalog(valid.obj.catalogId)?.name||'Растение';
+ for(const axis of ['x','y']){const input=dock.querySelector('[data-coordinate="'+axis+'"]');if(document.activeElement!==input)input.value=Number(valid.obj[axis]).toFixed(2);input.min=0;input.max=axis==='x'?doc.site.width:doc.site.height;}
+}
+function applyWalkMoveR164(ref,x,y){
+ const p={x:Math.round(x*100)/100,y:Math.round(y*100)/100};if(!inParcel(p,doc.site))return false;
+ ref.obj.x=p.x;ref.obj.y=p.y;const node=pickables.find(g=>g.userData.key===state.selected);if(node){const v=pos(p.x,p.y);node.position.set(v.x,terrainAt(v.x,v.z),v.z);node.updateMatrixWorld(true);if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;}else scheduleBrushRebuild();
+ syncWalkMoveR164(ref);for(const axis of ['x','y']){const input=$('#properties [data-prop="'+axis+'"]');if(input&&document.activeElement!==input)input.value=Number(ref.obj[axis]).toFixed(2);}renderGate.invalidate();return true;
+}
+function setupWalkMoveR164(){
+ const dock=$('#walkMoveDockR164');for(const axis of ['x','y']){const input=dock.querySelector('[data-coordinate="'+axis+'"]');input.onchange=()=>{const ref=walkMoveRefR164();if(!ref)return;const n=Number(input.value),x=axis==='x'?n:Number(ref.obj.x),y=axis==='y'?n:Number(ref.obj.y);if(input.value.trim()===''||!Number.isFinite(n)||!inParcel({x,y},doc.site)){input.value=Number(ref.obj[axis]).toFixed(2);status('Координата за пределами участка.');return;}if(n===Number(ref.obj[axis]))return;push();applyWalkMoveR164(ref,x,y);save();rebuild();renderProps();};}
+ for(const button of dock.querySelectorAll('[data-axis],[data-pad]')){
+ button.addEventListener('pointerdown',e=>{if(e.button!==0||motionR156.active||pathTraceR72?.active)return;const ref=walkMoveRefR164();if(!ref)return;e.preventDefault();freezeWalkLook();button.setPointerCapture(e.pointerId);const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);right.y=0;right.normalize();const forward=camera.getWorldDirection(new THREE.Vector3());forward.y=0;if(forward.lengthSq()<.001)forward.set(Math.sin(-walkYaw),0,-Math.cos(walkYaw));forward.normalize();walkMoveDragR164={id:e.pointerId,key:state.selected,ref,axis:button.dataset.axis||'pad',x:Number(ref.obj.x),y:Number(ref.obj.y),sx:e.clientX,sy:e.clientY,right,forward,moved:false};});
+ button.addEventListener('pointermove',e=>{const d=walkMoveDragR164;if(!d||d.id!==e.pointerId||d.key!==state.selected||!(e.buttons&1))return;const dx=(e.clientX-d.sx)*.035,dy=(e.clientY-d.sy)*.035;if(!d.moved&&Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<3)return;let x=d.x,y=d.y;if(d.axis==='x')x+=dx;else if(d.axis==='y')y+=dx;else{x+=d.right.x*dx-d.forward.x*dy;y+=d.right.z*dx-d.forward.z*dy;}if(!inParcel({x,y},doc.site))return;if(!d.moved){push();d.moved=true;}applyWalkMoveR164(d.ref,x,y);});
+ const finish=e=>{const d=walkMoveDragR164;if(!d||d.id!==e.pointerId)return;walkMoveDragR164=null;if(d.moved){save();rebuild();renderProps();status('Растение перемещено · Ctrl+Z — отмена.');}};for(const evt of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(evt,finish);
+ }
+ dock.querySelector('[data-done]').onclick=()=>{state.selected=null;renderProps();status('Ракурс зафиксирован.');};
 }
 function nudgeSelectedObject(dx,dy){
  const ref=state.selected?selectable(state.selected):null;
@@ -5246,7 +5275,7 @@ function animate(now=0){
   if(phone&&autoReduced&&graphicsChoiceR105==='auto'&&!graphicsAutoLimitR106&&window.FORMA_GRAPHICS_R105!=='eco'&&now-lastCameraMotionR106>450&&!state.painting){graphicsAutoLimitR106=true;applyGraphicsR105();}
  }
 }
-try{initialize();setupMotionR156()}catch(err){console.error(err);window.FORMA_3D_READY=false;$('#loadError').style.display='flex';$('#loadError p').textContent=err.message;$('#status').textContent='Ошибка запуска 3D. Проект не удалён.'}
+try{initialize();setupMotionR156();setupWalkMoveR164()}catch(err){console.error(err);window.FORMA_3D_READY=false;$('#loadError').style.display='flex';$('#loadError p').textContent=err.message;$('#status').textContent='Ошибка запуска 3D. Проект не удалён.'}
 </script>
 <script>
 /* Show an actionable message if the 3D module or its CDN imports never start.
