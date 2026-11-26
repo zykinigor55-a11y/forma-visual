@@ -153,7 +153,7 @@ function addBasalTurf(T,root,{profile,focus,mobile,low,terrainAt,contains,slope,
   idx.push(b,b+2,b+1,b+1,b+2,b+3,b+2,b+4,b+3);
  }
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setAttribute('color',new T.Float32BufferAttribute(col,3));geo.setIndex(idx);geo.computeVertexNormals();
- const rows=[],radius=mobile?4.5:6,step=(mobile?.038:.032)*(low?1.15:1)/Math.sqrt(Math.min(1.4,profile.density));
+ const rows=[],radius=mobile?3.6:5.5,step=(mobile?.038:.032)*(low?1.15:1)/Math.sqrt(Math.min(1.4,profile.density));
  for(let iz=Math.floor((focus.z-radius)/step);iz<=Math.ceil((focus.z+radius)/step);iz++)for(let ix=Math.floor((focus.x-radius)/step);ix<=Math.ceil((focus.x+radius)/step);ix++){
   const x=(ix+hash(ix,iz,101))*step,z=(iz+hash(ix,iz,102))*step,d=Math.hypot(x-focus.x,z-focus.z);
   if(d>radius||!contains(x,z)||hash(ix,iz,103)>clamp((radius-d)/.9,0,1))continue;
@@ -172,13 +172,13 @@ function addBasalTurf(T,root,{profile,focus,mobile,low,terrainAt,contains,slope,
 // During a brush stroke, keep existing roots attached without reallocating buffers.
 export function reanchorDenseLawn(T,root,terrainAt,dirty){
  if(!root||!dirty)return;
- const matrix=new T.Matrix4(),p=new T.Vector3(),q=new T.Quaternion(),scale=new T.Vector3();
+ // All matrices are column-major; only the translation Y needs changing during a stroke.
  for(const m of root.children){if(!m.isInstancedMesh)continue;let changed=false;
   const a=m.instanceMatrix.array;
   for(let i=0;i<m.count;i++){const o=i*16,x=a[o+12],z=a[o+14];if(x<dirty.x0-.15||x>dirty.x1+.15||z<dirty.z0-.15||z>dirty.z1+.15)continue;
-   m.getMatrixAt(i,matrix);matrix.decompose(p,q,scale);p.y=terrainAt(x,z)+.0005;matrix.compose(p,q,scale);m.setMatrixAt(i,matrix);changed=true;
+   a[o+13]=terrainAt(x,z)+.0005;changed=true;
   }
-  if(changed){m.instanceMatrix.needsUpdate=true;m.computeBoundingSphere();}
+  if(changed){m.instanceMatrix.needsUpdate=true;m.frustumCulled=false;}
  }
 }
 
