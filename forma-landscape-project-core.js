@@ -16,6 +16,7 @@ export const GROUPS=Object.freeze([
  {id:'lights',name:'Светильники',qty:11,symbol:'☼'},
  {id:'lawns',name:'Газоны',qty:4,symbol:'≋'},
  {id:'ponds',name:'Водоёмы',qty:3,symbol:'≈'},
+ {id:'pools',name:'Бассейны',qty:3,symbol:'▣'},
  {id:'boulders',name:'Валуны',qty:4,symbol:'⬡'}
 ]);
 export const TREE_HEIGHT_M=Object.freeze({pine:14,spruce:12,birch:16,oak:17,maple:13,linden:14,willow:11,rowan:8,apple:6,sakura:7,ash:16,aspen:18,poplar:24,'ph-fir-sapling':3,'ph-pine-sapling':2.8,'ph-quiver-01':4.5,'ph-quiver-02':3.7});
@@ -102,6 +103,11 @@ export const CATALOG=Object.freeze([
  ['meadow','Луговой газон · разнотравье','#769b4b','meadow']
  ].map(([id,name,color,texture])=>({id,group:'lawns',name,color,texture})),
  ...[
+ {id:'pool-fixed',group:'pools',name:'Стационарный бассейн',color:'#5a99ad',diameter:8,width:4,height:1.5},
+ {id:'pool-frame',group:'pools',name:'Каркасный бассейн',color:'#678da9',diameter:4.5,height:1.2},
+ {id:'pool-inflatable',group:'pools',name:'Надувной бассейн',color:'#6ba9ce',diameter:3.05,height:.76}
+ ],
+ ...[
  ['natural','Природный пруд','#406d66','natural'],
  ['formal-pond','Декоративный пруд','#3a6774','formal'],
  ['bio-pond','Биопруд с растениями','#4e7b6d','bio']
@@ -120,6 +126,17 @@ const point=p=>({x:finite(p?.x,-5000,5000,0),y:finite(p?.y,-5000,5000,0)});
 const maxObjects=500;
 const safePhoto=x=>typeof x==='string'&&x.length<1200000&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x)?x:null;
 export const freshProject=()=>({version:1,title:'Ландшафтный проект',site:{width:30,height:40,orientation:0,boundary:null},house:{x:15,y:16,width:12,height:8,rotation:0,type:'house',roof:'gable',roofColor:'#393c3e',ridge:0,entry:'south',photo:null,garland:{...ROOF_GARLAND_DEFAULTS}},objects:[],buildings:[],underlay:null,underlayOpacity:.25,north:0,northVerified:false,verified:false,style:'natural',atmosphere:{time:'day',season:'summer',weather:'sunny',effects:{...WEATHER_EFFECT_DEFAULTS},interior:{...INTERIOR_NIGHT_DEFAULTS}}});
+export function poolDimensions(o){
+ const entry=byId(o.catalogId);if(entry?.group!=='pools')return null;
+ const fixed=entry.id==='pool-fixed';
+ return {diameter:finite(o.diameter,fixed?2:1,fixed?20:10,entry.diameter),height:finite(o.height,fixed?.6:.25,fixed?3:1.8,entry.height),...(fixed?{width:finite(o.width,1.5,10,entry.width)}:{})};
+}
+export function poolFootprint(o,margin=0){
+ const d=poolDimensions(o);if(!d)return [];
+ const a=(Number(o.rotation)||0)*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),x=Number(o.x),y=Number(o.y);
+ const local=o.catalogId==='pool-fixed'?[[-d.diameter/2-margin,-d.width/2-margin],[d.diameter/2+margin,-d.width/2-margin],[d.diameter/2+margin,d.width/2+margin],[-d.diameter/2-margin,d.width/2+margin]]:Array.from({length:48},(_,i)=>{const t=i*Math.PI/24;return [(d.diameter/2+margin)*Math.cos(t),(d.diameter/2+margin)*Math.sin(t)]});
+ return local.map(([u,v])=>({x:x+u*cs-v*sn,y:y+u*sn+v*cs}));
+}
 export function normalizeProject(raw){
  const obj=raw&&typeof raw==='object'?raw:{},base=freshProject(),site=obj.site||{},house=obj.house||{};
  const width=finite(site.width,5,500,30),height=finite(site.height,5,500,40);
@@ -141,6 +158,7 @@ export function normalizeProject(raw){
   const legacyNinebark=item.catalogId==='ninebark';
   const entry=byId(legacyNinebark?'pennisetum':item.catalogId);if(!entry)continue;
   const id=/^[a-z0-9-]{1,48}$/i.test(item.id||'')?item.id:'o-'+Math.random().toString(36).slice(2,10);
+  if(entry.group==='pools'){r.objects.push({id,catalogId:entry.id,type:'pools',x:finite(item.x,0,width,width/2),y:finite(item.y,0,height,height/2),rotation:finite(item.rotation,-360,360,0),...poolDimensions({...item,catalogId:entry.id})});continue;}
   if(['pavers','fills','lawns','ponds'].includes(entry.group)){
    const points=(Array.isArray(item.points)?item.points:[]).slice(0,512).map(point);
    const strip=['fills','lawns'].includes(entry.group)&&item.geometry==='strip';
