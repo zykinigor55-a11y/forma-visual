@@ -137,7 +137,7 @@ function firShootGeometry(T,variant,mobile){
   count++;
  }
  function twig(a,b,n,seed){
-  const axis=b.clone().sub(a).normalize(),lateral=V(1,0,0).cross(axis).normalize(),other=axis.clone().cross(lateral).normalize();
+  const axis=b.clone().sub(a).normalize(),lateral=V(Math.abs(axis.x)>.90?0:1,Math.abs(axis.x)>.90?1:0,0).cross(axis).normalize(),other=axis.clone().cross(lateral).normalize();
   const wood=new T.Color('#827c59'),first=p.length/3;
   for(const [point,radius] of [[a,.00115],[b,.00020]])for(let k=0;k<4;k++){const q=k*Math.PI*.5;vert(point.clone().addScaledVector(lateral,Math.cos(q)*radius).addScaledVector(other,Math.sin(q)*radius),wood);}
   for(let k=0;k<4;k++){const j=(k+1)%4;ix.push(first+k,first+j,first+4+k,first+j,first+4+j,first+4+k);}
@@ -163,7 +163,7 @@ function firShootGeometry(T,variant,mobile){
 }
 function addVolumetricTwigs(T,group,sites,age){
  const mobile=typeof window!=='undefined'&&window.innerWidth<=850;
- const cap=mobile?(age===10?6500:age===100?11000:9500):(age===10?10000:age===100?18000:15000);
+ const cap=mobile?(age===10?6500:age===100?11000:9500):(age===10?8500:age===100?12500:11000);
  const n=Math.min(cap,sites.length),stride=sites.length/Math.max(1,n),r=rng('fir-real-instances-r99'),o=new T.Object3D(),up=new T.Vector3(0,1,0),tint=new T.Color();
  const mat=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.78,metalness:0,envMapIntensity:.42});firLight(T,mat);
  let total=0;
@@ -171,7 +171,7 @@ function addVolumetricTwigs(T,group,sites,age){
   const geo=firShootGeometry(T,k,mobile),num=Math.max(0,Math.ceil((n-k)/3));if(!num){geo.dispose();continue;}
   const mesh=new T.InstancedMesh(geo,mat.clone(),num);mesh.material.onBeforeCompile=mat.onBeforeCompile;mesh.material.customProgramCacheKey=mat.customProgramCacheKey;
   for(let j=0;j<num;j++){const a=sites[Math.min(sites.length-1,Math.floor((j*3+k+.5)*stride))];o.position.copy(a.p);o.quaternion.setFromUnitVectors(up,a.dir);o.rotateY(a.roll);o.scale.setScalar(.88+r()*.21);o.updateMatrix();mesh.setMatrixAt(j,o.matrix);mesh.setColorAt(j,tint.set(a.young?'#f6f8e9':'#dbe2d4'));}
-  mesh.name='fir-real-needle-leaves-'+k;mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=false;mesh.receiveShadow=false;group.add(mesh);total+=num*geo.userData.needleCount;
+  mesh.name='fir-real-needle-leaves-'+k;mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.castShadow=false;mesh.receiveShadow=false;group.add(mesh);total+=num*geo.userData.needleCount;
  }
  mat.dispose();return total;
 }
@@ -211,6 +211,8 @@ export function createDetailedFir(T,instance){
    const droop=(old?.025:youngTree?.006:.013)*(1-t),lift=(old?.003:.006)+r()*.008;const start=trunkAt(clamp(y/h+(r()-.5)*(youngTree?.034:.046),0,1)),mid=V(start.x+Math.cos(a)*L*.53,start.y-h*droop,start.z+Math.sin(a)*L*.53),tip=V(start.x+Math.cos(a)*L,start.y+h*(lift-droop*.45),start.z+Math.sin(a)*L);
    const curve=new T.QuadraticBezierCurve3(start,mid.clone().multiplyScalar(2).addScaledVector(start,-.5).addScaledVector(tip,-.5),tip);const path=curve.getPoints(8),baseW=h*.0032*(1-t*.72);woodMesh.tube(path,path.map((_,k)=>Math.max(.0006,baseW*Math.pow(1-k/8,.83))*(k===0?1.32:1)),10,i+j,.045,1.7);
    const count=t>.83?8:youngTree?13:15;
+   // Additional oblique shoots bridge the gap to the next whorl.
+   for(let k=0;k<(t>.83?2:4);k++){const q=.25+k*.16,p=curve.getPoint(q),az=a+(k%2?1:-1)*(.35+r()*.6),reach=L*(.18+r()*.14);const b=p.clone().add(V(Math.cos(az)*reach,Math.min(h*.035,L*.30)*(.65+r()*.45),Math.sin(az)*reach));shoot(p,b,az,t>.67,true);if(k%2===0){const mid=p.clone().lerp(b,.55),az2=az+(k%2?1:-1)*.9;shoot(mid,mid.clone().add(V(Math.cos(az2)*reach*.45,-reach*.12,Math.sin(az2)*reach*.45)),az2,t>.67,true);}}
    for(let k=0;k<count;k++){
     const q=(k+.6)/count,p=curve.getPoint(q);
     for(const sign of [-1,1]){
@@ -243,7 +245,7 @@ export function createDetailedFir(T,instance){
  }
  // Measure complete generated crown; keep saved footprint without scaling needles
  // by a wildly different factor when a sparse geometry sample misses the tips.
- g.updateMatrixWorld(true);const box=new T.Box3().setFromObject(g,true),size=box.getSize(new T.Vector3()),actual=Math.max(size.x,size.z);if(actual>0)g.scale.set(d/actual,1,d/actual);
+ g.updateMatrixWorld(true);const box=new T.Box3().setFromObject(g),size=box.getSize(new T.Vector3()),actual=Math.max(size.x,size.z);if(actual>0)g.scale.set(d/actual,1,d/actual);
  g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=true;});
  g.userData.species='ph-fir-sapling';g.userData.physicalHeight=h;g.userData.crownDiameter=d;g.userData.firNativeR25=true;g.userData.firNativeR26=true;g.userData.firHybridR28=true;g.userData.firAge=stage.age;g.userData.firR93=true;g.userData.firR94=true;g.userData.firR96=true;g.userData.firR98=true;g.userData.firR99=true;g.userData.foliageCards=0;g.userData.needleCount=detailedNeedles;g.userData.realNeedleInstances=detailedNeedles;g.userData.continuousTrunk=true;g.name='FORMA fir · '+stage.age;
  if(firCache.size<2){const template=g.clone(true);template.traverse(n=>{if(n.isMesh)n.material=cloneFirMaterial(n.material)});firCache.set(key,template);}else g.traverse(n=>{if(n.isMesh)n.userData.bundledSharedGeometry=false;});
