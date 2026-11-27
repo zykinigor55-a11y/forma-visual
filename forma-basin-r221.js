@@ -46,7 +46,7 @@ export function seaPolygon(p,w,h,extent){
  const x=w/2,y=h/2,b=extent/2;const corners=[{x:x-b,y:y-b},{x:x+b,y:y-b},{x:x+b,y:y+b},{x:x-b,y:y+b}],out=[];
  for(let i=0;i<4;i++){const a=corners[i],b=corners[(i+1)%4],da=p.signed(a.x,a.y),db=p.signed(b.x,b.y);if(da>=0)out.push(a);if((da>=0)!==(db>=0)){const t=da/(da-db);out.push({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});}}return out;
 }
-export function basinMesh(T,p,{pos,width,height,extent,texture}){
+export function basinMesh(T,p,{pos,width,height,extent,texture,terrainAt,groundExtent=Math.max(width,height)}){
  const g=new T.Group(),r=p.r,sea=r.kind==='sea',points=sea?seaPolygon(p,width,height,extent):p.p;
  const poly=(pts)=>{const shape=new T.Shape();pts.forEach((v,i)=>{const q=pos(v.x,v.y);if(i)shape.lineTo(q.x,-q.z);else shape.moveTo(q.x,-q.z);});shape.closePath();const geo=new T.ShapeGeometry(shape);geo.rotateX(-Math.PI/2);const uv=geo.attributes.uv,vert=geo.attributes.position;for(let i=0;i<uv.count;i++)uv.setXY(i,vert.getX(i)/4,vert.getZ(i)/4);uv.needsUpdate=true;return geo;};
  if(points.length<3)return {group:g,water:null};
@@ -56,6 +56,25 @@ export function basinMesh(T,p,{pos,width,height,extent,texture}){
  const water=new T.Mesh(poly(points),mat);water.position.y=r.level;water.userData.formaWater=true;water.userData.basinWave={clock,waves:r.waves,speed:r.speed,sea};water.renderOrder=2;g.add(water);
  // A separate near-parcel mesh is used for fog sampling, not the ocean horizon.
  if(sea){water.userData.fogFootprint=seaPolygon(p,width,height,Math.max(width,height)*1.05).map(v=>({x:v.x-width/2,z:v.y-height/2}));}
+ // Real shoreline material follows the modified ground; no floating flat beach decal.
+ if(r.bank!=='grass'&&typeof terrainAt==='function'){
+  const color={sand:'#b2a58a',gravel:'#8f9086',rock:'#777a76',soil:'#78644e'}[r.bank],verts=[],uv=[],indices=[];
+  const shoreWidth=r.beachWidth;
+  let shore=sea?seaPolygon(p,width,height,groundExtent).filter(v=>Math.abs(p.signed(v.x,v.y))<.001):p.p;
+  if(shore.length>=2){
+   let area=0;for(let i=0;i<shore.length;i++){const a=shore[i],b=shore[(i+1)%shore.length];area+=a.x*b.y-b.x*a.y;}
+   const closed=!sea,edges=closed?shore.length:shore.length-1;
+   const samples=[];
+   for(let i=0;i<edges;i++){
+    const a=shore[i],b=shore[(i+1)%shore.length],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy);if(l<.001)continue;
+    const n=Math.max(1,Math.ceil(l/.8));for(let k=0;k<n;k++){const t=k/n;const x=a.x+dx*t,y=a.y+dy*t,nx=sea?p.dy*p.sign:(area>0?dy:-dy)/l,ny=sea?-p.dx*p.sign:(area>0?-dx:dx)/l;samples.push({x,y,nx,ny});}
+   }
+   if(sea){const a=shore.at(-1);samples.push({x:a.x,y:a.y,nx:p.dy*p.sign,ny:-p.dx*p.sign});}else if(samples.length)samples.push({...samples[0]});
+   const cols=Math.max(2,Math.min(14,Math.ceil(shoreWidth/.7)));
+   for(let i=0;i<samples.length;i++){const a=samples[i];for(let j=0;j<=cols;j++){const d=.04+shoreWidth*j/cols,q=pos(a.x+a.nx*d,a.y+a.ny*d);verts.push(q.x,terrainAt(q.x,q.z)+.026,q.z);uv.push(q.x*.8,q.z*.8);if(i&&j){const b=i*(cols+1)+j;indices.push(b-cols-2,b-1,b-cols-1,b-cols-1,b-1,b);}}}
+   if(indices.length){const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(verts,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();const beach=new T.Mesh(geo,new T.MeshStandardMaterial({color,roughness:.94,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));beach.userData.formaWeatherableSurface=true;beach.receiveShadow=true;g.add(beach);}
+  }
+ }
  return {group:g,water};
 }
 export function basinPrompt(objects,video=false){
