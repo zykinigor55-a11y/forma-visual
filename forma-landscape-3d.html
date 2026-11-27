@@ -463,6 +463,13 @@ body[data-active-tool]:not([data-active-tool=select]) #lawnShortcutR92,body[data
  #fenceOverlayR211 button{position:absolute;pointer-events:auto;touch-action:none;transform:translate(-50%,-50%);min-width:40px;height:40px;padding:4px;border-radius:10px;border:1px solid #f7d9a4;background:#ddbc88;color:#302820;font-weight:700;box-shadow:0 2px 8px #0007}
  #fenceOverlayR211 button[data-handle=move]{min-width:72px;font-size:12px}
  #fenceOverlayR211 button[data-handle=done]{transform:translateX(-50%);min-width:110px}
+ #fenceWidthDialogR212{color:#f2eee7;background:#292c32;border:1px solid #77716a;border-radius:16px;width:min(340px,88vw);padding:18px;box-shadow:0 12px 50px #0009}
+ #fenceWidthDialogR212::backdrop{background:#0008}
+ #fenceWidthDialogR212 form{display:grid;gap:12px}
+ #fenceWidthDialogR212 input{width:100%;font-size:22px;padding:12px;border-radius:8px;background:#191b20;color:#fff;border:1px solid #78716a}
+ #fenceWidthDialogR212 small{color:#d8bb8c;min-height:20px}
+ #fenceWidthDialogR212 form>div{display:flex;gap:8px}
+ #fenceWidthDialogR212 button{flex:1;min-height:44px}
  </style>
 <link rel="stylesheet" href="./forma-landscape-pine-sizing.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three-gpu-pathtracer":"https://cdn.jsdelivr.net/npm/three-gpu-pathtracer@0.0.24/src/index.js","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.8.3/src/index.js"}}</script>
@@ -582,7 +589,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R211</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R212</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -946,7 +953,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
 import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r201.js?v=R201';
-import {normalizeFence,fenceInspector,createLouverFence,perimeterPoints,fenceSideLengths,validateFenceOpenings,snapFencePoint} from './forma-landscape-fence-r211.js?v=R211';
+import {normalizeFence,fenceInspector,createLouverFence,perimeterPoints,fenceSideLengths,validateFenceOpenings,snapFencePoint} from './forma-landscape-fence-r212.js?v=R212';
 let fenceMagnetR209=true;
 let selectedFenceSideR208=0,fenceTabR211='type',fenceKindR211='gate',fencePlaceR211=null,fenceEditR211=false,fenceDragR211=null,fencePreviewR211=null;
 import {createNaturalSakura,sakuraStage,importSakuraBark} from './forma-landscape-3d-sakura-r206.js?v=R206';
@@ -1014,7 +1021,7 @@ const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
 const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137','rowan-r138','rowan-r139'].includes(treeTestScene);
 const sakuraTestMode=['sakura-test','sakura-r191','sakura-r192','sakura-r202','sakura-r203','sakura-r204','sakura-r205','sakura-r206'].includes(treeTestScene);
-const fenceTestMode=['fence-test','fence-r207','fence-r208','fence-r209','fence-r210','fence-r211'].includes(treeTestScene);
+const fenceTestMode=['fence-test','fence-r207','fence-r208','fence-r209','fence-r210','fence-r211','fence-r212'].includes(treeTestScene);
 const treeLineupMode=fenceTestMode||sakuraTestMode||rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=fenceTestMode?'forma-fence-isolated-r207':sakuraTestMode?'forma-sakura-isolated-r191':rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -1304,7 +1311,7 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;readLawnSettingsR90();const old=cachedGroundTexture;cachedGroundTexture=null;save();rebuild();old?.dispose();lawnPanelSyncR90?.();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();if(fenceTestMode){d.title='FORMA · Заборы · R211';d.site={width:18,height:18,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
+ const d=freshProject();if(fenceTestMode){d.title='FORMA · Заборы · R212';d.site={width:18,height:18,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
  if(sakuraTestMode){const p=sakuraStage(35);d.title='FORMA · Сакура · R206';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[{id:'sakura-test',catalogId:'sakura',type:'trees',x:12,y:12,height:p.height,diameter:p.diameter,rotation:0,variant:1,sakura:{age:p.age}}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'spring',weather:'sunny'};return normalizeProject(d);}
  if(rowanTestMode){const p=rowanStage(35);d.title='FORMA · Рябина обыкновенная · R130';d.site={width:32,height:32,orientation:0,boundary:null};d.objects=[{id:'rowan-test',catalogId:'rowan',type:'trees',x:16,y:16,height:p.height,diameter:p.diameter,rotation:0,variant:1}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};const n=normalizeProject(d);n.objects[0].rowan={age:p.age};return n;}
  if(firTestMode){const p=firStage(45);d.title='FORMA · Пихта · R107';d.site={width:40,height:40,orientation:0,boundary:null};d.objects=[{id:'fir-test',catalogId:'ph-fir-sapling',type:'trees',x:20,y:20,height:p.height,diameter:p.diameter,rotation:0,variant:1,fir:{age:p.age}}];d.buildings=[];return normalizeProject(d);}
@@ -3415,7 +3422,7 @@ function renderProps(){
   on('[data-opening-offset]',e=>replaceOpening({offset:Number(e.target.value)}),'change');
   on('[data-opening-direction]',e=>replaceOpening({direction:e.target.value}),'change');
   on('[data-fence-action="placeOpening"]',()=>{fencePlaceR211={id:o.id,side:selectedFenceSideR208,kind:fenceKindR211};fenceEditR211=false;fenceFocusR211(o);status('Коснитесь места на выделенной стороне.');});
-  on('[data-fence-action="editScene"]',()=>{fencePlaceR211=null;fenceEditR211=true;fenceFocusR211(o);status('↔ перемещает проём; крайние маркеры меняют ширину.');});
+  on('[data-fence-action="editScene"]',()=>{fencePlaceR211=null;fenceEditR211=true;fenceFocusR211(o);status('Боковые стрелки — перемещение. Нажмите размер, чтобы ввести ширину.');});
   on('[data-fence-action="preview"]',()=>{fenceEditR211=false;fenceFocusR211(o);fencePreviewR211={id:o.id,side:selectedFenceSideR208,start:performance.now()};renderGate.invalidate();});
   on('[data-fence-action="removeOpening"]',()=>{const v=normalizeFence(o);v.openings=v.openings.filter(x=>!(x.side===selectedFenceSideR208&&x.kind===fenceKindR211));fenceEditR211=false;commit(v,'Проём удалён.');});
   on('[data-fence-action="delete"]',()=>{fenceEditR211=false;fencePlaceR211=null;deleteSelectedObject();});const dup=el.querySelector('[data-fence-action="duplicate"]');dup.hidden=!!o.perimeter;dup.onclick=duplicateSelected;return;
@@ -5062,22 +5069,44 @@ function placeFenceOpeningR211(e){
  const options=q.kind==='gate'?['right','left']:['right'];let result=null;
  for(const dir of options){const x={side:q.side,kind:q.kind,offset:Math.round((center-width/2)*20)/20,width,direction:dir};const next=normalizeFence({...v,openings:[...v.openings.filter(x=>!(x.side===q.side&&x.kind===q.kind)),x]});if(x.offset>=0&&!validateFenceOpenings({...o,fence:next})){result=next;break;}}
  if(!result){status('Проём не помещается здесь. Выберите другое место.');return false;}
- push();o.fence=result;state.selected='extra:'+o.id;selectedFenceSideR208=q.side;fenceKindR211=q.kind;fencePlaceR211=null;fenceEditR211=true;save();redrawFenceR211(o);renderProps();status('Проём установлен. Потяните маркеры для редактирования.');return true;
+ push();o.fence=result;state.selected='extra:'+o.id;selectedFenceSideR208=q.side;fenceKindR211=q.kind;fencePlaceR211=null;fenceEditR211=true;save();redrawFenceR211(o);renderProps();status('Проём установлен. Стрелки — перемещение. Нажмите размер для ввода ширины.');return true;
+}
+function fenceOpeningActiveR212(){
+ const o=fenceObjectR211(),f=o&&normalizeFence(o),x=f?.openings.find(x=>x.side===selectedFenceSideR208&&x.kind===fenceKindR211);return x?{o,f,x}:null;
+}
+function applyFenceOpeningR212(o,f,x){
+ const min=x.kind==='gate'?2.5:.8,max=x.kind==='gate'?7:1.5;
+ if(!Number.isFinite(x.width)||!Number.isFinite(x.offset)||x.offset<0||x.width<min||x.width>max)return 'Ширина: '+min+'–'+max+' м. Проверьте положение.';
+ const next=normalizeFence({...f,openings:f.openings.map(z=>z.side===x.side&&z.kind===x.kind?x:z)}),error=validateFenceOpenings({...o,fence:next});if(error)return error;
+ push();o.fence=next;save();redrawFenceR211(o);renderProps();updateFenceOverlayR211();return '';
+}
+function openFenceWidthR212(){
+ const active=fenceOpeningActiveR212();if(!active)return;
+ const {o,f,x}=active;let dialog=$('#fenceWidthDialogR212');
+ if(!dialog){dialog=document.createElement('dialog');dialog.id='fenceWidthDialogR212';dialog.innerHTML='<form><strong data-width-title></strong><label for="fenceWidthInputR212">Ширина проёма, м</label><input id="fenceWidthInputR212" type="text" inputmode="decimal" autocomplete="off"><small data-width-error role="alert"></small><div><button type="button" data-width-cancel>Отмена</button><button class="primary" type="submit">Готово</button></div></form>';document.body.append(dialog);}
+ const input=dialog.querySelector('input'),err=dialog.querySelector('[data-width-error]'),min=x.kind==='gate'?2.5:.8,max=x.kind==='gate'?7:1.5;
+ dialog.querySelector('[data-width-title]').textContent=x.kind==='gate'?'Ширина ворот':'Ширина калитки';input.value=x.width.toFixed(2).replace('.',',');err.textContent='Допустимо '+min+'–'+max+' м';
+ dialog.querySelector('[data-width-cancel]').onclick=()=>dialog.close();
+ dialog.querySelector('form').onsubmit=e=>{e.preventDefault();const raw=input.value.trim().replace(',','.'),width=Number(raw);if(!raw||!Number.isFinite(width)||width<min||width>max){err.textContent='Введите число от '+min+' до '+max+' м';return;}
+  const next={...x,width,offset:x.offset+(x.width-width)/2};const error=applyFenceOpeningR212(o,f,next);if(error){err.textContent=error;return;}dialog.close();status('Ширина сохранена: '+width.toFixed(2)+' м.');};
+ dialog.showModal();input.focus();input.select();
 }
 function ensureFenceOverlayR211(){
  let el=$('#fenceOverlayR211');if(el)return el;
- el=document.createElement('div');el.id='fenceOverlayR211';el.hidden=true;el.innerHTML='<button data-handle="start" aria-label="Изменить левую границу">↔</button><button data-handle="move" aria-label="Переместить проём">↔</button><button data-handle="end" aria-label="Изменить правую границу">↔</button><button data-handle="done">Готово</button>';document.body.append(el);
- const done=el.querySelector('[data-handle="done"]');done.onclick=()=>{fenceEditR211=false;fencePlaceR211=null;el.hidden=true;renderProps();revealSelectedInspector();};
- for(const button of el.querySelectorAll('button:not([data-handle="done"])')){
-  button.onpointerdown=e=>{const o=fenceObjectR211(),f=o&&normalizeFence(o),x=f?.openings.find(x=>x.side===selectedFenceSideR208&&x.kind===fenceKindR211);if(!x)return;const start=fenceSideCoordinateR211(e,o,x.side);if(start===null)return;e.preventDefault();e.stopPropagation();button.setPointerCapture(e.pointerId);fenceDragR211={id:e.pointerId,o,original:f,opening:{...x},start,mode:button.dataset.handle,changed:false,last:0};controls.enabled=false;};
-  button.onpointermove=e=>{const d=fenceDragR211;if(!d||d.id!==e.pointerId)return;e.preventDefault();const coordinate=fenceSideCoordinateR211(e,d.o,d.opening.side);if(coordinate===null)return;
-   const delta=Math.round((coordinate-d.start)*20)/20,x={...d.opening};if(d.mode==='move')x.offset+=delta;else if(d.mode==='start'){x.offset+=delta;x.width-=delta;}else x.width+=delta;
-   const min=x.kind==='gate'?2.5:.8,max=x.kind==='gate'?7:1.5;if(x.offset<0||x.width<min||x.width>max)return;
-   const next=normalizeFence({...d.original,openings:d.original.openings.map(z=>z.side===x.side&&z.kind===x.kind?x:z)});
-   if(validateFenceOpenings({...d.o,fence:next}))return;
+ el=document.createElement('div');el.id='fenceOverlayR211';el.hidden=true;el.innerHTML='<button data-handle="start" aria-label="Сдвинуть влево">←</button><button data-handle="move" aria-label="Ввести ширину">4,00 м ✎</button><button data-handle="end" aria-label="Сдвинуть вправо">→</button><button data-handle="done">Готово</button>';document.body.append(el);
+ el.querySelector('[data-handle="move"]').onclick=openFenceWidthR212;
+ el.querySelector('[data-handle="done"]').onclick=()=>{fenceEditR211=false;fencePlaceR211=null;el.hidden=true;renderProps();revealSelectedInspector();};
+ for(const button of el.querySelectorAll('[data-handle="start"],[data-handle="end"]')){
+  button.onpointerdown=e=>{const active=fenceOpeningActiveR212();if(!active)return;const {o,f,x}=active,start=fenceSideCoordinateR211(e,o,x.side);if(start===null)return;e.preventDefault();e.stopPropagation();button.setPointerCapture(e.pointerId);fenceDragR211={id:e.pointerId,o,original:f,opening:{...x},start,screenX:e.clientX,screenY:e.clientY,mode:button.dataset.handle,changed:false,moved:false,last:0};controls.enabled=false;};
+  button.onpointermove=e=>{const d=fenceDragR211;if(!d||d.id!==e.pointerId)return;e.preventDefault();if(Math.hypot(e.clientX-d.screenX,e.clientY-d.screenY)>5)d.moved=true;if(!d.moved)return;const coordinate=fenceSideCoordinateR211(e,d.o,d.opening.side);if(coordinate===null)return;
+   const delta=Math.round((coordinate-d.start)*20)/20,x={...d.opening,offset:d.opening.offset+delta};if(x.offset<0)return;
+   const next=normalizeFence({...d.original,openings:d.original.openings.map(z=>z.side===x.side&&z.kind===x.kind?x:z)});if(validateFenceOpenings({...d.o,fence:next}))return;
    if(!d.changed){push();d.changed=true;}d.o.fence=next;if(performance.now()-d.last>90){d.last=performance.now();redrawFenceR211(d.o);}updateFenceOverlayR211();
   };
-  const finish=e=>{const d=fenceDragR211;if(!d||d.id!==e.pointerId)return;fenceDragR211=null;controls.enabled=state.view!=='walk';if(d.changed){save();redrawFenceR211(d.o);renderProps();status('Положение и размеры сохранены.');}};
+  const finish=e=>{const d=fenceDragR211;if(!d||d.id!==e.pointerId)return;fenceDragR211=null;controls.enabled=state.view!=='walk';if(d.changed){save();redrawFenceR211(d.o);renderProps();status('Положение сохранено.');}else if(e.type==='pointerup'&&!d.moved){
+    const a=d.o.points[d.opening.side],b=d.o.points[d.opening.side+1],A=pos(a.x,a.y),B=pos(b.x,b.y);A.y=B.y=normalizeFence(d.o).height*.7;const sign=B.project(camera).x>=A.project(camera).x?1:-1;
+    const x={...d.opening,offset:d.opening.offset+(d.mode==='start'?-1:1)*sign*.10},error=applyFenceOpeningR212(d.o,d.original,x);if(error)status(error);
+   }};
   button.onpointerup=finish;button.onpointercancel=finish;button.onlostpointercapture=finish;
  }
  return el;
@@ -5087,10 +5116,11 @@ function updateFenceOverlayR211(){
  if(!o||state.tool!=='select'||(!fenceEditR211&&!fencePlaceR211)||document.body.dataset.presentation==='true'){if(el)el.hidden=true;return;}
  const layer=ensureFenceOverlayR211(),f=normalizeFence(o),x=f.openings.find(x=>x.side===selectedFenceSideR208&&x.kind===fenceKindR211),a=o.points[selectedFenceSideR208],b=o.points[selectedFenceSideR208+1];
  layer.hidden=false;const rect=canvas.getBoundingClientRect(),done=layer.querySelector('[data-handle="done"]');
- done.style.left=(rect.left+rect.width/2)+'px';done.style.top=(rect.top+12)+'px';done.textContent=fencePlaceR211?'Отмена':'Готово';
+ done.style.left=(rect.left+rect.width/2)+'px';done.style.top=(rect.top+(window.innerWidth<=850?76:16))+'px';done.textContent=fencePlaceR211?'Отмена':'Готово';
  if(!x||!a||!b||fencePlaceR211){for(const btn of layer.querySelectorAll('button:not([data-handle="done"])'))btn.hidden=true;return;}
  const L=Math.hypot(b.x-a.x,b.y-a.y),show=(key,t,yoff)=>{const btn=layer.querySelector('[data-handle="'+key+'"]'),p=pos(a.x+(b.x-a.x)*t/L,a.y+(b.y-a.y)*t/L);p.y=state.view==='2d'?.2:terrainAt(p.x,p.z)+yoff;const q=p.project(camera);btn.hidden=q.z< -1||q.z>1||Math.abs(q.x)>1||Math.abs(q.y)>1;btn.style.left=(rect.left+(q.x+1)*rect.width/2)+'px';btn.style.top=(rect.top+(1-q.y)*rect.height/2)+'px';};
- show('start',x.offset,f.height*.83);show('end',x.offset+x.width,f.height*.83);show('move',x.offset+x.width/2,f.height*.48);layer.querySelector('[data-handle="move"]').textContent='↔ '+x.width.toFixed(2)+' м';
+ const left=pos(a.x,a.y),right=pos(b.x,b.y);left.y=right.y=f.height*.7;const forward=right.project(camera).x>=left.project(camera).x;
+ show('start',forward?x.offset:x.offset+x.width,f.height*.65);show('end',forward?x.offset+x.width:x.offset,f.height*.65);show('move',x.offset+x.width/2,f.height*.48);layer.querySelector('[data-handle="move"]').textContent=x.width.toFixed(2).replace('.',',')+' м ✎';
 }
 function tickFencePreviewR211(now){
  const q=fencePreviewR211;if(!q)return;const group=pickables.find(g=>g.userData.key==='extra:'+q.id),leaf=group?.userData.fenceGateLeaves?.find(x=>x.side===q.side);
