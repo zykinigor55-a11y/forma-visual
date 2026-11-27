@@ -19,15 +19,14 @@
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false;
  let lastFocus=null,paintStart=0,readyQueued=false;
- let audioContext=null,sequencePending=false,gestureBusy=false,playedTaps=0,woodFinished=true,woodDeadline=0;
+ let audioContext=null,sequencePending=false,gestureBusy=false,playedTaps=0;
  function hint(message=''){if(tapHint){tapHint.textContent=message;tapHint.hidden=!message}}
  // Real wooden blocks: Freesound #543705, 200221-WeanBekker, CC0.
  // Public preview from the source page; no synthesized substitute.
  const woodUrl='https://cdn.freesound.org/previews/543/543705_11072224-lq.mp3';
  let woodBuffer=null,woodCuts=[],woodPromise=null,woodError=false;
  const playingWood=new Set();
- // Select ONE uninterrupted take from the actual recording, not isolated transients.
- function findOriginalClicks(buffer){
+ function findWoodCuts(buffer){
   const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.008)),frames=Math.floor(buffer.length/hop);
   const ch=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
   const levels=new Float32Array(frames);
@@ -54,29 +53,6 @@
    return {start,duration,peak:Math.max(.03,peak)};
   });
  }
- function findWoodCuts(buffer){
-  const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.02)),frames=Math.floor(buffer.length/hop);
-  const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
-  const rms=new Float32Array(frames);
-  for(let i=0;i<frames;i++){let power=0;for(let k=0;k<hop;k+=4)for(const ch of channels){const v=ch[i*hop+k];power+=v*v}rms[i]=Math.sqrt(power/(Math.ceil(hop/4)*channels.length))}
-  const max=rms.reduce((a,b)=>Math.max(a,b),0);
-  if(max<.0001||frames<1)throw Error('Silent recording');
-  const duration=Math.min(1.45,buffer.duration),span=Math.min(frames,Math.max(1,Math.round(duration*rate/hop)));
-  let best=0,bestScore=-Infinity;
-  // One continuous passage of handling wood during the word reveal. Prefer
-  // several separate contacts, audible friction and a quiet ending.
-  for(let i=0;i+span<=frames;i++){
-   let active=0,contacts=0,energy=0;
-   for(let k=i;k<i+span;k++){let v=rms[k];energy+=v*v;if(v>max*.06)active++;if(k>i+1&&v>max*.14&&v>rms[k-1]*1.45&&v>rms[k-2]*1.35)contacts++}
-   let end=0;for(let k=Math.max(i,i+span-5);k<i+span;k++)end+=rms[k]/5;
-   const score=Math.min(contacts,5)*.7+Math.min(active/span,.78)*2+Math.sqrt(energy/span)/max*.6-end/max*1.2;
-   if(score>bestScore){bestScore=score;best=i}
-  }
-  const start=best*hop/rate;
-  let peak=0;for(const ch of channels)for(let k=Math.floor(start*rate);k<Math.min(buffer.length,Math.floor((start+duration)*rate));k++)peak=Math.max(peak,Math.abs(ch[k]));
-  let original;try{original=findOriginalClicks(buffer)}catch{original=[{start,duration:Math.min(.195,duration),peak:Math.max(.03,peak)}]}
-  return [original[0],original[1]||original[0],{start,duration,peak:Math.max(.03,peak)}];
- }
  function prepareWood(){
   if(woodBuffer)return Promise.resolve(true);
   if(woodPromise)return woodPromise;
@@ -101,34 +77,19 @@
   }catch{return Promise.resolve(false)}
  }
  function stopWood(){for(const node of playingWood){try{node.stop()}catch{}}playingWood.clear()}
- function playWoodCut(index,offset,level){
-  if(!woodBuffer||!woodCuts[index]||audioContext?.state!=='running')return false;
-  const cut=woodCuts[index],ctx=audioContext,now=ctx.currentTime+offset;
-  const playRun=run;
+ function woodTap(index,level=.23){
+  if(!woodBuffer||!woodCuts.length||audioContext?.state!=='running')return;
+  const cut=woodCuts[index%woodCuts.length],ctx=audioContext,now=ctx.currentTime+.008;
   const src=ctx.createBufferSource(),gain=ctx.createGain(),hp=ctx.createBiquadFilter();
-  src.buffer=woodBuffer;hp.type='highpass';hp.frequency.value=55;hp.Q.value=.6;
-  const volume=Math.min(2.2,level/cut.peak),fadeIn=index===2?.025:.003,fadeOut=index===2?.12:.025;
+  src.buffer=woodBuffer;hp.type='highpass';hp.frequency.value=85;hp.Q.value=.6;
+  const volume=Math.min(2.2,level*.85/cut.peak);
   gain.gain.setValueAtTime(0,now);
-  gain.gain.linearRampToValueAtTime(volume,now+fadeIn);
-  gain.gain.setValueAtTime(volume,now+Math.max(fadeIn,cut.duration-fadeOut));
+  gain.gain.linearRampToValueAtTime(volume,now+.003);
+  gain.gain.setValueAtTime(volume,now+Math.max(.004,cut.duration-.025));
   gain.gain.linearRampToValueAtTime(0,now+cut.duration);
   src.connect(hp);hp.connect(gain);gain.connect(ctx.destination);playingWood.add(src);
-  src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect();if(playRun===run&&!playingWood.size){woodFinished=true;checkReadiness()}};
-  src.start(now,cut.start,cut.duration);
-  return true;
- }
- function playWoodTake(){
-  if(playedTaps||!woodBuffer||woodCuts.length!==3||audioContext?.state!=='running')return false;
-  // Original two distinct FA clicks, followed by an unbroken real wood-handling passage.
-  const elapsed=Math.max(0,(performance.now()-paintStart)/1000);
-  if(elapsed>.50)return false;
-  const first=TIME.logo/1000-elapsed,second=first+.14,word=TIME.name/1000-elapsed;
-  if(!playWoodCut(0,Math.max(.01,first),.17))return false;
-  playWoodCut(1,Math.max(.01,second),.15);
-  playWoodCut(2,Math.max(.01,word),.14);
-  playedTaps=3;woodFinished=false;
-  woodDeadline=performance.now()+(word+woodCuts[2].duration)*1000+500;
-  return true;
+  src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect()};
+  src.start(now,cut.start,cut.duration);playedTaps++;
  }
  // Touch activation: click/pointerup, not touch pointerdown. Never bypass browser policy.
  function resumeOnInteraction(event){
@@ -176,6 +137,7 @@
   closing=true;clearTimers();hint('');
   screen.classList.remove('is-holding');
   if(recover)recover.hidden=true;
+  woodTap(7,.22);
   screen.classList.add('is-leaving');
   const id=run;
   setTimeout(()=>{
@@ -193,7 +155,6 @@
  }
  function checkReadiness(){
   if(!active||closing||!minimumPassed)return;
-  if(!woodFinished&&performance.now()<woodDeadline)return;
   if(ready()){
    screen.classList.add('is-ready');
    progress?.setAttribute('aria-valuetext','Студия готова');
@@ -206,7 +167,7 @@
   if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
  }
  function begin(){
-  run+=1;clearTimers();stopWood();playedTaps=0;woodFinished=true;woodDeadline=0;gestureBusy=false;sequencePending=false;hint('');
+  run+=1;clearTimers();stopWood();playedTaps=0;gestureBusy=false;sequencePending=false;hint('');
   active=true;closing=false;firstPaint=false;minimumPassed=false;readyQueued=false;
   screen.classList.remove('is-ready');progress?.removeAttribute('aria-valuenow');progress?.setAttribute('aria-valuetext','Загрузка');
   lastFocus=document.activeElement;
@@ -235,13 +196,11 @@
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
    if(id!==run||!active||closing)return;
    firstPaint=true;paintStart=performance.now();screen.classList.add('is-grid-visible');
-   // Start the full take with the visual sequence; never play a truncated tail.
-   if(!playWoodTake()&&audioContext?.state==='running'){
-    prepareWood().then(ok=>{if(ok&&id===run&&active&&!closing&&!playedTaps&&performance.now()-paintStart<500)playWoodTake()});
-   }
    addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
-   addTimeout(()=>screen.classList.add('is-logo-visible'),TIME.logo);
+   addTimeout(()=>{screen.classList.add('is-logo-visible');woodTap(0,.23)},TIME.logo);
+   addTimeout(()=>woodTap(1,.21),TIME.logo+140);
    addTimeout(()=>screen.classList.add('is-name-visible'),TIME.name);
+   for(let i=0;i<5;i++)addTimeout(()=>woodTap(i+2,.16+i*.008),TIME.name+i*105+90);
    addTimeout(()=>screen.classList.add('is-descriptor-visible'),TIME.descriptor);
    addTimeout(()=>{minimumPassed=true;checkReadiness();if(previewHold&&playedTaps===0)hint(woodError?'Запись дерева недоступна':'Коснитесь экрана для звука')},TIME.minShow);
    addTimeout(()=>{
@@ -263,7 +222,7 @@
   replay:()=>begin(),
   enter:()=>revealStudio(true),
   get active(){return active},
-  get audioDiagnostics(){return {state:audioContext?.state||'unavailable',source:woodUrl,sourceDuration:woodBuffer?.duration||null,selectedCuts:woodCuts,played:!!playedTaps,finished:woodFinished,error:woodError}},
+  get audioDiagnostics(){return {state:audioContext?.state||'unavailable',source:woodUrl,sourceDuration:woodBuffer?.duration||null,selectedCuts:woodCuts,played:!!playedTaps,error:woodError}},
   get stage(){return !firstPaint?'preparing':screen.classList.contains('is-logo-visible')?'branding':'loading'}
  };
  begin();
