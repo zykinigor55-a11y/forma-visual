@@ -30,7 +30,7 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
  gl_FragColor=vec4(c,top);
  #include <colorspace_fragment>
  }`});
- const ring=new T.Mesh(new T.CylinderGeometry(1,1,.66,mobile?48:96,1,true),material);ring.position.y=.20;ring.renderOrder=-70;ring.frustumCulled=false;ring.name='forma-photo-horizon';group.add(ring);
+ const ring=new T.Mesh(new T.CylinderGeometry(1,1,.24,mobile?48:96,1,true),material);ring.position.y=16;ring.renderOrder=-70;ring.frustumCulled=false;ring.name='forma-photo-horizon';group.add(ring);
  // One distant ground quad bridges the square parcel and horizon; no trees,
  // buildings, terrain collision geometry or extra shadows are created.
  const floorMat=new T.ShaderMaterial({uniforms:u,side:T.DoubleSide,depthWrite:true,toneMapped:false,
@@ -67,14 +67,14 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
  function apply(v,{time='day',fog='#b8c7c4',weather='sunny',side=40,mode='3d',camera=null}={}){
   settings=normalizePanorama(v);view=mode;
   const radius=Math.max(settings.radius,side*.80+10,mode==='3d'&&camera?Math.hypot(camera.position.x,camera.position.z)+15:0);
-  ring.scale.setScalar(radius);ring.rotation.y=settings.rotation*Math.PI/180;floor.scale.setScalar(radius);
+  ring.scale.setScalar(radius);ring.position.y=radius*.08;ring.rotation.y=settings.rotation*Math.PI/180;floor.scale.setScalar(radius);
   u.groundHalf.value=side*.5-.03;u.radius.value=radius;u.hazeColor.value.set(fog);u.blur.value=settings.blur/100;
   u.haze.value=Math.min(.95,settings.haze/100+(weather==='fog'?.38:weather==='rain'||weather==='snow'?.13:0));
   u.season.value=['summer','spring','autumn','winter'].indexOf(settings.season);
   u.brightness.value=({day:1,morning:.90,evening:.72,'blue-hour':.39,night:.13})[time]||1;
   u.tint.value.set(time==='evening'?'#ffe7d2':time==='blue-hour'||time==='night'?'#a1b7dd':'#ffffff');
   u.groundColor.value.set(({summer:'#6c7b51',spring:'#79875b',autumn:'#8e8060',winter:'#b7c1c2'})[settings.season]).multiplyScalar(u.brightness.value);
-  if(camera?.isPerspectiveCamera&&camera.far<radius*2.4+100){camera.far=radius*2.4+100;camera.updateProjectionMatrix();}
+  if(settings.type!=='off'&&camera?.isPerspectiveCamera&&camera.far<radius*2.4+100){camera.far=radius*2.4+100;camera.updateProjectionMatrix();}
   load(settings.type);show();
   scene.userData.formaPanorama={...settings,label:PANORAMAS.find(p=>p[0]===settings.type)?.[1]||'Без окружения',effectiveRadius:radius};
  }
