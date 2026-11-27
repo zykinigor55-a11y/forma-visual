@@ -1,3 +1,4 @@
+import {continuousSkyPalette,solarAppearance} from './forma-photographic-environment-r71.js?v=R215';
 /* R64 procedural HDR sky for environment-based lighting. Linear radiance,
  * PMREM filtering, no sharp sun disk (the shadowed directional sun owns it).
  * Not a measured HDRI and not a path-traced bounce solution.
@@ -10,7 +11,7 @@ export function updateHDRSky(T,renderer,{time='day',weather='sunny',azimuth=311,
  if(state?.signature===signature)return state.target?.texture||null;
  const mobile=typeof window!=='undefined'&&window.innerWidth<=850,w=mobile?256:512,h=w/2,values=new Uint16Array(w*h*4);
  const overcast=['overcast','rain','fog','snow'].includes(weather),day=['day','morning','evening'].includes(time);
- const palette=time==='night'?[[.015,.025,.055],[.075,.105,.17],[.025,.033,.040]]:time==='blue-hour'?[[.065,.13,.30],[.26,.36,.58],[.055,.069,.083]]:time==='evening'?[[.25,.39,.70],[1.13,.78,.50],[.15,.16,.13]]:time==='morning'?[[.37,.60,.94],[1.03,.85,.67],[.17,.19,.15]]:overcast?[[.63,.70,.76],[.87,.90,.90],[.21,.23,.19]]:[[.34,.58,1.0],[.88,.99,1.15],[.20,.23,.17]];
+ const colors=continuousSkyPalette(T.Color,elevation,weather);const palette=[colors[0].toArray(),colors[1].toArray(),colors[2].toArray()];const appearance=solarAppearance(elevation);
  const az=Number(azimuth)*Math.PI/180,el=Number(elevation)*Math.PI/180,sx=Math.sin(az)*Math.cos(el),sy=Math.sin(el),sz=Math.cos(az)*Math.cos(el);
  const cover=clamp(Number(clouds)/100,0,1);
  for(let y=0;y<h;y++){
@@ -19,8 +20,8 @@ export function updateHDRSky(T,renderer,{time='day',weather='sunny',azimuth=311,
    const lon=((x+.5)/w-.5)*Math.PI*2,dx=Math.cos(lon)*horizontal,dz=Math.sin(lon)*horizontal;
    const zen=Math.pow(Math.max(0,dy),.55),ground=Math.pow(Math.max(0,-dy),.55),v=dy>=0?zen:ground;
    const base=dy>=0?palette[0]:palette[2],horizon=palette[1],dot=clamp(dx*sx+dy*sy+dz*sz,0,1);
-   const glow=day&&dy>0?Math.pow(dot,18)*(overcast?.09:.40)*(1-cover*.60):0;
-   const cloud=day&&dy>0?Math.max(0,Math.sin(dx*9+dz*3+Math.sin(dy*12))*.5+Math.sin(dz*15+dy*6)*.28+Math.sin(dx*21-dz*19)*.12-.52+cover*.42)*.20:0;
+   const glow=dy>0?appearance.direct*Math.pow(dot,18)*(overcast?.09:.40)*(1-cover*.60):0;
+   const cloud=dy>0?appearance.day*Math.max(0,Math.sin(dx*9+dz*3+Math.sin(dy*12))*.5+Math.sin(dz*15+dy*6)*.28+Math.sin(dx*21-dz*19)*.12-.52+cover*.42)*.20:0;
    const k=(y*w+x)*4;
    for(let i=0;i<3;i++){const warmth=i===0?1:i===1?.88:.69;values[k+i]=T.DataUtils.toHalfFloat(clamp(horizon[i]*(1-v)+base[i]*v+glow*warmth+cloud,0,4));}
    values[k+3]=T.DataUtils.toHalfFloat(1);
