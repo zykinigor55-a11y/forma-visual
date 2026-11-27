@@ -14,10 +14,13 @@
  const status=document.getElementById('formaIntroProgressStatus');
  const waitLabel=document.getElementById('formaIntroWait');
  const progress=screen.querySelector('#formaLaunchProgress');
+ const tapHint=document.getElementById('formaLaunchTapHint');
+ const touchDevice=matchMedia('(pointer: coarse)').matches;
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false;
  let lastFocus=null,paintStart=0,readyQueued=false;
- let audioContext=null;
+ let audioContext=null,sequencePending=false,gestureBusy=false,playedTaps=0;
+ function hint(message=''){if(tapHint){tapHint.textContent=message;tapHint.hidden=!message}}
  // Real wooden blocks: Freesound #543705, 200221-WeanBekker, CC0.
  // Public preview from the source page; no synthesized substitute.
  const woodUrl='https://cdn.freesound.org/previews/543/543705_11072224-lq.mp3';
@@ -69,8 +72,8 @@
    if(!A)return Promise.resolve(false);
    if(!audioContext)audioContext=new A();
    // Resume within the user gesture; decoding itself may finish later.
-   audioContext.resume().catch(()=>{});
-   return prepareWood();
+   const resume=audioContext.resume().catch(()=>{});
+   return Promise.all([resume,prepareWood()]).then(([,loaded])=>loaded&&audioContext.state==='running');
   }catch{return Promise.resolve(false)}
  }
  function stopWood(){for(const node of playingWood){try{node.stop()}catch{}}playingWood.clear()}
@@ -86,15 +89,26 @@
   gain.gain.linearRampToValueAtTime(0,now+cut.duration);
   src.connect(hp);hp.connect(gain);gain.connect(ctx.destination);playingWood.add(src);
   src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect()};
-  src.start(now,cut.start,cut.duration);
+  src.start(now,cut.start,cut.duration);playedTaps++;
  }
- // Autoplay is subject to the browser's permission; resume on a genuine
- // interaction during the splash, without replaying or delaying the visual intro.
- function resumeOnInteraction(){
-  if(!active||closing)return;
-  unlockSound();
+ // Touch activation: click/pointerup, not touch pointerdown. Never bypass browser policy.
+ function resumeOnInteraction(event){
+  if(!active||closing||gestureBusy||event?.target===recover)return;
+  if(audioContext?.state==='running'&&woodBuffer&&playedTaps>0)return;
+  gestureBusy=true;const current=run;
+  const wasPending=sequencePending;
+  const loading=unlockSound();
+  hint('');
+  Promise.race([loading,new Promise(resolve=>setTimeout(()=>resolve(false),950))]).then(ok=>{
+   if(current!==run||!active||closing)return;
+   gestureBusy=false;
+   if(wasPending&&sequencePending){startSequence(current);return}
+   if(ok&&previewHold&&playedTaps===0){begin();return}
+   if(woodError&&previewHold)hint('Запись дерева недоступна');
+   else if(!ok&&previewHold)hint('Коснитесь экрана для звука');
+  });
  }
- screen.addEventListener('pointerdown',resumeOnInteraction,{passive:true});
+ screen.addEventListener('click',resumeOnInteraction);
  document.addEventListener('keydown',resumeOnInteraction);
  unlockSound();
  const timers=new Set();
@@ -120,7 +134,7 @@
  }
  function revealStudio(force=false){
   if(!active||closing||previewHold&&!force||!force&&(!minimumPassed||!ready()))return;
-  closing=true;clearTimers();
+  closing=true;clearTimers();hint('');
   screen.classList.remove('is-holding');
   if(recover)recover.hidden=true;
   woodTap(7,.075);
@@ -153,7 +167,7 @@
   if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
  }
  function begin(){
-  run+=1;clearTimers();stopWood();
+  run+=1;clearTimers();stopWood();playedTaps=0;gestureBusy=false;sequencePending=false;hint('');
   active=true;closing=false;firstPaint=false;minimumPassed=false;readyQueued=false;
   screen.classList.remove('is-ready');progress?.removeAttribute('aria-valuenow');progress?.setAttribute('aria-valuetext','Загрузка');
   lastFocus=document.activeElement;
@@ -165,7 +179,19 @@
   if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
   lockWorkspace(true);
   screen.getBoundingClientRect();
-  const id=run;
+  const id=run;sequencePending=true;
+  if(touchDevice&&audioContext?.state!=='running'){
+   screen.classList.add('is-grid-visible');
+   hint('Коснитесь экрана');
+   // A brief optional window for gesture; unattended startup still proceeds.
+   addTimeout(()=>{if(sequencePending&&!gestureBusy)startSequence(id)},1800);
+   addTimeout(()=>{if(sequencePending)startSequence(id)},3000);
+  }else startSequence(id);
+ }
+ function startSequence(id){
+  if(id!==run||!active||closing||!sequencePending)return;
+  sequencePending=false;
+  if(!previewHold||audioContext?.state==='running')hint('');
   // Run the clock after the browser has shown the first, fully black loader frame.
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
    if(id!==run||!active||closing)return;
@@ -176,7 +202,7 @@
    addTimeout(()=>woodTap(3,.08),TIME.name+195);
    addTimeout(()=>woodTap(5,.065),TIME.name+510);
    addTimeout(()=>screen.classList.add('is-descriptor-visible'),TIME.descriptor);
-   addTimeout(()=>{minimumPassed=true;checkReadiness()},TIME.minShow);
+   addTimeout(()=>{minimumPassed=true;checkReadiness();if(previewHold&&playedTaps===0)hint(woodError?'Запись дерева недоступна':'Коснитесь экрана для звука')},TIME.minShow);
    addTimeout(()=>{
     if(previewHold||ready()||!active)return;
     screen.classList.add('is-holding');
