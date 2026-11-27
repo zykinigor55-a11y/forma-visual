@@ -37,8 +37,8 @@ function applyBarkMaps(T,mat,wood,mobile,onReady){
 export function sakuraStage(age=35){
  return age<=15?{age:10,height:3.2,diameter:2.6}:age<=50?{age:35,height:6.5,diameter:6.8}:{age:75,height:8.8,diameter:10.5};
 }
-export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()=>{}}={}){
- const root=new T.Group();root.name='forma-sakura-r206';
+export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()=>{},adaptivePreview=false}={}){
+ const root=new T.Group();root.name='forma-sakura-r206';const previewDetail={value:1};root.userData.sakuraPreviewDetail=previewDetail;
  const h=Math.max(.8,Number(o.height)||6.5),r=Math.max(.4,Number(o.diameter)||6.8)/2;
  const age=sakuraStage(o.sakura?.age||(h<4?10:h>8?75:35)).age,young=age===10,old=age===75;
  let seed=(Number(o.variant)||1)*51283+age*7919;
@@ -163,7 +163,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
  const wood=new T.Mesh(woodGeo,new T.MeshStandardMaterial({vertexColors:true,map:tex(al,true),bumpMap:tex(bm,false),bumpScale:.005,roughness:.79}));wood.name='sakura-bark-branches';wood.material.onBeforeCompile=shader=>{shader.vertexShader='attribute float barkYouth; varying float vBarkYouth;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvBarkYouth=barkYouth;');shader.fragmentShader='varying float vBarkYouth;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\n diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.10+vec3(.035,.024,.016),vBarkYouth*.75);');shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=mix(roughnessFactor,.73,vBarkYouth*.65);');shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\nnormal=normalize(mix(normal,nonPerturbedNormal,vBarkYouth*.72));');};wood.material.customProgramCacheKey=()=> 'sakura-bark-youth-r205';wood.castShadow=wood.receiveShadow=true;root.add(wood);applyBarkMaps(T,wood.material,wood,mobile,onReady);
  // A whole flower atlas contains the real five-lobed outline, radial veins,
  // notched tips and minute pollen-bearing stamens. Cupped geometry supplies volume.
- const tw=256,petals=new Uint8Array(tw*tw*4),leafPixels=new Uint8Array(tw*tw*4);
+ const tw=256,petals=new Uint8Array(tw*tw*4),leafPixels=new Uint8Array(tw*tw*4),petalRelief=adaptivePreview?new Float32Array(tw*tw):null;
  const dots=Array.from({length:21},(_,i)=>{const a=i*2.399963,r=.075+.13*Math.sqrt((i+.5)/21);return [Math.cos(a)*r,Math.sin(a)*r,.010+rnd()*.009];});
  for(let y=0;y<tw;y++)for(let x=0;x<tw;x++){
   const u=x/(tw-1),v=y/(tw-1),xx=(u-.5)*2,zz=(v-.5)*2,rho=Math.hypot(xx,zz),a=Math.atan2(zz,xx),theta=((a+Math.PI*2+.6283185)%1.256637)-.6283185;
@@ -173,6 +173,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   const heart=Math.exp(-rho*rho*13),noise=(rnd()-.5)*4,i=(y*tw+x)*4;
   let R=237-5*vein+noise,G=200-32*heart-11*vein+noise,B=212-23*heart-7*vein+noise;
   if(rho<.25){let pollen=0,filament=0;for(const [dx,dz,dr] of dots){pollen=Math.max(pollen,Math.exp(-((xx-dx)**2+(zz-dz)**2)/(dr*dr)));const t=Math.max(0,Math.min(1,(xx*dx+zz*dz)/(dx*dx+dz*dz)));filament=Math.max(filament,Math.exp(-((xx-t*dx)**2+(zz-t*dz)**2)/.000045));}R=R*(1-pollen)+186*pollen;G=G*(1-pollen)+140*pollen;B=B*(1-pollen)+77*pollen;R-=filament*7;G-=filament*12;B-=filament*8;}
+  if(petalRelief)petalRelief[y*tw+x]=alpha*(.32+.17*Math.sin(Math.PI*Math.min(1,rho))+.045*vein+.075*heart+.025*Math.cos(theta*5));
   petals.set([Math.max(0,Math.min(255,R)),Math.max(0,Math.min(255,G)),Math.max(0,Math.min(255,B)),Math.round(alpha*255)],i);
   const d=Math.abs(u-.5),mid=Math.exp(-d*d*1600),lv=Math.pow(.5+.5*Math.cos(v*65-d*43),15)*Math.min(1,d*7);
   const g=Math.max(0,Math.min(255,231+14*mid+9*lv-9*d+noise));
@@ -192,10 +193,13 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   for(let i=0;i<pts.length;i+=3)uvs.push(.5+pts[i],pts[i+2]);
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pts,3));g.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));const ix=[];for(let i=0;i<8;i++)ix.push(8,i,(i+1)%8);g.setIndex(ix);g.computeVertexNormals();return g;
  }
+ function petalNormal(){if(!petalRelief)return null;const data=new Uint8Array(tw*tw*4);const sample=(x,y)=>petalRelief[Math.max(0,Math.min(tw-1,y))*tw+Math.max(0,Math.min(tw-1,x))];for(let y=0;y<tw;y++)for(let x=0;x<tw;x++){const i=(y*tw+x)*4,dx=(sample(x+1,y)-sample(x-1,y))*3.2,dy=(sample(x,y+1)-sample(x,y-1))*3.2,n=1/Math.hypot(dx,dy,1);data.set([Math.round(128-dx*127*n),Math.round(128-dy*127*n),Math.round(128+127*n),255],i);}const t=new T.DataTexture(data,tw,tw,T.RGBAFormat);t.colorSpace=T.NoColorSpace;t.minFilter=T.LinearMipmapLinearFilter;t.magFilter=T.LinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;}
  function translucentMat(isPetal){
   const map=surfaceTex(isPetal?petals:leafPixels);
   const mat=new T.MeshStandardMaterial({side:T.DoubleSide,roughness:isPetal?.83:.76,map,metalness:0,alphaTest:isPetal?.35:0});
-  mat.onBeforeCompile=shader=>{
+  if(adaptivePreview&&isPetal){mat.normalMap=petalNormal();mat.normalScale.set(.38,.38);mat.alphaToCoverage=true;map.anisotropy=4;}
+  mat.userData.sakuraPreviewMaterial=adaptivePreview;mat.onBeforeCompile=shader=>{
+   if(adaptivePreview){shader.uniforms.sakuraDetail=previewDetail;shader.fragmentShader='uniform float sakuraDetail;\n'+shader.fragmentShader;}
    shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>',`
     #include <lights_fragment_end>
     #if NUM_DIR_LIGHTS > 0
@@ -203,13 +207,13 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     vec3 flL=normalize(directionalLights[0].direction);
     float flBack=max(0.,-dot(flN,flL));
     float flRim=pow(1.-abs(dot(flN,normalize(vViewPosition))),2.);
-    float flStrength=${isPetal?'.10':'.13'}*(flBack*.87+flRim*.13);
+    float flStrength=${isPetal?'.10':'.13'}*(flBack*.87+flRim*.13);${adaptivePreview?`\n    float transmitted=pow(max(0.,dot(normalize(vViewPosition),-flL)),2.);\n    flStrength=mix(flStrength,${isPetal?'.18':'.16'}*(flBack*.70+transmitted*.24+flRim*.06),sakuraDetail);`:''}
     vec3 flTint=vec3(${isPetal?'.96,.83,.80':'.79,1.0,.55'});
     reflectedLight.indirectDiffuse+=diffuseColor.rgb*flTint*min(directionalLights[0].color,vec3(1.6))*flStrength;
     #endif
    `);
   };
-  mat.customProgramCacheKey=()=>isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205';
+  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r223':'');
   return mat;
  }
  function inst(rows,geo,palette,name){
@@ -224,6 +228,6 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
  const visibleFlowers=sample(flowers,limit);
  inst(visibleFlowers,blossomGeo(),['#f3e3e7','#e9c9d2','#e4bcc8','#ddb0bf','#f0d4da','#e6bec9'],'sakura-blossoms');
  inst(leaves,leafGeo(),season==='autumn'?['#a77944','#b58c53','#946345','#ab8a51']:['#607d48','#789253','#527340','#8a9e60'],'sakura-leaves');
- root.userData.formaSakuraStats={age,season,mobile,flowers:visibleFlowers.length,generatedFlowers:flowers.length,petalTexture:256,leafTexture:256,flowerTriangles:mobile?10:60,translucency:true,barkVerticalRepeatPerM:2.3,barkPhysicalTileWidthM:.43,barkNormalStrength:.46,curvedMajorLimbs:true,branchCollars:true,leaves:leaves.length,woodTriangles:idx.length/3};
+ root.userData.formaSakuraStats={age,season,mobile,adaptivePreview,petalNormal:adaptivePreview,flowers:visibleFlowers.length,generatedFlowers:flowers.length,petalTexture:256,leafTexture:256,flowerTriangles:mobile?10:60,translucency:true,barkVerticalRepeatPerM:2.3,barkPhysicalTileWidthM:.43,barkNormalStrength:.46,curvedMajorLimbs:true,branchCollars:true,leaves:leaves.length,woodTriangles:idx.length/3};
  return root;
 }
