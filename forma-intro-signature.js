@@ -6,7 +6,7 @@
 (() => {
  'use strict';
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const TIME={loaderEnd:680,logo:320,name:850,descriptor:1440,minShow:reduced?1600:2350,recovery:14000};
+ const TIME={loaderEnd:1100,logo:550,name:1550,descriptor:2600,minShow:reduced?1600:4200,recovery:14000};
  const root=document.documentElement;
  const screen=document.getElementById('forma-intro');
  if(!screen)return;
