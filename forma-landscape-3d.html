@@ -572,7 +572,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R175</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R182</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -945,7 +945,8 @@ import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-
 import {duplicateLandscapeObject,rotatedLandscapeObject,validatedLandscapeProps} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
-import {CREATURE_ASSETS,creatureById,isCreatureId} from './forma-landscape-3d-creatures.js?v=creatures-v1-20261122';
+import {CREATURE_ASSETS,creatureById,isCreatureId} from './forma-landscape-3d-creatures.js?v=R182';
+import {loadHsrdPerson} from './forma-landscape-3d-hsrd-r182.js?v=R182';
 import {addRealGardenEmission,gardenLightingState,gardenLightingSpec} from './forma-landscape-3d-lighting.js';
 import {photographGardenLightPreviews} from './forma-landscape-3d-fixtures.js';
 import {iconURL,fallbackIconURL} from './forma-landscape-project-graphics.js?v=pools-P32';
@@ -2293,16 +2294,16 @@ function loadCreatureModel(id){
  const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
  // Native GLBs are proxied from fixed CC0 URLs by our own domain, avoiding
  // 3rd-party CORS failures, unsigned redirects and unlicensed uploads.
- loader.loadAsync(location.hostname.endsWith('github.io')?entry.nativeGLB:entry.modelPath).catch(error=>{if(location.hostname.endsWith('github.io'))throw error;return loader.loadAsync(entry.nativeGLB);}).then(gltf=>{
+ (entry.scan?loadHsrdPerson(entry,window.innerWidth<=850?1024:2048):loader.loadAsync(location.hostname.endsWith('github.io')?entry.nativeGLB:entry.modelPath).catch(error=>{if(location.hostname.endsWith('github.io'))throw error;return loader.loadAsync(entry.nativeGLB);})).then(gltf=>{
   if(!gltf?.scene)throw Error('Пустой GLB');
   let meshCount=0;gltf.scene.traverse(node=>{if(node.isMesh)meshCount++});
   if(meshCount===0)throw Error('Нет 3D-сетки');
   creatureSources.set(id,gltf.scene);creatureFailures.delete(id);
   if(root&&renderer&&doc)rebuild();
-  status('Загружена CC0-модель: '+entry.name+' · '+meshCount+' мешей');
+  status('Загружена 3D-модель: '+entry.name+' · '+meshCount+' мешей');
  }).catch(e=>{
   creatureFailures.add(id);
-  status('GLB '+entry.name+' недоступна. Проверьте соединение или источник.');
+  status('3D-модель '+entry.name+' недоступна. Проверьте соединение или источник.');
   console.warn('Creature CC0 GLB load failed',id,e?.message||e);
  }).finally(()=>{creatureLoading.delete(id);ktx2.dispose()});
 }
@@ -2563,6 +2564,7 @@ function drawExtra(o){
   attachTreeSnowPreview(THREE,g,{...o,catalogId:'ph-fir-sapling',diameter:width,height},doc.atmosphere);
   mark(g,'extra:'+o.id);root.add(g);return;
  }
+ if(['creature-casual-man','creature-hiker-woman','creature-older-man'].includes(o.type))return; // legacy people retained only in saved data, never drawn
  if(isCreatureId(o.type)){
   const entry=creatureById(o.type),source=creatureSources.get(entry.id);
   if(!source){loadCreatureModel(entry.id);return;}
@@ -2693,14 +2695,14 @@ function renderCreatureCatalog(){
   return '<div class="asset-group-heading">'+title+' · '+items.length+'</div>'+
    items.map(e=>'<div class="creature-row"><button type="button" class="choice creature-choice" data-creature-id="'+e.id+'">'+
     '<img class="creature-thumbnail" src="'+e.preview+'" loading="lazy" decoding="async" alt="3D-модель: '+e.name+'"><span class="creature-emoji" aria-hidden="true" hidden>'+e.emoji+'</span><span class="creature-copy"><strong>'+e.name+'</strong>'+
-    '<small>'+e.notes+'</small><small>Рост: '+e.height.toFixed(2)+' м · CC0 · GLB</small></span><b class="asset-add">＋</b></button>'+
-    '<a class="creature-source" href="'+e.source+'" target="_blank" rel="noopener noreferrer" title="Автор и бесплатная лицензия CC0">Источник GLB</a></div>').join('');
+    '<small>'+e.notes+'</small><small>Рост: '+e.height.toFixed(2)+' м · '+(e.scan?'Фотоскан LOD2':'CC0 · GLB')+'</small></span><b class="asset-add">＋</b></button>'+
+    '<a class="creature-source" href="'+e.source+'" target="_blank" rel="noopener noreferrer" title="Автор и лицензия">Источник 3D</a></div>').join('');
  };
- target.innerHTML='<div class="real-model-intro"><strong>ЛЮДИ И ЖИВОТНЫЕ · 8 GLB</strong><p>Настоящие лицензированные 3D-модели. Выберите персонажа, затем коснитесь участка. Положение сохраняется, рост и поворот меняются в параметрах. При отсутствии сети модель не подменяется условной фигурой.</p></div>'+
+ target.innerHTML='<div class="real-model-intro"><strong>ЛЮДИ И ЖИВОТНЫЕ · 19 МОДЕЛЕЙ</strong><p>Настоящие лицензированные 3D-модели. Выберите персонажа, затем коснитесь участка. Положение сохраняется, рост и поворот меняются в параметрах. При отсутствии сети модель не подменяется условной фигурой.</p></div>'+
  '<input id="creatureSearch" type="search" placeholder="Поиск по людям и животным…" aria-label="Поиск живых существ" autocomplete="off">'+
  '<div class="catalog-filter" role="group" aria-label="Виды"><button type="button" class="active" data-creature-filter="all">Все</button><button type="button" data-creature-filter="people">Люди</button><button type="button" data-creature-filter="animals">Животные</button></div>'+
  make('people','ЛЮДИ')+make('animals','ЖИВОТНЫЕ')+
- '<small class="creature-footer">Источник: tevy.dev · CC0 1.0 · облегчённые LOD1 для мобильного просмотра. Натуральные пропорции при AI-рендере.</small>';
+ '<small class="creature-footer">Люди: Digital Reality Lab · HSRD-100 (2025) · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> · LOD2, исходные UV и оптимизированные текстуры. Животные: tevy.dev · CC0. Фотосканы загружаются при выборе, статические позы.</small>';
  target.querySelectorAll('.creature-thumbnail').forEach(img=>{
   img.addEventListener('error',()=>{
    img.hidden=true;
