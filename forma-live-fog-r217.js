@@ -57,38 +57,44 @@ export function createLiveFogR217(T,scene,{width,depth,terrainAt,waterSurfaces=[
  group.add(ground,water);
  const rnd=seeded(901722),dummy=new T.Object3D(),ray=new T.Raycaster(),up=new T.Vector3(0,-1,0);
  const groundSeeds=Array.from({length:ground.instanceMatrix.count},()=>({x:(rnd()-.5)*w,z:(rnd()-.5)*d,size:.6+rnd()*.9,phase:rnd()}));
- const waterSeeds=[];
+ const waterSeeds=[],pixels=ctx.getImageData(0,0,256,256).data;
  if(waterSurfaces.length){
   for(let i=0;i<water.instanceMatrix.count*22&&waterSeeds.length<water.instanceMatrix.count;i++){
    const x=(rnd()-.5)*w,z=(rnd()-.5)*d;
    const px=clamp(Math.floor((x/w+.5)*256),0,255),py=clamp(Math.floor((z/d+.5)*256),0,255);
-   if(ctx.getImageData(px,py,1,1).data[0]<128)continue;
+   if(pixels[(py*256+px)*4]<128)continue;
    ray.set(new T.Vector3(x,1000,z),up);const hit=ray.intersectObjects(waterSurfaces,false)[0];if(!hit)continue;
    waterSeeds.push({x,z,y:hit.point.y,size:.6+rnd()*.9,phase:rnd()});
   }
  }
- let previous='',last=0;
+ let previous='',last=0,frame=0,flow=0;
+ const wrap=(v,extent)=>((v+extent*.5)%extent+extent)%extent-extent*.5;
  function update(settings,now,visible,tint){
   group.visible=visible;
   const density=[settings.groundDensity,settings.waterDensity],height=[settings.groundHeight,settings.waterHeight];
   const sig=JSON.stringify([density,height]);
+  const dt=frame?Math.min(.12,Math.max(0,(now-frame)*.001)):0;frame=now;
+  if(visible)flow+=dt*settings.driftSpeed/100;
+  const stepMotion=visible&&settings.driftSpeed>0&&now-last>(mobile?110:60);
   for(const [i,m,seeds] of [[0,ground,groundSeeds],[1,water,waterSeeds]]){
    m.visible=visible&&density[i]>0&&seeds.length>0;
    m.material.uniforms.density.value=density[i]/100;
-   m.material.uniforms.drift.value=settings.driftSpeed/100;
-   m.material.uniforms.clock.value=now*.001;
+   m.material.uniforms.drift.value=1;
+   m.material.uniforms.clock.value=flow;
    if(tint?.isColor)m.material.uniforms.tint.value.copy(tint).lerp(new T.Color('#d3d8d9'),.25);
-   if(sig!==previous){
+   if(sig!==previous||stepMotion&&m.visible){
     const h=height[i],spread=i===0?Math.sqrt(w*d/seeds.length)*2.8:Math.max(1,Math.min(7,Math.sqrt(w*d/Math.max(1,seeds.length))*1.2));
     m.count=density[i]>0?seeds.length:0;
-    for(let j=0;j<m.count;j++){const p=seeds[j],base=i?p.y:terrainAt(p.x,p.z);
-     dummy.position.set(p.x,base+h*.5,p.z);dummy.scale.set(spread*p.size,h*(.75+.25*p.size),1);dummy.updateMatrix();m.setMatrixAt(j,dummy.matrix);
+    for(let j=0;j<m.count;j++){const p=seeds[j];
+     const x=i?p.x+Math.sin(flow*.22+p.phase*1.5)*1.4:wrap(p.x+flow*.83,w),z=i?p.z+Math.sin(flow*.16+p.phase)*.65:wrap(p.z+flow*.28,d);
+     const base=i?p.y:terrainAt(x,z);
+     dummy.position.set(x,base+h*.5,z);dummy.scale.set(spread*p.size,h*(.75+.25*p.size),1);dummy.updateMatrix();m.setMatrixAt(j,dummy.matrix);
     }m.instanceMatrix.needsUpdate=true;
    }
   }
   const changed=sig!==previous;previous=sig;
   const active=visible&&(ground.visible||water.visible);
-  const moving=active&&settings.driftSpeed>0&&now-last>(mobile?100:50);
+  const moving=active&&stepMotion;
   if(moving)last=now;return changed||moving;
  }
  return {update,dispose(){scene.remove(group);for(const mesh of [ground,water]){mesh.geometry.dispose();mesh.material.dispose();}map.dispose();},diagnostics:()=>({groundPatches:ground.count,waterPatches:water.count,waterSamples:waterSeeds.length,visible:group.visible})};
