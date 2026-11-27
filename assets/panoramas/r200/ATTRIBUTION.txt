@@ -1,0 +1,2 @@
+Backdrop006: ambientCG, CC0, https://ambientcg.com/view?id=Backdrop006. Alpha combined and cropped/resized.
+Alpine360: Tiia Monto, Mountains panorama.jpg, https://commons.wikimedia.org/wiki/File:Mountains_panorama.jpg, CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/. Modified by sky masking, cropping and resizing; resulting PNG files are CC BY-SA 4.0. Original photo is a full 360-degree panorama.
