@@ -62,8 +62,6 @@ html.forma-studio-booting .mobile-nav{visibility:hidden!important}
 <link rel="icon" type="image/svg+xml" href="assets/brand/forma-preview-favicon.svg?v=ivory-logo-20261117">
 <link rel="stylesheet" href="forma-brand-identity.css?v=ivory-logo-20261117">
 <link rel="preload" href="assets/brand/forma-fa-intro-mark.svg" as="image" type="image/svg+xml">
-<link rel="stylesheet" href="forma-intro-signature.css?v=noir-geometry-v15">
-<link rel="stylesheet" href="forma-intro-lockup-v19.css?v=20261115-v19">
 <noscript><style>html.forma-intro-pending{overflow:auto!important}html.forma-intro-pending #forma-intro{display:none!important}</style></noscript>
 <link rel="stylesheet" href="forma-home-tools.css?v=20261114-vizworkflow-02">
 <link rel="stylesheet" href="forma-signature-theme.css?v=20261114-signature-v1">
@@ -147,83 +145,63 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
 #formaStudioHome .fa-studio-task>svg.forma-main-nav-icon{width:43px!important;height:43px!important;max-width:43px!important;flex:0 0 43px!important;overflow:hidden!important;filter:none!important;margin:0 0 5px!important}
 #formaStudioHome .fa-studio-task:before{display:none!important}
 @media(max-width:760px){#formaStudioHome .fa-studio-task>svg.forma-main-nav-icon{width:40px!important;height:40px!important;max-width:40px!important;flex-basis:40px!important}#formaStudioHome .fa-studio-task{min-height:130px!important}}
-/* Precision reveal: original FA emblem, drafting guides, no video or heavy media. */
-#forma-intro.forma-intro{transition:opacity .65s cubic-bezier(.22,1,.36,1),visibility .65s}
-#forma-intro .forma-intro-geometry-ring{stroke:#777b7e;stroke-width:.65;stroke-dasharray:376;stroke-dashoffset:376;opacity:.65;animation:forma-r178-trace .8s ease-out both;transform:none}
-#forma-intro .forma-intro-geometry-ring-inner{stroke:#565a5d;stroke-width:.5;stroke-dasharray:none;opacity:.5}
-#forma-intro .forma-intro-geometry-axis{stroke:#73777b;stroke-width:.5;opacity:.35}
-#forma-intro .forma-intro-geometry-draw{stroke:#d5d9db;stroke-width:1.15;stroke-dasharray:132;stroke-dashoffset:132;animation:forma-r178-trace .85s .12s ease-out both}
-#forma-intro .forma-intro-geometry-center{fill:#b3b8ba;opacity:.6}
-#forma-intro.is-loader-complete .forma-intro-geometry{opacity:.28;transition:opacity .6s;animation:none!important;stroke-dashoffset:0}
-#forma-intro.is-loader-complete .forma-intro-geometry-ring,#forma-intro.is-loader-complete .forma-intro-geometry-draw{stroke-dashoffset:0;animation:none}
-#forma-intro .forma-intro-measure>.forma-intro-mark{clip-path:inset(0 100% 0 0);transition:clip-path .7s cubic-bezier(.2,.8,.2,1),opacity .35s,visibility 0s}
-#forma-intro.is-logo-visible .forma-intro-measure>.forma-intro-mark{clip-path:inset(0 0 0 0);transition:clip-path .7s cubic-bezier(.2,.8,.2,1),opacity .35s,visibility 0s}
-#forma-intro .forma-intro-lockup .forma-intro-name{font-weight:430;letter-spacing:.26em;padding-left:.26em;font-size:clamp(36px,7vw,60px);color:#f4f4f2}
-#forma-intro .forma-intro-lockup .forma-intro-descriptor{color:#b8babb;letter-spacing:.13em;font-weight:500}
-#forma-intro .forma-intro-loader-overline,#forma-intro .forma-intro-loader-bottom,#forma-intro .forma-intro-wait{color:#aeb0b2}
-#forma-intro .forma-intro-loader-dot{background:#c6c9ca;box-shadow:none}
-@keyframes forma-r178-trace{to{stroke-dashoffset:0}}
-@media(prefers-reduced-motion:reduce){#forma-intro .forma-intro-geometry-ring,#forma-intro .forma-intro-geometry-draw{animation:none;stroke-dashoffset:0}#forma-intro .forma-intro-measure>.forma-intro-mark{clip-path:none;transition:none}}
 </style>
-<style id="forma-precision-launch-r179">
-/* Approved black splash. Sharp, non-scaling vector strokes and no glow. */
-#forma-intro .forma-intro-center{min-height:360px}
-#forma-intro .forma-intro-loader{top:calc(50% - 83px);gap:0}
-#forma-intro .forma-intro-loader-overline,#forma-intro .forma-intro-loader-bottom{position:absolute;top:0;opacity:0!important;pointer-events:none}
-#forma-intro .forma-intro-measure,#forma-intro .forma-intro-geometry{width:168px;height:168px;filter:none!important}
-#forma-intro .forma-intro-geometry :is(rect,path){fill:none;stroke-linecap:butt;stroke-linejoin:miter;vector-effect:non-scaling-stroke;shape-rendering:geometricPrecision}
-#forma-intro .forma-intro-geometry-ring{stroke:#686b70;stroke-width:1;stroke-dasharray:none;stroke-dashoffset:0;animation:forma-r179-grid .32s ease-out both;opacity:1}
-#forma-intro .forma-intro-geometry-ring-inner,#forma-intro .forma-intro-geometry-axis{stroke:#505359;stroke-width:1;opacity:1;animation:forma-r179-grid .4s ease-out both}
-#forma-intro .forma-intro-geometry-draw,#forma-intro .forma-intro-geometry-center{display:none}
-#forma-intro.is-loader-complete .forma-intro-geometry{opacity:1;transition:none}
-#forma-intro .forma-intro-measure>.forma-intro-mark{width:100px;height:100px;transform:translate(-50%,-50%)!important;filter:none!important;clip-path:inset(0 100% 0 0);transition:clip-path .48s cubic-bezier(.22,1,.36,1),opacity .15s,visibility 0s}
-#forma-intro.is-logo-visible .forma-intro-measure>.forma-intro-mark{clip-path:inset(0);transition:clip-path .48s cubic-bezier(.22,1,.36,1),opacity .15s,visibility 0s}
-#forma-intro .forma-intro-lockup{top:calc(50% + 27px);width:min(440px,96vw)}
-#forma-intro .forma-intro-lockup .forma-intro-name{display:flex;justify-content:center;gap:.21em;font-weight:350;font-size:clamp(37px,9vw,60px);line-height:1.12;letter-spacing:0;padding:0;transform:none!important;transition:none!important}
-#forma-intro .forma-intro-name>span{display:block;opacity:0;clip-path:inset(100% 0 0 0);transform:translateY(6px);transition:none}
-#forma-intro.is-name-visible .forma-intro-name>span{opacity:1;clip-path:inset(0);transform:none;transition:clip-path .38s cubic-bezier(.22,1,.36,1),transform .38s cubic-bezier(.22,1,.36,1),opacity .18s linear;transition-delay:calc(var(--letter)*70ms)}
-#forma-intro .forma-intro-lockup .forma-intro-descriptor{margin-top:15px;color:#b5b5b7;letter-spacing:.16em;font-weight:500;transform:none!important;transition:opacity .3s ease,visibility .3s}
-#forma-intro .forma-intro-progress-r179{display:block;position:relative;width:112px;height:2px;margin-top:32px;background:#35373a;overflow:hidden;opacity:0;transition:opacity .2s}
-#forma-intro.is-descriptor-visible .forma-intro-progress-r179{opacity:1}
-#forma-intro .forma-intro-progress-r179>span{position:absolute;inset:0 auto 0 0;width:35%;background:#dfe0e1;animation:forma-r179-loading 1s ease-in-out infinite}
-#forma-intro.is-ready .forma-intro-progress-r179>span{animation:none;width:100%;transform:none;transition:width .2s ease}
-#forma-intro .forma-intro-wait{top:calc(50% + 178px);font-size:10px}
-@keyframes forma-r179-grid{from{opacity:0}to{opacity:1}}
-@keyframes forma-r179-loading{from{transform:translateX(-100%)}to{transform:translateX(285%)}}
-@media(max-width:760px){#forma-intro .forma-intro-center{min-height:350px}#forma-intro .forma-intro-lockup .forma-intro-name{font-size:clamp(36px,10vw,49px)}#forma-intro .forma-intro-lockup .forma-intro-descriptor{font-size:clamp(7px,2vw,10px);letter-spacing:.12em}}
-@media(prefers-reduced-motion:reduce){#forma-intro .forma-intro-geometry :is(rect,path),#forma-intro .forma-intro-progress-r179>span{animation:none!important}#forma-intro .forma-intro-measure>.forma-intro-mark{clip-path:none;transition:none!important}#forma-intro.is-name-visible .forma-intro-name>span{transition:none!important}}
+
+<style id="forma-launch-r180-css">
+html.forma-intro-pending{overflow:hidden!important}
+#forma-intro.forma-launch-r180{position:fixed!important;inset:0!important;z-index:99999!important;display:grid!important;place-items:center!important;width:100%!important;height:100dvh!important;background:#000!important;color:#f8f8f7!important;overflow:hidden!important;opacity:1;visibility:visible;transition:opacity .65s ease,visibility .65s;isolation:isolate}
+#forma-intro.forma-launch-r180[hidden]{display:none!important}
+#forma-intro.forma-launch-r180.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+#formaLaunchComposition{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;width:min(90vw,480px);position:relative;gap:0;padding:0!important;margin:0!important;text-align:center;font-family:"Helvetica Neue",Roboto,Arial,sans-serif!important;transform:none!important;filter:none!important;animation:none!important}
+#formaLaunchSymbol{display:block!important;width:clamp(156px,42vw,216px)!important;height:auto!important;aspect-ratio:1!important;overflow:visible!important;filter:none!important;transform:none!important;animation:none!important;shape-rendering:geometricPrecision}
+#formaLaunchGrid,#formaLaunchGrid rect,#formaLaunchGrid path{transform:none!important;animation:none!important;filter:none!important;stroke-dasharray:none!important;stroke-dashoffset:0!important;visibility:visible!important}
+#formaLaunchGrid{opacity:0;transition:opacity .3s ease}
+#forma-intro.is-grid-visible #formaLaunchGrid{opacity:1}
+#formaLaunchSymbol .formaLaunchF,#formaLaunchSymbol .formaLaunchA{opacity:0;clip-path:inset(0 100% 0 0);transform-box:fill-box;transition:none;filter:none!important;animation:none!important}
+#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchF,#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchA{opacity:1;clip-path:inset(0);transition:clip-path .44s cubic-bezier(.2,.8,.2,1),opacity .15s linear}
+#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchA{transition-delay:.09s}
+#formaLaunchWord{display:flex!important;justify-content:center;align-items:center;gap:.27em;font-family:"Helvetica Neue",Roboto,Arial,sans-serif!important;font-size:clamp(38px,10vw,60px)!important;font-weight:300!important;line-height:1.12!important;letter-spacing:0!important;margin:13px 0 0!important;padding:0!important;color:#f6f6f6!important;white-space:nowrap}
+#formaLaunchWord span{display:block;font:inherit;color:inherit;opacity:0;clip-path:inset(100% 0 0 0);transform:translateY(5px);transition:none}
+#forma-intro.is-name-visible #formaLaunchWord span{opacity:1;clip-path:inset(0);transform:none;transition:clip-path .34s cubic-bezier(.22,1,.36,1),transform .34s cubic-bezier(.22,1,.36,1),opacity .17s;transition-delay:calc(var(--i)*75ms)}
+#formaLaunchCaption{font-family:"Helvetica Neue",Roboto,Arial,sans-serif!important;font-size:clamp(8px,2.5vw,12px)!important;line-height:1.35;font-weight:400!important;letter-spacing:.22em!important;color:#b5b5b7!important;white-space:nowrap;margin:15px 0 0!important;opacity:0;transition:opacity .3s}
+#forma-intro.is-descriptor-visible #formaLaunchCaption{opacity:1}
+#formaLaunchProgress{width:clamp(104px,27vw,140px);height:2px;background:#35373a;position:relative;overflow:hidden;margin-top:35px;opacity:0;transition:opacity .3s}
+#forma-intro.is-descriptor-visible #formaLaunchProgress{opacity:1}
+#formaLaunchProgress>span{display:block;position:absolute;inset:0 auto 0 0;width:35%;background:#dfe0e1;animation:formaLaunchScanR180 1.05s ease-in-out infinite}
+#forma-intro.is-ready #formaLaunchProgress>span{width:100%;transform:none;animation:none}
+@keyframes formaLaunchScanR180{from{transform:translateX(-100%)}to{transform:translateX(285%)}}
+#formaIntroWait{position:absolute;top:calc(100% + 17px);left:0;right:0;color:#97999b;font:400 10px/1.4 Arial,sans-serif;opacity:0}
+#forma-intro.is-holding #formaIntroWait{opacity:1}
+#formaIntroSound,#formaIntroRecover{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));padding:9px 12px;border:1px solid #424244;border-radius:7px;background:#090909;color:#aaa;font:400 11px/1.3 Arial,sans-serif;cursor:pointer}
+#formaIntroSound{right:15px}#formaIntroRecover{left:50%;transform:translateX(-50%)}#formaIntroRecover[hidden]{display:none!important}
+.formaLaunchSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-height:480px){#formaLaunchComposition{transform:scale(.78)!important}#formaIntroSound{bottom:8px}}
+@media(prefers-reduced-motion:reduce){#formaLaunchWord span,#formaLaunchSymbol .formaLaunchF,#formaLaunchSymbol .formaLaunchA{transition:none!important;transform:none!important}#formaLaunchProgress>span{animation:none!important}}
 </style>
 </head>
 <body>
-<div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Загрузка студии FORMA" aria-hidden="false">
- <div class="forma-intro-content">
-  <div class="forma-intro-center">
-   <div class="forma-intro-loader" role="status" aria-live="polite" aria-atomic="true">
-    <span class="forma-intro-loader-overline">АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</span>
-    <span class="forma-intro-measure" aria-hidden="true">
-     <svg class="forma-intro-geometry" viewBox="0 0 132 132" aria-hidden="true">
-      <rect x="19" y="19" width="94" height="94" class="forma-intro-geometry-ring"/>
-      <path d="M19 42.5H113M19 66H113M19 89.5H113M42.5 19V113M66 19V113M89.5 19V113" class="forma-intro-geometry-ring-inner"/>
-      <path d="M66 5V19M66 113V127M5 66H19M113 66H127" class="forma-intro-geometry-axis"/>
-      <path d="M19 19H113V113H19Z" class="forma-intro-geometry-draw"/>
-      <circle cx="66" cy="66" r="1.5" class="forma-intro-geometry-center"/>
-     </svg>
-     <img class="forma-intro-mark" src="assets/brand/forma-fa-intro-mark.svg" width="120" height="118" alt="" decoding="async">
-    </span>
-    <span class="forma-intro-loader-bottom"><span class="forma-intro-loader-dot" aria-hidden="true"></span><span id="formaIntroProgressStatus">Загружаем инструменты</span></span>
-   </div>
-   <div class="forma-intro-lockup">
-    <span class="forma-intro-name" aria-label="FORMA"><span aria-hidden="true" style="--letter:0">F</span><span aria-hidden="true" style="--letter:1">O</span><span aria-hidden="true" style="--letter:2">R</span><span aria-hidden="true" style="--letter:3">M</span><span aria-hidden="true" style="--letter:4">A</span></span>
-    <span class="forma-intro-descriptor">АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</span>
-    <span class="forma-intro-progress-r179" role="progressbar" aria-label="Инициализация студии" aria-valuetext="Загрузка"><span></span></span>
-   </div>
-   <div class="forma-intro-wait" id="formaIntroWait" aria-live="polite">Завершаем подготовку студии</div>
-  </div>
-  <button id="formaIntroSound" class="forma-intro-sound" type="button" aria-pressed="false">○ Включить звук</button>
-  <button id="formaIntroRecover" class="forma-intro-recover" type="button" hidden>Открыть студию</button>
+<div id="forma-intro" class="forma-launch-r180" role="dialog" aria-modal="true" aria-label="Загрузка студии FORMA" aria-hidden="false">
+ <div id="formaLaunchComposition">
+  <svg id="formaLaunchSymbol" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+   <g id="formaLaunchGrid" fill="none" stroke="#53565a" stroke-width=".9" stroke-linecap="butt" stroke-linejoin="miter">
+    <rect x="22" y="22" width="156" height="156" vector-effect="non-scaling-stroke"/>
+    <path d="M61 22V178M100 2V198M139 22V178M22 61H178M1 100H199M22 139H178" vector-effect="non-scaling-stroke"/>
+   </g>
+   <g transform="translate(34 32) scale(.53)">
+    <path class="formaLaunchF" d="M24 80 78 46H222L201 66H85L51 93v126H24Z M51 116h101l-20 19H51Z" fill="#f8f8f7"/>
+    <path class="formaLaunchA" d="m102 219 64-108h18l61 108h-32l-38-68-41 68Z" fill="#d4b690"/>
+   </g>
+  </svg>
+  <div id="formaLaunchWord" aria-label="FORMA"><span aria-hidden="true" style="--i:0">F</span><span aria-hidden="true" style="--i:1">O</span><span aria-hidden="true" style="--i:2">R</span><span aria-hidden="true" style="--i:3">M</span><span aria-hidden="true" style="--i:4">A</span></div>
+  <div id="formaLaunchCaption">АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</div>
+  <div id="formaLaunchProgress" role="progressbar" aria-label="Инициализация студии" aria-valuetext="Загрузка"><span></span></div>
+  <span id="formaIntroProgressStatus" class="formaLaunchSr">Загружаем инструменты</span>
+  <div id="formaIntroWait" aria-live="polite">Завершаем подготовку студии</div>
  </div>
+ <button id="formaIntroSound" type="button" aria-pressed="false">○ Включить звук</button>
+ <button id="formaIntroRecover" type="button" hidden>Открыть студию</button>
 </div>
-<script src="forma-intro-signature.js?v=R179-precision-launch"></script>
+<script src="forma-intro-signature.js?v=R180-fixed-grid"></script>
 
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
