@@ -172,10 +172,10 @@ html.forma-intro-pending{overflow:hidden!important}
 @keyframes formaLaunchScanR180{from{transform:translateX(-100%)}to{transform:translateX(285%)}}
 #formaIntroWait{position:absolute;top:calc(100% + 17px);left:0;right:0;color:#97999b;font:400 10px/1.4 Arial,sans-serif;opacity:0}
 #forma-intro.is-holding #formaIntroWait{opacity:1}
-#formaIntroSound,#formaIntroRecover{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));padding:9px 12px;border:1px solid #424244;border-radius:7px;background:#090909;color:#aaa;font:400 11px/1.3 Arial,sans-serif;cursor:pointer}
-#formaIntroSound{right:15px}#formaIntroRecover{left:50%;transform:translateX(-50%)}#formaIntroRecover[hidden]{display:none!important}
+#formaIntroRecover{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));padding:9px 12px;border:1px solid #424244;border-radius:7px;background:#090909;color:#aaa;font:400 11px/1.3 Arial,sans-serif;cursor:pointer}
+#formaIntroRecover{left:50%;transform:translateX(-50%)}#formaIntroRecover[hidden]{display:none!important}
 .formaLaunchSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
-@media(max-height:480px){#formaLaunchComposition{transform:scale(.78)!important}#formaIntroSound{bottom:8px}}
+@media(max-height:480px){#formaLaunchComposition{transform:scale(.78)!important}}
 @media(prefers-reduced-motion:reduce){#formaLaunchWord span,#formaLaunchSymbol .formaLaunchF,#formaLaunchSymbol .formaLaunchA{transition:none!important;transform:none!important}#formaLaunchProgress>span{animation:none!important}}
 </style>
 </head>
@@ -198,10 +198,9 @@ html.forma-intro-pending{overflow:hidden!important}
   <span id="formaIntroProgressStatus" class="formaLaunchSr">Загружаем инструменты</span>
   <div id="formaIntroWait" aria-live="polite">Завершаем подготовку студии</div>
  </div>
- <button id="formaIntroSound" type="button" aria-pressed="false">○ Включить звук</button>
  <button id="formaIntroRecover" type="button" hidden>Открыть студию</button>
 </div>
-<script src="forma-intro-signature.js?v=R183-wood-asmr"></script>
+<script src="forma-intro-signature.js?v=R184-quiet-wood"></script>
 
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
