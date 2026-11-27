@@ -13,7 +13,7 @@
  const recover=document.getElementById('formaIntroRecover');
  const status=document.getElementById('formaIntroProgressStatus');
  const waitLabel=document.getElementById('formaIntroWait');
- const progress=screen.querySelector('.forma-intro-progress-r179');
+ const progress=screen.querySelector('#formaLaunchProgress');
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false;
  let lastFocus=null,paintStart=0,readyQueued=false;
@@ -96,7 +96,7 @@
    if(id!==run)return;
    active=false;closing=false;
    screen.hidden=true;screen.setAttribute('aria-hidden','true');
-   screen.classList.remove('is-leaving','is-loader-complete','is-logo-visible','is-name-visible','is-descriptor-visible','is-holding');
+   screen.classList.remove('is-leaving','is-grid-visible','is-loader-complete','is-logo-visible','is-name-visible','is-descriptor-visible','is-holding');
    root.classList.remove('forma-intro-pending');
    lockWorkspace(false);
    if(screen.contains(document.activeElement)){
@@ -125,7 +125,7 @@
   lastFocus=document.activeElement;
   root.classList.add('forma-intro-pending');
   screen.hidden=false;screen.setAttribute('aria-hidden','false');
-  screen.classList.remove('is-leaving','is-loader-complete','is-logo-visible','is-name-visible','is-descriptor-visible','is-holding');
+  screen.classList.remove('is-leaving','is-grid-visible','is-loader-complete','is-logo-visible','is-name-visible','is-descriptor-visible','is-holding');
   if(recover)recover.hidden=true;
   if(status)status.textContent='Загружаем инструменты';
   if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
@@ -135,7 +135,7 @@
   // Run the clock after the browser has shown the first, fully black loader frame.
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
    if(id!==run||!active||closing)return;
-   firstPaint=true;paintStart=performance.now();
+   firstPaint=true;paintStart=performance.now();screen.classList.add('is-grid-visible');
    addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
    addTimeout(()=>screen.classList.add('is-logo-visible'),TIME.logo);
    addTimeout(()=>screen.classList.add('is-name-visible'),TIME.name);
