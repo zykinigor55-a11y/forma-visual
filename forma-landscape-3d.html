@@ -1638,7 +1638,7 @@ function initialize(){
  try{
   const stored=JSON.parse(localStorage.getItem(SOLAR)||'null');
   solarSettings=stored?.time===doc.atmosphere.time?normalizeSolarSettings(stored.settings,doc.atmosphere.time):solarPreset(doc.atmosphere.time);
-  if(doc.atmosphere.time==='night'&&solarSettings.elevation>=0)solarSettings=solarPreset('night');if(doc.atmosphere.time==='blue-hour'&&solarSettings.elevation>=0)solarSettings=solarPreset('blue-hour');
+  if(doc.atmosphere.time==='night'&&solarSettings.elevation>=0)solarSettings=solarPreset('night');if(doc.atmosphere.time==='blue-hour'&&solarSettings.elevation>=0)solarSettings=solarPreset('blue-hour');if(doc.atmosphere.time==='morning'&&solarSettings.azimuth===282&&solarSettings.elevation===20)solarSettings=solarPreset('morning');if(doc.atmosphere.time==='evening'&&solarSettings.azimuth===73&&solarSettings.elevation===6)solarSettings=solarPreset('evening');
  }catch{solarSettings=solarPreset(doc.atmosphere.time)}
  if(oakTestMode&&pbrR63Enabled&&doc.atmosphere.time==='day'){solarSettings={...solarSettings,azimuth:282,elevation:32,softness:3.8};}
  syncSolarControls();
@@ -1671,7 +1671,7 @@ function initialize(){
  atmosphereSky.material.uniforms.mieCoefficient.value=.004;
  atmosphereSky.material.uniforms.mieDirectionalG.value=.82;
  atmosphereSky.material.depthWrite=false;atmosphereSky.frustumCulled=false;scene.add(atmosphereSky);
- cloudLayer=pbrR63Enabled?makePhotographicSky(THREE):makeCloudLayer(THREE);scene.add(cloudLayer);if(pbrR63Enabled)atmosphereSky.visible=false;
+ cloudLayer=makePhotographicSky(THREE);scene.add(cloudLayer);atmosphereSky.visible=false;
  waterRippleTexture=makeWaterRippleTexture(THREE,document);
  try{panoramaSettingsR193=normalizePanorama(JSON.parse(localStorage.getItem(panoramaKeyR193)||'null'));}catch{}
  panoramaR193=createPanoramaEnvironment(THREE,scene,{mobile:window.innerWidth<=850,onChange:()=>renderGate.invalidate(),onStatus:m=>panoramaPanelR193?.status(m)});
@@ -3970,7 +3970,7 @@ function updateSun(){
  sun.shadow.radius=THREE.MathUtils.clamp(penumbraM/shadowTexel,.25,32);
  sun.shadow.needsUpdate=true;
  if(atmosphereSky){
-  atmosphereSky.visible=!pbrR63Enabled&&!['night','blue-hour'].includes(val)&&state.view!=='2d';
+  atmosphereSky.visible=false;
   const uniforms=atmosphereSky.material.uniforms;
   uniforms.sunPosition.value.copy(sun.position).normalize();
   uniforms.turbidity.value=['overcast','rain','fog','snow'].includes(doc.atmosphere.weather)?9.2:val==='evening'?5.8:3.4;
@@ -4007,13 +4007,9 @@ function updateSun(){
   bounced.color.set(val==='night'?'#9bb8d6':val==='evening'?'#f0d8b8':'#c6d8e3')}
  balanceOutdoorPBR(THREE,{scene,sun,sky,bounce:bounced,weather,time:val,modelling:modellingLight,enabled:pbrR63Enabled});
  // R69: one calibrated light profile replaces the previous stacked intensity multipliers.
- if(cloudLayer&&pbrR63Enabled){
+ if(cloudLayer){
   updatePhotographicSky(cloudLayer,{time:val,weather,sun,coverage:atmosphere.clouds,haze:atmosphere.haze,view:state.view,settings:sceneAtmosphere});
- }else if(cloudLayer){
-  cloudLayer.visible=state.view!=='2d'&&atmosphere.clouds>.01;
-  cloudLayer.material.uniforms.coverage.value=atmosphere.clouds;
-  cloudLayer.material.uniforms.opacity.value=val==='night'?.49:.60;
-  cloudLayer.material.uniforms.cloudColor.value.set(val==='blue-hour'?'#91A6CD':val==='night'?'#7899BC':val==='evening'?'#f3e1cb':'#f5f6f1');
+
  }
  renderer.toneMappingExposure=atmosphere.exposure*(daylight?.91:1);
  applyPhysicalLight(THREE,{scene,renderer,sun,sky,bounce:bounced,atmosphere,settings:sceneAtmosphere,solarSettings,time:val,weather,modelling:modellingLight,enabled:pbrR63Enabled});
@@ -4097,7 +4093,7 @@ function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
  heldWalkKeys.clear();lastWalkFrame=0;walkDrag=null;walkLookDirty=false;walkLookEnabled=false;syncWalkLook();
- state.view=view;if(lawnIntegratedR90){root?.children.forEach(n=>{if(n.userData.formaAutoLawnR90)n.visible=view==='2d';});if(view==='2d'&&lawnPanelR90)lawnPanelR90.style.display='none';}if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=!pbrR63Enabled&&view!=='2d'&&!['night','blue-hour'].includes(doc.atmosphere.time);if(cloudLayer)cloudLayer.visible=view!=='2d'&&(pbrR63Enabled||sceneAtmosphere.clouds>0);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ state.view=view;if(lawnIntegratedR90){root?.children.forEach(n=>{if(n.userData.formaAutoLawnR90)n.visible=view==='2d';});if(view==='2d'&&lawnPanelR90)lawnPanelR90.style.display='none';}if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=false;if(cloudLayer)cloudLayer.visible=view!=='2d';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  $('#mobileWalkDock').hidden=view!=='walk';$('#mobileWalkToggle').textContent=view==='walk'?'Выйти из прогулки':'Прогулка';syncMobileTerrainDock();
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';syncSelectedObjectDock(state.selected?selectable(state.selected):null,$('#selectedObjectName')?.textContent);
  const W=doc.site.width,H=doc.site.height;
@@ -4861,8 +4857,8 @@ async function renderAi(series=null,precision=null,settings=null){
     shadowMapHeight:sunLight?.shadow?.mapSize?.y??null
    },
    sky:{
-    visible:!!(pbrR63Enabled?cloudLayer?.visible:atmosphereSky?.visible),
-    model:pbrR63Enabled?'photographic-r65':'physical-sky',
+    visible:!!cloudLayer?.visible,
+    model:'continuous-solar-r215',
     turbidity:uniforms?.turbidity?.value??null,
     rayleigh:uniforms?.rayleigh?.value??null,
     mieCoefficient:uniforms?.mieCoefficient?.value??null,
