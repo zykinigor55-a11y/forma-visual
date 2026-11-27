@@ -596,7 +596,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R216</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R217</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -1011,7 +1011,9 @@ import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terra
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js?v=R130';
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
 import {normalizeLiveFog,liveAtmosphereSnapshot,liveAtmospherePrompt} from './forma-live-atmosphere-r216.js?v=R216';
-import {addWeatherSceneVisuals,applyWetMaterialResponse} from './forma-landscape-3d-weather-visuals.js?v=weather-controls-v2-20261122';
+import {addWeatherSceneVisuals,applyWetMaterialResponse,tickPrecipitationR217} from './forma-landscape-3d-weather-visuals.js?v=R217';
+import {createLiveFogR217} from './forma-live-fog-r217.js?v=R217';
+import {mountLiveWeatherPreviewR217} from './forma-live-weather-preview-r217.js?v=R217';
 import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape-3d-snow-canopy.js?v=snow-canopy-opaque-glb-v2-20261122';
 import {normalizeNightInterior,nightInteriorMode} from './forma-landscape-3d-night-interior.js?v=bright-night-v2-20261122';
 import {normalizeRoofGarland} from './forma-landscape-roof-garlands.js';
@@ -2180,6 +2182,7 @@ function updateTurfDetail(){
  root.add(turfDetail);if(pbrR63Enabled)calibrateScenePBR(THREE,turfDetail,{classify:()=> 'plants'});renderGate.invalidate();
 }
 function rebuild(){
+ disposeLiveFogR217();
  windR74.clear();invalidateTurfDetail();renderGate.invalidate();
  waterSurfaces.length=0;
  shadowBudgetDirty=true;
@@ -3859,7 +3862,15 @@ function setSceneClimateOpen(open){
  $('#sceneClimateButton')?.setAttribute('aria-expanded',String(!!open));
  if(open){syncQuickClimateControls();positionClimatePanel();requestAnimationFrame(positionClimatePanel);}
 }
-let liveFogR216=normalizeLiveFog();
+let liveFogR216=normalizeLiveFog(),liveFogVisualR217=null,lastPrecipR217=0;
+function disposeLiveFogR217(){liveFogVisualR217?.dispose();liveFogVisualR217=null;}
+function tickLiveFogR217(now){
+ if(!scene||!root||!doc)return false;
+ const active=liveFogR216.groundDensity>0||(liveFogR216.waterDensity>0&&waterSurfaces.length>0);
+ if(active&&!liveFogVisualR217){root.updateMatrixWorld(true);liveFogVisualR217=createLiveFogR217(THREE,scene,{width:doc.site.width,depth:doc.site.height,terrainAt,waterSurfaces,mobile:window.innerWidth<=850});}
+ return liveFogVisualR217?.update(liveFogR216,now,state.view!=='2d'&&active,scene.fog?.color)||false;
+}
+window.FORMA_LIVE_ATMOSPHERE_R217=()=>({settings:currentLiveAtmosphereR216(),fog:liveFogVisualR217?.diagnostics()||null});
 function currentLiveAtmosphereR216(){
  return liveAtmosphereSnapshot({atmosphere:doc.atmosphere,solar:solarSettings,sky:sceneAtmosphere,wind:windAmountR74,fog:liveFogR216,hasWater:waterSurfaces.length>0||doc.objects.some(o=>catalog(o.catalogId)?.group==='ponds')});
 }
@@ -3869,8 +3880,9 @@ function setupLiveFogR216(){
  const sync=()=>{for(const [k,,a,b,step,u] of fields){document.querySelectorAll('[data-live-fog="'+k+'"]').forEach(el=>{el.value=liveFogR216[k];});document.querySelectorAll('[data-live-fog-value="'+k+'"]').forEach(el=>{el.textContent=(u===' м'?liveFogR216[k].toFixed(1):liveFogR216[k])+u;});}};
  for(const id of ['liveFogQuickR216','liveFogFullR216']){
   const host=document.getElementById(id);if(!host)continue;
-  host.innerHTML='<strong>ЖИВАЯ АТМОСФЕРА · ТУМАН</strong><div class="weather-strength-sliders">'+fields.map(([k,l,a,b,step])=>'<label>'+l+' <output data-live-fog-value="'+k+'"></output></label><input aria-label="'+l+'" data-live-fog="'+k+'" type="range" min="'+a+'" max="'+b+'" step="'+step+'">').join('')+'</div><small>Параметры тумана автоматически передаются в AI-фото и видео. Туман над водой применяется только к существующим водоёмам.</small>';
-  host.querySelectorAll('[data-live-fog]').forEach(el=>el.addEventListener('input',()=>{liveFogR216=normalizeLiveFog({...liveFogR216,[el.dataset.liveFog]:el.value});sync();try{localStorage.setItem(ATMO+'-live-fog-r216',JSON.stringify(liveFogR216));}catch{}renderGate.invalidate();}));
+  host.innerHTML='<strong>ЖИВАЯ АТМОСФЕРА</strong><div class="weather-strength-sliders">'+fields.map(([k,l,a,b,step])=>'<label>'+l+' <output data-live-fog-value="'+k+'"></output></label><input aria-label="'+l+'" data-live-fog="'+k+'" type="range" min="'+a+'" max="'+b+'" step="'+step+'">').join('')+'</div><small>Параметры тумана автоматически передаются в AI-фото и видео. Туман над водой применяется только к существующим водоёмам.</small>';
+  const preview=document.createElement('div');preview.style.cssText='margin:4px 0 8px';host.querySelector('strong').after(preview);mountLiveWeatherPreviewR217(preview,currentLiveAtmosphereR216);
+  host.querySelectorAll('[data-live-fog]').forEach(el=>el.addEventListener('input',()=>{liveFogR216=normalizeLiveFog({...liveFogR216,[el.dataset.liveFog]:el.value});sync();try{localStorage.setItem(ATMO+'-live-fog-r216',JSON.stringify(liveFogR216));}catch{}tickLiveFogR217(performance.now());renderGate.invalidate();}));
  }
  sync();
 }
@@ -4137,7 +4149,7 @@ function setView(view){
  renderGate.invalidate();
  if(state.view==='walk'&&view!=='walk'&&document.pointerLockElement===canvas)document.exitPointerLock?.();
  heldWalkKeys.clear();lastWalkFrame=0;walkDrag=null;walkLookDirty=false;walkLookEnabled=false;syncWalkLook();
- state.view=view;if(lawnIntegratedR90){root?.children.forEach(n=>{if(n.userData.formaAutoLawnR90)n.visible=view==='2d';});if(view==='2d'&&lawnPanelR90)lawnPanelR90.style.display='none';}if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=false;if(cloudLayer)cloudLayer.visible=view!=='2d';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ state.view=view;if(liveFogVisualR217)tickLiveFogR217(performance.now());if(lawnIntegratedR90){root?.children.forEach(n=>{if(n.userData.formaAutoLawnR90)n.visible=view==='2d';});if(view==='2d'&&lawnPanelR90)lawnPanelR90.style.display='none';}if(view==='walk')hideLocalTerrainBrush();if(atmosphereSky)atmosphereSky.visible=false;if(cloudLayer)cloudLayer.visible=view!=='2d';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  $('#mobileWalkDock').hidden=view!=='walk';$('#mobileWalkToggle').textContent=view==='walk'?'Выйти из прогулки':'Прогулка';syncMobileTerrainDock();
  $('#walkInstructions').hidden=view!=='walk';$('#cameraElevationPanel').hidden=view!=='3d';syncSelectedObjectDock(state.selected?selectable(state.selected):null,$('#selectedObjectName')?.textContent);
  const W=doc.site.width,H=doc.site.height;
@@ -4844,7 +4856,7 @@ function captureHighQuality3dReference(precision=false){
   root.updateMatrixWorld(true);camera.updateMatrixWorld();
   for(const group of botanicalGroups)updateBotanicalLod(group,camera,canvas.clientHeight,'premium');
   renderer.shadowMap.needsUpdate=true;
-  if(autoReduced){releasePhotorealPipeline(renderer);renderer.render(scene,camera);}else renderPhotoFrame(true);
+  tickLiveFogR217(performance.now());if(autoReduced){releasePhotorealPipeline(renderer);renderer.render(scene,camera);}else renderPhotoFrame(true);
   const image=renderer.domElement.toDataURL('image/png');return precision?{image,...capturePrecisionGuidesR172()}:image;
  }finally{
   for(const [group,tier] of prevBotanicalTiers)setFoliageTier(group,tier);
@@ -5698,7 +5710,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   }catch(e){gpuLostR75=true;console.error('WebGL recovery',e);status('Не удалось восстановить WebGL — используйте кнопку перезапуска.')}
  });
 }
-function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;syncPanoramaR193();const ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&window.FORMA_GRAPHICS_R105!=='eco'&&(!mobileDeviceR106()||['high','ultra'].includes(window.FORMA_GRAPHICS_R105))&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
+function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;tickLiveFogR217(performance.now());syncPanoramaR193();const ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&window.FORMA_GRAPHICS_R105!=='eco'&&(!mobileDeviceR106()||['high','ultra'].includes(window.FORMA_GRAPHICS_R105))&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
 function resize(){if(gpuLostR75||pathTraceR72?.active)return;renderGate.invalidate();const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);if(state.view==='walk'&&window.innerWidth>850)applyWalkLens();else camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
 let lastRenderMs=0,lastRenderCost=0,lastShadowBudgetAt=0,lastTurfDetailAt=0,shadowBudgetDirty=true;
 function animate(now=0){
@@ -5745,10 +5757,11 @@ function animate(now=0){
  if(canAnimateAtmosphere&&state.view!=='2d'&&now-lastAtmosphereAnimationAt>atmosphericCadence&&
     ((cloudLayer?.visible&&sceneAtmosphere.clouds>1)||(waterSurfaces.length&&sceneAtmosphere.ripples>0))){
   lastAtmosphereAnimationAt=now;
-  if(cloudLayer?.visible)cloudLayer.material.uniforms.time.value=now*.001;
+  if(cloudLayer?.visible)cloudLayer.material.uniforms.time.value=now*.001*(.2+windAmountR74/35);
   // R74 water uses the common wind field below.
   renderGate.invalidate();
  }
+ if(!document.hidden){if(tickLiveFogR217(now))renderGate.invalidate();if(state.view!=='2d'&&now-lastPrecipR217>(phone?65:32)){lastPrecipR217=now;if(tickPrecipitationR217(root,now*.001,windAmountR74,terrainAt))renderGate.invalidate();}}
  const windWeather=({sunny:1,overcast:1.05,'after-rain':1.18,rain:1.40,snow:.85,fog:.55})[doc.atmosphere.weather]||1;
  const windStrength=Math.min(1.35,Math.pow(windAmountR74/100,.78)*windWeather);
  if(scene&&!document.hidden&&state.view!=='2d'&&now-(scene.userData.lastWindR74||0)>=Math.max(0,interval-2)){scene.userData.lastWindR74=now;const moving=windR74.tick(now,windStrength);const grassMoving=tickDenseLawn(turfDetail,now,windStrength);let raisedGrassMoving=false;for(const node of root.children)if(node.userData.raisedGrass)raisedGrassMoving=tickRaisedGrass(node,now,windStrength)||raisedGrassMoving;const waves=windRipple(THREE,waterSurfaces,waterRippleTexture,now,sceneAtmosphere.ripples,windStrength);if(((moving||grassMoving||raisedGrassMoving)&&windAmountR74>0)||waves&&sceneAtmosphere.ripples>0||scene.userData.previousWindR74!==windAmountR74){if(renderer?.shadowMap&&moving&&(!phone&&now-lastWindShadowR106>180||phone&&!economy&&now-lastWindShadowR106>1000)){renderer.shadowMap.needsUpdate=true;lastWindShadowR106=now;}renderGate.invalidate();}scene.userData.previousWindR74=windAmountR74;}
