@@ -158,16 +158,16 @@ html.forma-intro-pending{overflow:hidden!important}
 #formaLaunchGrid{opacity:0;transition:opacity .3s ease}
 #forma-intro.is-grid-visible #formaLaunchGrid{opacity:1}
 #formaLaunchSymbol .formaLaunchF,#formaLaunchSymbol .formaLaunchA{opacity:0;clip-path:inset(0 100% 0 0);transform-box:fill-box;transition:none;filter:none!important;animation:none!important}
-#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchF,#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchA{opacity:1;clip-path:inset(0);transition:clip-path .44s cubic-bezier(.2,.8,.2,1),opacity .15s linear}
-#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchA{transition-delay:.09s}
+#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchF,#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchA{opacity:1;clip-path:inset(0);transition:clip-path .7s cubic-bezier(.2,.8,.2,1),opacity .22s linear}
+#forma-intro.is-logo-visible #formaLaunchSymbol .formaLaunchA{transition-delay:.14s}
 #formaLaunchWord{display:flex!important;justify-content:center;align-items:center;gap:.27em;font-family:"Helvetica Neue",Roboto,Arial,sans-serif!important;font-size:clamp(38px,10vw,60px)!important;font-weight:300!important;line-height:1.12!important;letter-spacing:0!important;margin:13px 0 0!important;padding:0!important;color:#f6f6f6!important;white-space:nowrap}
 #formaLaunchWord span{display:block;font:inherit;color:inherit;opacity:0;clip-path:inset(100% 0 0 0);transform:translateY(5px);transition:none}
-#forma-intro.is-name-visible #formaLaunchWord span{opacity:1;clip-path:inset(0);transform:none;transition:clip-path .34s cubic-bezier(.22,1,.36,1),transform .34s cubic-bezier(.22,1,.36,1),opacity .17s;transition-delay:calc(var(--i)*75ms)}
+#forma-intro.is-name-visible #formaLaunchWord span{opacity:1;clip-path:inset(0);transform:none;transition:clip-path .52s cubic-bezier(.22,1,.36,1),transform .52s cubic-bezier(.22,1,.36,1),opacity .25s;transition-delay:calc(var(--i)*105ms)}
 #formaLaunchCaption{font-family:"Helvetica Neue",Roboto,Arial,sans-serif!important;font-size:clamp(8px,2.5vw,12px)!important;line-height:1.35;font-weight:400!important;letter-spacing:.22em!important;color:#b5b5b7!important;white-space:nowrap;margin:15px 0 0!important;opacity:0;transition:opacity .3s}
 #forma-intro.is-descriptor-visible #formaLaunchCaption{opacity:1}
 #formaLaunchProgress{width:clamp(104px,27vw,140px);height:2px;background:#35373a;position:relative;overflow:hidden;margin-top:35px;opacity:0;transition:opacity .3s}
 #forma-intro.is-descriptor-visible #formaLaunchProgress{opacity:1}
-#formaLaunchProgress>span{display:block;position:absolute;inset:0 auto 0 0;width:35%;background:#dfe0e1;animation:formaLaunchScanR180 1.05s ease-in-out infinite}
+#formaLaunchProgress>span{display:block;position:absolute;inset:0 auto 0 0;width:35%;background:#dfe0e1;animation:formaLaunchScanR180 1.65s ease-in-out infinite}
 #forma-intro.is-ready #formaLaunchProgress>span{width:100%;transform:none;animation:none}
 @keyframes formaLaunchScanR180{from{transform:translateX(-100%)}to{transform:translateX(285%)}}
 #formaIntroWait{position:absolute;top:calc(100% + 17px);left:0;right:0;color:#97999b;font:400 10px/1.4 Arial,sans-serif;opacity:0}
@@ -201,7 +201,7 @@ html.forma-intro-pending{overflow:hidden!important}
  <button id="formaIntroSound" type="button" aria-pressed="false">○ Включить звук</button>
  <button id="formaIntroRecover" type="button" hidden>Открыть студию</button>
 </div>
-<script src="forma-intro-signature.js?v=R180-fixed-grid"></script>
+<script src="forma-intro-signature.js?v=R181-slow-launch"></script>
 
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
