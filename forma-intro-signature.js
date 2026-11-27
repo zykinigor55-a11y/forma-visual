@@ -21,48 +21,95 @@
  const soundKey='forma-noir-open-sound-v1';
  try{soundEnabled=localStorage.getItem(soundKey)==='on'}catch{}
  const soundButton=document.getElementById('formaIntroSound');
+ // Real wooden blocks: Freesound #543705, 200221-WeanBekker, CC0.
+ // Public preview from the source page; no synthesized substitute.
+ const woodUrl='https://cdn.freesound.org/previews/543/543705_11072224-lq.mp3';
+ let woodBuffer=null,woodCuts=[],woodPromise=null,woodError=false;
+ const playingWood=new Set();
  function soundUI(){
   if(!soundButton)return;
-  soundButton.textContent=soundEnabled?'◉  Звук включён':'○  Включить звук';
+  soundButton.textContent=woodError?'Звук недоступен · повторить':soundEnabled?'◉ Дерево · звук включён':'○ Включить звук';
   soundButton.setAttribute('aria-pressed',String(soundEnabled));
+  soundButton.title='Натуральная запись деревянных блоков · Freesound 543705 · CC0';
+ }
+ function findWoodCuts(buffer){
+  const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.008)),frames=Math.floor(buffer.length/hop);
+  const ch=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+  const levels=new Float32Array(frames);
+  for(let i=0;i<frames;i++){let power=0;for(let k=0;k<hop;k++)for(const channel of ch){const v=channel[i*hop+k];power+=v*v}levels[i]=Math.sqrt(power/(hop*ch.length))}
+  const max=levels.reduce((a,b)=>Math.max(a,b),0),candidates=[];
+  if(max<.0001)throw Error('Silent source');
+  for(let i=7;i<frames-29;i++){
+   const peak=levels[i],prior=(levels[i-6]+levels[i-5]+levels[i-4]+levels[i-3]+levels[i-2])/5;
+   if(peak<max*.13||peak<levels[i-1]||peak<levels[i+1]||peak<prior*1.9)continue;
+   let tail=0;for(let k=12;k<25;k++)tail+=levels[i+k]/13;
+   const score=(peak-prior)/(Math.max(.008,tail)+peak*.28);
+   candidates.push({i,score,peak});
+  }
+  candidates.sort((a,b)=>b.score-a.score);
+  const chosen=[];
+  for(const c of candidates){if(chosen.every(x=>Math.abs(x.i-c.i)*hop/rate>.30)){chosen.push(c);if(chosen.length===12)break}}
+  if(chosen.length<3)throw Error('Not enough separate wooden impacts');
+  // Use separate sharp transients; brief dry tails, with no pitch shift or synthetic bass.
+  return chosen.sort((a,b)=>a.i-b.i).map(c=>{
+   let onset=c.i;while(onset>c.i-6&&levels[onset-1]>c.peak*.12)onset--;
+   const start=Math.max(0,onset*hop/rate-.012);
+   let duration=Math.min(.195,buffer.duration-start);
+   let peak=0;for(const channel of ch)for(let k=Math.floor(start*rate);k<Math.min(buffer.length,Math.floor((start+duration)*rate));k++)peak=Math.max(peak,Math.abs(channel[k]));
+   return {start,duration,peak:Math.max(.03,peak)};
+  });
+ }
+ function prepareWood(){
+  if(woodBuffer)return Promise.resolve(true);
+  if(woodPromise)return woodPromise;
+  woodError=false;soundUI();
+  woodPromise=(async()=>{
+   const response=await fetch(woodUrl,{mode:'cors',credentials:'omit',cache:'force-cache'});
+   if(!response.ok)throw Error('Audio HTTP '+response.status);
+   const buffer=await audioContext.decodeAudioData(await response.arrayBuffer());
+   const cuts=findWoodCuts(buffer);woodBuffer=buffer;woodCuts=cuts;
+   return true;
+  })().catch(error=>{woodError=true;soundUI();console.warn('FORMA natural wood recording unavailable',error);return false}).finally(()=>{woodPromise=null});
+  return woodPromise;
  }
  function unlockSound(){
-  if(!soundEnabled)return;
+  if(!soundEnabled)return Promise.resolve(false);
   try{
    const A=window.AudioContext||window.webkitAudioContext;
-   if(!A)return;
+   if(!A)return Promise.resolve(false);
    if(!audioContext)audioContext=new A();
-   if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
-  }catch{}
+   // Resume within the user gesture; decoding itself may finish later.
+   audioContext.resume().catch(()=>{});
+   return prepareWood();
+  }catch{return Promise.resolve(false)}
  }
- function entranceSound(){
-  if(!soundEnabled||!audioContext||audioContext.state!=='running')return;
-  try{
-   const context=audioContext,now=context.currentTime;
-   const mix=context.createGain(),filter=context.createBiquadFilter();
-   filter.type='lowpass';filter.frequency.setValueAtTime(630,now);
-   mix.gain.setValueAtTime(.0001,now);
-   mix.gain.exponentialRampToValueAtTime(.024,now+.12);
-   mix.gain.exponentialRampToValueAtTime(.0001,now+.84);
-   mix.connect(filter);filter.connect(context.destination);
-   for(const [frequency,type,volume,offset] of [[196,'sine',.64,0],[293.66,'sine',.29,.04],[392,'triangle',.07,.07]]){
-    const oscillator=context.createOscillator(),gain=context.createGain();
-    oscillator.type=type;oscillator.frequency.setValueAtTime(frequency,now);
-    gain.gain.value=volume;oscillator.connect(gain);gain.connect(mix);
-    oscillator.start(now+offset);oscillator.stop(now+.87);
-    oscillator.addEventListener('ended',()=>{oscillator.disconnect();gain.disconnect()},{once:true});
-   }
-   setTimeout(()=>{mix.disconnect();filter.disconnect()},1200);
-  }catch{}
+ function stopWood(){for(const node of playingWood){try{node.stop()}catch{}}playingWood.clear()}
+ function woodTap(index,level=.23){
+  if(!soundEnabled||!woodBuffer||!woodCuts.length||audioContext?.state!=='running')return;
+  const cut=woodCuts[index%woodCuts.length],ctx=audioContext,now=ctx.currentTime+.008;
+  const src=ctx.createBufferSource(),gain=ctx.createGain(),hp=ctx.createBiquadFilter();
+  src.buffer=woodBuffer;hp.type='highpass';hp.frequency.value=85;hp.Q.value=.6;
+  const volume=Math.min(2.2,level/cut.peak);
+  gain.gain.setValueAtTime(0,now);
+  gain.gain.linearRampToValueAtTime(volume,now+.003);
+  gain.gain.setValueAtTime(volume,now+Math.max(.004,cut.duration-.025));
+  gain.gain.linearRampToValueAtTime(0,now+cut.duration);
+  src.connect(hp);hp.connect(gain);gain.connect(ctx.destination);playingWood.add(src);
+  src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect()};
+  src.start(now,cut.start,cut.duration);
  }
- soundButton?.addEventListener('click',()=>{
-  soundEnabled=!soundEnabled;
+ soundButton?.addEventListener('click',async()=>{
+  if(woodError)soundEnabled=true;else soundEnabled=!soundEnabled;
+  woodError=false;
   try{localStorage.setItem(soundKey,soundEnabled?'on':'off')}catch{}
   soundUI();
-  if(soundEnabled)unlockSound();
+  if(!soundEnabled){stopWood();return}
+  const loaded=await unlockSound();
+  if(loaded&&soundEnabled&&active&&!closing)begin();
  });
- screen.addEventListener('pointerdown',()=>{if(soundEnabled)unlockSound()},{passive:true});
+ screen.addEventListener('pointerdown',()=>{if(soundEnabled&&!woodError)unlockSound()},{passive:true});
  soundUI();
+ if(soundEnabled)unlockSound();
  const timers=new Set();
  const addTimeout=(task,ms)=>{
   const id=run;const timer=setTimeout(()=>{
@@ -89,7 +136,7 @@
   closing=true;clearTimers();
   screen.classList.remove('is-holding');
   if(recover)recover.hidden=true;
-  entranceSound();
+  woodTap(7,.22);
   screen.classList.add('is-leaving');
   const id=run;
   setTimeout(()=>{
@@ -119,7 +166,7 @@
   if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
  }
  function begin(){
-  run+=1;clearTimers();
+  run+=1;clearTimers();stopWood();
   active=true;closing=false;firstPaint=false;minimumPassed=false;readyQueued=false;
   screen.classList.remove('is-ready');progress?.removeAttribute('aria-valuenow');progress?.setAttribute('aria-valuetext','Загрузка');
   lastFocus=document.activeElement;
@@ -137,8 +184,10 @@
    if(id!==run||!active||closing)return;
    firstPaint=true;paintStart=performance.now();screen.classList.add('is-grid-visible');
    addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
-   addTimeout(()=>screen.classList.add('is-logo-visible'),TIME.logo);
+   addTimeout(()=>{screen.classList.add('is-logo-visible');woodTap(0,.23)},TIME.logo);
+   addTimeout(()=>woodTap(1,.21),TIME.logo+140);
    addTimeout(()=>screen.classList.add('is-name-visible'),TIME.name);
+   for(let i=0;i<5;i++)addTimeout(()=>woodTap(i+2,.16+i*.008),TIME.name+i*105+90);
    addTimeout(()=>screen.classList.add('is-descriptor-visible'),TIME.descriptor);
    addTimeout(()=>{minimumPassed=true;checkReadiness()},TIME.minShow);
    addTimeout(()=>{
