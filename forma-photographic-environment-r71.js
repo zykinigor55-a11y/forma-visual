@@ -1,5 +1,29 @@
-/* R65 outdoor sky: camera-centred infinite background, layered cloud density
- * and directional cloud shading. A realtime approximation, not ray marching. */
+/* R215: continuous altitude-dependent sky and one coherent projected cloud field.
+ * Scene-linear approximation; not a calibrated spectral atmosphere. */ 
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
+export function solarAppearance(elevation){
+ const e=clamp(Number.isFinite(Number(elevation))?Number(elevation):45,-18,85);
+ const air=1/Math.max(.045,Math.sin(Math.max(0,e)*Math.PI/180)+.045);
+ return {elevation:e,direct:smooth(-.83,2,e)*Math.exp(-.15*(air-1)),day:smooth(-9,18,e),twilight:smooth(-18,-5,e)*(1-smooth(0,18,e)),air};
+}
+const skyKnots=[
+ [-18,'#07101e','#162436','#17202c','#526079','#252f44'],
+ [-12,'#10233d','#3b5276','#29394c','#788aaa','#3d4d6b'],
+ [-6,'#304f87','#a0a8c8','#626b83','#c1a7ab','#687a9c'],
+ [0,'#627fae','#e4ab88','#948e89','#f6c6a5','#8b8a9e'],
+ [8,'#709bc2','#e3c5ae','#a4adae','#f9e4cb','#a1aab8'],
+ [22,'#6998c0','#c9dbe6','#a7b9bd','#fff9ee','#9aaabd'],
+ [85,'#5e8db6','#c9dbe6','#aabbbd','#fffdf7','#97a8ba']
+];
+export function continuousSkyPalette(Color,elevation,weather='sunny'){
+ const e=solarAppearance(elevation).elevation;let i=1;while(i<skyKnots.length-1&&e>skyKnots[i][0])i++;
+ const a=skyKnots[i-1],b=skyKnots[i],t=smooth(a[0],b[0],e);
+ const wet=['overcast','rain','fog','snow'].includes(weather),gray=['#a4b3bf','#d3dbdf','#b0b8b9','#e4e9ec','#acb6c0'];
+ const day=smooth(-12,12,e);
+ return a.slice(1).map((v,j)=>{const c=new Color(v).lerp(new Color(b[j+1]),t);if(wet)c.lerp(new Color(gray[j]).multiplyScalar(.10+.90*day),.64);return c});
+}
+
 export function makePhotographicSky(T){
  const uniforms={coverage:{value:.35},time:{value:0},opacity:{value:1},cloudColor:{value:new T.Color('#f5f6f1')},sunDirection:{value:new T.Vector3(.5,.7,.5)},zenith:{value:new T.Color('#759abb')},horizon:{value:new T.Color('#d9e1e5')},ground:{value:new T.Color('#9eaeb0')},cloudShade:{value:new T.Color('#a7b5c3')},haze:{value:.30},sunGlow:{value:.15},overcast:{value:0},cloudDensity:{value:.65},cloudScale:{value:1},cloudHeight:{value:1},cloudThickness:{value:1},cloudTransmission:{value:.65},cloudDetail:{value:.75}};
  const material=new T.ShaderMaterial({uniforms,defines:{CLOUD_STEPS:typeof window!=='undefined'&&window.innerWidth<=850?5:8},side:T.BackSide,depthWrite:false,depthTest:true,toneMapped:true,fog:false,
@@ -26,27 +50,26 @@ export function makePhotographicSky(T){
  if(d.y<0.)color=mix(horizon,ground,smoothstep(0.,.28,-d.y));
  float sunDot=max(0.,dot(d,normalize(sunDirection)));color+=sunGlow*vec3(1.,.82,.63)*pow(sunDot,28.);
  if(d.y>.015&&coverage>.005){
-  // Ray integration through a finite cloud layer; Beer-Lambert transmittance
-  // and a short sun-direction density probe provide illuminated cloud edges.
-  float dy=max(.045,d.y),trans=1.;vec3 scattered=vec3(0.);
-  vec3 L=normalize(sunDirection);float mu=dot(d,L);
-  float g=.55;float hg=(1.-g*g)/pow(max(.10,1.+g*g-2.*g*mu),1.5);float phase=.65+.35*min(3.,hg);
-  float thickness=.65*cloudThickness;float dt=thickness/(dy*float(CLOUD_STEPS));
-  for(int i=0;i<CLOUD_STEPS;i++){
-   float h=(float(i)+.5)/float(CLOUD_STEPS);
-   vec3 p=d*((1.25*cloudHeight+h*thickness)/dy);p.xz+=vec2(time*.004,time*.002);
-   float den=cloudVolume(p,h);
-   float probe=.30*cloudThickness;
-   float lightDensity=cloudVolume(p+L*probe,clamp(h+L.y*.36,0.,1.))+cloudVolume(p+L*probe*2.,clamp(h+L.y*.72,0.,1.));
-   float extinction=mix(2.5,1.0,cloudTransmission);
-   float illumination=exp(-lightDensity*probe*extinction);
-   vec3 light=mix(cloudShade*.58,cloudColor*1.55,illumination)*phase;
-   float alpha=1.-exp(-den*dt*extinction);
-   scattered+=trans*alpha*light;trans*=1.-alpha;
-  }
-  float blend=smoothstep(.035,.19,altitude)*opacity;
-  color=mix(color,color*trans+scattered,blend);sunTransmittance=mix(1.,trans,blend);
+  // One continuous field on a curved projection. No repeated slices or
+  // translucent copies; the second probe affects lighting only.
+  float dy=max(.10,d.y);
+  vec2 p=d.xz*(1.25*cloudHeight/dy)/max(.4,cloudScale)+vec2(time*.004,time*.002);
+  float n=fbm(p*.65+vec2(13.7,8.2));
+  float detail=fbm(p*2.4+vec2(4.1,19.7));
+  float shape=mix(n,detail,.13*cloudDetail);
+  float threshold=.72-coverage*.52;
+  float den=smoothstep(threshold,threshold+.16,shape);
+  vec2 lightOffset=normalize(sunDirection.xz+vec2(.0001))*.12*cloudThickness;
+  float upstream=fbm((p+lightOffset)*.65+vec2(13.7,8.2));
+  float shade=exp(-max(0.,upstream-threshold)*cloudDensity*7.);
+  float extinction=mix(2.7,1.1,cloudTransmission);
+  float alpha=(1.-exp(-den*cloudDensity*cloudThickness*extinction*3./max(.36,dy)))*smoothstep(.025,.16,altitude)*opacity;
+  vec3 light=mix(cloudShade*.65,cloudColor*1.25,shade);
+  color=mix(color,light,alpha);sunTransmittance=1.-alpha;
  }
+ // Single solar disc, angular diameter about half a degree; clouds attenuate it.
+ float disk=smoothstep(.999986,.999994,sunDot)*step(0.,sunDirection.y)*sunTransmittance;
+ color+=disk*sunGlow*12.*vec3(1.,.88,.72);
  gl_FragColor=vec4(color,1.);
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
@@ -56,9 +79,10 @@ export function makePhotographicSky(T){
 export function updatePhotographicSky(sky,{time='day',weather='sunny',sun,coverage=.35,haze=.3,view='3d',settings={}}={}){
  if(!sky)return;sky.visible=view!=='2d';const u=sky.material.uniforms;
  const wet=['overcast','rain','fog','snow'].includes(weather);
- const p=time==='night'?['#18283b','#4b657f','#303e49','#69798e','#3b495e',0]:time==='blue-hour'?['#415e90','#9aaec8','#71808e','#b1bdcf','#697b9c',0]:time==='evening'?['#7294ba','#d9b7a2','#b6aaa0','#f8dfc7','#a9aab2',.13]:time==='morning'?['#7ba4c7','#e1d4c4','#b6b9b3','#fff0dc','#afbecb',.12]:wet?['#a4b3bf','#d3dbdf','#b0b8b9','#e4e9ec','#acb6c0',.025]:['#5e8db6','#c9dbe6','#aabbbd','#fffdf7','#97a8ba',.11];
- ['zenith','horizon','ground','cloudColor','cloudShade'].forEach((key,i)=>u[key].value.set(p[i]));
- u.sunGlow.value=p[5];u.coverage.value=Math.max(0,Math.min(1,coverage));u.haze.value=haze;u.overcast.value=wet?1:0;u.opacity.value=1;
+ const elevation=sun?Math.asin(clamp(sun.position.y/Math.max(.001,sun.position.length()),-1,1))*180/Math.PI:({night:-18,'blue-hour':-6,evening:5,morning:12,day:67}[time]??45);
+ const appearance=solarAppearance(elevation),palette=continuousSkyPalette(u.zenith.value.constructor,elevation,weather);
+ ['zenith','horizon','ground','cloudColor','cloudShade'].forEach((key,i)=>u[key].value.copy(palette[i]));
+ u.sunGlow.value=appearance.direct*(wet?.06:.23);u.coverage.value=clamp(coverage,0,1);u.haze.value=haze;u.overcast.value=wet?1:0;u.opacity.value=1;
  for(const [key,def] of Object.entries({cloudDensity:65,cloudScale:100,cloudHeight:100,cloudThickness:100,cloudTransmission:65,cloudDetail:75}))u[key].value=(Number(settings[key]??def))/100;
  if(sun)u.sunDirection.value.copy(sun.position).normalize();
 }
