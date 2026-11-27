@@ -6,9 +6,9 @@
  */
 const PRESETS=Object.freeze({
  day:{azimuth:311,elevation:67,strength:1,softness:2.6},
- morning:{azimuth:282,elevation:20,strength:1,softness:3},
- evening:{azimuth:73,elevation:6,strength:1,softness:3.5},
- 'blue-hour':{azimuth:73,elevation:-6,strength:1,softness:3.5},
+ morning:{azimuth:82,elevation:20,strength:1,softness:3},
+ evening:{azimuth:273,elevation:6,strength:1,softness:3.5},
+ 'blue-hour':{azimuth:273,elevation:-6,strength:1,softness:3.5},
  night:{azimuth:296,elevation:-18,strength:1,softness:3.5}
 });
 export const solarPreset=time=>({...PRESETS[time]||PRESETS.day});
