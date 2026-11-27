@@ -1037,7 +1037,7 @@ import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-la
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js?v=local-20261126';
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js?v=R130';
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
-import {normalizeBasin,basinPoints,basinValid,prepareBasin,basinConflict,basinTerrain,basinMesh,basinPrompt} from './forma-basin-r221.js?v=R221';
+import {normalizeBasin,basinPoints,basinValid,prepareBasin,basinConflict,basinTerrain,basinMesh,basinPrompt} from './forma-basin-r221.js?v=R221b';
 import {normalizeRiver,riverPath,prepareRiver,riverTerrain,riverRows,riverConflict,riverMesh,riverPrompt} from './forma-river-r219.js?v=R219';
 import {normalizeLiveFog,liveAtmosphereSnapshot,liveAtmospherePrompt} from './forma-live-atmosphere-r216.js?v=R216';
 import {addWeatherSceneVisuals,applyWetMaterialResponse,tickPrecipitationR217} from './forma-landscape-3d-weather-visuals.js?v=R217';
@@ -1800,7 +1800,7 @@ function terrainAt(x,z){const px=x+doc.site.width/2,py=z+doc.site.height/2;retur
 function riverWaterAtR219(x,z){return basinCacheR221.some(p=>p.signed(x+doc.site.width/2,z+doc.site.height/2)>=0)||riverCacheR219.some(p=>{const n=p.nearest(x+doc.site.width/2,z+doc.site.height/2);return n&&n.distance<n.half;});}
 function validateRiverR219(o){const p=prepareRiver(o);if(!p.length||p.length<1)return 'Нарисуйте русло длиной не менее 1 м.';if(riverConflict(p,treeLineupMode?[]:[doc.house,...doc.buildings]))return 'Русло пересекает защищённую площадку здания. Измените ширину или линию.';return '';}
 function validateBasinR221(o){if(!basinValid(o))return o.type==='sea'?'Проведите линию берега длиной от 2 м.':'Обведите замкнутый контур озера без пересечений.';if(basinConflict(prepareBasin(o),treeLineupMode?[]:[doc.house,...doc.buildings]))return 'Вода пересекает защищённую площадку здания. Измените берег или сторону моря.';return '';}
-function drawBasinR221(o){const tex=waterRippleTexture?.clone();if(tex)tex.needsUpdate=true;const {group,water}=basinMesh(THREE,prepareBasin(o),{pos,width:doc.site.width,height:doc.site.height,extent:Math.max(1600,squareTerrainSide(doc.site)*4),texture:tex});if(water){waterSurfaces.push(water);if(tex)water.userData.textures=[tex];}mark(group,'extra:'+o.id);root.add(group);}
+function drawBasinR221(o){const tex=waterRippleTexture?.clone();if(tex)tex.needsUpdate=true;const {group,water}=basinMesh(THREE,prepareBasin(o),{pos,width:doc.site.width,height:doc.site.height,extent:Math.max(1600,squareTerrainSide(doc.site)*4),texture:tex,terrainAt,groundExtent:squareTerrainSide(doc.site)});if(water){waterSurfaces.push(water);if(tex)water.userData.textures=[tex];}mark(group,'extra:'+o.id);root.add(group);}
 function drawRiverR219(o){const tex=waterRippleTexture?.clone();if(tex)tex.needsUpdate=true;const {group,water}=riverMesh(THREE,prepareRiver(o),{pos,terrainAt,texture:tex});if(water){waterSurfaces.push(water);if(tex)water.userData.textures=[tex];}mark(group,'extra:'+o.id);root.add(group);}
 
 let lawnTextureRequestR77=0;
