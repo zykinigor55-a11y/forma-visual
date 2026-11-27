@@ -573,7 +573,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R198</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R199</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -936,7 +936,7 @@ import {createDetailedFir,woodTexture,adoptFirPhotoMaps,firStage} from './forma-
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
-import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r198.js?v=R198';
+import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r199.js?v=R199';
 import {createNaturalSakura,sakuraStage} from './forma-landscape-3d-sakura-r192.js?v=R192';
 import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R130';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
@@ -1010,7 +1010,7 @@ let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,ter
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let panoramaR193=null,panoramaPanelR193=null,panoramaSettingsR193=normalizePanorama();
 const panoramaKeyR193='forma-panorama-r198-'+pid;
-function syncPanoramaR193(){if(!panoramaR193||!scene||!doc)return;panoramaR193.apply(panoramaSettingsR193,{time:doc.atmosphere.time,weather:doc.atmosphere.weather,fog:scene.fog?.color||'#b8c7c4',side:squareTerrainSide(doc.site),mode:state.view,camera,terrainMaterial:terrainMesh?.material,tile:LAWN_PROFILES[lawnTypeR77]?.tile||1.05});}
+function syncPanoramaR193(){if(!panoramaR193||!scene||!doc)return;const oldMeadow=root?.getObjectByName('forma-preview-horizon-meadow-r66');if(oldMeadow)oldMeadow.visible=state.view!=='2d'&&panoramaSettingsR193.near.type==='off'&&panoramaSettingsR193.far.type==='off';panoramaR193.apply(panoramaSettingsR193,{time:doc.atmosphere.time,weather:doc.atmosphere.weather,fog:scene.fog?.color||'#b8c7c4',side:squareTerrainSide(doc.site),mode:state.view,camera,terrainMaterial:terrainMesh?.material,tile:LAWN_PROFILES[lawnTypeR77]?.tile||1.05});}
 let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),cloudLayer=null,waterRippleTexture=null,outdoorReflectionMap=null;
 const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
