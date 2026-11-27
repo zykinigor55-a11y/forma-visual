@@ -80,7 +80,7 @@ function addSnowfall(T,root,site,intensity){
   transparent:true,opacity:Math.min(.72,.25+intensity*.004),
   depthWrite:false,sizeAttenuation:true});
  const mesh=new T.Points(geometry,material);
- mesh.userData.formaWeatherPreview=true;mesh.frustumCulled=false;
+ mesh.userData.formaWeatherPreview=true;mesh.userData.livePrecipitationR217={kind:'snow',initial:Float32Array.from(points),width:w,depth:h};mesh.frustumCulled=false;
  root.add(mesh);
 }
 function addRain(T,root,site,precipitation){
@@ -97,7 +97,7 @@ function addRain(T,root,site,precipitation){
  const mat=new T.LineBasicMaterial({color:'#BECED9',transparent:true,
   opacity:.08+.31*precipitation/100,depthWrite:false});
  const mesh=new T.LineSegments(geom,mat);
- mesh.userData.formaWeatherPreview=true;mesh.frustumCulled=false;
+ mesh.userData.formaWeatherPreview=true;mesh.userData.livePrecipitationR217={kind:'rain',initial:Float32Array.from(verts),width:w,depth:h};mesh.frustumCulled=false;
  root.add(mesh);
 }
 function addPuddles(T,root,site,groundAt,intensity){
@@ -157,4 +157,27 @@ export function applyWetMaterialResponse(root,atmosphere){
   m.roughness=clamp(m.userData.formaDryRoughness*(1-strength*.52),.105,1);
   m.needsUpdate=true;
  }
+}
+
+/** Time-based precipitation, no geometry rebuild while recording. */
+export function tickPrecipitationR217(root,seconds,wind,groundAt){
+ if(!root)return false;
+ let active=false;
+ const wrap=(v,n)=>((v+n/2)%n+n)%n-n/2;
+ for(const mesh of root.children){
+  const p=mesh.userData.livePrecipitationR217;if(!p||!mesh.visible)continue;
+  const a=mesh.geometry.attributes.position.array,base=p.initial,rain=p.kind==='rain',stride=rain?6:3;
+  const w=Math.max(1,p.width),d=Math.max(1,p.depth),strength=Math.max(0,Math.min(1,wind/100));
+  for(let i=0;i<a.length;i+=stride){
+   const seed=i*.173,fall=rain?7.5+1.8*Math.sin(seed):.48+.32*(.5+.5*Math.sin(seed));
+   const dx=seconds*strength*(rain?3.4:1.3),dz=seconds*strength*(rain?1.15:.45);
+   const x=wrap(base[i]+dx+(rain?0:.24*Math.sin(seconds*.8+seed)),w);
+   const z=wrap(base[i+2]+dz+(rain?0:.18*Math.cos(seconds*.6+seed)),d);
+   const y=groundAt(x,z)+.15+(((base[i+1]-seconds*fall)%17)+17)%17;
+   a[i]=x;a[i+1]=y;a[i+2]=z;
+   if(rain){const l=Math.max(.08,base[i+1]-base[i+4]);a[i+3]=x-l*strength*.43;a[i+4]=y-l;a[i+5]=z-l*strength*.15;}
+  }
+  mesh.geometry.attributes.position.needsUpdate=true;active=true;
+ }
+ return active;
 }
