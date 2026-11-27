@@ -596,7 +596,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R213</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R214</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -960,6 +960,8 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
 import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r201.js?v=R201';
+import {WALL_LIGHTS,WALL_COLORS,wallLightSettings,wallLightThumb,createWallLight} from './forma-landscape-wall-lights-r214.js?v=R214';
+let wallLightCategoryR214='garden',wallLightDragR214=null,wallLightPlaceR214=null;
 import {normalizeFence,fenceInspector,createLouverFence,perimeterPoints,fenceSideLengths,validateFenceOpenings,snapFencePoint,fenceCategory} from './forma-landscape-fence-r213.js?v=R213';
 let fenceMagnetR209=true;
 let selectedFenceSideR208=0,fenceCategoryR213=null,fenceCategoryContextR213='',fenceTabR211='type',fenceKindR211='gate',fencePlaceR211=null,fenceEditR211=false,fenceDragR211=null,fencePreviewR211=null;
@@ -1028,7 +1030,7 @@ const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
 const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137','rowan-r138','rowan-r139'].includes(treeTestScene);
 const sakuraTestMode=['sakura-test','sakura-r191','sakura-r192','sakura-r202','sakura-r203','sakura-r204','sakura-r205','sakura-r206'].includes(treeTestScene);
-const fenceTestMode=['fence-test','fence-r207','fence-r208','fence-r209','fence-r210','fence-r211','fence-r212','fence-r213'].includes(treeTestScene);
+const fenceTestMode=['fence-test','fence-r207','fence-r208','fence-r209','fence-r210','fence-r211','fence-r212','fence-r213','fence-r214'].includes(treeTestScene);
 const treeLineupMode=fenceTestMode||sakuraTestMode||rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=fenceTestMode?'forma-fence-isolated-r207':sakuraTestMode?'forma-sakura-isolated-r191':rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -1286,7 +1288,7 @@ function syncMobilePlacementHint(){
  hint.hidden=!active;
  if(!active)return;
  const entry=catalog(state.placing)||realModelById(state.placing)||creatureById(state.placing);
- label.textContent=state.tool==='fence'?(state.placing==='fence-side'?'Коснитесь нужной стороны участка':pointMode.length<2?'Отметьте начало и конец · '+pointMode.length+'/2':'Точек: '+pointMode.length+' · нажмите «Готово»'):water?(pointMode.length<3?'Отметьте 3 точки берега · '+pointMode.length+'/3':'Точек: '+pointMode.length+' · добавьте ещё или нажмите «Готово»'):
+ label.textContent=state.tool==='light'&&state.placing?.startsWith('wall-light:')?'Коснитесь вертикальной стены или столба':state.tool==='fence'?(state.placing==='fence-side'?'Коснитесь нужной стороны участка':pointMode.length<2?'Отметьте начало и конец · '+pointMode.length+'/2':'Точек: '+pointMode.length+' · нажмите «Готово»'):water?(pointMode.length<3?'Отметьте 3 точки берега · '+pointMode.length+'/3':'Точек: '+pointMode.length+' · добавьте ещё или нажмите «Готово»'):
   '＋ '+(entry?.name||'Объект')+' · коснитесь земли для установки';
 }
 function activateMobilePanel(name){
@@ -1318,7 +1320,7 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;readLawnSettingsR90();const old=cachedGroundTexture;cachedGroundTexture=null;save();rebuild();old?.dispose();lawnPanelSyncR90?.();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();if(fenceTestMode){d.title='FORMA · Заборы · R213';d.site={width:18,height:18,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
+ const d=freshProject();if(fenceTestMode){d.title='FORMA · Заборы · R214';d.site={width:18,height:18,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
  if(sakuraTestMode){const p=sakuraStage(35);d.title='FORMA · Сакура · R206';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[{id:'sakura-test',catalogId:'sakura',type:'trees',x:12,y:12,height:p.height,diameter:p.diameter,rotation:0,variant:1,sakura:{age:p.age}}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'spring',weather:'sunny'};return normalizeProject(d);}
  if(rowanTestMode){const p=rowanStage(35);d.title='FORMA · Рябина обыкновенная · R130';d.site={width:32,height:32,orientation:0,boundary:null};d.objects=[{id:'rowan-test',catalogId:'rowan',type:'trees',x:16,y:16,height:p.height,diameter:p.diameter,rotation:0,variant:1}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};const n=normalizeProject(d);n.objects[0].rowan={age:p.age};return n;}
  if(firTestMode){const p=firStage(45);d.title='FORMA · Пихта · R107';d.site={width:40,height:40,orientation:0,boundary:null};d.objects=[{id:'fir-test',catalogId:'ph-fir-sapling',type:'trees',x:20,y:20,height:p.height,diameter:p.diameter,rotation:0,variant:1,fir:{age:p.age}}];d.buildings=[];return normalizeProject(d);}
@@ -1859,7 +1861,7 @@ function mark(group,key){
 
  // A lightweight bronze ground ring makes the active object immediately
  // identifiable. The ring is not a raycast target and follows drag/rotation.
- if(state.selected===key&&selectable(key)?.obj?.type!=='fence'){
+ if(state.selected===key&&!['fence','wall-light'].includes(selectable(key)?.obj?.type)){
   const o=selectable(key)?.obj;
   const width=Math.max(.5,Math.min(20,Number(o?.width||o?.diameter||realModelById(o?.type)?.width||1.5)));
   const radius=width*.64;
@@ -2190,7 +2192,7 @@ function rebuild(){
  const parcelLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePoints),new THREE.LineBasicMaterial({color:'#e1e8d2'}));parcelLine.name='forma-parcel-outline';parcelLine.visible=(!pbrR63Enabled||(!oakTestMode&&!lawnTestMode))&&document.body.dataset.presentation!=='true';root.add(parcelLine);
  if(!treeLineupMode){buildBuilding(doc.house,'house:main');for(const b of doc.buildings)buildBuilding(b,'building:'+b.id);}
  for(const o of doc.objects){const entry=catalog(o.catalogId);if(!entry)continue;if(Array.isArray(o.points)&&o.points.length>=2)drawArea(o,entry,'object:'+o.id);else drawObject(o,entry,'object:'+o.id)}
- for(const o of extra)drawExtra(o);
+ for(const o of extra)if(o.type!=='wall-light')drawExtra(o);root.updateMatrixWorld(true);for(const o of extra)if(o.type==='wall-light')drawExtra(o);
  // The preview is a disposable overlay: never added to project objects,
  // never changes planted coordinates, path edges, buildings or terrain.
  addWeatherSceneVisuals(THREE,root,terrainMesh,doc,terrainAt);
@@ -2607,6 +2609,7 @@ function drawArea(o,entry,key){
 // Legacy 3D-catalogue spruce was actually the same Poly Haven fir_sapling asset.
 function isLegacyFirExtra(type){return ['spruce','ph-fir-sapling','fir_sapling','fir-sapling','fir'].includes(type)}
 function drawExtra(o){
+ if(o.type==='wall-light'){drawWallLightR214(o);return;}
  if(o.type==='fence'&&o.fence?.style==='louver'){const g=createLouverFence(THREE,o,{pos,terrainAt,mobile:window.innerWidth<=850});mark(g,'extra:'+o.id);if(state.selected==='extra:'+o.id){const a=o.points[selectedFenceSideR208],b=o.points[selectedFenceSideR208+1];if(a&&b){const pts=Array.from({length:25},(_,i)=>{const p=pos(a.x+(b.x-a.x)*i/24,a.y+(b.y-a.y)*i/24);p.y=terrainAt(p.x,p.z)+.14;return p;});const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:'#edbd72',depthTest:false}));line.renderOrder=50;line.raycast=()=>{};g.add(line);}}root.add(g);return;}
  if(isSurfacePrimitive(o)){
   const v=normalizePrimitive(o),p=pos(v.x,v.y),index=extra.filter(isSurfacePrimitive).indexOf(o);
@@ -2802,6 +2805,7 @@ let pondModeR139='lasso',pondGestureR139=null,plantCategoryR143='trees';
 function desktopPondR139(){return window.innerWidth>850&&state.tool==='water'&&catalog(state.placing)?.group==='ponds';}
 function syncPondToolsR139(){const panel=$('#pondToolsR139');if(!panel)return;panel.hidden=!desktopPondR139();if(panel.hidden)return;panel.querySelectorAll('[data-pond-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.pondMode===pondModeR139);b.setAttribute('aria-pressed',String(b.dataset.pondMode===pondModeR139));});$('#pondWidthRowR139').hidden=pondModeR139!=='brush';$('#pondModeHintR139').textContent=pondModeR139==='lasso'?'Зажмите ЛКМ и обведите берег. Отпустите кнопку — контур замкнётся.':pondModeR139==='brush'?'Зажмите ЛКМ и рисуйте водную область. Отпустите для создания.':'Щёлкайте точки берега. Enter, двойной клик или «Завершить» замыкают контур.';const draft=$('#draftActions');if(draft)draft.hidden=pondModeR139!=='polygon';}
 function chooseTool(t){
+ wallLightPlaceR214=null;
  if(pondGestureR139)cancelPondGestureR139();
  if(t!=='select'&&lawnIntegratedR90&&lawnPanelR90){lawnPanelR90.style.display='none';if((firTestMode||rowanTestMode)&&$('#forma-lineup-panel-r74'))$('#forma-lineup-panel-r74').style.display='flex';}
  if(window.innerWidth<=850&&t!=='select')setSceneClimateOpen(false);
@@ -2815,6 +2819,7 @@ function chooseTool(t){
  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
  document.querySelectorAll('[data-quick-tool]').forEach(b=>{const active=b.dataset.quickTool===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  const desktopSurface=t==='surface'&&window.innerWidth>850,desktopPlant=t==='plant'&&window.innerWidth>850;
+ if(t==='light'&&wallLightCategoryR214==='wall'){renderWallLightCatalogR214();return;}
  const arr=desktopSurface?(choices[t]||[]).filter(c=>['pavers','fills'].includes(catalog(c[0])?.group)):(choices[t]||[]);
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
  if(t==='primitives'){
@@ -2871,7 +2876,7 @@ function chooseTool(t){
  });
  if(t==='select')$('#library').querySelectorAll('[data-select-pine]').forEach(b=>
   b.addEventListener('click',()=>selectPineById(b.dataset.selectPine)));
- if(t==='light')refreshGardenLightCatalogPreviews();
+ if(t==='light'){const tabs=wallLightTabsR214();$('#library').prepend(tabs);refreshGardenLightCatalogPreviews();}
  if(t==='plant'){
   $('#vegetationGlb').onchange=e=>importPlantGlb(e.target.files?.[0]);
   $('#removePlantGlb').onclick=removePlantGlb;
@@ -3234,6 +3239,7 @@ function nudgeSelectedObject(dx,dy){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return status('Сначала выберите объект.');
  const obj=ref.obj;
+ if(obj.type==='wall-light')return status('Бра перемещается только по поверхности крепления.');
  if(Array.isArray(obj.points)){
   const moved=obj.points.map(p=>({x:Math.round((p.x+dx)*100)/100,y:Math.round((p.y+dy)*100)/100}));
   if(!moved.every(p=>inParcel(p,doc.site)))return status('Граница участка: перемещение отменено.');
@@ -3264,6 +3270,7 @@ function deleteSelectedObject(){
 function duplicateSelected(){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return status('Сначала выберите объект для копирования.');
+ if(ref.obj.type==='wall-light')return status('Для второго бра выберите место на стене в каталоге.');
  const copy=duplicateLandscapeObject(ref.obj,{newId:id(),plot:doc.site,contains:p=>inParcel(p,doc.site)});
  if(!copy)return status('Рядом недостаточно свободного места внутри границ участка для копии.');
  push();
@@ -3276,6 +3283,7 @@ function duplicateSelected(){
 function rotateSelected(degrees){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return;
+ if(ref.obj.type==='wall-light')return status('Поворот бра автоматически задан плоскостью стены.');
  const result=rotatedLandscapeObject(ref.obj,degrees);
  if(!result)return;
  push();ref.obj.rotation=result.rotation;save();rebuild();
@@ -3411,6 +3419,7 @@ function renderProps(){
  $('#pineInspectorShortcut').hidden=true;el.classList.remove('pine-inspector-open','forma-shrub-open');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj;
+ if(ref.type==='extra'&&o.type==='wall-light'){renderWallLightInspectorR214(el,ref);return;}
  if(ref.type==='extra'&&o.type==='fence'&&o.fence?.style==='louver'){
   el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';
   selectedFenceSideR208=Math.max(0,Math.min(fenceSideLengths(o).length-1,selectedFenceSideR208));
@@ -4845,7 +4854,7 @@ async function renderAi(series=null,precision=null,settings=null){
   });
   const sourceLawn=LAWN_PROFILES[lawnTypeR77];
   const lawnTemplate=lawnEnabledR90&&sourceLawn?{profile:lawnTypeR77,visible:doc.atmosphere.season!=='winter',bladeHeightM:sourceLawn.crop?lawnWheatHeightR88/100:sourceLawn.height*lawnHeightR90/100,densityPercent:lawnDensityR90,pressedPercent:lawnPressedR90,flowerPercent:lawnFlowersR88,scope:'parcel-masked',revision:'R106'}:null;
-  const sceneInfo={...measuredPlan,lawnTemplate,raisedSurfaces:extra.filter(isSurfacePrimitive).map(normalizePrimitive),fences:extra.filter(o=>o.type==='fence'&&o.fence?.style==='louver').map(o=>({id:o.id,points:o.points,...normalizeFence(o)})),panorama:scene.userData.formaPanorama||null,...(treeLineupMode?{house:null,buildings:[]}:{}),objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
+  const sceneInfo={...measuredPlan,lawnTemplate,wallLights:extra.filter(o=>o.type==='wall-light').map(o=>({id:o.id,host:o.host,anchor:o.anchor,normal:o.normal,...wallLightSettings(o),dimensions:WALL_LIGHTS[o.model],world:wallLightPoseR214(o)?.point.toArray()||null,lit:wallLightNightR214()})),raisedSurfaces:extra.filter(isSurfacePrimitive).map(normalizePrimitive),fences:extra.filter(o=>o.type==='fence'&&o.fence?.style==='louver').map(o=>({id:o.id,points:o.points,...normalizeFence(o)})),panorama:scene.userData.formaPanorama||null,...(treeLineupMode?{house:null,buildings:[]}:{}),objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
@@ -5136,7 +5145,52 @@ function tickFencePreviewR211(now){
  leaf.group.position.set(leaf.dx*ease,0,leaf.dz*ease);renderGate.invalidate();if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;if(t>=5)fencePreviewR211=null;
 }
 
+
+function wallLightTabsR214(){const el=document.createElement('div');el.className='fence-tabs-r211';el.innerHTML=['garden','wall'].map(k=>'<button type="button" data-wall-cat="'+k+'" aria-pressed="'+(wallLightCategoryR214===k)+'">'+(k==='garden'?'Садовые':'Уличные бра · 6')+'</button>').join('');el.querySelectorAll('button').forEach(b=>b.onclick=()=>{wallLightCategoryR214=b.dataset.wallCat;chooseTool('light');});return el;}
+function renderWallLightCatalogR214(){
+ const lib=$('#library');lib.innerHTML='<div class="real-model-intro">Выберите бра и коснитесь фасада, стены или столба. Корпус автоматически повернётся к поверхности.</div><div class="fence-models-r213">'+Object.entries(WALL_LIGHTS).map(([k,s])=>'<button type="button" data-wall-model="'+k+'" aria-pressed="false"><img style="width:100%;height:70px;object-fit:contain" src="'+wallLightThumb(k)+'"><span>'+s.name+'</span></button>').join('')+'</div>';lib.prepend(wallLightTabsR214());
+ lib.querySelectorAll('[data-wall-model]').forEach(b=>b.onclick=()=>{state.placing='wall-light:'+b.dataset.wallModel;wallLightPlaceR214=b.dataset.wallModel;lib.querySelectorAll('[data-wall-model]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if(window.innerWidth<=850)activateMobilePanel('scene');syncMobilePlacementHint();status('Коснитесь поверхности крепления.');});
+}
+function wallLightNightR214(){return ['evening','dusk','night','blue-hour','sunset','bluehour'].includes(doc.atmosphere.time)||nightInteriorMode(doc.atmosphere.time);}
+function wallLightHostR214(key){return pickables.find(g=>g.userData.key===key);}
+function wallLightPoseR214(o){const host=wallLightHostR214(o.host);if(!host||!Array.isArray(o.anchor)||!Array.isArray(o.normal))return null;host.updateMatrixWorld(true);const point=host.localToWorld(new THREE.Vector3().fromArray(o.anchor)),normal=new THREE.Vector3().fromArray(o.normal).transformDirection(host.matrixWorld);return {host,point,normal};}
+function wallLightHitR214(ray,hostOnly=null){const hosts=hostOnly?[hostOnly]:pickables.filter(g=>{const k=g.userData.key||'',o=selectable(k)?.obj;return k.startsWith('house:')||k.startsWith('building:')||o?.type==='fence'||(o&&isSurfacePrimitive(o));});root.updateMatrixWorld(true);
+ const caster=new THREE.Raycaster(ray.origin,ray.direction,0,1000);
+ for(const hit of caster.intersectObjects(hosts,true)){if(!hit.face||!hit.object.isMesh||!hit.object.visible||hit.object.userData.selectionProxy)continue;
+  let host=hit.object;while(host&&!hosts.includes(host))host=host.parent;if(!host)continue;
+  const matrix=hit.object.matrixWorld.clone();if(hit.instanceId!==undefined&&hit.object.isInstancedMesh){const im=new THREE.Matrix4();hit.object.getMatrixAt(hit.instanceId,im);matrix.multiply(im);}
+  const normal=hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(matrix)).normalize();if(Math.abs(normal.y)>.15)continue;
+  if(normal.dot(ray.direction)>0)normal.negate();normal.y=0;normal.normalize();return {host,point:hit.point.clone(),normal};
+ }return null;
+}
+function wallLightSupportR214(hit,model){const s=WALL_LIGHTS[model],t=new THREE.Vector3(hit.normal.z,0,-hit.normal.x);for(const [dx,dy] of [[0,0],[-s.w*.32,0],[s.w*.32,0],[0,-s.h*.32],[0,s.h*.32]]){const p=hit.point.clone().addScaledVector(t,dx);p.y+=dy;const probe=wallLightHitR214(new THREE.Ray(p.clone().addScaledVector(hit.normal,.07),hit.normal.clone().negate()),hit.host);if(!probe||probe.point.distanceTo(p)>.022||probe.normal.dot(hit.normal)<.98)return false;}return true;}
+function wallLightAnchorR214(o,hit){o.host=hit.host.userData.key;o.anchor=hit.host.worldToLocal(hit.point.clone()).toArray();o.normal=hit.normal.clone().transformDirection(hit.host.matrixWorld.clone().invert()).toArray();o.x=hit.point.x+doc.site.width/2;o.y=hit.point.z+doc.site.height/2;}
+function drawWallLightR214(o){const hit=wallLightPoseR214(o);if(!hit)return;const g=createWallLight(THREE,o,{night:wallLightNightR214(),shadow:false});g.position.copy(hit.point).addScaledVector(hit.normal,.002);g.rotation.y=Math.atan2(hit.normal.x,hit.normal.z);g.name='wall-light-'+o.id;mark(g,'extra:'+o.id);root.add(g);}
+function placeWallLightR214(e){mousePosition(e);camera.updateMatrixWorld();raycaster.setFromCamera(mouse,camera);const hit=wallLightHitR214(raycaster.ray);if(!hit||!wallLightSupportR214(hit,wallLightPlaceR214))return status('Выберите ровную вертикальную поверхность подходящей ширины.');const model=wallLightPlaceR214,o={id:id(),type:'wall-light',...wallLightSettings({model}),height:WALL_LIGHTS[model].h};wallLightAnchorR214(o,hit);push();extra.push(o);chooseTool('select');state.selected='extra:'+o.id;save();rebuild();renderProps();status('Бра закреплено. Перетаскивайте его по стене.');}
+function renderWallLightInspectorR214(el,ref){const o=ref.obj,v=wallLightSettings(o),pose=wallLightPoseR214(o);el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';const sel=(k,l,items)=>'<label>'+l+'</label><select data-wall-setting="'+k+'">'+Object.entries(items).map(([key,name])=>'<option value="'+key+'"'+(String(v[k])===key?' selected':'')+'>'+name+'</option>').join('')+'</select>';
+ el.innerHTML='<strong>'+WALL_LIGHTS[v.model].name+'</strong><p class="hint">'+(pose?'Закреплено на вертикальной поверхности. Перетаскивайте по плоскости.':'Поверхность крепления отсутствует.')+'</p>'+sel('color','Корпус',{graphite:'Графит',brown:'Коричневый',white:'Белый'})+sel('kelvin','Температура',{2700:'2700 K',3000:'3000 K',4000:'4000 K'})+'<label>Яркость, %</label><input type="range" min="0" max="200" step="5" value="'+v.brightness+'" data-wall-setting="brightness">'+(WALL_LIGHTS[v.model].beam==='up-down'?'<label>Угол луча, °</label><input type="range" min="15" max="80" value="'+v.angle+'" data-wall-setting="angle">':'')+'<button class="action primary" data-wall-move>Переместить по стене</button><button class="action" data-wall-delete>Удалить</button>';
+ syncSelectedObjectDock(ref,WALL_LIGHTS[v.model].name);el.querySelectorAll('[data-wall-setting]').forEach(b=>b.onchange=()=>{push();Object.assign(o,wallLightSettings({...o,[b.dataset.wallSetting]:b.value}));save();rebuild();renderProps();});el.querySelector('[data-wall-move]').onclick=()=>{if(window.innerWidth<=850)activateMobilePanel('scene');status('Потяните за корпус бра.');};el.querySelector('[data-wall-delete]').onclick=deleteSelectedObject;
+}
+function setupWallLightEventsR214(){
+ const capture={capture:true};let tap=null;
+ canvas.addEventListener('pointerdown',e=>{if(e.button!==0||fencePlaceR211||document.body.dataset.presentation==='true')return;
+  if(state.tool==='light'&&wallLightPlaceR214){tap={id:e.pointerId,x:e.clientX,y:e.clientY};e.preventDefault();e.stopImmediatePropagation();canvas.setPointerCapture?.(e.pointerId);return;}
+  if(state.tool!=='select')return;const key=hitObj(e),o=selectable(key)?.obj;if(o?.type!=='wall-light')return;const pose=wallLightPoseR214(o);if(!pose)return;
+  state.selected=key;const plane=new THREE.Plane().setFromNormalAndCoplanarPoint(pose.normal,pose.point);mousePosition(e);raycaster.setFromCamera(mouse,camera);const start=raycaster.ray.intersectPlane(plane,new THREE.Vector3());if(!start)return;
+  wallLightDragR214={id:e.pointerId,o,pose,plane,delta:pose.point.clone().sub(start),x:e.clientX,y:e.clientY,changed:false};controls.enabled=false;e.preventDefault();e.stopImmediatePropagation();canvas.setPointerCapture?.(e.pointerId);
+ },capture);
+ canvas.addEventListener('pointermove',e=>{const d=wallLightDragR214;if(!d||e.pointerId!==d.id)return;e.preventDefault();e.stopImmediatePropagation();if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<5&&!d.changed)return;
+  mousePosition(e);camera.updateMatrixWorld();raycaster.setFromCamera(mouse,camera);const p=raycaster.ray.intersectPlane(d.plane,new THREE.Vector3());if(!p)return;p.add(d.delta);
+  const hit=wallLightHitR214(new THREE.Ray(p.clone().addScaledVector(d.pose.normal,.07),d.pose.normal.clone().negate()),d.pose.host);
+  if(!hit||hit.point.distanceTo(p)>.022||hit.normal.dot(d.pose.normal)<.98||!wallLightSupportR214(hit,d.o.model))return;
+  if(!d.changed){push();d.changed=true;}wallLightAnchorR214(d.o,hit);const g=wallLightHostR214('extra:'+d.o.id);if(g){g.position.copy(hit.point).addScaledVector(hit.normal,.002);g.updateMatrixWorld(true);}renderGate.invalidate();
+ },capture);
+ const finish=e=>{if(tap?.id===e.pointerId){const a=tap;tap=null;e.stopImmediatePropagation();if(e.type==='pointerup'&&Math.hypot(e.clientX-a.x,e.clientY-a.y)<15)placeWallLightR214(e);return;}const d=wallLightDragR214;if(!d||d.id!==e.pointerId)return;wallLightDragR214=null;e.stopImmediatePropagation();controls.enabled=state.view!=='walk';if(d.changed){save();rebuild();status('Положение бра сохранено.');}else{renderProps();revealSelectedInspector();}};
+ canvas.addEventListener('pointerup',finish,capture);canvas.addEventListener('pointercancel',finish,capture);
+}
+
 function addEvents(){
+ setupWallLightEventsR214();
  canvas.addEventListener('pointerdown',e=>{if(!fencePlaceR211)return;e.preventDefault();e.stopImmediatePropagation();canvas.setPointerCapture?.(e.pointerId);},{capture:true});canvas.addEventListener('pointerup',e=>{if(!fencePlaceR211)return;e.preventDefault();e.stopImmediatePropagation();placeFenceOpeningR211(e);},{capture:true});
  const touchPointers=new Set();
  let tapCancelled=false;
@@ -5428,6 +5482,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   syncSelectedObjectDock(selectable(state.selected),$('#selectedObjectName')?.textContent||'Объект');
  };
  const enterMobileObjectMove=()=>{
+ if(selectable(state.selected)?.obj?.type==='wall-light'){if(window.innerWidth<=850)activateMobilePanel('scene');status('Перетащите бра по стене пальцем.');return;}
   if(!selectable(state.selected)?.obj){status('Сначала выберите объект.');return}
   if(state.tool!=='select')chooseTool('select');
   state.mobileMoveMode=true;state.mobileObjectCollapsed=false;controls.touches.ONE=null;
