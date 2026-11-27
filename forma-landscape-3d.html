@@ -1968,8 +1968,7 @@ let terrainDirty=null,terrainUpdateFrame=0,lastTerrainShadow=0;
  geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(new THREE.BufferAttribute(indices,1));
  geo.userData.terrain={steps,side};updateGroundRegion(geo,null);
  // Height brush is restricted to -4..5 m; fixed bounds avoid scanning on each stroke.
- geo.boundingBox=new THREE.Box3(new THREE.Vector3(-side/2,-4,-side/2),new THREE.Vector3(side/2,5,side/2));
- geo.boundingSphere=new THREE.Sphere(new THREE.Vector3(),Math.hypot(side/2,side/2,5));
+ if(riverCacheR219.length){geo.computeBoundingBox();geo.computeBoundingSphere();}else{geo.boundingBox=new THREE.Box3(new THREE.Vector3(-side/2,-4,-side/2),new THREE.Vector3(side/2,5,side/2));geo.boundingSphere=new THREE.Sphere(new THREE.Vector3(),Math.hypot(side/2,side/2,5));}
  return geo;
 }
 function updateGroundRegion(geo,dirty){
@@ -2851,6 +2850,7 @@ let pondModeR139='lasso',pondGestureR139=null,plantCategoryR143='trees';
 function desktopPondR139(){return window.innerWidth>850&&state.tool==='water'&&catalog(state.placing)?.group==='ponds';}
 function syncPondToolsR139(){const panel=$('#pondToolsR139');if(!panel)return;panel.hidden=!desktopPondR139();if(panel.hidden)return;panel.querySelectorAll('[data-pond-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.pondMode===pondModeR139);b.setAttribute('aria-pressed',String(b.dataset.pondMode===pondModeR139));});$('#pondWidthRowR139').hidden=pondModeR139!=='brush';$('#pondModeHintR139').textContent=pondModeR139==='lasso'?'Зажмите ЛКМ и обведите берег. Отпустите кнопку — контур замкнётся.':pondModeR139==='brush'?'Зажмите ЛКМ и рисуйте водную область. Отпустите для создания.':'Щёлкайте точки берега. Enter, двойной клик или «Завершить» замыкают контур.';const draft=$('#draftActions');if(draft)draft.hidden=pondModeR139!=='polygon';}
 function chooseTool(t){
+ riverReplaceR219=null;if(riverGestureR219){riverGestureR219=null;if(controls)controls.enabled=state.view!=='walk';}
  wallLightPlaceR214=null;
  if(pondGestureR139)cancelPondGestureR139();
  if(t!=='select'&&lawnIntegratedR90&&lawnPanelR90){lawnPanelR90.style.display='none';if((firTestMode||rowanTestMode)&&$('#forma-lineup-panel-r74'))$('#forma-lineup-panel-r74').style.display='flex';}
@@ -5476,6 +5476,7 @@ const move=e=>{
   const dx=pt.x-state.dragAnchor.x,dy=pt.y-state.dragAnchor.y;
   const shifted=state.dragPoints.map(q=>({x:q.x+dx,y:q.y+dy}));
   if(!shifted.every(q=>inParcel(q,doc.site)))return;
+  if(ref.obj.type==='river'){const err=validateRiverR219({...ref.obj,points:shifted});if(err)return;ref.obj.x=shifted[0].x;ref.obj.y=shifted[0].y;}
   ref.obj.points=shifted;
   scheduleBrushRebuild(); // Vector geometry needs a new mesh, at most once per frame.
  }else if('x'in ref.obj){
@@ -5729,6 +5730,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
    if(key==='q'||key==='e'){e.preventDefault();rotateSelected((key==='q'?-1:1)*(e.shiftKey?5:15));return}
   }
   if(e.key==='Enter'&&pointMode.length){e.preventDefault();finishContour()}
+  if(e.key==='Escape'&&riverGestureR219){riverGestureR219=null;pointMode=[];controls.enabled=state.view!=='walk';refreshDraft();return;}
   if(e.key==='Escape'&&pondGestureR139){cancelPondGestureR139();return;}
   if(e.key==='Escape'&&pointMode.length){pointMode=[];refreshDraft();status('Черновой контур отменён')}
  });
