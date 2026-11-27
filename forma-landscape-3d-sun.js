@@ -8,8 +8,8 @@ const PRESETS=Object.freeze({
  day:{azimuth:311,elevation:67,strength:1,softness:2.6},
  morning:{azimuth:282,elevation:20,strength:1,softness:3},
  evening:{azimuth:73,elevation:6,strength:1,softness:3.5},
- 'blue-hour':{azimuth:73,elevation:0,strength:1,softness:3.5},
- night:{azimuth:296,elevation:5,strength:1,softness:3.5}
+ 'blue-hour':{azimuth:73,elevation:-6,strength:1,softness:3.5},
+ night:{azimuth:296,elevation:-18,strength:1,softness:3.5}
 });
 export const solarPreset=time=>({...PRESETS[time]||PRESETS.day});
 export function normalizeSolarSettings(settings={},time='day'){
@@ -17,7 +17,7 @@ export function normalizeSolarSettings(settings={},time='day'){
  const bounded=(v,min,max,fallback)=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Math.min(max,Math.max(min,Number(v))):fallback;
  return {
   azimuth:bounded(settings.azimuth,0,359,preset.azimuth),
-  elevation:bounded(settings.elevation,2,85,preset.elevation),
+  elevation:bounded(settings.elevation,-18,85,preset.elevation),
   strength:bounded(settings.strength,.3,1.7,preset.strength),
   softness:bounded(settings.softness,1,5,preset.softness)
  };
