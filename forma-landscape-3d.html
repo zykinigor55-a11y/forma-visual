@@ -457,6 +457,13 @@ body[data-active-tool]:not([data-active-tool=select]) #lawnShortcutR92,body[data
  .fence-tabs-r211{display:grid;grid-template-columns:repeat(auto-fit,minmax(65px,1fr));gap:5px;margin:9px 0}
  .fence-tabs-r211 button{padding:10px 5px;min-height:42px;font-size:12px}
  .fence-tabs-r211 button[aria-pressed=true]{border-color:#d3b98d;background:#514839;color:#fff}
+ .fence-category-r213{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:5px 0 10px}
+ .fence-category-r213 button{min-height:42px;padding:8px 3px;font-size:12px;white-space:nowrap}
+ .fence-category-r213 button small{font-size:10px;opacity:.7}
+ .fence-category-r213 button[aria-pressed=true],.fence-models-r213 button[aria-pressed=true]{border-color:#d3b98d;background:#514839;color:#fff}
+ .fence-models-r213{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
+ .fence-models-r213 button{min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 5px;min-height:74px;font-size:12px;line-height:1.25}
+ .fence-models-r213 svg{width:100%;max-width:125px;height:48px;display:block}
  .fence-content-r211{padding:6px 0 10px}.fence-content-r211 details, #properties details{margin:8px 0}.fence-content-r211 summary{padding:9px 0;cursor:pointer}
  #fenceOverlayR211{position:fixed;inset:0;z-index:70;pointer-events:none}
  #fenceOverlayR211[hidden]{display:none!important}
@@ -589,7 +596,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R212</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R213</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -953,9 +960,9 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
 import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r201.js?v=R201';
-import {normalizeFence,fenceInspector,createLouverFence,perimeterPoints,fenceSideLengths,validateFenceOpenings,snapFencePoint} from './forma-landscape-fence-r212.js?v=R212';
+import {normalizeFence,fenceInspector,createLouverFence,perimeterPoints,fenceSideLengths,validateFenceOpenings,snapFencePoint,fenceCategory} from './forma-landscape-fence-r213.js?v=R213';
 let fenceMagnetR209=true;
-let selectedFenceSideR208=0,fenceTabR211='type',fenceKindR211='gate',fencePlaceR211=null,fenceEditR211=false,fenceDragR211=null,fencePreviewR211=null;
+let selectedFenceSideR208=0,fenceCategoryR213=null,fenceCategoryContextR213='',fenceTabR211='type',fenceKindR211='gate',fencePlaceR211=null,fenceEditR211=false,fenceDragR211=null,fencePreviewR211=null;
 import {createNaturalSakura,sakuraStage,importSakuraBark} from './forma-landscape-3d-sakura-r206.js?v=R206';
 import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R130';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
@@ -1021,7 +1028,7 @@ const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
 const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137','rowan-r138','rowan-r139'].includes(treeTestScene);
 const sakuraTestMode=['sakura-test','sakura-r191','sakura-r192','sakura-r202','sakura-r203','sakura-r204','sakura-r205','sakura-r206'].includes(treeTestScene);
-const fenceTestMode=['fence-test','fence-r207','fence-r208','fence-r209','fence-r210','fence-r211','fence-r212'].includes(treeTestScene);
+const fenceTestMode=['fence-test','fence-r207','fence-r208','fence-r209','fence-r210','fence-r211','fence-r212','fence-r213'].includes(treeTestScene);
 const treeLineupMode=fenceTestMode||sakuraTestMode||rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
 const pid=fenceTestMode?'forma-fence-isolated-r207':sakuraTestMode?'forma-sakura-isolated-r191':rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
@@ -1311,7 +1318,7 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;readLawnSettingsR90();const old=cachedGroundTexture;cachedGroundTexture=null;save();rebuild();old?.dispose();lawnPanelSyncR90?.();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();if(fenceTestMode){d.title='FORMA · Заборы · R212';d.site={width:18,height:18,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
+ const d=freshProject();if(fenceTestMode){d.title='FORMA · Заборы · R213';d.site={width:18,height:18,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
  if(sakuraTestMode){const p=sakuraStage(35);d.title='FORMA · Сакура · R206';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[{id:'sakura-test',catalogId:'sakura',type:'trees',x:12,y:12,height:p.height,diameter:p.diameter,rotation:0,variant:1,sakura:{age:p.age}}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'spring',weather:'sunny'};return normalizeProject(d);}
  if(rowanTestMode){const p=rowanStage(35);d.title='FORMA · Рябина обыкновенная · R130';d.site={width:32,height:32,orientation:0,boundary:null};d.objects=[{id:'rowan-test',catalogId:'rowan',type:'trees',x:16,y:16,height:p.height,diameter:p.diameter,rotation:0,variant:1}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};const n=normalizeProject(d);n.objects[0].rowan={age:p.age};return n;}
  if(firTestMode){const p=firStage(45);d.title='FORMA · Пихта · R107';d.site={width:40,height:40,orientation:0,boundary:null};d.objects=[{id:'fir-test',catalogId:'ph-fir-sapling',type:'trees',x:20,y:20,height:p.height,diameter:p.diameter,rotation:0,variant:1,fir:{age:p.age}}];d.buildings=[];return normalizeProject(d);}
@@ -3407,12 +3414,12 @@ function renderProps(){
  if(ref.type==='extra'&&o.type==='fence'&&o.fence?.style==='louver'){
   el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';
   selectedFenceSideR208=Math.max(0,Math.min(fenceSideLengths(o).length-1,selectedFenceSideR208));
-  el.innerHTML=fenceInspector(o,selectedFenceSideR208,fenceTabR211,fenceKindR211);syncSelectedObjectDock(ref,'Ограждение');
+  const categoryContext=o.id+':'+selectedFenceSideR208;if(fenceCategoryContextR213!==categoryContext){fenceCategoryR213=null;fenceCategoryContextR213=categoryContext;}el.innerHTML=fenceInspector(o,selectedFenceSideR208,fenceTabR211,fenceKindR211,fenceCategoryR213);syncSelectedObjectDock(ref,'Ограждение');
   const on=(q,fn,event='click')=>el.querySelector(q)?.addEventListener(event,fn);
   const commit=(v,msg)=>{const next=normalizeFence(v),error=validateFenceOpenings({...o,fence:next});if(error){status(error);renderProps();return false;}push();o.fence=next;save();rebuild();renderProps();if(msg)status(msg);return true;};
   on('[data-fence-side-select]',e=>{selectedFenceSideR208=Number(e.target.value);fencePreviewR211=null;rebuild();renderProps();},'change');
   el.querySelectorAll('[data-fence-tab]').forEach(b=>b.onclick=()=>{fenceTabR211=b.dataset.fenceTab;fenceEditR211=false;fencePlaceR211=null;renderProps();});
-  on('[data-fence-side-style]',e=>{const v=normalizeFence(o);v.sideStyles[selectedFenceSideR208]=e.target.value;commit(v,'Тип стороны изменён.');},'change');
+  el.querySelectorAll('[data-fence-category]').forEach(b=>b.onclick=()=>{fenceCategoryR213=b.dataset.fenceCategory;renderProps();});el.querySelectorAll('[data-fence-model]').forEach(b=>b.onclick=()=>{const v=normalizeFence(o);v.sideStyles[selectedFenceSideR208]=b.dataset.fenceModel;fenceCategoryR213=fenceCategory(b.dataset.fenceModel);commit(v,'Тип стороны изменён.');});
   on('[data-fence-action="finish"]',()=>{const v=normalizeFence(o),side=selectedFenceSideR208,finish={...(v.sideFinishes[side]||{})};for(const field of el.querySelectorAll('[data-side-finish]'))finish[field.dataset.sideFinish]=field.value;v.sideFinishes[side]=finish;commit(v,'Материал стороны сохранён.');});
   on('[data-fence-action="apply"]',()=>{const v=normalizeFence(o);for(const field of el.querySelectorAll('[data-fence]'))v[field.dataset.fence]=field.type==='checkbox'?field.checked:field.value;commit(v,'Размеры сохранены.');});
   el.querySelectorAll('[data-opening-kind]').forEach(b=>b.onclick=()=>{fenceKindR211=b.dataset.openingKind;renderProps();});
