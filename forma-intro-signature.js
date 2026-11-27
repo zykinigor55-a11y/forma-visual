@@ -17,21 +17,12 @@
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false;
  let lastFocus=null,paintStart=0,readyQueued=false;
- let soundEnabled=false,audioContext=null;
- const soundKey='forma-noir-open-sound-v1';
- try{soundEnabled=localStorage.getItem(soundKey)==='on'}catch{}
- const soundButton=document.getElementById('formaIntroSound');
+ let audioContext=null;
  // Real wooden blocks: Freesound #543705, 200221-WeanBekker, CC0.
  // Public preview from the source page; no synthesized substitute.
  const woodUrl='https://cdn.freesound.org/previews/543/543705_11072224-lq.mp3';
  let woodBuffer=null,woodCuts=[],woodPromise=null,woodError=false;
  const playingWood=new Set();
- function soundUI(){
-  if(!soundButton)return;
-  soundButton.textContent=woodError?'Звук недоступен · повторить':soundEnabled?'◉ Дерево · звук включён':'○ Включить звук';
-  soundButton.setAttribute('aria-pressed',String(soundEnabled));
-  soundButton.title='Натуральная запись деревянных блоков · Freesound 543705 · CC0';
- }
  function findWoodCuts(buffer){
   const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.008)),frames=Math.floor(buffer.length/hop);
   const ch=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
@@ -62,18 +53,17 @@
  function prepareWood(){
   if(woodBuffer)return Promise.resolve(true);
   if(woodPromise)return woodPromise;
-  woodError=false;soundUI();
+  woodError=false;
   woodPromise=(async()=>{
    const response=await fetch(woodUrl,{mode:'cors',credentials:'omit',cache:'force-cache'});
    if(!response.ok)throw Error('Audio HTTP '+response.status);
    const buffer=await audioContext.decodeAudioData(await response.arrayBuffer());
    const cuts=findWoodCuts(buffer);woodBuffer=buffer;woodCuts=cuts;
    return true;
-  })().catch(error=>{woodError=true;soundUI();console.warn('FORMA natural wood recording unavailable',error);return false}).finally(()=>{woodPromise=null});
+  })().catch(error=>{woodError=true;console.warn('FORMA natural wood recording unavailable',error);return false}).finally(()=>{woodPromise=null});
   return woodPromise;
  }
  function unlockSound(){
-  if(!soundEnabled)return Promise.resolve(false);
   try{
    const A=window.AudioContext||window.webkitAudioContext;
    if(!A)return Promise.resolve(false);
@@ -84,32 +74,29 @@
   }catch{return Promise.resolve(false)}
  }
  function stopWood(){for(const node of playingWood){try{node.stop()}catch{}}playingWood.clear()}
- function woodTap(index,level=.23){
-  if(!soundEnabled||!woodBuffer||!woodCuts.length||audioContext?.state!=='running')return;
+ function woodTap(index,level=.085){
+  if(!woodBuffer||!woodCuts.length||audioContext?.state!=='running')return;
   const cut=woodCuts[index%woodCuts.length],ctx=audioContext,now=ctx.currentTime+.008;
   const src=ctx.createBufferSource(),gain=ctx.createGain(),hp=ctx.createBiquadFilter();
   src.buffer=woodBuffer;hp.type='highpass';hp.frequency.value=85;hp.Q.value=.6;
-  const volume=Math.min(2.2,level/cut.peak);
+  const volume=Math.min(1,level/cut.peak);
   gain.gain.setValueAtTime(0,now);
-  gain.gain.linearRampToValueAtTime(volume,now+.003);
+  gain.gain.linearRampToValueAtTime(volume,now+.006);
   gain.gain.setValueAtTime(volume,now+Math.max(.004,cut.duration-.025));
   gain.gain.linearRampToValueAtTime(0,now+cut.duration);
   src.connect(hp);hp.connect(gain);gain.connect(ctx.destination);playingWood.add(src);
   src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect()};
   src.start(now,cut.start,cut.duration);
  }
- soundButton?.addEventListener('click',async()=>{
-  if(woodError)soundEnabled=true;else soundEnabled=!soundEnabled;
-  woodError=false;
-  try{localStorage.setItem(soundKey,soundEnabled?'on':'off')}catch{}
-  soundUI();
-  if(!soundEnabled){stopWood();return}
-  const loaded=await unlockSound();
-  if(loaded&&soundEnabled&&active&&!closing)begin();
- });
- screen.addEventListener('pointerdown',()=>{if(soundEnabled&&!woodError)unlockSound()},{passive:true});
- soundUI();
- if(soundEnabled)unlockSound();
+ // Autoplay is subject to the browser's permission; resume on a genuine
+ // interaction during the splash, without replaying or delaying the visual intro.
+ function resumeOnInteraction(){
+  if(!active||closing)return;
+  unlockSound();
+ }
+ screen.addEventListener('pointerdown',resumeOnInteraction,{passive:true});
+ document.addEventListener('keydown',resumeOnInteraction);
+ unlockSound();
  const timers=new Set();
  const addTimeout=(task,ms)=>{
   const id=run;const timer=setTimeout(()=>{
@@ -136,7 +123,7 @@
   closing=true;clearTimers();
   screen.classList.remove('is-holding');
   if(recover)recover.hidden=true;
-  woodTap(7,.22);
+  woodTap(7,.075);
   screen.classList.add('is-leaving');
   const id=run;
   setTimeout(()=>{
@@ -184,10 +171,10 @@
    if(id!==run||!active||closing)return;
    firstPaint=true;paintStart=performance.now();screen.classList.add('is-grid-visible');
    addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
-   addTimeout(()=>{screen.classList.add('is-logo-visible');woodTap(0,.23)},TIME.logo);
-   addTimeout(()=>woodTap(1,.21),TIME.logo+140);
+   addTimeout(()=>{screen.classList.add('is-logo-visible');woodTap(0,.095)},TIME.logo);
    addTimeout(()=>screen.classList.add('is-name-visible'),TIME.name);
-   for(let i=0;i<5;i++)addTimeout(()=>woodTap(i+2,.16+i*.008),TIME.name+i*105+90);
+   addTimeout(()=>woodTap(3,.08),TIME.name+195);
+   addTimeout(()=>woodTap(5,.065),TIME.name+510);
    addTimeout(()=>screen.classList.add('is-descriptor-visible'),TIME.descriptor);
    addTimeout(()=>{minimumPassed=true;checkReadiness()},TIME.minShow);
    addTimeout(()=>{
