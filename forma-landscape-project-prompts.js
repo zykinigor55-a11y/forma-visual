@@ -1,3 +1,4 @@
+import {riverPrompt} from './forma-river-r219.js';
 import {liveAtmospherePrompt} from './forma-live-atmosphere-r216.js';
 import {byId} from './forma-landscape-project-core.js';
 import {professionalPlanPrompt} from './forma-landscape-professional-sheet.js';
@@ -87,6 +88,7 @@ export function masterplanPrompt(input){
   ...sceneInstructions,
   weatherPhotoContract(input),
   liveAtmospherePrompt(input.liveAtmosphere,'photo'),
+  riverPrompt(input.rivers,false),
   nightInteriorPhotoContract(input),
   roofGarlandPhotoContract(input.house),
   ...(Array.isArray(input.buildings)?input.buildings.map(roofGarlandPhotoContract):[]),
