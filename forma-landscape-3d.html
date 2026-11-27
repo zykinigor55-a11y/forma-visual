@@ -592,11 +592,38 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 #formaMainMenuExit:hover{background:#414e4b;border-color:#82968a}
 }
 @media(max-width:850px){#formaMainMenuExit{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:36px;border:1px solid #596764;border-radius:8px;background:#30393a;color:#e2e8e5;text-decoration:none}#formaMainMenuExit .menu-label{display:none}#formaMainMenuExit svg{width:19px;height:19px}header .header-right{gap:3px!important}header .header-right button{padding-inline:5px!important}}
+</style><style id="mobile-compact-r220">
+@media(max-width:850px){
+ body[data-mobile-panel=tools] #left{height:min(34dvh,260px)!important;max-height:calc(100% - 78px)!important;overflow:hidden!important;display:flex!important;gap:0!important;padding:0 6px 5px!important}
+ body[data-mobile-panel=tools] #mobileWorkspaceTabs{bottom:calc(min(34dvh,260px) + 16px + env(safe-area-inset-bottom,0px))!important}
+ body[data-mobile-panel=tools] #left>.heading{padding:3px 8px!important;font-size:9px!important;line-height:1.25!important;min-height:0!important;margin:0!important;flex:none!important}
+ body[data-mobile-panel=tools] #left>.heading:first-child{display:flex;justify-content:space-between;align-items:center;gap:8px}
+ #mobileCatalogCloseR220{min-height:32px!important;min-width:44px!important;font-size:17px!important;padding:0 7px!important;background:#33383c;border-radius:7px}
+ body[data-mobile-panel=tools] #tools{flex:0 0 auto!important;padding:3px 2px!important;gap:4px!important;min-height:0!important}
+ body[data-mobile-panel=tools] #tools button{flex:0 0 70px!important;width:70px!important;min-width:70px!important;height:49px!important;min-height:49px!important;max-height:49px!important;padding:2px!important;gap:1px!important}
+ body[data-mobile-panel=tools] #tools button .glyph{width:25px!important;height:25px!important;flex:0 0 25px!important}
+ body[data-mobile-panel=tools] #tools button .glyph svg{width:25px!important;height:25px!important}
+ body[data-mobile-panel=tools] #tools button .tool-name{font-size:9px!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+ body[data-mobile-panel=tools] #library{min-height:0!important;flex:1 1 0!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 3px 5px!important;touch-action:pan-y!important}
+ body[data-mobile-panel=tools] #library .choice{min-height:44px!important;margin:2px 0!important;padding:4px 6px!important}
+ body[data-mobile-panel=tools] #library .choice.has-preview{grid-template-columns:33px minmax(0,1fr) 20px!important;gap:6px!important}
+ body[data-mobile-panel=tools] #library .choice.has-preview img{width:32px!important;height:32px!important}
+ body[data-mobile-panel=tools] #left>hr{margin:0!important}
+ body[data-mobile-panel=tools] #draftActions:not([hidden]){padding:3px!important;gap:4px!important;flex:none!important}
+ body[data-mobile-panel=tools] #draftActions small{display:none!important}
+ body[data-mobile-panel=tools] #draftActions button{min-height:40px!important;padding:4px!important}
+ body[data-mobile-panel=tools] :is(#sceneQuickTools,#mobileMotionR172,#sceneCameraCycle,#sceneClimateButton,#mobileWalkToggle,#openComposition,#alphaSceneButton,#mobilePlacementHint){display:none!important}
+ body[data-mobile-panel=scene][data-active-tool=water] :is(#sceneQuickTools,#mobileMotionR172,#sceneCameraCycle,#sceneClimateButton,#mobileWalkToggle,#openComposition,#alphaSceneButton,#selectedObjectDock){display:none!important}
+ body[data-mobile-panel=scene][data-active-tool=water] #mobilePlacementHint{max-width:calc(100% - 16px)!important;left:8px!important;right:8px!important;bottom:62px!important;top:auto!important}
+ body[data-mobile-panel=scene][data-active-tool=water] #status{display:none!important}
+ body[data-presentation=true] #mobileCatalogCloseR220{display:none!important}
+}
+@media(min-width:851px){#mobileCatalogCloseR220{display:none}}
 </style></head>
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R219</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R220</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -759,7 +786,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  <button type="button" id="mobileHouseSelect" aria-label="Открыть настройки дома, гирлянд и внутреннего освещения">🏠 Дом</button>
 </div>
 <div id="mobilePlacementHint" role="status" hidden><span id="mobilePlacementLabel" aria-live="polite"></span><button id="mobilePondFinish" class="primary" type="button" hidden disabled>Готово</button><button id="mobilePlacementCancel" type="button" aria-label="Отменить размещение и вернуть выбор">Отмена</button></div>
-<div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ · 3D-КОНСТРУКТОР</div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
+<div id="left" class="panel"><div class="heading">ИНСТРУМЕНТЫ <button type="button" id="mobileCatalogCloseR220" aria-label="Свернуть каталог">⌄</button></div><div id="tools"></div><hr><div class="heading">БИБЛИОТЕКА</div><div id="library"></div><div id="draftActions" hidden><button id="finishContour" class="primary">✓ Завершить контур</button><button id="cancelContour">✕ Отменить</button><small>Поставьте нужное число точек. Кнопка завершит дорожку или замкнёт область.</small></div></div>
 <div id="right" class="panel">
  <nav id="desktopInspectorNav" aria-label="Разделы параметров"><div class="desktop-inspector-label">ПАРАМЕТРЫ СЦЕНЫ</div><div id="desktopInspectorTabs"></div><div id="desktopInspectorTitle"></div></nav>
  <div id="mobileGeneralSettingsHeader"><strong>Параметры сцены</strong><button type="button" id="mobileGeneralSettingsClose" aria-label="Закрыть параметры сцены">×</button></div>
@@ -1287,7 +1314,7 @@ function selectNextPine(){
 function syncMobilePlacementHint(){
  const hint=$('#mobilePlacementHint'),label=$('#mobilePlacementLabel');
  if(!hint||!label)return;
- const river=state.tool==='water'&&state.placing==='river-procedural';const water=state.tool==='water'&&catalog(state.placing)?.group!=='pools'&&!river;
+ const river=state.tool==='water'&&state.placing==='river-procedural';const water=state.tool==='water'&&!!state.placing&&catalog(state.placing)?.group!=='pools'&&!river;
  const fenceDraw=state.tool==='fence'&&state.placing==='fence-louver';const finish=$('#mobilePondFinish');const draft=$('#draftActions');if(draft&&state.tool==='water')draft.hidden=window.innerWidth>850?(!desktopPondR139()||pondModeR139!=='polygon'):!water;
  finish.hidden=!water&&!fenceDraw;finish.disabled=pointMode.length<(fenceDraw?2:3);
  const active=window.innerWidth<=850&&state.tool!=='select'&&!!state.placing&&
@@ -1646,6 +1673,7 @@ function initialize(){
   renderProps();revealSelectedInspector();
   status('Дом выбран. Настройки гирлянд и интерьера находятся здесь.');
  };
+ $('#mobileCatalogCloseR220').onclick=()=>activateMobilePanel('scene');
  $('#mobilePondFinish').onclick=finishContour;
  $('#mobilePlacementCancel').onclick=()=>{
   chooseTool('select');state.placing=null;activateMobilePanel('scene');
@@ -2861,7 +2889,7 @@ function chooseTool(t){
  if(scene?.getObjectByName('sun'))updateSun();
  if(window.innerWidth<=850){state.mobileMoveMode=false;state.mobileObjectCollapsed=true;}
  syncMobilePlacementHint();
- const draft=$('#draftActions');if(draft)draft.hidden=!['site','surface','water','fence'].includes(t);
+ const draft=$('#draftActions');if(draft)draft.hidden=t==='water'||!['site','surface','fence'].includes(t);
  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
  document.querySelectorAll('[data-quick-tool]').forEach(b=>{const active=b.dataset.quickTool===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
  const desktopSurface=t==='surface'&&window.innerWidth>850,desktopPlant=t==='plant'&&window.innerWidth>850;
@@ -2904,7 +2932,7 @@ function chooseTool(t){
  });
  $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{
   state.placing=b.dataset.item;
-  if(t==='water'&&state.placing==='river-procedural'){setView('2d');syncPondToolsR139();status('Нарисуйте центральную линию реки мышью или пальцем.');syncMobilePlacementHint();return;}
+  if(t==='water'&&state.placing==='river-procedural'){b.classList.add('active');setView('2d');if(window.innerWidth<=850)activateMobilePanel('scene');syncPondToolsR139();status('Нарисуйте центральную линию реки мышью или пальцем.');syncMobilePlacementHint();return;}
   if(t==='fence'&&state.placing==='fence-perimeter'){const existing=extra.find(o=>o.type==='fence'&&o.perimeter);if(existing){chooseTool('select');state.selected='extra:'+existing.id;renderProps();revealSelectedInspector();return;}const points=perimeterPoints(doc.site);if(points.length<4){status('Не задан корректный периметр участка.');return;}const fence={id:id(),type:'fence',perimeter:true,points,x:points[0].x,y:points[0].y,rotation:0,fence:normalizeFence()};push();extra.push(fence);chooseTool('select');state.selected='extra:'+fence.id;selectedFenceSideR208=0;save();rebuild();renderProps();revealSelectedInspector();status('Забор установлен по всему периметру. Выберите сторону.');return;}
   syncMobileTerrainDock();
   if(t==='light'){
@@ -3894,11 +3922,12 @@ function setSceneClimateOpen(open){
 }
 let liveFogR216=normalizeLiveFog(),liveFogVisualR217=null,lastPrecipR217=0;
 function disposeLiveFogR217(){liveFogVisualR217?.dispose();liveFogVisualR217=null;}
-function tickLiveFogR217(now){
+function overviewFogWeightR220(){if(state.view==='2d')return 0;if(state.view==='walk'||motionR156.active||document.body.dataset.presentation==='true'||!camera||!controls)return 1;const radius=Math.max(10,Math.hypot(doc.site.width,doc.site.height)*.5),distance=camera.position.distanceTo(controls.target);return 1-Math.max(0,Math.min(1,(distance/radius-1.1)/1.6));}
+function tickLiveFogR217(now,full=false){
  if(!scene||!root||!doc)return false;
  const active=liveFogR216.groundDensity>0||(liveFogR216.waterDensity>0&&waterSurfaces.length>0);
  if(active&&!liveFogVisualR217){root.updateMatrixWorld(true);liveFogVisualR217=createLiveFogR217(THREE,scene,{width:doc.site.width,depth:doc.site.height,terrainAt,waterSurfaces,mobile:window.innerWidth<=850});}
- return liveFogVisualR217?.update(liveFogR216,now,state.view!=='2d'&&active,scene.fog?.color)||false;
+ const weight=full&&state.view!=='2d'?1:overviewFogWeightR220();const settings={...liveFogR216,groundDensity:Math.round(liveFogR216.groundDensity*weight),waterDensity:Math.round(liveFogR216.waterDensity*weight)};return liveFogVisualR217?.update(settings,now,state.view!=='2d'&&active&&weight>.01,scene.fog?.color)||false;
 }
 window.FORMA_LIVE_ATMOSPHERE_R217=()=>({settings:currentLiveAtmosphereR216(),fog:liveFogVisualR217?.diagnostics()||null});
 function currentLiveAtmosphereR216(){
@@ -4891,7 +4920,7 @@ function captureHighQuality3dReference(precision=false){
   root.updateMatrixWorld(true);camera.updateMatrixWorld();
   for(const group of botanicalGroups)updateBotanicalLod(group,camera,canvas.clientHeight,'premium');
   renderer.shadowMap.needsUpdate=true;
-  tickLiveFogR217(performance.now());if(autoReduced){releasePhotorealPipeline(renderer);renderer.render(scene,camera);}else renderPhotoFrame(true);
+  tickLiveFogR217(performance.now(),true);if(autoReduced){releasePhotorealPipeline(renderer);renderer.render(scene,camera);}else renderPhotoFrame(true);
   const image=renderer.domElement.toDataURL('image/png');return precision?{image,...capturePrecisionGuidesR172()}:image;
  }finally{
   for(const [group,tier] of prevBotanicalTiers)setFoliageTier(group,tier);
@@ -5759,7 +5788,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   }catch(e){gpuLostR75=true;console.error('WebGL recovery',e);status('Не удалось восстановить WebGL — используйте кнопку перезапуска.')}
  });
 }
-function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;tickLiveFogR217(performance.now());syncPanoramaR193();const ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&window.FORMA_GRAPHICS_R105!=='eco'&&(!mobileDeviceR106()||['high','ultra'].includes(window.FORMA_GRAPHICS_R105))&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
+function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;tickLiveFogR217(performance.now(),force);syncPanoramaR193();const fog=scene.fog,authored=fog?{near:fog.near,far:fog.far}:null,post=scene.userData.formaAtmosphereR70;const weight=force?1:overviewFogWeightR220();if(fog&&!force){if(state.view==='2d'){fog.near=10000;fog.far=20000;}else if(state.view==='3d'&&weight<1){const distance=camera.position.distanceTo(controls.target),radius=Math.hypot(doc.site.width,doc.site.height)*.5;fog.near=Math.max(fog.near,(distance+radius)* (1-weight));fog.far=Math.max(fog.far,fog.near+Math.max(50,radius*3));}if(post&&weight<1)scene.userData.formaAtmosphereR70={...post,density:post.density*weight,start:Math.max(post.start||0,fog.near)};}let ao;try{ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&window.FORMA_GRAPHICS_R105!=='eco'&&(!mobileDeviceR106()||['high','ultra'].includes(window.FORMA_GRAPHICS_R105))&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});}finally{if(authored){fog.near=authored.near;fog.far=authored.far;}scene.userData.formaAtmosphereR70=post;}scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
 function resize(){if(gpuLostR75||pathTraceR72?.active)return;renderGate.invalidate();const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);if(state.view==='walk'&&window.innerWidth>850)applyWalkLens();else camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
 let lastRenderMs=0,lastRenderCost=0,lastShadowBudgetAt=0,lastTurfDetailAt=0,shadowBudgetDirty=true;
 function animate(now=0){
