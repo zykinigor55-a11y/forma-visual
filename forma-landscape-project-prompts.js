@@ -1,3 +1,4 @@
+import {liveAtmospherePrompt} from './forma-live-atmosphere-r216.js';
 import {byId} from './forma-landscape-project-core.js';
 import {professionalPlanPrompt} from './forma-landscape-professional-sheet.js';
 import {botanicalPhotoProfile} from './forma-landscape-3d-plant-materials.js';
@@ -85,6 +86,7 @@ export function masterplanPrompt(input){
   sceneLock,
   ...sceneInstructions,
   weatherPhotoContract(input),
+  liveAtmospherePrompt(input.liveAtmosphere,'photo'),
   nightInteriorPhotoContract(input),
   roofGarlandPhotoContract(input.house),
   ...(Array.isArray(input.buildings)?input.buildings.map(roofGarlandPhotoContract):[]),
