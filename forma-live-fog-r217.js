@@ -51,20 +51,30 @@ function layer(T,count,mask,w,d,water){
  const mesh=new T.InstancedMesh(geometry,material,count);mesh.count=0;mesh.frustumCulled=false;mesh.renderOrder=4;mesh.userData.formaWeatherPreview=true;mesh.raycast=()=>{};return mesh;
 }
 export function createLiveFogR217(T,scene,{width,depth,terrainAt,waterSurfaces=[],mobile=false}){
- const w=Math.max(1,width),d=Math.max(1,depth),{map,ctx}=waterMask(T,waterSurfaces,w,d);
+ const w=Math.max(1,width),d=Math.max(1,depth),{map}=waterMask(T,waterSurfaces,w,d);
  const group=new T.Group();group.name='forma-live-mist-r217';group.userData.formaWeatherPreview=true;scene.add(group);
  const ground=layer(T,mobile?60:120,map,w,d,false),water=layer(T,mobile?50:100,map,w,d,true);
  group.add(ground,water);
- const rnd=seeded(901722),dummy=new T.Object3D(),ray=new T.Raycaster(),up=new T.Vector3(0,-1,0);
+ const rnd=seeded(901722),dummy=new T.Object3D();
  const groundSeeds=Array.from({length:ground.instanceMatrix.count},()=>({x:(rnd()-.5)*w,z:(rnd()-.5)*d,size:.6+rnd()*.9,phase:rnd()}));
- const waterSeeds=[],pixels=ctx.getImageData(0,0,256,256).data;
- if(waterSurfaces.length){
-  for(let i=0;i<water.instanceMatrix.count*22&&waterSeeds.length<water.instanceMatrix.count;i++){
-   const x=(rnd()-.5)*w,z=(rnd()-.5)*d;
-   const px=clamp(Math.floor((x/w+.5)*256),0,255),py=clamp(Math.floor((z/d+.5)*256),0,255);
-   if(pixels[(py*256+px)*4]<128)continue;
-   ray.set(new T.Vector3(x,1000,z),up);const hit=ray.intersectObjects(waterSurfaces,false)[0];if(!hit)continue;
-   waterSeeds.push({x,z,y:hit.point.y,size:.6+rnd()*.9,phase:rnd()});
+ // Sample existing water triangles directly: tiny ponds must work even on a huge parcel.
+ const waterSeeds=[],triangles=[],a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),ab=new T.Vector3(),ac=new T.Vector3();let totalArea=0;
+ for(const mesh of waterSurfaces){
+  const g=mesh.geometry,p=g?.attributes?.position;if(!p)continue;mesh.updateWorldMatrix(true,false);
+  const index=g.index,n=index?index.count:p.count;
+  for(let i=0;i+2<n;i+=3){
+   const get=(j,v)=>v.fromBufferAttribute(p,index?index.getX(j):j).applyMatrix4(mesh.matrixWorld);
+   get(i,a);get(i+1,b);get(i+2,c);ab.subVectors(b,a);ac.subVectors(c,a);
+   const area=Math.abs(ab.x*ac.z-ab.z*ac.x)*.5;if(area<1e-6)continue;
+   totalArea+=area;triangles.push({a:a.clone(),b:b.clone(),c:c.clone(),end:totalArea});
+  }
+ }
+ if(totalArea>0){
+  const count=Math.min(water.instanceMatrix.count,Math.max(12,Math.ceil(totalArea/2)));
+  for(let i=0;i<count;i++){
+   const target=(i+rnd())/count*totalArea;let lo=0,hi=triangles.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(triangles[mid].end<target)lo=mid+1;else hi=mid;}
+   const tr=triangles[lo],u=Math.sqrt(rnd()),v=rnd(),wa=1-u,wb=u*(1-v),wc=u*v;
+   waterSeeds.push({x:tr.a.x*wa+tr.b.x*wb+tr.c.x*wc,y:tr.a.y*wa+tr.b.y*wb+tr.c.y*wc,z:tr.a.z*wa+tr.b.z*wb+tr.c.z*wc,size:.6+rnd()*.9,phase:rnd()});
   }
  }
  let previous='',last=0,frame=0,flow=0;
@@ -83,7 +93,7 @@ export function createLiveFogR217(T,scene,{width,depth,terrainAt,waterSurfaces=[
    m.material.uniforms.clock.value=flow;
    if(tint?.isColor)m.material.uniforms.tint.value.copy(tint).lerp(new T.Color('#d3d8d9'),.25);
    if(sig!==previous||stepMotion&&m.visible){
-    const h=height[i],spread=i===0?Math.sqrt(w*d/seeds.length)*2.8:Math.max(1,Math.min(7,Math.sqrt(w*d/Math.max(1,seeds.length))*1.2));
+    const h=height[i],spread=i===0?Math.sqrt(w*d/seeds.length)*2.8:Math.max(.5,Math.min(7,Math.sqrt(totalArea/Math.max(1,seeds.length))*3.2));
     m.count=density[i]>0?seeds.length:0;
     for(let j=0;j<m.count;j++){const p=seeds[j];
      const x=i?p.x+Math.sin(flow*.22+p.phase*1.5)*1.4:wrap(p.x+flow*.83,w),z=i?p.z+Math.sin(flow*.16+p.phase)*.65:wrap(p.z+flow*.28,d);
