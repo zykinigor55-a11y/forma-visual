@@ -6,16 +6,17 @@
 (() => {
  'use strict';
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const TIME={loaderEnd:680,logo:380,name:900,descriptor:1120,minShow:reduced?1000:2150,recovery:14000};
+ const TIME={loaderEnd:680,logo:320,name:850,descriptor:1440,minShow:reduced?1600:2350,recovery:14000};
  const root=document.documentElement;
  const screen=document.getElementById('forma-intro');
  if(!screen)return;
  const recover=document.getElementById('formaIntroRecover');
  const status=document.getElementById('formaIntroProgressStatus');
  const waitLabel=document.getElementById('formaIntroWait');
+ const progress=screen.querySelector('.forma-intro-progress-r179');
  const previewHold=new URLSearchParams(location.search).get('previewIntro')==='1';
  let active=false,closing=false,run=0,firstPaint=false,minimumPassed=false;
- let lastFocus=null,paintStart=0;
+ let lastFocus=null,paintStart=0,readyQueued=false;
  let soundEnabled=false,audioContext=null;
  const soundKey='forma-noir-open-sound-v1';
  try{soundEnabled=localStorage.getItem(soundKey)==='on'}catch{}
@@ -106,14 +107,21 @@
  }
  function checkReadiness(){
   if(!active||closing||!minimumPassed)return;
+  if(ready()){
+   screen.classList.add('is-ready');
+   progress?.setAttribute('aria-valuetext','Студия готова');
+   progress?.setAttribute('aria-valuenow','100');
+   if(!previewHold&&!readyQueued){readyQueued=true;addTimeout(()=>revealStudio(),260);}
+   return;
+  }
   if(previewHold)return;
-  if(ready()){revealStudio();return}
   screen.classList.add('is-holding');
   if(waitLabel)waitLabel.textContent='Завершаем подготовку студии';
  }
  function begin(){
   run+=1;clearTimers();
-  active=true;closing=false;firstPaint=false;minimumPassed=false;
+  active=true;closing=false;firstPaint=false;minimumPassed=false;readyQueued=false;
+  screen.classList.remove('is-ready');progress?.removeAttribute('aria-valuenow');progress?.setAttribute('aria-valuetext','Загрузка');
   lastFocus=document.activeElement;
   root.classList.add('forma-intro-pending');
   screen.hidden=false;screen.setAttribute('aria-hidden','false');
