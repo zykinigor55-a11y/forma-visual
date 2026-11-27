@@ -165,6 +165,34 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
 @keyframes forma-r178-trace{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){#forma-intro .forma-intro-geometry-ring,#forma-intro .forma-intro-geometry-draw{animation:none;stroke-dashoffset:0}#forma-intro .forma-intro-measure>.forma-intro-mark{clip-path:none;transition:none}}
 </style>
+<style id="forma-precision-launch-r179">
+/* Approved black splash. Sharp, non-scaling vector strokes and no glow. */
+#forma-intro .forma-intro-center{min-height:360px}
+#forma-intro .forma-intro-loader{top:calc(50% - 83px);gap:0}
+#forma-intro .forma-intro-loader-overline,#forma-intro .forma-intro-loader-bottom{position:absolute;top:0;opacity:0!important;pointer-events:none}
+#forma-intro .forma-intro-measure,#forma-intro .forma-intro-geometry{width:168px;height:168px;filter:none!important}
+#forma-intro .forma-intro-geometry :is(rect,path){fill:none;stroke-linecap:butt;stroke-linejoin:miter;vector-effect:non-scaling-stroke;shape-rendering:geometricPrecision}
+#forma-intro .forma-intro-geometry-ring{stroke:#686b70;stroke-width:1;stroke-dasharray:none;stroke-dashoffset:0;animation:forma-r179-grid .32s ease-out both;opacity:1}
+#forma-intro .forma-intro-geometry-ring-inner,#forma-intro .forma-intro-geometry-axis{stroke:#505359;stroke-width:1;opacity:1;animation:forma-r179-grid .4s ease-out both}
+#forma-intro .forma-intro-geometry-draw,#forma-intro .forma-intro-geometry-center{display:none}
+#forma-intro.is-loader-complete .forma-intro-geometry{opacity:1;transition:none}
+#forma-intro .forma-intro-measure>.forma-intro-mark{width:100px;height:100px;transform:translate(-50%,-50%)!important;filter:none!important;clip-path:inset(0 100% 0 0);transition:clip-path .48s cubic-bezier(.22,1,.36,1),opacity .15s,visibility 0s}
+#forma-intro.is-logo-visible .forma-intro-measure>.forma-intro-mark{clip-path:inset(0);transition:clip-path .48s cubic-bezier(.22,1,.36,1),opacity .15s,visibility 0s}
+#forma-intro .forma-intro-lockup{top:calc(50% + 27px);width:min(440px,96vw)}
+#forma-intro .forma-intro-lockup .forma-intro-name{display:flex;justify-content:center;gap:.21em;font-weight:350;font-size:clamp(37px,9vw,60px);line-height:1.12;letter-spacing:0;padding:0;transform:none!important;transition:none!important}
+#forma-intro .forma-intro-name>span{display:block;opacity:0;clip-path:inset(100% 0 0 0);transform:translateY(6px);transition:none}
+#forma-intro.is-name-visible .forma-intro-name>span{opacity:1;clip-path:inset(0);transform:none;transition:clip-path .38s cubic-bezier(.22,1,.36,1),transform .38s cubic-bezier(.22,1,.36,1),opacity .18s linear;transition-delay:calc(var(--letter)*70ms)}
+#forma-intro .forma-intro-lockup .forma-intro-descriptor{margin-top:15px;color:#b5b5b7;letter-spacing:.16em;font-weight:500;transform:none!important;transition:opacity .3s ease,visibility .3s}
+#forma-intro .forma-intro-progress-r179{display:block;position:relative;width:112px;height:2px;margin-top:32px;background:#35373a;overflow:hidden;opacity:0;transition:opacity .2s}
+#forma-intro.is-descriptor-visible .forma-intro-progress-r179{opacity:1}
+#forma-intro .forma-intro-progress-r179>span{position:absolute;inset:0 auto 0 0;width:35%;background:#dfe0e1;animation:forma-r179-loading 1s ease-in-out infinite}
+#forma-intro.is-ready .forma-intro-progress-r179>span{animation:none;width:100%;transform:none;transition:width .2s ease}
+#forma-intro .forma-intro-wait{top:calc(50% + 178px);font-size:10px}
+@keyframes forma-r179-grid{from{opacity:0}to{opacity:1}}
+@keyframes forma-r179-loading{from{transform:translateX(-100%)}to{transform:translateX(285%)}}
+@media(max-width:760px){#forma-intro .forma-intro-center{min-height:350px}#forma-intro .forma-intro-lockup .forma-intro-name{font-size:clamp(36px,10vw,49px)}#forma-intro .forma-intro-lockup .forma-intro-descriptor{font-size:clamp(7px,2vw,10px);letter-spacing:.12em}}
+@media(prefers-reduced-motion:reduce){#forma-intro .forma-intro-geometry :is(rect,path),#forma-intro .forma-intro-progress-r179>span{animation:none!important}#forma-intro .forma-intro-measure>.forma-intro-mark{clip-path:none;transition:none!important}#forma-intro.is-name-visible .forma-intro-name>span{transition:none!important}}
+</style>
 </head>
 <body>
 <div id="forma-intro" class="forma-intro" role="dialog" aria-modal="true" aria-label="Загрузка студии FORMA" aria-hidden="false">
@@ -175,9 +203,9 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
     <span class="forma-intro-measure" aria-hidden="true">
      <svg class="forma-intro-geometry" viewBox="0 0 132 132" aria-hidden="true">
       <rect x="19" y="19" width="94" height="94" class="forma-intro-geometry-ring"/>
-      <path d="M19 42H113M19 90H113M42 19V113M90 19V113" class="forma-intro-geometry-ring-inner"/>
-      <path d="M66 5V127M5 66H127" class="forma-intro-geometry-axis"/>
-      <path d="M19 35V19H35M97 19H113V35M113 97V113H97M35 113H19V97" class="forma-intro-geometry-draw"/>
+      <path d="M19 42.5H113M19 66H113M19 89.5H113M42.5 19V113M66 19V113M89.5 19V113" class="forma-intro-geometry-ring-inner"/>
+      <path d="M66 5V19M66 113V127M5 66H19M113 66H127" class="forma-intro-geometry-axis"/>
+      <path d="M19 19H113V113H19Z" class="forma-intro-geometry-draw"/>
       <circle cx="66" cy="66" r="1.5" class="forma-intro-geometry-center"/>
      </svg>
      <img class="forma-intro-mark" src="assets/brand/forma-fa-intro-mark.svg" width="120" height="118" alt="" decoding="async">
@@ -185,8 +213,9 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
     <span class="forma-intro-loader-bottom"><span class="forma-intro-loader-dot" aria-hidden="true"></span><span id="formaIntroProgressStatus">Загружаем инструменты</span></span>
    </div>
    <div class="forma-intro-lockup">
-    <span class="forma-intro-name">FORMA</span>
+    <span class="forma-intro-name" aria-label="FORMA"><span aria-hidden="true" style="--letter:0">F</span><span aria-hidden="true" style="--letter:1">O</span><span aria-hidden="true" style="--letter:2">R</span><span aria-hidden="true" style="--letter:3">M</span><span aria-hidden="true" style="--letter:4">A</span></span>
     <span class="forma-intro-descriptor">АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</span>
+    <span class="forma-intro-progress-r179" role="progressbar" aria-label="Инициализация студии" aria-valuetext="Загрузка"><span></span></span>
    </div>
    <div class="forma-intro-wait" id="formaIntroWait" aria-live="polite">Завершаем подготовку студии</div>
   </div>
@@ -194,7 +223,7 @@ html[data-forma-theme="light"] body :is(.mobile-header .forma-brand-mobile-name 
   <button id="formaIntroRecover" class="forma-intro-recover" type="button" hidden>Открыть студию</button>
  </div>
 </div>
-<script src="forma-intro-signature.js?v=R178-precision-reveal"></script>
+<script src="forma-intro-signature.js?v=R179-precision-launch"></script>
 
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M3 9l9 6 9-6M12 15v6M8 21v-7"/></symbol>
