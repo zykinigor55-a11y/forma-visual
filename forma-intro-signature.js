@@ -6,7 +6,7 @@
 (() => {
  'use strict';
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const TIME={loaderEnd:1100,logo:550,name:1550,descriptor:2600,minShow:reduced?2900:4700,recovery:14000};
+ const TIME={loaderEnd:1100,logo:550,name:1550,descriptor:2600,minShow:reduced?2900:4200,recovery:14000};
  const root=document.documentElement;
  const screen=document.getElementById('forma-intro');
  if(!screen)return;
@@ -27,40 +27,55 @@
  let woodBuffer=null,woodCuts=[],woodPromise=null,woodError=false;
  const playingWood=new Set();
  // Select ONE uninterrupted take from the actual recording, not isolated transients.
- function findWoodCuts(buffer){
-  const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.025)),frames=Math.floor(buffer.length/hop);
-  const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+ function findOriginalClicks(buffer){
+  const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.008)),frames=Math.floor(buffer.length/hop);
+  const ch=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
   const levels=new Float32Array(frames);
-  for(let i=0;i<frames;i++){let power=0;for(let k=0;k<hop;k+=4)for(const ch of channels){const v=ch[i*hop+k];power+=v*v}levels[i]=Math.sqrt(power/(Math.ceil(hop/4)*channels.length))}
-  const max=levels.reduce((a,b)=>Math.max(a,b),0);
-  if(max<.0001||frames<1)throw Error('Silent recording');
-  const sorted=Array.from(levels).sort((a,b)=>a-b);
-  const noise=sorted[Math.floor(sorted.length*.2)]||0;
-  const quiet=Math.max(noise*2.2,max*.035);
-  const activity=Math.max(noise*3,max*.065);
-  const edge=(i)=>{let p=0;for(let k=Math.max(0,i-3);k<Math.min(frames,i+4);k++)p=Math.max(p,levels[k]);return p};
-  let best=null;
-  const minFrames=Math.ceil(4.8*rate/hop),maxFrames=Math.floor(6.6*rate/hop);
-  // Choose the take from quiet boundary to quiet boundary, rather than truncating a contact.
-  for(let i=0;i<frames-minFrames;i+=2){
-   const e0=edge(i);if(e0>quiet*2.5)continue;
-   for(let end=i+minFrames;end<=Math.min(frames-1,i+maxFrames);end+=3){
-    const e1=edge(end);if(e1>quiet*2.5)continue;
-    let occupied=0,blocks=0,spread=0;
-    const segment=end-i;const bins=new Array(5).fill(0);
-    for(let k=i;k<end;k++){if(levels[k]>activity){occupied++;bins[Math.min(4,Math.floor((k-i)*5/segment))]++;}if(k>i+1&&levels[k]>activity*1.8&&levels[k]>levels[k-1]*1.5&&levels[k]>levels[k-2]*1.3)blocks++}
-    spread=bins.filter(v=>v>2).length;
-    const density=occupied/segment;
-    const score=spread*2+Math.min(blocks,12)*.15+Math.min(density,.65)*3-(e0+e1)/Math.max(quiet,.00001)*.5-Math.abs(segment*hop/rate-5.5)*.12;
-    if(!best||score>best.score)best={i,end,score};
-   }
+  for(let i=0;i<frames;i++){let power=0;for(let k=0;k<hop;k++)for(const channel of ch){const v=channel[i*hop+k];power+=v*v}levels[i]=Math.sqrt(power/(hop*ch.length))}
+  const max=levels.reduce((a,b)=>Math.max(a,b),0),candidates=[];
+  if(max<.0001)throw Error('Silent source');
+  for(let i=7;i<frames-29;i++){
+   const peak=levels[i],prior=(levels[i-6]+levels[i-5]+levels[i-4]+levels[i-3]+levels[i-2])/5;
+   if(peak<max*.13||peak<levels[i-1]||peak<levels[i+1]||peak<prior*1.9)continue;
+   let tail=0;for(let k=12;k<25;k++)tail+=levels[i+k]/13;
+   const score=(peak-prior)/(Math.max(.008,tail)+peak*.28);
+   candidates.push({i,score,peak});
   }
-  // If the clip has no qualifying boundary, keep a longer uninterrupted take
-  // with the lowest edge energy rather than an isolated sound.
-  if(!best){const span=Math.min(frames,Math.round(5.8*rate/hop));for(let i=0;i+span<=frames;i+=2){const score=-(edge(i)+edge(Math.min(frames-1,i+span)))/max;if(!best||score>best.score)best={i,end:i+span,score}}}
-  const start=best.i*hop/rate,duration=Math.min(buffer.duration-start,(best.end-best.i)*hop/rate);
+  candidates.sort((a,b)=>b.score-a.score);
+  const chosen=[];
+  for(const c of candidates){if(chosen.every(x=>Math.abs(x.i-c.i)*hop/rate>.30)){chosen.push(c);if(chosen.length===12)break}}
+  if(chosen.length<3)throw Error('Not enough separate wooden impacts');
+  // Use separate sharp transients; brief dry tails, with no pitch shift or synthetic bass.
+  return chosen.sort((a,b)=>a.i-b.i).map(c=>{
+   let onset=c.i;while(onset>c.i-6&&levels[onset-1]>c.peak*.12)onset--;
+   const start=Math.max(0,onset*hop/rate-.012);
+   let duration=Math.min(.195,buffer.duration-start);
+   let peak=0;for(const channel of ch)for(let k=Math.floor(start*rate);k<Math.min(buffer.length,Math.floor((start+duration)*rate));k++)peak=Math.max(peak,Math.abs(channel[k]));
+   return {start,duration,peak:Math.max(.03,peak)};
+  });
+ }
+ function findWoodCuts(buffer){
+  const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.02)),frames=Math.floor(buffer.length/hop);
+  const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+  const rms=new Float32Array(frames);
+  for(let i=0;i<frames;i++){let power=0;for(let k=0;k<hop;k+=4)for(const ch of channels){const v=ch[i*hop+k];power+=v*v}rms[i]=Math.sqrt(power/(Math.ceil(hop/4)*channels.length))}
+  const max=rms.reduce((a,b)=>Math.max(a,b),0);
+  if(max<.0001||frames<1)throw Error('Silent recording');
+  const duration=Math.min(1.45,buffer.duration),span=Math.min(frames,Math.max(1,Math.round(duration*rate/hop)));
+  let best=0,bestScore=-Infinity;
+  // One continuous passage of handling wood during the word reveal. Prefer
+  // several separate contacts, audible friction and a quiet ending.
+  for(let i=0;i+span<=frames;i++){
+   let active=0,contacts=0,energy=0;
+   for(let k=i;k<i+span;k++){let v=rms[k];energy+=v*v;if(v>max*.06)active++;if(k>i+1&&v>max*.14&&v>rms[k-1]*1.45&&v>rms[k-2]*1.35)contacts++}
+   let end=0;for(let k=Math.max(i,i+span-5);k<i+span;k++)end+=rms[k]/5;
+   const score=Math.min(contacts,5)*.7+Math.min(active/span,.78)*2+Math.sqrt(energy/span)/max*.6-end/max*1.2;
+   if(score>bestScore){bestScore=score;best=i}
+  }
+  const start=best*hop/rate;
   let peak=0;for(const ch of channels)for(let k=Math.floor(start*rate);k<Math.min(buffer.length,Math.floor((start+duration)*rate));k++)peak=Math.max(peak,Math.abs(ch[k]));
-  return [{start,duration,peak:Math.max(.03,peak)}];
+  let original;try{original=findOriginalClicks(buffer)}catch{original=[{start,duration:Math.min(.195,duration),peak:Math.max(.03,peak)}]}
+  return [original[0],original[1]||original[0],{start,duration,peak:Math.max(.03,peak)}];
  }
  function prepareWood(){
   if(woodBuffer)return Promise.resolve(true);
@@ -86,22 +101,34 @@
   }catch{return Promise.resolve(false)}
  }
  function stopWood(){for(const node of playingWood){try{node.stop()}catch{}}playingWood.clear()}
- function playWoodTake(){
-  if(playedTaps||!woodBuffer||!woodCuts.length||audioContext?.state!=='running')return false;
-  const cut=woodCuts[0],ctx=audioContext,now=ctx.currentTime+.015;
-  const playRun=run;woodFinished=false;woodDeadline=performance.now()+cut.duration*1000+900;
+ function playWoodCut(index,offset,level){
+  if(!woodBuffer||!woodCuts[index]||audioContext?.state!=='running')return false;
+  const cut=woodCuts[index],ctx=audioContext,now=ctx.currentTime+offset;
+  const playRun=run;
   const src=ctx.createBufferSource(),gain=ctx.createGain(),hp=ctx.createBiquadFilter();
   src.buffer=woodBuffer;hp.type='highpass';hp.frequency.value=55;hp.Q.value=.6;
-  // A quiet, audible peak around -15 dBFS, with the original dynamics intact.
-  const volume=Math.min(2.5,.18/cut.peak);
+  const volume=Math.min(2.2,level/cut.peak),fadeIn=index===2?.025:.003,fadeOut=index===2?.12:.025;
   gain.gain.setValueAtTime(0,now);
-  gain.gain.linearRampToValueAtTime(volume,now+.07);
-  gain.gain.setValueAtTime(volume,now+Math.max(.08,cut.duration-.15));
+  gain.gain.linearRampToValueAtTime(volume,now+fadeIn);
+  gain.gain.setValueAtTime(volume,now+Math.max(fadeIn,cut.duration-fadeOut));
   gain.gain.linearRampToValueAtTime(0,now+cut.duration);
   src.connect(hp);hp.connect(gain);gain.connect(ctx.destination);playingWood.add(src);
-  src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect();if(playRun===run){woodFinished=true;checkReadiness()}};
-  addTimeout(()=>{if(playRun===run&&!woodFinished){woodFinished=true;checkReadiness()}},cut.duration*1000+950);
-  src.start(now,cut.start,cut.duration);playedTaps++;return true;
+  src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect();if(playRun===run&&!playingWood.size){woodFinished=true;checkReadiness()}};
+  src.start(now,cut.start,cut.duration);
+  return true;
+ }
+ function playWoodTake(){
+  if(playedTaps||!woodBuffer||woodCuts.length!==3||audioContext?.state!=='running')return false;
+  // Original two distinct FA clicks, followed by an unbroken real wood-handling passage.
+  const elapsed=Math.max(0,(performance.now()-paintStart)/1000);
+  if(elapsed>.50)return false;
+  const first=TIME.logo/1000-elapsed,second=first+.14,word=TIME.name/1000-elapsed;
+  if(!playWoodCut(0,Math.max(.01,first),.17))return false;
+  playWoodCut(1,Math.max(.01,second),.15);
+  playWoodCut(2,Math.max(.01,word),.14);
+  playedTaps=3;woodFinished=false;
+  woodDeadline=performance.now()+(word+woodCuts[2].duration)*1000+500;
+  return true;
  }
  // Touch activation: click/pointerup, not touch pointerdown. Never bypass browser policy.
  function resumeOnInteraction(event){
@@ -210,7 +237,7 @@
    firstPaint=true;paintStart=performance.now();screen.classList.add('is-grid-visible');
    // Start the full take with the visual sequence; never play a truncated tail.
    if(!playWoodTake()&&audioContext?.state==='running'){
-    prepareWood().then(ok=>{if(ok&&id===run&&active&&!closing&&!playedTaps&&performance.now()-paintStart<1500)playWoodTake()});
+    prepareWood().then(ok=>{if(ok&&id===run&&active&&!closing&&!playedTaps&&performance.now()-paintStart<500)playWoodTake()});
    }
    addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
    addTimeout(()=>screen.classList.add('is-logo-visible'),TIME.logo);
@@ -236,7 +263,7 @@
   replay:()=>begin(),
   enter:()=>revealStudio(true),
   get active(){return active},
-  get audioDiagnostics(){return {state:audioContext?.state||'unavailable',source:woodUrl,sourceDuration:woodBuffer?.duration||null,selectedTake:woodCuts[0]||null,played:!!playedTaps,finished:woodFinished,error:woodError}},
+  get audioDiagnostics(){return {state:audioContext?.state||'unavailable',source:woodUrl,sourceDuration:woodBuffer?.duration||null,selectedCuts:woodCuts,played:!!playedTaps,finished:woodFinished,error:woodError}},
   get stage(){return !firstPaint?'preparing':screen.classList.contains('is-logo-visible')?'branding':'loading'}
  };
  begin();
