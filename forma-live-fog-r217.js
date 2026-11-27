@@ -60,6 +60,9 @@ export function createLiveFogR217(T,scene,{width,depth,terrainAt,waterSurfaces=[
  // Sample existing water triangles directly: tiny ponds must work even on a huge parcel.
  const waterSeeds=[],triangles=[],a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),ab=new T.Vector3(),ac=new T.Vector3();let totalArea=0;
  for(const mesh of waterSurfaces){
+  if(Array.isArray(mesh.userData.fogFootprint)&&mesh.userData.fogFootprint.length>=3){
+   const polygon=mesh.userData.fogFootprint;for(let i=1;i<polygon.length-1;i++){const [v,u,q]=[polygon[0],polygon[i],polygon[i+1]],a=new T.Vector3(v.x,mesh.position.y,v.z),b=new T.Vector3(u.x,mesh.position.y,u.z),c=new T.Vector3(q.x,mesh.position.y,q.z);ab.subVectors(b,a);ac.subVectors(c,a);const area=Math.abs(ab.x*ac.z-ab.z*ac.x)*.5;if(area<1e-6)continue;totalArea+=area;triangles.push({a,b,c,end:totalArea});}continue;
+  }
   const g=mesh.geometry,p=g?.attributes?.position;if(!p)continue;mesh.updateWorldMatrix(true,false);
   const index=g.index,n=index?index.count:p.count;
   for(let i=0;i+2<n;i+=3){
