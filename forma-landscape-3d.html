@@ -251,7 +251,7 @@ input[type="number"],input[type="text"],select{padding:8px;border:1px solid #536
 #loadError{display:none;position:absolute;inset:0;background:#12201df3;align-items:center;justify-content:center;padding:36px;text-align:center;z-index:5}
 #loadError strong{font-size:19px}.model-health{padding:11px 12px;margin:11px 0 13px;border:1px solid #6a634f;border-radius:11px;background:linear-gradient(135deg,#31362f,#242c2a)}.model-health strong{font-size:12px;color:#ebcfa5;letter-spacing:.04em}.model-health small{display:block;margin-top:5px;color:#bac7bc;line-height:1.55;font-size:10px}.model-health button{margin-top:7px;background:#514735;color:#f8e1bc;border:1px solid #a18a64;border-radius:7px;padding:7px 10px;font-size:11px}.model-health button:focus-visible{outline:2px solid #edd0a2}.build-info{font-size:10px;padding:6px 8px;margin:6px 0 10px;border-radius:7px;color:#adbcad;line-height:1.45}.build-info.stale{border:1px solid #a78851;background:#493b29;color:#ffe3ae}
 .solar-controls{border:1px solid #655c45;background:linear-gradient(145deg,#31352f,#202928);border-radius:12px;padding:12px 11px;margin-top:12px;display:grid;gap:9px}
-.solar-controls h3{margin:0;color:#e9d4ae;font-size:12px;letter-spacing:.07em}
+ .solar-r215{display:grid;gap:8px;color:#e3e5e6}.solar-r215 .solar-dials{display:grid;grid-template-columns:1fr 1fr;gap:7px}.solar-r215 .solar-dial{background:#1c2224;border:1px solid #ffffff20;border-radius:12px;padding:5px;min-width:0;text-align:center}.solar-r215 svg{display:block;width:100%;max-height:132px;touch-action:none;cursor:grab;user-select:none}.solar-r215 svg:active{cursor:grabbing}.solar-r215 svg text{font:10px sans-serif;fill:#9da7aa}.solar-r215 .solar-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.solar-r215 .solar-presets button{font-size:10px;padding:7px 3px;background:#2a3032;border:1px solid #ffffff18;border-radius:7px;color:#d7dadd}.solar-r215 .solar-presets button[aria-pressed=true]{border-color:#cfb188;color:#f0d2a8;background:#493e30}.solar-r215 .solar-readout{font-size:11px;color:#d9c5a6;font-variant-numeric:tabular-nums}.solar-r215 .solar-title{font-size:10px;color:#aeb6ba}.solar-controls h3{margin:0;color:#e9d4ae;font-size:12px;letter-spacing:.07em}
 .solar-controls label{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#e1e6dc}
 .solar-controls output{color:#ebcb99;font-weight:700;font-variant-numeric:tabular-nums}
 .solar-controls input[type=range]{width:100%;accent-color:#c9ac7c;cursor:pointer;margin:0}
@@ -596,7 +596,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R214</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R215</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -701,9 +701,10 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
  <input id="quickWindowGlow" type="range" min="0" max="100" step="5" value="45">
  <small>Свет работает внутри существующего дома. Рамы, стены и положение мебели не меняются. При AI-рендере сохраняются выбранные значения.</small>
 </section>
+ <div id="solarVisualQuickR215" data-climate-group="sun"></div>
  <div class="scene-climate-sliders">
   <label for="quickSunAzimuth" data-climate-group="sun">Азимут солнца <output id="quickSunAzimuthValue">311°</output></label><input id="quickSunAzimuth" data-climate-group="sun" type="range" min="0" max="359" step="1">
-  <label for="quickSunElevation" data-climate-group="sun">Высота солнца <output id="quickSunElevationValue">67°</output></label><input id="quickSunElevation" data-climate-group="sun" type="range" min="2" max="85" step="1">
+  <label for="quickSunElevation" data-climate-group="sun">Высота солнца <output id="quickSunElevationValue">67°</output></label><input id="quickSunElevation" data-climate-group="sun" type="range" min="-18" max="85" step="1">
   <label for="quickSunStrength" data-climate-group="sun">Яркость солнца <output id="quickSunStrengthValue">100%</output></label><input id="quickSunStrength" data-climate-group="sun" type="range" min="30" max="170" step="5">
   <label for="quickSunSoftness" data-climate-group="shadows">Мягкость теней <output id="quickSunSoftnessValue">2.6</output></label><input id="quickSunSoftness" data-climate-group="shadows" type="range" min="1" max="5" step=".2">
   <label for="quickCloudCover" data-climate-group="atmosphere">Облачность <output id="quickCloudCoverValue">35%</output></label><input id="quickCloudCover" data-climate-group="atmosphere" type="range" min="0" max="100" step="5">
@@ -871,11 +872,11 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
   <small>Заполняющий свет (быстрая имитация глобального GI), мягкие облака и воздушная перспектива; рябь не меняет геометрию воды. Настройки сохраняются для проекта.</small>
  </section>
  <section class="solar-controls" aria-label="Физическое солнце">
-  <h3>☀ ФИЗИЧЕСКОЕ СОЛНЦЕ · 3D</h3>
+  <h3>ПОЛОЖЕНИЕ СОЛНЦА</h3><div id="solarVisualFullR215"></div>
   <label for="sunAzimuth">Направление (азимут) <output id="sunAzimuthValue" for="sunAzimuth">311°</output></label>
   <input type="range" id="sunAzimuth" min="0" max="359" step="1" value="311" aria-label="Азимут солнца в градусах">
   <label for="sunElevation">Высота над горизонтом <output id="sunElevationValue" for="sunElevation">67°</output></label>
-  <input type="range" id="sunElevation" min="2" max="85" step="1" value="67" aria-label="Высота солнца в градусах">
+  <input type="range" id="sunElevation" min="-18" max="85" step="1" value="67" aria-label="Высота солнца в градусах">
   <label for="sunStrength">Яркость солнечного света <output id="sunStrengthValue" for="sunStrength">100%</output></label>
   <input type="range" id="sunStrength" min="30" max="170" step="5" value="100" aria-label="Множитель яркости солнца">
   <label for="sunSoftness">Мягкость теней <output id="sunSoftnessValue" for="sunSoftness">2.6</output></label>
@@ -932,14 +933,14 @@ import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r89.js?v=R89';
 import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R161';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R122';
 import {applyPhysicalLight,applyCanopyDepth} from './forma-physical-light-r71.js?v=R71';
-import {createPathTraceMode,physicalSkyR159} from './forma-path-tracing-r75.js?v=R162';
+import {createPathTraceMode,physicalSkyR159} from './forma-path-tracing-r75.js?v=R215';
 import {exportCyclesJob,CYclesPresets} from './forma-cycles-export-r107.js?v=R123';
 import {createWindSystem,windRipple} from './forma-wind-r91.js?v=R113';
 const windR74=createWindSystem(THREE);let windAmountR74=window.innerWidth<=850?15:25;try{const v=localStorage.getItem('forma-wind-r75');if(v!==null)windAmountR74=Math.max(0,Math.min(100,Number(v)||0));}catch{}
 let pathTraceR72=null,gpuLostR75=false,gpuMenuR75=null,gpuPendingFallbackR140=false,gpuRecoveryR140=false;
-import {updateHDRSky} from './forma-pbr-sky-r64.js?v=R64';
+import {updateHDRSky} from './forma-pbr-sky-r64.js?v=R215';
 import {photographicHDR} from './forma-photo-assets-r73.js?v=R73';
-import {makePhotographicSky,updatePhotographicSky,photographicFog} from './forma-photographic-environment-r71.js?v=R131';
+import {makePhotographicSky,updatePhotographicSky,photographicFog,solarAppearance,continuousSkyPalette} from './forma-photographic-environment-r71.js?v=R215';
 import {installSoftPenumbra,renderPhotorealFrame,applyTurfVariation,createPreviewMeadow,releasePhotorealPipeline} from './forma-photoreal-render-r88.js?v=R88';
 const pbrR63Enabled=new URLSearchParams(location.search).get('pbr')!=='off';
 const r66AOEnabled=pbrR63Enabled&&new URLSearchParams(location.search).get('ao')!=='off';
@@ -984,7 +985,7 @@ import {shrubEditorMarkup,shrubSizePreset} from './forma-landscape-shrub-editor.
 
 import {createFrameGate} from './forma-landscape-3d-frame-gate.js';
 import {applyRealModelShadowBudget} from './forma-landscape-3d-shadow-budget.js';
-import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-3d-sun.js';
+import {solarPreset,solarVector,normalizeSolarSettings} from './forma-landscape-3d-sun.js?v=R215';
 import {duplicateLandscapeObject,rotatedLandscapeObject,validatedLandscapeProps} from './forma-landscape-3d-editing.js';
 import {modelPath} from './forma-landscape-3d-premium.js';
 import {REAL_3D_OBJECTS,REAL_3D_NON_BOTANICAL,REAL_3D_CATEGORIES,REAL_3D_TOTAL,realModelById} from './forma-landscape-3d-library40.js';
@@ -1637,6 +1638,7 @@ function initialize(){
  try{
   const stored=JSON.parse(localStorage.getItem(SOLAR)||'null');
   solarSettings=stored?.time===doc.atmosphere.time?normalizeSolarSettings(stored.settings,doc.atmosphere.time):solarPreset(doc.atmosphere.time);
+  if(doc.atmosphere.time==='night'&&solarSettings.elevation>=0)solarSettings=solarPreset('night');if(doc.atmosphere.time==='blue-hour'&&solarSettings.elevation>=0)solarSettings=solarPreset('blue-hour');
  }catch{solarSettings=solarPreset(doc.atmosphere.time)}
  if(oakTestMode&&pbrR63Enabled&&doc.atmosphere.time==='day'){solarSettings={...solarSettings,azimuth:282,elevation:32,softness:3.8};}
  syncSolarControls();
@@ -3862,6 +3864,7 @@ function setupSceneClimateControls(){
   });
  }
  for(const [quickId,baseId] of QUICK_CLIMATE_LINKS){
+  if(baseId.startsWith('sun'))$('#'+quickId).addEventListener('change',()=>$('#'+baseId).dispatchEvent(new Event('change',{bubbles:true})));
   $('#'+quickId).addEventListener('input',event=>{
    const base=$('#'+baseId);
    base.value=event.currentTarget.value;
@@ -3871,12 +3874,47 @@ function setupSceneClimateControls(){
   });
  }
 }
+function solarBandR215(e,az){
+ if(e<=-12)return 'night';if(e<-.83)return 'blue-hour';if(e>=18)return 'day';
+ return az<180?'morning':'evening';
+}
+function syncSolarVisualR215(){
+ const a=solarSettings.azimuth*Math.PI/180,e=solarSettings.elevation*Math.PI/180,band=solarBandR215(solarSettings.elevation,solarSettings.azimuth);
+ for(const host of document.querySelectorAll('.solar-r215')){
+  const point=(key,x,y)=>{const n=host.querySelector('[data-'+key+']');if(n){n.setAttribute('cx',x.toFixed(2));n.setAttribute('cy',y.toFixed(2));}};
+  point('az-dot',64+45*Math.sin(a),63-45*Math.cos(a));point('el-dot',25+78*Math.cos(e),82-78*Math.sin(e));
+  host.querySelector('.solar-readout').textContent='Азимут '+Math.round(solarSettings.azimuth)+'° · Высота '+Math.round(solarSettings.elevation)+'°';
+  host.querySelectorAll('[data-solar-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.solarPreset===band)));
+ }
+}
+function setupSolarVisualR215(){
+ const markup='<div class="solar-dials"><div class="solar-dial"><div class="solar-title">Направление</div><svg data-axis="azimuth" viewBox="0 0 128 126" aria-label="Компас направления солнца"><circle cx="64" cy="63" r="45" fill="#252d30" stroke="#596269"/><path d="M64 18V108M19 63H109" stroke="#465156" stroke-dasharray="3 4"/><text x="64" y="13" text-anchor="middle">С</text><text x="115" y="66">В</text><text x="64" y="122" text-anchor="middle">Ю</text><text x="3" y="66">З</text><circle data-az-dot cx="64" cy="18" r="7" fill="#eac58b" stroke="#fff0cf" stroke-width="1.5"/></svg></div><div class="solar-dial"><div class="solar-title">Высота над горизонтом</div><svg data-axis="elevation" viewBox="0 0 128 126" aria-label="Дуга высоты солнца"><path d="M8 82H119" stroke="#76818b" stroke-dasharray="3 4"/><path d="M99.18 106.10 A78 78 0 0 0 31.80 4.30" fill="none" stroke="#63747e" stroke-width="2"/><path d="M25 82L25 4" stroke="#465156" stroke-dasharray="3 4"/><text x="8" y="12">90°</text><text x="107" y="78">0°</text><text x="79" y="120">−18°</text><circle data-el-dot cx="103" cy="82" r="7" fill="#eac58b" stroke="#fff0cf" stroke-width="1.5"/></svg></div></div><div class="solar-readout"></div><div class="solar-presets"><button type="button" data-solar-preset="morning">Утро</button><button type="button" data-solar-preset="day">День</button><button type="button" data-solar-preset="evening">Закат</button><button type="button" data-solar-preset="blue-hour">Синий час</button><button type="button" data-solar-preset="night">Ночь</button></div>';
+ for(const id of ['solarVisualQuickR215','solarVisualFullR215']){
+  const host=document.getElementById(id);if(!host)continue;host.classList.add('solar-r215');host.innerHTML=markup;
+  host.querySelectorAll('[data-solar-preset]').forEach(b=>b.onclick=()=>{const sel=$('#time');sel.value=b.dataset.solarPreset;sel.dispatchEvent(new Event('change',{bubbles:true}));syncSolarControls();syncQuickClimateControls();});
+  host.querySelectorAll('svg[data-axis]').forEach(svg=>{
+   let active=null;
+   const move=event=>{
+    const matrix=svg.getScreenCTM();if(!matrix)return;
+    const p=svg.createSVGPoint();p.x=event.clientX;p.y=event.clientY;const q=p.matrixTransform(matrix.inverse());
+    const axis=svg.dataset.axis,isAz=axis==='azimuth';
+    const value=isAz?((Math.round(Math.atan2(q.x-64,63-q.y)*180/Math.PI)%360)+360)%360:Math.round(Math.max(-18,Math.min(85,Math.atan2(82-q.y,q.x-25)*180/Math.PI)));
+    const input=$('#'+(isAz?'sunAzimuth':'sunElevation'));input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));
+   };
+   svg.addEventListener('pointerdown',e=>{if(active!==null||e.button!==0)return;active=e.pointerId;svg.setPointerCapture(e.pointerId);e.preventDefault();move(e);});
+   svg.addEventListener('pointermove',e=>{if(e.pointerId===active){e.preventDefault();move(e);}});
+   for(const event of ['pointerup','pointercancel','lostpointercapture'])svg.addEventListener(event,e=>{if(e.pointerId!==active)return;active=null;const input=$('#'+(svg.dataset.axis==='azimuth'?'sunAzimuth':'sunElevation'));input.dispatchEvent(new Event('change',{bubbles:true}));});
+  });
+ }
+ syncSolarVisualR215();
+}
 function syncSolarControls(){
  for(const [id,key,suffix,scale] of [['sunAzimuth','azimuth','°',1],['sunElevation','elevation','°',1],['sunStrength','strength','%',100],['sunSoftness','softness','',1]]){
   const el=$('#'+id),out=$('#'+id+'Value');
   if(el)el.value=String(Math.round(solarSettings[key]*scale*10)/10);
   if(out)out.textContent=(scale===100?Math.round(solarSettings[key]*scale):solarSettings[key])+suffix;
  }
+ syncSolarVisualR215();
 }
 function saveSolarSettings(){
  try{localStorage.setItem(SOLAR,JSON.stringify({time:doc.atmosphere.time,settings:solarSettings}))}
@@ -3907,7 +3945,8 @@ function applyAtmosphereControls(){
 }
 function updateSun(){
  renderGate.invalidate();
- const val=doc.atmosphere.time,season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
+ const val=solarBandR215(solarSettings.elevation,solarSettings.azimuth),season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
+ const appearance=solarAppearance(solarSettings.elevation);
  if(renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;
  const cfg={day:3,morning:1.75,evening:1.3,'blue-hour':0,night:.15};
  // Temporary modelling light: make small changes in height legible.
@@ -3944,7 +3983,7 @@ function updateSun(){
   updateOutdoorReflectionMap(outdoorReflectionMap,{time:val,weather,
    azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,clouds:sceneAtmosphere.clouds});
   const hdr=pbrR63Enabled?updateHDRSky(THREE,renderer,{time:val,weather,azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,clouds:sceneAtmosphere.clouds}):null;
-  const photo=pbrR63Enabled?photographicHDR(THREE,renderer,{time:val,weather,onReady:()=>{updateSun();renderGate.invalidate();}}):null;
+  const photo=null; // Keep reflections aligned to the live solar position; no unrelated fixed photographic HDR.
   scene.environment=photo||hdr||outdoorReflectionMap;
   scene.userData.formaPhotographicHDRR67=!!photo;
   scene.userData.formaHDRSkyR64=!!hdr;
@@ -3979,6 +4018,14 @@ function updateSun(){
  renderer.toneMappingExposure=atmosphere.exposure*(daylight?.91:1);
  applyPhysicalLight(THREE,{scene,renderer,sun,sky,bounce:bounced,atmosphere,settings:sceneAtmosphere,solarSettings,time:val,weather,modelling:modellingLight,enabled:pbrR63Enabled});
  // Editor approximation of cloud extinction; the final HDR render uses actual directional transmittance instead.
+ if(!modellingLight){
+  const warm=new THREE.Color('#ffad75').lerp(new THREE.Color('#fff5e8'),Math.min(1,Math.max(0,(solarSettings.elevation+1)/24)));
+  sun.color.copy(warm);sun.intensity=3.0*factor*solarSettings.strength*appearance.direct;
+  const palette=continuousSkyPalette(THREE.Color,solarSettings.elevation,weather);
+  if(sky){sky.color.copy(palette[0]).lerp(palette[1],.45);sky.intensity=(.18+1.32*appearance.day+.23*appearance.twilight)*(sceneAtmosphere.globalFill/110);}
+  if(bounced){bounced.color.copy(palette[1]);bounced.intensity=.06+.25*appearance.day;}
+  scene.environmentIntensity=.12+.42*appearance.day+.09*appearance.twilight;
+ }
  sun.userData.formaUncloudedIntensity=sun.intensity;
  if(daylight&&!modellingLight)sun.intensity*=Math.exp(-atmosphere.clouds*(sceneAtmosphere.cloudDensity/100)*(sceneAtmosphere.cloudThickness/100)*(2.5-1.5*sceneAtmosphere.cloudTransmission/100)*.65);
  scene.background=new THREE.Color(atmosphere.background);
@@ -4001,7 +4048,7 @@ function updateSun(){
  // on clear days and no moving distant trees or changing terrain height.
  if(pbrR63Enabled&&state.view!=='2d'){
   const aerial=photographicFog({time:val,weather,haze:atmosphere.haze,siteSize:extent,treeTest:oakTestMode});
-  scene.fog.color.set(aerial.color);scene.fog.near=aerial.near;scene.fog.far=aerial.far;
+  scene.fog.color.copy(continuousSkyPalette(THREE.Color,solarSettings.elevation,weather)[1]);scene.fog.near=aerial.near;scene.fog.far=aerial.far;
   // Keep the isolated foreground specimen crisp even when orbiting from afar.
   if(oakTestMode&&!weatherFog&&!wetFog&&camera){
    const distance=camera.position.distanceTo(controls.target);
@@ -5455,12 +5502,14 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
  const onSolarInput=()=>{
   solarSettings=normalizeSolarSettings({azimuth:Number($('#sunAzimuth').value),elevation:Number($('#sunElevation').value),
    strength:Number($('#sunStrength').value)/100,softness:Number($('#sunSoftness').value)},doc.atmosphere.time);
-  syncSolarControls();syncQuickClimateControls();saveSolarSettings();updateSun();if(renderer&&scene&&camera)renderPhotoFrame();
+  syncSolarControls();syncQuickClimateControls();updateSun();renderGate.invalidate();
  };
+ const finishSolarInput=()=>{onSolarInput();const band=solarBandR215(solarSettings.elevation,solarSettings.azimuth);if(doc.atmosphere.time!==band){push();doc.atmosphere.time=band;$('#time').value=band;saveSolarSettings();save();rebuild();syncNightHomeControls();}else saveSolarSettings();syncQuickClimateControls();};
  for(const id of ['sunAzimuth','sunElevation','sunStrength','sunSoftness']){
   $('#'+id).addEventListener('input',onSolarInput);
-  $('#'+id).addEventListener('change',onSolarInput);
+  $('#'+id).addEventListener('change',finishSolarInput);
  }
+ setupSolarVisualR215();
  $('#sunReset').onclick=()=>{solarSettings=solarPreset(doc.atmosphere.time);syncSolarControls();saveSolarSettings();updateSun();renderPhotoFrame();status('Солнце возвращено к пресету '+$('#time').selectedOptions[0]?.textContent+'.')};
  for(const id of ['globalFill','cloudCover','aerialHaze','nightGlow','waterRipples','cloudDensity','cloudScale','cloudHeight','cloudThickness','cloudTransmission','cloudDetail'])
   $('#'+id).addEventListener('input',applyAtmosphereControls);
