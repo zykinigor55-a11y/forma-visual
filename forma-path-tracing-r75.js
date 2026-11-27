@@ -1,5 +1,5 @@
 import {tuftGeometry,bladeMaps} from './forma-dense-lawn-r106.js?v=R161';
-import {bakeCloudEnvironment} from './forma-photographic-environment-r71.js?v=R131';
+import {bakeCloudEnvironment} from './forma-photographic-environment-r71.js?v=R215';
 /* FORMA R73 — optional actual WebGL GPU path tracing snapshot.
  * three-gpu-pathtracer 0.0.23 + three-mesh-bvh 0.8.3; no mutation of editor scene.
  * Shader-only effects are not representable by the physical tracer.
