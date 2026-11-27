@@ -573,7 +573,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R206</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R207</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -937,6 +937,7 @@ import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from '
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
 import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r201.js?v=R201';
+import {normalizeFence,fenceInspector,createLouverFence} from './forma-landscape-fence-r207.js?v=R207';
 import {createNaturalSakura,sakuraStage,importSakuraBark} from './forma-landscape-3d-sakura-r206.js?v=R206';
 import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R130';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
@@ -1002,9 +1003,10 @@ const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
 const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137','rowan-r138','rowan-r139'].includes(treeTestScene);
 const sakuraTestMode=['sakura-test','sakura-r191','sakura-r192','sakura-r202','sakura-r203','sakura-r204','sakura-r205','sakura-r206'].includes(treeTestScene);
-const treeLineupMode=sakuraTestMode||rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
+const fenceTestMode=['fence-test','fence-r207'].includes(treeTestScene);
+const treeLineupMode=fenceTestMode||sakuraTestMode||rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90;
-const pid=sakuraTestMode?'forma-sakura-isolated-r191':rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
+const pid=fenceTestMode?'forma-fence-isolated-r207':sakuraTestMode?'forma-sakura-isolated-r191':rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
@@ -1129,7 +1131,7 @@ const choices={
  surface:CATALOG.filter(x=>['pavers','fills','lawns'].includes(x.group)).map(x=>[x.id,x.name]),
  terrain:[['raise','Поднять грунт'],['lower','Опустить грунт'],['flatten','Выровнять площадку'],['smooth','Сгладить рельеф'],['roughen','Добавить неровности']],
  build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['carport','Навес для автомобиля'],['gazebo','Беседка'],['greenhouse','Теплица'],['outbuilding','Хозблок']],
- fence:[['fence','Ограждение · линия']],
+ fence:[['fence-louver','Металлическое жалюзи']],
  plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
  water:CATALOG.filter(x=>['pools','ponds'].includes(x.group)).map(x=>[x.id,x.name]),
  landscape:[...CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name])],
@@ -1291,7 +1293,7 @@ function save(){
 function push(){undo.push(JSON.stringify({doc,extra,heightmap}));if(undo.length>60)undo.shift();redo.length=0}
 function restore(prev,dest){if(!prev.length)return;dest.push(JSON.stringify({doc,extra,heightmap}));const v=JSON.parse(prev.pop());doc=v.doc;extra=v.extra;heightmap=v.heightmap;readLawnSettingsR90();const old=cachedGroundTexture;cachedGroundTexture=null;save();rebuild();old?.dispose();lawnPanelSyncR90?.();renderHouseLibrary()}
 function makeTreeLineup(){
- const d=freshProject();if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
+ const d=freshProject();if(fenceTestMode){d.title='FORMA · Забор жалюзи · R207';d.site={width:18,height:18,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}if(lawnTestMode){d.title='FORMA · Газон · R92';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};return normalizeProject(d);}
  if(sakuraTestMode){const p=sakuraStage(35);d.title='FORMA · Сакура · R206';d.site={width:24,height:24,orientation:0,boundary:null};d.objects=[{id:'sakura-test',catalogId:'sakura',type:'trees',x:12,y:12,height:p.height,diameter:p.diameter,rotation:0,variant:1,sakura:{age:p.age}}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'spring',weather:'sunny'};return normalizeProject(d);}
  if(rowanTestMode){const p=rowanStage(35);d.title='FORMA · Рябина обыкновенная · R130';d.site={width:32,height:32,orientation:0,boundary:null};d.objects=[{id:'rowan-test',catalogId:'rowan',type:'trees',x:16,y:16,height:p.height,diameter:p.diameter,rotation:0,variant:1}];d.buildings=[];d.atmosphere={...d.atmosphere,time:'day',season:'summer',weather:'sunny'};const n=normalizeProject(d);n.objects[0].rowan={age:p.age};return n;}
  if(firTestMode){const p=firStage(45);d.title='FORMA · Пихта · R107';d.site={width:40,height:40,orientation:0,boundary:null};d.objects=[{id:'fir-test',catalogId:'ph-fir-sapling',type:'trees',x:20,y:20,height:p.height,diameter:p.diameter,rotation:0,variant:1,fir:{age:p.age}}];d.buildings=[];return normalizeProject(d);}
@@ -1597,7 +1599,7 @@ function initialize(){
  });
  try{doc=normalizeProject(JSON.parse(localStorage.getItem(KEY)||'null'))}catch{doc=freshProject()}
  try{extra=JSON.parse(localStorage.getItem(EXTRA)||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
- if(treeLineupMode){doc=makeTreeLineup();extra=[];if(firTestMode)$('#terrainBuildTag').textContent='R107';if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(lawnTestMode)$('#terrainBuildTag').textContent='R107';}
+ if(treeLineupMode){doc=makeTreeLineup();extra=fenceTestMode?[{id:'fence-demo',type:'fence',points:[{x:6.5,y:9},{x:11.5,y:9}],x:6.5,y:9,rotation:0,fence:normalizeFence()}]:[];if(firTestMode)$('#terrainBuildTag').textContent='R107';if(birchTestMode)$('#terrainBuildTag').textContent='R56';if(lawnTestMode)$('#terrainBuildTag').textContent='R107';}
  readLawnSettingsR90();
  try{plantSpeciesStored=new Set((JSON.parse(localStorage.getItem(FLORA)||'[]')||[]).filter(x=>VEGETATION_SPECIES[x]))}catch{plantSpeciesStored=new Set()}
  try{heightmap=JSON.parse(localStorage.getItem(TERRAIN)||'[]');if(!Array.isArray(heightmap))heightmap=[]}catch{heightmap=[]}
@@ -1691,7 +1693,7 @@ function initialize(){
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
  const previousDrawing=treeLineupMode?null:localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);
- if(lawnEnabledR90)setupLawnPreviewR77();if(treeLineupMode&&!lawnTestMode)setupLineupNavigation();
+ if(lawnEnabledR90)setupLawnPreviewR77();if(treeLineupMode&&!lawnTestMode&&!fenceTestMode)setupLineupNavigation();if(fenceTestMode){state.selected='extra:fence-demo';const ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));const dist=Math.max(6,5/(2*Math.tan(25*Math.PI/180)*ratio)*1.25);camera.position.set(dist*.27,2.15,dist);controls.target.set(0,1,0);controls.update();renderProps();renderGate.invalidate();}
  window.FORMA_3D_READY=true;$('#loadError').style.display='none';readBuildInfo();
  status(window.innerWidth<=850?'3D готов. Откройте «Каталог», выберите объект и нажмите на участок.':'3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
@@ -2580,6 +2582,7 @@ function drawArea(o,entry,key){
 // Legacy 3D-catalogue spruce was actually the same Poly Haven fir_sapling asset.
 function isLegacyFirExtra(type){return ['spruce','ph-fir-sapling','fir_sapling','fir-sapling','fir'].includes(type)}
 function drawExtra(o){
+ if(o.type==='fence'&&o.fence?.style==='louver'){const g=createLouverFence(THREE,o,{pos,terrainAt,mobile:window.innerWidth<=850});mark(g,'extra:'+o.id);root.add(g);return;}
  if(isSurfacePrimitive(o)){
   const v=normalizePrimitive(o),p=pos(v.x,v.y),index=extra.filter(isSurfacePrimitive).indexOf(o);
   const g=createSurfacePrimitive(THREE,v,{season:doc.atmosphere.season,mobile:window.innerWidth<=850,low:autoReduced,detail:index>=0&&index<(window.innerWidth<=850?2:4)});
@@ -3381,6 +3384,7 @@ function renderProps(){
  $('#pineInspectorShortcut').hidden=true;el.classList.remove('pine-inspector-open','forma-shrub-open');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj;
+ if(ref.type==='extra'&&o.type==='fence'&&o.fence?.style==='louver'){el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';el.innerHTML=fenceInspector(o);syncSelectedObjectDock(ref,'Забор · Жалюзи');el.querySelector('[data-fence-action="apply"]').onclick=()=>{const v={...o.fence};for(const field of el.querySelectorAll('[data-fence]'))v[field.dataset.fence]=field.type==='checkbox'?field.checked:field.value;push();o.fence=normalizeFence(v);save();rebuild();renderProps();};el.querySelector('[data-fence-action="delete"]').onclick=deleteSelectedObject;el.querySelector('[data-fence-action="duplicate"]').onclick=duplicateSelected;return;}
  if(ref.type==='extra'&&isSurfacePrimitive(o)){
   el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';
   el.innerHTML=primitiveInspector(o);syncSelectedObjectDock(ref,primitiveLabel(o));
@@ -4469,14 +4473,14 @@ function finishContour(){
  if(tool==='site'&&state.placing==='outline'){
   push();doc.site.boundary=pointMode.map(p=>({...p}));doc.verified=false;
  }else if(tool==='fence'){
-  push();extra.push({id:id(),type:'fence',points:pointMode.map(p=>({...p})),x:pointMode[0].x,y:pointMode[0].y,rotation:0});
+  if(state.placing!=='fence-louver'){status('Выберите тип забора в каталоге.');return;}const fence={id:id(),type:'fence',points:pointMode.map(p=>({...p})),x:pointMode[0].x,y:pointMode[0].y,rotation:0,fence:normalizeFence()};push();extra.push(fence);chooseTool('select');state.selected='extra:'+fence.id;state.mobileObjectCollapsed=false;
  }else if(tool==='water'||tool==='surface'){
   if(!catalog(state.placing)){status('Выберите покрытие или водоём.');return}
   push();doc.objects.push({id:id(),catalogId:state.placing,type:type||'ponds',points:pointMode.map(p=>({...p})),width:1.5,...(desktopPondR139()&&pondModeR139==='brush'?{geometry:'paint'}:{})});
  }else{status('Выберите инструмент рисования.');return}
  pointMode=[];
  if(tool==='water'&&window.innerWidth<=850)chooseTool('select');
- save();rebuild();if(desktopPondR139())syncPondToolsR139();status(tool==='water'?'Водоём добавлен.':'Контур сохранён. Остальные объекты не затронуты.');
+ save();rebuild();if(tool==='fence'){renderProps();revealSelectedInspector();}if(desktopPondR139())syncPondToolsR139();status(tool==='water'?'Водоём добавлен.':'Контур сохранён. Остальные объекты не затронуты.');
 }
 function place(world){
  const point=fromWorld(world),tool=state.tool,entry=catalog(state.placing),type=entry?.group;
@@ -4790,7 +4794,7 @@ async function renderAi(series=null,precision=null,settings=null){
   });
   const sourceLawn=LAWN_PROFILES[lawnTypeR77];
   const lawnTemplate=lawnEnabledR90&&sourceLawn?{profile:lawnTypeR77,visible:doc.atmosphere.season!=='winter',bladeHeightM:sourceLawn.crop?lawnWheatHeightR88/100:sourceLawn.height*lawnHeightR90/100,densityPercent:lawnDensityR90,pressedPercent:lawnPressedR90,flowerPercent:lawnFlowersR88,scope:'parcel-masked',revision:'R106'}:null;
-  const sceneInfo={...measuredPlan,lawnTemplate,raisedSurfaces:extra.filter(isSurfacePrimitive).map(normalizePrimitive),panorama:scene.userData.formaPanorama||null,...(treeLineupMode?{house:null,buildings:[]}:{}),objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
+  const sceneInfo={...measuredPlan,lawnTemplate,raisedSurfaces:extra.filter(isSurfacePrimitive).map(normalizePrimitive),fences:extra.filter(o=>o.type==='fence'&&o.fence?.style==='louver').map(o=>({id:o.id,points:o.points,...normalizeFence(o)})),panorama:scene.userData.formaPanorama||null,...(treeLineupMode?{house:null,buildings:[]}:{}),objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,

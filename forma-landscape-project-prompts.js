@@ -221,6 +221,14 @@ export function panoramaPhotoContract(input){
  return 'DISTANT ENVIRONMENT / REFERENCE IDENTITY LOCK FOR NANO BANANA: '+layers.join(' ')+' Background season '+season+'. Authored haze '+n(p.haze,0,25,10)+'%, blur '+n(p.blur,0,12,2)+'%. Preserve the exact source camera position, framing, horizon and projected pixel coordinates; keep far layer behind near layer and preserve their occlusion. Existing sky, time, weather and sun remain independent. Preserve muted, natural colors, no excessive saturation. No hills or mountains unless explicitly selected. No giant trunks or interior forest viewpoint. Do not reinterpret the screenshot as a new design. '+groundContinuityPrompt(input);
 }
 
+export function fencePhotoContract(input){
+ const fences=Array.isArray(input?.fences)?input.fences.slice(0,80):[];
+ if(!fences.length)return '';
+ const n=(v,a,b,d)=>Number.isFinite(Number(v))?Math.max(a,Math.min(b,Number(v))):d;
+ const colors={anthracite:'anthracite gray',graphite:'graphite',black:'black',brown:'brown',gray:'gray'};
+ return 'FENCE GEOMETRY LOCK: Preserve the exact visible fence path, corner locations, number of posts and bays, stepped terrain levels, slat direction and spacing in the source image. Render real powder-coated metal horizontal angled louvers, subtle folded edges, believable satin metal and contact shadows. No solid wall or vertical pickets; no gates or openings unless authored. '+fences.map((f,i)=>'Fence '+(i+1)+': '+(colors[f.color]||colors.anthracite)+', height '+n(f.height,.8,3,1.8)+' m, max bay width '+n(f.sectionWidth,1,3.5,2.4)+' m, square post '+n(f.postWidth,.06,.18,.1)+' m, slat pitch '+n(f.pitch,.08,.18,.12)+' m, slat tilt '+n(f.angle,15,55,32)+' degrees, '+(f.plinth?'concrete plinth':'no plinth')+'.').join(' ');
+}
+
 export function perspectiveLandscapePrompt(input){
  if(!input||typeof input!=='object')throw Object.assign(Error('Не передан 3D-проект ландшафта.'),{status:400});
  const w=Number(input.site?.width),h=Number(input.site?.height);
@@ -321,6 +329,7 @@ export function perspectiveLandscapePrompt(input){
   'BOTANICAL PHOTO REALITY: Pinus sylvestris at the authored age and selected growth stage has an open red-brown trunk and long green needle bundles; Picea abies is a dense tapered conifer with short evergreen needles; Betula pendula has fine hanging branches and pale black-flecked bark, not needle-like spiky starburst foliage. Fraxinus excelsior must have pinnate compound foliage, Populus tremula small near-circular leaves on a tall pale trunk, Quercus robur lobed leaves. Dryopteris fern leaves grow as separate arching pinnate fronds from one root; Vinca minor forms a low creeping evergreen mat, not a round shrub; Spiraea japonica has fine arching stems and small leaves. Use light-accurate translucent leaf edges, restrained varied autumn colours and depth-shaded branches, no giant leaves or cotton-ball crown blobs. Grass, mulch, gravel and path descriptions correspond strictly to installed scene objects; no unplaced plants, no extra terrain vegetation.',
   'EXACT LUMINAIRE IDENTITIES: Every existing placed garden lamp must retain its chosen catalog housing type, 3D silhouette, mounting height, front/back orientation and emitted light distribution. Preserve circular recessed lights as circular ground fixtures; classical lanterns as tall four-pane lanterns; mushroom fixtures as shaded downward lights; the opal globe as a true glowing sphere. Do not substitute a bollard for a globe, add random bollards around paths or ponds, or increase the lamp count. In daytime lamps are unlit physical housings; at night their warm lighting must originate from the physically present diffuser or lens. No fake floating beams, luminous ground spots or light sources without a visible installed fixture.',
   'EXISTING 3D ASSET LOCK: '+(extraSchedule.length?extraSchedule.join('; '):'No extra models placed')+'. Every listed 3D asset must retain its source visibility and MUST remain in place, same count, dimensions, rotation and physical material; never remove a visible plant or outdoor object as an imagined addition. GLB-origin vegetation must be photographed as its real species, not invented as another plant.',
+  fencePhotoContract(input),
   panoramaPhotoContract(input),
   photoLightingContract(input),
   weatherPhotoContract(input),
