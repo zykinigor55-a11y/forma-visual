@@ -596,7 +596,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R217</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R218</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -1012,8 +1012,8 @@ import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeClou
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
 import {normalizeLiveFog,liveAtmosphereSnapshot,liveAtmospherePrompt} from './forma-live-atmosphere-r216.js?v=R216';
 import {addWeatherSceneVisuals,applyWetMaterialResponse,tickPrecipitationR217} from './forma-landscape-3d-weather-visuals.js?v=R217';
-import {createLiveFogR217} from './forma-live-fog-r217.js?v=R217';
-import {mountLiveWeatherPreviewR217} from './forma-live-weather-preview-r217.js?v=R217';
+import {createLiveFogR217} from './forma-live-fog-r217.js?v=R218';
+import {mountLiveWeatherPreviewR217} from './forma-live-weather-preview-r217.js?v=R218';
 import {attachTreeSnowPreview,refreshAllTreeSnowPreview} from './forma-landscape-3d-snow-canopy.js?v=snow-canopy-opaque-glb-v2-20261122';
 import {normalizeNightInterior,nightInteriorMode} from './forma-landscape-3d-night-interior.js?v=bright-night-v2-20261122';
 import {normalizeRoofGarland} from './forma-landscape-roof-garlands.js';
@@ -3877,11 +3877,16 @@ function currentLiveAtmosphereR216(){
 function setupLiveFogR216(){
  try{liveFogR216=normalizeLiveFog(JSON.parse(localStorage.getItem(ATMO+'-live-fog-r216')||'{}'));}catch{}
  const fields=[['groundDensity','Туман над землёй',0,100,5,'%'],['groundHeight','Высота над землёй',.1,5,.1,' м'],['waterDensity','Туман над водой',0,100,5,'%'],['waterHeight','Высота над водой',.1,5,.1,' м'],['driftSpeed','Скорость движения',0,100,5,'%']];
- const sync=()=>{for(const [k,,a,b,step,u] of fields){document.querySelectorAll('[data-live-fog="'+k+'"]').forEach(el=>{el.value=liveFogR216[k];});document.querySelectorAll('[data-live-fog-value="'+k+'"]').forEach(el=>{el.textContent=(u===' м'?liveFogR216[k].toFixed(1):liveFogR216[k])+u;});}};
+ const sync=()=>{document.querySelectorAll("[data-fog-toggle]").forEach(b=>{const on=liveFogR216[b.dataset.fogToggle]>0;b.setAttribute("aria-pressed",String(on));b.style.borderColor=on?"#c6ad85":"";b.style.color=on?"#e8d1ad":"";});for(const [k,,a,b,step,u] of fields){document.querySelectorAll('[data-live-fog="'+k+'"]').forEach(el=>{el.value=liveFogR216[k];});document.querySelectorAll('[data-live-fog-value="'+k+'"]').forEach(el=>{el.textContent=(u===' м'?liveFogR216[k].toFixed(1):liveFogR216[k])+u;});}};
  for(const id of ['liveFogQuickR216','liveFogFullR216']){
   const host=document.getElementById(id);if(!host)continue;
-  host.innerHTML='<strong>ЖИВАЯ АТМОСФЕРА</strong><div class="weather-strength-sliders">'+fields.map(([k,l,a,b,step])=>'<label>'+l+' <output data-live-fog-value="'+k+'"></output></label><input aria-label="'+l+'" data-live-fog="'+k+'" type="range" min="'+a+'" max="'+b+'" step="'+step+'">').join('')+'</div><small>Параметры тумана автоматически передаются в AI-фото и видео. Туман над водой применяется только к существующим водоёмам.</small>';
+  host.innerHTML='<strong>ЖИВАЯ АТМОСФЕРА</strong><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:6px 0" role="group" aria-label="Быстрый выбор погоды">'+[['sunny','Солнце'],['overcast','Облака'],['rain','Дождь'],['after-rain','После дождя'],['snow','Снег'],['fog','Дымка']].map(([v,l])=>'<button type="button" data-live-weather="'+v+'" style="font-size:11px;padding:5px 2px;min-width:0">'+l+'</button>').join('')+'</div><div style="display:flex;gap:5px;margin:8px 0"><button type="button" data-fog-toggle="groundDensity" style="flex:1">Туман над землёй</button><button type="button" data-fog-toggle="waterDensity" style="flex:1">Над водой</button></div><div class="weather-strength-sliders">'+fields.map(([k,l,a,b,step])=>'<label data-fog-field="'+k+'">'+l+' <output data-live-fog-value="'+k+'"></output></label><input data-fog-field="'+k+'" aria-label="'+l+'" data-live-fog="'+k+'" type="range" min="'+a+'" max="'+b+'" step="'+step+'">').join('')+'</div><small>Эффекты видны в 3D и автоматически передаются в AI-фото и видео. Туман над водой действует только на существующие водоёмы.</small>';
   const preview=document.createElement('div');preview.style.cssText='margin:4px 0 8px';host.querySelector('strong').after(preview);mountLiveWeatherPreviewR217(preview,currentLiveAtmosphereR216);
+  host.querySelectorAll('[data-live-weather]').forEach(button=>button.onclick=()=>{
+   const weather=$('#weather');weather.value=button.dataset.liveWeather;weather.dispatchEvent(new Event('change',{bubbles:true}));syncQuickClimateControls();
+   if(weather.value==='snow'&&doc.atmosphere.effects.snowfall===0){const el=document.querySelector('#quickWeatherSnowfall');if(el){el.value='35';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}}
+  });
+  host.querySelectorAll('[data-fog-toggle]').forEach(button=>button.onclick=()=>{const key=button.dataset.fogToggle,el=host.querySelector('[data-live-fog="'+key+'"]');el.value=liveFogR216[key]>0?'0':'45';el.dispatchEvent(new Event('input',{bubbles:true}));});
   host.querySelectorAll('[data-live-fog]').forEach(el=>el.addEventListener('input',()=>{liveFogR216=normalizeLiveFog({...liveFogR216,[el.dataset.liveFog]:el.value});sync();try{localStorage.setItem(ATMO+'-live-fog-r216',JSON.stringify(liveFogR216));}catch{}tickLiveFogR217(performance.now());renderGate.invalidate();}));
  }
  sync();
