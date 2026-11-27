@@ -573,7 +573,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R193</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R194</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -903,6 +903,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <script defer src="./forma-render-queue-client.js"></script>
 <script type="module">
 import * as THREE from 'three';
+import {isSurfacePrimitive,normalizePrimitive,primitiveLabel,primitiveInspector,createSurfacePrimitive,tickRaisedGrass} from './forma-raised-surfaces-r194.js?v=R194';
 import {LAWN_PROFILES,lawnBlade} from './forma-lawn-profiles-r89.js?v=R89';
 import {createDenseLawn,tickDenseLawn,lawnTerrainMicro,reanchorDenseLawn,setCloverFlowerAmount} from './forma-dense-lawn-r106.js?v=R161';
 import {calibrateScenePBR,balanceOutdoorPBR} from './forma-pbr-engine-r70.js?v=R122';
@@ -1117,7 +1118,7 @@ const MODEL_FAVORITES_KEY='forma-3d-model-favorites-v1',MODEL_RECENT_KEY='forma-
 function readModelList(key){try{const val=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(val)?val.filter(id=>typeof id==='string'&&Boolean(realModelById(id))):[]}catch{return []}}
 function saveModelList(key,ids){try{localStorage.setItem(key,JSON.stringify(ids))}catch{}}
 const toolList=[
- ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['terrain','Рельеф','⛰'],
+ ['select','Управление','↗'],['site','Участок','▣'],['surface','Поверхности','▤'],['primitives','Примитивы','▱'],['terrain','Рельеф','⛰'],
  ['build','Строения','⌂'],['fence','Ограждения','╫'],['plant','Озеленение','♧'],['water','Вода','≈'],
  ['landscape','Элементы','⬡'],['small','Малые формы','⌘'],['furniture','Уличная мебель','▧'],
  ['transport','Транспорт','▱'],['light','Освещение','☼'],['creatures','Персонажи и животные','♟'],['models40','3D-каталог · 24','◆']
@@ -1253,7 +1254,7 @@ function syncMobilePlacementHint(){
  const finish=$('#mobilePondFinish');const draft=$('#draftActions');if(draft&&state.tool==='water')draft.hidden=window.innerWidth>850?(!desktopPondR139()||pondModeR139!=='polygon'):!water;
  finish.hidden=!water;finish.disabled=pointMode.length<3;
  const active=window.innerWidth<=850&&state.tool!=='select'&&!!state.placing&&
-  ['light','plant','landscape','models40','creatures','build','furniture','water'].includes(state.tool);
+  ['light','plant','landscape','models40','creatures','build','furniture','water','primitives'].includes(state.tool);
  hint.hidden=!active;
  if(!active)return;
  const entry=catalog(state.placing)||realModelById(state.placing)||creatureById(state.placing);
@@ -2578,6 +2579,11 @@ function drawArea(o,entry,key){
 // Legacy 3D-catalogue spruce was actually the same Poly Haven fir_sapling asset.
 function isLegacyFirExtra(type){return ['spruce','ph-fir-sapling','fir_sapling','fir-sapling','fir'].includes(type)}
 function drawExtra(o){
+ if(isSurfacePrimitive(o)){
+  const v=normalizePrimitive(o),p=pos(v.x,v.y),index=extra.filter(isSurfacePrimitive).indexOf(o);
+  const g=createSurfacePrimitive(THREE,v,{season:doc.atmosphere.season,mobile:window.innerWidth<=850,low:autoReduced,detail:index>=0&&index<(window.innerWidth<=850?2:4)});
+  g.position.set(p.x,terrainAt(p.x,p.z)+v.elevation,p.z);g.rotation.y=v.rotation*Math.PI/180;mark(g,'extra:'+o.id);root.add(g);return;
+ }
  if(isLegacyFirExtra(o.type)){
   loadCuratedAdultTree('ph-fir-sapling');
   const width=Number(o.width)||Number(o.diameter)||realModelById(o.type)?.width||2;
@@ -2782,6 +2788,11 @@ function chooseTool(t){
  const desktopSurface=t==='surface'&&window.innerWidth>850,desktopPlant=t==='plant'&&window.innerWidth>850;
  const arr=desktopSurface?(choices[t]||[]).filter(c=>['pavers','fills'].includes(catalog(c[0])?.group)):(choices[t]||[]);
  canvas.classList.toggle('tool-brush',['surface','plant','terrain'].includes(t));
+ if(t==='primitives'){
+ $('#library').innerHTML='<div class="real-model-intro">Независимые поверхности для террас, крыши, клумб и газонов на разных отметках. Выберите форму, затем место установки.</div><button type="button" class="choice" data-item="primitive-plane"><span>Плоскость</span><b class="asset-add">＋</b></button><button type="button" class="choice" data-item="primitive-box"><span>Куб / прямоугольный блок</span><b class="asset-add">＋</b></button>';
+ $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{state.placing=b.dataset.item;$('#library').querySelectorAll('[data-item]').forEach(el=>el.classList.toggle('active',el===b));syncMobilePlacementHint();status('Нажмите на участок или верхнюю поверхность дома. Высоту можно уточнить в свойствах.');});
+ return;
+ }
  if(t==='creatures'){renderCreatureCatalog();return}
  $('#library').innerHTML=t==='select'?'<p>Коснитесь газона для настройки покрытия или выберите дерево из списка.</p><div class="pine-object-list"><strong>ДЕРЕВЬЯ НА УЧАСТКЕ</strong>'+
  doc.objects.filter(o=>catalog(o.catalogId)?.group==='trees').map((o,i)=>'<button type="button" data-select-pine="'+o.id+'">🌲 '+(catalog(o.catalogId)?.name||'Дерево')+' '+(i+1)+' · '+Number(o.height||14).toFixed(1)+' м · параметры</button>').join('')+
@@ -3368,7 +3379,21 @@ function renderProps(){
  if(!ref?.obj){syncSelectedObjectDock(null);document.body.dataset.mobilePine='false';document.body.dataset.objectInspector='false';$('#mobileObjectEditorHeader').hidden=true;$('#mobilePineSelect')?.classList.remove('active');
  $('#pineInspectorShortcut').hidden=true;el.classList.remove('pine-inspector-open','forma-shrub-open');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
- const o=ref.obj, fields=['pine','spruce'].includes(o.catalogId)?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
+ const o=ref.obj;
+ if(ref.type==='extra'&&isSurfacePrimitive(o)){
+  el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';
+  el.innerHTML=primitiveInspector(o);syncSelectedObjectDock(ref,primitiveLabel(o));
+  el.querySelectorAll('[data-primitive]').forEach(input=>input.onchange=()=>{
+   const k=input.dataset.primitive,v=k==='lawn'?input.value:Number(input.value);
+   if(k!=='lawn'&&(!Number.isFinite(v)||input.value==='')){renderProps();return;}
+   if((k==='x'||k==='y')&&!inParcel({x:k==='x'?v:o.x,y:k==='y'?v:o.y},doc.site)){status('Координаты должны находиться внутри участка.');renderProps();return;}
+   push();Object.assign(o,normalizePrimitive({...o,[k]:v}));save();rebuild();renderProps();
+  });
+  el.querySelector('[data-primitive-action="delete"]').onclick=deleteSelectedObject;
+  el.querySelector('[data-primitive-action="duplicate"]').onclick=duplicateSelected;
+  return;
+ }
+ const fields=['pine','spruce'].includes(o.catalogId)?[]:[['x','X, м',o.x],['y','Y, м',o.y],['rotation','Поворот, °',o.rotation||0]];
  if(ref.type==='building'||ref.type==='house')fields.push(['width','Ширина, м',o.width],['height','Длина, м',o.height],['roofRise','Высота кровли, м',o.roofRise||1.4]);
  else if(o.type==='pools'){const fixed=o.catalogId==='pool-fixed';fields.push(['diameter',fixed?'Длина, м':'Диаметр, м',o.diameter],['height',fixed?'Глубина, м':'Высота, м',o.height]);if(fixed)fields.push(['width','Ширина, м',o.width]);}
  else if('diameter'in o&&!['pine','spruce'].includes(o.catalogId))fields.push(['diameter','Диаметр, м',o.diameter],['height','Высота, м',o.height||1]);
@@ -4295,6 +4320,13 @@ function hitTerrainHeightfield(ray){
  for(let i=1;i<=count;i++){const t=lo+(hi-lo)*i/count,v=f(t);if(pv>=0&&v<=0){let a=prev,b=t;for(let j=0;j<12;j++){const m=(a+b)/2;if(f(m)>0)a=m;else b=m}return ray.at((a+b)/2,new THREE.Vector3())}prev=t;pv=v;}
  return null;
 }
+function hitPrimitivePlacementR194(e){
+ mousePosition(e);camera.updateMatrixWorld();raycaster.setFromCamera(mouse,camera);
+ const groups=pickables.filter(g=>g.visible&&(/^(house|building):/.test(g.userData.key||'')||isSurfacePrimitive(selectable(g.userData.key)?.obj)));
+ const hits=raycaster.intersectObjects(groups,true);
+ for(const hit of hits){if(!hit.face)continue;const n=hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld));if(n.y>.90&&inParcel(fromWorld(hit.point),doc.site))return hit.point;}
+ return hitGround(e);
+}
 function hitObj(e){mousePosition(e);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables.filter(g=>g.visible),true).find(h=>{let n=h.object;while(n){if(!n.visible)return false;if(n.userData.key)break;n=n.parent;}return true;});if(!hit)return null;let obj=hit.object;while(obj&&!obj.userData.key)obj=obj.parent;return obj?.userData.key||null}
 
 // The turf instances intentionally have no raycast. Pick the actual ground
@@ -4447,6 +4479,12 @@ function finishContour(){
 }
 function place(world){
  const point=fromWorld(world),tool=state.tool,entry=catalog(state.placing),type=entry?.group;
+ if(tool==='primitives'&&['primitive-plane','primitive-box'].includes(state.placing)){
+  const box=state.placing==='primitive-box',base=terrainAt(world.x,world.z);
+  const elevation=Number.isFinite(world.y)?Math.max(box?1:.04,world.y-base+.025):box?1:.04;
+  const o=normalizePrimitive({id:id(),type:state.placing,x:point.x,y:point.y,width:box?2:3,depth:box?2:3,elevation,thickness:box?1:.04,rotation:0,lawn:'none'});
+  push();extra.push(o);chooseTool('select');state.selected='extra:'+o.id;state.mobileObjectCollapsed=false;save();rebuild();renderProps();revealSelectedInspector();status('Поверхность создана. Выберите газон и отметку высоты.');return;
+ }
  if(tool==='terrain'){if(!state.placing)state.placing='raise';push();modifyTerrain(world);save();return}
  if(!state.placing){status('Сначала выберите элемент из библиотеки.');return}
  if(tool==='site'&&state.placing==='outline'){
@@ -4751,7 +4789,7 @@ async function renderAi(series=null,precision=null,settings=null){
   });
   const sourceLawn=LAWN_PROFILES[lawnTypeR77];
   const lawnTemplate=lawnEnabledR90&&sourceLawn?{profile:lawnTypeR77,visible:doc.atmosphere.season!=='winter',bladeHeightM:sourceLawn.crop?lawnWheatHeightR88/100:sourceLawn.height*lawnHeightR90/100,densityPercent:lawnDensityR90,pressedPercent:lawnPressedR90,flowerPercent:lawnFlowersR88,scope:'parcel-masked',revision:'R106'}:null;
-  const sceneInfo={...measuredPlan,lawnTemplate,...(treeLineupMode?{house:null,buildings:[]}:{}),objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
+  const sceneInfo={...measuredPlan,lawnTemplate,raisedSurfaces:extra.filter(isSurfacePrimitive).map(normalizePrimitive),panorama:scene.userData.formaPanorama||null,...(treeLineupMode?{house:null,buildings:[]}:{}),objects:photoObjects,cameraMode:'3d-perspective',cameraView:state.view,
    cameraPosition:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
@@ -5160,7 +5198,7 @@ const up=e=>{
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
  if(!tapCancelled&&movement<(finger?14:5)){
   if(state.tool==='select'){
-   const desktopHit=window.innerWidth>850?hitObj(e):null;
+   const directHitR194=hitObj(e);const desktopHit=window.innerWidth>850||isSurfacePrimitive(selectable(directHitR194)?.obj)?directHitR194:null;
    if(!desktopHit&&lawnIntegratedR90&&hitLawnR92(e)){openLawnPanelR90();status('Настройки газона участка.');state.down=null;return;}
    const key=desktopHit||hitTreeOnMobile(e);
    state.selected=key;
@@ -5169,7 +5207,7 @@ const up=e=>{
    renderProps();
    if(key){if(lawnIntegratedR90&&catalog(selectable(key)?.obj?.catalogId)?.group==='lawns'){openLawnPanelR90();}else{if(lawnIntegratedR90&&lawnPanelR90)lawnPanelR90.style.display='none';if((firTestMode||rowanTestMode)&&$('#forma-lineup-panel-r74'))$('#forma-lineup-panel-r74').style.display='flex';revealSelectedInspector();}}
    else {const groundHit=lawnIntegratedR90?hitGround(e):null;if(groundHit&&lawnAllowedR90(groundHit.x,groundHit.z)){if(finger)activateMobilePanel('scene');openLawnPanelR90();status('Настройки газона участка.');}else{if(lawnIntegratedR90&&lawnPanelR90)lawnPanelR90.style.display='none';if(finger){activateMobilePanel('scene');status('Коснитесь объекта, чтобы открыть его настройки.');}}}
-  }else{const p=hitGround(e);if(p)place(p);else if(finger)status('Коснитесь земли внутри границ участка.');}
+  }else{const p=state.tool==='primitives'?hitPrimitivePlacementR194(e):hitGround(e);if(p)place(p);else if(finger)status('Коснитесь земли внутри границ участка.');}
  }
  state.down=null;
 };
@@ -5419,7 +5457,7 @@ function animate(now=0){
  }
  const windWeather=({sunny:1,overcast:1.05,'after-rain':1.18,rain:1.40,snow:.85,fog:.55})[doc.atmosphere.weather]||1;
  const windStrength=Math.min(1.35,Math.pow(windAmountR74/100,.78)*windWeather);
- if(scene&&!document.hidden&&state.view!=='2d'&&now-(scene.userData.lastWindR74||0)>=Math.max(0,interval-2)){scene.userData.lastWindR74=now;const moving=windR74.tick(now,windStrength);const grassMoving=tickDenseLawn(turfDetail,now,windStrength);const waves=windRipple(THREE,waterSurfaces,waterRippleTexture,now,sceneAtmosphere.ripples,windStrength);if(((moving||grassMoving)&&windAmountR74>0)||waves&&sceneAtmosphere.ripples>0||scene.userData.previousWindR74!==windAmountR74){if(renderer?.shadowMap&&moving&&(!phone&&now-lastWindShadowR106>180||phone&&!economy&&now-lastWindShadowR106>1000)){renderer.shadowMap.needsUpdate=true;lastWindShadowR106=now;}renderGate.invalidate();}scene.userData.previousWindR74=windAmountR74;}
+ if(scene&&!document.hidden&&state.view!=='2d'&&now-(scene.userData.lastWindR74||0)>=Math.max(0,interval-2)){scene.userData.lastWindR74=now;const moving=windR74.tick(now,windStrength);const grassMoving=tickDenseLawn(turfDetail,now,windStrength);let raisedGrassMoving=false;for(const node of root.children)if(node.userData.raisedGrass)raisedGrassMoving=tickRaisedGrass(node,now,windStrength)||raisedGrassMoving;const waves=windRipple(THREE,waterSurfaces,waterRippleTexture,now,sceneAtmosphere.ripples,windStrength);if(((moving||grassMoving||raisedGrassMoving)&&windAmountR74>0)||waves&&sceneAtmosphere.ripples>0||scene.userData.previousWindR74!==windAmountR74){if(renderer?.shadowMap&&moving&&(!phone&&now-lastWindShadowR106>180||phone&&!economy&&now-lastWindShadowR106>1000)){renderer.shadowMap.needsUpdate=true;lastWindShadowR106=now;}renderGate.invalidate();}scene.userData.previousWindR74=windAmountR74;}
  const activeWalk=state.view==='walk'&&walked;
  // Pixel-space selection, not a fixed world distance. Hysteresis avoids
  // foliage popping during strolls; update at most ~4 times per second.
