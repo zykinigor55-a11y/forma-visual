@@ -475,13 +475,14 @@ body[data-active-tool]:not([data-active-tool=select]) #lawnShortcutR92,body[data
  #sceneClimatePanel .scene-climate-heading{position:relative;flex:0 0 auto;min-height:42px;margin:0!important;padding:5px 7px 4px 11px;border-bottom:1px solid #4d5056;letter-spacing:0;font-size:12px;touch-action:none;user-select:none}
  #sceneClimatePanel .climate-grip{display:block;position:absolute;top:4px;left:calc(50% - 15px);width:30px;height:3px;border-radius:4px;background:#85868b;pointer-events:none}
  #sceneClimatePanel #sceneClimateClose{flex:none;width:44px;min-width:44px;min-height:40px!important;height:40px;padding:0!important;font-size:19px;line-height:1;touch-action:manipulation}
- #sceneClimatePanel #sceneClimateTabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px 7px;flex:none;background:#25282e}
+ #sceneClimatePanel #sceneClimateTabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px 7px;flex:none;background:#25282e}
  #sceneClimatePanel #sceneClimateTabs button{min-height:35px!important;padding:4px 2px!important;font-size:11px;line-height:1.15;white-space:normal;touch-action:manipulation}
  #sceneClimatePanel #sceneClimateTabs button[aria-pressed=true]{background:#d0bd9f!important;color:#25282e!important;border-color:#d0bd9f!important}
  #sceneClimatePanel #sceneClimateBody{display:block;min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain;padding:3px 10px 7px;scrollbar-width:thin;touch-action:pan-y}
  #sceneClimatePanel[data-climate-tab=sun] [data-climate-group]:not([data-climate-group=sun]),
  #sceneClimatePanel[data-climate-tab=atmosphere] [data-climate-group]:not([data-climate-group=atmosphere]),
- #sceneClimatePanel[data-climate-tab=shadows] [data-climate-group]:not([data-climate-group=shadows]){display:none!important}
+ #sceneClimatePanel[data-climate-tab=shadows] [data-climate-group]:not([data-climate-group=shadows]),
+ #sceneClimatePanel[data-climate-tab=panorama] [data-climate-group]:not([data-climate-group=panorama]){display:none!important}
  #sceneClimatePanel .scene-climate-sliders{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:2px 9px}
  #sceneClimatePanel .scene-climate-sliders label{margin:0!important;min-height:32px;align-items:center;gap:4px;font-size:11px!important}
  #sceneClimatePanel .scene-climate-sliders output{font-size:11px;flex:none}
@@ -572,7 +573,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R192</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R193</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -614,12 +615,22 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <button type="button" id="sceneClimateButton" aria-controls="sceneClimatePanel" aria-expanded="false" aria-label="Открыть настройки солнца, времени суток и погоды">☀ Солнце и погода</button>
 <section id="sceneClimatePanel" class="scene-climate-panel" data-climate-tab="sun" role="region" aria-label="Настройки солнца и погоды" hidden>
  <div class="scene-climate-heading"><strong>☀ Солнце и погода</strong><span class="climate-grip" aria-hidden="true"></span><button type="button" id="sceneClimateClose" aria-label="Закрыть настройки погоды">✕</button></div>
- <div id="sceneClimateTabs" role="group" aria-label="Разделы настроек"><button type="button" data-climate-tab="sun" aria-pressed="true">Солнце</button><button type="button" data-climate-tab="atmosphere" aria-pressed="false">Атмосфера</button><button type="button" data-climate-tab="shadows" aria-pressed="false">Тени</button></div>
+ <div id="sceneClimateTabs" role="group" aria-label="Разделы настроек"><button type="button" data-climate-tab="sun" aria-pressed="true">Солнце</button><button type="button" data-climate-tab="atmosphere" aria-pressed="false">Атмосфера</button><button type="button" data-climate-tab="shadows" aria-pressed="false">Тени</button><button type="button" data-climate-tab="panorama" aria-pressed="false">Окружение</button></div>
  <div id="sceneClimateBody"><div class="scene-climate-grid" data-climate-group="atmosphere">
   <label for="quickTime">Время суток</label><select id="quickTime"><option value="day">День</option><option value="morning">Утро</option><option value="evening">Закат</option><option value="blue-hour">Синий час</option><option value="night">Ночь</option></select>
   <label for="quickSeason">Сезон</label><select id="quickSeason"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
   <label for="quickWeather">Погода</label><select id="quickWeather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
  </div>
+ <section id="panoramaR193panel" data-climate-group="panorama" class="weather-strength-section">
+ <strong>ПАНОРАМА 360° · ДАЛЬНИЙ ПЛАН</strong>
+ <label for="panoramaR193type">Окружение</label><select id="panoramaR193type"><option value="off">Без окружения</option><option value="conifer">Хвойный лес</option><option value="deciduous">Лиственный лес</option><option value="mixed">Смешанный лес</option><option value="village">Посёлок</option><option value="city">Город</option><option value="field">Поле</option><option value="lake">Озеро</option><option value="mountain">Холмы и горы</option><option value="industrial">Промышленная зона</option><option value="park">Парковая зона</option></select>
+ <div class="weather-strength-sliders">
+ <label for="panoramaR193rotation">Поворот <output id="panoramaR193rotationValue"></output></label><input id="panoramaR193rotation" type="range" min="0" max="360" step="1"><label for="panoramaR193radius">Радиус <output id="panoramaR193radiusValue"></output></label><input id="panoramaR193radius" type="range" min="50" max="1000" step="10"><label for="panoramaR193blur">Размытие <output id="panoramaR193blurValue"></output></label><input id="panoramaR193blur" type="range" min="0" max="100" step="1"><label for="panoramaR193haze">Дымка горизонта <output id="panoramaR193hazeValue"></output></label><input id="panoramaR193haze" type="range" min="0" max="100" step="1">
+ </div><label for="panoramaR193season">Сезон окружения</label><select id="panoramaR193season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
+ <small id="panoramaR193status" role="status" aria-live="polite">Подготовка панорамы…</small>
+ <div class="scene-climate-actions"><button type="button" id="panoramaR193reset">Сбросить</button><button type="button" id="panoramaR193retry">Перезагрузить</button></div>
+ <small>Фото: Poly Haven CC0. Сезоны — цветовая адаптация. Небо и солнце независимы.</small>
+ </section>
  <section data-climate-group="atmosphere" class="weather-strength-section"><strong>ВЕТЕР</strong><div class="weather-strength-sliders"><label for="quickWindR91">Сила ветра <output id="quickWindR91Value">15%</output></label><input id="quickWindR91" type="range" min="0" max="100" step="1" value="15"></div><small>Трава, цветы, листья, ветви и рябь воды.</small></section>
  <section id="quickWeatherSNOW" data-climate-group="atmosphere" class="weather-strength-section" data-weather-section="snow" hidden>
  <strong>❄ СНЕГ · СИЛА ЭФФЕКТА</strong>
@@ -923,6 +934,7 @@ import {createDetailedFir,woodTexture,adoptFirPhotoMaps,firStage} from './forma-
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
+import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r193.js?v=R193';
 import {createNaturalSakura,sakuraStage} from './forma-landscape-3d-sakura-r192.js?v=R192';
 import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R130';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
@@ -994,6 +1006,9 @@ const pid=sakuraTestMode?'forma-sakura-isolated-r191':rowanTestMode?'forma-rowan
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
+let panoramaR193=null,panoramaPanelR193=null,panoramaSettingsR193=normalizePanorama();
+const panoramaKeyR193='forma-panorama-r193-'+pid;
+function syncPanoramaR193(){if(!panoramaR193||!scene||!doc)return;panoramaR193.apply(panoramaSettingsR193,{time:doc.atmosphere.time,weather:doc.atmosphere.weather,fog:scene.fog?.color||'#b8c7c4',side:squareTerrainSide(doc.site),mode:state.view,camera});}
 let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),cloudLayer=null,waterRippleTexture=null,outdoorReflectionMap=null;
 const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
 const heldWalkKeys=new Set();
@@ -1625,6 +1640,9 @@ function initialize(){
  atmosphereSky.material.depthWrite=false;atmosphereSky.frustumCulled=false;scene.add(atmosphereSky);
  cloudLayer=pbrR63Enabled?makePhotographicSky(THREE):makeCloudLayer(THREE);scene.add(cloudLayer);if(pbrR63Enabled)atmosphereSky.visible=false;
  waterRippleTexture=makeWaterRippleTexture(THREE,document);
+ try{panoramaSettingsR193=normalizePanorama(JSON.parse(localStorage.getItem(panoramaKeyR193)||'null'));}catch{}
+ panoramaR193=createPanoramaEnvironment(THREE,scene,{mobile:window.innerWidth<=850,onChange:()=>renderGate.invalidate(),onStatus:m=>panoramaPanelR193?.status(m)});
+ panoramaPanelR193=bindPanoramaPanel($('#panoramaR193panel'),{settings:panoramaSettingsR193,onUpdate:v=>{panoramaSettingsR193=v;try{localStorage.setItem(panoramaKeyR193,JSON.stringify(v));}catch{}syncPanoramaR193();renderGate.invalidate();},onRetry:()=>panoramaR193.retry()});
  camera=new THREE.PerspectiveCamera(50,1,.1,600);camera.position.set(38,37,49);
  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,0,0);controls.maxPolarAngle=Math.PI/2-.005;controls.minDistance=.8;controls.maxDistance=treeLineupMode?650:220;
  const skyFill=new THREE.HemisphereLight(0xdceafa,0x334b3c,1.75);skyFill.name='forma-sky-fill';scene.add(skyFill);
@@ -3710,7 +3728,7 @@ function positionClimatePanel(){
  panel.style.setProperty('--climate-bottom',Math.ceil(bottom)+'px');
 }
 function setSceneClimateTab(tab){
- if(!['sun','atmosphere','shadows'].includes(tab))return;
+ if(!['sun','atmosphere','shadows','panorama'].includes(tab))return;
  const panel=$('#sceneClimatePanel');panel.dataset.climateTab=tab;
  panel.querySelectorAll('[data-climate-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.climateTab===tab)));
  $('#sceneClimateBody').scrollTop=0;
@@ -3912,6 +3930,7 @@ function updateSun(){
   scene.fog.near=Math.max(1,scene.fog.near*(1-.20*extraHaze));
   scene.fog.far=Math.max(scene.fog.near+15,scene.fog.far*(1-.47*extraHaze));
  }
+ syncPanoramaR193();
 }
 function setOrbitCameraHeight(height){
  if(state.view!=='3d'||!camera?.isPerspectiveCamera)return;
@@ -5347,7 +5366,7 @@ canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove
   }catch(e){gpuLostR75=true;console.error('WebGL recovery',e);status('Не удалось восстановить WebGL — используйте кнопку перезапуска.')}
  });
 }
-function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;const ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&window.FORMA_GRAPHICS_R105!=='eco'&&(!mobileDeviceR106()||['high','ultra'].includes(window.FORMA_GRAPHICS_R105))&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
+function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!renderer||!scene||!camera||renderer.getContext().isContextLost())return;syncPanoramaR193();const ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:r66AOEnabled&&window.FORMA_GRAPHICS_R105!=='eco'&&(!mobileDeviceR106()||['high','ultra'].includes(window.FORMA_GRAPHICS_R105))&&state.view!=='2d'&&(force||!autoReduced),force,onReady:()=>renderGate.invalidate()});scene.userData.formaGTAOR66=ao;const d=$('#forma-r71-render-status');if(d){const msg=ao?'GTAO / SSGI: проходы запущены':'Базовый PBR: GTAO / SSGI не активны';if(d.textContent!==msg)d.textContent=msg;}}
 function resize(){if(gpuLostR75||pathTraceR72?.active)return;renderGate.invalidate();const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);if(state.view==='walk'&&window.innerWidth>850)applyWalkLens();else camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
 let lastRenderMs=0,lastRenderCost=0,lastShadowBudgetAt=0,lastTurfDetailAt=0,shadowBudgetDirty=true;
 function animate(now=0){
