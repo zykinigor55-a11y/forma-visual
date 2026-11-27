@@ -623,7 +623,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R220</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R221</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -1037,6 +1037,7 @@ import {smoothPaintPath,simplifyPaintStroke,erasePaintedStrips} from './forma-la
 import {applyTerrainBrush,terrainStrokeSamples} from './forma-landscape-3d-terrain-brush.js?v=local-20261126';
 import {ATMOSPHERE_DEFAULTS,normalizeSceneAtmosphere,atmosphereLighting,makeCloudLayer,makeWaterRippleTexture,animateWaterRipple} from './forma-landscape-3d-atmosphere.js?v=R130';
 import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=weather-controls-v2-20261122';
+import {normalizeBasin,basinPoints,basinValid,prepareBasin,basinConflict,basinTerrain,basinMesh,basinPrompt} from './forma-basin-r221.js?v=R221';
 import {normalizeRiver,riverPath,prepareRiver,riverTerrain,riverRows,riverConflict,riverMesh,riverPrompt} from './forma-river-r219.js?v=R219';
 import {normalizeLiveFog,liveAtmosphereSnapshot,liveAtmospherePrompt} from './forma-live-atmosphere-r216.js?v=R216';
 import {addWeatherSceneVisuals,applyWetMaterialResponse,tickPrecipitationR217} from './forma-landscape-3d-weather-visuals.js?v=R217';
@@ -1194,7 +1195,7 @@ const choices={
  build:[['house','Жилой дом'],['bath','Баня'],['garage','Гараж'],['carport','Навес для автомобиля'],['gazebo','Беседка'],['greenhouse','Теплица'],['outbuilding','Хозблок']],
  fence:[['fence-perimeter','По всему периметру'],['fence-side','Одна сторона целиком'],['fence-louver','Рисовать вручную']],
  plant:[...CATALOG.filter(x=>x.group==='trees'),...CATALOG.filter(x=>x.group==='shrubs')].map(x=>[x.id,x.name]),
- water:[['river-procedural','Река · автоматический рельеф'],...CATALOG.filter(x=>['pools','ponds'].includes(x.group)).map(x=>[x.id,x.name])],
+ water:[['river-procedural','Река · автоматический рельеф'],['lake-procedural','Большое озеро'],['sea-procedural','Море · побережье'],...CATALOG.filter(x=>['pools','ponds'].includes(x.group)).map(x=>[x.id,x.name])],
  landscape:[...CATALOG.filter(x=>x.group==='boulders').map(x=>[x.id,x.name])],
  small:[['pergola','Пергола'],['gazebo','Беседка']],
  furniture:[['bench','Скамья'],['table','Стол'],['outdoor-dining','Уличный стол и 2 стула'],['picnic-table','Пикниковый стол со скамьями']],
@@ -1203,7 +1204,7 @@ const choices={
  light:CATALOG.filter(x=>x.group==='lights').map(x=>[x.id,x.name]),
  models40:[...REAL_3D_NON_BOTANICAL].sort((a,b)=>Object.keys(REAL_3D_CATEGORIES).indexOf(a.group)-Object.keys(REAL_3D_CATEGORIES).indexOf(b.group)).map(x=>[x.id,x.name])
 };
-const fallback={'river-procedural':{id:'river-procedural',group:'river',name:'Река',color:'#527c83'},pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
+const fallback={'lake-procedural':{id:'lake-procedural',group:'lake',name:'Озеро',color:'#567e82'},'sea-procedural':{id:'sea-procedural',group:'sea',name:'Море',color:'#487780'},'river-procedural':{id:'river-procedural',group:'river',name:'Река',color:'#527c83'},pine:{group:'trees',color:'#4c7358',diameter:6,name:'Сосна'},spruce:{group:'trees',color:'#3e6554',diameter:5,name:'Ель'},birch:{group:'trees',color:'#82aa68',diameter:6,name:'Берёза'},oak:{group:'trees',color:'#648b52',diameter:9,name:'Дуб'},maple:{group:'trees',color:'#86aa4e',diameter:7,name:'Клён'},hydrangea:{group:'shrubs',color:'#9db77e',diameter:1.4,name:'Гортензия'},juniper:{group:'shrubs',color:'#6c8c65',diameter:1.8,name:'Можжевельник'},'lawn-universal':{group:'lawns',color:'#7a9463'},'concrete-pavers':{group:'pavers',color:'#b6b3a9'},'granite-screenings':{group:'fills',color:'#aaa59d'},'pond-small':{group:'ponds',color:'#4d8798'},'granite-boulder':{group:'boulders',color:'#989a8d',diameter:1.4},bollard:{group:'lights',color:'#ccc4a4',diameter:.25},pole:{group:'lights',color:'#ddd2ae',diameter:.3}};
 const catalog=id=>CATALOG.find(o=>o.id===id)||fallback[id];
 const PROP_WIDTH_M=Object.freeze({fern:.95,'wild-shrub':1.7,periwinkle:.8,'outdoor-dining':3.0,'picnic-table':2.7});
 const id=()=>('o-'+Math.random().toString(36).slice(2,10));
@@ -1314,7 +1315,7 @@ function selectNextPine(){
 function syncMobilePlacementHint(){
  const hint=$('#mobilePlacementHint'),label=$('#mobilePlacementLabel');
  if(!hint||!label)return;
- const river=state.tool==='water'&&state.placing==='river-procedural';const water=state.tool==='water'&&!!state.placing&&catalog(state.placing)?.group!=='pools'&&!river;
+ const river=state.tool==='water'&&proceduralWaterR221();const water=state.tool==='water'&&!!state.placing&&catalog(state.placing)?.group!=='pools'&&!river;
  const fenceDraw=state.tool==='fence'&&state.placing==='fence-louver';const finish=$('#mobilePondFinish');const draft=$('#draftActions');if(draft&&state.tool==='water')draft.hidden=window.innerWidth>850?(!desktopPondR139()||pondModeR139!=='polygon'):!water;
  finish.hidden=!water&&!fenceDraw;finish.disabled=pointMode.length<(fenceDraw?2:3);
  const active=window.innerWidth<=850&&state.tool!=='select'&&!!state.placing&&
@@ -1322,7 +1323,7 @@ function syncMobilePlacementHint(){
  hint.hidden=!active;
  if(!active)return;
  const entry=catalog(state.placing)||realModelById(state.placing)||creatureById(state.placing);
- label.textContent=river?'Проведите пальцем по руслу реки':state.tool==='light'&&state.placing?.startsWith('wall-light:')?'Коснитесь вертикальной стены или столба':state.tool==='fence'?(state.placing==='fence-side'?'Коснитесь нужной стороны участка':pointMode.length<2?'Отметьте начало и конец · '+pointMode.length+'/2':'Точек: '+pointMode.length+' · нажмите «Готово»'):water?(pointMode.length<3?'Отметьте 3 точки берега · '+pointMode.length+'/3':'Точек: '+pointMode.length+' · добавьте ещё или нажмите «Готово»'):
+ label.textContent=river?(state.placing==='lake-procedural'?'Обведите берег озера одним движением':state.placing==='sea-procedural'?'Проведите линию берега моря':'Проведите пальцем по руслу реки'):state.tool==='light'&&state.placing?.startsWith('wall-light:')?'Коснитесь вертикальной стены или столба':state.tool==='fence'?(state.placing==='fence-side'?'Коснитесь нужной стороны участка':pointMode.length<2?'Отметьте начало и конец · '+pointMode.length+'/2':'Точек: '+pointMode.length+' · нажмите «Готово»'):water?(pointMode.length<3?'Отметьте 3 точки берега · '+pointMode.length+'/3':'Точек: '+pointMode.length+' · добавьте ещё или нажмите «Готово»'):
   '＋ '+(entry?.name||'Объект')+' · коснитесь земли для установки';
 }
 function activateMobilePanel(name){
@@ -1607,10 +1608,10 @@ function startMotionR156(){
  if(pathTraceR72?.active||gpuLostR75){q('[data-status]').textContent='Сначала завершите рендер или восстановите GPU.';return;}
  const mode=q('[data-mode]').value;if(mode==='path'&&m.points.length<2){q('[data-status]').textContent='Сохраните минимум две точки камеры.';return;}
  if(mode==='walk'&&state.view!=='walk')setView('walk');if(!camera?.isPerspectiveCamera){q('[data-status]').textContent='Нужна перспективная 3D-камера.';return;}
- freezeWalkLook();chooseTool('select');m.mode=mode;m.view=state.view;m.liveAtmosphere=currentLiveAtmosphereR216();m.rivers=JSON.parse(JSON.stringify(riverObjectsR219()));m.originalControls=controls.enabled;m.duration=Number(q('[data-duration]').value)*1000;m.start=null;m.frames=0;m.keys=[];m.stills=[];m.chunks=[];m.result=null;q('[data-result]').hidden=true;q('[data-record]').hidden=false;m.panel.dataset.recording='true';
+ freezeWalkLook();chooseTool('select');m.mode=mode;m.view=state.view;m.liveAtmosphere=currentLiveAtmosphereR216();m.rivers=JSON.parse(JSON.stringify(riverObjectsR219()));m.basins=JSON.parse(JSON.stringify(basinObjectsR221()));m.originalControls=controls.enabled;m.duration=Number(q('[data-duration]').value)*1000;m.start=null;m.frames=0;m.keys=[];m.stills=[];m.chunks=[];m.result=null;q('[data-result]').hidden=true;q('[data-record]').hidden=false;m.panel.dataset.recording='true';
  try{
   const c=document.createElement('canvas');const portrait=q('[data-aspect]').value==='portrait';c.width=portrait?720:1280;c.height=portrait?1280:720;m.capture=c;m.ctx=c.getContext('2d',{alpha:false});m.stream=c.captureStream(30);
-  const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4','video/webm'].find(x=>MediaRecorder.isTypeSupported(x));m.recorder=new MediaRecorder(m.stream,mime?{mimeType:mime,videoBitsPerSecond:8000000}:{videoBitsPerSecond:8000000});m.recorder.ondataavailable=e=>{if(e.data.size)m.chunks.push(e.data)};m.recorder.onerror=e=>{q('[data-status]').textContent='Ошибка записи: '+(e.error?.message||'MediaRecorder');stopMotionR156()};m.recorder.onstop=()=>{m.stream?.getTracks().forEach(t=>t.stop());m.stopping=false;const type=m.recorder.mimeType||m.chunks[0]?.type||'video/webm',blob=new Blob(m.chunks,{type});if(!blob.size||!m.frames){q('[data-status]').textContent='Запись не получилась. Повторите попытку.';return;}if(m.url)URL.revokeObjectURL(m.url);m.url=URL.createObjectURL(blob);m.result={blob,ext:type.includes('mp4')?'mp4':'webm',stills:m.stills.slice(),keys:m.keys.slice(),width:c.width,height:c.height,duration:m.elapsed,frames:m.frames,mode:m.mode,liveAtmosphere:m.liveAtmosphere,rivers:m.rivers};q('video').src=m.url;q('[data-result]').hidden=false;q('[data-status]').textContent='Готово · '+(m.elapsed/1000).toFixed(1)+' с · ≈ '+(m.frames/Math.max(.1,m.elapsed/1000)).toFixed(1)+' кадров/с. Проверьте видео перед экспортом.';};
+  const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4','video/webm'].find(x=>MediaRecorder.isTypeSupported(x));m.recorder=new MediaRecorder(m.stream,mime?{mimeType:mime,videoBitsPerSecond:8000000}:{videoBitsPerSecond:8000000});m.recorder.ondataavailable=e=>{if(e.data.size)m.chunks.push(e.data)};m.recorder.onerror=e=>{q('[data-status]').textContent='Ошибка записи: '+(e.error?.message||'MediaRecorder');stopMotionR156()};m.recorder.onstop=()=>{m.stream?.getTracks().forEach(t=>t.stop());m.stopping=false;const type=m.recorder.mimeType||m.chunks[0]?.type||'video/webm',blob=new Blob(m.chunks,{type});if(!blob.size||!m.frames){q('[data-status]').textContent='Запись не получилась. Повторите попытку.';return;}if(m.url)URL.revokeObjectURL(m.url);m.url=URL.createObjectURL(blob);m.result={blob,ext:type.includes('mp4')?'mp4':'webm',stills:m.stills.slice(),keys:m.keys.slice(),width:c.width,height:c.height,duration:m.elapsed,frames:m.frames,mode:m.mode,liveAtmosphere:m.liveAtmosphere,rivers:m.rivers,basins:m.basins};q('video').src=m.url;q('[data-result]').hidden=false;q('[data-status]').textContent='Готово · '+(m.elapsed/1000).toFixed(1)+' с · ≈ '+(m.frames/Math.max(.1,m.elapsed/1000)).toFixed(1)+' кадров/с. Проверьте видео перед экспортом.';};
   m.active=true;if(mode==='path')controls.enabled=false;q('[data-status]').textContent=mode==='walk'?'WASD — движение, удерживайте ЛКМ и двигайте мышью для поворота камеры.':'Камера движется по заданным точкам.';renderGate.invalidate();
  }catch(e){m.active=false;m.stream?.getTracks().forEach(t=>t.stop());m.panel.dataset.recording='false';q('[data-record]').hidden=true;controls.enabled=m.originalControls;q('[data-status]').textContent='Не удалось начать запись: '+e.message;}
 }
@@ -1646,14 +1647,14 @@ async function generateMotionWanR216(){
   const ref=q('[data-refs]').files[0];let image=r.stills[0];if(ref){image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(ref);});}
   if(!image)throw Error('Отсутствует первый кадр.');
   const img=new Image();img.src=image;await img.decode();const c=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(img.width,img.height));c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d',{alpha:false}).drawImage(img,0,0,c.width,c.height);image=c.toDataURL('image/jpeg',.9);
-  const prompt=liveAtmospherePrompt(r.liveAtmosphere||currentLiveAtmosphereR216(),'video')+'\n'+riverPrompt(r.rivers||[],true)+'\nSmooth architectural camera movement, preserve reference view, no scene cuts. Reproduce the existing materials and composition as photographed.';
+  const prompt=liveAtmospherePrompt(r.liveAtmosphere||currentLiveAtmosphereR216(),'video')+'\n'+riverPrompt(r.rivers||[],true)+'\n'+basinPrompt(r.basins||[],true)+'\nSmooth architectural camera movement, preserve reference view, no scene cuts. Reproduce the existing materials and composition as photographed.';
   q('[data-wan-status]').textContent='Отправляем кадр и параметры атмосферы…';
   const response=await fetch('/api/wan3/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,prompt,duration,ratio:r.width>r.height?'16:9':'9:16',accessPin})});const data=await response.json();if(!response.ok||!data.id)throw Error(data.error||'Запрос отклонён.');
   m.wanJob=data.id;q('[data-wan-check]').disabled=false;q('[data-wan-status]').textContent='Задание принято.';m.wanTimer=setInterval(checkMotionWanR216,18000);await checkMotionWanR216();
  }catch(e){q('[data-wan-status]').textContent=e.message;q('[data-wan-generate]').disabled=false;}finally{m.wanSubmitting=false;}
 }
 async function exportMotionR156(){
- const m=motionR156,r=m.result,q=m.q;if(!r)return;const button=q('[data-zip]');button.disabled=true;try{q('[data-status]').textContent='Упаковка комплекта…';const {zipSync,strToU8}=await import('https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js');const files={};files['01-animatic.'+r.ext]=new Uint8Array(await r.blob.arrayBuffer());for(let i=0;i<r.stills.length;i++)if(r.stills[i])files['02-draft-'+['start','middle','end'][i]+'.png']=new Uint8Array(await (await fetch(r.stills[i])).arrayBuffer());const refs=Array.from(q('[data-refs]').files).slice(0,3);for(let i=0;i<refs.length;i++){const f=refs[i],ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg';files['03-photo-reference-'+(i+1)+'.'+ext]=new Uint8Array(await f.arrayBuffer());}files['04-camera.json']=strToU8(JSON.stringify({width:r.width,height:r.height,durationMs:r.duration,recordedFrames:r.frames,mode:r.mode,camera:r.keys},null,2));files['05-seedance-prompt.txt']=strToU8('Use the uploaded animatic as the camera movement reference. Use supplied photorealistic image references for appearance. Preserve exact architecture, materials, plants and lens perspective. The draft frames are geometry references, not final photography.\n'+liveAtmospherePrompt(r.liveAtmosphere||currentLiveAtmosphereR216(),'video')+'\n'+riverPrompt(r.rivers||[],true));files['06-live-atmosphere.json']=strToU8(JSON.stringify(r.liveAtmosphere||currentLiveAtmosphereR216(),null,2));files['README.txt']=strToU8('FORMA MOTION / Seedance\n1. Upload 01-animatic as motion reference in a supported reference-to-video mode.\n2. Upload optional 03-photo-reference images as appearance references. If absent, generate a photorealistic image from 02-draft-start first.\n3. Use 05-seedance-prompt. 04-camera.json is for your archive; do not upload as video reference.\nAI output may change geometry. Review the result. This package does not call the paid Seedance API. Video format depends on browser support; convert WebM to MP4 if the provider requires it.');motionDownloadR156(new Blob([zipSync(files,{level:0})],{type:'application/zip'}),'FORMA-MOTION-Seedance.zip');q('[data-status]').textContent='Комплект подготовлен.';}catch(e){q('[data-status]').textContent='Не удалось создать ZIP: '+e.message+'. Видео можно скачать отдельно.';}finally{button.disabled=false;}
+ const m=motionR156,r=m.result,q=m.q;if(!r)return;const button=q('[data-zip]');button.disabled=true;try{q('[data-status]').textContent='Упаковка комплекта…';const {zipSync,strToU8}=await import('https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js');const files={};files['01-animatic.'+r.ext]=new Uint8Array(await r.blob.arrayBuffer());for(let i=0;i<r.stills.length;i++)if(r.stills[i])files['02-draft-'+['start','middle','end'][i]+'.png']=new Uint8Array(await (await fetch(r.stills[i])).arrayBuffer());const refs=Array.from(q('[data-refs]').files).slice(0,3);for(let i=0;i<refs.length;i++){const f=refs[i],ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg';files['03-photo-reference-'+(i+1)+'.'+ext]=new Uint8Array(await f.arrayBuffer());}files['04-camera.json']=strToU8(JSON.stringify({width:r.width,height:r.height,durationMs:r.duration,recordedFrames:r.frames,mode:r.mode,camera:r.keys},null,2));files['05-seedance-prompt.txt']=strToU8('Use the uploaded animatic as the camera movement reference. Use supplied photorealistic image references for appearance. Preserve exact architecture, materials, plants and lens perspective. The draft frames are geometry references, not final photography.\n'+liveAtmospherePrompt(r.liveAtmosphere||currentLiveAtmosphereR216(),'video')+'\n'+riverPrompt(r.rivers||[],true)+'\n'+basinPrompt(r.basins||[],true));files['06-live-atmosphere.json']=strToU8(JSON.stringify(r.liveAtmosphere||currentLiveAtmosphereR216(),null,2));files['README.txt']=strToU8('FORMA MOTION / Seedance\n1. Upload 01-animatic as motion reference in a supported reference-to-video mode.\n2. Upload optional 03-photo-reference images as appearance references. If absent, generate a photorealistic image from 02-draft-start first.\n3. Use 05-seedance-prompt. 04-camera.json is for your archive; do not upload as video reference.\nAI output may change geometry. Review the result. This package does not call the paid Seedance API. Video format depends on browser support; convert WebM to MP4 if the provider requires it.');motionDownloadR156(new Blob([zipSync(files,{level:0})],{type:'application/zip'}),'FORMA-MOTION-Seedance.zip');q('[data-status]').textContent='Комплект подготовлен.';}catch(e){q('[data-status]').textContent='Не удалось создать ZIP: '+e.message+'. Видео можно скачать отдельно.';}finally{button.disabled=false;}
 }
 function initialize(){
  setupDesktopInspectorR137();
@@ -1788,13 +1789,18 @@ function initialize(){
 }
 function pos(x,y){return new THREE.Vector3(x-doc.site.width/2,0,y-doc.site.height/2)}
 function fromWorld(p){return{x:Math.max(0,Math.min(doc.site.width,p.x+doc.site.width/2)),y:Math.max(0,Math.min(doc.site.height,p.z+doc.site.height/2))}}
-let riverCacheR219=[],riverBuildingsR219=[];
+let riverCacheR219=[],riverBuildingsR219=[],basinCacheR221=[];
+const isBasinR221=o=>['lake','sea'].includes(o?.type);
+const basinObjectsR221=()=>extra.filter(isBasinR221);
+const proceduralWaterR221=()=>['river-procedural','lake-procedural','sea-procedural'].includes(state.placing);
 function baseTerrainR219(x,z){return heightAt(heightmap,GRID,doc.site.width,doc.site.height,x,z)+(lawnTestMode?lawnTerrainMicro(x,z):0)}
 function riverObjectsR219(){return extra.filter(o=>o.type==='river');}
-function updateRiverCacheR219(){riverBuildingsR219=treeLineupMode?[]:[doc.house,...doc.buildings].filter(Boolean);riverCacheR219=riverObjectsR219().map(prepareRiver).filter(p=>p.length>0);}
-function terrainAt(x,z){return riverTerrain(baseTerrainR219(x,z),x+doc.site.width/2,z+doc.site.height/2,riverCacheR219,riverBuildingsR219)}
-function riverWaterAtR219(x,z){return riverCacheR219.some(p=>{const n=p.nearest(x+doc.site.width/2,z+doc.site.height/2);return n&&n.distance<n.half;});}
+function updateRiverCacheR219(){riverBuildingsR219=treeLineupMode?[]:[doc.house,...doc.buildings].filter(Boolean);riverCacheR219=riverObjectsR219().map(prepareRiver).filter(p=>p.length>0);basinCacheR221=basinObjectsR221().filter(basinValid).map(prepareBasin);}
+function terrainAt(x,z){const px=x+doc.site.width/2,py=z+doc.site.height/2;return basinTerrain(riverTerrain(baseTerrainR219(x,z),px,py,riverCacheR219,riverBuildingsR219),px,py,basinCacheR221,riverBuildingsR219)}
+function riverWaterAtR219(x,z){return basinCacheR221.some(p=>p.signed(x+doc.site.width/2,z+doc.site.height/2)>=0)||riverCacheR219.some(p=>{const n=p.nearest(x+doc.site.width/2,z+doc.site.height/2);return n&&n.distance<n.half;});}
 function validateRiverR219(o){const p=prepareRiver(o);if(!p.length||p.length<1)return 'Нарисуйте русло длиной не менее 1 м.';if(riverConflict(p,treeLineupMode?[]:[doc.house,...doc.buildings]))return 'Русло пересекает защищённую площадку здания. Измените ширину или линию.';return '';}
+function validateBasinR221(o){if(!basinValid(o))return o.type==='sea'?'Проведите линию берега длиной от 2 м.':'Обведите замкнутый контур озера без пересечений.';if(basinConflict(prepareBasin(o),treeLineupMode?[]:[doc.house,...doc.buildings]))return 'Вода пересекает защищённую площадку здания. Измените берег или сторону моря.';return '';}
+function drawBasinR221(o){const tex=waterRippleTexture?.clone();if(tex)tex.needsUpdate=true;const {group,water}=basinMesh(THREE,prepareBasin(o),{pos,width:doc.site.width,height:doc.site.height,extent:Math.max(1600,squareTerrainSide(doc.site)*4),texture:tex});if(water){waterSurfaces.push(water);if(tex)water.userData.textures=[tex];}mark(group,'extra:'+o.id);root.add(group);}
 function drawRiverR219(o){const tex=waterRippleTexture?.clone();if(tex)tex.needsUpdate=true;const {group,water}=riverMesh(THREE,prepareRiver(o),{pos,terrainAt,texture:tex});if(water){waterSurfaces.push(water);if(tex)water.userData.textures=[tex];}mark(group,'extra:'+o.id);root.add(group);}
 
 let lawnTextureRequestR77=0;
@@ -1996,7 +2002,7 @@ let terrainDirty=null,terrainUpdateFrame=0,lastTerrainShadow=0;
  geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(new THREE.BufferAttribute(indices,1));
  geo.userData.terrain={steps,side};updateGroundRegion(geo,null);
  // Height brush is restricted to -4..5 m; fixed bounds avoid scanning on each stroke.
- if(riverCacheR219.length){geo.computeBoundingBox();geo.computeBoundingSphere();}else{geo.boundingBox=new THREE.Box3(new THREE.Vector3(-side/2,-4,-side/2),new THREE.Vector3(side/2,5,side/2));geo.boundingSphere=new THREE.Sphere(new THREE.Vector3(),Math.hypot(side/2,side/2,5));}
+ if(riverCacheR219.length||basinCacheR221.length){geo.computeBoundingBox();geo.computeBoundingSphere();}else{geo.boundingBox=new THREE.Box3(new THREE.Vector3(-side/2,-4,-side/2),new THREE.Vector3(side/2,5,side/2));geo.boundingSphere=new THREE.Sphere(new THREE.Vector3(),Math.hypot(side/2,side/2,5));}
  return geo;
 }
 function updateGroundRegion(geo,dirty){
@@ -2681,6 +2687,7 @@ function drawArea(o,entry,key){
 // Legacy 3D-catalogue spruce was actually the same Poly Haven fir_sapling asset.
 function isLegacyFirExtra(type){return ['spruce','ph-fir-sapling','fir_sapling','fir-sapling','fir'].includes(type)}
 function drawExtra(o){
+ if(isBasinR221(o)){drawBasinR221(o);return;}
  if(o.type==='river'){drawRiverR219(o);return;}
  if(o.type==='wall-light'){drawWallLightR214(o);return;}
  if(o.type==='fence'&&o.fence?.style==='louver'){const g=createLouverFence(THREE,o,{pos,terrainAt,mobile:window.innerWidth<=850});mark(g,'extra:'+o.id);if(state.selected==='extra:'+o.id){const a=o.points[selectedFenceSideR208],b=o.points[selectedFenceSideR208+1];if(a&&b){const pts=Array.from({length:25},(_,i)=>{const p=pos(a.x+(b.x-a.x)*i/24,a.y+(b.y-a.y)*i/24);p.y=terrainAt(p.x,p.z)+.14;return p;});const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:'#edbd72',depthTest:false}));line.renderOrder=50;line.raycast=()=>{};g.add(line);}}root.add(g);return;}
@@ -2932,7 +2939,7 @@ function chooseTool(t){
  });
  $('#library').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{
   state.placing=b.dataset.item;
-  if(t==='water'&&state.placing==='river-procedural'){b.classList.add('active');setView('2d');if(window.innerWidth<=850)activateMobilePanel('scene');syncPondToolsR139();status('Нарисуйте центральную линию реки мышью или пальцем.');syncMobilePlacementHint();return;}
+  if(t==='water'&&proceduralWaterR221()){b.classList.add('active');setView('2d');if(window.innerWidth<=850)activateMobilePanel('scene');syncPondToolsR139();status(state.placing==='lake-procedural'?'Обведите береговую линию озера.':state.placing==='sea-procedural'?'Проведите линию берега. Сторону моря определим автоматически.':'Нарисуйте центральную линию реки мышью или пальцем.');syncMobilePlacementHint();return;}
   if(t==='fence'&&state.placing==='fence-perimeter'){const existing=extra.find(o=>o.type==='fence'&&o.perimeter);if(existing){chooseTool('select');state.selected='extra:'+existing.id;renderProps();revealSelectedInspector();return;}const points=perimeterPoints(doc.site);if(points.length<4){status('Не задан корректный периметр участка.');return;}const fence={id:id(),type:'fence',perimeter:true,points,x:points[0].x,y:points[0].y,rotation:0,fence:normalizeFence()};push();extra.push(fence);chooseTool('select');state.selected='extra:'+fence.id;selectedFenceSideR208=0;save();rebuild();renderProps();revealSelectedInspector();status('Забор установлен по всему периметру. Выберите сторону.');return;}
   syncMobileTerrainDock();
   if(t==='light'){
@@ -3345,7 +3352,7 @@ function deleteSelectedObject(){
 function duplicateSelected(){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return status('Сначала выберите объект для копирования.');
- if(ref.obj.type==='river')return status('Нарисуйте отдельную реку в разделе Вода.');
+ if(ref.obj.type==='river'||isBasinR221(ref.obj))return status('Нарисуйте отдельный водный объект в разделе Вода.');
  if(ref.obj.type==='wall-light')return status('Для второго бра выберите место на стене в каталоге.');
  const copy=duplicateLandscapeObject(ref.obj,{newId:id(),plot:doc.site,contains:p=>inParcel(p,doc.site)});
  if(!copy)return status('Рядом недостаточно свободного места внутри границ участка для копии.');
@@ -3359,7 +3366,7 @@ function duplicateSelected(){
 function rotateSelected(degrees){
  const ref=state.selected?selectable(state.selected):null;
  if(!ref?.obj)return;
- if(ref.obj.type==='river')return status('Измените линию русла через свойства.');
+ if(ref.obj.type==='river'||isBasinR221(ref.obj))return status('Измените береговую линию через свойства.');
  if(ref.obj.type==='wall-light')return status('Поворот бра автоматически задан плоскостью стены.');
  const result=rotatedLandscapeObject(ref.obj,degrees);
  if(!result)return;
@@ -3488,6 +3495,16 @@ function wireRoofGarlandEditor(el,building){
  slider?.addEventListener('input',()=>{if(output)output.textContent=slider.value+'%'});
  slider?.addEventListener('change',()=>persist('brightness',Number(slider.value)));
 }
+function renderBasinInspectorR221(el,ref){
+ const o=ref.obj,r=normalizeBasin(o),sea=o.type==='sea',name=sea?'Море':'Озеро';el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';
+ const fields=[['depth','Глубина, м',.2,12,.1],['level','Уровень воды, м',-12,8,.1],['bankHeight','Высота берега, м',0,6,.1],['beachWidth','Ширина берегового перехода, м',.5,30,.5],['influence','Зона влияния, м',1,50,1],['waves','Сила волн, %',0,100,5],['speed','Скорость волн, %',0,100,5],...(sea?[['foam','Пена прибоя, %',0,100,5]]:[])];
+ const select=(key,label,options)=>'<label>'+label+'<select data-basin="'+key+'">'+options.map(([v,l])=>'<option value="'+v+'"'+(r[key]===v?' selected':'')+'>'+l+'</option>').join('')+'</select></label>';
+ el.innerHTML='<section class="roof-garland-editor"><strong>'+name.toUpperCase()+' · БЕРЕГ И ВОДА</strong><svg viewBox="0 0 280 82" style="width:100%;height:auto;background:#28343a;border-radius:8px"><path d="'+(sea?'M0 15H65L155 68H280V82H0Z':'M0 15H45L100 68H180L235 15H280V82H0Z')+'" fill="#91816a"/><path d="'+(sea?'M100 37H280V68H155Z':'M68 37H212L180 68H100Z')+'" fill="#648b98"/><path d="'+(sea?'M100 37H280':'M68 37H212')+'" stroke="#c2d7d9"/><text x="140" y="30" text-anchor="middle" fill="#e6e8e3" font-size="10">'+name+'</text></svg>'+fields.map(([k,l,min,max,step])=>'<label>'+l+'<input type="number" data-basin="'+k+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+r[k]+'"></label>').join('')+select('bank','Материал берега',[['grass','Трава'],['sand','Песок'],['gravel','Галька'],['rock','Камень'],['soil','Грунт']])+(sea?select('side','Сторона воды',[['left','Слева по линии'],['right','Справа по линии']]):'')+'<button type="button" data-basin-apply class="primary">Применить</button><button type="button" data-basin-redraw>Перерисовать берег</button><button type="button" data-basin-delete>Удалить '+name.toLowerCase()+'</button><small>Рельеф восстанавливается при удалении. Площадки зданий защищены.</small></section>';
+ syncSelectedObjectDock(ref,name);
+ el.querySelector('[data-basin-apply]').onclick=()=>{const v={...r};el.querySelectorAll('[data-basin]').forEach(f=>v[f.dataset.basin]=f.type==='number'?Number(f.value):f.value);const basin=normalizeBasin({type:o.type,basin:v}),err=validateBasinR221({...o,basin});if(err)return status(err);push();o.basin=basin;save();rebuild();status(name+' обновлено.');};
+ el.querySelector('[data-basin-redraw]').onclick=()=>{chooseTool('water');state.placing=o.type+'-procedural';riverReplaceR219=o.id;setView('2d');activateMobilePanel('scene');syncMobilePlacementHint();status('Нарисуйте новую береговую линию.');};
+ el.querySelector('[data-basin-delete]').onclick=deleteSelectedObject;
+}
 function renderRiverInspectorR219(el,ref){
  const o=ref.obj,r=normalizeRiver(o);el.classList.remove('pine-inspector-open','forma-shrub-open');document.body.dataset.mobilePine='false';
  const fields=[['width','Ширина реки, м',.5,50,.5],['depth','Глубина, м',.1,5,.1],['left','Левый берег, м',0,6,.1],['right','Правый берег, м',0,6,.1],['slope','Крутизна берегов, %',0,100,5],['influence','Зона влияния, м',1,50,1],['variation','Неровность ширины, %',0,100,5],['level','Уровень воды, м',-12,8,.1],['flow','Течение, %',0,100,5]];
@@ -3510,6 +3527,7 @@ function renderProps(){
  $('#pineInspectorShortcut').hidden=true;el.classList.remove('pine-inspector-open','forma-shrub-open');el.innerHTML='<p>Выберите объект в сцене, чтобы изменить его координаты и параметры.</p>';return}
  const pinePanel=$('#right'),priorScroll=pinePanel?.scrollTop||0;
  const o=ref.obj;
+ if(ref.type==='extra'&&isBasinR221(o)){renderBasinInspectorR221(el,ref);return;}
  if(ref.type==='extra'&&o.type==='river'){renderRiverInspectorR219(el,ref);return;}
  if(ref.type==='extra'&&o.type==='wall-light'){renderWallLightInspectorR214(el,ref);return;}
  if(ref.type==='extra'&&o.type==='fence'&&o.fence?.style==='louver'){
@@ -4681,7 +4699,7 @@ function refreshDraft(){
  if(last){root.remove(last);last.geometry.dispose();last.material.dispose()}
  if(!pointMode.length)return;
  const pts=pointMode.map(p=>{const v=pos(p.x,p.y);return new THREE.Vector3(v.x,terrainAt(v.x,v.z)+.3,v.z)});
- const ShapeLine=state.tool==='water'&&state.placing!=='river-procedural'&&pts.length>=3?THREE.LineLoop:THREE.Line;
+ const ShapeLine=state.tool==='water'&&(!proceduralWaterR221()||state.placing==='lake-procedural')&&pts.length>=3?THREE.LineLoop:THREE.Line;
  const line=new ShapeLine(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xffd49c,depthTest:false}));
  line.name='preview-contour';line.renderOrder=10;root.add(line);
 }
@@ -5022,7 +5040,7 @@ async function renderAi(series=null,precision=null,settings=null){
    cameraFovDegrees:camera.isPerspectiveCamera?camera.fov:null,
    sunPosition:sunlight?{x:sunlight.x,y:sunlight.y,z:sunlight.z}:null,
    solarAngles:{azimuth:solarSettings.azimuth,elevation:solarSettings.elevation,strength:solarSettings.strength,softness:solarSettings.softness},
-   lightingRig,liveAtmosphere:currentLiveAtmosphereR216(),rivers:riverObjectsR219(),
+   lightingRig,liveAtmosphere:currentLiveAtmosphereR216(),rivers:riverObjectsR219(),basins:basinObjectsR221(),
    extra3dObjects:extra.slice(0,250).map(o=>({type:o.type,x:o.x,y:o.y,
     width:o.width??null,height:o.height??null,rotation:o.rotation,
     catalogName:creatureById(o.type)?.name||realModelById(o.type)?.name||o.type,
@@ -5354,13 +5372,20 @@ function setupWallLightEventsR214(){
 
 let riverGestureR219=null,riverReplaceR219=null;
 function setupRiverEventsR219(){
- const active=()=>state.tool==='water'&&state.placing==='river-procedural'&&state.view!=='walk'&&document.body.dataset.presentation!=='true';
+ const active=()=>state.tool==='water'&&proceduralWaterR221()&&state.view!=='walk'&&document.body.dataset.presentation!=='true';
  const cap={capture:true};
  const clear=()=>{riverGestureR219=null;pointMode=[];controls.enabled=state.view!=='walk';refreshDraft();};
  const add=e=>{const p=hitGround(e);if(p){const q=fromWorld(p);if(inParcel(q,doc.site))appendBrushPoint(riverGestureR219.points,q,.2);}pointMode=riverGestureR219.points.slice();refreshDraft();};
  canvas.addEventListener('pointerdown',e=>{if(!active()||e.button!==0&&e.pointerType==='mouse'||riverGestureR219)return;e.preventDefault();e.stopImmediatePropagation();const p=hitGround(e);if(!p)return;const q=fromWorld(p);if(!inParcel(q,doc.site))return;riverGestureR219={id:e.pointerId,points:[q]};controls.enabled=false;canvas.setPointerCapture?.(e.pointerId);pointMode=[q];refreshDraft();},cap);
  canvas.addEventListener('pointermove',e=>{if(riverGestureR219?.id!==e.pointerId)return;e.preventDefault();e.stopImmediatePropagation();add(e);},cap);
- canvas.addEventListener('pointerup',e=>{if(riverGestureR219?.id!==e.pointerId)return;e.preventDefault();e.stopImmediatePropagation();add(e);const pts=riverPath(riverGestureR219.points),old=extra.find(o=>o.id===riverReplaceR219&&o.type==='river');clear();if(pts.length<2)return status('Проведите линию реки.');const a=pts[0],level=Math.min(...pts.map(p=>baseTerrainR219(p.x-doc.site.width/2,p.y-doc.site.height/2)))-1.2;const o={id:old?.id||id(),type:'river',x:a.x,y:a.y,rotation:0,points:pts,river:old?normalizeRiver(old):normalizeRiver({level})};const error=validateRiverR219(o);if(error)return status(error);push();if(old)extra=extra.map(v=>v.id===old.id?o:v);else extra.push(o);riverReplaceR219=null;chooseTool('select');state.selected='extra:'+o.id;state.mobileObjectCollapsed=false;save();rebuild();revealSelectedInspector();const plants=doc.objects.filter(v=>['trees','shrubs'].includes(catalog(v.catalogId)?.group)&&riverWaterAtR219(v.x-doc.site.width/2,v.y-doc.site.height/2));status(plants.length?'Река создана. Растений в русле: '+plants.length+'. Переместите их вручную.':'Река создана. Размеры и берега — в свойствах.');},cap);
+ canvas.addEventListener('pointerup',e=>{if(riverGestureR219?.id!==e.pointerId)return;e.preventDefault();e.stopImmediatePropagation();add(e);
+ const type=state.placing.replace('-procedural',''),isRiver=type==='river',sea=type==='sea',pts=isRiver?riverPath(riverGestureR219.points):basinPoints(riverGestureR219.points,sea),old=extra.find(o=>o.id===riverReplaceR219&&o.type===type);clear();
+ if(pts.length<(type==='lake'?3:2))return status(type==='lake'?'Обведите берег озера.':'Проведите линию.');
+ const a=pts[0],level=Math.min(...pts.map(p=>baseTerrainR219(p.x-doc.site.width/2,p.y-doc.site.height/2)))-(isRiver?1.2:.8);
+ const o={id:old?.id||id(),type,x:a.x,y:a.y,rotation:0,points:pts};
+ if(isRiver)o.river=old?normalizeRiver(old):normalizeRiver({level});else{o.basin=old?normalizeBasin(old):normalizeBasin({type,level});if(sea&&!old&&validateBasinR221(o))o.basin.side='right';}
+ const error=isRiver?validateRiverR219(o):validateBasinR221(o);if(error)return status(error);push();if(old)extra=extra.map(v=>v.id===old.id?o:v);else extra.push(o);riverReplaceR219=null;chooseTool('select');state.selected='extra:'+o.id;state.mobileObjectCollapsed=false;save();rebuild();revealSelectedInspector();
+ const plants=doc.objects.filter(v=>['trees','shrubs'].includes(catalog(v.catalogId)?.group)&&riverWaterAtR219(v.x-doc.site.width/2,v.y-doc.site.height/2));status(plants.length?'Вода создана. Растений в воде: '+plants.length+'. Переместите их вручную.':'Вода создана. Размеры, берег и волны — в свойствах.');},cap);
  canvas.addEventListener('pointercancel',e=>{if(riverGestureR219?.id!==e.pointerId)return;e.stopImmediatePropagation();clear();},cap);
 }
 function addEvents(){
@@ -5505,7 +5530,7 @@ const move=e=>{
   const dx=pt.x-state.dragAnchor.x,dy=pt.y-state.dragAnchor.y;
   const shifted=state.dragPoints.map(q=>({x:q.x+dx,y:q.y+dy}));
   if(!shifted.every(q=>inParcel(q,doc.site)))return;
-  if(ref.obj.type==='river'){const err=validateRiverR219({...ref.obj,points:shifted});if(err)return;ref.obj.x=shifted[0].x;ref.obj.y=shifted[0].y;}
+  if(ref.obj.type==='river'||isBasinR221(ref.obj)){const err=ref.obj.type==='river'?validateRiverR219({...ref.obj,points:shifted}):validateBasinR221({...ref.obj,points:shifted});if(err)return;ref.obj.x=shifted[0].x;ref.obj.y=shifted[0].y;}
   ref.obj.points=shifted;
   scheduleBrushRebuild(); // Vector geometry needs a new mesh, at most once per frame.
  }else if('x'in ref.obj){
@@ -5578,7 +5603,7 @@ const up=e=>{
  const finger=e.pointerType==='touch'||e.pointerType==='pen';
  if(!tapCancelled&&movement<(finger?14:5)){
   if(state.tool==='select'){
-   const directHitR194=hitObj(e);const desktopHit=window.innerWidth>850||isSurfacePrimitive(selectable(directHitR194)?.obj)||['fence','river'].includes(selectable(directHitR194)?.obj?.type)?directHitR194:null;
+   const directHitR194=hitObj(e);const desktopHit=window.innerWidth>850||isSurfacePrimitive(selectable(directHitR194)?.obj)||['fence','river','lake','sea'].includes(selectable(directHitR194)?.obj?.type)?directHitR194:null;
    if(!desktopHit&&lawnIntegratedR90&&hitLawnR92(e)){openLawnPanelR90();status('Настройки газона участка.');state.down=null;return;}
    const key=desktopHit||hitTreeOnMobile(e);
    state.selected=key;
@@ -5840,7 +5865,7 @@ function animate(now=0){
   renderGate.invalidate();
  }
  if(!document.hidden){if(tickLiveFogR217(now))renderGate.invalidate();if(state.view!=='2d'&&now-lastPrecipR217>(phone?65:32)){lastPrecipR217=now;if(tickPrecipitationR217(root,now*.001,windAmountR74,terrainAt))renderGate.invalidate();}}
- for(const surface of waterSurfaces){if(surface.userData.riverFlow>0&&surface.material.bumpMap){surface.material.bumpMap.offset.x=(surface.userData.riverReverse?1:-1)*now*.000018*surface.userData.riverFlow;renderGate.invalidate();}}
+ for(const surface of waterSurfaces){const wave=surface.userData.basinWave;if(wave&&state.view!=='2d'&&!document.hidden){wave.clock.value=now*.001;const tex=surface.material.bumpMap;if(tex){tex.offset.set(now*.00001*wave.speed,now*.000004*wave.speed);surface.material.bumpScale=.006+wave.waves*.001;}if(wave.speed>0&&wave.waves>0)renderGate.invalidate();}if(surface.userData.riverFlow>0&&surface.material.bumpMap){surface.material.bumpMap.offset.x=(surface.userData.riverReverse?1:-1)*now*.000018*surface.userData.riverFlow;renderGate.invalidate();}}
  const windWeather=({sunny:1,overcast:1.05,'after-rain':1.18,rain:1.40,snow:.85,fog:.55})[doc.atmosphere.weather]||1;
  const windStrength=Math.min(1.35,Math.pow(windAmountR74/100,.78)*windWeather);
  if(scene&&!document.hidden&&state.view!=='2d'&&now-(scene.userData.lastWindR74||0)>=Math.max(0,interval-2)){scene.userData.lastWindR74=now;const moving=windR74.tick(now,windStrength);const grassMoving=tickDenseLawn(turfDetail,now,windStrength);let raisedGrassMoving=false;for(const node of root.children)if(node.userData.raisedGrass)raisedGrassMoving=tickRaisedGrass(node,now,windStrength)||raisedGrassMoving;const waves=windRipple(THREE,waterSurfaces,waterRippleTexture,now,sceneAtmosphere.ripples,windStrength);if(((moving||grassMoving||raisedGrassMoving)&&windAmountR74>0)||waves&&sceneAtmosphere.ripples>0||scene.userData.previousWindR74!==windAmountR74){if(renderer?.shadowMap&&moving&&(!phone&&now-lastWindShadowR106>180||phone&&!economy&&now-lastWindShadowR106>1000)){renderer.shadowMap.needsUpdate=true;lastWindShadowR106=now;}renderGate.invalidate();}scene.userData.previousWindR74=windAmountR74;}
