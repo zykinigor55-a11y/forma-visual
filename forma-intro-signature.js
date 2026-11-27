@@ -137,7 +137,6 @@
   closing=true;clearTimers();hint('');
   screen.classList.remove('is-holding');
   if(recover)recover.hidden=true;
-  woodTap(7,.22);
   screen.classList.add('is-leaving');
   const id=run;
   setTimeout(()=>{
@@ -198,9 +197,7 @@
    firstPaint=true;paintStart=performance.now();screen.classList.add('is-grid-visible');
    addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
    addTimeout(()=>{screen.classList.add('is-logo-visible');woodTap(0,.23)},TIME.logo);
-   addTimeout(()=>woodTap(1,.21),TIME.logo+140);
    addTimeout(()=>screen.classList.add('is-name-visible'),TIME.name);
-   for(let i=0;i<5;i++)addTimeout(()=>woodTap(i+2,.16+i*.008),TIME.name+i*105+90);
    addTimeout(()=>screen.classList.add('is-descriptor-visible'),TIME.descriptor);
    addTimeout(()=>{minimumPassed=true;checkReadiness();if(previewHold&&playedTaps===0)hint(woodError?'Запись дерева недоступна':'Коснитесь экрана для звука')},TIME.minShow);
    addTimeout(()=>{
