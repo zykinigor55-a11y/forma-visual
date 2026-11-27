@@ -205,14 +205,15 @@ export function lawnTemplatePhotoContract(input){
 }
 
 export function panoramaPhotoContract(input){
- const p=input?.panorama;if(!p||typeof p!=='object'||!p.type)return '';
- const types={conifer:'distant coniferous forest edge, pine and spruce at physically believable heights',deciduous:'distant deciduous forest edge with natural birch, oak and broadleaf crowns',mixed:'distant mixed woodland edge with coniferous and deciduous crowns',park:'distant landscaped park tree line',village:'distant low-rise village skyline with scattered trees',city:'distant urban skyline',field:'open meadow and field with distant horizon',lake:'distant lake and natural shoreline',industrial:'distant industrial buildings',mountain:'distant natural mountain range beyond the woodland', 'snow-mountain':'distant snow-capped mountains behind the woodland',off:'no artificial background environment'};
- const type=Object.hasOwn(types,p.type)?types[p.type]:'';if(!type)return '';
+ const p=input?.panorama;if(!p||typeof p!=='object'||!p.near||!p.far)return '';
+ const types={conifer:'distant coniferous forest edge, pine and spruce',deciduous:'distant deciduous broadleaf forest edge',mixed:'distant mixed coniferous and deciduous woodland edge'};
  const n=(v,min,max,d)=>Number.isFinite(Number(v))?Math.max(min,Math.min(max,Number(v))):d;
  const season=['summer','spring','autumn','winter'].includes(p.season)?p.season:'summer';
- if(p.type==='off')return 'DISTANT ENVIRONMENT: no added background. Preserve open horizon and existing scene.';
- const mountain=p.mountains||p.type==='mountain'||p.type==='snow-mountain';
- return 'DISTANT ENVIRONMENT CONTRACT FOR NANO BANANA: '+type+'. Background season '+season+'. Preserve authored horizon, camera and foreground geometry. Continue existing ground naturally beyond parcel; render only distant context outside the measured property, never add trees or structures on the property. Forest belts are separate from sky; show whole, naturally scaled crowns, not giant trunks or a camera inside a forest. Preserve the authored background orientation '+n(p.rotation,0,360,0)+' degrees, near horizon distance '+n(p.effectiveRadius,50,5000,200)+' m, haze '+n(p.haze,0,100,15)+'%, blur '+n(p.blur,0,100,8)+'%. Natural atmospheric perspective without artificial blur, seams, repeating trees, excessive saturation or pasted sky. '+(mountain?'Mountains must appear behind trees, realistically distant and layered, preserve existing silhouette in source; never move mountains into the foreground. '+(p.type==='snow-mountain'?'Natural snow on upper slopes only. ':''):'Do not introduce mountains.')+' Match the independently authored sky, sun, weather and time of day.';
+ const layers=[['NEAR PLAN',p.near],['FAR PLAN',p.far]].map(([name,v])=>{
+  if(!Object.hasOwn(types,v.type))return name+': disabled. Do not invent a forest belt here.';
+  return name+': '+types[v.type]+', approximately '+n(v.effectiveDistance??v.distance,50,5000,200)+' m from scene centre, height '+n(v.height,5,40,18)+' m, rotation '+n(v.rotation,0,360,0)+' degrees. Preserve visible source skyline and natural scale.';
+ });
+ return 'DISTANT ENVIRONMENT CONTRACT FOR NANO BANANA: '+layers.join(' ')+' Background season '+season+'. Haze '+n(p.haze,0,25,10)+'%, blur '+n(p.blur,0,12,2)+'%. Far layer has softer contrast and more atmospheric depth. Preserve camera, architecture, placed trees and lawn exactly; extend ground naturally outside parcel only. Separate sky from forest silhouettes; no giant trunks, close-up forest view, artificial haze, excessive saturation or added mountains. No new objects inside designed property. Match authored time, weather and sun.';
 }
 
 export function perspectiveLandscapePrompt(input){

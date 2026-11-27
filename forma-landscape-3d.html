@@ -573,7 +573,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R197</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R198</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -622,14 +622,15 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
   <label for="quickWeather">Погода</label><select id="quickWeather"><option value="sunny">Солнечно</option><option value="overcast">Пасмурно</option><option value="after-rain">После дождя</option><option value="rain">Дождь</option><option value="fog">Туман</option><option value="snow">Снег</option></select>
  </div>
  <section id="panoramaR193panel" data-climate-group="panorama" class="weather-strength-section">
- <strong>ПАНОРАМА 360° · ДАЛЬНИЙ ПЛАН</strong>
- <label for="panoramaR193type">Окружение</label><select id="panoramaR193type"><option value="off">Без окружения</option><option value="conifer">Хвойный лес</option><option value="deciduous">Лиственный лес</option><option value="mixed">Смешанный лес</option><option value="village">Посёлок</option><option value="city">Город</option><option value="field">Поле</option><option value="lake">Озеро</option><option value="mountain">Горы</option><option value="snow-mountain">Снежные горы</option><option value="industrial">Промышленная зона</option><option value="park">Парковая зона</option></select>
- <div class="weather-strength-sliders">
- <label for="panoramaR193rotation">Поворот <output id="panoramaR193rotationValue"></output></label><input id="panoramaR193rotation" type="range" min="0" max="360" step="1"><label for="panoramaR193radius">Радиус <output id="panoramaR193radiusValue"></output></label><input id="panoramaR193radius" type="range" min="50" max="1000" step="10"><label for="panoramaR193blur">Размытие <output id="panoramaR193blurValue"></output></label><input id="panoramaR193blur" type="range" min="0" max="100" step="1"><label for="panoramaR193haze">Дымка горизонта <output id="panoramaR193hazeValue"></output></label><input id="panoramaR193haze" type="range" min="0" max="100" step="1">
- </div><label for="panoramaR193season">Сезон окружения</label><select id="panoramaR193season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
- <label><input type="checkbox" id="panoramaR193mountains"> Добавить дальние горы</label><small id="panoramaR193status" role="status" aria-live="polite">Подготовка панорамы…</small>
- <div class="scene-climate-actions"><button type="button" id="panoramaR193reset">Сбросить</button><button type="button" id="panoramaR193retry">Перезагрузить</button></div>
- <small>Лес: прозрачные фотопанорамы ambientCG CC0. Горы: отдельная геометрия. Остальные окружения: Poly Haven CC0. Небо независимо.</small>
+ <strong>ОКРУЖЕНИЕ</strong><small>Два независимых плана. Выберите лес, его расстояние и высоту.</small>
+ <div style="padding:8px 0;border-bottom:1px solid #ffffff18"><strong>БЛИЖНИЙ ПЛАН</strong><label for="panoramaR198nearType">Тип леса</label><select id="panoramaR198nearType"><option value="off">Без окружения</option><option value="conifer">Хвойный лес</option><option value="deciduous">Лиственный лес</option><option value="mixed">Смешанный лес</option></select><div id="panoramaR198nearControls"><div class="weather-strength-sliders"><label for="panoramaR198nearDistance">Расстояние <output id="panoramaR198nearDistanceValue"></output></label><input id="panoramaR198nearDistance" type="range" min="50" max="250" step="10"><label for="panoramaR198nearHeight">Высота деревьев <output id="panoramaR198nearHeightValue"></output></label><input id="panoramaR198nearHeight" type="range" min="5" max="35" step="1"><label for="panoramaR198nearRotation">Поворот <output id="panoramaR198nearRotationValue"></output></label><input id="panoramaR198nearRotation" type="range" min="0" max="360" step="1"></div></div></div>
+ <div style="padding:8px 0;border-bottom:1px solid #ffffff18"><strong>ДАЛЬНИЙ ПЛАН</strong><label for="panoramaR198farType">Тип леса</label><select id="panoramaR198farType"><option value="off">Без окружения</option><option value="conifer">Хвойный лес</option><option value="deciduous">Лиственный лес</option><option value="mixed">Смешанный лес</option></select><div id="panoramaR198farControls"><div class="weather-strength-sliders"><label for="panoramaR198farDistance">Расстояние <output id="panoramaR198farDistanceValue"></output></label><input id="panoramaR198farDistance" type="range" min="260" max="1000" step="10"><label for="panoramaR198farHeight">Высота деревьев <output id="panoramaR198farHeightValue"></output></label><input id="panoramaR198farHeight" type="range" min="5" max="40" step="1"><label for="panoramaR198farRotation">Поворот <output id="panoramaR198farRotationValue"></output></label><input id="panoramaR198farRotation" type="range" min="0" max="360" step="1"></div></div></div>
+ <strong>ОБЩИЕ НАСТРОЙКИ</strong>
+ <div class="weather-strength-sliders"><label for="panoramaR198blur">Размытие <output id="panoramaR198blurValue"></output></label><input id="panoramaR198blur" type="range" min="0" max="12" step="1"><label for="panoramaR198haze">Дымка <output id="panoramaR198hazeValue"></output></label><input id="panoramaR198haze" type="range" min="0" max="25" step="1"></div>
+ <label for="panoramaR198season">Сезон</label><select id="panoramaR198season"><option value="summer">Лето</option><option value="spring">Весна</option><option value="autumn">Осень</option><option value="winter">Зима</option></select>
+ <small id="panoramaR198status" role="status" aria-live="polite">Подготовка окружения…</small>
+ <div class="scene-climate-actions"><button type="button" id="panoramaR198reset">Сбросить</button><button type="button" id="panoramaR198retry">Перезагрузить</button></div>
+ <small>Прозрачные фотопанорамы ambientCG (CC0). Небо и солнце независимы.</small>
  </section>
  <section data-climate-group="atmosphere" class="weather-strength-section"><strong>ВЕТЕР</strong><div class="weather-strength-sliders"><label for="quickWindR91">Сила ветра <output id="quickWindR91Value">15%</output></label><input id="quickWindR91" type="range" min="0" max="100" step="1" value="15"></div><small>Трава, цветы, листья, ветви и рябь воды.</small></section>
  <section id="quickWeatherSNOW" data-climate-group="atmosphere" class="weather-strength-section" data-weather-section="snow" hidden>
@@ -935,7 +936,7 @@ import {createDetailedFir,woodTexture,adoptFirPhotoMaps,firStage} from './forma-
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
-import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r197.js?v=R197';
+import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r198.js?v=R198';
 import {createNaturalSakura,sakuraStage} from './forma-landscape-3d-sakura-r192.js?v=R192';
 import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R130';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
@@ -1008,7 +1009,7 @@ const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
 let pickables=[],pointMode=[],walkYaw=0,walkPitch=0,lastHouseTargetKey='',brushStroke=null,terrainStrokeLast=null,brushRefreshFrame=0,shadowedGardenLights=0,atmosphereSky=null;
 let panoramaR193=null,panoramaPanelR193=null,panoramaSettingsR193=normalizePanorama();
-const panoramaKeyR193='forma-panorama-r193-'+pid;
+const panoramaKeyR193='forma-panorama-r198-'+pid;
 function syncPanoramaR193(){if(!panoramaR193||!scene||!doc)return;panoramaR193.apply(panoramaSettingsR193,{time:doc.atmosphere.time,weather:doc.atmosphere.weather,fog:scene.fog?.color||'#b8c7c4',side:squareTerrainSide(doc.site),mode:state.view,camera,terrainMaterial:terrainMesh?.material,tile:LAWN_PROFILES[lawnTypeR77]?.tile||1.05});}
 let solarSettings=solarPreset('day'),sceneAtmosphere=normalizeSceneAtmosphere(),cloudLayer=null,waterRippleTexture=null,outdoorReflectionMap=null;
 const waterSurfaces=[];let lastAtmosphereAnimationAt=0;
