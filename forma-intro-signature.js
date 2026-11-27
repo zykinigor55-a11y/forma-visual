@@ -26,32 +26,33 @@
  const woodUrl='https://cdn.freesound.org/previews/543/543705_11072224-lq.mp3';
  let woodBuffer=null,woodCuts=[],woodPromise=null,woodError=false;
  const playingWood=new Set();
+ // Select ONE uninterrupted take from the actual recording, not isolated transients.
  function findWoodCuts(buffer){
-  const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.008)),frames=Math.floor(buffer.length/hop);
-  const ch=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+  const rate=buffer.sampleRate,hop=Math.max(1,Math.round(rate*.04)),frames=Math.floor(buffer.length/hop);
+  const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
   const levels=new Float32Array(frames);
-  for(let i=0;i<frames;i++){let power=0;for(let k=0;k<hop;k++)for(const channel of ch){const v=channel[i*hop+k];power+=v*v}levels[i]=Math.sqrt(power/(hop*ch.length))}
-  const max=levels.reduce((a,b)=>Math.max(a,b),0),candidates=[];
-  if(max<.0001)throw Error('Silent source');
-  for(let i=7;i<frames-29;i++){
-   const peak=levels[i],prior=(levels[i-6]+levels[i-5]+levels[i-4]+levels[i-3]+levels[i-2])/5;
-   if(peak<max*.13||peak<levels[i-1]||peak<levels[i+1]||peak<prior*1.9)continue;
-   let tail=0;for(let k=12;k<25;k++)tail+=levels[i+k]/13;
-   const score=(peak-prior)/(Math.max(.008,tail)+peak*.28);
-   candidates.push({i,score,peak});
+  for(let i=0;i<frames;i++){let power=0;for(let k=0;k<hop;k+=4)for(const ch of channels){const v=ch[i*hop+k];power+=v*v}levels[i]=Math.sqrt(power/(Math.ceil(hop/4)*channels.length))}
+  const max=levels.reduce((a,b)=>Math.max(a,b),0);
+  if(max<.0001)throw Error('Silent recording');
+  const duration=Math.min(4.15,buffer.duration);
+  const span=Math.min(frames,Math.floor(duration*rate/hop));
+  if(span<1)throw Error('Empty recording');
+  let best=0,bestScore=-Infinity;
+  // Prefer a sequence of naturally spaced contacts with audible movement between them.
+  for(let i=0;i<=frames-span;i+=3){
+   let active=0,contacts=0,power=0;
+   for(let k=i;k<i+span;k++){
+    const v=levels[k];power+=v*v;
+    if(v>max*.055)active++;
+    if(k>i+2&&v>max*.16&&v>levels[k-1]*1.45&&v>levels[k-2]*1.35)contacts++;
+   }
+   const density=active/span;
+   const score=Math.min(contacts,12)*.09+Math.min(density,.78)*.8+Math.sqrt(power/span)/max*.25-Math.max(0,density-.85);
+   if(score>bestScore){bestScore=score;best=i}
   }
-  candidates.sort((a,b)=>b.score-a.score);
-  const chosen=[];
-  for(const c of candidates){if(chosen.every(x=>Math.abs(x.i-c.i)*hop/rate>.30)){chosen.push(c);if(chosen.length===12)break}}
-  if(chosen.length<3)throw Error('Not enough separate wooden impacts');
-  // Use separate sharp transients; brief dry tails, with no pitch shift or synthetic bass.
-  return chosen.sort((a,b)=>a.i-b.i).map(c=>{
-   let onset=c.i;while(onset>c.i-6&&levels[onset-1]>c.peak*.12)onset--;
-   const start=Math.max(0,onset*hop/rate-.012);
-   let duration=Math.min(.195,buffer.duration-start);
-   let peak=0;for(const channel of ch)for(let k=Math.floor(start*rate);k<Math.min(buffer.length,Math.floor((start+duration)*rate));k++)peak=Math.max(peak,Math.abs(channel[k]));
-   return {start,duration,peak:Math.max(.03,peak)};
-  });
+  const start=Math.max(0,Math.min(buffer.duration-duration,best*hop/rate));
+  let peak=0;for(const ch of channels)for(let k=Math.floor(start*rate);k<Math.min(buffer.length,Math.floor((start+duration)*rate));k++)peak=Math.max(peak,Math.abs(ch[k]));
+  return [{start,duration,peak:Math.max(.03,peak)}];
  }
  function prepareWood(){
   if(woodBuffer)return Promise.resolve(true);
@@ -77,19 +78,20 @@
   }catch{return Promise.resolve(false)}
  }
  function stopWood(){for(const node of playingWood){try{node.stop()}catch{}}playingWood.clear()}
- function woodTap(index,level=.085){
-  if(!woodBuffer||!woodCuts.length||audioContext?.state!=='running')return;
-  const cut=woodCuts[index%woodCuts.length],ctx=audioContext,now=ctx.currentTime+.008;
+ function playWoodTake(){
+  if(playedTaps||!woodBuffer||!woodCuts.length||audioContext?.state!=='running')return false;
+  const cut=woodCuts[0],ctx=audioContext,now=ctx.currentTime+.015;
   const src=ctx.createBufferSource(),gain=ctx.createGain(),hp=ctx.createBiquadFilter();
-  src.buffer=woodBuffer;hp.type='highpass';hp.frequency.value=85;hp.Q.value=.6;
-  const volume=Math.min(1,level/cut.peak);
+  src.buffer=woodBuffer;hp.type='highpass';hp.frequency.value=55;hp.Q.value=.6;
+  // A quiet, audible peak around -15 dBFS, with the original dynamics intact.
+  const volume=Math.min(2.5,.18/cut.peak);
   gain.gain.setValueAtTime(0,now);
-  gain.gain.linearRampToValueAtTime(volume,now+.006);
-  gain.gain.setValueAtTime(volume,now+Math.max(.004,cut.duration-.025));
+  gain.gain.linearRampToValueAtTime(volume,now+.07);
+  gain.gain.setValueAtTime(volume,now+Math.max(.08,cut.duration-.15));
   gain.gain.linearRampToValueAtTime(0,now+cut.duration);
   src.connect(hp);hp.connect(gain);gain.connect(ctx.destination);playingWood.add(src);
   src.onended=()=>{playingWood.delete(src);src.disconnect();hp.disconnect();gain.disconnect()};
-  src.start(now,cut.start,cut.duration);playedTaps++;
+  src.start(now,cut.start,cut.duration);playedTaps++;return true;
  }
  // Touch activation: click/pointerup, not touch pointerdown. Never bypass browser policy.
  function resumeOnInteraction(event){
@@ -102,8 +104,8 @@
   Promise.race([loading,new Promise(resolve=>setTimeout(()=>resolve(false),950))]).then(ok=>{
    if(current!==run||!active||closing)return;
    gestureBusy=false;
-   if(wasPending&&sequencePending){startSequence(current);return}
-   if(ok&&previewHold&&playedTaps===0){begin();return}
+   if(wasPending&&sequencePending){startSequence(current);if(!ok)loading.then(loaded=>{if(loaded&&current===run&&active&&!closing&&!playedTaps&&previewHold)begin()});return}
+   if(ok&&playedTaps===0&&(previewHold||performance.now()-paintStart<1500)){begin();return}
    if(woodError&&previewHold)hint('Запись дерева недоступна');
    else if(!ok&&previewHold)hint('Коснитесь экрана для звука');
   });
@@ -137,7 +139,6 @@
   closing=true;clearTimers();hint('');
   screen.classList.remove('is-holding');
   if(recover)recover.hidden=true;
-  woodTap(7,.075);
   screen.classList.add('is-leaving');
   const id=run;
   setTimeout(()=>{
@@ -196,11 +197,13 @@
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
    if(id!==run||!active||closing)return;
    firstPaint=true;paintStart=performance.now();screen.classList.add('is-grid-visible');
+   // Start the full take with the visual sequence; never play a truncated tail.
+   if(!playWoodTake()&&audioContext?.state==='running'){
+    prepareWood().then(ok=>{if(ok&&id===run&&active&&!closing&&!playedTaps&&performance.now()-paintStart<220)playWoodTake()});
+   }
    addTimeout(()=>screen.classList.add('is-loader-complete'),TIME.loaderEnd);
-   addTimeout(()=>{screen.classList.add('is-logo-visible');woodTap(0,.095)},TIME.logo);
+   addTimeout(()=>screen.classList.add('is-logo-visible'),TIME.logo);
    addTimeout(()=>screen.classList.add('is-name-visible'),TIME.name);
-   addTimeout(()=>woodTap(3,.08),TIME.name+195);
-   addTimeout(()=>woodTap(5,.065),TIME.name+510);
    addTimeout(()=>screen.classList.add('is-descriptor-visible'),TIME.descriptor);
    addTimeout(()=>{minimumPassed=true;checkReadiness();if(previewHold&&playedTaps===0)hint(woodError?'Запись дерева недоступна':'Коснитесь экрана для звука')},TIME.minShow);
    addTimeout(()=>{
