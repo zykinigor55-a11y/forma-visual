@@ -427,7 +427,7 @@ function roofGeometry(g,T,b,w,d,eave,bodyHeight,roofMaterial,roofFinish){
  const dark=mat(T,'#22282B',.75,.38),soffit=mat(T,'#555A59',.82,.06),gable=roof==='gable',hip=roof==='hip';
  const rise=b.archStyle==='aframe'?Math.max(4.2,Math.min(8,Number(b.roofRise)||0,w*.74)):Math.max(.5,Math.min(4,Number(b.roofRise)||Math.min(w,d)*.22));
  if(roof==='flat'){
-  box(g,T,w+overhang*2,.30,d+overhang*2,0,bodyHeight+.16,0,roofMaterial);
+  box(g,T,w+overhang*2,.30,d+overhang*2,0,bodyHeight+.16,0,roofMaterial).userData.architecturePart='roof-layer';
   const lip=mat(T,'#32393A',.8,.15);
   for(const x of [-1,1])box(g,T,.17,.38,d+overhang*2,x*(w/2+overhang-.08),bodyHeight+.41,0,lip);
   for(const z of [-1,1])box(g,T,w+overhang*2,.38,.17,0,bodyHeight+.41,z*(d/2+overhang-.08),lip);
