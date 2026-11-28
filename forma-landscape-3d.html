@@ -2342,7 +2342,7 @@ function rebuild(){
  // never changes planted coordinates, path edges, buildings or terrain.
  // R243: snow overlays on actual eligible object geometry. Keep a bounded plant instance budget.
  if(weatherEffectsVisible(doc.atmosphere).snow){
-  const phone=mobileDeviceR106();let budget=phone?8500:24000;
+  const phone=mobileDeviceR106();const plantCount=pickables.filter(g=>{const ref=selectable(g.userData.key||''),o=ref?.obj;if(!o)return false;const cat=ref.type==='object'?catalog(o.catalogId)?.group:ref.type==='extra'?realModelById(o.type)?.group:'';return cat==='trees'||cat==='shrubs'||ref.type==='extra'&&/pine|spruce|fir|birch|oak|willow|maple|rowan|shrub|fern|periwinkle|hedge|bush/i.test(o.type||'');}).length;const perPlant=Math.max(8,Math.min(phone?750:1800,Math.floor((phone?8500:24000)/Math.max(1,plantCount))));
   for(const group of pickables){
    const key=group.userData.key||'',ref=selectable(key),o=ref?.obj;if(!o)continue;
    let kind='';
@@ -2350,9 +2350,7 @@ function rebuild(){
    else if(ref.type==='object'){const cat=catalog(o.catalogId)?.group;kind=cat==='trees'||cat==='shrubs'?cat:['pavers','fills','lawns','stones','rocks','furniture','fences'].includes(cat)?'object':/stone|boulder|rock|bench|fence|terrace/i.test(o.catalogId||'')?'object':'';}
    else if(ref.type==='extra'&&!isCreatureId(o.type)){const cat=realModelById(o.type)?.group;kind=cat==='trees'||cat==='shrubs'?cat:/pine|spruce|fir|birch|oak|willow|maple|rowan/i.test(o.type)?'trees':/shrub|fern|periwinkle|hedge|bush/i.test(o.type)?'shrubs':isSurfacePrimitive(o)||/fence|bench|table|pergola|gazebo|stone|boulder|rock|terrace|planter/i.test(o.type)?'object':'';}
    if(!kind)continue;
-   if((kind==='trees'||kind==='shrubs')&&budget<=0)continue;
-   const used=attachObjectSnowPreview(THREE,group,kind,doc.atmosphere,{mobile:phone,budget:Math.min(budget,phone?750:1800)});
-   budget-=used;
+   attachObjectSnowPreview(THREE,group,kind,doc.atmosphere,{mobile:phone,budget:perPlant});
   }
  }
  addWeatherSceneVisuals(THREE,root,terrainMesh,doc,terrainAt);
