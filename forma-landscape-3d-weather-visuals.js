@@ -19,7 +19,7 @@ function pathDistanceR244(paths){
  const cell=2,grid=new Map();for(const rows of paths||[]){for(let i=1;i<rows.length;i++){const a=rows[i-1],b=rows[i],dx=b.x-a.x,dz=b.z-a.z,l2=dx*dx+dz*dz;if(l2<1e-8)continue;const s={a,b,dx,dz,l2},pad=Math.max(a.w,b.w)+1.1;for(let ix=Math.floor((Math.min(a.x,b.x)-pad)/cell);ix<=Math.floor((Math.max(a.x,b.x)+pad)/cell);ix++)for(let iz=Math.floor((Math.min(a.z,b.z)-pad)/cell);iz<=Math.floor((Math.max(a.z,b.z)+pad)/cell);iz++){const k=ix+':'+iz;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(s);}}}
  return (x,z)=>{let best=Infinity;for(const s of grid.get(Math.floor(x/cell)+':'+Math.floor(z/cell))||[]){const t=clamp(((x-s.a.x)*s.dx+(z-s.a.z)*s.dz)/s.l2,0,1);const d=Math.hypot(x-s.a.x-s.dx*t,z-s.a.z-s.dz*t)-(s.a.w+(s.b.w-s.a.w)*t);if(d<best)best=d;}return best;};
 }
-function clearMaskR244(d,clear){return 1-clear*(1-clamp((d+.025)/.10,0,1));}
+function clearMaskR244(d,clear){return 1-clear*(1-clamp((d+.16)/.10,0,1));}
 function snowAtlas(T,coverage,side,distance,clear){
  const size=512,el=document.createElement('canvas');el.width=el.height=size;const ctx=el.getContext('2d');if(!ctx)return null;
  const img=ctx.createImageData(size,size),p=coverage/100;
@@ -75,6 +75,29 @@ function addSnowGround(T,root,terrainMesh,effects,paths){
  const mat=new T.MeshStandardMaterial({map,bumpMap:micro,bumpScale:.012+.040*relief,roughness:1,metalness:0,color:'#ffffff',envMapIntensity:.32,alphaTest:.5,transparent:false,depthWrite:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,side:T.DoubleSide});
  const mesh=new T.Mesh(geom,mat);mesh.name='forma-settled-ground-snow-r242';mesh.receiveShadow=true;mesh.castShadow=false;mesh.raycast=()=>{};
  mesh.userData.formaWeatherPreview=true;mesh.userData.textures=[map,micro];root.add(mesh);
+}
+// Close the exposed soil seam with a continuous tapered snow shoulder.
+function addPathEdgeSnowR247(T,root,effects,paths,groundAt){
+ const coverage=effects.snowGround/100,clear=effects.pathClear/100;if(coverage<.05||clear<.05)return;
+ const verts=[],indices=[],cols=8,stride=cols+1;
+ for(const rows of paths){if(rows.length<2)continue;
+  for(const sign of [-1,1]){const first=verts.length/3;
+   for(let i=0;i<rows.length;i++){const r=rows[i],a=rows[Math.max(0,i-1)],b=rows[Math.min(rows.length-1,i+1)],dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz)||1,nx=-dz/len*sign,nz=dx/len*sign;
+    const edge=Number(r.w)||.6,drift=(effects.pathBanks/100)*(effects.pathBankHeight/100),depth=effects.snowDepth/100;
+    for(let j=0;j<=cols;j++){const t=j/cols,d=-.07+t*.63,x=r.x+nx*(edge+d),z=r.z+nz*(edge+d),blend=clamp(t*5,0,1);
+     const bank=Math.exp(-Math.pow((d-.27)/.22,2))*drift*(.74+.43*snowNoise(x*1.9,z*1.9));
+     const endDepth=.018+depth*(.76+.20*snowNoise(x*.9,z*.9));
+     const y=groundAt(x,z)+(.082*(1-blend)+(endDepth+bank+.018)*blend)*coverage+.012;
+     verts.push(x,y,z);if(i<rows.length-1&&j<cols){const k=first+i*stride+j;indices.push(k,k+stride,k+1,k+1,k+stride,k+stride+1);}
+    }
+   }
+  }
+ }
+ if(!indices.length)return;
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(verts,3));geo.setIndex(indices);geo.computeVertexNormals();
+ const n=geo.attributes.normal;for(let i=0;i<n.count;i++)if(n.getY(i)<0)n.setXYZ(i,-n.getX(i),-n.getY(i),-n.getZ(i));n.needsUpdate=true;
+ const mat=new T.MeshStandardMaterial({color:'#e8edf0',roughness:1,metalness:0,side:T.DoubleSide,envMapIntensity:.32});
+ const m=new T.Mesh(geo,mat);m.name='forma-continuous-snow-path-shoulder-r247';m.userData.formaWeatherPreview=true;m.receiveShadow=true;m.raycast=()=>{};root.add(m);
 }
 function addPathDustR244(T,root,effects){
  if(effects.snowGround<=0||effects.pathDust<=0||effects.pathClear<=0)return;
@@ -148,6 +171,7 @@ export function addWeatherSceneVisuals(T,root,terrainMesh,doc,terrainAt,paths=[]
  const {snow,rain}=weatherEffectsVisible(state);
  if(snow){
   addSnowGround(T,root,terrainMesh,effects,paths);
+  addPathEdgeSnowR247(T,root,effects,paths,terrainAt);
   addPathDustR244(T,root,effects);
   addSnowfall(T,root,doc.site,effects.snowfall);
  }
