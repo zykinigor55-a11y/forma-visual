@@ -16,14 +16,14 @@ function branchShellR245(T,group,kind,mobile,budget){
  const V=(x,y,z)=>new T.Vector3(x,y,z),up=V(0,1,0),h=group.userData.physicalHeight||group.userData.formaPlantBoundsR142?.height||5;
  const candidates=(fir?.length?fir.map((b,i)=>({points:b.points,rank:rnd(i,89),bough:b})):decid.map((points,i)=>({points,rank:rnd(i,89)}))).filter(q=>q.points.length>1);
  candidates.sort((a,b)=>a.rank-b.rank);const paths=candidates.slice(0,Math.min(candidates.length,Math.max(80,budget))),positions=[],normals=[],ends=[];
- const across=mobile?6:10;
+ const across=fir?.length?(mobile?10:14):(mobile?6:10);
  for(let k=0;k<paths.length;k++){const q=paths[k],pts=q.points.map(p=>V(p[0],p[1],p[2])),rows=[];let valid=false;
   for(let i=0;i<pts.length;i++){const p=pts[i],t=i/(pts.length-1),axis=pts[Math.min(pts.length-1,i+1)].clone().sub(pts[Math.max(0,i-1)]).normalize(),side=V(0,0,0).crossVectors(axis,up).normalize(),top=V(0,0,0).crossVectors(side,axis).normalize();
    if(side.lengthSq()<.01){side.set(1,0,0);top.set(0,1,0);}
    const taper=Math.pow(Math.max(.01,Math.sin(Math.PI*t)),.58),slope=Math.sqrt(Math.max(0,1-axis.y*axis.y));let w,thick,offset;
-   if(q.bough){const L=q.bough.length;const outer=.8+.16*Math.sin(i*2.8+k*.91);w=Math.max(.018,L*(.27-.04*t)*taper*outer);thick=Math.max(.018,L*.14*taper*(.9+.12*Math.sin(k*2+i*.9)));offset=Math.min(.12,L*.17)*taper;valid=true;}
+   if(q.bough){const L=q.bough.length;const outer=.94+.13*Math.sin(i*1.9+k*.91);w=Math.max(.025,L*(.43-.055*t)*taper*outer);thick=Math.max(.035,Math.min(.30,L*.23)*taper*(.94+.12*Math.sin(k*2+i*.9)));offset=Math.min(.24,L*.27)*taper;valid=true;}
    else{const r=q.points[i][3]||.001;const extra=Math.min(.045,Math.max(.003,r*.65+h*.0014))*slope;w=Math.max(.001,r+extra*.72*taper);thick=r+extra*taper;offset=0;if(slope>.30&&p.y>h*.18)valid=true;}
-   const row=[];for(let j=0;j<=across;j++){const u=j/across,angle=-Math.PI*.12+u*Math.PI*1.24,noise=1+.06*Math.sin(k*1.4+i*1.9+j*2.7);const pos=p.clone().addScaledVector(side,Math.cos(angle)*w*noise).addScaledVector(top,Math.sin(angle)*thick*noise+offset);const norm=side.clone().multiplyScalar(Math.cos(angle)/Math.max(.001,w)).addScaledVector(top,Math.sin(angle)/Math.max(.001,thick)).normalize();row.push({pos,norm});}rows.push(row);
+   const row=[];for(let j=0;j<=across;j++){const u=j/across,angle=-Math.PI*.12+u*Math.PI*1.24,noise=1+(q.bough?.10:.06)*Math.sin(k*1.4+i*1.9+j*2.7);const pos=p.clone().addScaledVector(side,Math.cos(angle)*w*noise).addScaledVector(top,Math.sin(angle)*thick*noise+offset);const norm=side.clone().multiplyScalar(Math.cos(angle)/Math.max(.001,w)).addScaledVector(top,Math.sin(angle)/Math.max(.001,thick)).normalize();row.push({pos,norm});}rows.push(row);
   }
   if(!valid)continue;
   const tri=(a,b,c)=>{const n=b.pos.clone().sub(a.pos).cross(c.pos.clone().sub(a.pos));if(n.dot(a.norm.clone().add(b.norm).add(c.norm))<0){const tmp=b;b=c;c=tmp;}for(const p of [a,b,c]){positions.push(p.pos.x,p.pos.y,p.pos.z);normals.push(p.norm.x,p.norm.y,p.norm.z);}};
@@ -32,11 +32,11 @@ function branchShellR245(T,group,kind,mobile,budget){
  }
  if(!ends.length)return null;
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setAttribute('normal',new T.Float32BufferAttribute(normals,3));geo.computeBoundingSphere();
- const mat=material(T);mat.color.set('#e5ebef');mat.roughness=1;const mesh=new T.Mesh(geo,mat);mesh.name='forma-continuous-branch-snow-r245';mesh.userData.formaWeatherPreview=true;mesh.raycast=()=>{};mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return {kind,mesh,ends};
+ const mat=material(T);mat.color.set('#e5ebef');mat.roughness=1;const mesh=new T.Mesh(geo,mat);mesh.name='forma-continuous-branch-snow-r245';mesh.userData.formaWeatherPreview=true;mesh.raycast=()=>{};mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return {kind,mesh,ends,boughSnow:!!fir?.length};
 }
 function plantSnow(T,group,kind,mobile,budget){
  if(kind==='trees'&&group.userData?.formaSnowPreview?.branchSnow)return [];
- const native=branchShellR245(T,group,kind,mobile,budget),nativeFir=!!group.userData.formaFirBoughsR245?.length;if(native&&!nativeFir)return [native];
+ const native=branchShellR245(T,group,kind,mobile,budget),nativeFir=!!group.userData.formaFirBoughsR245?.length;if(native)return [native];
  // Fallback for other native or imported plants: a conforming layer on real
  // upward-facing surfaces, without disconnected spheres or new crown geometry.
  const entries=native?[native]:[],nodes=[];group.traverse(n=>{if(usable(n)&&!/fruit|berry|cone|calyx|click-volume/i.test(n.name)&&(!nativeFir||/needle|foliage|leaves/i.test(n.name)))nodes.push(n);});
@@ -105,7 +105,7 @@ function updateObjectSnowPreview(group,atmosphere){
   const value=active?(entry.kind==='trees'?e.snowTrees:entry.kind==='shrubs'?e.snowShrubs:entry.kind==='roof'?e.snowRoofs:e.snowObjects)/100:0;
   if(entry.coat){entry.coat.value=value;continue;}
   entry.mesh.visible=value>0;
-  if(entry.ends){const count=Math.round(entry.ends.length*value);entry.mesh.geometry.setDrawRange(0,count?entry.ends[count-1]:0);continue;}
+  if(entry.ends){const count=Math.round(entry.ends.length*(entry.boughSnow?Math.pow(value,.55):value));entry.mesh.geometry.setDrawRange(0,count?entry.ends[count-1]:0);continue;}
   if(entry.capacity){entry.mesh.count=Math.round(entry.capacity*value);continue;}
   entry.u.value=value;const key=[value,e.snowDepth,e.snowRelief,e.snowDrifts].join('|');if(entry.last===key)continue;entry.last=key;
   const p=entry.mesh.geometry.attributes.position,depth=Math.min(.24,e.snowDepth/100)*(entry.kind==='roof'?.62:.42);
