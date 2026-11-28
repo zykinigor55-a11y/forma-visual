@@ -333,17 +333,18 @@ function createDryField(T,{profile,focus,mobile,low,terrainAt,contains,bounds}){
 // Broad, inexpensive three-leaf clusters beyond the camera-centered detailed carpet.
 function addDistantTurf(T,root,{profile,focus,bounds,horizon,mobile,low,terrainAt,contains,mat,palette}){
  const area=Math.max(1,(bounds.x1-bounds.x0)*(bounds.z1-bounds.z0));
- const step=Math.max(mobile?.16:.09,Math.sqrt(area/(mobile?(low?15000:26000):145000)))/Math.sqrt(Math.max(.65,Math.min(mobile?1.35:1.4,profile.density)));
+ const volume=!!profile.volumePreviewR231;
+ const step=Math.max(mobile?(volume?.13:.16):.09,Math.sqrt(area/(mobile?(low?15000:26000):145000)))/Math.sqrt(Math.max(.65,Math.min(mobile?1.35:1.4,profile.density)));
  const rows=[],geo=tuftGeometry(T,profile,1,mobile?7:4,mobile),dummy=new T.Object3D(),color=new T.Color(),fall=new T.Color('#a69a59');
  for(let iz=Math.floor(bounds.z0/step);iz<=Math.ceil(bounds.z1/step);iz++)for(let ix=Math.floor(bounds.x0/step);ix<=Math.ceil(bounds.x1/step);ix++){
   const x=(ix+hash(ix,iz,181))*step,z=(iz+hash(ix,iz,182))*step,d=Math.hypot(x-focus.x,z-focus.z);
-  if((mobile?d<(low?3.6:4.9):d<horizon-6)||!contains(x,z))continue;
+  if((mobile?d<(volume?(low?5.5:7.0):(low?3.6:4.9)):d<horizon-6)||!contains(x,z))continue;
   if(!mobile&&hash(ix,iz,183)>smooth(clamp((d-horizon+6)/4,0,1)))continue;
   rows.push([x,z,hash(ix,iz,184),hash(ix,iz,185)]);
  }
  if(!rows.length){geo.dispose();return 0;}
  const m=new T.InstancedMesh(geo,mat,rows.length);
- rows.forEach(([x,z,v,a],i)=>{const h=profile.height*(.85+.36*v),w=mobile?h*(.95+.20*v):Math.max(h,step*.96);
+ rows.forEach(([x,z,v,a],i)=>{const h=profile.height*(.85+.36*v),w=mobile?(volume?Math.max(h*(.95+.20*v),step*.66):h*(.95+.20*v)):Math.max(h,step*.96);
   dummy.position.set(x,terrainAt(x,z)+.006,z);dummy.rotation.set(0,a*6.283185,0);dummy.scale.set(w,h,w);dummy.updateMatrix();m.setMatrixAt(i,dummy.matrix);color.copy(palette[Math.min(palette.length-1,Math.floor(v*palette.length))]);if(profile.season==='autumn')color.lerp(fall,.35+.45*field(x,z,.45,190));m.setColorAt(i,color);
  });
  m.name='forma-parcel-distant-turf-r104';m.receiveShadow=true;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.raycast=()=>{};root.add(m);return rows.length*5;
@@ -351,7 +352,7 @@ function addDistantTurf(T,root,{profile,focus,bounds,horizon,mobile,low,terrainA
 
 export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains=()=>true,low=false,bounds=null}){
  if(profile.crop)return createDryField(T,{profile,focus,mobile,low,terrainAt,contains,bounds});
- const root=new T.Group();root.name='forma-dense-lawn-r106';const maps=mobile?{}:bladeMaps(T),u={t:{value:0},wind:{value:0}};
+ const root=new T.Group();root.name='forma-dense-lawn-r106';const volume=!!profile.volumePreviewR231;const maps=mobile?{}:bladeMaps(T),u={t:{value:0},wind:{value:0}};
  const mat=mobile?new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.92,metalness:0,envMapIntensity:.20}):new T.MeshPhysicalMaterial({...maps,vertexColors:true,side:T.DoubleSide,roughness:.90,metalness:0,clearcoat:.03,clearcoatRoughness:.85,specularIntensity:.22,normalScale:new T.Vector2(.12,.10),envMapIntensity:.23});
  mat.onBeforeCompile=shader=>{
   shader.uniforms.formaGrassTime=u.t;shader.uniforms.formaGrassWind=u.wind;
@@ -361,6 +362,9 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
    float sway=.72*sin(formaGrassTime*1.1+grassAnchor.x*.95+grassAnchor.z*.72)+.28*sin(formaGrassTime*2.4+grassAnchor.x*2.2-grassAnchor.z*1.7);
    float flex=clamp(position.y,0.,1.);flex*=flex; transformed.z+=sway*formaGrassWind*.42*flex; transformed.x+=sin(formaGrassTime*1.65+grassAnchor.x*.72+grassAnchor.z*.5)*formaGrassWind*.18*flex;
   #endif`);
+  if(volume){shader.vertexShader='varying float vFormaBladeHeightR231;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvFormaBladeHeightR231=clamp(position.y,0.,1.);');shader.fragmentShader='varying float vFormaBladeHeightR231;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   float bladeHeight=smoothstep(0.,.65,vFormaBladeHeightR231);diffuseColor.rgb*=mix(.72,1.05,bladeHeight);
+  `);}
   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
    roughnessFactor=clamp(roughnessFactor,.64,.94);
   `);
@@ -385,11 +389,11 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
   `);
 
  };
- mat.customProgramCacheKey=()=> 'forma-grass-r118';
+ mat.customProgramCacheKey=()=> 'forma-grass-r118'+(volume?'|volume-r231':'');
  const pressedColor=new T.Color('#746c47'),color=new T.Color(),palette=profile.palette.map(c=>new T.Color(c).lerp(new T.Color('#46603b'),.12)),dummy=new T.Object3D();const autumnColors=['#7b824c','#a29b56','#b3a15a','#997c43','#806a42','#65794a'].map(c=>new T.Color(c));
  const cx=Math.round(focus.x/.6)*.6,cz=Math.round(focus.z/.6)*.6;
  const integrated=!!profile.integrated;const near=mobile?(integrated?1.05:1.15):1.55,mid=mobile?(integrated?3.0:3.2):4.0,far=mobile?7.5:9.2,horizon=mobile?14:19;
- const bands=mobile?[{min:0,max:low?2.1:2.5,step:low?.046:.039,detail:2},{min:low?1.7:2.1,max:low?4.6:6.0,step:low?.088:.073,detail:6}]:[{min:0,max:near+.24,step:.020,detail:0},{min:near-.24,max:mid+.36,step:.028,detail:1},{min:mid-.36,max:far+1.2,step:.048,detail:2},{min:far-1.2,max:horizon,step:.065,detail:3}];
+ const bands=mobile?(volume?[{min:0,max:low?2.1:2.6,step:low?.055:.045,detail:2},{min:low?1.7:2.1,max:low?4.8:5.8,step:low?.092:.079,detail:6},{min:low?4.0:4.9,max:low?7.2:9.0,step:low?.15:.125,detail:7}]:[{min:0,max:low?2.1:2.5,step:low?.046:.039,detail:2},{min:low?1.7:2.1,max:low?4.6:6.0,step:low?.088:.073,detail:6}]):[{min:0,max:near+.24,step:.020,detail:0},{min:near-.24,max:mid+.36,step:.028,detail:1},{min:mid-.36,max:far+1.2,step:.048,detail:2},{min:far-1.2,max:horizon,step:.065,detail:3}];
  const slopeCache=new Map(),up=new T.Vector3(0,1,0),normal=new T.Vector3(),axis=new T.Vector3(1,0,0),qYaw=new T.Quaternion(),qTilt=new T.Quaternion();
  function slope(x,z){
   const ix=Math.round(x/.18),iz=Math.round(z/.18),key=ix+':'+iz;
@@ -416,7 +420,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
    const patch=field(x,z,1.45,32)*.65+field(x,z,4.1,33)*.35;
    const tuft=field(x,z,15,34);const pressed=clamp(smooth(clamp((field(x,z,.83,35)*.73+field(x,z,2.1,36)*.27-.46)/.29,0,1))*(profile.pressedAmount??45)/45,0,1);
    const r=hash(ix,iz,3),h=profile.height*(1+(hash(ix,iz,4)-.5)*2*profile.variation)*(.72+.62*patch)*(.84+.32*tuft);
-   const w=Math.max(h*(.94+.24*r)*(1+pressed*.50)*(bandIndex===3?1.5:bandIndex===2?1.13:1),bandIndex>=2?step*.92:0);
+   const w=Math.max(h*(.94+.24*r)*(1+pressed*.50)*(bandIndex===3?1.5:bandIndex===2?1.13:1),bandIndex>=2?step*(volume?.73:.92):0);
    const shade=hash(ix,iz,6),variant=Math.min(2,Math.floor(hash(ix,iz,7)*3));
    const angle=field(x,z,.65,39)*Math.PI*4;const randomAngle=hash(ix,iz,8)*Math.PI*2;
    const stripe=profile.stripes?Math.floor((x+12)/profile.stripes)%2:0;
