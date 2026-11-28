@@ -24,7 +24,7 @@ function plantSnow(T,group,kind,mobile,budget){
  const rows=[],cells=new Set(),h=Math.max(.5,group.userData.formaPlantBoundsR142?.height||new T.Box3().setFromObject(group).getSize(new T.Vector3()).y);
  const spacing=kind==='shrubs'?Math.max(.045,h*.055):Math.max(.065,h*.025);
  const inv=group.matrixWorld.clone().invert(),local=new T.Matrix4(),instance=new T.Matrix4(),m=new T.Matrix4(),nm=new T.Matrix3(),v=new T.Vector3(),normal=new T.Vector3(),up=new T.Vector3(0,1,0);
- const nodes=[];group.traverse(n=>{if(usable(n))nodes.push(n);});
+ const nodes=[];group.traverse(n=>{if(usable(n))nodes.push(n);});nodes.sort((a,b)=>Number(b.isInstancedMesh)-Number(a.isInstancedMesh));
  for(const node of nodes){if(rows.length>=budget)break;const p=node.geometry.attributes.position,n=node.geometry.attributes.normal;if(!p||!n)continue;local.multiplyMatrices(inv,node.matrixWorld);
   const add=(i,k,transform,nmat,scale)=>{
    v.fromBufferAttribute(p,i).applyMatrix4(transform);normal.fromBufferAttribute(n,i).applyMatrix3(nmat).normalize();
@@ -40,7 +40,7 @@ function plantSnow(T,group,kind,mobile,budget){
  const dep=addDeposit(T,group,rows,kind,mobile);return dep?[dep]:[];
 }
 function surfaceSnow(T,group,kind,mobile){
- const nodes=[];group.traverse(n=>{if(!usable(n)||n.isInstancedMesh)return;const part=n.userData.architecturePart||'';if(kind==='roof'&&!roofPart.test(part))return;if(kind==='deck'&&!deckPart.test(part))return;nodes.push(n);});
+ const nodes=[];group.traverse(n=>{if(!usable(n)||n.isInstancedMesh)return;const part=n.userData.architecturePart||'';if(kind==='roof'&&!roofPart.test(part)&&!(group.userData.archStyle==='custom-glb'&&/(?:roof|кровл|крыш)/i.test(n.name)))return;if(kind==='deck'&&!deckPart.test(part))return;nodes.push(n);});
  const result=[],inv=group.matrixWorld.clone().invert(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),ab=new T.Vector3(),ac=new T.Vector3(),normal=new T.Vector3(),transform=new T.Matrix4();
  for(const node of nodes){const g=node.geometry,p=g.attributes.position,index=g.index,tri=index?index.count/3:p.count/3,part=node.userData.architecturePart||'';if(tri>25000)continue;
   transform.multiplyMatrices(inv,node.matrixWorld);const out=[],slopes=[];let maxEdge=0;const triangles=[];
@@ -54,7 +54,7 @@ function surfaceSnow(T,group,kind,mobile){
    maxEdge=Math.max(maxEdge,a.distanceTo(b),b.distanceTo(c),c.distanceTo(a));triangles.push([a.clone(),b.clone(),c.clone(),normal.y]);
   }
   if(!triangles.length)continue;
-  const n=Math.max(1,Math.min(mobile?14:24,Math.ceil(maxEdge/.45),Math.floor(Math.sqrt((mobile?18000:40000)/triangles.length))));
+  const n=Math.max(1,Math.min(mobile?12:20,Math.ceil(maxEdge/.45),Math.floor(Math.sqrt((mobile?10000:24000)/triangles.length))));
   for(const [A,B,C,ny] of triangles){const point=(i,j)=>{const x=A.clone().multiplyScalar(1-(i+j)/n).addScaledVector(B,i/n).addScaledVector(C,j/n);return x;};const push=(x)=>{out.push(x.x,x.y,x.z);slopes.push(ny);};
    for(let i=0;i<n;i++)for(let j=0;j<n-i;j++){push(point(i,j));push(point(i+1,j));push(point(i,j+1));if(i+j<n-1){push(point(i+1,j));push(point(i+1,j+1));push(point(i,j+1));}}
   }
@@ -62,7 +62,7 @@ function surfaceSnow(T,group,kind,mobile){
   const mat=material(T),u={value:0};mat.onBeforeCompile=shader=>{shader.uniforms.formaSnowCoverageR243=u;shader.vertexShader='varying vec3 vSnowR243;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvSnowR243=position;');shader.fragmentShader='varying vec3 vSnowR243; uniform float formaSnowCoverageR243;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
  float field=.5+.19*sin(vSnowR243.x*1.9+sin(vSnowR243.z*2.3))*cos(vSnowR243.z*1.7)+.13*sin(vSnowR243.x*5.1+vSnowR243.z*4.3);
  if(formaSnowCoverageR243<.999&&field>formaSnowCoverageR243)discard;
- diffuseColor.rgb*=.97+.025*sin(vSnowR243.x*13.7+vSnowR243.z*11.1);
+ float grain=sin(vSnowR243.x*11.3+sin(vSnowR243.z*17.1))*cos(vSnowR243.z*13.9+sin(vSnowR243.x*15.7));diffuseColor.rgb*=.97+.018*grain;
  `);};mat.customProgramCacheKey=()=> 'forma-matte-snow-r243';
   const mesh=new T.Mesh(geo,mat);mesh.name='forma-snow-surface-r243';mesh.userData.formaWeatherPreview=true;mesh.receiveShadow=true;mesh.castShadow=false;mesh.raycast=()=>{};group.add(mesh);
   result.push({kind,mesh,u,base:Float32Array.from(out),slopes:Float32Array.from(slopes),last:''});
