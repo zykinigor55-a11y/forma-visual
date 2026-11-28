@@ -45,6 +45,8 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
  const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
  const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),tau=Math.PI*2,up=V(0,1,0);
  const bp=[],bc=[],uv=[],idx=[],youth=[],flowers=[],leaves=[];
+ // R225: same seeded branch/flower topology on phone and desktop in comparison mode.
+ const compactTopology=adaptivePreview||mobile;
  const bark=new T.Color(old?'#62504a':young?'#795e50':'#6b554a'),shade=new T.Color('#463b37');
  const lerp=(a,b,t)=>a.clone().lerp(b,t);
  function tube(pts,radii,sides){
@@ -95,12 +97,12 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   if(!hasLeaves)return;
   const axis=b.clone().sub(a).normalize();
   const u=V(0,1,0).cross(axis);if(u.lengthSq()<.001)u.set(1,0,0);u.normalize();const v=axis.clone().cross(u).normalize();
-  const clusters=isFlower?(mobile?8:10):(mobile?6:8);
+  const clusters=isFlower?(compactTopology?8:10):(compactTopology?6:8);
   for(let i=0;i<clusters;i++){
    const t=.08+.89*(i+rnd()*.75)/clusters,step=path?t*(path.length-1):0,center=path?lerp(path[Math.floor(step)],path[Math.min(path.length-1,Math.floor(step)+1)],step%1):lerp(a,b,t);const attach=center.clone();
    const angle=rnd()*tau,spur=(.017+rnd()*.043)*Math.min(1.4,scale);
    center.addScaledVector(u,Math.cos(angle)*spur).addScaledVector(v,Math.sin(angle)*spur);
-   const count=isFlower?(mobile?4+Math.floor(rnd()*4):5+Math.floor(rnd()*4)):2;
+   const count=isFlower?(compactTopology?4+Math.floor(rnd()*4):5+Math.floor(rnd()*4)):2;
    if(isFlower&&i%2===0)branch(attach,center,Math.max(.00065,h*.00017),V(0,.006,0),2,3);
    for(let j=0;j<count;j++){
     const phi=angle+j*2.399963+rnd()*.65,rr=(.011+rnd()*.035)*scale;
@@ -126,7 +128,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
    const tip=at.clone().add(V(Math.cos(side)*reach2,h*(.015+rnd()*.115),Math.sin(side)*reach2));
    const d=Math.hypot(tip.x,tip.z);if(d>r*.99){tip.x*=r*.99/d;tip.z*=r*.99/d}tip.y=Math.min(h*.97,tip.y);
    const sub=branch(at,tip,baseR*(.065+.035*rnd())*(1-.4*f),V((rnd()-.5)*r*.25,h*.065,(rnd()-.5)*r*.25),16,8);
-   const shoots=mobile?8:10;
+   const shoots=compactTopology?8:10;
    for(let m=0;m<shoots;m++){
     const p=sub[Math.min(sub.length-1,Math.floor((.25+.72*(m+.5)/shoots)*(sub.length-1)))];
     const ang=side+(m%2?1:-1)*(.35+rnd()*1.5),len=r*(.065+rnd()*.085);
@@ -134,7 +136,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     const rd=Math.hypot(e.x,e.z);if(rd>r){e.x*=r/rd;e.z*=r/rd}e.y=Math.min(h*.99,e.y);
     const shoot=branch(p,e,Math.max(.003,baseR*.021),V((rnd()-.5)*len*.36,h*.019,(rnd()-.5)*len*.36),7,5);
     terminal(shoot[0],e,1,false,shoot);
-    if(!mobile||m%3!==1){
+    if(!compactTopology||m%3!==1){
      const q=shoot[4],ang2=ang+(m%2?1:-1)*(.7+rnd()*.8);
      const e2=q.clone().add(V(Math.cos(ang2)*len*.65,h*(.012+rnd()*.036),Math.sin(ang2)*len*.65));
      const rr=Math.hypot(e2.x,e2.z);if(rr>r){e2.x*=r/rr;e2.z*=r/rr}e2.y=Math.min(h,e2.y);
@@ -172,8 +174,9 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   const vein=Math.pow(.5+.5*Math.cos(theta*31/(.35+rho)+rho*5),17)*Math.max(0,Math.sin(Math.PI*Math.min(1,rho)));
   const heart=Math.exp(-rho*rho*13),noise=(rnd()-.5)*4,i=(y*tw+x)*4;
   let R=237-5*vein+noise,G=200-32*heart-11*vein+noise,B=212-23*heart-7*vein+noise;
+  if(adaptivePreview){R=247-9*vein-5*heart+noise;G=232-58*heart-13*vein+noise;B=236-38*heart-8*vein+noise;}
   if(rho<.25){let pollen=0,filament=0;for(const [dx,dz,dr] of dots){pollen=Math.max(pollen,Math.exp(-((xx-dx)**2+(zz-dz)**2)/(dr*dr)));const t=Math.max(0,Math.min(1,(xx*dx+zz*dz)/(dx*dx+dz*dz)));filament=Math.max(filament,Math.exp(-((xx-t*dx)**2+(zz-t*dz)**2)/.000045));}R=R*(1-pollen)+186*pollen;G=G*(1-pollen)+140*pollen;B=B*(1-pollen)+77*pollen;R-=filament*7;G-=filament*12;B-=filament*8;}
-  if(petalRelief)petalRelief[y*tw+x]=alpha*(.32+.17*Math.sin(Math.PI*Math.min(1,rho))+.045*vein+.075*heart+.025*Math.cos(theta*5));
+  if(petalRelief)petalRelief[y*tw+x]=alpha*(.32+.19*Math.sin(Math.PI*Math.min(1,rho))+.075*vein+.11*heart+.045*Math.cos(theta*5));
   petals.set([Math.max(0,Math.min(255,R)),Math.max(0,Math.min(255,G)),Math.max(0,Math.min(255,B)),Math.round(alpha*255)],i);
   const d=Math.abs(u-.5),mid=Math.exp(-d*d*1600),lv=Math.pow(.5+.5*Math.cos(v*65-d*43),15)*Math.min(1,d*7);
   const g=Math.max(0,Math.min(255,231+14*mid+9*lv-9*d+noise));
@@ -199,7 +202,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   const mat=new T.MeshStandardMaterial({side:T.DoubleSide,roughness:isPetal?.83:.76,map,metalness:0,alphaTest:isPetal?.35:0});
   if(adaptivePreview&&isPetal){mat.normalMap=petalNormal();mat.normalScale.set(.38,.38);mat.alphaToCoverage=true;map.anisotropy=4;}
   mat.userData.sakuraPreviewMaterial=adaptivePreview;mat.onBeforeCompile=shader=>{
-   if(adaptivePreview){shader.uniforms.sakuraDetail=previewDetail;shader.fragmentShader='uniform float sakuraDetail;\n'+shader.fragmentShader;
+   if(adaptivePreview){shader.uniforms.sakuraDetail=previewDetail;shader.vertexShader='attribute float sakuraCanopyAO; varying float vSakuraCanopyAO;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvSakuraCanopyAO=sakuraCanopyAO;');shader.fragmentShader='uniform float sakuraDetail; varying float vSakuraCanopyAO;\n'+shader.fragmentShader;
     if(isPetal){shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
      #ifdef USE_MAP
      float petalRadius=length(vMapUv-vec2(.5))*2.;
@@ -224,24 +227,27 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     float flStrength=${isPetal?'.10':'.13'}*(flBack*.87+flRim*.13);${adaptivePreview?`\n    float transmitted=pow(max(0.,dot(normalize(vViewPosition),-flL)),2.);\n    float thin=1.-.45*abs(dot(flN,flL));\n    flStrength=mix(flStrength,${isPetal?'.32':'.19'}*(flBack*.49+transmitted*.37+flRim*.14)*thin,sakuraDetail);`:''}
     vec3 flTint=vec3(${isPetal?'.96,.83,.80':'.79,1.0,.55'});
     reflectedLight.indirectDiffuse+=diffuseColor.rgb*flTint*min(directionalLights[0].color,vec3(1.6))*flStrength;
+    ${adaptivePreview?`float occ=clamp(vSakuraCanopyAO,.62,1.); reflectedLight.indirectDiffuse*=mix(1.,occ,sakuraDetail); reflectedLight.directDiffuse*=mix(1.,mix(.84,1.,occ),sakuraDetail);`:''}
     #endif
    `);
   };
-  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r224':'');
+  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r225':'');
   return mat;
  }
+ // Local density-based canopy occlusion: precomputed once, no extra lighting pass.
+ function canopyOcclusion(rows){const cells=new Map(),step=.20,key=(x,y,z)=>x+','+y+','+z;for(const row of rows){const x=Math.floor(row.p.x/step),y=Math.floor(row.p.y/step),z=Math.floor(row.p.z/step),k=key(x,y,z);cells.set(k,(cells.get(k)||0)+1);}const result=new Float32Array(rows.length);rows.forEach((row,i)=>{const x=Math.floor(row.p.x/step),y=Math.floor(row.p.y/step),z=Math.floor(row.p.z/step);let sum=0;for(let dz=-1;dz<=1;dz++)for(let dy=0;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const count=cells.get(key(x+dx,y+dy,z+dz))||0;sum+=count*(dy===0?.55:.85)/(1+Math.abs(dx)+Math.abs(dz));}result[i]=1-.32*(1-Math.exp(-Math.max(0,sum-1)/35));});return result;}
  function inst(rows,geo,palette,name){
   if(!rows.length)return;const isPetal=name==='sakura-blossoms',mat=translucentMat(isPetal),m=new T.InstancedMesh(geo,mat,rows.length),d=new T.Object3D(),spin=new T.Quaternion(),col=new T.Color();
-  m.name=name;const cs=palette.map(v=>new T.Color(v));
+  m.name=name;const cs=palette.map(v=>new T.Color(v));if(adaptivePreview){const ao=isPetal?canopyOcclusion(rows):new Float32Array(rows.length).fill(.92);geo.setAttribute('sakuraCanopyAO',new T.InstancedBufferAttribute(ao,1));}
   rows.forEach((row,i)=>{d.position.copy(row.p);d.quaternion.setFromUnitVectors(up,row.normal);spin.setFromAxisAngle(up,row.roll);d.quaternion.multiply(spin);d.scale.setScalar(row.s);d.updateMatrix();m.setMatrixAt(i,d.matrix);col.copy(cs[Math.min(cs.length-1,Math.floor(row.t*cs.length))]);if(isPetal)col.offsetHSL(0,-.02,Math.sin(i*12.9898)*.02);m.setColorAt(i,col)});
   m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.castShadow=m.receiveShadow=true;root.add(m);
  }
  // Bounded instance budgets keep older mobile GPUs usable. Preserve even spatial distribution.
- const limit=mobile?(old?59000:47000):(old?76000:60000);
+ const limit=compactTopology?(old?59000:47000):(old?76000:60000);
  const sample=(rows,n)=>rows.length<=n?rows:Array.from({length:n},(_,i)=>rows[Math.floor(i*rows.length/n)]);
  const visibleFlowers=sample(flowers,limit);
- inst(visibleFlowers,blossomGeo(),['#f3e3e7','#e9c9d2','#e4bcc8','#ddb0bf','#f0d4da','#e6bec9'],'sakura-blossoms');
+ inst(visibleFlowers,blossomGeo(),adaptivePreview?['#f7ecee','#f1dce2','#eacdd7','#e4c2ce','#f4e3e7','#ecd0d9']:['#f3e3e7','#e9c9d2','#e4bcc8','#ddb0bf','#f0d4da','#e6bec9'],'sakura-blossoms');
  inst(leaves,leafGeo(),season==='autumn'?['#a77944','#b58c53','#946345','#ab8a51']:['#607d48','#789253','#527340','#8a9e60'],'sakura-leaves');
- root.userData.formaSakuraStats={age,season,mobile,adaptivePreview,petalNormal:adaptivePreview,flowers:visibleFlowers.length,generatedFlowers:flowers.length,petalTexture:256,leafTexture:256,flowerTriangles:mobile?10:60,translucency:true,barkVerticalRepeatPerM:2.3,barkPhysicalTileWidthM:.43,barkNormalStrength:.46,curvedMajorLimbs:true,branchCollars:true,leaves:leaves.length,woodTriangles:idx.length/3};
+ root.userData.formaSakuraStats={age,season,mobile,adaptivePreview,unifiedTopology:adaptivePreview,canopyOcclusion:adaptivePreview,petalNormal:adaptivePreview,flowers:visibleFlowers.length,generatedFlowers:flowers.length,petalTexture:256,leafTexture:256,flowerTriangles:mobile?10:60,translucency:true,barkVerticalRepeatPerM:2.3,barkPhysicalTileWidthM:.43,barkNormalStrength:.46,curvedMajorLimbs:true,branchCollars:true,leaves:leaves.length,woodTriangles:idx.length/3};
  return root;
 }
