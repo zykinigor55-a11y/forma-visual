@@ -2,7 +2,7 @@
  * Stock PBR foliage only. Existing material hooks and textures are preserved. */
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const profiles={
- sakura:{depth:.58,contrast:.62,rim:.10},birch:{depth:.24,contrast:.24,rim:.06},
+ sakura:{depth:.43,contrast:.55,rim:.10},birch:{depth:.24,contrast:.24,rim:.06},
  pine:{depth:.38,contrast:.30,rim:.025},spruce:{depth:.39,contrast:.30,rim:.025},
  fir:{depth:.36,contrast:.28,rim:.025},willow:{depth:.29,contrast:.25,rim:.06},
  oak:{depth:.34,contrast:.30,rim:.05},maple:{depth:.30,contrast:.27,rim:.06},
@@ -17,7 +17,7 @@ export function treeLightingProfileR230(species=''){
 export function canopyFactorsR230(radius,facing,profile=profiles.default,weight=1){
  const t=clamp((radius-.35)/.68,0,1),outer=t*t*(3-2*t);
  const sunSide=clamp(facing*.5+.5,0,1);const direct=1+profile.contrast*weight*(sunSide-.50)*(1-.12*outer);
- return {outer,indirect:1-profile.depth*(1-outer)*(.72+.22*(1-sunSide*weight))-.18*weight*(1-sunSide)*(1-outer*.25),direct};
+ return {outer,indirect:1-profile.depth*(1-outer)*(.72+.22*(1-sunSide*weight))-.10*weight*(1-sunSide)*(1-outer*.25),direct};
 }
 function isFoliage(node,mat){
  if(!mat?.isMeshStandardMaterial||node.isBatchedMesh||node.userData?.selectionProxy)return false;
@@ -56,16 +56,16 @@ export function installTreeLightingR230(T,group,{species='',height=3,diameter=3}
      float ftOuter=smoothstep(.35,1.03,ftRadius);
      vec3 ftDir=vFormaTreeVolume/max(.15,ftRadius);
      float ftFacing=clamp(dot(ftDir,formaTreeSun)*.5+.5,0.,1.);
-     float ftIndirect=1.-formaTreeParams.x*(1.-ftOuter)*(.72+.22*(1.-ftFacing*formaTreeWeight))-.18*formaTreeWeight*(1.-ftFacing)*(1.-ftOuter*.25);
+     float ftIndirect=1.-formaTreeParams.x*(1.-ftOuter)*(.72+.22*(1.-ftFacing*formaTreeWeight))-.10*formaTreeWeight*(1.-ftFacing)*(1.-ftOuter*.25);
      float ftDirect=1.+formaTreeParams.y*formaTreeWeight*(ftFacing-.50)*(1.-.12*ftOuter);
      float ftEdge=formaTreeParams.z*ftOuter*formaTreeWeight*ftFacing*pow(1.-abs(dot(normalize(normal),normalize(vViewPosition))),2.);
-     reflectedLight.indirectDiffuse*=mix(1.,ftIndirect,formaTreeEnabled);
+     reflectedLight.indirectDiffuse*=mix(1.,max(.55,ftIndirect),formaTreeEnabled);
      reflectedLight.directDiffuse*=mix(1.,ftDirect+ftEdge,formaTreeEnabled);
      reflectedLight.directSpecular*=mix(1.,ftDirect,formaTreeEnabled);
      reflectedLight.indirectSpecular*=mix(1.,mix(1.,ftIndirect,.65),formaTreeEnabled);
     `);
    };
-   mat.customProgramCacheKey=()=>key+'|forma-tree-volume-r235';mat.needsUpdate=true;mats.set(original,mat);count++;return mat;
+   mat.customProgramCacheKey=()=>key+'|forma-tree-volume-r237';mat.needsUpdate=true;mats.set(original,mat);count++;return mat;
   };
   node.material=Array.isArray(node.material)?node.material.map(replace):replace(node.material);
  });
