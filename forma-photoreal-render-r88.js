@@ -107,7 +107,7 @@ export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force
   if(!state){state=makePipeline(T,renderer,scene,camera,w,h,mobile);pipelines.set(renderer,state);}
   if(w!==state.w||h!==state.h){state.target.setSize(w,h);state.giTarget.setSize(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));state.ao.setSize(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));state.w=w;state.h=h;}
   state.ao.camera=camera;state.ao.scene=scene;
-  state.mat.uniforms.strength.value=scene.userData.formaLawnR86?(force?.38:mobile?.28:.33):scene.userData.formaSakuraR225?(mobile?.55:.62):(force?.60:mobile?.48:.55);state.mat.uniforms.cameraNear.value=camera.near;state.mat.uniforms.cameraFar.value=camera.far;state.mat.uniforms.aoTexel.value.set(1/state.ao.width,1/state.ao.height);
+  state.mat.uniforms.strength.value=scene.userData.formaLawnR86?(force?.38:mobile?.28:.33):scene.userData.formaSakuraR225?(mobile?.44:.50):(force?.60:mobile?.48:.55);state.mat.uniforms.cameraNear.value=camera.near;state.mat.uniforms.cameraFar.value=camera.far;state.mat.uniforms.aoTexel.value.set(1/state.ao.width,1/state.ao.height);
   renderer.setRenderTarget(state.target);renderer.autoClear=true;renderer.render(scene,camera);
   state.ao.render(renderer,null,state.target);
   state.giMat.uniforms.invProjection.value.copy(camera.projectionMatrixInverse);state.giMat.uniforms.pixel.value.set(1/w,1/h);
