@@ -32,5 +32,5 @@ export function fitSakuraShadowR227(T,sun,trees,terrainAt,softness=2.8){
 export function sakuraLightProfileR227({day=1,direct=1,weather='sunny',strength=1,clouds=.35,fill=1}={}){
  const wet=['rain','snow','fog','overcast'].includes(weather),trans=clamp(1-clouds*.42,.55,1);
  const weatherDirect=({sunny:1,'after-rain':.70,overcast:.32,rain:.22,fog:.18,snow:.30})[weather]??1;
- return {sun:2.85*direct*weatherDirect*strength*trans,sky:(.14+1.09*day)*fill*(wet?1.20:1),bounce:.035+.23*day,environment:.10+.35*day,exposure:(wet?1.03:.96)*Math.pow(2,.32*day),shadowIntensity:wet?.76:.90,sunWeight:clamp(direct*weatherDirect,0,1)};
+ return {sun:3.10*direct*weatherDirect*strength*trans,sky:(.14+1.15*day)*fill*(wet?1.20:1),bounce:.035+.25*day,environment:.10+.30*day,exposure:(wet?1.03:.96)*Math.pow(2,.32*day),shadowIntensity:wet?.76:.88,sunWeight:clamp(direct*weatherDirect,0,1)};
 }
