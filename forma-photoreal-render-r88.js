@@ -109,7 +109,13 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
  float ex=abs(dot(x1-x2,vec3(.2126,.7152,.0722))),ey=abs(dot(y1-y2,vec3(.2126,.7152,.0722)));
  vec3 along=ex>ey?(y1+y2)*.5:(x1+x2)*.5;
  float edgeAA=smoothstep(mix(.10,.045,max(lawnAA,sakuraAA*.75)),mix(.55,.25,max(lawnAA,sakuraAA*.75)),max(ex,ey));
- c.rgb=mix(c.rgb,along,edgeAA*mix(.13,.34,max(lawnAA,sakuraAA*.78)));
+ c.rgb=mix(c.rgb,along,edgeAA*mix(.055,.12,max(lawnAA,sakuraAA*.78)));
+ // Contrast-adaptive bounded sharpening, avoid sky/foreground halos.
+ vec3 crossMean=(x1+x2+y1+y2)*.25;
+ vec3 lowC=min(min(x1,x2),min(y1,y2)),highC=max(max(x1,x2),max(y1,y2));
+ float contrast=dot(highC-lowC,vec3(.2126,.7152,.0722));
+ float sharp=.19*(1.-smoothstep(.12,.55,contrast));
+ if(z<.99999)c.rgb=clamp(c.rgb+(texture2D(beauty,vUv).rgb-crossMean)*sharp,min(c.rgb,lowC),max(c.rgb,highC));
  gl_FragColor=c;
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
@@ -129,7 +135,7 @@ function makeTemporalR238(T,w,h){
  for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec3 x=texture2D(current,clamp(vUv+vec2(float(i),float(j))*pixel,vec2(0.),vec2(1.))).rgb;lo=min(lo,x);hi=max(hi,x);}
  vec3 h=clamp(texture2D(previous,vUv).rgb,lo,hi);gl_FragColor=vec4(mix(c,h,blend),1.);
  }`});
- const output=new T.ShaderMaterial({uniforms:{source:{value:history[0].texture}},vertexShader,depthTest:false,depthWrite:false,toneMapped:true,fragmentShader:`varying vec2 vUv;uniform sampler2D source;void main(){gl_FragColor=texture2D(source,vUv);
+ const output=new T.ShaderMaterial({uniforms:{source:{value:history[0].texture},pixel:{value:new T.Vector2(1/w,1/h)}},vertexShader,depthTest:false,depthWrite:false,toneMapped:true,fragmentShader:`varying vec2 vUv;uniform sampler2D source;uniform vec2 pixel;void main(){vec4 c=texture2D(source,vUv);vec3 a=texture2D(source,vUv+vec2(pixel.x,0.)).rgb,b=texture2D(source,vUv-vec2(pixel.x,0.)).rgb,d=texture2D(source,vUv+vec2(0.,pixel.y)).rgb,e=texture2D(source,vUv-vec2(0.,pixel.y)).rgb;vec3 lo=min(c.rgb,min(min(a,b),min(d,e))),hi=max(c.rgb,max(max(a,b),max(d,e)));float k=.20*(1.-smoothstep(.10,.50,dot(hi-lo,vec3(.2126,.7152,.0722))));gl_FragColor=vec4(clamp(c.rgb+(c.rgb-(a+b+d+e)*.25)*k,lo,hi),c.a);
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
  }`});
@@ -174,7 +180,7 @@ export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force
   const haze=scene.userData.formaAtmosphereR70||{};u.fogDensity.value=haze.density??0;u.fogStart.value=haze.start??22;if(scene.fog?.color)u.fogColor.value.copy(scene.fog.color);
   if(useTAA){
    renderer.setRenderTarget(taa.current);renderer.autoClear=true;renderer.render(state.quadScene,state.quadCamera);
-   const dst=1-taa.index;taa.material.uniforms.previous.value=taa.history[taa.index].texture;taa.material.uniforms.blend.value=taa.count?Math.min(.75,taa.count/(taa.count+1)):0;
+   const dst=1-taa.index;taa.material.uniforms.previous.value=taa.history[taa.index].texture;taa.material.uniforms.blend.value=taa.count?Math.min(.55,taa.count/(taa.count+1)):0;
    taa.quad.material=taa.material;renderer.setRenderTarget(taa.history[dst]);renderer.render(taa.quadScene,taa.cam);
    taa.index=dst;taa.count=Math.min(4,taa.count+1);taa.output.uniforms.source.value=taa.history[dst].texture;
    taa.quad.material=taa.output;renderer.setRenderTarget(oldTarget);renderer.render(taa.quadScene,taa.cam);
