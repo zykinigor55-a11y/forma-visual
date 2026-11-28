@@ -36,11 +36,11 @@ function branchShellR245(T,group,kind,mobile,budget){
 }
 function plantSnow(T,group,kind,mobile,budget){
  if(kind==='trees'&&group.userData?.formaSnowPreview?.branchSnow)return [];
- const native=branchShellR245(T,group,kind,mobile,budget);if(native)return [native];
+ const native=branchShellR245(T,group,kind,mobile,budget),nativeFir=!!group.userData.formaFirBoughsR245?.length;if(native&&!nativeFir)return [native];
  // Fallback for other native or imported plants: a conforming layer on real
  // upward-facing surfaces, without disconnected spheres or new crown geometry.
- const entries=[],nodes=[];group.traverse(n=>{if(usable(n)&&!/fruit|berry|cone|calyx|click-volume/i.test(n.name))nodes.push(n);});
- const isConifer=/pine|spruce|fir|thuja|juniper|cedar/i.test(group.userData.species||group.userData.formaSnowPreview?.species||'');
+ const entries=native?[native]:[],nodes=[];group.traverse(n=>{if(usable(n)&&!/fruit|berry|cone|calyx|click-volume/i.test(n.name)&&(!nativeFir||/needle|foliage|leaves/i.test(n.name)))nodes.push(n);});
+ const isConifer=nativeFir||/pine|spruce|fir|thuja|juniper|cedar/i.test(group.userData.species||group.userData.formaSnowPreview?.species||'');
  for(const n of nodes){const mats=Array.isArray(n.material)?n.material:[n.material];for(const mat of mats){if(!mat?.isMeshStandardMaterial||mat.userData.formaSnowCoatR245)continue;
   const u={value:0},prior=mat.onBeforeCompile,oldKey=mat.customProgramCacheKey.bind(mat);mat.userData.formaSnowCoatR245=true;
   mat.onBeforeCompile=function(sh,renderer){prior.call(this,sh,renderer);sh.uniforms.formaSnowR245=u;
@@ -54,7 +54,7 @@ function plantSnow(T,group,kind,mobile,budget){
    #include <project_vertex>`);
    sh.fragmentShader='varying vec3 snowP245; varying vec3 snowN245; uniform float formaSnowR245;\n'+sh.fragmentShader;
    sh.fragmentShader=sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-    float patch245=.50+.23*sin(snowP245.x*4.1+sin(snowP245.y*5.3))*cos(snowP245.z*4.9)+.12*sin(snowP245.y*7.9+snowP245.z*6.2);
+    float patch245=.50+.23*sin(snowP245.x*2.7+sin(snowP245.y*4.1))*cos(snowP245.z*3.1)+.12*sin(snowP245.y*6.2+snowP245.z*4.7);
     float face245=smoothstep(${isConifer?'.10,.70':'.25,.82'},normalize(snowN245).y);
     float coat245=smoothstep(patch245-.15,patch245+.04,formaSnowR245)*face245*step(.001,formaSnowR245);
     diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.79,.83,.86),coat245);`);
