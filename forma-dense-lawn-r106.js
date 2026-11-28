@@ -338,7 +338,8 @@ function addDistantTurf(T,root,{profile,focus,bounds,horizon,mobile,low,terrainA
  const rows=[],geo=tuftGeometry(T,profile,1,mobile?7:4,mobile),dummy=new T.Object3D(),color=new T.Color(),fall=new T.Color('#a69a59');
  for(let iz=Math.floor(bounds.z0/step);iz<=Math.ceil(bounds.z1/step);iz++)for(let ix=Math.floor(bounds.x0/step);ix<=Math.ceil(bounds.x1/step);ix++){
   const x=(ix+hash(ix,iz,181))*step,z=(iz+hash(ix,iz,182))*step,d=Math.hypot(x-focus.x,z-focus.z);
-  if((mobile?d<(volume?(low?5.5:7.0):(low?3.6:4.9)):d<horizon-6)||!contains(x,z))continue;
+  if((mobile?d<(volume?(low?4.8:5.8):(low?3.6:4.9)):d<horizon-6)||!contains(x,z))continue;
+  if(mobile&&volume&&hash(ix,iz,183)>smooth(clamp((d-(low?4.8:5.8))/2.6,0,1)))continue;
   if(!mobile&&hash(ix,iz,183)>smooth(clamp((d-horizon+6)/4,0,1)))continue;
   rows.push([x,z,hash(ix,iz,184),hash(ix,iz,185)]);
  }
@@ -350,20 +351,22 @@ function addDistantTurf(T,root,{profile,focus,bounds,horizon,mobile,low,terrainA
  m.name='forma-parcel-distant-turf-r104';m.receiveShadow=true;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.raycast=()=>{};root.add(m);return rows.length*5;
 }
 
-export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains=()=>true,low=false,bounds=null}){
+export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains=()=>true,low=false,bounds=null,contactMap=null,contactSide=1}){
  if(profile.crop)return createDryField(T,{profile,focus,mobile,low,terrainAt,contains,bounds});
  const root=new T.Group();root.name='forma-dense-lawn-r106';const volume=!!profile.volumePreviewR231;const maps=mobile?{}:bladeMaps(T),u={t:{value:0},wind:{value:0}};
  const mat=mobile?new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.92,metalness:0,envMapIntensity:.20}):new T.MeshPhysicalMaterial({...maps,vertexColors:true,side:T.DoubleSide,roughness:.90,metalness:0,clearcoat:.03,clearcoatRoughness:.85,specularIntensity:.22,normalScale:new T.Vector2(.12,.10),envMapIntensity:.23});
  mat.onBeforeCompile=shader=>{
   shader.uniforms.formaGrassTime=u.t;shader.uniforms.formaGrassWind=u.wind;
+  if(contactMap){shader.uniforms.formaGrassContact={value:contactMap};shader.uniforms.formaGrassContactSide={value:contactSide};shader.vertexShader='varying vec2 vFormaGrassContact;\n'+shader.vertexShader;shader.fragmentShader='uniform sampler2D formaGrassContact; uniform float formaGrassContactSide; varying vec2 vFormaGrassContact;\n'+shader.fragmentShader;}
   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nuniform float formaGrassTime,formaGrassWind;').replace('#include <begin_vertex>',`#include <begin_vertex>
   #ifdef USE_INSTANCING
    vec3 grassAnchor=(modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.)).xyz;
+   ${contactMap?'vFormaGrassContact=grassAnchor.xz;':''}
    float sway=.72*sin(formaGrassTime*1.1+grassAnchor.x*.95+grassAnchor.z*.72)+.28*sin(formaGrassTime*2.4+grassAnchor.x*2.2-grassAnchor.z*1.7);
    float flex=clamp(position.y,0.,1.);flex*=flex; transformed.z+=sway*formaGrassWind*.42*flex; transformed.x+=sin(formaGrassTime*1.65+grassAnchor.x*.72+grassAnchor.z*.5)*formaGrassWind*.18*flex;
   #endif`);
   if(volume){shader.vertexShader='varying float vFormaBladeHeightR231;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvFormaBladeHeightR231=clamp(position.y,0.,1.);');shader.fragmentShader='varying float vFormaBladeHeightR231;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-   float bladeHeight=smoothstep(0.,.65,vFormaBladeHeightR231);diffuseColor.rgb*=mix(.72,1.05,bladeHeight);
+   float bladeHeight=smoothstep(0.,.83,vFormaBladeHeightR231);diffuseColor.rgb*=mix(.76,1.06,bladeHeight);
   `);}
   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
    roughnessFactor=clamp(roughnessFactor,.64,.94);
@@ -380,6 +383,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
    `));
   }
   shader.fragmentShader=shader.fragmentShader.replace('#include <aomap_fragment>',`#include <aomap_fragment>
+   ${contactMap?'float gc=texture2D(formaGrassContact,vFormaGrassContact/formaGrassContactSide+.5).r; reflectedLight.indirectDiffuse*=mix(.48,1.,gc); reflectedLight.indirectSpecular*=mix(.55,1.,gc); reflectedLight.directDiffuse*=mix(.80,1.,gc);':''}
    #ifdef USE_MAP
     float formaRoot=smoothstep(0.0,.85,vMapUv.y);
     reflectedLight.indirectDiffuse*=mix(.94,1.0,formaRoot);
@@ -389,7 +393,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
   `);
 
  };
- mat.customProgramCacheKey=()=> 'forma-grass-r118'+(volume?'|volume-r231':'');
+ mat.customProgramCacheKey=()=> 'forma-grass-r234'+(volume?'|volume-r231':'')+(contactMap?'|contact':'');
  const pressedColor=new T.Color('#746c47'),color=new T.Color(),palette=profile.palette.map(c=>new T.Color(c).lerp(new T.Color('#46603b'),.12)),dummy=new T.Object3D();const autumnColors=['#7b824c','#a29b56','#b3a15a','#997c43','#806a42','#65794a'].map(c=>new T.Color(c));
  const cx=Math.round(focus.x/.6)*.6,cz=Math.round(focus.z/.6)*.6;
  const integrated=!!profile.integrated;const near=mobile?(integrated?1.05:1.15):1.55,mid=mobile?(integrated?3.0:3.2):4.0,far=mobile?7.5:9.2,horizon=mobile?14:19;
@@ -416,7 +420,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
    const x=(ix+hash(ix,iz,1)+(mobile?(hash(ix,iz,91)-.5)*.65:0))*step,z=(iz+hash(ix,iz,2)+(mobile?(hash(ix,iz,92)-.5)*.65:0))*step,d=Math.hypot(x-cx,z-cz);
    if(d<b.min||d>b.max||!contains(x,z))continue;
    const fadeIn=bandIndex===0?1:smooth(clamp((d-b.min)/(bandIndex===1?.48:bandIndex===2?.72:2.4),0,1)),fadeOut=smooth(clamp((b.max-d)/(bandIndex===0?.48:bandIndex===1?.72:bandIndex===2?2.4:5.0),0,1));
-   if(hash(ix,iz,11)>Math.min(1,Math.max(.18,fadeIn*fadeOut)))continue;
+   if(hash(ix,iz,11)>Math.min(1,Math.max(0,fadeIn*fadeOut)))continue;
    const patch=field(x,z,1.45,32)*.65+field(x,z,4.1,33)*.35;
    const tuft=field(x,z,15,34);const pressed=clamp(smooth(clamp((field(x,z,.83,35)*.73+field(x,z,2.1,36)*.27-.46)/.29,0,1))*(profile.pressedAmount??45)/45,0,1);
    const r=hash(ix,iz,3),h=profile.height*(1+(hash(ix,iz,4)-.5)*2*profile.variation)*(.72+.62*patch)*(.84+.32*tuft);
