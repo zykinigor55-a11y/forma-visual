@@ -50,8 +50,8 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
    float frDist=length(formaGroundWorld.xz);
    float frEdge=max(abs(formaGroundWorld.x),abs(formaGroundWorld.z));
    if(frEdge<formaPlotHalf-.12||frDist>formaReach)discard;
-   float frFade=smoothstep(0.,65.,max(0.,frEdge-formaPlotHalf));
-   float frNoise=sin(formaGroundWorld.x*.087)*sin(formaGroundWorld.z*.093)*.038+sin(formaGroundWorld.x*.023+formaGroundWorld.z*.047)*.032;
+   float frFade=smoothstep(0.,48.,max(0.,frEdge-formaPlotHalf));
+   float frNoise=sin(formaGroundWorld.x*.48+sin(formaGroundWorld.z*.27))*sin(formaGroundWorld.z*.39+cos(formaGroundWorld.x*.32))*.09+sin(formaGroundWorld.x*.087)*sin(formaGroundWorld.z*.093)*.045;
    float frAngle=atan(formaGroundWorld.z,formaGroundWorld.x);
    float frWobble=sin(frAngle*29.)*1.8+sin(frAngle*71.)*.75;
    float frNear=formaNearOn*exp(-pow((frDist-formaNearRadius+4.+frWobble)/7.,2.));
@@ -59,7 +59,7 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
    float frFoot=max(frNear,frFar);
    float frLuma=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(frLuma),frFade*.12);
-   diffuseColor.rgb*=1.+frNoise*frFade;
+   diffuseColor.rgb*=.95+frNoise*mix(.65,1.,frFade);
    diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.80,.86,.68),frFoot*.40);
   `);
   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
@@ -68,7 +68,7 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
    #include <opaque_fragment>
   `);
  };
- floorMat.customProgramCacheKey=()=> 'forma-ground-continuity-r201';
+ floorMat.customProgramCacheKey=()=> 'forma-ground-continuity-r238';
  const floorGeo=new T.PlaneGeometry(2,2);floorGeo.rotateX(-Math.PI/2);
  const floor=new T.Mesh(floorGeo,floorMat);floor.position.y=-.055;floor.name='forma-distant-ground-r201';floor.renderOrder=-60;floor.frustumCulled=false;floor.receiveShadow=true;floor.raycast=()=>{};root.add(floor);
  let uvKey='',lastMap=null;
