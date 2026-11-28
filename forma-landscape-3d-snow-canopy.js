@@ -50,7 +50,11 @@ function detachMaterials(mesh,entries){
 }
 export function attachTreeSnowPreview(T,group,plant,atmosphere){
  const species=String(plant?.catalogId||plant?.type||group?.userData?.species||'');
- if(!group||!conifer.test(species)||!group.traverse)return null;
+ if(!group||!group.traverse)return null;
+ // R240 native deciduous branch snow, independently ranked instances.
+ const branchSnow=[];group.traverse(n=>{if(n.isInstancedMesh&&n.userData?.formaBranchSnowR240)branchSnow.push(n);});
+ if(branchSnow.length){const info={species,branchSnow,strength:-1};group.userData.formaSnowPreview=info;updateTreeSnowPreview(info,atmosphere);return info;}
+ if(!conifer.test(species))return null;
  if(group.userData?.formaSnowPreview)return group.userData.formaSnowPreview;
  const entries=[],seed=hash(plant.id||species),white=new T.Color('#E7F0F2');
  let eligible=0;
@@ -109,6 +113,7 @@ export function updateTreeSnowPreview(info,atmosphere){
  const strength=snow?clamp(effects.snowTrees/100):0;
  if(info.strength===strength)return false;
  info.strength=strength;
+ if(info.branchSnow){for(const mesh of info.branchSnow){const max=mesh.userData.snowCapacityR240||0;mesh.count=Math.min(max,Math.round(max*strength));mesh.visible=mesh.count>0;}return true;}
  const white=info.white;
  for(const e of info.entries){
   if(e.kind==='material'){
