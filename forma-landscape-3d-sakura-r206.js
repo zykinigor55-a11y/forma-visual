@@ -280,9 +280,9 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   // Each mound is attached to the upper surface of an actual woody segment.
   // Independent deterministic ranks allow live slider changes without rebuilding branches.
   const budget=mobile?8000:15000;const rows=sample(snowRowsR240,budget).sort((a,b)=>a.rank-b.rank);
-  const geo=new T.SphereGeometry(1,9,6);const pos=geo.attributes.position;
-  for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i),v=1+.045*Math.sin(x*7+y*9+z*6)+.025*Math.cos(z*11-x*5);pos.setXYZ(i,x*v,y<0?y*v*.65:y*v,z*v);}geo.computeVertexNormals();
-  const mat=new T.MeshStandardMaterial({color:'#f3f5f5',roughness:.86,metalness:0,envMapIntensity:.68});
+  const geo=new T.SphereGeometry(1,mobile?10:14,mobile?7:10);const pos=geo.attributes.position;
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i),v=1+.065*Math.sin(x*5+y*6+z*4)+.028*Math.cos(z*8-x*5);pos.setXYZ(i,x*v,y<0?y*v*.65:y*v,z*v);}geo.computeVertexNormals();
+  const mat=new T.MeshStandardMaterial({color:'#e9edf0',roughness:1,metalness:0,envMapIntensity:.44});
   const mesh=new T.InstancedMesh(geo,mat,rows.length),d=new T.Object3D(),basis=new T.Matrix4(),color=new T.Color(),side=new T.Vector3();mesh.name='sakura-settled-snow-r240';mesh.userData.formaWeatherPreview=true;mesh.userData.formaBranchSnowR240=true;mesh.userData.snowCapacityR240=rows.length;
   rows.forEach((row,i)=>{side.crossVectors(row.axis,row.top).normalize();basis.makeBasis(row.axis,row.top,side);d.quaternion.setFromRotationMatrix(basis);d.position.copy(row.center);d.scale.set(row.length,row.thick,row.width);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);color.set('#ffffff').lerp(new T.Color('#dae2e8'),row.variation*.28);mesh.setColorAt(i,color);});
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.count=0;mesh.castShadow=true;mesh.receiveShadow=true;mesh.raycast=()=>{};root.add(mesh);
