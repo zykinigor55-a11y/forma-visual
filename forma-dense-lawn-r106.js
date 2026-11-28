@@ -17,7 +17,7 @@ export function tuftGeometry(T,profile,variant,detail,mobile=false){
  const pos=[],uv=[],col=[],idx=[];
  const count=detail===7?5:detail===6?5:detail===5?3:detail===0?9:detail===1?7:detail===2?6:5;
  const rows=detail===6?2:detail>=4?1:detail===0?7:detail===1?4:3;
- const stride=detail===0?3:2;
+ const stride=detail===0||(mobile&&detail===2)?3:2;
  const ratio=profile.width/profile.height;
  for(let n=0;n<count;n++){
   const seed=variant*31+n*7;
@@ -38,7 +38,7 @@ export function tuftGeometry(T,profile,variant,detail,mobile=false){
     const sideways=k*w*Math.cos(turn)+curve*h*t*t,along=fold+k*w*Math.sin(turn)*.35;
     pos.push(ox+dx*(out+along)+sx*sideways,y+k*w*Math.sin(turn)*.72,oz+dz*(out+along)+sz*sideways);
     uv.push((k+1)*.5,t);
-    const c=(.63+.37*Math.pow(t,.62))*(.87+.13*r(6));
+    const c=(.70+.30*Math.pow(t,.72))*(.91+.09*r(6));
     col.push(c*(.96+.08*age),c*(.96+.04*age),c*(.91+.07*(1-age)));
    }
   }
@@ -48,7 +48,7 @@ export function tuftGeometry(T,profile,variant,detail,mobile=false){
   const tip=pos.length/3;pos.push(ox+dx*h*bend+sx*curve*h,h*(1-.28*bend),oz+dz*h*bend+sz*curve*h);uv.push(.5,1);col.push(.87,.92,.87);
   for(let k=0;k<stride-1;k++)idx.push(first+(rows-1)*stride+k,tip,first+(rows-1)*stride+k+1);
  }
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();const normals=g.getAttribute('normal');for(let i=0;i<normals.count;i++){const x=normals.getX(i)*.65,y=normals.getY(i)*.65+.35,z=normals.getZ(i)*.65,l=Math.hypot(x,y,z)||1;normals.setXYZ(i,x/l,y/l,z/l);}return g;
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();const normals=g.getAttribute('normal');for(let i=0;i<normals.count;i++){const x=normals.getX(i)*.78,y=normals.getY(i)*.78+.22,z=normals.getZ(i)*.78,l=Math.hypot(x,y,z)||1;normals.setXYZ(i,x/l,y/l,z/l);}return g;
 }
 export function bladeMaps(T){
  const w=256,h=512,albedo=new Uint8Array(w*h*4),normal=new Uint8Array(w*h*4),rough=new Uint8Array(w*h*4);
@@ -394,7 +394,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
   `);
 
  };
- mat.customProgramCacheKey=()=> 'forma-grass-r237'+(volume?'|volume-r231':'')+(contactMap?'|contact':'');
+ mat.customProgramCacheKey=()=> 'forma-grass-r239'+(volume?'|volume-r231':'')+(contactMap?'|contact':'');
  const pressedColor=new T.Color('#746c47'),color=new T.Color(),palette=profile.palette.map(c=>new T.Color(c).lerp(new T.Color('#46603b'),.12)),dummy=new T.Object3D();const autumnColors=['#7b824c','#a29b56','#b3a15a','#997c43','#806a42','#65794a'].map(c=>new T.Color(c));
  const cx=Math.round(focus.x/.6)*.6,cz=Math.round(focus.z/.6)*.6;
  const integrated=!!profile.integrated;const near=mobile?(integrated?1.05:1.15):1.55,mid=mobile?(integrated?3.0:3.2):4.0,far=mobile?7.5:9.2,horizon=mobile?14:19;
