@@ -51,17 +51,17 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
  }else{
   // R236: depth-only hemisphere approximation, no normal override pass.
   aoTarget=new T.WebGLRenderTarget(aw,ah,{type:T.UnsignedByteType,depthBuffer:false});
-  aoMat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:false,uniforms:{depth:{value:target.depthTexture},invProjection:{value:camera.projectionMatrixInverse.clone()},pixel:{value:new T.Vector2(1/w,1/h)},projectionScale:{value:camera.projectionMatrix.elements[5]},radius:{value:sakura?.42:lawn?.22:.65}},vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,fragmentShader:`
-  varying vec2 vUv;uniform sampler2D depth;uniform mat4 invProjection;uniform vec2 pixel;uniform float projectionScale,radius;
+  aoMat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:false,uniforms:{depth:{value:target.depthTexture},invProjection:{value:camera.projectionMatrixInverse.clone()},pixel:{value:new T.Vector2(1/w,1/h)},projectionScale:{value:camera.projectionMatrix.elements[5]},radius:{value:sakura?.42:lawn?.22:.65},winter:{value:0}},vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,fragmentShader:`
+  varying vec2 vUv;uniform sampler2D depth;uniform mat4 invProjection;uniform vec2 pixel;uniform float projectionScale,radius,winter;
   vec3 at(vec2 uv){float z=texture2D(depth,uv).r;vec4 p=invProjection*vec4(uv*2.-1.,z*2.-1.,1.);return p.xyz/p.w;}
   void main(){float z=texture2D(depth,vUv).r;if(z>.99999){gl_FragColor=vec4(1.);return;}
    vec3 p=at(vUv),a=at(clamp(vUv+vec2(pixel.x,0.),0.,1.))-p,b=p-at(clamp(vUv-vec2(pixel.x,0.),0.,1.)),c=at(clamp(vUv+vec2(0.,pixel.y),0.,1.))-p,d=p-at(clamp(vUv-vec2(0.,pixel.y),0.,1.));
    vec3 n=cross(length(a)<length(b)?a:b,length(c)<length(d)?c:d);n/=max(length(n),.000001);if(dot(n,-p)<0.)n=-n;
    float occ=0.;float hits=0.;float screenRadius=clamp(radius*projectionScale*.5/max(.12,-p.z),pixel.y*2.,.13);
-   for(int i=0;i<12;i++){float fi=float(i);float ang=fi*2.39996323;float rr=sqrt((fi+.5)/12.);vec2 uv=vUv+vec2(cos(ang)*pixel.x/pixel.y,sin(ang))*screenRadius*rr;
+   for(int i=0;i<12;i++){float fi=float(i);float ang=fi*2.39996323;float rr=mix(sqrt((fi+.5)/12.),pow((fi+.5)/12.,.82),winter);vec2 uv=vUv+vec2(cos(ang)*pixel.x/pixel.y,sin(ang))*screenRadius*rr;
     if(any(lessThan(uv,vec2(.001)))||any(greaterThan(uv,vec2(.999))))continue;
     if(texture2D(depth,uv).r>.99999)continue;vec3 v=at(uv)-p;float dist=length(v);if(dist<.012||dist>radius*1.5)continue;
-    occ+=max(0.,dot(n,v/dist)-.08)*(1.-smoothstep(radius*.2,radius*1.5,dist));hits+=1.;
+    float closeWeight=mix(1.,1.+.6*(1.-smoothstep(.05,radius*.52,dist)),winter);occ+=max(0.,dot(n,v/dist)-.08)*(1.-smoothstep(radius*.2,radius*1.5,dist))*closeWeight;hits+=1.;
    }
    float visibility=clamp(1.-occ/max(4.,hits)*1.45,.48,1.);gl_FragColor=vec4(vec3(visibility),1.);
   }`});
@@ -78,9 +78,9 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
  for(int i=0;i<GI_SAMPLES;i++){float fi=float(i),ang=rot+fi*2.39996;float radius=(.35+fi/float(GI_SAMPLES))*.085/max(1.,-p.z*.12);vec2 uv=vUv+vec2(cos(ang),sin(ang))*radius*vec2(pixel.x/pixel.y,1.);if(any(lessThan(uv,vec2(.002)))||any(greaterThan(uv,vec2(.998))))continue;float dz=texture2D(depth,uv).r;if(dz>.99999)continue;vec3 q=pos(uv,dz),v=q-p;float dist=length(v);if(dist<.04||dist>3.5)continue;float cosine=max(0.,dot(n,v/dist));float weight=cosine*exp(-dist*.65);vec3 light=min(texture2D(beauty,uv).rgb,vec3(1.6));bounce+=light*weight;total+=weight;}
  gl_FragColor=vec4(bounce/max(2.5,total),-p.z);}`});
  const giScene=new T.Scene(),giCamera=new T.Camera(),giQuad=new T.Mesh(new T.PlaneGeometry(2,2),giMat);giQuad.frustumCulled=false;giScene.add(giQuad);
- const mat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:true,uniforms:{beauty:{value:target.texture},ambient:{value:ambient},depth:{value:target.depthTexture},strength:{value:.52},lawnAA:{value:lawn?1:0},sakuraAA:{value:sakura?1:0},aoTexel:{value:new T.Vector2(1/aw,1/ah)},cameraNear:{value:camera.near},cameraFar:{value:camera.far},gi:{value:giTarget.texture},giStrength:{value:0},giEnabled:{value:0},inverseProjection:{value:camera.projectionMatrixInverse.clone()},cameraWorld:{value:camera.matrixWorld.clone()},fogColor:{value:new T.Color('#c4d3df')},fogDensity:{value:.002},fogStart:{value:20},pixel:{value:new T.Vector2(1/w,1/h)}},
+ const mat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:true,uniforms:{beauty:{value:target.texture},ambient:{value:ambient},depth:{value:target.depthTexture},strength:{value:.52},winter:{value:0},lawnAA:{value:lawn?1:0},sakuraAA:{value:sakura?1:0},aoTexel:{value:new T.Vector2(1/aw,1/ah)},cameraNear:{value:camera.near},cameraFar:{value:camera.far},gi:{value:giTarget.texture},giStrength:{value:0},giEnabled:{value:0},inverseProjection:{value:camera.projectionMatrixInverse.clone()},cameraWorld:{value:camera.matrixWorld.clone()},fogColor:{value:new T.Color('#c4d3df')},fogDensity:{value:.002},fogStart:{value:20},pixel:{value:new T.Vector2(1/w,1/h)}},
  vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,
- fragmentShader:`varying vec2 vUv;uniform sampler2D beauty,ambient,depth;uniform float strength,cameraNear,cameraFar,giStrength,giEnabled,fogDensity,fogStart,lawnAA,sakuraAA;uniform vec2 aoTexel,pixel;uniform sampler2D gi;uniform mat4 inverseProjection,cameraWorld;uniform vec3 fogColor;
+ fragmentShader:`varying vec2 vUv;uniform sampler2D beauty,ambient,depth;uniform float strength,winter,cameraNear,cameraFar,giStrength,giEnabled,fogDensity,fogStart,lawnAA,sakuraAA;uniform vec2 aoTexel,pixel;uniform sampler2D gi;uniform mat4 inverseProjection,cameraWorld;uniform vec3 fogColor;
  float linearDepth(float z){return cameraNear*cameraFar/(cameraFar-z*(cameraFar-cameraNear));}
  void main(){vec4 c=texture2D(beauty,vUv);float z=texture2D(depth,vUv).r;
  float center=linearDepth(z),sum=0.,weights=0.;
@@ -92,7 +92,7 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
   sum+=clamp(texture2D(ambient,uv).r,0.,1.)*w;weights+=w;
  }
  float occ=sum/max(weights,.0001);
- float weight=strength*(1.-smoothstep(.72,1.2,dot(c.rgb,vec3(.2126,.7152,.0722)))*.55);if(lawnAA>.5){occ=max(occ,.65);weight*=1.-.50*smoothstep(2.,12.,center);}
+ float weight=strength*(1.-smoothstep(.72,1.2,dot(c.rgb,vec3(.2126,.7152,.0722)))*mix(.55,.30,winter));if(lawnAA>.5){occ=max(occ,.65);weight*=1.-.50*smoothstep(2.,12.,center);}
  if(z<.99999){
  c.rgb*=mix(1.,occ,weight);
  if(giEnabled>.5){vec3 indirect=vec3(0.);float gw=0.;
@@ -107,9 +107,9 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
  // Small depth-aware edge filter, not a global blur.
  vec3 x1=texture2D(beauty,vUv+vec2(pixel.x,0.)).rgb,x2=texture2D(beauty,vUv-vec2(pixel.x,0.)).rgb,y1=texture2D(beauty,vUv+vec2(0.,pixel.y)).rgb,y2=texture2D(beauty,vUv-vec2(0.,pixel.y)).rgb;
  float ex=abs(dot(x1-x2,vec3(.2126,.7152,.0722))),ey=abs(dot(y1-y2,vec3(.2126,.7152,.0722)));
- vec3 along=ex>ey?(y1+y2)*.5:(x1+x2)*.5;
+ vec3 raw=texture2D(beauty,vUv).rgb;vec2 e=ex>ey?vec2(0.,pixel.y):vec2(pixel.x,0.);float d1=linearDepth(texture2D(depth,clamp(vUv+e,0.,1.)).r),d2=linearDepth(texture2D(depth,clamp(vUv-e,0.,1.)).r);float g1=exp(-abs(d1-center)/max(.035,center*.003)),g2=exp(-abs(d2-center)/max(.035,center*.003));vec3 n1=ex>ey?y1:x1,n2=ex>ey?y2:x2;vec3 along=(raw+n1*g1+n2*g2)/(1.+g1+g2);
  float edgeAA=smoothstep(mix(.10,.045,max(lawnAA,sakuraAA*.75)),mix(.55,.25,max(lawnAA,sakuraAA*.75)),max(ex,ey));
- c.rgb=mix(c.rgb,along,edgeAA*mix(.055,.12,max(lawnAA,sakuraAA*.78)));
+ if(z<.99999)c.rgb=max(vec3(0.),c.rgb+(along-raw)*edgeAA*mix(.055,.12,max(lawnAA,sakuraAA*.78)));
  // Contrast-adaptive bounded sharpening, avoid sky/foreground halos.
  vec3 crossMean=(x1+x2+y1+y2)*.25;
  vec3 lowC=min(min(x1,x2),min(y1,y2)),highC=max(max(x1,x2),max(y1,y2));
@@ -168,7 +168,7 @@ export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force
    const jitter=[[-.25,-.1667],[.25,.1667],[-.375,.3889],[.125,-.3889]][taa.count%4];
    projection=camera.projectionMatrix.clone();camera.projectionMatrix.elements[8]+=2*jitter[0]/w;camera.projectionMatrix.elements[9]+=2*jitter[1]/h;camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
   }else if(taa)taa.count=0;
-  u.strength.value=scene.userData.formaLawnR86?(mobile?.30:.34):scene.userData.formaSakuraR225?(mobile?.40:.44):(mobile?.34:.41);
+  const winter=scene.userData.formaWinterLightingR250?1:0;u.winter.value=winter;if(state.aoMat){state.aoMat.uniforms.winter.value=winter;state.aoMat.uniforms.radius.value=winter?.85:scene.userData.formaSakuraR225?.42:scene.userData.formaLawnR86?.22:.65;}u.strength.value=winter?(mobile?.56:.59):scene.userData.formaLawnR86?(mobile?.30:.34):scene.userData.formaSakuraR225?(mobile?.40:.44):(mobile?.34:.41);
   u.cameraNear.value=camera.near;u.cameraFar.value=camera.far;
   renderer.setRenderTarget(state.target);renderer.autoClear=true;renderer.render(scene,camera);
   if(state.ao){state.ao.camera=camera;state.ao.scene=scene;state.ao.render(renderer,null,state.target);}
