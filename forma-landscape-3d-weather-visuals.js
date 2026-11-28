@@ -6,26 +6,23 @@ import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-w
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const randSeed=(seed)=>{let x=seed>>>0;return ()=>((x=(x*1664525+1013904223)>>>0)/4294967296)};
 function hashString(v){let h=2166136261>>>0;for(const c of String(v)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
-const rgba=(x,y,coverage,random)=>{
- const d=Math.sin(x*.061+Math.sin(y*.083))*Math.cos(y*.063-x*.041)*.21+
-  Math.sin(x*.19+y*.15)*Math.cos(y*.14-x*.07)*.12+
-  (random()-.5)*.10;
- const threshold=(coverage/100)*1.23-.13;
- const alpha=clamp((threshold-d)*1.9,0,1);
- return Math.round(alpha*226);
-};
-function snowAtlas(T,doc,coverage){
- const el=document.createElement('canvas');el.width=el.height=128;
+// R241: opaque, irregular PBR snow coverage and independent tiled microrelief.
+function snowAtlas(T,coverage){
+ const size=256,el=document.createElement('canvas');el.width=el.height=size;
  const ctx=el.getContext('2d');if(!ctx)return null;
- const img=ctx.createImageData(128,128),rnd=randSeed(712345);
- for(let y=0;y<128;y++)for(let x=0;x<128;x++){
-  const i=(y*128+x)*4,a=rgba(x,y,coverage,rnd);
-  img.data[i]=230;img.data[i+1]=236;img.data[i+2]=237;img.data[i+3]=a;
+ const img=ctx.createImageData(size,size),rnd=randSeed(712345),p=coverage/100;
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const broad=.5+.19*Math.sin(x*.052+Math.sin(y*.063))*Math.cos(y*.047-x*.035)+.12*Math.sin(x*.135+y*.119)*Math.cos(y*.106-x*.071)+.055*Math.sin(x*.41+y*.29)*Math.cos(y*.34-x*.18);
+  const n=rnd(),mask=p>=1?1:p<=0?0:clamp((p-broad+.035)/.07,0,1);
+  const i=(y*size+x)*4,v=Math.round(244+(n-.5)*6+3*Math.sin(x*.19+y*.13));
+  img.data[i]=v;img.data[i+1]=Math.min(255,v+2);img.data[i+2]=Math.min(255,v+3);img.data[i+3]=Math.round(mask*255);
  }
- ctx.putImageData(img,0,0);
- const map=new T.CanvasTexture(el);map.colorSpace=T.SRGBColorSpace;
- map.wrapS=map.wrapT=T.ClampToEdgeWrapping;map.anisotropy=4;
- return map;
+ ctx.putImageData(img,0,0);const map=new T.CanvasTexture(el);map.colorSpace=T.SRGBColorSpace;map.wrapS=map.wrapT=T.ClampToEdgeWrapping;map.anisotropy=4;return map;
+}
+function snowMicroR241(T,side){
+ const size=128,data=new Uint8Array(size*size*4),rnd=randSeed(41235);
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){const a=x/size*Math.PI*2,b=y/size*Math.PI*2;const v=Math.round(128+23*Math.sin(a*3+Math.sin(b*2))*Math.cos(b*4-a*2)+12*Math.sin(a*11+b*8)+8*(rnd()-.5));data.set([v,v,v,255],(y*size+x)*4);}
+ const t=new T.DataTexture(data,size,size,T.RGBAFormat);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(side/.7,side/.7);t.magFilter=T.LinearFilter;t.minFilter=T.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;
 }
 export function addSnowToPlant(T,group,plant,atmosphere){
  const {snow}=weatherEffectsVisible(atmosphere);
@@ -56,16 +53,16 @@ export function addSnowToPlant(T,group,plant,atmosphere){
  group.add(snowMesh);return snowMesh;
 }
 function addSnowGround(T,root,terrainMesh,intensity){
- if(intensity<2||!terrainMesh)return;
- const map=snowAtlas(T,null,intensity);if(!map)return;
- const geom=terrainMesh.geometry.clone(),positions=geom.getAttribute('position');
- for(let i=0;i<positions.count;i++)positions.setY(i,positions.getY(i)+.028);
- positions.needsUpdate=true;geom.computeBoundingSphere();
- const mat=new T.MeshBasicMaterial({map,transparent:true,opacity:1,depthWrite:false,
-  polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,side:T.DoubleSide});
- const mesh=new T.Mesh(geom,mat);mesh.renderOrder=3;mesh.receiveShadow=false;
- mesh.userData.formaWeatherPreview=true;mesh.userData.textures=[map];
- root.add(mesh);
+ if(intensity<=0||!terrainMesh)return;
+ const map=snowAtlas(T,intensity);if(!map)return;
+ const geom=terrainMesh.geometry.clone(),positions=geom.getAttribute('position');geom.computeBoundingBox();
+ const side=Math.max(1,geom.boundingBox.max.x-geom.boundingBox.min.x,geom.boundingBox.max.z-geom.boundingBox.min.z),micro=snowMicroR241(T,side);
+ const depth=.012+.045*intensity/100;
+ for(let i=0;i<positions.count;i++){const x=positions.getX(i),z=positions.getZ(i);const drift=.65+.22*Math.sin(x*.72+Math.sin(z*.48))*Math.cos(z*.51)+.13*Math.sin(x*1.7+z*.8);positions.setY(i,positions.getY(i)+depth*drift);}
+ positions.needsUpdate=true;geom.computeVertexNormals();geom.computeBoundingSphere();
+ const mat=new T.MeshStandardMaterial({map,bumpMap:micro,bumpScale:.016,roughness:.93,metalness:0,color:'#ffffff',envMapIntensity:.44,alphaTest:.5,transparent:false,depthWrite:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,side:T.DoubleSide});
+ const mesh=new T.Mesh(geom,mat);mesh.name='forma-settled-ground-snow-r241';mesh.receiveShadow=true;mesh.castShadow=false;mesh.raycast=()=>{};
+ mesh.userData.formaWeatherPreview=true;mesh.userData.textures=[map,micro];root.add(mesh);
 }
 function addSnowfall(T,root,site,intensity){
  if(intensity<2)return;
