@@ -80,6 +80,8 @@ function addSnowGround(T,root,terrainMesh,effects,paths){
  }
  positions.needsUpdate=true;geom.computeVertexNormals();geom.computeBoundingBox();geom.computeBoundingSphere();
  const mat=new T.MeshStandardMaterial({map,bumpMap:micro,bumpScale:.008+.028*relief,roughness:1,metalness:0,color:'#ffffff',envMapIntensity:.32,alphaTest:.5,transparent:false,depthWrite:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,side:T.DoubleSide});
+ // Reuse plot-aligned contact AO; no extra fullscreen pass or texture allocation.
+ const contact=terrainMesh.material?.aoMap;if(contact){mat.aoMap=contact;mat.aoMapIntensity=.72;}
  const mesh=new T.Mesh(geom,mat);mesh.name='forma-settled-ground-snow-r242';mesh.receiveShadow=true;mesh.castShadow=false;mesh.raycast=()=>{};
  mesh.userData.formaWeatherPreview=true;mesh.userData.textures=[map,micro];root.add(mesh);
 }
