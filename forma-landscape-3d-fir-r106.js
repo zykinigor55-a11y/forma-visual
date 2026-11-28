@@ -298,6 +298,8 @@ export function createDetailedFir(T,instance){
  const trunk=new T.Mesh(trunkMesh.geometry(),bm);trunk.name='fir-continuous-trunk';trunk.castShadow=true;trunk.receiveShadow=true;g.add(trunk);
  const stem=new T.Mesh(woodMesh.geometry(),bm.clone());stem.name='fir-curved-branches';stem.castShadow=true;stem.receiveShadow=true;g.add(stem);
  const detailedNeedles=addVolumetricTwigs(T,g,twigSites,stage.age);
+ // Compact numeric branch/needle anchors survive cached Object3D cloning.
+ const snowStep=Math.max(1,Math.ceil(twigSites.length/4800));g.userData.formaFirSnowAnchorsR244=twigSites.filter((_,i)=>i%snowStep===0).map(q=>[q.p.x,q.p.y,q.p.z,q.dir.x,q.dir.y,q.dir.z]);
  if(coneSites.length){
   const coneCount=Math.min(coneSites.length,youngTree?22:old?112:72),coneGeo=coneGeometry(T),maps=coneScaleMaps(T,youngTree);
   const coneMat=new T.MeshStandardMaterial({color:'#ffffff',map:maps.map,bumpMap:maps.relief,bumpScale:.0017,roughness:.88,metalness:0});
