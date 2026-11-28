@@ -44,13 +44,16 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
  let seed=(Number(o.variant)||1)*51283+age*7919;
  const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
  const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),tau=Math.PI*2,up=V(0,1,0);
- const bp=[],bc=[],uv=[],idx=[],youth=[],barkAO=[],flowers=[],leaves=[];
+ const bp=[],bc=[],uv=[],idx=[],youth=[],barkAO=[],flowers=[],leaves=[],snowRowsR240=[];
+ const winterR240=season==='winter';
+ const snowHashR240=(i,k)=>{let x=Math.imul(i+37,1597334677)^Math.imul(k+71,3812015801);x=Math.imul(x^(x>>>16),2246822519);return ((x^(x>>>13))>>>0)/4294967295;};
  // R225: same seeded branch/flower topology on phone and desktop in comparison mode.
  const compactTopology=adaptivePreview||mobile;
  const bark=new T.Color(old?'#62504a':young?'#795e50':'#6b554a'),shade=new T.Color('#463b37');
  const lerp=(a,b,t)=>a.clone().lerp(b,t);
  function tube(pts,radii,sides){
-  const base=bp.length/3,stride=sides+1;let length=0,prevX=null;const circumference=tau*radii[0];const wraps=Math.max(1,Math.round(circumference/.43));const offset=(Math.sin(pts[0].x*13.37+pts[0].y*8.13+pts[0].z*19.91)*.5+.5);
+  const base=bp.length/3,stride=sides+1;let length=0,prevX=null;
+  if(winterR240){for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1],axis=b.clone().sub(a),len=axis.length();if(len<.003)continue;axis.multiplyScalar(1/len);const horizontal=Math.sqrt(Math.max(0,1-axis.y*axis.y));if(horizontal<.36||a.y<h*.18)continue;const radius=(radii[i]+radii[i+1])*.5;const k=base+i;const chance=snowHashR240(k,1);if(radius<.006&&chance>.72)continue;const top=up.clone().addScaledVector(axis,-axis.y).normalize();const width=Math.min(h*.014,Math.max(radius*1.16,h*.0038))*(.82+.45*snowHashR240(k,2));const thick=Math.max(radius*.36,width*(.36+.22*snowHashR240(k,3)));const center=a.clone().lerp(b,.5).addScaledVector(top,Math.max(0,radius+thick*.25));snowRowsR240.push({center,axis,top,length:Math.max(width*.9,len*.62),width,thick,rank:snowHashR240(k,4),variation:snowHashR240(k,5)});}}const circumference=tau*radii[0];const wraps=Math.max(1,Math.round(circumference/.43));const offset=(Math.sin(pts[0].x*13.37+pts[0].y*8.13+pts[0].z*19.91)*.5+.5);
   for(let i=0;i<pts.length;i++){
    if(i)length+=pts[i].distanceTo(pts[i-1]);
    const p=pts[i],d=pts[Math.min(i+1,pts.length-1)].clone().sub(pts[Math.max(0,i-1)]).normalize();
@@ -273,6 +276,18 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
  const limit=compactTopology?(old?59000:47000):(old?76000:60000);
  const sample=(rows,n)=>rows.length<=n?rows:Array.from({length:n},(_,i)=>rows[Math.floor(i*rows.length/n)]);
  const visibleFlowers=sample(flowers,limit);
+ if(winterR240&&snowRowsR240.length){
+  // Each mound is attached to the upper surface of an actual woody segment.
+  // Independent deterministic ranks allow live slider changes without rebuilding branches.
+  const budget=mobile?6200:12500;const rows=sample(snowRowsR240,budget).sort((a,b)=>a.rank-b.rank);
+  const geo=new T.SphereGeometry(1,9,6);const pos=geo.attributes.position;
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i),v=1+.085*Math.sin(x*7+y*9+z*6)+.045*Math.cos(z*11-x*5);pos.setXYZ(i,x*v,y*v,z*v);}geo.computeVertexNormals();
+  const mat=new T.MeshStandardMaterial({color:'#f3f5f5',roughness:.86,metalness:0,envMapIntensity:.52});
+  const mesh=new T.InstancedMesh(geo,mat,rows.length),d=new T.Object3D(),basis=new T.Matrix4(),color=new T.Color(),side=new T.Vector3();mesh.name='sakura-settled-snow-r240';mesh.userData.formaWeatherPreview=true;mesh.userData.formaBranchSnowR240=true;mesh.userData.snowCapacityR240=rows.length;
+  rows.forEach((row,i)=>{side.crossVectors(row.axis,row.top).normalize();basis.makeBasis(row.axis,row.top,side);d.quaternion.setFromRotationMatrix(basis);d.position.copy(row.center);d.scale.set(row.length,row.thick,row.width);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);color.set('#ffffff').lerp(new T.Color('#dae2e8'),row.variation*.28);mesh.setColorAt(i,color);});
+  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.count=0;mesh.castShadow=true;mesh.receiveShadow=true;mesh.raycast=()=>{};root.add(mesh);
+ }
+
  inst(visibleFlowers,blossomGeo(),adaptivePreview?['#f3dce4','#efd2dc','#ecc6d4','#dfb6c7','#f3d9e2','#e8c5d2']:['#f3e3e7','#e9c9d2','#e4bcc8','#ddb0bf','#f0d4da','#e6bec9'],'sakura-blossoms');
  inst(leaves,leafGeo(),season==='autumn'?['#a77944','#b58c53','#946345','#ab8a51']:['#607d48','#789253','#527340','#8a9e60'],'sakura-leaves');
  root.userData.formaSakuraStats={age,season,mobile,adaptivePreview,unifiedTopology:adaptivePreview,canopyOcclusion:adaptivePreview,petalNormal:adaptivePreview,flowers:visibleFlowers.length,generatedFlowers:flowers.length,petalTexture:256,leafTexture:256,flowerTriangles:adaptivePreview?(mobile?15:75):(mobile?10:60),translucency:true,barkVerticalRepeatPerM:2.3,barkPhysicalTileWidthM:.43,barkNormalStrength:.46,curvedMajorLimbs:true,branchCollars:true,leaves:leaves.length,woodTriangles:idx.length/3};
