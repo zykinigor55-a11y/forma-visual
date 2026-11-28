@@ -623,7 +623,7 @@ main:has(#aiProgress:not([hidden]),#aiResult:not([hidden])) #formaPresentationOp
 <body>
 <div id="shell">
 <header>
- <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R237</span>
+ <div class="brand">FORMA<small>АРХИТЕКТУРНАЯ ЛАБОРАТОРИЯ</small></div><span id="terrainBuildTag" title="Версия редактора" style="position:absolute;right:8px;top:2px;font-size:8px;color:#9d9d9d;pointer-events:none">R238</span>
  <input id="projectName" class="name" aria-label="Название проекта" value="Ландшафтный проект">
  <div class="header-right"><a id="formaMainMenuExit" href="forma-preview.html" title="Вернуться в главное меню FORMA" aria-label="Выход в главное меню"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg><span class="menu-label" style="margin-left:5px">Главное меню</span></a>
   <button id="undo" title="Отменить (Ctrl+Z)">↶</button><button id="redo" title="Повторить (Ctrl+Y)">↷</button>
@@ -967,13 +967,13 @@ import {exportCyclesJob,CYclesPresets} from './forma-cycles-export-r107.js?v=R12
 import {createWindSystem,windRipple} from './forma-wind-r91.js?v=R113';
 const windR74=createWindSystem(THREE);let windAmountR74=window.innerWidth<=850?15:25;try{const v=localStorage.getItem('forma-wind-r75');if(v!==null)windAmountR74=Math.max(0,Math.min(100,Number(v)||0));}catch{}
 let pathTraceR72=null,gpuLostR75=false,gpuMenuR75=null,gpuPendingFallbackR140=false,gpuRecoveryR140=false;
-import {updateHDRSky} from './forma-pbr-sky-r64.js?v=R215';
+import {updateHDRSky} from './forma-pbr-sky-r64.js?v=R238';
 import {photographicHDR} from './forma-photo-assets-r73.js?v=R73';
 import {makePhotographicSky,updatePhotographicSky,photographicFog,solarAppearance,continuousSkyPalette} from './forma-photographic-environment-r71.js?v=R215';
-import {installSoftPenumbra,renderPhotorealFrame,applyTurfVariation,createPreviewMeadow,releasePhotorealPipeline} from './forma-photoreal-render-r88.js?v=R237';
+import {installSoftPenumbra,renderPhotorealFrame,applyTurfVariation,createPreviewMeadow,releasePhotorealPipeline} from './forma-photoreal-render-r88.js?v=R238';
 const pbrR63Enabled=new URLSearchParams(location.search).get('pbr')!=='off';
 const r66AOEnabled=pbrR63Enabled&&new URLSearchParams(location.search).get('ao')!=='off';
-let postFXEnabledR236=r66AOEnabled,postFXSlowR236=0,postFXCooldownR236=0;
+let postFXEnabledR236=r66AOEnabled,postFXSlowR236=0,postFXCooldownR236=0,temporalRevisionR238=0;
 if(pbrR63Enabled)installSoftPenumbra(THREE);
 import {premiumIcon} from './forma-premium-icons.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
@@ -990,13 +990,13 @@ import {createDetailedFir,woodTexture,adoptFirPhotoMaps,firStage} from './forma-
 import {createVegetation,createRock,createGardenLight,VEGETATION_SPECIES} from './forma-landscape-3d-vegetation.js?v=R29';
 import {createNaturalMaple} from './forma-landscape-3d-maple-r41.js?v=R43';
 import {createNaturalWillow} from './forma-landscape-3d-willow-r51.js?v=R51';
-import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r201.js?v=R201';
+import {createPanoramaEnvironment,normalizePanorama,bindPanoramaPanel} from './forma-landscape-panorama-r201.js?v=R238';
 import {WALL_LIGHTS,WALL_COLORS,wallLightSettings,wallLightThumb,createWallLight} from './forma-landscape-wall-lights-r214.js?v=R214';
 let wallLightCategoryR214='garden',wallLightDragR214=null,wallLightPlaceR214=null;
 import {normalizeFence,fenceInspector,createLouverFence,perimeterPoints,fenceSideLengths,validateFenceOpenings,snapFencePoint,fenceCategory} from './forma-landscape-fence-r213.js?v=R213';
 let fenceMagnetR209=true;
 let selectedFenceSideR208=0,fenceCategoryR213=null,fenceCategoryContextR213='',fenceTabR211='type',fenceKindR211='gate',fencePlaceR211=null,fenceEditR211=false,fenceDragR211=null,fencePreviewR211=null;
-import {createNaturalSakura,sakuraStage} from './forma-landscape-3d-sakura-r206.js?v=R237';
+import {createNaturalSakura,sakuraStage} from './forma-landscape-3d-sakura-r206.js?v=R238';
 import {createNaturalRowan,rowanStage} from './forma-landscape-3d-rowan-r111.js?v=R130';
 import {createNaturalBirch,birchStage} from './forma-landscape-3d-birch-r56.js?v=R56';
 import {createNaturalOak,oakStage} from './forma-landscape-3d-oak-r74.js?v=R74';
@@ -1067,12 +1067,12 @@ const oakTestMode=['oak-test','oak-r59','oak-r60','oak-r61','oak-r62','oak-r63',
 const lawnTestMode=['lawn-r77','lawn-r78','lawn-r79','lawn-r80','lawn-r81','lawn-r82','lawn-r83','lawn-r84','lawn-r85','lawn-r86','lawn-r87','lawn-r88','lawn-r89','lawn-r90','lawn-r91','lawn-r92','lawn-test'].includes(treeTestScene);let lawnTypeR77='universal',lawnFlowersR88=75,lawnWheatHeightR88=76,lawnHeightR90=100,lawnDensityR90=100,lawnPressedR90=45,lawnPanelR90=null,lawnPanelSyncR90=null;
 const firTestMode=['fir-test','fir-r93','fir-r94','fir-r95','fir-r96','fir-r97','fir-r98','fir-r99','fir-r100','fir-r101','fir-r102','fir-r103','fir-r104','fir-r105','fir-r106','fir-r107'].includes(treeTestScene);
 const rowanTestMode=['rowan-test','rowan-r111','rowan-r112','rowan-r113','rowan-r114','rowan-r115','rowan-r116','rowan-r117','rowan-r118','rowan-r119','rowan-r120','rowan-r121','rowan-r122','rowan-r123','rowan-r124','rowan-r125','rowan-r126','rowan-r127','rowan-r128','rowan-r129','rowan-r130','rowan-r131','rowan-r132','rowan-r133','rowan-r134','rowan-r135','rowan-r136','rowan-r137','rowan-r138','rowan-r139'].includes(treeTestScene);
-const sakuraWebGLDemoR222=['sakura-webgl-r222','sakura-webgl-r223','sakura-webgl-r224','sakura-webgl-r225','sakura-webgl-r226','sakura-webgl-r227','sakura-webgl-r228','sakura-webgl-r229','sakura-webgl-r230','sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237'].includes(treeTestScene);
-const sakuraTestMode=['sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237','sakura-webgl-r231','sakura-webgl-r230','sakura-webgl-r229','sakura-webgl-r228','sakura-webgl-r227','sakura-webgl-r226','sakura-webgl-r225','sakura-webgl-r224','sakura-webgl-r223','sakura-webgl-r222','sakura-test','sakura-r191','sakura-r192','sakura-r202','sakura-r203','sakura-r204','sakura-r205','sakura-r206'].includes(treeTestScene);
+const sakuraWebGLDemoR222=['sakura-webgl-r222','sakura-webgl-r223','sakura-webgl-r224','sakura-webgl-r225','sakura-webgl-r226','sakura-webgl-r227','sakura-webgl-r228','sakura-webgl-r229','sakura-webgl-r230','sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237','sakura-webgl-r238'].includes(treeTestScene);
+const sakuraTestMode=['sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237','sakura-webgl-r238','sakura-webgl-r231','sakura-webgl-r230','sakura-webgl-r229','sakura-webgl-r228','sakura-webgl-r227','sakura-webgl-r226','sakura-webgl-r225','sakura-webgl-r224','sakura-webgl-r223','sakura-webgl-r222','sakura-test','sakura-r191','sakura-r192','sakura-r202','sakura-r203','sakura-r204','sakura-r205','sakura-r206'].includes(treeTestScene);
 const fenceTestMode=['fence-test','fence-r207','fence-r208','fence-r209','fence-r210','fence-r211','fence-r212','fence-r213','fence-r214'].includes(treeTestScene);
 const treeLineupMode=fenceTestMode||sakuraTestMode||rowanTestMode||lawnTestMode||firTestMode||oakTestMode||birchTestMode||['trees-r45','trees-r46','willow-r48','willow-r49','willow-r50','willow-r51'].includes(treeTestScene);
 const lawnIntegratedR90=!treeLineupMode||firTestMode||rowanTestMode,lawnEnabledR90=lawnTestMode||lawnIntegratedR90||sakuraWebGLDemoR222;
-let sakuraLawnR230=['sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237'].includes(treeTestScene);const treeLightEnabledR230=new URLSearchParams(location.search).get('treeLight')!=='off';const treeLightControlsR230={depth:1,contrast:1,rim:1};
+let sakuraLawnR230=['sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237','sakura-webgl-r238'].includes(treeTestScene);const treeLightEnabledR230=new URLSearchParams(location.search).get('treeLight')!=='off';const treeLightControlsR230={depth:1,contrast:1,rim:1};
 const pid=fenceTestMode?'forma-fence-isolated-r207':sakuraTestMode?'forma-sakura-isolated-r191':rowanTestMode?'forma-rowan-isolated-r111':firTestMode?'forma-fir-isolated-r93':lawnTestMode?'forma-lawn-isolated-r77':oakTestMode?'forma-oak-isolated-test-v1':birchTestMode?'forma-birch-isolated-test-v1':treeLineupMode?'forma-willow-test-r50':(()=>{try{return JSON.parse(localStorage.getItem('domrender_mvp_projects_v1')||'{}').activeId||'landscape'}catch{return 'landscape'}})();
 const KEY='forma-landscape-masterplan-v1-'+pid,EXTRA='forma-landscape-3d-extra-v1-'+pid,TERRAIN='forma-landscape-3d-terrain-v1-'+pid,UNDERLAY='forma-landscape-3d-underlay-v1-'+pid,FLORA='forma-landscape-3d-flora-v1-'+pid,SOLAR='forma-landscape-3d-sun-v1-'+pid,ATMO='forma-landscape-3d-atmosphere-v1-'+pid;
 let doc,extra=[],heightmap=[],undo=[],redo=[],scene,renderer,camera,controls,terrainMesh,plotOutline,root,raycaster,mouse,brushCursor,underlayTexture=null;
@@ -1353,6 +1353,7 @@ function activateMobilePanel(name){
  requestAnimationFrame(resize);
 }
 function save(){
+ temporalRevisionR238++;
  doc.title=$('#projectName').value.trim()||'Ландшафтный проект';
  try{localStorage.setItem(KEY,JSON.stringify(normalizeProject(doc)));localStorage.setItem(EXTRA,JSON.stringify(extra));localStorage.setItem(TERRAIN,JSON.stringify(heightmap));status('Проект сохранён. 2D и 3D используют общие координаты.')}
  catch(e){status('Сохранение не удалось: '+e.message)}
@@ -1423,7 +1424,7 @@ function applySakuraQualityR222(now=performance.now(),moving=false,force=false){
  if(!force&&(phase===sakuraPhaseR222||now-sakuraLastSwitchR222<400))return;
  sakuraPhaseR222=phase;sakuraLastSwitchR222=now;
  const detail=phase==='detail',ratio=detail?(phone?(weak&&sakuraQualityR222==='auto'?1.15:1.65):1.8):.75;
- root?.traverse(n=>{if(n.userData.sakuraPreviewDetail)n.userData.sakuraPreviewDetail.value=sakuraQualityR222==='basic'?0:1;if(n.name==='sakura-blossoms'&&n.material?.userData.sakuraPreviewMaterial){n.material.normalScale.setScalar(sakuraQualityR222==='basic'?0:.42);}if(n.name==='sakura-bark-branches'&&n.material?.normalMap)n.material.normalScale.setScalar(sakuraQualityR222==='basic'?.46:.69);});
+ root?.traverse(n=>{if(n.userData.sakuraPreviewDetail)n.userData.sakuraPreviewDetail.value=sakuraQualityR222==='basic'?0:1;if(n.name==='sakura-blossoms'&&n.material?.userData.sakuraPreviewMaterial){n.material.normalScale.setScalar(sakuraQualityR222==='basic'?0:.42);}if(n.name==='sakura-bark-branches'&&n.material?.normalMap)n.material.normalScale.setScalar(sakuraQualityR222==='basic'?.46:.76);});
  const target=Math.max(.55,Math.min(window.devicePixelRatio||1,ratio,Math.sqrt((phone?2.1e6:3.5e6)/Math.max(1,canvas.clientWidth*canvas.clientHeight))));
  if(Math.abs(renderer.getPixelRatio()-target)>.02){renderer.setPixelRatio(target);resize();}
  const sun=scene.getObjectByName('sun');if(sun){const n=Math.min(renderer.capabilities.maxTextureSize,detail?(phone?2048:4096):sakuraQualityR222==='basic'?512:1024);if(sun.shadow.mapSize.x!==n){sun.shadow.map?.dispose();sun.shadow.map=null;sun.shadow.mapSize.set(n,n);}sun.shadow.needsUpdate=true;renderer.shadowMap.needsUpdate=true;updateSun();}
@@ -1693,7 +1694,7 @@ function initialize(){
  setupDesktopInspectorR137();
  $('#pathTraceR72Button').onclick=()=>{if(motionR156.active){status('Сначала остановите запись MOTION.');return;}openRenderMenuR75();};
  $('#graphicsR105').onclick=openGraphicsR105;
- const windInput=$('#windR74'),windLabel=$('#windR74Value'),quickWind=$('#quickWindR91'),quickLabel=$('#quickWindR91Value');const setWind=v=>{windAmountR74=Math.max(0,Math.min(100,Number(v)||0));windInput.value=quickWind.value=String(windAmountR74);windLabel.textContent=quickLabel.textContent=windAmountR74+'%';try{localStorage.setItem('forma-wind-r75',String(windAmountR74))}catch{}renderGate.invalidate();};windInput.oninput=()=>setWind(windInput.value);quickWind.oninput=()=>setWind(quickWind.value);setWind(windAmountR74);
+ const windInput=$('#windR74'),windLabel=$('#windR74Value'),quickWind=$('#quickWindR91'),quickLabel=$('#quickWindR91Value');const setWind=v=>{windAmountR74=Math.max(0,Math.min(100,Number(v)||0));windInput.value=quickWind.value=String(windAmountR74);windLabel.textContent=quickLabel.textContent=windAmountR74+'%';try{localStorage.setItem('forma-wind-r75',String(windAmountR74))}catch{}renderGate.invalidate();};windInput.oninput=()=>setWind(windInput.value);quickWind.oninput=()=>setWind(quickWind.value);setWind(windAmountR74);if(sakuraWebGLDemoR222&&new URLSearchParams(location.search).get('still')==='1'){windAmountR74=0;windInput.value=quickWind.value='0';windLabel.textContent=quickLabel.textContent='0%';}
  // On a phone the 3D canvas, not a tiny library drawer, is the starting point.
  activateMobilePanel(window.innerWidth<=850?'scene':'tools');
  document.querySelectorAll('#mobileWorkspaceTabs [data-mobile-panel]').forEach(button=>button.addEventListener('click',()=>{
@@ -1734,7 +1735,7 @@ function initialize(){
   solarSettings=stored?.time===doc.atmosphere.time?normalizeSolarSettings(stored.settings,doc.atmosphere.time):solarPreset(doc.atmosphere.time);
   if(doc.atmosphere.time==='night'&&solarSettings.elevation>=0)solarSettings=solarPreset('night');if(doc.atmosphere.time==='blue-hour'&&solarSettings.elevation>=0)solarSettings=solarPreset('blue-hour');if(doc.atmosphere.time==='morning'&&solarSettings.azimuth===282&&solarSettings.elevation===20)solarSettings=solarPreset('morning');if(doc.atmosphere.time==='evening'&&solarSettings.azimuth===73&&solarSettings.elevation===6)solarSettings=solarPreset('evening');
  }catch{solarSettings=solarPreset(doc.atmosphere.time)}
- if(['sakura-webgl-r229','sakura-webgl-r230','sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237'].includes(treeTestScene)&&doc.atmosphere.time==='day'){solarSettings=normalizeSolarSettings({...solarSettings,azimuth:300,elevation:42,softness:2.8},'day');}
+ if(['sakura-webgl-r229','sakura-webgl-r230','sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237','sakura-webgl-r238'].includes(treeTestScene)&&doc.atmosphere.time==='day'){solarSettings=normalizeSolarSettings({...solarSettings,azimuth:300,elevation:42,softness:2.8},'day');}
  if(oakTestMode&&pbrR63Enabled&&doc.atmosphere.time==='day'){solarSettings={...solarSettings,azimuth:282,elevation:32,softness:3.8};}
  syncSolarControls();
  try{sceneAtmosphere=normalizeSceneAtmosphere(JSON.parse(localStorage.getItem(ATMO)||'null'))}catch{sceneAtmosphere=normalizeSceneAtmosphere()}
@@ -1817,7 +1818,7 @@ function initialize(){
  restorePlantGlbs().catch(e=>console.warn('Stored vegetation GLB restore:',e));
  const previousDrawing=treeLineupMode?null:localStorage.getItem(UNDERLAY);
  if(previousDrawing)setUnderlay(previousDrawing,false);
- if(['sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237'].includes(treeTestScene)){lawnTypeR77='universal';lawnHeightR90=135;lawnDensityR90=110;lawnPressedR90=18;const old=cachedGroundTexture;cachedGroundTexture=null;rebuild();old?.dispose();updateTurfDetail();}if(lawnEnabledR90&&!sakuraWebGLDemoR222)setupLawnPreviewR77();if(treeLineupMode&&!lawnTestMode&&!fenceTestMode)setupLineupNavigation();if(fenceTestMode){state.selected='extra:fence-demo';const ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));const dist=Math.max(13,18/(2*Math.tan(25*Math.PI/180)*ratio)*.95);selectedFenceSideR208=2;camera.position.set(dist*.22,dist*.52,dist);controls.target.set(0,0,0);controls.update();renderProps();renderGate.invalidate();}
+ if(['sakura-webgl-r231','sakura-webgl-r232','sakura-webgl-r233','sakura-webgl-r234','sakura-webgl-r235','sakura-webgl-r236','sakura-webgl-r237','sakura-webgl-r238'].includes(treeTestScene)){lawnTypeR77='universal';lawnHeightR90=135;lawnDensityR90=110;lawnPressedR90=18;const old=cachedGroundTexture;cachedGroundTexture=null;rebuild();old?.dispose();updateTurfDetail();}if(lawnEnabledR90&&!sakuraWebGLDemoR222)setupLawnPreviewR77();if(treeLineupMode&&!lawnTestMode&&!fenceTestMode)setupLineupNavigation();if(fenceTestMode){state.selected='extra:fence-demo';const ratio=Math.max(.35,canvas.clientWidth/Math.max(1,canvas.clientHeight));const dist=Math.max(13,18/(2*Math.tan(25*Math.PI/180)*ratio)*.95);selectedFenceSideR208=2;camera.position.set(dist*.22,dist*.52,dist);controls.target.set(0,0,0);controls.update();renderProps();renderGate.invalidate();}
  window.FORMA_3D_READY=true;$('#loadError').style.display='none';readBuildInfo();
  status(window.innerWidth<=850?'3D готов. Откройте «Каталог», выберите объект и нажмите на участок.':'3D-конструктор готов. Выберите объект слева, затем нажмите на участок.');
 }
@@ -2094,6 +2095,7 @@ function commitTerrainStroke(){
 let turfDetail=null,turfCell='',turfMask=null;
 function disposeTurfDetail(){if(!turfDetail)return;root?.remove(turfDetail);if(turfDetail.userData?.dispose)turfDetail.userData.dispose();else{turfDetail.geometry?.dispose();turfDetail.material?.dispose();}turfDetail=null;}
 function invalidateTurfDetail(){
+ temporalRevisionR238++;
  turfCell='';turfMask=null;
  disposeTurfDetail();
 }
@@ -2261,6 +2263,7 @@ function updateTurfDetail(){
  root.add(turfDetail);if(pbrR63Enabled)calibrateScenePBR(THREE,turfDetail,{classify:()=> 'plants'});renderGate.invalidate();
 }
 function rebuild(){
+ temporalRevisionR238++;
  updateRiverCacheR219();
  disposeLiveFogR217();
  windR74.clear();invalidateTurfDetail();renderGate.invalidate();
@@ -4119,6 +4122,7 @@ function applyAtmosphereControls(){
  renderGate.invalidate();
 }
 function updateSun(){
+ temporalRevisionR238++;
  renderGate.invalidate();
  const val=solarBandR215(solarSettings.elevation,solarSettings.azimuth),season=doc.atmosphere.season,sun=scene.getObjectByName('sun');
  const appearance=solarAppearance(solarSettings.elevation);
@@ -5880,11 +5884,13 @@ function renderPhotoFrame(force=false){if(gpuLostR75||pathTraceR72?.active||!ren
  const settled=performance.now()-lastCameraMotionR106>650;
  const detail=sakuraWebGLDemoR222&&sakuraQualityR222==='detail';
  const allowed=postFXEnabledR236&&state.view!=='2d'&&!gpuRecoveryR140&&quality!=='eco'&&(!sakuraWebGLDemoR222||sakuraQualityR222!=='basic')&&(force||performance.now()>postFXCooldownR236)&&(force||detail||!phone||settled);
- ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:allowed,force,mode:phone||weak?'ssao':'gtao',gi:!phone&&!weak&&(force||['high','ultra'].includes(quality)),onReady:()=>renderGate.invalidate()});
+ const stillTest=sakuraWebGLDemoR222&&new URLSearchParams(location.search).get('still')==='1';
+ const temporal=settled&&!weak&&!state.painting&&!state.down&&!motionR156.active&&windAmountR74===0&&!waterSurfaces.length&&!['rain','snow','fog'].includes(doc.atmosphere.weather)&&(stillTest||sceneAtmosphere.clouds<=1);
+ ao=renderPhotorealFrame(THREE,renderer,scene,camera,{enabled:allowed,force,mode:phone||weak?'ssao':'gtao',gi:!phone&&!weak&&(force||['high','ultra'].includes(quality)),temporal,temporalKey:String(temporalRevisionR238),onReady:()=>renderGate.invalidate()});
  }finally{if(authored){fog.near=authored.near;fog.far=authored.far;}scene.userData.formaAtmosphereR70=post;}
  scene.userData.formaGTAOR66=ao&&scene.userData.formaPostFXR236.startsWith('gtao');
  const label=scene.userData.formaPostFXR236==='gtao + ssgi'?'GTAO + экранное отражённое освещение':scene.userData.formaPostFXR236==='gtao'?'GTAO · пространственные тени':scene.userData.formaPostFXR236==='ssao'?'SSAO · пространственные тени':'PBR · локальные тени';
- for(const id of ['#sakuraQualityAOStatusR222','#forma-r71-render-status']){const el=$(id);if(el&&el.textContent!==label)el.textContent=label;}
+ for(const id of ['#sakuraQualityAOStatusR222','#forma-r71-render-status']){const el=$(id);const shown=label+(scene.userData.formaTAAR238?' · TAA '+scene.userData.formaTAAR238+'/4':'');if(el&&el.textContent!==shown)el.textContent=shown;}
 }
 
 function resize(){if(gpuLostR75||pathTraceR72?.active)return;renderGate.invalidate();const rect=canvas.getBoundingClientRect();if(!renderer||!camera)return;renderer.setSize(rect.width,rect.height,false);if(camera.isPerspectiveCamera){camera.aspect=rect.width/Math.max(1,rect.height);if(state.view==='walk'&&window.innerWidth>850)applyWalkLens();else camera.updateProjectionMatrix()}else if(camera.isOrthographicCamera){const half=Math.max(doc.site.width,doc.site.height)*.73;camera.left=-half*rect.width/Math.max(1,rect.height);camera.right=-camera.left;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix()}}
@@ -5933,7 +5939,7 @@ function animate(now=0){
  if(canAnimateAtmosphere&&state.view!=='2d'&&now-lastAtmosphereAnimationAt>atmosphericCadence&&
     ((cloudLayer?.visible&&sceneAtmosphere.clouds>1)||(waterSurfaces.length&&sceneAtmosphere.ripples>0))){
   lastAtmosphereAnimationAt=now;
-  if(cloudLayer?.visible)cloudLayer.material.uniforms.time.value=now*.001*(.2+windAmountR74/35);
+  if(cloudLayer?.visible&&!(sakuraWebGLDemoR222&&new URLSearchParams(location.search).get('still')==='1'&&windAmountR74===0))cloudLayer.material.uniforms.time.value=now*.001*(.2+windAmountR74/35);
   // R74 water uses the common wind field below.
   renderGate.invalidate();
  }
