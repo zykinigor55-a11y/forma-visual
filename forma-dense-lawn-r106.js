@@ -366,7 +366,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
    float flex=clamp(position.y,0.,1.);flex*=flex; transformed.z+=sway*formaGrassWind*.42*flex; transformed.x+=sin(formaGrassTime*1.65+grassAnchor.x*.72+grassAnchor.z*.5)*formaGrassWind*.18*flex;
   #endif`);
   if(volume){shader.vertexShader='varying float vFormaBladeHeightR231;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvFormaBladeHeightR231=clamp(position.y,0.,1.);');shader.fragmentShader='varying float vFormaBladeHeightR231;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-   float bladeHeight=smoothstep(0.,.83,vFormaBladeHeightR231);diffuseColor.rgb*=mix(.76,1.06,bladeHeight);
+   float bladeHeight=smoothstep(0.,.88,vFormaBladeHeightR231);diffuseColor.rgb*=mix(.78,1.10,bladeHeight);
   `);}
   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
    roughnessFactor=clamp(roughnessFactor,.64,.94);
@@ -383,7 +383,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
    `));
   }
   shader.fragmentShader=shader.fragmentShader.replace('#include <aomap_fragment>',`#include <aomap_fragment>
-   ${contactMap?'float gc=texture2D(formaGrassContact,vFormaGrassContact/formaGrassContactSide+.5).r; reflectedLight.indirectDiffuse*=mix(.48,1.,gc); reflectedLight.indirectSpecular*=mix(.55,1.,gc); reflectedLight.directDiffuse*=mix(.80,1.,gc);':''}
+   ${contactMap?'float gc=texture2D(formaGrassContact,vFormaGrassContact/formaGrassContactSide+.5).r; reflectedLight.indirectDiffuse*=mix(.58,1.,gc); reflectedLight.indirectSpecular*=mix(.62,1.,gc); reflectedLight.directDiffuse*=mix(.86,1.,gc);':''}
    #ifdef USE_MAP
     float formaRoot=smoothstep(0.0,.85,vMapUv.y);
     reflectedLight.indirectDiffuse*=mix(.94,1.0,formaRoot);
@@ -393,7 +393,7 @@ export function createDenseLawn(T,{profile,focus,mobile=false,terrainAt,contains
   `);
 
  };
- mat.customProgramCacheKey=()=> 'forma-grass-r234'+(volume?'|volume-r231':'')+(contactMap?'|contact':'');
+ mat.customProgramCacheKey=()=> 'forma-grass-r235'+(volume?'|volume-r231':'')+(contactMap?'|contact':'');
  const pressedColor=new T.Color('#746c47'),color=new T.Color(),palette=profile.palette.map(c=>new T.Color(c).lerp(new T.Color('#46603b'),.12)),dummy=new T.Object3D();const autumnColors=['#7b824c','#a29b56','#b3a15a','#997c43','#806a42','#65794a'].map(c=>new T.Color(c));
  const cx=Math.round(focus.x/.6)*.6,cz=Math.round(focus.z/.6)*.6;
  const integrated=!!profile.integrated;const near=mobile?(integrated?1.05:1.15):1.55,mid=mobile?(integrated?3.0:3.2):4.0,far=mobile?7.5:9.2,horizon=mobile?14:19;
