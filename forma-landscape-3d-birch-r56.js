@@ -95,8 +95,10 @@ export function createNaturalBirch(T,o,{season='summer'}={}){
  const r=random('birch-r52|'+o.id+'|'+o.variant+'|'+p.age),g=new T.Group(),V=(x,y,z)=>new T.Vector3(x,y,z),tex=textures(T);
  const pale={pos:[],uv:[],col:[],idx:[]},dark={pos:[],uv:[],col:[],idx:[]},foliage=[],extraTwigs=[],forks=[];const detailRng=random('birch-r56-details|'+o.id+'|'+o.variant+'|'+p.age);
  const polar=(a,d,y)=>V(Math.cos(a)*d,y,Math.sin(a)*d),mix=(a,b,t)=>a.clone().lerp(b,t),curve=pts=>new T.CatmullRomCurve3(pts,false,'centripetal');
+ const snowPathsR245=[];
  function tube(path,steps,sides,base,tip,white=false,root=false){
   const b=white?pale:dark,pts=path.getPoints(steps),first=b.pos.length/3;let U=null,len=0;const phase=r()*6.28;
+  if(season==='winter'&&!root&&base>=.0018){const stride=Math.max(1,Math.floor(steps/12));const samples=[];for(let j=0;j<=steps;j++){if(j%stride&&j!==steps)continue;const q=pts[j],t=j/steps;samples.push([q.x,q.y,q.z,tip+(base-tip)*Math.pow(1-t,1.32)]);}snowPathsR245.push(samples);}
   for(let i=0;i<=steps;i++){const t=i/steps,c=pts[i],axis=pts[Math.min(steps,i+1)].clone().sub(pts[Math.max(0,i-1)]).normalize(),ref=Math.abs(axis.y)>.92?V(1,0,0):V(0,1,0);
    U=U?U.clone().addScaledVector(axis,-U.dot(axis)):V(0,0,0).crossVectors(axis,ref);if(U.lengthSq()<1e-8)U.crossVectors(axis,ref);U.normalize();const W=V(0,0,0).crossVectors(axis,U).normalize();
    if(i)len+=c.distanceTo(pts[i-1]);const radius=(tip+(base-tip)*Math.pow(1-t,1.32))*(root?1+.32*Math.exp(-t*24):white?1+.17*Math.exp(-t*19):1);
@@ -140,5 +142,5 @@ export function createNaturalBirch(T,o,{season='summer'}={}){
  mesh(dark,new T.MeshStandardMaterial({color:'#544839',roughness:.97,side:T.DoubleSide}),'Birch R52 fine woody twigs');
  if(foliage.length){const geo=new T.PlaneGeometry(1,1,2,2),a=geo.attributes.position;for(let i=0;i<a.count;i++)a.setZ(i,.16*(1-Math.abs(a.getX(i))*2)-.12*a.getY(i)**2);geo.computeVertexNormals();const mat=new T.MeshStandardMaterial({map:tex.leaf,alphaTest:.35,side:T.DoubleSide,roughness:.88,color:'#efefdf',emissive:'#8e986e',emissiveIntensity:.10});const m=new T.InstancedMesh(geo,mat,foliage.length),tmp=new T.Object3D(),Y=V(0,1,0),colors=(season==='autumn'?['#e4bf73','#c5ab62','#d0bb71']:['#d7dfbc','#c7d3af','#e1e5c6','#b9c5a1']).map(c=>new T.Color(c));
  foliage.forEach((f,i)=>{tmp.position.copy(f.origin).addScaledVector(f.dir,f.size*.43);tmp.quaternion.setFromUnitVectors(Y,f.dir);tmp.rotateY(f.roll);tmp.scale.set(f.size*.76,f.size,f.size*.76);tmp.updateMatrix();m.setMatrixAt(i,tmp.matrix);m.setColorAt(i,colors[Math.min(colors.length-1,Math.floor(f.shade*colors.length))]);});m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();m.castShadow=true;m.receiveShadow=true;m.name='Birch R52 serrated individual leaves';g.add(m);}
- g.userData.nativeBirchR52=true;g.userData.nativeBirchR53=true;g.userData.nativeBirchR54=true;g.userData.nativeBirchR55=true;g.userData.nativeBirchR56=true;g.userData.birchAge=p.age;g.userData.leafCount=foliage.length;g.userData.physicalHeight=h;g.userData.trunkDiameter=p.radius*2;return g;
+ g.userData.nativeBirchR52=true;g.userData.nativeBirchR53=true;g.userData.nativeBirchR54=true;g.userData.nativeBirchR55=true;g.userData.nativeBirchR56=true;g.userData.birchAge=p.age;g.userData.leafCount=foliage.length;g.userData.physicalHeight=h;g.userData.trunkDiameter=p.radius*2;g.userData.formaDeciduousSnowPathsR245=snowPathsR245;return g;
 }
