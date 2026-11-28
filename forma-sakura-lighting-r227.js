@@ -26,11 +26,11 @@ export function fitSakuraShadowR227(T,sun,trees,terrainAt,softness=2.8){
  Object.assign(cam,{left:b.left,right:b.right,bottom:b.bottom,top:b.top,near:b.near,far:Math.max(b.near+2,b.far)});cam.updateProjectionMatrix();
  sun.shadow.normalBias=clamp(b.texel*.30,.0015,.010);sun.shadow.bias=-clamp(b.texel/(cam.far-cam.near)*.18,.000015,.00013);
  // Approximate a small physical penumbra, not a global large blur.
- sun.shadow.radius=clamp((.012+.068*Math.pow(clamp((softness-1)/4,0,1),1.5))/b.texel,.8,5.5);
+ sun.shadow.radius=clamp((.022+.105*Math.pow(clamp((softness-1)/4,0,1),1.5))/b.texel,1.2,7.0);
  sun.shadow.needsUpdate=true;return true;
 }
 export function sakuraLightProfileR227({day=1,direct=1,weather='sunny',strength=1,clouds=.35,fill=1}={}){
  const wet=['rain','snow','fog','overcast'].includes(weather),trans=clamp(1-clouds*.42,.55,1);
  const weatherDirect=({sunny:1,'after-rain':.70,overcast:.32,rain:.22,fog:.18,snow:.30})[weather]??1;
- return {sun:2.25*direct*weatherDirect*strength*trans,sky:(.14+.88*day)*fill*(wet?1.15:1),bounce:.035+.15*day,environment:.10+.26*day,exposure:wet?1.03:.96};
+ return {sun:2.55*direct*weatherDirect*strength*trans,sky:(.14+1.16*day)*fill*(wet?1.12:1),bounce:.035+.19*day,environment:.10+.35*day,exposure:(wet?1.03:.96)*Math.pow(2,.32*day),shadowIntensity:wet?.76:.86};
 }
