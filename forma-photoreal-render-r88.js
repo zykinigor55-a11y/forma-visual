@@ -32,7 +32,7 @@ export function installSoftPenumbra(T){
 }
 function makePipeline(T,renderer,scene,camera,w,h,mobile){
  const target=new T.WebGLRenderTarget(w,h,{type:T.HalfFloatType,depthBuffer:true,stencilBuffer:false});
- const lawn=!!scene.userData.formaLawnR86;
+ const lawn=!!scene.userData.formaLawnR86,sakura=!!scene.userData.formaSakuraR225;
  if(lawn&&!mobile)target.samples=Math.min(4,renderer.capabilities.maxSamples||0);
  target.texture.colorSpace=T.LinearSRGBColorSpace;
  target.depthTexture=new T.DepthTexture(w,h,T.UnsignedIntType);
@@ -41,7 +41,7 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  // scene depth for the AO normal reconstruction, preserving alpha cutouts.
  const ao=new GTAO(scene,camera,Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));
  ao.setGBuffer(target.depthTexture);
- ao.updateGtaoMaterial({radius:lawn?.11:.85,thickness:lawn?.045:.32,distanceFallOff:1,scale:lawn?1.05:1.15,samples:mobile?8:16,screenSpaceRadius:false});
+ ao.updateGtaoMaterial({radius:lawn?.11:sakura?.32:.85,thickness:lawn?.045:sakura?.11:.32,distanceFallOff:1,scale:lawn?1.05:1.15,samples:mobile?8:16,screenSpaceRadius:false});
  ao.updatePdMaterial({radius:mobile?3:5,samples:mobile?8:16,rings:2});
  ao.output=GTAO.OUTPUT.Off;
  const giTarget=new T.WebGLRenderTarget(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)),{type:T.HalfFloatType,depthBuffer:false});
@@ -53,9 +53,9 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  for(int i=0;i<GI_SAMPLES;i++){float fi=float(i),ang=rot+fi*2.39996;float radius=(.35+fi/float(GI_SAMPLES))*.085/max(1.,-p.z*.12);vec2 uv=vUv+vec2(cos(ang),sin(ang))*radius*vec2(pixel.x/pixel.y,1.);if(any(lessThan(uv,vec2(.002)))||any(greaterThan(uv,vec2(.998))))continue;float dz=texture2D(depth,uv).r;if(dz>.99999)continue;vec3 q=pos(uv,dz),v=q-p;float dist=length(v);if(dist<.04||dist>3.5)continue;float cosine=max(0.,dot(n,v/dist));float weight=cosine*exp(-dist*.65);vec3 light=min(texture2D(beauty,uv).rgb,vec3(1.6));bounce+=light*weight;total+=weight;}
  gl_FragColor=vec4(bounce/max(2.5,total),-p.z);}`});
  const giScene=new T.Scene(),giCamera=new T.Camera(),giQuad=new T.Mesh(new T.PlaneGeometry(2,2),giMat);giQuad.frustumCulled=false;giScene.add(giQuad);
- const mat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:true,uniforms:{beauty:{value:target.texture},ambient:{value:ao.pdRenderTarget.texture},depth:{value:target.depthTexture},strength:{value:.52},lawnAA:{value:lawn?1:0},aoTexel:{value:new T.Vector2(2/w,2/h)},cameraNear:{value:camera.near},cameraFar:{value:camera.far},gi:{value:giTarget.texture},giStrength:{value:.16},inverseProjection:{value:camera.projectionMatrixInverse.clone()},cameraWorld:{value:camera.matrixWorld.clone()},fogColor:{value:new T.Color('#c4d3df')},fogDensity:{value:.002},fogStart:{value:20},pixel:{value:new T.Vector2(1/w,1/h)}},
+ const mat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:true,uniforms:{beauty:{value:target.texture},ambient:{value:ao.pdRenderTarget.texture},depth:{value:target.depthTexture},strength:{value:.52},lawnAA:{value:lawn?1:0},sakuraAA:{value:sakura?1:0},aoTexel:{value:new T.Vector2(2/w,2/h)},cameraNear:{value:camera.near},cameraFar:{value:camera.far},gi:{value:giTarget.texture},giStrength:{value:.16},inverseProjection:{value:camera.projectionMatrixInverse.clone()},cameraWorld:{value:camera.matrixWorld.clone()},fogColor:{value:new T.Color('#c4d3df')},fogDensity:{value:.002},fogStart:{value:20},pixel:{value:new T.Vector2(1/w,1/h)}},
  vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,
- fragmentShader:`varying vec2 vUv;uniform sampler2D beauty,ambient,depth;uniform float strength,cameraNear,cameraFar,giStrength,fogDensity,fogStart,lawnAA;uniform vec2 aoTexel,pixel;uniform sampler2D gi;uniform mat4 inverseProjection,cameraWorld;uniform vec3 fogColor;
+ fragmentShader:`varying vec2 vUv;uniform sampler2D beauty,ambient,depth;uniform float strength,cameraNear,cameraFar,giStrength,fogDensity,fogStart,lawnAA,sakuraAA;uniform vec2 aoTexel,pixel;uniform sampler2D gi;uniform mat4 inverseProjection,cameraWorld;uniform vec3 fogColor;
  float linearDepth(float z){return cameraNear*cameraFar/(cameraFar-z*(cameraFar-cameraNear));}
  void main(){vec4 c=texture2D(beauty,vUv);float z=texture2D(depth,vUv).r;
  float center=linearDepth(z),sum=0.,weights=0.;
@@ -83,7 +83,8 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  vec3 x1=texture2D(beauty,vUv+vec2(pixel.x,0.)).rgb,x2=texture2D(beauty,vUv-vec2(pixel.x,0.)).rgb,y1=texture2D(beauty,vUv+vec2(0.,pixel.y)).rgb,y2=texture2D(beauty,vUv-vec2(0.,pixel.y)).rgb;
  float ex=abs(dot(x1-x2,vec3(.2126,.7152,.0722))),ey=abs(dot(y1-y2,vec3(.2126,.7152,.0722)));
  vec3 along=ex>ey?(y1+y2)*.5:(x1+x2)*.5;
- c.rgb=mix(c.rgb,along,smoothstep(mix(.10,.035,lawnAA),mix(.55,.22,lawnAA),max(ex,ey))*mix(.10,.27,lawnAA));
+ float edgeAA=smoothstep(mix(.10,.035,max(lawnAA,sakuraAA*.55)),mix(.55,.22,max(lawnAA,sakuraAA*.55)),max(ex,ey));
+ c.rgb=mix(c.rgb,along,edgeAA*mix(.10,.27,max(lawnAA,sakuraAA*.42)));
  gl_FragColor=c;
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
@@ -106,7 +107,7 @@ export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force
   if(!state){state=makePipeline(T,renderer,scene,camera,w,h,mobile);pipelines.set(renderer,state);}
   if(w!==state.w||h!==state.h){state.target.setSize(w,h);state.giTarget.setSize(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));state.ao.setSize(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));state.w=w;state.h=h;}
   state.ao.camera=camera;state.ao.scene=scene;
-  state.mat.uniforms.strength.value=scene.userData.formaLawnR86?(force?.38:mobile?.28:.33):(force?.60:mobile?.48:.55);state.mat.uniforms.cameraNear.value=camera.near;state.mat.uniforms.cameraFar.value=camera.far;state.mat.uniforms.aoTexel.value.set(1/state.ao.width,1/state.ao.height);
+  state.mat.uniforms.strength.value=scene.userData.formaLawnR86?(force?.38:mobile?.28:.33):scene.userData.formaSakuraR225?(mobile?.55:.62):(force?.60:mobile?.48:.55);state.mat.uniforms.cameraNear.value=camera.near;state.mat.uniforms.cameraFar.value=camera.far;state.mat.uniforms.aoTexel.value.set(1/state.ao.width,1/state.ao.height);
   renderer.setRenderTarget(state.target);renderer.autoClear=true;renderer.render(scene,camera);
   state.ao.render(renderer,null,state.target);
   state.giMat.uniforms.invProjection.value.copy(camera.projectionMatrixInverse);state.giMat.uniforms.pixel.value.set(1/w,1/h);
