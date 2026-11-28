@@ -30,20 +30,45 @@ export function installSoftPenumbra(T){
  T.ShaderChunk.shadowmap_pars_fragment=chunk.slice(0,pos)+code+chunk.slice(pos);
  return true;
 }
-function makePipeline(T,renderer,scene,camera,w,h,mobile){
+function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
+ const scale=mobile?.35:.5;
  const target=new T.WebGLRenderTarget(w,h,{type:T.HalfFloatType,depthBuffer:true,stencilBuffer:false});
  const lawn=!!scene.userData.formaLawnR86,sakura=!!scene.userData.formaSakuraR225;
- if(lawn&&!mobile)target.samples=Math.min(4,renderer.capabilities.maxSamples||0);
+ // Avoid multisampled depth resolves for alpha-tested vegetation in postFX.
  target.texture.colorSpace=T.LinearSRGBColorSpace;
  target.depthTexture=new T.DepthTexture(w,h,T.UnsignedIntType);
  target.depthTexture.format=T.DepthFormat;
  // Create normal target first (r179 setGBuffer expects one); then use actual
  // scene depth for the AO normal reconstruction, preserving alpha cutouts.
- const ao=new GTAO(scene,camera,Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));
- ao.setGBuffer(target.depthTexture);
- ao.updateGtaoMaterial({radius:lawn?.11:sakura?.32:.85,thickness:lawn?.045:sakura?.11:.32,distanceFallOff:1,scale:lawn?1.05:1.15,samples:mobile?8:16,screenSpaceRadius:false});
- ao.updatePdMaterial({radius:mobile?3:5,samples:mobile?8:16,rings:2});
- ao.output=GTAO.OUTPUT.Off;
+ const aw=Math.max(1,Math.round(w*scale)),ah=Math.max(1,Math.round(h*scale));
+ let ao=null,aoTarget=null,aoMat=null,aoScene=null,aoCamera=null;
+ if(mode==='gtao'){
+  ao=new GTAO(scene,camera,aw,ah);
+  ao.setGBuffer(target.depthTexture);
+  ao.updateGtaoMaterial({radius:sakura?.38:lawn?.22:.85,thickness:sakura?.14:lawn?.07:.28,distanceFallOff:1,scale:1.1,samples:16,screenSpaceRadius:false});
+  ao.updatePdMaterial({radius:4,samples:12,rings:2});
+  ao.output=GTAO.OUTPUT.Off;
+ }else{
+  // R236: depth-only hemisphere approximation, no normal override pass.
+  aoTarget=new T.WebGLRenderTarget(aw,ah,{type:T.UnsignedByteType,depthBuffer:false});
+  aoMat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:false,uniforms:{depth:{value:target.depthTexture},invProjection:{value:camera.projectionMatrixInverse.clone()},pixel:{value:new T.Vector2(1/w,1/h)},projectionScale:{value:camera.projectionMatrix.elements[5]},radius:{value:sakura?.42:lawn?.22:.65}},vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,fragmentShader:`
+  varying vec2 vUv;uniform sampler2D depth;uniform mat4 invProjection;uniform vec2 pixel;uniform float projectionScale,radius;
+  vec3 at(vec2 uv){float z=texture2D(depth,uv).r;vec4 p=invProjection*vec4(uv*2.-1.,z*2.-1.,1.);return p.xyz/p.w;}
+  void main(){float z=texture2D(depth,vUv).r;if(z>.99999){gl_FragColor=vec4(1.);return;}
+   vec3 p=at(vUv),a=at(clamp(vUv+vec2(pixel.x,0.),0.,1.))-p,b=p-at(clamp(vUv-vec2(pixel.x,0.),0.,1.)),c=at(clamp(vUv+vec2(0.,pixel.y),0.,1.))-p,d=p-at(clamp(vUv-vec2(0.,pixel.y),0.,1.));
+   vec3 n=cross(length(a)<length(b)?a:b,length(c)<length(d)?c:d);n/=max(length(n),.000001);if(dot(n,-p)<0.)n=-n;
+   float occ=0.;float hits=0.;float screenRadius=clamp(radius*projectionScale*.5/max(.12,-p.z),pixel.y*2.,.13);
+   for(int i=0;i<12;i++){float fi=float(i);float ang=fi*2.39996323;float rr=sqrt((fi+.5)/12.);vec2 uv=vUv+vec2(cos(ang)*pixel.x/pixel.y,sin(ang))*screenRadius*rr;
+    if(any(lessThan(uv,vec2(.001)))||any(greaterThan(uv,vec2(.999))))continue;
+    if(texture2D(depth,uv).r>.99999)continue;vec3 v=at(uv)-p;float dist=length(v);if(dist<.012||dist>radius*1.5)continue;
+    occ+=max(0.,dot(n,v/dist)-.08)*(1.-smoothstep(radius*.2,radius*1.5,dist));hits+=1.;
+   }
+   float visibility=clamp(1.-occ/max(4.,hits)*1.65,.38,1.);gl_FragColor=vec4(vec3(visibility),1.);
+  }`});
+  aoScene=new T.Scene();aoCamera=new T.Camera();const q=new T.Mesh(new T.PlaneGeometry(2,2),aoMat);q.frustumCulled=false;aoScene.add(q);
+ }
+ const ambient=ao?.gtaoMap||ao?.pdRenderTarget?.texture||aoTarget?.texture;
+ if(!ambient)throw Error('AO output unavailable');
  const giTarget=new T.WebGLRenderTarget(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)),{type:T.HalfFloatType,depthBuffer:false});
  const giMat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:false,defines:{GI_SAMPLES:mobile?6:10},uniforms:{beauty:{value:target.texture},depth:{value:target.depthTexture},invProjection:{value:camera.projectionMatrixInverse.clone()},pixel:{value:new T.Vector2(1/w,1/h)}},vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,fragmentShader:`varying vec2 vUv;uniform sampler2D beauty,depth;uniform mat4 invProjection;uniform vec2 pixel;
  vec3 pos(vec2 uv,float z){vec4 p=invProjection*vec4(uv*2.-1.,z*2.-1.,1.);return p.xyz/p.w;}
@@ -53,9 +78,9 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  for(int i=0;i<GI_SAMPLES;i++){float fi=float(i),ang=rot+fi*2.39996;float radius=(.35+fi/float(GI_SAMPLES))*.085/max(1.,-p.z*.12);vec2 uv=vUv+vec2(cos(ang),sin(ang))*radius*vec2(pixel.x/pixel.y,1.);if(any(lessThan(uv,vec2(.002)))||any(greaterThan(uv,vec2(.998))))continue;float dz=texture2D(depth,uv).r;if(dz>.99999)continue;vec3 q=pos(uv,dz),v=q-p;float dist=length(v);if(dist<.04||dist>3.5)continue;float cosine=max(0.,dot(n,v/dist));float weight=cosine*exp(-dist*.65);vec3 light=min(texture2D(beauty,uv).rgb,vec3(1.6));bounce+=light*weight;total+=weight;}
  gl_FragColor=vec4(bounce/max(2.5,total),-p.z);}`});
  const giScene=new T.Scene(),giCamera=new T.Camera(),giQuad=new T.Mesh(new T.PlaneGeometry(2,2),giMat);giQuad.frustumCulled=false;giScene.add(giQuad);
- const mat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:true,uniforms:{beauty:{value:target.texture},ambient:{value:ao.pdRenderTarget.texture},depth:{value:target.depthTexture},strength:{value:.52},lawnAA:{value:lawn?1:0},sakuraAA:{value:sakura?1:0},aoTexel:{value:new T.Vector2(2/w,2/h)},cameraNear:{value:camera.near},cameraFar:{value:camera.far},gi:{value:giTarget.texture},giStrength:{value:.16},inverseProjection:{value:camera.projectionMatrixInverse.clone()},cameraWorld:{value:camera.matrixWorld.clone()},fogColor:{value:new T.Color('#c4d3df')},fogDensity:{value:.002},fogStart:{value:20},pixel:{value:new T.Vector2(1/w,1/h)}},
+ const mat=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:true,uniforms:{beauty:{value:target.texture},ambient:{value:ambient},depth:{value:target.depthTexture},strength:{value:.52},lawnAA:{value:lawn?1:0},sakuraAA:{value:sakura?1:0},aoTexel:{value:new T.Vector2(1/aw,1/ah)},cameraNear:{value:camera.near},cameraFar:{value:camera.far},gi:{value:giTarget.texture},giStrength:{value:0},giEnabled:{value:0},inverseProjection:{value:camera.projectionMatrixInverse.clone()},cameraWorld:{value:camera.matrixWorld.clone()},fogColor:{value:new T.Color('#c4d3df')},fogDensity:{value:.002},fogStart:{value:20},pixel:{value:new T.Vector2(1/w,1/h)}},
  vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,
- fragmentShader:`varying vec2 vUv;uniform sampler2D beauty,ambient,depth;uniform float strength,cameraNear,cameraFar,giStrength,fogDensity,fogStart,lawnAA,sakuraAA;uniform vec2 aoTexel,pixel;uniform sampler2D gi;uniform mat4 inverseProjection,cameraWorld;uniform vec3 fogColor;
+ fragmentShader:`varying vec2 vUv;uniform sampler2D beauty,ambient,depth;uniform float strength,cameraNear,cameraFar,giStrength,giEnabled,fogDensity,fogStart,lawnAA,sakuraAA;uniform vec2 aoTexel,pixel;uniform sampler2D gi;uniform mat4 inverseProjection,cameraWorld;uniform vec3 fogColor;
  float linearDepth(float z){return cameraNear*cameraFar/(cameraFar-z*(cameraFar-cameraNear));}
  void main(){vec4 c=texture2D(beauty,vUv);float z=texture2D(depth,vUv).r;
  float center=linearDepth(z),sum=0.,weights=0.;
@@ -70,9 +95,9 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  float weight=strength*(1.-smoothstep(.72,1.2,dot(c.rgb,vec3(.2126,.7152,.0722)))*.55);if(lawnAA>.5){occ=max(occ,.65);weight*=1.-.50*smoothstep(2.,12.,center);}
  if(z<.99999){
  c.rgb*=mix(1.,occ,weight);
- vec3 indirect=vec3(0.);float gw=0.;
+ if(giEnabled>.5){vec3 indirect=vec3(0.);float gw=0.;
  for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec2 u=clamp(vUv+vec2(float(i),float(j))*aoTexel*.65,vec2(.0),vec2(1.));vec4 g=texture2D(gi,u);float k=g.a>0.0?exp(-abs(g.a-center)/max(.12,center*.012)):0.0;indirect+=g.rgb*k;gw+=k;}
- c.rgb+=indirect/max(gw,.001)*giStrength*clamp(1.-dot(c.rgb,vec3(.2126,.7152,.0722))*.45,.25,1.);
+ c.rgb+=indirect/max(gw,.001)*giStrength*clamp(1.-dot(c.rgb,vec3(.2126,.7152,.0722))*.45,.25,1.);}
  vec4 vp=inverseProjection*vec4(vUv*2.-1.,z*2.-1.,1.);vec3 world=(cameraWorld*vec4(vp.xyz/vp.w,1.)).xyz;
  float path=max(0.,length(vp.xyz/vp.w)-fogStart);
  float altitude=max(0.,(world.y+cameraWorld[3].y)*.5);
@@ -90,35 +115,42 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile){
  #include <colorspace_fragment>
  }`});
  const quadScene=new T.Scene(),quadCamera=new T.Camera(),quad=new T.Mesh(new T.PlaneGeometry(2,2),mat);quad.frustumCulled=false;quadScene.add(quad);
- return {target,ao,mat,quadScene,quadCamera,giTarget,giMat,giScene,giCamera,w,h,mobile,failed:false};
+ return {target,ao,aoTarget,aoMat,aoScene,aoCamera,mat,quadScene,quadCamera,giTarget,giMat,giScene,giCamera,w,h,mobile,mode,aw,ah,failed:false};
 }
-export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force=false,onReady=()=>{}}={}){
- scene.userData.formaSSGIR70=false;
- if(!enabled||!camera?.isPerspectiveCamera||!renderer.extensions.has('EXT_color_buffer_float')||unavailable){renderer.render(scene,camera);return false;}
- if(!GTAO){
-  if(!loading){loading=true;import('three/addons/postprocessing/GTAOPass.js').then(mod=>{GTAO=mod.GTAOPass;onReady();}).catch(e=>{unavailable=true;console.warn('FORMA GTAO unavailable',e);});}
-  renderer.render(scene,camera);return false;
- }
+export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force=false,onReady=()=>{},mode='auto',gi=false}={}){
+ scene.userData.formaSSGIR70=false;scene.userData.formaPostFXR236='pbr';
+ if(!enabled||!camera?.isPerspectiveCamera||!renderer.extensions.has('EXT_color_buffer_float')){renderer.render(scene,camera);return false;}
+ const mobile=typeof window!=='undefined'&&window.innerWidth<=850;
+ const preferGTAO=mode==='gtao'||(mode==='auto'&&!mobile);
+ if(preferGTAO&&!GTAO&&!loading&&!unavailable){loading=true;import('three/addons/postprocessing/GTAOPass.js').then(mod=>{GTAO=mod.GTAOPass;onReady();}).catch(e=>{unavailable=true;console.warn('FORMA GTAO unavailable; SSAO fallback',e);onReady();});}
+ let selected=preferGTAO&&GTAO&&!unavailable?'gtao':'ssao';
+ const sz=renderer.getDrawingBufferSize(new T.Vector2()),w=Math.max(1,Math.round(sz.x)),h=Math.max(1,Math.round(sz.y));
  let state=pipelines.get(renderer);
  if(state?.failed){renderer.render(scene,camera);return false;}
- const mobile=typeof window!=='undefined'&&window.innerWidth<=850,sz=renderer.getDrawingBufferSize(new T.Vector2()),w=Math.max(1,Math.round(sz.x)),h=Math.max(1,Math.round(sz.y));
+ // Rebuild on actual target size or tier change; never keep stale depth attachments.
+ if(state&&(state.w!==w||state.h!==h||state.mode!==selected)){releasePhotorealPipeline(renderer);state=null;}
  const oldTarget=renderer.getRenderTarget(),oldAuto=renderer.autoClear;
  try{
-  if(!state){state=makePipeline(T,renderer,scene,camera,w,h,mobile);pipelines.set(renderer,state);}
-  if(w!==state.w||h!==state.h){state.target.setSize(w,h);state.giTarget.setSize(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));state.ao.setSize(Math.max(1,Math.round(w*.5)),Math.max(1,Math.round(h*.5)));state.w=w;state.h=h;}
-  state.ao.camera=camera;state.ao.scene=scene;
-  state.mat.uniforms.strength.value=scene.userData.formaLawnR86?(force?.38:mobile?.28:.33):scene.userData.formaSakuraR225?(mobile?.44:.50):(force?.60:mobile?.48:.55);state.mat.uniforms.cameraNear.value=camera.near;state.mat.uniforms.cameraFar.value=camera.far;state.mat.uniforms.aoTexel.value.set(1/state.ao.width,1/state.ao.height);
+  if(!state){state=makePipeline(T,renderer,scene,camera,w,h,mobile,selected);pipelines.set(renderer,state);}
+  const u=state.mat.uniforms;camera.updateMatrixWorld();
+  u.strength.value=scene.userData.formaLawnR86?(mobile?.42:.48):scene.userData.formaSakuraR225?(mobile?.58:.63):(mobile?.48:.58);
+  u.cameraNear.value=camera.near;u.cameraFar.value=camera.far;
   renderer.setRenderTarget(state.target);renderer.autoClear=true;renderer.render(scene,camera);
-  state.ao.render(renderer,null,state.target);
-  state.giMat.uniforms.invProjection.value.copy(camera.projectionMatrixInverse);state.giMat.uniforms.pixel.value.set(1/w,1/h);
-  renderer.setRenderTarget(state.giTarget);renderer.autoClear=true;renderer.render(state.giScene,state.giCamera);
-  const u=state.mat.uniforms;u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.cameraWorld.value.copy(camera.matrixWorld);u.pixel.value.set(1/w,1/h);u.giStrength.value=force?.22:mobile?.14:.18;
-  const haze=scene.userData.formaAtmosphereR70||{};u.fogDensity.value=haze.density??.0015;u.fogStart.value=haze.start??22;if(scene.fog?.color)u.fogColor.value.copy(scene.fog.color);
-  scene.userData.formaSSGIR70=true;
+  if(state.ao){state.ao.camera=camera;state.ao.scene=scene;state.ao.render(renderer,null,state.target);}
+  else{state.aoMat.uniforms.invProjection.value.copy(camera.projectionMatrixInverse);state.aoMat.uniforms.projectionScale.value=camera.projectionMatrix.elements[5];renderer.setRenderTarget(state.aoTarget);renderer.render(state.aoScene,state.aoCamera);}
+  const doGI=gi&&selected==='gtao'&&!mobile;
+  if(doGI){state.giMat.uniforms.invProjection.value.copy(camera.projectionMatrixInverse);renderer.setRenderTarget(state.giTarget);renderer.render(state.giScene,state.giCamera);}
+  u.giEnabled.value=doGI?1:0;u.giStrength.value=doGI?.16:0;
+  u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.cameraWorld.value.copy(camera.matrixWorld);
+  const haze=scene.userData.formaAtmosphereR70||{};u.fogDensity.value=haze.density??0;u.fogStart.value=haze.start??22;if(scene.fog?.color)u.fogColor.value.copy(scene.fog.color);
   renderer.setRenderTarget(oldTarget);renderer.autoClear=true;renderer.render(state.quadScene,state.quadCamera);
+  scene.userData.formaSSGIR70=doGI;scene.userData.formaPostFXR236=selected+(doGI?' + ssgi':'');
   return true;
- }catch(e){scene.userData.formaSSGIR70=false;console.warn('FORMA GTAO/SSGI fallback',e);pipelines.set(renderer,{failed:true});renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;renderer.render(scene,camera);return false;}
- finally{renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;}
+ }catch(e){
+  console.warn('FORMA R236 postFX fallback',e);releasePhotorealPipeline(renderer);
+  if(selected==='gtao'){unavailable=true;onReady();}else pipelines.set(renderer,{failed:true});
+  renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;renderer.render(scene,camera);return false;
+ }finally{renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;}
 }
 export function applyTurfVariation(mat){
  const prior=mat.onBeforeCompile,key=mat.customProgramCacheKey?.()||'';
@@ -144,6 +176,6 @@ export function createPreviewMeadow(T,grass,side){
 /* Release optional postprocess targets before heavy GPU jobs or after loss. */
 export function releasePhotorealPipeline(renderer){
  const p=pipelines.get(renderer);pipelines.delete(renderer);if(!p||p.failed)return;
- for(const r of [p.target,p.ao,p.mat,p.giTarget,p.giMat]){try{r?.dispose();}catch{}}
- for(const scene of [p.quadScene,p.giScene])scene?.traverse(n=>{if(n.isMesh)n.geometry?.dispose();});
+ for(const r of [p.target,p.ao,p.aoTarget,p.aoMat,p.mat,p.giTarget,p.giMat]){try{r?.dispose();}catch{}}
+ for(const scene of [p.quadScene,p.giScene,p.aoScene])scene?.traverse(n=>{if(n.isMesh)n.geometry?.dispose();});
 }
