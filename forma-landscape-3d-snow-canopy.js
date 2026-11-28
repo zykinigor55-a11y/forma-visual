@@ -118,15 +118,15 @@ export function updateTreeSnowPreview(info,atmosphere){
  for(const e of info.entries){
   if(e.kind==='material'){
    const mat=e.target;
-   const lighten=(info.hasInstanceColors?.has(mat)?strength*.15:strength*.95);
+   const lighten=(info.hasInstanceColors?.has(mat)?strength*.08:strength*.38);
    if(e.color&&mat.color){
     mat.color.copy(e.color).lerp(white,lighten);
    }
    // A faint PBR emissive component lifts photo-dark GLB needle maps.
    // Keep night-time snow softly lit, NEVER an electric white neon tree.
    if(e.emissive&&mat.emissive){
-    mat.emissive.copy(e.emissive).lerp(white,strength*.26);
-    mat.emissiveIntensity=e.emissiveIntensity+strength*.32;
+    mat.emissive.copy(e.emissive);
+    mat.emissiveIntensity=e.emissiveIntensity;
    }
   }else if(e.kind==='instance'){
    const dst=e.target.array,src=e.original;
@@ -136,7 +136,7 @@ export function updateTreeSnowPreview(info,atmosphere){
     // 100% => nearly every foliage needle/leaf becomes white.
     // Selection never touches trunk or branch geometry.
     const coat=strength===0?0:clamp((strength-random+.10)*6);
-    const amount=coat*(.78+.20*strength);
+    const amount=coat*(.28+.24*strength);
     dst[m]=src[m]+(white.r-src[m])*amount;
     dst[m+1]=src[m+1]+(white.g-src[m+1])*amount;
     dst[m+2]=src[m+2]+(white.b-src[m+2])*amount;
