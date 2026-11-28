@@ -63,7 +63,7 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
     if(texture2D(depth,uv).r>.99999)continue;vec3 v=at(uv)-p;float dist=length(v);if(dist<.012||dist>radius*1.5)continue;
     occ+=max(0.,dot(n,v/dist)-.08)*(1.-smoothstep(radius*.2,radius*1.5,dist));hits+=1.;
    }
-   float visibility=clamp(1.-occ/max(4.,hits)*1.65,.38,1.);gl_FragColor=vec4(vec3(visibility),1.);
+   float visibility=clamp(1.-occ/max(4.,hits)*1.45,.48,1.);gl_FragColor=vec4(vec3(visibility),1.);
   }`});
   aoScene=new T.Scene();aoCamera=new T.Camera();const q=new T.Mesh(new T.PlaneGeometry(2,2),aoMat);q.frustumCulled=false;aoScene.add(q);
  }
@@ -108,8 +108,8 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
  vec3 x1=texture2D(beauty,vUv+vec2(pixel.x,0.)).rgb,x2=texture2D(beauty,vUv-vec2(pixel.x,0.)).rgb,y1=texture2D(beauty,vUv+vec2(0.,pixel.y)).rgb,y2=texture2D(beauty,vUv-vec2(0.,pixel.y)).rgb;
  float ex=abs(dot(x1-x2,vec3(.2126,.7152,.0722))),ey=abs(dot(y1-y2,vec3(.2126,.7152,.0722)));
  vec3 along=ex>ey?(y1+y2)*.5:(x1+x2)*.5;
- float edgeAA=smoothstep(mix(.10,.035,max(lawnAA,sakuraAA*.55)),mix(.55,.22,max(lawnAA,sakuraAA*.55)),max(ex,ey));
- c.rgb=mix(c.rgb,along,edgeAA*mix(.10,.27,max(lawnAA,sakuraAA*.42)));
+ float edgeAA=smoothstep(mix(.10,.045,max(lawnAA,sakuraAA*.75)),mix(.55,.25,max(lawnAA,sakuraAA*.75)),max(ex,ey));
+ c.rgb=mix(c.rgb,along,edgeAA*mix(.13,.34,max(lawnAA,sakuraAA*.78)));
  gl_FragColor=c;
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
@@ -133,7 +133,7 @@ export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force
  try{
   if(!state){state=makePipeline(T,renderer,scene,camera,w,h,mobile,selected);pipelines.set(renderer,state);}
   const u=state.mat.uniforms;camera.updateMatrixWorld();
-  u.strength.value=scene.userData.formaLawnR86?(mobile?.42:.48):scene.userData.formaSakuraR225?(mobile?.58:.63):(mobile?.48:.58);
+  u.strength.value=scene.userData.formaLawnR86?(mobile?.30:.34):scene.userData.formaSakuraR225?(mobile?.40:.44):(mobile?.34:.41);
   u.cameraNear.value=camera.near;u.cameraFar.value=camera.far;
   renderer.setRenderTarget(state.target);renderer.autoClear=true;renderer.render(scene,camera);
   if(state.ao){state.ao.camera=camera;state.ao.scene=scene;state.ao.render(renderer,null,state.target);}
