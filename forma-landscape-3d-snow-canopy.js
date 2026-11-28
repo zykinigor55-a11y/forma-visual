@@ -37,7 +37,7 @@ function detachMaterials(mesh,entries){
  const snowCopies=originals.map(original=>{
   if(!original||typeof original.clone!=='function')return original;
   let copy=unique.get(original);
-  if(!copy){copy=original.clone();unique.set(original,copy)}
+  if(!copy){copy=original.clone();copy.onBeforeCompile=original.onBeforeCompile;copy.customProgramCacheKey=original.customProgramCacheKey;unique.set(original,copy)}
   return copy;
  });
  mesh.material=Array.isArray(mesh.material)?snowCopies:snowCopies[0];
@@ -100,7 +100,7 @@ export function attachTreeSnowPreview(T,group,plant,atmosphere){
  // Instance colours provide per-needle patchiness; avoid global white wash.
  if(entries.some(e=>e.kind==='instance'))
   for(const e of entries)if(e.kind==='material')hasInstanceColors.add(e.target);
- const info={species,seed,entries,eligibleMeshes:eligible,
+ const fir=!!group.userData.formaFirBoughsR245?.length;const info={species,seed,entries,eligibleMeshes:eligible,fir,
   strength:-1,white,group,hasInstanceColors};
  group.userData.formaSnowPreview=info;
  updateTreeSnowPreview(info,atmosphere);
@@ -118,9 +118,9 @@ export function updateTreeSnowPreview(info,atmosphere){
  for(const e of info.entries){
   if(e.kind==='material'){
    const mat=e.target;
-   const lighten=(info.hasInstanceColors?.has(mat)?strength*.08:strength*.38);
+   const lighten=info.fir?strength*.16:(info.hasInstanceColors?.has(mat)?strength*.08:strength*.38);
    if(e.color&&mat.color){
-    mat.color.copy(e.color).lerp(white,lighten);
+    mat.color.copy(e.color).lerp(white,lighten);if(info.fir){mat.color.r*=1-strength*.025;mat.color.g*=1-strength*.18;mat.color.b*=1-strength*.035;}
    }
    // A faint PBR emissive component lifts photo-dark GLB needle maps.
    // Keep night-time snow softly lit, NEVER an electric white neon tree.
@@ -136,7 +136,7 @@ export function updateTreeSnowPreview(info,atmosphere){
     // 100% => nearly every foliage needle/leaf becomes white.
     // Selection never touches trunk or branch geometry.
     const coat=strength===0?0:clamp((strength-random+.10)*6);
-    const amount=coat*(.28+.24*strength);
+    const amount=info.fir?strength*.13:coat*(.28+.24*strength);
     dst[m]=src[m]+(white.r-src[m])*amount;
     dst[m+1]=src[m+1]+(white.g-src[m+1])*amount;
     dst[m+2]=src[m+2]+(white.b-src[m+2])*amount;
