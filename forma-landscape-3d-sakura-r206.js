@@ -53,7 +53,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
  const lerp=(a,b,t)=>a.clone().lerp(b,t);
  function tube(pts,radii,sides){
   const base=bp.length/3,stride=sides+1;let length=0,prevX=null;
-  if(winterR240){for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1],axis=b.clone().sub(a),len=axis.length();if(len<.003)continue;axis.multiplyScalar(1/len);const horizontal=Math.sqrt(Math.max(0,1-axis.y*axis.y));if(horizontal<.36||a.y<h*.18)continue;const radius=(radii[i]+radii[i+1])*.5;const k=base+i;const chance=snowHashR240(k,1);if(radius<.006&&chance>.72)continue;const top=up.clone().addScaledVector(axis,-axis.y).normalize();const width=Math.min(h*.014,Math.max(radius*1.16,h*.0038))*(.82+.45*snowHashR240(k,2));const thick=Math.max(radius*.36,width*(.36+.22*snowHashR240(k,3)));const center=a.clone().lerp(b,.5).addScaledVector(top,Math.max(0,radius+thick*.25));snowRowsR240.push({center,axis,top,length:Math.max(width*.9,len*.62),width,thick,rank:snowHashR240(k,4),variation:snowHashR240(k,5)});}}const circumference=tau*radii[0];const wraps=Math.max(1,Math.round(circumference/.43));const offset=(Math.sin(pts[0].x*13.37+pts[0].y*8.13+pts[0].z*19.91)*.5+.5);
+  if(winterR240){for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1],axis=b.clone().sub(a),len=axis.length();if(len<.003)continue;axis.multiplyScalar(1/len);const horizontal=Math.sqrt(Math.max(0,1-axis.y*axis.y));if(horizontal<.48||a.y<h*.18)continue;const radius=(radii[i]+radii[i+1])*.5;const k=base+i;const chance=snowHashR240(base,1);if(radius<.006&&chance>.83)continue;const top=up.clone().addScaledVector(axis,-axis.y).normalize();const width=Math.min(h*.022,Math.max(radius*1.20,h*.0045))*(.85+.38*snowHashR240(base,2));const thick=Math.max(radius*.33,width*(.28+.15*snowHashR240(base,3)));const center=a.clone().lerp(b,.5).addScaledVector(top,Math.max(0,radius+thick*.04));snowRowsR240.push({center,axis,top,length:Math.max(width*1.1,len*.80),width,thick,rank:Math.min(1,snowHashR240(base,4)*.84+snowHashR240(k,4)*.16),variation:snowHashR240(k,5)});}}const circumference=tau*radii[0];const wraps=Math.max(1,Math.round(circumference/.43));const offset=(Math.sin(pts[0].x*13.37+pts[0].y*8.13+pts[0].z*19.91)*.5+.5);
   for(let i=0;i<pts.length;i++){
    if(i)length+=pts[i].distanceTo(pts[i-1]);
    const p=pts[i],d=pts[Math.min(i+1,pts.length-1)].clone().sub(pts[Math.max(0,i-1)]).normalize();
@@ -279,10 +279,10 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
  if(winterR240&&snowRowsR240.length){
   // Each mound is attached to the upper surface of an actual woody segment.
   // Independent deterministic ranks allow live slider changes without rebuilding branches.
-  const budget=mobile?6200:12500;const rows=sample(snowRowsR240,budget).sort((a,b)=>a.rank-b.rank);
+  const budget=mobile?8000:15000;const rows=sample(snowRowsR240,budget).sort((a,b)=>a.rank-b.rank);
   const geo=new T.SphereGeometry(1,9,6);const pos=geo.attributes.position;
-  for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i),v=1+.085*Math.sin(x*7+y*9+z*6)+.045*Math.cos(z*11-x*5);pos.setXYZ(i,x*v,y*v,z*v);}geo.computeVertexNormals();
-  const mat=new T.MeshStandardMaterial({color:'#f3f5f5',roughness:.86,metalness:0,envMapIntensity:.52});
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i),v=1+.045*Math.sin(x*7+y*9+z*6)+.025*Math.cos(z*11-x*5);pos.setXYZ(i,x*v,y<0?y*v*.65:y*v,z*v);}geo.computeVertexNormals();
+  const mat=new T.MeshStandardMaterial({color:'#f3f5f5',roughness:.86,metalness:0,envMapIntensity:.68});
   const mesh=new T.InstancedMesh(geo,mat,rows.length),d=new T.Object3D(),basis=new T.Matrix4(),color=new T.Color(),side=new T.Vector3();mesh.name='sakura-settled-snow-r240';mesh.userData.formaWeatherPreview=true;mesh.userData.formaBranchSnowR240=true;mesh.userData.snowCapacityR240=rows.length;
   rows.forEach((row,i)=>{side.crossVectors(row.axis,row.top).normalize();basis.makeBasis(row.axis,row.top,side);d.quaternion.setFromRotationMatrix(basis);d.position.copy(row.center);d.scale.set(row.length,row.thick,row.width);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);color.set('#ffffff').lerp(new T.Color('#dae2e8'),row.variation*.28);mesh.setColorAt(i,color);});
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();mesh.count=0;mesh.castShadow=true;mesh.receiveShadow=true;mesh.raycast=()=>{};root.add(mesh);
