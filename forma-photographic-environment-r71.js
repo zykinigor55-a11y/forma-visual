@@ -61,10 +61,13 @@ export function makePhotographicSky(T){
   float den=smoothstep(threshold,threshold+.16,shape);
   vec2 lightOffset=normalize(sunDirection.xz+vec2(.0001))*.12*cloudThickness;
   float upstream=fbm((p+lightOffset)*.65+vec2(13.7,8.2));
-  float shade=exp(-max(0.,upstream-threshold)*cloudDensity*7.);
+  float deep=fbm((p+lightOffset*2.6)*.65+vec2(13.7,8.2));
+  float optical=max(0.,upstream-threshold)*.65+max(0.,deep-threshold)*.35;
+  float shade=exp(-optical*cloudDensity*10.);
   float extinction=mix(2.7,1.1,cloudTransmission);
   float alpha=(1.-exp(-den*cloudDensity*cloudThickness*extinction*3./max(.36,dy)))*smoothstep(.025,.16,altitude)*opacity;
-  vec3 light=mix(cloudShade*.65,cloudColor*1.25,shade);
+  float silver=pow(sunDot,7.)*(1.-den)*smoothstep(.03,.4,den)*(1.-overcast)*.15;
+  vec3 light=mix(cloudShade*.76,cloudColor*1.12,shade*.86+.14)+cloudColor*silver;
   color=mix(color,light,alpha);sunTransmittance=1.-alpha;
  }
  // Single solar disc, angular diameter about half a degree; clouds attenuate it.
