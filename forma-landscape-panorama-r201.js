@@ -29,7 +29,7 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
   float alpha=c.a;if(alpha<.025)discard;
   float l=dot(c.rgb,vec3(.2126,.7152,.0722));float g=smoothstep(.015,.14,c.g-max(c.r,c.b));
   if(season>1.5&&season<2.5)c.rgb=mix(c.rgb,vec3(l*1.27,l*.93,l*.55),g*.48);
-  if(season>2.5){float vegetation=smoothstep(.005,.10,c.g-max(c.r,c.b));float ridge=smoothstep(.12,.57,l);float snowMask=clamp((.18+.78*snow)*(.35+.65*ridge)*vegetation,0.,1.);vec3 dormant=mix(vec3(l*.87,l*.91,l*.94),vec3(l*.91,l*.85,l*.77),vegetation*.22);c.rgb=mix(dormant,vec3(.76,.80,.83),snowMask); }
+  if(season>2.5){float vegetation=smoothstep(.005,.10,c.g-max(c.r,c.b));float ridge=smoothstep(.12,.57,l);float snowMask=clamp((.18+.78*snow)*(.35+.65*ridge)*vegetation,0.,1.);vec3 dormant=mix(vec3(l*.88,l*.91,l*.95),vec3(l*.93,l*.89,l*.84),vegetation*.14);c.rgb=mix(dormant,vec3(.76,.80,.83),snowMask); }
   c.rgb=mix(c.rgb*tint*tone,sky,haze);float baseFade=1.-smoothstep(0.,foot,vUv.y);c.rgb=mix(c.rgb,groundTint,baseFade*.33);gl_FragColor=vec4(c.rgb,alpha);
   #include <colorspace_fragment>
   }`});
@@ -61,7 +61,7 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(frLuma),frFade*.12);
    diffuseColor.rgb*=.95+frNoise*mix(.65,1.,frFade);
    diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.80,.86,.68),frFoot*.40);
-   float snowPattern=.5+.20*sin(formaGroundWorld.x*.52+sin(formaGroundWorld.z*.41))*cos(formaGroundWorld.z*.46)+.10*sin(formaGroundWorld.x*1.7+formaGroundWorld.z*.83);float snowCover=formaSnow>=.999?1.:smoothstep(snowPattern-.08,snowPattern+.08,formaSnow)*step(.001,formaSnow);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.89,.91,.92)*(1.+frNoise*.30),snowCover);
+   float snowPattern=.5+.20*sin(formaGroundWorld.x*.52+sin(formaGroundWorld.z*.41))*cos(formaGroundWorld.z*.46)+.10*sin(formaGroundWorld.x*1.7+formaGroundWorld.z*.83);float snowCover=formaSnow>=.999?1.:smoothstep(snowPattern-.12,snowPattern+.12,formaSnow)*step(.001,formaSnow);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.76,.79,.81)*(1.+frNoise*.23),snowCover);
   `);
   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
    float frAtmos=smoothstep(formaPlotHalf+12.,max(formaPlotHalf+13.,formaRadius),frDist);
@@ -69,7 +69,7 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
    #include <opaque_fragment>
   `);
  };
- floorMat.customProgramCacheKey=()=> 'forma-ground-continuity-r241';
+ floorMat.customProgramCacheKey=()=> 'forma-ground-continuity-r242';
  const floorGeo=new T.PlaneGeometry(2,2);floorGeo.rotateX(-Math.PI/2);
  const floor=new T.Mesh(floorGeo,floorMat);floor.position.y=-.055;floor.name='forma-distant-ground-r201';floor.renderOrder=-60;floor.frustumCulled=false;floor.receiveShadow=true;floor.raycast=()=>{};root.add(floor);
  let uvKey='',lastMap=null;
@@ -111,9 +111,9 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
  }
  function apply(v,o={}){
   current=normalizePanorama(v);lastOptions=o;
-  const {time='day',weather='sunny',fog='#b8c7c4',side=40,mode='3d',camera=null,terrainMaterial=null,tile=1.05,season:authoredSeason=current.season,snowGround=0,snowTrees=0}=o;
+  const {time='day',weather='sunny',fog='#b8c7c4',side=40,mode='3d',camera=null,terrainMaterial=null,tile=1.05,season:authoredSeason=current.season,snowGround=0,snowTrees=0,snowDepth=18}=o;
   const useNear=current.near.type!=='off',useFar=current.far.type!=='off',use=useNear||useFar;
-  root.visible=use&&mode!=='2d';
+  const winter=authoredSeason==='winter';root.visible=(use||winter)&&mode!=='2d';
   const minimum=Math.max(side*Math.SQRT2*.5+12,mode==='3d'&&camera?Math.hypot(camera.position.x,camera.position.z)+20:0);
   const rNear=Math.max(current.near.distance,minimum),rFar=Math.max(current.far.distance,minimum+(useNear?100:0),useNear?rNear+100:0);
   const outer=Math.max(useNear?rNear:0,useFar?rFar:0,minimum);
@@ -128,7 +128,7 @@ export function createPanoramaEnvironment(T,scene,{mobile=false,onChange=()=>{},
    r.u.ratio2.value=Math.max(2,Math.round(r.u.repeats.value*ratio/ratio2/2)*2)/r.u.repeats.value;
    r.u.offset.value=phase;r.u.haze.value=relief.has(p.type)?Math.min(.65,opacity+.06):opacity;r.u.sky.value.copy(sky);r.u.tone.value=light;r.u.tint.value.set(tint);r.u.season.value=season;r.u.snow.value=season===3?snowTrees/100:0;r.u.blur.value=current.blur/100;
   }
-  floor.visible=use;const reach=outer+Math.max(60,outer*.22);floor.scale.set(reach,1,reach);gu.reach.value=reach;gu.radius.value=outer;gu.plotHalf.value=side*.5;gu.nearRadius.value=rNear;gu.farRadius.value=rFar;gu.nearOn.value=useNear?1:0;gu.farOn.value=useFar?1:0;gu.sky.value.copy(sky);gu.haze.value=haze;gu.relief.value=relief.has(current.far.type)?1:0;gu.snow.value=season===3?snowGround/100:0;syncGroundMaterial(terrainMaterial,side,reach);
+  floor.visible=use||winter;floor.position.y=-.055+(winter?Math.min(.60,snowDepth/100)*.70*snowGround/100:0);const reach=outer+Math.max(winter?180:60,outer*.22);floor.scale.set(reach,1,reach);gu.reach.value=reach;gu.radius.value=outer;gu.plotHalf.value=side*.5;gu.nearRadius.value=rNear;gu.farRadius.value=rFar;gu.nearOn.value=useNear?1:0;gu.farOn.value=useFar?1:0;gu.sky.value.copy(sky);gu.haze.value=haze;gu.relief.value=relief.has(current.far.type)?1:0;gu.snow.value=season===3?snowGround/100:0;syncGroundMaterial(terrainMaterial,side,reach);
   if(camera?.isPerspectiveCamera&&root.visible){const needed=reach*2+100;if(camera.far<needed){camera.far=needed;camera.updateProjectionMatrix();}}
   scene.userData.formaPanorama={...current,near:{...current.near,effectiveDistance:rNear,assetIds:sets[current.near.type]||[],loaded:near.ready},far:{...current.far,effectiveDistance:rFar,assetIds:sets[current.far.type]||[],loaded:far.ready},treeLine:use,groundContinuity:'same-pbr-turf-with-forest-edge-transition',preserveReferenceSkyline:true};
  }
