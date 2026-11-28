@@ -21,7 +21,7 @@ function branchShellR245(T,group,kind,mobile,budget){
   for(let i=0;i<pts.length;i++){const p=pts[i],t=i/(pts.length-1),axis=pts[Math.min(pts.length-1,i+1)].clone().sub(pts[Math.max(0,i-1)]).normalize(),side=V(0,0,0).crossVectors(axis,up).normalize(),top=V(0,0,0).crossVectors(side,axis).normalize();
    if(side.lengthSq()<.01){side.set(1,0,0);top.set(0,1,0);}
    const taper=Math.pow(Math.max(.01,Math.sin(Math.PI*t)),.58),slope=Math.sqrt(Math.max(0,1-axis.y*axis.y));let w,thick,offset;
-   if(q.bough){const L=q.bough.length;const outer=.94+.13*Math.sin(i*1.9+k*.91);w=Math.max(.025,L*(.43-.055*t)*taper*outer);thick=Math.max(.035,Math.min(.30,L*.23)*taper*(.94+.12*Math.sin(k*2+i*.9)));offset=Math.min(.24,L*.27)*taper;valid=true;}
+   if(q.bough){const L=q.bough.length;const outer=.94+.13*Math.sin(i*1.9+k*.91);w=Math.max(.038,L*(.49-.06*t)*taper*outer);thick=Math.max(.047,Math.min(.36,L*.29+.025)*taper*(.94+.12*Math.sin(k*2+i*.9)));offset=Math.min(.28,L*.29+.05)*taper;valid=true;}
    else{const r=q.points[i][3]||.001;const extra=Math.min(.045,Math.max(.003,r*.65+h*.0014))*slope;w=Math.max(.001,r+extra*.72*taper);thick=r+extra*taper;offset=0;if(slope>.30&&p.y>h*.18)valid=true;}
    const row=[];for(let j=0;j<=across;j++){const u=j/across,angle=-Math.PI*.12+u*Math.PI*1.24,noise=1+(q.bough?.10:.06)*Math.sin(k*1.4+i*1.9+j*2.7);const pos=p.clone().addScaledVector(side,Math.cos(angle)*w*noise).addScaledVector(top,Math.sin(angle)*thick*noise+offset);const norm=side.clone().multiplyScalar(Math.cos(angle)/Math.max(.001,w)).addScaledVector(top,Math.sin(angle)/Math.max(.001,thick)).normalize();row.push({pos,norm});}rows.push(row);
   }
@@ -105,7 +105,7 @@ function updateObjectSnowPreview(group,atmosphere){
   const value=active?(entry.kind==='trees'?e.snowTrees:entry.kind==='shrubs'?e.snowShrubs:entry.kind==='roof'?e.snowRoofs:e.snowObjects)/100:0;
   if(entry.coat){entry.coat.value=value;continue;}
   entry.mesh.visible=value>0;
-  if(entry.ends){const count=Math.round(entry.ends.length*(entry.boughSnow?Math.pow(value,.55):value));entry.mesh.geometry.setDrawRange(0,count?entry.ends[count-1]:0);continue;}
+  if(entry.ends){const count=Math.round(entry.ends.length*(entry.boughSnow?Math.pow(value,.36):value));entry.mesh.geometry.setDrawRange(0,count?entry.ends[count-1]:0);continue;}
   if(entry.capacity){entry.mesh.count=Math.round(entry.capacity*value);continue;}
   entry.u.value=value;const key=[value,e.snowDepth,e.snowRelief,e.snowDrifts].join('|');if(entry.last===key)continue;entry.last=key;
   const p=entry.mesh.geometry.attributes.position,depth=Math.min(.24,e.snowDepth/100)*(entry.kind==='roof'?.62:.42);
