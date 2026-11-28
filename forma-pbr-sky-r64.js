@@ -4,9 +4,9 @@ import {continuousSkyPalette,solarAppearance} from './forma-photographic-environ
  * Not a measured HDRI and not a path-traced bounce solution.
  */
 const probes=new WeakMap(),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-export function updateHDRSky(T,renderer,{time='day',weather='sunny',azimuth=311,elevation=45,clouds=35}={}){
+export function updateHDRSky(T,renderer,{time='day',weather='sunny',azimuth=311,elevation=45,clouds=35,snowCoverage=0}={}){
  if(!renderer?.capabilities?.isWebGL2||!renderer.extensions.has('EXT_color_buffer_float'))return null;
- const signature=[time,weather,Math.round(azimuth/5),Math.round(elevation/3),Math.round(clouds/5)].join('|');
+ const snow=clamp(Number(snowCoverage)||0,0,1);const signature=[time,weather,Math.round(azimuth/5),Math.round(elevation/3),Math.round(clouds/5),Math.round(snow*10)].join('|');
  let state=probes.get(renderer);
  if(state?.signature===signature)return state.target?.texture||null;
  const mobile=typeof window!=='undefined'&&window.innerWidth<=850,w=mobile?256:512,h=w/2,values=new Uint16Array(w*h*4);
@@ -19,13 +19,13 @@ export function updateHDRSky(T,renderer,{time='day',weather='sunny',azimuth=311,
   for(let x=0;x<w;x++){
    const lon=((x+.5)/w-.5)*Math.PI*2,dx=Math.cos(lon)*horizontal,dz=Math.sin(lon)*horizontal;
    const zen=Math.pow(Math.max(0,dy),.55),ground=Math.pow(Math.max(0,-dy),.55),v=dy>=0?zen:ground;
-   const base=dy>=0?palette[0]:palette[2],horizon=palette[1],dot=clamp(dx*sx+dy*sy+dz*sz,0,1);
+   const base=dy>=0?palette[0]:palette[2].map((v,i)=>v*(1-snow)+[.38,.41,.44][i]*appearance.day*snow),horizon=palette[1],dot=clamp(dx*sx+dy*sy+dz*sz,0,1);
    const glow=dy>0?appearance.direct*Math.pow(dot,12)*(overcast?.08:.24)*(1-cover*.60):0;
-   const groundBounce=dy<0?appearance.day*(overcast?.055:.11)*Math.pow(Math.max(0,-dy),.45):0;
+   const groundBounce=dy<0?appearance.day*((overcast?.055:.11)*(1-snow)+snow*(overcast?.08:.19))*Math.pow(Math.max(0,-dy),.45):0;
    const skyScatter=dy>0?appearance.day*(overcast?.08:.06)*(1-.35*zen):0;
    const cloud=dy>0?appearance.day*Math.max(0,Math.sin(dx*9+dz*3+Math.sin(dy*12))*.5+Math.sin(dz*15+dy*6)*.28+Math.sin(dx*21-dz*19)*.12-.52+cover*.42)*.20:0;
    const k=(y*w+x)*4;
-   for(let i=0;i<3;i++){const warmth=i===0?1:i===1?.88:.69;values[k+i]=T.DataUtils.toHalfFloat(clamp(horizon[i]*(1-v)+base[i]*v+glow*warmth+cloud+groundBounce*(i===2?.79:i===1?1:.91)+skyScatter*(i===0?.85:i===1?.95:1),0,4));}
+   for(let i=0;i<3;i++){const warmth=i===0?1:i===1?.88:.69;values[k+i]=T.DataUtils.toHalfFloat(clamp(horizon[i]*(1-v)+base[i]*v+glow*warmth+cloud+groundBounce*(i===2?.79+.18*snow:i===1?1:.91+.04*snow)+skyScatter*(i===0?.85:i===1?.95:1),0,4));}
    values[k+3]=T.DataUtils.toHalfFloat(1);
   }
  }
