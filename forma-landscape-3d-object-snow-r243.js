@@ -24,7 +24,7 @@ function plantSnow(T,group,kind,mobile,budget){
  const rows=[],cells=new Set(),h=Math.max(.5,group.userData.formaPlantBoundsR142?.height||new T.Box3().setFromObject(group).getSize(new T.Vector3()).y);
  const spacing=kind==='shrubs'?Math.max(.045,h*.055):Math.max(.065,h*.025);
  const inv=group.matrixWorld.clone().invert(),local=new T.Matrix4(),instance=new T.Matrix4(),m=new T.Matrix4(),nm=new T.Matrix3(),v=new T.Vector3(),normal=new T.Vector3(),up=new T.Vector3(0,1,0);
- const nodes=[];group.traverse(n=>{if(usable(n))nodes.push(n);});nodes.sort((a,b)=>Number(b.isInstancedMesh)-Number(a.isInstancedMesh));
+ const nodes=[];group.traverse(n=>{if(usable(n))nodes.push(n);});nodes.sort((a,b)=>Number(!!b.isInstancedMesh)-Number(!!a.isInstancedMesh));
  for(const node of nodes){if(rows.length>=budget)break;const p=node.geometry.attributes.position,n=node.geometry.attributes.normal;if(!p||!n)continue;local.multiplyMatrices(inv,node.matrixWorld);
   const add=(i,k,transform,nmat,scale)=>{
    v.fromBufferAttribute(p,i).applyMatrix4(transform);normal.fromBufferAttribute(n,i).applyMatrix3(nmat).normalize();
