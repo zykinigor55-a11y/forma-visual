@@ -21,18 +21,18 @@ function branchShellR245(T,group,kind,mobile,budget){
   for(let i=0;i<pts.length;i++){const p=pts[i],t=i/(pts.length-1),axis=pts[Math.min(pts.length-1,i+1)].clone().sub(pts[Math.max(0,i-1)]).normalize(),side=V(0,0,0).crossVectors(axis,up).normalize(),top=V(0,0,0).crossVectors(side,axis).normalize();
    if(side.lengthSq()<.01){side.set(1,0,0);top.set(0,1,0);}
    const taper=Math.pow(Math.max(.01,Math.sin(Math.PI*t)),.58),slope=Math.sqrt(Math.max(0,1-axis.y*axis.y));let w,thick,offset;
-   if(q.bough){const L=q.bough.length;const outer=.8+.16*Math.sin(i*2.8+k*.91);w=Math.max(.014,L*(.21-.035*t)*taper*outer);thick=Math.max(.012,L*.105*taper*(.9+.12*Math.sin(k*2+i*.9)));offset=Math.min(.085,L*.13)*taper;valid=true;}
+   if(q.bough){const L=q.bough.length;const outer=.8+.16*Math.sin(i*2.8+k*.91);w=Math.max(.018,L*(.27-.04*t)*taper*outer);thick=Math.max(.018,L*.14*taper*(.9+.12*Math.sin(k*2+i*.9)));offset=Math.min(.12,L*.17)*taper;valid=true;}
    else{const r=q.points[i][3]||.001;const extra=Math.min(.045,Math.max(.003,r*.65+h*.0014))*slope;w=Math.max(.001,r+extra*.72*taper);thick=r+extra*taper;offset=0;if(slope>.30&&p.y>h*.18)valid=true;}
-   const row=[];for(let j=0;j<=across;j++){const u=j/across,angle=-Math.PI*.12+u*Math.PI*1.24,noise=1+.06*Math.sin(k*1.4+i*1.9+j*2.7);const pos=p.clone().addScaledVector(side,Math.cos(angle)*w*noise).addScaledVector(top,Math.sin(angle)*thick*noise+offset);row.push(pos);}rows.push(row);
+   const row=[];for(let j=0;j<=across;j++){const u=j/across,angle=-Math.PI*.12+u*Math.PI*1.24,noise=1+.06*Math.sin(k*1.4+i*1.9+j*2.7);const pos=p.clone().addScaledVector(side,Math.cos(angle)*w*noise).addScaledVector(top,Math.sin(angle)*thick*noise+offset);const norm=side.clone().multiplyScalar(Math.cos(angle)/Math.max(.001,w)).addScaledVector(top,Math.sin(angle)/Math.max(.001,thick)).normalize();row.push({pos,norm});}rows.push(row);
   }
   if(!valid)continue;
-  const tri=(a,b,c)=>{const n=b.clone().sub(a).cross(c.clone().sub(a)).normalize();if(n.y<0)n.negate();for(const p of [a,b,c]){positions.push(p.x,p.y,p.z);normals.push(n.x,n.y,n.z);}};
+  const tri=(a,b,c)=>{const n=b.pos.clone().sub(a.pos).cross(c.pos.clone().sub(a.pos));if(n.dot(a.norm.clone().add(b.norm).add(c.norm))<0){const tmp=b;b=c;c=tmp;}for(const p of [a,b,c]){positions.push(p.pos.x,p.pos.y,p.pos.z);normals.push(p.norm.x,p.norm.y,p.norm.z);}};
   for(let i=0;i<rows.length-1;i++)for(let j=0;j<across;j++){const a=rows[i][j],b=rows[i+1][j],c=rows[i][j+1],d=rows[i+1][j+1];tri(a,b,c);tri(c,b,d);}
   ends.push(positions.length/3);
  }
  if(!ends.length)return null;
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setAttribute('normal',new T.Float32BufferAttribute(normals,3));geo.computeBoundingSphere();
- const mat=material(T);mat.color.set('#e5ebef');const mesh=new T.Mesh(geo,mat);mesh.name='forma-continuous-branch-snow-r245';mesh.userData.formaWeatherPreview=true;mesh.raycast=()=>{};mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return {kind,mesh,ends};
+ const mat=material(T);mat.color.set('#e5ebef');mat.roughness=1;const mesh=new T.Mesh(geo,mat);mesh.name='forma-continuous-branch-snow-r245';mesh.userData.formaWeatherPreview=true;mesh.raycast=()=>{};mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return {kind,mesh,ends};
 }
 function plantSnow(T,group,kind,mobile,budget){
  if(kind==='trees'&&group.userData?.formaSnowPreview?.branchSnow)return [];
