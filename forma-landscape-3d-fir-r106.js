@@ -241,7 +241,7 @@ export function createDetailedFir(T,instance){
  const variant=clamp(Math.round(Number(instance.variant)||1),1,3),key=h.toFixed(3)+'|'+d.toFixed(3)+'|'+variant+'|'+stage.age+'|'+(typeof window!=='undefined'?window.FORMA_GRAPHICS_R105||'auto':'auto');
  const cached=firCache.get(key);if(cached){const copy=cached.clone(true);copy.traverse(n=>{if(n.isMesh)n.material=cloneFirMaterial(n.material)});return copy;}
  const r=rng('fir-r102|'+variant+'|'+stage.age),g=new T.Group(),detailR=rng('fir-fine-detail-r102|'+variant+'|'+stage.age);
- const branches=[],coneSites=[],twigSites=[];const woodMesh=woodyBuilder(T),trunkMesh=woodyBuilder(T);
+ const branches=[],coneSites=[],twigSites=[],snowBoughsR245=[];const woodMesh=woodyBuilder(T),trunkMesh=woodyBuilder(T);
  
  const V=(x,y,z)=>new T.Vector3(x,y,z);
  function branch(a,b,w){if(a.distanceTo(b)>.0001)branches.push([a,b,w]);}
@@ -270,6 +270,7 @@ export function createDetailedFir(T,instance){
    const a=a0+j*Math.PI*2/arms+(r()-.5)*.40,L=rad*envelope*(.74+r()*.26);
    const droop=(old?.020:youngTree?.006:.008)*(1-t),lift=(old?-.014+.020*t:.002)+r()*.008;const start=trunkAt(clamp(y/h+(r()-.5)*(youngTree?.034:.046),0,1)),mid=V(start.x+Math.cos(a)*L*.53,start.y-h*droop,start.z+Math.sin(a)*L*.53),tip=V(start.x+Math.cos(a)*L,start.y+h*(lift-droop*.45),start.z+Math.sin(a)*L);
    const curve=new T.QuadraticBezierCurve3(start,mid.clone().multiplyScalar(2).addScaledVector(start,-.5).addScaledVector(tip,-.5),tip);const path=curve.getPoints(8),baseW=h*.0032*(1-t*.72);woodMesh.tube(path,path.map((_,k)=>Math.max(.0006,baseW*Math.pow(1-k/8,.83))*(k===0?1.32:1)),10,i+j,.045,1.7);
+   snowBoughsR245.push({length:L,t,points:path.map(p=>[p.x,p.y,p.z])});
    const count=t>.83?9:youngTree?13:old?20:18;
    // Additional oblique shoots bridge the gap to the next whorl.
    for(let k=0;k<(t>.83?2:4);k++){const q=.25+k*.16,p=curve.getPoint(q),az=a+(k%2?1:-1)*(.35+r()*.6),reach=L*(.18+r()*.14);const b=p.clone().add(V(Math.cos(az)*reach,Math.min(h*.035,L*.30)*(.65+r()*.45),Math.sin(az)*reach));shoot(p,b,az,t>.67,true);if(k%2===0){const mid=p.clone().lerp(b,.55),az2=az+(k%2?1:-1)*.9;shoot(mid,mid.clone().add(V(Math.cos(az2)*reach*.45,-reach*.12,Math.sin(az2)*reach*.45)),az2,t>.67,true);}}
@@ -299,6 +300,7 @@ export function createDetailedFir(T,instance){
  const stem=new T.Mesh(woodMesh.geometry(),bm.clone());stem.name='fir-curved-branches';stem.castShadow=true;stem.receiveShadow=true;g.add(stem);
  const detailedNeedles=addVolumetricTwigs(T,g,twigSites,stage.age);
  // Compact numeric branch/needle anchors survive cached Object3D cloning.
+ g.userData.formaFirBoughsR245=snowBoughsR245;
  const snowStep=Math.max(1,Math.ceil(twigSites.length/4800));g.userData.formaFirSnowAnchorsR244=twigSites.filter((_,i)=>i%snowStep===0).map(q=>[q.p.x,q.p.y,q.p.z,q.dir.x,q.dir.y,q.dir.z]);
  if(coneSites.length){
   const coneCount=Math.min(coneSites.length,youngTree?22:old?112:72),coneGeo=coneGeometry(T),maps=coneScaleMaps(T,youngTree);
