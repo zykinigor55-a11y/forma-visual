@@ -20,10 +20,12 @@ export function updateHDRSky(T,renderer,{time='day',weather='sunny',azimuth=311,
    const lon=((x+.5)/w-.5)*Math.PI*2,dx=Math.cos(lon)*horizontal,dz=Math.sin(lon)*horizontal;
    const zen=Math.pow(Math.max(0,dy),.55),ground=Math.pow(Math.max(0,-dy),.55),v=dy>=0?zen:ground;
    const base=dy>=0?palette[0]:palette[2],horizon=palette[1],dot=clamp(dx*sx+dy*sy+dz*sz,0,1);
-   const glow=dy>0?appearance.direct*Math.pow(dot,18)*(overcast?.09:.40)*(1-cover*.60):0;
+   const glow=dy>0?appearance.direct*Math.pow(dot,12)*(overcast?.08:.24)*(1-cover*.60):0;
+   const groundBounce=dy<0?appearance.day*(overcast?.055:.11)*Math.pow(Math.max(0,-dy),.45):0;
+   const skyScatter=dy>0?appearance.day*(overcast?.08:.06)*(1-.35*zen):0;
    const cloud=dy>0?appearance.day*Math.max(0,Math.sin(dx*9+dz*3+Math.sin(dy*12))*.5+Math.sin(dz*15+dy*6)*.28+Math.sin(dx*21-dz*19)*.12-.52+cover*.42)*.20:0;
    const k=(y*w+x)*4;
-   for(let i=0;i<3;i++){const warmth=i===0?1:i===1?.88:.69;values[k+i]=T.DataUtils.toHalfFloat(clamp(horizon[i]*(1-v)+base[i]*v+glow*warmth+cloud,0,4));}
+   for(let i=0;i<3;i++){const warmth=i===0?1:i===1?.88:.69;values[k+i]=T.DataUtils.toHalfFloat(clamp(horizon[i]*(1-v)+base[i]*v+glow*warmth+cloud+groundBounce*(i===2?.79:i===1?1:.91)+skyScatter*(i===0?.85:i===1?.95:1),0,4));}
    values[k+3]=T.DataUtils.toHalfFloat(1);
   }
  }
