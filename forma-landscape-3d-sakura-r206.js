@@ -199,7 +199,21 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   const mat=new T.MeshStandardMaterial({side:T.DoubleSide,roughness:isPetal?.83:.76,map,metalness:0,alphaTest:isPetal?.35:0});
   if(adaptivePreview&&isPetal){mat.normalMap=petalNormal();mat.normalScale.set(.38,.38);mat.alphaToCoverage=true;map.anisotropy=4;}
   mat.userData.sakuraPreviewMaterial=adaptivePreview;mat.onBeforeCompile=shader=>{
-   if(adaptivePreview){shader.uniforms.sakuraDetail=previewDetail;shader.fragmentShader='uniform float sakuraDetail;\n'+shader.fragmentShader;}
+   if(adaptivePreview){shader.uniforms.sakuraDetail=previewDetail;shader.fragmentShader='uniform float sakuraDetail;\n'+shader.fragmentShader;
+    if(isPetal){shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+     #ifdef USE_MAP
+     float petalRadius=length(vMapUv-vec2(.5))*2.;
+     float petalOuter=smoothstep(.28,.93,petalRadius);
+     float petalCore=1.-smoothstep(.10,.46,petalRadius);
+     vec3 pale=mix(diffuseColor.rgb,vec3(dot(diffuseColor.rgb,vec3(.2126,.7152,.0722))),.15*petalOuter);
+     diffuseColor.rgb=mix(diffuseColor.rgb,pale*(1.+.21*petalOuter-.06*petalCore),sakuraDetail);
+     #endif
+    `);shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+     #ifdef USE_MAP
+     roughnessFactor=mix(roughnessFactor,mix(.88,.67,smoothstep(.18,.85,length(vMapUv-vec2(.5))*2.)),sakuraDetail);
+     #endif
+    `);}
+   }
    shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>',`
     #include <lights_fragment_end>
     #if NUM_DIR_LIGHTS > 0
@@ -207,13 +221,13 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     vec3 flL=normalize(directionalLights[0].direction);
     float flBack=max(0.,-dot(flN,flL));
     float flRim=pow(1.-abs(dot(flN,normalize(vViewPosition))),2.);
-    float flStrength=${isPetal?'.10':'.13'}*(flBack*.87+flRim*.13);${adaptivePreview?`\n    float transmitted=pow(max(0.,dot(normalize(vViewPosition),-flL)),2.);\n    flStrength=mix(flStrength,${isPetal?'.18':'.16'}*(flBack*.70+transmitted*.24+flRim*.06),sakuraDetail);`:''}
+    float flStrength=${isPetal?'.10':'.13'}*(flBack*.87+flRim*.13);${adaptivePreview?`\n    float transmitted=pow(max(0.,dot(normalize(vViewPosition),-flL)),2.);\n    float thin=1.-.45*abs(dot(flN,flL));\n    flStrength=mix(flStrength,${isPetal?'.32':'.19'}*(flBack*.49+transmitted*.37+flRim*.14)*thin,sakuraDetail);`:''}
     vec3 flTint=vec3(${isPetal?'.96,.83,.80':'.79,1.0,.55'});
     reflectedLight.indirectDiffuse+=diffuseColor.rgb*flTint*min(directionalLights[0].color,vec3(1.6))*flStrength;
     #endif
    `);
   };
-  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r223':'');
+  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r224':'');
   return mat;
  }
  function inst(rows,geo,palette,name){
