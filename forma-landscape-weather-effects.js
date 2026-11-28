@@ -3,11 +3,11 @@
  * or depth in centimetres. Geometry and planted positions are invariant.
  */
 export const WEATHER_EFFECT_DEFAULTS=Object.freeze({
- snowTrees:22,snowShrubs:55,snowRoofs:75,snowObjects:65,snowGround:52,snowDepth:18,snowRelief:65,snowDrifts:45,snowfall:0,winterHaze:18,
+ snowTrees:22,snowShrubs:55,snowRoofs:75,snowObjects:65,snowGround:52,snowDepth:18,snowRelief:65,snowDrifts:45,pathClear:100,pathDust:12,pathBanks:75,pathBankHeight:25,snowfall:0,winterHaze:18,
  rainIntensity:42,surfaceWetness:65,puddles:20,rainMist:25
 });
 export const WEATHER_EFFECT_GROUPS=Object.freeze({
- snow:['snowTrees','snowShrubs','snowRoofs','snowObjects','snowGround','snowDepth','snowRelief','snowDrifts','snowfall','winterHaze'],
+ snow:['snowTrees','snowShrubs','snowRoofs','snowObjects','snowGround','snowDepth','snowRelief','snowDrifts','pathClear','pathDust','pathBanks','pathBankHeight','snowfall','winterHaze'],
  rain:['rainIntensity','surfaceWetness','puddles','rainMist']
 });
 const integer=(v,def)=>v==null||v===''||!Number.isFinite(Number(v))
@@ -15,7 +15,7 @@ const integer=(v,def)=>v==null||v===''||!Number.isFinite(Number(v))
 export function normalizeWeatherEffects(raw){
  const s=raw&&typeof raw==='object'?raw:{};
  return Object.fromEntries(Object.keys(WEATHER_EFFECT_DEFAULTS)
-  .map(k=>[k,k==='snowDepth'?Math.min(60,integer(s[k],WEATHER_EFFECT_DEFAULTS[k])):integer(s[k],WEATHER_EFFECT_DEFAULTS[k])]));
+  .map(k=>[k,k==='pathBankHeight'?Math.min(40,integer(s[k],WEATHER_EFFECT_DEFAULTS[k])):k==='snowDepth'?Math.min(60,integer(s[k],WEATHER_EFFECT_DEFAULTS[k])):integer(s[k],WEATHER_EFFECT_DEFAULTS[k])]));
 }
 export function weatherEffectsVisible({season,weather}={}){
  return {snow:season==='winter'||weather==='snow',
@@ -43,6 +43,7 @@ export function weatherPhotoContract(input){
   lines.push('GROUND SNOW '+snowGround+'% ('+level(snowGround)+'). Cover only existing ground/grass/soil and appropriately existing non-vertical roof/terrace/path surfaces. At 0%, no newly created snow; at low intensity preserve underlying ground and paths, expose footprints/soil and uneven snow patches. At 100%, widespread settled ground snow but still preserve EXACT path alignments, roof edges, terrain and all objects; do not invent snowbanks or move contours.');
   lines.push('SNOW ON SHRUBS '+snowShrubs+'%, ROOFS '+snowRoofs+'%, OTHER OUTDOOR SURFACES '+snowObjects+'%. Respect existing roof slope and skylight openings; no snow on vertical facades or glazing.');
   lines.push('SNOW DEPTH '+snowDepth+' cm (design preview setting), SURFACE RELIEF '+snowRelief+'%, SOFT DRIFTS '+snowDrifts+'%. At 100% ground coverage do not expose green grass. Matte powder snow, no glitter, no artificial crystal sparkle. Only snow layer thickness changes, never the surveyed ground.');
+  lines.push('PATH CLEARANCE '+controls.pathClear+'%, LIGHT DUST '+controls.pathDust+'%, EDGE BANKS '+controls.pathBanks+'%, BANK HEIGHT '+controls.pathBankHeight+' cm. Follow the exact existing path edges; reveal the paving in cleared centres, add only matte light dust, push soft irregular snow banks beside paths, never change path widths or alignment.');
   lines.push('FALLING SNOW '+snowfall+'% ('+level(snowfall)+'). Distinguish actual flakes IN THE AIR from settled snow on branches and ground. At 0%, NO falling flakes even if ground is snowy. Higher intensities increase fine particles with correct camera depth; never replace trees with snow sculptures.');
   lines.push('WINTER HAZE '+winterHaze+'% ('+level(winterHaze)+'). Fine cold atmospheric perspective only. Distant trees remain recognisable individually, not erased into a white rectangle; preserve weather-selected physical sky, solar settings and composition.');
  }
