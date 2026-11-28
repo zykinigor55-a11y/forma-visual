@@ -18,8 +18,9 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
  const noise=(x,y,seed=0,period=0)=>{const i=Math.floor(x),j=Math.floor(y),u=x-i,v=y-j,fu=u*u*(3-2*u),fv=v*v*(3-2*v);const h=(a,b)=>hash(period?((a%period)+period)%period:a,b,seed);const a=h(i,j),b=h(i+1,j),c=h(i,j+1),d=h(i+1,j+1);return (a+(b-a)*fu)*(1-fv)+(c+(d-c)*fu)*fv;};
  function along(points,t){const d=t*(points.length-1),i=Math.min(points.length-2,Math.floor(d));return points[i].clone().lerp(points[i+1],d-i);}
  function crownLimit(p){const v=Math.max(-.99,Math.min(.99,(p.y/h-(old?.60:young?.64:.62))/(old?.39:.37)));const width=r*(young?1.03:1.04)*Math.pow(1-v*v,young?.61:.47),radial=Math.hypot(p.x,p.z);if(radial>width&&radial>0){p.x*=width/radial;p.z*=width/radial;}return p;}
- const snowAnchorsR244=[];
+ const snowAnchorsR244=[],snowPathsR245=[];
  function tube(points,radii,sides){
+  if(season==='winter'&&radii[0]>=.0015&&points[0].y>h*.18){snowPathsR245.push(points.map((q,i)=>[q.x,q.y,q.z,radii[i]]));}
   if(season==='winter'){for(let i=0;i<points.length-1;i++){const a=points[i],b=points[i+1],radius=(radii[i]+radii[i+1])*.5;if(radius<.0009||a.y<h*.23||a.distanceTo(b)<.014)continue;snowAnchorsR244.push([a.x,a.y,a.z,b.x,b.y,b.z,radius]);}}
   const base=bp.length/3,stride=sides+1,indexStart=bi.length;let distance=0;
   points.forEach((p,i)=>{if(i)distance+=p.distanceTo(points[i-1]);
@@ -173,5 +174,5 @@ export function createNaturalRowan(T,o,{season='summer',mobile=false}={}){
  const mat=new T.MeshStandardMaterial({map:ft(al,true),bumpMap:ft(br,false),bumpScale:.0005,roughness:.59,metalness:0}),m=new T.InstancedMesh(g,mat,fruitRows.length),obj=new T.Object3D(),a=new T.Color('#b93c23'),b=new T.Color('#df7438'),c=new T.Color();m.name='rowan-fruit-berries';fruitRows.forEach(([p,s,t],i)=>{obj.position.copy(p);obj.scale.set(s*(.93+.09*t),s*(.91+.12*(1-t)),s*(.96+.07*t));obj.rotation.set(t*.45,t*6.28,0);obj.updateMatrix();m.setMatrixAt(i,obj.matrix);m.setColorAt(i,c.copy(a).lerp(b,t));});m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.computeBoundingSphere();root.add(m);}
  if(calyxRows.length){const g=new T.SphereGeometry(1,5,3),m=new T.InstancedMesh(g,new T.MeshStandardMaterial({color:'#57382b',roughness:.93}),calyxRows.length),ob=new T.Object3D();m.name='rowan-fruit-calyx';calyxRows.forEach(([p,r],i)=>{ob.position.copy(p);ob.scale.set(r,r*.5,r);ob.updateMatrix();m.setMatrixAt(i,ob.matrix);});m.instanceMatrix.needsUpdate=true;m.computeBoundingSphere();root.add(m);}
  root.userData.formaRowanStats={age,compoundLeaves:leafRows.length,berries:fruitRows.length,clusters,mobile,woodTriangles:bi.length/3};
- root.userData.formaDeciduousSnowAnchorsR244=snowAnchorsR244;return root;
+ root.userData.formaDeciduousSnowAnchorsR244=snowAnchorsR244;root.userData.formaDeciduousSnowPathsR245=snowPathsR245;return root;
 }
