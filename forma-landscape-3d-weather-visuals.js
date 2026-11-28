@@ -15,13 +15,20 @@ function snowNoise(x,z){
 }
 function snowField(x,z){return .62*snowNoise(x*.65,z*.65)+.26*snowNoise(x*2.1+12,z*2.1)+.12*snowNoise(x*6.4,z*6.4+23);}
 function snowMask(x,z,p){if(p>=.999)return 1;if(p<=0)return 0;return clamp((p-snowField(x,z)+.07)/.14,0,1);}
+// R248: distance to the actual paving boundary, including flat end caps.
+// Only the outer edges of a ribbon are used; internal cross-sections are not boundaries.
 function pathDistanceR244(paths){
- const cell=2,grid=new Map();for(const rows of paths||[]){for(let i=1;i<rows.length;i++){const a=rows[i-1],b=rows[i],dx=b.x-a.x,dz=b.z-a.z,l2=dx*dx+dz*dz;if(l2<1e-8)continue;const s={a,b,dx,dz,l2},pad=Math.max(a.w,b.w)+1.1;for(let ix=Math.floor((Math.min(a.x,b.x)-pad)/cell);ix<=Math.floor((Math.max(a.x,b.x)+pad)/cell);ix++)for(let iz=Math.floor((Math.min(a.z,b.z)-pad)/cell);iz<=Math.floor((Math.max(a.z,b.z)+pad)/cell);iz++){const k=ix+':'+iz;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(s);}}}
- return (x,z)=>{let best=Infinity;for(const s of grid.get(Math.floor(x/cell)+':'+Math.floor(z/cell))||[]){const t=clamp(((x-s.a.x)*s.dx+(z-s.a.z)*s.dz)/s.l2,0,1);const d=Math.hypot(x-s.a.x-s.dx*t,z-s.a.z-s.dz*t)-(s.a.w+(s.b.w-s.a.w)*t);if(d<best)best=d;}return best;};
+ const cell=2,grid=new Map(),pad=1.4;
+ const bin=(points,kind)=>{const minX=Math.min(...points.map(p=>p.x)),maxX=Math.max(...points.map(p=>p.x)),minZ=Math.min(...points.map(p=>p.z)),maxZ=Math.max(...points.map(p=>p.z));const item={points,kind};for(let ix=Math.floor((minX-pad)/cell);ix<=Math.floor((maxX+pad)/cell);ix++)for(let iz=Math.floor((minZ-pad)/cell);iz<=Math.floor((maxZ+pad)/cell);iz++){const k=ix+':'+iz;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(item);}};
+ for(const rows of paths||[]){if(rows.length<2)continue;const edge=rows.map((r,i)=>{if(Number.isFinite(r.lx)&&Number.isFinite(r.rx))return [{x:r.lx,z:r.lz},{x:r.rx,z:r.rz}];const a=rows[Math.max(0,i-1)],b=rows[Math.min(rows.length-1,i+1)],dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz)||1;return [{x:r.x-dz/l*r.w,z:r.z+dx/l*r.w},{x:r.x+dz/l*r.w,z:r.z-dx/l*r.w}];});
+ for(let i=1;i<edge.length;i++){const a=edge[i-1],b=edge[i];bin([a[0],a[1],b[1],b[0]],'face');bin([a[0],b[0]],'edge');bin([a[1],b[1]],'edge');}bin(edge[0],'edge');bin(edge[edge.length-1],'edge');}
+ const seg=(x,z,a,b)=>{const dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/Math.max(1e-10,dx*dx+dz*dz),0,1);return Math.hypot(x-a.x-t*dx,z-a.z-t*dz);};
+ return (x,z)=>{let d=Infinity,inside=false;for(const item of grid.get(Math.floor(x/cell)+':'+Math.floor(z/cell))||[]){const p=item.points;if(item.kind==='edge'){d=Math.min(d,seg(x,z,p[0],p[1]));continue;}let hit=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if((a.z>z)!==(b.z>z)&&x<(b.x-a.x)*(z-a.z)/(b.z-a.z)+a.x)hit=!hit;}inside=inside||hit;}return inside?-d:d;};
 }
-function clearMaskR244(d,clear){return 1-clear*(1-clamp((d+.16)/.10,0,1));}
+function smoothR248(x){x=clamp(x,0,1);return x*x*(3-2*x);}
+function clearMaskR244(d,clear){return 1-clear*(1-smoothR248((d+.22)/.14));}
 function snowAtlas(T,coverage,side,distance,clear){
- const size=512,el=document.createElement('canvas');el.width=el.height=size;const ctx=el.getContext('2d');if(!ctx)return null;
+ const size=side<=55?768:512,el=document.createElement('canvas');el.width=el.height=size;const ctx=el.getContext('2d');if(!ctx)return null;
  const img=ctx.createImageData(size,size),p=coverage/100;
  for(let y=0;y<size;y++)for(let x=0;x<size;x++){const wx=(x/(size-1)-.5)*side,wz=(.5-y/(size-1))*side;const mask=snowMask(wx,wz,p)*clearMaskR244(distance(wx,wz),clear);const v=Math.round(220+22*snowNoise(wx*3.2,wz*3.2)+9*snowNoise(wx*13.7,wz*13.7));const i=(y*size+x)*4;img.data[i]=v;img.data[i+1]=v+2;img.data[i+2]=v+3;img.data[i+3]=Math.round(mask*255);}
  ctx.putImageData(img,0,0);const t=new T.CanvasTexture(el);t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;return t;
@@ -68,36 +75,13 @@ function addSnowGround(T,root,terrainMesh,effects,paths){
  const depth=effects.snowDepth/100,relief=effects.snowRelief/100,drifts=effects.snowDrifts/100,p=intensity/100;
  for(let i=0;i<positions.count;i++){const x=positions.getX(i),z=positions.getZ(i),mask=snowMask(x,z,p);
   const swell=Math.pow(snowNoise(x*.29+13,z*.29),2.4),rough=snowNoise(x*1.45,z*1.45+17)-.5;
-  const d=distance(x,z),cleared=clearMaskR244(d,clear),bank=d>=.04&&d<1?Math.exp(-Math.pow((d-.32)/.24,2))*clamp((d-.04)/.14,0,1):0;const layer=.003+Math.max(0,depth*(.70+.80*relief*rough)+drifts*depth*1.5*swell)*mask*cleared+bank*clear*(effects.pathBanks/100)*(effects.pathBankHeight/100)*(.65+.55*snowNoise(x*2.4,z*2.4))*p;
+  const d=distance(x,z),cleared=clearMaskR244(d,clear);const natural=Math.max(0,depth*(.76+.56*relief*rough)+drifts*depth*1.2*swell);const transition=smoothR248((d+.16)/.40);const edgeHeight=.085+(natural-.085)*transition;const bank=Number.isFinite(d)?Math.exp(-Math.pow((d-.37)/.34,2))*smoothR248((d+.05)/.22):0;const layer=.003+Math.max(0,natural*(1-clear)+clear*edgeHeight)*mask*cleared+bank*clear*(effects.pathBanks/100)*(effects.pathBankHeight/100)*(.76+.30*snowNoise(x*1.2,z*1.2))*p;
   positions.setY(i,positions.getY(i)+layer);
  }
  positions.needsUpdate=true;geom.computeVertexNormals();geom.computeBoundingBox();geom.computeBoundingSphere();
- const mat=new T.MeshStandardMaterial({map,bumpMap:micro,bumpScale:.012+.040*relief,roughness:1,metalness:0,color:'#ffffff',envMapIntensity:.32,alphaTest:.5,transparent:false,depthWrite:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,side:T.DoubleSide});
+ const mat=new T.MeshStandardMaterial({map,bumpMap:micro,bumpScale:.008+.028*relief,roughness:1,metalness:0,color:'#ffffff',envMapIntensity:.32,alphaTest:.5,transparent:false,depthWrite:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,side:T.DoubleSide});
  const mesh=new T.Mesh(geom,mat);mesh.name='forma-settled-ground-snow-r242';mesh.receiveShadow=true;mesh.castShadow=false;mesh.raycast=()=>{};
  mesh.userData.formaWeatherPreview=true;mesh.userData.textures=[map,micro];root.add(mesh);
-}
-// Close the exposed soil seam with a continuous tapered snow shoulder.
-function addPathEdgeSnowR247(T,root,effects,paths,groundAt){
- const coverage=effects.snowGround/100,clear=effects.pathClear/100;if(coverage<.05||clear<.05)return;
- const verts=[],indices=[],cols=8,stride=cols+1;
- for(const rows of paths){if(rows.length<2)continue;
-  for(const sign of [-1,1]){const first=verts.length/3;
-   for(let i=0;i<rows.length;i++){const r=rows[i],a=rows[Math.max(0,i-1)],b=rows[Math.min(rows.length-1,i+1)],dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz)||1,nx=-dz/len*sign,nz=dx/len*sign;
-    const edge=Number(r.w)||.6,drift=(effects.pathBanks/100)*(effects.pathBankHeight/100),depth=effects.snowDepth/100;
-    for(let j=0;j<=cols;j++){const t=j/cols,d=-.07+t*.63,x=r.x+nx*(edge+d),z=r.z+nz*(edge+d),blend=clamp(t*5,0,1);
-     const bank=Math.exp(-Math.pow((d-.27)/.22,2))*drift*(.74+.43*snowNoise(x*1.9,z*1.9));
-     const endDepth=.018+depth*(.76+.20*snowNoise(x*.9,z*.9));
-     const y=groundAt(x,z)+(.082*(1-blend)+(endDepth+bank+.018)*blend)*coverage+.012;
-     verts.push(x,y,z);if(i<rows.length-1&&j<cols){const k=first+i*stride+j;indices.push(k,k+stride,k+1,k+1,k+stride,k+stride+1);}
-    }
-   }
-  }
- }
- if(!indices.length)return;
- const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(verts,3));geo.setIndex(indices);geo.computeVertexNormals();
- const n=geo.attributes.normal;for(let i=0;i<n.count;i++)if(n.getY(i)<0)n.setXYZ(i,-n.getX(i),-n.getY(i),-n.getZ(i));n.needsUpdate=true;
- const mat=new T.MeshStandardMaterial({color:'#e8edf0',roughness:1,metalness:0,side:T.DoubleSide,envMapIntensity:.32});
- const m=new T.Mesh(geo,mat);m.name='forma-continuous-snow-path-shoulder-r247';m.userData.formaWeatherPreview=true;m.receiveShadow=true;m.raycast=()=>{};root.add(m);
 }
 function addPathDustR244(T,root,effects){
  if(effects.snowGround<=0||effects.pathDust<=0||effects.pathClear<=0)return;
@@ -171,7 +155,6 @@ export function addWeatherSceneVisuals(T,root,terrainMesh,doc,terrainAt,paths=[]
  const {snow,rain}=weatherEffectsVisible(state);
  if(snow){
   addSnowGround(T,root,terrainMesh,effects,paths);
-  addPathEdgeSnowR247(T,root,effects,paths,terrainAt);
   addPathDustR244(T,root,effects);
   addSnowfall(T,root,doc.site,effects.snowfall);
  }
