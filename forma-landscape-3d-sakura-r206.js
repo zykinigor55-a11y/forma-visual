@@ -215,7 +215,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
      float petalOuter=smoothstep(.28,.93,petalRadius);
      float petalCore=1.-smoothstep(.10,.46,petalRadius);
      vec3 rose=diffuseColor.rgb*vec3(1.,1.,.98);
-     diffuseColor.rgb=mix(diffuseColor.rgb,rose*(1.+.045*petalOuter-.12*petalCore),sakuraDetail);
+     diffuseColor.rgb=mix(diffuseColor.rgb,rose*(1.+.065*petalOuter-.13*petalCore),sakuraDetail);
      #endif
     `);shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
      #ifdef USE_MAP
@@ -228,7 +228,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     if(marker){const at=marker.index+marker[0].length,call=chunk.slice(at).match(/RE_Direct\s*\([^;]*\);/);
      if(call&&call[0].includes('geometryNormal')&&call[0].includes('directLight')){
       const i=at+call.index+call[0].length;
-      const addition='\n reflectedLight.directDiffuse+=diffuseColor.rgb*directLight.color*vec3('+(isPetal?'1.,.93,.92':'.88,1.,.70')+')*pow(max(0.,-dot(geometryNormal,directLight.direction)),.85)*'+(isPetal?'.39':'.19')+'*.318309886;\n';
+      const addition='\n reflectedLight.directDiffuse+=diffuseColor.rgb*directLight.color*vec3('+(isPetal?'1.,.93,.92':'.88,1.,.70')+')*pow(max(0.,-dot(geometryNormal,directLight.direction)),.85)*'+(isPetal?'.43':'.19')+'*.318309886;\n';
       shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_begin>',chunk.slice(0,i)+addition+chunk.slice(i));
      }
     }
@@ -247,7 +247,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     #endif
    `);
   };
-  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r238':'');
+  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r239':'');
   return mat;
  }
  // Local density-based canopy occlusion: precomputed once, no extra lighting pass.
