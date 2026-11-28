@@ -23,7 +23,7 @@ function isFoliage(node,mat){
  if(!mat?.isMeshStandardMaterial||node.isBatchedMesh||node.userData?.selectionProxy)return false;
  const name=(node.name+' '+mat.name+' '+(mat.map?.name||'')).toLowerCase();
  if(/bark|trunk|wood|branch|stem|snow|fruit|calyx|root|proxy/.test(name))return false;
- return /foliage|leaf|leaves|needle|blossom|crown|petal|canopy/.test(name)||mat.alphaTest>.05||!!mat.alphaMap;
+ return ['leaf','needle'].includes(mat.userData?.formaPBRRoleR63)||/foliage|leaf|leaves|needle|blossom|crown|petal|canopy/.test(name)||mat.alphaTest>.05||!!mat.alphaMap;
 }
 export function installTreeLightingR230(T,group,{species='',height=3,diameter=3}={}){
  if(!group||group.userData.treeLightingR230)return 0;
@@ -36,7 +36,7 @@ export function installTreeLightingR230(T,group,{species='',height=3,diameter=3}
    if(!isFoliage(node,original))return original;
    if(mats.has(original))return mats.get(original);
    // Native and imported assets may share materials; a clone keeps per-tree uniforms isolated.
-   const mat=original.clone(),prior=original.onBeforeCompile,key=original.customProgramCacheKey?.()||'';
+   let mat;try{mat=original.clone();}catch(e){console.warn('FORMA R230: unsupported shared material',e);return original;}const prior=original.onBeforeCompile,key=original.customProgramCacheKey?.()||'';
    mat.onBeforeCompile=function(shader,renderer){
     prior?.call(this,shader,renderer);
     Object.assign(shader.uniforms,{formaTreeCenter:center,formaTreeExtent:extent,formaTreeSun:sun,formaTreeParams:params,formaTreeEnabled:enabled,formaTreeWeight:weight});
