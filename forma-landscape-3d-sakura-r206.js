@@ -228,7 +228,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     if(marker){const at=marker.index+marker[0].length,call=chunk.slice(at).match(/RE_Direct\s*\([^;]*\);/);
      if(call&&call[0].includes('geometryNormal')&&call[0].includes('directLight')){
       const i=at+call.index+call[0].length;
-      const addition='\n reflectedLight.directDiffuse+=diffuseColor.rgb*directLight.color*vec3('+(isPetal?'1.,.93,.92':'.88,1.,.70')+')*pow(max(0.,-dot(geometryNormal,directLight.direction)),.85)*'+(isPetal?'.22':'.14')+'*.318309886;\n';
+      const addition='\n reflectedLight.directDiffuse+=diffuseColor.rgb*directLight.color*vec3('+(isPetal?'1.,.93,.92':'.88,1.,.70')+')*pow(max(0.,-dot(geometryNormal,directLight.direction)),.85)*'+(isPetal?'.32':'.15')+'*.318309886;\n';
       shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_begin>',chunk.slice(0,i)+addition+chunk.slice(i));
      }
     }
@@ -243,15 +243,15 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
     float flStrength=${isPetal?'.10':'.13'}*(flBack*.87+flRim*.13);${adaptivePreview?`\n    float transmitted=pow(max(0.,dot(normalize(vViewPosition),-flL)),2.);\n    float thin=1.-.45*abs(dot(flN,flL));\n    flStrength=mix(flStrength,${isPetal?'.18':'.14'}*(flBack*.58+transmitted*.30+flRim*.12)*thin,sakuraDetail);`:''}
     vec3 flTint=vec3(${isPetal?'.96,.83,.80':'.79,1.0,.55'});
     ${adaptivePreview?'':'reflectedLight.indirectDiffuse+=diffuseColor.rgb*flTint*min(directionalLights[0].color,vec3(1.25))*flStrength;'}
-    ${adaptivePreview?`float occ=mix(1.,clamp(vSakuraCanopyAO,.52,1.),.86); float sunVis=mix(1.,clamp(vSakuraSunPath,.42,1.),sakuraDetail*sakuraSunWeight); reflectedLight.indirectDiffuse*=mix(1.,occ,sakuraDetail); reflectedLight.directDiffuse*=sunVis; reflectedLight.directSpecular*=sunVis;`:''}
+    ${adaptivePreview?`float occ=mix(1.,clamp(vSakuraCanopyAO,.64,1.),.60); float sunVis=mix(1.,clamp(vSakuraSunPath,.57,1.),sakuraDetail*sakuraSunWeight*.80); reflectedLight.indirectDiffuse*=mix(1.,occ,sakuraDetail); reflectedLight.directDiffuse*=sunVis; reflectedLight.directSpecular*=sunVis;`:''}
     #endif
    `);
   };
-  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r235':'');
+  mat.customProgramCacheKey=()=> (isPetal?'sakura-petal-transmission-r205':'sakura-leaf-transmission-r205')+(adaptivePreview?'-r237':'');
   return mat;
  }
  // Local density-based canopy occlusion: precomputed once, no extra lighting pass.
- function canopyOcclusion(rows){const cells=new Map(),step=.20,key=(x,y,z)=>x+','+y+','+z;for(const row of rows){const x=Math.floor(row.p.x/step),y=Math.floor(row.p.y/step),z=Math.floor(row.p.z/step),k=key(x,y,z);cells.set(k,(cells.get(k)||0)+1);}const result=new Float32Array(rows.length);rows.forEach((row,i)=>{const x=Math.floor(row.p.x/step),y=Math.floor(row.p.y/step),z=Math.floor(row.p.z/step);let sum=0;for(let dz=-1;dz<=1;dz++)for(let dy=0;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const count=cells.get(key(x+dx,y+dy,z+dz))||0;sum+=count*(dy===0?.55:.85)/(1+Math.abs(dx)+Math.abs(dz));}result[i]=1-.48*(1-Math.exp(-Math.max(0,sum-1)/32));});return result;}
+ function canopyOcclusion(rows){const cells=new Map(),step=.20,key=(x,y,z)=>x+','+y+','+z;for(const row of rows){const x=Math.floor(row.p.x/step),y=Math.floor(row.p.y/step),z=Math.floor(row.p.z/step),k=key(x,y,z);cells.set(k,(cells.get(k)||0)+1);}const result=new Float32Array(rows.length);rows.forEach((row,i)=>{const x=Math.floor(row.p.x/step),y=Math.floor(row.p.y/step),z=Math.floor(row.p.z/step);let sum=0;for(let dz=-1;dz<=1;dz++)for(let dy=0;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const count=cells.get(key(x+dx,y+dy,z+dz))||0;sum+=count*(dy===0?.55:.85)/(1+Math.abs(dx)+Math.abs(dz));}result[i]=1-.36*(1-Math.exp(-Math.max(0,sum-1)/32));});return result;}
  // R229: six-axis optical depth per occupied cell; rotate/interpolate by current sun
  // direction in the vertex shader. No raymarching per pixel and no added instances.
  function canopyDirectionalPaths(rows){
@@ -259,7 +259,7 @@ export function createNaturalSakura(T,o,{season='spring',mobile=false,onReady=()
   for(const row of rows){const q=[Math.floor(row.p.x/cell),Math.floor(row.p.y/cell),Math.floor(row.p.z/cell)];coords.push(q);const k=key(...q);cells.set(k,(cells.get(k)||0)+1);}
   const cache=new Map(),pos=new Float32Array(rows.length*3),neg=new Float32Array(rows.length*3);
   for(let i=0;i<coords.length;i++){const q=coords[i],k=key(...q);let v=cache.get(k);
-   if(!v){v=[];for(const sign of [1,-1])for(let axis=0;axis<3;axis++){let density=Math.max(0,(cells.get(k)||1)-1)*.14;for(let d=1;d<=7;d++){const p=q.slice();p[axis]+=d*sign;const count=cells.get(key(...p))||0;density+=count*Math.exp(-d*.16);}v.push(.42+.58*Math.exp(-density/31));}cache.set(k,v);}
+   if(!v){v=[];for(const sign of [1,-1])for(let axis=0;axis<3;axis++){let density=Math.max(0,(cells.get(k)||1)-1)*.14;for(let d=1;d<=7;d++){const p=q.slice();p[axis]+=d*sign;const count=cells.get(key(...p))||0;density+=count*Math.exp(-d*.16);}v.push(.57+.43*Math.exp(-density/31));}cache.set(k,v);}
    pos.set(v.slice(0,3),i*3);neg.set(v.slice(3),i*3);
   }return {pos,neg};
  }
