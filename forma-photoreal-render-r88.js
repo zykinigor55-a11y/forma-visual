@@ -117,9 +117,28 @@ function makePipeline(T,renderer,scene,camera,w,h,mobile,mode){
  const quadScene=new T.Scene(),quadCamera=new T.Camera(),quad=new T.Mesh(new T.PlaneGeometry(2,2),mat);quad.frustumCulled=false;quadScene.add(quad);
  return {target,ao,aoTarget,aoMat,aoScene,aoCamera,mat,quadScene,quadCamera,giTarget,giMat,giScene,giCamera,w,h,mobile,mode,aw,ah,failed:false};
 }
-export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force=false,onReady=()=>{},mode='auto',gi=false}={}){
- scene.userData.formaSSGIR70=false;scene.userData.formaPostFXR236='pbr';
- if(!enabled||!camera?.isPerspectiveCamera||!renderer.extensions.has('EXT_color_buffer_float')){renderer.render(scene,camera);return false;}
+// R238: bounded stationary-view temporal supersampling. Dynamic scenes keep spatial AA.
+function makeTemporalR238(T,w,h){
+ const target=()=>new T.WebGLRenderTarget(w,h,{type:T.HalfFloatType,depthBuffer:false,stencilBuffer:false});
+ const current=target(),history=[target(),target()];
+ const uniforms={current:{value:current.texture},previous:{value:history[0].texture},blend:{value:0},pixel:{value:new T.Vector2(1/w,1/h)}};
+ const vertexShader='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}';
+ const material=new T.ShaderMaterial({uniforms,vertexShader,depthTest:false,depthWrite:false,toneMapped:false,fragmentShader:`
+ varying vec2 vUv;uniform sampler2D current,previous;uniform float blend;uniform vec2 pixel;
+ void main(){vec3 c=texture2D(current,vUv).rgb,lo=c,hi=c;
+ for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec3 x=texture2D(current,clamp(vUv+vec2(float(i),float(j))*pixel,vec2(0.),vec2(1.))).rgb;lo=min(lo,x);hi=max(hi,x);}
+ vec3 h=clamp(texture2D(previous,vUv).rgb,lo,hi);gl_FragColor=vec4(mix(c,h,blend),1.);
+ }`});
+ const output=new T.ShaderMaterial({uniforms:{source:{value:history[0].texture}},vertexShader,depthTest:false,depthWrite:false,toneMapped:true,fragmentShader:`varying vec2 vUv;uniform sampler2D source;void main(){gl_FragColor=texture2D(source,vUv);
+ #include <tonemapping_fragment>
+ #include <colorspace_fragment>
+ }`});
+ const quadScene=new T.Scene(),cam=new T.Camera(),quad=new T.Mesh(new T.PlaneGeometry(2,2),material);quad.frustumCulled=false;quadScene.add(quad);
+ return {current,history,material,output,quadScene,cam,quad,index:0,count:0,key:''};
+}
+export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force=false,onReady=()=>{},mode='auto',gi=false,temporal=false,temporalKey=''}={}){
+ scene.userData.formaSSGIR70=false;scene.userData.formaPostFXR236='pbr';scene.userData.formaTAAR238=0;
+ if(!enabled||!camera?.isPerspectiveCamera||!renderer.extensions.has('EXT_color_buffer_float')){const p=pipelines.get(renderer);if(p?.temporal)p.temporal.count=0;renderer.render(scene,camera);return false;}
  const mobile=typeof window!=='undefined'&&window.innerWidth<=850;
  const preferGTAO=mode==='gtao'||(mode==='auto'&&!mobile);
  if(preferGTAO&&!GTAO&&!loading&&!unavailable){loading=true;import('three/addons/postprocessing/GTAOPass.js').then(mod=>{GTAO=mod.GTAOPass;onReady();}).catch(e=>{unavailable=true;console.warn('FORMA GTAO unavailable; SSAO fallback',e);onReady();});}
@@ -130,9 +149,19 @@ export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force
  // Rebuild on actual target size or tier change; never keep stale depth attachments.
  if(state&&(state.w!==w||state.h!==h||state.mode!==selected)){releasePhotorealPipeline(renderer);state=null;}
  const oldTarget=renderer.getRenderTarget(),oldAuto=renderer.autoClear;
+ let projection=null;
  try{
   if(!state){state=makePipeline(T,renderer,scene,camera,w,h,mobile,selected);pipelines.set(renderer,state);}
   const u=state.mat.uniforms;camera.updateMatrixWorld();
+  const useTAA=temporal&&!force&&w*h<2500000;
+  let taa=state.temporal;
+  if(useTAA){
+   if(!taa)taa=state.temporal=makeTemporalR238(T,w,h);
+   const key=temporalKey+'|'+camera.matrixWorld.elements.map(v=>v.toFixed(5)).join(',')+'|'+camera.projectionMatrix.elements.map(v=>v.toFixed(5)).join(',');
+   if(taa.key!==key){taa.key=key;taa.count=0;}
+   const jitter=[[-.25,-.1667],[.25,.1667],[-.375,.3889],[.125,-.3889]][taa.count%4];
+   projection=camera.projectionMatrix.clone();camera.projectionMatrix.elements[8]+=2*jitter[0]/w;camera.projectionMatrix.elements[9]+=2*jitter[1]/h;camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+  }else if(taa)taa.count=0;
   u.strength.value=scene.userData.formaLawnR86?(mobile?.30:.34):scene.userData.formaSakuraR225?(mobile?.40:.44):(mobile?.34:.41);
   u.cameraNear.value=camera.near;u.cameraFar.value=camera.far;
   renderer.setRenderTarget(state.target);renderer.autoClear=true;renderer.render(scene,camera);
@@ -143,14 +172,21 @@ export function renderPhotorealFrame(T,renderer,scene,camera,{enabled=true,force
   u.giEnabled.value=doGI?1:0;u.giStrength.value=doGI?.16:0;
   u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.cameraWorld.value.copy(camera.matrixWorld);
   const haze=scene.userData.formaAtmosphereR70||{};u.fogDensity.value=haze.density??0;u.fogStart.value=haze.start??22;if(scene.fog?.color)u.fogColor.value.copy(scene.fog.color);
-  renderer.setRenderTarget(oldTarget);renderer.autoClear=true;renderer.render(state.quadScene,state.quadCamera);
+  if(useTAA){
+   renderer.setRenderTarget(taa.current);renderer.autoClear=true;renderer.render(state.quadScene,state.quadCamera);
+   const dst=1-taa.index;taa.material.uniforms.previous.value=taa.history[taa.index].texture;taa.material.uniforms.blend.value=taa.count?Math.min(.75,taa.count/(taa.count+1)):0;
+   taa.quad.material=taa.material;renderer.setRenderTarget(taa.history[dst]);renderer.render(taa.quadScene,taa.cam);
+   taa.index=dst;taa.count=Math.min(4,taa.count+1);taa.output.uniforms.source.value=taa.history[dst].texture;
+   taa.quad.material=taa.output;renderer.setRenderTarget(oldTarget);renderer.render(taa.quadScene,taa.cam);
+   scene.userData.formaTAAR238=taa.count;if(taa.count<4)onReady();
+  }else{renderer.setRenderTarget(oldTarget);renderer.autoClear=true;renderer.render(state.quadScene,state.quadCamera);}
   scene.userData.formaSSGIR70=doGI;scene.userData.formaPostFXR236=selected+(doGI?' + ssgi':'');
   return true;
  }catch(e){
   console.warn('FORMA R236 postFX fallback',e);releasePhotorealPipeline(renderer);
   if(selected==='gtao'){unavailable=true;onReady();}else pipelines.set(renderer,{failed:true});
-  renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;renderer.render(scene,camera);return false;
- }finally{renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;}
+  if(projection){camera.projectionMatrix.copy(projection);camera.projectionMatrixInverse.copy(projection).invert();projection=null;}renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;renderer.render(scene,camera);return false;
+ }finally{if(projection){camera.projectionMatrix.copy(projection);camera.projectionMatrixInverse.copy(projection).invert();}renderer.setRenderTarget(oldTarget);renderer.autoClear=oldAuto;}
 }
 export function applyTurfVariation(mat){
  const prior=mat.onBeforeCompile,key=mat.customProgramCacheKey?.()||'';
@@ -177,5 +213,6 @@ export function createPreviewMeadow(T,grass,side){
 export function releasePhotorealPipeline(renderer){
  const p=pipelines.get(renderer);pipelines.delete(renderer);if(!p||p.failed)return;
  for(const r of [p.target,p.ao,p.aoTarget,p.aoMat,p.mat,p.giTarget,p.giMat]){try{r?.dispose();}catch{}}
+ if(p.temporal){const t=p.temporal;for(const x of [t.current,...t.history,t.material,t.output,t.quad.geometry])try{x.dispose()}catch{}}
  for(const scene of [p.quadScene,p.giScene,p.aoScene])scene?.traverse(n=>{if(n.isMesh)n.geometry?.dispose();});
 }
