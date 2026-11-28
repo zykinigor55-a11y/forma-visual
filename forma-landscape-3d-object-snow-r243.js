@@ -1,4 +1,4 @@
-import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=R243';
+import {normalizeWeatherEffects,weatherEffectsVisible} from './forma-landscape-weather-effects.js?v=R244';
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const rnd=(i,k=0)=>{let n=Math.imul(i+173,374761393)^Math.imul(k+91,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;};
 const roofPart=/^(roof-layer|alpha-standing-seam-roof-with-openings|parapet-metal-coping)$/;
@@ -10,34 +10,32 @@ function usable(n){
 }
 function material(T){return new T.MeshStandardMaterial({color:'#e9edf0',roughness:1,metalness:0,envMapIntensity:.35,side:T.DoubleSide});}
 function addDeposit(T,group,rows,kind,mobile){
- if(!rows.length)return null;
- rows.sort((a,b)=>a.rank-b.rank);
- const geo=new T.SphereGeometry(1,mobile?7:10,mobile?4:6),p=geo.attributes.position;
- for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),v=1+.055*Math.sin(6*x+4*z+5*y);p.setXYZ(i,x*v,y<0?y*.48:y*v,z*v);}geo.computeVertexNormals();
- const mesh=new T.InstancedMesh(geo,material(T),rows.length),d=new T.Object3D();
- rows.forEach((r,i)=>{d.position.copy(r.p);d.scale.set(r.w,r.h,r.l);d.rotation.set(0,r.angle,0);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);});
- mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();mesh.count=0;mesh.castShadow=true;mesh.receiveShadow=true;mesh.raycast=()=>{};mesh.name='forma-snow-deposits-r243';mesh.userData.formaWeatherPreview=true;group.add(mesh);
- return {kind,mesh,capacity:rows.length};
+ if(!rows.length)return null;rows.sort((a,b)=>a.rank-b.rank);
+ const geo=new T.SphereGeometry(1,mobile?9:12,mobile?6:8),p=geo.attributes.position;
+ for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),v=1+.075*Math.sin(5*x+4*z+5*y)+.035*Math.cos(7*z-3*x);p.setXYZ(i,x*v,y<0?y*.76:y*v,z*v);}geo.computeVertexNormals();
+ const mat=material(T),mesh=new T.InstancedMesh(geo,mat,rows.length),d=new T.Object3D(),basis=new T.Matrix4(),top=new T.Vector3(),side=new T.Vector3(),up=new T.Vector3(0,1,0);
+ rows.forEach((r,i)=>{d.position.copy(r.p);d.scale.set(r.l,r.h,r.w);const axis=r.axis.clone().normalize();top.copy(up).addScaledVector(axis,-axis.y).normalize();side.crossVectors(axis,top).normalize();basis.makeBasis(axis,top,side);d.quaternion.setFromRotationMatrix(basis);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);});
+ mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();mesh.count=0;mesh.castShadow=true;mesh.receiveShadow=true;mesh.raycast=()=>{};mesh.name='forma-snow-branch-clusters-r244';mesh.userData.formaWeatherPreview=true;group.add(mesh);return {kind,mesh,capacity:rows.length};
 }
 function plantSnow(T,group,kind,mobile,budget){
  if(kind==='trees'&&group.userData?.formaSnowPreview?.branchSnow)return [];
- const rows=[],cells=new Set(),h=Math.max(.5,group.userData.formaPlantBoundsR142?.height||new T.Box3().setFromObject(group).getSize(new T.Vector3()).y);
- const spacing=kind==='shrubs'?Math.max(.045,h*.055):Math.max(.065,h*.025);
- const inv=group.matrixWorld.clone().invert(),local=new T.Matrix4(),instance=new T.Matrix4(),m=new T.Matrix4(),nm=new T.Matrix3(),v=new T.Vector3(),normal=new T.Vector3(),up=new T.Vector3(0,1,0);
- const nodes=[];group.traverse(n=>{if(usable(n))nodes.push(n);});nodes.sort((a,b)=>Number(!!b.isInstancedMesh)-Number(!!a.isInstancedMesh));
- for(const node of nodes){if(rows.length>=budget)break;const p=node.geometry.attributes.position,n=node.geometry.attributes.normal;if(!p||!n)continue;local.multiplyMatrices(inv,node.matrixWorld);
-  const add=(i,k,transform,nmat,scale)=>{
-   v.fromBufferAttribute(p,i).applyMatrix4(transform);normal.fromBufferAttribute(n,i).applyMatrix3(nmat).normalize();
-   if(normal.y<.32||v.y<h*(kind==='shrubs'?.22:.30))return;
-   const key=Math.floor(v.x/spacing)+':'+Math.floor(v.y/spacing)+':'+Math.floor(v.z/spacing);if(cells.has(key))return;cells.add(key);
-   const width=clamp(spacing*(.52+rnd(k,3)*.55)*scale,.025,kind==='shrubs'?.20:.23),height=width*(.36+.22*rnd(k,4));
-   rows.push({p:v.clone().addScaledVector(up,height*.32),w:width,h:height,l:width*(1.1+rnd(k,5)*.65),rank:rnd(k,7),angle:rnd(k,9)*Math.PI});
-  };
-  if(node.isInstancedMesh){const stride=Math.max(1,Math.floor(node.count/Math.max(1,budget*3)));const candidates=[];const vs=Math.max(1,Math.floor(p.count/32));for(let i=0;i<p.count;i+=vs)candidates.push(i);
-   for(let k=0;k<node.count&&rows.length<budget;k+=stride){node.getMatrixAt(k,instance);m.multiplyMatrices(local,instance);nm.getNormalMatrix(m);for(let j=0;j<Math.min(4,candidates.length);j++){const i=candidates[Math.floor(rnd(k+j*113,17)*candidates.length)];add(i,k*7+j,m,nm,.86);}}
-  }else{nm.getNormalMatrix(local);const stride=Math.max(1,Math.floor(p.count/Math.max(1,budget*6)));for(let i=0;i<p.count&&rows.length<budget;i+=stride)add(i,i,local,nm,1);}
+ const rows=[],cells=new Map(),h=Math.max(.5,group.userData.formaPlantBoundsR142?.height||group.userData.physicalHeight||new T.Box3().setFromObject(group).getSize(new T.Vector3()).y);
+ const fir=group.userData.formaFirSnowAnchorsR244,decid=group.userData.formaDeciduousSnowAnchorsR244;
+ const conifer=!!fir||/pine|spruce|fir|thuja|juniper|cedar/i.test(group.userData.species||group.userData.formaSnowPreview?.species||'');
+ const V=(x,y,z)=>new T.Vector3(x,y,z),up=V(0,1,0),spacing=conifer?Math.max(.045,h*.012):Math.max(.025,h*.009);
+ const candidate=(p,axis,width,length,height,k)=>{if(Math.abs(axis.y)>.86||p.y<h*(kind==='shrubs'?.18:.19))return;axis.normalize();const key=[Math.floor(p.x/spacing),Math.floor(p.y/spacing),Math.floor(p.z/spacing)].join(':');const rank=rnd(k,71);const row={p,axis,w:width,l:length,h:height,rank};const old=cells.get(key);if(!old||rank<old.rank)cells.set(key,row);};
+ if(fir?.length){for(let i=0;i<fir.length;i++){const q=fir[i],axis=V(q[3],q[4],q[5]);const t=clamp(q[1]/h),radius=Math.hypot(q[0],q[2]);const w=clamp(h*.009*(1-.40*t)*(.72+.58*rnd(i,12)),.018,.095);const l=w*(1.5+1.3*rnd(i,16));const thick=w*(.46+.24*rnd(i,19));if(radius<h*.018)continue;candidate(V(q[0],q[1]+w*.20,q[2]),axis,w,l,thick,i);}}
+ else if(decid?.length){for(let i=0;i<decid.length;i++){const q=decid[i],a=V(q[0],q[1],q[2]),b=V(q[3],q[4],q[5]),axis=b.clone().sub(a),len=axis.length();if(len<.009)continue;axis.normalize();const n=Math.max(1,Math.ceil(len/Math.max(.055,h*.018)));for(let j=0;j<n;j++){const p=a.clone().lerp(b,(j+.5)/n),w=clamp(q[6]*1.45+h*.0017,.006,.055),thick=w*(.45+.25*rnd(i+j,2));const top=up.clone().addScaledVector(axis,-axis.y).normalize();p.addScaledVector(top,q[6]+thick*.06);candidate(p,axis.clone(),w,Math.max(w*1.3,len/n*.63),thick,i*71+j);}}}
+ else {
+  const inv=group.matrixWorld.clone().invert(),local=new T.Matrix4(),instance=new T.Matrix4(),m=new T.Matrix4(),nm=new T.Matrix3(),v=new T.Vector3(),normal=new T.Vector3(),axis=V(0,0,0);const nodes=[];group.traverse(n=>{if(usable(n)&&!/cone|fruit|berr|calyx/i.test(n.name))nodes.push(n);});
+  for(let ni=0;ni<nodes.length;ni++){const node=nodes[ni],p=node.geometry.attributes.position,n=node.geometry.attributes.normal;if(!p||!n)continue;local.multiplyMatrices(inv,node.matrixWorld);
+   const add=(i,k,transform,nmat)=>{v.fromBufferAttribute(p,i).applyMatrix4(transform);normal.fromBufferAttribute(n,i).applyMatrix3(nmat).normalize();if(normal.y<.55)return;axis.set(v.x,0,v.z);if(axis.lengthSq()<.002)axis.set(1,0,0);axis.normalize();const w=clamp(h*(conifer?.006:kind==='shrubs'?.023:.0027)*(.6+.65*rnd(k,3)),.008,conifer?.075:kind==='shrubs'?.08:.033);candidate(v.clone().addScaledVector(up,w*.12),axis.clone(),w,w*(1.4+rnd(k,5)),w*.52,k+ni*65537);};
+   if(node.isInstancedMesh){const stride=Math.max(1,Math.floor(node.count/Math.max(12,budget*2)));for(let k=0;k<node.count;k+=stride){node.getMatrixAt(k,instance);m.multiplyMatrices(local,instance);nm.getNormalMatrix(m);for(let j=0;j<3;j++)add(Math.floor(rnd(k+j*137,17)*p.count),k*7+j,m,nm);}}
+   else{nm.getNormalMatrix(local);const stride=Math.max(1,Math.floor(p.count/Math.max(1,budget*8)));for(let i=0;i<p.count;i+=stride)add(i,i,local,nm);}
+  }
  }
- const dep=addDeposit(T,group,rows,kind,mobile);return dep?[dep]:[];
+ // Select from the whole crown before limiting, not the first branch / LOD bin.
+ const all=[...cells.values()].sort((a,b)=>a.rank-b.rank);const cap=Math.min(all.length,budget);rows.push(...all.slice(0,cap));const dep=addDeposit(T,group,rows,kind,mobile);return dep?[dep]:[];
 }
 function surfaceSnow(T,group,kind,mobile){
  const nodes=[];group.traverse(n=>{if(!usable(n)||n.isInstancedMesh)return;const part=n.userData.architecturePart||'';if(kind==='roof'&&!roofPart.test(part)&&!(group.userData.archStyle==='custom-glb'&&/(?:roof|кровл|крыш)/i.test(n.name)))return;if(kind==='deck'&&!deckPart.test(part))return;nodes.push(n);});
